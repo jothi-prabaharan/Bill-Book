@@ -53,6 +53,7 @@ public sealed class TransactionsController : ControllerBase
                 ContactName = q.ContactName,
                 TotalAmount = q.TotalAmount,
                 Status = q.Status,
+                CustomerResponse = q.CustomerResponse == "None" ? null : q.CustomerResponse,
                 DueDate = q.ValidUntil
             }));
         }

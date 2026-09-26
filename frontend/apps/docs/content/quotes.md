@@ -82,6 +82,17 @@ A GSTIN that contradicts the stated place of supply is **refused rather than gue
 
 The list becomes one card per quote and the form stacks to a single column at around 360px, which is the width this product is built to work at.
 
+## The customer's answer
+
+A posted quote shows on the [customer portal](portal#quotes). The customer can **accept** or
+**decline** it there with their name and an optional note, while it is still valid.
+
+- A quote is answered **once**. An expired quote, or one already made into a sales order, cannot be answered.
+- The answer shows on the sales list beside the quote's status: **Accepted by customer** or
+  **Declined by customer** (shown as *Rejected*).
+- Accepting does not create a sales order. Raising the order stays your decision, because only you
+  know the stock, the price and the delivery date.
+
 ## What is not here yet
 
 - **Converting a quote into a sales order from the quote screen.** The sales order can be raised directly in the meantime.

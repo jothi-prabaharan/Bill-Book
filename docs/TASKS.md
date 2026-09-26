@@ -1868,17 +1868,28 @@ The build cards each design in section E produced. Each design section in `docs/
     - `retail/portal.models.spec.ts`.
   - **Owner step:** run the Reporting, Sales and Master suites and the portal specs. "The summary matches the ledger for a seeded contact" is covered over lists, not against a database, because Reporting's fixture has no `acc` or `sal` tables.
 ### TK-96 · Portal: accept or reject a quote
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#85](https://github.com/jothi-prabaharan/Bill-Book/issues/85)
 - **Lanes:** L-SAL, L-SAL-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
 - **Where:** `sal.Quotes`, `QuoteService`; design "Client portal" → Quotes.
 - **Sub-tasks:**
-  - [ ] `CustomerResponse`, `RespondedAt`, `RespondedByName`, `ResponseNote` on `sal.Quotes` (migration).
-  - [ ] `GET api/portal/quotes`, `POST …/{id}/accept`, `…/{id}/reject`: posted, unexpired, answered once.
-  - [ ] The staff quote list shows the answer; the portal page lists quotes with the two actions.
-  - [ ] Test: an expired or already-answered quote is refused; another contact's quote is 404.
+  - [x] `CustomerResponse`, `RespondedAt`, `RespondedByName`, `ResponseNote` on `sal.Quotes` (migration).
+  - [x] `GET api/portal/quotes`, `POST …/{id}/accept`, `…/{id}/reject`: posted, unexpired, answered once.
+  - [x] The staff quote list shows the answer; the portal page lists quotes with the two actions.
+  - [x] Test: an expired or already-answered quote is refused; another contact's quote is 404.
 - **Done when:** a contact accepts a posted quote from the portal and staff see it accepted.
-
+- **As built (2026-09-26):**
+  - **`sal.Quotes`** (migration `QuoteCustomerResponse`) gains `CustomerResponse` (`QuoteResponse` enum, stored as its name, existing rows `None`), `RespondedAt`, `RespondedByName` and `ResponseNote`, with `chk_quotes_response_stamp`: an answer carries its time.
+  - **`PortalQuoteService`:**
+    - Lists the contact's posted quotes, with `CanRespond` meaning unanswered, still valid and not yet an order.
+    - Answering is a guarded `ExecuteUpdate` on unanswered and valid, so two racing answers record one.
+    - The outcomes are NotFound (another contact's quote or a draft), Lapsed, AlreadyAnswered, and Converted (a quote already made into a sales order, which the design did not name; refused so an answer never lands on a decided quote).
+  - **Routes:** `api/portal/quotes` and `/{id}/accept`, `/{id}/reject` with `{ name, note }`, plus gateway route `sales-portal-quotes`.
+  - **Staff:** `SalesTransactionListItem.CustomerResponse`, shown as a tag beside the quote's status on the sales list. The quote view carries the answer fields.
+  - **Portal:** the **Quotes** page, with accept or decline, a name and a note, one column.
+  - **Not built:** the design's "staff notification" on an answer. There is no in-app notification channel for staff yet; the answer shows on the list.
+  - **Tests:** `Sales.Api.Tests.PortalQuoteTests` covers accept once, lapsed refused, another contact's quote and a draft not found, and converted refused. The portal spec covers `quoteState`.
+  - **Owner step:** run the Sales suite and the portal specs.
 ### TK-97 · Portal: support tickets
 - [ ] open
 - **Lanes:** L-CUS, L-CUS-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —

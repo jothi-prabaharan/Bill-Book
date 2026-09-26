@@ -43,6 +43,11 @@ export interface QuoteListItem {
   status: string;
   isInterState: boolean;
   convertedToSalesOrderId?: number;
+  /** The customer's answer on the portal (TK-96). */
+  customerResponse?: 'None' | 'Accepted' | 'Rejected';
+  respondedAt?: string | null;
+  respondedByName?: string | null;
+  responseNote?: string | null;
 }
 
 export interface QuoteView {

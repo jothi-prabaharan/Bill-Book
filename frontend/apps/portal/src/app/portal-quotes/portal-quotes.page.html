@@ -1,0 +1,49 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/dashboard">Your account</a>
+    <a class="link" routerLink="/invoices">Invoices</a>
+    <a class="link" routerLink="/statement">Statement</a>
+  </nav>
+
+  <h1>Quotes</h1>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+  @if (!loading() && quotes().length === 0) {
+    <p class="muted">No quotes yet.</p>
+  }
+
+  <div class="cards">
+    @for (q of quotes(); track q.quoteId) {
+      <div class="card">
+        <span class="row"><strong>{{ q.documentNo }}</strong><span>{{ q.currencyCode }} {{ q.totalAmount | number: '1.2-2' }}</span></span>
+        <span class="muted">{{ q.documentDate | date: 'mediumDate' }} · valid until {{ q.validUntil | date: 'mediumDate' }}</span>
+        <span>{{ quoteState(q, today) }}@if (q.respondedByName) { ({{ q.respondedByName }}) }</span>
+
+        @if (q.canRespond) {
+          @if (answering() === q.quoteId) {
+            <label>
+              Your name
+              <input type="text" [(ngModel)]="name" maxlength="100" autocomplete="name" />
+            </label>
+            <label>
+              A note for the business (optional)
+              <textarea [(ngModel)]="note" maxlength="500" rows="3"></textarea>
+            </label>
+            <span class="row">
+              <button type="button" class="button" (click)="answer(q.quoteId, 'accept')" [disabled]="busy()">Accept</button>
+              <button type="button" class="link" (click)="answer(q.quoteId, 'reject')" [disabled]="busy()">Decline</button>
+              <button type="button" class="link" (click)="answering.set(null)" [disabled]="busy()">Cancel</button>
+            </span>
+          } @else {
+            <button type="button" class="link" (click)="open(q.quoteId)">Answer this quote</button>
+          }
+        }
+      </div>
+    }
+  </div>
+</main>

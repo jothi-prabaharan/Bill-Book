@@ -192,6 +192,15 @@ public class QuoteListItem
 
     /// <summary>The order this became, when it has. Null otherwise.</summary>
     public long? ConvertedToSalesOrderId { get; set; }
+
+    /// <summary>The customer's answer on the portal (TK-96): None, Accepted or Rejected.</summary>
+    public string CustomerResponse { get; set; } = "None";
+
+    public DateTimeOffset? RespondedAt { get; set; }
+
+    public string? RespondedByName { get; set; }
+
+    public string? ResponseNote { get; set; }
 }
 
 /// <summary>A quote with its lines and their tax rows.</summary>

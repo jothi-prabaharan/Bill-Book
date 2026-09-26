@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { PortalInvoiceDetail, PortalInvoiceItem, PortalStatement, PortalSummary } from './portal.models';
+import { PortalInvoiceDetail, PortalInvoiceItem, PortalQuoteItem, PortalStatement, PortalSummary } from './portal.models';
 
 /**
  * The customer portal's reads (TK-95). Every route is under `/api/portal/`, so
@@ -26,6 +26,15 @@ export class PortalApi {
 
   invoicePdf(id: number): Promise<Blob> {
     return firstValueFrom(this.http.get(`/api/portal/invoices/${id}/pdf`, { responseType: 'blob' }));
+  }
+
+  quotes(): Promise<PortalQuoteItem[]> {
+    return firstValueFrom(this.http.get<PortalQuoteItem[]>('/api/portal/quotes'));
+  }
+
+  /** Accepts or declines a quote, once (TK-96). */
+  answerQuote(id: number, answer: 'accept' | 'reject', name: string, note: string | null): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/portal/quotes/${id}/${answer}`, { name, note }));
   }
 
   statement(fromDate?: string, toDate?: string): Promise<PortalStatement> {

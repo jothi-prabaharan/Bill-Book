@@ -47,6 +47,14 @@
           'tag-outline': row.status === 'Draft' || row.status === 'Void'
         }">{{ row.status }}</span>
 
+        @if (row.customerResponse) {
+          <span
+            class="tag"
+            [ngClass]="row.customerResponse === 'Accepted' ? 'tag-accent' : 'tag-outline'"
+            title="The customer's answer on the portal"
+          >{{ row.customerResponse }} by customer</span>
+        }
+
         @if (canAllocate(row)) {
           <button
             type="button"

@@ -80,3 +80,14 @@ public enum PosTenderMode
     Card = 2,
     Upi = 3,
 }
+
+/// <summary>
+/// What the customer said to a quote on the portal (TK-96). Recorded, never
+/// acted on: turning an accepted quote into an order is still a staff decision.
+/// </summary>
+public enum QuoteResponse
+{
+    None = 0,
+    Accepted = 1,
+    Rejected = 2,
+}

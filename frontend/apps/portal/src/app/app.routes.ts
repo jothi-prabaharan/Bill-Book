@@ -47,6 +47,11 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./portal-invoices/portal-invoice.page').then(m => m.PortalInvoicePage)
   },
   {
+    path: 'quotes',
+    canActivate: [portalSessionGuard],
+    loadComponent: () => import('./portal-quotes/portal-quotes.page').then(m => m.PortalQuotesPage)
+  },
+  {
     path: 'statement',
     canActivate: [portalSessionGuard],
     loadComponent: () => import('./portal-statement-list/portal-statement.list').then(m => m.PortalStatementList)

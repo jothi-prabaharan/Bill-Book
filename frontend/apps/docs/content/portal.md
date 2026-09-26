@@ -36,6 +36,13 @@ An invoice's page shows its lines, the totals, what is still owed, and **Downloa
 the same file that was filed when the invoice was posted, so the customer gets the copy your staff
 see.
 
+## Quotes
+
+Every posted quote, newest first, with its total and the date it is valid until. While a quote is
+still valid and has not been made into an order, the customer can **Accept** or **Decline** it,
+giving their name and an optional note. They can answer only once, and the answer shows on your
+sales list. See [Quotes](quotes#the-customers-answer).
+
 ## Statement
 
 The account's history with a running balance.
@@ -49,5 +56,4 @@ Each line shows the document's own number, and an invoice opens in the portal.
 ## Not built yet
 
 - Paying online (TK-98)
-- Accepting or rejecting a quote (TK-96)
 - Raising and following support tickets (TK-97)

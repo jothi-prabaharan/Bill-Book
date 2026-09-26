@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { invoiceLink, statusLabel, statusTone, PortalStatementLine } from './portal.models';
+import { invoiceLink, quoteState, statusLabel, statusTone, PortalQuoteItem, PortalStatementLine } from './portal.models';
 
 const line = (transactionTypeCode: string, transactionId = 7): PortalStatementLine => ({
   ledgerDate: '2026-09-01',
@@ -30,5 +30,29 @@ describe('portal invoice status (TK-95)', () => {
     expect(invoiceLink(line('POS', 13))).toBe(13);
     expect(invoiceLink(line('RCM'))).toBeNull();
     expect(invoiceLink(line('BIL'))).toBeNull();
+  });
+});
+
+describe('portal quote state (TK-96)', () => {
+  const quote = (over: Partial<PortalQuoteItem>): PortalQuoteItem => ({
+    quoteId: 1,
+    documentNo: 'QT/1',
+    documentDate: '2026-09-01',
+    validUntil: '2026-09-30',
+    currencyCode: 'INR',
+    totalAmount: 100,
+    customerResponse: 'None',
+    respondedAt: null,
+    respondedByName: null,
+    canRespond: true,
+    ...over,
+  });
+
+  it('says what the customer answered, or what is still open to them', () => {
+    expect(quoteState(quote({ customerResponse: 'Accepted', canRespond: false }), '2026-09-26')).toBe('You accepted this quote');
+    expect(quoteState(quote({ customerResponse: 'Rejected', canRespond: false }), '2026-09-26')).toBe('You declined this quote');
+    expect(quoteState(quote({}), '2026-09-26')).toBe('Waiting for your answer');
+    expect(quoteState(quote({ validUntil: '2026-09-25', canRespond: false }), '2026-09-26')).toBe('No longer valid');
+    expect(quoteState(quote({ canRespond: false }), '2026-09-26')).toBe('Already turned into an order');
   });
 });

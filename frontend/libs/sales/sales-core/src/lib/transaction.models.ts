@@ -8,4 +8,6 @@ export interface SalesTransactionListItem {
   totalAmount: number;
   status: string;
   dueDate?: string | null;
+  /** A quote's answer from the customer portal (TK-96). */
+  customerResponse?: 'Accepted' | 'Rejected' | null;
 }

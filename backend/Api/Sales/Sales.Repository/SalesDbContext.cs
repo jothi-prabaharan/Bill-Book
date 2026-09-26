@@ -109,6 +109,12 @@ public class SalesDbContext : TenantDbContext
         {
             b.HasKey(e => e.QuoteId);
             b.ConfigureHeader("Quotes", "QTE");
+            b.Property(e => e.CustomerResponse).HasConversion<string>().HasMaxLength(10);
+
+            // An answer carries when it came, and nothing is answered without one.
+            b.ToTable(t => t.HasCheckConstraint(
+                "chk_quotes_response_stamp",
+                "(\"CustomerResponse\" = 'None') = (\"RespondedAt\" IS NULL)"));
         });
 
         modelBuilder.Entity<QuoteDetail>(b =>

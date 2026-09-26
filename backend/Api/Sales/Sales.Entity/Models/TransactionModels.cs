@@ -13,4 +13,7 @@ public class SalesTransactionListItem
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateOnly? DueDate { get; set; } 
+
+    /// <summary>A quote's answer from the customer portal: Accepted or Rejected, null when none (TK-96).</summary>
+    public string? CustomerResponse { get; set; }
 }

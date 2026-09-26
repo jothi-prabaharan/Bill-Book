@@ -98,3 +98,25 @@ export function statusTone(status: PortalInvoiceStatus): 'danger' | 'success' | 
 export function invoiceLink(line: PortalStatementLine): number | null {
   return line.transactionTypeCode === 'INV' || line.transactionTypeCode === 'POS' ? line.transactionId : null;
 }
+
+/** A quote as the portal lists it (TK-96). */
+export interface PortalQuoteItem {
+  quoteId: number;
+  documentNo: string;
+  documentDate: string;
+  validUntil: string;
+  currencyCode: string;
+  totalAmount: number;
+  customerResponse: 'None' | 'Accepted' | 'Rejected';
+  respondedAt: string | null;
+  respondedByName: string | null;
+  canRespond: boolean;
+}
+
+/** How a quote's state reads to the customer. */
+export function quoteState(quote: PortalQuoteItem, today: string): string {
+  if (quote.customerResponse === 'Accepted') return 'You accepted this quote';
+  if (quote.customerResponse === 'Rejected') return 'You declined this quote';
+  if (quote.validUntil < today) return 'No longer valid';
+  return quote.canRespond ? 'Waiting for your answer' : 'Already turned into an order';
+}

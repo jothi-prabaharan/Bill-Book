@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using Sales.Entity.Enums;
 using Shared.Kernel.Documents;
 
 namespace Sales.Entity.TableEntities;
@@ -27,6 +29,18 @@ public class Quote : DocumentHeaderBase
     /// ticks, and a lapsed quote is not a withdrawn one.
     /// </summary>
     public DateOnly ValidUntil { get; set; }
+
+    /// <summary>The customer's answer on the portal (TK-96): once, to a posted quote still valid.</summary>
+    public QuoteResponse CustomerResponse { get; set; } = QuoteResponse.None;
+
+    public DateTimeOffset? RespondedAt { get; set; }
+
+    /// <summary>The name the person answering gave. A portal session is a contact, not a person.</summary>
+    [MaxLength(100, ErrorMessage = "The name cannot exceed 100 characters.")]
+    public string? RespondedByName { get; set; }
+
+    [MaxLength(500, ErrorMessage = "The note cannot exceed 500 characters.")]
+    public string? ResponseNote { get; set; }
 
     public List<QuoteDetail> Lines { get; set; } = [];
 }

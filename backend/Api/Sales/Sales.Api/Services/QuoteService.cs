@@ -428,6 +428,10 @@ public sealed class QuoteService
                 IsInterState = q.IsInterState,
                 ConvertedToSalesOrderId = _db.SalesOrders.Where(o => o.QuoteId == q.QuoteId).Select(o => (long?)o.SalesOrderId).FirstOrDefault(),
                 HasLapsed = q.Status == DocumentStatus.Posted && q.ValidUntil < today,
+                CustomerResponse = q.CustomerResponse.ToString(),
+                RespondedAt = q.RespondedAt,
+                RespondedByName = q.RespondedByName,
+                ResponseNote = q.ResponseNote,
                 ContactGstin = q.ContactGstin,
                 PlaceOfSupplyStateId = q.PlaceOfSupplyStateId,
                 BillingAddress = q.BillingAddress,
@@ -532,6 +536,10 @@ public sealed class QuoteService
                 IsInterState = q.IsInterState,
                 ConvertedToSalesOrderId = _db.SalesOrders.Where(o => o.QuoteId == q.QuoteId).Select(o => (long?)o.SalesOrderId).FirstOrDefault(),
                 HasLapsed = q.Status == DocumentStatus.Posted && q.ValidUntil < today,
+                CustomerResponse = q.CustomerResponse.ToString(),
+                RespondedAt = q.RespondedAt,
+                RespondedByName = q.RespondedByName,
+                ResponseNote = q.ResponseNote,
             }).ToListAsync(ct);
 
         var contactIds = Quotes.Select(q => q.ContactId).Distinct().ToList();
