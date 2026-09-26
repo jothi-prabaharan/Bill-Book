@@ -100,36 +100,52 @@ public sealed class ContactsController : ControllerBase
         return Respond(outcome, NoContent);
     }
 
+    /// <summary>
+    /// A new portal link for the contact (TK-94): a code the portal exchanges
+    /// for one-hour sessions until the link expires or is revoked. The code is
+    /// shown once and never stored. Older links keep working.
+    /// </summary>
     [HttpPost("{contactId:long}/portal-link")]
-    public async Task<IActionResult> GeneratePortalLink(long contactId, CancellationToken ct)
+    public async Task<IActionResult> GeneratePortalLink(
+        long contactId, [FromServices] PortalAccessService portal, CancellationToken ct)
     {
         // The link opens the portal of the app it was made from: a School
-        // guardian's link is a School token (TK-69).
-        string? token = await _contacts.GeneratePortalLinkAsync(contactId, RequireAppAttribute.AppOf(User), ct);
-        if (token is null)
+        // guardian's link opens the parent portal (TK-69).
+        PortalLink? link = await portal.CreateLinkAsync(contactId, RequireAppAttribute.AppOf(User), ct);
+        if (link is null)
         {
             return NotFound();
         }
 
-        // The token and, where the deployment says where the portal lives, the
-        // whole link.
-        //
-        // <b>Both, rather than one or the other.</b> A screen that has just
-        // generated the link knows its own origin and can compose it; an email
-        // sent to a contact cannot ask a browser anything, so somewhere the
-        // deployment has to say. `Portal:BaseUrl` is optional for exactly that
-        // reason — a development box with no portal deployed still gets a
-        // usable token, and does not get a link to a host that is not there.
+        // The code and, where the deployment says where the portal lives, the
+        // whole link. `Portal:BaseUrl` is optional: a screen that has just made
+        // the link knows its own portal's origin, and an email cannot ask.
         string? baseUrl = _configuration["Portal:BaseUrl"]?.TrimEnd('/');
 
         return Ok(new
         {
-            token,
+            code = link.Code,
+            expiresAt = link.ExpiresAt,
             url = string.IsNullOrWhiteSpace(baseUrl)
                 ? null
-                : $"{baseUrl}/portal?token={Uri.EscapeDataString(token)}",
+                : $"{baseUrl}/access/{Uri.EscapeDataString(link.Code)}",
         });
     }
+
+    /// <summary>How many of the contact's portal links still work, and when one was last used.</summary>
+    [HttpGet("{contactId:long}/portal-access")]
+    public async Task<IActionResult> GetPortalAccess(
+        long contactId, [FromServices] PortalAccessService portal, CancellationToken ct) =>
+        await portal.GetStateAsync(contactId, ct) is { } state ? Ok(state) : NotFound();
+
+    /// <summary>
+    /// Revokes every portal link the contact has (TK-94). No new session is
+    /// issued from then on; one already open ends within the hour.
+    /// </summary>
+    [HttpPost("{contactId:long}/portal-access/revoke")]
+    public async Task<IActionResult> RevokePortalAccess(
+        long contactId, [FromServices] PortalAccessService portal, CancellationToken ct) =>
+        await portal.RevokeAsync(contactId, ct) is int revoked ? Ok(new { revoked }) : NotFound();
 
     [HttpDelete("{contactId:long}")]
     public async Task<IActionResult> Deactivate(long contactId, CancellationToken ct) =>

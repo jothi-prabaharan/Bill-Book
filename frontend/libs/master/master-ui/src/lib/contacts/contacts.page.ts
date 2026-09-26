@@ -17,6 +17,7 @@ import {
   TextInputComponent,
   TextareaComponent,
 } from '@bill-book/ui-components';
+import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -189,11 +190,26 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
  * (at least one person, exactly one default, one default address per type), so
  * the set has to arrive together.
  */
+/** A portal link just made (TK-94): the code in it is shown once. */
+interface PortalLinkMade {
+  code: string;
+  url: string | null;
+  expiresAt: string;
+}
+
+/** What the contact screen shows about a contact's portal access (TK-94). */
+interface PortalAccessState {
+  liveLinks: number;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
   imports: [
+    DatePipe,
     DataGridComponent,
     FormsModule,
     ContactPersonRolesDialog,
@@ -230,8 +246,11 @@ export class ContactsPage implements OnInit {
   protected readonly rolesOpen = signal(false);
   protected readonly editingId = signal<number | null>(null);
 
-  /** The last portal link made for the open contact: a customer's statement, or a guardian's parent portal from School (TK-69). */
-  protected readonly portalLink = signal<{ token: string; url: string | null } | null>(null);
+  /** The last portal link made for the open contact: a customer's portal, or a guardian's parent portal from School (TK-69). */
+  protected readonly portalLink = signal<PortalLinkMade | null>(null);
+
+  /** How many of the open contact's portal links still work, and when one was last used (TK-94). */
+  protected readonly portalAccess = signal<PortalAccessState | null>(null);
   protected readonly tab = signal<Tab>('general');
   protected readonly uploading = signal(false);
 
@@ -398,6 +417,7 @@ export class ContactsPage implements OnInit {
   openAdd(): void {
     this.editingId.set(null);
     this.portalLink.set(null);
+    this.portalAccess.set(null);
     this.form = this.blank();
     this.addPerson();
     this.tab.set('general');
@@ -421,8 +441,10 @@ export class ContactsPage implements OnInit {
       };
       this.editingId.set(row.contactId);
       this.portalLink.set(null);
+      this.portalAccess.set(null);
       this.tab.set('general');
       this.editorOpen.set(true);
+      void this.loadPortalAccess(row.contactId);
     } catch {
       this.fail('Could not open that contact.');
     } finally {
@@ -817,12 +839,40 @@ export class ContactsPage implements OnInit {
     if (id === null) return;
     this.busy.set(true);
     try {
-      this.portalLink.set(await this.send<{ token: string; url: string | null }>('POST', `/api/contacts/${id}/portal-link`, {}));
-      this.succeed('Portal link made. It is valid for 30 days.');
+      const link = await this.send<PortalLinkMade>('POST', `/api/contacts/${id}/portal-link`, {});
+      this.portalLink.set(link);
+      this.succeed(`Portal link made. It works until ${new Date(link.expiresAt).toLocaleDateString()} unless you revoke it.`);
+      await this.loadPortalAccess(id);
     } catch (err: unknown) {
       this.fail(this.messageOf(err, 'Could not make a portal link.'));
     } finally {
       this.busy.set(false);
+    }
+  }
+
+  /** Revokes every portal link the open contact has (TK-94). Sessions already open end within the hour. */
+  async revokePortalAccess(): Promise<void> {
+    const id = this.editingId();
+    if (id === null) return;
+    this.busy.set(true);
+    try {
+      await this.send<{ revoked: number }>('POST', `/api/contacts/${id}/portal-access/revoke`, {});
+      this.portalLink.set(null);
+      this.succeed('Portal access revoked. The contact cannot open a new session, and any open one ends within the hour.');
+      await this.loadPortalAccess(id);
+    } catch (err: unknown) {
+      this.fail(this.messageOf(err, 'Could not revoke portal access.'));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  private async loadPortalAccess(contactId: number): Promise<void> {
+    try {
+      const state = await this.get<PortalAccessState>(`/api/contacts/${contactId}/portal-access`);
+      if (this.editingId() === contactId) this.portalAccess.set(state);
+    } catch {
+      // The contact still opens; the access line is simply left off.
     }
   }
 

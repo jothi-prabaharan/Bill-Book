@@ -9,7 +9,8 @@ import { PortalSession } from './portal-session';
  */
 export const portalTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const token = inject(PortalSession).token();
-  return token && req.url.includes('/api/portal/')
+  // The session exchange itself carries the code, not a token.
+  return token && req.url.includes('/api/portal/') && !req.url.includes('/api/portal/session')
     ? next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }))
     : next(req);
 };

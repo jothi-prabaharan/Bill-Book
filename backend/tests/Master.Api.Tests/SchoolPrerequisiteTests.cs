@@ -168,7 +168,7 @@ public sealed class GuardianContactTests
     public GuardianContactTests(PostgresFixture postgres) => _postgres = postgres;
 
     private static ContactService Service(ContactsDbContext db, TenantContext tenant) =>
-        new(db, null!, null!, null!, null!, TimeProvider.System, null!, tenant);
+        new(db, null!, null!, null!, null!, TimeProvider.System, tenant);
 
     [SkippableFact]
     public async Task A_guardian_only_contact_is_saved_and_the_guardian_filter_finds_only_guardians()

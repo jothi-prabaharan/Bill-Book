@@ -32,6 +32,13 @@ public sealed class RequirePortalAccessAttribute : Attribute, IActionFilter
     public const string AccessClaim = "portal_access";
     public const string ContactClaim = "contact_id";
 
+    /// <summary>
+    /// The grant the session was issued for (TK-94). Required: a token without
+    /// one is a 30-day link from before grants existed, and those stopped
+    /// working when revocable access shipped.
+    /// </summary>
+    public const string GrantClaim = "portal_grant";
+
     public void OnActionExecuting(ActionExecutingContext context)
     {
         if (context.HttpContext.User.FindFirst(AccessClaim)?.Value != "true")
@@ -45,6 +52,14 @@ public sealed class RequirePortalAccessAttribute : Attribute, IActionFilter
         string? contactId = context.HttpContext.User.FindFirst(ContactClaim)?.Value;
 
         if (string.IsNullOrEmpty(contactId) || !long.TryParse(contactId, out _))
+        {
+            context.Result = new ForbidResult();
+            return;
+        }
+
+        // Issued for a grant, so revocable (TK-94). An old 30-day link token
+        // carries none and is refused, whatever its expiry says.
+        if (!long.TryParse(context.HttpContext.User.FindFirst(GrantClaim)?.Value, out _))
         {
             context.Result = new ForbidResult();
         }

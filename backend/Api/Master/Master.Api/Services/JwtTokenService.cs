@@ -124,14 +124,19 @@ public sealed class JwtTokenService : ITokenService
         return (token, HashUtil.Sha256(token), expires);
     }
 
-    public string CreatePortalToken(Guid customerId, Guid orgId, long contactId, App app = App.RetailErp)
+    /// <summary>How long a portal session lasts. Revoking a grant ends its sessions within this (TK-94).</summary>
+    public static readonly TimeSpan PortalSessionLifetime = TimeSpan.FromHours(1);
+
+    public (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
+        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp)
     {
         var claims = new List<Claim>
         {
             new("customer_id", customerId.ToString()),
             new("org_id", orgId.ToString()),
-            new("contact_id", contactId.ToString()),
-            new("portal_access", "true")
+            new(RequirePortalAccessAttribute.ContactClaim, contactId.ToString()),
+            new(RequirePortalAccessAttribute.AccessClaim, "true"),
+            new(RequirePortalAccessAttribute.GrantClaim, grantId.ToString()),
         };
 
         // A RetailErp token keeps its old shape, with no app claim, which reads as
@@ -142,8 +147,10 @@ public sealed class JwtTokenService : ITokenService
             claims.Add(new Claim(RequireAppAttribute.ClaimType, app.ToString()));
         }
 
-        // Portal tokens can live longer (e.g. 30 days) to allow contacts to use the link.
-        return Write(claims, _clock.GetUtcNow().AddDays(30));
+        // An hour, not the thirty days a link used to carry: the link is now a
+        // code the portal exchanges again, so revoking it has an end (TK-94).
+        DateTimeOffset expires = _clock.GetUtcNow().Add(PortalSessionLifetime);
+        return (Write(claims, expires), expires);
     }
 
     private string Write(IEnumerable<Claim> claims, DateTimeOffset expires)

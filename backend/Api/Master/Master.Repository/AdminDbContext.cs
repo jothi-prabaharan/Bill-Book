@@ -642,6 +642,22 @@ public class AdminDbContext : DbContext
                 Value = "dd/MM/yyyy",
                 Category = "Formatting",
                 IsSystem = true,
+            },
+
+            // How long a portal link works before the contact needs a new one
+            // (TK-94). A branch can shorten or lengthen it; revoking ends it at
+            // once whatever it says.
+            new Configuration
+            {
+                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000006"),
+                OrgId = null,
+                Code = "portal.linkDays",
+                Name = "Portal Link Validity (days)",
+                Description = "Days a contact's portal link keeps working, unless it is revoked first",
+                DataType = ConfigDataType.Number,
+                Value = "90",
+                Category = "Portal",
+                IsSystem = true,
             });
     }
 

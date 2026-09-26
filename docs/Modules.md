@@ -3275,6 +3275,21 @@ quotes**; **raise and follow support tickets**.
   JWT locally, and it is written on the revoke button.
 - `CreatePortalToken`'s 30-day lifetime goes; old links stop working at release, and the release
   note says so.
+- **As built (TK-94, 26 September 2026).** Two points differ from the text above:
+  - **The code names its customer and branch**, as `pg_{customer}_{org}_{secret}`, the way an API
+    key names its customer. The session exchange sets the tenant from those two ids and then finds
+    the grant under the ordinary query filter and a standard RLS policy, by hash alone. So
+    `con.PortalGrants` needs no pre-tenant read policy, and the shard is known before the database
+    is opened. Altering either id makes the code hash to nothing.
+  - **The lifetime is `mst.Configurations` `portal.linkDays`** (default 90, overridable per branch
+    on Settings › Configuration).
+  - Other details:
+    - `[RequirePortalAccess]` now also requires `portal_grant`, so a pre-TK-94 30-day token is
+      refused everywhere.
+    - The session never outlives its grant.
+    - A deactivated contact's links stop working.
+    - The route is limited to 10 exchanges a minute per address (the last `X-Forwarded-For` entry
+      behind the gateway).
 
 ## Screens and endpoints
 

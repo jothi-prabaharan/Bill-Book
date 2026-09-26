@@ -514,7 +514,23 @@ Accounting is a separate service, so that step can fail on its own. When it does
 
 ## Deactivating
 
-Contacts are never deleted. Documents point at them and their sub-accounts hold ledger history. Deactivating takes them out of the pickers and leaves everything else intact.
+Contacts are never deleted. Documents point at them and their sub-accounts hold ledger history. Deactivating takes them out of the pickers and leaves everything else intact. A deactivated contact's portal links stop working.
+
+## Portal access
+
+**Portal link** on an open contact makes a link to send to them. It opens the customer portal, or
+the parent portal when it is made in the School app.
+
+- The link is shown **once**, when it is made. Only a fingerprint of it is stored, so nobody can
+  read it back later, and a lost link is replaced by making a new one.
+- A link works for **90 days**. A branch can change that with the **Portal Link Validity (days)**
+  setting under **Settings › Configuration**.
+- Opening the link starts a session that lasts an hour and renews itself while the link works.
+- The contact screen shows how many of the contact's links work and when one was last opened.
+- **Revoke portal access** stops every link the contact has at once. No new session can be opened,
+  and a session already open ends **within the hour**. Making a new link afterwards works as normal.
+
+Links made before revocable access was built stopped working when it shipped. Send those contacts a new link.
 
 
 

@@ -604,15 +604,38 @@
 
     @if (portalLink(); as link) {
       <label class="portal-link">
-        <span>{{ link.url ? 'Portal link — send this to the contact' : 'Portal token (no portal address is configured, so add it to the portal\'s /portal?token= link)' }}</span>
-        <input type="text" readonly [value]="link.url ?? link.token" (focus)="$any($event.target).select()" />
+        <span>{{ link.url ? 'Portal link — send this to the contact. It is shown only now.' : 'Portal code (no portal address is configured, so add it to the portal\'s /access/ address). It is shown only now.' }}</span>
+        <input type="text" readonly [value]="link.url ?? link.code" (focus)="$any($event.target).select()" />
       </label>
+    }
+
+    @if (portalAccess(); as access) {
+      <p class="portal-access">
+        @if (access.liveLinks > 0) {
+          Portal access: {{ access.liveLinks }} {{ access.liveLinks === 1 ? 'link works' : 'links work' }}
+          @if (access.expiresAt) { until {{ access.expiresAt | date: 'mediumDate' }} }.
+        } @else {
+          No portal link works for this contact.
+        }
+        @if (access.lastUsedAt) { Last opened {{ access.lastUsedAt | date: 'medium' }}. }
+      </p>
     }
 
     <div class="sheet-actions">
       <button type="button" (click)="save()" [disabled]="busy() || !form.displayName">Save contact</button>
       @if (editingId() !== null) {
         <button type="button" class="link" (click)="makePortalLink()" [disabled]="busy()">Portal link</button>
+        @if ((portalAccess()?.liveLinks ?? 0) > 0) {
+          <button
+            type="button"
+            class="link danger"
+            (click)="revokePortalAccess()"
+            [disabled]="busy()"
+            title="Stops the contact opening a new portal session. A session already open ends within the hour."
+          >
+            Revoke portal access
+          </button>
+        }
       }
       <button type="button" class="link" (click)="editorOpen.set(false)">Cancel</button>
     </div>

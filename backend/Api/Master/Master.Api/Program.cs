@@ -166,6 +166,11 @@ builder.Services.AddScoped<ITenantSeeder, HttpTenantSeeder>();
 
 // ---- Contacts. ----
 builder.Services.AddScoped<ContactService>();
+
+// Revocable portal links and the one-hour sessions they open (TK-94).
+builder.Services.AddScoped<PortalAccessService>();
+builder.Services.AddScoped<IPortalLinkLifetime, ConfigurationPortalLinkLifetime>();
+builder.Services.AddPortalRateLimit();
 builder.Services.AddScoped<ContactPersonRoleService>();
 builder.Services.AddScoped<ContactAttachmentService>();
 
@@ -298,6 +303,9 @@ app.UseAuthorization();
 // Only the contacts context needs it; it is harmless on the master one, which
 // takes no tenant.
 app.UseMiddleware<TenantMiddleware>();
+
+// Only the portal session exchange names a policy (TK-94).
+app.UseRateLimiter();
 
 app.MapControllers();
 

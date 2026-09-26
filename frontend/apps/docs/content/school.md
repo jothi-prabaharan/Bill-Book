@@ -148,7 +148,7 @@ A contract starts as a **draft**. List the assets it covers, then **Activate** i
 
 Guardians can see their children's school record on the parent portal, without a staff login.
 
-**Giving a guardian access.** Open the guardian's contact in the School app and press **Portal link**. Send the link to the guardian; it is valid for 30 days. A link made in the School app opens the parent portal, and one made in RetailErp opens a customer's statement. On a student's record, a guardian sees the child only when **portal access** is ticked for them, so a second guardian can be kept off the portal.
+**Giving a guardian access.** Open the guardian's contact in the School app and press **Portal link**. Send the link to the guardian. It works for 90 days unless you revoke it, and **Revoke portal access** on the contact stops it at once (see [Portal access](masters#portal-access)). A link made in the School app opens the parent portal, and one made in RetailErp opens a customer's statement. On a student's record, a guardian sees the child only when **portal access** is ticked for them, so a second guardian can be kept off the portal.
 
 **What a guardian sees:**
 

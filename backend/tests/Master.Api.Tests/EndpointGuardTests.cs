@@ -58,6 +58,11 @@ public sealed class EndpointGuardTests
         //                         raises a foreign-currency or jewellery document
         //                         reads them. Its history and writes carry
         //                         RequirePermission("platform.*") (TK-24).
+        //   PortalSessionController — exchanges a portal link's code for a
+        //                         one-hour portal session (TK-94). Anonymous
+        //                         because the code is the credential; rate
+        //                         limited per address, and every failure is the
+        //                         same 401.
         //
         // An exemption is a line here that somebody had to write and defend,
         // which is the difference between this and an attribute nobody added.
@@ -71,7 +76,8 @@ public sealed class EndpointGuardTests
                 "FormatsController",
                 "MenuController",
                 "MeController",
-                "RatesController")));
+                "RatesController",
+                "PortalSessionController")));
     }
 
     /// <summary>

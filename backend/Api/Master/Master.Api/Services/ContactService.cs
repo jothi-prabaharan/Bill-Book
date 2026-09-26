@@ -33,7 +33,6 @@ public sealed class ContactService
     private readonly IStateDirectory _states;
     private readonly IAccountingSubAccounts _subAccounts;
     private readonly TimeProvider _clock;
-    private readonly ITokenService _tokenService;
     private readonly ITenantContext _tenant;
 
     public ContactService(
@@ -43,7 +42,6 @@ public sealed class ContactService
         IStateDirectory states,
         IAccountingSubAccounts subAccounts,
         TimeProvider clock,
-        ITokenService tokenService,
         ITenantContext tenant)
     {
         _db = db;
@@ -52,7 +50,6 @@ public sealed class ContactService
         _states = states;
         _subAccounts = subAccounts;
         _clock = clock;
-        _tokenService = tokenService;
         _tenant = tenant;
     }
 
@@ -520,25 +517,6 @@ public sealed class ContactService
         contact.IsActive = false;
         await _db.SaveChangesAsync(ct);
         return SaveContactOutcome.Ok;
-    }
-
-    /// <summary>
-    /// Generates a long-lived secure statement URL for external contacts.
-    /// Returns null if the contact does not exist.
-    /// </summary>
-    public async Task<string?> GeneratePortalLinkAsync(long contactId, App app, CancellationToken ct)
-    {
-        var exists = await _db.Contacts.AnyAsync(c => c.ContactId == contactId, ct);
-        if (!exists)
-        {
-            return null;
-        }
-
-        // We assume the caller is authenticated and has ITenantContext populated
-        Guid customerId = _tenant.CustomerId ?? Guid.Empty;
-        Guid orgId = _tenant.OrgId ?? Guid.Empty;
-
-        return _tokenService.CreatePortalToken(customerId, orgId, contactId, app);
     }
 
     /// <summary>

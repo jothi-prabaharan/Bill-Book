@@ -1797,20 +1797,45 @@ The build cards each design in section E produced. Each design section in `docs/
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and Master. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-94 · Portal: revocable access and one-hour sessions
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#83](https://github.com/jothi-prabaharan/Bill-Book/issues/83)
 - **Lanes:** L-CON, L-MST, L-PTL, L-KERNEL · **Depends on:** TK-32 · **Decision:** —
 - **Where:** `ContactService.GeneratePortalLinkAsync`, `JwtTokenService.CreatePortalToken`, `ContactsController` (`portal-link`), `apps/portal`; design "Client portal" → Access.
 - **Tables:** `con.PortalGrants`
 - **Sub-tasks:**
-  - [ ] `con.PortalGrants` with the RLS block; the link carries a random code whose SHA-256 is stored.
-  - [ ] `POST api/portal/session` exchanges the code for a one-hour portal JWT with `portal_grant`; rate-limited; exempted in Master's guard test with its reason.
-  - [ ] Revoke portal access on the contact screen; the 30-day token path is removed.
-  - [ ] `apps/portal` gains `/access/:code`, keeps the code, and re-exchanges it before the hour runs out.
-  - [ ] Test: a revoked or expired grant is refused; a code is never stored in clear; a portal token carries no permission claims.
+  - [x] `con.PortalGrants` with the RLS block; the link carries a random code whose SHA-256 is stored.
+  - [x] `POST api/portal/session` exchanges the code for a one-hour portal JWT with `portal_grant`; rate-limited; exempted in Master's guard test with its reason.
+  - [x] Revoke portal access on the contact screen; the 30-day token path is removed.
+  - [x] `apps/portal` gains `/access/:code`, keeps the code, and re-exchanges it before the hour runs out.
+  - [x] Test: a revoked or expired grant is refused; a code is never stored in clear; a portal token carries no permission claims.
   - Standard delivery sub-tasks (section 5).
 - **Done when:** revoking a contact's access stops a fresh session from being issued, and existing sessions expire within an hour.
-
+- **As built (2026-09-26):**
+  - **Master:**
+    - `con.PortalGrants` (migration `PortalGrants`, with the RLS block) stores `CodeHash` (SHA-256, unique), `App`, `ExpiresAt`, `RevokedAt`/`RevokedBy` and `LastUsedAt`.
+    - `PortalAccessService` creates, reads the state of, revokes and exchanges grants. The code is `pg_{customer}_{org}_{secret}`, and the session controller sets the tenant from the code before opening the database. This departs from the design's "past the query filter" wording: no special RLS policy is needed, and the shard is known up front.
+    - The lifetime comes from `mst.Configurations` `portal.linkDays`, default 90 (migration `PortalLinkDaysSetting`).
+  - **Routes:**
+    - `POST api/portal/session` is anonymous, `[NoTransaction]` (the service opens its own scope after the tenant is set), and rate-limited to 10 a minute per address. Every failure is the same 401.
+    - `POST api/contacts/{id}/portal-link` now returns `{ code, expiresAt, url }` with `url = {Portal:BaseUrl}/access/{code}`.
+    - New: `GET api/contacts/{id}/portal-access` and `POST api/contacts/{id}/portal-access/revoke`.
+    - Gateway route `master-portal-session`.
+  - **Token and guard:**
+    - `CreatePortalToken` issues one hour and carries `portal_grant`. The session never outlives its grant.
+    - `[RequirePortalAccess]` requires `portal_grant`, so old 30-day links are refused by every service.
+    - `ContactService.GeneratePortalLinkAsync` and its `ITokenService` dependency are gone.
+  - **Frontend:**
+    - `apps/portal`: `/access/:code` exchanges the code. `PortalSession` keeps the code for the tab and renews five minutes before expiry. `portalSessionGuard` protects every page. `/portal?token=` and a withdrawn link go to `/expired`.
+    - Contacts page: shows the link once, the access line (live links, last opened) and **Revoke portal access**.
+  - **Tests:**
+    - `Master.Api.Tests.PortalAccessTests`: code format; never stored in clear; exchange claims; revoke all; expiry; a session capped at the grant; a deactivated contact; tampered secret or branch; another branch's contact.
+    - `PortalTokenTests`: one hour, with the grant claim.
+    - `EndpointGuardTests` exemption with its reason.
+    - `portal-session.spec.ts`: renewal timing.
+  - **Owner step:**
+    - Run the Master suite from dropped databases, and the portal specs.
+    - Existing portal links stop working at deploy; send contacts new ones.
+    - Set `Portal:BaseUrl` so the contact screen shows a full link.
 ### TK-95 · Portal: dashboard figures and invoices with PDF
 - [ ] open
 - **Lanes:** L-RPT, L-SAL, L-PTL · **Depends on:** TK-94, TK-22 · **Decision:** —

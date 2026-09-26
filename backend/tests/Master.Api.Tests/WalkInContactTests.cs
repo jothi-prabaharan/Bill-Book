@@ -39,7 +39,7 @@ public sealed class WalkInContactTests
     /// admin database, numbering, states and tokens are never reached by them.
     /// </summary>
     private static ContactService Service(ContactsDbContext db, TenantContext tenant, IAccountingSubAccounts subAccounts) =>
-        new(db, null!, null!, null!, subAccounts, TimeProvider.System, null!, tenant);
+        new(db, null!, null!, null!, subAccounts, TimeProvider.System, tenant);
 
     private (ContactsDbContext Db, TenantContext Tenant) Branch(Guid? customerId = null, Guid? orgId = null)
     {

@@ -41,6 +41,9 @@ public class ContactsDbContext : TenantDbContext
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
     public DbSet<ApiClient> ApiClients => Set<ApiClient>();
 
+    /// <summary>Portal links given to contacts, by code hash (TK-94).</summary>
+    public DbSet<PortalGrant> PortalGrants => Set<PortalGrant>();
+
     // The approval engine's configuration (D-26, TK-99), in its own tenant
     // schema beside con: Master is the one service every app has.
     public DbSet<ApprovalWorkflow> ApprovalWorkflows => Set<ApprovalWorkflow>();
@@ -232,6 +235,21 @@ public class ContactsDbContext : TenantDbContext
             b.ToTable(table => table.HasCheckConstraint(
                 "chk_licence_dates",
                 "\"IssuedOn\" IS NULL OR \"ExpiresOn\" IS NULL OR \"ExpiresOn\" >= \"IssuedOn\""));
+        });
+
+        modelBuilder.Entity<PortalGrant>(b =>
+        {
+            b.HasKey(e => e.PortalGrantId);
+
+            // A session is found by the code's hash and nothing else.
+            b.HasIndex(e => e.CodeHash).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+            b.Property(e => e.CodeHash).IsFixedLength().HasMaxLength(64);
+
+            b.HasOne<Contact>()
+                .WithMany()
+                .HasForeignKey(e => e.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ContactAttachment>(b =>

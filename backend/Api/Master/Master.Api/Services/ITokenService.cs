@@ -17,11 +17,15 @@ public interface ITokenService
     (string Token, string Hash, DateTimeOffset ExpiresAt) CreateRefreshToken();
 
     /// <summary>
-    /// A long-lived secure token for external contacts: a RetailErp customer's
-    /// statements, or a School guardian's parent portal (TK-69). The token names
-    /// <paramref name="app"/> so the School routes accept it and RetailErp's refuse it.
+    /// A one-hour token for a contact's portal session, issued for a live
+    /// <c>con.PortalGrants</c> row (TK-94): a RetailErp customer's portal, or a
+    /// School guardian's parent portal (TK-69). The token names
+    /// <paramref name="app"/> so the School routes accept it and RetailErp's
+    /// refuse it, and carries <c>portal_grant</c> so every service can tell it
+    /// from the 30-day links that came before.
     /// </summary>
-    string CreatePortalToken(Guid customerId, Guid orgId, long contactId, App app = App.RetailErp);
+    (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
+        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp);
 }
 
 public sealed class AccessTokenRequest
