@@ -72,7 +72,8 @@ export class CustomerService {
     return firstValueFrom(this.http.get<TicketMessage[]>(`/api/tickets/${ticketId}/messages`));
   }
 
-  createTicketMessage(ticketId: string, body: string): Promise<TicketMessage> {
-    return firstValueFrom(this.http.post<TicketMessage>(`/api/tickets/${ticketId}/messages`, { body }));
+  /** A staff reply, or with `isInternal` a note the customer never sees (TK-97). */
+  createTicketMessage(ticketId: string, body: string, isInternal = false): Promise<TicketMessage> {
+    return firstValueFrom(this.http.post<TicketMessage>(`/api/tickets/${ticketId}/messages`, { body, isInternal }));
   }
 }

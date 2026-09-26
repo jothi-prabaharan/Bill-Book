@@ -120,3 +120,35 @@ export function quoteState(quote: PortalQuoteItem, today: string): string {
   if (quote.validUntil < today) return 'No longer valid';
   return quote.canRespond ? 'Waiting for your answer' : 'Already turned into an order';
 }
+
+/** A support ticket as the portal lists it (TK-97). */
+export interface PortalTicketItem {
+  ticketId: number;
+  subject: string;
+  status: 'Open' | 'InProgress' | 'Resolved' | 'Closed';
+  raisedAt: string | null;
+  lastMessageAt: string | null;
+}
+
+export interface PortalTicketMessage {
+  messageId: number;
+  from: 'You' | 'Support';
+  body: string;
+  sentAt: string | null;
+}
+
+export interface PortalTicketDetail {
+  ticket: PortalTicketItem;
+  description: string | null;
+  messages: PortalTicketMessage[];
+}
+
+/** How a ticket's status reads to the customer. */
+export function ticketStatusLabel(status: PortalTicketItem['status']): string {
+  switch (status) {
+    case 'InProgress':
+      return 'In progress';
+    default:
+      return status;
+  }
+}

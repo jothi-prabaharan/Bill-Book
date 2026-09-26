@@ -1891,17 +1891,31 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `Sales.Api.Tests.PortalQuoteTests` covers accept once, lapsed refused, another contact's quote and a draft not found, and converted refused. The portal spec covers `quoteState`.
   - **Owner step:** run the Sales suite and the portal specs.
 ### TK-97 · Portal: support tickets
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#86](https://github.com/jothi-prabaharan/Bill-Book/issues/86)
 - **Lanes:** L-CUS, L-CUS-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
 - **Where:** `TicketsController`, `cus.TicketMessages`; design "Client portal" → Tickets.
 - **Sub-tasks:**
-  - [ ] `IsInternal` on `cus.TicketMessages`; the staff reply box can mark a note internal.
-  - [ ] `GET/POST api/portal/tickets`, `POST api/portal/tickets/{id}/messages`, never returning internal messages.
-  - [ ] Portal ticket list, detail and new-ticket pages.
-  - [ ] Test: an internal message never reaches the portal; another contact's ticket is 404; a portal ticket gets its SLA from `cus.SlaPolicies`.
+  - [x] `IsInternal` on `cus.TicketMessages`; the staff reply box can mark a note internal.
+  - [x] `GET/POST api/portal/tickets`, `POST api/portal/tickets/{id}/messages`, never returning internal messages.
+  - [x] Portal ticket list, detail and new-ticket pages.
+  - [x] Test: an internal message never reaches the portal; another contact's ticket is 404; a portal ticket gets its SLA from `cus.SlaPolicies`.
 - **Done when:** a contact raises a ticket in the portal, staff reply, and the contact sees the reply but not an internal note.
-
+- **As built (2026-09-26):**
+  - **`cus.TicketMessages.IsInternal`** (migration `TicketMessageInternal`), with `chk_ticketmessages_internal_by_staff`: only a `User` message can be internal.
+  - **`PortalTicketService` and `api/portal/tickets`** (list, `/{id}`, raise, `/{id}/messages`):
+    - Only the token's contact; another contact's ticket is 404.
+    - Internal notes are filtered out.
+    - A portal ticket is Medium priority with the branch's SLA.
+    - Replying to a Resolved ticket reopens it; a Closed one is 409.
+    - Gateway route `customer-portal-tickets`.
+  - **Found and fixed on the staff side:**
+    - The thread screen called `GET api/tickets/{id}/messages`, which did not exist. It now does, returning the whole thread with `isInternal` and the author type as its name.
+    - `POST api/tickets/{id}/messages` took the author from the request body, so the screen's replies were stored as `Contact` (enum 0). A staff message is now always `User` and the signed-in user.
+  - **Staff UI:** an **Internal note** checkbox on the reply box, and internal notes marked in the thread.
+  - **Portal:** the **Support** list (with New ticket) and a ticket page with replies.
+  - **Tests:** `Customer.Api.Tests.PortalTicketTests` covers internal notes never reaching the portal, the database refusing a contact's internal note, another contact's ticket, the SLA from policy, reopening a resolved ticket and a closed ticket refusing. The portal spec covers the status label.
+  - **Owner step:** run the Customer suite and the portal specs.
 ### TK-98 · Portal: pay online
 - [ ] open
 - **Lanes:** L-ACC, L-ACC-UI, L-PTL · **Depends on:** TK-95 · **Decision:** D-25

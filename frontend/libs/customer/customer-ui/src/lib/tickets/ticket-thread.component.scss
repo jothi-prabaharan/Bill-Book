@@ -88,3 +88,15 @@
   
   &:hover { color: var(--color-text); }
 }
+
+// An internal note reads differently from a reply the customer sees (TK-97).
+.message.internal {
+  border-left: 3px dashed var(--color-warning, #b26a00);
+  background: var(--color-warning-subtle, #fff8e1);
+}
+
+.internal-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}

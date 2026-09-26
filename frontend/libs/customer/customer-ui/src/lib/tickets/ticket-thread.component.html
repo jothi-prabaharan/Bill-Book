@@ -12,9 +12,10 @@
     </div>
 
     <div class="messages" *ngIf="!loading()">
-      <div *ngFor="let msg of messages()" class="message" [class.staff]="msg.authorType === 'User'">
+      <div *ngFor="let msg of messages()" class="message" [class.staff]="msg.authorType === 'User'" [class.internal]="msg.isInternal">
         <div class="meta">
-          <strong>{{ msg.authorType }}</strong> - {{ msg.createdAt | date:'short' }}
+          <strong>{{ msg.authorType === 'User' ? 'Staff' : 'Customer' }}</strong> - {{ msg.createdAt | date:'short' }}
+          <span *ngIf="msg.isInternal" class="badge" title="The customer never sees this">Internal note</span>
         </div>
         <div class="body">{{ msg.body }}</div>
       </div>
@@ -32,8 +33,12 @@
         [ngModel]="replyBody()"
         (ngModelChange)="replyBody.set($event)"
       />
+      <label class="internal-toggle">
+        <input type="checkbox" [checked]="internal()" (change)="internal.set($any($event.target).checked)" [disabled]="sending()" />
+        Internal note (the customer never sees it)
+      </label>
       <button class="bb-btn bb-btn-primary" [disabled]="!replyBody().trim() || sending()" (click)="sendMessage()">
-        {{ sending() ? 'Sending...' : 'Reply' }}
+        {{ sending() ? 'Sending...' : internal() ? 'Add note' : 'Reply' }}
       </button>
     </div>
   </div>

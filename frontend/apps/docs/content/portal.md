@@ -43,6 +43,20 @@ still valid and has not been made into an order, the customer can **Accept** or 
 giving their name and an optional note. They can answer only once, and the answer shows on your
 sales list. See [Quotes](quotes#the-customers-answer).
 
+## Support
+
+The customer's support tickets, newest first, with **New ticket** to raise one.
+
+- A ticket raised on the portal gets the branch's service level for **Medium** priority, like one
+  raised by staff. Staff can change the priority afterwards.
+- A ticket's page shows its conversation. The customer's messages show as **You** and your staff's
+  as **Support**.
+- Replying to a **resolved** ticket reopens it, because the customer is saying it is not resolved.
+  A **closed** ticket takes no replies; the customer raises a new one.
+
+**Internal notes.** In the staff ticket screen, tick **Internal note** before sending, and the
+message is kept for colleagues. The portal never shows an internal note. Only staff can write one.
+
 ## Statement
 
 The account's history with a running balance.
@@ -56,4 +70,3 @@ Each line shows the document's own number, and an invoice opens in the portal.
 ## Not built yet
 
 - Paying online (TK-98)
-- Raising and following support tickets (TK-97)

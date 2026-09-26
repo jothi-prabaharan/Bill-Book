@@ -58,6 +58,8 @@ export interface TicketMessage {
   ticketId: string;
   body: string;
   authorType: 'Contact' | 'User';
+  /** A note for colleagues; the client portal never shows it (TK-97). */
+  isInternal?: boolean;
   createdAt: string;
 }
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Customer;
+using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using System.ComponentModel.DataAnnotations;
@@ -154,8 +155,36 @@ public sealed class TicketsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>The ticket's whole thread, internal notes included — this is the staff side.</summary>
+    [HttpGet("{id:long}/messages")]
+    public async Task<IActionResult> Messages(long id, CancellationToken ct)
+    {
+        if (!await _db.Tickets.AnyAsync(t => t.TicketId == id, ct)) return NotFound();
+
+        return Ok(await _db.TicketMessages
+            .Where(m => m.TicketId == id)
+            .OrderBy(m => m.TicketMessageId)
+            .Select(m => new
+            {
+                id = m.TicketMessageId,
+                ticketId = m.TicketId,
+                body = m.Body,
+                authorType = m.AuthorType.ToString(),
+                authorUserId = m.AuthorUserId,
+                isInternal = m.IsInternal,
+                createdAt = m.CreatedAt,
+            })
+            .ToListAsync(ct));
+    }
+
+    /// <summary>
+    /// A staff reply, or an internal note when <c>IsInternal</c> is set (TK-97).
+    /// Always written as the signed-in user: the author used to be taken from
+    /// the request, which recorded the screen's replies as the customer's.
+    /// </summary>
     [HttpPost("{id:long}/messages")]
-    public async Task<IActionResult> AddMessage(long id, [FromBody] SaveTicketMessageRequest request, CancellationToken ct)
+    public async Task<IActionResult> AddMessage(
+        long id, [FromBody] SaveTicketMessageRequest request, [FromServices] ICurrentUser user, CancellationToken ct)
     {
         var ticket = await _db.Tickets.FindAsync(new object[] { id }, ct);
         if (ticket == null) return NotFound();
@@ -165,15 +194,25 @@ public sealed class TicketsController : ControllerBase
         var message = new TicketMessage
         {
             TicketId = id,
-            AuthorType = request.AuthorType,
-            AuthorUserId = request.AuthorType == TicketAuthorType.User ? request.AuthorUserId : null,
-            Body = request.Body
+            AuthorType = TicketAuthorType.User,
+            AuthorUserId = user.UserId,
+            Body = request.Body,
+            IsInternal = request.IsInternal,
         };
 
         _db.TicketMessages.Add(message);
         await _db.SaveChangesAsync(ct);
 
-        return Ok(message);
+        return Ok(new
+        {
+            id = message.TicketMessageId,
+            ticketId = message.TicketId,
+            body = message.Body,
+            authorType = message.AuthorType.ToString(),
+            authorUserId = message.AuthorUserId,
+            isInternal = message.IsInternal,
+            createdAt = message.CreatedAt,
+        });
     }
 }
 
@@ -199,10 +238,10 @@ public class UpdateTicketStatusRequest
 
 public class SaveTicketMessageRequest
 {
-    public TicketAuthorType AuthorType { get; set; }
-
-    public Guid? AuthorUserId { get; set; }
-
     [Required(ErrorMessage = "Body is required.")]
+    [MaxLength(4000, ErrorMessage = "A message cannot exceed 4000 characters.")]
     public string Body { get; set; } = null!;
+
+    /// <summary>A note for colleagues only; the customer never sees it (TK-97).</summary>
+    public bool IsInternal { get; set; }
 }

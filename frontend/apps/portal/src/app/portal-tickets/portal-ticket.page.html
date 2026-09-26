@@ -1,0 +1,46 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/tickets">All tickets</a>
+    <a class="link" routerLink="/dashboard">Your account</a>
+  </nav>
+
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  @if (detail(); as d) {
+    <div class="row">
+      <h1>{{ d.ticket.subject }}</h1>
+      <span>{{ statusLabel(d.ticket.status) }}</span>
+    </div>
+    <p class="muted">Raised {{ d.ticket.raisedAt | date: 'medium' }}</p>
+    @if (d.description) {
+      <p>{{ d.description }}</p>
+    }
+
+    <section class="cards">
+      @for (m of d.messages; track m.messageId) {
+        <div class="card">
+          <span class="row"><strong>{{ m.from }}</strong><span class="muted">{{ m.sentAt | date: 'medium' }}</span></span>
+          <span>{{ m.body }}</span>
+        </div>
+      } @empty {
+        <p class="muted">No replies yet.</p>
+      }
+    </section>
+
+    @if (d.ticket.status !== 'Closed') {
+      <section class="card">
+        <label>
+          Reply
+          <textarea [(ngModel)]="body" maxlength="4000" rows="4"></textarea>
+        </label>
+        <span class="row">
+          <button type="button" class="button" (click)="reply()" [disabled]="busy() || !body.trim()">Send</button>
+        </span>
+      </section>
+    } @else {
+      <p class="muted">This ticket is closed. Raise a new one if you still need help.</p>
+    }
+  }
+</main>

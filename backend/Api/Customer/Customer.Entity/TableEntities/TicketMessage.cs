@@ -16,4 +16,10 @@ public class TicketMessage : OrgScopedEntity
 
     [Required(ErrorMessage = "Body is required.")]
     public string Body { get; set; } = null!;
+
+    /// <summary>
+    /// A note for colleagues (TK-97). The client portal never returns one, so
+    /// staff can discuss a ticket without the customer reading it.
+    /// </summary>
+    public bool IsInternal { get; set; }
 }

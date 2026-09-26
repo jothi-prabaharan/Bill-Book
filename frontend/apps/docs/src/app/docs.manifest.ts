@@ -55,7 +55,7 @@ export const DOCS: DocSection[] = [
   },
   {
     title: 'Customer portal',
-    // Partial: online payment and tickets are still to come (TK-97, TK-98).
+    // Partial: online payment is still to come (TK-98).
     pages: [{ slug: 'portal', title: 'Customer portal', status: 'partial' }],
   },
   {

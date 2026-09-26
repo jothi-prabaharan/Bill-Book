@@ -29,6 +29,8 @@ export class TicketThreadComponent implements OnChanges {
   readonly _ticket = signal<Ticket | null>(null);
   readonly messages = signal<TicketMessage[]>([]);
   readonly replyBody = signal('');
+  /** The reply is a note for colleagues, which the customer never sees (TK-97). */
+  readonly internal = signal(false);
   readonly loading = signal(false);
   readonly sending = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -59,8 +61,9 @@ export class TicketThreadComponent implements OnChanges {
     this.sending.set(true);
     this.errorMessage.set(null);
     try {
-      await this.customerService.createTicketMessage(this.ticket.ticketId, this.replyBody());
+      await this.customerService.createTicketMessage(this.ticket.ticketId, this.replyBody(), this.internal());
       this.replyBody.set('');
+      this.internal.set(false);
       await this.loadMessages();
     } catch (err: any) {
       this.errorMessage.set(err?.error?.message || 'Failed to send message.');

@@ -1,0 +1,54 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/dashboard">Your account</a>
+    <a class="link" routerLink="/invoices">Invoices</a>
+    <a class="link" routerLink="/quotes">Quotes</a>
+  </nav>
+
+  <div class="row">
+    <h1>Support</h1>
+    @if (!raising()) {
+      <button type="button" class="button" (click)="raising.set(true)">New ticket</button>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  @if (raising()) {
+    <section class="card">
+      <label>
+        Subject
+        <input type="text" [(ngModel)]="subject" maxlength="200" />
+      </label>
+      <label>
+        What do you need help with?
+        <textarea [(ngModel)]="description" maxlength="4000" rows="5"></textarea>
+      </label>
+      <span class="row">
+        <button type="button" class="button" (click)="raise()" [disabled]="busy()">Raise ticket</button>
+        <button type="button" class="link" (click)="raising.set(false)" [disabled]="busy()">Cancel</button>
+      </span>
+    </section>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+  @if (!loading() && tickets().length === 0 && !raising()) {
+    <p class="muted">You have not raised any tickets.</p>
+  }
+
+  <section class="cards">
+    @for (t of tickets(); track t.ticketId) {
+      <a class="card" [routerLink]="['/tickets', t.ticketId]">
+        <span class="row"><strong>{{ t.subject }}</strong><span>{{ statusLabel(t.status) }}</span></span>
+        <span class="muted">
+          Raised {{ t.raisedAt | date: 'mediumDate' }}
+          @if (t.lastMessageAt) { · last message {{ t.lastMessageAt | date: 'medium' }} }
+        </span>
+      </a>
+    }
+  </section>
+</main>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { invoiceLink, quoteState, statusLabel, statusTone, PortalQuoteItem, PortalStatementLine } from './portal.models';
+import { invoiceLink, quoteState, statusLabel, statusTone, ticketStatusLabel, PortalQuoteItem, PortalStatementLine } from './portal.models';
 
 const line = (transactionTypeCode: string, transactionId = 7): PortalStatementLine => ({
   ledgerDate: '2026-09-01',
@@ -54,5 +54,12 @@ describe('portal quote state (TK-96)', () => {
     expect(quoteState(quote({}), '2026-09-26')).toBe('Waiting for your answer');
     expect(quoteState(quote({ validUntil: '2026-09-25', canRespond: false }), '2026-09-26')).toBe('No longer valid');
     expect(quoteState(quote({ canRespond: false }), '2026-09-26')).toBe('Already turned into an order');
+  });
+});
+
+describe('portal ticket status (TK-97)', () => {
+  it('reads in-progress as two words and the rest as they are', () => {
+    expect(ticketStatusLabel('InProgress')).toBe('In progress');
+    expect(ticketStatusLabel('Resolved')).toBe('Resolved');
   });
 });

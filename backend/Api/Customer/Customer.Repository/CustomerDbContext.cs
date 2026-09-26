@@ -52,6 +52,11 @@ public class CustomerDbContext : TenantDbContext
 
             b.HasIndex(e => new { e.OrgId, e.TicketId });
 
+            // Only staff write internal notes; a contact's message is never one.
+            b.ToTable(t => t.HasCheckConstraint(
+                "chk_ticketmessages_internal_by_staff",
+                "NOT \"IsInternal\" OR \"AuthorType\" = 'User'"));
+
             b.HasOne<Ticket>()
                 .WithMany(t => t.Messages)
                 .HasForeignKey(e => e.TicketId)

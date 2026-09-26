@@ -30,6 +30,9 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Support tickets on the customer portal.** A customer can raise a ticket, follow its conversation and reply. Replying to a resolved ticket reopens it. A portal ticket gets the branch's service level for Medium priority. See [Customer portal](portal#support).
+- **Added**: **Internal notes on tickets.** Tick **Internal note** in the staff ticket screen and the message stays between colleagues; the customer portal never shows it.
+- **Fixed**: The staff ticket screen could not load a ticket's messages, and every reply sent from it was recorded as the customer's. Replies are now recorded as the signed-in member of staff.
 - **Added**: **Customers can accept or decline a quote on the portal.** A posted quote still in its validity shows on the portal's **Quotes** page. The customer answers once, with their name and an optional note. The sales list shows **Accepted by customer** or **Rejected by customer** beside the quote. Accepting does not create a sales order. See [Quotes](quotes#the-customers-answer).
 - **Added**: **The customer portal shows the account and its invoices.** The first page shows what the customer owes and how much of it is overdue, and what they have traded this financial year and in all. The **Invoices** page lists every posted invoice with its status (open, part-paid, overdue, paid or void). Each invoice opens with its lines and a **Download PDF** of the filed copy. The **Statement** shows document numbers rather than internal ids. For a contact who is also a vendor, it adds what you owe them. See [Customer portal](portal).
 - **Fixed**: Reports that read a sales or purchase document's status (invoices, credit notes, quotes, orders, challans, bills, purchase orders, goods receipts) failed as soon as they read one, because the status was read as a number where it is stored as a name.
