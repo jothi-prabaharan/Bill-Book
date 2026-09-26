@@ -2076,7 +2076,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `approval-workflows.model.spec.ts`, `approvals-inbox.model.spec.ts`, `DocumentApprovalActionRequestTests`, and the menu assertions in `AppGrantRuleTests`.
 
 ### TK-104 · Projects: masters and the `ProjectId` ledger dimension
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#92](https://github.com/jothi-prabaharan/Bill-Book/issues/92)
 - **Lanes:** L-ACC, L-ACC-UI, L-MST · **Depends on:** TK-34 · **Decision:** —
 - **Where:** design "Project accounting"; `acc.JournalLedger`, `acc.JournalDetail`, `LedgerPostingService`, `PostLedgerRequest`.
 - **Tables:** `acc.Projects`, `acc.ProjectTasks`, `acc.ProjectMembers`, `acc.ProjectMilestones`
