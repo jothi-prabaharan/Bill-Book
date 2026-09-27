@@ -2151,7 +2151,8 @@ The build cards each design in section E produced. Each design section in `docs/
   Tests: `ProjectReportTests` (profitability equals the ledger rows' net by type, the period, budget and hours variance, unbilled valuation by task and person rate with markup, time split), and the source and certification registries (94 sources).
 
 ### TK-108 · Budgets: tables, entry grid, import and approval
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-27
+- **Issue:** [#96](https://github.com/jothi-prabaharan/Bill-Book/issues/96)
 - **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-35 · **Decision:** —
 - **Where:** design "Budgeting"; `mst.Organizations.FinancialYearStartMonth` via the org context; `acc.Accounts`.
 - **Tables:** `acc.Budgets`, `acc.BudgetLines`
