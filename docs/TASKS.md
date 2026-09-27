@@ -2208,7 +2208,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `BudgetReportTests` (P&L match, favourable and adverse, contra sign, month window, no budget, windows, by project, trend) and `BudgetTests` (an expense over the month's budget warns and the journal still saves; within budget; year to date against month; income and unbudgeted accounts; no approved budget).
 
 ### TK-110 · Custom fields: definitions and the shared validator
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-27
+- **Issue:** [#98](https://github.com/jothi-prabaharan/Bill-Book/issues/98)
 - **Lanes:** L-CON, L-KERNEL, L-UI, L-DEPS · **Depends on:** TK-36 · **Decision:** —
 - **Where:** design "Custom fields and custom reports" → Custom fields.
 - **Tables:** `cfd.CustomFieldDefinitions`
