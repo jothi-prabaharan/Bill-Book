@@ -216,3 +216,141 @@ public enum SaveProjectOutcome
 }
 
 public sealed record SaveProjectResult(SaveProjectOutcome Outcome, long ProjectId = 0, string? Detail = null);
+
+/// <summary>An entry on the timesheet (TK-106).</summary>
+public class SaveTimeEntryRequest
+{
+    [Range(1, long.MaxValue, ErrorMessage = "Choose a project.")]
+    public long ProjectId { get; set; }
+
+    [Range(1, long.MaxValue, ErrorMessage = "Choose a task.")]
+    public long ProjectTaskId { get; set; }
+
+    /// <summary>Who worked. The signed-in user when left empty; someone else only with <c>projects.edit</c>.</summary>
+    public Guid? UserId { get; set; }
+
+    public DateOnly WorkDate { get; set; }
+
+    [Range(typeof(decimal), "0.01", "24", ErrorMessage = "Hours must be more than 0 and at most 24.")]
+    public decimal Hours { get; set; }
+
+    [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
+    public string? Notes { get; set; }
+
+    /// <summary>Whether the hours are to be billed. The task's own setting when left empty.</summary>
+    public bool? IsBillable { get; set; }
+}
+
+public class TimeEntryView
+{
+    public long TimeEntryId { get; set; }
+
+    public long ProjectId { get; set; }
+
+    public string ProjectCode { get; set; } = null!;
+
+    public string ProjectName { get; set; } = null!;
+
+    public long ProjectTaskId { get; set; }
+
+    public string TaskName { get; set; } = null!;
+
+    public Guid UserId { get; set; }
+
+    public DateOnly WorkDate { get; set; }
+
+    public decimal Hours { get; set; }
+
+    public string? Notes { get; set; }
+
+    public bool IsBillable { get; set; }
+
+    public string BillingStatus { get; set; } = null!;
+
+    public long? InvoiceId { get; set; }
+}
+
+public enum TimeEntryOutcome
+{
+    Ok = 0,
+    NotFound = 1,
+
+    /// <summary>The project or task will not take time, or the day would pass 24 hours.</summary>
+    Refused = 2,
+
+    /// <summary>Another user's time, without <c>projects.edit</c>.</summary>
+    NotYours = 3,
+
+    /// <summary>Billed on an invoice, so fixed until that invoice is voided.</summary>
+    Billed = 4,
+}
+
+public sealed record TimeEntryResult(TimeEntryOutcome Outcome, long TimeEntryId = 0, string? Detail = null);
+
+/// <summary>What a project has left to bill (TK-106): the invoice's "Add project items" list.</summary>
+public class ProjectUnbilledView
+{
+    public long ProjectId { get; set; }
+
+    public long? ContactId { get; set; }
+
+    public string BillingMethod { get; set; } = null!;
+
+    public List<UnbilledTimeItem> Time { get; set; } = [];
+
+    public List<UnbilledExpenseItem> Expenses { get; set; } = [];
+
+    public List<UnbilledMilestoneItem> Milestones { get; set; } = [];
+}
+
+public class UnbilledTimeItem
+{
+    public long TimeEntryId { get; set; }
+
+    public DateOnly WorkDate { get; set; }
+
+    public Guid UserId { get; set; }
+
+    public long ProjectTaskId { get; set; }
+
+    public string TaskName { get; set; } = null!;
+
+    public decimal Hours { get; set; }
+
+    public string? Notes { get; set; }
+
+    /// <summary>The hourly rate the project's rate basis gives this entry. Zero when none is set.</summary>
+    public decimal Rate { get; set; }
+
+    public decimal Amount { get; set; }
+}
+
+public class UnbilledExpenseItem
+{
+    public long SpendMoneyDetailId { get; set; }
+
+    public DateOnly TransactionDate { get; set; }
+
+    public string? TransactionNo { get; set; }
+
+    public string? Memo { get; set; }
+
+    /// <summary>What was paid, in base currency.</summary>
+    public decimal Amount { get; set; }
+
+    public decimal? MarkupPercent { get; set; }
+
+    /// <summary>What it is charged on at: the amount plus the markup, to two decimals.</summary>
+    public decimal BillableAmount { get; set; }
+}
+
+public class UnbilledMilestoneItem
+{
+    public long ProjectMilestoneId { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public decimal Amount { get; set; }
+
+    public DateOnly? DueDate { get; set; }
+}

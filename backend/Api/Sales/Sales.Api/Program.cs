@@ -283,6 +283,26 @@ builder.Services.AddHttpClient<Shared.Kernel.Projects.IProjectDirectory, Shared.
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// Claims and releases the project items an invoice bills (TK-106):
+// Accounting owns time, expenses and milestones, Purchase owns bill lines.
+builder.Services.AddHttpClient("project-billing-accounting", client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHttpClient("project-billing-purchase", client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Purchase:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddScoped<Shared.Kernel.Projects.IProjectBillingClient>(sp =>
+{
+    IHttpClientFactory factory = sp.GetRequiredService<IHttpClientFactory>();
+    return new Shared.Kernel.Projects.HttpProjectBillingClient(
+        factory.CreateClient("project-billing-accounting"),
+        factory.CreateClient("project-billing-purchase"));
+});
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())

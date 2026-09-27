@@ -2120,15 +2120,16 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** an invoice's revenue lands on the project its lines name.
 
 ### TK-106 · Projects: timesheets and billing time, expenses and milestones
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
 - **Issue:** [#94](https://github.com/jothi-prabaharan/Bill-Book/issues/94)
 - **Lanes:** L-ACC, L-ACC-UI, L-SAL, L-SAL-UI, L-PUR · **Depends on:** TK-105 · **Decision:** —
 - **Tables:** `acc.TimeEntries`; `IsBillable`, `MarkupPercent`, `BilledInvoiceId` on bill and spend-money lines
 - **Sub-tasks:**
-  - [ ] Weekly timesheet and timer; a user logs only their own time without `projects.edit`; 24 hours a day at most.
-  - [ ] "Add project items" on the invoice form; `internal/projects/billing/claim` at post and `…/release` on void, guarded by row count.
-  - [ ] Test: two invoices claiming the same hours — exactly one posts; a void releases the hours; markup applies to re-billed expenses.
+  - [x] Weekly timesheet and timer; a user logs only their own time without `projects.edit`; 24 hours a day at most.
+  - [x] "Add project items" on the invoice form; `internal/projects/billing/claim` at post and `…/release` on void, guarded by row count.
+  - [x] Test: two invoices claiming the same hours — exactly one posts; a void releases the hours; markup applies to re-billed expenses.
 - **Done when:** unbilled hours billed on one invoice cannot be billed on another, and come back when it is voided.
+- **As built:** `acc.TimeEntries` (RLS) behind `api/projects/time`, which needs only `projects.view`. The service refuses anyone else's entry without `projects.edit`, refuses more than 24 hours a day and a closed project or inactive task, and locks a billed entry. `GET api/projects/{id}/unbilled` prices hours through `ProjectBillingService.RateFor` (project, task or member rate), lists posted spend-money lines marked billable with their markup, and lists uninvoiced milestones. Purchase serves its own billable bill lines at `GET api/purchase/bills/billable`, because bill lines are Purchase's (rule 8). The claim runs at post, through `Shared.Kernel.Projects.HttpProjectBillingClient`. It claims Accounting's kinds (`internal/projects/billing/claim`), then Purchase's (`internal/bills/billing/claim`), and releases Accounting's if Purchase refuses. Each side is a guarded `ExecuteUpdate` whose row count must equal the items asked for, or it answers 409 so the reliability filter rolls back. A retry by the same invoice is idempotent. `sal.InvoiceProjectItems` (RLS) records what an invoice bills. A failed post and a void release the items. A spend-money document or bill with a billed line refuses a void (`BilledToClient`, 409). Frontend: `TimesheetPage` (a week grid, a timer kept in `localStorage`, and the menu row `1128`); `bb-project-items-dialog` on the invoice form, which turns picked items into lines through `toBillingLines`; and **Charge on** plus a markup on bill lines (the grid's `showBilling`) and on spend-money lines. Tests: `ProjectBillingTests`, `InvoiceProjectBillingTests`, `project-billing.spec.ts`, `timesheet-week.spec.ts`.
 
 ### TK-107 · Projects: reports
 - [ ] open

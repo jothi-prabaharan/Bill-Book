@@ -107,6 +107,9 @@ public sealed class SpendMoneyService
                 AmountBase = l.AmountBase,
                 LineMemo = l.LineMemo,
                 ProjectId = l.ProjectId,
+                IsBillable = l.IsBillable,
+                MarkupPercent = l.MarkupPercent,
+                BilledInvoiceId = l.BilledInvoiceId,
             })
             .ToListAsync(ct);
 
@@ -439,6 +442,13 @@ public sealed class SpendMoneyService
             return new MoneyDocumentResult(MoneyDocumentOutcome.NotPosted, id);
         }
 
+        // An expense charged on to a client stands behind that invoice's line (TK-106).
+        if (await _db.SpendMoneyDetails.AnyAsync(l => l.SpendMoneyId == id && l.BilledInvoiceId != null, ct))
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.BilledToClient, id,
+                "An expense on this payment has been charged on to a client. Void that invoice first.");
+        }
+
         MoneyDocumentResult? closed =
             await MoneyPosting.CheckPeriodAsync(_ledger, document.TransactionDate, ct);
 
@@ -527,6 +537,10 @@ public sealed class SpendMoneyService
             AmountBase = MoneyPosting.Base(line.Amount, document.ExchangeRate),
             LineMemo = line.LineMemo,
             ProjectId = line.ProjectId,
+
+            // Only a line with a project can be charged on to its client (TK-106).
+            IsBillable = line.IsBillable && line.ProjectId is not null,
+            MarkupPercent = line.IsBillable && line.ProjectId is not null ? line.MarkupPercent : null,
         });
 
     private IQueryable<MoneyDocumentListItem> Summarize(IQueryable<SpendMoney> documents) =>

@@ -62,6 +62,12 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ProjectsPage),
         data: { access: { permission: 'projects.view' } },
       },
+      // The timesheet (TK-106) — before the :projectId route, which would otherwise take 'timesheet' as an id.
+      {
+        path: 'accounting/projects/timesheet',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TimesheetPage),
+        data: { access: { permission: 'projects.view' } },
+      },
       {
         path: 'accounting/projects/:projectId',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ProjectsPage),

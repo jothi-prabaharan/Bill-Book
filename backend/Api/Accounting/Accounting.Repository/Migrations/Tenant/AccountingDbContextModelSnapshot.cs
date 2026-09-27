@@ -2402,6 +2402,9 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.Property<decimal>("AmountBase")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<long?>("BilledInvoiceId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2410,6 +2413,9 @@ namespace Accounting.Repository.Migrations.Tenant
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("LedgerSourceId")
                         .HasColumnType("integer");
@@ -2427,6 +2433,9 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.Property<string>("MappingTransactionTypeCode")
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
+
+                    b.Property<decimal?>("MarkupPercent")
+                        .HasColumnType("decimal(7,2)");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -2454,6 +2463,9 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.HasIndex("ProjectId");
 
                     b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "BilledInvoiceId")
+                        .HasFilter("\"BilledInvoiceId\" IS NOT NULL");
 
                     b.HasIndex("SpendMoneyId", "LineNumber")
                         .IsUnique();
@@ -2741,6 +2753,89 @@ namespace Accounting.Repository.Migrations.Tenant
                             t.HasCheckConstraint("chk_tax_effective_range", "\"EffectiveTo\" IS NULL OR \"EffectiveTo\" >= \"EffectiveFrom\"");
 
                             t.HasCheckConstraint("chk_tax_split", "\"CgstRate\" = \"SgstRate\" AND \"CgstRate\" + \"SgstRate\" = \"TotalRate\" AND \"IgstRate\" = \"TotalRate\"");
+                        });
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.TimeEntry", b =>
+                {
+                    b.Property<long>("TimeEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TimeEntryId"));
+
+                    b.Property<string>("BillingStatus")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Hours")
+                        .HasColumnType("decimal(6,2)");
+
+                    b.Property<long?>("InvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ProjectTaskId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("TimeEntryId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("ProjectTaskId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "InvoiceId")
+                        .HasFilter("\"InvoiceId\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "ProjectId", "BillingStatus");
+
+                    b.HasIndex("OrgId", "UserId", "WorkDate");
+
+                    b.ToTable("TimeEntries", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_timeentries_hours", "\"Hours\" > 0 AND \"Hours\" <= 24");
                         });
                 });
 
@@ -3535,6 +3630,21 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.HasOne("Accounting.Entity.TableEntities.Account", null)
                         .WithMany()
                         .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.TimeEntry", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Accounting.Entity.TableEntities.ProjectTask", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectTaskId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

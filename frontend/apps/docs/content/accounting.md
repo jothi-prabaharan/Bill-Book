@@ -626,7 +626,7 @@ The query filter is the first line of defence, not the last: it is a property of
 
 # Projects
 
-**Status: partial.** The project master is built, and so is the project tag on manual journal, money-document, sales and purchase lines. Timesheets and billing, and the project reports, come in later releases.
+**Status: partial.** Several parts are built: the project master, the project tag on manual journal, money-document, sales and purchase lines, timesheets, and billing a project's hours, expenses and milestones on an invoice. The project reports come in a later release.
 
 **Accounting › Projects** lists the branch's projects. A project is a job the branch does, for a client or for itself, and it takes its code from the **PRJ** number series (PRJ-0001, PRJ-0002 and so on).
 
@@ -660,6 +660,35 @@ When such a document posts:
 When the costing engine later settles a line's cost of sales, the settled rows keep the line's project.
 
 The project is checked when the line is saved and again when it posts. The posting is refused if the project is not this branch's, or if it is completed or cancelled. A posting to a closed job would change a profit figure someone has already signed off.
+
+## Timesheets
+
+**Accounting › Timesheet** shows your hours for a week. Each project task gets one row, with a column for each day and totals along the bottom. Below the grid, each day lists its entries. Use the arrows to move between weeks.
+
+- **Log hours** takes a project, one of its tasks, a date, the hours and an optional note. An entry is **billable** unless you untick it; a new entry starts with its task's own setting.
+- **Start timer instead** times the task you chose, and the timer keeps running if you reload the page. **Stop and log** opens an entry for today with the time rounded up to the next quarter hour.
+- You can log at most 24 hours on one day, across all your entries. Only a task that is still active can take hours, and only on an active or on-hold project.
+- A **billed** entry is locked. Void the invoice that billed it to change it.
+
+Anyone who can read projects (**projects.view**) logs their own hours. Logging or changing someone else's needs **projects.edit**.
+
+## Charging expenses on to the client
+
+A **spend money** line or a **bill** line that names a project can be marked **Charge on**, with an optional **markup %**. Once the document is posted, the line waits on the project to be billed. A line's cost stays on the job either way. Charging it on adds it to the client's invoice as well.
+
+A spend money document or a bill with a billed line cannot be voided until the invoice that billed it is voided.
+
+## Billing a project
+
+On an invoice, **Add project items** lists one project for the invoice's customer. It shows everything not yet billed:
+
+- **Hours**: billable, unbilled timesheet entries. Each is priced at the project's rate, the task's rate or the person's rate, depending on the project's **Hourly rate from** setting.
+- **Expenses**: posted spend money and bill lines marked **Charge on**, with their markup added.
+- **Milestones**: the project's milestones not yet invoiced.
+
+Choose an **income account** and the items to bill. The dialog then adds invoice lines. Hours at one rate on one task become one line, and each expense and milestone becomes a line of its own. You can edit the lines like any others before saving.
+
+The items are claimed only **when the invoice posts**. If someone else's invoice billed one of them first, the post is refused and nothing is claimed, and you can remove the item and post again. Voiding the invoice releases every item it billed, so they can be billed again.
 
 ## A project's ledger
 

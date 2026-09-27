@@ -19,6 +19,9 @@ import {
   eInvoiceNeedsAttention,
   irnCancellable,
   canRequestApproval,
+  ApiDocumentLine,
+  ProjectItemRef,
+  mergeProjectItems,
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
@@ -39,8 +42,10 @@ import {
   ApprovalPanelComponent,
   ProjectOption,
   ProjectOptionsService,
+  recalculate,
 } from '@bill-book/ui-components';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
+import { ProjectItemsDialogComponent } from '../project-items/project-items.dialog';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
 
 /**
@@ -80,6 +85,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     DocumentLineGridComponent,
     MessageBoxComponent,
     OrderToInvoiceDialogComponent,
+    ProjectItemsDialogComponent,
     EwayBillPanel,
     NumberInputComponent,
     TextInputComponent,
@@ -101,6 +107,10 @@ export class InvoiceFormComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly messages = signal<UiMessage[]>([]);
   protected readonly showConvert = signal(false);
+
+  /** The project items this invoice bills, claimed when it posts (TK-106). */
+  protected readonly projectItems = signal<ProjectItemRef[]>([]);
+  protected readonly showProjectItems = signal(false);
   protected readonly glPreview = signal<GlPreviewResult | null>(null);
 
   protected readonly status = signal('Draft');
@@ -247,6 +257,7 @@ export class InvoiceFormComponent implements OnInit {
     this.creditOverride.set(invoice.creditOverrideStatus ?? null);
     this.discountOverride.set(invoice.discountOverrideStatus ?? null);
     this.status.set(invoice.status);
+    this.projectItems.set(invoice.projectItems ?? []);
     this.documentNo.set(invoice.documentNo);
     this.salesOrderId.set(invoice.salesOrderId ?? null);
     this.daysOverdue.set(invoice.daysOverdue ?? 0);
@@ -353,6 +364,7 @@ export class InvoiceFormComponent implements OnInit {
     const value = this.form.getRawValue();
 
     const request: SaveInvoiceRequest = {
+      projectItems: this.projectItems(),
       documentDate: value.documentDate,
       dueDate: value.dueDate || undefined,
       contactId: value.contactId,
@@ -499,6 +511,20 @@ export class InvoiceFormComponent implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  /** The chosen project items become lines at the end of the grid (TK-106). */
+  protected onProjectItems(result: { lines: ApiDocumentLine[]; items: ProjectItemRef[] }): void {
+    const kept = this.lines().filter((line) => line.quantity > 0 || line.itemId !== null || !!line.description);
+    const added = result.lines.map((line, index) => recalculate(toGridLine(line, kept.length + index + 1), this.context()));
+    this.lines.set([...kept, ...added]);
+    this.projectItems.update((items) => mergeProjectItems(items, result.items));
+    this.showProjectItems.set(false);
+  }
+
+  /** Stops billing the project items. Their lines stay for the user to remove. */
+  protected clearProjectItems(): void {
+    this.projectItems.set([]);
   }
 
   protected async onConverted(invoiceId: number): Promise<void> {

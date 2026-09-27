@@ -95,6 +95,8 @@ public class AccountingDbContext : TenantDbContext
 
     public DbSet<ProjectMilestone> ProjectMilestones => Set<ProjectMilestone>();
 
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+
     public DbSet<SpendMoneyDetail> SpendMoneyDetails => Set<SpendMoneyDetail>();
 
     /// <summary>Money in. The mirror of <see cref="SpendMoney"/>.</summary>
@@ -1025,6 +1027,26 @@ public class AccountingDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.ProjectId });
             b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
             b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Timesheets and re-billing (TK-106).
+        modelBuilder.Entity<TimeEntry>(b =>
+        {
+            b.HasKey(e => e.TimeEntryId);
+            b.HasIndex(e => new { e.OrgId, e.UserId, e.WorkDate });
+            b.HasIndex(e => new { e.OrgId, e.ProjectId, e.BillingStatus });
+            b.HasIndex(e => new { e.OrgId, e.InvoiceId }).HasFilter("\"InvoiceId\" IS NOT NULL");
+            b.Property(e => e.Hours).HasColumnType("decimal(6,2)");
+            b.Property(e => e.BillingStatus).HasConversion<string>().HasMaxLength(12);
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<ProjectTask>().WithMany().HasForeignKey(e => e.ProjectTaskId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t => t.HasCheckConstraint("chk_timeentries_hours", "\"Hours\" > 0 AND \"Hours\" <= 24"));
+        });
+
+        modelBuilder.Entity<SpendMoneyDetail>(b =>
+        {
+            b.Property(e => e.MarkupPercent).HasColumnType("decimal(7,2)");
+            b.HasIndex(e => new { e.OrgId, e.BilledInvoiceId }).HasFilter("\"BilledInvoiceId\" IS NOT NULL");
         });
 
         // The project dimension on the ledger and the lines that feed it.

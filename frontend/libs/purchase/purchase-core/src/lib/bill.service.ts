@@ -53,6 +53,9 @@ export interface SaveBillLineRequest {
   fixedAssetCategoryId?: number | null;
   /** The project the line belongs to (TK-105). */
   projectId?: number | null;
+  /** Charged on to the project's client, with this markup (TK-106). */
+  isBillable?: boolean;
+  markupPercent?: number | null;
   itemBatchId?: number | null;
   lineNotes?: string | null;
 }
@@ -138,6 +141,9 @@ export interface BillLineView {
   fixedAssetCategoryId?: number | null;
   /** The project the line belongs to (TK-105). */
   projectId?: number | null;
+  /** Charged on to the project's client, with this markup (TK-106). */
+  isBillable?: boolean;
+  markupPercent?: number | null;
   lineTotal: number;
   itemBatchId?: number | null;
   lineNotes?: string | null;

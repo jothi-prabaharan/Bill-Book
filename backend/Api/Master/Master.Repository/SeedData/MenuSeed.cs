@@ -278,6 +278,8 @@ public static class MenuSeed
         new Menu { MenuId = 1124, ParentId = 121, Type = MenuType.Item, Code = "amc", Name = "AMC contracts", Icon = "file-signature", Module = "amc", RoutePath = "/amc/contracts", IsSearchable = false, CanCreate = true, SingularName = "AMC contract", DisplayOrder = 5, IsActive = true },
         // Project accounting (TK-104): the project master, under Accounting.
         new Menu { MenuId = 1127, ParentId = 106, Type = MenuType.Item, Code = "prj", Name = "Projects", Icon = "briefcase", Module = "projects", RoutePath = "/accounting/projects", IsSearchable = true, CanCreate = true, SingularName = "Project", DisplayOrder = 20, IsActive = true },
+        // The timesheet (TK-106): anyone who can read projects logs their own hours.
+        new Menu { MenuId = 1128, ParentId = 106, Type = MenuType.Item, Code = "timesheet", Name = "Timesheet", Icon = "clock", Module = "projects", RoutePath = "/accounting/projects/timesheet", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 21, IsActive = true },
         // ---- Approvals (TK-103): what waits on the signed-in user, across RetailErp's services ----
         new Menu { MenuId = 14, ParentId = null, Type = MenuType.Rail, Code = "approvals", Name = "Approvals", Icon = "check-circle", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 14, IsActive = true },
         new Menu { MenuId = 122, ParentId = 14, Type = MenuType.Group, Code = "approvals-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -752,5 +754,7 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 451, MenuId = 1127, PermissionCode = "projects.view", Action = "view", Module = "projects" },
         new MenuPermission { MenuPermissionId = 452, MenuId = 1127, PermissionCode = "projects.create", Action = "create", Module = "projects" },
         new MenuPermission { MenuPermissionId = 453, MenuId = 1127, PermissionCode = "projects.edit", Action = "edit", Module = "projects" },
+        // Timesheet (TK-106).
+        new MenuPermission { MenuPermissionId = 454, MenuId = 1128, PermissionCode = "projects.view", Action = "view", Module = "projects" },
     ];
 }

@@ -330,6 +330,13 @@ public class PurchaseDbContext : TenantDbContext
         // OnModelCreating this way. SalesDbContext does not, which is why `sal`
         // has neither of the two isolation layers it is supposed to have — see
         // the note in docs/Purchase.md §11.
+        // Re-billing (TK-106): a bill line charged on to a project's client.
+        modelBuilder.Entity<BillDetail>(b =>
+        {
+            b.Property(e => e.MarkupPercent).HasColumnType("decimal(7,2)");
+            b.HasIndex(e => new { e.OrgId, e.BilledInvoiceId }).HasFilter("\"BilledInvoiceId\" IS NOT NULL");
+        });
+
         modelBuilder.Entity<PurchaseApprovalStep>(b =>
         {
             b.ToTable("ApprovalSteps");

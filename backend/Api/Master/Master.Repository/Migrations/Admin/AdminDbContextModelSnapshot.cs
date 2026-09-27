@@ -9556,6 +9556,23 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1128,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "timesheet",
+                            DisplayOrder = 21,
+                            Icon = "clock",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "projects",
+                            Name = "Timesheet",
+                            ParentId = 106,
+                            RoutePath = "/accounting/projects/timesheet",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 14,
                             Apps = 1,
                             CanCreate = false,
@@ -13726,6 +13743,15 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1127,
                             Module = "projects",
                             PermissionCode = "projects.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 454,
+                            Action = "view",
+                            MenuId = 1128,
+                            Module = "projects",
+                            PermissionCode = "projects.view",
                             Version = 0u
                         });
                 });

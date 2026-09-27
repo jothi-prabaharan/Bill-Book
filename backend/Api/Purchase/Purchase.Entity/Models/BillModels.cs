@@ -143,6 +143,13 @@ public class SaveBillLineRequest
     /// <summary>The project the line belongs to (TK-105), or null. Checked through Accounting.</summary>
     public long? ProjectId { get; set; }
 
+    /// <summary>A cost to be charged on to the project's client (TK-106). Needs a project.</summary>
+    public bool IsBillable { get; set; }
+
+    /// <summary>The markup added when it is charged on, as a percentage.</summary>
+    [Range(typeof(decimal), "0", "1000", ErrorMessage = "Markup must be between 0 and 1000 percent.")]
+    public decimal? MarkupPercent { get; set; }
+
     public long? ItemBatchId { get; set; }
 
     [MaxLength(300, ErrorMessage = "Line notes cannot exceed 300 characters.")]
@@ -182,6 +189,9 @@ public enum BillOutcome
     /// and how that difference is treated is not decided yet.
     /// </summary>
     PriceVarianceUndecided = 13,
+
+    /// <summary>A line was charged on to a client, so the bill cannot be voided until that invoice is (TK-106).</summary>
+    BilledToClient = 14,
 }
 
 public sealed record BillResult(BillOutcome Outcome, long BillId = 0, string? Detail = null);
@@ -332,6 +342,13 @@ public class BillLineView
     /// <summary>The project the line belongs to (TK-105), or null. Checked through Accounting.</summary>
     public long? ProjectId { get; set; }
 
+    public bool IsBillable { get; set; }
+
+    public decimal? MarkupPercent { get; set; }
+
+    /// <summary>The invoice that charged the line on, once billed (TK-106).</summary>
+    public long? BilledInvoiceId { get; set; }
+
     public decimal LineTotal { get; set; }
 
     public long? ItemBatchId { get; set; }
@@ -363,4 +380,26 @@ public class VoidBillRequest
     [Required(ErrorMessage = "Say why this bill is being voided.")]
     [MaxLength(300, ErrorMessage = "Reason cannot exceed 300 characters.")]
     public string Reason { get; set; } = null!;
+}
+
+/// <summary>A bill line a project has left to charge on to its client (TK-106).</summary>
+public class BillableBillLine
+{
+    public long BillDetailId { get; set; }
+
+    public long BillId { get; set; }
+
+    public string DocumentNo { get; set; } = null!;
+
+    public DateOnly DocumentDate { get; set; }
+
+    public string? Description { get; set; }
+
+    /// <summary>The line's taxable value, in base currency.</summary>
+    public decimal Amount { get; set; }
+
+    public decimal? MarkupPercent { get; set; }
+
+    /// <summary>What it is charged on at: the amount plus the markup, to two decimals.</summary>
+    public decimal BillableAmount { get; set; }
 }

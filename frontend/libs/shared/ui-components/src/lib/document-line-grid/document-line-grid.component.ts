@@ -88,6 +88,12 @@ export class DocumentLineGridComponent {
    */
   readonly projects = input<readonly ProjectOption[]>([]);
 
+  /**
+   * Whether a line with a project may be marked billable to the project's
+   * client, with a markup (TK-106). The bill form turns it on.
+   */
+  readonly showBilling = input(false);
+
   /** Emitted whenever a line changes, already recalculated. */
   readonly linesChange = output<readonly DocumentLine[]>();
 

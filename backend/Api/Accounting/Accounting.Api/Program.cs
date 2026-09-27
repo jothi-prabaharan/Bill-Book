@@ -79,6 +79,8 @@ builder.Services.AddScoped<LedgerPostingService>();
 builder.Services.AddScoped<PeriodLockService>();
 builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<TimeEntryService>();
+builder.Services.AddScoped<ProjectBillingService>();
 
 // Approval chains for spend money and manual journals (TK-101): Master
 // resolves them, this service stores the steps.

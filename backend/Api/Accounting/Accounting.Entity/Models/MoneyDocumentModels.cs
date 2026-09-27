@@ -83,6 +83,13 @@ public class SaveMoneyLineRequest
 
     /// <summary>The project the line belongs to (TK-104), or null. Carried to its control leg.</summary>
     public long? ProjectId { get; set; }
+
+    /// <summary>A spend to be charged on to the project's client (TK-106). Needs a project; ignored on a receipt.</summary>
+    public bool IsBillable { get; set; }
+
+    /// <summary>The markup added when it is charged on, as a percentage.</summary>
+    [Range(typeof(decimal), "0", "1000", ErrorMessage = "Markup must be between 0 and 1000 percent.")]
+    public decimal? MarkupPercent { get; set; }
 }
 
 /// <summary>A transfer between the organization's own accounts. No contact, no lines.</summary>
@@ -191,6 +198,9 @@ public enum MoneyDocumentOutcome
 
     /// <summary>A line names a project that is not the branch's, or is completed or cancelled (TK-104).</summary>
     ProjectRefused = 17,
+
+    /// <summary>An expense on the payment was charged on to a client, so it cannot be voided until that invoice is (TK-106).</summary>
+    BilledToClient = 18,
 }
 
 public sealed record MoneyDocumentResult(
@@ -251,6 +261,13 @@ public class MoneyLineView
 
     /// <summary>The project the line belongs to (TK-104), or null.</summary>
     public long? ProjectId { get; set; }
+
+    public bool IsBillable { get; set; }
+
+    public decimal? MarkupPercent { get; set; }
+
+    /// <summary>The invoice that charged the expense on, once billed (TK-106).</summary>
+    public long? BilledInvoiceId { get; set; }
 
     public int LineNumber { get; set; }
 

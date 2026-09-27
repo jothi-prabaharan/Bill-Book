@@ -24,6 +24,14 @@ public class SaveInvoiceRequest
     /// </summary>
     public bool RequestApproval { get; set; }
 
+    /// <summary>
+    /// The project items this invoice bills (TK-106): hours, re-billed expenses
+    /// and bill lines, milestones. Claimed from their owners when the invoice
+    /// posts, so two invoices cannot bill the same item; a void releases them.
+    /// The lines that charge for them are sent as ordinary lines.
+    /// </summary>
+    public List<Shared.Kernel.Projects.ProjectItemRef> ProjectItems { get; set; } = [];
+
 
     /// <summary>
     /// The print template this document should use. Null means the branch's
@@ -297,6 +305,9 @@ public enum InvoiceOutcome
 
     /// <summary>A limit or the approval rules could not be read. Transient.</summary>
     LimitsUnavailable = 19,
+
+    /// <summary>A project item on the invoice was billed elsewhere or could not be claimed (TK-106).</summary>
+    ProjectItemsRefused = 20,
 }
 
 /// <param name="EInvoice">
@@ -383,6 +394,9 @@ public class InvoiceSummary : InvoiceListItem
 /// <summary>An Invoice with its lines and their tax rows.</summary>
 public class InvoiceView : InvoiceListItem
 {
+    /// <summary>The project items the invoice bills (TK-106).</summary>
+    public List<Shared.Kernel.Projects.ProjectItemRef> ProjectItems { get; set; } = [];
+
     /// <summary>Where a credit-limit override stands, or null when none was needed (TK-102).</summary>
     public string? CreditOverrideStatus { get; set; }
 

@@ -113,6 +113,11 @@ public sealed class SpendMoneyController : ControllerBase
             // A line pointing at the wrong kind of document, or at one another
             // line already settles. 409 rather than 400: the document is
             // well-formed, it just contradicts itself about what it pays.
+            MoneyDocumentOutcome.BilledToClient => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "An expense on this payment has been charged on to a client.",
+            }),
+
             MoneyDocumentOutcome.AwaitingApproval => Conflict(new MessageResponse
             {
                 Message = result.Detail ?? "This payment needs approval before it can be posted.",

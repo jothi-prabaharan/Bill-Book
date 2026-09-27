@@ -170,7 +170,7 @@ public sealed class SalesOrdersController : ControllerBase
             InvoiceOutcome.LineInvalid => BadRequest(new MessageResponse { Message = result.Detail ?? "One or more lines are invalid." }),
             InvoiceOutcome.InsufficientStock => Conflict(new MessageResponse { Message = result.Detail ?? "Insufficient stock to fulfill the Sales Order." }),
             InvoiceOutcome.CreditLimitExceeded or InvoiceOutcome.DiscountLimitExceeded => BadRequest(new LimitRefusalResponse { Message = result.Detail ?? "Credit limit exceeded or account on hold." }),
-            InvoiceOutcome.AwaitingApproval or InvoiceOutcome.OverrideRefused => Conflict(new MessageResponse { Message = result.Detail ?? "This invoice waits on an approval." }),
+            InvoiceOutcome.AwaitingApproval or InvoiceOutcome.OverrideRefused or InvoiceOutcome.ProjectItemsRefused => Conflict(new MessageResponse { Message = result.Detail ?? "This invoice waits on an approval." }),
             InvoiceOutcome.LimitsUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = result.Detail ?? "Please try again in a moment." }),
             InvoiceOutcome.DueDateMissing => BadRequest(new MessageResponse { Message = result.Detail ?? "An invoice requires a due date." }),
             InvoiceOutcome.PlaceOfSupplyRefused => BadRequest(new MessageResponse { Message = result.Detail ?? "Place of supply could not be determined." }),

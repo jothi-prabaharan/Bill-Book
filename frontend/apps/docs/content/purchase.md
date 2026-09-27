@@ -92,6 +92,8 @@ step can issue straight from draft.
 
 Each purchase order, goods receipt, bill and debit note line can name a **project**. A line's own ledger leg carries it, so what a job spent on materials and services lands on the job. The payable and the tax carry the project only when every line names the same one. See [Projects](#/accounting) on the Accounts page.
 
+A bill line that names a project can also be marked **Charge on the client**, with an optional **markup %**. Once the bill is posted, the line appears under the project's unbilled expenses, ready to be added to a customer invoice. A bill with a line already billed to a client cannot be voided until that invoice is voided.
+
 ## Approval workflows
 
 A branch can require purchase orders, bills and debit notes to pass an **approval chain** before

@@ -36,6 +36,11 @@ public sealed class ProjectsController : ControllerBase
     public async Task<IActionResult> Ledger(long id, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken ct) =>
         await _projects.LedgerAsync(id, from, to, ct) is { } rows ? Ok(rows) : NotFound();
 
+    /// <summary>What the project has left to bill: the invoice's "Add project items" list (TK-106).</summary>
+    [HttpGet("{id:long}/unbilled")]
+    public async Task<IActionResult> Unbilled(long id, [FromServices] ProjectBillingService billing, CancellationToken ct) =>
+        await billing.UnbilledAsync(id, ct) is { } items ? Ok(items) : NotFound();
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SaveProjectRequest request, CancellationToken ct)
     {

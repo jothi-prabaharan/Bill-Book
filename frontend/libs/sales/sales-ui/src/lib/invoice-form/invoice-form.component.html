@@ -345,6 +345,16 @@
   </form>
 
   <div class="inv-form__lines">
+    @if (editable()) {
+      <!-- Hours, expenses and milestones a project has left to bill (TK-106). -->
+      <div class="inv-form__project-items">
+        <button type="button" class="btn" (click)="showProjectItems.set(true)">Add project items</button>
+        @if (projectItems().length > 0) {
+          <span>{{ projectItems().length }} project item(s) billed on this invoice, claimed when it posts.</span>
+          <button type="button" class="btn btn--link" (click)="clearProjectItems()">Stop billing them</button>
+        }
+      </div>
+    }
     <bb-document-line-grid
       [projects]="projectOptions()"
       [lines]="lines()"
@@ -403,6 +413,15 @@
     </div>
   </div>
 </section>
+
+@if (showProjectItems()) {
+  <bb-project-items-dialog
+    [contactId]="form.controls.contactId.value || null"
+    [existing]="projectItems()"
+    (added)="onProjectItems($event)"
+    (cancelled)="showProjectItems.set(false)"
+  />
+}
 
 @if (showConvert()) {
   <bb-order-to-invoice-dialog

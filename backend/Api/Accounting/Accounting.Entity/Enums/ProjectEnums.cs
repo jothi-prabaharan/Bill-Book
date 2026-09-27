@@ -34,3 +34,15 @@ public enum ProjectStatus
     /// <summary>Abandoned. It accepts no new postings either.</summary>
     Cancelled = 4,
 }
+
+/// <summary>Where a logged hour stands against billing (TK-106).</summary>
+public enum TimeBillingStatus
+{
+    Unbilled = 1,
+
+    /// <summary>Claimed by a posted invoice; <c>InvoiceId</c> names it. A void releases it.</summary>
+    Billed = 2,
+
+    /// <summary>Will never be billed. Kept for job cost.</summary>
+    WrittenOff = 3,
+}

@@ -53,6 +53,9 @@ export interface DocumentLine {
   fixedAssetCategoryId: number | null;
   /** The project the line belongs to (TK-105); its ledger legs carry it. */
   projectId?: number | null;
+  /** A purchase line to be charged on to the project's client, and its markup percent (TK-106). */
+  isBillable?: boolean;
+  markupPercent?: number | null;
 
   /** Paise. `taxableAmount + taxAmount` — computed. */
   lineTotal: number;

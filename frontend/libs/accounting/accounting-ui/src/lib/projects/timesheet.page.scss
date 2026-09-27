@@ -1,0 +1,41 @@
+.hint { color: #6a6f80; font-size: .9rem; }
+.error { color: #c0392b; }
+.ok { color: #187a4b; }
+.empty { color: #6a6f80; }
+h2 { font-size: 1.1rem; margin: 0; }
+
+.toolbar, .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 1rem 0; }
+.editor { display: grid; gap: .8rem; max-width: 56rem; margin: 1rem 0; padding: 1rem; border: 1px solid #dde1ea; border-radius: 8px; }
+.row { display: flex; flex-wrap: wrap; gap: .75rem; }
+.grow { flex: 1; min-width: 12rem; }
+.narrow { width: 8rem; }
+
+button { padding: .55rem 1rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
+button.secondary { background: #eceef3; color: #33384a; }
+button.danger { color: #c0392b; }
+button.link { background: none; color: #3557d6; padding: .2rem .4rem; }
+button:disabled { opacity: .6; cursor: default; }
+
+.timer { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; background: #eef2ff; border-radius: 8px; padding: .6rem 1rem; margin: 1rem 0; }
+.timer__clock { font-variant-numeric: tabular-nums; font-size: 1.2rem; font-weight: 600; }
+
+.grid-wrap { overflow-x: auto; max-width: 100%; }
+.week { border-collapse: collapse; min-width: 40rem; }
+.week th, .week td { border-bottom: 1px solid #e6e8ee; padding: .45rem .6rem; text-align: left; white-space: nowrap; }
+.week .num { text-align: right; font-variant-numeric: tabular-nums; }
+.week .strong, .week tfoot { font-weight: 600; }
+
+.days-title { margin-top: 1.5rem; }
+.days { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .6rem; max-width: 56rem; }
+.day { border: 1px solid #dde1ea; border-radius: 8px; padding: .5rem .75rem; display: grid; gap: .4rem; }
+.day__head { display: flex; justify-content: space-between; align-items: center; }
+.entry { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; text-align: left; background: #f7f8fb; color: inherit; }
+.entry.locked { opacity: .75; }
+.entry__hours { font-variant-numeric: tabular-nums; font-weight: 600; }
+.entry__notes { flex-basis: 100%; color: #6a6f80; font-size: .85rem; }
+.pill { background: #e7f5ee; color: #187a4b; border-radius: 999px; padding: .05rem .5rem; font-size: .75rem; }
+.pill.muted { background: #eceef3; color: #6a6f80; }
+
+@media (max-width: 480px) {
+  .narrow { width: 100%; }
+}

@@ -1631,6 +1631,64 @@ namespace Sales.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.InvoiceProjectItem", b =>
+                {
+                    b.Property<long>("InvoiceProjectItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("InvoiceProjectItemId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("InvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("InvoiceProjectItemId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "InvoiceId", "Kind", "ItemId")
+                        .IsUnique();
+
+                    b.ToTable("InvoiceProjectItems", "sal");
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.InvoiceTender", b =>
                 {
                     b.Property<long>("InvoiceTenderId")
@@ -3312,6 +3370,15 @@ namespace Sales.Repository.Migrations.Tenant
                     b.HasOne("Sales.Entity.TableEntities.InvoiceDetail", null)
                         .WithMany("Taxes")
                         .HasForeignKey("InvoiceDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.InvoiceProjectItem", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

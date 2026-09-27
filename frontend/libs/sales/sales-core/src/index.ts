@@ -16,3 +16,4 @@ export * from './lib/outstanding.service';
 export * from './lib/sales-lookup.service';
 export * from './lib/eway-bill.service';
 export * from './lib/limit-refusal';
+export * from './lib/project-billing';

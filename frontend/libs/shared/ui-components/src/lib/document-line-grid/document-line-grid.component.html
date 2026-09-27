@@ -241,6 +241,34 @@
                   }
                 </select>
               </label>
+              @if (showBilling() && line.projectId) {
+                <label class="muted project">
+                  <input
+                    type="checkbox"
+                    [name]="'billable' + i"
+                    [(ngModel)]="line.isBillable"
+                    [disabled]="context().readonly"
+                    (ngModelChange)="touch(i)"
+                  />
+                  Charge on to the client
+                </label>
+                @if (line.isBillable) {
+                  <label class="muted project">
+                    Markup %
+                    <input
+                      type="number"
+                      class="markup"
+                      min="0"
+                      max="1000"
+                      step="0.01"
+                      [name]="'markup' + i"
+                      [(ngModel)]="line.markupPercent"
+                      [disabled]="context().readonly"
+                      (ngModelChange)="touch(i)"
+                    />
+                  </label>
+                }
+              }
             </td>
           </tr>
         }

@@ -1,0 +1,107 @@
+<div class="pi__scrim" (click)="cancelled.emit()" aria-hidden="true"></div>
+
+<section class="pi" role="dialog" aria-modal="true" aria-labelledby="pi-title">
+  <header class="pi__head">
+    <h2 id="pi-title">Add project items</h2>
+    <button type="button" class="pi__close" (click)="cancelled.emit()" aria-label="Close">✕</button>
+  </header>
+
+  <div class="pi__body">
+    @if (error(); as text) {
+      <p class="pi__error">{{ text }}</p>
+    }
+
+    <label class="pi__field">
+      Project
+      <select name="project" [ngModel]="projectId" (ngModelChange)="chooseProject($event)">
+        <option [ngValue]="null">Choose a project…</option>
+        @for (project of projects(); track project.projectId) {
+          <option [ngValue]="project.projectId">{{ project.projectCode }} · {{ project.projectName }}</option>
+        }
+      </select>
+    </label>
+
+    @if (accounts().length > 0) {
+      <label class="pi__field">
+        Income account
+        <select name="account" [(ngModel)]="accountId">
+          <option [ngValue]="null">Choose…</option>
+          @for (account of accounts(); track account.accountId) {
+            <option [ngValue]="account.accountId">{{ account.accountCode }} {{ account.accountName }}</option>
+          }
+        </select>
+      </label>
+    }
+
+    @if (loading()) {
+      <p class="pi__hint">Loading…</p>
+    }
+
+    @if (nothingLeft()) {
+      <p class="pi__hint">Nothing is left to bill on this project.</p>
+    }
+
+    @if (unbilled(); as u) {
+      @if (u.time.length > 0) {
+        <h3>Hours</h3>
+        <ul class="pi__list">
+          @for (entry of u.time; track entry.timeEntryId) {
+            <li>
+              <label>
+                <input type="checkbox" [disabled]="isTaken('TimeEntry', entry.timeEntryId)" (change)="toggle('TimeEntry', entry.timeEntryId, $any($event.target).checked)" />
+                <span class="pi__what">{{ entry.workDate }} · {{ entry.taskName }} · {{ entry.hours }} h</span>
+                <span class="pi__amount">{{ entry.amount | number: '1.2-2' }}</span>
+              </label>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (u.expenses.length > 0 || bills().length > 0) {
+        <h3>Expenses</h3>
+        <ul class="pi__list">
+          @for (expense of u.expenses; track expense.spendMoneyDetailId) {
+            <li>
+              <label>
+                <input type="checkbox" [disabled]="isTaken('Expense', expense.spendMoneyDetailId)" (change)="toggle('Expense', expense.spendMoneyDetailId, $any($event.target).checked)" />
+                <span class="pi__what">{{ expense.transactionDate }} · {{ expense.memo ?? expense.transactionNo }}</span>
+                <span class="pi__amount">{{ expense.billableAmount | number: '1.2-2' }}</span>
+              </label>
+            </li>
+          }
+          @for (bill of bills(); track bill.billDetailId) {
+            <li>
+              <label>
+                <input type="checkbox" [disabled]="isTaken('BillLine', bill.billDetailId)" (change)="toggle('BillLine', bill.billDetailId, $any($event.target).checked)" />
+                <span class="pi__what">{{ bill.documentDate }} · {{ bill.documentNo }} · {{ bill.description }}</span>
+                <span class="pi__amount">{{ bill.billableAmount | number: '1.2-2' }}</span>
+              </label>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (u.milestones.length > 0) {
+        <h3>Milestones</h3>
+        <ul class="pi__list">
+          @for (milestone of u.milestones; track milestone.projectMilestoneId) {
+            <li>
+              <label>
+                <input type="checkbox" [disabled]="isTaken('Milestone', milestone.projectMilestoneId)" (change)="toggle('Milestone', milestone.projectMilestoneId, $any($event.target).checked)" />
+                <span class="pi__what">{{ milestone.name }}</span>
+                <span class="pi__amount">{{ milestone.amount | number: '1.2-2' }}</span>
+              </label>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    <p class="pi__hint">Nothing is claimed until the invoice posts. If another invoice posts these items first, this one will be refused until they are removed.</p>
+  </div>
+
+  <footer class="pi__foot">
+    <button type="button" class="pi__secondary" (click)="cancelled.emit()">Cancel</button>
+    <button type="button" class="pi__primary" (click)="add()" [disabled]="!unbilled()">Add to invoice</button>
+  </footer>
+</section>

@@ -136,6 +136,36 @@
             [(ngModel)]="row.projectId"
             (ngModelChange)="touch()"
           />
+          @if (direction() === 'spend' && row.projectId) {
+            <label class="billable">
+              <input
+                type="checkbox"
+                [name]="'billable' + index"
+                [(ngModel)]="row.isBillable"
+                [disabled]="row.billedInvoiceId !== null"
+                (ngModelChange)="touch()"
+              />
+              Charge on
+            </label>
+            @if (row.isBillable) {
+              <input
+                class="markup"
+                type="number"
+                min="0"
+                max="1000"
+                step="0.01"
+                placeholder="Markup %"
+                aria-label="Markup percent"
+                [name]="'markup' + index"
+                [(ngModel)]="row.markupPercent"
+                [disabled]="row.billedInvoiceId !== null"
+                (ngModelChange)="touch()"
+              />
+            }
+            @if (row.billedInvoiceId) {
+              <span class="chip">Billed</span>
+            }
+          }
         } @else {
           <span class="none">—</span>
         }

@@ -281,6 +281,10 @@ public sealed class InvoicesController : ControllerBase
             {
                 Message = result.Detail ?? "Credit limit exceeded or account on hold."
             }),
+            InvoiceOutcome.ProjectItemsRefused => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "Some of the project items were billed elsewhere."
+            }),
             InvoiceOutcome.AwaitingApproval or InvoiceOutcome.OverrideRefused => Conflict(new MessageResponse
             {
                 Message = result.Detail ?? "This invoice waits on an approval."

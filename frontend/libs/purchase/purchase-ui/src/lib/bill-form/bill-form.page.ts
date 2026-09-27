@@ -229,6 +229,8 @@ export class BillFormPage {
           accountId: line.accountId ?? null,
           fixedAssetCategoryId: line.fixedAssetCategoryId ?? null,
           projectId: line.projectId ?? null,
+          isBillable: line.isBillable ?? false,
+          markupPercent: line.markupPercent ?? null,
           lineTotal: Math.round(line.lineTotal * PAISE),
           itemBatchId: line.itemBatchId ?? null,
           lineNotes: line.lineNotes ?? null,
@@ -569,6 +571,8 @@ export class BillFormPage {
       accountId: line.accountId,
       fixedAssetCategoryId: line.fixedAssetCategoryId,
       projectId: line.projectId,
+      isBillable: line.isBillable ?? false,
+      markupPercent: line.isBillable ? (line.markupPercent ?? null) : null,
       itemBatchId: line.itemBatchId,
       lineNotes: line.lineNotes,
     }));

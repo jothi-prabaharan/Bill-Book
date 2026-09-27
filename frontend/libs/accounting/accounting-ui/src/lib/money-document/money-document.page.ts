@@ -79,6 +79,10 @@ interface MoneyLineView {
   amountBase: number;
   lineMemo: string | null;
   projectId?: number | null;
+  /** Charged on to the project's client, with this markup (TK-106). */
+  isBillable?: boolean;
+  markupPercent?: number | null;
+  billedInvoiceId?: number | null;
 }
 
 interface MoneyDocumentListItem {
@@ -113,6 +117,11 @@ interface LineForm {
   lineMemo: string;
   /** The project the line belongs to (TK-104). */
   projectId: number | null;
+  /** A spend line charged on to the project's client, and its markup (TK-106). */
+  isBillable: boolean;
+  markupPercent: string;
+  /** The invoice that billed it, which locks the line. */
+  billedInvoiceId: number | null;
 }
 
 /**
@@ -486,6 +495,9 @@ export class MoneyDocumentPage implements OnInit {
         amount: String(l.amount),
         lineMemo: l.lineMemo ?? '',
         projectId: l.projectId ?? null,
+        isBillable: l.isBillable ?? false,
+        markupPercent: l.markupPercent == null ? '' : String(l.markupPercent),
+        billedInvoiceId: l.billedInvoiceId ?? null,
       })),
     );
     this.editing.set(true);
@@ -601,6 +613,9 @@ export class MoneyDocumentPage implements OnInit {
         amount: rest.toFixed(2),
         lineMemo: '',
         projectId: null,
+        isBillable: false,
+        markupPercent: '',
+        billedInvoiceId: null,
       },
     ]);
   }
@@ -635,6 +650,13 @@ export class MoneyDocumentPage implements OnInit {
           amount: this.money(l.amount),
           lineMemo: l.lineMemo || null,
           projectId: l.projectId,
+          // Only a spend line with a project can be charged on (TK-106); the
+          // server ignores the flag otherwise, so none is sent.
+          isBillable: this.direction() === 'spend' && l.projectId !== null && l.isBillable,
+          markupPercent:
+            this.direction() === 'spend' && l.projectId !== null && l.isBillable && l.markupPercent !== ''
+              ? Number(l.markupPercent)
+              : null,
         })),
       };
 
@@ -751,6 +773,9 @@ export class MoneyDocumentPage implements OnInit {
       amount: '',
       lineMemo: '',
       projectId: null,
+      isBillable: false,
+      markupPercent: '',
+      billedInvoiceId: null,
     };
   }
 

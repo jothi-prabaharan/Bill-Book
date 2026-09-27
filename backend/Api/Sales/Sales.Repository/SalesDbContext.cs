@@ -71,6 +71,8 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<SalesApprovalStep> ApprovalSteps => Set<SalesApprovalStep>();
 
+    public DbSet<InvoiceProjectItem> InvoiceProjectItems => Set<InvoiceProjectItem>();
+
     public DbSet<InvoiceDetail> InvoiceDetails => Set<InvoiceDetail>();
 
     public DbSet<InvoiceDetailTax> InvoiceDetailTaxes => Set<InvoiceDetailTax>();
@@ -398,6 +400,16 @@ public class SalesDbContext : TenantDbContext
             // A document may have had an earlier bill cancelled, so this is not unique.
             b.HasIndex(e => new { e.OrgId, e.SourceType, e.SourceId });
             b.HasIndex(e => e.EwbNo).IsUnique().HasFilter("\"EwbNo\" IS NOT NULL");
+        });
+
+        // ---- Project billing (TK-106) --------------------------------------
+
+        modelBuilder.Entity<InvoiceProjectItem>(b =>
+        {
+            b.HasKey(e => e.InvoiceProjectItemId);
+            b.HasIndex(e => new { e.OrgId, e.InvoiceId, e.Kind, e.ItemId }).IsUnique();
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(12);
+            b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // ---- Approvals (TK-102) ------------------------------------------

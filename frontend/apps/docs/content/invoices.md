@@ -62,6 +62,8 @@ A save that breaches either is refused, and the screen offers **Request approval
 
 Each line can name a **project**. Posting splits the revenue across the projects the lines name. If every line names the same project, the receivable, tax and rounding carry it too. A line naming a project that is completed, cancelled or not this branch's cannot be saved. See [Projects](#/accounting) on the Accounts page.
 
+**Add project items** bills a project for the invoice's customer. It turns the project's unbilled hours, charged-on expenses and milestones into invoice lines. The items are claimed when the invoice posts, so two invoices can never bill the same hour. If another invoice got there first, the post is refused. Voiding the invoice releases them. See [Billing a project](#/accounting) on the Accounts page.
+
 ## From a sales order
 
 **From an order** lists every confirmed sales order with something left to bill, and turns the one you pick into an invoice for what is left.

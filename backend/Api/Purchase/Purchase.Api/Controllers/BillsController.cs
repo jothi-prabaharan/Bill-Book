@@ -124,6 +124,10 @@ public sealed class BillsController : ControllerBase
                 Message = result.Detail ?? "Inventory refused the goods.",
             }),
 
+            BillOutcome.BilledToClient => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "A line on this bill has been charged on to a client.",
+            }),
             BillOutcome.AlreadyCredited => Conflict(new MessageResponse
             {
                 Message = result.Detail ?? "A debit note has been raised against this bill.",

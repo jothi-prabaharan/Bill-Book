@@ -79,4 +79,17 @@ public class SpendMoneyDetail : OrgScopedEntity
     /// profit by project is a query over these rows.
     /// </summary>
     public long? ProjectId { get; set; }
+
+    // ---- Re-billing (TK-106). An expense paid for a client's job, charged on
+    // to them with a markup, on an invoice that claims it at post.
+
+    /// <summary>Whether the expense is to be charged on to the project's client.</summary>
+    public bool IsBillable { get; set; }
+
+    /// <summary>The markup added when it is charged on, as a percentage.</summary>
+    [Range(typeof(decimal), "0", "1000", ErrorMessage = "Markup must be between 0 and 1000 percent.")]
+    public decimal? MarkupPercent { get; set; }
+
+    /// <summary>The invoice that charged it on, set by the claim. No FK: invoices live in Sales.</summary>
+    public long? BilledInvoiceId { get; set; }
 }

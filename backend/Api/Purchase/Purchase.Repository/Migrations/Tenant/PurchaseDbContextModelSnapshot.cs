@@ -269,6 +269,9 @@ namespace Purchase.Repository.Migrations.Tenant
                     b.Property<long>("BillId")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("BilledInvoiceId")
+                        .HasColumnType("bigint");
+
                     b.Property<decimal>("ConversionFactor")
                         .HasColumnType("decimal(18,6)");
 
@@ -304,6 +307,9 @@ namespace Purchase.Repository.Migrations.Tenant
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
 
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsPriceInclusive")
                         .HasColumnType("boolean");
 
@@ -327,6 +333,9 @@ namespace Purchase.Repository.Migrations.Tenant
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
+
+                    b.Property<decimal?>("MarkupPercent")
+                        .HasColumnType("decimal(7,2)");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -392,6 +401,9 @@ namespace Purchase.Repository.Migrations.Tenant
                         .HasDatabaseName("IX_BillDetails_Line");
 
                     b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "BilledInvoiceId")
+                        .HasFilter("\"BilledInvoiceId\" IS NOT NULL");
 
                     b.HasIndex("OrgId", "ItemId")
                         .HasDatabaseName("IX_BillDetails_Item");

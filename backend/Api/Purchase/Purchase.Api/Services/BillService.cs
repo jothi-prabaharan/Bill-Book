@@ -437,6 +437,10 @@ public sealed class BillService
                 AccountId = lineReq.AccountId,
                 FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
                 ProjectId = lineReq.ProjectId,
+
+                // Only a line with a project can be charged on to its client (TK-106).
+                IsBillable = lineReq.IsBillable && lineReq.ProjectId is not null,
+                MarkupPercent = lineReq.IsBillable && lineReq.ProjectId is not null ? lineReq.MarkupPercent : null,
                 LineTotal = computed.LineTotal,
                 ItemBatchId = lineReq.ItemBatchId,
                 LineNotes = lineReq.LineNotes,
@@ -836,6 +840,13 @@ public sealed class BillService
 
         bool hasDebitNote = await _db.DebitNotes.AnyAsync(d => d.BillId == billId, ct);
 
+        // A line charged on to a client stands behind that invoice's line (TK-106).
+        if (await _db.BillDetails.AnyAsync(l => l.BillId == billId && l.BilledInvoiceId != null, ct))
+        {
+            return new BillResult(BillOutcome.BilledToClient, billId,
+                "A line on this bill has been charged on to a client. Void that invoice first.");
+        }
+
         DocumentTransition transition =
             DocumentLifecycle.CanVoid(bill.Status, hasDebitNote, request.Reason);
 
@@ -991,6 +1002,9 @@ public sealed class BillService
                         AccountId = l.AccountId,
                         FixedAssetCategoryId = l.FixedAssetCategoryId,
                         ProjectId = l.ProjectId,
+                        IsBillable = l.IsBillable,
+                        MarkupPercent = l.MarkupPercent,
+                        BilledInvoiceId = l.BilledInvoiceId,
                         LineTotal = l.LineTotal,
                         ItemBatchId = l.ItemBatchId,
                         LineNotes = l.LineNotes,

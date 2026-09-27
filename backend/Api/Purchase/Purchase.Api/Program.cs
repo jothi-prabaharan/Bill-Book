@@ -77,6 +77,7 @@ builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(cl
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<GoodsReceiptService>();
 builder.Services.AddScoped<BillService>();
+builder.Services.AddScoped<BillBillingService>();
 builder.Services.AddScoped<DebitNoteService>();
 
 // The due date a payment term implies. Asked rather than computed: the rule is

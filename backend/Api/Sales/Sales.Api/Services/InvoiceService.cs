@@ -92,6 +92,9 @@ public sealed class InvoiceService : IInvoiceService
     /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
     private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
 
+    /// <summary>Claims and releases the project items an invoice bills (TK-106). Null in tests that do not exercise it.</summary>
+    private readonly Shared.Kernel.Projects.IProjectBillingClient? _projectBilling;
+
     public InvoiceService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -113,8 +116,10 @@ public sealed class InvoiceService : IInvoiceService
         EInvoicing.IEInvoicePosting eInvoicing,
         IDiscountLimitClient? discountLimits = null,
         InvoiceOverrideService? overrides = null,
-        Shared.Kernel.Projects.IProjectDirectory? projects = null)
+        Shared.Kernel.Projects.IProjectDirectory? projects = null,
+        Shared.Kernel.Projects.IProjectBillingClient? projectBilling = null)
     {
+        _projectBilling = projectBilling;
         _projects = projects;
         _discountLimits = discountLimits;
         _overrides = overrides;
@@ -638,6 +643,7 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         invoice.Lines.AddRange(detailLines);
+        await SaveProjectItemsAsync(invoice, request.ProjectItems, ct);
         return await RequestOverridesAsync(invoice, limits, ct)
             ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
     }
@@ -884,6 +890,7 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         invoice.Lines.AddRange(newDetails);
+        await SaveProjectItemsAsync(invoice, request.ProjectItems, ct);
         return await RequestOverridesAsync(invoice, limits, ct)
             ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
     }
@@ -939,6 +946,30 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Replaces the project items a draft bills (TK-106). They are only
+    /// recorded here; nothing is claimed until the invoice posts.
+    /// </summary>
+    private async Task SaveProjectItemsAsync(
+        Invoice invoice, List<Shared.Kernel.Projects.ProjectItemRef> items, CancellationToken ct)
+    {
+        await _db.InvoiceProjectItems.Where(p => p.InvoiceId == invoice.InvoiceId).ExecuteDeleteAsync(ct);
+
+        foreach (var item in items.GroupBy(i => (i.Kind, i.ItemId)).Select(g => g.First()))
+        {
+            _db.InvoiceProjectItems.Add(new InvoiceProjectItem
+            {
+                OrgId = invoice.OrgId,
+                InvoiceId = invoice.InvoiceId,
+                Kind = item.Kind,
+                ItemId = item.ItemId,
+                ProjectId = item.ProjectId ?? 0,
+            });
+        }
+
+        await _db.SaveChangesAsync(ct);
     }
 
     public async Task<InvoiceResult> SaveAsync(
@@ -1114,6 +1145,12 @@ public sealed class InvoiceService : IInvoiceService
 
             view.Lines.Add(lineView);
         }
+
+        view.ProjectItems = await _db.InvoiceProjectItems.AsNoTracking()
+            .Where(p => p.InvoiceId == invoiceId)
+            .OrderBy(p => p.InvoiceProjectItemId)
+            .Select(p => new Shared.Kernel.Projects.ProjectItemRef { Kind = p.Kind, ItemId = p.ItemId, ProjectId = p.ProjectId })
+            .ToListAsync(ct);
 
         return view;
     }
@@ -1508,7 +1545,51 @@ public sealed class InvoiceService : IInvoiceService
         };
     }
 
+    /// <summary>
+    /// Posts a draft. When it bills project items, they are claimed first
+    /// (TK-106), and given back if the post then fails, so a refused post holds
+    /// nothing another invoice could have billed.
+    /// </summary>
     public async Task<InvoiceResult> PostAsync(long invoiceId, CancellationToken ct)
+    {
+        if (_projectBilling is null)
+        {
+            return await PostInvoiceAsync(invoiceId, ct);
+        }
+
+        var header = await _db.Invoices.AsNoTracking()
+            .Where(i => i.InvoiceId == invoiceId)
+            .Select(i => new { i.Status })
+            .FirstOrDefaultAsync(ct);
+
+        List<Shared.Kernel.Projects.ProjectItemRef> items = await _db.InvoiceProjectItems.AsNoTracking()
+            .Where(p => p.InvoiceId == invoiceId)
+            .Select(p => new Shared.Kernel.Projects.ProjectItemRef { Kind = p.Kind, ItemId = p.ItemId })
+            .ToListAsync(ct);
+
+        // Only a draft about to post claims: a posted invoice already holds its
+        // items, and releasing them on its refused re-post would free them.
+        if (header is null || items.Count == 0 || !DocumentLifecycle.CanPost(header.Status, 1).IsAllowed)
+        {
+            return await PostInvoiceAsync(invoiceId, ct);
+        }
+
+        (Guid customerId, Guid orgId) = _tenant.Require();
+        if (await _projectBilling.ClaimAsync(customerId, orgId, invoiceId, items, ct) is string refused)
+        {
+            return new InvoiceResult(InvoiceOutcome.ProjectItemsRefused, invoiceId, refused);
+        }
+
+        InvoiceResult posted = await PostInvoiceAsync(invoiceId, ct);
+        if (posted.Outcome != InvoiceOutcome.Ok)
+        {
+            await _projectBilling.ReleaseAsync(customerId, orgId, invoiceId, ct);
+        }
+
+        return posted;
+    }
+
+    private async Task<InvoiceResult> PostInvoiceAsync(long invoiceId, CancellationToken ct)
     {
         (Guid customerId, Guid orgId) = _tenant.Require();
 
@@ -2047,7 +2128,23 @@ public sealed class InvoiceService : IInvoiceService
     public Task<InvoiceResult> VoidAsync(long invoiceId, CancellationToken ct) =>
         VoidAsync(invoiceId, new VoidInvoiceRequest { Reason = "Voided by user." }, ct);
 
+    /// <summary>Voids an invoice, and gives back the project items it billed (TK-106).</summary>
     public async Task<InvoiceResult> VoidAsync(
+        long invoiceId, VoidInvoiceRequest request, CancellationToken ct)
+    {
+        InvoiceResult voided = await VoidInvoiceAsync(invoiceId, request, ct);
+
+        if (voided.Outcome == InvoiceOutcome.Ok && _projectBilling is not null
+            && await _db.InvoiceProjectItems.AnyAsync(p => p.InvoiceId == invoiceId, ct))
+        {
+            (Guid customerId, Guid orgId) = _tenant.Require();
+            await _projectBilling.ReleaseAsync(customerId, orgId, invoiceId, ct);
+        }
+
+        return voided;
+    }
+
+    private async Task<InvoiceResult> VoidInvoiceAsync(
         long invoiceId, VoidInvoiceRequest request, CancellationToken ct)
     {
         // With its lines: the challan and order reversals below walk them, and

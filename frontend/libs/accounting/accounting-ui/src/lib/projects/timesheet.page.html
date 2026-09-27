@@ -1,0 +1,146 @@
+<h1>Timesheet</h1>
+<p class="hint">
+  Your hours for the week, one row per project task. Billable hours wait on the project until an invoice
+  bills them; a billed entry is locked until that invoice is voided.
+</p>
+
+@if (message(); as text) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
+}
+
+@if (timer(); as running) {
+  <div class="timer" role="status">
+    <span class="timer__clock">{{ timerLabel() }}</span>
+    <span>{{ timerProject() }}</span>
+    <button type="button" (click)="stopTimer()">Stop and log</button>
+  </div>
+}
+
+<div class="toolbar">
+  <button type="button" class="secondary" (click)="shiftWeek(-1)" [disabled]="busy()" aria-label="Previous week">‹</button>
+  <strong>{{ formats.formatDate(days()[0]) }} – {{ formats.formatDate(days()[6]) }}</strong>
+  <button type="button" class="secondary" (click)="shiftWeek(1)" [disabled]="busy()" aria-label="Next week">›</button>
+  <button type="button" class="secondary" (click)="thisWeek()" [disabled]="busy()">This week</button>
+  <button type="button" (click)="newEntry()" [disabled]="busy()">Log hours</button>
+</div>
+
+@if (editing()) {
+  <form class="editor" (ngSubmit)="save()">
+    <h2>{{ editingId === null ? 'Log hours' : 'Edit entry' }}</h2>
+    <div class="row">
+      <div class="field grow">
+        <bb-select
+          label="Project"
+          name="projectId"
+          [options]="projectChoices()"
+          [(ngModel)]="form.projectId"
+          (ngModelChange)="onProject()"
+          required
+        />
+      </div>
+      <div class="field grow">
+        <bb-select
+          label="Task"
+          name="projectTaskId"
+          [options]="taskChoices()"
+          [(ngModel)]="form.projectTaskId"
+          (ngModelChange)="onTask()"
+          required
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <bb-date-input label="Date" name="workDate" [(ngModel)]="form.workDate" required />
+      </div>
+      <div class="field narrow">
+        <bb-number-input label="Hours" name="hours" [(ngModel)]="form.hours" required />
+      </div>
+      <div class="field grow">
+        <bb-text-input label="Notes" name="notes" [(ngModel)]="form.notes" maxlength="500" />
+      </div>
+    </div>
+    <bb-checkbox text="Billable to the client" name="isBillable" [(ngModel)]="form.isBillable" />
+    <div class="actions">
+      <button type="submit" [disabled]="busy()">Save</button>
+      @if (editingId === null && !timer()) {
+        <button type="button" class="secondary" (click)="startTimer()" [disabled]="busy()">Start timer instead</button>
+      }
+      @if (editingId !== null) {
+        <button type="button" class="secondary danger" (click)="remove()" [disabled]="busy()">Delete</button>
+      }
+      <button type="button" class="secondary" (click)="cancel()">Cancel</button>
+    </div>
+  </form>
+}
+
+@if (rows().length === 0) {
+  <p class="empty">No hours logged this week.</p>
+} @else {
+  <div class="grid-wrap">
+    <table class="week">
+      <thead>
+        <tr>
+          <th scope="col">Project · task</th>
+          @for (day of days(); track day) {
+            <th scope="col" class="num">{{ dayLabel(day) }}</th>
+          }
+          <th scope="col" class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key) {
+          <tr>
+            <th scope="row">{{ row.label }}</th>
+            @for (hours of row.hours; track $index) {
+              <td class="num">{{ hours ? hoursText(hours) : '' }}</td>
+            }
+            <td class="num strong">{{ hoursText(row.total) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row">Total</th>
+          @for (total of totals(); track $index) {
+            <td class="num">{{ total ? hoursText(total) : '' }}</td>
+          }
+          <td class="num strong">{{ hoursText(weekTotal()) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+
+<h2 class="days-title">Entries</h2>
+<ul class="days">
+  @for (day of days(); track day) {
+    <li class="day">
+      <div class="day__head">
+        <strong>{{ dayLabel(day) }}</strong>
+        <button type="button" class="link" (click)="newEntry(day)" [disabled]="busy()">+ Add</button>
+      </div>
+      @for (entry of entriesOn(day); track entry.timeEntryId) {
+        <button
+          type="button"
+          class="entry"
+          [class.locked]="entry.billingStatus !== 'Unbilled'"
+          [disabled]="entry.billingStatus !== 'Unbilled'"
+          (click)="edit(entry)"
+        >
+          <span>{{ entry.projectCode }} · {{ entry.taskName }}</span>
+          <span class="entry__hours">{{ hoursText(entry.hours) }} h</span>
+          @if (!entry.isBillable) {
+            <span class="pill muted">Non-billable</span>
+          }
+          @if (entry.billingStatus === 'Billed') {
+            <span class="pill">Billed</span>
+          }
+          @if (entry.notes) {
+            <span class="entry__notes">{{ entry.notes }}</span>
+          }
+        </button>
+      }
+    </li>
+  }
+</ul>
