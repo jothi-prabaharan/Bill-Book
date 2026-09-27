@@ -1,0 +1,88 @@
+<h1>Budgets</h1>
+<p class="hint">
+  A budget is a year of monthly amounts per account. Enter income and expenses as positive figures. Once a budget is
+  approved it is locked, and changing it means revising it, which makes a new draft.
+</p>
+
+@if (message(); as text) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
+}
+
+@if (canEdit() && !creating()) {
+  <div class="toolbar">
+    <button type="button" (click)="startCreate()">New budget</button>
+  </div>
+}
+
+@if (creating()) {
+  <form class="editor" (ngSubmit)="create()">
+    <h2>New budget</h2>
+    <div class="row">
+      <div class="field grow">
+        <bb-text-input label="Name" name="name" [(ngModel)]="form.name" required maxlength="100" placeholder="FY 2026-27 base" />
+      </div>
+      <div class="field narrow">
+        <bb-number-input label="Year it starts in" name="year" [(ngModel)]="form.year" required />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field grow">
+        <bb-select label="Start from" name="source" [options]="sourceOptions" [clearable]="false" [(ngModel)]="form.source" />
+      </div>
+      @if (form.source === 'OtherBudget') {
+        <div class="field grow">
+          <bb-select label="Budget to copy" name="sourceBudgetId" [options]="budgetOptions()" [(ngModel)]="form.sourceBudgetId" />
+        </div>
+      }
+    </div>
+    @if (form.source !== 'Blank') {
+      <div class="row">
+        <div class="field narrow">
+          <bb-number-input label="Adjust all by %" name="adjustPercent" [(ngModel)]="form.adjustPercent" />
+        </div>
+        <div class="field narrow">
+          <bb-number-input label="Income by %" name="incomePercent" [(ngModel)]="form.incomePercent" />
+        </div>
+        <div class="field narrow">
+          <bb-number-input label="Expenses by %" name="expensePercent" [(ngModel)]="form.expensePercent" />
+        </div>
+      </div>
+      <p class="hint">
+        +10 plans ten percent more than the source. An income or expense figure overrides the general one for that
+        type.
+      </p>
+    }
+    <bb-checkbox text="Budget by project" name="byProject" [(ngModel)]="form.byProject" />
+    <div class="actions">
+      <button type="submit" [disabled]="busy()">Create</button>
+      <button type="button" class="secondary" (click)="cancel()">Cancel</button>
+    </div>
+  </form>
+}
+
+@if (rows().length === 0 && !busy()) {
+  <p class="empty">No budgets yet.</p>
+} @else {
+  <ul class="cards">
+    @for (budget of rows(); track budget.budgetId) {
+      <li class="card" tabindex="0" (click)="open(budget)" (keydown.enter)="open(budget)">
+        <div class="card__title">
+          <strong>{{ yearOf(budget) }} · {{ budget.name }}</strong>
+          <span class="pill" [class.draft]="budget.status === 'Draft'" [class.old]="budget.status === 'Superseded'">{{ budget.status }}</span>
+          @if (budget.isBranchDefault) {
+            <span class="pill default">Branch budget</span>
+          }
+          @if (budget.byProject) {
+            <span class="pill old">By project</span>
+          }
+        </div>
+        <div class="card__meta">
+          <span>Total {{ formats.formatMoney(budget.total) }}</span>
+          @if (budget.revisionReason) {
+            <span>Revision: {{ budget.revisionReason }}</span>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+}

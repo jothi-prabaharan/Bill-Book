@@ -280,6 +280,8 @@ public static class MenuSeed
         new Menu { MenuId = 1127, ParentId = 106, Type = MenuType.Item, Code = "prj", Name = "Projects", Icon = "briefcase", Module = "projects", RoutePath = "/accounting/projects", IsSearchable = true, CanCreate = true, SingularName = "Project", DisplayOrder = 20, IsActive = true },
         // The timesheet (TK-106): anyone who can read projects logs their own hours.
         new Menu { MenuId = 1128, ParentId = 106, Type = MenuType.Item, Code = "timesheet", Name = "Timesheet", Icon = "clock", Module = "projects", RoutePath = "/accounting/projects/timesheet", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 21, IsActive = true },
+        // Budgets (TK-108), under Accounting.
+        new Menu { MenuId = 1133, ParentId = 106, Type = MenuType.Item, Code = "budgets", Name = "Budgets", Icon = "target", Module = "accounting", RoutePath = "/accounting/budgets", IsSearchable = true, CanCreate = true, SingularName = "Budget", DisplayOrder = 22, IsActive = true },
         // Project reports (TK-107), under Reports. Each links straight to its report key.
         new Menu { MenuId = 123, ParentId = 8, Type = MenuType.Group, Code = "reports-g8", Name = "Projects", Icon = "briefcase", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = true },
         new Menu { MenuId = 1129, ParentId = 123, Type = MenuType.Item, Code = "r-project-profitability", Name = "Project Profitability", Icon = "trending-up", Module = "reports", RoutePath = "/reports/project-profitability", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -771,5 +773,9 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 460, MenuId = 1131, PermissionCode = "reports.export", Action = "export", Module = "reports" },
         new MenuPermission { MenuPermissionId = 461, MenuId = 1132, PermissionCode = "reports.view", Action = "view", Module = "reports" },
         new MenuPermission { MenuPermissionId = 462, MenuId = 1132, PermissionCode = "reports.export", Action = "export", Module = "reports" },
+        // Budgets (TK-108).
+        new MenuPermission { MenuPermissionId = 463, MenuId = 1133, PermissionCode = "accounting.view", Action = "view", Module = "accounting" },
+        new MenuPermission { MenuPermissionId = 464, MenuId = 1133, PermissionCode = "accounting.edit", Action = "edit", Module = "accounting" },
+        new MenuPermission { MenuPermissionId = 465, MenuId = 1133, PermissionCode = "accounting.approve", Action = "approve", Module = "accounting" },
     ];
 }

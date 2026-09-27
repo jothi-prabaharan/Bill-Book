@@ -692,6 +692,157 @@ namespace Accounting.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Budget", b =>
+                {
+                    b.Property<long>("BudgetId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("BudgetId"));
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ByProject")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("FinancialYearStart")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsBranchDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("RevisionOf")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RevisionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("BudgetId");
+
+                    b.HasIndex("RevisionOf");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("CustomerId", "OrgId", "FinancialYearStart")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Budgets_BranchDefault")
+                        .HasFilter("\"IsBranchDefault\" = true");
+
+                    b.HasIndex("OrgId", "FinancialYearStart", "Status");
+
+                    b.ToTable("Budgets", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_budgets_default_approved", "NOT \"IsBranchDefault\" OR \"Status\" = 'Approved'");
+                        });
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.BudgetLine", b =>
+                {
+                    b.Property<long>("BudgetLineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("BudgetLineId"));
+
+                    b.Property<long>("AccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("BudgetId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<short>("Period")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("BudgetLineId");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("BudgetId", "AccountId", "ProjectId", "Period")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("BudgetId", "AccountId", "ProjectId", "Period"), false);
+
+                    b.ToTable("BudgetLines", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_budgetlines_amount", "\"Amount\" >= 0");
+
+                            t.HasCheckConstraint("chk_budgetlines_period", "\"Period\" BETWEEN 1 AND 12");
+                        });
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.DepreciationSchedule", b =>
                 {
                     b.Property<long>("DepreciationScheduleId")
@@ -3407,6 +3558,34 @@ namespace Accounting.Repository.Migrations.Tenant
                         .HasForeignKey("BankStatementId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Budget", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.Budget", null)
+                        .WithMany()
+                        .HasForeignKey("RevisionOf")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.BudgetLine", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Accounting.Entity.TableEntities.Budget", null)
+                        .WithMany()
+                        .HasForeignKey("BudgetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accounting.Entity.TableEntities.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Accounting.Entity.TableEntities.DepreciationSchedule", b =>

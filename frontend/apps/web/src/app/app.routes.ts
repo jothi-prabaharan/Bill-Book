@@ -73,6 +73,17 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ProjectsPage),
         data: { access: { permission: 'projects.view' } },
       },
+      // Budgets (TK-108): the list, and one budget's grid.
+      {
+        path: 'accounting/budgets',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.BudgetsPage),
+        data: { access: { permission: 'accounting.view' } },
+      },
+      {
+        path: 'accounting/budgets/:budgetId',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.BudgetGridPage),
+        data: { access: { permission: 'accounting.view' } },
+      },
       {
         path: 'accounting/opening-balance',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.OpeningBalancePage),

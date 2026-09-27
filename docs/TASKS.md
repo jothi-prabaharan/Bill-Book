@@ -2151,20 +2151,36 @@ The build cards each design in section E produced. Each design section in `docs/
   Tests: `ProjectReportTests` (profitability equals the ledger rows' net by type, the period, budget and hours variance, unbilled valuation by task and person rate with markup, time split), and the source and certification registries (94 sources).
 
 ### TK-108 · Budgets: tables, entry grid, import and approval
-- [~] working (Claude Opus 5.5) — since 2026-09-27
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
 - **Issue:** [#96](https://github.com/jothi-prabaharan/Bill-Book/issues/96)
 - **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-35 · **Decision:** —
 - **Where:** design "Budgeting"; `mst.Organizations.FinancialYearStartMonth` via the org context; `acc.Accounts`.
 - **Tables:** `acc.Budgets`, `acc.BudgetLines`
 - **Sub-tasks:**
-  - [ ] Both tables with RLS; a filtered unique index for one approved default per branch and year.
-  - [ ] Create blank, from last year's actuals (± % per account group) or from another budget; spread a year total evenly or by last year's shape.
-  - [ ] CSV/XLSX import and export in the account-code × month layout; unknown codes listed and refused.
-  - [ ] Approve locks; revise copies with a reason and supersedes on approval.
-  - [ ] The budget grid page (accounts × 12 months), usable at 360px as one month at a time.
-  - [ ] Test: an approved budget refuses edits; a revision supersedes; last year's actuals seed the right months for an April-start branch.
-  - Standard delivery sub-tasks (section 5).
+  - [x] Both tables with RLS; a filtered unique index for one approved default per branch and year.
+  - [x] Create blank, from last year's actuals (± % per account group) or from another budget; spread a year total evenly or by last year's shape.
+  - [x] CSV/XLSX import and export in the account-code × month layout; unknown codes listed and refused.
+  - [x] Approve locks; revise copies with a reason and supersedes on approval.
+  - [x] The budget grid page (accounts × 12 months), usable at 360px as one month at a time.
+  - [x] Test: an approved budget refuses edits; a revision supersedes; last year's actuals seed the right months for an April-start branch.
+  - [x] Standard delivery sub-tasks (section 5).
 - **Done when:** an accountant imports a year's budget from a spreadsheet, approves it, and cannot edit it afterwards.
+- **As built:** `acc.Budgets` and `acc.BudgetLines` with RLS. The filtered unique index `IX_Budgets_BranchDefault` is on (`CustomerId`, `OrgId`, `FinancialYearStart`) where `IsBranchDefault`, and a check constraint means only an approved budget can be the default. Lines are unique on (budget, account, project, period) with nulls not distinct; months at zero are not stored.
+
+  `BudgetService` behind `api/budgets` (`accounting.view`; `edit` for create, save, import and delete; `approve` for approve, make-default and revise):
+  - **Create** starts blank, from last year's income and expense actuals in each account's normal direction (`BudgetMath.NormalAmount`, which handles contra accounts), or from another budget. Adjustments are a general percentage plus one per account type, and a negative month clamps to zero.
+  - **Save** refuses parent accounts, inactive or unknown accounts, negatives, duplicates, and projects on a budget that is not by project.
+  - **Import** reads CSV or XLSX through the statement readers in the layout `BudgetMath.SheetHeader` exports. Every code is resolved first, and unknown ones are listed and refused with nothing written.
+  - **Approve** locks the budget. A revision supersedes its original and takes its default.
+  - `GET {id}/last-year` feeds "spread by last year's shape".
+
+  The financial year start comes from `IFinancialYearProvider`. Gateway route `/api/budgets`; menu row `1133`.
+
+  Frontend:
+  - `BudgetsPage` lists budgets and creates them.
+  - `BudgetGridPage` has accounts × 12 months with section subtotals and budgeted profit. A typed year total spreads evenly or by shape (`budget-math.ts`, worked in paise). It handles import and export, approve, revise, make-default and delete, and shows one month at a time below 640px.
+
+  Tests: `BudgetTests` (the done-when, revision supersedes, April-start actuals land in periods 1 and 12, unknown codes, parent and negative refused, one default per year, and the pure maths and sheet parsing) and `budget-math.spec.ts`.
 
 ### TK-109 · Budgets: budget against actual, and over-budget warnings
 - [ ] open

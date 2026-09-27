@@ -9573,6 +9573,24 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1133,
+                            Apps = 1,
+                            CanCreate = true,
+                            Code = "budgets",
+                            DisplayOrder = 22,
+                            Icon = "target",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "accounting",
+                            Name = "Budgets",
+                            ParentId = 106,
+                            RoutePath = "/accounting/budgets",
+                            SingularName = "Budget",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 123,
                             Apps = 1,
                             CanCreate = false,
@@ -13907,6 +13925,33 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1132,
                             Module = "reports",
                             PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 463,
+                            Action = "view",
+                            MenuId = 1133,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 464,
+                            Action = "edit",
+                            MenuId = 1133,
+                            Module = "accounting",
+                            PermissionCode = "accounting.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 465,
+                            Action = "approve",
+                            MenuId = 1133,
+                            Module = "accounting",
+                            PermissionCode = "accounting.approve",
                             Version = 0u
                         });
                 });

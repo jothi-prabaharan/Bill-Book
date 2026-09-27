@@ -696,6 +696,48 @@ Opening a project shows every ledger row tagged with it, with its account, its d
 
 Reading projects needs **projects.view**, and creating and saving them need **projects.create** and **projects.edit**. Owner, Administrator and Accountant hold all three; Sales and Viewer can read.
 
+# Budgets
+
+**Status: partial.** Budgets can be entered, imported, exported, approved and revised. The budget against actual report and the over-budget warnings on documents come in a later release.
+
+**Accounting › Budgets** lists the branch's budgets, newest year first. A budget is a year of monthly amounts per account, running from the first month of the branch's financial year. Amounts are in the base currency and **entered as positive figures** in each account's own direction: rent of 30,000 is 30,000, and sales of 1,00,000 are 1,00,000. A contra account such as sales returns is positive too.
+
+## Starting a budget
+
+**New budget** asks for a name, the year the financial year starts in, and what to start from:
+
+- **A blank budget.**
+- **Last year's actuals**: the income and expense movements posted in the previous financial year, month by month. You can raise or lower them by a percentage, for everything at once or separately for income and expenses. A month where refunds outran spending starts at zero.
+- **A copy of another budget.** Copying a budget that is by project into one that is not adds the projects together.
+
+Tick **Budget by project** to give each line a project, so each job has a budget of its own.
+
+## The grid
+
+Opening a budget shows its accounts down the side and twelve months across, grouped into income, expenses and any balance-sheet accounts, with subtotals and the **budgeted profit** at the bottom. A draft that is not by project lists every income and expense account ready to type into. **Add a line** adds any other account, or a project line on a budget by project.
+
+- Type into a month, or type a **year total** and it spreads across the months. Choose **evenly**, or **by last year's shape**, which follows how last year's actuals fell month by month. An account with no actuals last year spreads evenly.
+- Only accounts with no accounts beneath them can be budgeted. A parent account's figure would be counted twice.
+- **Save** stores the grid. Months left at zero are not stored.
+
+On a phone the grid shows **one month at a time**. Choose the month at the top.
+
+## Import and export
+
+**Export CSV** and **Export XLSX** download the budget in this layout: account code, then project code on a budget by project, then account name, one column per month and a total. **Import** reads the same layout back into a draft, replacing its lines, so you can plan in a spreadsheet:
+
+- The account name and total columns are ignored. Commas in amounts are fine, Indian grouping included.
+- If the file names an account or project code the branch does not have, nothing is imported, and every unknown code is listed.
+- A negative amount, or a word where an amount belongs, refuses the file and names its row and month.
+
+## Approving and revising
+
+**Approve and lock** approves a draft. Tick **Make it the branch's budget for the year** to make it the one reports and warnings use. A branch has at most one such budget per year. An approved budget cannot be edited, imported into or deleted.
+
+To change an approved budget, give a reason and choose **Revise**. That copies it into a new draft. The approved budget stays in force until the revision is approved. Then the old one is marked **Superseded**, and the revision takes over as the branch's budget if the old one was. Superseded budgets are kept as history.
+
+Reading budgets needs **accounting.view**. Entering, importing and deleting a draft need **accounting.edit**. Approving, revising and choosing the branch's budget need **accounting.approve**.
+
 # Opening balances
 
 **Accounting › Opening balances**

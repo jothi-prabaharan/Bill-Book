@@ -1,0 +1,29 @@
+.hint { color: #6a6f80; font-size: .9rem; }
+.error { color: #c0392b; }
+.ok { color: #187a4b; }
+.empty { color: #6a6f80; }
+h2 { font-size: 1.1rem; margin: 0; }
+
+.toolbar, .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 1rem 0; }
+.editor { display: grid; gap: .8rem; max-width: 56rem; margin: 1rem 0; padding: 1rem; border: 1px solid #dde1ea; border-radius: 8px; }
+.row { display: flex; flex-wrap: wrap; gap: .75rem; }
+.grow { flex: 1; min-width: 12rem; }
+.narrow { width: 10rem; }
+
+button { padding: .55rem 1rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
+button.secondary { background: #eceef3; color: #33384a; }
+button:disabled { opacity: .6; cursor: default; }
+
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; max-width: 56rem; }
+.card { border: 1px solid #dde1ea; border-radius: 8px; padding: .75rem 1rem; cursor: pointer; background: #fff; }
+.card:hover, .card:focus-visible { border-color: #3557d6; outline: none; }
+.card__title { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.card__meta { display: flex; flex-wrap: wrap; gap: .25rem 1rem; color: #6a6f80; font-size: .85rem; margin-top: .25rem; }
+.pill { background: #e7f5ee; color: #187a4b; border-radius: 999px; padding: .05rem .5rem; font-size: .75rem; }
+.pill.draft { background: #fff7e6; color: #9a6400; }
+.pill.old { background: #eceef3; color: #6a6f80; }
+.pill.default { background: #e8edff; color: #3557d6; }
+
+@media (max-width: 480px) {
+  .narrow { width: 100%; }
+}

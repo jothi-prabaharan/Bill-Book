@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Accounting › Budgets.** Plan a financial year month by month, account by account, and optionally by project. You can start blank, from last year's actuals adjusted by a percentage, or from another budget. A typed year total spreads evenly or by last year's shape, and on a phone the grid shows one month at a time. Import and export use CSV or XLSX in the same layout, and an import naming unknown account codes lists them and changes nothing. An approved budget is locked. Revising it makes a new draft, and approving the draft supersedes the old budget. See [Accounts](accounting#budgets).
 - **Added**: **Project reports.** Four reports under **Reports › Projects**:
   - **Project Profitability**: revenue, cost, profit and margin from each project's ledger rows.
   - **Project Budget vs Actual**: the cost budget and budget hours against what was spent and logged.

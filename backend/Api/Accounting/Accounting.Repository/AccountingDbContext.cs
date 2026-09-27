@@ -88,6 +88,8 @@ public class AccountingDbContext : TenantDbContext
     public DbSet<AccountingApprovalStep> ApprovalSteps => Set<AccountingApprovalStep>();
 
     public DbSet<Project> Projects => Set<Project>();
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<BudgetLine> BudgetLines => Set<BudgetLine>();
 
     public DbSet<ProjectTask> ProjectTasks => Set<ProjectTask>();
 
@@ -984,6 +986,41 @@ public class AccountingDbContext : TenantDbContext
                 "chk_transactionratio_amount",
                 "\"Amount\" > 0"
             ));
+        });
+
+        // ---- Budgets (TK-108) ----------------------------------------------
+
+        modelBuilder.Entity<Budget>(b =>
+        {
+            b.HasKey(e => e.BudgetId);
+            b.HasIndex(e => new { e.OrgId, e.FinancialYearStart, e.Status });
+
+            // One approved default per branch and year.
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.FinancialYearStart })
+                .IsUnique()
+                .HasFilter("\"IsBranchDefault\" = true")
+                .HasDatabaseName("IX_Budgets_BranchDefault");
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+            b.HasOne<Budget>().WithMany().HasForeignKey(e => e.RevisionOf).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t => t.HasCheckConstraint("chk_budgets_default_approved", "NOT \"IsBranchDefault\" OR \"Status\" = 'Approved'"));
+        });
+
+        modelBuilder.Entity<BudgetLine>(b =>
+        {
+            b.HasKey(e => e.BudgetLineId);
+            b.HasIndex(e => new { e.BudgetId, e.AccountId, e.ProjectId, e.Period })
+                .IsUnique()
+                .AreNullsDistinct(false);
+            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            b.HasOne<Budget>().WithMany().HasForeignKey(e => e.BudgetId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne<Account>().WithMany().HasForeignKey(e => e.AccountId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("chk_budgetlines_period", "\"Period\" BETWEEN 1 AND 12");
+                t.HasCheckConstraint("chk_budgetlines_amount", "\"Amount\" >= 0");
+            });
         });
 
         // ---- Projects (TK-104) --------------------------------------------

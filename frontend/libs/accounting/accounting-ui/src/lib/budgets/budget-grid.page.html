@@ -1,0 +1,216 @@
+<p class="back"><a routerLink="/accounting/budgets">‹ Budgets</a></p>
+<h1>{{ title() }}</h1>
+
+@if (budget(); as b) {
+  <div class="status">
+    <span class="pill" [class.draft]="b.status === 'Draft'" [class.old]="b.status === 'Superseded'">{{ b.status }}</span>
+    @if (b.isBranchDefault) {
+      <span class="pill default">Branch budget</span>
+    }
+    @if (b.byProject) {
+      <span class="pill old">By project</span>
+    }
+    @if (b.revisionReason) {
+      <span class="muted">Revision: {{ b.revisionReason }}</span>
+    }
+  </div>
+
+  @if (message(); as text) {
+    <p [class]="messageIsError() ? 'error' : 'ok'" role="status">{{ text }}</p>
+  }
+  @if (unknownCodes().length > 0) {
+    <ul class="unknown">
+      @for (code of unknownCodes(); track code) {
+        <li>{{ code }}</li>
+      }
+    </ul>
+  }
+
+  <div class="toolbar">
+    @if (editable()) {
+      <div class="name">
+        <bb-text-input label="Name" name="name" [(ngModel)]="name" maxlength="100" (ngModelChange)="dirty.set(true)" />
+      </div>
+      <label class="spread">
+        Typing a year total spreads it
+        <select [ngModel]="spreadMode()" (ngModelChange)="spreadMode.set($event)" name="spreadMode">
+          <option value="even">evenly</option>
+          <option value="shape">by last year's shape</option>
+        </select>
+      </label>
+      <button type="button" (click)="save()" [disabled]="busy() || !dirty()">Save</button>
+      <label class="file secondary">
+        Import CSV or XLSX
+        <input type="file" accept=".csv,.xlsx" (change)="importFile($event)" [disabled]="busy()" />
+      </label>
+    }
+    <button type="button" class="secondary" (click)="exportAs('csv')" [disabled]="busy()">Export CSV</button>
+    <button type="button" class="secondary" (click)="exportAs('xlsx')" [disabled]="busy()">Export XLSX</button>
+  </div>
+
+  <!-- Wide screens: accounts down, twelve months across. -->
+  <div class="grid-wrap wide">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th scope="col" class="account">Account</th>
+          @for (label of labels(); track $index) {
+            <th scope="col" class="num">{{ label }}</th>
+          }
+          <th scope="col" class="num">Year</th>
+          @if (editable()) {
+            <th scope="col"><span class="sr-only">Remove</span></th>
+          }
+        </tr>
+      </thead>
+      @for (section of sections(); track section.label) {
+        <tbody>
+          <tr class="section">
+            <th scope="rowgroup" [attr.colspan]="editable() ? 15 : 14">{{ section.label }}</th>
+          </tr>
+          @for (item of section.rows; track item.row.key) {
+            <tr>
+              <th scope="row" class="account">
+                {{ item.row.accountCode }} · {{ item.row.accountName }}
+                @if (item.row.projectCode) {
+                  <span class="muted">· {{ item.row.projectCode }}</span>
+                }
+              </th>
+              @for (amount of item.row.amounts; track $index; let m = $index) {
+                <td class="num">
+                  @if (editable()) {
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [attr.aria-label]="item.row.accountName + ' ' + labels()[m]"
+                      [ngModel]="amount || null"
+                      [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                      (ngModelChange)="setCell(item.index, m, $event)"
+                    />
+                  } @else {
+                    {{ amount ? amountText(amount) : '' }}
+                  }
+                </td>
+              }
+              <td class="num strong">
+                @if (editable()) {
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="total"
+                    [attr.aria-label]="item.row.accountName + ' year total'"
+                    [ngModel]="rowTotalOf(item.row) || null"
+                    [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                    (ngModelChange)="setTotal(item.index, $event)"
+                  />
+                } @else {
+                  {{ amountText(rowTotalOf(item.row)) }}
+                }
+              </td>
+              @if (editable()) {
+                <td>
+                  <button type="button" class="link" (click)="removeLine(item.index)" [attr.aria-label]="'Remove ' + item.row.accountName">×</button>
+                </td>
+              }
+            </tr>
+          }
+          <tr class="subtotal">
+            <th scope="row">{{ section.label }} total</th>
+            @for (value of section.months; track $index) {
+              <td class="num">{{ amountText(value) }}</td>
+            }
+            <td class="num strong">{{ amountText(section.total) }}</td>
+            @if (editable()) {
+              <td></td>
+            }
+          </tr>
+        </tbody>
+      }
+      <tfoot>
+        <tr>
+          <th scope="row">Budgeted profit</th>
+          @for (value of profit().months; track $index) {
+            <td class="num">{{ amountText(value) }}</td>
+          }
+          <td class="num strong">{{ amountText(profit().total) }}</td>
+          @if (editable()) {
+            <td></td>
+          }
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Phones: one month at a time. -->
+  <div class="narrow-view">
+    <bb-select label="Month" name="month" [options]="monthOptions()" [clearable]="false" [ngModel]="month()" (ngModelChange)="setMonth($event)" />
+    @for (section of sections(); track section.label) {
+      <h2>{{ section.label }} <span class="muted">{{ amountText(section.months[month()]) }}</span></h2>
+      <ul class="cards">
+        @for (item of section.rows; track item.row.key) {
+          <li class="card">
+            <span class="card__name">
+              {{ item.row.accountCode }} · {{ item.row.accountName }}
+              @if (item.row.projectCode) {
+                <span class="muted">· {{ item.row.projectCode }}</span>
+              }
+            </span>
+            @if (editable()) {
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                [attr.aria-label]="item.row.accountName + ' ' + labels()[month()]"
+                [ngModel]="item.row.amounts[month()] || null"
+                [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                (ngModelChange)="setCell(item.index, month(), $event)"
+              />
+            } @else {
+              <strong>{{ amountText(item.row.amounts[month()]) }}</strong>
+            }
+            <span class="muted">Year {{ amountText(rowTotalOf(item.row)) }}</span>
+          </li>
+        }
+      </ul>
+    }
+    <p class="strong">Budgeted profit {{ amountText(profit().months[month()]) }} · year {{ amountText(profit().total) }}</p>
+  </div>
+
+  @if (editable()) {
+    <div class="add">
+      <div class="field grow">
+        <bb-select label="Add a line" name="addAccount" [options]="addableAccounts()" [(ngModel)]="addAccountId" />
+      </div>
+      @if (b.byProject) {
+        <div class="field grow">
+          <bb-select label="Project" name="addProject" placeholder="No project" [options]="projectOptions()" [(ngModel)]="addProjectId" />
+        </div>
+      }
+      <button type="button" class="secondary" (click)="addLine()" [disabled]="!addAccountId">Add</button>
+    </div>
+  }
+
+  <div class="lifecycle">
+    @if (b.status === 'Draft' && canApprove()) {
+      <bb-checkbox text="Make it the branch's budget for the year" name="makeDefault" [(ngModel)]="makeDefault" />
+      <button type="button" (click)="approve()" [disabled]="busy() || dirty()">Approve and lock</button>
+      @if (dirty()) {
+        <span class="muted">Save your changes first.</span>
+      }
+    }
+    @if (b.status === 'Draft' && editable()) {
+      <button type="button" class="secondary danger" (click)="remove()" [disabled]="busy()">Delete draft</button>
+    }
+    @if (b.status === 'Approved' && canApprove()) {
+      @if (!b.isBranchDefault) {
+        <button type="button" class="secondary" (click)="setDefault()" [disabled]="busy()">Make it the branch's budget</button>
+      }
+      <div class="field grow">
+        <bb-text-input label="Reason for revising" name="reviseReason" [(ngModel)]="reviseReason" maxlength="500" />
+      </div>
+      <button type="button" (click)="revise()" [disabled]="busy()">Revise</button>
+    }
+  </div>
+}
