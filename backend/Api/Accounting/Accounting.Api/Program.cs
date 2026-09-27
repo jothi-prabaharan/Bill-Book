@@ -82,6 +82,7 @@ builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<TimeEntryService>();
 builder.Services.AddScoped<ProjectBillingService>();
 builder.Services.AddScoped<BudgetService>();
+builder.Services.AddScoped<BudgetCheckService>();
 
 // Approval chains for spend money and manual journals (TK-101): Master
 // resolves them, this service stores the steps.
@@ -141,6 +142,14 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 // database. Cached for hours: it changes about never, and an HTTP call on every
 // code allocation would be absurd.
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// The branch's settings, for which budget figure an over-budget warning
+// compares against (TK-109). Cached like the financial year.
+builder.Services.AddHttpClient<IBranchSettingsProvider, HttpBranchSettingsProvider>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })

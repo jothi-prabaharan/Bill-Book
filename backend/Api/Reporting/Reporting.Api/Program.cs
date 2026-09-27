@@ -205,6 +205,11 @@ builder.Services.AddScoped<IReportSource, ProjectBudgetSource>();
 builder.Services.AddScoped<IReportSource, ProjectUnbilledSource>();
 builder.Services.AddScoped<IReportSource, ProjectTimeByUserSource>();
 
+// Budget reports (TK-109)
+builder.Services.AddScoped<IReportSource, BudgetAgainstActualSource>();
+builder.Services.AddScoped<IReportSource, BudgetAgainstActualByProjectSource>();
+builder.Services.AddScoped<IReportSource, BudgetMonthlyTrendSource>();
+
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
 builder.Services.AddScoped<SavedViewService>();

@@ -34,6 +34,8 @@ interface OrganizationSettings {
   /** When the branch starts e-invoicing (ISO date), or null when it does not (TK-91). */
   eInvoiceFrom: string | null;
   ewayBillEnabled: boolean;
+  /** Over-budget warnings compare the year to date instead of the month (TK-109). */
+  budgetWarningYearToDate: boolean;
   gstin: string | null;
   pan: string | null;
   tan: string | null;
@@ -129,6 +131,21 @@ export class OrganizationSettingsPage implements OnInit {
     { value: 'no', label: 'Not from this product' },
     { value: 'yes', label: 'Generate e-way bills here' },
   ];
+
+  protected readonly budgetWarningOptions: BbSelectOption<string>[] = [
+    { value: 'month', label: "The month's budget" },
+    { value: 'ytd', label: 'The budget for the year to date' },
+  ];
+
+  protected get budgetWarning(): string {
+    return this.form?.budgetWarningYearToDate ? 'ytd' : 'month';
+  }
+
+  protected set budgetWarning(value: string) {
+    if (this.form) {
+      this.form.budgetWarningYearToDate = value === 'ytd';
+    }
+  }
 
   protected get ewayBills(): string {
     return this.form?.ewayBillEnabled ? 'yes' : 'no';

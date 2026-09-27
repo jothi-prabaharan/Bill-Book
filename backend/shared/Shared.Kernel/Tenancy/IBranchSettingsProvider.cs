@@ -35,7 +35,10 @@ public sealed record BranchSettings(
     DateOnly? EInvoiceFrom = null,
 
     /// <summary>Whether the branch generates e-way bills from the product (TK-91).</summary>
-    bool EwayBillEnabled = false);
+    bool EwayBillEnabled = false,
+
+    /// <summary>Over-budget warnings compare the year to date instead of the month (TK-109).</summary>
+    bool BudgetWarningYearToDate = false);
 
 /// <summary>
 /// Reads the settings from Platform's org context, cached per organization.
@@ -94,7 +97,8 @@ public sealed class HttpBranchSettingsProvider : IBranchSettingsProvider
                 stateCode,
                 context.DiscountBeforeTax,
                 EInvoiceFrom: context.EInvoiceFrom,
-                EwayBillEnabled: context.EwayBillEnabled);
+                EwayBillEnabled: context.EwayBillEnabled,
+                BudgetWarningYearToDate: context.BudgetWarningYearToDate);
             _cache.Set(key, settings, TimeSpan.FromHours(6));
             return settings;
         }
@@ -107,5 +111,5 @@ public sealed class HttpBranchSettingsProvider : IBranchSettingsProvider
 
     /// <summary>Only the required fields are read.</summary>
     private sealed record OrgContextDto(
-        string? StateCode, bool DiscountBeforeTax, DateOnly? EInvoiceFrom, bool EwayBillEnabled);
+        string? StateCode, bool DiscountBeforeTax, DateOnly? EInvoiceFrom, bool EwayBillEnabled, bool BudgetWarningYearToDate);
 }

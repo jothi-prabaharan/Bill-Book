@@ -9591,6 +9591,57 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1134,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "r-budget-vs-actual",
+                            DisplayOrder = 2,
+                            Icon = "target",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
+                            Name = "Budget vs Actual",
+                            ParentId = 108,
+                            RoutePath = "/reports/budget-vs-actual",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1135,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "r-budget-vs-actual-by-project",
+                            DisplayOrder = 3,
+                            Icon = "target",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
+                            Name = "Budget vs Actual by Project",
+                            ParentId = 108,
+                            RoutePath = "/reports/budget-vs-actual-by-project",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1136,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "r-budget-monthly-trend",
+                            DisplayOrder = 4,
+                            Icon = "target",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
+                            Name = "Budget Monthly Trend",
+                            ParentId = 108,
+                            RoutePath = "/reports/budget-monthly-trend",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 123,
                             Apps = 1,
                             CanCreate = false,
@@ -13953,6 +14004,60 @@ namespace Master.Repository.Migrations.Admin
                             Module = "accounting",
                             PermissionCode = "accounting.approve",
                             Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 466,
+                            Action = "view",
+                            MenuId = 1134,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 467,
+                            Action = "export",
+                            MenuId = 1134,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 468,
+                            Action = "view",
+                            MenuId = 1135,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 469,
+                            Action = "export",
+                            MenuId = 1135,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 470,
+                            Action = "view",
+                            MenuId = 1136,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 471,
+                            Action = "export",
+                            MenuId = 1136,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
                         });
                 });
 
@@ -14083,6 +14188,9 @@ namespace Master.Repository.Migrations.Admin
                         .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
+
+                    b.Property<bool>("BudgetWarningYearToDate")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Cin")
                         .HasMaxLength(21)

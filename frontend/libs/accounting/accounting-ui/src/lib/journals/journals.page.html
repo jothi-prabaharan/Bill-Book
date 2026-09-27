@@ -6,6 +6,16 @@
   </div>
 </header>
 
+@if (budgetWarnings().length > 0) {
+  <div class="budget-warning" role="status">
+    Saved, but over budget:
+    <ul>
+      @for (warning of budgetWarnings(); track warning) {
+        <li>{{ warning }}</li>
+      }
+    </ul>
+  </div>
+}
 @if (message()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }

@@ -78,6 +78,7 @@ builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(cl
 builder.Services.AddScoped<GoodsReceiptService>();
 builder.Services.AddScoped<BillService>();
 builder.Services.AddScoped<BillBillingService>();
+builder.Services.AddScoped<BillBudgetCheck>();
 builder.Services.AddScoped<DebitNoteService>();
 
 // The due date a payment term implies. Asked rather than computed: the rule is
@@ -205,6 +206,13 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 // Which projects a line may name (TK-105): Accounting owns them.
 builder.Services.AddHttpClient<Shared.Kernel.Projects.IProjectDirectory, Shared.Kernel.Projects.HttpProjectDirectory>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// Whether a saved bill passes the branch's approved budget (TK-109): Accounting owns budgets.
+builder.Services.AddHttpClient<Shared.Kernel.Budgets.IBudgetCheckClient, Shared.Kernel.Budgets.HttpBudgetCheckClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
 })

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
+using Reporting.Repository.ReadModels;
 
 namespace Reporting.Api.Services.Sources;
 
@@ -43,27 +44,30 @@ public sealed class ProfitAndLossSource : ReportSource<ProfitAndLossRow>
     ];
 
     protected override IQueryable<ProfitAndLossRow> Build(
-        ReportParameters parameters, ReportingDbContext db)
-    {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        ReportParameters parameters, ReportingDbContext db) =>
+        Rows(db.Accounts, db.Ledger, parameters.Date("from"), parameters.Date("to"));
 
-        return from a in db.Accounts
-               where a.IsActive && (a.AccountTypeId == 4 || a.AccountTypeId == 5)
-               let legs = db.Ledger.Where(l =>
-                   l.AccountId == a.AccountId
-                   && (start == null || l.LedgerDate >= start)
-                   && (end == null || l.LedgerDate <= end))
-               select new ProfitAndLossRow
-               {
-                   AccountId = a.AccountId,
-                   AccountTypeId = a.AccountTypeId,
-                   AccountName = a.AccountName,
-                   NetAmount = a.AccountTypeId == 4 
-                       ? legs.Sum(l => l.CreditAmountBase) - legs.Sum(l => l.DebitAmountBase)
-                       : legs.Sum(l => l.DebitAmountBase) - legs.Sum(l => l.CreditAmountBase),
-               };
-    }
+    /// <summary>
+    /// The P&L's query over plain sets, so another report can be tested against
+    /// it: Budget vs Actual's actual column must be exactly these figures (TK-109).
+    /// </summary>
+    public static IQueryable<ProfitAndLossRow> Rows(
+        IQueryable<AccountRead> accounts, IQueryable<JournalLedgerRead> ledger, DateOnly? start, DateOnly? end) =>
+        from a in accounts
+        where a.IsActive && (a.AccountTypeId == 4 || a.AccountTypeId == 5)
+        let legs = ledger.Where(l =>
+            l.AccountId == a.AccountId
+            && (start == null || l.LedgerDate >= start)
+            && (end == null || l.LedgerDate <= end))
+        select new ProfitAndLossRow
+        {
+            AccountId = a.AccountId,
+            AccountTypeId = a.AccountTypeId,
+            AccountName = a.AccountName,
+            NetAmount = a.AccountTypeId == 4
+                ? legs.Sum(l => l.CreditAmountBase) - legs.Sum(l => l.DebitAmountBase)
+                : legs.Sum(l => l.DebitAmountBase) - legs.Sum(l => l.CreditAmountBase),
+        };
 
     protected override LambdaExpression DefaultOrder =>
         (Expression<Func<ProfitAndLossRow, long>>)(r => r.AccountId);

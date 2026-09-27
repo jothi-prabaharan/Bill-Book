@@ -95,6 +95,20 @@ A few rules decide what appears:
 
 The register does not record brand, outlet, warranty expiry, cost limit or averaging method, so these reports have no columns for them.
 
+## Budget reports
+
+Three reports compare the branch's budget with what was posted, under **Accounting** in the list and **Reports › Financial performance** in the menu. Each takes an **As at** date, today when left blank. Each also takes a **Budget**; when blank it uses the branch's approved budget for the year holding that date. With no budget, the reports still show the actuals.
+
+- **Budget vs Actual**: each income and expense account's budget and actual, with the variance, the variance as a percentage of the budget, and whether it is **Favourable** or **Adverse**. **Period** chooses the date's month, its financial quarter, or the year to date (`month`, `quarter` or `ytd`; year to date when blank). The period always covers whole months, because a budget is monthly.
+- **Budget vs Actual by Project**: the same for each project and account, for a budget kept by project.
+- **Budget Monthly Trend**: one row per account and month of the budget's year, with budget and actual side by side. Pivot on **Month** to lay the twelve months across.
+
+How the figures are worked out:
+
+- **Actual** is exactly what the Profit and Loss report shows for the same dates: income as credits less debits, expenses as debits less credits, over the branch's active income and expense accounts.
+- **Variance** is positive when it is good, meaning income above budget or expenses below it. So a positive variance is always favourable.
+- Budgets are entered as positive figures, so a contra account's budget is shown with the P&L's sign. Sales returns budgeted at 1,000 read −1,000, beside actual returns that read negative too.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

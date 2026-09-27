@@ -1109,6 +1109,8 @@ They are frozen the same way the base currency is: editable until the branch pos
 
 The same screen's **Statutory** tab holds the branch's **E-invoicing from** date and whether it generates **E-way bills**. Both need the branch's GSTIN. See [Invoices](invoices).
 
+The **Financial** tab's **Over-budget warnings compare** setting chooses whether a bill or journal that passes the approved budget is measured against **the month's budget** or **the budget for the year to date**. See [Budgets](accounting#budgets).
+
 # Print templates
 
 How your printed documents look — the letterhead, the columns, the terms at the foot — is a

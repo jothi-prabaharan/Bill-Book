@@ -225,3 +225,15 @@
   background: #fdeceb;
   color: #b42318;
 }
+
+/* Over-budget warnings (TK-109): the save stood, so this is a caution, not an error. */
+.banner--warn {
+  background: #fff7e6;
+  border-left: 3px solid #d68a00;
+  color: #6b4a00;
+
+  ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.25rem;
+  }
+}

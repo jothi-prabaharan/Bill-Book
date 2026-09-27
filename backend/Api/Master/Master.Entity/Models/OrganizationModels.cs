@@ -93,6 +93,9 @@ public class OrganizationListItem
 
     public bool EwayBillEnabled { get; set; }
 
+    /// <summary>Over-budget warnings compare the year to date instead of the month (TK-109).</summary>
+    public bool BudgetWarningYearToDate { get; set; }
+
     /// <summary>Provisioning, Active, Suspended — a branch is only usable once Active.</summary>
     public string Status { get; set; } = null!;
 
@@ -236,6 +239,9 @@ public class SaveOrganizationRequest
 
     /// <summary>Whether the branch generates e-way bills from the product. Needs the branch's GSTIN.</summary>
     public bool EwayBillEnabled { get; set; }
+
+    /// <summary>Over-budget warnings compare the year to date instead of the month (TK-109).</summary>
+    public bool BudgetWarningYearToDate { get; set; }
 }
 
 public enum SaveOrganizationOutcome

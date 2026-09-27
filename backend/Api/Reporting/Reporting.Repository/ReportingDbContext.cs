@@ -159,6 +159,10 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<ProjectMilestoneRead> ProjectMilestones => Set<ProjectMilestoneRead>();
     public DbSet<TimeEntryRead> TimeEntries => Set<TimeEntryRead>();
 
+    // Budgets (acc), for the budget reports (TK-109).
+    public DbSet<BudgetRead> Budgets => Set<BudgetRead>();
+    public DbSet<BudgetLineRead> BudgetLines => Set<BudgetLineRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -379,6 +383,10 @@ public class ReportingDbContext : TenantDbContext
         MapRead<ProjectMemberRead>(modelBuilder, "ProjectMembers", "acc", e => e.ProjectMemberId);
         MapRead<ProjectMilestoneRead>(modelBuilder, "ProjectMilestones", "acc", e => e.ProjectMilestoneId);
         MapRead<TimeEntryRead>(modelBuilder, "TimeEntries", "acc", e => e.TimeEntryId);
+
+        // Budgets (acc, TK-109)
+        MapRead<BudgetRead>(modelBuilder, "Budgets", "acc", e => e.BudgetId);
+        MapRead<BudgetLineRead>(modelBuilder, "BudgetLines", "acc", e => e.BudgetLineId);
     }
 
     private static void MapRead<TEntity>(

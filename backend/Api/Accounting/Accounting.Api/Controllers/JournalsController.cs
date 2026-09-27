@@ -2,6 +2,7 @@ using Accounting.Api.Services;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Budgets;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
 
@@ -45,25 +46,28 @@ public sealed class JournalsController : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] SaveJournalRequest request, CancellationToken ct)
+        [FromBody] SaveJournalRequest request, [FromServices] BudgetCheckService budgets, CancellationToken ct)
     {
         SaveJournalResult result = await _journals.CreateAsync(request, ct);
+        List<string> warnings = result.Outcome == SaveJournalOutcome.Ok ? await BudgetWarningsAsync(request, budgets, ct) : [];
 
         return Respond(result, () => CreatedAtAction(
             nameof(Get),
             new { journalId = result.JournalId },
-            new { journalId = result.JournalId }));
+            new { journalId = result.JournalId, warnings }));
     }
 
     [HttpPut("{journalId:long}")]
     public async Task<IActionResult> Update(
-        long journalId, [FromBody] SaveJournalRequest request, CancellationToken ct)
+        long journalId, [FromBody] SaveJournalRequest request, [FromServices] BudgetCheckService budgets, CancellationToken ct)
     {
         SaveJournalResult result = await _journals.UpdateAsync(journalId, request, ct);
+        List<string> warnings = result.Outcome == SaveJournalOutcome.Ok ? await BudgetWarningsAsync(request, budgets, ct) : [];
 
-        // An edit that took the journal out of approval says so (TK-101).
-        return Respond(result, () => result.Detail is string detail
-            ? Ok(new MessageResponse { Message = detail })
+        // An edit that took the journal out of approval says so (TK-101), and
+        // one that passes the budget says that too (TK-109).
+        return Respond(result, () => result.Detail is not null || warnings.Count > 0
+            ? Ok(new { message = result.Detail, warnings })
             : NoContent());
     }
 
@@ -88,6 +92,25 @@ public sealed class JournalsController : ControllerBase
     [HttpDelete("{journalId:long}")]
     public async Task<IActionResult> Delete(long journalId, CancellationToken ct) =>
         Respond(await _journals.DeleteAsync(journalId, ct), NoContent);
+
+    /// <summary>
+    /// Whether the saved lines pass the branch's approved budget: each line's
+    /// debit less credit, in base currency. The save already stands; these are
+    /// warnings the form shows (TK-109).
+    /// </summary>
+    private static Task<List<string>> BudgetWarningsAsync(SaveJournalRequest request, BudgetCheckService budgets, CancellationToken ct)
+    {
+        decimal rate = request.ExchangeRate is decimal r && r > 0m ? r : 1m;
+
+        return budgets.WarningsAsync(request.JournalDate, request.Lines.Select(l => new BudgetSpendLine
+        {
+            AccountId = l.AccountId,
+            ProjectId = l.ProjectId,
+            Amount = rate == 1m
+                ? l.DebitAmount - l.CreditAmount
+                : Math.Round((l.DebitAmount - l.CreditAmount) / rate, 2, MidpointRounding.AwayFromZero),
+        }), ct);
+    }
 
     private IActionResult Respond(SaveJournalResult result, Func<IActionResult> onOk) =>
         result.Outcome switch

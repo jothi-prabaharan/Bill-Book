@@ -54,6 +54,7 @@ public sealed class OrgContextService
                 o.PostalCode,
                 o.EInvoiceFrom,
                 o.EwayBillEnabled,
+                o.BudgetWarningYearToDate,
                 o.PhoneNumber,
                 o.Email,
                 StateCode = s != null ? s.StateCode : null,
@@ -162,6 +163,7 @@ public sealed class OrgContextService
             PostalCode = row.PostalCode,
             EInvoiceFrom = row.EInvoiceFrom,
             EwayBillEnabled = row.EwayBillEnabled,
+            BudgetWarningYearToDate = row.BudgetWarningYearToDate,
             PhoneNumber = row.PhoneNumber,
             Email = row.Email,
         };

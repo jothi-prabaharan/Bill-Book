@@ -186,4 +186,11 @@ public class Organization : AuditableEntity
 
     /// <summary>Whether this branch generates e-way bills from the product (TK-91).</summary>
     public bool EwayBillEnabled { get; set; }
+
+    /// <summary>
+    /// Whether an over-budget warning compares the year to date rather than the
+    /// month (TK-109). The warning never blocks a save; this only decides which
+    /// budget figure it is measured against.
+    /// </summary>
+    public bool BudgetWarningYearToDate { get; set; }
 }

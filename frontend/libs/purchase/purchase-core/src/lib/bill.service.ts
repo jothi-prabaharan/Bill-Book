@@ -173,15 +173,17 @@ export class BillService {
     return firstValueFrom(this.http.get<BillView>(`${this.apiUrl}/${billId}`));
   }
 
-  create(request: SaveBillRequest): Promise<{ billId: number }> {
+  /** Creates a draft. `warnings` name expense accounts the bill takes past the approved budget (TK-109). */
+  create(request: SaveBillRequest): Promise<{ billId: number; warnings?: string[] }> {
     return firstValueFrom(
-      this.http.post<{ billId: number }>(this.apiUrl, request),
+      this.http.post<{ billId: number; warnings?: string[] }>(this.apiUrl, request),
     );
   }
 
-  update(billId: number, request: SaveBillRequest): Promise<void> {
+  /** Saves a draft. The body is empty unless there is something to say: a return from approval, or budget warnings. */
+  update(billId: number, request: SaveBillRequest): Promise<{ message?: string | null; warnings?: string[] } | null> {
     return firstValueFrom(
-      this.http.put<void>(`${this.apiUrl}/${billId}`, request),
+      this.http.put<{ message?: string | null; warnings?: string[] } | null>(`${this.apiUrl}/${billId}`, request),
     );
   }
 

@@ -232,6 +232,19 @@
       </div>
     </div>
 
+    <div class="fields">
+      <div class="field">
+        <bb-select
+          label="Over-budget warnings compare"
+          hint="A bill or journal that takes an expense account past the approved budget is saved with a warning. This chooses which budget figure it is measured against."
+          name="budgetWarning"
+          [options]="budgetWarningOptions"
+          [clearable]="false"
+          [(ngModel)]="budgetWarning"
+        />
+      </div>
+    </div>
+
     <p class="hint">
       Which currencies this branch trades in is set on Settings › Currencies;
       number formats and default terms on Settings › Configuration.

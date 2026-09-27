@@ -2183,15 +2183,29 @@ The build cards each design in section E produced. Each design section in `docs/
   Tests: `BudgetTests` (the done-when, revision supersedes, April-start actuals land in periods 1 and 12, unknown codes, parent and negative refused, one default per year, and the pure maths and sheet parsing) and `budget-math.spec.ts`.
 
 ### TK-109 · Budgets: budget against actual, and over-budget warnings
-- [~] working (Claude Opus 5.5) — since 2026-09-27
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
 - **Issue:** [#97](https://github.com/jothi-prabaharan/Bill-Book/issues/97)
 - **Lanes:** L-RPT, L-ACC, L-ACC-UI · **Depends on:** TK-108 · **Decision:** —
 - **Where:** `Reporting.Api/Services/Sources`, the P&L source's sign rules.
 - **Sub-tasks:**
-  - [ ] Report sources: budget against actual (month, quarter, YTD), by project, monthly trend; favourable or adverse by account type.
-  - [ ] A warning on bill, spend-money and journal saves that pass the approved budget (month or YTD, a branch setting).
-  - [ ] Test: actuals equal the P&L's for the same period; an expense over budget warns and still saves.
+  - [x] Report sources: budget against actual (month, quarter, YTD), by project, monthly trend; favourable or adverse by account type.
+  - [x] A warning on bill, spend-money and journal saves that pass the approved budget (month or YTD, a branch setting). Spend money has nothing to check; see As built.
+  - [x] Test: actuals equal the P&L's for the same period; an expense over budget warns and still saves.
 - **Done when:** the budget-against-actual report's actual column matches the P&L for the same period.
+- **As built:**
+  - **Reports.** Three sources in `Reporting.Api/Services/Sources/BudgetReportsSources.cs`, all `accounting.view`: `budget-vs-actual`, `budget-vs-actual-by-project` and `budget-monthly-trend`. Their queries live in `BudgetReports`, over plain `IQueryable`s.
+    - The done-when holds by construction and by test. The P&L's query moved into `ProfitAndLossSource.Rows` (active income and expense accounts; income credit less debit, others debit less credit), and `BudgetReportTests` compares the actual column against that function rather than a copy of its rule.
+    - Budget amounts are negated for contra accounts so they sit on the P&L's sign. Variance is positive when favourable, whatever the type.
+    - The window is always whole months (`BudgetWindows.For`): the date's month, its financial quarter, or the year to date. The budget is the one named, or else the branch's approved default for the year.
+  - **`PrepareAsync`.** A new virtual hook on `ReportSource`, run before `Build`, because a source must look the budget up and `Build` cannot await.
+  - **Read models and menu.** `acc.Budgets` and `acc.BudgetLines` (snapshot-only migration). Catalog seeds `171`–`173`; menu items `1134`–`1136` under Financial performance.
+  - **Warnings.**
+    - `BudgetCheckService` compares each expense account (and project, on a budget by project) in the document with what is posted for the period plus the document. It warns only on accounts the budget names.
+    - The setting is `mst.Organizations.BudgetWarningYearToDate` (the Admin migration adds the column). It is carried to services in the org context as `BranchSettings.BudgetWarningYearToDate` and set on Settings › Organization › Financial.
+    - The journal controller checks after a successful create or update. Purchase's `BillBudgetCheck` reads the saved lines at taxable value × rate and asks `internal/budgets/check` through `Shared.Kernel.Budgets.HttpBudgetCheckClient`, which answers with no warnings rather than an error.
+    - Both return `warnings` in the save response, and the bill form and journal page show them.
+    - **Spend money is not wired, deliberately.** Every spend-money line posts to a payable, receivable or advance control account through `MoneyPostingMap`, never to an expense account, so no spend-money save can pass a budget.
+  - Tests: `BudgetReportTests` (P&L match, favourable and adverse, contra sign, month window, no budget, windows, by project, trend) and `BudgetTests` (an expense over the month's budget warns and the journal still saves; within budget; year to date against month; income and unbudgeted accounts; no approved budget).
 
 ### TK-110 · Custom fields: definitions and the shared validator
 - [ ] open

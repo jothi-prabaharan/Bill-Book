@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Budget against actual, and over-budget warnings.** Three new reports: **Budget vs Actual** (for the month, quarter or year to date), **Budget vs Actual by Project** and **Budget Monthly Trend**. Each marks a variance favourable or adverse by account type, and uses the Profit and Loss report's own actual figures. Saving a bill or a manual journal that takes an expense account past the approved budget still saves it, and shows a warning. Settings › Organization chooses whether that compares the month or the year to date. See [Reports](reports#budget-reports) and [Accounts](accounting#budgets).
 - **Added**: **Accounting › Budgets.** Plan a financial year month by month, account by account, and optionally by project. You can start blank, from last year's actuals adjusted by a percentage, or from another budget. A typed year total spreads evenly or by last year's shape, and on a phone the grid shows one month at a time. Import and export use CSV or XLSX in the same layout, and an import naming unknown account codes lists them and changes nothing. An approved budget is locked. Revising it makes a new draft, and approving the draft supersedes the old budget. See [Accounts](accounting#budgets).
 - **Added**: **Project reports.** Four reports under **Reports › Projects**:
   - **Project Profitability**: revenue, cost, profit and margin from each project's ledger rows.

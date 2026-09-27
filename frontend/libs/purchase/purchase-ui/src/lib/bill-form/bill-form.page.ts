@@ -95,6 +95,15 @@ export class BillFormPage {
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
+  /**
+   * Expense accounts the last save took past the approved budget (TK-109).
+   * A new bill's arrive through navigation state, because saving it moves to
+   * the bill's own route and a new instance of this page.
+   */
+  protected readonly budgetWarnings = signal<string[]>(
+    (this.router.getCurrentNavigation()?.extras.state?.['budgetWarnings'] as string[] | undefined) ?? [],
+  );
+
   protected readonly picker = signal<Picker>('none');
   protected readonly pickerRows = signal<readonly LookupRow[]>([]);
   protected readonly pickerLoading = signal(false);
@@ -513,11 +522,15 @@ export class BillFormPage {
 
       if (id === null) {
         const created = await this.bills.create(request);
-        await this.router.navigate(['../', created.billId], { relativeTo: this.route });
+        await this.router.navigate(['../', created.billId], {
+          relativeTo: this.route,
+          state: { budgetWarnings: created.warnings ?? [] },
+        });
       } else {
-        await this.bills.update(id, request);
+        const saved = await this.bills.update(id, request);
         await this.load(id);
-        this.notice.set('Saved.');
+        this.budgetWarnings.set(saved?.warnings ?? []);
+        this.notice.set(saved?.message ?? 'Saved.');
       }
     } catch (err) {
       this.error.set(this.messageFrom(err));

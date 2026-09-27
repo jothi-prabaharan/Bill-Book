@@ -125,6 +125,16 @@ public abstract class ReportSource<TRow> : IReportSource
     {
     }
 
+    /// <summary>
+    /// Reads whatever the query needs to know before it can be composed — the
+    /// budget a budget report is against, say — since <see cref="Build"/> cannot
+    /// await. Runs once per request, before <see cref="Build"/>. A source is
+    /// scoped to its request, so what this stores on the instance is that
+    /// request's (TK-109).
+    /// </summary>
+    protected virtual Task PrepareAsync(ReportParameters parameters, ReportingDbContext db, CancellationToken ct) =>
+        Task.CompletedTask;
+
     protected virtual Task FormatRowsAsync(IReadOnlyList<TRow> page, CancellationToken ct) =>
         Task.CompletedTask;
 
@@ -139,6 +149,7 @@ public abstract class ReportSource<TRow> : IReportSource
         CancellationToken ct)
     {
         ReportParameters parameters = new(request.Parameters);
+        await PrepareAsync(parameters, db, ct);
         IQueryable<TRow> query = Build(parameters, db);
 
         query = ReportQueryBuilder<TRow>.ApplyFilters(query, request.Filters, Map);

@@ -256,6 +256,9 @@ public class OrgContextResponse
 
     public bool EwayBillEnabled { get; set; }
 
+    /// <summary>Over-budget warnings compare the year to date instead of the month (TK-109). Accounting reads it here.</summary>
+    public bool BudgetWarningYearToDate { get; set; }
+
     /// <summary>The branch's phone and email, for the seller block the IRP asks for.</summary>
     public string? PhoneNumber { get; set; }
 

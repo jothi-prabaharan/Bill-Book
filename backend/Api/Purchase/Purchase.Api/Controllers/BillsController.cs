@@ -34,24 +34,36 @@ public sealed class BillsController : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] SaveBillRequest request, CancellationToken ct)
+        [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheck budget, CancellationToken ct)
     {
         BillResult result = await _bills.CreateAsync(request, ct);
+        if (result.Outcome != BillOutcome.Ok)
+        {
+            return Respond(result);
+        }
 
-        return result.Outcome == BillOutcome.Ok
-            ? CreatedAtAction(nameof(Get), new { billId = result.BillId }, result)
-            : Respond(result);
+        // The save stands either way; passing the budget is a warning the form shows (TK-109).
+        List<string> warnings = await budget.WarningsAsync(result.BillId, ct);
+        return CreatedAtAction(nameof(Get), new { billId = result.BillId },
+            new { result.Outcome, result.BillId, result.Detail, warnings });
     }
 
     [HttpPut("{billId:long}")]
     public async Task<IActionResult> Update(
-        long billId, [FromBody] SaveBillRequest request, CancellationToken ct)
+        long billId, [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheck budget, CancellationToken ct)
     {
         BillResult result = await _bills.UpdateAsync(billId, request, ct);
+        if (result.Outcome != BillOutcome.Ok)
+        {
+            return Respond(result);
+        }
 
-        // A detail on success says the edit returned it from approval (TK-100).
-        return result.Outcome != BillOutcome.Ok ? Respond(result)
-            : result.Detail is null ? NoContent() : Ok(new MessageResponse { Message = result.Detail });
+        // A detail on success says the edit returned it from approval (TK-100);
+        // warnings say it passes the budget (TK-109).
+        List<string> warnings = await budget.WarningsAsync(billId, ct);
+        return result.Detail is null && warnings.Count == 0
+            ? NoContent()
+            : Ok(new { message = result.Detail, warnings });
     }
 
     /// <summary>Clears the clearing account, or brings the goods in — and always owes the vendor.</summary>

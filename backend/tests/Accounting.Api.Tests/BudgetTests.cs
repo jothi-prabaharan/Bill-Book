@@ -4,6 +4,9 @@ using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Shared.Kernel.Budgets;
+using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 using Xunit;
 
@@ -204,6 +207,81 @@ public sealed class BudgetTests
         Assert.False((await h.Budgets.GetAsync(stretch, default))!.IsBranchDefault);
     }
 
+    // ---- over-budget warnings (TK-109) ------------------------------------------
+
+    /// <summary>TK-109's second case: an expense over budget warns, and the journal still saves.</summary>
+    [SkippableFact]
+    public async Task An_expense_over_this_months_budget_warns_and_the_journal_still_saves()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        await h.ApprovedRentBudgetAsync(10_000m);
+        await h.PostAsync(new DateOnly(2026, 4, 5), h.RentId, debit: 8_000m);
+
+        SaveJournalResult saved = await h.Journals.CreateAsync(h.RentJournal(new DateOnly(2026, 4, 20), 3_000m), default);
+        Assert.Equal(SaveJournalOutcome.Ok, saved.Outcome);
+
+        List<string> warnings = await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+            .WarningsAsync(new DateOnly(2026, 4, 20), [h.RentSpend(3_000m)], default);
+
+        Assert.Equal(["Rent is 1,000.00 over the Apr 2026 budget."], warnings);
+        h.Db.ChangeTracker.Clear();
+        Assert.True(await h.Db.Journals.AnyAsync(j => j.JournalId == saved.JournalId));
+    }
+
+    [SkippableFact]
+    public async Task Spending_within_the_month_does_not_warn()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        await h.ApprovedRentBudgetAsync(10_000m);
+        await h.PostAsync(new DateOnly(2026, 4, 5), h.RentId, debit: 8_000m);
+
+        Assert.Empty(await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+            .WarningsAsync(new DateOnly(2026, 4, 20), [h.RentSpend(2_000m)], default));
+    }
+
+    [SkippableFact]
+    public async Task The_year_to_date_setting_compares_the_year_rather_than_the_month()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        await h.ApprovedRentBudgetAsync(10_000m);
+        await h.PostAsync(new DateOnly(2026, 4, 5), h.RentId, debit: 18_000m);
+        DateOnly may = new(2026, 5, 10);
+
+        List<string> monthly = await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+            .WarningsAsync(may, [h.RentSpend(3_000m)], default);
+        List<string> yearToDate = await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: true))
+            .WarningsAsync(may, [h.RentSpend(3_000m)], default);
+
+        Assert.Empty(monthly);
+        Assert.Equal(["Rent is 1,000.00 over the budget for the year to May 2026."], yearToDate);
+    }
+
+    [SkippableFact]
+    public async Task Income_and_unbudgeted_accounts_never_warn()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        await h.ApprovedRentBudgetAsync(10_000m);
+
+        Assert.Empty(await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false)).WarningsAsync(
+            new DateOnly(2026, 4, 20),
+            [
+                new BudgetSpendLine { AccountId = h.SalesId, Amount = 1_000_000m },
+                new BudgetSpendLine { AccountId = h.ExpensesParentId, Amount = 1_000_000m },
+            ],
+            default));
+    }
+
+    [SkippableFact]
+    public async Task Without_an_approved_branch_budget_nothing_warns()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        long draft = await h.CreateAsync("Still a draft");
+        await h.Budgets.SaveAsync(draft, h.Rent(1m), default);
+
+        Assert.Empty(await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+            .WarningsAsync(new DateOnly(2026, 4, 20), [h.RentSpend(5_000m)], default));
+    }
+
     // ---- the pure parts ---------------------------------------------------------
 
     [Theory]
@@ -266,6 +344,8 @@ public sealed class BudgetTests
 
         public required LedgerPostingService Postings { get; init; }
 
+        public required JournalService Journals { get; init; }
+
         public required long RentId { get; init; }
 
         public required long SalesId { get; init; }
@@ -285,6 +365,28 @@ public sealed class BudgetTests
             Db.ChangeTracker.Clear();
             return created.BudgetId;
         }
+
+        /// <summary>An approved branch budget for 2026-27 with rent at <paramref name="monthly"/> every month.</summary>
+        public async Task ApprovedRentBudgetAsync(decimal monthly)
+        {
+            long id = await CreateAsync("Base");
+            Assert.Equal(BudgetOutcome.Ok, (await Budgets.SaveAsync(id, Rent(monthly), default)).Outcome);
+            Assert.Equal(BudgetOutcome.Ok, (await Budgets.ApproveAsync(id, makeDefault: true, Approver, default)).Outcome);
+            Db.ChangeTracker.Clear();
+        }
+
+        public BudgetSpendLine RentSpend(decimal amount) => new() { AccountId = RentId, Amount = amount };
+
+        public SaveJournalRequest RentJournal(DateOnly on, decimal amount) => new()
+        {
+            JournalDate = on,
+            Memo = "Rent",
+            Lines =
+            [
+                new SaveJournalLineRequest { AccountId = RentId, DebitAmount = amount },
+                new SaveJournalLineRequest { AccountId = BankId, CreditAmount = amount },
+            ],
+        };
 
         public SaveBudgetRequest Rent(decimal monthly) => new()
         {
@@ -322,6 +424,7 @@ public sealed class BudgetTests
             var sales = new Account { OrgId = orgId, AccountTypeId = 4, AccountCode = "4000", AccountName = "Sales", IsActive = true };
             var returns = new Account { OrgId = orgId, AccountTypeId = 4, IsContra = true, AccountCode = "4100", AccountName = "Sales returns", IsActive = true };
             var bank = new Account { OrgId = orgId, AccountTypeId = 1, AccountCode = "1020", AccountName = "Bank", IsActive = true };
+            db.NumberingSeries.AddRange(Repository.SeedData.NumberingSeriesSeed.Build(orgId));
             db.Accounts.AddRange(parent, sales, returns, bank);
             await db.SaveChangesAsync();
 
@@ -335,6 +438,15 @@ public sealed class BudgetTests
                 Db = db,
                 Budgets = new BudgetService(db, new StubFinancialYear(4), TimeProvider.System),
                 Postings = new LedgerPostingService(db, tenant, new StubBaseCurrency()),
+                Journals = new JournalService(
+                    db,
+                    new LedgerPostingService(db, tenant, new StubBaseCurrency()),
+                    new PeriodLockService(db, new StubCurrentUser()),
+                    new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
+                    new StubBaseCurrency(),
+                    new StubCurrentUser(Approver),
+                    tenant,
+                    TimeProvider.System),
                 RentId = rent.AccountId,
                 SalesId = sales.AccountId,
                 ReturnsId = returns.AccountId,
@@ -345,4 +457,11 @@ public sealed class BudgetTests
 
         public ValueTask DisposeAsync() => Db.DisposeAsync();
     }
+}
+
+/// <summary>Branch settings with only the budget warning scope that matters here.</summary>
+internal sealed class StubBranchSettings(bool yearToDate) : IBranchSettingsProvider
+{
+    public Task<BranchSettings?> GetSettingsAsync(CancellationToken ct = default) =>
+        Task.FromResult<BranchSettings?>(new BranchSettings("33", DiscountBeforeTax: true, BudgetWarningYearToDate: yearToDate));
 }

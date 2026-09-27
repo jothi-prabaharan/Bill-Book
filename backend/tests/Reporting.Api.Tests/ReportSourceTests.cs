@@ -124,6 +124,10 @@ public class ReportSourceTests
     private static readonly ProjectUnbilledSource ProjectUnbilled = new();
     private static readonly ProjectTimeByUserSource ProjectTimeByUser = new(OfflineResolver());
 
+    private static readonly BudgetAgainstActualSource BudgetAgainstActual = new(new StubFinancialYear());
+    private static readonly BudgetAgainstActualByProjectSource BudgetAgainstActualByProject = new(new StubFinancialYear());
+    private static readonly BudgetMonthlyTrendSource BudgetMonthlyTrend = new(new StubFinancialYear());
+
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
     /// declared without touching Master — so the client is here to satisfy the
@@ -231,6 +235,9 @@ public class ReportSourceTests
         ProjectBudget,
         ProjectUnbilled,
         ProjectTimeByUser,
+        BudgetAgainstActual,
+        BudgetAgainstActualByProject,
+        BudgetMonthlyTrend,
     ];
 
     [Theory]

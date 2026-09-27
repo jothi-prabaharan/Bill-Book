@@ -433,6 +433,7 @@ public sealed class OrganizationService
         organization.DiscountBeforeTax = request.DiscountBeforeTax;
         organization.EInvoiceFrom = request.EInvoiceFrom;
         organization.EwayBillEnabled = request.EwayBillEnabled;
+        organization.BudgetWarningYearToDate = request.BudgetWarningYearToDate;
         organization.Gstin = Trimmed(request.Gstin)?.ToUpperInvariant();
         organization.Pan = Trimmed(request.Pan)?.ToUpperInvariant();
         organization.Tan = Trimmed(request.Tan)?.ToUpperInvariant();
@@ -514,6 +515,7 @@ public sealed class OrganizationService
         DiscountBeforeTax = o.DiscountBeforeTax,
         EInvoiceFrom = o.EInvoiceFrom,
         EwayBillEnabled = o.EwayBillEnabled,
+        BudgetWarningYearToDate = o.BudgetWarningYearToDate,
         FinancialYearStartMonth = o.FinancialYearStartMonth,
         Gstin = o.Gstin,
         Pan = o.Pan,

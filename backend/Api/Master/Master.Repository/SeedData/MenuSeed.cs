@@ -282,6 +282,10 @@ public static class MenuSeed
         new Menu { MenuId = 1128, ParentId = 106, Type = MenuType.Item, Code = "timesheet", Name = "Timesheet", Icon = "clock", Module = "projects", RoutePath = "/accounting/projects/timesheet", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 21, IsActive = true },
         // Budgets (TK-108), under Accounting.
         new Menu { MenuId = 1133, ParentId = 106, Type = MenuType.Item, Code = "budgets", Name = "Budgets", Icon = "target", Module = "accounting", RoutePath = "/accounting/budgets", IsSearchable = true, CanCreate = true, SingularName = "Budget", DisplayOrder = 22, IsActive = true },
+        // Budget reports (TK-109), under Reports › Financial performance.
+        new Menu { MenuId = 1134, ParentId = 108, Type = MenuType.Item, Code = "r-budget-vs-actual", Name = "Budget vs Actual", Icon = "target", Module = "reports", RoutePath = "/reports/budget-vs-actual", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
+        new Menu { MenuId = 1135, ParentId = 108, Type = MenuType.Item, Code = "r-budget-vs-actual-by-project", Name = "Budget vs Actual by Project", Icon = "target", Module = "reports", RoutePath = "/reports/budget-vs-actual-by-project", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
+        new Menu { MenuId = 1136, ParentId = 108, Type = MenuType.Item, Code = "r-budget-monthly-trend", Name = "Budget Monthly Trend", Icon = "target", Module = "reports", RoutePath = "/reports/budget-monthly-trend", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
         // Project reports (TK-107), under Reports. Each links straight to its report key.
         new Menu { MenuId = 123, ParentId = 8, Type = MenuType.Group, Code = "reports-g8", Name = "Projects", Icon = "briefcase", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = true },
         new Menu { MenuId = 1129, ParentId = 123, Type = MenuType.Item, Code = "r-project-profitability", Name = "Project Profitability", Icon = "trending-up", Module = "reports", RoutePath = "/reports/project-profitability", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -777,5 +781,12 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 463, MenuId = 1133, PermissionCode = "accounting.view", Action = "view", Module = "accounting" },
         new MenuPermission { MenuPermissionId = 464, MenuId = 1133, PermissionCode = "accounting.edit", Action = "edit", Module = "accounting" },
         new MenuPermission { MenuPermissionId = 465, MenuId = 1133, PermissionCode = "accounting.approve", Action = "approve", Module = "accounting" },
+        // Budget reports (TK-109).
+        new MenuPermission { MenuPermissionId = 466, MenuId = 1134, PermissionCode = "reports.view", Action = "view", Module = "reports" },
+        new MenuPermission { MenuPermissionId = 467, MenuId = 1134, PermissionCode = "reports.export", Action = "export", Module = "reports" },
+        new MenuPermission { MenuPermissionId = 468, MenuId = 1135, PermissionCode = "reports.view", Action = "view", Module = "reports" },
+        new MenuPermission { MenuPermissionId = 469, MenuId = 1135, PermissionCode = "reports.export", Action = "export", Module = "reports" },
+        new MenuPermission { MenuPermissionId = 470, MenuId = 1136, PermissionCode = "reports.view", Action = "view", Module = "reports" },
+        new MenuPermission { MenuPermissionId = 471, MenuId = 1136, PermissionCode = "reports.export", Action = "export", Module = "reports" },
     ];
 }

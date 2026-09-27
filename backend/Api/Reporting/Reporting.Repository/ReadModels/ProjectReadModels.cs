@@ -73,3 +73,32 @@ public class TimeEntryRead : OrgScopedEntity
     /// <summary><c>Unbilled</c>, <c>Billed</c> or <c>WrittenOff</c>.</summary>
     public string BillingStatus { get; set; }
 }
+
+// -----------------------------------------------------------------------------
+// Budgets (acc) read models, for the budget reports (TK-109).
+// -----------------------------------------------------------------------------
+
+/// <summary><c>acc.Budgets</c>, read-only.</summary>
+public class BudgetRead : OrgScopedEntity
+{
+    public long BudgetId { get; set; }
+    public string Name { get; set; }
+    public DateOnly FinancialYearStart { get; set; }
+
+    /// <summary><c>Draft</c>, <c>Approved</c> or <c>Superseded</c>.</summary>
+    public string Status { get; set; }
+
+    public bool IsBranchDefault { get; set; }
+    public bool ByProject { get; set; }
+}
+
+/// <summary><c>acc.BudgetLines</c>, read-only. Amounts are positive in the account's normal direction.</summary>
+public class BudgetLineRead : OrgScopedEntity
+{
+    public long BudgetLineId { get; set; }
+    public long BudgetId { get; set; }
+    public long AccountId { get; set; }
+    public long? ProjectId { get; set; }
+    public short Period { get; set; }
+    public decimal Amount { get; set; }
+}

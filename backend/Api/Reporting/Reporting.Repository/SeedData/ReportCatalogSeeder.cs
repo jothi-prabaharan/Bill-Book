@@ -2257,6 +2257,71 @@ public sealed class ReportCatalogSeeder
                 new("nonBillableHours", "Non-billable", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
             ],
         },
+
+        // ---- Budgets (TK-109) ----
+        new()
+        {
+            ReportKey = "budget-vs-actual",
+            Title = "Budget vs Actual",
+            Module = ReportModule.Accounting,
+            RequiredPermission = "accounting.view",
+            Description = "Each income and expense account's budget against its actual for a month, a quarter or the year to date. Actuals are the P&L's own figures.",
+            SortOrder = 171,
+            Columns =
+            [
+                new("accountType", "Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("accountCode", "Account code", ColumnDataType.Text, IsDefault: true),
+                new("accountName", "Account", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("budget", "Budget", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("actual", "Actual", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("variance", "Variance", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("variancePercent", "Variance %", ColumnDataType.Percent, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("result", "Result", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("accountId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "budget-vs-actual-by-project",
+            Title = "Budget vs Actual by Project",
+            Module = ReportModule.Accounting,
+            RequiredPermission = "accounting.view",
+            Description = "Budget against actual per project and account, for a budget kept by project.",
+            SortOrder = 172,
+            Columns =
+            [
+                new("projectCode", "Project", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("projectName", "Project name", ColumnDataType.Text, IsGroupable: true),
+                new("accountType", "Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("accountCode", "Account code", ColumnDataType.Text, IsDefault: true),
+                new("accountName", "Account", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("budget", "Budget", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("actual", "Actual", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("variance", "Variance", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("variancePercent", "Variance %", ColumnDataType.Percent, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("result", "Result", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "budget-monthly-trend",
+            Title = "Budget Monthly Trend",
+            Module = ReportModule.Accounting,
+            RequiredPermission = "accounting.view",
+            Description = "Budget and actual per account for each month of the budget's year. Pivot on Month for the months side by side.",
+            SortOrder = 173,
+            Columns =
+            [
+                new("accountType", "Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("accountCode", "Account code", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("accountName", "Account", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true, IsPrimary: true),
+                new("month", "Month", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("period", "Period", ColumnDataType.Number),
+                new("budget", "Budget", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("actual", "Actual", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("variance", "Variance", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
     ];
     private sealed class ReportSeed
     {

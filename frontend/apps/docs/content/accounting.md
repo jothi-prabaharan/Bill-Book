@@ -698,7 +698,7 @@ Reading projects needs **projects.view**, and creating and saving them need **pr
 
 # Budgets
 
-**Status: partial.** Budgets can be entered, imported, exported, approved and revised. The budget against actual report and the over-budget warnings on documents come in a later release.
+**Status: built.** Budgets can be entered, imported, exported, approved and revised. There are also reports of budget against actual, and a warning when a bill or journal passes the budget.
 
 **Accounting › Budgets** lists the branch's budgets, newest year first. A budget is a year of monthly amounts per account, running from the first month of the branch's financial year. Amounts are in the base currency and **entered as positive figures** in each account's own direction: rent of 30,000 is 30,000, and sales of 1,00,000 are 1,00,000. A contra account such as sales returns is positive too.
 
@@ -735,6 +735,19 @@ On a phone the grid shows **one month at a time**. Choose the month at the top.
 **Approve and lock** approves a draft. Tick **Make it the branch's budget for the year** to make it the one reports and warnings use. A branch has at most one such budget per year. An approved budget cannot be edited, imported into or deleted.
 
 To change an approved budget, give a reason and choose **Revise**. That copies it into a new draft. The approved budget stays in force until the revision is approved. Then the old one is marked **Superseded**, and the revision takes over as the branch's budget if the old one was. Superseded budgets are kept as history.
+
+## Budget against actual
+
+Three reports under **Reports › Financial performance** compare the budget with what was posted. See [Reports](reports#budget-reports). Their actual figures are the Profit and Loss report's own, so the two never disagree.
+
+## Over-budget warnings
+
+Saving a **bill** or a **manual journal** checks it against the branch's approved budget. It checks each expense account on it, and each project too when the budget is by project. If the document takes an account past its budget, it **is still saved**, and the form shows a warning such as "Rent is 1,000.00 over the Apr 2026 budget."
+
+- By default the check uses the month of the document's date. Settings › Organization can make it use **the year to date** instead.
+- The check counts what is already posted for the period plus the document being saved.
+- An account the budget does not mention is unbudgeted rather than over budget, so it never warns. Nor does an income account.
+- Spend money is not checked. Its lines settle payables, receivables and advances, never an expense account, so it cannot pass a budget.
 
 Reading budgets needs **accounting.view**. Entering, importing and deleting a draft need **accounting.edit**. Approving, revising and choosing the branch's budget need **accounting.approve**.
 

@@ -184,6 +184,8 @@ export class JournalsPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
+  /** Expense accounts the last save took past the approved budget (TK-109). */
+  protected readonly budgetWarnings = signal<string[]>([]);
 
   statusFilter = '';
   protected editingId: number | null = null;
@@ -386,12 +388,16 @@ export class JournalsPage implements OnInit {
 
       let id: number;
 
+      // A save that takes an expense account past the approved budget still
+      // stands; the warnings say so (TK-109).
       if (this.editingId === null) {
-        const created = await this.req<{ journalId: number }>('POST', '/api/journals', body);
+        const created = await this.req<{ journalId: number; warnings?: string[] }>('POST', '/api/journals', body);
         id = created.journalId;
+        this.budgetWarnings.set(created.warnings ?? []);
       } else {
-        await this.req('PUT', `/api/journals/${this.editingId}`, body);
+        const saved = await this.req<{ warnings?: string[] } | null>('PUT', `/api/journals/${this.editingId}`, body);
         id = this.editingId;
+        this.budgetWarnings.set(saved?.warnings ?? []);
       }
 
       if (post) {
