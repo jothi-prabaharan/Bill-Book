@@ -196,6 +196,12 @@ public abstract class ReportSource<TRow> : IReportSource
             ApplyRunningTotals(rows, carried);
         }
 
+        // Names only another service knows — a user, an account type — are
+        // filled over the page once it is in hand. This hook was declared and
+        // overridden by several reports but never called, so those columns came
+        // back empty (found by TK-107).
+        await FormatRowsAsync(rows, ct);
+
         List<ReportColumn> selected = Select(request.Columns);
 
         return new ReportResultView

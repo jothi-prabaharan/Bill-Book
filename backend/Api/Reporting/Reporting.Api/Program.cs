@@ -199,6 +199,12 @@ builder.Services.AddScoped<IReportSource, ClaimsByCategorySource>();
 builder.Services.AddScoped<IReportSource, ClaimsByEmployeeSource>();
 builder.Services.AddScoped<IReportSource, ClaimsPendingApprovalSource>();
 
+// Project reports (TK-107)
+builder.Services.AddScoped<IReportSource, ProjectProfitabilitySource>();
+builder.Services.AddScoped<IReportSource, ProjectBudgetSource>();
+builder.Services.AddScoped<IReportSource, ProjectUnbilledSource>();
+builder.Services.AddScoped<IReportSource, ProjectTimeByUserSource>();
+
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
 builder.Services.AddScoped<SavedViewService>();

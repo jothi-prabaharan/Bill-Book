@@ -38,5 +38,11 @@ public class BillDetailRead : OrgScopedEntity
     public decimal LineTotal { get; set; }
     public long? ItemBatchId { get; set; }
     public string? LineNotes { get; set; }
+    public long? ProjectId { get; set; }
+
+    /// <summary>Charged on to the project's client (TK-106), with this markup.</summary>
+    public bool IsBillable { get; set; }
+    public decimal? MarkupPercent { get; set; }
+    public long? BilledInvoiceId { get; set; }
 }
 

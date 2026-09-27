@@ -30,6 +30,14 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Project reports.** Four reports under **Reports › Projects**:
+  - **Project Profitability**: revenue, cost, profit and margin from each project's ledger rows.
+  - **Project Budget vs Actual**: the cost budget and budget hours against what was spent and logged.
+  - **Project Unbilled Work**: hours, charged-on expenses and milestones not yet invoiced, valued as an invoice would bill them.
+  - **Project Time by User**: hours per task and person, split into billable, billed and non-billable.
+
+  See [Reports](reports#project-reports).
+- **Fixed**: **Names left blank on several reports.** The account type column on Trial Balance, Account Movement, Bank Summary, Balance Sheet and Profit and Loss was always empty. So were the person on the Journal Report and the state and country on Warehouse Tracking Status. The names are filled in now.
 - **Added**: **Timesheets and project billing.** **Accounting › Timesheet** shows your hours for the week, one row per project task. You can log hours directly, or run a timer that rounds up to the quarter hour. A spend money or bill line on a project can be marked **Charge on** with a markup. **Add project items** on an invoice turns a project's unbilled hours, charged-on expenses and milestones into invoice lines. Each item is claimed when the invoice posts, so nothing is billed twice, and voiding the invoice releases it. See [Accounts](accounting#projects).
 - **Added**: **Projects on sales and purchase lines.** Every line of a quote, order, challan, invoice, purchase order, goods receipt, bill or debit note can name a project from a **Project** row in the line grid. Posting carries the project to the ledger. An invoice's revenue is split across the projects its lines name. The receivable or payable carries a project only when every line agrees. A credit note follows the invoice lines it credits. See [Accounts](accounting#projects).
 - **Added**: **Accounting › Projects.** Set up the jobs the branch does, with a client, a billing method, tasks, milestones and a cost budget. Tag a manual journal line, or a spend or receive money line, with a project. Its ledger row then counts towards that project, and the project shows every row tagged with it. A completed or cancelled project takes no postings. See [Accounts](accounting#projects).

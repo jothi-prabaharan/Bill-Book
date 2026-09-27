@@ -119,6 +119,11 @@ public class ReportSourceTests
     private static readonly ClaimsByEmployeeSource ClaimsByEmployee = new();
     private static readonly ClaimsPendingApprovalSource ClaimsPendingApproval = new();
 
+    private static readonly ProjectProfitabilitySource ProjectProfitability = new();
+    private static readonly ProjectBudgetSource ProjectBudget = new();
+    private static readonly ProjectUnbilledSource ProjectUnbilled = new();
+    private static readonly ProjectTimeByUserSource ProjectTimeByUser = new(OfflineResolver());
+
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
     /// declared without touching Master — so the client is here to satisfy the
@@ -222,6 +227,10 @@ public class ReportSourceTests
         ClaimsByCategory,
         ClaimsByEmployee,
         ClaimsPendingApproval,
+        ProjectProfitability,
+        ProjectBudget,
+        ProjectUnbilled,
+        ProjectTimeByUser,
     ];
 
     [Theory]

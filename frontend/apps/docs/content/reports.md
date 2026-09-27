@@ -95,6 +95,17 @@ A few rules decide what appears:
 
 The register does not record brand, outlet, warranty expiry, cost limit or averaging method, so these reports have no columns for them.
 
+## Project reports
+
+Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.
+
+- **Project Profitability**: one row per project. **Revenue** is what the project's income rows add up to, credits less debits, so a sales return or a discount given comes off it. **Cost** is its expense rows, debits less credits. **Profit** is the difference, and **Margin %** is profit as a share of revenue, left blank when there is no revenue. Rows that name no project are not counted. The report takes an optional **From** and **To** date.
+- **Project Budget vs Actual**: each project's **cost budget** against the expense rows posted to it, and its tasks' **budget hours** against the hours logged, with the variance of each. Budget used % shows how much of the cost budget is spent. A budget is for the whole job, so this report has no period. A project with no cost budget shows no variance.
+- **Project Unbilled Work**: what is waiting to be billed, valued the way **Add project items** on an invoice would bill it. **Time** is unbilled billable hours at the project's, the task's or the person's rate. **Expenses** are posted spend-money and bill lines marked **Charge on**, with their markup. **Milestones** are those not yet invoiced. A project with nothing waiting is left out.
+- **Project Time by User**: hours logged in the period for each project task and person. The hours are split into billable, billed and non-billable.
+
+A project's income and costs come from the ledger rows tagged with it. That covers manual journals, money documents, and sales and purchase lines. See [Projects](accounting#projects).
+
 ## If a branch shows no reports
 
 The report catalog is seeded per branch. A branch created before reporting existed has an empty catalog until it is seeded, which an administrator can trigger; it only adds what is missing, so it is safe to run again.

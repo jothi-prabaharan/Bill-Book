@@ -12815,6 +12815,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<long>("BillId")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("BilledInvoiceId")
+                        .HasColumnType("bigint");
+
                     b.Property<decimal>("ConversionFactor")
                         .HasColumnType("numeric");
 
@@ -12848,6 +12851,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<string>("HsnSacCode")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsPriceInclusive")
                         .HasColumnType("boolean");
 
@@ -12869,6 +12875,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<int>("LineType")
                         .HasColumnType("integer");
 
+                    b.Property<decimal?>("MarkupPercent")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -12877,6 +12886,9 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
+
+                    b.Property<long?>("ProjectId")
+                        .HasColumnType("bigint");
 
                     b.Property<long?>("PurchaseOrderDetailId")
                         .HasColumnType("bigint");
@@ -12960,6 +12972,9 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<DateOnly>("DueDate")
                         .HasColumnType("date");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -15766,6 +15781,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
+                    b.Property<long?>("ProjectId")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("SubAccountId")
                         .HasColumnType("bigint");
 
@@ -16505,6 +16523,233 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.HasKey("PayslipId");
 
                     b.ToTable("Payslips", "pay", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.ProjectMemberRead", b =>
+                {
+                    b.Property<long>("ProjectMemberId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ProjectMemberId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("HourlyRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ProjectMemberId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("ProjectMembers", "acc", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.ProjectMilestoneRead", b =>
+                {
+                    b.Property<long>("ProjectMilestoneId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ProjectMilestoneId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("InvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ProjectMilestoneId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("ProjectMilestones", "acc", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.ProjectRead", b =>
+                {
+                    b.Property<long>("ProjectId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ProjectId"));
+
+                    b.Property<string>("BillingMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("BudgetAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<long?>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("HourlyRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProjectCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RateBasis")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ProjectId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("Projects", "acc", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.ProjectTaskRead", b =>
+                {
+                    b.Property<long>("ProjectTaskId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ProjectTaskId"));
+
+                    b.Property<decimal?>("BudgetHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("HourlyRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TaskName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ProjectTaskId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("ProjectTasks", "acc", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -17743,6 +17988,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<decimal>("AmountBase")
                         .HasColumnType("numeric");
 
+                    b.Property<long?>("BilledInvoiceId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -17751,6 +17999,9 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("LedgerSourceId")
                         .HasColumnType("integer");
@@ -17767,6 +18018,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<string>("MappingTransactionTypeCode")
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("MarkupPercent")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -17775,6 +18029,9 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
+
+                    b.Property<long?>("ProjectId")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("SpendMoneyId")
                         .HasColumnType("bigint");
@@ -18203,6 +18460,70 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.HasIndex("CustomerId", "OrgId");
 
                     b.ToTable("TaxMasters", "acc", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.TimeEntryRead", b =>
+                {
+                    b.Property<long>("TimeEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TimeEntryId"));
+
+                    b.Property<string>("BillingStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Hours")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsBillable")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ProjectTaskId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("TimeEntryId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("TimeEntries", "acc", t =>
                         {
                             t.ExcludeFromMigrations();
                         });

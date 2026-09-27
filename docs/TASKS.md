@@ -2132,13 +2132,23 @@ The build cards each design in section E produced. Each design section in `docs/
 - **As built:** `acc.TimeEntries` (RLS) behind `api/projects/time`, which needs only `projects.view`. The service refuses anyone else's entry without `projects.edit`, refuses more than 24 hours a day and a closed project or inactive task, and locks a billed entry. `GET api/projects/{id}/unbilled` prices hours through `ProjectBillingService.RateFor` (project, task or member rate), lists posted spend-money lines marked billable with their markup, and lists uninvoiced milestones. Purchase serves its own billable bill lines at `GET api/purchase/bills/billable`, because bill lines are Purchase's (rule 8). The claim runs at post, through `Shared.Kernel.Projects.HttpProjectBillingClient`. It claims Accounting's kinds (`internal/projects/billing/claim`), then Purchase's (`internal/bills/billing/claim`), and releases Accounting's if Purchase refuses. Each side is a guarded `ExecuteUpdate` whose row count must equal the items asked for, or it answers 409 so the reliability filter rolls back. A retry by the same invoice is idempotent. `sal.InvoiceProjectItems` (RLS) records what an invoice bills. A failed post and a void release the items. A spend-money document or bill with a billed line refuses a void (`BilledToClient`, 409). Frontend: `TimesheetPage` (a week grid, a timer kept in `localStorage`, and the menu row `1128`); `bb-project-items-dialog` on the invoice form, which turns picked items into lines through `toBillingLines`; and **Charge on** plus a markup on bill lines (the grid's `showBilling`) and on spend-money lines. Tests: `ProjectBillingTests`, `InvoiceProjectBillingTests`, `project-billing.spec.ts`, `timesheet-week.spec.ts`.
 
 ### TK-107 · Projects: reports
-- [~] working (Claude Opus 5.5) — since 2026-09-27
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
 - **Issue:** [#95](https://github.com/jothi-prabaharan/Bill-Book/issues/95)
 - **Lanes:** L-RPT · **Depends on:** TK-106 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] Project profitability, budget against actual, unbilled work, time by user, as report sources on `bb-report-grid`.
-  - [ ] Test: profitability for a seeded project equals its ledger rows' net by type.
+  - [x] Project profitability, budget against actual, unbilled work, time by user, as report sources on `bb-report-grid`.
+  - [x] Test: profitability for a seeded project equals its ledger rows' net by type.
 - **Done when:** the four reports run for a branch with a billed project.
+- **As built:** Four sources in `Reporting.Api/Services/Sources/ProjectReportsSources.cs`, under the new `ReportModule.Projects`, all needing `projects.view`: `project-profitability`, `project-budget-vs-actual`, `project-unbilled-work` and `project-time-by-user`. Their queries live in `ProjectReports` as functions of plain `IQueryable`s, as `FixedAssetRegister` does. Profitability nets income rows as credit less debit and expense rows as debit less credit, so contra accounts need no rule of their own. Unbilled work values items exactly as TK-106's dialog does. New read models map `acc.Projects`, `ProjectTasks`, `ProjectMembers`, `ProjectMilestones` and `TimeEntries`. `ProjectId` and the billing columns were added to the ledger, spend-money and bill line reads, and `ExchangeRate` to the bill read; the migration is snapshot-only. Catalog seeds `1401`–`1404`, plus the menu group `123` with items `1129`–`1132` that link to the report keys directly.
+
+  Three older gaps were found and fixed on the way:
+  - `ReportSource.FormatRowsAsync` was declared and overridden by seven reports but never called, so their account-type, user and state names were always empty.
+  - Master had no `internal/users/batch`, which `BatchedNameResolver` calls.
+  - Master's `internal/master/account-types` sent `NormalBalance` and `ReportSection` as numbers where Reporting reads names. This would also have failed `StatementsController`.
+
+  **Still open:** the older report menu rows link to `/reports/r-{code}`, and those codes are not report keys (`r-journal-report` against `journal-report`). That is left for its own card.
+
+  Tests: `ProjectReportTests` (profitability equals the ledger rows' net by type, the period, budget and hours variance, unbilled valuation by task and person rate with markup, time split), and the source and certification registries (94 sources).
 
 ### TK-108 · Budgets: tables, entry grid, import and approval
 - [ ] open

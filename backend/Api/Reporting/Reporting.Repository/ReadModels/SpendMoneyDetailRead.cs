@@ -15,5 +15,11 @@ public class SpendMoneyDetailRead : OrgScopedEntity
     public decimal Amount { get; set; }
     public decimal AmountBase { get; set; }
     public string? LineMemo { get; set; }
+    public long? ProjectId { get; set; }
+
+    /// <summary>Charged on to the project's client (TK-106), with this markup.</summary>
+    public bool IsBillable { get; set; }
+    public decimal? MarkupPercent { get; set; }
+    public long? BilledInvoiceId { get; set; }
 }
 

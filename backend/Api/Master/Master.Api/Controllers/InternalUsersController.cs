@@ -69,7 +69,28 @@ public sealed class InternalUsersController : ControllerBase
         return Ok(new { user.UserId });
     }
 
-    [HttpPost("{userId:guid}/deactivate")]
+    /// <summary>
+    /// Display names for a batch of user ids, for a report showing who logged
+    /// or posted something (Reporting's <c>BatchedNameResolver</c>). An id with
+    /// no user is left out. At most 500 ids a call.
+    /// </summary>
+    [HttpPost("batch")]
+    public async Task<IActionResult> Names([FromBody] List<Guid> userIds, CancellationToken ct)
+    {
+        if (userIds.Count > 500)
+        {
+            return BadRequest(new MessageResponse { Message = "Ask for at most 500 users at a time." });
+        }
+
+        List<Guid> ids = [.. userIds.Distinct()];
+        Dictionary<Guid, string> names = await _db.Users.AsNoTracking()
+            .Where(u => ids.Contains(u.UserId))
+            .ToDictionaryAsync(u => u.UserId, u => u.DisplayName, ct);
+
+        return Ok(names);
+    }
+
+        [HttpPost("{userId:guid}/deactivate")]
     public async Task<IActionResult> DeactivateUser(Guid userId, CancellationToken ct)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId, ct);

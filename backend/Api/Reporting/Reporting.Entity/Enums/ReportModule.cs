@@ -21,4 +21,7 @@ public enum ReportModule
     Statutory = 11,
     Recruitment = 12,
     Claims = 13,
+
+    /// <summary>Project accounting (TK-107): profitability, budgets, unbilled work and time.</summary>
+    Projects = 14,
 }

@@ -152,6 +152,13 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<ExpenseClaimLineRead> ExpenseClaimLines => Set<ExpenseClaimLineRead>();
     public DbSet<ApprovalStepRead> ApprovalSteps => Set<ApprovalStepRead>();
 
+    // Project accounting (acc), for the project reports (TK-107).
+    public DbSet<ProjectRead> Projects => Set<ProjectRead>();
+    public DbSet<ProjectTaskRead> ProjectTasks => Set<ProjectTaskRead>();
+    public DbSet<ProjectMemberRead> ProjectMembers => Set<ProjectMemberRead>();
+    public DbSet<ProjectMilestoneRead> ProjectMilestones => Set<ProjectMilestoneRead>();
+    public DbSet<TimeEntryRead> TimeEntries => Set<TimeEntryRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -365,6 +372,13 @@ public class ReportingDbContext : TenantDbContext
         MapRead<ExpenseClaimRead>(modelBuilder, "ExpenseClaims", "clm", e => e.ExpenseClaimId);
         MapRead<ExpenseClaimLineRead>(modelBuilder, "ExpenseClaimLines", "clm", e => e.ExpenseClaimLineId);
         MapRead<ApprovalStepRead>(modelBuilder, "ApprovalSteps", "clm", e => e.ApprovalStepId);
+
+        // Projects (acc, TK-107)
+        MapRead<ProjectRead>(modelBuilder, "Projects", "acc", e => e.ProjectId);
+        MapRead<ProjectTaskRead>(modelBuilder, "ProjectTasks", "acc", e => e.ProjectTaskId);
+        MapRead<ProjectMemberRead>(modelBuilder, "ProjectMembers", "acc", e => e.ProjectMemberId);
+        MapRead<ProjectMilestoneRead>(modelBuilder, "ProjectMilestones", "acc", e => e.ProjectMilestoneId);
+        MapRead<TimeEntryRead>(modelBuilder, "TimeEntries", "acc", e => e.TimeEntryId);
     }
 
     private static void MapRead<TEntity>(

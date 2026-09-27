@@ -9573,6 +9573,89 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 123,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "reports-g8",
+                            DisplayOrder = 8,
+                            Icon = "briefcase",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Projects",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1129,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "r-project-profitability",
+                            DisplayOrder = 1,
+                            Icon = "trending-up",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
+                            Name = "Project Profitability",
+                            ParentId = 123,
+                            RoutePath = "/reports/project-profitability",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1130,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "r-project-budget-vs-actual",
+                            DisplayOrder = 2,
+                            Icon = "target",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
+                            Name = "Project Budget vs Actual",
+                            ParentId = 123,
+                            RoutePath = "/reports/project-budget-vs-actual",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1131,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "r-project-unbilled-work",
+                            DisplayOrder = 3,
+                            Icon = "receipt",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
+                            Name = "Project Unbilled Work",
+                            ParentId = 123,
+                            RoutePath = "/reports/project-unbilled-work",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1132,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "r-project-time-by-user",
+                            DisplayOrder = 4,
+                            Icon = "clock",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
+                            Name = "Project Time by User",
+                            ParentId = 123,
+                            RoutePath = "/reports/project-time-by-user",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 14,
                             Apps = 1,
                             CanCreate = false,
@@ -13752,6 +13835,78 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1128,
                             Module = "projects",
                             PermissionCode = "projects.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 455,
+                            Action = "view",
+                            MenuId = 1129,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 456,
+                            Action = "export",
+                            MenuId = 1129,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 457,
+                            Action = "view",
+                            MenuId = 1130,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 458,
+                            Action = "export",
+                            MenuId = 1130,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 459,
+                            Action = "view",
+                            MenuId = 1131,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 460,
+                            Action = "export",
+                            MenuId = 1131,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 461,
+                            Action = "view",
+                            MenuId = 1132,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 462,
+                            Action = "export",
+                            MenuId = 1132,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
                             Version = 0u
                         });
                 });

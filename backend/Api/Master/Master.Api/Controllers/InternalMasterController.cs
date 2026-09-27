@@ -69,7 +69,18 @@ public sealed class InternalMasterController : ControllerBase
             .Select(t => new { t.AccountTypeId, t.SystemName, t.DisplayName, t.NormalBalance, t.ReportSection, t.SortOrder })
             .ToListAsync(ct);
 
-        return Ok(types);
+        // The two enums go out by name: Reporting reads "Credit" and
+        // "ProfitAndLoss", and this host serialises enums as numbers, which
+        // failed that read on the first row (found by TK-107).
+        return Ok(types.Select(t => new
+        {
+            t.AccountTypeId,
+            t.SystemName,
+            t.DisplayName,
+            NormalBalance = t.NormalBalance.ToString(),
+            ReportSection = t.ReportSection.ToString(),
+            t.SortOrder,
+        }));
     }
 
     /// <summary>

@@ -2167,6 +2167,96 @@ public sealed class ReportCatalogSeeder
                 new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
             ],
         },
+
+        // ---- Projects (TK-107) ----
+        new()
+        {
+            ReportKey = "project-profitability",
+            Title = "Project Profitability",
+            Module = ReportModule.Projects,
+            RequiredPermission = "projects.view",
+            Description = "Each project's income and expense ledger rows netted by type, and the profit and margin they leave.",
+            SortOrder = 1401,
+            Columns =
+            [
+                new("projectCode", "Project", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("projectName", "Name", ColumnDataType.Text, IsDefault: true),
+                new("customer", "Customer", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("billingMethod", "Billing", ColumnDataType.Text, IsGroupable: true),
+                new("revenue", "Revenue", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("cost", "Cost", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("profit", "Profit", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("marginPercent", "Margin %", ColumnDataType.Percent, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("budgetAmount", "Cost budget", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("projectId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "project-budget-vs-actual",
+            Title = "Project Budget vs Actual",
+            Module = ReportModule.Projects,
+            RequiredPermission = "projects.view",
+            Description = "Each project's cost budget against the costs posted to it, and its tasks' budgeted hours against the hours logged.",
+            SortOrder = 1402,
+            Columns =
+            [
+                new("projectCode", "Project", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("projectName", "Name", ColumnDataType.Text, IsDefault: true),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("budgetAmount", "Cost budget", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("actualCost", "Actual cost", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("costVariance", "Cost variance", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("costUsedPercent", "Budget used %", ColumnDataType.Percent, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("budgetHours", "Budget hours", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("actualHours", "Actual hours", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("hoursVariance", "Hours variance", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("projectId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "project-unbilled-work",
+            Title = "Project Unbilled Work",
+            Module = ReportModule.Projects,
+            RequiredPermission = "projects.view",
+            Description = "Billable hours, charged-on expenses and milestones that no invoice has billed yet, valued as an invoice would bill them.",
+            SortOrder = 1403,
+            Columns =
+            [
+                new("projectCode", "Project", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("projectName", "Name", ColumnDataType.Text, IsDefault: true),
+                new("customer", "Customer", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("billingMethod", "Billing", ColumnDataType.Text, IsGroupable: true),
+                new("unbilledHours", "Unbilled hours", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("timeValue", "Time", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("expenses", "Expenses", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("milestones", "Milestones", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("total", "Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("projectId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "project-time-by-user",
+            Title = "Project Time by User",
+            Module = ReportModule.Projects,
+            RequiredPermission = "projects.view",
+            Description = "Hours logged in a period by project, task and person, split into billable, billed and non-billable.",
+            SortOrder = 1404,
+            Columns =
+            [
+                new("projectCode", "Project", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPrimary: true),
+                new("projectName", "Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("taskName", "Task", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("userName", "Person", ColumnDataType.Text, IsDefault: true, IsFilterable: false),
+                new("hours", "Hours", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("billableHours", "Billable", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("billedHours", "Billed", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("nonBillableHours", "Non-billable", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
     ];
     private sealed class ReportSeed
     {

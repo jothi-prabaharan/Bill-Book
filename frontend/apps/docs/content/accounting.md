@@ -626,7 +626,7 @@ The query filter is the first line of defence, not the last: it is a property of
 
 # Projects
 
-**Status: partial.** Several parts are built: the project master, the project tag on manual journal, money-document, sales and purchase lines, timesheets, and billing a project's hours, expenses and milestones on an invoice. The project reports come in a later release.
+**Status: partial.** Several parts are built: the project master, the project tag on manual journal, money-document, sales and purchase lines, timesheets, and billing a project's hours, expenses and milestones on an invoice. Four project reports are built too: profitability, budget against actual, unbilled work and time by user. See [Reports](reports).
 
 **Accounting › Projects** lists the branch's projects. A project is a job the branch does, for a client or for itself, and it takes its code from the **PRJ** number series (PRJ-0001, PRJ-0002 and so on).
 
@@ -692,7 +692,7 @@ The items are claimed only **when the invoice posts**. If someone else's invoice
 
 ## A project's ledger
 
-Opening a project shows every ledger row tagged with it, with its account, its document and whether it is a debit or a credit, and the net at the bottom. That is what the job earned and cost so far. A proper profitability report is to come.
+Opening a project shows every ledger row tagged with it, with its account, its document and whether it is a debit or a credit, and the net at the bottom. That is what the job earned and cost so far. **Reports › Projects** has the profitability, budget, unbilled-work and time reports.
 
 Reading projects needs **projects.view**, and creating and saving them need **projects.create** and **projects.edit**. Owner, Administrator and Accountant hold all three; Sales and Viewer can read.
 

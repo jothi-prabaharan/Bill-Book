@@ -63,6 +63,9 @@ public class JournalLedgerRead : OrgScopedEntity
     public string? DocumentNo { get; set; }
 
     public long? JournalId { get; set; }
+
+    /// <summary>The project the leg belongs to (TK-104); null on a leg that belongs to no job.</summary>
+    public long? ProjectId { get; set; }
 }
 
 
