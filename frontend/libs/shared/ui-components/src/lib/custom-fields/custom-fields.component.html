@@ -1,0 +1,74 @@
+@if (fields().length > 0) {
+  <div class="custom-fields">
+    @for (field of fields(); track field.key) {
+      <div class="field" [class.wide]="field.dataType === 'LongText' || field.dataType === 'MultiSelect'">
+        @let id = 'cf-' + field.key;
+        @let locked = disabled() || !field.isActive;
+        @switch (field.dataType) {
+          @case ('Boolean') {
+            <label class="check">
+              <input type="checkbox" [id]="id" [checked]="checked(field.key)" [disabled]="locked" (change)="setBoolean(field.key, $event)" />
+              {{ field.label }}
+            </label>
+          }
+          @case ('MultiSelect') {
+            <fieldset>
+              <legend>{{ field.label }}@if (field.isRequired) {<span class="req" aria-hidden="true"> *</span>}</legend>
+              @for (option of options(field); track option.value) {
+                <label class="check">
+                  <input
+                    type="checkbox"
+                    [checked]="isChosen(field.key, option.value)"
+                    [disabled]="locked"
+                    (change)="toggle(field.key, option.value, $event)"
+                  />
+                  {{ option.label }}
+                </label>
+              }
+            </fieldset>
+          }
+          @default {
+            <label [for]="id">{{ field.label }}@if (field.isRequired) {<span class="req" aria-hidden="true"> *</span>}</label>
+            @switch (field.dataType) {
+              @case ('LongText') {
+                <textarea [id]="id" rows="3" [value]="text(field.key)" [attr.maxlength]="field.maxLength ?? 4000" [disabled]="locked" (change)="setText(field.key, $event)"></textarea>
+              }
+              @case ('Integer') {
+                <input type="number" step="1" [id]="id" [value]="text(field.key)" [disabled]="locked" (change)="setNumber(field.key, $event)" />
+              }
+              @case ('Decimal') {
+                <input type="number" step="any" [id]="id" [value]="text(field.key)" [disabled]="locked" (change)="setNumber(field.key, $event)" />
+              }
+              @case ('Date') {
+                <input type="date" [id]="id" [value]="text(field.key)" [disabled]="locked" (change)="setText(field.key, $event)" />
+              }
+              @case ('Dropdown') {
+                <select [id]="id" [disabled]="locked" (change)="setText(field.key, $event)">
+                  <option value="" [selected]="!current(field.key)">—</option>
+                  @for (option of options(field); track option.value) {
+                    <option [value]="option.value" [selected]="current(field.key) === option.value">{{ option.label }}</option>
+                  }
+                </select>
+              }
+              @case ('Email') {
+                <input type="email" [id]="id" [value]="text(field.key)" maxlength="254" [disabled]="locked" (change)="setText(field.key, $event)" />
+              }
+              @case ('Url') {
+                <input type="url" [id]="id" [value]="text(field.key)" maxlength="2000" [disabled]="locked" (change)="setText(field.key, $event)" />
+              }
+              @case ('Phone') {
+                <input type="tel" [id]="id" [value]="text(field.key)" maxlength="20" [disabled]="locked" (change)="setText(field.key, $event)" />
+              }
+              @default {
+                <input type="text" [id]="id" [value]="text(field.key)" [attr.maxlength]="field.maxLength ?? 255" [disabled]="locked" (change)="setText(field.key, $event)" />
+              }
+            }
+          }
+        }
+        @if (!field.isActive) {
+          <small class="muted">No longer in use; kept as it was.</small>
+        }
+      </div>
+    }
+  </div>
+}

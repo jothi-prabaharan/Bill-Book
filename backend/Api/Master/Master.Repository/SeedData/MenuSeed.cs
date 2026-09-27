@@ -46,6 +46,7 @@ public static class MenuSeed
         9,                                              // Settings rail
         114, 1079, 1080, 1081, 1082, 1083, 1084, 1085,  // Organisation
         1125,                                           // Approval workflows (TK-103)
+        1137,                                           // Custom fields (TK-110)
         115, 1086, 1087, 1088, 1089, 1090, 1106,        // Users and access
     };
 
@@ -223,6 +224,7 @@ public static class MenuSeed
         new Menu { MenuId = 1085, ParentId = 114, Type = MenuType.Item, Code = "lic", Name = "Applications", Icon = "badge-check", Module = "settings", RoutePath = "/settings/applications", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
         // Every app's approval chains, configured in one place (TK-103).
         new Menu { MenuId = 1125, ParentId = 114, Type = MenuType.Item, Code = "apw", Name = "Approval workflows", Icon = "list-checks", Module = "settings", RoutePath = "/settings/approval-workflows", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = true },
+        new Menu { MenuId = 1137, ParentId = 114, Type = MenuType.Item, Code = "cfd", Name = "Custom fields", Icon = "list-plus", Module = "settings", RoutePath = "/settings/custom-fields", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 9, IsActive = true },
         new Menu { MenuId = 115, ParentId = 9, Type = MenuType.Group, Code = "settings-g2", Name = "Users and access", Icon = "users-round", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
         new Menu { MenuId = 1086, ParentId = 115, Type = MenuType.Item, Code = "usr", Name = "Users", Icon = "users-round", Module = "settings", RoutePath = "/settings/users", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1087, ParentId = 115, Type = MenuType.Item, Code = "rol", Name = "Roles", Icon = "shield", Module = "settings", RoutePath = "/settings/roles", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
@@ -788,5 +790,8 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 469, MenuId = 1135, PermissionCode = "reports.export", Action = "export", Module = "reports" },
         new MenuPermission { MenuPermissionId = 470, MenuId = 1136, PermissionCode = "reports.view", Action = "view", Module = "reports" },
         new MenuPermission { MenuPermissionId = 471, MenuId = 1136, PermissionCode = "reports.export", Action = "export", Module = "reports" },
+        // Custom fields (TK-110).
+        new MenuPermission { MenuPermissionId = 472, MenuId = 1137, PermissionCode = "settings.view", Action = "view", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 473, MenuId = 1137, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
     ];
 }

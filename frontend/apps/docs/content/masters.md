@@ -1111,6 +1111,29 @@ The same screen's **Statutory** tab holds the branch's **E-invoicing from** date
 
 The **Financial** tab's **Over-budget warnings compare** setting chooses whether a bill or journal that passes the approved budget is measured against **the month's budget** or **the budget for the year to date**. See [Budgets](accounting#budgets).
 
+# Custom fields
+
+**Status: partial.** Fields can be defined and are checked by the shared validator. Showing and saving them on contacts, items and documents comes in later releases.
+
+**Settings › Custom fields** lets a branch add fields of its own to contacts, items, warehouses, quotes, orders, challans, invoices, credit notes, purchase documents, leads, tickets and projects. Choose the kind of record at the top. The page lists that kind's fields and previews how they will look on its form.
+
+Each field has:
+
+- A **label**, which can change.
+- A **key**, suggested from the label: lowercase letters, digits and underscores, starting with a letter. Values are stored under the key, so **it cannot change once saved**. Neither can the field's kind of record or its type.
+- A **type**: text, long text, whole number, number, date, yes / no, dropdown, multi-select, email, web address or phone.
+- For a dropdown or multi-select field, its **options**. An option can be relabelled or deactivated, but a saved option **cannot be removed**, because records may hold it.
+- **Required on new records**: a record saved before the field was made required is not refused later.
+- A **default value**, a **maximum length** for text, and its **order** on the form.
+- Flags for showing it in the list, offering it on print templates, making it searchable, and carrying it forward to the next document (quote to order to invoice, and so on).
+- **Active**. A field is never deleted. Deactivate it instead: every value stored under it is kept and still shown, but no new value can be set.
+
+A kind of record holds at most **50 active fields**. More than that is a sign it needs a real column.
+
+Every service checks values against these definitions when a record is saved. It refuses a key with no field, a value of the wrong type, a dropdown value that is not one of the field's active options, and a missing required field on a new record. A value already stored stays valid after its field or option is deactivated.
+
+Reading the page needs **settings.view**, and saving a field needs **settings.edit**.
+
 # Print templates
 
 How your printed documents look — the letterhead, the columns, the terms at the foot — is a

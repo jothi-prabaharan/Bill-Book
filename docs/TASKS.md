@@ -2208,18 +2208,31 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `BudgetReportTests` (P&L match, favourable and adverse, contra sign, month window, no budget, windows, by project, trend) and `BudgetTests` (an expense over the month's budget warns and the journal still saves; within budget; year to date against month; income and unbudgeted accounts; no approved budget).
 
 ### TK-110 · Custom fields: definitions and the shared validator
-- [~] working (Claude Opus 5.5) — since 2026-09-27
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
 - **Issue:** [#98](https://github.com/jothi-prabaharan/Bill-Book/issues/98)
 - **Lanes:** L-CON, L-KERNEL, L-UI, L-DEPS · **Depends on:** TK-36 · **Decision:** —
 - **Where:** design "Custom fields and custom reports" → Custom fields.
 - **Tables:** `cfd.CustomFieldDefinitions`
 - **Sub-tasks:**
-  - [ ] The definitions table on Master's tenant context, with RLS; `api/custom-fields` and `internal/custom-fields`.
-  - [ ] `Shared.Kernel.CustomFields`: the cached `ICustomFieldDefinitions` client and the pure `CustomFieldValidator`.
-  - [ ] Settings › Custom fields (`libs/settings/custom-fields`) and the shared `bb-custom-fields` form component.
-  - [ ] Test: the validator per data type; an unknown key refused; a required field enforced on new saves only; a key cannot be changed; 50-per-kind limit.
-  - Standard delivery sub-tasks (section 5).
+  - [x] The definitions table on Master's tenant context, with RLS; `api/custom-fields` and `internal/custom-fields`.
+  - [x] `Shared.Kernel.CustomFields`: the cached `ICustomFieldDefinitions` client and the pure `CustomFieldValidator`.
+  - [x] Settings › Custom fields (`libs/settings/custom-fields`) and the shared `bb-custom-fields` form component.
+  - [x] Test: the validator per data type; an unknown key refused; a required field enforced on new saves only; a key cannot be changed; 50-per-kind limit.
+  - [x] Standard delivery sub-tasks (section 5).
 - **Done when:** a branch defines a dropdown field for contacts and the validator refuses a value not in its options.
+- **As built:**
+  - **Table.** `cfd.CustomFieldDefinitions` on Master's `ContactsDbContext`, with RLS in TK-71's form. It is unique on (`OrgId`, `EntityKind`, `Key`), with a check constraint on the key's shape, and its options are an owned JSON collection in a jsonb column.
+  - **Shared kernel.** `Shared.Kernel.CustomFields` holds:
+    - the two enums;
+    - `CustomFieldDefinitionDto`;
+    - `CustomFieldValidator`, which is pure. It refuses unknown keys, checks all eleven types, enforces a required field only on a new record, and keeps a stored value whose field or option has since been deactivated but takes no new one;
+    - `HttpCustomFieldDefinitions`, cached five minutes per branch and kind, which returns null when Master cannot be reached so the caller decides.
+  - **Master.** `CustomFieldService` and `CustomFieldRules`. The key, kind and type are fixed after the first save. Options are never removed, only deactivated. A default must itself validate. The limit is 50 active fields per kind.
+  - **Routes.** `api/custom-fields` (`settings.*`) and `internal/custom-fields?customerId&orgId&kind`, which returns every field of the kind with a `Version`. Gateway route `/api/custom-fields`; shared menu row `1137`.
+  - **Frontend.**
+    - `libs/settings/custom-fields` (`@bill-book/settings-custom-fields`) holds the list per kind, the editor with its options, and a live preview. It is mounted through `shared-routes` for every app.
+    - `bb-custom-fields` in ui-components, with pure helpers in `custom-fields.model.ts`, is ready for TK-111 to put on the contact and item forms.
+  - Tests: `CustomFieldValidatorTests` (done-when, unknown key, required only on new saves, each type, max length, inactive field and option), `CustomFieldTests` (done-when end to end, key change refused and reuse duplicate, the 50 limit, RLS on `cfd`, the pure rules), `custom-fields.model.spec.ts` and `custom-fields-settings.model.spec.ts`.
 
 ### TK-111 · Custom fields on contacts and items
 - [ ] open

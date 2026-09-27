@@ -79,6 +79,13 @@ export const sharedSettingsRoutes: Routes = [
       import('@bill-book/settings-approval-workflows').then((m) => m.ApprovalWorkflowsPage),
     data: { access: { permission: 'settings.view' } },
   },
+  // A branch's own fields on each kind of record (TK-110). Read-only without settings.edit.
+  {
+    path: 'settings/custom-fields',
+    loadComponent: () =>
+      import('@bill-book/settings-custom-fields').then((m) => m.CustomFieldsSettingsPage),
+    data: { access: { permission: 'settings.view' } },
+  },
   {
     path: 'settings/applications',
     loadComponent: () => import('@bill-book/settings-applications').then((m) => m.ApplicationsPage),

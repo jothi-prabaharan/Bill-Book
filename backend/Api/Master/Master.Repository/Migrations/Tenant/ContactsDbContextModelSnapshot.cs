@@ -1013,6 +1013,101 @@ namespace Master.Repository.Migrations.Tenant
                     b.ToTable("ContactPersonRoles", "con");
                 });
 
+            modelBuilder.Entity("Master.Entity.TableEntities.CustomFieldDefinition", b =>
+                {
+                    b.Property<long>("CustomFieldDefinitionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("CustomFieldDefinitionId"));
+
+                    b.Property<bool>("CarryForward")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("DefaultValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EntityKind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsSearchable")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int?>("MaxLength")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ShowInList")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ShowOnPrint")
+                        .HasColumnType("boolean");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("CustomFieldDefinitionId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "EntityKind", "Key")
+                        .IsUnique();
+
+                    b.HasIndex("OrgId", "EntityKind", "IsActive", "DisplayOrder");
+
+                    b.ToTable("CustomFieldDefinitions", "cfd", t =>
+                        {
+                            t.HasCheckConstraint("chk_customfields_key", "\"Key\" ~ '^[a-z][a-z0-9_]*$'");
+                        });
+                });
+
             modelBuilder.Entity("Master.Entity.TableEntities.PortalGrant", b =>
                 {
                     b.Property<long>("PortalGrantId")
@@ -1443,6 +1538,38 @@ namespace Master.Repository.Migrations.Tenant
                         .HasForeignKey("ContactPersonRoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Master.Entity.TableEntities.CustomFieldDefinition", b =>
+                {
+                    b.OwnsMany("Master.Entity.TableEntities.CustomFieldOption", "Options", b1 =>
+                        {
+                            b1.Property<long>("CustomFieldDefinitionId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<bool>("Active");
+
+                            b1.Property<string>("Label")
+                                .IsRequired()
+                                .HasMaxLength(80);
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(60);
+
+                            b1.HasKey("CustomFieldDefinitionId", "__synthesizedOrdinal");
+
+                            b1.ToTable("CustomFieldDefinitions", "cfd");
+
+                            b1.ToJson("Options");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CustomFieldDefinitionId");
+                        });
+
+                    b.Navigation("Options");
                 });
 
             modelBuilder.Entity("Master.Entity.TableEntities.PortalGrant", b =>

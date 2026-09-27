@@ -52,6 +52,9 @@ public class ContactsDbContext : TenantDbContext
 
     public DbSet<ApprovalDelegate> ApprovalDelegates => Set<ApprovalDelegate>();
 
+    /// <summary>Custom field definitions, schema <c>cfd</c> (TK-110).</summary>
+    public DbSet<CustomFieldDefinition> CustomFieldDefinitions => Set<CustomFieldDefinition>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -273,6 +276,21 @@ public class ContactsDbContext : TenantDbContext
             b.ToTable(table => table.HasCheckConstraint(
                 "chk_attachment_size",
                 "\"FileSizeBytes\" > 0"));
+        });
+
+        // ---- cfd: custom field definitions (TK-110) ----
+        modelBuilder.Entity<CustomFieldDefinition>(b =>
+        {
+            b.ToTable("CustomFieldDefinitions", "cfd", t =>
+            {
+                t.HasCheckConstraint("chk_customfields_key", "\"Key\" ~ '^[a-z][a-z0-9_]*$'");
+            });
+            b.HasKey(e => e.CustomFieldDefinitionId);
+            b.Property(e => e.EntityKind).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.DataType).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.OrgId, e.EntityKind, e.Key }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.EntityKind, e.IsActive, e.DisplayOrder });
+            b.OwnsMany(e => e.Options, o => o.ToJson());
         });
 
         // ---- apr: approval workflows (D-26, TK-99) ----

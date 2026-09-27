@@ -1,0 +1,131 @@
+<h1>Custom fields</h1>
+<p class="hint">
+  Fields of your own on contacts, items, documents and more. A field's key, kind and type are fixed once it is saved.
+  A field is never deleted: deactivate it and every value stored under it is kept.
+</p>
+
+@if (message(); as text) {
+  <p [class]="messageIsError() ? 'error' : 'ok'" role="status">{{ text }}</p>
+}
+
+<div class="toolbar">
+  <div class="field kind">
+    <bb-select label="Record" name="kind" [options]="kindOptions" [clearable]="false" [ngModel]="kind()" (ngModelChange)="setKind($event)" />
+  </div>
+  <span class="muted">{{ activeCount() }} of {{ maxActive }} active</span>
+  @if (canEdit() && !editing()) {
+    <button type="button" (click)="startNew()" [disabled]="activeCount() >= maxActive">New field</button>
+  }
+</div>
+
+@if (editing()) {
+  <form class="editor" (ngSubmit)="save()">
+    <h2>{{ editingId === null ? 'New field on ' + kindLabel(form.entityKind) : form.label }}</h2>
+    <div class="row">
+      <div class="field grow">
+        <bb-text-input label="Label" name="label" [(ngModel)]="form.label" (ngModelChange)="onLabel()" maxlength="80" required />
+      </div>
+      <div class="field grow">
+        <bb-text-input
+          label="Key"
+          name="key"
+          [hint]="editingId === null ? 'Stored values are filed under it, so it cannot change later.' : 'Fixed.'"
+          [(ngModel)]="form.key"
+          (ngModelChange)="onKey()"
+          maxlength="40"
+          [disabled]="editingId !== null"
+          required
+        />
+      </div>
+      <div class="field">
+        <bb-select label="Type" name="dataType" [options]="typeOptions" [clearable]="false" [(ngModel)]="form.dataType" [disabled]="editingId !== null" />
+      </div>
+    </div>
+
+    @if (hasOptions(form.dataType)) {
+      <fieldset class="options">
+        <legend>Options</legend>
+        @for (option of form.options; track $index; let i = $index) {
+          <div class="option">
+            <input aria-label="Option value" placeholder="value" [name]="'ov' + i" [(ngModel)]="option.value" [disabled]="option.saved" maxlength="60" />
+            <input aria-label="Option label" placeholder="Label" [name]="'ol' + i" [(ngModel)]="option.label" maxlength="80" />
+            <label class="check"><input type="checkbox" [name]="'oa' + i" [(ngModel)]="option.active" /> Active</label>
+            @if (!option.saved) {
+              <button type="button" class="link" (click)="removeOption(i)" aria-label="Remove option">×</button>
+            }
+          </div>
+        }
+        <button type="button" class="secondary" (click)="addOption()">Add option</button>
+        <small class="muted">A saved option cannot be removed, because records may hold it. Deactivate it instead.</small>
+      </fieldset>
+    }
+
+    <div class="row">
+      <div class="field grow">
+        <bb-text-input
+          label="Default value"
+          name="defaultValue"
+          [hint]="form.dataType === 'MultiSelect' ? 'Option values separated by commas.' : form.dataType === 'Boolean' ? 'true or false.' : 'Filled in on new records.'"
+          [(ngModel)]="form.defaultValue"
+          maxlength="4000"
+        />
+      </div>
+      @if (isText(form.dataType)) {
+        <div class="field narrow">
+          <bb-number-input label="Maximum length" name="maxLength" [(ngModel)]="form.maxLength" />
+        </div>
+      }
+      <div class="field narrow">
+        <bb-number-input label="Order" name="displayOrder" [(ngModel)]="form.displayOrder" />
+      </div>
+    </div>
+
+    <div class="flags">
+      <bb-checkbox text="Required on new records" name="isRequired" [(ngModel)]="form.isRequired" />
+      <bb-checkbox text="Show in the list" name="showInList" [(ngModel)]="form.showInList" />
+      <bb-checkbox text="Offer on print templates" name="showOnPrint" [(ngModel)]="form.showOnPrint" />
+      <bb-checkbox text="Searchable" name="isSearchable" [(ngModel)]="form.isSearchable" />
+      <bb-checkbox text="Carry forward to the next document" name="carryForward" [(ngModel)]="form.carryForward" />
+      <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
+    </div>
+
+    <div class="actions">
+      <button type="submit" [disabled]="busy() || !canEdit()">Save</button>
+      <button type="button" class="secondary" (click)="cancel()">Cancel</button>
+    </div>
+  </form>
+}
+
+@if (fields().length === 0) {
+  <p class="empty">No custom fields on {{ kindLabel(kind()).toLowerCase() }} yet.</p>
+} @else {
+  <ul class="cards">
+    @for (field of fields(); track field.customFieldDefinitionId) {
+      <li class="card" [class.inactive]="!field.isActive" tabindex="0" (click)="edit(field)" (keydown.enter)="edit(field)">
+        <div class="card__title">
+          <strong>{{ field.label }}</strong>
+          <code>{{ field.key }}</code>
+          <span class="pill">{{ typeLabel(field.dataType) }}</span>
+          @if (field.isRequired) {
+            <span class="pill warn">Required</span>
+          }
+          @if (!field.isActive) {
+            <span class="pill off">Inactive</span>
+          }
+        </div>
+        @if (field.options.length > 0) {
+          <div class="card__meta">
+            @for (option of field.options; track option.value) {
+              <span [class.off]="!option.active">{{ option.label }}</span>
+            }
+          </div>
+        }
+      </li>
+    }
+  </ul>
+
+  <section class="preview">
+    <h2>How the form looks</h2>
+    <bb-custom-fields [definitions]="fields()" [(value)]="preview" />
+  </section>
+}

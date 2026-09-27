@@ -1,0 +1,41 @@
+.hint { color: #6a6f80; font-size: .9rem; }
+.error { color: #c0392b; }
+.ok { color: #187a4b; }
+.empty, .muted { color: #6a6f80; }
+.muted { font-size: .85rem; }
+h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+
+.toolbar, .actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; margin: 1rem 0; }
+.kind { min-width: 14rem; }
+.editor { display: grid; gap: .8rem; max-width: 56rem; margin: 1rem 0; padding: 1rem; border: 1px solid #dde1ea; border-radius: 8px; }
+.row, .flags { display: flex; flex-wrap: wrap; gap: .75rem; }
+.grow { flex: 1; min-width: 12rem; }
+.narrow { width: 9rem; }
+
+.options { border: 1px solid #dde1ea; border-radius: 6px; padding: .75rem; display: grid; gap: .5rem; margin: 0; }
+.option { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.option input:not([type='checkbox']) { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; flex: 1; min-width: 8rem; }
+.check { display: inline-flex; align-items: center; gap: .3rem; font-size: .9rem; }
+
+button { padding: .55rem 1rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; justify-self: start; }
+button.secondary { background: #eceef3; color: #33384a; }
+button.link { background: none; color: #6a6f80; padding: .1rem .4rem; }
+button:disabled { opacity: .6; cursor: default; }
+
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; max-width: 56rem; }
+.card { border: 1px solid #dde1ea; border-radius: 8px; padding: .75rem 1rem; cursor: pointer; background: #fff; }
+.card.inactive { opacity: .65; }
+.card:hover, .card:focus-visible { border-color: #3557d6; outline: none; }
+.card__title { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.card__meta { display: flex; flex-wrap: wrap; gap: .25rem .75rem; color: #6a6f80; font-size: .85rem; margin-top: .25rem; }
+.card__meta .off { text-decoration: line-through; }
+code { background: #f4f5f8; border-radius: 4px; padding: 0 .3rem; font-size: .8rem; }
+.pill { background: #e8edff; color: #3557d6; border-radius: 999px; padding: .05rem .5rem; font-size: .75rem; }
+.pill.warn { background: #fff7e6; color: #9a6400; }
+.pill.off { background: #eceef3; color: #6a6f80; }
+
+.preview { max-width: 56rem; margin-top: 1.5rem; padding: 1rem; border: 1px dashed #cdd1dc; border-radius: 8px; }
+
+@media (max-width: 480px) {
+  .narrow, .kind { width: 100%; min-width: 0; }
+}

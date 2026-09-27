@@ -8707,6 +8707,23 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1137,
+                            Apps = 15,
+                            CanCreate = false,
+                            Code = "cfd",
+                            DisplayOrder = 9,
+                            Icon = "list-plus",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Custom fields",
+                            ParentId = 114,
+                            RoutePath = "/settings/custom-fields",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 115,
                             Apps = 15,
                             CanCreate = false,
@@ -14057,6 +14074,24 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1136,
                             Module = "reports",
                             PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 472,
+                            Action = "view",
+                            MenuId = 1137,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 473,
+                            Action = "edit",
+                            MenuId = 1137,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
                             Version = 0u
                         });
                 });

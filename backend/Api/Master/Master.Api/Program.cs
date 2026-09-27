@@ -185,6 +185,7 @@ builder.Services.AddScoped<MenuService>();
 // with Employee:BaseUrl unset, those levels are simply unresolved.
 builder.Services.AddScoped<ApprovalChainResolver>();
 builder.Services.AddScoped<ApprovalWorkflowService>();
+builder.Services.AddScoped<CustomFieldService>();
 builder.Services.AddHttpClient<IEmployeeApproverClient, EmployeeApproverClient>(client =>
 {
     if (builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } hrm)
