@@ -2183,7 +2183,8 @@ The build cards each design in section E produced. Each design section in `docs/
   Tests: `BudgetTests` (the done-when, revision supersedes, April-start actuals land in periods 1 and 12, unknown codes, parent and negative refused, one default per year, and the pure maths and sheet parsing) and `budget-math.spec.ts`.
 
 ### TK-109 · Budgets: budget against actual, and over-budget warnings
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-27
+- **Issue:** [#97](https://github.com/jothi-prabaharan/Bill-Book/issues/97)
 - **Lanes:** L-RPT, L-ACC, L-ACC-UI · **Depends on:** TK-108 · **Decision:** —
 - **Where:** `Reporting.Api/Services/Sources`, the P&L source's sign rules.
 - **Sub-tasks:**
