@@ -1,4 +1,5 @@
 using Admission.Api.Services;
+using Admission.Repository.Repositories;
 using Admission.Entity.Enums;
 using Admission.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -20,10 +21,10 @@ namespace Admission.Api.Controllers;
 [Route("api/admission")]
 public sealed class AdmissionController : ControllerBase
 {
-    private readonly EnquiryService _enquiries;
-    private readonly ApplicationService _applications;
+    private readonly EnquiryRepository _enquiries;
+    private readonly ApplicationRepository _applications;
 
-    public AdmissionController(EnquiryService enquiries, ApplicationService applications)
+    public AdmissionController(EnquiryRepository enquiries, ApplicationRepository applications)
     {
         _enquiries = enquiries;
         _applications = applications;
@@ -70,7 +71,7 @@ public sealed class AdmissionController : ControllerBase
 
     // A row outside the caller's branch is not found: the query filter and RLS
     // hide it, so "another branch's" and "none" are one answer.
-    private IActionResult Answer(AdmissionResult result) => result.Outcome switch
+    private IActionResult Answer(AdmissionResultRepository result) => result.Outcome switch
     {
         AdmissionOutcome.Ok => Ok(result.Body ?? new { id = result.Id }),
         AdmissionOutcome.NotFound => NotFound(),

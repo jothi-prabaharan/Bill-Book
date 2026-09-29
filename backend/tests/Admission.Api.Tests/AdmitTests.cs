@@ -1,4 +1,5 @@
 using Admission.Api.Services;
+using Admission.Repository.Repositories;
 using Admission.Entity.Enums;
 using Admission.Entity.Models;
 using Admission.Entity.TableEntities;
@@ -100,16 +101,16 @@ public sealed class AdmitTests
     {
         Guid orgId = Guid.NewGuid();
         AdmissionDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
-        await new AdmissionSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new AdmissionSeederRepository(db).SeedForOrganizationAsync(orgId, default);
         return new Branch(db, new FakeStudent(), new FakeGuardians());
     }
 
-    private static ApplicationService Service(Branch b) => new(
+    private static ApplicationRepository Service(Branch b) => new(
         b.Db,
         new NumberGenerator(b.Db, Options.Create(new NumberingOptions()), new AprilYear()),
         b.Student,
         b.Guardians,
-        NullLogger<ApplicationService>.Instance);
+        NullLogger<ApplicationRepository>.Instance);
 
     private static SaveApplicationRequest Meera(string mobile = "9840012345") => new()
     {
@@ -126,7 +127,7 @@ public sealed class AdmitTests
         Documents = [new() { DocumentKind = DocumentKind.BirthCertificate, IsVerified = true }],
     };
 
-    private static async Task<long> OfferedAsync(ApplicationService service, SaveApplicationRequest request)
+    private static async Task<long> OfferedAsync(ApplicationRepository service, SaveApplicationRequest request)
     {
         long id = (await service.SaveAsync(null, request, default)).Id!.Value;
         Assert.Equal(AdmissionOutcome.Ok, (await service.MoveAsync(id, new MoveApplicationRequest { ApplicationStage = ApplicationStage.Offered }, default)).Outcome);
@@ -143,8 +144,8 @@ public sealed class AdmitTests
         long id = await OfferedAsync(Service(b), Meera());
         var admit = new AdmitRequest { AdmissionDate = new DateOnly(2026, 6, 1) };
 
-        AdmissionResult first = await Service(b).AdmitAsync(id, admit, default);
-        AdmissionResult second = await Service(b).AdmitAsync(id, admit, default);
+        AdmissionResultRepository first = await Service(b).AdmitAsync(id, admit, default);
+        AdmissionResultRepository second = await Service(b).AdmitAsync(id, admit, default);
 
         Assert.Equal(AdmissionOutcome.Ok, first.Outcome);
         Assert.Equal(AdmissionOutcome.Ok, second.Outcome);
@@ -234,7 +235,7 @@ public sealed class AdmitTests
         Branch b = await NewBranchAsync();
         await using AdmissionDbContext _ = b.Db;
 
-        var enquiries = new EnquiryService(b.Db, b.Student, NullLogger<EnquiryService>.Instance);
+        var enquiries = new EnquiryRepository(b.Db, b.Student, NullLogger<EnquiryRepository>.Instance);
         long enquiry = (await enquiries.SaveAsync(null, new SaveEnquiryRequest
         {
             EnquiryDate = new DateOnly(2026, 3, 20), ChildName = "Meera", SeekingClassId = 1, AcademicYearId = 1,
@@ -244,7 +245,7 @@ public sealed class AdmitTests
         SaveApplicationRequest request = Meera();
         request.EnquiryId = enquiry;
 
-        AdmissionResult first = await Service(b).SaveAsync(null, request, default);
+        AdmissionResultRepository first = await Service(b).SaveAsync(null, request, default);
         Assert.Equal(AdmissionOutcome.Ok, first.Outcome);
         Assert.Equal("APL/2627/00001", await b.Db.Applications.Select(a => a.ApplicationNo).SingleAsync());
         Assert.Equal(EnquiryStatus.Converted, await b.Db.Enquiries.Select(e => e.EnquiryStatus).SingleAsync());
@@ -283,13 +284,13 @@ public sealed class ApplicationStageTests
     [InlineData(ApplicationStage.Rejected, ApplicationStage.Offered, false)]
     [InlineData(ApplicationStage.Withdrawn, ApplicationStage.Submitted, false)]
     public void An_application_moves_forward_or_ends_and_admits_only_by_admitting(ApplicationStage from, ApplicationStage to, bool allowed) =>
-        Assert.Equal(allowed, ApplicationService.CanMove(from, to));
+        Assert.Equal(allowed, ApplicationRepository.CanMove(from, to));
 
     [Fact]
     public void Documents_are_verified_only_when_there_are_some_and_all_are()
     {
-        Assert.False(ApplicationService.DocumentsVerified([]));
-        Assert.False(ApplicationService.DocumentsVerified([new ApplicationDocument { IsVerified = true }, new ApplicationDocument()]));
-        Assert.True(ApplicationService.DocumentsVerified([new ApplicationDocument { IsVerified = true }]));
+        Assert.False(ApplicationRepository.DocumentsVerified([]));
+        Assert.False(ApplicationRepository.DocumentsVerified([new ApplicationDocument { IsVerified = true }, new ApplicationDocument()]));
+        Assert.True(ApplicationRepository.DocumentsVerified([new ApplicationDocument { IsVerified = true }]));
     }
 }

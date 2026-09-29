@@ -9,7 +9,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.School;
 using Shared.Kernel.Validation;
 
-namespace Admission.Api.Services;
+namespace Admission.Repository.Repositories;
 
 /// <summary>
 /// Applications and admitting them (S2, TK-62).
@@ -25,16 +25,16 @@ namespace Admission.Api.Services;
 /// its student.</item>
 /// </list>
 /// </summary>
-public sealed class ApplicationService
+public sealed class ApplicationRepository
 {
     private readonly AdmissionDbContext _db;
     private readonly INumberGenerator _numbers;
     private readonly IStudentClient _sis;
     private readonly IContactDirectory _contacts;
-    private readonly ILogger<ApplicationService> _log;
+    private readonly ILogger<ApplicationRepository> _log;
 
-    public ApplicationService(
-        AdmissionDbContext db, INumberGenerator numbers, IStudentClient sis, IContactDirectory contacts, ILogger<ApplicationService> log)
+    public ApplicationRepository(
+        AdmissionDbContext db, INumberGenerator numbers, IStudentClient sis, IContactDirectory contacts, ILogger<ApplicationRepository> log)
     {
         _db = db;
         _numbers = numbers;
@@ -58,19 +58,19 @@ public sealed class ApplicationService
             ? View(a)
             : null;
 
-    public async Task<AdmissionResult> SaveAsync(long? id, SaveApplicationRequest request, CancellationToken ct)
+    public async Task<AdmissionResultRepository> SaveAsync(long? id, SaveApplicationRequest request, CancellationToken ct)
     {
         if (request.DateOfBirth >= request.ApplicationDate)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.Invalid, "The date of birth must be before the application date.");
+            return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, "The date of birth must be before the application date.");
         }
 
         if (PhoneNumbers.NormalizeOptional(request.GuardianPhone) is null)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.Invalid, "Give the guardian's mobile number.");
+            return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, "Give the guardian's mobile number.");
         }
 
-        AdmissionResult? academic = await EnquiryService.CheckAcademicAsync(_sis, _log, request.AcademicYearId, request.SeekingClassId, ct);
+        AdmissionResultRepository? academic = await EnquiryRepository.CheckAcademicAsync(_sis, _log, request.AcademicYearId, request.SeekingClassId, ct);
         if (academic is not null)
         {
             return academic;
@@ -82,12 +82,12 @@ public sealed class ApplicationService
             application = await _db.Applications.Include(a => a.Documents).FirstOrDefaultAsync(a => a.ApplicationId == existing, ct);
             if (application is null)
             {
-                return AdmissionResult.Fail(AdmissionOutcome.NotFound);
+                return AdmissionResultRepository.Fail(AdmissionOutcome.NotFound);
             }
 
             if (IsClosed(application.ApplicationStage))
             {
-                return AdmissionResult.Fail(AdmissionOutcome.StageRule, "An admitted, rejected or withdrawn application cannot be changed.");
+                return AdmissionResultRepository.Fail(AdmissionOutcome.StageRule, "An admitted, rejected or withdrawn application cannot be changed.");
             }
 
             _db.ApplicationDocuments.RemoveRange(application.Documents);
@@ -101,12 +101,12 @@ public sealed class ApplicationService
                 Enquiry? enquiry = await _db.Enquiries.FirstOrDefaultAsync(e => e.EnquiryId == enquiryId, ct);
                 if (enquiry is null)
                 {
-                    return AdmissionResult.Fail(AdmissionOutcome.Invalid, "Choose an enquiry from this branch.");
+                    return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, "Choose an enquiry from this branch.");
                 }
 
                 if (enquiry.EnquiryStatus == EnquiryStatus.Converted)
                 {
-                    return AdmissionResult.Fail(AdmissionOutcome.StageRule, "That enquiry already has an application.");
+                    return AdmissionResultRepository.Fail(AdmissionOutcome.StageRule, "That enquiry already has an application.");
                 }
 
                 enquiry.EnquiryStatus = EnquiryStatus.Converted;
@@ -142,32 +142,32 @@ public sealed class ApplicationService
         }
 
         await _db.SaveChangesAsync(ct);
-        return AdmissionResult.Ok(application.ApplicationId);
+        return AdmissionResultRepository.Ok(application.ApplicationId);
     }
 
-    public async Task<AdmissionResult> MoveAsync(long id, MoveApplicationRequest request, CancellationToken ct)
+    public async Task<AdmissionResultRepository> MoveAsync(long id, MoveApplicationRequest request, CancellationToken ct)
     {
         Application? application = await _db.Applications.Include(a => a.Documents).FirstOrDefaultAsync(a => a.ApplicationId == id, ct);
         if (application is null)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.NotFound);
+            return AdmissionResultRepository.Fail(AdmissionOutcome.NotFound);
         }
 
         if (!CanMove(application.ApplicationStage, request.ApplicationStage))
         {
-            return AdmissionResult.Fail(AdmissionOutcome.StageRule, request.ApplicationStage == ApplicationStage.Admitted
+            return AdmissionResultRepository.Fail(AdmissionOutcome.StageRule, request.ApplicationStage == ApplicationStage.Admitted
                 ? "An application is admitted with Admit, which makes the student."
                 : "The application cannot move to that stage from where it is.");
         }
 
         if (request.ApplicationStage == ApplicationStage.DocumentsVerified && !DocumentsVerified(application.Documents))
         {
-            return AdmissionResult.Fail(AdmissionOutcome.Invalid, "Record the documents and verify each one first.");
+            return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, "Record the documents and verify each one first.");
         }
 
         if (request.ApplicationStage == ApplicationStage.Assessed && request.AssessmentScore is null)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.Invalid, "Give the assessment score.");
+            return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, "Give the assessment score.");
         }
 
         application.ApplicationStage = request.ApplicationStage;
@@ -177,7 +177,7 @@ public sealed class ApplicationService
         }
 
         await _db.SaveChangesAsync(ct);
-        return AdmissionResult.Ok(application.ApplicationId);
+        return AdmissionResultRepository.Ok(application.ApplicationId);
     }
 
     /// <summary>
@@ -185,17 +185,17 @@ public sealed class ApplicationService
     /// the student made in Student, and the application marked admitted. Calling it
     /// again, even after a failure halfway, makes nothing twice.
     /// </summary>
-    public async Task<AdmissionResult> AdmitAsync(long id, AdmitRequest request, CancellationToken ct)
+    public async Task<AdmissionResultRepository> AdmitAsync(long id, AdmitRequest request, CancellationToken ct)
     {
         Application? application = await _db.Applications.FirstOrDefaultAsync(a => a.ApplicationId == id, ct);
         if (application is null)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.NotFound);
+            return AdmissionResultRepository.Fail(AdmissionOutcome.NotFound);
         }
 
         if (application.ApplicationStage == ApplicationStage.Admitted && application.AdmittedStudentId is long already)
         {
-            return AdmissionResult.Ok(application.ApplicationId, new AdmitResponse
+            return AdmissionResultRepository.Ok(application.ApplicationId, new AdmitResponse
             {
                 StudentId = already, AdmissionNo = application.AdmissionNo ?? string.Empty, GuardianContactId = application.GuardianContactId ?? 0,
             });
@@ -203,12 +203,12 @@ public sealed class ApplicationService
 
         if (application.ApplicationStage != ApplicationStage.Offered)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.StageRule, "Only an application that has been offered a seat can be admitted.");
+            return AdmissionResultRepository.Fail(AdmissionOutcome.StageRule, "Only an application that has been offered a seat can be admitted.");
         }
 
         if (request.AdmissionDate < application.ApplicationDate)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.Invalid, "The admission date cannot be before the application date.");
+            return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, "The admission date cannot be before the application date.");
         }
 
         try
@@ -218,7 +218,7 @@ public sealed class ApplicationService
                 AcademicCheckResponse check = await _sis.CheckAsync(application.AcademicYearId, application.SeekingClassId, sectionId, ct);
                 if (!check.SectionMatches)
                 {
-                    return AdmissionResult.Fail(AdmissionOutcome.Invalid, "Choose a section of the class sought, in the application's school year.");
+                    return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, "Choose a section of the class sought, in the application's school year.");
                 }
             }
 
@@ -249,19 +249,19 @@ public sealed class ApplicationService
             application.ApplicationStage = ApplicationStage.Admitted;
             await _db.SaveChangesAsync(ct);
 
-            return AdmissionResult.Ok(application.ApplicationId, new AdmitResponse
+            return AdmissionResultRepository.Ok(application.ApplicationId, new AdmitResponse
             {
                 StudentId = student.StudentId, AdmissionNo = student.AdmissionNo, GuardianContactId = application.GuardianContactId.Value,
             });
         }
         catch (StudentRefusedException refused)
         {
-            return AdmissionResult.Fail(AdmissionOutcome.Invalid, refused.Message);
+            return AdmissionResultRepository.Fail(AdmissionOutcome.Invalid, refused.Message);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _log.LogError(ex, "Admitting application {ApplicationId} could not reach Student or Master.", id);
-            return AdmissionResult.Fail(AdmissionOutcome.Unavailable);
+            return AdmissionResultRepository.Fail(AdmissionOutcome.Unavailable);
         }
     }
 

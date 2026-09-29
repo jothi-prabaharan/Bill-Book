@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Admission.Api.Services;
+using Admission.Repository.Repositories;
 using Admission.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -91,9 +92,9 @@ builder.Services.AddHttpClient<IStudentClient, HttpStudentClient>(client =>
     .AddHttpMessageHandler<InternalKeyHandler>();
 
 // ---- Service registrations ----
-builder.Services.AddScoped<AdmissionSeeder>();
-builder.Services.AddScoped<EnquiryService>();
-builder.Services.AddScoped<ApplicationService>();
+builder.Services.AddScoped<AdmissionSeederRepository>();
+builder.Services.AddScoped<EnquiryRepository>();
+builder.Services.AddScoped<ApplicationRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

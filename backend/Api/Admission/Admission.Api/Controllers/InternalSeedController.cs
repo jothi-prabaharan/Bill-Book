@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Admission.Api.Services;
+using Admission.Repository.Repositories;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -36,7 +37,7 @@ public sealed class InternalSeedController : ControllerBase
 
         var response = new SeedOrganizationResponse
         {
-            Seeded = await _services.GetRequiredService<AdmissionSeeder>().SeedForOrganizationAsync(request.OrgId, ct),
+            Seeded = await _services.GetRequiredService<AdmissionSeederRepository>().SeedForOrganizationAsync(request.OrgId, ct),
         };
 
         _log.LogInformation("Seeded Admission for organization {OrgId}: {@Seeded}", request.OrgId, response.Seeded);

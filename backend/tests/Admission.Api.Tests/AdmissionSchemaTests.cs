@@ -1,4 +1,5 @@
 using Admission.Api.Services;
+using Admission.Repository.Repositories;
 using Admission.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class AdmissionSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using AdmissionDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new AdmissionSeeder(db).SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new AdmissionSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new AdmissionSeederRepository(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new AdmissionSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }
