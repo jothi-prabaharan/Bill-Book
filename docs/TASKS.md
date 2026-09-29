@@ -2350,8 +2350,9 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Not matched yet.** CDNR and B2BA.
 
 ### TK-117 · Compliance: TDS on purchases and receipts
-- [ ] open
-- **Lanes:** L-ACC, L-PUR, L-CON, L-ACC-UI · **Depends on:** TK-115 · **Decision:** —
+- [~] working (Claude Opus 5.5) — since 2026-09-29
+- **Issue:** [#105](https://github.com/jothi-prabaharan/Bill-Book/issues/105)
+- **Lanes:** L-ACC, L-PUR, L-CON, L-ACC-UI · **Depends on:** TK-115 · **Decision:** D-32, D-33
 - **Tables:** `acc.TdsSections`; lower-deduction certificate columns on `con.Contacts`
 - **Sub-tasks:**
   - [ ] Effective-dated `acc.TdsSections`, seeded; the contact's `TdsSection` becomes a reference.
@@ -4171,6 +4172,8 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-28 | School work-order parts: a School-only customer has no Inventory. Its branches are not seeded for Inventory and `apps/school` has no item or store screens, so the part picker is empty. Options: **(a)** seed Inventory for School branches and mount the item and warehouse screens in `apps/school` under Maintenance; **(b)** let a School work order record a part as free text with a cost, with no stock kept; **(c)** issue parts only for customers who also hold RetailErp. | work-order parts for School-only customers | *Open.* Raised 2026-09-25 by TK-66, which issues through Inventory as its card says |
 | D-30 | Reverse charge on a bill: a flag with the correct posting, deferred, or a flag with no posting change? Today no bill can be marked reverse charge, and its GST always credits Accounts Payable. | TK-115 | **Flag with the correct posting** (owner, 2026-09-29): a **Reverse charge** tick on the bill. The vendor is owed the net only. The tax is credited to *GST payable (reverse charge)* and debited to Input GST where the line's ITC is eligible. The register and GSTR-3B show it in 3.1(d) and 4A(3). TK-115 |
 | D-31 | Ineligible or blocked (section 17(5)) ITC: add the tax to the line's cost, or only report it? Today every bill line's GST is posted to Input GST. | TK-115 | **Add it to the line's cost** (owner, 2026-09-29): a per-line ITC eligibility (Eligible, Ineligible or Blocked; default Eligible). For a line that is not eligible, the GST is posted into the line's expense, stock or asset cost instead of Input GST, and GSTR-3B table 4 shows it apart. TK-115 |
+| D-32 | TDS sections: which section codes does the seed use, now the Income-tax Act 2025 has renumbered the TDS provisions from 1 April 2026? | TK-117 | **The familiar codes** (owner, 2026-09-29): 194C, 194J, 194H, 194I, 194A and 194Q with the 2025-26 rates and thresholds, effective 1 April 2025, per branch and editable. The owner re-labels or re-dates rows to the 2025 Act's numbering on the TDS sections screen. TK-117 |
+| D-33 | TDS deducted by customers: which statement does the reconciliation import? | TK-117 | **The Form 26AS text file** (owner, 2026-09-29): the caret-separated download from TRACES. Part I gives each deductor's TAN and the amounts, which is what matching needs. TK-117 |
 
 ---
 
