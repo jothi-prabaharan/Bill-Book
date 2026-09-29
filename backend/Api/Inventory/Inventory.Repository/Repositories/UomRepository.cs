@@ -4,7 +4,7 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Ordering;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Unit types and their units, served together because the screen edits them
@@ -15,11 +15,11 @@ namespace Inventory.Api.Services;
 /// whole type. That is its own action, and it is refused once any item uses a
 /// unit of the type — the rescale would restate quantities already recorded.
 /// </summary>
-public sealed class UomService
+public sealed class UomRepository
 {
     private readonly InventoryDbContext _db;
 
-    public UomService(InventoryDbContext db) => _db = db;
+    public UomRepository(InventoryDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<UomTypeListItem>> ListAsync(
         bool includeInactive, CancellationToken ct)

@@ -5,17 +5,17 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Ordering;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Karatage and fineness. Small, but load-bearing: the purity factor scales the
 /// metal rate, so a wrong figure here misprices every piece of that purity.
 /// </summary>
-public sealed class MetalPurityService
+public sealed class MetalPurityRepository
 {
     private readonly InventoryDbContext _db;
 
-    public MetalPurityService(InventoryDbContext db) => _db = db;
+    public MetalPurityRepository(InventoryDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<MetalPurityListItem>> ListAsync(
         string? metalType, bool includeInactive, CancellationToken ct)

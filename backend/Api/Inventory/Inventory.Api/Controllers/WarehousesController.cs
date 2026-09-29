@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,9 @@ namespace Inventory.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class WarehousesController : ControllerBase
 {
-    private readonly WarehouseService _warehouses;
+    private readonly WarehouseRepository _warehouses;
 
-    public WarehousesController(WarehouseService warehouses) => _warehouses = warehouses;
+    public WarehousesController(WarehouseRepository warehouses) => _warehouses = warehouses;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] bool includeInactive, CancellationToken ct) =>

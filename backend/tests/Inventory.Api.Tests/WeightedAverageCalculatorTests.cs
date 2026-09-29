@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Enums;
 using Xunit;
 
@@ -39,7 +40,7 @@ public class WeightedAverageCalculatorTests
     [Fact]
     public void The_worked_example_values_every_stock_out_to_the_cent()
     {
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(WorkedExample(), null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(WorkedExample(), null);
 
         var outs = result.Lines.Where(l => l.Direction == StockDirection.Out).ToList();
 
@@ -54,7 +55,7 @@ public class WeightedAverageCalculatorTests
     [Fact]
     public void The_average_is_taken_at_each_stock_in_and_held_to_twelve_decimals()
     {
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(WorkedExample(), null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(WorkedExample(), null);
 
         WeightedAverageLineResult Line(long id) => result.Lines.Single(l => l.StockMovementId == id);
 
@@ -76,7 +77,7 @@ public class WeightedAverageCalculatorTests
     [Fact]
     public void A_stock_in_adds_quantity_times_its_own_cost_not_its_rounded_line_value()
     {
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(WorkedExample(), null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(WorkedExample(), null);
 
         WeightedAverageLineResult row4 = result.Lines.Single(l => l.StockMovementId == 4);
         WeightedAverageLineResult row5 = result.Lines.Single(l => l.StockMovementId == 5);
@@ -92,7 +93,7 @@ public class WeightedAverageCalculatorTests
     [Fact]
     public void The_running_value_moves_by_the_unrounded_line_value()
     {
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(WorkedExample(), null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(WorkedExample(), null);
 
         // 72 − 2 × 20.571428571428: the example's 30.8571, not 72 − 41.14.
         Assert.Equal(
@@ -107,7 +108,7 @@ public class WeightedAverageCalculatorTests
     [Fact]
     public void The_cumulative_correction_moves_the_line_where_the_drift_first_appears()
     {
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(WorkedExample(), null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(WorkedExample(), null);
 
         WeightedAverageLineResult row6 = result.Lines.Single(l => l.StockMovementId == 6);
 
@@ -128,7 +129,7 @@ public class WeightedAverageCalculatorTests
             lines.Add(Out(id, 0.2m, Day1.AddDays((int)id)));
         }
 
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(lines, null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(lines, null);
 
         var outs = result.Lines.Where(l => l.Recalculated).ToList();
         decimal unrounded = outs.Sum(l => l.UnroundedValue!.Value);
@@ -157,7 +158,7 @@ public class WeightedAverageCalculatorTests
             In(2, 8m, 9m, Day1.AddDays(3)),
         ];
 
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(lines, null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(lines, null);
 
         Assert.Equal([2L, 1L], result.Lines.Select(l => l.StockMovementId));
 
@@ -174,7 +175,7 @@ public class WeightedAverageCalculatorTests
     public void Stock_ins_are_brought_forward_until_the_quantity_holds()
     {
         // Two small receipts after a sale that needs both of them.
-        List<WeightedAverageLine> ordered = WeightedAverageCalculator.Order(
+        List<WeightedAverageLine> ordered = WeightedAverageCalculatorRepository.Order(
         [
             Out(1, 5m, Day1),
             In(2, 2m, 10m, Day1.AddDays(1)),
@@ -182,7 +183,7 @@ public class WeightedAverageCalculatorTests
             In(4, 4m, 13m, Day1.AddDays(3)),
         ]);
 
-        WeightedAverageCalculator.CoverNegativeStock(ordered);
+        WeightedAverageCalculatorRepository.CoverNegativeStock(ordered);
 
         Assert.Equal([2L, 4L, 1L, 3L], ordered.Select(l => l.StockMovementId));
     }
@@ -190,17 +191,17 @@ public class WeightedAverageCalculatorTests
     [Fact]
     public void With_no_later_stock_in_left_the_stock_out_stays_where_it_is()
     {
-        List<WeightedAverageLine> ordered = WeightedAverageCalculator.Order(
+        List<WeightedAverageLine> ordered = WeightedAverageCalculatorRepository.Order(
         [
             In(1, 2m, 10m, Day1),
             Out(2, 5m, Day1.AddDays(1)),
         ]);
 
-        WeightedAverageCalculator.CoverNegativeStock(ordered);
+        WeightedAverageCalculatorRepository.CoverNegativeStock(ordered);
 
         Assert.Equal([1L, 2L], ordered.Select(l => l.StockMovementId));
 
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(ordered, null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(ordered, null);
 
         // Still valued at the average it had; the quantity simply goes negative.
         Assert.Equal(50.00m, result.Lines.Single(l => l.StockMovementId == 2).TotalCost);
@@ -210,7 +211,7 @@ public class WeightedAverageCalculatorTests
     [Fact]
     public void On_the_same_date_stock_in_comes_before_stock_out_then_entry_order()
     {
-        List<WeightedAverageLine> ordered = WeightedAverageCalculator.Order(
+        List<WeightedAverageLine> ordered = WeightedAverageCalculatorRepository.Order(
         [
             Out(5, 1m, Day1),
             In(9, 1m, 10m, Day1),
@@ -232,7 +233,7 @@ public class WeightedAverageCalculatorTests
 
         DateOnly lockDate = Day1.AddDays(2);
 
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(lines, lockDate);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(lines, lockDate);
 
         WeightedAverageLineResult row3 = result.Lines.Single(l => l.StockMovementId == 3);
         Assert.False(row3.Recalculated);
@@ -261,8 +262,8 @@ public class WeightedAverageCalculatorTests
             Out(2, 1m, Day1.AddDays(1), storedUnitCost: 7m, storedTotal: 7m),
         ];
 
-        WeightedAverageResult onTheDay = WeightedAverageCalculator.Calculate(lines, Day1.AddDays(1));
-        WeightedAverageResult dayBefore = WeightedAverageCalculator.Calculate(lines, Day1);
+        WeightedAverageResult onTheDay = WeightedAverageCalculatorRepository.Calculate(lines, Day1.AddDays(1));
+        WeightedAverageResult dayBefore = WeightedAverageCalculatorRepository.Calculate(lines, Day1);
 
         Assert.False(onTheDay.Lines.Single(l => l.StockMovementId == 2).Recalculated);
         Assert.Equal(7m, onTheDay.Lines.Single(l => l.StockMovementId == 2).TotalCost);
@@ -276,7 +277,7 @@ public class WeightedAverageCalculatorTests
     {
         List<WeightedAverageLine> lines = [Out(1, 2m, Day1, storedUnitCost: 4m, storedTotal: 8m)];
 
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(lines, null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(lines, null);
 
         WeightedAverageLineResult line = Assert.Single(result.Lines);
         Assert.False(line.Recalculated);
@@ -296,7 +297,7 @@ public class WeightedAverageCalculatorTests
             In(3, 10m, 20m, Day1.AddDays(2)),
         ];
 
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(lines, null);
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(lines, null);
 
         // (100 + 200) ÷ 20 = 15, so the sale cost 75, not the 50 it was stored at.
         WeightedAverageLineResult sale = result.Lines.Single(l => l.StockMovementId == 2);

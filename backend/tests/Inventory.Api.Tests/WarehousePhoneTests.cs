@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
 using Inventory.Repository;
@@ -18,7 +19,7 @@ public sealed class WarehousePhoneTests
     public WarehousePhoneTests(PostgresFixture postgres) => _postgres = postgres;
 
     /// <summary>The request names its code, so nothing is numbered.</summary>
-    private static WarehouseService Service(InventoryDbContext db) => new(db, null!, TimeProvider.System);
+    private static WarehouseRepository Service(InventoryDbContext db) => new(db, null!, TimeProvider.System);
 
     [SkippableFact]
     public async Task Blank_phones_are_stored_as_null_and_real_ones_trimmed()

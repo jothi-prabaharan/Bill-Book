@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Posts to the general ledger. Only Accounting writes ledger rows, so this is
@@ -62,12 +62,12 @@ public enum LedgerPostOutcome
     Refused = 2,
 }
 
-public sealed class AccountingLedger : IAccountingLedger
+public sealed class AccountingLedgerRepository : IAccountingLedger
 {
     private readonly HttpClient _http;
-    private readonly ILogger<AccountingLedger> _log;
+    private readonly ILogger<AccountingLedgerRepository> _log;
 
-    public AccountingLedger(HttpClient http, ILogger<AccountingLedger> log)
+    public AccountingLedgerRepository(HttpClient http, ILogger<AccountingLedgerRepository> log)
     {
         _http = http;
         _log = log;

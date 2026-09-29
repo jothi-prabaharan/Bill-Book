@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Inventory.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -66,7 +67,7 @@ public sealed class InternalStockController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var stock = _services.GetRequiredService<StockService>();
+        var stock = _services.GetRequiredService<StockRepository>();
 
         var response = new RecordOpeningStockResponse();
 
@@ -143,7 +144,7 @@ public sealed class InternalStockController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var stock = _services.GetRequiredService<StockService>();
+        var stock = _services.GetRequiredService<StockRepository>();
         var rows = await stock.GetAvailabilityAsync(request.ItemIds, ct);
 
         return Ok(new StockAvailabilityResponse
@@ -218,7 +219,7 @@ public sealed class InternalStockController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var stock = _services.GetRequiredService<StockService>();
+        var stock = _services.GetRequiredService<StockRepository>();
         var response = new ReserveStockResponse { Success = true };
 
         foreach (var line in request.Lines)
@@ -263,7 +264,7 @@ public sealed class InternalStockController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var stock = _services.GetRequiredService<StockService>();
+        var stock = _services.GetRequiredService<StockRepository>();
         var response = new ReleaseStockResponse { Success = true };
 
         foreach (var line in request.Lines)
@@ -309,7 +310,7 @@ public sealed class InternalStockController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var stock = _services.GetRequiredService<StockService>();
+        var stock = _services.GetRequiredService<StockRepository>();
         var db = _services.GetRequiredService<InventoryDbContext>();
         
         await using ITransactionScope transaction = await db.Database.BeginScopeAsync(ct);
@@ -378,7 +379,7 @@ public sealed class InternalStockController : ControllerBase
     /// opened, weighted average moved.
     ///
     /// <b>It posts nothing to the ledger, and that is deliberate.</b> These
-    /// movements carry a source type, and <c>StockLedgerMapping</c> refuses a
+    /// movements carry a source type, and <c>StockLedgerMappingRepository</c> refuses a
     /// posting for a sourced receipt — the other leg is Goods Received Not
     /// Invoiced or Accounts Payable, and only Purchase knows which vendor and
     /// how much of the figure is reclaimable tax. Posting the stock half here as
@@ -415,7 +416,7 @@ public sealed class InternalStockController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var stock = _services.GetRequiredService<StockService>();
+        var stock = _services.GetRequiredService<StockRepository>();
         var response = new ReceiveStockResponse { Success = true };
 
         foreach (ReceiveStockLine line in request.Lines)
@@ -504,7 +505,7 @@ public sealed class InternalStockController : ControllerBase
     /// would move value into or out of the branch that never existed.
     ///
     /// Like the receipt, it posts nothing: a sourced <c>PurchaseReturn</c> is
-    /// refused a posting by <c>StockLedgerMapping</c>, because its other leg is
+    /// refused a posting by <c>StockLedgerMappingRepository</c>, because its other leg is
     /// Accounts Payable and only Purchase knows the vendor and the tax.
     /// </summary>
     [HttpPost("return")]
@@ -522,7 +523,7 @@ public sealed class InternalStockController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var stock = _services.GetRequiredService<StockService>();
+        var stock = _services.GetRequiredService<StockRepository>();
         var response = new ReturnStockResponse { Success = true };
 
         foreach (ReturnStockLine line in request.Lines)

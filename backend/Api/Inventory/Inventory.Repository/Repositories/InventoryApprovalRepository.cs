@@ -6,7 +6,7 @@ using Shared.Kernel.Approvals;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Tenancy;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Approval chains for stock adjustments (TK-102): the shared flow of
@@ -14,11 +14,11 @@ namespace Inventory.Api.Services;
 /// A sheet has no ReadyToPost state, so approval changes only the summary: an
 /// <c>Approved</c> summary is what lets the ordinary post through.
 /// </summary>
-public sealed class InventoryApprovalService : DocumentApprovalService<InventoryApprovalStep>
+public sealed class InventoryApprovalRepository : DocumentApprovalService<InventoryApprovalStep>
 {
     private readonly InventoryDbContext _db;
 
-    public InventoryApprovalService(
+    public InventoryApprovalRepository(
         InventoryDbContext db, IApprovalChainClient chains, ITenantContext tenant, ICurrentUser user, TimeProvider clock)
         : base(db, chains, tenant, user, clock)
     {

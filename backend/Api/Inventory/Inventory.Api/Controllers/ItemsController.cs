@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +22,9 @@ namespace Inventory.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class ItemsController : ControllerBase
 {
-    private readonly ItemService _items;
+    private readonly ItemRepository _items;
 
-    public ItemsController(ItemService items) => _items = items;
+    public ItemsController(ItemRepository items) => _items = items;
 
     /// <summary>
     /// The item list. <c>search</c> matches name and code anywhere and a barcode

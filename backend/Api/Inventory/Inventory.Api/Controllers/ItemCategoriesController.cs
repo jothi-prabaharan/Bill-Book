@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,9 @@ namespace Inventory.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class ItemCategoriesController : ControllerBase
 {
-    private readonly ItemCategoryService _categories;
+    private readonly ItemCategoryRepository _categories;
 
-    public ItemCategoriesController(ItemCategoryService categories) => _categories = categories;
+    public ItemCategoriesController(ItemCategoryRepository categories) => _categories = categories;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] bool includeInactive, CancellationToken ct) =>

@@ -1,5 +1,6 @@
 using Inventory.Api.Controllers;
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Enums;
 using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
@@ -70,7 +71,7 @@ public class InternalStockControllerTests
 
         var services = new ServiceCollection();
         services.AddScoped(_ => db);
-        services.AddScoped<StockService>(sp => new StockService(db, new CostingService(db), TimeProvider.System));
+        services.AddScoped<StockRepository>(sp => new StockRepository(db, new CostingRepository(db), TimeProvider.System));
         var sp = services.BuildServiceProvider();
 
         var tenant = new TenantContext();
@@ -162,7 +163,7 @@ public class InternalStockControllerTests
 
         var services = new ServiceCollection();
         services.AddScoped(_ => db);
-        services.AddScoped<StockService>(sp => new StockService(db, new CostingService(db), TimeProvider.System));
+        services.AddScoped<StockRepository>(sp => new StockRepository(db, new CostingRepository(db), TimeProvider.System));
         var sp = services.BuildServiceProvider();
 
         var controller = new InternalStockController(

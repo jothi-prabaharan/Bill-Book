@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,9 @@ namespace Inventory.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class StockAdjustmentsController : ControllerBase
 {
-    private readonly StockAdjustmentService _adjustments;
+    private readonly StockAdjustmentRepository _adjustments;
 
-    public StockAdjustmentsController(StockAdjustmentService adjustments) =>
+    public StockAdjustmentsController(StockAdjustmentRepository adjustments) =>
         _adjustments = adjustments;
 
     [HttpGet]

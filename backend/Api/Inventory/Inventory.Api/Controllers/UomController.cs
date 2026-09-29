@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +20,9 @@ namespace Inventory.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class UomController : ControllerBase
 {
-    private readonly UomService _uom;
+    private readonly UomRepository _uom;
 
-    public UomController(UomService uom) => _uom = uom;
+    public UomController(UomRepository uom) => _uom = uom;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] bool includeInactive, CancellationToken ct) =>

@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// How far back a branch's books are closed, for a caller that is no person.
@@ -27,12 +27,12 @@ public sealed record PeriodLockLookup(bool Known, DateOnly? LockedUpto)
     public static PeriodLockLookup Unknown { get; } = new(false, null);
 }
 
-public sealed class AccountingPeriodLock : IAccountingPeriodLock
+public sealed class AccountingPeriodLockRepository : IAccountingPeriodLock
 {
     private readonly HttpClient _http;
-    private readonly ILogger<AccountingPeriodLock> _log;
+    private readonly ILogger<AccountingPeriodLockRepository> _log;
 
-    public AccountingPeriodLock(HttpClient http, ILogger<AccountingPeriodLock> log)
+    public AccountingPeriodLockRepository(HttpClient http, ILogger<AccountingPeriodLockRepository> log)
     {
         _http = http;
         _log = log;

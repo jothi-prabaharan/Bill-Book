@@ -2,7 +2,7 @@ using Inventory.Entity.Enums;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>What one item's recalculation changed.</summary>
 /// <param name="ItemId">The item.</param>
@@ -18,7 +18,7 @@ public sealed record WeightedAverageRecostResult(
     decimal AverageCost);
 
 /// <summary>
-/// Applies <see cref="WeightedAverageCalculator"/> to one weighted-average item:
+/// Applies <see cref="WeightedAverageCalculatorRepository"/> to one weighted-average item:
 /// reads its movements, recalculates, and writes back only what changed.
 ///
 /// <b>Why a recalculation over the whole history rather than a running
@@ -47,12 +47,12 @@ public sealed record WeightedAverageRecostResult(
 ///
 /// Runs inside the caller's transaction; it opens none of its own.
 /// </summary>
-public sealed class WeightedAverageRecosting
+public sealed class WeightedAverageRecostingRepository
 {
     private readonly InventoryDbContext _db;
-    private readonly ILogger<WeightedAverageRecosting> _log;
+    private readonly ILogger<WeightedAverageRecostingRepository> _log;
 
-    public WeightedAverageRecosting(InventoryDbContext db, ILogger<WeightedAverageRecosting> log)
+    public WeightedAverageRecostingRepository(InventoryDbContext db, ILogger<WeightedAverageRecostingRepository> log)
     {
         _db = db;
         _log = log;
@@ -83,7 +83,7 @@ public sealed class WeightedAverageRecosting
             })
             .ToListAsync(ct);
 
-        WeightedAverageResult result = WeightedAverageCalculator.Calculate(
+        WeightedAverageResult result = WeightedAverageCalculatorRepository.Calculate(
             stored.Select(m => new WeightedAverageLine(
                 m.StockMovementId,
                 m.MovementDate,

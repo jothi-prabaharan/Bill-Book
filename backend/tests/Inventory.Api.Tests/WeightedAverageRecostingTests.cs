@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Enums;
 using Inventory.Entity.TableEntities;
 using Inventory.Repository;
@@ -199,8 +200,8 @@ public class WeightedAverageRecostingTests
         // The ledger accepts the posting of 50.00, and while that call is in
         // flight the recalculation restates the sale at 60.00.
         var ledger = new RestatingLedger(h.Db, sale, restatedTo: 60m);
-        var poster = new StockLedgerPoster(
-            h.Db, ledger, h.Tenant, TimeProvider.System, NullLogger<StockLedgerPoster>.Instance);
+        var poster = new StockLedgerPosterRepository(
+            h.Db, ledger, h.Tenant, TimeProvider.System, NullLogger<StockLedgerPosterRepository>.Instance);
 
         int posted = await poster.PostPendingAsync(10, 5, TimeSpan.FromMinutes(10), ct);
 
@@ -272,7 +273,7 @@ public class WeightedAverageRecostingTests
 
         public required TenantContext Tenant { get; init; }
 
-        public required WeightedAverageRecosting Recosting { get; init; }
+        public required WeightedAverageRecostingRepository Recosting { get; init; }
 
         private long UomId { get; init; }
 
@@ -400,8 +401,8 @@ public class WeightedAverageRecostingTests
                 Tenant = tenant,
                 UomTypeId = uomType.UomTypeId,
                 UomId = uom.UomId,
-                Recosting = new WeightedAverageRecosting(
-                    db, NullLogger<WeightedAverageRecosting>.Instance),
+                Recosting = new WeightedAverageRecostingRepository(
+                    db, NullLogger<WeightedAverageRecostingRepository>.Instance),
             };
         }
 

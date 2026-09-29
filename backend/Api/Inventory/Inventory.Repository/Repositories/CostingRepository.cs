@@ -4,7 +4,7 @@ using Inventory.Entity.TableEntities;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Cost layers: what each receipt cost, and which of them each issue consumed.
@@ -27,11 +27,11 @@ namespace Inventory.Api.Services;
 /// there being enough, with the row count as the answer. Two sales cannot take
 /// the same last unit of a layer.
 /// </summary>
-public sealed class CostingService
+public sealed class CostingRepository
 {
     private readonly InventoryDbContext _db;
 
-    public CostingService(InventoryDbContext db) => _db = db;
+    public CostingRepository(InventoryDbContext db) => _db = db;
 
     /// <summary>Layer quantities share the movement scale, so allocations always sum exactly.</summary>
     private const int QuantityScale = 3;

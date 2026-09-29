@@ -5,7 +5,7 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Ordering;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// The category tree. Two rules make this more than CRUD: a category cannot be
@@ -13,13 +13,13 @@ namespace Inventory.Api.Services;
 /// deeper than that and every report grouping has to decide which level it
 /// means.
 /// </summary>
-public sealed class ItemCategoryService
+public sealed class ItemCategoryRepository
 {
     private const int MaxDepth = 3;
 
     private readonly InventoryDbContext _db;
 
-    public ItemCategoryService(InventoryDbContext db) => _db = db;
+    public ItemCategoryRepository(InventoryDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<ItemCategoryListItem>> ListAsync(
         bool includeInactive, CancellationToken ct)

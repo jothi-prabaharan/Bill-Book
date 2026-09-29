@@ -1,7 +1,7 @@
 using Inventory.Entity.Enums;
 using Inventory.Entity.TableEntities;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// What a stock movement means in the general ledger.
@@ -10,7 +10,7 @@ namespace Inventory.Api.Services;
 /// that is wrong quietly. A movement posted to the wrong account does not fail —
 /// it produces a balance sheet that balances and a gross margin that lies.
 /// </summary>
-public static class StockLedgerMapping
+public static class StockLedgerMappingRepository
 {
     /// <summary>
     /// The control accounts this maps onto, by the immutable

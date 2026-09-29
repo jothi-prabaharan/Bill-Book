@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,9 @@ namespace Inventory.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class MetalPuritiesController : ControllerBase
 {
-    private readonly MetalPurityService _purities;
+    private readonly MetalPurityRepository _purities;
 
-    public MetalPuritiesController(MetalPurityService purities) => _purities = purities;
+    public MetalPuritiesController(MetalPurityRepository purities) => _purities = purities;
 
     [HttpGet]
     public async Task<IActionResult> List(

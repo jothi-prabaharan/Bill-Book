@@ -9,7 +9,7 @@ using Shared.Kernel.CustomFields;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Ordering;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// The item master. Saved as an aggregate — item, its vertical extension and its
@@ -22,14 +22,14 @@ namespace Inventory.Api.Services;
 /// the unit type, inventory unit, costing type and tracking flags are frozen,
 /// because every recorded quantity and cost was written under them.
 /// </summary>
-public sealed class ItemService
+public sealed class ItemRepository
 {
     private readonly InventoryDbContext _db;
     private readonly INumberGenerator _numbers;
     private readonly TimeProvider _clock;
     private readonly ICustomFieldDefinitions? _customFields;
 
-    public ItemService(InventoryDbContext db, INumberGenerator numbers, TimeProvider clock, ICustomFieldDefinitions? customFields = null)
+    public ItemRepository(InventoryDbContext db, INumberGenerator numbers, TimeProvider clock, ICustomFieldDefinitions? customFields = null)
     {
         _db = db;
         _numbers = numbers;

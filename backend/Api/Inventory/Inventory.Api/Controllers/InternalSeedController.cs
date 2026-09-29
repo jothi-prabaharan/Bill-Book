@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -42,9 +43,9 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var uom = _services.GetRequiredService<UomService>();
-        var purities = _services.GetRequiredService<MetalPurityService>();
-        var seeder = _services.GetRequiredService<InventorySeeder>();
+        var uom = _services.GetRequiredService<UomRepository>();
+        var purities = _services.GetRequiredService<MetalPurityRepository>();
+        var seeder = _services.GetRequiredService<InventorySeederRepository>();
 
         var response = new SeedOrganizationResponse
         {

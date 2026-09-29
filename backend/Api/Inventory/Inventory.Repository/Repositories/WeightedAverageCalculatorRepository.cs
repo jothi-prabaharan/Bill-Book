@@ -1,6 +1,6 @@
 using Inventory.Entity.Enums;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// One movement as the weighted average recalculation sees it: a date, a
@@ -106,7 +106,7 @@ public sealed record WeightedAverageResult(
 /// item's total cost of sales is exact to the cent.</item>
 /// </list>
 /// </summary>
-public static class WeightedAverageCalculator
+public static class WeightedAverageCalculatorRepository
 {
     /// <summary>Precision of the average, the unit cost and the unrounded line value.</summary>
     public const int CostScale = 12;

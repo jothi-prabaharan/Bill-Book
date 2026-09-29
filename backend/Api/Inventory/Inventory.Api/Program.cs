@@ -1,6 +1,7 @@
 using Shared.Kernel.Security;
 using System.Text;
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -64,30 +65,30 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-builder.Services.AddScoped<UomService>();
-builder.Services.AddScoped<ItemCategoryService>();
-builder.Services.AddScoped<MetalPurityService>();
-builder.Services.AddScoped<InventorySeeder>();
-builder.Services.AddScoped<StockAdjustmentService>();
+builder.Services.AddScoped<UomRepository>();
+builder.Services.AddScoped<ItemCategoryRepository>();
+builder.Services.AddScoped<MetalPurityRepository>();
+builder.Services.AddScoped<InventorySeederRepository>();
+builder.Services.AddScoped<StockAdjustmentRepository>();
 
 // Approval chains for stock adjustments (TK-102): Master resolves them, this
 // service stores the steps.
-builder.Services.AddScoped<InventoryApprovalService>();
+builder.Services.AddScoped<InventoryApprovalRepository>();
 builder.Services.AddHttpClient<Shared.Kernel.Approvals.IApprovalChainClient, Shared.Kernel.Approvals.HttpApprovalChainClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<WarehouseService>();
+builder.Services.AddScoped<WarehouseRepository>();
 // The branch's custom field definitions (TK-111), read from Master and cached.
 builder.Services.AddHttpClient<Shared.Kernel.CustomFields.ICustomFieldDefinitions, Shared.Kernel.CustomFields.HttpCustomFieldDefinitions>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<ItemService>();
-builder.Services.AddScoped<CostingService>();
-builder.Services.AddScoped<StockService>();
+builder.Services.AddScoped<ItemRepository>();
+builder.Services.AddScoped<CostingRepository>();
+builder.Services.AddScoped<StockRepository>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so an item code is allocated inside the

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Kernel.Persistence;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Stock: one pool per item, company-wide, and the append-only movement history
@@ -20,13 +20,13 @@ namespace Inventory.Api.Services;
 /// It is synchronous for the same reason: costing, accounting and notifications
 /// can all be told afterwards, but the quantity cannot.
 /// </summary>
-public sealed class StockService
+public sealed class StockRepository
 {
     private readonly InventoryDbContext _db;
-    private readonly CostingService _costing;
+    private readonly CostingRepository _costing;
     private readonly TimeProvider _clock;
 
-    public StockService(InventoryDbContext db, CostingService costing, TimeProvider clock)
+    public StockRepository(InventoryDbContext db, CostingRepository costing, TimeProvider clock)
     {
         _db = db;
         _costing = costing;
@@ -641,7 +641,7 @@ public sealed class StockService
         // Inbound always creates a layer, whatever the method: the layer is the
         // receipt, and one never written could not be reconstructed later.
         return direction == StockDirection.In
-            || CostingService.ConsumesLayers(item.CostingType)
+            || CostingRepository.ConsumesLayers(item.CostingType)
             || item.CostingType == CostingType.WeightedAverage;
     }
 

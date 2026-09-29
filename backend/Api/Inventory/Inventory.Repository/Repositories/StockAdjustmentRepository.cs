@@ -8,12 +8,12 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Stock adjustment sheets — a count or a write-off posted as one document.
 ///
-/// <b>It moves stock through <see cref="StockService"/> and posts nothing
+/// <b>It moves stock through <see cref="StockRepository"/> and posts nothing
 /// itself.</b> Each line records an ordinary movement carrying this document's
 /// id, and the movement-to-ledger mapping already files a sourced movement under
 /// its document. So a twenty-line count produces twenty movements and one
@@ -26,29 +26,29 @@ namespace Inventory.Api.Services;
 /// sheet, linked to the original from both ends — the same shape as a journal
 /// reversal, for the same reason.
 /// </summary>
-public sealed class StockAdjustmentService
+public sealed class StockAdjustmentRepository
 {
     /// <summary>The transaction type this document is, and the series it numbers from.</summary>
     private const string TypeCode = "STA";
 
     private readonly InventoryDbContext _db;
-    private readonly StockService _stock;
+    private readonly StockRepository _stock;
     private readonly INumberGenerator _numbers;
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
-    private readonly ILogger<StockAdjustmentService> _logger;
+    private readonly ILogger<StockAdjustmentRepository> _logger;
 
     /// <summary>Approval chains (TK-102). Null in tests that do not exercise them.</summary>
-    private readonly InventoryApprovalService? _approvals;
+    private readonly InventoryApprovalRepository? _approvals;
 
-    public StockAdjustmentService(
+    public StockAdjustmentRepository(
         InventoryDbContext db,
-        StockService stock,
+        StockRepository stock,
         INumberGenerator numbers,
         ICurrentUser user,
         TimeProvider clock,
-        ILogger<StockAdjustmentService> logger,
-        InventoryApprovalService? approvals = null)
+        ILogger<StockAdjustmentRepository> logger,
+        InventoryApprovalRepository? approvals = null)
     {
         _approvals = approvals;
         _db = db;

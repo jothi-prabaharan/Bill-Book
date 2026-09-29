@@ -7,20 +7,20 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Ordering;
 using Shared.Kernel.Validation;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Stock locations. A reporting and movement dimension only — stock is one
 /// shared pool and weighted average cost is company-wide, so nothing here
 /// partitions inventory.
 /// </summary>
-public sealed class WarehouseService
+public sealed class WarehouseRepository
 {
     private readonly InventoryDbContext _db;
     private readonly INumberGenerator _numbers;
     private readonly TimeProvider _clock;
 
-    public WarehouseService(InventoryDbContext db, INumberGenerator numbers, TimeProvider clock)
+    public WarehouseRepository(InventoryDbContext db, INumberGenerator numbers, TimeProvider clock)
     {
         _db = db;
         _numbers = numbers;

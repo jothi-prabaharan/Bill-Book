@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -28,7 +29,7 @@ public sealed class TradeSeedTests
 
         Guid orgId = Guid.NewGuid();
         await using InventoryDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
-        var purities = new MetalPurityService(db);
+        var purities = new MetalPurityRepository(db);
 
         Assert.Equal(0, await purities.SeedForOrganizationAsync(orgId, "Pharma", default));
         Assert.Equal(0, await db.MetalPurities.CountAsync());
@@ -51,6 +52,6 @@ public sealed class TradeSeedTests
         Guid orgId = Guid.NewGuid();
         await using InventoryDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
 
-        Assert.True(await new MetalPurityService(db).SeedForOrganizationAsync(orgId, "General", default) > 0);
+        Assert.True(await new MetalPurityRepository(db).SeedForOrganizationAsync(orgId, "General", default) > 0);
     }
 }

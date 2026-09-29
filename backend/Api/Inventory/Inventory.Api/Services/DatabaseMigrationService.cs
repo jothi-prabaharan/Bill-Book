@@ -1,3 +1,4 @@
+using Inventory.Repository.Repositories;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

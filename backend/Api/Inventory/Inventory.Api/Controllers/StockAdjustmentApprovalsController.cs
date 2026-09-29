@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Approvals;
@@ -24,9 +25,9 @@ public sealed class StockAdjustmentApprovalsController : ControllerBase
 {
     private const ApprovalRequestKind Kind = ApprovalRequestKind.StockAdjustment;
 
-    private readonly InventoryApprovalService _approvals;
+    private readonly InventoryApprovalRepository _approvals;
 
-    public StockAdjustmentApprovalsController(InventoryApprovalService approvals) => _approvals = approvals;
+    public StockAdjustmentApprovalsController(InventoryApprovalRepository approvals) => _approvals = approvals;
 
     [HttpPost("{id:long}/submit")]
     [PermissionAction("edit")]

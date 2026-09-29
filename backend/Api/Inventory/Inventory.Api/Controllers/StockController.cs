@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,9 @@ namespace Inventory.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class StockController : ControllerBase
 {
-    private readonly StockService _stock;
+    private readonly StockRepository _stock;
 
-    public StockController(StockService stock) => _stock = stock;
+    public StockController(StockRepository stock) => _stock = stock;
 
     /// <summary>Every stocked item, including ones that have never moved.</summary>
     [HttpGet]

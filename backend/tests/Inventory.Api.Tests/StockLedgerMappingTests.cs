@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Enums;
 using Inventory.Entity.TableEntities;
 using Xunit;
@@ -41,22 +42,22 @@ public class StockLedgerMappingTests
     [Fact]
     public void A_sale_debits_cost_of_goods_sold_and_credits_inventory()
     {
-        StockPosting posting = StockLedgerMapping.For(Movement(StockMovementType.Issue))!;
+        StockPosting posting = StockLedgerMappingRepository.For(Movement(StockMovementType.Issue))!;
 
         // The direction of this pair is the whole feature. Reversed, stock grows
         // as it is sold and gross profit is negative.
-        Assert.Equal(StockLedgerMapping.CostOfGoodsSold, posting.DebitAccountSystemName);
-        Assert.Equal(StockLedgerMapping.Inventory, posting.CreditAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.CostOfGoodsSold, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.Inventory, posting.CreditAccountSystemName);
     }
 
     [Fact]
     public void A_sales_return_reverses_that_pair()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.SalesReturn, StockDirection.In))!;
 
-        Assert.Equal(StockLedgerMapping.Inventory, posting.DebitAccountSystemName);
-        Assert.Equal(StockLedgerMapping.CostOfGoodsSold, posting.CreditAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.Inventory, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.CostOfGoodsSold, posting.CreditAccountSystemName);
     }
 
     [Theory]
@@ -67,7 +68,7 @@ public class StockLedgerMappingTests
         // Stock is one pool per branch, so a transfer changes where it is and
         // not what the branch owns. Posting it would move value between an
         // account and itself.
-        Assert.Null(StockLedgerMapping.For(Movement(type, direction)));
+        Assert.Null(StockLedgerMappingRepository.For(Movement(type, direction)));
     }
 
     [Theory]
@@ -79,46 +80,46 @@ public class StockLedgerMappingTests
         // The other leg is Accounts Payable, and only Purchase knows the vendor
         // and how much of the amount is tax. Posting the stock half here as well
         // would double the inventory asset.
-        Assert.Null(StockLedgerMapping.For(
+        Assert.Null(StockLedgerMappingRepository.For(
             Movement(type, direction, sourceType: "BIL", sourceId: 900, sourceLineId: 2)));
     }
 
     [Fact]
     public void A_receipt_with_no_document_behind_it_is_treated_as_an_assertion_of_stock()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.Receipt, StockDirection.In))!;
 
-        Assert.Equal(StockLedgerMapping.Inventory, posting.DebitAccountSystemName);
-        Assert.Equal(StockLedgerMapping.OpeningBalanceEquity, posting.CreditAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.Inventory, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.OpeningBalanceEquity, posting.CreditAccountSystemName);
         Assert.Equal("OPB", posting.TransactionTypeCode);
     }
 
     [Fact]
     public void Shrinkage_is_a_cost_of_goods_sold_expense()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.Adjustment, StockDirection.Out))!;
 
-        Assert.Equal(StockLedgerMapping.CostOfGoodsSold, posting.DebitAccountSystemName);
-        Assert.Equal(StockLedgerMapping.Inventory, posting.CreditAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.CostOfGoodsSold, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.Inventory, posting.CreditAccountSystemName);
         Assert.Equal("STA", posting.TransactionTypeCode);
     }
 
     [Fact]
     public void An_upward_count_correction_runs_the_other_way()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.Adjustment, StockDirection.In))!;
 
-        Assert.Equal(StockLedgerMapping.Inventory, posting.DebitAccountSystemName);
-        Assert.Equal(StockLedgerMapping.CostOfGoodsSold, posting.CreditAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.Inventory, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.CostOfGoodsSold, posting.CreditAccountSystemName);
     }
 
     [Fact]
     public void A_sourced_sale_files_under_the_document_and_its_own_line()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.Issue, sourceType: "INV", sourceId: 4321, sourceLineId: 7))!;
 
         // Under the invoice, not under the movement. That is what puts the cost
@@ -131,7 +132,7 @@ public class StockLedgerMappingTests
     [Fact]
     public void An_unsourced_movement_is_its_own_document()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.Issue, movementId: 512))!;
 
         // There is nothing else to file it under, and using the movement id
@@ -150,7 +151,7 @@ public class StockLedgerMappingTests
         {
             foreach (StockDirection direction in Enum.GetValues<StockDirection>())
             {
-                if (StockLedgerMapping.For(Movement(type, direction)) is not { } posting)
+                if (StockLedgerMappingRepository.For(Movement(type, direction)) is not { } posting)
                 {
                     continue;
                 }
@@ -165,14 +166,14 @@ public class StockLedgerMappingTests
     [Fact]
     public void Goods_out_on_a_sale_challan_wait_in_goods_delivered_not_invoiced()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.Issue, sourceType: "DLC", sourceId: 31, sourceLineId: 4))!;
 
         // Not cost of sales yet: there is no revenue until the invoice, which
         // moves the cost on. Filed on the challan's own line and the COGS leg
         // type, the key the challan's provisional posting uses.
-        Assert.Equal(StockLedgerMapping.GoodsDeliveredNotInvoiced, posting.DebitAccountSystemName);
-        Assert.Equal(StockLedgerMapping.Inventory, posting.CreditAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.GoodsDeliveredNotInvoiced, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.Inventory, posting.CreditAccountSystemName);
         Assert.Equal("DLC", posting.TransactionTypeCode);
         Assert.Equal(31, posting.TransactionId);
         Assert.Equal(4, posting.TransactionDetailId);
@@ -181,10 +182,10 @@ public class StockLedgerMappingTests
     [Fact]
     public void An_invoices_issue_still_goes_straight_to_cost_of_goods_sold()
     {
-        StockPosting posting = StockLedgerMapping.For(
+        StockPosting posting = StockLedgerMappingRepository.For(
             Movement(StockMovementType.Issue, sourceType: "INV", sourceId: 9, sourceLineId: 2))!;
 
-        Assert.Equal(StockLedgerMapping.CostOfGoodsSold, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMappingRepository.CostOfGoodsSold, posting.DebitAccountSystemName);
     }
 
     [Theory]
@@ -197,6 +198,6 @@ public class StockLedgerMappingTests
         StockMovement movement = Movement(type, direction, sourceType: "DLC", sourceId: 31, sourceLineId: 4);
         movement.LedgerExempt = true;
 
-        Assert.Null(StockLedgerMapping.For(movement));
+        Assert.Null(StockLedgerMappingRepository.For(movement));
     }
 }

@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Enums;
 using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
@@ -320,7 +321,7 @@ public class StockAdjustmentServiceTests
 
         public required Guid OrgId { get; init; }
 
-        public required StockAdjustmentService Adjustments { get; init; }
+        public required StockAdjustmentRepository Adjustments { get; init; }
 
         private long UomId { get; init; }
 
@@ -372,7 +373,7 @@ public class StockAdjustmentServiceTests
         }
 
         /// <summary>Set when the harness was built with an approval workflow (TK-102).</summary>
-        public InventoryApprovalService? Approvals { get; private init; }
+        public InventoryApprovalRepository? Approvals { get; private init; }
 
         public SwitchableUser User { get; private init; } = new();
 
@@ -418,13 +419,13 @@ public class StockAdjustmentServiceTests
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
             var clock = TimeProvider.System;
-            var costing = new CostingService(db);
-            var stock = new StockService(db, costing, clock);
+            var costing = new CostingRepository(db);
+            var stock = new StockRepository(db, costing, clock);
 
             var user = new SwitchableUser();
-            InventoryApprovalService? approvals = chains is null
+            InventoryApprovalRepository? approvals = chains is null
                 ? null
-                : new InventoryApprovalService(
+                : new InventoryApprovalRepository(
                     db, chains, new TenantContext { CustomerId = customerId, OrgId = orgId }, user, clock);
 
             return new Harness
@@ -435,9 +436,9 @@ public class StockAdjustmentServiceTests
                 UomId = uom.UomId,
                 User = user,
                 Approvals = approvals,
-                Adjustments = new StockAdjustmentService(
+                Adjustments = new StockAdjustmentRepository(
                     db, stock, numbers, user, clock,
-                    NullLogger<StockAdjustmentService>.Instance, approvals),
+                    NullLogger<StockAdjustmentRepository>.Instance, approvals),
             };
         }
 

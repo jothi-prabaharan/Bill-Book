@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Enums;
 using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
@@ -73,7 +74,7 @@ public sealed class ItemCustomFieldTests
     {
         await using InventoryDbContext db = await BranchAsync();
 
-        IReadOnlyList<ItemListItem> found = await new ItemService(db, null!, TimeProvider.System, new Definitions(searchable: true))
+        IReadOnlyList<ItemListItem> found = await new ItemRepository(db, null!, TimeProvider.System, new Definitions(searchable: true))
             .ListAsync("aisle-7", null, null, false, default);
 
         ItemListItem soap = Assert.Single(found);
@@ -86,7 +87,7 @@ public sealed class ItemCustomFieldTests
     {
         await using InventoryDbContext db = await BranchAsync();
 
-        Assert.Empty(await new ItemService(db, null!, TimeProvider.System, new Definitions(searchable: false))
+        Assert.Empty(await new ItemRepository(db, null!, TimeProvider.System, new Definitions(searchable: false))
             .ListAsync("aisle-7", null, null, false, default));
     }
 }

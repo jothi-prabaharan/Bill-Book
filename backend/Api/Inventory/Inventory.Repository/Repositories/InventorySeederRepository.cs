@@ -2,7 +2,7 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Numbering;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Inventory's own document numbering series for a newly created organization —
@@ -16,11 +16,11 @@ namespace Inventory.Api.Services;
 /// returned is what was actually written, which is zero on a branch already
 /// complete.
 /// </summary>
-public sealed class InventorySeeder
+public sealed class InventorySeederRepository
 {
     private readonly InventoryDbContext _db;
 
-    public InventorySeeder(InventoryDbContext db) => _db = db;
+    public InventorySeederRepository(InventoryDbContext db) => _db = db;
 
     public async Task<int> SeedNumberingSeriesAsync(Guid orgId, CancellationToken ct)
     {

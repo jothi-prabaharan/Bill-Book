@@ -4,7 +4,7 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
 
-namespace Inventory.Api.Services;
+namespace Inventory.Repository.Repositories;
 
 /// <summary>
 /// Drains the ledger queue: takes movements whose cost has settled and asks
@@ -21,20 +21,20 @@ namespace Inventory.Api.Services;
 /// that balance on their own and replace only their own rows, so posting a
 /// Tuesday sale before a Monday one produces exactly the same ledger.
 /// </summary>
-public sealed class StockLedgerPoster
+public sealed class StockLedgerPosterRepository
 {
     private readonly InventoryDbContext _db;
     private readonly IAccountingLedger _ledger;
     private readonly ITenantContext _tenant;
     private readonly TimeProvider _clock;
-    private readonly ILogger<StockLedgerPoster> _log;
+    private readonly ILogger<StockLedgerPosterRepository> _log;
 
-    public StockLedgerPoster(
+    public StockLedgerPosterRepository(
         InventoryDbContext db,
         IAccountingLedger ledger,
         ITenantContext tenant,
         TimeProvider clock,
-        ILogger<StockLedgerPoster> log)
+        ILogger<StockLedgerPosterRepository> log)
     {
         _db = db;
         _ledger = ledger;
@@ -117,7 +117,7 @@ public sealed class StockLedgerPoster
     private async Task<bool> PostOneAsync(
         Guid customerId, Guid orgId, StockMovement movement, int maxAttempts, CancellationToken ct)
     {
-        StockPosting? posting = StockLedgerMapping.For(movement);
+        StockPosting? posting = StockLedgerMappingRepository.For(movement);
 
         // No posting to make. A settled answer, not a failure — a transfer moves
         // no value, and a receipt against a purchase document is posted by that
@@ -210,7 +210,7 @@ public sealed class StockLedgerPoster
     }
 
     private static bool HasItemSubAccount(string account) =>
-        account is StockLedgerMapping.Inventory or StockLedgerMapping.CostOfGoodsSold;
+        account is StockLedgerMappingRepository.Inventory or StockLedgerMappingRepository.CostOfGoodsSold;
 
     private static LedgerPostingLeg Leg(
         StockPosting posting, long itemId, decimal amount, bool isDebit, string description)
@@ -224,7 +224,7 @@ public sealed class StockLedgerPoster
             // filed against the document's own line. Together those two are the
             // key this posting replaces, so a recosted movement corrects its own
             // rows and leaves the rest of the document alone.
-            StockLedgerMapping.CogsLedgerType,
+            StockLedgerMappingRepository.CogsLedgerType,
             posting.LedgerSourceId,
             posting.TransactionDetailId,
             account,

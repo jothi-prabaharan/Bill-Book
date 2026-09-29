@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Inventory.Repository.Repositories;
 using Inventory.Entity.Enums;
 using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
@@ -23,7 +24,7 @@ public sealed class ItemSearchTests
     /// Only the list paths are exercised, and neither numbers anything, so the
     /// service gets no number generator.
     /// </summary>
-    private static ItemService Service(InventoryDbContext db) => new(db, null!, TimeProvider.System);
+    private static ItemRepository Service(InventoryDbContext db) => new(db, null!, TimeProvider.System);
 
     private static async Task<(long UomTypeId, long UomId)> SeedUnitAsync(InventoryDbContext db, Guid orgId)
     {
