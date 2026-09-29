@@ -11,6 +11,7 @@ namespace Customer.Api.Controllers;
 [Authorize]
 [RequireModulePermission("crm")]
 [Route("api/audiences")]
+[Route("api/campaigns/audiences")]
 [RequireApp(App.RetailErp)]
 public sealed class AudiencesController : ControllerBase
 {
@@ -72,6 +73,25 @@ public sealed class AudiencesController : ControllerBase
     [HttpPost("{id:long}/preview")]
     [RequirePermission("crm.view")]
     public async Task<IActionResult> PreviewExisting(long id, CancellationToken ct)
+    {
+        var audience = await _repo.GetByIdAsync(id, ct);
+        if (audience is null) return NotFound();
+
+        var preview = await _repo.ResolvePreviewAsync(audience.Rules, ct);
+        return Ok(preview);
+    }
+
+    [HttpPost("count")]
+    [RequirePermission("crm.view")]
+    public async Task<IActionResult> Count([FromBody] AudienceRules rules, CancellationToken ct)
+    {
+        var preview = await _repo.ResolvePreviewAsync(rules, ct);
+        return Ok(new { count = preview.TotalSubscribedRecipients, suppressedCount = preview.TotalSuppressedRecipients });
+    }
+
+    [HttpGet("{id:long}/recipients")]
+    [RequirePermission("crm.view")]
+    public async Task<IActionResult> GetRecipients(long id, CancellationToken ct)
     {
         var audience = await _repo.GetByIdAsync(id, ct);
         if (audience is null) return NotFound();

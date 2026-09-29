@@ -12,6 +12,7 @@ namespace Customer.Api.Controllers;
 [Authorize]
 [RequireModulePermission("crm")]
 [Route("api/email-consents")]
+[Route("api/campaigns/consent")]
 [RequireApp(App.RetailErp)]
 public sealed class EmailConsentsController : ControllerBase
 {
