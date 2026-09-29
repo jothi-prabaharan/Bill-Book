@@ -9,7 +9,7 @@ using WorkOrder.Entity.TableEntities;
 using WorkOrder.Repository;
 using WorkOrder.Repository.SeedData;
 
-namespace WorkOrder.Api.Services;
+namespace WorkOrder.Repository.Repositories;
 
 public enum WorkOrderOutcome
 {
@@ -40,7 +40,7 @@ public sealed record WorkOrderResult(WorkOrderOutcome Outcome, long? Id = null, 
 /// through Inventory's guarded decrement, keyed on the work order and part so
 /// the same part is never issued twice.
 /// </summary>
-public sealed class WorkOrderService
+public sealed class WorkOrderRepository
 {
     public const string TypeCode = "WRK";
 
@@ -49,15 +49,15 @@ public sealed class WorkOrderService
     private readonly IFacilityClient _facility;
     private readonly IEmployeeDirectory _employees;
     private readonly IStockClient _stock;
-    private readonly ILogger<WorkOrderService> _log;
+    private readonly ILogger<WorkOrderRepository> _log;
 
-    public WorkOrderService(
+    public WorkOrderRepository(
         WorkOrderDbContext db,
         INumberGenerator numbers,
         IFacilityClient facility,
         IEmployeeDirectory employees,
         IStockClient stock,
-        ILogger<WorkOrderService> log)
+        ILogger<WorkOrderRepository> log)
     {
         _db = db;
         _numbers = numbers;
@@ -104,9 +104,9 @@ public sealed class WorkOrderService
                 return WorkOrderResult.Fail(WorkOrderOutcome.NotFound);
             }
 
-            if (!WorkOrderLifecycle.IsEditable(order.WorkOrderStatus))
+            if (!WorkOrderLifecycleRepository.IsEditable(order.WorkOrderStatus))
             {
-                return WorkOrderResult.Fail(WorkOrderOutcome.StateRule, WorkOrderLifecycle.NotEditable(order.WorkOrderStatus));
+                return WorkOrderResult.Fail(WorkOrderOutcome.StateRule, WorkOrderLifecycleRepository.NotEditable(order.WorkOrderStatus));
             }
 
             _db.WorkOrderTasks.RemoveRange(order.Tasks);
@@ -150,9 +150,9 @@ public sealed class WorkOrderService
             return WorkOrderResult.Fail(WorkOrderOutcome.NotFound);
         }
 
-        if (WorkOrderLifecycle.Next(order.WorkOrderStatus, request.Action) is not WorkOrderStatus next)
+        if (WorkOrderLifecycleRepository.Next(order.WorkOrderStatus, request.Action) is not WorkOrderStatus next)
         {
-            return WorkOrderResult.Fail(WorkOrderOutcome.StateRule, WorkOrderLifecycle.Refusal(order.WorkOrderStatus, request.Action));
+            return WorkOrderResult.Fail(WorkOrderOutcome.StateRule, WorkOrderLifecycleRepository.Refusal(order.WorkOrderStatus, request.Action));
         }
 
         switch (request.Action)
@@ -218,9 +218,9 @@ public sealed class WorkOrderService
             return WorkOrderResult.Fail(WorkOrderOutcome.NotFound);
         }
 
-        if (!WorkOrderLifecycle.TakesTicks(order.WorkOrderStatus))
+        if (!WorkOrderLifecycleRepository.TakesTicks(order.WorkOrderStatus))
         {
-            return WorkOrderResult.Fail(WorkOrderOutcome.StateRule, $"A work order that is {WorkOrderLifecycle.Words(order.WorkOrderStatus)} takes no more changes.");
+            return WorkOrderResult.Fail(WorkOrderOutcome.StateRule, $"A work order that is {WorkOrderLifecycleRepository.Words(order.WorkOrderStatus)} takes no more changes.");
         }
 
         task.IsDone = isDone;
@@ -241,10 +241,10 @@ public sealed class WorkOrderService
             return WorkOrderResult.Fail(WorkOrderOutcome.NotFound);
         }
 
-        if (!WorkOrderLifecycle.TakesParts(order.WorkOrderStatus))
+        if (!WorkOrderLifecycleRepository.TakesParts(order.WorkOrderStatus))
         {
             return WorkOrderResult.Fail(WorkOrderOutcome.StateRule,
-                $"Parts are issued while the work is under way, not when it is {WorkOrderLifecycle.Words(order.WorkOrderStatus)}.");
+                $"Parts are issued while the work is under way, not when it is {WorkOrderLifecycleRepository.Words(order.WorkOrderStatus)}.");
         }
 
         var part = new WorkOrderPart { WorkOrderId = id, ItemId = request.ItemId, WarehouseId = request.WarehouseId, Quantity = request.Quantity };

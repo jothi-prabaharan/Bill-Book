@@ -1,4 +1,5 @@
 using WorkOrder.Api.Services;
+using WorkOrder.Repository.Repositories;
 using WorkOrder.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class WorkOrderSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using WorkOrderDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new WorkOrderSeeder(db).SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new WorkOrderSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new WorkOrderSeederRepository(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new WorkOrderSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }

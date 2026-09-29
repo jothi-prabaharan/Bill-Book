@@ -1,6 +1,6 @@
 using WorkOrder.Entity.Enums;
 
-namespace WorkOrder.Api.Services;
+namespace WorkOrder.Repository.Repositories;
 
 /// <summary>
 /// The work order's lifecycle (S6, TK-66), as one table, with one set of
@@ -8,7 +8,7 @@ namespace WorkOrder.Api.Services;
 /// shape <c>Shared.Kernel.Documents.DocumentLifecycle</c> gives the sales and
 /// purchase documents.
 /// </summary>
-public static class WorkOrderLifecycle
+public static class WorkOrderLifecycleRepository
 {
     /// <summary>Where an action takes a work order from each status it is allowed in, or null.</summary>
     public static WorkOrderStatus? Next(WorkOrderStatus from, WorkOrderAction action) => (from, action) switch

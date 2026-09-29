@@ -2,14 +2,14 @@ using Microsoft.EntityFrameworkCore;
 using WorkOrder.Repository;
 using WorkOrder.Repository.SeedData;
 
-namespace WorkOrder.Api.Services;
+namespace WorkOrder.Repository.Repositories;
 
 /// <summary>A branch's WRK series (S6, TK-66). Added only when missing.</summary>
-public sealed class WorkOrderSeeder
+public sealed class WorkOrderSeederRepository
 {
     private readonly WorkOrderDbContext _db;
 
-    public WorkOrderSeeder(WorkOrderDbContext db) => _db = db;
+    public WorkOrderSeederRepository(WorkOrderDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {

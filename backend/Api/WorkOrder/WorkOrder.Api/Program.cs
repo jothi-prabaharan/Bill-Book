@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using WorkOrder.Api.Services;
+using WorkOrder.Repository.Repositories;
 using WorkOrder.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -80,8 +81,8 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IFinancialYearProvider>()));
 
 // ---- Service registrations ----
-builder.Services.AddScoped<WorkOrderSeeder>();
-builder.Services.AddScoped<WorkOrderService>();
+builder.Services.AddScoped<WorkOrderSeederRepository>();
+builder.Services.AddScoped<WorkOrderRepository>();
 
 // Where the work is (Facility), who does it (Employee), and the parts it uses (Inventory).
 builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>

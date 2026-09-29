@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using WorkOrder.Api.Services;
+using WorkOrder.Repository.Repositories;
 using WorkOrder.Entity.Enums;
 using WorkOrder.Entity.Models;
 
@@ -21,9 +22,9 @@ namespace WorkOrder.Api.Controllers;
 [Route("api/work-orders")]
 public sealed class WorkOrdersController : ControllerBase
 {
-    private readonly WorkOrderService _orders;
+    private readonly WorkOrderRepository _orders;
 
-    public WorkOrdersController(WorkOrderService orders) => _orders = orders;
+    public WorkOrdersController(WorkOrderRepository orders) => _orders = orders;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] WorkOrderStatus? status, [FromQuery] long? facilityAssetId, CancellationToken ct) =>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using WorkOrder.Api.Services;
+using WorkOrder.Repository.Repositories;
 using WorkOrder.Entity.Models;
 
 namespace WorkOrder.Api.Controllers;
@@ -39,6 +40,6 @@ public sealed class InternalWorkOrdersController : ControllerBase
             return UnprocessableEntity(new WorkOrderMessage("Say where the work is: an asset, a space, or both."));
         }
 
-        return Ok(await _services.GetRequiredService<WorkOrderService>().RaiseAsync(request, ct));
+        return Ok(await _services.GetRequiredService<WorkOrderRepository>().RaiseAsync(request, ct));
     }
 }

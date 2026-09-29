@@ -6,6 +6,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.School;
 using Shared.Kernel.Stock;
 using WorkOrder.Api.Services;
+using WorkOrder.Repository.Repositories;
 using WorkOrder.Entity.Enums;
 using WorkOrder.Entity.Models;
 using WorkOrder.Entity.TableEntities;
@@ -97,17 +98,17 @@ public sealed class WorkOrderServiceTests
     {
         Guid orgId = Guid.NewGuid();
         WorkOrderDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
-        await new WorkOrderSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new WorkOrderSeederRepository(db).SeedForOrganizationAsync(orgId, default);
         return new Branch(db, new FakeStock());
     }
 
-    private static WorkOrderService Service(Branch b) => new(
+    private static WorkOrderRepository Service(Branch b) => new(
         b.Db,
         new NumberGenerator(b.Db, Options.Create(new NumberingOptions()), new AprilYear()),
         new FakeFacility(),
         new FakeEmployees(),
         b.Stock,
-        NullLogger<WorkOrderService>.Instance);
+        NullLogger<WorkOrderRepository>.Instance);
 
     private static SaveWorkOrderRequest Fan(long? assetId = 7, long? spaceId = 3) => new()
     {
@@ -118,7 +119,7 @@ public sealed class WorkOrderServiceTests
         Tasks = ["Check the regulator", "Replace the capacitor"],
     };
 
-    private static async Task<long> AssignedAsync(WorkOrderService service)
+    private static async Task<long> AssignedAsync(WorkOrderRepository service)
     {
         long id = (await service.SaveAsync(null, Fan(), default)).Id!.Value;
         Assert.Equal(WorkOrderOutcome.Ok, (await service.ActAsync(id, new WorkOrderActionRequest { Action = WorkOrderAction.Assign, EmployeeId = 21 }, false, default)).Outcome);
@@ -131,7 +132,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
 
         long id = (await service.SaveAsync(null, Fan(), default)).Id!.Value;
         SaveWorkOrderRequest renamed = Fan();
@@ -154,7 +155,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
         long id = await AssignedAsync(service);
 
         WorkOrderResult issued = await service.IssuePartAsync(id, new IssuePartRequest { ItemId = 101, Quantity = 2, IssueDate = new DateOnly(2026, 7, 2) }, default);
@@ -173,7 +174,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
         long id = await AssignedAsync(service);
 
         WorkOrderResult refused = await service.IssuePartAsync(id, new IssuePartRequest { ItemId = 101, Quantity = 11, IssueDate = new DateOnly(2026, 7, 2) }, default);
@@ -188,7 +189,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
         long id = (await service.SaveAsync(null, Fan(), default)).Id!.Value;
 
         Assert.Equal(WorkOrderOutcome.StateRule,
@@ -203,7 +204,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
 
         Assert.Equal(WorkOrderOutcome.Invalid, (await service.SaveAsync(null, Fan(null, null), default)).Outcome);
         Assert.Equal(WorkOrderOutcome.Invalid, (await service.SaveAsync(null, Fan(8, null), default)).Outcome);
@@ -222,7 +223,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
         long id = await AssignedAsync(service);
         var close = new WorkOrderActionRequest { Action = WorkOrderAction.Close };
 
@@ -242,7 +243,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
         long id = await AssignedAsync(service);
 
         Assert.Equal(WorkOrderOutcome.Invalid, (await service.ActAsync(id, new WorkOrderActionRequest { Action = WorkOrderAction.Cancel }, false, default)).Outcome);
@@ -257,7 +258,7 @@ public sealed class WorkOrderServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         Branch b = await NewBranchAsync();
         await using WorkOrderDbContext _ = b.Db;
-        WorkOrderService service = Service(b);
+        WorkOrderRepository service = Service(b);
         var raise = new RaiseWorkOrderRequest
         {
             SourceKey = "PPM:4:2026-07-01", Title = "Quarterly AC service", FacilityAssetId = 7,

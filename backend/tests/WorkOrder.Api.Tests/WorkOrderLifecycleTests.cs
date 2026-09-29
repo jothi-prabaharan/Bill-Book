@@ -1,4 +1,5 @@
 using WorkOrder.Api.Services;
+using WorkOrder.Repository.Repositories;
 using WorkOrder.Entity.Enums;
 using Xunit;
 
@@ -17,7 +18,7 @@ public sealed class WorkOrderLifecycleTests
     [InlineData(WorkOrderStatus.Completed, WorkOrderAction.Close, WorkOrderStatus.Closed)]
     [InlineData(WorkOrderStatus.Open, WorkOrderAction.Cancel, WorkOrderStatus.Cancelled)]
     public void An_allowed_move_lands_where_expected(WorkOrderStatus from, WorkOrderAction action, WorkOrderStatus to) =>
-        Assert.Equal(to, WorkOrderLifecycle.Next(from, action));
+        Assert.Equal(to, WorkOrderLifecycleRepository.Next(from, action));
 
     [Theory]
     [InlineData(WorkOrderStatus.Open, WorkOrderAction.Complete)]
@@ -28,17 +29,17 @@ public sealed class WorkOrderLifecycleTests
     [InlineData(WorkOrderStatus.Completed, WorkOrderAction.Cancel)]
     public void A_forbidden_move_is_refused_with_a_reason(WorkOrderStatus from, WorkOrderAction action)
     {
-        Assert.Null(WorkOrderLifecycle.Next(from, action));
-        Assert.False(string.IsNullOrWhiteSpace(WorkOrderLifecycle.Refusal(from, action)));
+        Assert.Null(WorkOrderLifecycleRepository.Next(from, action));
+        Assert.False(string.IsNullOrWhiteSpace(WorkOrderLifecycleRepository.Refusal(from, action)));
     }
 
     [Fact]
     public void Only_an_open_work_order_is_editable() =>
-        Assert.Equal([WorkOrderStatus.Open], Enum.GetValues<WorkOrderStatus>().Where(WorkOrderLifecycle.IsEditable));
+        Assert.Equal([WorkOrderStatus.Open], Enum.GetValues<WorkOrderStatus>().Where(WorkOrderLifecycleRepository.IsEditable));
 
     [Fact]
     public void Parts_are_issued_only_while_the_work_is_under_way() =>
         Assert.Equal(
             [WorkOrderStatus.Assigned, WorkOrderStatus.InProgress, WorkOrderStatus.OnHold],
-            Enum.GetValues<WorkOrderStatus>().Where(WorkOrderLifecycle.TakesParts));
+            Enum.GetValues<WorkOrderStatus>().Where(WorkOrderLifecycleRepository.TakesParts));
 }

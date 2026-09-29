@@ -1,3 +1,4 @@
+using WorkOrder.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using WorkOrder.Repository;
