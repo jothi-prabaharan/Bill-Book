@@ -107,7 +107,8 @@ public sealed class SpendMoneyController : ControllerBase
             // Transient. The caller should come back rather than treat it as a
             // refusal — a lock that could not be read is not a lock that passed.
             MoneyDocumentOutcome.PeriodLockUnavailable
-                or MoneyDocumentOutcome.SettlementRateUnavailable => StatusCode(
+                or MoneyDocumentOutcome.SettlementRateUnavailable
+                or MoneyDocumentOutcome.TdsUnavailable => StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
                 new MessageResponse { Message = result.Detail ?? "Please try again." }),
 
@@ -122,6 +123,11 @@ public sealed class SpendMoneyController : ControllerBase
             MoneyDocumentOutcome.AwaitingApproval => Conflict(new MessageResponse
             {
                 Message = result.Detail ?? "This payment needs approval before it can be posted.",
+            }),
+
+            MoneyDocumentOutcome.TdsDeposited => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "The TDS on this payment has been deposited. Void the challan first.",
             }),
 
             MoneyDocumentOutcome.MappingNotSettleable

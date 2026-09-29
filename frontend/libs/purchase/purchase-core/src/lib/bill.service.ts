@@ -111,6 +111,11 @@ export interface BillView extends BillListItem {
   totalAmountBase: number;
   landedCostAmount: number;
   isReverseCharge?: boolean;
+  /** TDS deducted when the bill posted (TK-117): the vendor is owed the payable less this. */
+  tdsSectionCode?: string | null;
+  tdsBase?: number;
+  tdsAmount?: number;
+  tdsNote?: string | null;
   notes?: string | null;
   termsAndConditions?: string | null;
   postedAt?: string | null;

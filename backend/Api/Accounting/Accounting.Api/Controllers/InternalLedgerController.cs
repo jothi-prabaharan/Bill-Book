@@ -76,6 +76,11 @@ public sealed class InternalLedgerController : ControllerBase
                         + "posted. The posting is unchanged and can be retried.",
                 }),
 
+            PostLedgerOutcome.TdsDeposited => StatusCode(StatusCodes.Status409Conflict, new MessageResponse
+            {
+                Message = result.Detail ?? "The TDS on this document has been deposited.",
+            }),
+
             PostLedgerOutcome.AccountMissing or PostLedgerOutcome.SubAccountMissing =>
                 StatusCode(StatusCodes.Status409Conflict, new MessageResponse
                 {

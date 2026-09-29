@@ -2350,16 +2350,50 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Not matched yet.** CDNR and B2BA.
 
 ### TK-117 · Compliance: TDS on purchases and receipts
-- [~] working (Claude Opus 5.5) — since 2026-09-29
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
 - **Issue:** [#105](https://github.com/jothi-prabaharan/Bill-Book/issues/105)
 - **Lanes:** L-ACC, L-PUR, L-CON, L-ACC-UI · **Depends on:** TK-115 · **Decision:** D-32, D-33
 - **Tables:** `acc.TdsSections`; lower-deduction certificate columns on `con.Contacts`
 - **Sub-tasks:**
-  - [ ] Effective-dated `acc.TdsSections`, seeded; the contact's `TdsSection` becomes a reference.
-  - [ ] Deduction on bill and spend-money lines at the single or aggregate threshold; `Cr TDS Payable`; lower-deduction certificates.
-  - [ ] TDS challan on spend money; the 26Q data export; TDS receivable on receipts and a 26AS/AIS import-and-match.
-  - [ ] Test: the aggregate threshold deducts on the bill that crosses it and not before; a certificate's rate applies within its limit; the vendor is owed the net.
+  - [x] Effective-dated `acc.TdsSections`, seeded; the contact's `TdsSection` becomes a reference.
+  - [x] Deduction on bill and spend-money lines at the single or aggregate threshold; `Cr TDS Payable`; lower-deduction certificates.
+  - [x] TDS challan on spend money; the 26Q data export; TDS receivable on receipts and a 26AS/AIS import-and-match.
+  - [x] Test: the aggregate threshold deducts on the bill that crosses it and not before; a certificate's rate applies within its limit; the vendor is owed the net.
 - **Done when:** a bill that takes a vendor past the year's threshold posts TDS Payable and a net payable.
+- **As built:**
+  - **Accounting.**
+    - `acc.TdsSections` is effective-dated and seeded per branch by `TdsSectionSeed` through the seed endpoint (D-32).
+    - `acc.TdsEntries` is the register. It holds one row per document that counts toward a threshold or deducts, whether the branch deducted (`Deducted`) or a customer withheld (`Suffered`).
+    - `acc.Form26asImports` and `acc.Form26asLines` hold the 26AS imports. All four tables have RLS.
+    - New system accounts: TDS Payable 2220 and TDS Receivable 1310.
+    - `TdsCalculationRepository` is pure. It handles the single and aggregate thresholds (with catch-up, or excess-only for 194Q), picks the rate from the PAN's fourth character or the 206AA rate, applies a certificate within its limit and validity, stops an advance being taxed twice, and rounds to the rupee.
+    - `TdsRepository` handles quote, register write and remove, outstanding, and the challan mark and release. `internal/tds/quote` and `internal/tds/sections/exists` are the internal endpoints. `api/tds/*` covers sections, register, outstanding, a preview quote, `26q` plus `26q/check`, and `26as`.
+  - **Ledger.**
+    - `PostLedgerRequest.Tds` carries the register row, written in the ledger's transaction.
+    - A withdrawal removes the row, and is refused (`TdsDeposited`, 409) once the row is on a challan.
+  - **Purchase.**
+    - `BillRepository` asks for the quote before stock moves. The bill stores `TdsSectionCode`, `TdsBase`, `TdsAmount` and `TdsNote`.
+    - It credits TDS Payable as a TAX leg, so the bill's control legs, and therefore its open balance, come to the net.
+  - **Spend money.**
+    - Supplier-deposit lines (source 8) deduct. The lines stay gross and `Amount` is the bank figure.
+    - `IsTdsChallan` with `ChallanNo`, `BsrCode`, `ChallanSectionCode` and `ChallanMonth` has no lines. It debits TDS Payable, must equal the outstanding amount for its section and month, and marks those rows deposited.
+  - **Receive money.** `TdsAmount`, `DeductorTan` and `TdsSectionCode` are recorded, and TDS Receivable is debited.
+  - **Allocation triggers.** They now require the lines to equal `Amount + TdsAmount` and skip challans. The Down step restores the old functions.
+  - **Master.**
+    - The contact carries a lower-deduction certificate: five columns, all or none.
+    - `internal/contacts/tds-profile`.
+    - The contact's section is checked against Accounting on save.
+    - A TDS menu entry.
+  - **Files.**
+    - The 26Q export is a zip of challans.csv and deductees.csv.
+    - The 26AS import reads the TRACES text file's Part I (D-33) and matches by TAN and amount within a rupee.
+    - The branch's PAN is read from its GSTIN.
+  - **Not built.**
+    - 27Q and section 195: a foreign-currency document is not taxed.
+    - A debit note does not reverse TDS.
+    - Interest and late fees on a challan.
+    - The section code in the 26Q export is not mapped to the utility's own codes.
+    - Rent's monthly threshold is modelled as a per-document threshold.
 
 ### TK-118 · Compliance: the audit trail (edit log)
 - [ ] open

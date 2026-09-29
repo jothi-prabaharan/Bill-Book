@@ -204,6 +204,13 @@ builder.Services.AddHttpClient<IAccountingSubAccounts, AccountingSubAccounts>(cl
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// A contact's TDS section names one of Accounting's TDS sections (TK-117).
+builder.Services.AddHttpClient<Shared.Kernel.Tax.ITdsSectionDirectory, Shared.Kernel.Tax.HttpTdsSectionDirectory>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // Uploaded files. Blob Storage, Cloud Storage or local disk, chosen by which
 // setting is present rather than by an environment name. The choice itself lives
 // in Shared.Kernel because this block was previously copied between here and the

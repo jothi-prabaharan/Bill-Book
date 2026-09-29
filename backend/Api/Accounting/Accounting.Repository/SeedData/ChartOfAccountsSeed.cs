@@ -49,6 +49,10 @@ public static class ChartOfAccountsSeed
         // Reverse-charge GST owed on purchases (TK-115, D-30). Off the manual
         // picker like Output GST: bills credit it and a tax payment clears it.
         Account(orgId, "2210", SystemAccount.GstPayableReverseCharge, Liability),
+
+        // TDS (TK-117). Off the manual picker like GST: documents move them.
+        Account(orgId, "2220", SystemAccount.TdsPayable, Liability),
+        Account(orgId, "1310", SystemAccount.TdsReceivable, Asset),
         Account(orgId, "3100", SystemAccount.OpeningBalanceEquity, Equity, isJe: true),
         Account(orgId, "4100", SystemAccount.SalesRevenue, Income, isSales: true),
 

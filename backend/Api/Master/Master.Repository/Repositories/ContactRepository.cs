@@ -1,4 +1,5 @@
 using Master.Repository.Clients;
+using Shared.Kernel.Tax;
 using System.Linq.Expressions;
 using System.Text.Json;
 using Master.Entity.Enums;
@@ -40,6 +41,8 @@ public sealed class ContactRepository
     private readonly ITenantContext _tenant;
     private readonly ICustomFieldDefinitions? _customFields;
 
+    private readonly ITdsSectionDirectory? _tdsSections;
+
     public ContactRepository(
         ContactsDbContext db,
         AdminDbContext admin,
@@ -48,9 +51,11 @@ public sealed class ContactRepository
         IAccountingSubAccounts subAccounts,
         TimeProvider clock,
         ITenantContext tenant,
-        ICustomFieldDefinitions? customFields = null)
+        ICustomFieldDefinitions? customFields = null,
+        ITdsSectionDirectory? tdsSections = null)
     {
         _customFields = customFields;
+        _tdsSections = tdsSections;
         _db = db;
         _admin = admin;
         _numbers = numbers;
@@ -586,6 +591,35 @@ public sealed class ContactRepository
             return SaveContactOutcome.TdsSectionRequired;
         }
 
+        // A lower-deduction certificate is five facts that mean nothing apart
+        // (TK-117): a rate with no period would apply for ever.
+        bool[] certificate =
+        [
+            !string.IsNullOrWhiteSpace(request.LowerDeductionCertificateNo),
+            request.LowerDeductionRate is not null,
+            request.LowerDeductionValidFrom is not null,
+            request.LowerDeductionValidTo is not null,
+            request.LowerDeductionLimit is not null,
+        ];
+        if (certificate.Any(x => x) && !certificate.All(x => x))
+        {
+            return SaveContactOutcome.TdsCertificateIncomplete;
+        }
+
+        if (request.LowerDeductionValidFrom is DateOnly certFrom && request.LowerDeductionValidTo is DateOnly certTo
+            && certTo < certFrom)
+        {
+            return SaveContactOutcome.TdsCertificateIncomplete;
+        }
+
+        // The section names a row of Accounting's TDS sections (TK-117). An
+        // unreadable answer is not a refusal: the bill that uses it says so.
+        if (request.IsTdsApplicable && _tdsSections is not null
+            && await _tdsSections.ExistsAsync(request.TdsSection!.Trim(), ct) == false)
+        {
+            return SaveContactOutcome.TdsSectionUnknown;
+        }
+
         if (request.IsMsme && string.IsNullOrWhiteSpace(request.UdyamNumber))
         {
             return SaveContactOutcome.UdyamNumberRequired;
@@ -898,6 +932,13 @@ public sealed class ContactRepository
         contact.PayableAccountId = request.PayableAccountId;
         contact.IsTdsApplicable = request.IsTdsApplicable;
         contact.TdsSection = request.TdsSection;
+        contact.LowerDeductionCertificateNo = string.IsNullOrWhiteSpace(request.LowerDeductionCertificateNo)
+            ? null
+            : request.LowerDeductionCertificateNo.Trim();
+        contact.LowerDeductionRate = request.LowerDeductionRate;
+        contact.LowerDeductionValidFrom = request.LowerDeductionValidFrom;
+        contact.LowerDeductionValidTo = request.LowerDeductionValidTo;
+        contact.LowerDeductionLimit = request.LowerDeductionLimit;
         contact.IsMsme = request.IsMsme;
         contact.UdyamNumber = request.UdyamNumber;
         contact.Notes = request.Notes;
@@ -991,6 +1032,11 @@ public sealed class ContactRepository
         PayableAccountId = c.PayableAccountId,
         IsTdsApplicable = c.IsTdsApplicable,
         TdsSection = c.TdsSection,
+        LowerDeductionCertificateNo = c.LowerDeductionCertificateNo,
+        LowerDeductionRate = c.LowerDeductionRate,
+        LowerDeductionValidFrom = c.LowerDeductionValidFrom,
+        LowerDeductionValidTo = c.LowerDeductionValidTo,
+        LowerDeductionLimit = c.LowerDeductionLimit,
         IsMsme = c.IsMsme,
         UdyamNumber = c.UdyamNumber,
         Notes = c.Notes,

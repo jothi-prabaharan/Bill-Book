@@ -89,6 +89,15 @@ public class PostLedgerRequest
     public string? DocumentNo { get; set; }
 
     /// <summary>
+    /// The TDS register row this posting carries (TK-117), written in the same
+    /// transaction as the legs and replacing the document's earlier one. Sent
+    /// by a bill that deducted, or that counts toward a vendor's threshold.
+    /// A withdrawal removes the document's row, and is refused once the
+    /// deduction has been paid over on a challan.
+    /// </summary>
+    public Shared.Kernel.Tax.TdsQuote? Tds { get; set; }
+
+    /// <summary>
     /// The manual journal behind this posting. Set only when
     /// <see cref="LedgerSourceId"/> is 12 (Journal) — it is what lets a ledger
     /// row drill back to the journal that wrote it rather than only to a
@@ -331,6 +340,9 @@ public enum PostLedgerOutcome
 
     /// <summary>A leg names a project that is not the branch's, or is completed or cancelled (TK-104).</summary>
     ProjectRefused = 9,
+
+    /// <summary>A withdrawal of a document whose TDS has been paid to the government on a challan (TK-117).</summary>
+    TdsDeposited = 10,
 }
 
 public sealed record PostLedgerResult(

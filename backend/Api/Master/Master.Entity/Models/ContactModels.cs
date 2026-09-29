@@ -77,6 +77,16 @@ public class ContactDetail : ContactListItem
 
     public string? TdsSection { get; set; }
 
+    public string? LowerDeductionCertificateNo { get; set; }
+
+    public decimal? LowerDeductionRate { get; set; }
+
+    public DateOnly? LowerDeductionValidFrom { get; set; }
+
+    public DateOnly? LowerDeductionValidTo { get; set; }
+
+    public decimal? LowerDeductionLimit { get; set; }
+
     public bool IsMsme { get; set; }
 
     public string? UdyamNumber { get; set; }
@@ -256,6 +266,20 @@ public class SaveContactRequest
     [MaxLength(10, ErrorMessage = "TDS section cannot exceed 10 characters.")]
     public string? TdsSection { get; set; }
 
+    /// <summary>A lower-deduction certificate (TK-117): all five together, or none.</summary>
+    [MaxLength(20, ErrorMessage = "Certificate number cannot exceed 20 characters.")]
+    public string? LowerDeductionCertificateNo { get; set; }
+
+    [Range(0, 100, ErrorMessage = "Certificate rate must be between 0 and 100 percent.")]
+    public decimal? LowerDeductionRate { get; set; }
+
+    public DateOnly? LowerDeductionValidFrom { get; set; }
+
+    public DateOnly? LowerDeductionValidTo { get; set; }
+
+    [Range(typeof(decimal), "0", "79228162514264337593543950335", ErrorMessage = "Certificate limit cannot be negative.")]
+    public decimal? LowerDeductionLimit { get; set; }
+
     public bool IsMsme { get; set; }
 
     [MaxLength(20, ErrorMessage = "Udyam number cannot exceed 20 characters.")]
@@ -314,6 +338,12 @@ public enum SaveContactOutcome
 
     /// <summary>A custom field value does not fit its definition (TK-111); the detail says which.</summary>
     CustomFieldsRefused = 20,
+
+    /// <summary>A lower-deduction certificate with some of its five facts missing, or ending before it starts (TK-117).</summary>
+    TdsCertificateIncomplete = 21,
+
+    /// <summary>The TDS section is not one of the branch's TDS sections (TK-117).</summary>
+    TdsSectionUnknown = 22,
 }
 
 public sealed record SaveContactResult(SaveContactOutcome Outcome, long? ContactId, string? ContactCode, string? Detail = null);

@@ -107,6 +107,17 @@
           </span>
         </div>
 
+        @if (tds(); as t) {
+          <div class="field tds">
+            <span class="field__label">TDS deducted</span>
+            <strong>{{ formats.formatMoney(t.amount) }}</strong>
+            <span class="field__hint">
+              Under {{ t.section }} on {{ formats.formatMoney(t.base) }}. The vendor is owed the payable less this.
+              @if (t.note) { {{ t.note }} }
+            </span>
+          </div>
+        }
+
         <label class="field">
           <span class="field__label">Received on</span>
           <bb-date-input

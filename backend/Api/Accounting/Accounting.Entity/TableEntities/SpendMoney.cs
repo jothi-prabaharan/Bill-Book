@@ -104,6 +104,40 @@ public class SpendMoney : OrgScopedEntity, IApprovalSummary
 
     public long? MappingTransactionId { get; set; }
 
+    // ---- TDS (TK-117).
+
+    /// <summary>
+    /// TDS withheld from the vendor on the advance lines, computed when the
+    /// payment posts. The lines carry the gross; <see cref="Amount"/> is what
+    /// left the bank, so the lines add up to the amount plus this.
+    /// </summary>
+    public decimal TdsAmount { get; set; }
+
+    [MaxLength(10, ErrorMessage = "Section code cannot exceed 10 characters.")]
+    public string? TdsSectionCode { get; set; }
+
+    /// <summary>
+    /// A payment of deducted TDS to the government. It has no lines: it debits
+    /// TDS Payable with its amount, which must equal what is still undeposited
+    /// for <see cref="ChallanSectionCode"/> in <see cref="ChallanMonth"/>, and
+    /// marks those deductions deposited.
+    /// </summary>
+    public bool IsTdsChallan { get; set; }
+
+    /// <summary>The challan identification number on the bank's counterfoil.</summary>
+    [MaxLength(20, ErrorMessage = "Challan number cannot exceed 20 characters.")]
+    public string? ChallanNo { get; set; }
+
+    /// <summary>The seven-digit BSR code of the receiving bank branch.</summary>
+    [MaxLength(7, ErrorMessage = "BSR code cannot exceed 7 characters.")]
+    public string? BsrCode { get; set; }
+
+    [MaxLength(10, ErrorMessage = "Section code cannot exceed 10 characters.")]
+    public string? ChallanSectionCode { get; set; }
+
+    /// <summary>The first day of the month whose deductions the challan pays.</summary>
+    public DateOnly? ChallanMonth { get; set; }
+
     public MoneyDocumentStatus Status { get; set; } = MoneyDocumentStatus.Draft;
 
     public DateTimeOffset? PostedAt { get; set; }

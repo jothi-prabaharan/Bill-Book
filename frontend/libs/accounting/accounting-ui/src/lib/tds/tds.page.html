@@ -1,0 +1,261 @@
+<header class="page-head">
+  <h1>TDS</h1>
+</header>
+
+<nav class="tabs" aria-label="TDS">
+  <button type="button" [class.active]="tab() === 'sections'" (click)="show('sections')">Sections</button>
+  <button type="button" [class.active]="tab() === 'register'" (click)="show('register')">Register</button>
+  <button type="button" [class.active]="tab() === 'due'" (click)="show('due')">Deposits due</button>
+  <button type="button" [class.active]="tab() === 'return'" (click)="show('return')">26Q return</button>
+  <button type="button" [class.active]="tab() === 'statement'" (click)="show('statement')">Form 26AS</button>
+</nav>
+
+<bb-message-box [messages]="messages()" />
+
+@switch (tab()) {
+  @case ('sections') {
+    @if (editing() !== null) {
+      <form class="editor" (ngSubmit)="saveSection()">
+        <p class="note">
+          To revise a rate, end the current row the day before the change and add a new row from that day.
+          Documents are taxed by the row in force on their own date.
+        </p>
+        <div class="row">
+          <div class="field">
+            <bb-text-input label="Section code" name="sectionCode" [(ngModel)]="form.sectionCode" required maxlength="10" />
+          </div>
+          <div class="field grow">
+            <bb-text-input label="Nature of payment" name="natureOfPayment" [(ngModel)]="form.natureOfPayment" required maxlength="200" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <bb-date-input label="Effective from" name="effectiveFrom" [(ngModel)]="form.effectiveFrom" required />
+          </div>
+          <div class="field">
+            <bb-date-input label="Effective to (optional)" name="effectiveTo" [(ngModel)]="form.effectiveTo" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <bb-number-input label="Individual or HUF %" name="rateIndividual" step="0.001" min="0" [(ngModel)]="form.rateIndividual" />
+          </div>
+          <div class="field">
+            <bb-number-input label="Others %" name="rateOther" step="0.001" min="0" [(ngModel)]="form.rateOther" />
+          </div>
+          <div class="field">
+            <bb-number-input label="No PAN %" name="rateNoPan" step="0.001" min="0" [(ngModel)]="form.rateNoPan" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <bb-number-input label="Single-document threshold" name="singleThreshold" step="1" min="0" [(ngModel)]="form.singleThreshold" />
+          </div>
+          <div class="field">
+            <bb-number-input label="Yearly threshold" name="aggregateThreshold" step="1" min="0" [(ngModel)]="form.aggregateThreshold" />
+          </div>
+        </div>
+        <bb-checkbox
+          text="Tax only the amount above the yearly threshold"
+          hint="As section 194Q does. Otherwise the document that crosses it is taxed on the whole year so far."
+          name="excessOnly"
+          [(ngModel)]="form.excessOnly"
+        />
+        <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
+        <div class="editor-actions">
+          <button type="submit" [disabled]="busy() || !validSection()">Save</button>
+          <button type="button" class="link" (click)="editing.set(null)">Cancel</button>
+        </div>
+      </form>
+    } @else {
+      <div class="bar">
+        <p class="hint">
+          Rates are in percent. Seeded with the 2025-26 figures; edit or re-date them when the law changes.
+        </p>
+        <button type="button" (click)="startNew()" [disabled]="busy()">+ New section</button>
+      </div>
+      <bb-data-grid
+        gridCode="TDS_SECTIONS"
+        label="TDS sections"
+        [columns]="sectionColumns"
+        [data]="sections()"
+        [rowClass]="sectionRowClass"
+        [paged]="false"
+        stackOnPhone
+        emptyText="No TDS sections. Add one, or retry the branch's setup to seed them."
+      >
+        <ng-template bbCellTemplate="sectionCode" let-s><strong>{{ s.sectionCode }}</strong></ng-template>
+        <ng-template bbCellTemplate="rateIndividual" let-s>{{ s.rateIndividual }}%</ng-template>
+        <ng-template bbCellTemplate="rateOther" let-s>{{ s.rateOther }}%</ng-template>
+        <ng-template bbCellTemplate="rateNoPan" let-s>{{ s.rateNoPan }}%</ng-template>
+        <ng-template bbCellTemplate="threshold" let-s>{{ threshold(s) }}</ng-template>
+        <ng-template bbCellTemplate="effectiveFrom" let-s>
+          <span class="dates">
+            {{ formats.formatDate(s.effectiveFrom) }}
+            @if (s.effectiveTo) { → {{ formats.formatDate(s.effectiveTo) }} }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="actions" let-s>
+          <button type="button" class="link" (click)="startEdit(s)">Edit</button>
+        </ng-template>
+      </bb-data-grid>
+    }
+  }
+
+  @case ('register') {
+    <div class="bar">
+      <div class="pick">
+        <bb-select label="Year" name="registerYear" [clearable]="false" [options]="yearOptions" [(ngModel)]="year" (ngModelChange)="loadRegister()" />
+      </div>
+      <div class="pick">
+        <bb-select label="Showing" name="direction" [clearable]="false" [options]="directionOptions" [(ngModel)]="direction" (ngModelChange)="loadRegister()" />
+      </div>
+      <span class="total">Total TDS {{ formats.formatMoney(registerTotal()) }}</span>
+    </div>
+    <bb-data-grid
+      gridCode="TDS_REGISTER"
+      label="TDS register"
+      [columns]="registerColumns"
+      [data]="register()"
+      stackOnPhone
+      [emptyText]="'Nothing in the register for ' + yearLabel(year) + '.'"
+    >
+      <ng-template bbCellTemplate="documentDate" let-r>{{ formats.formatDate(r.documentDate) }}</ng-template>
+      <ng-template bbCellTemplate="documentNo" let-r>
+        @if (documentLink(r); as link) {
+          <a [routerLink]="link">{{ r.documentNo ?? r.transactionTypeCode + '-' + r.transactionId }}</a>
+        } @else {
+          {{ r.documentNo }}
+        }
+        @if (r.note) { <span class="sub">{{ r.note }}</span> }
+      </ng-template>
+      <ng-template bbCellTemplate="contactName" let-r>
+        {{ r.contactName ?? 'Contact ' + r.contactId }}
+        <span class="sub">{{ r.direction === 'Deducted' ? (r.pan ?? 'No PAN') : (r.tan ?? 'No TAN') }}</span>
+      </ng-template>
+      <ng-template bbCellTemplate="amount" let-r>{{ formats.formatMoney(r.amount) }}</ng-template>
+      <ng-template bbCellTemplate="tdsBase" let-r>{{ formats.formatMoney(r.tdsBase) }}</ng-template>
+      <ng-template bbCellTemplate="tdsAmount" let-r>
+        {{ formats.formatMoney(r.tdsAmount) }}
+        @if (r.certificateNo) { <span class="sub">Certificate {{ r.certificateNo }}</span> }
+      </ng-template>
+      <ng-template bbCellTemplate="challanNo" let-r>
+        @if (r.challanSpendMoneyId) { Challan {{ r.challanNo ?? r.challanSpendMoneyId }} }
+        @else if (r.direction === 'Deducted' && r.tdsAmount > 0) { <span class="tag">Not yet</span> }
+      </ng-template>
+    </bb-data-grid>
+  }
+
+  @case ('due') {
+    <p class="hint">
+      Deducted TDS is paid to the government by the 7th of the following month (30 April for March). Record each payment
+      under <a routerLink="/banking/spend-money">Spend money</a> as a TDS challan for its section and month, for exactly the amount shown.
+    </p>
+    <bb-data-grid
+      gridCode="TDS_OUTSTANDING"
+      label="TDS waiting to be deposited"
+      [columns]="outstandingColumns"
+      [data]="outstanding()"
+      [rowClass]="outstandingRowClass"
+      [paged]="false"
+      stackOnPhone
+      emptyText="Nothing is waiting to be deposited."
+    >
+      <ng-template bbCellTemplate="month" let-o>{{ monthLabel(o.month) }}</ng-template>
+      <ng-template bbCellTemplate="tdsAmount" let-o>{{ formats.formatMoney(o.tdsAmount) }}</ng-template>
+      <ng-template bbCellTemplate="dueDate" let-o>
+        {{ formats.formatDate(o.dueDate) }}
+        @if (overdue(o)) { <span class="tag">Overdue</span> }
+      </ng-template>
+    </bb-data-grid>
+  }
+
+  @case ('return') {
+    <div class="bar">
+      <div class="pick">
+        <bb-select label="Year" name="returnYear" [clearable]="false" [options]="yearOptions" [(ngModel)]="year" (ngModelChange)="loadCheck()" />
+      </div>
+      <div class="pick">
+        <bb-select label="Quarter" name="quarter" [clearable]="false" [options]="quarterOptions" [(ngModel)]="quarter" (ngModelChange)="loadCheck()" />
+      </div>
+      <button type="button" (click)="download26q()" [disabled]="busy()">Download 26Q data</button>
+    </div>
+    <p class="hint">
+      A zip of two sheets, challans and deductees, in the column order of the return preparation utility's tables, to paste into it.
+      File the return and issue Form 16A on the government's tools.
+    </p>
+    @if (check(); as c) {
+      <p>{{ c.challans }} challans and {{ c.deductions }} deductions in {{ yearLabel(year) }} Q{{ quarter }}.</p>
+      @if (c.warnings.length > 0) {
+        <bb-message-box tone="warning">
+          <strong>The utility will refuse these until they are fixed:</strong>
+          <ul>
+            @for (w of c.warnings; track $index) { <li>{{ w }}</li> }
+          </ul>
+        </bb-message-box>
+      }
+    }
+  }
+
+  @case ('statement') {
+    <div class="bar">
+      <p class="hint">
+        On TRACES, view Form 26AS, download it as <strong>Text</strong>, and import the .txt here. Each deduction is matched to your
+        receipts by the customer's TAN and the TDS amount.
+      </p>
+      <bb-file-input
+        accept=".txt,text/plain"
+        ariaLabel="Form 26AS text file"
+        [buttonText]="busy() ? 'Working…' : 'Import 26AS text file'"
+        [disabled]="busy()"
+        (valueChange)="upload($event)"
+      />
+    </div>
+
+    @if (statements().length > 0) {
+      <ul class="imports">
+        @for (s of statements(); track s.form26asImportId) {
+          <li [class.active]="statement()?.form26asImportId === s.form26asImportId">
+            <button type="button" class="open" (click)="openStatement(s.form26asImportId)">
+              <span>{{ yearLabel(s.financialYear) }}</span>
+              <span class="sub">{{ s.fileName }}</span>
+              <span class="sub">At risk {{ formats.formatMoney(s.creditAtRisk) }}</span>
+            </button>
+            <button type="button" class="remove" (click)="removeStatement(s)" [attr.aria-label]="'Delete import ' + s.fileName">×</button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (statement(); as d) {
+      <section class="tiles">
+        <div class="tile risk"><span>Credit at risk</span><strong>{{ formats.formatMoney(d.creditAtRisk) }}</strong></div>
+        <div class="tile"><span>Matched</span><strong>{{ d.matchedCount }}</strong></div>
+        <div class="tile"><span>Amount differs</span><strong>{{ d.differenceCount }}</strong></div>
+        <div class="tile"><span>In 26AS, not in books</span><strong>{{ d.missingInBooksCount }}</strong></div>
+        <div class="tile"><span>In books, not in 26AS</span><strong>{{ d.missingIn26asCount }}</strong></div>
+      </section>
+      <bb-data-grid
+        gridCode="TDS_26AS_LINES"
+        label="Form 26AS matching"
+        [columns]="statementColumns"
+        [data]="d.lines"
+        stackOnPhone
+        emptyText="The statement had no Part I transactions."
+      >
+        <ng-template bbCellTemplate="matchState" let-l>
+          <span class="state" [attr.data-state]="l.matchState">{{ matchLabel(l.matchState) }}</span>
+        </ng-template>
+        <ng-template bbCellTemplate="deductorName" let-l>
+          {{ l.deductorName ?? l.deductorTan }}
+          <span class="sub">{{ l.deductorTan }} @if (l.sectionCode) { · {{ l.sectionCode }} }</span>
+          @if (l.note) { <span class="sub">{{ l.note }}</span> }
+        </ng-template>
+        <ng-template bbCellTemplate="transactionDate" let-l>{{ formats.formatDate(l.transactionDate) }}</ng-template>
+        <ng-template bbCellTemplate="statementTds" let-l>{{ l.statementTds === null ? '—' : formats.formatMoney(l.statementTds) }}</ng-template>
+        <ng-template bbCellTemplate="booksTds" let-l>{{ l.booksTds === null ? '—' : formats.formatMoney(l.booksTds) }}</ng-template>
+        <ng-template bbCellTemplate="documentNo" let-l>{{ l.documentNo ?? '—' }}</ng-template>
+      </bb-data-grid>
+    }
+  }
+}

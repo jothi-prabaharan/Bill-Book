@@ -3813,6 +3813,8 @@ Checked against the code on 24 September 2026:
 | **TDS on receipts** | When a customer deducts TDS, the receipt records it (`Dr TDS Receivable`), and a **Form 26AS / AIS reconciliation** imports the statement and matches by deductor TAN and amount, like 2B |
 | Payroll TDS | Salary TDS (section 192) belongs to Payroll's design, not here |
 
+**Built (TK-117, 29 September 2026).** The design above is built as described, with these choices. The register the aggregate is read from is `acc.TdsEntries`, written with the ledger posting, rather than a ledger query. A challan must pay exactly what is outstanding for its section and month. Advances deduct, and a later bill is not taxed on what an advance covered. The 26AS import reads the TRACES text file (D-33). The seed uses the 1961-Act codes (D-32). See the card for what is not built.
+
 ### 3. Audit trail (edit log)
 
 Companies using accounting software must keep an audit trail recording every change, with the date,

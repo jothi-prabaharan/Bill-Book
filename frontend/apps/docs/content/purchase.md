@@ -318,6 +318,12 @@ jobs: it **moves the stock** and debits Inventory directly.
 
 Every posted bill and debit note writes its lines to the **purchase register**, in the same step as the ledger. Each line carries your vendor's own number and date, the reverse-charge flag and the line's credit choice. Voiding a bill or debit note removes its lines. GSTR-3B reads its input tax credit from the purchase register. See [Reports](reports#gst-returns).
 
+## TDS
+
+A bill to a vendor with TDS turned on deducts it when it posts. The deduction is worked out on the bill's value before GST, under the section on the vendor's contact, once the single-document or yearly threshold is crossed. **TDS Payable** is credited with it and the vendor is owed the rest. The bill shows what was deducted and why. If the vendor's section has no row in force on the bill's date, the bill is not posted and the message says so. See [Accounts](accounting#tds).
+
+A debit note does not give back TDS already deducted.
+
 ## Due dates and aging
 
 A bill needs a due date. Choose a **payment term** and it is worked out for you,

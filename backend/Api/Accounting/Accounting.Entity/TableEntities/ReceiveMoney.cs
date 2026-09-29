@@ -90,6 +90,23 @@ public class ReceiveMoney : OrgScopedEntity
 
     public long? MappingTransactionId { get; set; }
 
+    // ---- TDS the customer withheld (TK-117).
+
+    /// <summary>
+    /// TDS the customer deducted from this payment. The lines carry the gross
+    /// they settle; <see cref="Amount"/> is what reached the bank, and this is
+    /// debited to TDS Receivable.
+    /// </summary>
+    [Range(typeof(decimal), "0", "79228162514264337593543950335", ErrorMessage = "TDS cannot be negative.")]
+    public decimal TdsAmount { get; set; }
+
+    [MaxLength(10, ErrorMessage = "Section code cannot exceed 10 characters.")]
+    public string? TdsSectionCode { get; set; }
+
+    /// <summary>The customer's TAN, which Form 26AS reports the deduction under.</summary>
+    [MaxLength(10, ErrorMessage = "TAN cannot exceed 10 characters.")]
+    public string? DeductorTan { get; set; }
+
     public MoneyDocumentStatus Status { get; set; } = MoneyDocumentStatus.Draft;
 
     public DateTimeOffset? PostedAt { get; set; }

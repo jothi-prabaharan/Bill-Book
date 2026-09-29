@@ -129,6 +129,17 @@ public class AccountingDbContext : TenantDbContext
 
     public DbSet<TransactionRatio> TransactionRatios => Set<TransactionRatio>();
 
+    /// <summary>TDS sections with their rates and thresholds, effective-dated (TK-117).</summary>
+    public DbSet<TdsSection> TdsSections => Set<TdsSection>();
+
+    /// <summary>The TDS register: every document that counts toward a threshold or carries a deduction (TK-117).</summary>
+    public DbSet<TdsEntry> TdsEntries => Set<TdsEntry>();
+
+    /// <summary>Form 26AS files imported for the TDS customers withheld (TK-117).</summary>
+    public DbSet<Form26asImport> Form26asImports => Set<Form26asImport>();
+
+    public DbSet<Form26asLine> Form26asLines => Set<Form26asLine>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("acc");
@@ -1127,6 +1138,83 @@ public class AccountingDbContext : TenantDbContext
 
             b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(30);
             b.Property(e => e.StepStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        // ---- TDS (TK-117) ------------------------------------------------
+
+        modelBuilder.Entity<TdsSection>(b =>
+        {
+            b.HasKey(e => e.TdsSectionId);
+            b.HasIndex(e => new { e.OrgId, e.SectionCode, e.EffectiveFrom }).IsUnique();
+            b.Property(e => e.ThresholdBasis).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.RateIndividual).HasColumnType("decimal(7,3)");
+            b.Property(e => e.RateOther).HasColumnType("decimal(7,3)");
+            b.Property(e => e.RateNoPan).HasColumnType("decimal(7,3)");
+            b.Property(e => e.SingleThreshold).HasColumnType("decimal(18,2)");
+            b.Property(e => e.AggregateThreshold).HasColumnType("decimal(18,2)");
+            b.ToTable(t => t.HasCheckConstraint(
+                "chk_tdssections_period", "\"EffectiveTo\" IS NULL OR \"EffectiveTo\" >= \"EffectiveFrom\""));
+        });
+
+        modelBuilder.Entity<TdsEntry>(b =>
+        {
+            b.HasKey(e => e.TdsEntryId);
+
+            // One row per document: a re-post replaces it.
+            b.HasIndex(e => new { e.OrgId, e.TransactionTypeCode, e.TransactionId }).IsUnique();
+
+            // The year's total for one vendor and section, which every quote reads.
+            b.HasIndex(e => new { e.OrgId, e.Direction, e.ContactId, e.SectionCode, e.FinancialYear });
+            b.HasIndex(e => new { e.OrgId, e.ChallanSpendMoneyId }).HasFilter("\"ChallanSpendMoneyId\" IS NOT NULL");
+
+            b.Property(e => e.Direction).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.DeducteeKind).HasConversion<string>().HasMaxLength(16);
+            foreach (string money in new[] { "Amount", "CoveredByAdvance", "TdsBase", "CertificateBase", "TdsAmount" })
+            {
+                b.Property(money).HasColumnType("decimal(18,2)");
+            }
+
+            b.Property(e => e.Rate).HasColumnType("decimal(7,3)");
+            b.Property(e => e.CertificateRate).HasColumnType("decimal(7,3)");
+            b.HasOne<SpendMoney>().WithMany().HasForeignKey(e => e.ChallanSpendMoneyId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Form26asImport>(b =>
+        {
+            b.HasKey(e => e.Form26asImportId);
+            b.HasIndex(e => new { e.OrgId, e.FinancialYear });
+            b.Property(e => e.CreditAtRisk).HasColumnType("decimal(18,2)");
+            b.HasMany(e => e.Lines).WithOne().HasForeignKey(l => l.Form26asImportId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Form26asLine>(b =>
+        {
+            b.HasKey(e => e.Form26asLineId);
+            b.Property(e => e.MatchState).HasConversion<string>().HasMaxLength(16);
+            b.Property(e => e.StatementAmountPaid).HasColumnType("decimal(18,2)");
+            b.Property(e => e.StatementTds).HasColumnType("decimal(18,2)");
+            b.Property(e => e.BooksTds).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<SpendMoney>(b =>
+        {
+            b.Property(e => e.TdsAmount).HasColumnType("decimal(18,2)");
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("chk_spendmoney_tds_nonnegative", "\"TdsAmount\" >= 0");
+
+                // A challan names what it pays; an ordinary payment names nothing.
+                t.HasCheckConstraint(
+                    "chk_spendmoney_challan",
+                    "\"IsTdsChallan\" = (\"ChallanSectionCode\" IS NOT NULL AND \"ChallanMonth\" IS NOT NULL)");
+            });
+        });
+
+        modelBuilder.Entity<ReceiveMoney>(b =>
+        {
+            b.Property(e => e.TdsAmount).HasColumnType("decimal(18,2)");
+            b.ToTable(t => t.HasCheckConstraint("chk_receivemoney_tds_nonnegative", "\"TdsAmount\" >= 0"));
         });
 
         base.OnModelCreating(modelBuilder);

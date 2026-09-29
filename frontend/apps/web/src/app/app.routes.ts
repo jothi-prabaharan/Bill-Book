@@ -84,6 +84,12 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.BudgetGridPage),
         data: { access: { permission: 'accounting.view' } },
       },
+      // TDS (TK-117): sections, register, deposits due, 26Q and Form 26AS.
+      {
+        path: 'accounting/tds',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TdsPage),
+        data: { access: { permission: 'accounting.view' } },
+      },
       {
         path: 'accounting/opening-balance',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.OpeningBalancePage),

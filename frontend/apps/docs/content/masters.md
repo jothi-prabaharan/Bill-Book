@@ -505,6 +505,12 @@ Three limits, all optional:
 
 Max outstanding days, and all three limits on purchase documents, are stored but not yet applied.
 
+## TDS
+
+Turn on **TDS applicable** for a vendor you deduct TDS from, and choose its **TDS section** from the branch's TDS sections. A code the branch has no section for is refused. The contact's **PAN** decides the rate: an individual or HUF takes one rate, other holders another, and no valid PAN the higher section 206AA rate.
+
+A vendor holding a **lower-deduction certificate** (section 197) gets its number, rate, the dates it is valid between, and the limit it covers. Enter all five or none. The customer's **TAN** is what Form 26AS reports their deductions from your receipts under. See [Accounts](accounting#tds).
+
 ## What happens when you save
 
 A contact gets **two sub-accounts** in the ledger — one receivable, one payable — created by Accounting. They are what let the ledger report per contact without the chart of accounts growing a line per customer.

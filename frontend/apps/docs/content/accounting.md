@@ -897,3 +897,72 @@ Deactivating a rate deactivates its sub-accounts. Nothing is deleted — posting
 ## Accounts for School fees
 
 Every branch's chart of accounts now includes three accounts that School fees post to (TK-64): **Fee Income** (4300, income), **Discount Given** (4250, a contra income account, so reports subtract it) and **Refundable Deposits** (2400, a liability for caution deposits). A branch set up earlier gets them the next time its setup is retried. Fee demands and receipts post as the transaction types **FDM** and **FRC**.
+
+# TDS
+
+**Accounts › TDS**
+
+Tax deducted at source, on both sides: what you deduct from vendors and pay to the government, and what customers deduct from what they pay you.
+
+## Sections
+
+The **Sections** tab lists each TDS section with its nature of payment, its three rates and its thresholds. Rates are in percent:
+
+- **Individual or HUF** — a deductee whose PAN has P or H as its fourth character.
+- **Others** — any other PAN holder: a company, firm, trust and so on.
+- **No PAN** — a deductee with no valid PAN, taxed at the higher section 206AA rate.
+
+A section can have a **single-document threshold**, a **yearly threshold**, both or neither. Sections are **effective-dated** like GST rates: to revise a rate, end the current row the day before the change and add a new row from that day. A document is always taxed by the row in force on its own date.
+
+Every branch is seeded with 194C, 194JA, 194JB, 194H, 194I(a), 194I(b), 194A and 194Q, with the 2025-26 rates and thresholds from 1 April 2025. The Income-tax Act 2025 renumbers these provisions from 1 April 2026. Re-label or re-date the rows yourself when you move to its numbering; the code is only a label. A branch set up earlier gets the seed when its setup is retried.
+
+A contact's **TDS section** is chosen from this list, on the contact's General tab.
+
+## When TDS is deducted
+
+A bill to a contact with TDS turned on is taxed when it posts, on its value **before GST**:
+
+- A bill above the section's **single-document threshold** is taxed on its own.
+- Once the year's total for that vendor and section passes the **yearly threshold**, the bill that crosses it is taxed on **everything in the year not yet taxed**, itself included. Every later bill is taxed on itself. The years run April to March.
+- Section 194Q (purchase of goods) taxes only the amount **above** its yearly threshold. Tick *Tax only the amount above the yearly threshold* for any section that works this way.
+- A section with no threshold taxes every document.
+
+Amounts are rounded to the nearest rupee. The bill credits **TDS Payable** with the deduction and **Accounts Payable** with the rest, so the vendor is owed the net. The bill shows how much was deducted and why.
+
+**Lower-deduction certificates.** A vendor holding a section 197 certificate gets its number, rate, validity and limit on their contact. While it is valid, its rate applies to as much of each bill as the limit still allows. Past the limit, the section rate applies.
+
+**Advances.** A deposit paid to a vendor before their bill (a *Supplier deposit* line on Spend money) bears TDS too, because TDS is due on the payment or the bill, whichever comes first. Choose **Work out TDS on the advance**: the lines stay at the gross, and the amount paid becomes the gross less the TDS. The later bill is not taxed again on what the advance already covered.
+
+Bills and advances in a foreign currency are not taxed here. A non-resident is paid under section 195 and reported on 27Q, and neither is built.
+
+## Paying it to the government
+
+**Deposits due** lists what was deducted and not yet deposited, by section and month. Each falls due on the 7th of the following month, or 30 April for March.
+
+Record each payment under **Banking › Spend money**, ticking **TDS challan**. Give the section, the month, the challan number and the bank's BSR code. A challan has no lines: it pays exactly the amount waiting for that section and month, and anything else is refused. Pay any interest or late fee as an ordinary payment.
+
+Posting the challan clears TDS Payable and marks those deductions deposited. From then on the bill or advance they came from cannot be voided until the challan is. Voiding a challan puts its deductions back on the list.
+
+## The register and the 26Q return
+
+**Register** lists every document for a year that counts toward a threshold or carries a deduction, including bills below the threshold with nothing deducted. That is what the yearly total is read from. Switch it to *TDS customers withheld* to see the other side.
+
+**26Q return** downloads a quarter's data as a zip of two sheets, **challans.csv** and **deductees.csv**, in the column order of the return preparation utility's tables. Paste them into the utility, then file the return and issue Form 16A on the government's tools. Before you download, the tab lists what the utility will refuse: a deduction not yet deposited, or a challan with no BSR code or number. The section code goes out as it is stored, so check it against the code the utility expects.
+
+## TDS customers withhold
+
+When a customer deducts TDS, record it on the receipt under **Banking › Receive money**: enter **TDS withheld**, the customer's **TAN** and the section. The lines settle the invoice at its full amount, the bank receives the amount less the TDS, and the difference is debited to **TDS Receivable**, which you claim against your own tax.
+
+## Form 26AS reconciliation
+
+On TRACES, view Form 26AS, download it as **Text**, and import the .txt on the **Form 26AS** tab. Part I of the statement is matched to your receipts by the customer's TAN and the TDS amount, within a rupee:
+
+| Result | Meaning |
+|---|---|
+| **Matched** | 26AS and a receipt agree |
+| **Amount differs** | Same customer, different figure. The difference is shown |
+| **In 26AS, not in books** | A deduction no receipt records |
+| **In books, not in 26AS** | TDS you recorded that the customer has not reported |
+
+**Credit at risk** totals what your books claim and 26AS does not support. A statement for a PAN other than the one in the branch's GSTIN is refused. A booking status other than F (final) is noted, because the credit is not yet claimable.
+

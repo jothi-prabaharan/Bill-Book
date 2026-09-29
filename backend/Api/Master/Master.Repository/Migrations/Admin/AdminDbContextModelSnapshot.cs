@@ -9608,6 +9608,23 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1138,
+                            Apps = 1,
+                            CanCreate = false,
+                            Code = "tds",
+                            DisplayOrder = 23,
+                            Icon = "percent",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "accounting",
+                            Name = "TDS",
+                            ParentId = 106,
+                            RoutePath = "/accounting/tds",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 1134,
                             Apps = 1,
                             CanCreate = false,
@@ -14092,6 +14109,42 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1137,
                             Module = "settings",
                             PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 474,
+                            Action = "view",
+                            MenuId = 1138,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 475,
+                            Action = "create",
+                            MenuId = 1138,
+                            Module = "accounting",
+                            PermissionCode = "accounting.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 476,
+                            Action = "edit",
+                            MenuId = 1138,
+                            Module = "accounting",
+                            PermissionCode = "accounting.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 477,
+                            Action = "export",
+                            MenuId = 1138,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
                             Version = 0u
                         });
                 });

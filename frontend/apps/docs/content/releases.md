@@ -30,6 +30,16 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **TDS on purchases and receipts.** Under **Accounts › TDS**:
+  - **Sections** with their rates and thresholds, effective-dated and editable. Every branch is seeded with 194C, 194JA, 194JB, 194H, 194I(a), 194I(b), 194A and 194Q at the 2025-26 figures. A contact's TDS section is now chosen from this list.
+  - A bill deducts TDS when it posts: on its own above the single-document threshold, or on the whole year so far on the bill that takes the vendor past the yearly threshold. **TDS Payable** is credited and the vendor is owed the net. A supplier deposit on Spend money deducts it too.
+  - **Lower-deduction certificates** on the contact: their rate applies within their limit and validity.
+  - **TDS challans** on Spend money pay a section's deductions for a month, and **Deposits due** lists what is waiting.
+  - A quarter's **26Q data** downloads as challan and deductee sheets for the return preparation utility.
+  - Receipts record **TDS the customer withheld** (debited to the new **TDS Receivable**), and a **Form 26AS** text file is matched against them by TAN and amount.
+  - Existing branches get the sections and the two accounts when their setup is retried from the admin screen.
+
+  See [Accounts](accounting#tds).
 - **Changed**: **Every table in the product is now the same table.** Some forty tables — payroll, claims, performance, recruitment, leave, the client and school portals, the budget grid, timesheets, the balance sheet and profit and loss, Settle documents, GSTR-2B, the invoice's posting preview, the dashboard and more — were drawn by a second, simpler table component, and the allocation dialog drew a third. They now all use the shared grid. Lists gain what the rest of the product's lists already had: click a heading to sort, a filter box under each heading, and a count of what is shown. Composed tables — statements, previews, the budget and timesheet — keep their totals rows and stay as they are laid out. A row that needs attention (short of stock, over-allocated, fully settled) is highlighted the same way everywhere, and on a phone the tables that had a card-per-row layout still do. The balance sheet and profit and loss gain column headings.
 - **Added**: **Campaigns: templates, audiences, consent and unsubscribe (TK-120).**
   - **Email templates**: Rich HTML templates with sanitisation against unsafe scripts and attributes, with plain text alternatives.

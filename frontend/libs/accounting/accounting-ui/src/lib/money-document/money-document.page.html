@@ -60,7 +60,51 @@
       <div class="field wide">
         <bb-text-input label="Memo"  [(ngModel)]="memo" name="memo" placeholder="Why this payment was made" />
       </div>
+      @if (direction() === 'receive') {
+        <!-- TDS the customer withheld (TK-117): the lines settle the gross. -->
+        <div class="field">
+          <bb-number-input label="TDS withheld" inputmode="decimal" step="0.01" min="0" [(ngModel)]="tdsAmount" name="tdsAmount" />
+        </div>
+        @if (tdsAmount) {
+          <div class="field">
+            <bb-text-input label="Customer's TAN" [(ngModel)]="deductorTan" name="deductorTan" maxlength="10" class="uppercase" />
+          </div>
+          <div class="field">
+            <bb-text-input label="TDS section" [(ngModel)]="tdsSectionCode" name="tdsSectionCode" maxlength="10" />
+          </div>
+        }
+      } @else {
+        <div class="field wide">
+          <bb-checkbox
+            text="TDS challan"
+            hint="A payment of deducted TDS to the government, for one section and month."
+            name="isTdsChallan"
+            [(ngModel)]="isTdsChallan"
+          />
+        </div>
+      }
     </div>
+
+    @if (direction() === 'spend' && isTdsChallan) {
+      <div class="head-fields">
+        <div class="field">
+          <bb-text-input label="Section" [(ngModel)]="challanSectionCode" name="challanSectionCode" maxlength="10" />
+        </div>
+        <div class="field">
+          <bb-date-input label="Month (any day in it)" [(ngModel)]="challanMonth" name="challanMonth" />
+        </div>
+        <div class="field">
+          <bb-text-input label="Challan number" [(ngModel)]="challanNo" name="challanNo" maxlength="20" />
+        </div>
+        <div class="field">
+          <bb-text-input label="BSR code" [(ngModel)]="bsrCode" name="bsrCode" maxlength="7" />
+        </div>
+      </div>
+      <p class="note">
+        A challan pays exactly what was deducted under its section in its month and not yet deposited; see
+        Accounting › TDS › Deposits due. Pay any interest or late fee as a separate payment.
+      </p>
+    } @else {
 
     @if (contactId === null) {
       <p class="note">
@@ -234,6 +278,21 @@
       </p>
     }
 
+    @if (direction() === 'spend' && advanceTotal > 0) {
+      <!-- TDS on a supplier advance (TK-117): the lines stay at the gross and the amount paid is net. -->
+      <div class="tds-check">
+        <button type="button" class="link" (click)="checkTds()" [disabled]="busy()">Work out TDS on the advance</button>
+        @if (tdsPreview(); as q) {
+          @if (q.applies && q.tdsAmount > 0) {
+            <span>TDS {{ q.tdsAmount | number: '1.2-2' }} under {{ q.sectionCode }}. {{ q.note }}</span>
+          } @else {
+            <span>No TDS is due. {{ q.note }}</span>
+          }
+        }
+      </div>
+    }
+    }
+
     <div class="editor-actions">
       <button type="button" class="ghost" (click)="close()">Cancel</button>
       <button type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
@@ -269,6 +328,12 @@
       <div><dt>Method</dt><dd>{{ d.paymentMethod }}</dd></div>
       <div><dt>Reference</dt><dd>{{ d.referenceNo ?? '—' }}</dd></div>
       <div><dt>Memo</dt><dd>{{ d.memo ?? '—' }}</dd></div>
+      @if (d.tdsAmount) {
+        <div><dt>TDS withheld</dt><dd>{{ d.tdsAmount | number: '1.2-2' }} @if (d.tdsSectionCode) { · {{ d.tdsSectionCode }} } @if (d.deductorTan) { · {{ d.deductorTan }} }</dd></div>
+      }
+      @if (d.isTdsChallan) {
+        <div><dt>TDS challan</dt><dd>{{ d.challanSectionCode }} · {{ d.challanMonth }} · {{ d.challanNo ?? '—' }} · BSR {{ d.bsrCode ?? '—' }}</dd></div>
+      }
     </dl>
 
     <bb-data-grid [gridCode]="'MONEY_DOCUMENT_VIEW_LINES'" [columns]="viewLinesColumns" [data]="d.lines">

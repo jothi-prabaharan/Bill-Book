@@ -63,6 +63,9 @@ public sealed class InternalSeedController : ControllerBase
                 ["taxMasters"] = await taxes.SeedForOrganizationAsync(request.OrgId, ct),
                 ["numberingSeries"] = await numbering.SeedForOrganizationAsync(request.OrgId, ct),
                 ["paymentTerms"] = await terms.SeedForOrganizationAsync(request.OrgId, ct),
+                ["tdsSections"] = await _services
+                    .GetRequiredService<Accounting.Repository.Repositories.TdsSectionRepository>()
+                    .SeedForOrganizationAsync(request.OrgId, ct),
             },
         };
 

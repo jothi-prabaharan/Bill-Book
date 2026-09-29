@@ -246,6 +246,14 @@ public sealed class ContactsController : ControllerBase
             {
                 Message = "Enter the TDS section, or turn TDS off.",
             }),
+            SaveContactOutcome.TdsCertificateIncomplete => BadRequest(new MessageResponse
+            {
+                Message = "A lower-deduction certificate needs its number, rate, validity dates and limit, with the end on or after the start.",
+            }),
+            SaveContactOutcome.TdsSectionUnknown => BadRequest(new MessageResponse
+            {
+                Message = "That TDS section is not one of this branch's TDS sections. Pick one from the list.",
+            }),
             SaveContactOutcome.UdyamNumberRequired => BadRequest(new MessageResponse
             {
                 Message = "Enter the Udyam registration number, or turn MSME off.",

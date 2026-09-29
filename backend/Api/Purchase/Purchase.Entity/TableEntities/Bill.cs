@@ -97,5 +97,20 @@ public class Bill : DocumentHeaderBase
     /// </summary>
     public bool IsReverseCharge { get; set; }
 
+    // ---- TDS (TK-117). Set by Accounting's quote when the bill posts; the
+    // vendor is owed the payable less TdsAmount, credited to TDS Payable.
+
+    [MaxLength(10, ErrorMessage = "Section code cannot exceed 10 characters.")]
+    public string? TdsSectionCode { get; set; }
+
+    /// <summary>What the deduction was computed on — the catch-up on the bill that crosses the year's threshold included.</summary>
+    public decimal TdsBase { get; set; }
+
+    public decimal TdsAmount { get; set; }
+
+    /// <summary>Why the deduction is what it is, as the quote explained it.</summary>
+    [MaxLength(300, ErrorMessage = "TDS note cannot exceed 300 characters.")]
+    public string? TdsNote { get; set; }
+
     public List<BillDetail> Lines { get; set; } = [];
 }

@@ -289,6 +289,15 @@ public class BillView : BillListItem
 
     public bool IsReverseCharge { get; set; }
 
+    /// <summary>TDS deducted when the bill posted (TK-117); zero while a draft.</summary>
+    public string? TdsSectionCode { get; set; }
+
+    public decimal TdsBase { get; set; }
+
+    public decimal TdsAmount { get; set; }
+
+    public string? TdsNote { get; set; }
+
     public string? Notes { get; set; }
 
     public string? TermsAndConditions { get; set; }

@@ -2,10 +2,12 @@ using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
+using Accounting.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Approvals;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
+using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Persistence;
 
@@ -38,6 +40,13 @@ public sealed class SpendMoneyRepository
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
     private readonly AccountingApprovalRepository? _approvals;
+    private readonly TdsRepository? _tds;
+    private readonly ITenantContext? _tenant;
+
+    /// <summary><c>mst.LedgerSources</c> 8 — a deposit placed with a supplier before their bill, which bears TDS (TK-117).</summary>
+    private const int SupplierAdvanceSource = 8;
+
+    private static readonly string TdsPayableAccount = SystemAccountNames.Of(SystemAccount.TdsPayable);
 
     public SpendMoneyRepository(
         AccountingDbContext db,
@@ -46,7 +55,9 @@ public sealed class SpendMoneyRepository
         IBaseCurrencyProvider baseCurrency,
         ICurrentUser user,
         TimeProvider clock,
-        AccountingApprovalRepository? approvals = null)
+        AccountingApprovalRepository? approvals = null,
+        TdsRepository? tds = null,
+        ITenantContext? tenant = null)
     {
         _db = db;
         _ledger = ledger;
@@ -55,6 +66,8 @@ public sealed class SpendMoneyRepository
         _user = user;
         _clock = clock;
         _approvals = approvals;
+        _tds = tds;
+        _tenant = tenant;
     }
 
     public async Task<IReadOnlyList<MoneyDocumentListItem>> ListAsync(
@@ -166,6 +179,7 @@ public sealed class SpendMoneyRepository
             MappingTransactionId = header.TransactionId,
             Status = MoneyDocumentStatus.Draft,
         };
+        ApplyChallan(document, request);
 
         _db.SpendMoney.Add(document);
         await _db.SaveChangesAsync(ct);
@@ -227,6 +241,7 @@ public sealed class SpendMoneyRepository
         (string? headerType, long? headerId) = MoneyAllocationRepository.HeaderMapping(request.Lines);
         document.MappingTransactionTypeCode = headerType;
         document.MappingTransactionId = headerId;
+        ApplyChallan(document, request);
 
         await _db.SpendMoneyDetails.Where(l => l.SpendMoneyId == id).ExecuteDeleteAsync(ct);
 
@@ -302,19 +317,49 @@ public sealed class SpendMoneyRepository
             return new MoneyDocumentResult(MoneyDocumentOutcome.AwaitingApproval, id, awaiting);
         }
 
+        // A TDS challan pays the government what was deducted (TK-117). It has
+        // no lines and posts on its own path.
+        if (document.IsTdsChallan)
+        {
+            return await PostChallanAsync(document, ct);
+        }
+
         List<SpendMoneyDetail> lines = await _db.SpendMoneyDetails
             .Where(l => l.SpendMoneyId == id)
             .OrderBy(l => l.LineNumber)
             .ToListAsync(ct);
 
+        // TDS on a deposit placed with a supplier (TK-117): due on whichever
+        // comes first, the payment or the bill. The lines keep the gross and
+        // the amount paid is the gross less the deduction.
+        (TdsQuote? tdsQuote, MoneyDocumentResult? tdsRefusal) = await QuoteAdvanceAsync(document, lines, ct);
+        if (tdsRefusal is not null)
+        {
+            return tdsRefusal;
+        }
+
+        decimal withheld = tdsQuote is { Applies: true } quoted ? quoted.TdsAmount : 0m;
+
         MoneyDocumentResult? refused = await MoneyPostingRepository.CheckPostableAsync(
-            _ledger, document.TransactionDate, document.Amount,
+            _ledger, document.TransactionDate, document.Amount + withheld,
             lines.Sum(l => l.Amount), lines.Count, ct);
 
         if (refused is not null)
         {
+            if (withheld > 0 && refused.Outcome == MoneyDocumentOutcome.NotAllocated)
+            {
+                decimal gross = lines.Sum(l => l.Amount);
+                return new MoneyDocumentResult(
+                    MoneyDocumentOutcome.TdsRefused, id,
+                    $"TDS of {withheld:0.00} is due on this advance. {tdsQuote!.Note} Keep the lines at the gross "
+                        + $"{gross:0.00} and enter {gross - withheld:0.00} as the amount paid.");
+            }
+
             return refused with { DocumentId = id };
         }
+
+        IReadOnlyDictionary<int, decimal> bankShares = TdsWithholdingRepository.BankShares(
+            lines.Select(l => (l.LineNumber, l.Amount, l.LedgerSourceId == SupplierAdvanceSource)), withheld);
 
         long? bankAccountId = await ResolveBankAsync(document.BankAccountId, ct);
         if (bankAccountId is null)
@@ -368,9 +413,14 @@ public sealed class SpendMoneyRepository
                 line.LineNumber, line.LedgerSourceId, target, document.ContactId,
                 debit: line.Amount, credit: 0m, line.LineMemo, settledRate) with { ProjectId = line.ProjectId });
 
-            legs.Add(MoneyPostingRepository.Bank(
-                line.LineNumber, line.LedgerSourceId, bankAccountId.Value,
-                debit: 0m, credit: line.Amount, line.LineMemo));
+            // Less leaves the bank than the line carries when TDS was withheld from it.
+            decimal paid = bankShares[line.LineNumber];
+            if (paid > 0)
+            {
+                legs.Add(MoneyPostingRepository.Bank(
+                    line.LineNumber, line.LedgerSourceId, bankAccountId.Value,
+                    debit: 0m, credit: paid, line.LineMemo));
+            }
 
             // The pair no longer balances once the two ends convert at different
             // rates, and what it is out by is the realized gain or loss.
@@ -383,7 +433,7 @@ public sealed class SpendMoneyRepository
                     controlDebitBase: MoneyPostingRepository.Base(line.Amount, booked),
                     controlCreditBase: 0m,
                     bankDebitBase: 0m,
-                    bankCreditBase: MoneyPostingRepository.Base(line.Amount, document.ExchangeRate),
+                    bankCreditBase: MoneyPostingRepository.Base(paid, document.ExchangeRate),
                     line.LineMemo);
 
                 if (fx is not null)
@@ -391,6 +441,16 @@ public sealed class SpendMoneyRepository
                     legs.Add(fx);
                 }
             }
+        }
+
+        // What was withheld is owed to the government, not the bank's (TK-117).
+        if (withheld > 0)
+        {
+            legs.Add(new LedgerPostingLeg(
+                MoneyPostingMapRepository.ControlLedgerType, SupplierAdvanceSource, 0,
+                TdsPayableAccount, AccountId: null, SubAccountReferenceType: null, SubAccountReferenceId: null,
+                MoneyPostingMapRepository.Primary, DebitAmount: 0m, CreditAmount: withheld,
+                $"TDS under {tdsQuote!.SectionCode}"));
         }
 
         LedgerPostOutcome posted = await _ledger.PostAsync(
@@ -415,11 +475,170 @@ public sealed class SpendMoneyRepository
         document.Status = MoneyDocumentStatus.Posted;
         document.PostedAt = _clock.GetUtcNow();
         document.PostedBy = _user.UserId;
+        document.TdsAmount = withheld;
+        document.TdsSectionCode = tdsQuote is { Applies: true } ? tdsQuote.SectionCode : null;
+
+        await _db.SaveChangesAsync(ct);
+
+        // The register row, which counts toward the vendor's threshold even
+        // when nothing was deducted (TK-117).
+        if (_tds is not null && tdsQuote is { Applies: true })
+        {
+            await _tds.WriteDeductionAsync(TypeCode, id, allocation.Code, document.TransactionDate, document.ContactId, tdsQuote, ct);
+        }
+
+        await tx.CommitAsync(ct);
+
+        return new MoneyDocumentResult(MoneyDocumentOutcome.Ok, id);
+    }
+
+    /// <summary>
+    /// What TDS a supplier deposit owes (TK-117). Nothing when there is no
+    /// deposit line, when TDS is not wired, or on a foreign-currency payment —
+    /// a non-resident is paid under section 195, which is not built.
+    /// </summary>
+    private async Task<(TdsQuote? Quote, MoneyDocumentResult? Refusal)> QuoteAdvanceAsync(
+        SpendMoney document, List<SpendMoneyDetail> lines, CancellationToken ct)
+    {
+        decimal advance = lines.Where(l => l.LedgerSourceId == SupplierAdvanceSource).Sum(l => l.Amount);
+        if (_tds is null || advance == 0m || document.ExchangeRate != 1m)
+        {
+            return (null, null);
+        }
+
+        TdsQuoteResult result = await _tds.QuoteAsync(new TdsQuoteRequest
+        {
+            CustomerId = _tenant?.CustomerId ?? Guid.Empty,
+            OrgId = _tenant?.OrgId ?? Guid.Empty,
+            ContactId = document.ContactId,
+            TransactionTypeCode = TypeCode,
+            TransactionId = document.SpendMoneyId,
+            Date = document.TransactionDate,
+            Amount = advance,
+            Kind = (int)TdsEntryKind.Advance,
+        }, ct);
+
+        return result.Outcome switch
+        {
+            TdsQuoteOutcome.Ok => (result.Quote, null),
+            TdsQuoteOutcome.Refused => (null, new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, document.SpendMoneyId, result.Detail)),
+            _ => (null, new MoneyDocumentResult(MoneyDocumentOutcome.TdsUnavailable, document.SpendMoneyId,
+                "The supplier's TDS details could not be read, so nothing was posted. Try again.")),
+        };
+    }
+
+    /// <summary>
+    /// Posts a TDS challan (TK-117): debits TDS Payable with its amount, which
+    /// must be exactly what is still undeposited for its section and month,
+    /// and marks those deductions paid by it. Interest and late fees are paid
+    /// as ordinary payments, so the register ties to the challan to the rupee.
+    /// </summary>
+    private async Task<MoneyDocumentResult> PostChallanAsync(SpendMoney document, CancellationToken ct)
+    {
+        long id = document.SpendMoneyId;
+
+        if (_tds is null || document.ChallanSectionCode is null || document.ChallanMonth is not DateOnly month)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, id,
+                "A challan needs the section and the month whose deductions it pays.");
+        }
+
+        if (document.ExchangeRate != 1m)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, id,
+                "TDS is paid to the government in the branch's own currency.");
+        }
+
+        if (await MoneyPostingRepository.CheckPeriodAsync(_ledger, document.TransactionDate, ct) is { } closed)
+        {
+            return closed with { DocumentId = id };
+        }
+
+        decimal due = await _tds.OutstandingForAsync(document.ChallanSectionCode, month, ct);
+        if (due == 0m)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, id,
+                $"Nothing deducted under {document.ChallanSectionCode} in {month:MMMM yyyy} is waiting to be deposited.");
+        }
+
+        if (due != document.Amount)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, id,
+                $"{due:0.00} deducted under {document.ChallanSectionCode} in {month:MMMM yyyy} is waiting to be deposited, "
+                    + $"and a challan pays exactly that. Enter {due:0.00}; pay any interest or late fee as a separate payment.");
+        }
+
+        long? bankAccountId = await ResolveBankAsync(document.BankAccountId, ct);
+        if (bankAccountId is null)
+        {
+            return new MoneyDocumentResult(
+                MoneyDocumentOutcome.BankAccountUnusable, id,
+                "That account has no ledger account behind it, so the challan cannot be posted.");
+        }
+
+        string memo = $"TDS challan {document.ChallanNo} — {document.ChallanSectionCode}, {month:MMM yyyy}";
+        List<LedgerPostingLeg> legs =
+        [
+            new(MoneyPostingMapRepository.ControlLedgerType, ChallanLedgerSource, 1, TdsPayableAccount,
+                AccountId: null, SubAccountReferenceType: null, SubAccountReferenceId: null, MoneyPostingMapRepository.Primary,
+                DebitAmount: document.Amount, CreditAmount: 0m, memo),
+            MoneyPostingRepository.Bank(1, ChallanLedgerSource, bankAccountId.Value, debit: 0m, credit: document.Amount, memo),
+        ];
+
+        LedgerPostOutcome posted = await _ledger.PostAsync(
+            new LedgerPosting(TypeCode, id, document.TransactionDate, document.CurrencyCode,
+                document.ExchangeRate, document.ContactId, legs),
+            ct);
+
+        if (posted != LedgerPostOutcome.Posted)
+        {
+            return new MoneyDocumentResult(
+                MoneyDocumentOutcome.PostingRefused, id,
+                "The ledger did not accept the challan, so nothing was posted.");
+        }
+
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
+
+        // A deduction posted since the check would make the challan pay more
+        // than its amount; the mark is refused and rolled back rather than
+        // leaving a deduction marked paid by money that never covered it.
+        int marked = await _tds.MarkDepositedAsync(id, document.ChallanSectionCode, month, ct);
+        decimal covered = await _db.TdsEntries.Where(e => e.ChallanSpendMoneyId == id).SumAsync(e => e.TdsAmount, ct);
+        if (marked == 0 || covered != document.Amount)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, id,
+                "A deduction was recorded under this section and month while the challan was posting. Check the amount and post again.");
+        }
+
+        NumberAllocation allocation = await _numbers.NextAsync(TypeCode, document.TransactionDate, ct);
+
+        document.TransactionNo = allocation.Code;
+        document.Status = MoneyDocumentStatus.Posted;
+        document.PostedAt = _clock.GetUtcNow();
+        document.PostedBy = _user.UserId;
 
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
         return new MoneyDocumentResult(MoneyDocumentOutcome.Ok, id);
+    }
+
+    /// <summary><c>mst.LedgerSources</c> 1 — an ordinary document posting, which a challan is.</summary>
+    private const int ChallanLedgerSource = 1;
+
+    /// <summary>
+    /// Copies the challan fields onto a draft (TK-117). A challan's month is
+    /// kept as its first day; an ordinary payment keeps none of them.
+    /// </summary>
+    private static void ApplyChallan(SpendMoney document, SaveMoneyDocumentRequest request)
+    {
+        document.IsTdsChallan = request.IsTdsChallan;
+        document.ChallanNo = request.IsTdsChallan ? request.ChallanNo?.Trim() : null;
+        document.BsrCode = request.IsTdsChallan ? request.BsrCode?.Trim() : null;
+        document.ChallanSectionCode = request.IsTdsChallan ? request.ChallanSectionCode?.Trim() : null;
+        document.ChallanMonth = request.IsTdsChallan && request.ChallanMonth is DateOnly month
+            ? TdsWithholdingRepository.MonthStart(month)
+            : null;
     }
 
     /// <summary>
@@ -457,6 +676,13 @@ public sealed class SpendMoneyRepository
             return closed with { DocumentId = id };
         }
 
+        // TDS deducted on the payment and already paid over freezes it (TK-117).
+        if (_tds is not null && await _tds.IsDepositedAsync(TypeCode, id, ct))
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsDeposited, id,
+                "The TDS deducted on this payment has been paid to the government on a challan. Void the challan first.");
+        }
+
         // An empty leg list with the leg types named is how a posting is
         // withdrawn — see the ledger door.
         LedgerPostOutcome withdrawn = await _ledger.PostAsync(
@@ -479,6 +705,20 @@ public sealed class SpendMoneyRepository
         document.VoidedBy = _user.UserId;
         document.VoidReason = request.Reason;
 
+        // A voided challan gives its deductions back to the undeposited pool; a
+        // voided payment leaves the register (TK-117).
+        if (_tds is not null)
+        {
+            if (document.IsTdsChallan)
+            {
+                await _tds.ReleaseChallanAsync(id, ct);
+            }
+            else
+            {
+                await _tds.RemoveAsync(TypeCode, id, ct);
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
 
         return new MoneyDocumentResult(MoneyDocumentOutcome.Ok, id);
@@ -497,6 +737,24 @@ public sealed class SpendMoneyRepository
 
     private static MoneyDocumentResult? Validate(SaveMoneyDocumentRequest request)
     {
+        // A challan pays TDS Payable and nothing else (TK-117).
+        if (request.IsTdsChallan)
+        {
+            if (request.Lines.Count > 0)
+            {
+                return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, 0,
+                    "A TDS challan has no lines: it pays what was deducted under one section in one month.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.ChallanSectionCode) || request.ChallanMonth is null)
+            {
+                return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, 0,
+                    "Choose the section and the month whose deductions the challan pays.");
+            }
+
+            return null;
+        }
+
         foreach (SaveMoneyLineRequest line in request.Lines)
         {
             if (MoneyPostingMapRepository.ForSpend(line.LedgerSourceId) is null)
@@ -564,5 +822,12 @@ public sealed class SpendMoneyRepository
             PostedAt = d.PostedAt,
             MappingTransactionTypeCode = d.MappingTransactionTypeCode,
             MappingTransactionId = d.MappingTransactionId,
+            TdsAmount = d.TdsAmount,
+            TdsSectionCode = d.TdsSectionCode,
+            IsTdsChallan = d.IsTdsChallan,
+            ChallanNo = d.ChallanNo,
+            BsrCode = d.BsrCode,
+            ChallanSectionCode = d.ChallanSectionCode,
+            ChallanMonth = d.ChallanMonth,
         };
 }

@@ -85,3 +85,6 @@ button.icon { background: none; color: #9aa0b0; font-size: 1.1rem; padding: 0 .4
 
 .billable { display: inline-flex; align-items: center; gap: var(--space-1, .25rem); font-size: .85em; margin-left: var(--space-2, .5rem); }
 .markup { width: 6rem; margin-left: var(--space-2, .5rem); padding: .3rem .4rem; border: 1px solid color-mix(in srgb, var(--color-text) 25%, transparent); border-radius: 6px; font: inherit; background: var(--color-bg); color: var(--color-text); }
+
+.tds-check { display: flex; gap: .75rem; align-items: baseline; flex-wrap: wrap; font-size: .85rem; margin: .5rem 0; }
+.tds-check span { color: var(--color-text-muted, #6a6f80); }

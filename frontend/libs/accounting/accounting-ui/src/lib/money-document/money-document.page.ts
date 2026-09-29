@@ -105,7 +105,28 @@ interface MoneyDocumentListItem {
   postedAt: string | null;
   mappingTransactionTypeCode: string | null;
   mappingTransactionId: number | null;
+  /** TDS withheld (TK-117): by the branch on a supplier advance, by the customer on a receipt. */
+  tdsAmount?: number;
+  tdsSectionCode?: string | null;
+  deductorTan?: string | null;
+  /** A payment of deducted TDS to the government (TK-117). */
+  isTdsChallan?: boolean;
+  challanNo?: string | null;
+  bsrCode?: string | null;
+  challanSectionCode?: string | null;
+  challanMonth?: string | null;
 }
+
+/** What Accounting says an advance owes in TDS (TK-117). */
+interface TdsQuote {
+  applies: boolean;
+  sectionCode: string | null;
+  tdsAmount: number;
+  note: string | null;
+}
+
+/** mst.LedgerSources 8: a deposit placed with a supplier, which bears TDS. */
+const SUPPLIER_ADVANCE_SOURCE = 8;
 
 interface MoneyDocumentView extends MoneyDocumentListItem {
   lines: MoneyLineView[];
@@ -267,6 +288,18 @@ export class MoneyDocumentPage implements OnInit {
   referenceDate = '';
   memo = '';
 
+  // ---- TDS (TK-117). A receipt records what the customer withheld; a
+  // payment is either a TDS challan, or an advance the branch deducts from.
+  tdsAmount = '';
+  tdsSectionCode = '';
+  deductorTan = '';
+  isTdsChallan = false;
+  challanNo = '';
+  bsrCode = '';
+  challanSectionCode = '';
+  challanMonth = '';
+  protected readonly tdsPreview = signal<TdsQuote | null>(null);
+
   /**
    * A signal rather than a plain array, so the allocated/unallocated panel below
    * moves as the lines are keyed. `computed` tracks signals; a field it can read
@@ -332,8 +365,27 @@ export class MoneyDocumentPage implements OnInit {
     return this.lines().reduce((sum, l) => sum + this.money(l.amount), 0);
   }
 
+  /**
+   * TDS kept back from the money that moved (TK-117): the lines carry the
+   * gross, so they add up to the amount plus this.
+   */
+  protected get withheld(): number {
+    if (this.direction() === 'receive') {
+      return this.money(this.tdsAmount);
+    }
+    const preview = this.tdsPreview();
+    return preview?.applies ? preview.tdsAmount : 0;
+  }
+
+  /** The gross of the supplier-advance lines, which is what TDS on a payment is worked out on. */
+  protected get advanceTotal(): number {
+    return this.lines()
+      .filter((l) => l.ledgerSourceId === SUPPLIER_ADVANCE_SOURCE)
+      .reduce((sum, l) => sum + this.money(l.amount), 0);
+  }
+
   protected get unallocated(): number {
-    return this.money(this.amount) - this.allocated;
+    return this.money(this.amount) + this.withheld - this.allocated;
   }
 
   /**
@@ -343,6 +395,16 @@ export class MoneyDocumentPage implements OnInit {
    * document that adds up perfectly.
    */
   protected get canPost(): boolean {
+    if (this.direction() === 'spend' && this.isTdsChallan) {
+      return (
+        this.contactId !== null &&
+        this.bankAccountId !== null &&
+        this.money(this.amount) > 0 &&
+        this.challanSectionCode.trim() !== '' &&
+        this.challanMonth !== ''
+      );
+    }
+
     return (
       this.contactId !== null &&
       this.bankAccountId !== null &&
@@ -467,6 +529,7 @@ export class MoneyDocumentPage implements OnInit {
     this.referenceNo = '';
     this.referenceDate = '';
     this.memo = '';
+    this.resetTds();
     this.lines.set([this.blankLine()]);
     this.editing.set(true);
   }
@@ -493,6 +556,15 @@ export class MoneyDocumentPage implements OnInit {
     this.referenceNo = document.referenceNo ?? '';
     this.referenceDate = '';
     this.memo = document.memo ?? '';
+    this.tdsAmount = document.tdsAmount ? String(document.tdsAmount) : '';
+    this.tdsSectionCode = document.tdsSectionCode ?? '';
+    this.deductorTan = document.deductorTan ?? '';
+    this.isTdsChallan = document.isTdsChallan ?? false;
+    this.challanNo = document.challanNo ?? '';
+    this.bsrCode = document.bsrCode ?? '';
+    this.challanSectionCode = document.challanSectionCode ?? '';
+    this.challanMonth = document.challanMonth ?? '';
+    this.tdsPreview.set(null);
     this.lines.set(
       document.lines.map((l) => ({
         ledgerSourceId: l.ledgerSourceId,
@@ -633,7 +705,9 @@ export class MoneyDocumentPage implements OnInit {
 
     this.busy.set(true);
     try {
-      const kept = this.lines().filter((l) => l.ledgerSourceId !== null);
+      // A challan has no lines (TK-117).
+      const challan = this.direction() === 'spend' && this.isTdsChallan;
+      const kept = challan ? [] : this.lines().filter((l) => l.ledgerSourceId !== null);
 
       const body = {
         transactionDate: this.transactionDate,
@@ -646,6 +720,14 @@ export class MoneyDocumentPage implements OnInit {
         referenceNo: this.referenceNo || null,
         referenceDate: this.referenceDate || null,
         memo: this.memo || null,
+        tdsAmount: this.direction() === 'receive' ? this.money(this.tdsAmount) : 0,
+        tdsSectionCode: this.direction() === 'receive' ? this.tdsSectionCode.trim() || null : null,
+        deductorTan: this.direction() === 'receive' ? this.deductorTan.trim().toUpperCase() || null : null,
+        isTdsChallan: challan,
+        challanNo: challan ? this.challanNo.trim() || null : null,
+        bsrCode: challan ? this.bsrCode.trim() || null : null,
+        challanSectionCode: challan ? this.challanSectionCode.trim() || null : null,
+        challanMonth: challan ? this.challanMonth || null : null,
         // No header mapping is sent. The server derives it from the lines,
         // because it is a summary of them rather than a fact beside them —
         // sending one from here would only create something to disagree with.
@@ -751,12 +833,63 @@ export class MoneyDocumentPage implements OnInit {
       return false;
     }
 
+    if (this.direction() === 'spend' && this.isTdsChallan) {
+      if (this.challanSectionCode.trim() === '' || this.challanMonth === '') {
+        this.show('Choose the section and the month whose deductions the challan pays.', true);
+        return false;
+      }
+      return true;
+    }
+
     if (post && !this.canPost) {
       this.show('Complete allocations before posting.', true);
       return false;
     }
 
     return true;
+  }
+
+  /**
+   * Asks Accounting what TDS the supplier-advance lines owe (TK-117), so the
+   * amount paid can be the gross less the deduction before the payment posts.
+   */
+  async checkTds(): Promise<void> {
+    if (this.contactId === null || this.advanceTotal <= 0) {
+      this.tdsPreview.set(null);
+      return;
+    }
+
+    this.busy.set(true);
+    try {
+      const quote = await this.req<TdsQuote>('POST', '/api/tds/quote', {
+        contactId: this.contactId,
+        date: this.transactionDate,
+        amount: this.advanceTotal,
+        kind: 2,
+        transactionTypeCode: 'SPM',
+        transactionId: this.editingId,
+      });
+      this.tdsPreview.set(quote);
+      if (quote.applies && quote.tdsAmount > 0) {
+        this.amount = (this.allocated - quote.tdsAmount).toFixed(2);
+      }
+    } catch (err: unknown) {
+      this.show(this.reason(err, 'Could not work out the TDS.'), true);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  private resetTds(): void {
+    this.tdsAmount = '';
+    this.tdsSectionCode = '';
+    this.deductorTan = '';
+    this.isTdsChallan = false;
+    this.challanNo = '';
+    this.bsrCode = '';
+    this.challanSectionCode = '';
+    this.challanMonth = '';
+    this.tdsPreview.set(null);
   }
 
   /** Parses a typed amount. Anything unparseable is zero, never NaN in a total. */

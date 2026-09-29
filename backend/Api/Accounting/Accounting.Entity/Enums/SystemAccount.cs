@@ -148,6 +148,19 @@ public enum SystemAccount
     /// in its own GSTR-3B row, 3.1(d).
     /// </summary>
     GstPayableReverseCharge = 26,
+
+    /// <summary>
+    /// TDS deducted from vendors and owed to the government (TK-117). A
+    /// Liability, off the manual picker: bills and advances credit it and a
+    /// TDS challan clears it.
+    /// </summary>
+    TdsPayable = 27,
+
+    /// <summary>
+    /// TDS customers withheld from their payments (TK-117). An Asset, claimed
+    /// against the branch's own income tax once Form 26AS shows it.
+    /// </summary>
+    TdsReceivable = 28,
 }
 
 /// <summary>
@@ -185,6 +198,8 @@ public static class SystemAccountNames
         SystemAccount.RefundableDeposits => "Refundable Deposits",
         SystemAccount.GoodsDeliveredNotInvoiced => "Goods Delivered Not Invoiced",
         SystemAccount.GstPayableReverseCharge => "GST Payable (Reverse Charge)",
+        SystemAccount.TdsPayable => "TDS Payable",
+        SystemAccount.TdsReceivable => "TDS Receivable",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

@@ -56,6 +56,38 @@ public class SaveMoneyDocumentRequest
     public long? MappingTransactionId { get; set; }
 
     public List<SaveMoneyLineRequest> Lines { get; set; } = [];
+
+    // ---- TDS (TK-117).
+
+    /// <summary>
+    /// Receipts only: TDS the customer withheld. The lines carry the gross they
+    /// settle and <see cref="Amount"/> what reached the bank. On a payment it is
+    /// ignored — the branch's own deduction is computed when it posts.
+    /// </summary>
+    [Range(typeof(decimal), "0", "79228162514264337593543950335", ErrorMessage = "TDS cannot be negative.")]
+    public decimal TdsAmount { get; set; }
+
+    [MaxLength(10, ErrorMessage = "Section code cannot exceed 10 characters.")]
+    public string? TdsSectionCode { get; set; }
+
+    /// <summary>Receipts only: the customer's TAN, which Form 26AS reports the deduction under.</summary>
+    [MaxLength(10, ErrorMessage = "TAN cannot exceed 10 characters.")]
+    public string? DeductorTan { get; set; }
+
+    /// <summary>Payments only: a deposit of deducted TDS to the government. It has no lines.</summary>
+    public bool IsTdsChallan { get; set; }
+
+    [MaxLength(20, ErrorMessage = "Challan number cannot exceed 20 characters.")]
+    public string? ChallanNo { get; set; }
+
+    [MaxLength(7, ErrorMessage = "BSR code cannot exceed 7 characters.")]
+    public string? BsrCode { get; set; }
+
+    [MaxLength(10, ErrorMessage = "Section code cannot exceed 10 characters.")]
+    public string? ChallanSectionCode { get; set; }
+
+    /// <summary>Any day in the month whose deductions the challan pays; stored as its first day.</summary>
+    public DateOnly? ChallanMonth { get; set; }
 }
 
 /// <summary>One meaning within a money document, and what it settles.</summary>
@@ -201,6 +233,20 @@ public enum MoneyDocumentOutcome
 
     /// <summary>An expense on the payment was charged on to a client, so it cannot be voided until that invoice is (TK-106).</summary>
     BilledToClient = 18,
+
+    /// <summary>
+    /// TDS stands in the way (TK-117): the amount paid does not allow for the
+    /// deduction due, the contact's section has no row in force, a challan does
+    /// not match what is outstanding, or TDS on a foreign-currency document.
+    /// The detail says which and what to change.
+    /// </summary>
+    TdsRefused = 19,
+
+    /// <summary>The contact's TDS details could not be read. Transient.</summary>
+    TdsUnavailable = 20,
+
+    /// <summary>The TDS on the payment has been paid to the government on a challan; void the challan first (TK-117).</summary>
+    TdsDeposited = 21,
 }
 
 public sealed record MoneyDocumentResult(
@@ -247,6 +293,24 @@ public class MoneyDocumentListItem
     public string? MappingTransactionTypeCode { get; set; }
 
     public long? MappingTransactionId { get; set; }
+
+    // ---- TDS (TK-117).
+
+    public decimal TdsAmount { get; set; }
+
+    public string? TdsSectionCode { get; set; }
+
+    public string? DeductorTan { get; set; }
+
+    public bool IsTdsChallan { get; set; }
+
+    public string? ChallanNo { get; set; }
+
+    public string? BsrCode { get; set; }
+
+    public string? ChallanSectionCode { get; set; }
+
+    public DateOnly? ChallanMonth { get; set; }
 }
 
 /// <summary>A money document with its allocation lines.</summary>

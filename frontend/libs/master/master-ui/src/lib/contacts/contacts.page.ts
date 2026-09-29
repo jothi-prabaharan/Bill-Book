@@ -143,6 +143,11 @@ interface ContactDetail extends ContactListItem {
   maxDiscountPercent: number | null;
   isTdsApplicable: boolean;
   tdsSection: string | null;
+  lowerDeductionCertificateNo: string | null;
+  lowerDeductionRate: number | null;
+  lowerDeductionValidFrom: string | null;
+  lowerDeductionValidTo: string | null;
+  lowerDeductionLimit: number | null;
   isMsme: boolean;
   udyamNumber: string | null;
   notes: string | null;
@@ -276,6 +281,9 @@ export class ContactsPage implements OnInit {
    * The option lists, in the shape `bb-select` takes. `LICENCE_TYPES` and
    * `DOCUMENT_TYPES` are already `{ value, label }` and are passed straight in.
    */
+
+  /** The branch's TDS sections (TK-117), for the contact's section. */
+  protected readonly tdsSectionOptions = signal<BbSelectOption<string>[]>([]);
 
   protected readonly statusFilterOptions: BbSelectOption<string>[] = [
     { value: 'active', label: 'Active only' },
@@ -433,6 +441,19 @@ export class ContactsPage implements OnInit {
       );
     } catch {
       /* the GSTIN/state check happens server-side regardless */
+    }
+
+    try {
+      // A contact's TDS section names one of the branch's TDS sections (TK-117).
+      const sections = await this.get<{ sectionCode: string; natureOfPayment: string; isActive: boolean }[]>('/api/tds/sections');
+      const seen = new Set<string>();
+      this.tdsSectionOptions.set(
+        sections
+          .filter((s) => s.isActive && !seen.has(s.sectionCode) && seen.add(s.sectionCode))
+          .map((s) => ({ value: s.sectionCode, label: `${s.sectionCode} · ${s.natureOfPayment}` })),
+      );
+    } catch {
+      /* without accounting access the section is checked when the contact is saved */
     }
   }
 
@@ -769,6 +790,11 @@ export class ContactsPage implements OnInit {
       gstin: this.cleanOptional(this.form.gstin)?.toUpperCase() ?? null,
       currencyCode: this.form.currencyCode.trim().toUpperCase(),
       tdsSection: this.cleanOptional(this.form.tdsSection),
+      lowerDeductionCertificateNo: this.cleanOptional(this.form.lowerDeductionCertificateNo),
+      lowerDeductionRate: this.form.lowerDeductionRate ?? null,
+      lowerDeductionValidFrom: this.form.lowerDeductionValidFrom || null,
+      lowerDeductionValidTo: this.form.lowerDeductionValidTo || null,
+      lowerDeductionLimit: this.form.lowerDeductionLimit ?? null,
       udyamNumber: this.cleanOptional(this.form.udyamNumber),
       notes: this.cleanOptional(this.form.notes),
       customFields: compactValues(this.form.customFields ?? {}),
@@ -959,6 +985,19 @@ export class ContactsPage implements OnInit {
       return false;
     }
 
+    // A lower-deduction certificate is all five facts or none (TK-117).
+    const certificate = [
+      this.hasText(this.form.lowerDeductionCertificateNo),
+      this.form.lowerDeductionRate != null,
+      this.hasText(this.form.lowerDeductionValidFrom),
+      this.hasText(this.form.lowerDeductionValidTo),
+      this.form.lowerDeductionLimit != null,
+    ];
+    if (certificate.some((x) => x) && !certificate.every((x) => x)) {
+      this.fail('A lower-deduction certificate needs its number, rate, validity dates and limit.');
+      return false;
+    }
+
     if (this.form.isMsme && !this.hasText(this.form.udyamNumber)) {
       this.fail('Udyam number is required for MSME contacts.');
       return false;
@@ -1092,6 +1131,11 @@ export class ContactsPage implements OnInit {
       maxDiscountPercent: null,
       isTdsApplicable: false,
       tdsSection: null,
+      lowerDeductionCertificateNo: null,
+      lowerDeductionRate: null,
+      lowerDeductionValidFrom: null,
+      lowerDeductionValidTo: null,
+      lowerDeductionLimit: null,
       isMsme: false,
       udyamNumber: null,
       notes: null,

@@ -376,6 +376,22 @@ namespace Master.Repository.Migrations.Tenant
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("LowerDeductionCertificateNo")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("LowerDeductionLimit")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("LowerDeductionRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateOnly?>("LowerDeductionValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("LowerDeductionValidTo")
+                        .HasColumnType("date");
+
                     b.Property<decimal?>("MaxDiscountPercent")
                         .HasColumnType("decimal(5,2)");
 

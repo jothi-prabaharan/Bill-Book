@@ -214,8 +214,41 @@
 
         @if (form.isTdsApplicable) {
           <div class="field">
-            <bb-text-input label="TDS section"  [(ngModel)]="form.tdsSection" maxlength="10" />
+            @if (tdsSectionOptions().length > 0) {
+              <bb-select
+                label="TDS section"
+                name="tdsSection"
+                placeholder="Choose a section"
+                [options]="tdsSectionOptions()"
+                [(ngModel)]="form.tdsSection"
+              />
+            } @else {
+              <bb-text-input label="TDS section" name="tdsSection" [(ngModel)]="form.tdsSection" maxlength="10" />
+            }
           </div>
+          <div class="field">
+            <bb-text-input
+              label="Lower-deduction certificate"
+              hint="Section 197. Leave blank unless the vendor holds one."
+              name="lowerDeductionCertificateNo"
+              [(ngModel)]="form.lowerDeductionCertificateNo"
+              maxlength="20"
+            />
+          </div>
+          @if (form.lowerDeductionCertificateNo) {
+            <div class="field">
+              <bb-percentage-input label="Certificate rate %" name="lowerDeductionRate" [(ngModel)]="form.lowerDeductionRate" />
+            </div>
+            <div class="field">
+              <bb-money-input label="Certificate limit" name="lowerDeductionLimit" [(ngModel)]="form.lowerDeductionLimit" />
+            </div>
+            <div class="field">
+              <bb-date-input label="Valid from" name="lowerDeductionValidFrom" [(ngModel)]="form.lowerDeductionValidFrom" />
+            </div>
+            <div class="field">
+              <bb-date-input label="Valid to" name="lowerDeductionValidTo" [(ngModel)]="form.lowerDeductionValidTo" />
+            </div>
+          }
         }
 
         <bb-checkbox text="MSME registered" name="isMsme" [(ngModel)]="form.isMsme" />

@@ -78,6 +78,12 @@ public sealed class BillRepository
     /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
     private readonly DocumentCustomFieldGate? _customFields;
 
+    /// <summary>What TDS a bill owes, from Accounting (TK-117). Null in tests that do not exercise it.</summary>
+    private readonly ITdsQuoteClient? _tdsQuotes;
+
+    /// <summary>Accounting's SystemAccount.TdsPayable (TK-117).</summary>
+    public const string TdsPayableAccount = "TDS Payable";
+
     public BillRepository(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -95,9 +101,11 @@ public sealed class BillRepository
         TimeProvider clock,
         PurchaseApprovalRepository? approvals = null,
         Shared.Kernel.Projects.IProjectDirectory? projects = null,
-        DocumentCustomFieldGate? customFields = null)
+        DocumentCustomFieldGate? customFields = null,
+        ITdsQuoteClient? tdsQuotes = null)
     {
         _customFields = customFields;
+        _tdsQuotes = tdsQuotes;
         _projects = projects;
         _approvals = approvals;
         _db = db;
@@ -616,6 +624,19 @@ public sealed class BillRepository
 
         bool againstReceipt = bill.GoodsReceiptId.HasValue;
 
+        // TDS (TK-117), asked before anything else moves: a bill that cannot be
+        // priced for TDS must not have received its stock first.
+        (TdsQuote? tds, BillResult? tdsRefusal) = await QuoteTdsAsync(bill, customerId, orgId, ct);
+        if (tdsRefusal is not null)
+        {
+            return tdsRefusal;
+        }
+
+        bill.TdsSectionCode = tds is { Applies: true } ? tds.SectionCode : null;
+        bill.TdsBase = tds is { Applies: true } ? tds.TdsBase : 0m;
+        bill.TdsAmount = tds is { Applies: true } ? tds.TdsAmount : 0m;
+        bill.TdsNote = tds is { Applies: true, Note: { } note } ? (note.Length <= 300 ? note : note[..300]) : null;
+
         List<BillDetail> stockLines = bill.Lines
             .Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue)
             .OrderBy(l => l.LineNumber)
@@ -683,6 +704,9 @@ public sealed class BillRepository
                 ContactId = bill.ContactId,
                 SourceDocumentId = bill.BillId,
                 Legs = legs,
+
+                // The TDS register row, written in the ledger's transaction.
+                Tds = tds,
             },
             ct);
 
@@ -900,6 +924,24 @@ public sealed class BillRepository
             }
         }
 
+        // TDS (TK-117): withheld from the vendor and owed to the government, so
+        // the vendor is owed the net. A tax leg rather than a control one, so
+        // the bill's open balance — the sum of its control legs — is the net.
+        if (bill.TdsAmount > 0)
+        {
+            legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = TaxLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                AccountSystemName = TdsPayableAccount,
+                CreditAmount = bill.TdsAmount,
+                TransactionDesc = $"TDS under {bill.TdsSectionCode}",
+            });
+
+            owed -= bill.TdsAmount;
+        }
+
         legs.Add(new LedgerLegRequest
         {
             LedgerTypeId = ControlLedgerType,
@@ -913,6 +955,46 @@ public sealed class BillRepository
         });
 
         return legs;
+    }
+
+    /// <summary>
+    /// What TDS the bill owes (TK-117), on its value before GST. Nothing when
+    /// TDS is not wired, or on a foreign-currency bill — a non-resident vendor
+    /// is paid under section 195 and returned on 27Q, neither of which is built.
+    /// </summary>
+    private async Task<(TdsQuote? Quote, BillResult? Refusal)> QuoteTdsAsync(
+        Bill bill, Guid customerId, Guid orgId, CancellationToken ct)
+    {
+        if (_tdsQuotes is null || bill.ExchangeRate != 1m)
+        {
+            return (null, null);
+        }
+
+        decimal taxable = bill.Lines.Sum(l => l.TaxableAmount);
+        if (taxable <= 0)
+        {
+            return (null, null);
+        }
+
+        TdsQuoteResult result = await _tdsQuotes.QuoteAsync(new TdsQuoteRequest
+        {
+            CustomerId = customerId,
+            OrgId = orgId,
+            ContactId = bill.ContactId,
+            TransactionTypeCode = "BIL",
+            TransactionId = bill.BillId,
+            Date = bill.DocumentDate,
+            Amount = taxable,
+            Kind = 1,
+        }, ct);
+
+        return result.Outcome switch
+        {
+            TdsQuoteOutcome.Ok => (result.Quote, null),
+            TdsQuoteOutcome.Refused => (null, new BillResult(BillOutcome.PostingRefused, bill.BillId, result.Detail)),
+            _ => (null, new BillResult(BillOutcome.PostingRefused, bill.BillId,
+                "The vendor's TDS could not be worked out, so the bill was not posted. Try again.")),
+        };
     }
 
     /// <summary>What a received unit cost, GST included where it cannot be claimed (D-31).</summary>
@@ -1071,6 +1153,10 @@ public sealed class BillRepository
                 TotalAmountBase = b.TotalAmountBase,
                 LandedCostAmount = b.LandedCostAmount,
                 IsReverseCharge = b.IsReverseCharge,
+                TdsSectionCode = b.TdsSectionCode,
+                TdsBase = b.TdsBase,
+                TdsAmount = b.TdsAmount,
+                TdsNote = b.TdsNote,
                 Notes = b.Notes,
                 CustomFields = b.CustomFields,
                 TermsAndConditions = b.TermsAndConditions,

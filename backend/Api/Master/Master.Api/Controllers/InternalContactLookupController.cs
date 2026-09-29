@@ -111,6 +111,43 @@ public sealed class InternalContactLookupController : ControllerBase
     }
 
     /// <summary>
+    /// What TDS needs from a contact (TK-117): whether it applies, the section,
+    /// PAN and TAN, and a lower-deduction certificate. A contact the branch
+    /// does not hold is not found.
+    /// </summary>
+    [HttpPost("tds-profile")]
+    public async Task<IActionResult> TdsProfile([FromBody] TdsProfileRequest request, CancellationToken ct)
+    {
+        switch (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId))
+        {
+            case InternalTenantOutcome.Missing:
+                return BadRequest(new MessageResponse { Message = "A customer and an organization are required to read a TDS profile." });
+            case InternalTenantOutcome.Mismatch:
+                return Forbid();
+        }
+
+        var db = _services.GetRequiredService<ContactsDbContext>();
+        TdsProfile? profile = await db.Contacts.AsNoTracking()
+            .Where(c => c.ContactId == request.ContactId)
+            .Select(c => new TdsProfile
+            {
+                ContactId = c.ContactId,
+                IsTdsApplicable = c.IsTdsApplicable,
+                TdsSection = c.TdsSection,
+                Pan = c.Pan,
+                Tan = c.Tan,
+                CertificateNo = c.LowerDeductionCertificateNo,
+                CertificateRate = c.LowerDeductionRate,
+                CertificateValidFrom = c.LowerDeductionValidFrom,
+                CertificateValidTo = c.LowerDeductionValidTo,
+                CertificateLimit = c.LowerDeductionLimit,
+            })
+            .FirstOrDefaultAsync(ct);
+
+        return profile is null ? NotFound() : Ok(profile);
+    }
+
+    /// <summary>
     /// The guardian with this mobile number, or a new one (School admissions,
     /// TK-62). Matching on the mobile number is what makes an admit retried
     /// after a lost reply, or a second child of the same parent, reuse the

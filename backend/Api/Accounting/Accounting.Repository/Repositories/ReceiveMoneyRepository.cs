@@ -2,6 +2,7 @@ using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
+using Accounting.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
@@ -39,6 +40,9 @@ public sealed class ReceiveMoneyRepository
     private readonly IBaseCurrencyProvider _baseCurrency;
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
+    private readonly TdsRepository? _tds;
+
+    private static readonly string TdsReceivableAccount = SystemAccountNames.Of(SystemAccount.TdsReceivable);
 
     public ReceiveMoneyRepository(
         AccountingDbContext db,
@@ -46,7 +50,8 @@ public sealed class ReceiveMoneyRepository
         INumberGenerator numbers,
         IBaseCurrencyProvider baseCurrency,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        TdsRepository? tds = null)
     {
         _db = db;
         _ledger = ledger;
@@ -54,6 +59,7 @@ public sealed class ReceiveMoneyRepository
         _baseCurrency = baseCurrency;
         _user = user;
         _clock = clock;
+        _tds = tds;
     }
 
     public async Task<IReadOnlyList<MoneyDocumentListItem>> ListAsync(
@@ -162,6 +168,7 @@ public sealed class ReceiveMoneyRepository
             MappingTransactionId = header.TransactionId,
             Status = MoneyDocumentStatus.Draft,
         };
+        ApplyTds(document, request);
 
         _db.ReceiveMoney.Add(document);
         await _db.SaveChangesAsync(ct);
@@ -223,6 +230,7 @@ public sealed class ReceiveMoneyRepository
         (string? headerType, long? headerId) = MoneyAllocationRepository.HeaderMapping(request.Lines);
         document.MappingTransactionTypeCode = headerType;
         document.MappingTransactionId = headerId;
+        ApplyTds(document, request);
 
         await _db.ReceiveMoneyDetails.Where(l => l.ReceiveMoneyId == id).ExecuteDeleteAsync(ct);
 
@@ -291,14 +299,33 @@ public sealed class ReceiveMoneyRepository
             .OrderBy(l => l.LineNumber)
             .ToListAsync(ct);
 
+        // TDS the customer withheld (TK-117): the lines settle the gross, the
+        // bank receives the net, and the difference is TDS Receivable.
+        decimal withheld = document.TdsAmount;
+        if (withheld > 0 && document.ExchangeRate != 1m)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, id,
+                "TDS withheld by a customer is recorded in the branch's own currency. Enter this receipt in it, or leave the TDS out.");
+        }
+
         MoneyDocumentResult? refused = await MoneyPostingRepository.CheckPostableAsync(
-            _ledger, document.TransactionDate, document.Amount,
+            _ledger, document.TransactionDate, document.Amount + withheld,
             lines.Sum(l => l.Amount), lines.Count, ct);
 
         if (refused is not null)
         {
+            if (withheld > 0 && refused.Outcome == MoneyDocumentOutcome.NotAllocated)
+            {
+                return new MoneyDocumentResult(MoneyDocumentOutcome.NotAllocated, id,
+                    $"The lines come to {lines.Sum(l => l.Amount):0.00}, but the amount received plus the TDS withheld is "
+                        + $"{document.Amount + withheld:0.00}. The lines carry what the customer settled before TDS.");
+            }
+
             return refused with { DocumentId = id };
         }
+
+        IReadOnlyDictionary<int, decimal> bankShares = TdsWithholdingRepository.BankShares(
+            lines.Select(l => (l.LineNumber, l.Amount, true)), withheld);
 
         long? bankAccountId = await ResolveBankAsync(document.BankAccountId, ct);
         if (bankAccountId is null)
@@ -352,9 +379,14 @@ public sealed class ReceiveMoneyRepository
                 line.LineNumber, line.LedgerSourceId, target, document.ContactId,
                 debit: 0m, credit: line.Amount, line.LineMemo, settledRate) with { ProjectId = line.ProjectId });
 
-            legs.Add(MoneyPostingRepository.Bank(
-                line.LineNumber, line.LedgerSourceId, bankAccountId.Value,
-                debit: line.Amount, credit: 0m, line.LineMemo));
+            // Less reaches the bank than the line settles when the customer withheld TDS.
+            decimal received = bankShares[line.LineNumber];
+            if (received > 0)
+            {
+                legs.Add(MoneyPostingRepository.Bank(
+                    line.LineNumber, line.LedgerSourceId, bankAccountId.Value,
+                    debit: received, credit: 0m, line.LineMemo));
+            }
 
             // The pair no longer balances once the two ends convert at different
             // rates, and what it is out by is the realized gain or loss. The
@@ -368,7 +400,7 @@ public sealed class ReceiveMoneyRepository
                     baseCurrency,
                     controlDebitBase: 0m,
                     controlCreditBase: MoneyPostingRepository.Base(line.Amount, booked),
-                    bankDebitBase: MoneyPostingRepository.Base(line.Amount, document.ExchangeRate),
+                    bankDebitBase: MoneyPostingRepository.Base(received, document.ExchangeRate),
                     bankCreditBase: 0m,
                     line.LineMemo);
 
@@ -377,6 +409,16 @@ public sealed class ReceiveMoneyRepository
                     legs.Add(fx);
                 }
             }
+        }
+
+        // What the customer withheld is claimed from the government, not the bank (TK-117).
+        if (withheld > 0)
+        {
+            legs.Add(new LedgerPostingLeg(
+                MoneyPostingMapRepository.ControlLedgerType, lines[0].LedgerSourceId, 0,
+                TdsReceivableAccount, AccountId: null, SubAccountReferenceType: null, SubAccountReferenceId: null,
+                MoneyPostingMapRepository.Primary, DebitAmount: withheld, CreditAmount: 0m,
+                document.DeductorTan is { Length: > 0 } tan ? $"TDS withheld by {tan}" : "TDS withheld by the customer"));
         }
 
         LedgerPostOutcome posted = await _ledger.PostAsync(
@@ -403,9 +445,29 @@ public sealed class ReceiveMoneyRepository
         document.PostedBy = _user.UserId;
 
         await _db.SaveChangesAsync(ct);
+
+        // The register row the Form 26AS match reads (TK-117).
+        if (_tds is not null && withheld > 0)
+        {
+            await _tds.WriteSufferedAsync(id, allocation.Code, document.TransactionDate, document.ContactId,
+                document.TdsSectionCode, document.DeductorTan, document.Amount, withheld, ct);
+        }
+
         await tx.CommitAsync(ct);
 
         return new MoneyDocumentResult(MoneyDocumentOutcome.Ok, id);
+    }
+
+    /// <summary>Copies the withheld TDS onto a draft (TK-117).</summary>
+    private static void ApplyTds(ReceiveMoney document, SaveMoneyDocumentRequest request)
+    {
+        document.TdsAmount = request.TdsAmount;
+        document.TdsSectionCode = request.TdsAmount > 0 && !string.IsNullOrWhiteSpace(request.TdsSectionCode)
+            ? request.TdsSectionCode.Trim()
+            : null;
+        document.DeductorTan = request.TdsAmount > 0 && !string.IsNullOrWhiteSpace(request.DeductorTan)
+            ? request.DeductorTan.Trim().ToUpperInvariant()
+            : null;
     }
 
     /// <summary>
@@ -458,6 +520,11 @@ public sealed class ReceiveMoneyRepository
         document.VoidedBy = _user.UserId;
         document.VoidReason = request.Reason;
 
+        if (_tds is not null)
+        {
+            await _tds.RemoveAsync(TypeCode, id, ct);
+        }
+
         await _db.SaveChangesAsync(ct);
 
         return new MoneyDocumentResult(MoneyDocumentOutcome.Ok, id);
@@ -476,6 +543,14 @@ public sealed class ReceiveMoneyRepository
 
     private static MoneyDocumentResult? Validate(SaveMoneyDocumentRequest request)
     {
+        // A TAN that is not one could never be found in Form 26AS (TK-117).
+        if (request.TdsAmount > 0 && !string.IsNullOrWhiteSpace(request.DeductorTan)
+            && !TdsCalculationRepository.IsValidTan(request.DeductorTan))
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.TdsRefused, 0,
+                "A TAN is four letters, five digits and a letter, such as MUMA12345B.");
+        }
+
         foreach (SaveMoneyLineRequest line in request.Lines)
         {
             if (MoneyPostingMapRepository.ForReceive(line.LedgerSourceId) is null)
@@ -539,5 +614,8 @@ public sealed class ReceiveMoneyRepository
             PostedAt = d.PostedAt,
             MappingTransactionTypeCode = d.MappingTransactionTypeCode,
             MappingTransactionId = d.MappingTransactionId,
+            TdsAmount = d.TdsAmount,
+            TdsSectionCode = d.TdsSectionCode,
+            DeductorTan = d.DeductorTan,
         };
 }

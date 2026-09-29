@@ -284,6 +284,8 @@ public static class MenuSeed
         new Menu { MenuId = 1128, ParentId = 106, Type = MenuType.Item, Code = "timesheet", Name = "Timesheet", Icon = "clock", Module = "projects", RoutePath = "/accounting/projects/timesheet", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 21, IsActive = true },
         // Budgets (TK-108), under Accounting.
         new Menu { MenuId = 1133, ParentId = 106, Type = MenuType.Item, Code = "budgets", Name = "Budgets", Icon = "target", Module = "accounting", RoutePath = "/accounting/budgets", IsSearchable = true, CanCreate = true, SingularName = "Budget", DisplayOrder = 22, IsActive = true },
+        // TDS (TK-117): sections, register, deposits due, 26Q and Form 26AS.
+        new Menu { MenuId = 1138, ParentId = 106, Type = MenuType.Item, Code = "tds", Name = "TDS", Icon = "percent", Module = "accounting", RoutePath = "/accounting/tds", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 23, IsActive = true },
         // Budget reports (TK-109), under Reports › Financial performance.
         new Menu { MenuId = 1134, ParentId = 108, Type = MenuType.Item, Code = "r-budget-vs-actual", Name = "Budget vs Actual", Icon = "target", Module = "reports", RoutePath = "/reports/budget-vs-actual", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
         new Menu { MenuId = 1135, ParentId = 108, Type = MenuType.Item, Code = "r-budget-vs-actual-by-project", Name = "Budget vs Actual by Project", Icon = "target", Module = "reports", RoutePath = "/reports/budget-vs-actual-by-project", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
@@ -793,5 +795,10 @@ public static class MenuSeed
         // Custom fields (TK-110).
         new MenuPermission { MenuPermissionId = 472, MenuId = 1137, PermissionCode = "settings.view", Action = "view", Module = "settings" },
         new MenuPermission { MenuPermissionId = 473, MenuId = 1137, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
+        // TDS (TK-117).
+        new MenuPermission { MenuPermissionId = 474, MenuId = 1138, PermissionCode = "accounting.view", Action = "view", Module = "accounting" },
+        new MenuPermission { MenuPermissionId = 475, MenuId = 1138, PermissionCode = "accounting.create", Action = "create", Module = "accounting" },
+        new MenuPermission { MenuPermissionId = 476, MenuId = 1138, PermissionCode = "accounting.edit", Action = "edit", Module = "accounting" },
+        new MenuPermission { MenuPermissionId = 477, MenuId = 1138, PermissionCode = "accounting.export", Action = "export", Module = "accounting" },
     ];
 }

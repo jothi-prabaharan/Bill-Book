@@ -85,6 +85,12 @@ public sealed class PostLedgerRequest
     public List<int> WithdrawLedgerTypeIds { get; set; } = [];
 
     public List<LedgerLegRequest> Legs { get; set; } = [];
+
+    /// <summary>
+    /// The TDS register row the posting carries (TK-117). Accounting writes it
+    /// in the ledger's transaction, and removes it with a withdrawal.
+    /// </summary>
+    public Shared.Kernel.Tax.TdsQuote? Tds { get; set; }
 }
 
 public sealed class LedgerLegRequest

@@ -161,6 +161,20 @@ namespace Purchase.Repository.Migrations.Tenant
                     b.Property<decimal>("TaxableAmount")
                         .HasColumnType("decimal(28,2)");
 
+                    b.Property<decimal>("TdsAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TdsBase")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("TdsNote")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("TdsSectionCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<string>("TermsAndConditions")
                         .HasColumnType("text");
 

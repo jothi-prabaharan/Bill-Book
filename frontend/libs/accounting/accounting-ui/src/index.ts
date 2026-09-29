@@ -14,6 +14,8 @@ export * from './lib/account-ledger/account-ledger.page';
 export * from './lib/trial-balance/trial-balance.page';
 export * from './lib/opening-balance/opening-balance.page';
 export * from './lib/closing-dates/closing-dates.page';
+export * from './lib/tds/tds.page';
+export * from './lib/tds/tds-math';
 
 // Banking — the bank accounts and the three money documents.
 export * from './lib/banks/banks.page';

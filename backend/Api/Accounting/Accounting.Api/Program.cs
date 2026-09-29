@@ -84,6 +84,28 @@ builder.Services.AddScoped<ProjectBillingRepository>();
 builder.Services.AddScoped<BudgetRepository>();
 builder.Services.AddScoped<BudgetCheckRepository>();
 
+// TDS (TK-117): the section master, the register the ledger writes, the 26Q
+// export and the Form 26AS match. A contact's TDS details are Master's.
+builder.Services.AddScoped<Accounting.Repository.Repositories.TdsSectionRepository>();
+builder.Services.AddScoped<Accounting.Repository.Repositories.TdsRepository>();
+builder.Services.AddScoped<Accounting.Repository.Repositories.Form26qRepository>();
+builder.Services.AddScoped<Accounting.Repository.Repositories.Form26asRepository>();
+builder.Services.AddHttpClient<Shared.Kernel.Contacts.ITdsProfileClient, Shared.Kernel.Contacts.HttpTdsProfileClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHttpClient<Shared.Kernel.Tenancy.IOrgIdentityProvider, Shared.Kernel.Tenancy.HttpOrgIdentityProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHttpClient<Shared.Kernel.Documents.IContactNameLookup, Shared.Kernel.Documents.HttpContactNameLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // Approval chains for spend money and manual journals (TK-101): Master
 // resolves them, this service stores the steps.
 builder.Services.AddScoped<AccountingApprovalRepository>();

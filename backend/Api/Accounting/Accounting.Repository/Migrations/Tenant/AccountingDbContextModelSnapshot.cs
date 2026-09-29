@@ -1060,6 +1060,163 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.ToTable("FixedAssetCategories", "acc");
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Form26asImport", b =>
+                {
+                    b.Property<long>("Form26asImportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Form26asImportId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CreditAtRisk")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DifferenceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<int>("FinancialYear")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MatchedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MissingIn26asCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MissingInBooksCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Pan")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("RawText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Form26asImportId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "FinancialYear");
+
+                    b.ToTable("Form26asImports", "acc");
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Form26asLine", b =>
+                {
+                    b.Property<long>("Form26asLineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Form26asLineId"));
+
+                    b.Property<decimal?>("BooksTds")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeductorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("DeductorTan")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("DocumentNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<long>("Form26asImportId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MatchState")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("ReceiveMoneyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SectionCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal?>("StatementAmountPaid")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("StatementTds")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateOnly?>("TransactionDate")
+                        .HasColumnType("date");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Form26asLineId");
+
+                    b.HasIndex("Form26asImportId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("Form26asLines", "acc");
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.Journal", b =>
                 {
                     b.Property<long>("JournalId")
@@ -2197,6 +2354,10 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("DeductorTan")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<decimal>("ExchangeRate")
                         .HasColumnType("decimal(18,8)");
 
@@ -2242,6 +2403,13 @@ namespace Accounting.Repository.Migrations.Tenant
 
                     b.Property<string>("Status")
                         .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("TdsAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TdsSectionCode")
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -2300,6 +2468,8 @@ namespace Accounting.Repository.Migrations.Tenant
                             t.HasCheckConstraint("chk_receivemoney_posted_stamp", "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
 
                             t.HasCheckConstraint("chk_receivemoney_rate_positive", "\"ExchangeRate\" > 0");
+
+                            t.HasCheckConstraint("chk_receivemoney_tds_nonnegative", "\"TdsAmount\" >= 0");
 
                             t.HasCheckConstraint("chk_receivemoney_void_stamp", "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
                         });
@@ -2404,6 +2574,21 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.Property<long>("BankAccountId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("BsrCode")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<DateOnly?>("ChallanMonth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ChallanNo")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ChallanSectionCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<long>("ContactId")
                         .HasColumnType("bigint");
 
@@ -2433,6 +2618,9 @@ namespace Accounting.Repository.Migrations.Tenant
 
                     b.Property<decimal>("ExchangeRate")
                         .HasColumnType("decimal(18,8)");
+
+                    b.Property<bool>("IsTdsChallan")
+                        .HasColumnType("boolean");
 
                     b.Property<long?>("MappingTransactionId")
                         .HasColumnType("bigint");
@@ -2476,6 +2664,13 @@ namespace Accounting.Repository.Migrations.Tenant
 
                     b.Property<string>("Status")
                         .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("TdsAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TdsSectionCode")
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -2527,6 +2722,8 @@ namespace Accounting.Repository.Migrations.Tenant
                         {
                             t.HasCheckConstraint("chk_spendmoney_amount_positive", "\"Amount\" > 0");
 
+                            t.HasCheckConstraint("chk_spendmoney_challan", "\"IsTdsChallan\" = (\"ChallanSectionCode\" IS NOT NULL AND \"ChallanMonth\" IS NOT NULL)");
+
                             t.HasCheckConstraint("chk_spendmoney_mapping_paired", "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
 
                             t.HasCheckConstraint("chk_spendmoney_number_on_post", "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
@@ -2534,6 +2731,8 @@ namespace Accounting.Repository.Migrations.Tenant
                             t.HasCheckConstraint("chk_spendmoney_posted_stamp", "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
 
                             t.HasCheckConstraint("chk_spendmoney_rate_positive", "\"ExchangeRate\" > 0");
+
+                            t.HasCheckConstraint("chk_spendmoney_tds_nonnegative", "\"TdsAmount\" >= 0");
 
                             t.HasCheckConstraint("chk_spendmoney_void_stamp", "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
                         });
@@ -2904,6 +3103,218 @@ namespace Accounting.Repository.Migrations.Tenant
                             t.HasCheckConstraint("chk_tax_effective_range", "\"EffectiveTo\" IS NULL OR \"EffectiveTo\" >= \"EffectiveFrom\"");
 
                             t.HasCheckConstraint("chk_tax_split", "\"CgstRate\" = \"SgstRate\" AND \"CgstRate\" + \"SgstRate\" = \"TotalRate\" AND \"IgstRate\" = \"TotalRate\"");
+                        });
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.TdsEntry", b =>
+                {
+                    b.Property<long>("TdsEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TdsEntryId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("CertificateBase")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CertificateNo")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("CertificateRate")
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<long?>("ChallanSpendMoneyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("CoveredByAdvance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeducteeKind")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly>("DocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DocumentNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("FinancialYear")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Pan")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("Rate")
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<string>("SectionCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Tan")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("TdsAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TdsBase")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("TransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TransactionTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("TdsEntryId");
+
+                    b.HasIndex("ChallanSpendMoneyId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ChallanSpendMoneyId")
+                        .HasFilter("\"ChallanSpendMoneyId\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "TransactionTypeCode", "TransactionId")
+                        .IsUnique();
+
+                    b.HasIndex("OrgId", "Direction", "ContactId", "SectionCode", "FinancialYear");
+
+                    b.ToTable("TdsEntries", "acc");
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.TdsSection", b =>
+                {
+                    b.Property<long>("TdsSectionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TdsSectionId"));
+
+                    b.Property<decimal?>("AggregateThreshold")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NatureOfPayment")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("RateIndividual")
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<decimal>("RateNoPan")
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<decimal>("RateOther")
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<string>("SectionCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal?>("SingleThreshold")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ThresholdBasis")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("TdsSectionId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "SectionCode", "EffectiveFrom")
+                        .IsUnique();
+
+                    b.ToTable("TdsSections", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_tdssections_period", "\"EffectiveTo\" IS NULL OR \"EffectiveTo\" >= \"EffectiveFrom\"");
                         });
                 });
 
@@ -3627,6 +4038,15 @@ namespace Accounting.Repository.Migrations.Tenant
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Form26asLine", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.Form26asImport", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("Form26asImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.Journal", b =>
                 {
                     b.HasOne("Accounting.Entity.TableEntities.Journal", null)
@@ -3813,6 +4233,14 @@ namespace Accounting.Repository.Migrations.Tenant
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.TdsEntry", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.SpendMoney", null)
+                        .WithMany()
+                        .HasForeignKey("ChallanSpendMoneyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.TimeEntry", b =>
                 {
                     b.HasOne("Accounting.Entity.TableEntities.Project", null)
@@ -3841,6 +4269,11 @@ namespace Accounting.Repository.Migrations.Tenant
                         .HasForeignKey("ToBankAccountId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Form26asImport", b =>
+                {
+                    b.Navigation("Lines");
                 });
 #pragma warning restore 612, 618
         }

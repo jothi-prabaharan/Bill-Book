@@ -238,6 +238,14 @@ public static class MoneyDocumentMapping
         PostedAt = header.PostedAt,
         MappingTransactionTypeCode = header.MappingTransactionTypeCode,
         MappingTransactionId = header.MappingTransactionId,
+        TdsAmount = header.TdsAmount,
+        TdsSectionCode = header.TdsSectionCode,
+        DeductorTan = header.DeductorTan,
+        IsTdsChallan = header.IsTdsChallan,
+        ChallanNo = header.ChallanNo,
+        BsrCode = header.BsrCode,
+        ChallanSectionCode = header.ChallanSectionCode,
+        ChallanMonth = header.ChallanMonth,
         Lines = lines,
     };
 }

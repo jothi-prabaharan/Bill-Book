@@ -1,6 +1,7 @@
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
+using Accounting.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Kernel.Tenancy;
@@ -46,13 +47,15 @@ public sealed class LedgerPostingRepository
     private readonly AccountingDbContext _db;
     private readonly TenantContext _tenant;
     private readonly IBaseCurrencyProvider _baseCurrency;
+    private readonly TdsRepository? _tds;
 
     public LedgerPostingRepository(
-        AccountingDbContext db, TenantContext tenant, IBaseCurrencyProvider baseCurrency)
+        AccountingDbContext db, TenantContext tenant, IBaseCurrencyProvider baseCurrency, TdsRepository? tds = null)
     {
         _db = db;
         _tenant = tenant;
         _baseCurrency = baseCurrency;
+        _tds = tds;
     }
 
     public async Task<PostLedgerResult> PostAsync(PostLedgerRequest request, CancellationToken ct)
@@ -311,6 +314,18 @@ public sealed class LedgerPostingRepository
         // three are one act. Only open a transaction when nothing else has.
         await using ITransactionScope own = await _db.Database.BeginScopeAsync(ct);
 
+        // TDS paid over on a challan freezes the document it was deducted on
+        // (TK-117): a withdrawal or a re-pricing would leave the challan paying
+        // for a deduction the books no longer hold.
+        bool touchesTds = request.Tds is not null || request.Legs.Count == 0;
+        if (touchesTds && _tds is not null && await _tds.IsDepositedAsync(typeCode, request.TransactionId, ct))
+        {
+            return new PostLedgerResult(
+                PostLedgerOutcome.TdsDeposited, 0, 0,
+                "The TDS deducted on this document has been paid to the government on a challan. "
+                    + "Void the challan first.");
+        }
+
         if (provisional.Count > 0)
         {
             // A provisional figure never overwrites one already written: the
@@ -362,6 +377,20 @@ public sealed class LedgerPostingRepository
 
         _db.JournalLedger.AddRange(rows);
         await _db.SaveChangesAsync(ct);
+
+        // The TDS register row rides on the posting (TK-117): written with the
+        // legs, or removed with them.
+        if (_tds is not null && request.ContactId is long tdsContact)
+        {
+            if (request.Tds is { Applies: true } quote)
+            {
+                await _tds.WriteDeductionAsync(typeCode, request.TransactionId, request.DocumentNo, request.LedgerDate, tdsContact, quote, ct);
+            }
+            else if (request.Tds is not null || rows.Count == 0)
+            {
+                await _tds.RemoveAsync(typeCode, request.TransactionId, ct);
+            }
+        }
 
         // The balance trigger is deferred, so it fires at commit rather than
         // on the first row — which is the only way a multi-leg posting can

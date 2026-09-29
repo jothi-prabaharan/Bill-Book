@@ -117,6 +117,14 @@ builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// TDS on a bill (TK-117): Accounting owns the sections and the register, and
+// says what a bill owes before it posts.
+builder.Services.AddHttpClient<Shared.Kernel.Tax.ITdsQuoteClient, Shared.Kernel.Tax.HttpTdsQuoteClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // The fixed asset register. A posted bill's capital lines become register rows
 // there, and Accounting reclassifies their cost to each category's account.
 builder.Services.AddHttpClient<IFixedAssetClient, FixedAssetClient>(client =>

@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   ApprovalPanelComponent,
   BbSelectOption,
@@ -76,6 +77,7 @@ export class BillFormPage {
   protected readonly customValues = signal<CustomFieldValues>({});
 
   private readonly bills = inject(BillService);
+  protected readonly formats = inject(FormatSettingsService);
   private readonly receipts = inject(GoodsReceiptService);
   private readonly lookups = inject(PurchaseLookupService);
   private readonly route = inject(ActivatedRoute);
@@ -101,6 +103,9 @@ export class BillFormPage {
 
   /** The vendor charged no GST and this business pays it (TK-115, D-30). */
   protected readonly isReverseCharge = signal(false);
+
+  /** TDS deducted at post (TK-117), shown once the bill is posted. */
+  protected readonly tds = signal<{ section: string | null; base: number; amount: number; note: string | null } | null>(null);
 
   /** Input tax credit choices for a line (TK-115, D-31). */
   protected readonly eligibilityOptions: BbSelectOption<ItcEligibility>[] = [
@@ -227,6 +232,11 @@ export class BillFormPage {
       this.customValues.set(view.customFields ?? {});
       this.isInterState.set(view.isInterState);
       this.isReverseCharge.set(view.isReverseCharge ?? false);
+      this.tds.set(
+        view.tdsAmount || view.tdsSectionCode
+          ? { section: view.tdsSectionCode ?? null, base: view.tdsBase ?? 0, amount: view.tdsAmount ?? 0, note: view.tdsNote ?? null }
+          : null,
+      );
 
       this.receiptLineIds = view.lines.map((l) => l.goodsReceiptDetailId ?? null);
 
