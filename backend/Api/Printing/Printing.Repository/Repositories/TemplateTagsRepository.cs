@@ -1,22 +1,22 @@
 using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// The merge tags in a whole template. The text-level reading — the pattern,
 /// one segment's tags, a tag's list group — is <see cref="MergeTags"/> in the
 /// shared contract; these read a stored template, which only Printing holds.
 /// </summary>
-public static class TemplateTags
+public static class TemplateTagsRepository
 {
     /// <summary>Every distinct tag across all five segments.</summary>
     public static IReadOnlyList<string> Extract(PrintContent content)
     {
         ArgumentNullException.ThrowIfNull(content);
 
-        return [.. PrintSegments.InOrder
-            .SelectMany(segment => MergeTags.Extract(PrintSegments.Html(content, segment)))
+        return [.. PrintSegmentsRepository.InOrder
+            .SelectMany(segment => MergeTags.Extract(PrintSegmentsRepository.Html(content, segment)))
             .Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 

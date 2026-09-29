@@ -1,7 +1,7 @@
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Paper dimensions and the one millimetre-to-pixel constant.
@@ -13,7 +13,7 @@ namespace Printing.Api.Rendering;
 /// of proportion to the page around them once already — the constant and the
 /// CSS unit disagree the moment anything is scaled.
 /// </summary>
-public static class PrintGeometry
+public static class PrintGeometryRepository
 {
     /// <summary>
     /// Millimetres to CSS pixels. 96 dpi, rounded, as the specification names it.

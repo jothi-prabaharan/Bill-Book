@@ -1,4 +1,5 @@
-using Printing.Api.Rendering;
+using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 using Printing.Repository.SeedData;
@@ -42,7 +43,7 @@ public class DefaultLayoutTests
 
         // A generated template that shipped with an unresolvable tag would print
         // a blank space on a real document and refuse its own activation.
-        Assert.Empty(TemplateTags.Unknown(content, code));
+        Assert.Empty(TemplateTagsRepository.Unknown(content, code));
     }
 
     [Theory]
@@ -52,7 +53,7 @@ public class DefaultLayoutTests
         PrintContent generated = DefaultLayoutGenerator.Build(DocumentTypeCatalog.Find(code)!);
         PrintContent sanitized = DefaultLayoutGenerator.Build(DocumentTypeCatalog.Find(code)!);
 
-        IReadOnlyList<SegmentViolation> violations = new SegmentSanitizer().SanitizeContent(sanitized);
+        IReadOnlyList<SegmentViolation> violations = new SegmentSanitizerRepository().SanitizeContent(sanitized);
 
         // Nothing removed, and nothing reformatted either: the generator writes
         // CSS in the canonical spacing AngleSharp re-serialises to. If the two
@@ -60,11 +61,11 @@ public class DefaultLayoutTests
         // the first time it is saved.
         Assert.Empty(violations);
 
-        foreach (PrintSegment segment in PrintSegments.InOrder)
+        foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
             Assert.Equal(
-                PrintSegments.Html(generated, segment),
-                PrintSegments.Html(sanitized, segment));
+                PrintSegmentsRepository.Html(generated, segment),
+                PrintSegmentsRepository.Html(sanitized, segment));
         }
     }
 
@@ -74,11 +75,11 @@ public class DefaultLayoutTests
     {
         PrintContent content = DefaultLayoutGenerator.Build(DocumentTypeCatalog.Find(code)!);
 
-        foreach (PrintSegment segment in PrintSegments.InOrder)
+        foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
             Assert.False(
-                string.IsNullOrWhiteSpace(PrintSegments.Html(content, segment)),
-                $"{code} generated an empty {PrintSegments.Code(segment)} segment.");
+                string.IsNullOrWhiteSpace(PrintSegmentsRepository.Html(content, segment)),
+                $"{code} generated an empty {PrintSegmentsRepository.Code(segment)} segment.");
         }
     }
 
@@ -113,7 +114,7 @@ public class DefaultLayoutTests
         string html = "<div style=\"font-weight: bold\" onclick=\"x()\">"
             + DefaultLayoutGenerator.Placeholder("Document.No") + "</div>";
 
-        string clean = new SegmentSanitizer().Sanitize(html);
+        string clean = new SegmentSanitizerRepository().Sanitize(html);
 
         Assert.Equal(["Document.No"], MergeTags.Extract(clean));
     }

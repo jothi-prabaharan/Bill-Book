@@ -1,6 +1,6 @@
 using Shared.Kernel.Printing;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Plausible data for previewing a template with no document behind it.
@@ -11,7 +11,7 @@ namespace Printing.Api.Rendering;
 /// decimals as decimals, dates as dates — so the preview exercises the same
 /// formatting path a printed document does.
 /// </summary>
-public static class SamplePayload
+public static class SamplePayloadRepository
 {
     private const int SampleRowCount = 3;
 

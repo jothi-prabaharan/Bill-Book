@@ -8,7 +8,7 @@ using Printing.Entity.Enums;
 using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>Everything one render needs. Nothing here touches a database.</summary>
 public sealed class PrintRenderRequest
@@ -23,7 +23,7 @@ public sealed class PrintRenderRequest
 
     public PrintFormatContext Format { get; init; } = PrintFormatContext.Default;
 
-    public PrintMetrics Metrics { get; init; } = PrintMetrics.Default;
+    public PrintMetricsRepository Metrics { get; init; } = PrintMetricsRepository.Default;
 
     /// <summary>Hosts an image placeholder may resolve to. Passed to the sanitiser.</summary>
     public IReadOnlyList<string> AllowedImageHosts { get; init; } = [];
@@ -69,19 +69,19 @@ public sealed class PrintRenderResult
 /// the roll's width, with no repeated bands, because there are no page edges to
 /// repeat anything at.
 /// </summary>
-public sealed class PrintRenderer
+public sealed class PrintRendererRepository
 {
-    private readonly ILogger<PrintRenderer>? _log;
+    private readonly ILogger<PrintRendererRepository>? _log;
 
-    public PrintRenderer(ILogger<PrintRenderer>? log = null) => _log = log;
+    public PrintRendererRepository(ILogger<PrintRendererRepository>? log = null) => _log = log;
 
     public PrintRenderResult Render(PrintRenderRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var sanitizer = new SegmentSanitizer(request.AllowedImageHosts);
+        var sanitizer = new SegmentSanitizerRepository(request.AllowedImageHosts);
         PrintSettings settings = request.Settings;
-        PrintMetrics metrics = request.Metrics;
+        PrintMetricsRepository metrics = request.Metrics;
 
         var unknown = new List<string>();
         Dictionary<PrintSegment, string> resolved = [];
@@ -90,10 +90,10 @@ public sealed class PrintRenderer
         // holds, the way a draft prints PROFORMA (TK-92).
         PrintContent content = EInvoiceStrip.Ensure(request.Content, request.Payload);
 
-        foreach (PrintSegment segment in PrintSegments.InOrder)
+        foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
-            SubstitutionResult result = PrintSubstitution.Resolve(
-                PrintSegments.Html(content, segment),
+            SubstitutionResult result = PrintSubstitutionRepository.Resolve(
+                PrintSegmentsRepository.Html(content, segment),
                 request.DocumentTypeCode,
                 request.Payload,
                 request.Format,
@@ -111,7 +111,7 @@ public sealed class PrintRenderer
                 tag);
         }
 
-        (double paperWidthMm, double paperHeightMm) = PrintGeometry.Paper(settings);
+        (double paperWidthMm, double paperHeightMm) = PrintGeometryRepository.Paper(settings);
         double contentWidthMm = paperWidthMm - settings.MarginLeftMm - settings.MarginRightMm;
 
         (string html, int pageCount) = settings.PrinterType == PrinterType.Thermal
@@ -136,9 +136,9 @@ public sealed class PrintRenderer
     {
         var body = new StringBuilder();
 
-        foreach (PrintSegment segment in PrintSegments.InOrder)
+        foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
-            SegmentMargin margin = PrintSegments.Margin(settings.SegMargins, segment);
+            SegmentMargin margin = PrintSegmentsRepository.Margin(settings.SegMargins, segment);
             body.Append(SegmentDiv(segment, resolved[segment], margin));
         }
 
@@ -157,7 +157,7 @@ public sealed class PrintRenderer
     private static (string Html, int PageCount) RenderPaged(
         Dictionary<PrintSegment, string> resolved,
         PrintSettings settings,
-        PrintMetrics metrics,
+        PrintMetricsRepository metrics,
         double paperWidthMm,
         double paperHeightMm,
         double contentWidthMm,
@@ -375,7 +375,7 @@ public sealed class PrintRenderer
 
     private static string Band(string cssClass, string html, PrintSegment segment, PrintSettings settings)
     {
-        SegmentMargin margin = PrintSegments.Margin(settings.SegMargins, segment);
+        SegmentMargin margin = PrintSegmentsRepository.Margin(settings.SegMargins, segment);
         return string.Format(
             CultureInfo.InvariantCulture,
             "<div class=\"pt-band {0}\" style=\"margin-top:{1};margin-bottom:{2}\">{3}</div>",
@@ -389,15 +389,15 @@ public sealed class PrintRenderer
         string.Format(
             CultureInfo.InvariantCulture,
             "<div class=\"pt-seg pt-{0}\" style=\"margin-top:{1};margin-bottom:{2}\">{3}</div>",
-            PrintSegments.Code(segment),
+            PrintSegmentsRepository.Code(segment),
             Px(margin.AboveMm),
             Px(margin.BelowMm),
             html);
 
     private static double BandHeight(
-        string html, PrintSegment segment, PrintSettings settings, PrintMetrics metrics, double contentWidthMm)
+        string html, PrintSegment segment, PrintSettings settings, PrintMetricsRepository metrics, double contentWidthMm)
     {
-        SegmentMargin margin = PrintSegments.Margin(settings.SegMargins, segment);
+        SegmentMargin margin = PrintSegmentsRepository.Margin(settings.SegMargins, segment);
         return Chunks(html, segment, settings, metrics, contentWidthMm).Sum(c => c.HeightMm)
             + margin.AboveMm + margin.BelowMm;
     }
@@ -408,7 +408,7 @@ public sealed class PrintRenderer
     /// top-level block.
     /// </summary>
     private static List<Chunk> Chunks(
-        string html, PrintSegment segment, PrintSettings settings, PrintMetrics metrics, double contentWidthMm)
+        string html, PrintSegment segment, PrintSettings settings, PrintMetricsRepository metrics, double contentWidthMm)
     {
         var chunks = new List<Chunk>();
 
@@ -417,7 +417,7 @@ public sealed class PrintRenderer
             return chunks;
         }
 
-        SegmentMargin margin = PrintSegments.Margin(settings.SegMargins, segment);
+        SegmentMargin margin = PrintSegmentsRepository.Margin(settings.SegMargins, segment);
         IHtmlDocument document = new HtmlParser().ParseDocument($"<body>{html}</body>");
         IElement? body = document.Body;
 
@@ -426,7 +426,7 @@ public sealed class PrintRenderer
             return chunks;
         }
 
-        string code = PrintSegments.Code(segment);
+        string code = PrintSegmentsRepository.Code(segment);
         int tableIndex = 0;
 
         foreach (IElement element in body.Children)
@@ -489,7 +489,7 @@ public sealed class PrintRenderer
         string.Concat(element.Attributes.Select(a => $" {a.Name}=\"{a.Value}\""));
 
     private static string Px(double millimetres) =>
-        string.Create(CultureInfo.InvariantCulture, $"{PrintGeometry.ToPx(millimetres):0.##}px");
+        string.Create(CultureInfo.InvariantCulture, $"{PrintGeometryRepository.ToPx(millimetres):0.##}px");
 
     /// <summary>The page's watermark, escaped, or nothing.</summary>
     private static string WatermarkDiv(string? watermark) =>

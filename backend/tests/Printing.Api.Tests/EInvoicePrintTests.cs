@@ -1,4 +1,5 @@
-using Printing.Api.Rendering;
+using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 using Xunit;
@@ -13,7 +14,7 @@ public sealed class EInvoicePrintTests
 {
     private const string Irn = "a3f1c2d4e5b6a7980c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b";
 
-    private static readonly PrintRenderer Renderer = new();
+    private static readonly PrintRendererRepository Renderer = new();
 
     private static PrintPayload Payload(bool registered)
     {
@@ -79,7 +80,7 @@ public sealed class EInvoicePrintTests
     [Fact]
     public void The_qr_image_is_a_real_png()
     {
-        string uri = QrImages.DataUri("header.payload.signature");
+        string uri = QrImagesRepository.DataUri("header.payload.signature");
         byte[] png = Convert.FromBase64String(uri["data:image/png;base64,".Length..]);
 
         Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, png[..4]);

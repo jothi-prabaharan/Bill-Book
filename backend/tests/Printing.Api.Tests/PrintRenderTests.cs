@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Printing.Api.Rendering;
 using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Models;
 using Printing.Repository;
 using Shared.Kernel.Printing;
@@ -26,7 +26,7 @@ public sealed class PrintRenderTests
 
     private static CancellationToken Ct => CancellationToken.None;
 
-    private static PrintTemplateService Service(PrintingDbContext db) => new(db, new PrintRenderer());
+    private static PrintTemplateRepository Service(PrintingDbContext db) => new(db, new PrintRendererRepository());
 
     /// <summary>A payload as a caller would send it: serialised, then bound.</summary>
     private static RenderPayload OverTheWire(PrintPayload payload) =>
@@ -46,7 +46,7 @@ public sealed class PrintRenderTests
         PrintTemplateResult<RenderPrintResponse> result = await Service(db).RenderAsync(new RenderPrintRequest
         {
             DocumentTypeCode = "INV",
-            Payload = OverTheWire(SamplePayload.For("INV")),
+            Payload = OverTheWire(SamplePayloadRepository.For("INV")),
         }, Ct);
 
         Assert.Equal(PrintTemplateOutcome.Ok, result.Outcome);
@@ -65,7 +65,7 @@ public sealed class PrintRenderTests
 
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
 
-        PrintPayload payload = SamplePayload.For("INV");
+        PrintPayload payload = SamplePayloadRepository.For("INV");
         payload.Singles["Totals.GrandTotal"] = 1234567.5m;
 
         PrintTemplateResult<RenderPrintResponse> result = await Service(db).RenderAsync(new RenderPrintRequest
@@ -85,7 +85,7 @@ public sealed class PrintRenderTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(
             new CreatePrintTemplateRequest { DocumentTypeCode = "INV", TemplateName = "Branch layout" }, Ct)).Value!;
@@ -101,7 +101,7 @@ public sealed class PrintRenderTests
         PrintTemplateResult<RenderPrintResponse> result = await service.RenderAsync(new RenderPrintRequest
         {
             DocumentTypeCode = "INV",
-            Payload = OverTheWire(SamplePayload.For("INV")),
+            Payload = OverTheWire(SamplePayloadRepository.For("INV")),
         }, Ct);
 
         Assert.Equal(PrintTemplateSource.BranchDefault, result.Value!.Source);
@@ -130,7 +130,7 @@ public sealed class PrintRenderTests
         {
             DocumentTypeCode = "INV",
             PrintTemplateId = foreignId,
-            Payload = OverTheWire(SamplePayload.For("INV")),
+            Payload = OverTheWire(SamplePayloadRepository.For("INV")),
         }, Ct);
 
         // The query filter hides the other branch's row, so the chain falls
@@ -149,7 +149,7 @@ public sealed class PrintRenderTests
         PrintTemplateResult<RenderPrintResponse> result = await Service(db).RenderAsync(new RenderPrintRequest
         {
             DocumentTypeCode = "INV",
-            Payload = OverTheWire(SamplePayload.For("INV")),
+            Payload = OverTheWire(SamplePayloadRepository.For("INV")),
             Watermark = "PROFORMA",
         }, Ct);
 
@@ -192,28 +192,28 @@ public sealed class PrintPayloadReaderTests
     [Fact]
     public void A_number_becomes_a_decimal_not_a_double()
     {
-        Assert.Equal(0.1m, PrintPayloadReader.Value(Json("0.1")));
-        Assert.IsType<decimal>(PrintPayloadReader.Value(Json("1234.50")));
+        Assert.Equal(0.1m, PrintPayloadReaderRepository.Value(Json("0.1")));
+        Assert.IsType<decimal>(PrintPayloadReaderRepository.Value(Json("1234.50")));
     }
 
     [Fact]
     public void A_string_stays_a_string_and_null_stays_null()
     {
-        Assert.Equal("INV-0001", PrintPayloadReader.Value(Json("\"INV-0001\"")));
-        Assert.Null(PrintPayloadReader.Value(Json("null")));
+        Assert.Equal("INV-0001", PrintPayloadReaderRepository.Value(Json("\"INV-0001\"")));
+        Assert.Null(PrintPayloadReaderRepository.Value(Json("null")));
     }
 
     [Fact]
     public void A_boolean_becomes_a_boolean()
     {
-        Assert.Equal(true, PrintPayloadReader.Value(Json("true")));
-        Assert.Equal(false, PrintPayloadReader.Value(Json("false")));
+        Assert.Equal(true, PrintPayloadReaderRepository.Value(Json("true")));
+        Assert.Equal(false, PrintPayloadReaderRepository.Value(Json("false")));
     }
 
     [Fact]
     public void An_object_is_kept_as_its_raw_text_rather_than_dropped()
     {
-        Assert.Equal("{\"a\":1}", PrintPayloadReader.Value(Json("{\"a\":1}")));
+        Assert.Equal("{\"a\":1}", PrintPayloadReaderRepository.Value(Json("{\"a\":1}")));
     }
 
     [Fact]
@@ -228,7 +228,7 @@ public sealed class PrintPayloadReaderTests
             },
         };
 
-        PrintPayload payload = PrintPayloadReader.Read(wire);
+        PrintPayload payload = PrintPayloadReaderRepository.Read(wire);
 
         Assert.Equal("INV-7", payload.Singles["Document.No"]);
         Assert.Equal(45m, payload.Rows("Item").Single()["Item.Rate"]);

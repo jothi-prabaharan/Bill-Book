@@ -3,7 +3,7 @@ using Printing.Entity.TableEntities;
 using Printing.Repository;
 using Printing.Repository.SeedData;
 
-namespace Printing.Api.Services;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Writes a branch's starting print templates into <c>prt</c>.
@@ -14,11 +14,11 @@ namespace Printing.Api.Services;
 /// branch that existed before Printing took templates over from Master gets
 /// its set (TK-81: re-seeded rather than copied).
 /// </summary>
-public sealed class PrintTemplateSeeder
+public sealed class PrintTemplateSeederRepository
 {
     private readonly PrintingDbContext _db;
 
-    public PrintTemplateSeeder(PrintingDbContext db) => _db = db;
+    public PrintTemplateSeederRepository(PrintingDbContext db) => _db = db;
 
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {

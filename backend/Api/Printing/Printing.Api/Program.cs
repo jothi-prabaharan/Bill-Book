@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Printing.Api.Rendering;
 using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Repository;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Persistence;
@@ -71,9 +71,9 @@ builder.Services.AddAuthorization(options =>
 // The template API and the render endpoint. The renderer holds no state and
 // its sanitiser is thread-safe, so one instance serves every request — as it
 // did in Master before templates moved here.
-builder.Services.AddScoped<PrintTemplateService>();
-builder.Services.AddScoped<PrintTemplateSeeder>();
-builder.Services.AddSingleton<PrintRenderer>();
+builder.Services.AddScoped<PrintTemplateRepository>();
+builder.Services.AddScoped<PrintTemplateSeederRepository>();
+builder.Services.AddSingleton<PrintRendererRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

@@ -2,7 +2,7 @@ using Ganss.Xss;
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>What the sanitiser took out of one segment, and why it counts as a refusal.</summary>
 public sealed class SegmentViolation
@@ -50,7 +50,7 @@ public sealed class SegmentSanitizeResult
 /// legitimate save in the product. <see cref="Inspect"/> reports what the
 /// sanitiser actually took out, which is the thing worth refusing over.
 /// </summary>
-public sealed class SegmentSanitizer
+public sealed class SegmentSanitizerRepository
 {
     /// <summary>
     /// The markup the editor's own toolbar can produce, and nothing else.
@@ -92,7 +92,7 @@ public sealed class SegmentSanitizer
     /// Hosts an <c>img src</c> may point at. Empty means relative URLs only,
     /// which is the safe default: the product serves its own uploads.
     /// </param>
-    public SegmentSanitizer(IEnumerable<string>? allowedImageHosts = null) =>
+    public SegmentSanitizerRepository(IEnumerable<string>? allowedImageHosts = null) =>
         _allowedImageHosts = new HashSet<string>(allowedImageHosts ?? [], StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Clean markup only. Use <see cref="Inspect"/> when the caller needs to refuse.</summary>
@@ -133,17 +133,17 @@ public sealed class SegmentSanitizer
 
         var violations = new List<SegmentViolation>();
 
-        foreach (PrintSegment segment in PrintSegments.InOrder)
+        foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
-            SegmentSanitizeResult result = Inspect(PrintSegments.Html(content, segment));
-            PrintSegments.SetHtml(content, segment, result.Html);
+            SegmentSanitizeResult result = Inspect(PrintSegmentsRepository.Html(content, segment));
+            PrintSegmentsRepository.SetHtml(content, segment, result.Html);
 
             foreach (SegmentViolation violation in result.Violations)
             {
                 violations.Add(new SegmentViolation
                 {
                     Kind = violation.Kind,
-                    Detail = $"{PrintSegments.Code(segment)}: {violation.Detail}",
+                    Detail = $"{PrintSegmentsRepository.Code(segment)}: {violation.Detail}",
                 });
             }
         }

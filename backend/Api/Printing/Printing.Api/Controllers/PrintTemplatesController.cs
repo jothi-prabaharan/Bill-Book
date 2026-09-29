@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Printing;
@@ -33,9 +34,9 @@ namespace Printing.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class PrintTemplatesController : ControllerBase
 {
-    private readonly PrintTemplateService _templates;
+    private readonly PrintTemplateRepository _templates;
 
-    public PrintTemplatesController(PrintTemplateService templates) => _templates = templates;
+    public PrintTemplatesController(PrintTemplateRepository templates) => _templates = templates;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] string? docType, CancellationToken ct) =>

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Printing.Api.Rendering;
 using Printing.Entity.Models;
 using Printing.Entity.TableEntities;
 using Printing.Repository;
@@ -7,7 +6,7 @@ using Printing.Repository.SeedData;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Printing;
 
-namespace Printing.Api.Services;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// The print template master, and the render endpoint's resolution of which
@@ -16,16 +15,16 @@ namespace Printing.Api.Services;
 /// them and none can forget to.
 ///
 /// <para>
-/// Ported from Master's <c>PrintTemplateService</c> (TK-80); Master's was
+/// Ported from Master's <c>PrintTemplateRepository</c> (TK-80); Master's was
 /// deleted with <c>con.PrintTemplates</c> in TK-81, so this is the only one.
 /// </para>
 /// </summary>
-public sealed class PrintTemplateService
+public sealed class PrintTemplateRepository
 {
     private readonly PrintingDbContext _db;
-    private readonly PrintRenderer _renderer;
+    private readonly PrintRendererRepository _renderer;
 
-    public PrintTemplateService(PrintingDbContext db, PrintRenderer renderer)
+    public PrintTemplateRepository(PrintingDbContext db, PrintRendererRepository renderer)
     {
         _db = db;
         _renderer = renderer;
@@ -299,7 +298,7 @@ public sealed class PrintTemplateService
             Settings = template.Settings,
             Content = template.Content,
             DocumentTypeCode = template.DocumentTypeCode,
-            Payload = SamplePayload.For(template.DocumentTypeCode),
+            Payload = SamplePayloadRepository.For(template.DocumentTypeCode),
         });
 
         return PrintTemplateResult<PrintPreviewResponse>.Ok(new PrintPreviewResponse
@@ -335,7 +334,7 @@ public sealed class PrintTemplateService
             Settings = layout.Settings,
             Content = layout.Content,
             DocumentTypeCode = layout.DocumentTypeCode,
-            Payload = PrintPayloadReader.Read(request.Payload),
+            Payload = PrintPayloadReaderRepository.Read(request.Payload),
             Format = new PrintFormatContext { CurrencySymbol = request.CurrencySymbol ?? string.Empty },
             Watermark = request.Watermark,
         });
@@ -408,9 +407,9 @@ public sealed class PrintTemplateService
     /// <summary>Normalises, validates and sanitises in that order. Null means it may be saved.</summary>
     private static PrintTemplateResult<PrintTemplateDetail>? Prepare(PrintSettings settings, PrintContent content)
     {
-        PrintSettingsValidator.Normalize(settings);
+        PrintSettingsValidatorRepository.Normalize(settings);
 
-        IReadOnlyList<GeometryFailure> geometry = PrintSettingsValidator.Validate(settings);
+        IReadOnlyList<GeometryFailure> geometry = PrintSettingsValidatorRepository.Validate(settings);
         if (geometry.Count > 0)
         {
             return PrintTemplateResult<PrintTemplateDetail>.Fail(
@@ -418,7 +417,7 @@ public sealed class PrintTemplateService
                 [.. geometry.Select(f => $"{f.Field}: {f.Message}")]);
         }
 
-        IReadOnlyList<SegmentViolation> violations = new SegmentSanitizer().SanitizeContent(content);
+        IReadOnlyList<SegmentViolation> violations = new SegmentSanitizerRepository().SanitizeContent(content);
         if (violations.Count > 0)
         {
             return PrintTemplateResult<PrintTemplateDetail>.Fail(
@@ -452,7 +451,7 @@ public sealed class PrintTemplateService
         TemplateVersion = template.TemplateVersion,
         SeedVersion = template.SeedVersion,
         CanResetToLatest = template.SeedVersion > 0 && template.SeedVersion < DefaultLayoutGenerator.SeedVersion,
-        UnknownTags = TemplateTags.Unknown(template.Content, template.DocumentTypeCode.Trim()),
+        UnknownTags = TemplateTagsRepository.Unknown(template.Content, template.DocumentTypeCode.Trim()),
         UpdatedAt = template.ModifiedAt ?? template.CreatedAt,
     };
 }

@@ -1,4 +1,5 @@
-using Printing.Api.Rendering;
+using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 using Shared.Kernel.Printing;
@@ -26,7 +27,7 @@ public class PrintSettingsTests
             FixedFooterPref = SegmentPosition.Inline,
         };
 
-        PrintSettingsValidator.Normalize(settings);
+        PrintSettingsValidatorRepository.Normalize(settings);
 
         Assert.Equal(SegmentPosition.Bottom, settings.FixedFooterPos);
     }
@@ -40,7 +41,7 @@ public class PrintSettingsTests
             FixedFooterPref = SegmentPosition.Inline,
         };
 
-        PrintSettingsValidator.Normalize(settings);
+        PrintSettingsValidatorRepository.Normalize(settings);
 
         // Forced, but not forgotten — otherwise pinning the footer would
         // silently destroy a setting the user had made.
@@ -57,11 +58,11 @@ public class PrintSettingsTests
             FixedFooterPref = SegmentPosition.Inline,
         };
 
-        PrintSettingsValidator.Normalize(settings);
+        PrintSettingsValidatorRepository.Normalize(settings);
         Assert.Equal(SegmentPosition.Bottom, settings.FixedFooterPos);
 
         settings.FooterPos = SegmentPosition.Inline;
-        PrintSettingsValidator.Normalize(settings);
+        PrintSettingsValidatorRepository.Normalize(settings);
 
         Assert.Equal(SegmentPosition.Inline, settings.FixedFooterPos);
     }
@@ -75,7 +76,7 @@ public class PrintSettingsTests
             FixedFooterPref = SegmentPosition.Bottom,
         };
 
-        PrintSettingsValidator.Normalize(settings);
+        PrintSettingsValidatorRepository.Normalize(settings);
 
         // The rule constrains only the pinned-footer case. Pinning the fixed
         // footer alone keeps the order, so it is allowed.
@@ -90,7 +91,7 @@ public class PrintSettingsTests
             foreach (SegmentPosition preference in Enum.GetValues<SegmentPosition>())
             {
                 var settings = new PrintSettings { FooterPos = footer, FixedFooterPref = preference };
-                PrintSettingsValidator.Normalize(settings);
+                PrintSettingsValidatorRepository.Normalize(settings);
 
                 bool inverted = settings.FooterPos == SegmentPosition.Bottom
                     && settings.FixedFooterPos == SegmentPosition.Inline;
@@ -108,7 +109,7 @@ public class PrintSettingsTests
                 PrintSegment.FixedHeader, PrintSegment.Header, PrintSegment.Details,
                 PrintSegment.Footer, PrintSegment.FixedFooter,
             ],
-            PrintSegments.InOrder.OrderBy(s => (int)s).ToArray());
+            PrintSegmentsRepository.InOrder.OrderBy(s => (int)s).ToArray());
     }
 
     [Fact]
@@ -117,7 +118,7 @@ public class PrintSettingsTests
         var settings = new PrintSettings { MarginTopMm = -1 };
 
         Assert.Contains(
-            PrintSettingsValidator.Validate(settings),
+            PrintSettingsValidatorRepository.Validate(settings),
             f => f.Field == nameof(PrintSettings.MarginTopMm));
     }
 
@@ -129,8 +130,8 @@ public class PrintSettingsTests
         var wide = new PrintSettings { PaperSize = PaperSize.A4, MarginLeftMm = 80, MarginRightMm = 80 };
         var narrow = new PrintSettings { PaperSize = PaperSize.A5, MarginLeftMm = 80, MarginRightMm = 80 };
 
-        Assert.DoesNotContain(PrintSettingsValidator.Validate(wide), f => f.Field == nameof(PrintSettings.MarginLeftMm));
-        Assert.Contains(PrintSettingsValidator.Validate(narrow), f => f.Field == nameof(PrintSettings.MarginLeftMm));
+        Assert.DoesNotContain(PrintSettingsValidatorRepository.Validate(wide), f => f.Field == nameof(PrintSettings.MarginLeftMm));
+        Assert.Contains(PrintSettingsValidatorRepository.Validate(narrow), f => f.Field == nameof(PrintSettings.MarginLeftMm));
     }
 
     [Fact]
@@ -144,7 +145,7 @@ public class PrintSettingsTests
             MarginBottomMm = 500,
         };
 
-        Assert.Empty(PrintSettingsValidator.Validate(settings));
+        Assert.Empty(PrintSettingsValidatorRepository.Validate(settings));
     }
 
     [Fact]
@@ -153,7 +154,7 @@ public class PrintSettingsTests
         var settings = new PrintSettings { PrinterType = PrinterType.Thermal, RollWidthMm = 0 };
 
         Assert.Contains(
-            PrintSettingsValidator.Validate(settings),
+            PrintSettingsValidatorRepository.Validate(settings),
             f => f.Field == nameof(PrintSettings.RollWidthMm));
     }
 
@@ -163,9 +164,9 @@ public class PrintSettingsTests
         // A roll width that would be refused on a thermal printer is simply
         // unread on a laser one, and vice versa for paper size.
         var laser = new PrintSettings { PrinterType = PrinterType.Laser, RollWidthMm = 0 };
-        Assert.Empty(PrintSettingsValidator.Validate(laser));
+        Assert.Empty(PrintSettingsValidatorRepository.Validate(laser));
 
         var thermal = new PrintSettings { PrinterType = PrinterType.Thermal, RollWidthMm = 58, PaperSize = PaperSize.Legal };
-        Assert.Equal(58d, PrintGeometry.Paper(thermal).WidthMm);
+        Assert.Equal(58d, PrintGeometryRepository.Paper(thermal).WidthMm);
     }
 }

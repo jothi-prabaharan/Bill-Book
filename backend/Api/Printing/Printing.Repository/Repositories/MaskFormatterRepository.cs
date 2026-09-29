@@ -1,7 +1,7 @@
 using System.Globalization;
 using Shared.Kernel.Printing;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Applies the catalogue's masks — <c>##,##,##0.00</c>, <c>##,##,##0.0##</c>,
@@ -14,7 +14,7 @@ namespace Printing.Api.Rendering;
 /// <c>###,###,##0</c> the Western 3-3-3, which is exactly how the frontend
 /// tells them apart.
 /// </summary>
-public static class MaskFormatter
+public static class MaskFormatterRepository
 {
     public static string Format(object? value, PlaceholderDefinition placeholder, PrintFormatContext context)
     {

@@ -2,14 +2,14 @@ using System.Text.Json;
 using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 
-namespace Printing.Api.Services;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Turns a payload off the wire into the <see cref="PrintPayload"/> the renderer
 /// reads.
 ///
 /// <b>Every value becomes a CLR value, because the formatter matches on type.</b>
-/// <c>MaskFormatter</c> formats a <c>decimal</c> against the placeholder's mask
+/// <c>MaskFormatterRepository</c> formats a <c>decimal</c> against the placeholder's mask
 /// and a <c>string</c> as itself; a <see cref="JsonElement"/> is neither, so an
 /// amount would print as its raw digits with no grouping and an image URL would
 /// print as nothing. Numbers become decimals — never doubles, which would put
@@ -20,7 +20,7 @@ namespace Printing.Api.Services;
 /// them, so a payload built in camelCase by a JSON serializer resolves the same
 /// tags as one built by hand.
 /// </summary>
-public static class PrintPayloadReader
+public static class PrintPayloadReaderRepository
 {
     public static PrintPayload Read(RenderPayload payload)
     {

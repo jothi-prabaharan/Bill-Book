@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Printing.Api.Rendering;
 using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 using Printing.Entity.TableEntities;
@@ -32,7 +32,7 @@ public sealed class PrintTemplateServiceTests
     /// <summary>Nothing here cancels; naming it keeps the calls readable.</summary>
     private static CancellationToken Ct => CancellationToken.None;
 
-    private PrintTemplateService Service(PrintingDbContext db) => new(db, new PrintRenderer());
+    private PrintTemplateRepository Service(PrintingDbContext db) => new(db, new PrintRendererRepository());
 
     private static UpdatePrintTemplateRequest Update(PrintTemplateDetail detail, Action<UpdatePrintTemplateRequest> edit)
     {
@@ -62,7 +62,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail first = (await service.CreateAsync(Create("A4 layout"), Ct)).Value!;
         PrintTemplateDetail second = (await service.CreateAsync(Create("A5 layout"), Ct)).Value!;
@@ -76,7 +76,7 @@ public sealed class PrintTemplateServiceTests
         }), Ct);
 
         await using PrintingDbContext fresh = _postgres.CreateContext(customer, org);
-        PrintTemplateService reader = Service(fresh);
+        PrintTemplateRepository reader = Service(fresh);
 
         PrintTemplateDetail a = (await reader.GetAsync(first.PrintTemplateId, Ct)).Value!;
         PrintTemplateDetail b = (await reader.GetAsync(second.PrintTemplateId, Ct)).Value!;
@@ -103,7 +103,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail first = (await service.CreateAsync(Create("First"), Ct)).Value!;
         PrintTemplateDetail second = (await service.CreateAsync(Create("Second"), Ct)).Value!;
@@ -133,7 +133,7 @@ public sealed class PrintTemplateServiceTests
 
         await using (PrintingDbContext seed = _postgres.CreateContext(customer, org))
         {
-            PrintTemplateService service = Service(seed);
+            PrintTemplateRepository service = Service(seed);
             firstId = (await service.CreateAsync(Create("First"), Ct)).Value!.PrintTemplateId;
             secondId = (await service.CreateAsync(Create("Second"), Ct)).Value!.PrintTemplateId;
         }
@@ -174,7 +174,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(Create("Shared"), Ct)).Value!;
 
@@ -216,7 +216,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(Create("Versioned"), Ct)).Value!;
         Assert.Equal(1, created.TemplateVersion);
@@ -240,7 +240,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail standard = (await service.CreateAsync(Create("Standard"), Ct)).Value!;
         PrintTemplateDetail seasonal = (await service.CreateAsync(Create("Seasonal"), Ct)).Value!;
@@ -284,7 +284,7 @@ public sealed class PrintTemplateServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail only = (await service.CreateAsync(Create("Only one"), Ct)).Value!;
 
@@ -304,7 +304,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(Create("Old name"), Ct)).Value!;
 
@@ -327,7 +327,7 @@ public sealed class PrintTemplateServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         await service.CreateAsync(Create("Duplicate"), Ct);
         PrintTemplateResult<PrintTemplateDetail> second =
@@ -345,7 +345,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail source = (await service.CreateAsync(Create("Source"), Ct)).Value!;
 
@@ -391,7 +391,7 @@ public sealed class PrintTemplateServiceTests
         }
 
         await using PrintingDbContext b = _postgres.CreateContext(customer, orgB);
-        PrintTemplateService service = Service(b);
+        PrintTemplateRepository service = Service(b);
 
         // Not found, never forbidden: a 403 would confirm the row exists, which
         // is itself a leak across the boundary.
@@ -434,7 +434,7 @@ public sealed class PrintTemplateServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(Create("Guarded"), Ct)).Value!;
 
@@ -453,7 +453,7 @@ public sealed class PrintTemplateServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(Create("Squeezed"), Ct)).Value!;
 
@@ -478,7 +478,7 @@ public sealed class PrintTemplateServiceTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(Create("Pinned"), Ct)).Value!;
 
@@ -503,7 +503,7 @@ public sealed class PrintTemplateServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        PrintTemplateService service = Service(db);
+        PrintTemplateRepository service = Service(db);
 
         PrintTemplateDetail created = (await service.CreateAsync(Create("Previewed"), Ct)).Value!;
 

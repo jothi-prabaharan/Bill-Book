@@ -1,13 +1,13 @@
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Reading and writing <see cref="PrintContent"/> by segment, so no caller has
 /// to switch over five properties and risk getting the order wrong.
 /// </summary>
-public static class PrintSegments
+public static class PrintSegmentsRepository
 {
     /// <summary>Every segment, in print order. Ordered by the enum's own values — see <see cref="PrintSegment"/>.</summary>
     public static readonly IReadOnlyList<PrintSegment> InOrder =

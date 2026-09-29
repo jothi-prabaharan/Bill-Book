@@ -1,5 +1,5 @@
-using Printing.Api.Rendering;
 using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Models;
 using Printing.Repository;
 using Printing.Repository.SeedData;
@@ -31,7 +31,7 @@ public sealed class PrintTemplateSeederTests
         Guid org = Guid.NewGuid();
 
         await using PrintingDbContext db = _postgres.CreateContext(customer, org);
-        var seeder = new PrintTemplateSeeder(db);
+        var seeder = new PrintTemplateSeederRepository(db);
 
         int first = await seeder.SeedForOrganizationAsync(org, Ct);
         int second = await seeder.SeedForOrganizationAsync(org, Ct);
@@ -40,7 +40,7 @@ public sealed class PrintTemplateSeederTests
         Assert.Equal(0, second);
 
         IReadOnlyList<PrintTemplateListItem> list =
-            await new PrintTemplateService(db, new PrintRenderer()).ListAsync(null, Ct);
+            await new PrintTemplateRepository(db, new PrintRendererRepository()).ListAsync(null, Ct);
 
         Assert.Equal(DocumentTypeCatalog.All.Count, list.Count);
         Assert.All(list, t => Assert.True(t.IsDefault));
@@ -54,10 +54,10 @@ public sealed class PrintTemplateSeederTests
         Guid org = Guid.NewGuid();
         await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), org);
 
-        await new PrintTemplateSeeder(db).SeedForOrganizationAsync(org, Ct);
+        await new PrintTemplateSeederRepository(db).SeedForOrganizationAsync(org, Ct);
 
         PrintTemplateResult<RenderPrintResponse> result =
-            await new PrintTemplateService(db, new PrintRenderer()).RenderAsync(new RenderPrintRequest
+            await new PrintTemplateRepository(db, new PrintRendererRepository()).RenderAsync(new RenderPrintRequest
             {
                 DocumentTypeCode = "INV",
                 Payload = new RenderPayload(),

@@ -1,4 +1,5 @@
-using Printing.Api.Rendering;
+using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 using Xunit;
@@ -22,7 +23,7 @@ public class SegmentSanitizerTests
     private const string Single = "{{Invoice.No}}";
     private const string ListTag = "{{Item.ItemName}}";
 
-    private static readonly SegmentSanitizer Sanitizer = new();
+    private static readonly SegmentSanitizerRepository Sanitizer = new();
 
     [Fact]
     public void Script_elements_are_stripped()
@@ -73,7 +74,7 @@ public class SegmentSanitizerTests
     [Fact]
     public void An_image_on_an_approved_host_survives()
     {
-        var sanitizer = new SegmentSanitizer(["cdn.billbook.example"]);
+        var sanitizer = new SegmentSanitizerRepository(["cdn.billbook.example"]);
 
         string clean = sanitizer.Sanitize("<img src=\"https://cdn.billbook.example/logo.png\" alt=\"Logo\">");
 
@@ -156,7 +157,7 @@ public class SegmentSanitizerTests
             DetailsHtml = "<div onclick=\"x()\">dirty</div>",
         };
 
-        IReadOnlyList<SegmentViolation> violations = new SegmentSanitizer().SanitizeContent(content);
+        IReadOnlyList<SegmentViolation> violations = new SegmentSanitizerRepository().SanitizeContent(content);
 
         SegmentViolation violation = Assert.Single(violations);
         Assert.Equal("attribute", violation.Kind);

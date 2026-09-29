@@ -1,5 +1,6 @@
 using Printing.Repository;
 using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Xunit;
@@ -146,7 +147,7 @@ public sealed class PrintingRowLevelSecurityTests
 
         await using PrintingDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        int seeded = await new PrintTemplateSeeder(db).SeedForOrganizationAsync(orgId, CancellationToken.None);
+        int seeded = await new PrintTemplateSeederRepository(db).SeedForOrganizationAsync(orgId, CancellationToken.None);
 
         return (customerId, orgId, seeded);
     }

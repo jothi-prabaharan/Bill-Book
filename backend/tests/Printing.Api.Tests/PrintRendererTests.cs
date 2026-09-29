@@ -1,6 +1,7 @@
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
-using Printing.Api.Rendering;
+using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 using Printing.Repository.SeedData;
@@ -18,7 +19,7 @@ namespace Printing.Api.Tests;
 /// </summary>
 public class PrintRendererTests
 {
-    private static readonly PrintRenderer Renderer = new();
+    private static readonly PrintRendererRepository Renderer = new();
 
     /// <summary>An invoice with as many lines as the bug that named this file had.</summary>
     private static PrintPayload Invoice(int lineCount)
@@ -76,7 +77,7 @@ public class PrintRendererTests
     {
         var settings = new PrintSettings();
         configure?.Invoke(settings);
-        PrintSettingsValidator.Normalize(settings);
+        PrintSettingsValidatorRepository.Normalize(settings);
 
         return new PrintRenderRequest
         {
@@ -378,7 +379,7 @@ public class PrintRendererTests
                 s.RollWidthMm = width;
             }));
 
-            string expected = $"{PrintGeometry.ToPx(width):0.##}px";
+            string expected = $"{PrintGeometryRepository.ToPx(width):0.##}px";
             Assert.Contains($"width:{expected}", result.Html, StringComparison.Ordinal);
         }
     }

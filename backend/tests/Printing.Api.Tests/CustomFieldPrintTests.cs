@@ -1,4 +1,5 @@
-using Printing.Api.Rendering;
+using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 using Xunit;
@@ -8,7 +9,7 @@ namespace Printing.Api.Tests;
 /// <summary>A branch's own fields print as <c>{{custom.key}}</c> (TK-112).</summary>
 public sealed class CustomFieldPrintTests
 {
-    private static readonly PrintRenderer Renderer = new();
+    private static readonly PrintRendererRepository Renderer = new();
 
     [Fact]
     public void An_invoice_prints_its_custom_field()

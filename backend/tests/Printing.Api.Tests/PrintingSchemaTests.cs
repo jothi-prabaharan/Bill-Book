@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Printing.Api.Rendering;
+using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Printing.Entity.Enums;
 using Printing.Entity.TableEntities;
 using Printing.Repository;
@@ -152,7 +153,7 @@ public sealed class PrintingSchemaTests
             SeedVersion = DefaultLayoutGenerator.SeedVersion,
         };
 
-        PrintSegments.SetHtml(template.Content, PrintSegment.Details, "<p>{{Invoice.Number}}</p>");
+        PrintSegmentsRepository.SetHtml(template.Content, PrintSegment.Details, "<p>{{Invoice.Number}}</p>");
 
         mine.PrintTemplates.Add(template);
         await mine.SaveChangesAsync(CancellationToken.None);
@@ -160,7 +161,7 @@ public sealed class PrintingSchemaTests
         PrintTemplate saved = Assert.Single(await mine.PrintTemplates.ToListAsync(CancellationToken.None));
         Assert.Equal(
             "<p>{{Invoice.Number}}</p>",
-            PrintSegments.Html(saved.Content, PrintSegment.Details));
+            PrintSegmentsRepository.Html(saved.Content, PrintSegment.Details));
 
         Assert.Empty(await theirs.PrintTemplates.ToListAsync(CancellationToken.None));
     }

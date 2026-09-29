@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Printing.Api.Services;
+using Printing.Repository.Repositories;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -42,7 +43,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var seeder = _services.GetRequiredService<PrintTemplateSeeder>();
+        var seeder = _services.GetRequiredService<PrintTemplateSeederRepository>();
 
         var response = new SeedOrganizationResponse
         {

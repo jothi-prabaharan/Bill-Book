@@ -4,7 +4,7 @@ using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Shared.Kernel.Printing;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>Resolved segment markup, plus the tags nothing could answer.</summary>
 public sealed class SubstitutionResult
@@ -34,14 +34,14 @@ public sealed class SubstitutionResult
 /// other way is what once printed a totals block once per item line — 42 copies
 /// on a 42-line invoice.
 /// </summary>
-public static class PrintSubstitution
+public static class PrintSubstitutionRepository
 {
     public static SubstitutionResult Resolve(
         string? html,
         string documentTypeCode,
         PrintPayload payload,
         PrintFormatContext format,
-        SegmentSanitizer sanitizer)
+        SegmentSanitizerRepository sanitizer)
     {
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(format);
@@ -76,7 +76,7 @@ public static class PrintSubstitution
         string documentTypeCode,
         PrintPayload payload,
         PrintFormatContext format,
-        SegmentSanitizer sanitizer,
+        SegmentSanitizerRepository sanitizer,
         List<string> unknown)
     {
         // Deepest rows first, so an inner table is expanded before any outer row
@@ -206,7 +206,7 @@ public static class PrintSubstitution
         string documentTypeCode,
         IReadOnlyDictionary<string, object?> values,
         PrintFormatContext format,
-        SegmentSanitizer sanitizer,
+        SegmentSanitizerRepository sanitizer,
         List<string> unknown,
         bool fallbackToShortName)
     {
@@ -241,8 +241,8 @@ public static class PrintSubstitution
 
                 case PlaceholderType.QrCode:
                     // Built here from the text, never taken from the payload as
-                    // markup, so it needs no sanitising (see QrImages).
-                    string qr = QrImages.Img(value as string);
+                    // markup, so it needs no sanitising (see QrImagesRepository).
+                    string qr = QrImagesRepository.Img(value as string);
                     anyMarkup |= qr.Length > 0;
                     return qr;
 
@@ -252,7 +252,7 @@ public static class PrintSubstitution
                     return markup;
 
                 default:
-                    return Escape(MaskFormatter.Format(value, placeholder, format));
+                    return Escape(MaskFormatterRepository.Format(value, placeholder, format));
             }
         });
 

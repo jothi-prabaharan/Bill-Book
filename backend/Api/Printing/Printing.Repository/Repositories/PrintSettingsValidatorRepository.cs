@@ -1,7 +1,7 @@
 using Printing.Entity.Enums;
 using Printing.Entity.Models;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>One rejected rule, ready to be returned as INVALID_GEOMETRY.</summary>
 public sealed class GeometryFailure
@@ -18,7 +18,7 @@ public sealed class GeometryFailure
 /// Running them the other way round would report a failure about a value
 /// normalisation was about to overwrite.
 /// </summary>
-public static class PrintSettingsValidator
+public static class PrintSettingsValidatorRepository
 {
     /// <summary>
     /// Applies the footer rule, which is a correctness constraint rather than a
@@ -74,10 +74,10 @@ public static class PrintSettingsValidator
         NonNegative(settings.MarginLeftMm, nameof(settings.MarginLeftMm), "Left margin");
         NonNegative(settings.MarginRightMm, nameof(settings.MarginRightMm), "Right margin");
 
-        foreach (PrintSegment segment in PrintSegments.InOrder)
+        foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
-            SegmentMargin margin = PrintSegments.Margin(settings.SegMargins, segment);
-            string code = PrintSegments.Code(segment);
+            SegmentMargin margin = PrintSegmentsRepository.Margin(settings.SegMargins, segment);
+            string code = PrintSegmentsRepository.Code(segment);
             NonNegative(margin.AboveMm, $"SegMargins.{code}.AboveMm", $"Space above the {code} segment");
             NonNegative(margin.BelowMm, $"SegMargins.{code}.BelowMm", $"Space below the {code} segment");
         }
@@ -101,7 +101,7 @@ public static class PrintSettingsValidator
         // A content box with no width or no height is a page that cannot hold a
         // single character. Checked against the paper actually in use, because
         // margins that are fine on A4 can swallow an A5 sheet whole.
-        (double widthMm, double heightMm) = PrintGeometry.Paper(settings);
+        (double widthMm, double heightMm) = PrintGeometryRepository.Paper(settings);
 
         double contentWidth = widthMm - settings.MarginLeftMm - settings.MarginRightMm;
         if (contentWidth <= 0)

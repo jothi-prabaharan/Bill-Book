@@ -1,6 +1,6 @@
 using QRCoder;
 
-namespace Printing.Api.Rendering;
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Draws a QR code as a PNG data URI (TK-92), for the e-invoice's signed QR
@@ -12,7 +12,7 @@ namespace Printing.Api.Rendering;
 /// one is a PNG this class encoded, and base64 has no characters that can leave
 /// the attribute.
 /// </summary>
-public static class QrImages
+public static class QrImagesRepository
 {
     /// <summary>
     /// Error correction level M, which the IRP's own QR uses, at 4 pixels per
@@ -73,8 +73,8 @@ public static class EInvoiceStrip
             return content;
         }
 
-        bool placed = PrintSegments.InOrder.Any(segment =>
-            PrintSegments.Html(content, segment).Contains("EInvoice.", StringComparison.OrdinalIgnoreCase));
+        bool placed = PrintSegmentsRepository.InOrder.Any(segment =>
+            PrintSegmentsRepository.Html(content, segment).Contains("EInvoice.", StringComparison.OrdinalIgnoreCase));
         if (placed)
         {
             return content;

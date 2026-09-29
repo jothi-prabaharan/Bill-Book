@@ -1,4 +1,5 @@
-namespace Printing.Api.Rendering;
+
+namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// How tall a block is taken to be.
@@ -13,9 +14,9 @@ namespace Printing.Api.Rendering;
 /// When a real rendering engine lands, these numbers should come from it
 /// instead. The estimate is isolated here so that swap touches one file.
 /// </summary>
-public sealed class PrintMetrics
+public sealed class PrintMetricsRepository
 {
-    public static readonly PrintMetrics Default = new();
+    public static readonly PrintMetricsRepository Default = new();
 
     /// <summary>One line of text, including its leading.</summary>
     public double LineHeightMm { get; init; } = 5.0;
