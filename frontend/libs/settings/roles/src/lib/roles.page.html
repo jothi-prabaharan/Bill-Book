@@ -3,8 +3,8 @@
   <button type="button" (click)="startCreate()" [disabled]="busy()">+ New role</button>
 </header>
 
-@if (error()) {
-  <p class="error">{{ error() }}</p>
+@if (error(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 @if (!editing()) {

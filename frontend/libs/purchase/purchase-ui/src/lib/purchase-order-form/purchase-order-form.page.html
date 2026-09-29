@@ -21,22 +21,22 @@
     <a class="btn" routerLink="..">Back to list</a>
   </header>
 
-  @if (error()) {
-    <div class="banner banner--error" role="alert">{{ error() }}</div>
+  @if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
-  @if (notice()) {
-    <div class="banner banner--ok">{{ notice() }}</div>
+  @if (notice(); as note) {
+    <bb-message-box [messages]="[{ tone: 'success', text: note }]" />
   }
 
   @if (readonlyDoc()) {
-    <div class="banner banner--info">
+    <bb-message-box tone="info">
       @if (status() === 'Void') {
         This order has been voided. Its number stays on record; raise a new one.
       } @else {
         This order has been issued, so it is no longer editable. Raise a goods
         receipt against it when the stock arrives.
       }
-    </div>
+    </bb-message-box>
   }
 
   @if (loading()) {

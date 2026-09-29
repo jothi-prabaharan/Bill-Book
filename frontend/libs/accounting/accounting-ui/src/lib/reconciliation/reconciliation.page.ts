@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { StatementUploadFormComponent } from './statement-upload-form.component';
@@ -38,7 +41,12 @@ interface StatementLine {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-reconciliation-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, StatementUploadFormComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    StatementUploadFormComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './reconciliation.page.html',
   styleUrl: './reconciliation.page.scss',
 })

@@ -19,8 +19,6 @@ button.icon { background: none; color: #9aa0b0; font-size: 1.1rem; padding: 0 .4
 .editor h2 { font-size: 1rem; margin: 0 0 .8rem; display: flex; gap: .5rem; align-items: baseline; }
 .editor.readonly { background: #fafbfd; }
 .note { background: #f4f6fb; border-left: 3px solid #3557d6; padding: .55rem .8rem; font-size: .82rem; color: #4a4f60; margin: 0 0 .8rem; }
-.note.warn { background: #fdf3e6; border-left-color: #b26a00; color: #7a4a00; }
-
 .head-fields { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .head-fields label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
 .head-fields label.wide { flex: 1 1 14rem; }

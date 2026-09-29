@@ -67,7 +67,7 @@
 </div>
 
 @if (error(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
+  <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
 }
 
 <bb-data-grid [gridCode]="'HSN_SAC'" [columns]="columns" [data]="rows()">

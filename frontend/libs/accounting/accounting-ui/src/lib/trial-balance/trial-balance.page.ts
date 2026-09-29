@@ -4,7 +4,12 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DataGridComponent, ColumnDef , DateInputComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 
 interface TrialBalanceRow {
   accountId: number;
@@ -45,7 +50,14 @@ interface AccountType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-trial-balance-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],
+  imports: [
+    DataGridComponent,
+    DecimalPipe,
+    FormsModule,
+    RouterLink,
+    DateInputComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './trial-balance.page.html',
   styleUrl: './trial-balance.page.scss',
 })

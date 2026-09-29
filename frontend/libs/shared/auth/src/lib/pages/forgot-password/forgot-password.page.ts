@@ -4,7 +4,12 @@ import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
-import { EmailInputComponent, PasswordInputComponent } from '@bill-book/ui-components';
+import {
+  EmailInputComponent,
+  MessageBoxComponent,
+  PasswordInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 /**
  * OTP wizard: request → verify → reset. The request step always advances,
@@ -20,6 +25,8 @@ import { EmailInputComponent, PasswordInputComponent } from '@bill-book/ui-compo
     RouterLink,
     EmailInputComponent,
     PasswordInputComponent,
+    MessageBoxComponent,
+    TextInputComponent,
   ],
   templateUrl: './forgot-password.page.html',
   styleUrl: './forgot-password.page.scss',

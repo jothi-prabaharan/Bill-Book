@@ -4,7 +4,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { PasswordInputComponent } from '@bill-book/ui-components';
+import {
+  MessageBoxComponent,
+  PasswordInputComponent,
+} from '@bill-book/ui-components';
 
 /**
  * Completes an invitation from the emailed link. The token and email arrive as
@@ -14,7 +17,12 @@ import { PasswordInputComponent } from '@bill-book/ui-components';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-accept-invitation-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, PasswordInputComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    PasswordInputComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './accept-invitation.page.html',
   styleUrl: './accept-invitation.page.scss',
 })

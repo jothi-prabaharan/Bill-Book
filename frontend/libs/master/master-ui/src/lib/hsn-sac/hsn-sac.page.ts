@@ -4,6 +4,7 @@ import {
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  MessageBoxComponent,
   SearchInputComponent,
   SelectComponent,
 } from '@bill-book/ui-components';
@@ -65,6 +66,7 @@ const PAGE_SIZE = 50;
     SearchInputComponent,
     CheckboxComponent,
     SelectComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './hsn-sac.page.html',
   styleUrl: './hsn-sac.page.scss',

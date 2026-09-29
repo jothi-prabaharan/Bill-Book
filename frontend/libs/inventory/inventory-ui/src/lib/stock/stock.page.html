@@ -23,28 +23,28 @@
 
 @if (costingQueue(); as queue) {
   @if (queue.failed > 0) {
-    <p class="error">
+    <bb-message-box tone="error">
       {{ queue.failed }} movement(s) could not be costed and have stopped retrying. Their
       quantities are correct; their costs are not settled. This needs looking at.
-    </p>
+    </bb-message-box>
   } @else if (queue.pending + queue.inProgress > 0) {
-    <p class="notice">
+    <bb-message-box tone="info">
       {{ queue.pending + queue.inProgress }} movement(s) waiting to be costed. Quantities are
       already up to date; costs settle a moment behind.
-    </p>
+    </bb-message-box>
   }
 
   @if (queue.ledgerFailed > 0) {
-    <p class="error">
+    <bb-message-box tone="error">
       {{ queue.ledgerFailed }} movement(s) could not be posted to the accounts and have stopped
       retrying. <strong>Stock and the general ledger disagree until this is resolved.</strong>
       The usual cause is a missing account in the chart of accounts.
-    </p>
+    </bb-message-box>
   } @else if (queue.ledgerPending > 0) {
-    <p class="notice">
+    <bb-message-box tone="info">
       {{ queue.ledgerPending }} movement(s) waiting to reach the accounts. Posting runs just
       behind costing.
-    </p>
+    </bb-message-box>
   }
 }
 

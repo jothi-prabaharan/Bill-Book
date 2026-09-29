@@ -4,6 +4,7 @@ import {
   ColumnDef,
   DataGridComponent,
   DateInputComponent,
+  MessageBoxComponent,
   SelectComponent,
 } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
@@ -81,6 +82,7 @@ interface AccountType {
     RouterLink,
     DateInputComponent,
     SelectComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './account-ledger.page.html',
   styleUrl: './account-ledger.page.scss',

@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridComponent,
+  MessageBoxComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -30,7 +35,12 @@ export interface ContactPersonRole {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-list',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './contact-person-roles.list.html',
   styleUrl: './contact-person-roles.list.scss',
 })

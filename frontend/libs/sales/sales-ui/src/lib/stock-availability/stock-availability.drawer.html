@@ -25,14 +25,14 @@
       </p>
     } @else {
       @if (shortCount() > 0) {
-        <p class="sad__warn">
+        <bb-message-box tone="warning">
           {{ shortCount() }} of {{ tracked().length }} stocked
           {{ tracked().length === 1 ? 'line is' : 'lines are' }} short of what is available.
           Confirming will be refused until the quantity comes down or more stock arrives.
-        </p>
+        </bb-message-box>
       }
 
-      <table class="sad__table">
+      <bb-card-table class="sad__table" label="Stock by item" flush>
         <thead>
           <tr>
             <th scope="col">Item</th>
@@ -59,7 +59,7 @@
             </tr>
           }
         </tbody>
-      </table>
+      </bb-card-table>
 
       @if (untrackedCount() > 0) {
         <p class="sad__note">

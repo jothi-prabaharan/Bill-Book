@@ -33,20 +33,15 @@ h1 {
   padding: 0.5rem 0;
 }
 
-.parameters label {
+/* One report parameter: its label above its field. The common inputs render
+   their label and control as siblings, so this is what stacks them. */
+.parameter {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   font-size: 0.85rem;
 }
 
-.notice {
-  margin: 0.25rem 0;
-  padding: 0.4rem 0.6rem;
-  border-left: 3px solid var(--bb-accent, #14605c);
-  background: var(--bb-surface-2, #f6f7f9);
-  font-size: 0.85rem;
-}
 
 .error {
   margin: 0.5rem 0;

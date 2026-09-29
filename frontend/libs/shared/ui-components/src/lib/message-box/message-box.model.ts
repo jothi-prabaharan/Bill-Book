@@ -38,6 +38,15 @@ export function dominantTone(messages: readonly UiMessage[]): MessageTone {
   return TONE_PRECEDENCE.find((tone) => messages.some((m) => m.tone === tone)) ?? 'info';
 }
 
+/**
+ * The tone of a box showing `messages` and, when `explicit` is set, content of
+ * its own in that tone. The explicit tone competes on the same terms as any
+ * message: an info note beside a server error is still an error box.
+ */
+export function boxTone(messages: readonly UiMessage[], explicit: MessageTone | null): MessageTone {
+  return explicit === null ? dominantTone(messages) : dominantTone([...messages, { tone: explicit, text: '' }]);
+}
+
 /** What a screen reader announces the box as. */
 export function toneLabel(tone: MessageTone): string {
   switch (tone) {

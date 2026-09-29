@@ -7,29 +7,28 @@
   <div *ngIf="data() as d">
     <div *ngFor="let sec of d.sections" class="section">
       <h3>{{ sec.displayName }}</h3>
-      <table style="width: 100%; border-collapse: collapse;">
+      <bb-card-table class="statement" [label]="sec.displayName" flush>
         <tbody>
           <tr *ngFor="let acc of sec.accounts">
-            <td style="padding: 4px 0;">{{ acc.accountCode }} - {{ acc.accountName }}</td>
-            <td style="padding: 4px 0; text-align: right;">{{ acc.balance | number:'1.2-2' }}</td>
+            <td>{{ acc.accountCode }} - {{ acc.accountName }}</td>
+            <td class="num">{{ acc.balance | number:'1.2-2' }}</td>
           </tr>
         </tbody>
         <tfoot>
           <tr>
-            <th style="padding: 8px 0; text-align: left; border-top: 1px solid #eee;">Total {{ sec.displayName }}</th>
-            <th style="padding: 8px 0; text-align: right; border-top: 1px solid #eee;">{{ sec.totalBalance | number:'1.2-2' }}</th>
+            <th scope="row">Total {{ sec.displayName }}</th>
+            <th class="num">{{ sec.totalBalance | number:'1.2-2' }}</th>
           </tr>
         </tfoot>
-      </table>
-      <br />
+      </bb-card-table>
     </div>
-    
-    <div class="summary" style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #ccc;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+
+    <div class="summary">
+      <div class="summary__line">
         <strong>Gross Profit</strong>
         <strong>{{ d.grossProfit | number:'1.2-2' }}</strong>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 1.1em;">
+      <div class="summary__line summary__line--net">
         <strong>Net Profit</strong>
         <strong>{{ d.netProfit | number:'1.2-2' }}</strong>
       </div>

@@ -11,9 +11,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import {
+  CardTableComponent,
   DateInputComponent,
   MessageBoxComponent,
-  NumberInputComponent,
+  MoneyInputComponent,
   UiMessage,
 } from '@bill-book/ui-components';
 
@@ -74,8 +75,9 @@ interface Applied extends OpenDocument {
     DecimalPipe,
     FormsModule,
     DateInputComponent,
-    NumberInputComponent,
+    MoneyInputComponent,
     MessageBoxComponent,
+    CardTableComponent,
   ],
   templateUrl: './allocation-workspace.page.html',
   styleUrl: './allocation-workspace.page.scss',

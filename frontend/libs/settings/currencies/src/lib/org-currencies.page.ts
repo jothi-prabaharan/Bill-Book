@@ -4,6 +4,7 @@ import {
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  MessageBoxComponent,
   SelectComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
@@ -44,6 +45,7 @@ interface MasterCurrency {
     FormsModule,
     CheckboxComponent,
     SelectComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './org-currencies.page.html',
   styleUrl: './org-currencies.page.scss',

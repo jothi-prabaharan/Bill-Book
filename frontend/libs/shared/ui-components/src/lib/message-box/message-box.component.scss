@@ -41,9 +41,29 @@
   --msgbox-ground: var(--color-accent-100);
 }
 
-.msgbox__list {
+/* Holds the messages and any projected content, one above the other. */
+.msgbox__body {
   flex: 1;
   min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Projected content brings its own paragraphs; their margins would double the
+   box's padding. */
+.msgbox__content {
+  text-wrap: pretty;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.msgbox__list {
   margin: 0;
   padding: 0;
   list-style: none;

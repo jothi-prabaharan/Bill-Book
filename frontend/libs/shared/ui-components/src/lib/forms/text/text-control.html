@@ -21,6 +21,7 @@
     <input
       class="input text-input"
       [class.uppercase]="uppercase()"
+      [class.input--code]="display() === 'code'"
       [type]="resolvedType()"
       [id]="controlId()"
       [name]="name() || null"

@@ -6,6 +6,7 @@ import {
   DataGridComponent,
   LookupDialogComponent,
   LookupRow,
+  MessageBoxComponent,
 } from '@bill-book/ui-components';
 import { CustomerService, Lead } from '@bill-book/customer-core';
 import { LeadFormComponent } from './lead-form.component';
@@ -20,6 +21,7 @@ import { LeadFormComponent } from './lead-form.component';
     DataGridCellTemplateDirective,
     LeadFormComponent,
     LookupDialogComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './lead.list.html',
   styleUrl: './lead.list.scss'

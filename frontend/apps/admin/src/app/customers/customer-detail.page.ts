@@ -1,7 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ColumnDef, DataGridComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridComponent,
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 
 interface OrganizationRow {
   orgId: string;
@@ -25,7 +29,11 @@ interface OrganizationRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-customer-detail-page',
   standalone: true,
-  imports: [DataGridComponent, RouterLink],
+  imports: [
+    DataGridComponent,
+    RouterLink,
+    MessageBoxComponent,
+  ],
   templateUrl: './customer-detail.page.html',
   styleUrl: './customer-detail.page.scss',
 })

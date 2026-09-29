@@ -4,8 +4,8 @@
     <button class="bb-btn bb-btn-primary" (click)="showForm.set(true)">Add Lead</button>
   </div>
 
-  @if (message()) {
-    <p class="error" role="alert">{{ message() }}</p>
+  @if (message(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
   <bb-data-grid

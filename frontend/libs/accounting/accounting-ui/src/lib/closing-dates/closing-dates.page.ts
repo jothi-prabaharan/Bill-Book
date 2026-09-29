@@ -2,7 +2,13 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  MessageBoxComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 interface PeriodLock {
   periodLockId: number;
@@ -47,7 +53,13 @@ interface Row {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-closing-dates-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './closing-dates.page.html',
   styleUrl: './closing-dates.page.scss',
 })

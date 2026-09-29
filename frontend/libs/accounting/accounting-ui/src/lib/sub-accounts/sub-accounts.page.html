@@ -11,8 +11,8 @@
   a tax rate up to six. They cannot be added or renamed here.
 </p>
 
-@if (message()) {
-  <p class="error">{{ message() }}</p>
+@if (message(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 <div class="filters">

@@ -3,8 +3,8 @@
   <a class="link" routerLink="/accounting/trial-balance">Trial balance →</a>
 </header>
 
-@if (message()) {
-  <p class="error">{{ message() }}</p>
+@if (message(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 <form class="filters" (ngSubmit)="load()">

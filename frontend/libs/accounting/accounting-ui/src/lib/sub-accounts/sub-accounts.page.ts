@@ -3,6 +3,7 @@ import {
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  MessageBoxComponent,
   SearchInputComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
@@ -47,6 +48,7 @@ type ReferenceType = (typeof REFERENCE_TYPES)[number];
     FormsModule,
     SearchInputComponent,
     CheckboxComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './sub-accounts.page.html',
   styleUrl: './sub-accounts.page.scss',

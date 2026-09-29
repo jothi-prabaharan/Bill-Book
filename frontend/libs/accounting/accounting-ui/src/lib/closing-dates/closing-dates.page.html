@@ -26,10 +26,10 @@
 
 @if (mine(); as my) {
   @if (my.lockedUpto) {
-    <p class="notice">
+    <bb-message-box tone="info">
       <strong>You are closed up to {{ my.lockedUpto }}</strong> — the first date you can post on
       is {{ my.openFrom }}. Changing your own role's date here changes that.
-    </p>
+    </bb-message-box>
   }
 }
 

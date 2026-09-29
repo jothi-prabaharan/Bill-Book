@@ -163,11 +163,11 @@
         added twice.
       </p>
     } @else {
-      <p class="note warn">
+      <bb-message-box tone="warning">
         This account has no column mapping yet. Every bank lays its export out differently, so tell
         us which column is which once and we will remember it.
         <button type="button" class="link" (click)="startProfile()">Set it up</button>
-      </p>
+      </bb-message-box>
     }
   </section>
 }

@@ -53,6 +53,19 @@ export abstract class BbTextControlBase extends BbControlBase<string> {
 
   readonly suffix = input<string | null>(null);
 
+  /**
+   * Overrides the on-screen keyboard the component would ask for — `numeric`
+   * for a one-time code, which is text (it keeps its leading zeros) typed on a
+   * number pad.
+   */
+  readonly inputmode = input<string>('');
+
+  /**
+   * `code` draws the field large, centred and letter-spaced, for a short code
+   * read off a message and typed back — the sign-in and password-reset codes.
+   */
+  readonly display = input<'default' | 'code'>('default');
+
   readonly valueChange = output<string>();
   // eslint-disable-next-line @angular-eslint/no-output-native
   readonly blur = output<FocusEvent>();
@@ -68,7 +81,7 @@ export abstract class BbTextControlBase extends BbControlBase<string> {
   );
 
   protected readonly resolvedInputmode = computed<string | null>(
-    () => this.defaultInputmode() || null,
+    () => this.inputmode() || this.defaultInputmode() || null,
   );
 
   protected readonly resolvedAutocomplete = computed(

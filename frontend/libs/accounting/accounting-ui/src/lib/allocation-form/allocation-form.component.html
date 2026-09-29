@@ -3,8 +3,8 @@
   <h2>Allocate {{ sourceTransactionTypeCode }}-{{ sourceTransactionId }}</h2>
   <p class="hint">Available to Allocate: {{ remainingAmount | number:'1.2-2' }}</p>
 
-  @if (error()) {
-    <p class="error">{{ error() }}</p>
+  @if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
   @if (targets().length === 0 && !busy()) {

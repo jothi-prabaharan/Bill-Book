@@ -8,6 +8,7 @@ import { AuthService } from '../../auth.service';
 import {
   BbSelectOption,
   EmailInputComponent,
+  MessageBoxComponent,
   PasswordInputComponent,
   PhoneInputComponent,
   SelectComponent,
@@ -34,6 +35,7 @@ import {
     PhoneInputComponent,
     PasswordInputComponent,
     SelectComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './signup.page.html',
   styleUrl: './signup.page.scss',

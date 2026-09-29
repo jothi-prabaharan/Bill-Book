@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
   DateInputComponent,
+  MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -36,6 +37,7 @@ interface ConfigurationRow {
     TextInputComponent,
     NumberInputComponent,
     SelectComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './configurations.page.html',
   styleUrl: './configurations.page.scss',

@@ -3,6 +3,7 @@ import {
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  MessageBoxComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
@@ -49,6 +50,7 @@ interface PermissionGroup {
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './roles.page.html',
   styleUrl: './roles.page.scss',

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { CardTableComponent } from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -19,8 +20,9 @@ interface BSResponse {
 @Component({
   selector: 'bb-balance-sheet',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CardTableComponent],
   templateUrl: './balance-sheet.page.html',
+  styleUrl: './statements.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BalanceSheetPage implements OnInit {

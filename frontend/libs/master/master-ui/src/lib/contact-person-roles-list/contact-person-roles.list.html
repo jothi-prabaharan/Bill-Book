@@ -1,5 +1,5 @@
-@if (error()) {
-  <p class="error">{{ error() }}</p>
+@if (error(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 <bb-data-grid [gridCode]="'CONTACT_ROLES'" [columns]="columns" [data]="rows()">

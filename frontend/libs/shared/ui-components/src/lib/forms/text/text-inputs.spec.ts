@@ -5,6 +5,7 @@ import { EmailInputComponent } from './email-input.component';
 import { PasswordInputComponent } from './password-input.component';
 import { PhoneInputComponent } from './phone-input.component';
 import { UrlInputComponent } from './url-input.component';
+import { TextInputComponent } from '../../text-input/text-input.component';
 import { bbEmail, bbPhone, bbUrl } from '../validators';
 
 interface TextHarness {
@@ -317,6 +318,26 @@ describe('Text inputs', () => {
   });
 
   describe('shared behaviour', () => {
+    it('TXTBASE-10: inputmode overrides the keyboard; a one-time code stays text', () => {
+      const plain = build(() => new TextInputComponent()) as unknown as TextHarness;
+      expect(plain.resolvedInputmode()).toBeNull();
+
+      const code = build(() => {
+        const made = new TextInputComponent();
+        set(made, 'inputmode', 'numeric');
+        set(made, 'display', 'code');
+        return made;
+      });
+      const harness = code as unknown as TextHarness;
+
+      expect(harness.resolvedInputmode()).toBe('numeric');
+      expect(harness.resolvedType()).toBe('text');
+
+      // Leading zeros are the whole point of keeping it text.
+      type(harness, '004217');
+      expect(harness.innerValue()).toBe('004217');
+    });
+
     it('TXTBASE-01: value binding, maxlength, readonly and disabled', () => {
       const component = build(() => {
         const made = new EmailInputComponent();

@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ColumnDef, DataGridComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridComponent,
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { FixedAssetFormComponent } from './fixed-asset-form.component';
 
 export interface FixedAsset {
@@ -27,7 +31,11 @@ export interface FixedAsset {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-fixed-asset-list',
   standalone: true,
-  imports: [DataGridComponent, FixedAssetFormComponent],
+  imports: [
+    DataGridComponent,
+    FixedAssetFormComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './fixed-asset.list.html',
   styleUrl: './fixed-asset.list.scss',
 })

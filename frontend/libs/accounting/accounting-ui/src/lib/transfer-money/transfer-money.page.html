@@ -78,10 +78,10 @@
     </div>
 
     @if (sameAccount) {
-      <p class="hint error">
+      <bb-message-box tone="error">
         The two ends are the same account. A transfer to where the money already is would post a
         debit and a credit to one account and mean nothing.
-      </p>
+      </bb-message-box>
     }
 
     <div class="editor-actions">

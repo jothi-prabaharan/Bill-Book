@@ -1,6 +1,7 @@
-# Input components
+# Common components
 
-Every field in Bill-Book is one of nineteen common inputs. They live in
+Every field in Bill-Book is one of nineteen common inputs, every table is one of
+two common tables, and every page-level message is one message box. They live in
 `libs/shared/ui-components` and are exported from `@bill-book/ui-components`.
 
 A module should never write its own version of one of these. The point is not
@@ -8,6 +9,90 @@ tidiness: it is that a field's precision, its validation, the way its error
 reads and whether a screen reader can name it are all decided **once**, so a
 discount box on the invoice screen behaves exactly like the one on the purchase
 order.
+
+---
+
+## The common-component rule
+
+**In a template, a raw HTML element that has a common component standing for
+it is a lint error.** Not a warning, not a review comment — `npm run lint`
+fails, so `npm run check` and CI fail with it.
+
+| Written by hand | Use instead |
+|---|---|
+| `<table>` | `bb-data-grid` for a list of records; `bb-card-table` for a table the page composes itself |
+| `<select>` | `bb-select` |
+| `<textarea>` | `bb-textarea`, or `bb-rich-text-input` for formatted text |
+| `<input>` (anything but `type="hidden"`) | the `bb-*-input` for what the field means — see the table below |
+| A `p`, `div`, `section` or `aside` classed `error`, `error-message`, `error-msg`, `banner`, `alert`, `success-alert`, `notice` or `warn` | `bb-message-box` |
+
+It is `no-restricted-syntax` in `eslint.config.mjs`, run against every template,
+including inline ones. The error names the component to use and points here.
+
+### Choosing the table
+
+- **`bb-data-grid`** — a list of records someone browses. Give it a `gridCode`
+  and a `ColumnDef[]`; it sorts, pages, remembers column choices per grid, and
+  takes a `bbCellTemplate` for any cell that needs markup (a badge, a button).
+- **`bb-card-table`** — a table the grid cannot draw: a totals footer (a posting
+  preview, a statement section and its subtotal), rows with a state of their own
+  (short of stock, over-allocated), or rows of editable controls. The page
+  projects `<thead>`, `<tbody>` and `<tfoot>`; the component owns the `<table>`
+  and its scrolling frame. `flush` drops the card border for a table already
+  inside a card, panel or drawer; `label` names it for a screen reader.
+
+  Put the page's class on `<bb-card-table class="…">`, not on a `<table>` — the
+  cells are still the page's own template, so its scoped styles reach them.
+
+### Choosing how the message box is filled
+
+```html
+<!-- What the server or a rule said: plain text. -->
+@if (error(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+}
+
+<!-- A message the page writes, with markup in it. -->
+<bb-message-box tone="info">
+  This bill has been <strong>posted</strong>. Correct it with a debit note.
+</bb-message-box>
+```
+
+The four tones are `error`, `warning`, `success` and `info`. When both
+`messages` and `tone` are given, the loudest wins.
+
+**What the rule does not cover, on purpose:**
+
+- **A field-level error beside a control that is not a common input** — the
+  contact picker on a ticket, the quote list in the convert dialog. That is
+  `<span class="field-error">`, the same class `bb-form-field` uses, and it
+  belongs next to its field rather than in a box.
+- **Inline status text** — a badge, a *Saved.* beside its button. That is a
+  `span`, and a box there would break the line.
+- **Buttons and dialogs.** There is no shared button component (buttons are the
+  theme's `.btn` classes) and no shared confirm dialog, so nothing to point at.
+
+### Exemptions
+
+Every exemption is a named file in `eslint.config.mjs` with its reason written
+beside it, and nowhere else: **inline `eslint-disable` comments are switched off
+for templates**, so a page cannot quietly opt itself out. Adding an entry is a
+decision to defend in review. The current list:
+
+| File | May use | Why |
+|---|---|---|
+| `ui-components/src/lib/**` | everything | These are the components. Something has to be the `<table>`. |
+| `invoice-print.page.html` | `<table>` | A printed tax invoice. Paged media wants a bare table that breaks across sheets. |
+| `shell-nav.component.html` | `<input type="checkbox">` | The mobile nav drawer is a CSS-only toggle, not a form field. |
+| `statement-upload-form.component.html` | `<input type="file">` | A drag-and-drop zone; `bb-file-input` has no drag-and-drop. |
+| `contacts.page.html`, `items.page.html`, `unit-types.page.html` | `<input type="radio">` | One radio per row marking "this one is the default" — not the shape of `bb-radio-group`. Any *other* raw input in these files is still an error. |
+
+**When the rule catches something no component fits**, the answer is to extend
+the component — that is how `bb-card-table` gained `flush`, `bb-message-box`
+gained projected content and `bb-text-input` gained `inputmode` — or to add an
+exemption with its reason. It is never a lookalike such as
+`<div role="table">`, which dodges the selector and keeps every problem the rule
+exists to prevent.
 
 ---
 
@@ -372,6 +457,13 @@ fell from 133 to 13.
 | **Admin** | Customer creation |
 
 ### The 13 direct inputs that remain, and why
+
+These are now enforced rather than listed: the ones in feature code are exactly
+the exemptions in `eslint.config.mjs` above, and the rest are inside the
+components themselves. When the rule was switched on it found **two more that
+this list had missed** — the sign-in code box on *Forgot password* and the
+parameter fields on a report — both since moved onto `bb-text-input` and
+`bb-date-input`.
 
 - **Five radios** (contacts ×3, item barcodes, unit types) are a *single* radio
   per card or per grid row, sharing a name, marking "this one is the default".

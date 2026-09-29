@@ -5,8 +5,8 @@
   </div>
 </header>
 
-@if (message()) {
-  <p class="error">{{ message() }}</p>
+@if (message(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 <bb-data-grid [gridCode]="'ADMIN_CUSTOMER_ORGANIZATIONS'" [columns]="columns" [data]="rows()">

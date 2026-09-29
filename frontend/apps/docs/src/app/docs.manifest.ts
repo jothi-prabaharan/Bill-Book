@@ -87,7 +87,7 @@ export const DOCS: DocSection[] = [
     title: 'Development',
     pages: [
       { slug: 'development', title: 'Development', status: 'built' },
-      { slug: 'inputs', title: 'Input components', status: 'built' },
+      { slug: 'inputs', title: 'Common components', status: 'built' },
       // 'partial' rather than 'built': the Azure templates and pipeline are
       // complete and verified locally, but have not been run against Azure, and
       // the first run stops at the migration step until the admin migration is

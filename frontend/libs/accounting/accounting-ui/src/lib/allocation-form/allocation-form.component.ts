@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NumberInputComponent } from '@bill-book/ui-components';
+import {
+  MessageBoxComponent,
+  NumberInputComponent,
+} from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
 
 export interface OutstandingBalanceView {
@@ -21,7 +24,12 @@ export interface OutstandingBalanceView {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-allocation-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, NumberInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NumberInputComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './allocation-form.component.html',
   styles: [
     `

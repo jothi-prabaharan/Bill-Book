@@ -68,10 +68,10 @@
         beneath receivables or payables, so until one is chosen there is nothing to point a line at.
       </p>
     } @else if (subLedgerMissing) {
-      <p class="note warn">
+      <bb-message-box tone="warning">
         This contact has no ledger accounts yet, so nothing here can be posted. Open the contact and
         use <strong>Provision accounts</strong>, then come back.
-      </p>
+      </bb-message-box>
     }
 
     <bb-data-grid [gridCode]="'MONEY_DOCUMENT_EDIT_LINES'" [columns]="editLinesColumns" [data]="lines()">

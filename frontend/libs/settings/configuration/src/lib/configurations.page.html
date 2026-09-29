@@ -4,8 +4,8 @@
   it to the shipped default.
 </p>
 
-@if (error()) {
-  <p class="error">{{ error() }}</p>
+@if (error(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 @for (group of grouped(); track group.category) {

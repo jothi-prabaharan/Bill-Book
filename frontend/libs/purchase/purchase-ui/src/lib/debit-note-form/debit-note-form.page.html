@@ -18,21 +18,21 @@
     <a class="btn" routerLink="..">Back to list</a>
   </header>
 
-  @if (error()) {
-    <div class="banner banner--error" role="alert">{{ error() }}</div>
+  @if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
-  @if (notice()) {
-    <div class="banner banner--ok">{{ notice() }}</div>
+  @if (notice(); as note) {
+    <bb-message-box [messages]="[{ tone: 'success', text: note }]" />
   }
 
   @if (readonlyDoc()) {
-    <div class="banner banner--info">
+    <bb-message-box tone="info">
       This debit note has been posted.
       @if (movesStock()) {
         The goods have gone back, so it cannot be undone &mdash; receive them
         again on a new goods receipt if the vendor returns them.
       }
-    </div>
+    </bb-message-box>
   }
 
   @if (loading()) {
@@ -112,17 +112,17 @@
       </div>
 
       @if (movesStock()) {
-        <p class="banner banner--warn">
+        <bb-message-box tone="warning">
           <strong>This reason sends the goods back.</strong> Posting removes the
           quantities below from stock, at what the layers they came from were
           carrying. Once posted it cannot be undone.
-        </p>
+        </bb-message-box>
       } @else {
-        <p class="banner banner--info">
+        <bb-message-box tone="info">
           <strong>This reason moves money only.</strong> The goods stay on the
           shelf; what changes is what the vendor is owed and the input tax
           claimed.
-        </p>
+        </bb-message-box>
       }
     </section>
 

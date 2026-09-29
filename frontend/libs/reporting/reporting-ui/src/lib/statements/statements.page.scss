@@ -1,0 +1,43 @@
+/* Shared by the balance sheet and the profit and loss, which are one layout:
+   a section per account group, each with its subtotal. The rows are projected
+   into bb-card-table, so these selectors reach them as this template's own. */
+
+.section {
+  margin-bottom: var(--space-6);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The subtotal reads as a figure, not as a column heading. */
+.statement tfoot th {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 0;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  color: inherit;
+}
+
+.summary {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--color-divider);
+}
+
+.summary__line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__line--net {
+  margin-bottom: 0;
+  font-size: 1.1em;
+}

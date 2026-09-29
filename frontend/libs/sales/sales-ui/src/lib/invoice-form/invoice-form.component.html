@@ -100,7 +100,7 @@
     <div class="inv-form__gl">
       <h2 class="inv-form__gl-title">What posting will write to the ledger</h2>
 
-      <table class="inv-form__gl-table">
+      <bb-card-table class="inv-form__gl-table" flush>
         <thead>
           <tr>
             <th scope="col">Account</th>
@@ -128,13 +128,13 @@
             <td class="inv-form__num">{{ preview.totalCredit | number: '1.2-2' }}</td>
           </tr>
         </tfoot>
-      </table>
+      </bb-card-table>
 
       @if (!preview.isBalanced) {
-        <p class="field-error" role="alert">
+        <bb-message-box tone="error">
           These legs do not balance, so posting will be refused. This is a fault in the document
           rather than in what you have typed — the ledger will not accept it either.
-        </p>
+        </bb-message-box>
       }
     </div>
   }

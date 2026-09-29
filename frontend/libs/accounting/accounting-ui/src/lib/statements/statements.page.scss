@@ -18,8 +18,6 @@ button.ghost { background: transparent; color: #4a4f60; }
 button:disabled { opacity: .45; cursor: default; }
 
 .note { background: #f4f6fb; border-left: 3px solid #3557d6; padding: .55rem .8rem; font-size: .82rem; color: #4a4f60; margin: 0 0 1rem; }
-.note.warn { background: #fdf3e6; border-left-color: #b26a00; color: #7a4a00; }
-
 .import { margin-bottom: 1.5rem; }
 .import-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
 .import-row input[type='file'] { font-size: .82rem; }

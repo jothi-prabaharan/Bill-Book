@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signa
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {
-  MoneyInputComponent,
   DateInputComponent,
+  MessageBoxComponent,
+  MoneyInputComponent,
   NumberInputComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -38,6 +39,7 @@ interface CapitalizeAssetModel {
     NumberInputComponent,
     MoneyInputComponent,
     DateInputComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './fixed-asset-form.component.html',
   styleUrl: './fixed-asset-form.component.scss',

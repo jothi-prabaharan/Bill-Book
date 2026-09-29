@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { dominantTone, toneLabel, toneLiveness, UiMessage } from './message-box.model';
+import { boxTone, MessageTone, toneLabel, toneLiveness, UiMessage } from './message-box.model';
 
 /**
  * The one place a business rule speaks to the user.
@@ -21,6 +21,17 @@ import { dominantTone, toneLabel, toneLiveness, UiMessage } from './message-box.
  *
  * Empty by default and it renders nothing at all, so a page can bind it
  * unconditionally rather than wrapping it in a condition of its own.
+ *
+ * **Two ways to fill it.** `messages` for what the server or a rule said — plain
+ * text, one line each. `tone` plus projected content for a message the page
+ * writes itself and wants markup in: a posted document's "this can no longer be
+ * changed" with the operative words in bold, or a count of failed movements
+ * with a link beside it.
+ *
+ * ```html
+ * <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+ * <bb-message-box tone="info">This bill has been <strong>posted</strong>.</bb-message-box>
+ * ```
  */
 @Component({
   selector: 'bb-message-box',
@@ -33,6 +44,15 @@ import { dominantTone, toneLabel, toneLiveness, UiMessage } from './message-box.
 export class MessageBoxComponent {
   readonly messages = input<readonly UiMessage[]>([]);
 
+  /**
+   * Show the projected content, in this tone.
+   *
+   * Null — the default — means the box has no content of its own and shows
+   * only `messages`. When both are present the louder tone wins, the same way
+   * it does between messages.
+   */
+  readonly tone = input<MessageTone | null>(null);
+
   /** Whether the user may dismiss it. Off for anything that blocks a save. */
   readonly dismissible = input(false);
 
@@ -40,14 +60,16 @@ export class MessageBoxComponent {
 
   protected readonly hasMessages = computed(() => this.messages().length > 0);
 
+  protected readonly visible = computed(() => this.hasMessages() || this.tone() !== null);
+
   /**
    * The loudest tone present, which is what the box takes its border from.
    * The rule itself lives in the model beside the type, where it is testable
    * without a component fixture.
    */
-  protected readonly tone = computed(() => dominantTone(this.messages()));
+  protected readonly boxTone = computed(() => boxTone(this.messages(), this.tone()));
 
-  protected readonly label = computed(() => toneLabel(this.tone()));
+  protected readonly label = computed(() => toneLabel(this.boxTone()));
 
-  protected readonly liveness = computed(() => toneLiveness(this.tone()));
+  protected readonly liveness = computed(() => toneLiveness(this.boxTone()));
 }

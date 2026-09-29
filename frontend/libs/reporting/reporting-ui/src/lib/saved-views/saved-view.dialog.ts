@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   CheckboxComponent,
+  MessageBoxComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
@@ -26,6 +27,7 @@ import { ReportQuery, SavedView, SavedViewService } from '@bill-book/reporting-c
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './saved-view.dialog.html',
   styleUrl: './saved-view.dialog.scss',

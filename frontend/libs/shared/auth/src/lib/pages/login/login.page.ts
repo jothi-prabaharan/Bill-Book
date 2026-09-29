@@ -6,6 +6,7 @@ import { AuthService } from '../../auth.service';
 import {
   CheckboxComponent,
   EmailInputComponent,
+  MessageBoxComponent,
   PasswordInputComponent,
 } from '@bill-book/ui-components';
 
@@ -24,6 +25,7 @@ import {
     EmailInputComponent,
     PasswordInputComponent,
     CheckboxComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './login.page.html',
   styleUrl: './login.page.scss',

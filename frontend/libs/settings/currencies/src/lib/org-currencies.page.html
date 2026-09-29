@@ -23,8 +23,8 @@
   </div>
 }
 
-@if (error()) {
-  <p class="error">{{ error() }}</p>
+@if (error(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 <bb-data-grid [gridCode]="'ORG_CURRENCIES'" [columns]="columns" [data]="rows()">

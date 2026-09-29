@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
+import {
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReportCatalogItem, ReportQueryService, catalogLink } from '@bill-book/reporting-core';
@@ -14,7 +17,10 @@ import { ReportCatalogItem, ReportQueryService, catalogLink } from '@bill-book/r
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-list-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [
+    RouterLink,
+    MessageBoxComponent,
+  ],
   templateUrl: './report-list.page.html',
   styleUrl: './report-list.page.scss',
 })

@@ -90,11 +90,8 @@
   margin: 0 0 var(--space-compact-2, 7px);
 }
 
-.grid {
-  width: 100%;
-  border-collapse: collapse;
-}
-
+/* `.grid` is on the bb-card-table host, which owns the <table>; the rows are
+   this template's own, so the selectors below still reach them. */
 .grid th,
 .grid td {
   text-align: left;
@@ -124,7 +121,7 @@
   background: var(--color-danger-bg, #fbe4e0);
 }
 
-.grid tr.over .apply-cell :is(input, bb-number-input) {
+.grid tr.over .apply-cell :is(input, bb-money-input) {
   border-color: var(--color-danger, #a2332a);
   outline-color: var(--color-danger, #a2332a);
 }

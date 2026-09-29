@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  boxTone,
   dominantTone,
   MessageTone,
   toneLabel,
@@ -52,5 +53,12 @@ describe('MessageBox tone', () => {
 
     expect(tone).toBe('info');
     expect(toneLabel(tone)).toBe('Information');
+  });
+
+  it('MSG-10: projected content in its own tone competes with the messages', () => {
+    expect(boxTone([], 'info')).toBe('info');
+    expect(boxTone([], null)).toBe('info');
+    expect(boxTone([message('error', 'Could not save.')], 'info')).toBe('error');
+    expect(boxTone([message('info', 'Draft saved.')], 'warning')).toBe('warning');
   });
 });

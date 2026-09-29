@@ -42,8 +42,8 @@
   </div>
 </header>
 
-@if (message()) {
-  <p class="error">{{ message() }}</p>
+@if (message(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 @if (custom()?.droppedColumns?.length) {
@@ -61,15 +61,23 @@
   @if (report.parameters.length > 0) {
     <form class="parameters">
       @for (parameter of report.parameters; track parameter.name) {
-        <label>
-          {{ parameter.label }}
-          <input
-            [type]="parameter.dataType === 'Date' ? 'date' : 'text'"
-            [name]="parameter.name"
-            [ngModel]="query().parameters[parameter.name]"
-            (ngModelChange)="onParameterChange(parameter.name, $event)"
-          />
-        </label>
+        <div class="parameter">
+          @if (parameter.dataType === 'Date') {
+            <bb-date-input
+              [label]="parameter.label"
+              [name]="parameter.name"
+              [ngModel]="query().parameters[parameter.name] || null"
+              (ngModelChange)="onParameterChange(parameter.name, $event ?? '')"
+            />
+          } @else {
+            <bb-text-input
+              [label]="parameter.label"
+              [name]="parameter.name"
+              [ngModel]="query().parameters[parameter.name]"
+              (ngModelChange)="onParameterChange(parameter.name, $event)"
+            />
+          }
+        </div>
       }
     </form>
   }
@@ -93,10 +101,10 @@
   />
 
   @if (report.forcesSortOrder) {
-    <p class="notice">
+    <bb-message-box tone="info">
       This report is shown in its own order, because its running balance is only
       true of that order.
-    </p>
+    </bb-message-box>
   }
 
   <bb-report-grid

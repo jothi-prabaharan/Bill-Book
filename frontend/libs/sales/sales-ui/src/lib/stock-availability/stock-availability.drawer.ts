@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { StockAvailability } from '@bill-book/sales-core';
+import { CardTableComponent, MessageBoxComponent } from '@bill-book/ui-components';
 
 /**
  * What the items on this document have, hold, and can still promise.
@@ -20,7 +21,7 @@ import { StockAvailability } from '@bill-book/sales-core';
 @Component({
   selector: 'bb-stock-availability-drawer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CardTableComponent, MessageBoxComponent],
   templateUrl: './stock-availability.drawer.html',
   styleUrl: './stock-availability.drawer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

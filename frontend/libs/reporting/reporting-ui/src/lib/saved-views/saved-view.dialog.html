@@ -4,8 +4,8 @@
     <button type="button" class="ghost" (click)="close()">Done</button>
   </header>
 
-  @if (message()) {
-    <p class="error">{{ message() }}</p>
+  @if (message(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
   <ul>

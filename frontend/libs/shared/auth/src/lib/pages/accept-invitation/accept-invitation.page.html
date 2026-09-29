@@ -47,8 +47,8 @@
             <bb-password-input id="a-conf" name="confirmPassword" label="Confirm password"
                                purpose="new" [(ngModel)]="confirmPassword" [required]="true" />
           </div>
-          @if (error()) {
-            <p class="error-msg">{{ error() }}</p>
+          @if (error(); as failure) {
+            <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
           }
           <button type="submit" [disabled]="busy()" class="btn btn-primary btn-block m-0">Set password</button>
         </form>

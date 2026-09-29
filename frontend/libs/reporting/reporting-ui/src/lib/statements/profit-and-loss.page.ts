@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { CardTableComponent } from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -21,8 +22,9 @@ interface PLResponse {
 @Component({
   selector: 'bb-profit-and-loss',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CardTableComponent],
   templateUrl: './profit-and-loss.page.html',
+  styleUrl: './statements.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfitAndLossPage implements OnInit {

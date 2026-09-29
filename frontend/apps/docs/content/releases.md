@@ -30,6 +30,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Changed**: **Warnings and errors look the same on every screen.** Around fifty messages across sales, purchase, accounting, inventory, reports, settings, sign-in and the client portal were each styled by hand — some red text, some tinted boxes, some grey notes — and now use one message box, with one colour and edge per kind of message and a screen reader announcing each the same way. What each message says has not changed.
+- **Changed**: **Tables that were drawn by hand now use the shared table.** The settle-documents workspace, the invoice's posting preview, the stock-availability drawer, the balance sheet, the profit and loss, the API clients list and the dashboard's two tables now share the product's table style — the same headings, row spacing and hover as every other list. The balance sheet and profit and loss also stop hard-coding their colours, so they follow the theme.
+- **Changed**: **The amount you apply on Settle documents is grouped like every other amount** — `4,00,000.00` on a rupee branch — once you leave the box.
+- **Changed**: **A report's own parameters, and the code box on Forgot password, are the standard fields.** They now carry proper labels and behave like every other date and text box; the code still keeps its leading zeros and brings up the number pad on a phone.
 - **Added**: **GSTR-2B reconciliation.** Import the month's GSTR-2B JSON under **Purchase › GSTR-2B reconciliation**. Each supplier invoice is matched to your bills, tolerating differences in case, separators and leading zeros in invoice numbers. You see what matched, what differs, what 2B has and your books don't, and which bills the supplier hasn't reported, with the credit at risk totalled. See [Purchase](purchase#gstr-2b-reconciliation).
 - **Added**: **Reverse charge and input tax credit on bills.**
   - A bill can be marked **Reverse charge**. The vendor is then owed the total without tax, and the tax goes to a new **GST Payable (Reverse Charge)** account.
