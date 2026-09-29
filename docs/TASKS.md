@@ -2384,7 +2384,7 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** the Home page shows the next GSTR-1 due date, and an MSME bill past 45 days appears on the ageing report.
 
 ### TK-120 · Campaigns: templates, audiences, consent and unsubscribe
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-29
 - **Lanes:** L-CUS, L-CUS-UI, L-RPT · **Depends on:** TK-38 · **Decision:** —
 - **Where:** `docs/Modules.md`, "Customer service (`cus`)" → "Campaigns and marketing automation".
 - **Tables:** `cus.EmailTemplates`, `cus.Audiences`, `cus.EmailConsents`
