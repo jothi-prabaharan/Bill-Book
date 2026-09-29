@@ -1,4 +1,5 @@
 using CostingEngine.Worker.Consumers;
+using Inventory.Repository.Repositories;
 using Inventory.Api.Services;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -57,13 +58,13 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
 // and that set of rows is the task list.
 builder.Services.AddBillBookWorkerErrorAudit<InventoryDbContext>();
 
-builder.Services.AddScoped<CostingService>();
+builder.Services.AddScoped<CostingRepository>();
 
 // The weighted average, recalculated per item in date order. It needs the
 // branch's lock date, which is Accounting's, so that comes over the wire too —
 // the same base address and the same internal key as the ledger posting.
-builder.Services.AddScoped<WeightedAverageRecosting>();
-builder.Services.AddHttpClient<IAccountingPeriodLock, AccountingPeriodLock>(client =>
+builder.Services.AddScoped<WeightedAverageRecostingRepository>();
+builder.Services.AddHttpClient<IAccountingPeriodLock, AccountingPeriodLockRepository>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
 })
@@ -73,8 +74,8 @@ builder.Services.AddHttpClient<IAccountingPeriodLock, AccountingPeriodLock>(clie
 // done inside the costing transaction: tying a stock movement's fate to
 // Accounting being reachable at that instant would either roll back a settled
 // cost or lose the posting it owed.
-builder.Services.AddScoped<StockLedgerPoster>();
-builder.Services.AddHttpClient<IAccountingLedger, AccountingLedger>(client =>
+builder.Services.AddScoped<StockLedgerPosterRepository>();
+builder.Services.AddHttpClient<IAccountingLedger, AccountingLedgerRepository>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
 })

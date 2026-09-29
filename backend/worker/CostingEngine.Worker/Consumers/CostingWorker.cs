@@ -1,3 +1,4 @@
+using Inventory.Repository.Repositories;
 using Inventory.Api.Services;
 using Inventory.Entity.Enums;
 using Inventory.Entity.TableEntities;
@@ -147,7 +148,7 @@ public sealed class CostingWorker : BackgroundService
         tenant.OrgId = organization.OrgId;
 
         InventoryDbContext db = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
-        CostingService costing = scope.ServiceProvider.GetRequiredService<CostingService>();
+        CostingRepository costing = scope.ServiceProvider.GetRequiredService<CostingRepository>();
         var auditor = scope.ServiceProvider.GetRequiredService<IWorkerErrorAuditor>();
 
         await ReclaimStaleAsync(db, ct);
@@ -221,7 +222,7 @@ public sealed class CostingWorker : BackgroundService
     {
         try
         {
-            var poster = scope.ServiceProvider.GetRequiredService<StockLedgerPoster>();
+            var poster = scope.ServiceProvider.GetRequiredService<StockLedgerPosterRepository>();
 
             int posted = await poster.PostPendingAsync(
                 LedgerBatchSize, LedgerMaxAttempts, ClaimTimeout, ct);
@@ -270,7 +271,7 @@ public sealed class CostingWorker : BackgroundService
 
     private async Task CostOneAsync(
         InventoryDbContext db,
-        CostingService costing,
+        CostingRepository costing,
         IWorkerErrorAuditor auditor,
         StockMovement movement,
         CancellationToken ct)
@@ -363,7 +364,7 @@ public sealed class CostingWorker : BackgroundService
     private async Task CostWeightedAverageAsync(
         IServiceScope scope,
         InventoryDbContext db,
-        CostingService costing,
+        CostingRepository costing,
         IWorkerErrorAuditor auditor,
         long itemId,
         List<StockMovement> movements,
@@ -411,7 +412,7 @@ public sealed class CostingWorker : BackgroundService
             return;
         }
 
-        var recosting = scope.ServiceProvider.GetRequiredService<WeightedAverageRecosting>();
+        var recosting = scope.ServiceProvider.GetRequiredService<WeightedAverageRecostingRepository>();
 
         await using ITransactionScope tx = await db.Database.BeginScopeAsync(ct);
 
