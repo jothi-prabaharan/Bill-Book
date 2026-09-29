@@ -30,17 +30,27 @@ public sealed class ReportsController : ControllerBase
 {
     private readonly ReportCatalogService _catalog;
     private readonly ReportRunner _runner;
+    private readonly CustomReportService _custom;
 
-    public ReportsController(ReportCatalogService catalog, ReportRunner runner)
+    public ReportsController(ReportCatalogService catalog, ReportRunner runner, CustomReportService custom)
     {
         _catalog = catalog;
         _runner = runner;
+        _custom = custom;
     }
 
-    /// <summary>The reports this caller may run. Ones they may not are absent, not refused.</summary>
+    /// <summary>
+    /// The reports this caller may run, then the custom reports they may open
+    /// (TK-113). Ones they may not are absent, not refused.
+    /// </summary>
     [HttpGet]
-    public async Task<IActionResult> Catalog(CancellationToken ct) =>
-        Ok(await _catalog.ListAsync(Permissions(), ct));
+    public async Task<IActionResult> Catalog(CancellationToken ct)
+    {
+        IReadOnlySet<string> permissions = Permissions();
+        List<ReportCatalogItemView> catalog = await _catalog.ListAsync(permissions, ct);
+        catalog.AddRange(await _custom.CatalogAsync(permissions, ct));
+        return Ok(catalog);
+    }
 
     /// <summary>One report's parameters and columns, for building its screen.</summary>
     [HttpGet("{reportKey}")]

@@ -1,4 +1,7 @@
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Text.Json;
+using Shared.Kernel.CustomFields;
 using Reporting.Entity.Enums;
 
 namespace Reporting.Api.Services;
@@ -96,6 +99,42 @@ public sealed class ReportColumn
         return new ReportColumn(
             key, dataType, selector, value, aggregate, sortable, filterable, groupable);
     }
+
+    /// <summary>
+    /// A custom field's value as a text column (TK-113), keyed <c>custom.{field}</c>.
+    ///
+    /// The selector reads the jsonb key in SQL, which Npgsql translates to
+    /// <c>"CustomFields" -&gt;&gt; 'field'</c>, so filtering, sorting, grouping
+    /// and pivoting run in the database like any other column. The field key
+    /// is a constant written into the expression, never a string from the
+    /// caller: it comes from the branch's own definitions. Reading a row
+    /// already in hand uses <see cref="CustomFieldStore.Text"/> instead, because
+    /// <c>GetProperty</c> throws in memory where SQL answers null.
+    /// </summary>
+    public static ReportColumn CustomField<TRow>(
+        string fieldKey, Expression<Func<TRow, JsonDocument?>> document)
+    {
+        MethodInfo getProperty = typeof(JsonElement).GetMethod(nameof(JsonElement.GetProperty), [typeof(string)])!;
+        MethodInfo getString = typeof(JsonElement).GetMethod(nameof(JsonElement.GetString), Type.EmptyTypes)!;
+
+        Expression root = Expression.Property(document.Body, nameof(JsonDocument.RootElement));
+        Expression value = Expression.Call(Expression.Call(root, getProperty, Expression.Constant(fieldKey)), getString);
+        Expression<Func<TRow, string?>> selector = Expression.Lambda<Func<TRow, string?>>(value, document.Parameters);
+
+        Func<TRow, JsonDocument?> read = document.Compile();
+
+        return new ReportColumn(
+            CustomKeyPrefix + fieldKey, ColumnDataType.Text, selector, typeof(string), AggregateFunction.None,
+            isSortable: true, isFilterable: true, isGroupable: true)
+        {
+            _getter = row => CustomFieldStore.Text(read((TRow)row), fieldKey),
+        };
+    }
+
+    /// <summary>What every custom field column's key starts with.</summary>
+    public const string CustomKeyPrefix = "custom.";
+
+    public bool IsCustomField => Key.StartsWith(CustomKeyPrefix, StringComparison.Ordinal);
 
     /// <summary>
     /// Whether this column can carry a number worth totalling. Read by the

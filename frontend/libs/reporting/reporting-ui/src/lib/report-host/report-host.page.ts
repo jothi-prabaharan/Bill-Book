@@ -3,6 +3,8 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  CustomReport,
+  CustomReportService,
   ExportFormat,
   ReportMetadata,
   ReportQuery,
@@ -20,6 +22,7 @@ import {
   PivotPanelComponent,
   ReportGridComponent } from '@bill-book/ui-components';
 import { SavedViewDialog } from '../saved-views/saved-view.dialog';
+import { CustomReportDialog } from '../custom-reports/custom-report.dialog';
 
 /**
  * Every report's screen.
@@ -45,7 +48,8 @@ import { SavedViewDialog } from '../saved-views/saved-view.dialog';
     ColumnChooserDialog,
     GroupPanelComponent,
     PivotPanelComponent,
-    SavedViewDialog
+    SavedViewDialog,
+    CustomReportDialog,
   ],
   templateUrl: './report-host.page.html',
   styleUrl: './report-host.page.scss',
@@ -54,6 +58,7 @@ export class ReportHostPage implements OnInit {
   private readonly reports = inject(ReportQueryService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly customReports = inject(CustomReportService);
 
   protected readonly metadata = signal<ReportMetadata | null>(null);
   protected readonly result = signal<ReportResult | null>(null);
@@ -65,9 +70,18 @@ export class ReportHostPage implements OnInit {
   /** The format currently exporting, or null. Two buttons, one flag. */
   protected readonly exporting = signal<ExportFormat | null>(null);
 
+  /** The custom report open over this dataset, when opened with `?custom=` (TK-113). */
+  protected readonly custom = signal<CustomReport | null>(null);
+  protected readonly savingCustom = signal(false);
+
   private reportKey = '';
 
   protected readonly columns = computed(() => this.metadata()?.columns ?? []);
+
+  /** A dataset, or a custom report built on one: the layout can be saved as a report. */
+  protected readonly isDataset = computed(() => this.metadata()?.module === 'Custom');
+
+  protected readonly title = computed(() => this.custom()?.title ?? this.metadata()?.title ?? 'Report');
 
   ngOnInit(): void {
     this.reportKey = this.route.snapshot.paramMap.get('reportKey') ?? '';
@@ -89,7 +103,13 @@ export class ReportHostPage implements OnInit {
       this.metadata.set(metadata);
 
       const shared = decodeQuery(this.route.snapshot.queryParamMap.get(REPORT_STATE_PARAM));
-      this.query.set(shared ?? emptyQuery(metadata));
+      const customId = Number(this.route.snapshot.queryParamMap.get('custom'));
+      const custom = customId > 0 ? await this.customReports.get(customId) : null;
+      this.custom.set(custom);
+
+      // A custom report's layout is what the report is; a pasted link's state
+      // still wins, as it does for a saved view.
+      this.query.set(shared ?? (custom ? { ...emptyQuery(metadata), ...custom.layout } : emptyQuery(metadata)));
 
       await this.run();
     } catch {
@@ -156,6 +176,33 @@ export class ReportHostPage implements OnInit {
       groupBy: pivot ? [] : this.query().groupBy,
       page: { ...this.query().page, number: 1, includeCount: true },
     });
+  }
+
+  /** The custom report just saved: stay on it, so a second save updates rather than duplicates. */
+  protected async onCustomSaved(report: CustomReport): Promise<void> {
+    this.custom.set({ ...report, droppedColumns: [] });
+
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { custom: report.customReportId, [REPORT_STATE_PARAM]: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected async deleteCustom(): Promise<void> {
+    const report = this.custom();
+
+    if (!report) {
+      return;
+    }
+
+    try {
+      await this.customReports.remove(report.customReportId);
+      await this.router.navigate(['/reports']);
+    } catch (error: unknown) {
+      this.message.set(this.readServerMessage(error) ?? 'Could not delete this report.');
+    }
   }
 
   protected onSavedViewApplied(layout: ReportQuery): void {

@@ -120,6 +120,28 @@ Four reports read project accounting, under **Projects** in the list. Running th
 
 A project's income and costs come from the ledger rows tagged with it. That covers manual journals, money documents, and sales and purchase lines. See [Projects](accounting#projects).
 
+## Custom reports
+
+Build a report of your own from a **dataset**. The datasets are listed under **Custom** in the report list, each marked **Dataset**:
+
+| Dataset | One row per | Needs | Custom fields |
+|---|---|---|---|
+| **Sales lines** | line of a posted invoice or POS sale | sales.view | the invoice's |
+| **Purchase lines** | line of a posted bill | purchase.view | the bill's |
+| **Ledger rows** | general-ledger line | accounting.view | none |
+| **Stock movements** | stock movement in or out | inventory.view | the item's |
+| **Items** | item | inventory.view | the item's |
+| **Contacts** | contact | contacts.view | the contact's |
+
+The branch's active [custom fields](masters#custom-fields) for that kind of record are extra columns at the end of the column list. They can be filtered, sorted, grouped and pivoted like any other column. Their values are shown as they are stored: a dropdown shows the option's value, and a multi-select shows its list. Amounts are in the branch's base currency, so lines in different currencies add up.
+
+To build one, open a dataset and choose the columns, filters, grouping and sorting you want. Then choose **Save as custom report** and give it a title. For example, to see sales by salesperson and site reference, open **Sales lines**, choose the **Salesperson** and **Site reference** columns with **Total**, and group by Salesperson and then Site reference.
+
+- A saved report appears under **Custom** in the report list and opens with its layout. **Save report** keeps changes, and **Save as a new report** keeps a copy.
+- A report is yours alone unless you tick **Share with the branch**. Sharing needs **reports.edit**, and so does changing or deleting a shared report.
+- A report reads its dataset, so it needs the same permission. A shared purchase-lines report is not listed for someone without **purchase.view**.
+- When a custom field is deactivated, its column goes from the dataset. A saved report that used it opens without it, with a notice naming the field. Reactivating the field brings the column back.
+
 ## If a branch shows no reports
 
 The report catalog is seeded per branch. A branch created before reporting existed has an empty catalog until it is seeded, which an administrator can trigger; it only adds what is missing, so it is safe to run again.

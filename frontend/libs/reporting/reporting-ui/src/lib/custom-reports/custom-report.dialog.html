@@ -1,0 +1,37 @@
+<div class="custom-report">
+  <header>
+    <h2>{{ existing()?.mayEdit ? 'Save custom report' : 'Save as custom report' }}</h2>
+    <button type="button" class="ghost" (click)="close()">Cancel</button>
+  </header>
+
+  <p class="hint">
+    Saves the columns, filters, grouping and sorting on screen. The report reads this
+    dataset, so anyone who opens it needs the same permission the dataset does.
+  </p>
+
+  @if (message()) {
+    <p class="error">{{ message() }}</p>
+  }
+
+  <form (ngSubmit)="save()">
+    <label>
+      Title
+      <bb-text-input name="title" placeholder="Sales by salesperson and site" [(ngModel)]="title" />
+    </label>
+
+    <label>
+      Description
+      <bb-text-input name="description" placeholder="Optional" [(ngModel)]="description" />
+    </label>
+
+    <bb-checkbox text="Share with the branch" name="shared" [(ngModel)]="shareWithBranch" />
+
+    @if (existing()?.mayEdit) {
+      <bb-checkbox text="Save as a new report" name="saveAsNew" [(ngModel)]="saveAsNew" />
+    }
+
+    <button type="submit" [disabled]="busy() || title.trim() === ''">
+      {{ busy() ? 'Saving…' : 'Save' }}
+    </button>
+  </form>
+</div>

@@ -61,3 +61,13 @@ h2 {
 .error {
   color: var(--bb-danger, #97302f);
 }
+
+.tag {
+  margin-left: 0.4rem;
+  padding: 0 0.35rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: var(--bb-surface-2, #f6f7f9);
+  border: 1px solid var(--bb-line, #e2e5ea);
+}

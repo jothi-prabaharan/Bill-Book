@@ -2287,7 +2287,7 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Not built:** only the invoice has a print route, so the other eight documents print custom fields once theirs exist (TK-22).
 
 ### TK-113 · Custom reports: datasets and the report builder
-- [~] working (Claude Opus 5.5) — since 2026-09-29
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
 - **Issue:** [#101](https://github.com/jothi-prabaharan/Bill-Book/issues/101)
 - **Lanes:** L-RPT, L-REPORTING-UI · **Depends on:** TK-111, TK-112 · **Decision:** —
 - **Tables:** `rpt.CustomReports`
@@ -2297,6 +2297,7 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] The builder page: pick a dataset, choose columns, filters, grouping and pivot on `bb-report-grid`, save.
   - [ ] Test: a user without `purchase.view` does not see a purchase-lines custom report; a deactivated field's column is dropped with a notice.
 - **Done when:** a user builds "sales by salesperson and site reference" from the sales-lines dataset, saves it, and reopens it from the catalog.
+- **As built:** six `DatasetSource` sources (`dataset-sales-lines`, `-purchase-lines`, `-ledger-rows`, `-stock-movements`, `-items`, `-contacts`) under `ReportModule.Custom`; each active custom field of the kind is a `custom.{key}` text column read from the jsonb in SQL, never seeded. `rpt.CustomReports` (RLS) holds the layout as a `ReportQueryRequest`; `api/reports/custom` saves and reopens, and the catalog appends the caller's visible reports. A deactivated field's column is pruned on open and named in `droppedColumns`. The builder is the report host page on a dataset, with **Save as custom report**. Datasets have no date parameter; a date filter narrows them. Running a dataset against real schemas is not covered by the tests (the Reporting test database has only `rpt`).
 
 ### TK-114 · Scheduled report email
 - [ ] open

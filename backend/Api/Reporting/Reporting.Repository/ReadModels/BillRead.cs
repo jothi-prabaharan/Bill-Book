@@ -18,5 +18,7 @@ public class BillRead : OrgScopedEntity
     public decimal ExchangeRate { get; set; }
     public decimal TotalAmount { get; set; }
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
-}
 
+    /// <summary>The record's custom field values (TK-111/TK-112), read by the custom report datasets (TK-113).</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
+}

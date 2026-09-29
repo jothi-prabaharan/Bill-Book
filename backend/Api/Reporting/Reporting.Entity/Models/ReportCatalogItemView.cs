@@ -23,6 +23,12 @@ public class ReportCatalogItemView
     public string? Description { get; set; }
 
     public int SortOrder { get; set; }
+
+    /// <summary>Set on a saved custom report (TK-113): it runs <see cref="ReportKey"/>, its dataset, with this report's layout.</summary>
+    public long? CustomReportId { get; set; }
+
+    /// <summary>True on a dataset, the starting point the report builder saves custom reports from.</summary>
+    public bool IsDataset { get; set; }
 }
 
 /// <summary>

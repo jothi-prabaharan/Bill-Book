@@ -128,6 +128,14 @@ public class ReportSourceTests
     private static readonly BudgetAgainstActualByProjectSource BudgetAgainstActualByProject = new(new StubFinancialYear());
     private static readonly BudgetMonthlyTrendSource BudgetMonthlyTrend = new(new StubFinancialYear());
 
+    // The datasets (TK-113), with no custom field definitions: their seeded columns only.
+    private static readonly SalesLinesDataset SalesLines = new();
+    private static readonly PurchaseLinesDataset PurchaseLines = new();
+    private static readonly LedgerRowsDataset LedgerRows = new();
+    private static readonly StockMovementsDataset StockMovements = new();
+    private static readonly ItemsDataset ItemsData = new();
+    private static readonly ContactsDataset ContactsData = new();
+
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
     /// declared without touching Master — so the client is here to satisfy the
@@ -238,6 +246,12 @@ public class ReportSourceTests
         BudgetAgainstActual,
         BudgetAgainstActualByProject,
         BudgetMonthlyTrend,
+        SalesLines,
+        PurchaseLines,
+        LedgerRows,
+        StockMovements,
+        ItemsData,
+        ContactsData,
     ];
 
     [Theory]

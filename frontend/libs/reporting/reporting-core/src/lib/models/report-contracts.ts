@@ -65,7 +65,8 @@ export type ReportModule =
   | 'Statutory'
   | 'Recruitment'
   | 'Claims'
-  | 'Projects';
+  | 'Projects'
+  | 'Custom';
 
 /**
  * `Xlsx` and `Csv` are the supported export formats. `Pdf` is declared so the
@@ -204,6 +205,24 @@ export interface ReportCatalogItem {
   description: string | null;
   sortOrder: number;
   app?: 'RetailErp' | 'School' | 'Hrms' | 'Payroll';
+  /** Set on a saved custom report (TK-113); `reportKey` is then its dataset. */
+  customReportId?: number | null;
+  /** True on a dataset, the starting point of the report builder. */
+  isDataset?: boolean;
+}
+
+/** A report built from a dataset and saved (TK-113). */
+export interface CustomReport {
+  customReportId: number;
+  datasetKey: string;
+  title: string;
+  description: string | null;
+  isShared: boolean;
+  /** Whether this user may change or delete it. Set by the server. */
+  mayEdit: boolean;
+  layout: ReportQuery;
+  /** Columns the saved layout named that the dataset no longer has, by heading. */
+  droppedColumns: string[];
 }
 
 export interface ReportParameter {

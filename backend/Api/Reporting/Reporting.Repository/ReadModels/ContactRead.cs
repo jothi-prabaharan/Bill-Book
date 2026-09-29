@@ -35,7 +35,7 @@ public class ContactRead : OrgScopedEntity
     public int? MaxOutstandingDays { get; set; }
 
     public bool IsActive { get; set; }
+
+    /// <summary>The record's custom field values (TK-111/TK-112), read by the custom report datasets (TK-113).</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
-
-
-

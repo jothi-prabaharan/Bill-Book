@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Security;
 using System.Text;
@@ -209,6 +210,21 @@ builder.Services.AddScoped<IReportSource, ProjectTimeByUserSource>();
 builder.Services.AddScoped<IReportSource, BudgetAgainstActualSource>();
 builder.Services.AddScoped<IReportSource, BudgetAgainstActualByProjectSource>();
 builder.Services.AddScoped<IReportSource, BudgetMonthlyTrendSource>();
+
+// The report builder's datasets (TK-113). Their custom field columns come
+// from Master's definitions, cached five minutes per branch and kind.
+builder.Services.AddHttpClient<ICustomFieldDefinitions, HttpCustomFieldDefinitions>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddScoped<IReportSource, SalesLinesDataset>();
+builder.Services.AddScoped<IReportSource, PurchaseLinesDataset>();
+builder.Services.AddScoped<IReportSource, LedgerRowsDataset>();
+builder.Services.AddScoped<IReportSource, StockMovementsDataset>();
+builder.Services.AddScoped<IReportSource, ItemsDataset>();
+builder.Services.AddScoped<IReportSource, ContactsDataset>();
+builder.Services.AddScoped<CustomReportService>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();

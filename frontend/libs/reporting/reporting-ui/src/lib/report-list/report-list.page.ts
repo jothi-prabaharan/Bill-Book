@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ReportCatalogItem, ReportQueryService } from '@bill-book/reporting-core';
+import { ReportCatalogItem, ReportQueryService, catalogLink } from '@bill-book/reporting-core';
 
 /**
  * The reports screen: everything this user may run, grouped by module.
@@ -24,6 +24,9 @@ export class ReportListPage implements OnInit {
   protected readonly catalog = signal<ReportCatalogItem[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
+
+  /** A custom report opens its dataset with `?custom=` (TK-113). */
+  protected readonly link = catalogLink;
 
   /** Grouped by module, each module's reports in their seeded order. */
   protected readonly grouped = computed(() => {

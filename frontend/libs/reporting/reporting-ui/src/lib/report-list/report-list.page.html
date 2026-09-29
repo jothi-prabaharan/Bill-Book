@@ -13,10 +13,15 @@
     <section>
       <h2>{{ group.module }}</h2>
       <ul class="reports">
-        @for (report of group.reports; track report.reportKey) {
+        @for (report of group.reports; track report.reportKey + '/' + (report.customReportId ?? '')) {
           <li>
-            <a [routerLink]="['/reports', report.reportKey]">
-              <span class="title">{{ report.title }}</span>
+            <a [routerLink]="link(report).path" [queryParams]="link(report).queryParams">
+              <span class="title">
+                {{ report.title }}
+                @if (report.isDataset) {
+                  <span class="tag">Dataset</span>
+                }
+              </span>
               @if (report.description) {
                 <span class="description">{{ report.description }}</span>
               }

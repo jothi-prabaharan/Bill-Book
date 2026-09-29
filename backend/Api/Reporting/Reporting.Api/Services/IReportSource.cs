@@ -46,6 +46,12 @@ public interface IReportSource
     /// </summary>
     bool ForcesSortOrder { get; }
 
+    /// <summary>
+    /// True on a dataset (TK-113): a wide, flat source the report builder
+    /// saves custom reports from, with the branch's custom fields as columns.
+    /// </summary>
+    bool IsDataset => false;
+
     /// <summary>Runs the report. Implemented once, generically, by <see cref="ReportSource{TRow}"/>.</summary>
     Task<ReportResultView> ExecuteAsync(
         ReportQueryRequest request,
@@ -80,6 +86,8 @@ public abstract class ReportSource<TRow> : IReportSource
     public virtual IReadOnlyList<ReportParameter> Parameters => [];
 
     public virtual bool ForcesSortOrder => false;
+
+    public virtual bool IsDataset => false;
 
     /// <summary>
     /// The report's query, executing nothing. Filters, sorting and paging are

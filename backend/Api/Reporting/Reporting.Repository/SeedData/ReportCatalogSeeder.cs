@@ -2322,6 +2322,159 @@ public sealed class ReportCatalogSeeder
                 new("variance", "Variance", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
             ],
         },
+
+        // The report builder's datasets (TK-113). Only their fixed columns are
+        // seeded: each branch's custom fields are added as columns at run time
+        // and are never rows here. Pivotable on every groupable column, since a
+        // dataset is where a pivot is built.
+        new()
+        {
+            ReportKey = "dataset-sales-lines",
+            Title = "Sales lines",
+            Module = ReportModule.Custom,
+            RequiredPermission = "sales.view",
+            Description = "Every line of every posted sales invoice and POS sale, with the invoice's custom fields. Start a custom report here.",
+            SortOrder = 1501,
+            Columns =
+            [
+                new("documentNo", "Invoice", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("documentDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("documentType", "Type", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("customer", "Customer", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("itemCode", "Item code", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("itemName", "Item", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("description", "Description", ColumnDataType.Text),
+                new("warehouse", "Warehouse", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("currencyCode", "Currency", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("quantity", "Quantity", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("unitPrice", "Unit price", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("discountBase", "Discount(%CurCode%)", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("taxableBase", "Taxable(%CurCode%)", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("taxBase", "Tax(%CurCode%)", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("lineTotalBase", "Total(%CurCode%)", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("lineId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "dataset-purchase-lines",
+            Title = "Purchase lines",
+            Module = ReportModule.Custom,
+            RequiredPermission = "purchase.view",
+            Description = "Every line of every posted purchase bill, with the bill's custom fields. Start a custom report here.",
+            SortOrder = 1502,
+            Columns =
+            [
+                new("documentNo", "Bill", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("documentDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("vendor", "Vendor", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("itemCode", "Item code", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("itemName", "Item", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("description", "Description", ColumnDataType.Text),
+                new("warehouse", "Warehouse", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("lineType", "Line type", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("currencyCode", "Currency", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("quantity", "Quantity", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("unitPrice", "Unit price", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("taxableBase", "Taxable(%CurCode%)", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("taxBase", "Tax(%CurCode%)", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("lineTotalBase", "Total(%CurCode%)", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("lineId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "dataset-ledger-rows",
+            Title = "Ledger rows",
+            Module = ReportModule.Custom,
+            RequiredPermission = "accounting.view",
+            Description = "Every general-ledger line with its account and contact. Start a custom report here.",
+            SortOrder = 1503,
+            Columns =
+            [
+                new("ledgerDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("accountType", "Account type", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("accountCode", "Account code", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("accountName", "Account", ColumnDataType.Text, IsDefault: true, IsPrimary: true, IsGroupable: true, IsPivotable: true),
+                new("contact", "Contact", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("transactionType", "Transaction type", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("documentNo", "Document", ColumnDataType.Text, IsDefault: true),
+                new("description", "Description", ColumnDataType.Text),
+                new("debitBase", "Debit(%CurCode%)", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("creditBase", "Credit(%CurCode%)", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("netBase", "Net(%CurCode%)", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("ledgerId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "dataset-stock-movements",
+            Title = "Stock movements",
+            Module = ReportModule.Custom,
+            RequiredPermission = "inventory.view",
+            Description = "Every stock movement in and out, with its item's custom fields. Start a custom report here.",
+            SortOrder = 1504,
+            Columns =
+            [
+                new("movementDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("itemCode", "Item code", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("itemName", "Item", ColumnDataType.Text, IsDefault: true, IsPrimary: true, IsGroupable: true, IsPivotable: true),
+                new("category", "Category", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("warehouse", "Warehouse", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("direction", "In/out", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("sourceType", "Source", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("quantityIn", "Qty in", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("quantityOut", "Qty out", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("netQuantity", "Net qty", ColumnDataType.Quantity, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("unitCost", "Unit cost", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("totalCost", "Total cost(%CurCode%)", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("stockMovementId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "dataset-items",
+            Title = "Items",
+            Module = ReportModule.Custom,
+            RequiredPermission = "inventory.view",
+            Description = "Every item with its prices, stock on hand and custom fields. Start a custom report here.",
+            SortOrder = 1505,
+            Columns =
+            [
+                new("itemCode", "Item code", ColumnDataType.Text, IsDefault: true),
+                new("itemName", "Item", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("category", "Category", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("unit", "Unit", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("status", "Status", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("salesPrice", "Sales price", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("purchasePrice", "Purchase price", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("mrp", "MRP", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("reorderLevel", "Reorder level", ColumnDataType.Quantity, Alignment: ColumnAlignment.Right),
+                new("quantityOnHand", "On hand", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("itemId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "dataset-contacts",
+            Title = "Contacts",
+            Module = ReportModule.Custom,
+            RequiredPermission = "contacts.view",
+            Description = "Every customer and vendor with their custom fields. Start a custom report here.",
+            SortOrder = 1506,
+            Columns =
+            [
+                new("contactCode", "Code", ColumnDataType.Text, IsDefault: true),
+                new("displayName", "Name", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("legalName", "Legal name", ColumnDataType.Text),
+                new("role", "Role", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("gstin", "GSTIN", ColumnDataType.Text, IsDefault: true),
+                new("currencyCode", "Currency", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("status", "Status", ColumnDataType.Text, IsGroupable: true, IsPivotable: true),
+                new("creditLimit", "Credit limit", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("contactId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
     ];
     private sealed class ReportSeed
     {

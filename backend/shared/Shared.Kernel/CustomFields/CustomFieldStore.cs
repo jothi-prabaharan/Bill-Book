@@ -28,6 +28,29 @@ public static class CustomFieldStore
         return values;
     }
 
+    /// <summary>
+    /// One stored value as text, the way Postgres's <c>-&gt;&gt;</c> reads it:
+    /// a string as itself, anything else as its JSON, a missing key or record
+    /// as null. What a report shows for a custom field column (TK-113), so the
+    /// materialised row agrees with the value the database grouped and filtered on.
+    /// </summary>
+    public static string? Text(JsonDocument? document, string key)
+    {
+        if (document is null
+            || document.RootElement.ValueKind != JsonValueKind.Object
+            || !document.RootElement.TryGetProperty(key, out JsonElement value))
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Null or JsonValueKind.Undefined => null,
+            JsonValueKind.String => value.GetString(),
+            _ => value.GetRawText(),
+        };
+    }
+
     /// <summary>The values to store: empty ones left out, and null when nothing is left.</summary>
     public static JsonDocument? Write(IReadOnlyDictionary<string, JsonElement>? values)
     {

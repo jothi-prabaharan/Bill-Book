@@ -121,8 +121,7 @@ public class ItemRead : OrgScopedEntity
     public bool IsActive { get; set; }
 
     // CreatedAt is inherited from OrgScopedEntity → AuditableEntity — already available.
+
+    /// <summary>The record's custom field values (TK-111/TK-112), read by the custom report datasets (TK-113).</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
-
-
-
-

@@ -1,10 +1,21 @@
 <header class="page-head">
   <div>
     <a class="back" routerLink="/reports">← Reports</a>
-    <h1>{{ metadata()?.title ?? 'Report' }}</h1>
+    <h1>{{ title() }}</h1>
+    @if (custom(); as report) {
+      <p class="subtitle">Custom report on {{ metadata()?.title }}</p>
+    }
   </div>
 
   <div class="actions">
+    @if (isDataset()) {
+      <button type="button" (click)="savingCustom.set(true)" [disabled]="busy()">
+        {{ custom()?.mayEdit ? 'Save report' : 'Save as custom report' }}
+      </button>
+      @if (custom()?.mayEdit) {
+        <button type="button" (click)="deleteCustom()" [disabled]="busy()">Delete report</button>
+      }
+    }
     <button type="button" (click)="choosingView.set(true)" [disabled]="busy()">
       Views
     </button>
@@ -30,6 +41,15 @@
 
 @if (message()) {
   <p class="error">{{ message() }}</p>
+}
+
+@if (custom()?.droppedColumns?.length) {
+  <p class="notice">
+    {{ custom()!.droppedColumns.join(', ') }}
+    {{ custom()!.droppedColumns.length === 1 ? 'is' : 'are' }} no longer in use, so
+    {{ custom()!.droppedColumns.length === 1 ? 'its column was' : 'their columns were' }}
+    taken out of this report. Save the report to keep it this way.
+  </p>
 }
 
 @if (metadata(); as report) {
@@ -90,6 +110,18 @@
         [layout]="query()"
         (applied)="onSavedViewApplied($event)"
         (closed)="choosingView.set(false)"
+      />
+    </div>
+  }
+
+  @if (savingCustom()) {
+    <div class="overlay">
+      <bb-custom-report-dialog
+        [datasetKey]="report.reportKey"
+        [layout]="query()"
+        [existing]="custom()"
+        (saved)="onCustomSaved($event)"
+        (closed)="savingCustom.set(false)"
       />
     </div>
   }

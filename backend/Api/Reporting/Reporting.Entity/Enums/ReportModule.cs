@@ -24,4 +24,7 @@ public enum ReportModule
 
     /// <summary>Project accounting (TK-107): profitability, budgets, unbilled work and time.</summary>
     Projects = 14,
+
+    /// <summary>The report builder's datasets and the custom reports saved from them (TK-113).</summary>
+    Custom = 15,
 }

@@ -31,6 +31,9 @@ public class ReportingDbContext : TenantDbContext
 
     public DbSet<ReportView> ReportViews => Set<ReportView>();
 
+    /// <summary>Reports built from a dataset and saved (TK-113).</summary>
+    public DbSet<CustomReport> CustomReports => Set<CustomReport>();
+
     public DbSet<ReportMaster> ReportMasters => Set<ReportMaster>();
 
     public DbSet<ReportColumn> ReportColumns => Set<ReportColumn>();
@@ -220,6 +223,24 @@ public class ReportingDbContext : TenantDbContext
                 .WithMany()
                 .HasForeignKey(e => e.ReportId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CustomReport>(b =>
+        {
+            b.HasKey(e => e.CustomReportId);
+
+            b.Property(e => e.DefinitionJson).HasColumnType("jsonb");
+
+            // A title once per owner, and once among the shared ones: two
+            // "Sales by site" in one list cannot be told apart.
+            b.HasIndex(e => new { e.OrgId, e.OwnerUserId, e.Title })
+                .IsUnique()
+                .AreNullsDistinct(false)
+                .HasFilter("\"IsActive\" = true")
+                .HasDatabaseName("IX_CustomReports_Title");
+
+            b.HasIndex(e => new { e.OrgId, e.DatasetKey })
+                .HasDatabaseName("IX_CustomReports_Dataset");
         });
 
         ConfigureReadModels(modelBuilder);

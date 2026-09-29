@@ -58,6 +58,7 @@ public sealed class ReportCatalogService
                     App = _sources[r.ReportKey].App,
                     Description = r.Description,
                     SortOrder = r.SortOrder,
+                    IsDataset = _sources[r.ReportKey].IsDataset,
                 }),
         ];
     }
@@ -125,11 +126,21 @@ public sealed class ReportCatalogService
     {
         Dictionary<string, ReportDetail> details = await DetailsAsync(source.ReportKey, ct);
 
+        // A dataset's custom field columns are the branch's, known only now
+        // and never seeded (TK-113). Their presentation is the field's label.
+        IReadOnlyDictionary<string, string> labels = new Dictionary<string, string>();
+        if (source is IDatasetSource dataset)
+        {
+            await dataset.PrepareColumnsAsync(ct);
+            labels = dataset.CustomLabels;
+        }
+
         Validate(source, details);
 
-        return
+        List<ReportColumnView> seeded =
         [
             .. source.Columns
+                .Where(column => !column.IsCustomField)
                 .Select(column =>
                 {
                     ReportDetail detail = details[column.Key];
@@ -150,6 +161,26 @@ public sealed class ReportCatalogService
                     };
                 })
                 .Where(c => !details[c.Key].IsHidden),
+        ];
+
+        return
+        [
+            .. seeded,
+            .. source.Columns
+                .Where(column => column.IsCustomField)
+                .Select(column => new ReportColumnView
+                {
+                    Key = column.Key,
+                    Header = labels.TryGetValue(column.Key, out string? label) ? label : column.Key,
+                    DataType = column.DataType,
+                    Alignment = ColumnAlignment.Left,
+                    Width = 160,
+                    IsFilterable = column.IsFilterable,
+                    IsSortable = column.IsSortable,
+                    IsGroupable = column.IsGroupable,
+                    IsPivotable = true,
+                    Aggregate = column.DefaultAggregate,
+                }),
         ];
     }
 
@@ -208,7 +239,7 @@ public sealed class ReportCatalogService
     {
         List<string> missing =
         [
-            .. source.Columns.Select(c => c.Key).Where(key => !details.ContainsKey(key)),
+            .. source.Columns.Where(c => !c.IsCustomField).Select(c => c.Key).Where(key => !details.ContainsKey(key)),
         ];
 
         List<string> orphaned =
