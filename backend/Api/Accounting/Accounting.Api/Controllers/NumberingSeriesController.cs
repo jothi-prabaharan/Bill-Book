@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,9 +27,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class NumberingSeriesController : ControllerBase
 {
-    private readonly NumberingSeriesService _series;
+    private readonly NumberingSeriesRepository _series;
 
-    public NumberingSeriesController(NumberingSeriesService series) => _series = series;
+    public NumberingSeriesController(NumberingSeriesRepository series) => _series = series;
 
     /// <summary><paramref name="seriesFor"/> filters to Master or Document; omit for both.</summary>
     [HttpGet]

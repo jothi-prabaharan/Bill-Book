@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -47,10 +48,10 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var accounts = _services.GetRequiredService<AccountService>();
-        var taxes = _services.GetRequiredService<TaxMasterService>();
-        var numbering = _services.GetRequiredService<NumberingSeriesService>();
-        var terms = _services.GetRequiredService<PaymentTermService>();
+        var accounts = _services.GetRequiredService<AccountRepository>();
+        var taxes = _services.GetRequiredService<TaxMasterRepository>();
+        var numbering = _services.GetRequiredService<NumberingSeriesRepository>();
+        var terms = _services.GetRequiredService<PaymentTermRepository>();
 
         var response = new SeedOrganizationResponse
         {

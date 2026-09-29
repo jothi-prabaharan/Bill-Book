@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,8 +9,8 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// The fixed asset register. Every rule lives in <see cref="FixedAssetService"/>
-/// and <see cref="DepreciationService"/>; this only maps their outcomes.
+/// The fixed asset register. Every rule lives in <see cref="FixedAssetRepository"/>
+/// and <see cref="DepreciationRepository"/>; this only maps their outcomes.
 /// </summary>
 [ApiController]
 [Route("api/accounting/fixed-assets")]
@@ -18,10 +19,10 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class FixedAssetsController : ControllerBase
 {
-    private readonly FixedAssetService _assets;
-    private readonly DepreciationService _depreciation;
+    private readonly FixedAssetRepository _assets;
+    private readonly DepreciationRepository _depreciation;
 
-    public FixedAssetsController(FixedAssetService assets, DepreciationService depreciation)
+    public FixedAssetsController(FixedAssetRepository assets, DepreciationRepository depreciation)
     {
         _assets = assets;
         _depreciation = depreciation;
@@ -41,7 +42,7 @@ public sealed class FixedAssetsController : ControllerBase
     /// <summary>
     /// Puts an asset bought on a bill on the register by hand, for a bill posted
     /// before bills did it themselves, and reclassifies its cost out of the
-    /// shared Fixed Asset account; see <see cref="FixedAssetService.CapitalizeAsync"/>.
+    /// shared Fixed Asset account; see <see cref="FixedAssetRepository.CapitalizeAsync"/>.
     /// </summary>
     [HttpPost("capitalize")]
     public async Task<IActionResult> CapitalizeAsset([FromBody] CapitalizeAssetRequest request, CancellationToken ct)
@@ -63,7 +64,7 @@ public sealed class FixedAssetsController : ControllerBase
     /// Retires an asset. <c>approve</c>, not <c>create</c>: taking an asset off
     /// the books is a sign-off, the same separation a journal's post has.
     /// Another branch's asset answers 404 — see
-    /// <see cref="FixedAssetService.DisposeAsync"/>.
+    /// <see cref="FixedAssetRepository.DisposeAsync"/>.
     /// </summary>
     [HttpPost("{id:long}/dispose")]
     [PermissionAction("approve")]

@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,9 +15,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class TaxMastersController : ControllerBase
 {
-    private readonly TaxMasterService _taxes;
+    private readonly TaxMasterRepository _taxes;
 
-    public TaxMastersController(TaxMasterService taxes) => _taxes = taxes;
+    public TaxMastersController(TaxMasterRepository taxes) => _taxes = taxes;
 
     [HttpGet]
     public async Task<IActionResult> List(

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -170,7 +171,7 @@ public class FixedAssetPostingTests
         // confirm the id exists in someone else's books (CLAUDE.md, TK-71).
         await using AccountingDbContext other = _postgres.CreateContext(h.CustomerId, Guid.NewGuid());
 
-        FixedAssetResult result = await new FixedAssetService(other, h.Journals).DisposeAsync(
+        FixedAssetResult result = await new FixedAssetRepository(other, h.Journals).DisposeAsync(
             h.AssetId, new DisposeAssetRequest { DisposalDate = new DateOnly(2026, 9, 1) }, ct);
 
         Assert.Equal(FixedAssetOutcome.NotFound, result.Outcome);
@@ -534,7 +535,7 @@ public class FixedAssetPostingTests
     private sealed class Harness : IAsyncDisposable
     {
         public required AccountingDbContext Db { get; init; }
-        public required DepreciationService Depreciation { get; init; }
+        public required DepreciationRepository Depreciation { get; init; }
         
         public required long AssetAccountId { get; init; }
         public required long AccumulatedDepreciationId { get; init; }
@@ -542,9 +543,9 @@ public class FixedAssetPostingTests
         public required long CategoryId { get; init; }
         public required long AssetId { get; init; }
         public required Guid CustomerId { get; init; }
-        public required FixedAssetService Assets { get; init; }
-        public required JournalService Journals { get; init; }
-        public required LedgerPostingService Postings { get; init; }
+        public required FixedAssetRepository Assets { get; init; }
+        public required JournalRepository Journals { get; init; }
+        public required LedgerPostingRepository Postings { get; init; }
         public required long FixedAssetHoldingId { get; init; }
         public required long OpeningEquityId { get; init; }
         public required long GainLossId { get; init; }
@@ -606,7 +607,7 @@ public class FixedAssetPostingTests
 
             // The seeded control accounts the register posts to — system
             // defaults, closed to hand entries, which is why it posts through
-            // JournalService.PostSystemAsync.
+            // JournalRepository.PostSystemAsync.
             long holding = await Account("1600", "Fixed Asset", 1, SystemAccount.FixedAsset);
             long openingEquity = await Account("3100", "Opening Balance Equity", 3, SystemAccount.OpeningBalanceEquity);
             long gainLoss = await Account("4920", "Gain/Loss on Asset Disposal", 4, SystemAccount.AssetDisposalGainLoss);
@@ -665,17 +666,17 @@ public class FixedAssetPostingTests
             await db.SaveChangesAsync();
 
             var numbers = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
-            var postings = new LedgerPostingService(db, tenant, new StubBaseCurrency());
+            var postings = new LedgerPostingRepository(db, tenant, new StubBaseCurrency());
             
-            var journals = new JournalService(
-                db, postings, new PeriodLockService(db, new StubCurrentUser()), numbers, 
+            var journals = new JournalRepository(
+                db, postings, new PeriodLockRepository(db, new StubCurrentUser()), numbers, 
                 new StubBaseCurrency(), new StubCurrentUser(), tenant, TimeProvider.System);
 
             return new Harness
             {
                 Db = db,
-                Depreciation = new DepreciationService(db, journals),
-                Assets = new FixedAssetService(db, journals),
+                Depreciation = new DepreciationRepository(db, journals),
+                Assets = new FixedAssetRepository(db, journals),
                 Journals = journals,
                 Postings = postings,
                 FixedAssetHoldingId = holding,

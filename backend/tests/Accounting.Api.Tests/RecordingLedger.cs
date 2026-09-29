@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 
 namespace Accounting.Api.Tests;
 

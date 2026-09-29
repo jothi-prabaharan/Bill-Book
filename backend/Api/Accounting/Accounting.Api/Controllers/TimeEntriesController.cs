@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,10 +22,10 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class TimeEntriesController : ControllerBase
 {
-    private readonly TimeEntryService _time;
+    private readonly TimeEntryRepository _time;
     private readonly ICurrentUser _user;
 
-    public TimeEntriesController(TimeEntryService time, ICurrentUser user)
+    public TimeEntriesController(TimeEntryRepository time, ICurrentUser user)
     {
         _time = time;
         _user = user;

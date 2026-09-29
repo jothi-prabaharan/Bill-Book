@@ -1,5 +1,5 @@
 using Accounting.Api.Services;
-using Accounting.Api.Services.Payments;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
@@ -48,10 +48,10 @@ public sealed class OnlinePaymentTests
         Guid customer = Guid.NewGuid();
         Guid org = Guid.NewGuid();
 
-        Assert.True(OnlinePaymentService.TryReadReference(OnlinePaymentService.Reference(customer, org, 42), out Guid c, out Guid o));
+        Assert.True(OnlinePaymentRepository.TryReadReference(OnlinePaymentRepository.Reference(customer, org, 42), out Guid c, out Guid o));
         Assert.Equal((customer, org), (c, o));
-        Assert.False(OnlinePaymentService.TryReadReference("op_pending_abc", out _, out _));
-        Assert.False(OnlinePaymentService.TryReadReference(null, out _, out _));
+        Assert.False(OnlinePaymentRepository.TryReadReference("op_pending_abc", out _, out _));
+        Assert.False(OnlinePaymentRepository.TryReadReference(null, out _, out _));
     }
 
     [SkippableFact]
@@ -177,7 +177,7 @@ public sealed class OnlinePaymentTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required OnlinePaymentService Payments { get; init; }
+        public required OnlinePaymentRepository Payments { get; init; }
 
         public required SandboxPaymentGateway Sandbox { get; init; }
 
@@ -234,7 +234,7 @@ public sealed class OnlinePaymentTests
             db.ChangeTracker.Clear();
 
             var numbers = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
-            var receipts = new ReceiveMoneyService(
+            var receipts = new ReceiveMoneyRepository(
                 db, ledger ?? new RecordingLedger(), numbers, new StubBaseCurrency(), new StubCurrentUser(), TimeProvider.System);
 
             SandboxPaymentGateway sandbox = OnlinePaymentTests.Sandbox();
@@ -243,7 +243,7 @@ public sealed class OnlinePaymentTests
             {
                 Db = db,
                 Sandbox = sandbox,
-                Payments = new OnlinePaymentService(db, tenant, gateway ?? sandbox, new StubBaseCurrency(), receipts, TimeProvider.System),
+                Payments = new OnlinePaymentRepository(db, tenant, gateway ?? sandbox, new StubBaseCurrency(), receipts, TimeProvider.System),
             };
         }
 

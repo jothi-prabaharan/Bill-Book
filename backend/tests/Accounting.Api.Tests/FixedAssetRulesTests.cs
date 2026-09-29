@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading;
 using Accounting.Api.Controllers;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -36,7 +37,7 @@ public sealed class FixedAssetRulesTests
     public void Straight_line_charges_a_level_monthly_amount(
         decimal cost, int life, decimal rate, decimal salvage, decimal expected)
     {
-        decimal charge = DepreciationService.MonthlyCharge(
+        decimal charge = DepreciationRepository.MonthlyCharge(
             cost, Schedule(DepreciationMethod.StraightLine, rate, life, salvage), chargedToDate: 0m);
 
         Assert.Equal(expected, charge);
@@ -48,7 +49,7 @@ public sealed class FixedAssetRulesTests
     [InlineData(600, 10.00)]    // 600 × 20% ÷ 12
     public void Written_down_value_charges_the_rate_on_the_book_value_left(decimal chargedToDate, decimal expected)
     {
-        decimal charge = DepreciationService.MonthlyCharge(
+        decimal charge = DepreciationRepository.MonthlyCharge(
             1200m, Schedule(DepreciationMethod.WrittenDownValue, rate: 20m), chargedToDate);
 
         Assert.Equal(expected, charge);
@@ -60,8 +61,8 @@ public sealed class FixedAssetRulesTests
         DepreciationSchedule schedule = Schedule(DepreciationMethod.StraightLine, life: 3, salvage: 100m);
 
         // 1,100 depreciable, 1,090 already charged: 10 left, not 30.56.
-        Assert.Equal(10m, DepreciationService.MonthlyCharge(1200m, schedule, chargedToDate: 1090m));
-        Assert.Equal(0m, DepreciationService.MonthlyCharge(1200m, schedule, chargedToDate: 1100m));
+        Assert.Equal(10m, DepreciationRepository.MonthlyCharge(1200m, schedule, chargedToDate: 1090m));
+        Assert.Equal(0m, DepreciationRepository.MonthlyCharge(1200m, schedule, chargedToDate: 1100m));
     }
 
     [Fact]
@@ -70,15 +71,15 @@ public sealed class FixedAssetRulesTests
         CreateDepreciationScheduleRequest Books(DepreciationMethod m, decimal rate = 0, int life = 0, decimal salvage = 0) =>
             new() { ScheduleType = DepreciationScheduleType.Books, DepreciationMethod = m, Rate = rate, UsefulLifeYears = life, SalvageValue = salvage };
 
-        Assert.True(FixedAssetService.SchedulesAreValid([], 1000m));
-        Assert.True(FixedAssetService.SchedulesAreValid([Books(DepreciationMethod.StraightLine, life: 5)], 1000m));
-        Assert.True(FixedAssetService.SchedulesAreValid([Books(DepreciationMethod.WrittenDownValue, rate: 15)], 1000m));
+        Assert.True(FixedAssetRepository.SchedulesAreValid([], 1000m));
+        Assert.True(FixedAssetRepository.SchedulesAreValid([Books(DepreciationMethod.StraightLine, life: 5)], 1000m));
+        Assert.True(FixedAssetRepository.SchedulesAreValid([Books(DepreciationMethod.WrittenDownValue, rate: 15)], 1000m));
 
-        Assert.False(FixedAssetService.SchedulesAreValid([Books(DepreciationMethod.StraightLine)], 1000m));
-        Assert.False(FixedAssetService.SchedulesAreValid([Books(DepreciationMethod.WrittenDownValue)], 1000m));
-        Assert.False(FixedAssetService.SchedulesAreValid([Books(DepreciationMethod.WrittenDownValue, rate: 100)], 1000m));
-        Assert.False(FixedAssetService.SchedulesAreValid([Books(DepreciationMethod.StraightLine, life: 5, salvage: 1001)], 1000m));
-        Assert.False(FixedAssetService.SchedulesAreValid(
+        Assert.False(FixedAssetRepository.SchedulesAreValid([Books(DepreciationMethod.StraightLine)], 1000m));
+        Assert.False(FixedAssetRepository.SchedulesAreValid([Books(DepreciationMethod.WrittenDownValue)], 1000m));
+        Assert.False(FixedAssetRepository.SchedulesAreValid([Books(DepreciationMethod.WrittenDownValue, rate: 100)], 1000m));
+        Assert.False(FixedAssetRepository.SchedulesAreValid([Books(DepreciationMethod.StraightLine, life: 5, salvage: 1001)], 1000m));
+        Assert.False(FixedAssetRepository.SchedulesAreValid(
             [Books(DepreciationMethod.StraightLine, life: 5), Books(DepreciationMethod.WrittenDownValue, rate: 15)], 1000m));
     }
 
@@ -111,8 +112,8 @@ public sealed class FixedAssetRulesTests
     [Fact]
     public void A_bill_assets_code_is_the_bill_number_and_line()
     {
-        Assert.Equal("BIL/26-27/0042-3", FixedAssetService.BillAssetCode("BIL/26-27/0042", 3));
-        Assert.Equal(50, FixedAssetService.BillAssetCode(new string('X', 60), 1).Length);
+        Assert.Equal("BIL/26-27/0042-3", FixedAssetRepository.BillAssetCode("BIL/26-27/0042", 3));
+        Assert.Equal(50, FixedAssetRepository.BillAssetCode(new string('X', 60), 1).Length);
     }
 
     private const long AssetAccount = 1;
@@ -120,7 +121,7 @@ public sealed class FixedAssetRulesTests
     private const long GainLossAccount = 3;
 
     private static SaveJournalLineRequest[] DisposalLinesFor(decimal cost, decimal accumulated, decimal proceeds) =>
-        FixedAssetService.DisposalLines(
+        FixedAssetRepository.DisposalLines(
             cost, accumulated, proceeds, AssetAccount, AccumulatedAccount, GainLossAccount, "Disposal").ToArray();
 
     [Fact]

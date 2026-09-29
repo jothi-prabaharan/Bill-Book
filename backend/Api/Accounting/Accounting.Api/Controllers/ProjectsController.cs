@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +20,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class ProjectsController : ControllerBase
 {
-    private readonly ProjectService _projects;
+    private readonly ProjectRepository _projects;
 
-    public ProjectsController(ProjectService projects) => _projects = projects;
+    public ProjectsController(ProjectRepository projects) => _projects = projects;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] long? contactId, CancellationToken ct) =>
@@ -38,7 +39,7 @@ public sealed class ProjectsController : ControllerBase
 
     /// <summary>What the project has left to bill: the invoice's "Add project items" list (TK-106).</summary>
     [HttpGet("{id:long}/unbilled")]
-    public async Task<IActionResult> Unbilled(long id, [FromServices] ProjectBillingService billing, CancellationToken ct) =>
+    public async Task<IActionResult> Unbilled(long id, [FromServices] ProjectBillingRepository billing, CancellationToken ct) =>
         await billing.UnbilledAsync(id, ct) is { } items ? Ok(items) : NotFound();
 
     [HttpPost]

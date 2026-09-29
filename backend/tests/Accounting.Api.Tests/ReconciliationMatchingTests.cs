@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ public class ReconciliationMatchingTests : IAsyncDisposable
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         _dbContext = _postgres.CreateContext(_customerId, _orgId);
-        var service = new ReconciliationService(_dbContext);
+        var service = new ReconciliationRepository(_dbContext);
 
         // Arrange.
         //

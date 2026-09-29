@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -222,11 +223,11 @@ public sealed class AccountingApprovalTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required JournalService Journals { get; init; }
+        public required JournalRepository Journals { get; init; }
 
-        public required SpendMoneyService Payments { get; init; }
+        public required SpendMoneyRepository Payments { get; init; }
 
-        public required AccountingApprovalService Approvals { get; init; }
+        public required AccountingApprovalRepository Approvals { get; init; }
 
         public required SwitchableUser User { get; init; }
 
@@ -326,7 +327,7 @@ public sealed class AccountingApprovalTests
 
             var user = new SwitchableUser();
             var numbers = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
-            var approvals = new AccountingApprovalService(db, chains ?? new FakeChains(), tenant, user, TimeProvider.System);
+            var approvals = new AccountingApprovalRepository(db, chains ?? new FakeChains(), tenant, user, TimeProvider.System);
 
             return new Harness
             {
@@ -336,17 +337,17 @@ public sealed class AccountingApprovalTests
                 RentId = rent,
                 CashId = cash,
                 BankAccountId = bankAccount.BankAccountId,
-                Journals = new JournalService(
+                Journals = new JournalRepository(
                     db,
-                    new LedgerPostingService(db, tenant, new StubBaseCurrency()),
-                    new PeriodLockService(db, new StubCurrentUser()),
+                    new LedgerPostingRepository(db, tenant, new StubBaseCurrency()),
+                    new PeriodLockRepository(db, new StubCurrentUser()),
                     numbers,
                     new StubBaseCurrency(),
                     user,
                     tenant,
                     TimeProvider.System,
                     approvals),
-                Payments = new SpendMoneyService(
+                Payments = new SpendMoneyRepository(
                     db,
                     new RecordingLedger(),
                     numbers,

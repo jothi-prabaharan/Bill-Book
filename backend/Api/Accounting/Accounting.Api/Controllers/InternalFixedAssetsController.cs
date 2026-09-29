@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,7 +50,7 @@ public sealed class InternalFixedAssetsController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var assets = _services.GetRequiredService<FixedAssetService>();
+        var assets = _services.GetRequiredService<FixedAssetRepository>();
 
         (FixedAssetResult result, CapitaliseBillResponse? response) =
             await assets.CapitaliseBillAsync(request, ct);

@@ -1,5 +1,6 @@
 using System.Text;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.TableEntities;
 using Xunit;
 
@@ -22,14 +23,14 @@ public class StatementImportTests
     [Fact]
     public void A_two_column_statement_reads_into_movements()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             Date,Narration,Chq/Ref No,Withdrawal Amt.,Deposit Amt.,Closing Balance
             01/04/2026,NEFT DR-SHARMA TRADERS,N0412345,"11,000.00",,"1,89,000.00"
             03/04/2026,UPI-RAMESH-9876543210,UPI412999,,"5,000.00","1,94,000.00"
             """);
 
-        List<BankStatementLine> lines = StatementRowMapper.Map(grid, TwoColumn());
+        List<BankStatementLine> lines = StatementRowMapperRepository.Map(grid, TwoColumn());
 
         Assert.Equal(2, lines.Count);
 
@@ -55,13 +56,13 @@ public class StatementImportTests
     [Fact]
     public void A_description_containing_a_comma_does_not_shift_the_columns()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             Date,Narration,Chq/Ref No,Withdrawal Amt.,Deposit Amt.,Closing Balance
             01/04/2026,"SHARMA, TRADERS & SONS, MUMBAI",N001,1000.00,,5000.00
             """);
 
-        BankStatementLine line = Assert.Single(StatementRowMapper.Map(grid, TwoColumn()));
+        BankStatementLine line = Assert.Single(StatementRowMapperRepository.Map(grid, TwoColumn()));
 
         Assert.Equal("SHARMA, TRADERS & SONS, MUMBAI", line.Description);
         Assert.Equal(1_000m, line.WithdrawalAmount);
@@ -76,7 +77,7 @@ public class StatementImportTests
     [Fact]
     public void Rows_above_the_header_are_skipped_by_count()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             HDFC BANK LTD
             Statement of account 0123456789
@@ -90,7 +91,7 @@ public class StatementImportTests
         StatementImportProfile profile = TwoColumn();
         profile.SkipRows = 3;
 
-        BankStatementLine line = Assert.Single(StatementRowMapper.Map(grid, profile));
+        BankStatementLine line = Assert.Single(StatementRowMapperRepository.Map(grid, profile));
         Assert.Equal(1_000m, line.WithdrawalAmount);
     }
 
@@ -102,7 +103,7 @@ public class StatementImportTests
     [Fact]
     public void A_single_signed_amount_column_splits_into_the_two_sides()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             Txn Date,Description,Ref,Amount
             01/04/2026,PAID TO SHARMA,N001,-11000.00
@@ -119,7 +120,7 @@ public class StatementImportTests
             AmountColumn = "Amount",
         };
 
-        List<BankStatementLine> lines = StatementRowMapper.Map(grid, profile);
+        List<BankStatementLine> lines = StatementRowMapperRepository.Map(grid, profile);
 
         Assert.Equal(11_000m, lines[0].WithdrawalAmount);
         Assert.Equal(0m, lines[0].DepositAmount);
@@ -142,8 +143,8 @@ public class StatementImportTests
             03/04/2026,UPI-RAMESH,U002,,2000.00,7000.00
             """;
 
-        string[] first = [.. StatementRowMapper.Map(Csv(file), TwoColumn()).Select(l => l.RowHash)];
-        string[] again = [.. StatementRowMapper.Map(Csv(file), TwoColumn()).Select(l => l.RowHash)];
+        string[] first = [.. StatementRowMapperRepository.Map(Csv(file), TwoColumn()).Select(l => l.RowHash)];
+        string[] again = [.. StatementRowMapperRepository.Map(Csv(file), TwoColumn()).Select(l => l.RowHash)];
 
         Assert.Equal(first, again);
 
@@ -152,7 +153,7 @@ public class StatementImportTests
         string respaced = file.Replace("NEFT DR-SHARMA", "NEFT  DR-SHARMA ");
 
         Assert.Equal(
-            first[0], StatementRowMapper.Map(Csv(respaced), TwoColumn())[0].RowHash);
+            first[0], StatementRowMapperRepository.Map(Csv(respaced), TwoColumn())[0].RowHash);
     }
 
     /// <summary>
@@ -164,14 +165,14 @@ public class StatementImportTests
     [Fact]
     public void Two_identical_movements_on_one_day_are_kept_apart()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             Date,Narration,Chq/Ref No,Withdrawal Amt.,Deposit Amt.,Closing Balance
             01/04/2026,ATM CASH,,500.00,,9500.00
             01/04/2026,ATM CASH,,500.00,,9000.00
             """);
 
-        List<BankStatementLine> lines = StatementRowMapper.Map(grid, TwoColumn());
+        List<BankStatementLine> lines = StatementRowMapperRepository.Map(grid, TwoColumn());
 
         Assert.Equal(2, lines.Count);
         Assert.NotEqual(lines[0].RowHash, lines[1].RowHash);
@@ -185,14 +186,14 @@ public class StatementImportTests
     [Fact]
     public void A_footer_row_with_no_date_is_not_a_movement()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             Date,Narration,Chq/Ref No,Withdrawal Amt.,Deposit Amt.,Closing Balance
             01/04/2026,NEFT DR-SHARMA,N001,1000.00,,5000.00
             ,TOTAL,,1000.00,0.00,
             """);
 
-        Assert.Single(StatementRowMapper.Map(grid, TwoColumn()));
+        Assert.Single(StatementRowMapperRepository.Map(grid, TwoColumn()));
     }
 
     /// <summary>
@@ -203,7 +204,7 @@ public class StatementImportTests
     [Fact]
     public void An_unreadable_date_says_which_row_and_which_format()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             Date,Narration,Chq/Ref No,Withdrawal Amt.,Deposit Amt.,Closing Balance
             01/04/2026,GOOD ROW,N001,1000.00,,5000.00
@@ -211,7 +212,7 @@ public class StatementImportTests
             """);
 
         StatementReadException error = Assert.Throws<StatementReadException>(
-            () => StatementRowMapper.Map(grid, TwoColumn()));
+            () => StatementRowMapperRepository.Map(grid, TwoColumn()));
 
         // Row 3: one skipped row would be zero, the header is row 1, the good row
         // is row 2 — which is the number the user sees in their spreadsheet.
@@ -227,11 +228,11 @@ public class StatementImportTests
     [Fact]
     public void A_tab_separated_file_is_detected_rather_than_assumed()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             "Date\tNarration\tChq/Ref No\tWithdrawal Amt.\tDeposit Amt.\tClosing Balance\n"
             + "01/04/2026\tNEFT DR-SHARMA, MUMBAI\tN001\t1000.00\t\t5000.00");
 
-        BankStatementLine line = Assert.Single(StatementRowMapper.Map(grid, TwoColumn()));
+        BankStatementLine line = Assert.Single(StatementRowMapperRepository.Map(grid, TwoColumn()));
 
         Assert.Equal("NEFT DR-SHARMA, MUMBAI", line.Description);
         Assert.Equal(1_000m, line.WithdrawalAmount);
@@ -246,13 +247,13 @@ public class StatementImportTests
     [Fact]
     public void A_row_with_both_amounts_is_refused()
     {
-        StatementGrid grid = Csv(
+        StatementGridRepository grid = Csv(
             """
             Date,Narration,Chq/Ref No,Withdrawal Amt.,Deposit Amt.,Closing Balance
             01/04/2026,BOTH,N001,1000.00,500.00,5000.00
             """);
 
-        Assert.Throws<StatementReadException>(() => StatementRowMapper.Map(grid, TwoColumn()));
+        Assert.Throws<StatementReadException>(() => StatementRowMapperRepository.Map(grid, TwoColumn()));
     }
 
     /// <summary>
@@ -272,14 +273,14 @@ public class StatementImportTests
             ["Date", "Description", "Withdrawal"],
             [["2026-04-01", "=cmd|'/c calc'!A1", "1000.00"]]);
 
-        string csv = Encoding.UTF8.GetString(StatementExportWriter.ToCsv(export));
+        string csv = Encoding.UTF8.GetString(StatementExportWriterRepository.ToCsv(export));
 
         Assert.Contains("'=cmd", csv);
         Assert.DoesNotContain("\n=cmd", csv);
 
         // And it opens as UTF-8 in Excel rather than as the system code page,
         // which is what keeps a Tamil or Chinese narration readable.
-        Assert.Equal(Encoding.UTF8.GetPreamble(), StatementExportWriter.ToCsv(export)[..3]);
+        Assert.Equal(Encoding.UTF8.GetPreamble(), StatementExportWriterRepository.ToCsv(export)[..3]);
     }
 
     /// <summary>The Excel export is a real workbook, and reads back as what went in.</summary>
@@ -291,18 +292,18 @@ public class StatementImportTests
             ["Date", "Description", "Withdrawal"],
             [["2026-04-01", "NEFT DR-SHARMA", "1000.00"]]);
 
-        using var stream = new MemoryStream(StatementExportWriter.ToExcel(export));
+        using var stream = new MemoryStream(StatementExportWriterRepository.ToExcel(export));
 
-        StatementGrid grid = ExcelStatementReader.Read(stream, skipRows: 0, hasHeaderRow: true);
+        StatementGridRepository grid = ExcelStatementReaderRepository.Read(stream, skipRows: 0, hasHeaderRow: true);
 
         Assert.Equal(["Date", "Description", "Withdrawal"], grid.Header);
         Assert.Equal(["2026-04-01", "NEFT DR-SHARMA", "1000.00"], Assert.Single(grid.Rows));
     }
 
-    private static StatementGrid Csv(string text, int skipRows = 0)
+    private static StatementGridRepository Csv(string text, int skipRows = 0)
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(text));
-        return CsvStatementReader.Read(stream, skipRows, hasHeaderRow: true);
+        return CsvStatementReaderRepository.Read(stream, skipRows, hasHeaderRow: true);
     }
 
     /// <summary>The HDFC-shaped layout these tests mostly use.</summary>

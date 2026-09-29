@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Xunit;
 
@@ -18,12 +19,12 @@ public class LedgerArithmeticTests
     [InlineData(500, 500, 0)]
     [InlineData(1200.50, 300.25, 900.25)]
     public void Net_is_debits_less_credits(decimal debit, decimal credit, decimal expected) =>
-        Assert.Equal(expected, LedgerArithmetic.Net(debit, credit));
+        Assert.Equal(expected, LedgerArithmeticRepository.Net(debit, credit));
 
     [Fact]
     public void A_debit_net_lands_in_the_debit_column_only()
     {
-        (decimal debit, decimal credit) = LedgerArithmetic.Sides(750m);
+        (decimal debit, decimal credit) = LedgerArithmeticRepository.Sides(750m);
 
         Assert.Equal(750m, debit);
         Assert.Equal(0m, credit);
@@ -38,7 +39,7 @@ public class LedgerArithmeticTests
     [Fact]
     public void A_credit_net_lands_in_the_credit_column_as_a_positive()
     {
-        (decimal debit, decimal credit) = LedgerArithmetic.Sides(-750m);
+        (decimal debit, decimal credit) = LedgerArithmeticRepository.Sides(-750m);
 
         Assert.Equal(0m, debit);
         Assert.Equal(750m, credit);
@@ -47,7 +48,7 @@ public class LedgerArithmeticTests
     [Fact]
     public void A_zero_net_is_in_neither_column()
     {
-        (decimal debit, decimal credit) = LedgerArithmetic.Sides(0m);
+        (decimal debit, decimal credit) = LedgerArithmeticRepository.Sides(0m);
 
         Assert.Equal(0m, debit);
         Assert.Equal(0m, credit);
@@ -63,7 +64,7 @@ public class LedgerArithmeticTests
             Row(debit: 15m),
         ];
 
-        decimal closing = LedgerArithmetic.ApplyRunningBalance(rows, opening: 250m);
+        decimal closing = LedgerArithmeticRepository.ApplyRunningBalance(rows, opening: 250m);
 
         Assert.Equal(350m, rows[0].RunningBalance);
         Assert.Equal(310m, rows[1].RunningBalance);
@@ -80,13 +81,13 @@ public class LedgerArithmeticTests
     {
         List<AccountLedgerRow> rows = [Row(credit: 90m)];
 
-        Assert.Equal(-90m, LedgerArithmetic.ApplyRunningBalance(rows, opening: 0m));
+        Assert.Equal(-90m, LedgerArithmeticRepository.ApplyRunningBalance(rows, opening: 0m));
         Assert.Equal(-90m, rows[0].RunningBalance);
     }
 
     [Fact]
     public void An_empty_ledger_closes_where_it_opened() =>
-        Assert.Equal(120m, LedgerArithmetic.ApplyRunningBalance([], opening: 120m));
+        Assert.Equal(120m, LedgerArithmeticRepository.ApplyRunningBalance([], opening: 120m));
 
     private static AccountLedgerRow Row(decimal debit = 0m, decimal credit = 0m) => new()
     {

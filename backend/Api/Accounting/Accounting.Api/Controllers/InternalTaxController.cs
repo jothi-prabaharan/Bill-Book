@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -76,13 +77,13 @@ public sealed class InternalTaxController : ControllerBase
         _tenant.CustomerId = customerId;
         _tenant.OrgId = orgId;
 
-        var taxes = _services.GetRequiredService<TaxMasterService>();
+        var taxes = _services.GetRequiredService<TaxMasterRepository>();
 
         IReadOnlyList<Entity.Models.TaxMasterListItem> rows =
             await taxes.ListAsync(includeHistory: true, includeInactive: false, ct);
 
         // In force on the date, newest first per group, and one row per group —
-        // the same rule TaxMasterService.ResolveAsync applies to a single group,
+        // the same rule TaxMasterRepository.ResolveAsync applies to a single group,
         // applied across all of them in one read rather than one call per line.
         List<TaxRate> rates = [.. rows
             .Where(r => r.EffectiveFrom <= on && (r.EffectiveTo is null || r.EffectiveTo >= on))

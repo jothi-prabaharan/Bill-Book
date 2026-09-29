@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,9 +26,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class JournalsController : ControllerBase
 {
-    private readonly JournalService _journals;
+    private readonly JournalRepository _journals;
 
-    public JournalsController(JournalService journals) => _journals = journals;
+    public JournalsController(JournalRepository journals) => _journals = journals;
 
     [HttpGet]
     public async Task<IActionResult> List(
@@ -46,7 +47,7 @@ public sealed class JournalsController : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] SaveJournalRequest request, [FromServices] BudgetCheckService budgets, CancellationToken ct)
+        [FromBody] SaveJournalRequest request, [FromServices] BudgetCheckRepository budgets, CancellationToken ct)
     {
         SaveJournalResult result = await _journals.CreateAsync(request, ct);
         List<string> warnings = result.Outcome == SaveJournalOutcome.Ok ? await BudgetWarningsAsync(request, budgets, ct) : [];
@@ -59,7 +60,7 @@ public sealed class JournalsController : ControllerBase
 
     [HttpPut("{journalId:long}")]
     public async Task<IActionResult> Update(
-        long journalId, [FromBody] SaveJournalRequest request, [FromServices] BudgetCheckService budgets, CancellationToken ct)
+        long journalId, [FromBody] SaveJournalRequest request, [FromServices] BudgetCheckRepository budgets, CancellationToken ct)
     {
         SaveJournalResult result = await _journals.UpdateAsync(journalId, request, ct);
         List<string> warnings = result.Outcome == SaveJournalOutcome.Ok ? await BudgetWarningsAsync(request, budgets, ct) : [];
@@ -98,7 +99,7 @@ public sealed class JournalsController : ControllerBase
     /// debit less credit, in base currency. The save already stands; these are
     /// warnings the form shows (TK-109).
     /// </summary>
-    private static Task<List<string>> BudgetWarningsAsync(SaveJournalRequest request, BudgetCheckService budgets, CancellationToken ct)
+    private static Task<List<string>> BudgetWarningsAsync(SaveJournalRequest request, BudgetCheckRepository budgets, CancellationToken ct)
     {
         decimal rate = request.ExchangeRate is decimal r && r > 0m ? r : 1m;
 

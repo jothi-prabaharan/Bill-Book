@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
@@ -489,9 +490,9 @@ public class AllocationServiceTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required LedgerPostingService Postings { get; init; }
+        public required LedgerPostingRepository Postings { get; init; }
 
-        public required AllocationService Allocations { get; init; }
+        public required AllocationRepository Allocations { get; init; }
 
         public required long RevenueId { get; init; }
 
@@ -524,9 +525,9 @@ public class AllocationServiceTests
             return new Harness
             {
                 Db = db,
-                Postings = new LedgerPostingService(db, tenant, new StubBaseCurrency()),
-                Allocations = new AllocationService(
-                    db, tenant, NullLogger<AllocationService>.Instance),
+                Postings = new LedgerPostingRepository(db, tenant, new StubBaseCurrency()),
+                Allocations = new AllocationRepository(
+                    db, tenant, NullLogger<AllocationRepository>.Instance),
                 RevenueId = await Account("4100", "Sales Revenue", 4),
                 ReceivableId = await Account("1100", "Accounts Receivable", 1),
             };

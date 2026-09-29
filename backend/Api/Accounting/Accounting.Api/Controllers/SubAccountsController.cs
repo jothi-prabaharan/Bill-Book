@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -20,9 +21,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class SubAccountsController : ControllerBase
 {
-    private readonly SubAccountService _subAccounts;
+    private readonly SubAccountRepository _subAccounts;
 
-    public SubAccountsController(SubAccountService subAccounts) => _subAccounts = subAccounts;
+    public SubAccountsController(SubAccountRepository subAccounts) => _subAccounts = subAccounts;
 
     [HttpGet]
     public async Task<IActionResult> List(
@@ -74,7 +75,7 @@ public sealed class InternalSubAccountsController : ControllerBase
         }
 
         // Resolved after the tenant is set: the context is built from it.
-        var subAccounts = _services.GetRequiredService<SubAccountService>();
+        var subAccounts = _services.GetRequiredService<SubAccountRepository>();
 
         ProvisionSubAccountsResult result = await subAccounts.ProvisionAsync(request, ct);
 
@@ -97,7 +98,7 @@ public sealed class InternalSubAccountsController : ControllerBase
         [FromQuery] long referenceId,
         CancellationToken ct)
     {
-        int deactivated = await _services.GetRequiredService<SubAccountService>()
+        int deactivated = await _services.GetRequiredService<SubAccountRepository>()
             .DeactivateAsync(referenceType, referenceId, ct);
         return Ok(new { deactivated });
     }

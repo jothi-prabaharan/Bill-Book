@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,9 +27,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class OpeningBalancesController : ControllerBase
 {
-    private readonly OpeningBalanceService _openings;
+    private readonly OpeningBalanceRepository _openings;
 
-    public OpeningBalancesController(OpeningBalanceService openings) => _openings = openings;
+    public OpeningBalancesController(OpeningBalanceRepository openings) => _openings = openings;
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct)

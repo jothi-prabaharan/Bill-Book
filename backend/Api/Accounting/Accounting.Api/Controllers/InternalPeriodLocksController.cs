@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,7 +53,7 @@ public sealed class InternalPeriodLocksController : ControllerBase
         _tenant.CustomerId = customerId;
         _tenant.OrgId = orgId;
 
-        var locks = _services.GetRequiredService<PeriodLockService>();
+        var locks = _services.GetRequiredService<PeriodLockRepository>();
 
         DateOnly? lockedUpto = await locks.BranchLockedUptoAsync(ct);
 

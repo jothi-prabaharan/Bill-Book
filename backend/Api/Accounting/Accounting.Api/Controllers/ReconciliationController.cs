@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -15,9 +16,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public class ReconciliationController : ControllerBase
 {
-    private readonly ReconciliationService _reconciliation;
+    private readonly ReconciliationRepository _reconciliation;
 
-    public ReconciliationController(ReconciliationService reconciliation)
+    public ReconciliationController(ReconciliationRepository reconciliation)
     {
         _reconciliation = reconciliation;
     }

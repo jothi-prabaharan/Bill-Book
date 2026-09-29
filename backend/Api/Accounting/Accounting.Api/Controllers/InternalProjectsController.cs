@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -47,6 +48,6 @@ public sealed class InternalProjectsController : ControllerBase
             return Ok(Array.Empty<ProjectSummary>());
         }
 
-        return Ok(await _services.GetRequiredService<ProjectService>().FindAsync(ids, ct));
+        return Ok(await _services.GetRequiredService<ProjectRepository>().FindAsync(ids, ct));
     }
 }

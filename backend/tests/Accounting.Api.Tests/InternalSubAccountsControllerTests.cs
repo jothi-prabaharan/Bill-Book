@@ -1,5 +1,6 @@
 using Accounting.Api.Controllers;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Repository;
@@ -39,7 +40,7 @@ public class InternalSubAccountsControllerTests
         var services = new ServiceCollection();
         services.AddSingleton(tenant);
         services.AddScoped(_ => _postgres.CreateContext(tenant));
-        services.AddScoped<SubAccountService>();
+        services.AddScoped<SubAccountRepository>();
 
         ServiceProvider provider = services.BuildServiceProvider();
         return (new InternalSubAccountsController(tenant, provider), provider);

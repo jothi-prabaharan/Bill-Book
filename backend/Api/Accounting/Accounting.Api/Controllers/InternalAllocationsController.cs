@@ -1,5 +1,6 @@
 using System.Data;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +37,7 @@ public sealed class InternalAllocationsController : ControllerBase
 
     [HttpPost]
     // Serializable, declared where the request-wide transaction filter can see
-    // it. AllocationService reads what the target still owes and writes against
+    // it. AllocationRepository reads what the target still owes and writes against
     // that in one act, so it asks for Serializable — and without this the filter
     // had already opened a Read Committed transaction, which cannot be raised,
     // so BeginScopeAsync refused every allocation made through the host (TK-08).
@@ -57,7 +58,7 @@ public sealed class InternalAllocationsController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var allocations = _services.GetRequiredService<AllocationService>();
+        var allocations = _services.GetRequiredService<AllocationRepository>();
 
         AllocationResult result = await allocations.AllocateAsync(request, ct);
 
@@ -104,7 +105,7 @@ public sealed class InternalAllocationsController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var allocations = _services.GetRequiredService<AllocationService>();
+        var allocations = _services.GetRequiredService<AllocationRepository>();
 
         await allocations.RemoveAllocationsAsync(
             request.SourceTransactionTypeCode.ToUpperInvariant(),

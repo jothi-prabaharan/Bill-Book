@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +22,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PeriodLocksController : ControllerBase
 {
-    private readonly PeriodLockService _locks;
+    private readonly PeriodLockRepository _locks;
 
-    public PeriodLocksController(PeriodLockService locks) => _locks = locks;
+    public PeriodLocksController(PeriodLockRepository locks) => _locks = locks;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) => Ok(await _locks.ListAsync(ct));

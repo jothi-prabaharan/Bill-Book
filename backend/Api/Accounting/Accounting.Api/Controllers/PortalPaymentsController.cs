@@ -1,4 +1,5 @@
-using Accounting.Api.Services.Payments;
+using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
@@ -20,9 +21,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PortalPaymentsController : ControllerBase
 {
-    private readonly OnlinePaymentService _payments;
+    private readonly OnlinePaymentRepository _payments;
 
-    public PortalPaymentsController(OnlinePaymentService payments) => _payments = payments;
+    public PortalPaymentsController(OnlinePaymentRepository payments) => _payments = payments;
 
     private long ContactId => long.Parse(User.FindFirst(RequirePortalAccessAttribute.ContactClaim)!.Value);
 

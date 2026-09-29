@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -149,21 +150,21 @@ public sealed class ProjectBillingTests
     [InlineData(ProjectRateBasis.TaskRate, 200)]
     [InlineData(ProjectRateBasis.UserRate, 300)]
     public void The_rate_basis_picks_the_rate(ProjectRateBasis basis, int expected) =>
-        Assert.Equal(expected, ProjectBillingService.RateFor(basis, 100m, 200m, 300m));
+        Assert.Equal(expected, ProjectBillingRepository.RateFor(basis, 100m, 200m, 300m));
 
     [Fact]
     public void A_markup_rounds_to_two_decimals() =>
-        Assert.Equal(123.46m, ProjectBillingService.WithMarkup(112.235m, 10m));
+        Assert.Equal(123.46m, ProjectBillingRepository.WithMarkup(112.235m, 10m));
 
     private sealed class Harness : IAsyncDisposable
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required TimeEntryService Time { get; init; }
+        public required TimeEntryRepository Time { get; init; }
 
-        public required ProjectBillingService Billing { get; init; }
+        public required ProjectBillingRepository Billing { get; init; }
 
-        public required SpendMoneyService Payments { get; init; }
+        public required SpendMoneyRepository Payments { get; init; }
 
         public required long ProjectId { get; init; }
 
@@ -252,7 +253,7 @@ public sealed class ProjectBillingTests
             await db.SaveChangesAsync();
 
             var numbers = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
-            var projects = new ProjectService(db, numbers, new StubBaseCurrency(), TimeProvider.System, NullLogger<ProjectService>.Instance);
+            var projects = new ProjectRepository(db, numbers, new StubBaseCurrency(), TimeProvider.System, NullLogger<ProjectRepository>.Instance);
 
             SaveProjectResult created = await projects.SaveAsync(null, new SaveProjectRequest
             {
@@ -273,9 +274,9 @@ public sealed class ProjectBillingTests
                 ProjectId = created.ProjectId,
                 TaskId = taskId,
                 BankAccountId = bankAccount.BankAccountId,
-                Time = new TimeEntryService(db),
-                Billing = new ProjectBillingService(db),
-                Payments = new SpendMoneyService(db, new RecordingLedger(), numbers, new StubBaseCurrency(), new StubCurrentUser(), TimeProvider.System),
+                Time = new TimeEntryRepository(db),
+                Billing = new ProjectBillingRepository(db),
+                Payments = new SpendMoneyRepository(db, new RecordingLedger(), numbers, new StubBaseCurrency(), new StubCurrentUser(), TimeProvider.System),
             };
         }
 

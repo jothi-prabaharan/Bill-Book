@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -314,7 +315,7 @@ public class JournalServiceTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required JournalService Journals { get; init; }
+        public required JournalRepository Journals { get; init; }
 
         public required long RentId { get; init; }
 
@@ -370,7 +371,7 @@ public class JournalServiceTests
                 Options.Create(new NumberingOptions()),
                 new StubFinancialYear());
 
-            var postings = new LedgerPostingService(db, tenant, new StubBaseCurrency());
+            var postings = new LedgerPostingRepository(db, tenant, new StubBaseCurrency());
 
             return new Harness
             {
@@ -379,10 +380,10 @@ public class JournalServiceTests
                 CashId = await Account("1010", "Cash", 1),
                 ReceivableId = await Account(
                     "1100", "Accounts Receivable", 1, systemDefault: true, isJe: false),
-                Journals = new JournalService(
+                Journals = new JournalRepository(
                     db,
                     postings,
-                    new PeriodLockService(db, new StubCurrentUser()),
+                    new PeriodLockRepository(db, new StubCurrentUser()),
                     numbers,
                     new StubBaseCurrency(),
                     new StubCurrentUser(),

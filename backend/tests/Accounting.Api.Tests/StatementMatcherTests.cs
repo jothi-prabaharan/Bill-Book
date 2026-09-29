@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Xunit;
@@ -23,7 +24,7 @@ public class StatementMatcherTests
     [Fact]
     public void A_lone_candidate_whose_reference_agrees_is_confident()
     {
-        List<MatchCandidateView> ranked = StatementMatcher.Rank(
+        List<MatchCandidateView> ranked = StatementMatcherRepository.Rank(
             Line(withdrawal: 11_000m, date: new DateOnly(2026, 4, 3), reference: "N0412345"),
             [Spend(1, 11_000m, new DateOnly(2026, 4, 1), "N0412345")]);
 
@@ -42,7 +43,7 @@ public class StatementMatcherTests
     [Fact]
     public void Two_equally_good_candidates_are_offered_rather_than_guessed_between()
     {
-        List<MatchCandidateView> ranked = StatementMatcher.Rank(
+        List<MatchCandidateView> ranked = StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 10), reference: null),
             [
                 Spend(1, 5_000m, new DateOnly(2026, 4, 10), null),
@@ -60,7 +61,7 @@ public class StatementMatcherTests
     [Fact]
     public void Amount_and_date_alone_are_not_enough_to_decide()
     {
-        MatchCandidateView only = Assert.Single(StatementMatcher.Rank(
+        MatchCandidateView only = Assert.Single(StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 10), reference: null),
             [Spend(1, 5_000m, new DateOnly(2026, 4, 10), null)]));
 
@@ -76,7 +77,7 @@ public class StatementMatcherTests
     [Fact]
     public void A_document_running_the_other_way_is_never_a_candidate()
     {
-        Assert.Empty(StatementMatcher.Rank(
+        Assert.Empty(StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 10), reference: "R1"),
             [Receive(1, 5_000m, new DateOnly(2026, 4, 10), "R1")]));
     }
@@ -88,11 +89,11 @@ public class StatementMatcherTests
     [Fact]
     public void A_document_beyond_the_date_window_is_not_offered()
     {
-        Assert.Empty(StatementMatcher.Rank(
+        Assert.Empty(StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 20), reference: "N1"),
             [Spend(1, 5_000m, new DateOnly(2026, 4, 1), "N1")]));
 
-        Assert.Single(StatementMatcher.Rank(
+        Assert.Single(StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 9), reference: "N1"),
             [Spend(1, 5_000m, new DateOnly(2026, 4, 1), "N1")]));
     }
@@ -114,7 +115,7 @@ public class StatementMatcherTests
         };
 
         MatchCandidateView best = Assert.Single(
-            StatementMatcher.Rank(line, [Spend(1, 11_000m, new DateOnly(2026, 4, 1), "123456")]));
+            StatementMatcherRepository.Rank(line, [Spend(1, 11_000m, new DateOnly(2026, 4, 1), "123456")]));
 
         Assert.True(best.IsConfident);
     }
@@ -126,7 +127,7 @@ public class StatementMatcherTests
     [Fact]
     public void A_reference_too_short_to_be_evidence_does_not_make_a_match_confident()
     {
-        MatchCandidateView only = Assert.Single(StatementMatcher.Rank(
+        MatchCandidateView only = Assert.Single(StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 10), reference: "12"),
             [Spend(1, 5_000m, new DateOnly(2026, 4, 10), "12")]));
 
@@ -140,7 +141,7 @@ public class StatementMatcherTests
     [Fact]
     public void An_amount_that_is_merely_close_is_not_a_candidate()
     {
-        Assert.Empty(StatementMatcher.Rank(
+        Assert.Empty(StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 10), reference: "N1"),
             [Spend(1, 4_995m, new DateOnly(2026, 4, 10), "N1")]));
     }
@@ -152,7 +153,7 @@ public class StatementMatcherTests
     [Fact]
     public void The_nearer_document_ranks_first_without_becoming_confident()
     {
-        List<MatchCandidateView> ranked = StatementMatcher.Rank(
+        List<MatchCandidateView> ranked = StatementMatcherRepository.Rank(
             Line(withdrawal: 5_000m, date: new DateOnly(2026, 4, 10), reference: null),
             [
                 Spend(1, 5_000m, new DateOnly(2026, 4, 4), null),

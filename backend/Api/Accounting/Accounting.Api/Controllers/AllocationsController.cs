@@ -1,5 +1,6 @@
 using System.Data;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +22,9 @@ namespace Accounting.Api.Controllers;
 public sealed class AllocationsController : ControllerBase
 {
     private readonly TenantContext _tenant;
-    private readonly AllocationService _allocations;
+    private readonly AllocationRepository _allocations;
 
-    public AllocationsController(TenantContext tenant, AllocationService allocations)
+    public AllocationsController(TenantContext tenant, AllocationRepository allocations)
     {
         _tenant = tenant;
         _allocations = allocations;
@@ -35,7 +36,7 @@ public sealed class AllocationsController : ControllerBase
     /// </summary>
     [HttpPost]
     // Serializable, declared where the request-wide transaction filter can see
-    // it. AllocationService reads what the target still owes and writes against
+    // it. AllocationRepository reads what the target still owes and writes against
     // that in one act, so it asks for Serializable — and without this the filter
     // had already opened a Read Committed transaction, which cannot be raised,
     // so BeginScopeAsync refused every allocation made through the host (TK-08).

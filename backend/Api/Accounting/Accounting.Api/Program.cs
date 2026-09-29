@@ -1,8 +1,8 @@
 using Shared.Kernel.Approvals;
-using Accounting.Api.Services.Payments;
+using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Shared.Kernel.Security;
 using System.Text;
-using Accounting.Api.Services;
 using Accounting.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -68,47 +68,47 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-builder.Services.AddScoped<AccountService>();
-builder.Services.AddScoped<AllocationService>();
-builder.Services.AddScoped<SubAccountService>();
-builder.Services.AddScoped<TaxMasterService>();
-builder.Services.AddScoped<NumberingSeriesService>();
-builder.Services.AddScoped<PaymentTermService>();
-builder.Services.AddScoped<BankLedgerService>();
-builder.Services.AddScoped<LedgerPostingService>();
-builder.Services.AddScoped<PeriodLockService>();
-builder.Services.AddScoped<JournalService>();
-builder.Services.AddScoped<ProjectService>();
-builder.Services.AddScoped<TimeEntryService>();
-builder.Services.AddScoped<ProjectBillingService>();
-builder.Services.AddScoped<BudgetService>();
-builder.Services.AddScoped<BudgetCheckService>();
+builder.Services.AddScoped<AccountRepository>();
+builder.Services.AddScoped<AllocationRepository>();
+builder.Services.AddScoped<SubAccountRepository>();
+builder.Services.AddScoped<TaxMasterRepository>();
+builder.Services.AddScoped<NumberingSeriesRepository>();
+builder.Services.AddScoped<PaymentTermRepository>();
+builder.Services.AddScoped<BankLedgerRepository>();
+builder.Services.AddScoped<LedgerPostingRepository>();
+builder.Services.AddScoped<PeriodLockRepository>();
+builder.Services.AddScoped<JournalRepository>();
+builder.Services.AddScoped<ProjectRepository>();
+builder.Services.AddScoped<TimeEntryRepository>();
+builder.Services.AddScoped<ProjectBillingRepository>();
+builder.Services.AddScoped<BudgetRepository>();
+builder.Services.AddScoped<BudgetCheckRepository>();
 
 // Approval chains for spend money and manual journals (TK-101): Master
 // resolves them, this service stores the steps.
-builder.Services.AddScoped<AccountingApprovalService>();
+builder.Services.AddScoped<AccountingApprovalRepository>();
 builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<LedgerReportService>();
-builder.Services.AddScoped<OpeningBalanceService>();
-builder.Services.AddScoped<DepreciationService>();
-builder.Services.AddScoped<FixedAssetService>();
-builder.Services.AddScoped<ReconciliationService>();
+builder.Services.AddScoped<LedgerReportRepository>();
+builder.Services.AddScoped<OpeningBalanceRepository>();
+builder.Services.AddScoped<DepreciationRepository>();
+builder.Services.AddScoped<FixedAssetRepository>();
+builder.Services.AddScoped<ReconciliationRepository>();
 
 // The money documents, formerly the Banking service. Registered alongside the
 // ledger rather than behind an HTTP client onto it, which is the whole point of
 // the merge: a payment and the ledger rows it produces now share a transaction.
-builder.Services.AddScoped<BankService>();
-builder.Services.AddScoped<SpendMoneyService>();
-builder.Services.AddScoped<ReceiveMoneyService>();
+builder.Services.AddScoped<BankRepository>();
+builder.Services.AddScoped<SpendMoneyRepository>();
+builder.Services.AddScoped<ReceiveMoneyRepository>();
 
 // Online payment from the client portal (TK-98): the sandbox until D-25 names a gateway.
 builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
-builder.Services.AddScoped<TransferMoneyService>();
-builder.Services.AddScoped<BankStatementService>();
+builder.Services.AddScoped<TransferMoneyRepository>();
+builder.Services.AddScoped<BankStatementRepository>();
 
 // The seam the money documents reach the ledger through. Still an interface —
 // it is where the tests substitute, and it marks the line they may not write
@@ -119,7 +119,7 @@ builder.Services.AddScoped<IAccountingLedger, InProcessAccountingLedger>();
 // average, and only Inventory can seed it. Keyed rather than token-forwarded,
 // so finalizing a migration does not require the person doing it to hold
 // inventory permissions for what is an accounting act.
-builder.Services.AddHttpClient<IInventoryOpeningStock, InventoryOpeningStock>(client =>
+builder.Services.AddHttpClient<IInventoryOpeningStock, InventoryOpeningStockRepository>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
 })

@@ -1,5 +1,6 @@
 using Accounting.Api.Controllers;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -24,7 +25,7 @@ public class AllocationsControllerTests
         var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId };
         await using var db = _postgres.CreateContext(tenant.CustomerId.Value, orgId);
 
-        var allocations = new AllocationService(db, tenant, NullLogger<AllocationService>.Instance);
+        var allocations = new AllocationRepository(db, tenant, NullLogger<AllocationRepository>.Instance);
         var controller = new AllocationsController(tenant, allocations);
 
         // We try to allocate against an invoice that doesn't exist (or has 0 balance)

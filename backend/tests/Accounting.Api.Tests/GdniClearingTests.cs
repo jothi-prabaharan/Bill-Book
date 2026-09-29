@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -167,7 +168,7 @@ public sealed class GdniClearingTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required LedgerPostingService Postings { get; init; }
+        public required LedgerPostingRepository Postings { get; init; }
 
         public required long GdniId { get; init; }
 
@@ -239,7 +240,7 @@ public sealed class GdniClearingTests
             return new Harness
             {
                 Db = db,
-                Postings = new LedgerPostingService(
+                Postings = new LedgerPostingRepository(
                     db,
                     new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId },
                     new StubBaseCurrency()),

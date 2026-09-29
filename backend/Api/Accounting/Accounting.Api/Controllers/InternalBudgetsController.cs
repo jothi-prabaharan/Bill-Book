@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Budgets;
@@ -34,7 +35,7 @@ public sealed class InternalBudgetsController : ControllerBase
             return BadRequest(new BudgetCheckResponse());
         }
 
-        List<string> warnings = await _services.GetRequiredService<BudgetCheckService>()
+        List<string> warnings = await _services.GetRequiredService<BudgetCheckRepository>()
             .WarningsAsync(request.Date, request.Lines, ct);
 
         return Ok(new BudgetCheckResponse { Warnings = warnings });

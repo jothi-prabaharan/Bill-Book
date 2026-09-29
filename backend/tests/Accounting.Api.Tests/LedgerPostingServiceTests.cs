@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
@@ -390,7 +391,7 @@ public class LedgerPostingServiceTests
             Legs = [revenue, receivable],
         }, ct);
 
-        var reports = new LedgerReportService(harness.Db);
+        var reports = new LedgerReportRepository(harness.Db);
 
         SettlementRateView? rate = await reports.GetSettlementRateAsync("inv", 7200, ct);
 
@@ -654,7 +655,7 @@ public class LedgerPostingServiceTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required LedgerPostingService Postings { get; init; }
+        public required LedgerPostingRepository Postings { get; init; }
 
         public required long RevenueId { get; init; }
 
@@ -702,7 +703,7 @@ public class LedgerPostingServiceTests
             return new Harness
             {
                 Db = db,
-                Postings = new LedgerPostingService(
+                Postings = new LedgerPostingRepository(
                     db,
                     new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId },
                     new StubBaseCurrency()),

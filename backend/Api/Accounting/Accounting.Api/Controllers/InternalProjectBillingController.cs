@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -35,7 +36,7 @@ public sealed class InternalProjectBillingController : ControllerBase
             return BadRequest(new ClaimProjectItemsResponse { Detail = "A customer and an organization are required." });
         }
 
-        ClaimProjectItemsResponse answer = await _services.GetRequiredService<ProjectBillingService>()
+        ClaimProjectItemsResponse answer = await _services.GetRequiredService<ProjectBillingRepository>()
             .ClaimAsync(request.InvoiceId, request.Items, ct);
 
         return answer.Claimed ? Ok(answer) : Conflict(answer);
@@ -49,7 +50,7 @@ public sealed class InternalProjectBillingController : ControllerBase
             return BadRequest();
         }
 
-        int released = await _services.GetRequiredService<ProjectBillingService>().ReleaseAsync(request.InvoiceId, ct);
+        int released = await _services.GetRequiredService<ProjectBillingRepository>().ReleaseAsync(request.InvoiceId, ct);
         return Ok(new { released });
     }
 }

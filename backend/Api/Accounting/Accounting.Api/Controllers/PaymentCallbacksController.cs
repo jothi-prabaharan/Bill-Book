@@ -1,4 +1,5 @@
-using Accounting.Api.Services.Payments;
+using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
@@ -51,7 +52,7 @@ public sealed class PaymentCallbacksController : ControllerBase
         }
 
         if (configured.ReadCallback(body) is not { } callback
-            || !OnlinePaymentService.TryReadReference(callback.Reference, out Guid customerId, out Guid orgId))
+            || !OnlinePaymentRepository.TryReadReference(callback.Reference, out Guid customerId, out Guid orgId))
         {
             return BadRequest();
         }
@@ -59,7 +60,7 @@ public sealed class PaymentCallbacksController : ControllerBase
         _tenant.CustomerId = customerId;
         _tenant.OrgId = orgId;
 
-        CompletePaymentOutcome outcome = await _services.GetRequiredService<OnlinePaymentService>().CompleteAsync(callback, ct);
+        CompletePaymentOutcome outcome = await _services.GetRequiredService<OnlinePaymentRepository>().CompleteAsync(callback, ct);
 
         return outcome switch
         {

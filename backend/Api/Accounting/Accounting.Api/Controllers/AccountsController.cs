@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,9 +15,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class AccountsController : ControllerBase
 {
-    private readonly AccountService _accounts;
+    private readonly AccountRepository _accounts;
 
-    public AccountsController(AccountService accounts) => _accounts = accounts;
+    public AccountsController(AccountRepository accounts) => _accounts = accounts;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] bool includeInactive, CancellationToken ct) =>

@@ -10,7 +10,7 @@ namespace Accounting.Api.Tests;
 /// Both allocation routes declare Serializable where the transaction filter can
 /// see it (TK-08).
 ///
-/// <c>AllocationService.AllocateAsync</c> asks <c>BeginScopeAsync</c> for
+/// <c>AllocationRepository.AllocateAsync</c> asks <c>BeginScopeAsync</c> for
 /// Serializable. Under the host, the reliability filter has already opened the
 /// request's transaction by then, at Read Committed unless the action says
 /// otherwise — and Postgres cannot raise the level of a transaction that has

@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -232,7 +233,7 @@ public class SubAccountServiceTests
 
         await h.SubAccounts.ProvisionAsync(Contact(6, "Sharma Traders"), ct);
 
-        var postings = new LedgerPostingService(h.Db, h.Tenant, new StubBaseCurrency());
+        var postings = new LedgerPostingRepository(h.Db, h.Tenant, new StubBaseCurrency());
 
         // Two legs on one document, both against Accounts Receivable for the
         // same contact, differing only in purpose.
@@ -290,7 +291,7 @@ public class SubAccountServiceTests
             .Where(s => s.ReferenceId == 7 && s.Purpose == SubAccountPurpose.OverpaymentAdvance)
             .ExecuteDeleteAsync(ct);
 
-        var postings = new LedgerPostingService(h.Db, h.Tenant, new StubBaseCurrency());
+        var postings = new LedgerPostingRepository(h.Db, h.Tenant, new StubBaseCurrency());
 
         PostLedgerResult result = await postings.PostAsync(new PostLedgerRequest
         {
@@ -339,7 +340,7 @@ public class SubAccountServiceTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required SubAccountService SubAccounts { get; init; }
+        public required SubAccountRepository SubAccounts { get; init; }
 
         public required long ReceivableId { get; init; }
 
@@ -392,7 +393,7 @@ public class SubAccountServiceTests
             {
                 Db = db,
                 Tenant = tenant,
-                SubAccounts = new SubAccountService(db),
+                SubAccounts = new SubAccountRepository(db),
                 ReceivableId = receivableId,
                 PayableId = payableId,
             };

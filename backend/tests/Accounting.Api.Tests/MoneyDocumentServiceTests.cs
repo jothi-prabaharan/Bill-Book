@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -76,7 +77,7 @@ public class MoneyDocumentServiceTests
             l => l.AccountSystemName == "Accounts Payable" && l.DebitAmount > 0);
 
         Assert.Equal(10_000m, settled.DebitAmount);
-        Assert.Equal(MoneyPostingMap.Primary, settled.SubAccountPurpose);
+        Assert.Equal(MoneyPostingMapRepository.Primary, settled.SubAccountPurpose);
         Assert.Equal(7, settled.SubAccountReferenceId);
         Assert.Equal(BillPayment, settled.LedgerSourceId);
 
@@ -86,7 +87,7 @@ public class MoneyDocumentServiceTests
             l => l.AccountSystemName == "Accounts Receivable" && l.DebitAmount > 0);
 
         Assert.Equal(1_000m, excess.DebitAmount);
-        Assert.Equal(MoneyPostingMap.OverpaymentAdvance, excess.SubAccountPurpose);
+        Assert.Equal(MoneyPostingMapRepository.OverpaymentAdvance, excess.SubAccountPurpose);
         Assert.Equal(VendorOverpayment, excess.LedgerSourceId);
 
         // Two bank legs, one per line, each carrying its line's source — so a
@@ -118,7 +119,7 @@ public class MoneyDocumentServiceTests
             h.Ledger.Last.Legs, l => l.AccountSystemName is not null);
 
         Assert.Equal("Accounts Receivable", control.AccountSystemName);
-        Assert.Equal(MoneyPostingMap.PrepaymentAdvance, control.SubAccountPurpose);
+        Assert.Equal(MoneyPostingMapRepository.PrepaymentAdvance, control.SubAccountPurpose);
         Assert.Equal(5_000m, control.DebitAmount);
     }
 
@@ -142,7 +143,7 @@ public class MoneyDocumentServiceTests
             h.Ledger.Last.Legs, l => l.AccountSystemName is not null);
 
         Assert.Equal("Accounts Receivable", control.AccountSystemName);
-        Assert.Equal(MoneyPostingMap.PrepaymentAdvance, control.SubAccountPurpose);
+        Assert.Equal(MoneyPostingMapRepository.PrepaymentAdvance, control.SubAccountPurpose);
         Assert.Equal(2_000m, control.CreditAmount);
     }
 
@@ -180,7 +181,7 @@ public class MoneyDocumentServiceTests
             posting.Legs, l => l.AccountSystemName == "Accounts Receivable");
 
         Assert.Equal(2_500m, control.CreditAmount);
-        Assert.Equal(MoneyPostingMap.Primary, control.SubAccountPurpose);
+        Assert.Equal(MoneyPostingMapRepository.Primary, control.SubAccountPurpose);
 
         LedgerPostingLeg bank = Assert.Single(posting.Legs, l => l.AccountId == h.LedgerAccountId);
         Assert.Equal(2_500m, bank.DebitAmount);
@@ -202,7 +203,7 @@ public class MoneyDocumentServiceTests
             h.Ledger.Last.Legs, l => l.AccountSystemName is not null);
 
         Assert.Equal("Accounts Payable", control.AccountSystemName);
-        Assert.Equal(MoneyPostingMap.OverpaymentAdvance, control.SubAccountPurpose);
+        Assert.Equal(MoneyPostingMapRepository.OverpaymentAdvance, control.SubAccountPurpose);
         Assert.Equal(750m, control.CreditAmount);
     }
 
@@ -236,7 +237,7 @@ public class MoneyDocumentServiceTests
         Assert.All(posting.Legs, l => Assert.Null(l.SubAccountReferenceId));
         Assert.All(
             posting.Legs,
-            l => Assert.Equal(MoneyPostingMap.MoneyTransferSource, l.LedgerSourceId));
+            l => Assert.Equal(MoneyPostingMapRepository.MoneyTransferSource, l.LedgerSourceId));
 
         // Into the cash drawer, out of the bank.
         Assert.Equal(500m, Assert.Single(posting.Legs, l => l.AccountId == h.CashLedgerAccountId).DebitAmount);
@@ -345,7 +346,7 @@ public class MoneyDocumentServiceTests
         // behind on a voided payment, unbalanced and attached to nothing.
         Assert.Empty(h.Ledger.Last.Legs);
         Assert.Equal(
-            [MoneyPostingMap.ControlLedgerType, MoneyPosting.FxLedgerType],
+            [MoneyPostingMapRepository.ControlLedgerType, MoneyPostingRepository.FxLedgerType],
             h.Ledger.Last.WithdrawLedgerTypeIds);
     }
 
@@ -601,7 +602,7 @@ public class MoneyDocumentServiceTests
                 // Part of one bill, all of another, and money over.
                 Settles(BillPayment, "BIL", 501, 4_000m),
                 Settles(BillPayment, "BIL", 502, 6_000m),
-                new SaveMoneyLineRequest { LedgerSourceId = MoneyPostingMap.Overpayment(spending: true), Amount = 2_000m },
+                new SaveMoneyLineRequest { LedgerSourceId = MoneyPostingMapRepository.Overpayment(spending: true), Amount = 2_000m },
             ],
         }, ct);
 
@@ -621,7 +622,7 @@ public class MoneyDocumentServiceTests
             control, l => l.AccountSystemName == "Accounts Receivable");
 
         Assert.Equal(2_000m, excess.DebitAmount);
-        Assert.Equal(MoneyPostingMap.OverpaymentAdvance, excess.SubAccountPurpose);
+        Assert.Equal(MoneyPostingMapRepository.OverpaymentAdvance, excess.SubAccountPurpose);
     }
 
     /// <summary>
@@ -704,7 +705,7 @@ public class MoneyDocumentServiceTests
         LedgerPostingLeg fx = Assert.Single(
             posting.Legs, l => l.AccountSystemName == "Realized FX Gain/Loss");
 
-        Assert.Equal(MoneyPosting.FxLedgerType, fx.LedgerTypeId);
+        Assert.Equal(MoneyPostingRepository.FxLedgerType, fx.LedgerTypeId);
         Assert.Equal(20_000m, fx.DebitAmount);
         Assert.Equal(0m, fx.CreditAmount);
         Assert.Equal("INR", fx.CurrencyCode);
@@ -863,11 +864,11 @@ public class MoneyDocumentServiceTests
 
         public required RecordingLedger Ledger { get; init; }
 
-        public required SpendMoneyService Spend { get; init; }
+        public required SpendMoneyRepository Spend { get; init; }
 
-        public required ReceiveMoneyService Receive { get; init; }
+        public required ReceiveMoneyRepository Receive { get; init; }
 
-        public required TransferMoneyService Transfer { get; init; }
+        public required TransferMoneyRepository Transfer { get; init; }
 
         public required long BankAccountId { get; init; }
 
@@ -984,9 +985,9 @@ public class MoneyDocumentServiceTests
                 CashAccountId = await Account(
                     "Cash in Hand", "CASH", BankAccountType.Cash, null,
                     cashLedgerAccount, isDefault: false),
-                Spend = new SpendMoneyService(db, recorder, numbers, currency, user, TimeProvider.System),
-                Receive = new ReceiveMoneyService(db, recorder, numbers, currency, user, TimeProvider.System),
-                Transfer = new TransferMoneyService(db, recorder, numbers, currency, user, TimeProvider.System),
+                Spend = new SpendMoneyRepository(db, recorder, numbers, currency, user, TimeProvider.System),
+                Receive = new ReceiveMoneyRepository(db, recorder, numbers, currency, user, TimeProvider.System),
+                Transfer = new TransferMoneyRepository(db, recorder, numbers, currency, user, TimeProvider.System),
             };
         }
 

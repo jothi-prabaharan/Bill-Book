@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,7 @@ namespace Accounting.Api.Controllers;
 /// of legs and a document to file them under; deciding which accounts a sale or
 /// a stock issue touches belongs to the service that owns the document, and
 /// deciding whether the result is a legal posting belongs to
-/// <see cref="LedgerPostingService"/>.
+/// <see cref="LedgerPostingRepository"/>.
 /// </summary>
 [ApiController]
 [AllowAnonymous]
@@ -53,7 +54,7 @@ public sealed class InternalLedgerController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var postings = _services.GetRequiredService<LedgerPostingService>();
+        var postings = _services.GetRequiredService<LedgerPostingRepository>();
 
         PostLedgerResult result = await postings.PostAsync(request, ct);
 
@@ -113,7 +114,7 @@ public sealed class InternalLedgerController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var reports = _services.GetRequiredService<LedgerReportService>();
+        var reports = _services.GetRequiredService<LedgerReportRepository>();
 
         List<SettlementView> settlements = await reports.GetSettlementsAsync(
             request.TransactionTypeCode, request.LedgerTypeId, request.TransactionIds, ct);

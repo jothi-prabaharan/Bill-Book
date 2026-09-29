@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,9 +24,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class ReceiveMoneyController : ControllerBase
 {
-    private readonly ReceiveMoneyService _documents;
+    private readonly ReceiveMoneyRepository _documents;
 
-    public ReceiveMoneyController(ReceiveMoneyService documents) => _documents = documents;
+    public ReceiveMoneyController(ReceiveMoneyRepository documents) => _documents = documents;
 
     [HttpGet]
     public async Task<IActionResult> List(

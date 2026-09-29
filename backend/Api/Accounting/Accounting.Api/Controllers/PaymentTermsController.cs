@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +21,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PaymentTermsController : ControllerBase
 {
-    private readonly PaymentTermService _terms;
+    private readonly PaymentTermRepository _terms;
 
-    public PaymentTermsController(PaymentTermService terms) => _terms = terms;
+    public PaymentTermsController(PaymentTermRepository terms) => _terms = terms;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] bool includeInactive, CancellationToken ct) =>

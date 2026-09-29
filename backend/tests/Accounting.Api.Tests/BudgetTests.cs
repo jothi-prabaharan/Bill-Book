@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -220,7 +221,7 @@ public sealed class BudgetTests
         SaveJournalResult saved = await h.Journals.CreateAsync(h.RentJournal(new DateOnly(2026, 4, 20), 3_000m), default);
         Assert.Equal(SaveJournalOutcome.Ok, saved.Outcome);
 
-        List<string> warnings = await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+        List<string> warnings = await new BudgetCheckRepository(h.Db, new StubBranchSettings(yearToDate: false))
             .WarningsAsync(new DateOnly(2026, 4, 20), [h.RentSpend(3_000m)], default);
 
         Assert.Equal(["Rent is 1,000.00 over the Apr 2026 budget."], warnings);
@@ -235,7 +236,7 @@ public sealed class BudgetTests
         await h.ApprovedRentBudgetAsync(10_000m);
         await h.PostAsync(new DateOnly(2026, 4, 5), h.RentId, debit: 8_000m);
 
-        Assert.Empty(await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+        Assert.Empty(await new BudgetCheckRepository(h.Db, new StubBranchSettings(yearToDate: false))
             .WarningsAsync(new DateOnly(2026, 4, 20), [h.RentSpend(2_000m)], default));
     }
 
@@ -247,9 +248,9 @@ public sealed class BudgetTests
         await h.PostAsync(new DateOnly(2026, 4, 5), h.RentId, debit: 18_000m);
         DateOnly may = new(2026, 5, 10);
 
-        List<string> monthly = await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+        List<string> monthly = await new BudgetCheckRepository(h.Db, new StubBranchSettings(yearToDate: false))
             .WarningsAsync(may, [h.RentSpend(3_000m)], default);
-        List<string> yearToDate = await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: true))
+        List<string> yearToDate = await new BudgetCheckRepository(h.Db, new StubBranchSettings(yearToDate: true))
             .WarningsAsync(may, [h.RentSpend(3_000m)], default);
 
         Assert.Empty(monthly);
@@ -262,7 +263,7 @@ public sealed class BudgetTests
         await using Harness h = await Harness.CreateAsync(_postgres);
         await h.ApprovedRentBudgetAsync(10_000m);
 
-        Assert.Empty(await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false)).WarningsAsync(
+        Assert.Empty(await new BudgetCheckRepository(h.Db, new StubBranchSettings(yearToDate: false)).WarningsAsync(
             new DateOnly(2026, 4, 20),
             [
                 new BudgetSpendLine { AccountId = h.SalesId, Amount = 1_000_000m },
@@ -278,7 +279,7 @@ public sealed class BudgetTests
         long draft = await h.CreateAsync("Still a draft");
         await h.Budgets.SaveAsync(draft, h.Rent(1m), default);
 
-        Assert.Empty(await new BudgetCheckService(h.Db, new StubBranchSettings(yearToDate: false))
+        Assert.Empty(await new BudgetCheckRepository(h.Db, new StubBranchSettings(yearToDate: false))
             .WarningsAsync(new DateOnly(2026, 4, 20), [h.RentSpend(5_000m)], default));
     }
 
@@ -290,25 +291,25 @@ public sealed class BudgetTests
     [InlineData(4, true, 100, 30, 70)]
     [InlineData(1, true, 30, 100, 70)]
     public void An_amount_is_read_in_the_accounts_normal_direction(int type, bool contra, int debit, int credit, int expected) =>
-        Assert.Equal(expected, BudgetMath.NormalAmount(type, contra, debit, credit));
+        Assert.Equal(expected, BudgetMathRepository.NormalAmount(type, contra, debit, credit));
 
     [Fact]
     public void Periods_count_from_the_financial_years_first_month()
     {
         DateOnly april = new(2026, 4, 1);
 
-        Assert.Equal(1, BudgetMath.PeriodOf(april, new DateOnly(2026, 4, 30)));
-        Assert.Equal(10, BudgetMath.PeriodOf(april, new DateOnly(2027, 1, 1)));
-        Assert.Equal(12, BudgetMath.PeriodOf(april, new DateOnly(2027, 3, 31)));
-        Assert.Equal(0, BudgetMath.PeriodOf(april, new DateOnly(2027, 4, 1)));
-        Assert.Equal(0, BudgetMath.PeriodOf(april, new DateOnly(2026, 3, 31)));
-        Assert.Equal(new DateOnly(2026, 4, 1), BudgetMath.YearStartOf(new DateOnly(2027, 2, 14), 4));
+        Assert.Equal(1, BudgetMathRepository.PeriodOf(april, new DateOnly(2026, 4, 30)));
+        Assert.Equal(10, BudgetMathRepository.PeriodOf(april, new DateOnly(2027, 1, 1)));
+        Assert.Equal(12, BudgetMathRepository.PeriodOf(april, new DateOnly(2027, 3, 31)));
+        Assert.Equal(0, BudgetMathRepository.PeriodOf(april, new DateOnly(2027, 4, 1)));
+        Assert.Equal(0, BudgetMathRepository.PeriodOf(april, new DateOnly(2026, 3, 31)));
+        Assert.Equal(new DateOnly(2026, 4, 1), BudgetMathRepository.YearStartOf(new DateOnly(2027, 2, 14), 4));
     }
 
     [Fact]
     public void A_sheet_with_a_word_where_an_amount_belongs_is_refused_with_its_place()
     {
-        SheetParse parsed = BudgetMath.ParseSheet([["6100", "Rent", "100", "lots"]], byProject: false);
+        SheetParse parsed = BudgetMathRepository.ParseSheet([["6100", "Rent", "100", "lots"]], byProject: false);
 
         Assert.Empty(parsed.Rows);
         Assert.Equal("Row 2, month 2: \"lots\" is not a number.", parsed.Error);
@@ -317,7 +318,7 @@ public sealed class BudgetTests
     [Fact]
     public void A_sheet_by_project_reads_the_project_column_and_skips_blank_rows()
     {
-        SheetParse parsed = BudgetMath.ParseSheet(
+        SheetParse parsed = BudgetMathRepository.ParseSheet(
         [
             ["6100", "PRJ-0001", "Rent", "5"],
             ["", "", "Total", "5"],
@@ -334,17 +335,17 @@ public sealed class BudgetTests
         Assert.Equal(
             ["Account code", "Account name", "Apr 2026", "May 2026", "Jun 2026", "Jul 2026", "Aug 2026", "Sep 2026",
              "Oct 2026", "Nov 2026", "Dec 2026", "Jan 2027", "Feb 2027", "Mar 2027", "Total"],
-            BudgetMath.SheetHeader(new DateOnly(2026, 4, 1), byProject: false));
+            BudgetMathRepository.SheetHeader(new DateOnly(2026, 4, 1), byProject: false));
 
     private sealed class Harness : IAsyncDisposable
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required BudgetService Budgets { get; init; }
+        public required BudgetRepository Budgets { get; init; }
 
-        public required LedgerPostingService Postings { get; init; }
+        public required LedgerPostingRepository Postings { get; init; }
 
-        public required JournalService Journals { get; init; }
+        public required JournalRepository Journals { get; init; }
 
         public required long RentId { get; init; }
 
@@ -436,12 +437,12 @@ public sealed class BudgetTests
             return new Harness
             {
                 Db = db,
-                Budgets = new BudgetService(db, new StubFinancialYear(4), TimeProvider.System),
-                Postings = new LedgerPostingService(db, tenant, new StubBaseCurrency()),
-                Journals = new JournalService(
+                Budgets = new BudgetRepository(db, new StubFinancialYear(4), TimeProvider.System),
+                Postings = new LedgerPostingRepository(db, tenant, new StubBaseCurrency()),
+                Journals = new JournalRepository(
                     db,
-                    new LedgerPostingService(db, tenant, new StubBaseCurrency()),
-                    new PeriodLockService(db, new StubCurrentUser()),
+                    new LedgerPostingRepository(db, tenant, new StubBaseCurrency()),
+                    new PeriodLockRepository(db, new StubCurrentUser()),
                     new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
                     new StubBaseCurrency(),
                     new StubCurrentUser(Approver),

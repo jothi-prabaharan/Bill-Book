@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -423,7 +424,7 @@ public class OpeningBalanceServiceTests
 
         Assert.Equal(OpeningBalanceOutcome.Ok, (await h.Openings.FinalizeAsync(ct)).Outcome);
 
-        var reports = new LedgerReportService(h.Db);
+        var reports = new LedgerReportRepository(h.Db);
 
         // The trial balance, actually drawn.
         TrialBalanceView trial = await reports.GetTrialBalanceAsync(null, null, ct);
@@ -476,7 +477,7 @@ public class OpeningBalanceServiceTests
 
         // A hand-written journal straight at the control account, which is what a
         // migration done outside this screen looks like.
-        var postings = new LedgerPostingService(
+        var postings = new LedgerPostingRepository(
             h.Db, new TenantContext { CustomerId = Guid.NewGuid(), OrgId = h.OrgId },
             new StubBaseCurrency());
 
@@ -516,7 +517,7 @@ public class OpeningBalanceServiceTests
             ],
         }, ct);
 
-        var reports = new LedgerReportService(h.Db);
+        var reports = new LedgerReportRepository(h.Db);
 
         // Double-entry is perfectly happy.
         Assert.True((await reports.GetTrialBalanceAsync(null, null, ct)).IsBalanced);
@@ -545,7 +546,7 @@ public class OpeningBalanceServiceTests
 
         await h.Contact(7);
 
-        var postings = new LedgerPostingService(
+        var postings = new LedgerPostingRepository(
             h.Db, new TenantContext { CustomerId = Guid.NewGuid(), OrgId = h.OrgId },
             new StubBaseCurrency());
 
@@ -668,7 +669,7 @@ public class OpeningBalanceServiceTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required OpeningBalanceService Openings { get; init; }
+        public required OpeningBalanceRepository Openings { get; init; }
 
         public required Guid OrgId { get; init; }
 
@@ -769,10 +770,10 @@ public class OpeningBalanceServiceTests
                 PayableId = await Account(
                     "2100", SystemAccount.AccountsPayable, "Accounts Payable", Liability),
                 InventoryId = await Account("1200", SystemAccount.Inventory, "Inventory", Asset),
-                Openings = new OpeningBalanceService(
+                Openings = new OpeningBalanceRepository(
                     db,
-                    new LedgerPostingService(db, tenant, new StubBaseCurrency()),
-                    new LedgerReportService(db),
+                    new LedgerPostingRepository(db, tenant, new StubBaseCurrency()),
+                    new LedgerReportRepository(db),
                     inventory ?? new RecordingInventory(),
                     new NumberGenerator(
                         db, Options.Create(new NumberingOptions()), new StubFinancialYear()),

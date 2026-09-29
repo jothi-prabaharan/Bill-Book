@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -215,7 +216,7 @@ public sealed class ProjectLedgerTests
     [InlineData(ProjectStatus.Completed, false)]
     [InlineData(ProjectStatus.Cancelled, false)]
     public void Only_an_open_job_takes_postings(ProjectStatus status, bool postable) =>
-        Assert.Equal(postable, ProjectRules.IsPostable(status));
+        Assert.Equal(postable, ProjectRulesRepository.IsPostable(status));
 
     private sealed class Harness : IAsyncDisposable
     {
@@ -223,11 +224,11 @@ public sealed class ProjectLedgerTests
 
         public required TenantContext Tenant { get; init; }
 
-        public required JournalService Journals { get; init; }
+        public required JournalRepository Journals { get; init; }
 
-        public required LedgerPostingService Postings { get; init; }
+        public required LedgerPostingRepository Postings { get; init; }
 
-        public required ProjectService Projects { get; init; }
+        public required ProjectRepository Projects { get; init; }
 
         public required long RentId { get; init; }
 
@@ -285,7 +286,7 @@ public sealed class ProjectLedgerTests
             await db.SaveChangesAsync();
 
             var numbers = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
-            var postings = new LedgerPostingService(db, tenant, new StubBaseCurrency());
+            var postings = new LedgerPostingRepository(db, tenant, new StubBaseCurrency());
 
             return new Harness
             {
@@ -294,11 +295,11 @@ public sealed class ProjectLedgerTests
                 Postings = postings,
                 RentId = await Account("6100", "Rent", 5),
                 CashId = await Account("1010", "Cash", 1),
-                Projects = new ProjectService(db, numbers, new StubBaseCurrency(), TimeProvider.System, NullLogger<ProjectService>.Instance),
-                Journals = new JournalService(
+                Projects = new ProjectRepository(db, numbers, new StubBaseCurrency(), TimeProvider.System, NullLogger<ProjectRepository>.Instance),
+                Journals = new JournalRepository(
                     db,
                     postings,
-                    new PeriodLockService(db, new StubCurrentUser()),
+                    new PeriodLockRepository(db, new StubCurrentUser()),
                     numbers,
                     new StubBaseCurrency(),
                     new StubCurrentUser(),

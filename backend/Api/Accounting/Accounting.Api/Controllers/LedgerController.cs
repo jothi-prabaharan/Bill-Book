@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class LedgerController : ControllerBase
 {
-    private readonly LedgerReportService _reports;
+    private readonly LedgerReportRepository _reports;
 
-    public LedgerController(LedgerReportService reports) => _reports = reports;
+    public LedgerController(LedgerReportRepository reports) => _reports = reports;
 
     [HttpGet("accounts/{accountId:long}")]
     public async Task<IActionResult> AccountLedger(

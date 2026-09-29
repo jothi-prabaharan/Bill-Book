@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,9 +31,9 @@ public sealed class BankStatementsController : ControllerBase
     /// </summary>
     private const long MaxUploadBytes = 10 * 1024 * 1024;
 
-    private readonly BankStatementService _statements;
+    private readonly BankStatementRepository _statements;
 
-    public BankStatementsController(BankStatementService statements) => _statements = statements;
+    public BankStatementsController(BankStatementRepository statements) => _statements = statements;
 
     [HttpGet]
     public async Task<IActionResult> List(
@@ -131,8 +132,8 @@ public sealed class BankStatementsController : ControllerBase
         bool excel = string.Equals(format, "xlsx", StringComparison.OrdinalIgnoreCase);
 
         return File(
-            excel ? StatementExportWriter.ToExcel(export) : StatementExportWriter.ToCsv(export),
-            excel ? StatementExportWriter.ExcelContentType : StatementExportWriter.CsvContentType,
+            excel ? StatementExportWriterRepository.ToExcel(export) : StatementExportWriterRepository.ToCsv(export),
+            excel ? StatementExportWriterRepository.ExcelContentType : StatementExportWriterRepository.CsvContentType,
             $"{export.Name}.{(excel ? "xlsx" : "csv")}");
     }
 

@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Approvals;
@@ -24,9 +25,9 @@ public sealed class JournalApprovalsController : ControllerBase
 {
     private const ApprovalRequestKind Kind = ApprovalRequestKind.ManualJournal;
 
-    private readonly AccountingApprovalService _approvals;
+    private readonly AccountingApprovalRepository _approvals;
 
-    public JournalApprovalsController(AccountingApprovalService approvals) => _approvals = approvals;
+    public JournalApprovalsController(AccountingApprovalRepository approvals) => _approvals = approvals;
 
     [HttpPost("{id:long}/submit")]
     [PermissionAction("edit")]

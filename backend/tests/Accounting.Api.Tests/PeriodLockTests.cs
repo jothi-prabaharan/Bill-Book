@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
@@ -213,9 +214,9 @@ public class PeriodLockTests
     {
         public required AccountingDbContext Db { get; init; }
 
-        public required PeriodLockService Locks { get; init; }
+        public required PeriodLockRepository Locks { get; init; }
 
-        public required JournalService Journals { get; init; }
+        public required JournalRepository Journals { get; init; }
 
         public required Guid OrgId { get; init; }
 
@@ -286,8 +287,8 @@ public class PeriodLockTests
                 await db.SaveChangesAsync();
             }
 
-            var locks = new PeriodLockService(db, user);
-            var postings = new LedgerPostingService(db, tenant, new StubBaseCurrency());
+            var locks = new PeriodLockRepository(db, user);
+            var postings = new LedgerPostingRepository(db, tenant, new StubBaseCurrency());
 
             return new Harness
             {
@@ -296,7 +297,7 @@ public class PeriodLockTests
                 Locks = locks,
                 RentId = await Account("6100", "Rent", 5),
                 CashId = await Account("1010", "Cash", 1),
-                Journals = new JournalService(
+                Journals = new JournalRepository(
                     db,
                     postings,
                     locks,

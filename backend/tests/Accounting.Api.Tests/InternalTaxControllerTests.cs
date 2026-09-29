@@ -1,5 +1,6 @@
 using Accounting.Api.Controllers;
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
 using Accounting.Repository.SeedData;
@@ -56,9 +57,9 @@ public class InternalTaxControllerTests
         var services = new ServiceCollection();
         services.AddSingleton(tenant);
         services.AddScoped(_ => _postgres.CreateContext(tenant));
-        services.AddScoped<SubAccountService>();
+        services.AddScoped<SubAccountRepository>();
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<TaxMasterService>();
+        services.AddScoped<TaxMasterRepository>();
 
         ServiceProvider provider = services.BuildServiceProvider();
         return (new InternalTaxController(tenant, provider), provider);

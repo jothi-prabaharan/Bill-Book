@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,10 +24,10 @@ public sealed class BudgetsController : ControllerBase
 {
     private const long MaxUploadBytes = 5 * 1024 * 1024;
 
-    private readonly BudgetService _budgets;
+    private readonly BudgetRepository _budgets;
     private readonly ICurrentUser _user;
 
-    public BudgetsController(BudgetService budgets, ICurrentUser user)
+    public BudgetsController(BudgetRepository budgets, ICurrentUser user)
     {
         _budgets = budgets;
         _user = user;
@@ -101,8 +102,8 @@ public sealed class BudgetsController : ControllerBase
 
         bool excel = string.Equals(format, "xlsx", StringComparison.OrdinalIgnoreCase);
         return File(
-            excel ? StatementExportWriter.ToExcel(export) : StatementExportWriter.ToCsv(export),
-            excel ? StatementExportWriter.ExcelContentType : StatementExportWriter.CsvContentType,
+            excel ? StatementExportWriterRepository.ToExcel(export) : StatementExportWriterRepository.ToCsv(export),
+            excel ? StatementExportWriterRepository.ExcelContentType : StatementExportWriterRepository.CsvContentType,
             $"{export.Name}.{(excel ? "xlsx" : "csv")}");
     }
 
@@ -122,14 +123,14 @@ public sealed class BudgetsController : ControllerBase
             return BadRequest(new MessageResponse { Message = "That file is too large for a budget. Check it is the right file." });
         }
 
-        StatementGrid grid;
+        StatementGridRepository grid;
         await using (Stream content = file.OpenReadStream())
         {
             try
             {
                 grid = file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase)
-                    ? ExcelStatementReader.Read(content, 0, hasHeaderRow: true)
-                    : CsvStatementReader.Read(content, 0, hasHeaderRow: true);
+                    ? ExcelStatementReaderRepository.Read(content, 0, hasHeaderRow: true)
+                    : CsvStatementReaderRepository.Read(content, 0, hasHeaderRow: true);
             }
             catch (StatementReadException ex)
             {

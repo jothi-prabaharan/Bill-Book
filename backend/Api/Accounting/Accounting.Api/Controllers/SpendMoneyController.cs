@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,9 +25,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class SpendMoneyController : ControllerBase
 {
-    private readonly SpendMoneyService _documents;
+    private readonly SpendMoneyRepository _documents;
 
-    public SpendMoneyController(SpendMoneyService documents) => _documents = documents;
+    public SpendMoneyController(SpendMoneyRepository documents) => _documents = documents;
 
     [HttpGet]
     public async Task<IActionResult> List(

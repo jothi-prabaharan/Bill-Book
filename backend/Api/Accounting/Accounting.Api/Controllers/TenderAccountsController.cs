@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -23,9 +24,9 @@ namespace Accounting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class TenderAccountsController : ControllerBase
 {
-    private readonly BankService _banks;
+    private readonly BankRepository _banks;
 
-    public TenderAccountsController(BankService banks) => _banks = banks;
+    public TenderAccountsController(BankRepository banks) => _banks = banks;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) =>
