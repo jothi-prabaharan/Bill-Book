@@ -80,6 +80,12 @@ public class SaveBillRequest
         ErrorMessage = "Landed cost cannot be negative.")]
     public decimal LandedCostAmount { get; set; }
 
+    /// <summary>
+    /// The vendor charged no GST and this business pays it (TK-115, D-30). The
+    /// vendor is owed the net; the tax is credited to GST Payable (Reverse Charge).
+    /// </summary>
+    public bool IsReverseCharge { get; set; }
+
     public string? Notes { get; set; }
 
     public string? TermsAndConditions { get; set; }
@@ -160,6 +166,10 @@ public class SaveBillLineRequest
 
     [MaxLength(300, ErrorMessage = "Line notes cannot exceed 300 characters.")]
     public string? LineNotes { get; set; }
+
+    /// <summary>Whether the line's GST is claimable (TK-115, D-31). Not eligible posts the tax into the line's cost.</summary>
+    [EnumDataType(typeof(ItcEligibility), ErrorMessage = "ITC eligibility must be Eligible, Ineligible or Blocked.")]
+    public ItcEligibility ItcEligibility { get; set; } = ItcEligibility.Eligible;
 }
 
 /// <summary>Why a bill was refused. Every value is something a user can act on.</summary>
@@ -277,6 +287,8 @@ public class BillView : BillListItem
 
     public decimal LandedCostAmount { get; set; }
 
+    public bool IsReverseCharge { get; set; }
+
     public string? Notes { get; set; }
 
     public string? TermsAndConditions { get; set; }
@@ -366,6 +378,8 @@ public class BillLineView
     public long? ItemBatchId { get; set; }
 
     public string? LineNotes { get; set; }
+
+    public string ItcEligibility { get; set; } = nameof(Shared.Kernel.Documents.ItcEligibility.Eligible);
 
     public List<BillLineTaxView> Taxes { get; set; } = [];
 }

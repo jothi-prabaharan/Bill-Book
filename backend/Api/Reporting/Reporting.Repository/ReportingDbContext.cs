@@ -84,6 +84,9 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<UnitOfMeasureRead> UnitsOfMeasure => Set<UnitOfMeasureRead>();
     public DbSet<SalesRegisterRead> SalesRegisters => Set<SalesRegisterRead>();
 
+    /// <summary>The purchase GST register (TK-115).</summary>
+    public DbSet<PurchaseRegisterRead> PurchaseRegisters => Set<PurchaseRegisterRead>();
+
     public DbSet<TaxMasterRead> TaxMasters => Set<TaxMasterRead>();
 
     public DbSet<ContactLicenceRead> ContactLicences => Set<ContactLicenceRead>();
@@ -319,6 +322,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<WarehouseRead>(modelBuilder, "Warehouses", "inv", e => e.WarehouseId);
         MapRead<UnitOfMeasureRead>(modelBuilder, "UnitsOfMeasure", "inv", e => e.UomId);
         MapRead<SalesRegisterRead>(modelBuilder, "SalesRegisters", "sal", e => e.SalesRegisterId);
+        MapRead<PurchaseRegisterRead>(modelBuilder, "PurchaseRegister", "pur", e => e.PurchaseRegisterId);
 
         MapRead<InvoiceRead>(modelBuilder, "Invoices", "sal", e => e.InvoiceId);
         MapRead<CreditNoteRead>(modelBuilder, "CreditNotes", "sal", e => e.CreditNoteId);

@@ -70,6 +70,9 @@ public class PurchaseDbContext : TenantDbContext
 
     public DbSet<DebitNoteDetailTax> DebitNoteDetailTaxes => Set<DebitNoteDetailTax>();
 
+    /// <summary>The purchase GST register (TK-115), written by the bill and debit note posters.</summary>
+    public DbSet<PurchaseRegister> PurchaseRegister => Set<PurchaseRegister>();
+
     /// <summary>Approval chains of purchase orders, bills and debit notes (TK-100).</summary>
     public DbSet<PurchaseApprovalStep> ApprovalSteps => Set<PurchaseApprovalStep>();
 
@@ -335,6 +338,40 @@ public class PurchaseDbContext : TenantDbContext
         {
             b.Property(e => e.MarkupPercent).HasColumnType("decimal(7,2)");
             b.HasIndex(e => new { e.OrgId, e.BilledInvoiceId }).HasFilter("\"BilledInvoiceId\" IS NOT NULL");
+        });
+
+        // ITC eligibility and reverse charge (TK-115, D-30, D-31).
+        modelBuilder.Entity<BillDetail>(b =>
+            b.Property(e => e.ItcEligibility).HasConversion<string>().HasMaxLength(12).HasDefaultValue(ItcEligibility.Eligible));
+
+        modelBuilder.Entity<PurchaseRegister>(b =>
+        {
+            b.ToTable("PurchaseRegister");
+            b.HasKey(e => e.PurchaseRegisterId);
+
+            b.Property(e => e.ItcEligibility).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.LineType).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.GstRate).HasColumnType("decimal(7,3)");
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,6)");
+            b.Property(e => e.ExchangeRate).HasColumnType("decimal(18,8)");
+
+            foreach (string money in new[]
+            {
+                "TaxableAmount", "CgstAmount",
+                "SgstAmount", "IgstAmount",
+                "CessAmount", "TotalAmount",
+                "TaxableAmountBase", "TaxAmountBase",
+            })
+            {
+                b.Property(money).HasColumnType("decimal(28,2)");
+            }
+
+            // What a return reads: a month of the branch's rows.
+            b.HasIndex(e => new { e.OrgId, e.DocumentDate }).HasDatabaseName("IX_PurchaseRegister_Date");
+
+            // What a void removes, and what 2B matching joins on.
+            b.HasIndex(e => new { e.OrgId, e.TransactionTypeCode, e.SourceId }).HasDatabaseName("IX_PurchaseRegister_Source");
+            b.HasIndex(e => new { e.OrgId, e.ContactGstin, e.SupplierInvoiceNo }).HasDatabaseName("IX_PurchaseRegister_Supplier");
         });
 
         modelBuilder.Entity<PurchaseApprovalStep>(b =>

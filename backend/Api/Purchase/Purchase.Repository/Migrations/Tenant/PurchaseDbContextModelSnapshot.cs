@@ -105,6 +105,9 @@ namespace Purchase.Repository.Migrations.Tenant
                     b.Property<bool>("IsInterState")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsReverseCharge")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("LandedCostAmount")
                         .HasColumnType("decimal(28,2)");
 
@@ -316,6 +319,13 @@ namespace Purchase.Repository.Migrations.Tenant
 
                     b.Property<bool>("IsPriceInclusive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("ItcEligibility")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasDefaultValue("Eligible");
 
                     b.Property<long?>("ItemBatchId")
                         .HasColumnType("bigint");
@@ -1902,6 +1912,156 @@ namespace Purchase.Repository.Migrations.Tenant
                         {
                             t.HasCheckConstraint("chk_purchaseorderdetailtaxes_non_negative", "\"Rate\" >= 0 AND \"TaxableAmount\" >= 0 AND \"Amount\" >= 0 AND \"AmountBase\" >= 0");
                         });
+                });
+
+            modelBuilder.Entity("Purchase.Entity.TableEntities.PurchaseRegister", b =>
+                {
+                    b.Property<long>("PurchaseRegisterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PurchaseRegisterId"));
+
+                    b.Property<decimal>("CessAmount")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal>("CgstAmount")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<string>("ContactGstin")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("DocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DocumentNo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<decimal>("GstRate")
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<string>("HsnSacCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<decimal>("IgstAmount")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<bool>("IsInterState")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ItcEligibility")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("LineType")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("OriginalBillId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OriginalBillNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("PlaceOfSupplyStateId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<bool>("ReverseCharge")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("SgstAmount")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<long>("SourceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SourceLineId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly>("SupplierInvoiceDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SupplierInvoiceNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("TaxAmountBase")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal>("TaxableAmount")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal>("TaxableAmountBase")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<string>("TransactionTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("PurchaseRegisterId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "DocumentDate")
+                        .HasDatabaseName("IX_PurchaseRegister_Date");
+
+                    b.HasIndex("OrgId", "ContactGstin", "SupplierInvoiceNo")
+                        .HasDatabaseName("IX_PurchaseRegister_Supplier");
+
+                    b.HasIndex("OrgId", "TransactionTypeCode", "SourceId")
+                        .HasDatabaseName("IX_PurchaseRegister_Source");
+
+                    b.ToTable("PurchaseRegister", "pur");
                 });
 
             modelBuilder.Entity("Shared.Kernel.Errors.ErrorLog", b =>

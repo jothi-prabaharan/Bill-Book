@@ -37,6 +37,9 @@ public sealed class BillService
     private const string InventoryAccount = "Inventory";
     private const string GrniAccount = "Goods Received Not Invoiced";
     private const string InputGstAccount = "Input GST";
+
+    /// <summary>Accounting's SystemAccount.GstPayableReverseCharge (TK-115, D-30).</summary>
+    public const string ReverseChargeAccount = "GST Payable (Reverse Charge)";
     private const string AccountsPayableAccount = "Accounts Payable";
     private const string FixedAssetAccount = "Fixed Asset";
 
@@ -320,6 +323,7 @@ public sealed class BillService
         bill.PaymentTermId = request.PaymentTermId;
         bill.DueDate = dueDate.Value;
         bill.LandedCostAmount = request.LandedCostAmount;
+        bill.IsReverseCharge = request.IsReverseCharge;
         bill.ContactId = request.ContactId;
         bill.ContactGstin = request.ContactGstin;
         bill.BillingAddress = request.BillingAddress;
@@ -467,6 +471,7 @@ public sealed class BillService
                 LineNotes = lineReq.LineNotes,
                 ApportionedLandedCost = 0m,
                 ReturnedQuantity = 0m,
+                ItcEligibility = lineReq.ItcEligibility,
             };
 
             foreach (TaxComponentAmount component in computed.Components)
@@ -493,9 +498,16 @@ public sealed class BillService
         bill.SgstAmount = totals.SgstAmount;
         bill.IgstAmount = totals.IgstAmount;
         bill.CessAmount = totals.CessAmount;
+        // Under reverse charge the vendor charged no tax, so what they are owed
+        // is the total without it (D-30). The tax is still computed and kept on
+        // the lines: this business owes it to the government instead.
+        decimal payable = bill.IsReverseCharge
+            ? totals.TotalAmount - (totals.CgstAmount + totals.SgstAmount + totals.IgstAmount + totals.CessAmount)
+            : totals.TotalAmount;
+
         bill.RoundOffAmount =
-            Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
-        bill.TotalAmount = totals.TotalAmount + bill.RoundOffAmount;
+            Math.Round(payable, 0, MidpointRounding.AwayFromZero) - payable;
+        bill.TotalAmount = payable + bill.RoundOffAmount;
         bill.TotalAmountBase = bill.TotalAmount * bill.ExchangeRate;
 
         return new BillResult(BillOutcome.Ok, bill.BillId);
@@ -678,6 +690,13 @@ public sealed class BillService
             return new BillResult(BillOutcome.PostingRefused, Detail: posted.Detail);
         }
 
+        // The GST register, in this transaction (TK-115). A retried post
+        // replaces what an earlier attempt left, as the ledger does.
+        await _db.PurchaseRegister
+            .Where(r => r.TransactionTypeCode == "BIL" && r.SourceId == bill.BillId)
+            .ExecuteDeleteAsync(ct);
+        _db.PurchaseRegister.AddRange(PurchaseRegisterRows.ForBill(bill));
+
         // Each capital line goes onto the fixed asset register, and Accounting
         // reclassifies its cost out of the shared Fixed Asset account into its
         // category's (D-19). After the ledger, because the reclassification
@@ -710,7 +729,8 @@ public sealed class BillService
                             Description = string.IsNullOrWhiteSpace(l.Description)
                                 ? $"Line {l.LineNumber}"
                                 : l.Description.Trim(),
-                            Amount = l.TaxableAmount,
+                            // The asset's cost, GST included when it cannot be claimed (D-31).
+                            Amount = LineCost(l),
                         })
                         .ToList(),
                 },
@@ -737,7 +757,7 @@ public sealed class BillService
     /// credited against the vendor's own sub-account — without which payables
     /// aging is one number with no vendors in it.
     /// </summary>
-    private static List<LedgerLegRequest> BuildLegs(Bill bill, bool againstReceipt)
+    public static List<LedgerLegRequest> BuildLegs(Bill bill, bool againstReceipt)
     {
         List<LedgerLegRequest> legs = [];
 
@@ -749,6 +769,9 @@ public sealed class BillService
                 continue;
             }
 
+            // GST that cannot be claimed is part of what the line cost (D-31).
+            decimal unclaimed = ClaimsCredit(line) ? 0m : TaxOf(line);
+
             // Against a receipt a line clears the clearing account — that is
             // what the receipt credited. Except a capital line: a receipt takes
             // no capital lines, so one on the same bill was never credited to
@@ -756,6 +779,26 @@ public sealed class BillService
             // receipt, which is also the balance the register reclassifies from;
             // clearing GRNI with it would leave the clearing account short.
             bool clearsReceipt = againstReceipt && line.LineType != DocumentLineType.Capital;
+
+            // Against a receipt the clearing account takes what the receipt put
+            // there, the taxable value; the unclaimable tax goes straight to the
+            // stock it was paid on. Otherwise it rides on the line's own leg.
+            if (clearsReceipt && unclaimed != 0)
+            {
+                legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = ItemLedgerType,
+                    LedgerSourceId = TransactionLedgerSource,
+                    TransactionDetailId = line.BillDetailId,
+                    AccountSystemName = InventoryAccount,
+                    DebitAmount = unclaimed,
+                    TransactionDesc = "GST not claimable, added to stock cost",
+                });
+            }
+            else
+            {
+                value += unclaimed;
+            }
 
             string account = clearsReceipt
                 ? GrniAccount
@@ -786,8 +829,9 @@ public sealed class BillService
 
         // Input GST, one leg per component per line, each against the sub-account
         // for that rate. An asset: it is reclaimable, which is the whole
-        // difference from the sales side.
-        foreach (BillDetail line in bill.Lines.OrderBy(l => l.LineNumber))
+        // difference from the sales side. Only for a line whose credit can be
+        // claimed; the rest went into the line's cost above.
+        foreach (BillDetail line in bill.Lines.OrderBy(l => l.LineNumber).Where(ClaimsCredit))
         {
             foreach (BillDetailTax tax in line.Taxes)
             {
@@ -831,6 +875,30 @@ public sealed class BillService
             owed += bill.RoundOffAmount;
         }
 
+        // Reverse charge (D-30): the tax is owed to the government, not the
+        // vendor. One credit per component per line, whether or not the line's
+        // credit is claimable — the liability is the same either way.
+        if (bill.IsReverseCharge)
+        {
+            foreach (BillDetail line in bill.Lines.OrderBy(l => l.LineNumber))
+            {
+                foreach (BillDetailTax tax in line.Taxes.Where(t => t.Amount != 0))
+                {
+                    legs.Add(new LedgerLegRequest
+                    {
+                        LedgerTypeId = TaxLedgerType,
+                        LedgerSourceId = TransactionLedgerSource,
+                        TransactionDetailId = line.BillDetailId,
+                        AccountSystemName = ReverseChargeAccount,
+                        CreditAmount = tax.Amount,
+                        TransactionDesc = $"{tax.TaxComponent} payable under reverse charge",
+                    });
+
+                    owed -= tax.Amount;
+                }
+            }
+        }
+
         legs.Add(new LedgerLegRequest
         {
             LedgerTypeId = ControlLedgerType,
@@ -846,8 +914,17 @@ public sealed class BillService
         return legs;
     }
 
+    /// <summary>What a received unit cost, GST included where it cannot be claimed (D-31).</summary>
     private static decimal NetUnitCost(BillDetail line) =>
-        line.Quantity == 0 ? 0m : line.TaxableAmount / line.Quantity;
+        line.Quantity == 0 ? 0m : LineCost(line) / line.Quantity;
+
+    /// <summary>The line's taxable value, plus its GST when that cannot be claimed (D-31).</summary>
+    public static decimal LineCost(BillDetail line) =>
+        line.TaxableAmount + (ClaimsCredit(line) ? 0m : TaxOf(line));
+
+    public static bool ClaimsCredit(BillDetail line) => line.ItcEligibility == ItcEligibility.Eligible;
+
+    private static decimal TaxOf(BillDetail line) => line.Taxes.Sum(t => t.Amount);
 
     public async Task<BillResult> VoidAsync(
         long billId, VoidBillRequest request, CancellationToken ct)
@@ -936,6 +1013,12 @@ public sealed class BillService
             {
                 return new BillResult(BillOutcome.PostingRefused, Detail: withdrawn.Detail);
             }
+
+            // Out of the GST register with the ledger rows, as a voided invoice
+            // leaves the sales register.
+            await _db.PurchaseRegister
+                .Where(r => r.TransactionTypeCode == "BIL" && r.SourceId == bill.BillId)
+                .ExecuteDeleteAsync(ct);
         }
 
         await _db.SaveChangesAsync(ct);
@@ -986,6 +1069,7 @@ public sealed class BillService
                 RoundOffAmount = b.RoundOffAmount,
                 TotalAmountBase = b.TotalAmountBase,
                 LandedCostAmount = b.LandedCostAmount,
+                IsReverseCharge = b.IsReverseCharge,
                 Notes = b.Notes,
                 CustomFields = b.CustomFields,
                 TermsAndConditions = b.TermsAndConditions,
@@ -1030,6 +1114,7 @@ public sealed class BillService
                         LineTotal = l.LineTotal,
                         ItemBatchId = l.ItemBatchId,
                         LineNotes = l.LineNotes,
+                        ItcEligibility = l.ItcEligibility.ToString(),
                         Taxes = l.Taxes
                             .Select(t => new BillLineTaxView
                             {

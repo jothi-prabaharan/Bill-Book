@@ -252,6 +252,13 @@ builder.Services.AddBillBookWorkerErrorAudit<ReportingDbContext>();
 builder.Services.AddScoped<IScheduledReportExporter, ScheduledReportExporter>();
 builder.Services.AddScoped<ReportScheduleRun>();
 builder.Services.AddScoped<ReportScheduleService>();
+
+// The branch's own GSTIN for the GSTR-1 export (TK-115), as Sales reads it for its documents.
+builder.Services.AddHttpClient<IOrgIdentityProvider, HttpOrgIdentityProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHostedService<ReportScheduleWorker>();
 
 builder.Services.AddScoped<ReportCatalogService>();

@@ -70,6 +70,23 @@ public sealed class BatchedNameResolver
 
     public sealed record StateDto(int StateId, int CountryId, string StateCode, string StateName);
 
+    /// <summary>
+    /// Every state's GST code by id (TK-115): the two digits a GST return names
+    /// a place of supply by. Cached like the names.
+    /// </summary>
+    public async Task<Dictionary<int, string>> GetStateCodesAsync(CancellationToken ct = default)
+    {
+        return await _cache.GetOrCreateAsync("StateCodes", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+            var response = await _client.GetAsync("internal/master/states", ct);
+            response.EnsureSuccessStatusCode();
+
+            var states = await response.Content.ReadFromJsonAsync<List<StateDto>>(cancellationToken: ct);
+            return states?.ToDictionary(s => s.StateId, s => s.StateCode) ?? new Dictionary<int, string>();
+        }) ?? new Dictionary<int, string>();
+    }
+
     /// <summary>Gets the display name for every country, cached since they are fixed reference data.</summary>
     public async Task<Dictionary<int, string>> GetCountryNamesAsync(CancellationToken ct = default)
     {

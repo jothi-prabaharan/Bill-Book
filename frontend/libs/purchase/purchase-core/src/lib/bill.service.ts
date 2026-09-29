@@ -10,6 +10,9 @@ import { firstValueFrom } from 'rxjs';
  * and the credit is claimed against the vendor's number. One vendor cannot bill
  * the same number twice in a financial year.
  */
+/** Whether a bill line's GST can be claimed (TK-115, D-31). Not eligible posts the tax into the line's cost. */
+export type ItcEligibility = 'Eligible' | 'Ineligible' | 'Blocked';
+
 export interface SaveBillRequest {
   documentDate: string;
   contactId: number;
@@ -27,6 +30,8 @@ export interface SaveBillRequest {
   currencyCode?: string | null;
   exchangeRate?: number | null;
   landedCostAmount: number;
+  /** The vendor charged no GST and this business pays it (TK-115, D-30): the vendor is owed the net. */
+  isReverseCharge?: boolean;
   notes?: string | null;
   termsAndConditions?: string | null;
   lines: SaveBillLineRequest[];
@@ -60,6 +65,7 @@ export interface SaveBillLineRequest {
   markupPercent?: number | null;
   itemBatchId?: number | null;
   lineNotes?: string | null;
+  itcEligibility?: ItcEligibility;
 }
 
 export interface VoidBillRequest {
@@ -104,6 +110,7 @@ export interface BillView extends BillListItem {
   roundOffAmount: number;
   totalAmountBase: number;
   landedCostAmount: number;
+  isReverseCharge?: boolean;
   notes?: string | null;
   termsAndConditions?: string | null;
   postedAt?: string | null;
@@ -151,6 +158,7 @@ export interface BillLineView {
   lineTotal: number;
   itemBatchId?: number | null;
   lineNotes?: string | null;
+  itcEligibility?: ItcEligibility;
   taxes: BillLineTaxView[];
 }
 

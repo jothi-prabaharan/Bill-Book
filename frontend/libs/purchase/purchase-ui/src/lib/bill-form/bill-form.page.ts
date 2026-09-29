@@ -20,11 +20,15 @@ import {
   CustomFieldValues,
   DocumentCustomFieldsComponent,
   compactValues,
+  BbSelectOption,
+  CheckboxComponent,
+  SelectComponent,
 } from '@bill-book/ui-components';
 import {
   BillService,
   BillView,
   GoodsReceiptService,
+  ItcEligibility,
   PurchaseLookupService,
   SaveBillLineRequest,
   SaveBillRequest,
@@ -59,6 +63,8 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
     DateInputComponent,
     TextInputComponent,
     TextareaComponent,
+    CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './bill-form.page.html',
   styleUrl: './bill-form.page.scss',
@@ -90,6 +96,16 @@ export class BillFormPage {
   protected readonly placeOfSupplyStateCode = signal('');
   protected readonly notes = signal('');
   protected readonly isInterState = signal(false);
+
+  /** The vendor charged no GST and this business pays it (TK-115, D-30). */
+  protected readonly isReverseCharge = signal(false);
+
+  /** Input tax credit choices for a line (TK-115, D-31). */
+  protected readonly eligibilityOptions: BbSelectOption<ItcEligibility>[] = [
+    { value: 'Eligible', label: 'Claimable' },
+    { value: 'Ineligible', label: 'Not claimable' },
+    { value: 'Blocked', label: 'Blocked (section 17(5))' },
+  ];
 
   protected readonly lines = signal<readonly DocumentLine[]>([]);
   protected readonly taxGroups = signal<readonly TaxGroupOption[]>([]);
@@ -208,6 +224,7 @@ export class BillFormPage {
       this.notes.set(view.notes ?? '');
       this.customValues.set(view.customFields ?? {});
       this.isInterState.set(view.isInterState);
+      this.isReverseCharge.set(view.isReverseCharge ?? false);
 
       this.receiptLineIds = view.lines.map((l) => l.goodsReceiptDetailId ?? null);
 
@@ -251,6 +268,7 @@ export class BillFormPage {
           lineTotal: Math.round(line.lineTotal * PAISE),
           itemBatchId: line.itemBatchId ?? null,
           lineNotes: line.lineNotes ?? null,
+          itcEligibility: line.itcEligibility ?? 'Eligible',
         })),
       );
     } catch {
@@ -262,6 +280,11 @@ export class BillFormPage {
 
   protected onLinesChange(lines: readonly DocumentLine[]): void {
     this.lines.set(lines);
+  }
+
+  /** Sets one line's input tax credit eligibility (TK-115). */
+  protected setEligibility(index: number, eligibility: ItcEligibility): void {
+    this.lines.set(this.lines().map((line, i) => (i === index ? { ...line, itcEligibility: eligibility } : line)));
   }
 
   // ---- Pickers ----------------------------------------------------------
@@ -596,6 +619,7 @@ export class BillFormPage {
       markupPercent: line.isBillable ? (line.markupPercent ?? null) : null,
       itemBatchId: line.itemBatchId,
       lineNotes: line.lineNotes,
+      itcEligibility: line.itcEligibility ?? 'Eligible',
     }));
 
     return {
@@ -608,6 +632,7 @@ export class BillFormPage {
       contactGstin: this.contactGstin() || null,
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
       landedCostAmount: 0,
+      isReverseCharge: this.isReverseCharge(),
       notes: this.notes() || null,
       customFields: compactValues(this.customValues()),
       lines,

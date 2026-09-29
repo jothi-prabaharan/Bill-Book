@@ -152,6 +152,46 @@ Any report can be emailed as an Excel workbook on a schedule. Open the report, l
 - **Pause** stops a schedule without losing it. **×** deletes it. You see and change only your own schedules.
 - Each schedule sends once per run, however many servers are running.
 
+## GST returns
+
+**GSTR-3B** for a period (`GET api/reports/gst/gstr3b?from=…&to=…`) comes from the sales register and the purchase register, in base currency, using the return's own table numbers:
+
+| Table | What it holds |
+|---|---|
+| 3.1(a) | Taxed outward supplies: invoices and POS sales, less credit notes |
+| 3.1(b) | Exports (place of supply outside India) |
+| 3.1(c) | Nil-rated and exempt supplies |
+| 3.1(d) | Purchases under reverse charge: tax you owe on them |
+| 4A(3) | Credit you can claim on reverse-charge purchases |
+| 4A(5) | All other credit you can claim, less debit notes |
+| 4C | Net credit you can claim |
+| 4D(1), 4D(2) | Credit blocked by section 17(5), and other credit you cannot claim. Shown so you can see it; never claimed |
+
+It also shows the tax payable, which is 3.1(a), (b) and (d), and that tax less 4C, per component. The portal's order for setting credit against each tax is not applied.
+
+**GSTR-1 export** (`GET api/reports/gst/gstr1/export?from=…&to=…`) downloads the month as JSON for the GST offline tool. It needs **reports.export**. It holds:
+
+- **B2B**: registered buyers.
+- **B2CL**: inter-state invoices to unregistered buyers over ₹1,00,000.
+- **B2CS**: everything else to unregistered buyers, by place of supply and rate.
+- **CDNR**: credit notes to registered buyers.
+- **EXP**: exports.
+- **HSN summary** and **documents issued**, with cancelled invoices counted from voided ones.
+
+Before anything downloads, the export is checked. It must pass all of these:
+
+- the branch has a valid GSTIN (Settings › Organization);
+- every buyer GSTIN is valid;
+- every line has an HSN or SAC code, and every place of supply a state code;
+- the HSN summary adds up to the sections within a rupee.
+
+If any check fails, you get the list of problems instead of a file.
+
+Two simplifications, for now:
+
+- A credit note to an unregistered buyer is netted into B2CS rather than reported under CDNUR.
+- Filing is done by you on the portal. The export only prepares the file.
+
 ## If a branch shows no reports
 
 The report catalog is seeded per branch. A branch created before reporting existed has an empty catalog until it is seeded, which an administrator can trigger; it only adds what is missing, so it is safe to run again.

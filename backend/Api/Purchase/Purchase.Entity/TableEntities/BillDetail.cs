@@ -41,6 +41,12 @@ public class BillDetail : DocumentLineBase
 
     public List<BillDetailTax> Taxes { get; set; } = [];
 
+    /// <summary>
+    /// Whether this line's GST is claimable (TK-115, D-31). A line that is not
+    /// posts its tax into its own cost instead of Input GST.
+    /// </summary>
+    public ItcEligibility ItcEligibility { get; set; } = ItcEligibility.Eligible;
+
     // ---- Re-billing (TK-106). A cost bought for a client's job, charged on to
     // them with a markup, on an invoice that claims it at post.
 

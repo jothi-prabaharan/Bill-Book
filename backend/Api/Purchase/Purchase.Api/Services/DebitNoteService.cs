@@ -376,9 +376,15 @@ public sealed class DebitNoteService
         note.SgstAmount = totals.SgstAmount;
         note.IgstAmount = totals.IgstAmount;
         note.CessAmount = totals.CessAmount;
+        // Against a reverse-charge bill the vendor owes back only the net, as
+        // they were only ever owed the net (D-30).
+        decimal refundable = bill.IsReverseCharge
+            ? totals.TotalAmount - (totals.CgstAmount + totals.SgstAmount + totals.IgstAmount + totals.CessAmount)
+            : totals.TotalAmount;
+
         note.RoundOffAmount =
-            Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
-        note.TotalAmount = totals.TotalAmount + note.RoundOffAmount;
+            Math.Round(refundable, 0, MidpointRounding.AwayFromZero) - refundable;
+        note.TotalAmount = refundable + note.RoundOffAmount;
         note.TotalAmountBase = note.TotalAmount * note.ExchangeRate;
 
         return new DebitNoteResult(DebitNoteOutcome.Ok, note.DebitNoteId);
@@ -472,6 +478,17 @@ public sealed class DebitNoteService
             }
         }
 
+        // The bill says how its GST was treated: reverse charge, and which lines'
+        // credit was claimed (TK-115). The note reverses exactly that.
+        Bill? bill = await _db.Bills.AsNoTracking()
+            .Include(b => b.Lines)
+            .FirstOrDefaultAsync(b => b.BillId == note.BillId, ct);
+
+        if (bill is null)
+        {
+            return new DebitNoteResult(DebitNoteOutcome.NotFound);
+        }
+
         PostLedgerOutcomeResult posted = await _ledger.PostAsync(
             new PostLedgerRequest
             {
@@ -485,7 +502,7 @@ public sealed class DebitNoteService
                 LedgerDate = note.DocumentDate,
                 ContactId = note.ContactId,
                 SourceDocumentId = note.DebitNoteId,
-                Legs = BuildLegs(note, returnedValue).TagProjects(note.Lines.Select(l => (l.DebitNoteDetailId, l.ProjectId))),
+                Legs = BuildLegs(note, returnedValue, bill).TagProjects(note.Lines.Select(l => (l.DebitNoteDetailId, l.ProjectId))),
             },
             ct);
 
@@ -493,6 +510,12 @@ public sealed class DebitNoteService
         {
             return new DebitNoteResult(DebitNoteOutcome.PostingRefused, Detail: posted.Detail);
         }
+
+        // The GST register, in this transaction (TK-115).
+        await _db.PurchaseRegister
+            .Where(r => r.TransactionTypeCode == "DBN" && r.SourceId == note.DebitNoteId)
+            .ExecuteDeleteAsync(ct);
+        _db.PurchaseRegister.AddRange(PurchaseRegisterRows.ForDebitNote(note, bill));
 
         await AdvanceBillAsync(note, ct);
 
@@ -513,9 +536,17 @@ public sealed class DebitNoteService
     /// difference is the stock half against the returns half, and both are
     /// posted rather than one being forced to match the other.
     /// </summary>
-    private static List<LedgerLegRequest> BuildLegs(DebitNote note, decimal returnedValue)
+    public static List<LedgerLegRequest> BuildLegs(DebitNote note, decimal returnedValue, Bill bill)
     {
         List<LedgerLegRequest> legs = [];
+
+        Dictionary<long, ItcEligibility> eligibility = bill.Lines.ToDictionary(l => l.BillDetailId, l => l.ItcEligibility);
+        bool Claimed(DebitNoteDetail line) =>
+            !eligibility.TryGetValue(line.BillDetailId, out ItcEligibility e) || e == ItcEligibility.Eligible;
+
+        // Under reverse charge the note's total is already the net (D-30): the
+        // vendor never charged the tax, and the self-assessed liability is
+        // reversed below instead.
 
         // The vendor owes us back: their payable falls. Against their own
         // sub-account, so the reduction lands on the right vendor's aging.
@@ -540,20 +571,23 @@ public sealed class DebitNoteService
                 continue;
             }
 
+            // Tax that was never claimed was part of the cost, so it comes back
+            // off the cost with the rest of it (D-31).
             legs.Add(new LedgerLegRequest
             {
                 LedgerTypeId = ItemLedgerType,
                 LedgerSourceId = TransactionLedgerSource,
                 TransactionDetailId = line.DebitNoteDetailId,
                 AccountSystemName = PurchaseReturnsAccount,
-                CreditAmount = line.TaxableAmount,
+                CreditAmount = line.TaxableAmount + (Claimed(line) ? 0m : line.Taxes.Sum(t => t.Amount)),
                 TransactionDesc = "Purchase return",
             });
         }
 
         // Input GST reversed. A credit: credit cannot be claimed on goods that
-        // went back, so this undoes the claim rather than making another.
-        foreach (DebitNoteDetail line in note.Lines.OrderBy(l => l.LineNumber))
+        // went back, so this undoes the claim rather than making another. Only
+        // where the bill claimed it.
+        foreach (DebitNoteDetail line in note.Lines.OrderBy(l => l.LineNumber).Where(Claimed))
         {
             foreach (DebitNoteDetailTax tax in line.Taxes)
             {
@@ -574,6 +608,26 @@ public sealed class DebitNoteService
                     CreditAmount = tax.Amount,
                     TransactionDesc = $"Input {tax.TaxComponent} reversed",
                 });
+            }
+        }
+
+        // The reverse-charge liability falls with the purchase it was on.
+        if (bill.IsReverseCharge)
+        {
+            foreach (DebitNoteDetail line in note.Lines.OrderBy(l => l.LineNumber))
+            {
+                foreach (DebitNoteDetailTax tax in line.Taxes.Where(t => t.Amount != 0))
+                {
+                    legs.Add(new LedgerLegRequest
+                    {
+                        LedgerTypeId = TaxLedgerType,
+                        LedgerSourceId = TransactionLedgerSource,
+                        TransactionDetailId = line.DebitNoteDetailId,
+                        AccountSystemName = BillService.ReverseChargeAccount,
+                        DebitAmount = tax.Amount,
+                        TransactionDesc = $"{tax.TaxComponent} under reverse charge reversed",
+                    });
+                }
             }
         }
 
@@ -709,6 +763,10 @@ public sealed class DebitNoteService
                 return new DebitNoteResult(
                     DebitNoteOutcome.PostingRefused, Detail: withdrawn.Detail);
             }
+
+            await _db.PurchaseRegister
+                .Where(r => r.TransactionTypeCode == "DBN" && r.SourceId == note.DebitNoteId)
+                .ExecuteDeleteAsync(ct);
         }
 
         await _db.SaveChangesAsync(ct);

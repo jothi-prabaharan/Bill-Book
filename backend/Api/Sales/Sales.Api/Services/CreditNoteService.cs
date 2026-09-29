@@ -615,7 +615,8 @@ public sealed class CreditNoteService
 
         foreach (var l in creditNote.Lines)
         {
-            var rate = l.Taxes.FirstOrDefault()?.Rate ?? 0;
+            // The line's whole rate: IGST alone, or CGST and SGST together (TK-115).
+            var rate = l.Taxes.Where(t => t.TaxComponent != TaxComponent.Cess).Sum(t => t.Rate);
             _db.SalesRegister.Add(new SalesRegister
             {
                 OrgId = creditNote.OrgId,

@@ -306,6 +306,18 @@ jobs: it **moves the stock** and debits Inventory directly.
   a capital line never clears Goods Received Not Invoiced. A new asset has no
   depreciation schedule until you give it one on the register.
 
+## Reverse charge and input tax credit
+
+**Reverse charge.** Tick **Reverse charge** when the vendor charged no GST and you pay it yourself. This covers notified goods from an unregistered supplier, a goods transport agency, legal services and the like. The bill still works out the tax on each line, but the vendor is owed the total *without* it. Posting credits the tax to **GST Payable (Reverse Charge)**, which paying the government clears. Where the line's credit can be claimed, the same tax is debited to Input GST as usual. A debit note against such a bill reverses both.
+
+**Input tax credit.** Each line is **Claimable**, **Not claimable** or **Blocked (section 17(5))**, and new lines start as Claimable. You set this under **Input tax credit** below the lines.
+
+- A line that is not claimable posts its GST into the line's own cost instead of Input GST: the expense account, the stock (so the unit cost includes the tax), or the asset.
+- On a bill against a receipt, the receipt already valued the stock without tax, so the unclaimable tax is debited straight to Inventory.
+- A debit note takes the bill line's choice and reverses exactly what the bill posted.
+
+Every posted bill and debit note writes its lines to the **purchase register**, in the same step as the ledger. Each line carries your vendor's own number and date, the reverse-charge flag and the line's credit choice. Voiding a bill or debit note removes its lines. GSTR-3B reads its input tax credit from the purchase register. See [Reports](reports#gst-returns).
+
 ## Due dates and aging
 
 A bill needs a due date. Choose a **payment term** and it is worked out for you,
@@ -329,9 +341,7 @@ assets are already on the register: dispose of the asset, or raise a debit note.
 
 ## Not built yet
 
-Debit notes are not coded, so there is currently no way to return goods or
-reverse a bill's tax. Landed cost — freight and duty spread across the lines —
-is held on the document but not yet apportioned.
+Landed cost — freight and duty spread across the lines — is held on the document but not yet apportioned. Reconciling the purchase register with GSTR-2B is not built yet.
 
 
 

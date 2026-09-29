@@ -139,6 +139,15 @@ public enum SystemAccount
     /// later restatement of the challan's cost can leave a small residue (TK-90).
     /// </summary>
     GoodsDeliveredNotInvoiced = 25,
+
+    /// <summary>
+    /// GST this business owes on a purchase under reverse charge (Liability,
+    /// TK-115, D-30). The bill credits it instead of the vendor's payable,
+    /// because the vendor charged no tax; paying it to the government clears
+    /// it. Kept apart from Output GST because it is paid in cash and reported
+    /// in its own GSTR-3B row, 3.1(d).
+    /// </summary>
+    GstPayableReverseCharge = 26,
 }
 
 /// <summary>
@@ -175,6 +184,7 @@ public static class SystemAccountNames
         SystemAccount.DiscountGiven => "Discount Given",
         SystemAccount.RefundableDeposits => "Refundable Deposits",
         SystemAccount.GoodsDeliveredNotInvoiced => "Goods Delivered Not Invoiced",
+        SystemAccount.GstPayableReverseCharge => "GST Payable (Reverse Charge)",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

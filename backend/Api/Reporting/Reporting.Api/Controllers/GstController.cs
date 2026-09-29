@@ -5,7 +5,10 @@ using Reporting.Repository;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Apps;
-using Reporting.Api.Services.Sources; // To reuse SalesRegisterRow if desired
+using Reporting.Api.Services;
+using Reporting.Api.Services.Gst;
+using Reporting.Repository.ReadModels;
+using Shared.Kernel.Documents;
 
 namespace Reporting.Api.Controllers;
 
@@ -30,11 +33,15 @@ public class GstController : ControllerBase
 {
     private readonly ReportingDbContext _db;
     private readonly ITenantContext _tenant;
+    private readonly BatchedNameResolver _names;
+    private readonly IOrgIdentityProvider _identity;
 
-    public GstController(ReportingDbContext db, ITenantContext tenant)
+    public GstController(ReportingDbContext db, ITenantContext tenant, BatchedNameResolver names, IOrgIdentityProvider identity)
     {
         _db = db;
         _tenant = tenant;
+        _names = names;
+        _identity = identity;
     }
 
     /// <summary>
@@ -108,40 +115,91 @@ public class GstController : ControllerBase
     }
 
     /// <summary>
-    /// GSTR-3B: Monthly Summary.
+    /// GSTR-3B for the period (TK-115): outward supplies and reverse-charge
+    /// inward supplies in table 3.1, claimable credit in 4A, blocked and
+    /// ineligible credit apart in 4D, and the tax payable and net of credit.
+    /// From the sales and purchase registers; see <see cref="Gstr3b"/> for each rule.
     /// </summary>
     [HttpGet("gstr3b")]
     public async Task<IActionResult> GetGstr3b([FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken ct)
     {
-        // For now, only outward supplies are aggregated.
-        var outward = await _db.SalesRegisters
+        List<SalesRegisterRead> sales = await _db.SalesRegisters.AsNoTracking()
             .Where(s => s.DocumentDate >= from && s.DocumentDate <= to)
-            .GroupBy(s => s.IsInterState)
-            .Select(g => new
-            {
-                InterState = g.Key,
-                Taxable = g.Sum(s => s.TaxableAmount),
-                Igst = g.Sum(s => s.IgstAmount),
-                Cgst = g.Sum(s => s.CgstAmount),
-                Sgst = g.Sum(s => s.SgstAmount),
-                Total = g.Sum(s => s.TotalAmount)
-            })
             .ToListAsync(ct);
 
-        return Ok(new
+        List<PurchaseRegisterRead> purchases = await _db.PurchaseRegisters.AsNoTracking()
+            .Where(p => p.DocumentDate >= from && p.DocumentDate <= to)
+            .ToListAsync(ct);
+
+        return Ok(Gstr3b.Build(from, to, sales, purchases, await _names.GetStateCodesAsync(ct)));
+    }
+
+    /// <summary>
+    /// GSTR-1 as the GST offline tool's JSON (TK-115), refused with the list of
+    /// problems when the branch GSTIN, a buyer's GSTIN, an HSN code or the HSN
+    /// summary would make the portal refuse it. An export, so it needs
+    /// <c>reports.export</c>.
+    /// </summary>
+    [HttpGet("gstr1/export")]
+    [PermissionAction("export")]
+    public async Task<IActionResult> ExportGstr1([FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken ct)
+    {
+        if (to < from)
         {
-            Period = new { From = from, To = to },
-            Table_3_1 = new
+            return BadRequest(new { message = "The period ends before it starts." });
+        }
+
+        List<SalesRegisterRead> rows = await _db.SalesRegisters.AsNoTracking()
+            .Where(s => s.DocumentDate >= from && s.DocumentDate <= to)
+            .ToListAsync(ct);
+
+        var invoices = await _db.Invoices.AsNoTracking()
+            .Where(i => i.DocumentDate >= from && i.DocumentDate <= to
+                && (i.Status == DocumentStatus.Posted || i.Status == DocumentStatus.Void))
+            .Select(i => new { i.DocumentNo, Void = i.Status == DocumentStatus.Void })
+            .ToListAsync(ct);
+
+        var creditNotes = await _db.CreditNotes.AsNoTracking()
+            .Where(c => c.DocumentDate >= from && c.DocumentDate <= to
+                && (c.Status == DocumentStatus.Posted || c.Status == DocumentStatus.Void))
+            .Select(c => new { c.DocumentNo, Void = c.Status == DocumentStatus.Void })
+            .ToListAsync(ct);
+
+        List<IssuedDocuments> issued = [];
+        if (invoices.Count > 0)
+        {
+            issued.Add(new IssuedDocuments(
+                Gstr1Export.InvoicesNature,
+                invoices.Select(i => i.DocumentNo).Min(StringComparer.Ordinal)!,
+                invoices.Select(i => i.DocumentNo).Max(StringComparer.Ordinal)!,
+                invoices.Count,
+                invoices.Count(i => i.Void)));
+        }
+
+        if (creditNotes.Count > 0)
+        {
+            issued.Add(new IssuedDocuments(
+                Gstr1Export.CreditNotesNature,
+                creditNotes.Select(c => c.DocumentNo).Min(StringComparer.Ordinal)!,
+                creditNotes.Select(c => c.DocumentNo).Max(StringComparer.Ordinal)!,
+                creditNotes.Count,
+                creditNotes.Count(c => c.Void)));
+        }
+
+        OrgIdentity? branch = await _identity.GetIdentityAsync(ct);
+        Gstr1ExportResult result = Gstr1Export.Build(
+            branch?.Gstin, from, to, rows, await _names.GetStateCodesAsync(ct), issued);
+
+        if (!result.IsValid)
+        {
+            return UnprocessableEntity(new
             {
-                Description = "Outward supplies and inward supplies liable to reverse charge",
-                Details = outward
-            },
-            Table_4 = new
-            {
-                Description = "Eligible ITC",
-                Details = "Pending Purchase Register"
-            }
-        });
+                message = "GSTR-1 cannot be exported until these are corrected.",
+                problems = result.Problems,
+            });
+        }
+
+        byte[] file = System.Text.Encoding.UTF8.GetBytes(result.Payload!.ToJsonString());
+        return File(file, "application/json", $"GSTR1-{to:MMyyyy}.json");
     }
 }
-

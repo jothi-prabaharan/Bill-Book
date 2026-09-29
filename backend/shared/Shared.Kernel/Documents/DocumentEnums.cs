@@ -86,6 +86,23 @@ public enum DocumentLineType
 }
 
 /// <summary>
+/// Whether a purchase line's GST can be claimed as input tax credit (TK-115,
+/// D-31). A line that is not <see cref="Eligible"/> posts its tax into its own
+/// cost, stock or asset rather than to Input GST, and GSTR-3B shows it apart.
+/// </summary>
+public enum ItcEligibility
+{
+    /// <summary>Claimable. The default: most business purchases are.</summary>
+    Eligible = 0,
+
+    /// <summary>Not claimable for another reason: an exempt or personal use, say.</summary>
+    Ineligible = 1,
+
+    /// <summary>Blocked by section 17(5): food, motor vehicles, works contracts for immovable property and the like.</summary>
+    Blocked = 2,
+}
+
+/// <summary>
 /// Which GST component a tax row is.
 ///
 /// <b>Deliberately not <c>Accounting.Entity.Enums.TaxComponent</c>.</b> That one

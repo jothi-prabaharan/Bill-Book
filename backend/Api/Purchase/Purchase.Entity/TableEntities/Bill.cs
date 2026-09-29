@@ -88,5 +88,14 @@ public class Bill : DocumentHeaderBase
     /// </summary>
     public decimal LandedCostAmount { get; set; }
 
+    /// <summary>
+    /// Tax is paid by this business rather than charged by the vendor (TK-115,
+    /// D-30): an unregistered supplier of notified goods, a goods transport
+    /// agency, legal services and the like. The vendor is owed the net only; the
+    /// tax is credited to GST Payable (Reverse Charge) and, where the line's
+    /// credit is eligible, claimed as Input GST like any other.
+    /// </summary>
+    public bool IsReverseCharge { get; set; }
+
     public List<BillDetail> Lines { get; set; } = [];
 }

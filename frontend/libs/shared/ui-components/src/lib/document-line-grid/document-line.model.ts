@@ -56,6 +56,8 @@ export interface DocumentLine {
   /** A purchase line to be charged on to the project's client, and its markup percent (TK-106). */
   isBillable?: boolean;
   markupPercent?: number | null;
+  /** A purchase line's input tax credit eligibility (TK-115): Eligible, Ineligible or Blocked. */
+  itcEligibility?: 'Eligible' | 'Ineligible' | 'Blocked';
 
   /** Paise. `taxableAmount + taxAmount` — computed. */
   lineTotal: number;

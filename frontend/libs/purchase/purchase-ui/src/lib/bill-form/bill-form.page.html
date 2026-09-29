@@ -94,6 +94,19 @@
           <span class="field__hint">The tax period the credit falls in.</span>
         </label>
 
+        <div class="field">
+          <bb-checkbox
+            text="Reverse charge"
+            name="isReverseCharge"
+            [disabled]="readonlyDoc()"
+            [ngModel]="isReverseCharge()"
+            (ngModelChange)="isReverseCharge.set($event)"
+          />
+          <span class="field__hint">
+            The vendor charged no GST and you pay it. They are owed the total without tax.
+          </span>
+        </div>
+
         <label class="field">
           <span class="field__label">Received on</span>
           <bb-date-input
@@ -208,6 +221,34 @@
         </p>
       }
     </section>
+
+    @if (lines().length > 0) {
+      <section class="card">
+        <h2 class="card__title">Input tax credit</h2>
+        <p class="field__hint">
+          GST you cannot claim is added to the line's cost instead of Input GST, and GSTR-3B
+          shows it apart.
+        </p>
+        <ul class="itc-lines">
+          @for (line of lines(); track $index) {
+            <li>
+              <span class="itc-lines__label">
+                {{ $index + 1 }}. {{ line.itemLabel || line.description || 'Line ' + ($index + 1) }}
+              </span>
+              <bb-select
+                [ariaLabel]="'Input tax credit for line ' + ($index + 1)"
+                [options]="eligibilityOptions"
+                [clearable]="false"
+                [disabled]="readonlyDoc()"
+                [ngModel]="line.itcEligibility ?? 'Eligible'"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="setEligibility($index, $event)"
+              />
+            </li>
+          }
+        </ul>
+      </section>
+    }
 
     <section class="card">
       <h2 class="card__title">Notes</h2>

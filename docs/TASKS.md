@@ -2312,7 +2312,7 @@ The build cards each design in section E produced. Each design section in `docs/
 - **As built:** `rpt.ReportSchedules` (RLS) with frequency, day, hour in the branch's zone (default `Asia/Kolkata`), owner and recipient user ids, and the layout. `ReportScheduleWorker` in Reporting ticks every five minutes over the branches Master lists; `ReportScheduleRun` claims a due row by moving `NextRunAt` with an update guarded on the value read. It then reads the branch's users and their current permissions from Master's new `internal/users/branch`, and needs `reports.view`, `reports.export` and the report's own permission. It exports through the export route's runner, cap and writer, and posts each email with the xlsx to Master's `internal/notifications/email`. Master sends through Notification.Worker where it runs. `EmailMessage` and `EmailRequested` carry attachments now, and Master sends in process any attachment over 160 KB, since Service Bus Standard refuses a message over 256 KB. Skips and failures are recorded on the row, and failures in `rpt.ErrorLogs` too. **Schedule** button on every report.
 
 ### TK-115 · Compliance: the purchase register, complete GSTR-3B and the GSTR-1 export
-- [~] working (Claude Opus 5.5) — since 2026-09-29
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
 - **Issue:** [#103](https://github.com/jothi-prabaharan/Bill-Book/issues/103)
 - **Lanes:** L-PUR, L-RPT, L-REPORTING-UI · **Depends on:** TK-37 · **Decision:** D-30, D-31
 - **Where:** design "Compliance bundle" → part 1; `sal.SalesRegister` and its writers; `GstController` (GSTR-2 501, GSTR-3B outward only).
@@ -2324,6 +2324,13 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Test: a posted bill writes its register rows; 3B's ITC equals the register's eligible tax; the export's HSN summary equals its sections.
   - Standard delivery sub-tasks (section 5).
 - **Done when:** GSTR-3B for a month with sales and purchases shows both output tax and eligible ITC.
+- **As built:**
+  - **Register.** `pur.PurchaseRegister` (with RLS) holds one row per bill or debit note line. The posters write it in the posting transaction, and a void removes it. Each row carries the supplier's number and date, reverse charge, `ItcEligibility`, line type and the tax per component.
+  - **Reverse charge (D-30).** `Bill.IsReverseCharge` makes the bill total net of tax. The tax is credited to the new system account *GST Payable (Reverse Charge)* (2210, which reseeding adds to existing branches).
+  - **Eligibility (D-31).** `BillDetail.ItcEligibility` (`Shared.Kernel.Documents.ItcEligibility`) puts non-claimable tax into the line's cost, the stock unit cost or the asset amount. Against a receipt it is debited to Inventory. Debit notes follow the bill line.
+  - **Returns.** `Gstr3b.Build` and `Gstr1Export.Build` are pure. `GET api/reports/gst/gstr3b` is complete, and `GET api/reports/gst/gstr1/export` answers 422 with the problems when validation fails.
+  - **Also fixed.** `sal.SalesRegister.GstRate` now holds the full rate, not CGST's half.
+  - **Left as they were.** GSTR-2 still answers 501; GSTR-2B reconciliation is the next part of the bundle. CDNUR is netted into B2CS.
 
 ### TK-116 · Compliance: GSTR-2B reconciliation
 - [ ] open

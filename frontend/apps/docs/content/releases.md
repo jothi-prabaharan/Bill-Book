@@ -30,6 +30,20 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Reverse charge and input tax credit on bills.**
+  - A bill can be marked **Reverse charge**. The vendor is then owed the total without tax, and the tax goes to a new **GST Payable (Reverse Charge)** account.
+  - Each bill line is **Claimable**, **Not claimable** or **Blocked (section 17(5))**. GST you cannot claim is added to the line's cost instead of Input GST.
+  - Debit notes reverse exactly what their bill posted.
+  - Existing branches get the new account when their setup is retried from the admin screen.
+
+  See [Purchase](purchase#reverse-charge-and-input-tax-credit).
+- **Added**: **Purchase register, complete GSTR-3B and the GSTR-1 export.**
+  - Posted bills and debit notes now write a purchase register.
+  - GSTR-3B shows eligible input tax credit (4A), reverse-charge liability (3.1(d)) and blocked or ineligible credit (4D) alongside output tax.
+  - GSTR-1 can be downloaded as the GST offline tool's JSON. The file is checked before it downloads: GSTINs, HSN codes and the HSN summary.
+
+  See [Reports](reports#gst-returns).
+- **Fixed**: **GST rate in the sales register.** An intra-state line was recorded at its CGST rate (9% for an 18% line). It now records the full rate. Only invoices and credit notes posted from now on are affected.
 - **Added**: **Scheduled reports.** Any report, custom reports included, can be emailed as an Excel workbook daily, weekly or monthly to chosen users of the branch. Choose **Schedule** on the report. Each run checks the owner's permissions at that moment, and if they no longer allow the report, sends nothing and records why. See [Reports](reports#scheduled-reports).
 - **Added**: **Custom reports.** Six datasets under **Reports › Custom** (sales lines, purchase lines, ledger rows, stock movements, items and contacts) carry the branch's custom fields as columns. Choose columns, filters, grouping and sorting, then save the layout as a custom report for yourself or, with **reports.edit**, for the whole branch. A report needs its dataset's permission, and a deactivated field's column is dropped with a notice. See [Reports](reports#custom-reports).
 - **Added**: **Custom fields on sales and purchase documents.** Quotes, orders, challans, invoices, credit notes, purchase orders, goods receipts, bills and debit notes show the branch's fields for their kind under **More details**, and check them on save. A field marked to carry forward goes with the document when it is converted, so a site reference typed on a quote reaches its order and its invoice. Fields marked to print can be placed on a template as `{{custom.key}}`, and the template editor lists them under **Custom**. See [Masters](masters#custom-fields).
