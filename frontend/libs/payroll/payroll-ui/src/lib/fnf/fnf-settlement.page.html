@@ -59,7 +59,7 @@
       </div>
 
       <div class="payroll-table-container">
-        <table class="payroll-table">
+        <bb-card-table class="payroll-table" flush>
           <thead>
             <tr>
               <th>Component / Item</th>
@@ -90,7 +90,7 @@
               <td style="text-align: right; color: var(--primary);">₹{{ settlement.netPayable | number:'1.2-2' }}</td>
             </tr>
           </tfoot>
-        </table>
+        </bb-card-table>
       </div>
     </div>
   }

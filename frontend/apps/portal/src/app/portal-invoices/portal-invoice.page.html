@@ -5,7 +5,7 @@
   </nav>
 
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
   }
 
   @if (detail(); as d) {
@@ -18,7 +18,7 @@
       @if (d.invoice.dueDate) { · due {{ d.invoice.dueDate | date: 'mediumDate' }} }
     </p>
 
-    <table>
+    <bb-card-table flush>
       <thead>
         <tr>
           <th>Item</th>
@@ -39,7 +39,7 @@
           </tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
 
     <section class="cards">
       <span class="row"><span>Subtotal</span><span>{{ d.subTotal | number: '1.2-2' }}</span></span>

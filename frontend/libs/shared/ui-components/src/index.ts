@@ -57,6 +57,7 @@ export * from './lib/forms/numeric/exchange-rate-input.component';
 
 export * from './lib/forms/datetime/date-control.base';
 export * from './lib/forms/datetime/datetime-input.component';
+export * from './lib/forms/datetime/month-input.component';
 
 export * from './lib/forms/checkbox/checkbox.component';
 export * from './lib/forms/radio/radio-group.component';

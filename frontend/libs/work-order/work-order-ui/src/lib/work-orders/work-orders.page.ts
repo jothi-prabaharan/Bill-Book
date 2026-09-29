@@ -6,6 +6,7 @@ import { FacilityApiService } from '@bill-book/facility-core';
 import { EmployeeApiService } from '@bill-book/employee-core';
 import {
   BbSelectOption,
+  CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
@@ -15,6 +16,7 @@ import {
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
+  TextareaComponent,
   UiMessage,
 } from '@bill-book/ui-components';
 import {
@@ -61,6 +63,8 @@ const ACTION_LABELS: Record<WorkOrderAction, string> = {
     SelectComponent,
     MessageBoxComponent,
     IfCanDirective,
+    CheckboxComponent,
+    TextareaComponent,
   ],
   templateUrl: './work-orders.page.html',
   styleUrl: '../work-order-page.scss',

@@ -11,7 +11,7 @@
     <p class="muted">Loading…</p>
   }
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
   }
   @if (!loading() && quotes().length === 0) {
     <p class="muted">No quotes yet.</p>
@@ -26,14 +26,8 @@
 
         @if (q.canRespond) {
           @if (answering() === q.quoteId) {
-            <label>
-              Your name
-              <input type="text" [(ngModel)]="name" maxlength="100" autocomplete="name" />
-            </label>
-            <label>
-              A note for the business (optional)
-              <textarea [(ngModel)]="note" maxlength="500" rows="3"></textarea>
-            </label>
+            <bb-text-input label="Your name" name="name" [(ngModel)]="name" [maxlength]="100" autocomplete="name" />
+            <bb-textarea label="A note for the business (optional)" name="note" [(ngModel)]="note" [maxlength]="500" [rows]="3" />
             <span class="row">
               <button type="button" class="button" (click)="answer(q.quoteId, 'accept')" [disabled]="busy()">Accept</button>
               <button type="button" class="link" (click)="answer(q.quoteId, 'reject')" [disabled]="busy()">Decline</button>

@@ -1,7 +1,7 @@
 <div class="page-head">
   <h1>Payroll Runs</h1>
   <div style="display: flex; gap: 8px; align-items: center;">
-    <input type="month" [(ngModel)]="selectedMonth" class="form-control" />
+    <bb-month-input ariaLabel="Payroll month" name="selectedMonth" [(ngModel)]="selectedMonth" />
     <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="processRun()">Process Pay Run</button>
   </div>
 </div>
@@ -9,7 +9,7 @@
 <bb-message-box [messages]="messages()" />
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Month</th>
@@ -44,5 +44,5 @@
         </tr>
       }
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

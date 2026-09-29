@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import {
+  CheckboxComponent,
+  SelectComponent,
+} from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -40,7 +44,12 @@ const INCOME_TYPE = 4;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-project-items-dialog',
   standalone: true,
-  imports: [FormsModule, DecimalPipe],
+  imports: [
+    FormsModule,
+    DecimalPipe,
+    CheckboxComponent,
+    SelectComponent,
+  ],
   templateUrl: './project-items.dialog.html',
   styleUrl: './project-items.dialog.scss',
 })
@@ -65,6 +74,14 @@ export class ProjectItemsDialogComponent implements OnInit {
 
   protected projectId: number | null = null;
   protected accountId: number | null = null;
+
+  protected readonly projectOptions = computed(() =>
+    this.projects().map((p) => ({ value: p.projectId, label: `${p.projectCode} · ${p.projectName}` })),
+  );
+
+  protected readonly accountOptions = computed(() =>
+    this.accounts().map((a) => ({ value: a.accountId, label: `${a.accountCode} ${a.accountName}` })),
+  );
   protected picked = new Set<string>();
 
   protected readonly nothingLeft = computed(() => {

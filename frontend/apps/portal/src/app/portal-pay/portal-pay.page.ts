@@ -1,4 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  CheckboxComponent,
+  MessageBoxComponent,
+  MoneyInputComponent,
+} from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,7 +24,14 @@ interface PayRow extends PaymentChoice {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-pay',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, RouterLink],
+  imports: [
+    DecimalPipe,
+    FormsModule,
+    RouterLink,
+    MessageBoxComponent,
+    CheckboxComponent,
+    MoneyInputComponent,
+  ],
   templateUrl: './portal-pay.page.html',
   styleUrl: '../retail/retail-portal.scss',
 })

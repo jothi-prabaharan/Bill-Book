@@ -7,22 +7,16 @@
 
 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
   <div>
-    <label>
-      <span>Cycle: </span>
-      <select [(ngModel)]="selectedCycleId" (change)="loadReviews()">
-        <option [ngValue]="undefined">All Cycles</option>
-        <option *ngFor="let c of cycles()" [value]="c.reviewCycleId">{{ c.name }}</option>
-      </select>
-    </label>
+    <div>
+      <bb-select label="Cycle" name="selectedCycleId" [options]="selectedCycleOptions()" placeholder="All Cycles" [(ngModel)]="selectedCycleId" (ngModelChange)="loadReviews()" />
+    </div>
   </div>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Employee</th>
@@ -57,7 +51,7 @@
         <td colspan="8" style="text-align: center; color: #64748b; padding: 24px;">No reviews found for this filter.</td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>
 
 <!-- Review Detail Sheet -->
@@ -130,30 +124,21 @@
 <div *ngIf="showActionModal()" class="sheet" style="background: #fff; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
   <h2>Level Review Decision</h2>
   <div class="fields">
-    <label>
-      <span>Decision</span>
-      <select [(ngModel)]="actionForm().decision" style="width: 100%;">
-        <option value="Approved">Approve & Advance</option>
-        <option value="SentBack">Send Back (Returns to level before / employee)</option>
-        <option value="Rejected">Reject</option>
-      </select>
-    </label>
-    <label>
-      <span>Rating Level (1-5)</span>
-      <input type="number" [(ngModel)]="actionForm().ratingLevelId" placeholder="Scale Level Id" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Recommended Increase (%)</span>
-      <input type="number" [(ngModel)]="actionForm().increasePercent" placeholder="e.g. 10" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Recommend Promotion?</span>
-      <input type="checkbox" [(ngModel)]="actionForm().isPromotionRecommended" style="margin-top: 8px;" />
-    </label>
-    <label style="grid-column: 1 / -1;">
-      <span>Comments (Required)</span>
-      <textarea [(ngModel)]="actionForm().comments" rows="3" placeholder="State reasons and appraisal feedback" style="width: 100%;"></textarea>
-    </label>
+    <div>
+      <bb-select label="Decision" name="decision" [options]="decisionOptions" [clearable]="false" [(ngModel)]="actionForm().decision" />
+    </div>
+    <div>
+      <bb-number-input label="Rating Level (1-5)" placeholder="Scale Level Id" name="ratingLevelId" [(ngModel)]="actionForm().ratingLevelId" />
+    </div>
+    <div>
+      <bb-percentage-input label="Recommended Increase (%)" placeholder="e.g. 10" name="increasePercent" [(ngModel)]="actionForm().increasePercent" />
+    </div>
+    <div>
+      <bb-checkbox text="Recommend Promotion?" name="isPromotionRecommended" [(ngModel)]="actionForm().isPromotionRecommended" />
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="Comments (Required)" [rows]="3" placeholder="State reasons and appraisal feedback" name="comments" [(ngModel)]="actionForm().comments" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button class="btn" (click)="showActionModal.set(false)">Cancel</button>

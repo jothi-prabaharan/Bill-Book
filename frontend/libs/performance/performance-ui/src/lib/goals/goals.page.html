@@ -7,51 +7,40 @@
 
 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
   <div>
-    <label>
-      <span>Cycle: </span>
-      <select [(ngModel)]="selectedCycleId" (change)="loadGoals()">
-        <option *ngFor="let c of cycles()" [value]="c.reviewCycleId">{{ c.name }}</option>
-      </select>
-    </label>
+    <div>
+      <bb-select label="Cycle" name="selectedCycleId" [options]="selectedCycleOptions()" [clearable]="false" [(ngModel)]="selectedCycleId" (ngModelChange)="loadGoals()" />
+    </div>
   </div>
   <div>
-    <label>
-      <span>Employee ID: </span>
-      <input type="number" [(ngModel)]="employeeId" (change)="loadGoals()" style="width: 80px;" />
-    </label>
+    <div>
+      <bb-number-input label="Employee ID" name="employeeId" [(ngModel)]="employeeId" (ngModelChange)="loadGoals()" />
+    </div>
   </div>
   <div style="margin-left: auto; font-weight: 600;">
     Total Weightage: <span [style.color]="totalWeightage() === 100 ? '#16a34a' : '#d97706'">{{ totalWeightage() }}% / 100%</span>
   </div>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div *ngIf="showForm()" class="sheet">
   <h2>New Performance Goal</h2>
   <div class="fields">
-    <label style="grid-column: 1 / -1;">
-      <span>Title</span>
-      <input type="text" [(ngModel)]="form().title" placeholder="Key objective or deliverable" style="width: 100%;" />
-    </label>
-    <label style="grid-column: 1 / -1;">
-      <span>Description</span>
-      <textarea [(ngModel)]="form().description" rows="3" style="width: 100%;"></textarea>
-    </label>
-    <label>
-      <span>Weightage (%)</span>
-      <input type="number" [(ngModel)]="form().weightage" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Measure / Metric</span>
-      <input type="text" [(ngModel)]="form().measure" placeholder="e.g. 99.9% uptime" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Target</span>
-      <input type="text" [(ngModel)]="form().target" placeholder="Target date or value" style="width: 100%;" />
-    </label>
+    <div style="grid-column: 1 / -1;">
+      <bb-text-input label="Title" placeholder="Key objective or deliverable" name="title" [(ngModel)]="form().title" />
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="Description" [rows]="3" name="description" [(ngModel)]="form().description" />
+    </div>
+    <div>
+      <bb-percentage-input label="Weightage (%)" name="weightage" [(ngModel)]="form().weightage" />
+    </div>
+    <div>
+      <bb-text-input label="Measure / Metric" placeholder="e.g. 99.9% uptime" name="measure" [(ngModel)]="form().measure" />
+    </div>
+    <div>
+      <bb-text-input label="Target" placeholder="Target date or value" name="target" [(ngModel)]="form().target" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button class="btn" (click)="showForm.set(false)">Cancel</button>
@@ -60,7 +49,7 @@
 </div>
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Title</th>
@@ -86,5 +75,5 @@
         <td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">No goals defined for this employee in this cycle.</td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

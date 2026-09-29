@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CustomerService, Ticket, TicketMessage } from '@bill-book/customer-core';
 import {
+  CheckboxComponent,
   MessageBoxComponent,
   TextareaComponent,
 } from '@bill-book/ui-components';
@@ -16,6 +17,7 @@ import {
     FormsModule,
     MessageBoxComponent,
     TextareaComponent,
+    CheckboxComponent,
   ],
   templateUrl: './ticket-thread.component.html',
   styleUrl: './ticket-thread.component.scss'

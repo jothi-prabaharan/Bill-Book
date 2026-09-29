@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   Component,
   DestroyRef,
@@ -25,7 +26,13 @@ import {
   PrintTemplateService,
   insertTag,
 } from '@bill-book/master-core';
-import { CustomFieldDefinition, MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  CustomFieldDefinition,
+  MessageBoxComponent,
+  SelectComponent,
+  TextInputComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
@@ -65,7 +72,10 @@ const CUSTOM_FIELD_KINDS: Record<string, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-print-templates-page',
   standalone: true,
-  imports: [MessageBoxComponent],
+  imports: [
+    MessageBoxComponent,
+    SelectComponent,
+    TextInputComponent, FormsModule],
   templateUrl: './print-templates.page.html',
   styleUrl: './print-templates.page.scss',
 })
@@ -85,6 +95,10 @@ export class PrintTemplatesPage implements OnInit {
   protected readonly canEdit = computed(() => this.session.has('settings.edit'));
 
   protected readonly documentTypes = signal<DocumentTypeOption[]>([]);
+
+  protected readonly typeOptions = computed(() =>
+    this.documentTypes().map((type) => ({ value: type.code, label: type.name })),
+  );
   protected readonly documentType = signal<string | null>(null);
   protected readonly templates = signal<PrintTemplateListItem[]>([]);
   protected readonly placeholders = signal<PlaceholderGroup[]>([]);

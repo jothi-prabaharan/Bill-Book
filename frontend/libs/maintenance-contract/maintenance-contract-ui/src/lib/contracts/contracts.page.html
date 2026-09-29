@@ -53,10 +53,9 @@
       <button type="button" class="btn btn-ghost" (click)="addAsset()" [disabled]="assetToAdd === null">Add</button>
     </div>
 
-    <label class="block">
-      <span>Remarks</span>
-      <textarea rows="2" maxlength="1000" [(ngModel)]="form.remarks"></textarea>
-    </label>
+    <div class="block">
+          <bb-textarea label="Remarks" name="remarks" [rows]="2" [maxlength]="1000" [(ngModel)]="form.remarks" />
+        </div>
     <div class="sheet-actions">
       <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
@@ -106,7 +105,7 @@
         <bb-select label="Kind" [options]="visitKinds" [(ngModel)]="visit.visitKind" [clearable]="false" />
         <bb-select label="Asset" placeholder="The whole contract" [options]="coveredOptions()" [(ngModel)]="visit.facilityAssetId" />
         <bb-text-input label="Remarks" [(ngModel)]="visit.remarks" maxlength="1000" />
-        <label class="check"><input type="checkbox" [(ngModel)]="visit.raiseWorkOrder" [disabled]="visit.facilityAssetId === null" /> Raise a work order</label>
+        <bb-checkbox class="check" text="Raise a work order" name="raiseWorkOrder" [(ngModel)]="visit.raiseWorkOrder" [disabled]="visit.facilityAssetId === null" />
         <button type="button" class="btn btn-primary" (click)="recordVisit()" [disabled]="busy()">Record visit</button>
       </div>
     }

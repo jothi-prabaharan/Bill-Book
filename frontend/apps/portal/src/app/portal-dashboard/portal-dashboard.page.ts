@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PortalApi } from '../retail/portal-api.service';
@@ -13,7 +16,12 @@ import { PortalSummary } from '../retail/portal.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-dashboard',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    RouterLink,
+    MessageBoxComponent,
+  ],
   templateUrl: './portal-dashboard.page.html',
   styleUrl: '../retail/retail-portal.scss',
 })

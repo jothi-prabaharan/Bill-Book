@@ -33,10 +33,7 @@
         [ngModel]="replyBody()"
         (ngModelChange)="replyBody.set($event)"
       />
-      <label class="internal-toggle">
-        <input type="checkbox" [checked]="internal()" (change)="internal.set($any($event.target).checked)" [disabled]="sending()" />
-        Internal note (the customer never sees it)
-      </label>
+      <bb-checkbox class="internal-toggle" text="Internal note (the customer never sees it)" name="internal" [ngModel]="internal()" (ngModelChange)="internal.set($event)" [disabled]="sending()" />
       <button class="bb-btn bb-btn-primary" [disabled]="!replyBody().trim() || sending()" (click)="sendMessage()">
         {{ sending() ? 'Sending...' : internal() ? 'Add note' : 'Reply' }}
       </button>

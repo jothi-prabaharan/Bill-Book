@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+  PercentageInputComponent,
+  SelectComponent,
+  TextInputComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   PerformanceApiService,
@@ -11,11 +18,23 @@ import {
 @Component({
   selector: 'bb-performance-self-evaluation',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MessageBoxComponent,
+    PercentageInputComponent,
+    SelectComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './self-evaluation.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class SelfEvaluationPage implements OnInit {
+  protected readonly selectedReviewOptions = computed(() =>
+    this.myReviews().map((r) => ({ value: r.performanceReviewId, label: `${r.cycleName} (Status: ${r.reviewStatus})` })),
+  );
+
   private readonly api = inject(PerformanceApiService);
 
   readonly myReviews = signal<PerformanceReview[]>([]);

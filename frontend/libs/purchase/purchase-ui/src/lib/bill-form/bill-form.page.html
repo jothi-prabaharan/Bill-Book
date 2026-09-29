@@ -20,28 +20,28 @@
     <a class="btn" routerLink="..">Back to list</a>
   </header>
 
-  @if (error()) {
-    <div class="banner banner--error" role="alert">{{ error() }}</div>
+  @if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
   @if (budgetWarnings().length > 0) {
-    <div class="banner banner--warn" role="status">
+    <bb-message-box tone="warning">
       Saved, but over budget:
       <ul>
         @for (warning of budgetWarnings(); track warning) {
           <li>{{ warning }}</li>
         }
       </ul>
-    </div>
+    </bb-message-box>
   }
-  @if (notice()) {
-    <div class="banner banner--ok">{{ notice() }}</div>
+  @if (notice(); as note) {
+    <bb-message-box [messages]="[{ tone: 'success', text: note }]" />
   }
 
   @if (readonlyDoc()) {
-    <div class="banner banner--info">
+    <bb-message-box tone="info">
       This bill has been posted. Correct it with a debit note rather than
       changing it.
-    </div>
+    </bb-message-box>
   }
 
   @if (loading()) {
@@ -184,14 +184,14 @@
       </div>
 
       @if (againstReceipt()) {
-        <p class="banner banner--info">
+        <bb-message-box tone="info">
           The goods are already on the shelf, so this bill <strong>moves no
           stock</strong> — it clears Goods Received Not Invoiced and owes the
           vendor. The lines came from the receipt and are locked: a bill has to
           agree with its receipt to the paise, because purchase price variance is
           not implemented yet. If the vendor billed a different price, detach the
           receipt or correct it there.
-        </p>
+        </bb-message-box>
       } @else {
         <p class="field__hint">
           With no receipt this bill <strong>does move stock</strong>: it debits

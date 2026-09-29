@@ -3,10 +3,14 @@
     <a routerLink="/purchase/transactions" class="back">← Purchase</a>
     <h1>GSTR-2B reconciliation</h1>
   </div>
-  <label class="btn btn-primary upload">
-    {{ busy() ? 'Working…' : 'Import 2B JSON' }}
-    <input type="file" accept=".json,application/json" (change)="upload($event)" [disabled]="busy()" />
-  </label>
+  <bb-file-input
+        class="upload"
+        accept=".json,application/json"
+        ariaLabel="GSTR-2B JSON file"
+        [buttonText]="busy() ? 'Working…' : 'Import 2B JSON'"
+        [disabled]="busy()"
+        (valueChange)="upload($event)"
+      />
 </header>
 
 <p class="hint">
@@ -15,8 +19,8 @@
   and leading zeros where needed.
 </p>
 
-@if (message()) {
-  <p class="error">{{ message() }}</p>
+@if (message(); as failure) {
+  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
 @if (imports().length > 0) {
@@ -55,7 +59,7 @@
   }
 
   <div class="card">
-    <table class="lines">
+    <bb-card-table class="lines" flush>
       <thead>
         <tr>
           <th scope="col">Supplier</th>
@@ -92,7 +96,7 @@
           <tr><td colspan="9" class="empty">Nothing in this group.</td></tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
   </div>
 } @else if (!busy()) {
   <p class="empty">No GSTR-2B imported yet.</p>

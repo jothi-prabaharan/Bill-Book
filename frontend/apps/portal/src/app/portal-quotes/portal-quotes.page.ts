@@ -1,4 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+  TextInputComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -14,7 +19,15 @@ import { PortalQuoteItem, quoteState } from '../retail/portal.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-quotes',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    FormsModule,
+    RouterLink,
+    MessageBoxComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './portal-quotes.page.html',
   styleUrl: '../retail/retail-portal.scss',
 })

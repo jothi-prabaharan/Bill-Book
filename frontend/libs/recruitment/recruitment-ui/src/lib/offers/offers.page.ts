@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  DateInputComponent,
+  MessageBoxComponent,
+  MoneyInputComponent,
+  SelectComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ApplicationListItem,
@@ -11,11 +18,23 @@ import {
 @Component({
   selector: 'rec-offers-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    DateInputComponent,
+    MoneyInputComponent,
+    SelectComponent,
+  ],
   templateUrl: './offers.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class OffersPage implements OnInit {
+  protected readonly applicationOptions = computed(() =>
+    this.applications().map((app) => ({ value: app.applicationId, label: `${app.candidateName} – ${app.openingTitle}` })),
+  );
+
   private readonly api = inject(RecruitmentApiService);
 
   readonly offers = signal<OfferView[]>([]);

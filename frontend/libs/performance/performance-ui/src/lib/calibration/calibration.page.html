@@ -4,18 +4,13 @@
 
 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
   <div>
-    <label>
-      <span>Cycle: </span>
-      <select [(ngModel)]="selectedCycleId" (change)="loadCalibration()">
-        <option *ngFor="let c of cycles()" [value]="c.reviewCycleId">{{ c.name }}</option>
-      </select>
-    </label>
+    <div>
+      <bb-select label="Cycle" name="selectedCycleId" [options]="selectedCycleOptions()" [clearable]="false" [(ngModel)]="selectedCycleId" (ngModelChange)="loadCalibration()" />
+    </div>
   </div>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div class="card-grid">
   <div *ngFor="let d of calibrations()" class="perf-card">
@@ -35,7 +30,7 @@
 <!-- Table of Department Reviews for Calibration -->
 <h2 style="margin-top: 2rem;">Reviews in this Cycle</h2>
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Employee</th>
@@ -58,21 +53,19 @@
         </td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>
 
 <!-- Adjust Modal -->
 <div *ngIf="showAdjustModal()" class="sheet">
   <h2>Calibration Rating Adjustment</h2>
   <div class="fields">
-    <label>
-      <span>New Rating Level</span>
-      <input type="number" [(ngModel)]="adjustForm().toRatingLevelId" placeholder="1 to 5" style="width: 100%;" />
-    </label>
-    <label style="grid-column: 1 / -1;">
-      <span>Reason for Calibration Adjustment</span>
-      <textarea [(ngModel)]="adjustForm().reason" rows="3" placeholder="Provide committee calibration rationale" style="width: 100%;"></textarea>
-    </label>
+    <div>
+      <bb-number-input label="New Rating Level" placeholder="1 to 5" name="toRatingLevelId" [(ngModel)]="adjustForm().toRatingLevelId" />
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="Reason for Calibration Adjustment" [rows]="3" placeholder="Provide committee calibration rationale" name="reason" [(ngModel)]="adjustForm().reason" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button class="btn" (click)="showAdjustModal.set(false)">Cancel</button>

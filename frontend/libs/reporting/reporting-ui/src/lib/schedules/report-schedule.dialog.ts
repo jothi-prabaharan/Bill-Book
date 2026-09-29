@@ -9,7 +9,13 @@ import {
   WeekDay,
   describeSchedule,
 } from '@bill-book/reporting-core';
-import { BbSelectOption, CheckboxComponent, SelectComponent, TextInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  CheckboxComponent,
+  MessageBoxComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 /**
  * Email this report as an Excel workbook on a schedule (TK-114): the layout on
@@ -23,7 +29,13 @@ import { BbSelectOption, CheckboxComponent, SelectComponent, TextInputComponent 
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-schedule-dialog',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, CheckboxComponent, SelectComponent],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    CheckboxComponent,
+    SelectComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './report-schedule.dialog.html',
   styleUrl: './report-schedule.dialog.scss',
 })

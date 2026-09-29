@@ -9,10 +9,10 @@
 }
 
 @if (unavailable().length > 0) {
-  <p class="warn">
+  <bb-message-box tone="warning">
     Could not read {{ unavailable().join(', ') }}. What waits there is not shown.
     <button type="button" class="link" (click)="load()">Try again</button>
-  </p>
+  </bb-message-box>
 }
 
 @if (loading()) {
@@ -33,19 +33,18 @@
           <span>Waiting at: {{ item.label }}</span>
         </div>
 
-        <label class="comment">
-          Comment
-          <textarea
-            rows="2"
-            maxlength="2000"
-            [name]="'comment-' + itemKey(item)"
-            [(ngModel)]="comments[itemKey(item)]"
-            placeholder="Needed to reject or send back"
-          ></textarea>
-        </label>
+        <bb-textarea
+              class="comment"
+              label="Comment"
+              [rows]="2"
+              [maxlength]="2000"
+              [name]="'comment-' + itemKey(item)"
+              [(ngModel)]="comments[itemKey(item)]"
+              placeholder="Needed to reject or send back"
+            />
 
         @if (errors()[itemKey(item)]; as error) {
-          <p class="error">{{ error }}</p>
+          <bb-message-box [messages]="[{ tone: 'error', text: error }]" />
         }
 
         <div class="actions">

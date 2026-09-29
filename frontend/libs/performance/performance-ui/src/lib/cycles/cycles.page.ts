@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  DateInputComponent,
+  MessageBoxComponent,
+  PercentageInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CycleKind,
@@ -12,11 +20,24 @@ import {
 @Component({
   selector: 'bb-performance-cycles',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    DateInputComponent,
+    PercentageInputComponent,
+    SelectComponent,
+    TextInputComponent,
+  ],
   templateUrl: './cycles.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class CyclesPage implements OnInit {
+  protected readonly ratingScaleOptions = computed(() =>
+    this.ratingScales().map((s) => ({ value: s.ratingScaleId, label: `${s.name}` })),
+  );
+
   private readonly api = inject(PerformanceApiService);
 
   readonly cycles = signal<ReviewCycle[]>([]);

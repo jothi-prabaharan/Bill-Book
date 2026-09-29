@@ -15,14 +15,13 @@
 
     @if (searchable()) {
       <div class="subsearch">
-        <input
-          class="input"
-          type="search"
-          [attr.placeholder]="'Search ' + label().toLowerCase()"
-          [attr.aria-label]="'Search ' + label().toLowerCase()"
-          [value]="query()"
-          (input)="setQuery($any($event.target).value)"
-        />
+        <bb-search-input
+              [placeholder]="'Search ' + label().toLowerCase()"
+              [ariaLabel]="'Search ' + label().toLowerCase()"
+              [debounceMs]="0"
+              [ngModel]="query()"
+              (ngModelChange)="setQuery($event)"
+            />
       </div>
     }
 

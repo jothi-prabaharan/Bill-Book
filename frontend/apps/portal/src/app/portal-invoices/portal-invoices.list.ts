@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PortalApi } from '../retail/portal-api.service';
@@ -9,7 +12,12 @@ import { PortalInvoiceItem, statusLabel, statusTone } from '../retail/portal.mod
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-invoices',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    RouterLink,
+    MessageBoxComponent,
+  ],
   templateUrl: './portal-invoices.list.html',
   styleUrl: '../retail/retail-portal.scss',
 })

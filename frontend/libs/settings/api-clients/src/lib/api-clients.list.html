@@ -5,8 +5,8 @@
     what that role's permissions allow. A change of role reaches a key within five minutes.
   </p>
 
-  @if (error()) {
-    <p class="error" role="alert">{{ error() }}</p>
+  @if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
   <form class="create" (ngSubmit)="createClient()">
@@ -36,7 +36,7 @@
     </div>
   }
 
-  <table class="keys">
+  <bb-card-table class="keys" flush>
     <thead>
       <tr>
         <th scope="col">Integration</th>
@@ -77,5 +77,5 @@
         <tr><td colspan="5" class="empty">No API keys yet.</td></tr>
       }
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

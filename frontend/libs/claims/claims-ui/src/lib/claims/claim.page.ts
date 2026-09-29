@@ -1,4 +1,11 @@
 import { CommonModule } from '@angular/common';
+import {
+  CardTableComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextInputComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,11 +19,25 @@ import {
 @Component({
   standalone: true,
   selector: 'bb-claim-detail',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    CardTableComponent,
+    NumberInputComponent,
+    SelectComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './claim.page.html',
   styleUrl: '../claims-page.scss',
 })
 export class ClaimDetailPage implements OnInit {
+  protected readonly payoutModeOptions = [
+    { value: 'Direct', label: 'Direct Spend Money' },
+    { value: 'Payroll', label: 'Attach to Payroll Run' },
+  ];
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(ClaimsApiService);

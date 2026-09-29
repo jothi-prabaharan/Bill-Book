@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  CheckboxComponent,
+  MoneyInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ClaimCategoryView,
@@ -12,11 +19,29 @@ import {
 @Component({
   standalone: true,
   selector: 'bb-claim-categories',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    CheckboxComponent,
+    MoneyInputComponent,
+    SelectComponent,
+    TextInputComponent,
+  ],
   templateUrl: './claim-categories.page.html',
   styleUrl: '../claims-page.scss',
 })
 export class ClaimCategoriesPage implements OnInit {
+  protected readonly claimCategoryOptions = computed(() =>
+    this.categories().map((c) => ({ value: c.claimCategoryId, label: `${c.name} (${c.code})` })),
+  );
+
+  protected readonly limitPeriodOptions = [
+    { value: 'PerClaim', label: 'Per Claim' },
+    { value: 'Monthly', label: 'Monthly' },
+    { value: 'Yearly', label: 'Yearly' },
+  ];
+
   private readonly api = inject(ClaimsApiService);
 
   readonly loading = signal(false);

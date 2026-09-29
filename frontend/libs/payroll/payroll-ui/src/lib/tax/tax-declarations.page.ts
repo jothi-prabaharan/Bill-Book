@@ -4,7 +4,9 @@ import { PayrollApiService } from '@bill-book/payroll-core';
 import {
   MessageBoxComponent,
   NumberInputComponent,
+  SelectComponent,
   TextInputComponent,
+  BbSelectOption,
   UiMessage,
 } from '@bill-book/ui-components';
 
@@ -12,7 +14,13 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-tax-declarations-page',
   standalone: true,
-  imports: [FormsModule, NumberInputComponent, TextInputComponent, MessageBoxComponent],
+  imports: [
+    FormsModule,
+    NumberInputComponent,
+    TextInputComponent,
+    MessageBoxComponent,
+    SelectComponent,
+  ],
   templateUrl: './tax-declarations.page.html',
   styleUrl: '../payroll-page.scss',
 })
@@ -25,6 +33,11 @@ export class TaxDeclarationsPage implements OnInit {
   protected employeeId = 1;
   protected financialYear = '2026-2027';
   protected regime = 'New';
+
+  protected readonly regimeOptions: BbSelectOption<string>[] = [
+    { value: 'New', label: 'New Tax Regime (Default u/s 115BAC)' },
+    { value: 'Old', label: 'Old Tax Regime' },
+  ];
   protected isLocked = false;
   protected declarationId: number | null = null;
 

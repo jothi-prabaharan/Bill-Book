@@ -2,13 +2,22 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PayrollApiService, PayrollRunView, PayslipView } from '@bill-book/payroll-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-payroll-run-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    MessageBoxComponent,
+    CardTableComponent,
+  ],
   templateUrl: './payroll-run.page.html',
   styleUrl: '../payroll-page.scss',
 })

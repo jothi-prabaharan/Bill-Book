@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { toApiLine } from '@bill-book/sales-core';
@@ -7,8 +8,14 @@ import {
   LookupDialogComponent,
   LookupRow,
   MessageBoxComponent,
+  MoneyInputComponent,
+  NumberInputComponent,
+  QuantityInputComponent,
+  SelectComponent,
   TaxGroupOption,
+  TextInputComponent,
   UiMessage,
+  UnitPriceInputComponent,
 } from '@bill-book/ui-components';
 import { BarcodeBurst, POS_KEYS, PosCommand, commandFor } from './pos-keys';
 import { PosSaleService, TenderAccount } from './pos-sale.service';
@@ -66,7 +73,15 @@ const TILL_KEY = 'bb.pos.tillId';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-pos-terminal',
   standalone: true,
-  imports: [LookupDialogComponent, MessageBoxComponent],
+  imports: [
+    LookupDialogComponent,
+    MessageBoxComponent,
+    MoneyInputComponent,
+    NumberInputComponent,
+    QuantityInputComponent,
+    SelectComponent,
+    TextInputComponent,
+    UnitPriceInputComponent, FormsModule],
   templateUrl: './pos-terminal.component.html',
   styleUrl: './pos-terminal.component.scss',
 })
@@ -133,12 +148,26 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   protected readonly tenderAmount = signal('');
   protected readonly tenderReference = signal('');
 
+  protected readonly paperOptions = [
+    { value: '80', label: '80 mm (48 columns)' },
+    { value: '58', label: '58 mm (32 columns)' },
+  ];
+
+  protected readonly connectionOptions = [
+    { value: 'device', label: 'USB or serial (device path)' },
+    { value: 'network', label: 'Network (TCP)' },
+  ];
+
   /** What the customer pays: the cart total rounded to the rupee, in paise. */
   protected readonly payable = computed(() => roundToRupee(this.totals().totalAmount));
 
   protected readonly roundOff = computed(() => this.payable() - this.totals().totalAmount);
 
   protected readonly tenderState = computed(() => tenderSummary(this.payable(), this.tenders()));
+
+  protected readonly tenderAccountOptions = computed(() =>
+    this.accountsForMode().map((a) => ({ value: a.bankAccountId, label: a.accountName })),
+  );
 
   protected readonly accountsForMode = computed(() =>
     this.tenderAccounts().filter((a) => (this.tenderMode() === 'Cash') === (a.accountType === 'Cash')),
@@ -190,7 +219,7 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected setTillId(value: string): void {
+  protected setTillId(value: number | string | null): void {
     const id = Number(value);
     if (!Number.isInteger(id) || id <= 0) {
       return;
@@ -397,7 +426,7 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     return line.unitPrice / 100;
   }
 
-  protected onQuantity(index: number, value: string): void {
+  protected onQuantity(index: number, value: number | string | null): void {
     this.lines.set(setQuantity(this.lines(), index, Number(value), this.context()));
   }
 
@@ -408,7 +437,7 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     );
   }
 
-  protected onUnitPrice(index: number, value: string): void {
+  protected onUnitPrice(index: number, value: number | string | null): void {
     this.lines.set(setUnitPrice(this.lines(), index, Number(value), this.context()));
   }
 
@@ -716,26 +745,26 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     }));
   }
 
-  protected setDevicePath(path: string): void {
-    this.printerDraft.update((d) => ({ ...d, target: { kind: 'device', path } }));
+  protected setDevicePath(path: string | null): void {
+    this.printerDraft.update((d) => ({ ...d, target: { kind: 'device', path: path ?? '' } }));
   }
 
-  protected setHost(host: string): void {
+  protected setHost(host: string | null): void {
     this.printerDraft.update((d) => ({
       ...d,
-      target: { kind: 'network', host, port: d.target?.kind === 'network' ? d.target.port : 9100 },
+      target: { kind: 'network', host: host ?? '', port: d.target?.kind === 'network' ? d.target.port : 9100 },
     }));
   }
 
-  protected setPort(port: string): void {
+  protected setPort(port: number | string | null): void {
     this.printerDraft.update((d) => ({
       ...d,
       target: { kind: 'network', host: d.target?.kind === 'network' ? d.target.host : '', port: Number(port) || 9100 },
     }));
   }
 
-  protected setFooter(footer: string): void {
-    this.printerDraft.update((d) => ({ ...d, footer: footer.trim() === '' ? undefined : footer }));
+  protected setFooter(footer: string | null): void {
+    this.printerDraft.update((d) => ({ ...d, footer: (footer ?? '').trim() === '' ? undefined : footer ?? undefined }));
   }
 
   protected savePrinter(): void {

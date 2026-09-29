@@ -2,23 +2,14 @@
   <h1>My Performance Appraisals & Self-Evaluation</h1>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
-<div *ngIf="successMessage()" class="alert alert-success" style="margin-bottom: 1rem; color: #16a34a;">
-  {{ successMessage() }}
-</div>
+<bb-message-box *ngIf="successMessage() as message" [messages]="[{ tone: 'success', text: message }]" />
 
 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;" *ngIf="myReviews().length > 0">
-  <label>
-    <span>Select Appraisal Cycle: </span>
-    <select [ngModel]="selectedReviewId()" (ngModelChange)="selectReview($event)">
-      <option *ngFor="let r of myReviews()" [value]="r.performanceReviewId">
-        {{ r.cycleName }} (Status: {{ r.reviewStatus }})
-      </option>
-    </select>
-  </label>
+  <div>
+    <bb-select label="Select Appraisal Cycle" name="selectedReviewId" [options]="selectedReviewOptions()" [clearable]="false" [ngModel]="selectedReviewId()" (ngModelChange)="selectReview($event)" />
+  </div>
 </div>
 
 <div *ngIf="myReviews().length === 0 && !loading()" style="padding: 24px; text-align: center; color: #64748b;">
@@ -35,10 +26,9 @@
   </div>
 
   <div *ngIf="currentReview()?.reviewStatus === 'Released'">
-    <label>
-      <span>Employee Acknowledgement Comment (Optional):</span>
-      <textarea [(ngModel)]="ackComment" rows="2" style="width: 100%;" placeholder="Acknowledge outcome or record feedback..."></textarea>
-    </label>
+    <div>
+      <bb-textarea label="Employee Acknowledgement Comment (Optional)" [rows]="2" placeholder="Acknowledge outcome or record feedback..." name="ackComment" [(ngModel)]="ackComment" />
+    </div>
     <div style="margin-top: 8px;">
       <button class="btn btn-primary" (click)="acknowledge()">Acknowledge Appraisal</button>
     </div>
@@ -61,30 +51,24 @@
   </div>
 
   <div class="fields">
-    <label style="grid-column: 1 / -1;">
-      <span>What did you achieve this period? (Required) *</span>
-      <textarea [(ngModel)]="form().achievements" [disabled]="isLocked()" rows="4" style="width: 100%;" placeholder="Describe key achievements, projects delivered, and quantifiable impact..."></textarea>
-    </label>
-    <label style="grid-column: 1 / -1;">
-      <span>What challenges did you face and how did you overcome them?</span>
-      <textarea [(ngModel)]="form().challenges" [disabled]="isLocked()" rows="3" style="width: 100%;"></textarea>
-    </label>
-    <label>
-      <span>Key Strengths</span>
-      <textarea [(ngModel)]="form().strengths" [disabled]="isLocked()" rows="2" style="width: 100%;"></textarea>
-    </label>
-    <label>
-      <span>Areas to Improve</span>
-      <textarea [(ngModel)]="form().areasToImprove" [disabled]="isLocked()" rows="2" style="width: 100%;"></textarea>
-    </label>
-    <label>
-      <span>Training Needs</span>
-      <textarea [(ngModel)]="form().trainingNeeds" [disabled]="isLocked()" rows="2" style="width: 100%;" placeholder="Skills, certifications, or workshops..."></textarea>
-    </label>
-    <label>
-      <span>Career Aspirations</span>
-      <textarea [(ngModel)]="form().careerAspirations" [disabled]="isLocked()" rows="2" style="width: 100%;" placeholder="Short-term & long-term career goals..."></textarea>
-    </label>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="What did you achieve this period? (Required) *" [disabled]="isLocked()" [rows]="4" placeholder="Describe key achievements, projects delivered, and quantifiable impact..." name="achievements" [(ngModel)]="form().achievements" />
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="What challenges did you face and how did you overcome them?" [disabled]="isLocked()" [rows]="3" name="challenges" [(ngModel)]="form().challenges" />
+    </div>
+    <div>
+      <bb-textarea label="Key Strengths" [disabled]="isLocked()" [rows]="2" name="strengths" [(ngModel)]="form().strengths" />
+    </div>
+    <div>
+      <bb-textarea label="Areas to Improve" [disabled]="isLocked()" [rows]="2" name="areasToImprove" [(ngModel)]="form().areasToImprove" />
+    </div>
+    <div>
+      <bb-textarea label="Training Needs" [disabled]="isLocked()" [rows]="2" placeholder="Skills, certifications, or workshops..." name="trainingNeeds" [(ngModel)]="form().trainingNeeds" />
+    </div>
+    <div>
+      <bb-textarea label="Career Aspirations" [disabled]="isLocked()" [rows]="2" placeholder="Short-term & long-term career goals..." name="careerAspirations" [(ngModel)]="form().careerAspirations" />
+    </div>
   </div>
 
   <!-- Goals Assessment -->
@@ -96,14 +80,12 @@
         <span>Weightage: {{ g.weightage }}%</span>
       </div>
       <div style="margin-top: 8px; display: flex; gap: 16px;">
-        <label>
-          <span>Achievement %: </span>
-          <input type="number" [(ngModel)]="g.achievementPercent" [disabled]="isLocked()" style="width: 70px;" />
-        </label>
-        <label style="flex: 1;">
-          <span>Self Comments: </span>
-          <input type="text" [(ngModel)]="g.comments" [disabled]="isLocked()" style="width: 100%;" />
-        </label>
+        <div>
+          <bb-percentage-input label="Achievement %" [disabled]="isLocked()" name="achievementPercent" [(ngModel)]="g.achievementPercent" />
+        </div>
+        <div style="flex: 1;">
+          <bb-text-input label="Self Comments" [disabled]="isLocked()" name="comments" [(ngModel)]="g.comments" />
+        </div>
       </div>
     </div>
   </div>
@@ -114,10 +96,9 @@
     <div *ngFor="let c of selfEval()?.competencies" style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 8px;">
       <div><strong>{{ c.competencyName }}</strong> ({{ c.groupName }})</div>
       <div style="margin-top: 8px;">
-        <label>
-          <span>Comments: </span>
-          <input type="text" [(ngModel)]="c.comments" [disabled]="isLocked()" style="width: 100%;" />
-        </label>
+        <div>
+          <bb-text-input label="Comments" [disabled]="isLocked()" name="comments" [(ngModel)]="c.comments" />
+        </div>
       </div>
     </div>
   </div>

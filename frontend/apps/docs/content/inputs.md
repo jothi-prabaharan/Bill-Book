@@ -1,6 +1,6 @@
 # Common components
 
-Every field in Bill-Book is one of nineteen common inputs, every table is one of
+Every field in Bill-Book is one of twenty common inputs, every table is one of
 two common tables, and every page-level message is one message box. They live in
 `libs/shared/ui-components` and are exported from `@bill-book/ui-components`.
 
@@ -85,6 +85,7 @@ decision to defend in review. The current list:
 | `invoice-print.page.html` | `<table>` | A printed tax invoice. Paged media wants a bare table that breaks across sheets. |
 | `shell-nav.component.html` | `<input type="checkbox">` | The mobile nav drawer is a CSS-only toggle, not a form field. |
 | `statement-upload-form.component.html` | `<input type="file">` | A drag-and-drop zone; `bb-file-input` has no drag-and-drop. |
+| `print-templates.page.html` | `<textarea>` | The template band editor inserts merge fields at the caret through each band's native element (`selectionStart`), which `bb-textarea` does not expose. A source editor, not a form field. |
 | `contacts.page.html`, `items.page.html`, `unit-types.page.html` | `<input type="radio">` | One radio per row marking "this one is the default" — not the shape of `bb-radio-group`. Any *other* raw input in these files is still an error. |
 
 **When the rule catches something no component fits**, the answer is to extend
@@ -113,6 +114,7 @@ exists to prevent.
 | Website | `bb-url-input` |
 | Invoice date, due date | `bb-date-input` |
 | A timestamp — when a ticket was raised | `bb-datetime-input` |
+| A calendar month — a payroll month, an attendance month | `bb-month-input` (value `yyyy-MM`) |
 | Notes, terms, an address | `bb-textarea` |
 | A long description that needs emphasis or a list | `bb-rich-text-input` |
 | Active, is customer, use SSL, a permission | `bb-checkbox` |
@@ -230,7 +232,7 @@ BbFormField                     label · required mark · hint · error · aria 
         |                         bb-unit-price-input · bb-quantity-input
         |                         bb-percentage-input · bb-exchange-rate-input
         |
-        +-- BbDateControlBase   bb-date-input · bb-datetime-input
+        +-- BbDateControlBase   bb-date-input · bb-datetime-input · bb-month-input
         |
         +-- bb-checkbox · bb-radio-group · bb-select · bb-search-input
             bb-textarea · bb-file-input · bb-rich-text-input

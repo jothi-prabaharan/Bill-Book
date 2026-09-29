@@ -5,7 +5,7 @@
   </nav>
 
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
   }
 
   @if (detail(); as d) {
@@ -31,10 +31,7 @@
 
     @if (d.ticket.status !== 'Closed') {
       <section class="card">
-        <label>
-          Reply
-          <textarea [(ngModel)]="body" maxlength="4000" rows="4"></textarea>
-        </label>
+        <bb-textarea label="Reply" name="body" [(ngModel)]="body" [maxlength]="4000" [rows]="4" />
         <span class="row">
           <button type="button" class="button" (click)="reply()" [disabled]="busy() || !body.trim()">Send</button>
         </span>

@@ -11,6 +11,7 @@ import {
 } from '@bill-book/employee-core';
 import {
   BbSelectOption,
+  CardTableComponent,
   MessageBoxComponent,
   SelectComponent,
   TextInputComponent,
@@ -28,6 +29,7 @@ type ProfileTab = 'overview' | 'contact' | 'documents' | 'announcements';
     TextInputComponent,
     SelectComponent,
     MessageBoxComponent,
+    CardTableComponent,
   ],
   templateUrl: './my-profile.page.html',
   styleUrl: '../employee-page.scss',

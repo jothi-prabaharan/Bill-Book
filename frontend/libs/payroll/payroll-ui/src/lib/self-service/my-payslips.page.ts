@@ -6,13 +6,21 @@ import {
   PayrollApiService,
   PayslipView,
 } from '@bill-book/payroll-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-my-payslips-page',
   standalone: true,
-  imports: [CommonModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    MessageBoxComponent,
+    CardTableComponent,
+  ],
   templateUrl: './my-payslips.page.html',
   styleUrl: '../payroll-page.scss',
 })

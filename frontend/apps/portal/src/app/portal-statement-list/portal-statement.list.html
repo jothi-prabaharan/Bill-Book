@@ -7,14 +7,14 @@
   <h1>Statement</h1>
 
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
   }
 
   @if (statement(); as s) {
     <ng-template #side let-side let-title="title" let-balanceLabel="balanceLabel">
       <section>
         <h2>{{ title }}</h2>
-        <table>
+        <bb-card-table flush>
           <thead>
             <tr>
               <th>Date</th>
@@ -43,7 +43,7 @@
               <tr><td colspan="5" class="muted">No transactions.</td></tr>
             }
           </tbody>
-        </table>
+        </bb-card-table>
         <p class="row"><strong>{{ balanceLabel }}</strong><strong>{{ side.closingBalance | number: '1.2-2' }}</strong></p>
       </section>
     </ng-template>

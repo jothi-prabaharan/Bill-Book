@@ -47,12 +47,12 @@
 }
 
 @if (custom()?.droppedColumns?.length) {
-  <p class="notice">
+  <bb-message-box tone="info">
     {{ custom()!.droppedColumns.join(', ') }}
     {{ custom()!.droppedColumns.length === 1 ? 'is' : 'are' }} no longer in use, so
     {{ custom()!.droppedColumns.length === 1 ? 'its column was' : 'their columns were' }}
     taken out of this report. Save the report to keep it this way.
-  </p>
+  </bb-message-box>
 }
 
 @if (metadata(); as report) {

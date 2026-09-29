@@ -1,4 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  FileInputComponent,
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import {
@@ -19,7 +24,13 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-gstr2b-page',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    CardTableComponent,
+    FileInputComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './gstr2b.page.html',
   styleUrl: './gstr2b.page.scss',
 })
@@ -67,10 +78,9 @@ export class Gstr2bPage implements OnInit {
     }
   }
 
-  protected async upload(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
+  /** bb-file-input clears its own element, so the same file can be picked twice. */
+  protected async upload(files: readonly File[]): Promise<void> {
+    const file = files[0];
     if (!file) {
       return;
     }

@@ -10,7 +10,7 @@
     <p class="muted">Loading…</p>
   }
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
   }
 
   @if (!loading()) {
@@ -21,36 +21,26 @@
     <section class="cards">
       @for (row of rows(); track row.invoiceId) {
         <div class="card">
-          <label class="row">
-            <span>
-              <input type="checkbox" [ngModel]="row.selected" (ngModelChange)="toggle(row, $event)" />
-              <strong>{{ row.documentNo }}</strong>
-            </span>
+          <div class="row">
+            <bb-checkbox [text]="row.documentNo" [name]="'sel-' + row.documentNo" [ngModel]="row.selected" (ngModelChange)="toggle(row, $event)" />
             <span class="muted">owed {{ row.outstanding | number: '1.2-2' }}</span>
-          </label>
+          </div>
           @if (row.selected) {
-            <label>
-              Amount to pay
-              <input
-                type="number"
-                inputmode="decimal"
-                min="0.01"
-                [max]="row.outstanding"
-                step="0.01"
-                [ngModel]="row.amount"
-                (ngModelChange)="setAmount(row, $event)"
-              />
-            </label>
+            <bb-money-input
+              label="Amount to pay"
+              [name]="'amt-' + row.documentNo"
+              [min]="0.01"
+              [max]="row.outstanding"
+              [ngModel]="row.amount"
+              (ngModelChange)="setAmount(row, $event)"
+            />
           }
         </div>
       }
     </section>
 
     <section class="card">
-      <label>
-        Anything extra on account
-        <input type="number" inputmode="decimal" min="0" step="0.01" [ngModel]="extra()" (ngModelChange)="extra.set(+$event || 0)" />
-      </label>
+      <bb-money-input label="Anything extra on account" name="extra" [ngModel]="extra()" (ngModelChange)="extra.set(+($event ?? 0) || 0)" />
     </section>
 
     <section class="row">

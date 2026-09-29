@@ -33,19 +33,19 @@
   <div class="sheet" style="margin-bottom: 24px;">
     <div class="fields">
       <div>
-        <label style="color: var(--color-text-muted); font-size: 0.75rem;">TOTAL AMOUNT</label>
+        <div style="color: var(--color-text-muted); font-size: 0.75rem;">TOTAL AMOUNT</div>
         <div style="font-size: 1.25rem; font-weight: 700;">{{ c.totalAmount | currency:'INR' }}</div>
       </div>
       <div>
-        <label style="color: var(--color-text-muted); font-size: 0.75rem;">APPROVED AMOUNT</label>
+        <div style="color: var(--color-text-muted); font-size: 0.75rem;">APPROVED AMOUNT</div>
         <div style="font-size: 1.25rem; font-weight: 700; color: #16a34a;">{{ c.approvedAmount | currency:'INR' }}</div>
       </div>
       <div>
-        <label style="color: var(--color-text-muted); font-size: 0.75rem;">PAYOUT MODE</label>
+        <div style="color: var(--color-text-muted); font-size: 0.75rem;">PAYOUT MODE</div>
         <div style="font-weight: 600;">{{ c.payoutMode }}</div>
       </div>
       <div>
-        <label style="color: var(--color-text-muted); font-size: 0.75rem;">CURRENT STEP</label>
+        <div style="color: var(--color-text-muted); font-size: 0.75rem;">CURRENT STEP</div>
         <div>{{ c.currentStepLabel || '—' }}</div>
       </div>
     </div>
@@ -54,7 +54,7 @@
   <div class="sheet">
     <h3>Expense Lines</h3>
     <div class="table-container">
-      <table>
+      <bb-card-table flush>
         <thead>
           <tr>
             <th>Date</th>
@@ -81,7 +81,7 @@
             </tr>
           }
         </tbody>
-      </table>
+      </bb-card-table>
     </div>
   </div>
 
@@ -90,8 +90,7 @@
     <div class="sheet" style="position: fixed; inset: 25% 35% auto 35%; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
       <h3>{{ approvalForm.action }} Claim</h3>
       <div style="margin-top: 12px;">
-        <label>Comments / Reason</label>
-        <textarea [(ngModel)]="approvalForm.comments" rows="3" style="width: 100%; padding: 6px; margin-top: 4px;" placeholder="Optional notes"></textarea>
+        <bb-textarea label="Comments / Reason" [rows]="3" placeholder="Optional notes" name="comments" [(ngModel)]="approvalForm.comments" />
       </div>
       <div class="sheet-actions">
         <button class="btn-secondary" (click)="closeApprovalModal()">Cancel</button>
@@ -106,25 +105,18 @@
       <h3>Process Payout</h3>
       <div class="fields" style="margin-top: 12px;">
         <div>
-          <label>Payout Mode</label>
-          <select [(ngModel)]="payoutForm.payoutMode" style="width: 100%; padding: 6px; margin-top: 4px;">
-            <option value="Direct">Direct Spend Money</option>
-            <option value="Payroll">Attach to Payroll Run</option>
-          </select>
+          <bb-select label="Payout Mode" name="payoutMode" [options]="payoutModeOptions" [clearable]="false" [(ngModel)]="payoutForm.payoutMode" />
         </div>
         @if (payoutForm.payoutMode === 'Direct') {
           <div>
-            <label>Bank Account ID</label>
-            <input type="number" [(ngModel)]="payoutForm.bankAccountId" style="width: 100%; padding: 6px; margin-top: 4px;" />
+            <bb-number-input label="Bank Account ID" name="bankAccountId" [(ngModel)]="payoutForm.bankAccountId" />
           </div>
           <div>
-            <label>Reference</label>
-            <input type="text" [(ngModel)]="payoutForm.paymentReference" placeholder="e.g. UTR / Cheque No" style="width: 100%; padding: 6px; margin-top: 4px;" />
+            <bb-text-input label="Reference" placeholder="e.g. UTR / Cheque No" name="paymentReference" [(ngModel)]="payoutForm.paymentReference" />
           </div>
         } @else {
           <div>
-            <label>Payroll Run ID</label>
-            <input type="number" [(ngModel)]="payoutForm.payrollRunId" placeholder="Payroll run ID" style="width: 100%; padding: 6px; margin-top: 4px;" />
+            <bb-number-input label="Payroll Run ID" placeholder="Payroll run ID" name="payrollRunId" [(ngModel)]="payoutForm.payrollRunId" />
           </div>
         }
       </div>

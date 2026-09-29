@@ -6,6 +6,7 @@ import { readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   BbSelectOption,
+  CardTableComponent,
   CheckboxComponent,
   DateInputComponent,
   NumberInputComponent,
@@ -60,7 +61,15 @@ const TIMER_KEY = 'bb.timesheet.timer';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-timesheet-page',
   standalone: true,
-  imports: [FormsModule, SelectComponent, NumberInputComponent, DateInputComponent, TextInputComponent, CheckboxComponent],
+  imports: [
+    FormsModule,
+    SelectComponent,
+    NumberInputComponent,
+    DateInputComponent,
+    TextInputComponent,
+    CheckboxComponent,
+    CardTableComponent,
+  ],
   templateUrl: './timesheet.page.html',
   styleUrl: './timesheet.page.scss',
 })

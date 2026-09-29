@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PortalApi } from '../retail/portal-api.service';
@@ -16,7 +19,11 @@ const MAX_POLLS = 15;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-payment-result',
   standalone: true,
-  imports: [DecimalPipe, RouterLink],
+  imports: [
+    DecimalPipe,
+    RouterLink,
+    MessageBoxComponent,
+  ],
   templateUrl: './portal-payment-result.page.html',
   styleUrl: '../retail/retail-portal.scss',
 })

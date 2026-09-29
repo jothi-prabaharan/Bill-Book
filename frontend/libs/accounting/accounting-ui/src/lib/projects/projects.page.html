@@ -156,15 +156,9 @@
   </form>
 } @else {
   <div class="toolbar">
-    <label class="filter">
-      Status
-      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
-        <option value="">All</option>
-        @for (option of statusOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
-    </label>
+    <div class="filter">
+          <bb-select label="Status" placeholder="All" name="statusFilter" [options]="statusOptions" [(ngModel)]="statusFilter" (ngModelChange)="load()" />
+        </div>
     @if (canEdit()) {
       <button type="button" (click)="startNew()">+ New project</button>
     }

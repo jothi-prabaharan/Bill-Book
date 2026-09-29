@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  DateInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ApplyLeave,
@@ -12,11 +18,34 @@ import {
 @Component({
   standalone: true,
   selector: 'bb-leave-applications',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    DateInputComponent,
+    SelectComponent,
+    TextInputComponent,
+  ],
   templateUrl: './leave-applications.page.html',
   styleUrl: '../time-leave-page.scss',
 })
 export class LeaveApplicationsPage implements OnInit {
+  protected readonly leaveTypeOptions = computed(() =>
+    this.leaveTypes().map((t) => ({ value: t.leaveTypeId, label: `${t.name} (${t.code})` })),
+  );
+
+  protected readonly fromHalfOptions = [
+    { value: 'Full', label: 'Full Day' },
+    { value: 'FirstHalf', label: 'First Half' },
+    { value: 'SecondHalf', label: 'Second Half' },
+  ];
+
+  protected readonly toHalfOptions = [
+    { value: 'Full', label: 'Full Day' },
+    { value: 'FirstHalf', label: 'First Half' },
+    { value: 'SecondHalf', label: 'Second Half' },
+  ];
+
   private readonly api = inject(TimeLeaveApiService);
 
   readonly loading = signal(false);

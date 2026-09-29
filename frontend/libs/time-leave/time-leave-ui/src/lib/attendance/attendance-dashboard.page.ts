@@ -1,4 +1,10 @@
 import { CommonModule } from '@angular/common';
+import {
+  CardTableComponent,
+  DateTimeInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -11,11 +17,24 @@ import {
 @Component({
   standalone: true,
   selector: 'bb-attendance-dashboard',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    DateTimeInputComponent,
+    SelectComponent,
+    TextInputComponent,
+  ],
   templateUrl: './attendance-dashboard.page.html',
   styleUrl: '../time-leave-page.scss',
 })
 export class AttendanceDashboardPage implements OnInit {
+  protected readonly requestedStatusOptions = [
+    { value: 'Present', label: 'Present' },
+    { value: 'HalfDay', label: 'Half Day' },
+    { value: 'OnDuty', label: 'On Duty' },
+  ];
+
   private readonly api = inject(TimeLeaveApiService);
 
   readonly loading = signal(false);

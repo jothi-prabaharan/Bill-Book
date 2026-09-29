@@ -30,14 +30,12 @@
       <bb-date-input label="Reported" [(ngModel)]="form.reportedDate" />
       <bb-date-input label="Due" [(ngModel)]="form.dueDate" />
     </div>
-    <label class="block">
-      <span>Details</span>
-      <textarea rows="3" maxlength="2000" [(ngModel)]="form.description"></textarea>
-    </label>
-    <label class="block">
-      <span>Checklist, one task per line</span>
-      <textarea rows="4" [(ngModel)]="tasksText"></textarea>
-    </label>
+    <div class="block">
+          <bb-textarea label="Details" name="description" [rows]="3" [maxlength]="2000" [(ngModel)]="form.description" />
+        </div>
+    <div class="block">
+          <bb-textarea label="Checklist, one task per line" name="tasksText" [rows]="4" [(ngModel)]="tasksText" />
+        </div>
     <div class="sheet-actions">
       <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
@@ -95,10 +93,14 @@
 
     <h3>Checklist</h3>
     @for (task of order.tasks; track task.workOrderTaskId) {
-      <label class="check">
-        <input type="checkbox" [checked]="task.isDone" (change)="tick(task.workOrderTaskId, $any($event.target).checked)" [disabled]="busy()" />
-        {{ task.description }}
-      </label>
+      <bb-checkbox
+            class="check"
+            [text]="task.description"
+            [name]="'task-' + task.workOrderTaskId"
+            [ngModel]="task.isDone"
+            (ngModelChange)="tick(task.workOrderTaskId, $event)"
+            [disabled]="busy()"
+          />
     } @empty {
       <p class="muted">No tasks listed.</p>
     }

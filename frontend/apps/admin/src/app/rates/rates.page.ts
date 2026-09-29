@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '@bill-book/auth';
 import {
   BbSelectOption,
+  CardTableComponent,
   DateInputComponent,
   NumberInputComponent,
   SelectComponent,
@@ -28,7 +29,14 @@ function today(): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-rates-page',
   standalone: true,
-  imports: [FormsModule, SelectComponent, TextInputComponent, DateInputComponent, NumberInputComponent],
+  imports: [
+    FormsModule,
+    SelectComponent,
+    TextInputComponent,
+    DateInputComponent,
+    NumberInputComponent,
+    CardTableComponent,
+  ],
   templateUrl: './rates.page.html',
   styleUrl: './rates.page.scss',
 })

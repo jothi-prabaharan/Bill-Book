@@ -1,4 +1,12 @@
 import { CommonModule } from '@angular/common';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  MoneyInputComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -10,11 +18,28 @@ import {
 @Component({
   selector: 'rec-requisitions-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    MoneyInputComponent,
+    NumberInputComponent,
+    SelectComponent,
+    TextareaComponent,
+  ],
   templateUrl: './requisitions.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class RequisitionsPage implements OnInit {
+  protected readonly employmentTypeOptions = [
+    { value: 'Permanent', label: 'Permanent' },
+    { value: 'Probation', label: 'Probation' },
+    { value: 'Contract', label: 'Contract' },
+    { value: 'PartTime', label: 'Part Time' },
+    { value: 'Intern', label: 'Intern' },
+  ];
+
   private readonly api = inject(RecruitmentApiService);
 
   readonly requisitions = signal<JobRequisitionListItem[]>([]);

@@ -2,13 +2,21 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { CommonModule } from '@angular/common';
 import { readApiFailure } from '@bill-book/api-client';
 import { EmployeeApiService, TeamMember, TeamSummary } from '@bill-book/employee-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-team-page',
   standalone: true,
-  imports: [CommonModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    MessageBoxComponent,
+    CardTableComponent,
+  ],
   templateUrl: './team.page.html',
   styleUrl: '../employee-page.scss',
 })

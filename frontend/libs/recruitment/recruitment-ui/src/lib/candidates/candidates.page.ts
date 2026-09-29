@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  EmailInputComponent,
+  MessageBoxComponent,
+  MoneyInputComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CandidateListItem,
@@ -11,11 +20,33 @@ import {
 @Component({
   selector: 'rec-candidates-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    EmailInputComponent,
+    MoneyInputComponent,
+    NumberInputComponent,
+    SelectComponent,
+    TextInputComponent,
+  ],
   templateUrl: './candidates.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class CandidatesPage implements OnInit {
+  protected readonly selectedOpeningOptions = computed(() =>
+    this.openings().map((op) => ({ value: op.jobOpeningId, label: `${op.title} (${op.requisitionCode})` })),
+  );
+
+  protected readonly candidateSourceOptions = [
+    { value: 'Portal', label: 'Portal' },
+    { value: 'Referral', label: 'Referral' },
+    { value: 'Agency', label: 'Agency' },
+    { value: 'CareersPage', label: 'Careers Page' },
+    { value: 'WalkIn', label: 'Walk In' },
+  ];
+
   private readonly api = inject(RecruitmentApiService);
 
   readonly candidates = signal<CandidateListItem[]>([]);

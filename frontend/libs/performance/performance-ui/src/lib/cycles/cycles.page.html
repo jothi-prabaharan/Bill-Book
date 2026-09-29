@@ -5,48 +5,36 @@
   </div>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <!-- Create Cycle Modal/Sheet -->
 <div *ngIf="showForm()" class="sheet">
   <h2>New Review Cycle</h2>
   <div class="fields">
-    <label>
-      <span>Cycle Name</span>
-      <input type="text" [(ngModel)]="form().name" placeholder="e.g. FY 2026-27 Annual Review" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Period From</span>
-      <input type="date" [(ngModel)]="form().periodFrom" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Period To</span>
-      <input type="date" [(ngModel)]="form().periodTo" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Rating Scale</span>
-      <select [(ngModel)]="form().ratingScaleId" style="width: 100%;">
-        <option *ngFor="let s of ratingScales()" [value]="s.ratingScaleId">{{ s.name }}</option>
-      </select>
-    </label>
-    <label>
-      <span>Goal Weight (%)</span>
-      <input type="number" [(ngModel)]="form().goalWeightPercent" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Competency Weight (%)</span>
-      <input type="number" [(ngModel)]="form().competencyWeightPercent" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Self Evaluation Due Date</span>
-      <input type="date" [(ngModel)]="form().selfEvaluationDueDate" style="width: 100%;" />
-    </label>
-    <label>
-      <span>Review Due Date</span>
-      <input type="date" [(ngModel)]="form().reviewDueDate" style="width: 100%;" />
-    </label>
+    <div>
+      <bb-text-input label="Cycle Name" placeholder="e.g. FY 2026-27 Annual Review" name="name" [(ngModel)]="form().name" />
+    </div>
+    <div>
+      <bb-date-input label="Period From" name="periodFrom" [(ngModel)]="form().periodFrom" />
+    </div>
+    <div>
+      <bb-date-input label="Period To" name="periodTo" [(ngModel)]="form().periodTo" />
+    </div>
+    <div>
+      <bb-select label="Rating Scale" name="ratingScaleId" [options]="ratingScaleOptions()" [clearable]="false" [(ngModel)]="form().ratingScaleId" />
+    </div>
+    <div>
+      <bb-percentage-input label="Goal Weight (%)" name="goalWeightPercent" [(ngModel)]="form().goalWeightPercent" />
+    </div>
+    <div>
+      <bb-percentage-input label="Competency Weight (%)" name="competencyWeightPercent" [(ngModel)]="form().competencyWeightPercent" />
+    </div>
+    <div>
+      <bb-date-input label="Self Evaluation Due Date" name="selfEvaluationDueDate" [(ngModel)]="form().selfEvaluationDueDate" />
+    </div>
+    <div>
+      <bb-date-input label="Review Due Date" name="reviewDueDate" [(ngModel)]="form().reviewDueDate" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button class="btn" (click)="cancelCreate()">Cancel</button>
@@ -58,10 +46,9 @@
 <div *ngIf="showEnroll()" class="sheet">
   <h2>Enroll Employees into Cycle</h2>
   <div class="fields">
-    <label>
-      <span>Joined Before Date</span>
-      <input type="date" [(ngModel)]="enrollForm().joinedBeforeDate" style="width: 100%;" />
-    </label>
+    <div>
+      <bb-date-input label="Joined Before Date" name="joinedBeforeDate" [(ngModel)]="enrollForm().joinedBeforeDate" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button class="btn" (click)="showEnroll.set(false)">Cancel</button>
@@ -71,7 +58,7 @@
 
 <!-- Table of Cycles -->
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Cycle Name</th>
@@ -107,5 +94,5 @@
         <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No review cycles found. Click 'New Review Cycle' to create one.</td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

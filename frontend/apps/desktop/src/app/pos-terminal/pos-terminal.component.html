@@ -2,18 +2,17 @@
   <header class="pos-head">
     <h2>POS Terminal</h2>
 
-    <label class="pos-till">
-      <span class="pos-label">Till</span>
-      <input
-        type="number"
-        min="1"
-        step="1"
-        inputmode="numeric"
-        aria-label="Till number"
-        [value]="tillId()"
-        (change)="setTillId($any($event.target).value)"
-      />
-    </label>
+    <div class="pos-till">
+          <bb-number-input
+            label="Till"
+            ariaLabel="Till number"
+            [min]="1"
+            [decimals]="0"
+            [ngModel]="tillId()"
+            [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+            (ngModelChange)="setTillId($event)"
+          />
+        </div>
 
     <button type="button" class="btn btn-ghost" (click)="openPrinter()">Printer</button>
 
@@ -103,15 +102,13 @@
               >
                 −
               </button>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                inputmode="decimal"
-                aria-label="Quantity"
-                [value]="quantityOf(line)"
-                (change)="onQuantity(i, $any($event.target).value)"
-              />
+              <bb-quantity-input
+                    ariaLabel="Quantity"
+                    align="right"
+                    [ngModel]="quantityOf(line)"
+                    [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                    (ngModelChange)="onQuantity(i, $event)"
+                  />
               <button
                 type="button"
                 class="btn btn-icon"
@@ -122,17 +119,15 @@
               </button>
             </div>
 
-            <label class="cart-price">
-              <span class="pos-label">Price{{ line.isPriceInclusive ? ' (incl. GST)' : '' }}</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                inputmode="decimal"
-                [value]="unitPriceOf(line)"
-                (change)="onUnitPrice(i, $any($event.target).value)"
-              />
-            </label>
+            <div class="cart-price">
+                  <bb-unit-price-input
+                    [label]="line.isPriceInclusive ? 'Price (incl. GST)' : 'Price'"
+                    align="right"
+                    [ngModel]="unitPriceOf(line)"
+                    [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                    (ngModelChange)="onUnitPrice(i, $event)"
+                  />
+                </div>
 
             <span class="cart-total">{{ rupees(line.lineTotal) }}</span>
 
@@ -220,38 +215,38 @@
       </div>
 
       <div class="tender-entry">
-        <label>
-          <span class="pos-label">Amount</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            inputmode="decimal"
-            [value]="tenderAmount()"
-            (input)="tenderAmount.set($any($event.target).value)"
-            (keydown.enter)="addTender()"
-          />
-        </label>
-        <label>
-          <span class="pos-label">Into</span>
-          <select [value]="tenderAccountId() ?? ''" (change)="tenderAccountId.set(+$any($event.target).value || null)">
-            @for (account of accountsForMode(); track account.bankAccountId) {
-              <option [value]="account.bankAccountId">{{ account.accountName }}</option>
-            } @empty {
-              <option value="">No account for this mode</option>
-            }
-          </select>
-        </label>
+        <div class="pos-field">
+              <!-- Bound through + so a figure the page writes (the amount still due)
+                   reaches the box, and one being typed is not written back over. -->
+              <bb-money-input
+                label="Amount"
+                name="tenderAmount"
+                [ngModel]="+tenderAmount() || null"
+                (ngModelChange)="tenderAmount.set($event === null ? '' : '' + $event)"
+                (keydown.enter)="addTender()"
+              />
+            </div>
+        <div class="pos-field">
+              <bb-select
+                label="Into"
+                name="tenderAccountId"
+                [clearable]="false"
+                emptyText="No account for this mode"
+                [options]="tenderAccountOptions()"
+                [ngModel]="tenderAccountId()"
+                (ngModelChange)="tenderAccountId.set($event)"
+              />
+            </div>
         @if (tenderMode() !== 'Cash') {
-          <label>
-            <span class="pos-label">Reference</span>
-            <input
-              type="text"
-              maxlength="50"
-              [value]="tenderReference()"
-              (input)="tenderReference.set($any($event.target).value)"
-            />
-          </label>
+          <div class="pos-field">
+                <bb-text-input
+                  label="Reference"
+                  name="tenderReference"
+                  [maxlength]="50"
+                  [ngModel]="tenderReference()"
+                  (ngModelChange)="tenderReference.set($event)"
+                />
+              </div>
         }
         <button type="button" class="btn btn-secondary" (click)="addTender()">Add</button>
       </div>
@@ -297,56 +292,59 @@
       }
 
       <div class="printer-form">
-        <label>
-          <span class="pos-label">Paper</span>
-          <select [value]="'' + printerDraft().paper" (change)="setPaper($any($event.target).value)">
-            <option value="80">80 mm (48 columns)</option>
-            <option value="58">58 mm (32 columns)</option>
-          </select>
-        </label>
+        <div class="pos-field">
+              <bb-select
+                label="Paper"
+                name="paper"
+                [clearable]="false"
+                [options]="paperOptions"
+                [ngModel]="'' + printerDraft().paper"
+                (ngModelChange)="setPaper($event)"
+              />
+            </div>
 
-        <label>
-          <span class="pos-label">Connection</span>
-          <select [value]="printerDraft().target?.kind ?? ''" (change)="setConnection($any($event.target).value)">
-            <option value="">None</option>
-            <option value="device">USB or serial (device path)</option>
-            <option value="network">Network (TCP)</option>
-          </select>
-        </label>
+        <div class="pos-field">
+              <bb-select
+                label="Connection"
+                name="connection"
+                placeholder="None"
+                [options]="connectionOptions"
+                [ngModel]="printerDraft().target?.kind ?? null"
+                (ngModelChange)="setConnection($event ?? '')"
+              />
+            </div>
 
         @if (printerDraft().target; as target) {
           @if (target.kind === 'device') {
-            <label>
-              <span class="pos-label">Device path</span>
-              <input
-                type="text"
-                placeholder="/dev/usb/lp0 or \\.\COM3"
-                [value]="target.path"
-                (input)="setDevicePath($any($event.target).value)"
-              />
-            </label>
+            <div class="pos-field">
+                  <bb-text-input
+                    label="Device path"
+                    name="devicePath"
+                    placeholder="/dev/usb/lp0 or \\.\COM3"
+                    [ngModel]="target.path"
+                    (ngModelChange)="setDevicePath($event)"
+                  />
+                </div>
           } @else {
-            <label>
-              <span class="pos-label">Host</span>
-              <input type="text" placeholder="192.168.1.50" [value]="target.host" (input)="setHost($any($event.target).value)" />
-            </label>
-            <label>
-              <span class="pos-label">Port</span>
-              <input type="number" min="1" max="65535" [value]="target.port" (input)="setPort($any($event.target).value)" />
-            </label>
+            <div class="pos-field">
+                  <bb-text-input label="Host" name="host" placeholder="192.168.1.50" [ngModel]="target.host" (ngModelChange)="setHost($event)" />
+                </div>
+            <div class="pos-field">
+                  <bb-number-input label="Port" name="port" [min]="1" [max]="65535" [decimals]="0" [ngModel]="target.port" (ngModelChange)="setPort($event)" />
+                </div>
           }
         }
 
-        <label>
-          <span class="pos-label">Footer</span>
-          <input
-            type="text"
-            maxlength="96"
-            placeholder="Thank you. Visit again."
-            [value]="printerDraft().footer ?? ''"
-            (input)="setFooter($any($event.target).value)"
-          />
-        </label>
+        <div class="pos-field">
+              <bb-text-input
+                label="Footer"
+                name="footer"
+                [maxlength]="96"
+                placeholder="Thank you. Visit again."
+                [ngModel]="printerDraft().footer ?? ''"
+                (ngModelChange)="setFooter($event)"
+              />
+            </div>
       </div>
 
       <div class="tender-actions">

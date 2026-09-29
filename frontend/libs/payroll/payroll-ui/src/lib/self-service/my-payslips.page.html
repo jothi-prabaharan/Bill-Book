@@ -18,7 +18,7 @@
     </div>
   } @else {
     <div class="bb-card">
-      <table class="bb-table" style="width: 100%;">
+      <bb-card-table class="bb-table" style="width: 100%;" flush>
         <thead>
           <tr>
             <th>Month</th>
@@ -69,7 +69,7 @@
             </tr>
           }
         </tbody>
-      </table>
+      </bb-card-table>
     </div>
   }
 
@@ -89,7 +89,7 @@
 
         <div style="margin-top: 1.5rem;">
           <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Earnings & Deductions</h3>
-          <table class="bb-table" style="width: 100%; font-size: 0.875rem;">
+          <bb-card-table class="bb-table" style="width: 100%; font-size: 0.875rem;" flush>
             <thead>
               <tr>
                 <th>Component</th>
@@ -124,7 +124,7 @@
                 <td style="text-align: right;">₹{{ detail.netPay | number:'1.2-2' }}</td>
               </tr>
             </tfoot>
-          </table>
+          </bb-card-table>
         </div>
 
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">

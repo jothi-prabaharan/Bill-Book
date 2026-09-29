@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  DateTimeInputComponent,
+  MessageBoxComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ApplicationListItem,
@@ -14,11 +22,46 @@ import {
 @Component({
   selector: 'rec-interviews-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    DateTimeInputComponent,
+    NumberInputComponent,
+    SelectComponent,
+    TextareaComponent,
+  ],
   templateUrl: './interviews.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class InterviewsPage implements OnInit {
+  protected readonly ratingOptions = [
+    { value: 1, label: '1 - Poor' },
+    { value: 2, label: '2 - Below Average' },
+    { value: 3, label: '3 - Average' },
+    { value: 4, label: '4 - Good' },
+    { value: 5, label: '5 - Excellent' },
+  ];
+
+  protected readonly selectedAppOptions = computed(() =>
+    this.applications().map((app) => ({ value: app.applicationId, label: `${app.candidateName} – ${app.openingTitle} (${app.stage})` })),
+  );
+
+  protected readonly roundKindOptions = [
+    { value: 'Telephonic', label: 'Telephonic' },
+    { value: 'Technical', label: 'Technical' },
+    { value: 'Hr', label: 'HR' },
+    { value: 'Managerial', label: 'Managerial' },
+  ];
+
+  protected readonly outcomeOptions = [
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Pass', label: 'Pass (Recommended)' },
+    { value: 'Fail', label: 'Fail' },
+    { value: 'NoShow', label: 'No Show' },
+  ];
+
   private readonly api = inject(RecruitmentApiService);
 
   readonly applications = signal<ApplicationListItem[]>([]);

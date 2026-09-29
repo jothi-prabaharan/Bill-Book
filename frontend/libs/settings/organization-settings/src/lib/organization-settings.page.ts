@@ -3,6 +3,7 @@ import {
   BbSelectOption,
   DateInputComponent,
   EmailInputComponent,
+  MessageBoxComponent,
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -92,6 +93,7 @@ const MONTHS = [
     SelectComponent,
     EmailInputComponent,
     DateInputComponent,
+    MessageBoxComponent,
   ],
   templateUrl: './organization-settings.page.html',
   styleUrl: './organization-settings.page.scss',

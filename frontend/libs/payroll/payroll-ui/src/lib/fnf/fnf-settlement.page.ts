@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { PayrollApiService } from '@bill-book/payroll-core';
 import {
+  CardTableComponent,
   MessageBoxComponent,
   NumberInputComponent,
   TextInputComponent,
@@ -13,7 +14,15 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-fnf-settlement-page',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, NumberInputComponent, TextInputComponent, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    DecimalPipe,
+    FormsModule,
+    NumberInputComponent,
+    TextInputComponent,
+    MessageBoxComponent,
+    CardTableComponent,
+  ],
   templateUrl: './fnf-settlement.page.html',
   styleUrl: '../payroll-page.scss',
 })

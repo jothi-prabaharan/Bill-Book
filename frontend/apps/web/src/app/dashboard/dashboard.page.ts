@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -33,6 +34,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-dashboard-page',
   standalone: true,
+  imports: [CardTableComponent],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })

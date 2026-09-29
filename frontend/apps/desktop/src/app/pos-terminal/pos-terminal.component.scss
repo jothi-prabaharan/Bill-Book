@@ -100,9 +100,9 @@
   align-items: center;
   gap: var(--space-1);
 
-  input {
+  bb-quantity-input {
+    display: inline-block;
     width: 4.5rem;
-    text-align: right;
   }
 }
 
@@ -110,9 +110,9 @@
   display: flex;
   flex-direction: column;
 
-  input {
+  bb-unit-price-input {
+    display: block;
     width: 100%;
-    text-align: right;
   }
 }
 
@@ -198,7 +198,8 @@
   align-items: center;
   gap: var(--space-2, 8px);
 
-  input {
+  bb-number-input {
+    display: inline-block;
     width: 4.5rem;
   }
 }
@@ -291,7 +292,7 @@
   gap: var(--space-2, 8px);
   align-items: end;
 
-  label {
+  .pos-field {
     display: grid;
     gap: 4px;
   }
@@ -325,7 +326,7 @@
   display: grid;
   gap: var(--space-3, 12px);
 
-  label {
+  .pos-field {
     display: grid;
     gap: 4px;
   }

@@ -3,8 +3,8 @@
 
   @if (loading()) {
     <p class="muted">Loading…</p>
-  } @else if (error()) {
-    <p class="error" role="alert">{{ error() }}</p>
+  } @else if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   } @else {
     <section aria-labelledby="children-title">
       <h2 id="children-title">Your children</h2>

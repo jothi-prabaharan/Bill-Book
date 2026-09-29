@@ -13,19 +13,13 @@
   </div>
 
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
   }
 
   @if (raising()) {
     <section class="card">
-      <label>
-        Subject
-        <input type="text" [(ngModel)]="subject" maxlength="200" />
-      </label>
-      <label>
-        What do you need help with?
-        <textarea [(ngModel)]="description" maxlength="4000" rows="5"></textarea>
-      </label>
+      <bb-text-input label="Subject" name="subject" [(ngModel)]="subject" [maxlength]="200" />
+      <bb-textarea label="What do you need help with?" name="description" [(ngModel)]="description" [maxlength]="4000" [rows]="5" />
       <span class="row">
         <button type="button" class="button" (click)="raise()" [disabled]="busy()">Raise ticket</button>
         <button type="button" class="link" (click)="raising.set(false)" [disabled]="busy()">Cancel</button>

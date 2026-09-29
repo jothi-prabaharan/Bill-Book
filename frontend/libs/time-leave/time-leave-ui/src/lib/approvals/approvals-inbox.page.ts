@@ -7,13 +7,24 @@ import {
   PendingApprovalItem,
   TimeLeaveApiService,
 } from '@bill-book/time-leave-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  TextareaComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-approvals-inbox-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MessageBoxComponent,
+    CardTableComponent,
+    TextareaComponent,
+  ],
   templateUrl: './approvals-inbox.page.html',
   styleUrl: '../time-leave-page.scss',
 })

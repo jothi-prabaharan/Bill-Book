@@ -1,61 +1,51 @@
 <div class="page-head">
   <h1>Candidates</h1>
   <div style="display: flex; gap: 8px;">
-    <input type="text" [(ngModel)]="searchTerm" placeholder="Search by name, email, phone..." (keyup.enter)="onSearch()" style="min-width: 250px;" />
+    <bb-text-input
+          ariaLabel="Search candidates"
+          name="searchTerm"
+          placeholder="Search by name, email, phone..."
+          style="min-width: 250px;"
+          [(ngModel)]="searchTerm"
+          (enter)="onSearch()"
+        />
     <button type="button" class="btn btn-secondary" (click)="onSearch()">Search</button>
     <button type="button" class="btn btn-primary" (click)="openCreate()">New Candidate</button>
   </div>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div *ngIf="showForm()" class="sheet">
   <h3>Add Candidate</h3>
   <div class="fields">
-    <label>
-      <span>First Name</span>
-      <input type="text" [(ngModel)]="form().firstName" />
-    </label>
-    <label>
-      <span>Last Name</span>
-      <input type="text" [(ngModel)]="form().lastName" />
-    </label>
-    <label>
-      <span>Email</span>
-      <input type="email" [(ngModel)]="form().email" />
-    </label>
-    <label>
-      <span>Phone</span>
-      <input type="text" [(ngModel)]="form().phone" />
-    </label>
-    <label>
-      <span>Current Employer</span>
-      <input type="text" [(ngModel)]="form().currentEmployer" />
-    </label>
-    <label>
-      <span>Current CTC (₹)</span>
-      <input type="number" [(ngModel)]="form().currentCtc" />
-    </label>
-    <label>
-      <span>Expected CTC (₹)</span>
-      <input type="number" [(ngModel)]="form().expectedCtc" />
-    </label>
-    <label>
-      <span>Notice Period (Days)</span>
-      <input type="number" [(ngModel)]="form().noticePeriodDays" />
-    </label>
-    <label>
-      <span>Source</span>
-      <select [(ngModel)]="form().candidateSource">
-        <option value="Portal">Portal</option>
-        <option value="Referral">Referral</option>
-        <option value="Agency">Agency</option>
-        <option value="CareersPage">Careers Page</option>
-        <option value="WalkIn">Walk In</option>
-      </select>
-    </label>
+    <div>
+      <bb-text-input label="First Name" name="firstName" [(ngModel)]="form().firstName" />
+    </div>
+    <div>
+      <bb-text-input label="Last Name" name="lastName" [(ngModel)]="form().lastName" />
+    </div>
+    <div>
+      <bb-email-input label="Email" name="email" [(ngModel)]="form().email" />
+    </div>
+    <div>
+      <bb-text-input label="Phone" name="phone" [(ngModel)]="form().phone" />
+    </div>
+    <div>
+      <bb-text-input label="Current Employer" name="currentEmployer" [(ngModel)]="form().currentEmployer" />
+    </div>
+    <div>
+      <bb-money-input label="Current CTC (₹)" name="currentCtc" [(ngModel)]="form().currentCtc" />
+    </div>
+    <div>
+      <bb-money-input label="Expected CTC (₹)" name="expectedCtc" [(ngModel)]="form().expectedCtc" />
+    </div>
+    <div>
+      <bb-number-input label="Notice Period (Days)" name="noticePeriodDays" [(ngModel)]="form().noticePeriodDays" />
+    </div>
+    <div>
+      <bb-select label="Source" name="candidateSource" [options]="candidateSourceOptions" [clearable]="false" [(ngModel)]="form().candidateSource" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
@@ -66,14 +56,9 @@
 <div *ngIf="showApplyModal()" class="sheet" style="background: #eff6ff; border-color: #bfdbfe;">
   <h3>Apply Candidate to Job Opening</h3>
   <div class="fields">
-    <label style="grid-column: 1 / -1;">
-      <span>Select Active Opening</span>
-      <select [ngModel]="selectedOpeningId()" (ngModelChange)="selectedOpeningId.set($event)">
-        <option *ngFor="let op of openings()" [value]="op.jobOpeningId">
-          {{ op.title }} ({{ op.requisitionCode }})
-        </option>
-      </select>
-    </label>
+    <div style="grid-column: 1 / -1;">
+      <bb-select label="Select Active Opening" name="selectedOpeningId" [options]="selectedOpeningOptions()" [clearable]="false" [ngModel]="selectedOpeningId()" (ngModelChange)="selectedOpeningId.set($event)" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button type="button" class="btn btn-secondary" (click)="showApplyModal.set(false)">Cancel</button>
@@ -82,7 +67,7 @@
 </div>
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Name</th>
@@ -112,5 +97,5 @@
         <td colspan="8" class="empty-state">No candidates found.</td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

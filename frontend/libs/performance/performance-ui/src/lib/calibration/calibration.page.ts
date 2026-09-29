@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   DepartmentCalibration,
@@ -11,11 +18,23 @@ import {
 @Component({
   selector: 'bb-performance-calibration',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    NumberInputComponent,
+    SelectComponent,
+    TextareaComponent,
+  ],
   templateUrl: './calibration.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class CalibrationPage implements OnInit {
+  protected readonly selectedCycleOptions = computed(() =>
+    this.cycles().map((c) => ({ value: c.reviewCycleId, label: `${c.name}` })),
+  );
+
   private readonly api = inject(PerformanceApiService);
 
   readonly cycles = signal<ReviewCycle[]>([]);

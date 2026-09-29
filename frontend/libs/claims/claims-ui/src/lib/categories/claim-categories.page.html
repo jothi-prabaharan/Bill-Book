@@ -16,7 +16,7 @@
 <div class="sheet" style="margin-bottom: 24px;">
   <h2>Categories</h2>
   <div class="table-container">
-    <table>
+    <bb-card-table flush>
       <thead>
         <tr>
           <th>Code</th>
@@ -51,14 +51,14 @@
           </tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
   </div>
 </div>
 
 <div class="sheet">
   <h2>Spending Limits</h2>
   <div class="table-container">
-    <table>
+    <bb-card-table flush>
       <thead>
         <tr>
           <th>Category</th>
@@ -87,7 +87,7 @@
           </tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
   </div>
 </div>
 
@@ -97,20 +97,16 @@
     <h3>New Claim Category</h3>
     <div class="fields" style="margin-top: 12px;">
       <div>
-        <label>Code</label>
-        <input type="text" [(ngModel)]="categoryForm.code" placeholder="e.g. TRAV" style="width: 100%; padding: 6px; margin-top: 4px;" />
+        <bb-text-input label="Code" placeholder="e.g. TRAV" name="code" [(ngModel)]="categoryForm.code" />
       </div>
       <div>
-        <label>Name</label>
-        <input type="text" [(ngModel)]="categoryForm.name" placeholder="e.g. Travel & Conveyance" style="width: 100%; padding: 6px; margin-top: 4px;" />
+        <bb-text-input label="Name" placeholder="e.g. Travel & Conveyance" name="name" [(ngModel)]="categoryForm.name" />
       </div>
       <div style="display: flex; gap: 8px; align-items: center; margin-top: 16px;">
-        <input type="checkbox" id="catReceipt" [(ngModel)]="categoryForm.isReceiptRequired" />
-        <label for="catReceipt">Receipt Required</label>
+        <bb-checkbox text="Receipt Required" id="catReceipt" name="isReceiptRequired" [(ngModel)]="categoryForm.isReceiptRequired" />
       </div>
       <div style="display: flex; gap: 8px; align-items: center; margin-top: 16px;">
-        <input type="checkbox" id="catActive" [(ngModel)]="categoryForm.isActive" />
-        <label for="catActive">Active</label>
+        <bb-checkbox text="Active" id="catActive" name="isActive" [(ngModel)]="categoryForm.isActive" />
       </div>
     </div>
     <div class="sheet-actions">
@@ -126,24 +122,13 @@
     <h3>Set Claim Limit</h3>
     <div class="fields" style="margin-top: 12px;">
       <div>
-        <label>Category</label>
-        <select [(ngModel)]="limitForm.claimCategoryId" style="width: 100%; padding: 6px; margin-top: 4px;">
-          @for (c of categories(); track c.claimCategoryId) {
-            <option [value]="c.claimCategoryId">{{ c.name }} ({{ c.code }})</option>
-          }
-        </select>
+        <bb-select label="Category" name="claimCategoryId" [options]="claimCategoryOptions()" [clearable]="false" [(ngModel)]="limitForm.claimCategoryId" />
       </div>
       <div>
-        <label>Period</label>
-        <select [(ngModel)]="limitForm.limitPeriod" style="width: 100%; padding: 6px; margin-top: 4px;">
-          <option value="PerClaim">Per Claim</option>
-          <option value="Monthly">Monthly</option>
-          <option value="Yearly">Yearly</option>
-        </select>
+        <bb-select label="Period" name="limitPeriod" [options]="limitPeriodOptions" [clearable]="false" [(ngModel)]="limitForm.limitPeriod" />
       </div>
       <div>
-        <label>Max Amount</label>
-        <input type="number" [(ngModel)]="limitForm.amount" style="width: 100%; padding: 6px; margin-top: 4px;" />
+        <bb-money-input label="Max Amount" name="amount" [(ngModel)]="limitForm.amount" />
       </div>
     </div>
     <div class="sheet-actions">

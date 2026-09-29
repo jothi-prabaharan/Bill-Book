@@ -16,6 +16,7 @@ import {
 } from '@bill-book/preventive-core';
 import {
   BbSelectOption,
+  CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
@@ -49,6 +50,7 @@ type Tab = 'plans' | 'occurrences';
     SelectComponent,
     MessageBoxComponent,
     IfCanDirective,
+    CheckboxComponent,
   ],
   templateUrl: './plans.page.html',
   styleUrl: '../preventive-page.scss',

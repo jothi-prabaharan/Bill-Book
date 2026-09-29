@@ -9,8 +9,8 @@
     dataset, so anyone who opens it needs the same permission the dataset does.
   </p>
 
-  @if (message()) {
-    <p class="error">{{ message() }}</p>
+  @if (message(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
   <form (ngSubmit)="save()">

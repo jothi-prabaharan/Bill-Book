@@ -23,7 +23,7 @@
 
 <div class="sheet">
   <div class="table-container">
-    <table>
+    <bb-card-table flush>
       <thead>
         <tr>
           <th>Claim No</th>
@@ -75,7 +75,7 @@
           </tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
   </div>
 </div>
 
@@ -85,19 +85,13 @@
     <h3>Create Expense Claim</h3>
     <div class="fields" style="margin-top: 12px;">
       <div>
-        <label>Employee ID</label>
-        <input type="number" [(ngModel)]="newClaim.employeeId" style="width: 100%; padding: 6px; margin-top: 4px;" />
+        <bb-number-input label="Employee ID" name="employeeId" [(ngModel)]="newClaim.employeeId" />
       </div>
       <div>
-        <label>Claim Date</label>
-        <input type="date" [(ngModel)]="newClaim.claimDate" style="width: 100%; padding: 6px; margin-top: 4px;" />
+        <bb-date-input label="Claim Date" name="claimDate" [(ngModel)]="newClaim.claimDate" />
       </div>
       <div>
-        <label>Payout Mode</label>
-        <select [(ngModel)]="newClaim.payoutMode" style="width: 100%; padding: 6px; margin-top: 4px;">
-          <option value="Direct">Direct (Accounting Spend Money)</option>
-          <option value="Payroll">Payroll (Next Payroll Run)</option>
-        </select>
+        <bb-select label="Payout Mode" name="payoutMode" [options]="payoutModeOptions" [clearable]="false" [(ngModel)]="newClaim.payoutMode" />
       </div>
     </div>
 
@@ -110,28 +104,19 @@
       @for (line of newClaim.lines; track $index) {
         <div style="display: grid; grid-template-columns: 2fr 1.5fr 3fr 1.5fr 2fr auto; gap: 8px; align-items: end; margin-top: 8px;">
           <div>
-            <label style="font-size: 0.75rem;">Category</label>
-            <select [(ngModel)]="line.claimCategoryId" style="width: 100%; padding: 4px;">
-              @for (cat of categories(); track cat.claimCategoryId) {
-                <option [value]="cat.claimCategoryId">{{ cat.name }}</option>
-              }
-            </select>
+            <bb-select label="Category" name="claimCategoryId" [options]="claimCategoryOptions()" [clearable]="false" [(ngModel)]="line.claimCategoryId" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Date</label>
-            <input type="date" [(ngModel)]="line.expenseDate" style="width: 100%; padding: 4px;" />
+            <bb-date-input label="Date" name="expenseDate" [(ngModel)]="line.expenseDate" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Description</label>
-            <input type="text" [(ngModel)]="line.description" placeholder="Description" style="width: 100%; padding: 4px;" />
+            <bb-text-input label="Description" placeholder="Description" name="description" [(ngModel)]="line.description" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Amount</label>
-            <input type="number" [(ngModel)]="line.amount" style="width: 100%; padding: 4px;" />
+            <bb-money-input label="Amount" name="amount" [(ngModel)]="line.amount" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Receipt Key</label>
-            <input type="text" [(ngModel)]="line.receiptAttachmentKey" placeholder="e.g. rec-123.jpg" style="width: 100%; padding: 4px;" />
+            <bb-text-input label="Receipt Key" placeholder="e.g. rec-123.jpg" name="receiptAttachmentKey" [(ngModel)]="line.receiptAttachmentKey" />
           </div>
           <div>
             <button class="btn-secondary" style="color: #dc2626; padding: 4px 8px;" (click)="removeLine($index)">X</button>

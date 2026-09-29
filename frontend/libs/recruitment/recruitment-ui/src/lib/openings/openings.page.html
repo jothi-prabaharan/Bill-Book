@@ -3,37 +3,23 @@
   <button type="button" class="btn btn-primary" (click)="openCreate()">New Job Opening</button>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div *ngIf="showForm()" class="sheet">
   <h3>Create Job Opening</h3>
   <div class="fields">
-    <label>
-      <span>Job Requisition</span>
-      <select [(ngModel)]="form().jobRequisitionId">
-        <option *ngFor="let req of requisitions()" [value]="req.jobRequisitionId">
-          {{ req.requisitionCode }} ({{ req.employmentType }} - {{ req.openings }} openings)
-        </option>
-      </select>
-    </label>
-    <label>
-      <span>Title</span>
-      <input type="text" [(ngModel)]="form().title" placeholder="e.g. Senior Frontend Engineer" />
-    </label>
-    <label>
-      <span>Status</span>
-      <select [(ngModel)]="form().openingStatus">
-        <option value="Draft">Draft</option>
-        <option value="Open">Open</option>
-        <option value="OnHold">On Hold</option>
-      </select>
-    </label>
-    <label style="grid-column: 1 / -1;">
-      <span>Job Description</span>
-      <textarea rows="4" [(ngModel)]="form().description" placeholder="Requirements, responsibilities..."></textarea>
-    </label>
+    <div>
+      <bb-select label="Job Requisition" name="jobRequisitionId" [options]="jobRequisitionOptions()" [clearable]="false" [(ngModel)]="form().jobRequisitionId" />
+    </div>
+    <div>
+      <bb-text-input label="Title" placeholder="e.g. Senior Frontend Engineer" name="title" [(ngModel)]="form().title" />
+    </div>
+    <div>
+      <bb-select label="Status" name="openingStatus" [options]="openingStatusOptions" [clearable]="false" [(ngModel)]="form().openingStatus" />
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="Job Description" [rows]="4" placeholder="Requirements, responsibilities..." name="description" [(ngModel)]="form().description" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
@@ -42,7 +28,7 @@
 </div>
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Title</th>
@@ -76,5 +62,5 @@
         <td colspan="6" class="empty-state">No job openings found.</td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

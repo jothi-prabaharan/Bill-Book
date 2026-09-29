@@ -1,3 +1,5 @@
+import { FormsModule } from '@angular/forms';
+import { SearchInputComponent } from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -27,7 +29,8 @@ import { ShellPanelService } from '../panel-state.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-subpanel',
   standalone: true,
-  imports: [],
+  imports: [
+    SearchInputComponent, FormsModule],
   templateUrl: './shell-subpanel.component.html',
   styleUrl: './shell-subpanel.component.scss',
 })

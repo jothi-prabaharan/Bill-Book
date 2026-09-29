@@ -5,7 +5,7 @@
   </nav>
 
   @if (error(); as message) {
-    <p class="error">{{ message }}</p>
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
   }
 
   @if (payment(); as p) {

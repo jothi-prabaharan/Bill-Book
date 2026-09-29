@@ -14,7 +14,7 @@
 
 <div class="sheet">
   <div class="table-container">
-    <table>
+    <bb-card-table flush>
       <thead>
         <tr>
           <th>Claim No</th>
@@ -51,7 +51,7 @@
           </tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
   </div>
 </div>
 
@@ -61,15 +61,10 @@
     <h3>Submit Expense Claim</h3>
     <div class="fields" style="margin-top: 12px;">
       <div>
-        <label>Claim Date</label>
-        <input type="date" [(ngModel)]="applyForm.claimDate" style="width: 100%; padding: 6px; margin-top: 4px;" />
+        <bb-date-input label="Claim Date" name="claimDate" [(ngModel)]="applyForm.claimDate" />
       </div>
       <div>
-        <label>Preferred Payout</label>
-        <select [(ngModel)]="applyForm.payoutMode" style="width: 100%; padding: 6px; margin-top: 4px;">
-          <option value="Direct">Direct Bank Transfer</option>
-          <option value="Payroll">With Monthly Salary</option>
-        </select>
+        <bb-select label="Preferred Payout" name="payoutMode" [options]="payoutModeOptions" [clearable]="false" [(ngModel)]="applyForm.payoutMode" />
       </div>
     </div>
 
@@ -82,28 +77,19 @@
       @for (line of applyForm.lines; track $index) {
         <div style="display: grid; grid-template-columns: 2fr 1.5fr 3fr 1.5fr 2fr auto; gap: 8px; align-items: end; margin-top: 8px;">
           <div>
-            <label style="font-size: 0.75rem;">Category</label>
-            <select [(ngModel)]="line.claimCategoryId" style="width: 100%; padding: 4px;">
-              @for (cat of categories(); track cat.claimCategoryId) {
-                <option [value]="cat.claimCategoryId">{{ cat.name }}</option>
-              }
-            </select>
+            <bb-select label="Category" name="claimCategoryId" [options]="claimCategoryOptions()" [clearable]="false" [(ngModel)]="line.claimCategoryId" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Date</label>
-            <input type="date" [(ngModel)]="line.expenseDate" style="width: 100%; padding: 4px;" />
+            <bb-date-input label="Date" name="expenseDate" [(ngModel)]="line.expenseDate" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Description</label>
-            <input type="text" [(ngModel)]="line.description" placeholder="Description" style="width: 100%; padding: 4px;" />
+            <bb-text-input label="Description" placeholder="Description" name="description" [(ngModel)]="line.description" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Amount</label>
-            <input type="number" [(ngModel)]="line.amount" style="width: 100%; padding: 4px;" />
+            <bb-money-input label="Amount" name="amount" [(ngModel)]="line.amount" />
           </div>
           <div>
-            <label style="font-size: 0.75rem;">Receipt Attachment</label>
-            <input type="text" [(ngModel)]="line.receiptAttachmentKey" placeholder="e.g. receipt123.jpg" style="width: 100%; padding: 4px;" />
+            <bb-text-input label="Receipt Attachment" placeholder="e.g. receipt123.jpg" name="receiptAttachmentKey" [(ngModel)]="line.receiptAttachmentKey" />
           </div>
           <div>
             <button class="btn-secondary" style="color: #dc2626; padding: 4px 8px;" (click)="removeLine($index)">X</button>

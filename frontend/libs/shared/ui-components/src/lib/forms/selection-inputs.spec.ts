@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CheckboxComponent } from './checkbox/checkbox.component';
 import { DateTimeInputComponent } from './datetime/datetime-input.component';
+import { MonthInputComponent } from './datetime/month-input.component';
 import { FileInputComponent } from './file/file-input.component';
 import { RadioGroupComponent } from './radio/radio-group.component';
 import { SelectComponent } from './select/select.component';
@@ -477,6 +478,37 @@ describe('Selection and long-form inputs', () => {
       const one = file('a.csv', 1);
       component.writeValue([one, 'nonsense']);
       expect(harness.files()).toEqual([one]);
+    });
+  });
+
+  describe('MonthInputComponent', () => {
+    it('MTH-01: a month is yyyy-MM, and a date or Date written in is cut to its month', () => {
+      const component = build(() => new MonthInputComponent());
+      const harness = component as unknown as DateHarness;
+
+      component.writeValue('2026-08');
+      expect(harness.innerValue()).toBe('2026-08');
+
+      component.writeValue('2026-08-01');
+      expect(harness.innerValue()).toBe('2026-08');
+
+      // Local constructor, so no timezone can move it into July.
+      component.writeValue(new Date(2026, 7, 31));
+      expect(harness.innerValue()).toBe('2026-08');
+
+      component.writeValue(null);
+      expect(harness.innerValue()).toBe('');
+    });
+
+    it('MTH-02: clearing the field publishes null, not an empty string', () => {
+      const component = build(() => new MonthInputComponent());
+      const harness = component as unknown as DateHarness;
+      const seen: (string | null)[] = [];
+      component.registerOnChange((value: string | null) => seen.push(value));
+
+      harness.onInput({ target: { value: '2026-09' } } as unknown as Event);
+      harness.onInput({ target: { value: '' } } as unknown as Event);
+      expect(seen).toEqual(['2026-09', null]);
     });
   });
 

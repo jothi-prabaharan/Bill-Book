@@ -2,7 +2,13 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { BbSelectOption, SelectComponent, TextInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  CardTableComponent,
+  MessageBoxComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 export interface ApiClientRow {
   id: string;
@@ -31,7 +37,13 @@ export interface ApiClientRole {
 @Component({
   selector: 'bb-api-clients-list',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, SelectComponent],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    SelectComponent,
+    CardTableComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './api-clients.list.html',
   styleUrl: './api-clients.list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

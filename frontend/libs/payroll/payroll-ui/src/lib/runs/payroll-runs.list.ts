@@ -3,13 +3,25 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { PayrollApiService, PayrollRunView } from '@bill-book/payroll-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  MonthInputComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-payroll-runs-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    MessageBoxComponent,
+    CardTableComponent,
+    MonthInputComponent,
+  ],
   templateUrl: './payroll-runs.list.html',
   styleUrl: '../payroll-page.scss',
 })

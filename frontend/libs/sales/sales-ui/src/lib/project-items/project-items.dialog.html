@@ -11,26 +11,14 @@
       <p class="pi__error">{{ text }}</p>
     }
 
-    <label class="pi__field">
-      Project
-      <select name="project" [ngModel]="projectId" (ngModelChange)="chooseProject($event)">
-        <option [ngValue]="null">Choose a project…</option>
-        @for (project of projects(); track project.projectId) {
-          <option [ngValue]="project.projectId">{{ project.projectCode }} · {{ project.projectName }}</option>
-        }
-      </select>
-    </label>
+    <div class="pi__field">
+          <bb-select label="Project" name="project" placeholder="Choose a project…" [options]="projectOptions()" [ngModel]="projectId" (ngModelChange)="chooseProject($event)" />
+        </div>
 
     @if (accounts().length > 0) {
-      <label class="pi__field">
-        Income account
-        <select name="account" [(ngModel)]="accountId">
-          <option [ngValue]="null">Choose…</option>
-          @for (account of accounts(); track account.accountId) {
-            <option [ngValue]="account.accountId">{{ account.accountCode }} {{ account.accountName }}</option>
-          }
-        </select>
-      </label>
+      <div class="pi__field">
+            <bb-select label="Income account" name="account" placeholder="Choose…" [options]="accountOptions()" [(ngModel)]="accountId" />
+          </div>
     }
 
     @if (loading()) {
@@ -47,11 +35,15 @@
         <ul class="pi__list">
           @for (entry of u.time; track entry.timeEntryId) {
             <li>
-              <label>
-                <input type="checkbox" [disabled]="isTaken('TimeEntry', entry.timeEntryId)" (change)="toggle('TimeEntry', entry.timeEntryId, $any($event.target).checked)" />
-                <span class="pi__what">{{ entry.workDate }} · {{ entry.taskName }} · {{ entry.hours }} h</span>
+              <div class="pi__row">
+                <bb-checkbox
+                  [name]="'TimeEntry-' + entry.timeEntryId"
+                  text="{{ entry.workDate }} · {{ entry.taskName }} · {{ entry.hours }} h"
+                  [disabled]="isTaken('TimeEntry', entry.timeEntryId)"
+                  (valueChange)="toggle('TimeEntry', entry.timeEntryId, $event)"
+                />
                 <span class="pi__amount">{{ entry.amount | number: '1.2-2' }}</span>
-              </label>
+              </div>
             </li>
           }
         </ul>
@@ -62,20 +54,28 @@
         <ul class="pi__list">
           @for (expense of u.expenses; track expense.spendMoneyDetailId) {
             <li>
-              <label>
-                <input type="checkbox" [disabled]="isTaken('Expense', expense.spendMoneyDetailId)" (change)="toggle('Expense', expense.spendMoneyDetailId, $any($event.target).checked)" />
-                <span class="pi__what">{{ expense.transactionDate }} · {{ expense.memo ?? expense.transactionNo }}</span>
+              <div class="pi__row">
+                <bb-checkbox
+                  [name]="'Expense-' + expense.spendMoneyDetailId"
+                  text="{{ expense.transactionDate }} · {{ expense.memo ?? expense.transactionNo }}"
+                  [disabled]="isTaken('Expense', expense.spendMoneyDetailId)"
+                  (valueChange)="toggle('Expense', expense.spendMoneyDetailId, $event)"
+                />
                 <span class="pi__amount">{{ expense.billableAmount | number: '1.2-2' }}</span>
-              </label>
+              </div>
             </li>
           }
           @for (bill of bills(); track bill.billDetailId) {
             <li>
-              <label>
-                <input type="checkbox" [disabled]="isTaken('BillLine', bill.billDetailId)" (change)="toggle('BillLine', bill.billDetailId, $any($event.target).checked)" />
-                <span class="pi__what">{{ bill.documentDate }} · {{ bill.documentNo }} · {{ bill.description }}</span>
+              <div class="pi__row">
+                <bb-checkbox
+                  [name]="'BillLine-' + bill.billDetailId"
+                  text="{{ bill.documentDate }} · {{ bill.documentNo }} · {{ bill.description }}"
+                  [disabled]="isTaken('BillLine', bill.billDetailId)"
+                  (valueChange)="toggle('BillLine', bill.billDetailId, $event)"
+                />
                 <span class="pi__amount">{{ bill.billableAmount | number: '1.2-2' }}</span>
-              </label>
+              </div>
             </li>
           }
         </ul>
@@ -86,11 +86,15 @@
         <ul class="pi__list">
           @for (milestone of u.milestones; track milestone.projectMilestoneId) {
             <li>
-              <label>
-                <input type="checkbox" [disabled]="isTaken('Milestone', milestone.projectMilestoneId)" (change)="toggle('Milestone', milestone.projectMilestoneId, $any($event.target).checked)" />
-                <span class="pi__what">{{ milestone.name }}</span>
+              <div class="pi__row">
+                <bb-checkbox
+                  [name]="'Milestone-' + milestone.projectMilestoneId"
+                  text="{{ milestone.name }}"
+                  [disabled]="isTaken('Milestone', milestone.projectMilestoneId)"
+                  (valueChange)="toggle('Milestone', milestone.projectMilestoneId, $event)"
+                />
                 <span class="pi__amount">{{ milestone.amount | number: '1.2-2' }}</span>
-              </label>
+              </div>
             </li>
           }
         </ul>

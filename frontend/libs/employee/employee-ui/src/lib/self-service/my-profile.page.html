@@ -166,7 +166,7 @@
         @if (documents().length === 0) {
           <p class="bb-empty-state">No documents uploaded.</p>
         } @else {
-          <table class="bb-table" style="width: 100%; margin-top: 1rem;">
+          <bb-card-table class="bb-table" style="width: 100%; margin-top: 1rem;" flush>
             <thead>
               <tr>
                 <th>Document Type</th>
@@ -183,7 +183,7 @@
                 </tr>
               }
             </tbody>
-          </table>
+          </bb-card-table>
         }
       </div>
     }

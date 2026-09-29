@@ -1,19 +1,19 @@
 <div class="page-head">
   <h1>Recruitment Pipeline Board</h1>
   <div style="display: flex; gap: 8px; align-items: center;">
-    <label>Filter by Opening:</label>
-    <select (change)="onOpeningChange($any($event.target).value)" style="min-width: 220px;">
-      <option value="">All Openings</option>
-      <option *ngFor="let op of openings()" [value]="op.jobOpeningId">
-        {{ op.title }} ({{ op.openingStatus }})
-      </option>
-    </select>
+    <bb-select
+      ariaLabel="Filter by opening"
+      name="opening"
+      placeholder="All Openings"
+      style="min-width: 220px;"
+      [options]="openingOptions()"
+      [ngModel]="selectedOpeningId() ?? null"
+      (ngModelChange)="onOpeningChange($event)"
+    />
   </div>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div class="pipeline-board">
   <div class="pipeline-column" *ngFor="let stage of stages">

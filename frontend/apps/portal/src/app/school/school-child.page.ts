@@ -1,4 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  MonthInputComponent,
+} from '@bill-book/ui-components';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SchoolPortalApi } from './school-portal-api.service';
@@ -9,7 +14,13 @@ import { PortalAttendance, PortalChild, PortalExam, attendancePercent } from './
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-school-child',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [
+    FormsModule,
+    RouterLink,
+    CardTableComponent,
+    MessageBoxComponent,
+    MonthInputComponent,
+  ],
   templateUrl: './school-child.page.html',
   styleUrl: './school-portal.scss',
 })

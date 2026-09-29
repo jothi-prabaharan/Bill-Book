@@ -52,7 +52,7 @@
       <bb-date-input label="Ends" [(ngModel)]="form.endDate" />
       <bb-number-input label="Raise days early" [(ngModel)]="form.leadDays" />
       <bb-select label="Assign to" placeholder="Nobody by default" [options]="employeeOptions()" [(ngModel)]="form.defaultAssigneeEmployeeId" />
-      <label class="check"><input type="checkbox" [(ngModel)]="form.isActive" /> Active</label>
+      <bb-checkbox class="check" text="Active" name="isActive" [(ngModel)]="form.isActive" />
     </div>
     <div class="sheet-actions">
       <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>

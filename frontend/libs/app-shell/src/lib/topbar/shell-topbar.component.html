@@ -25,14 +25,14 @@
           <span class="popover-count">{{ orgCount() }}</span>
         </div>
 
-        <input
-          class="input org-search-input"
-          type="search"
-          placeholder="Search organisation, branch or role"
-          aria-label="Search organizations"
-          [value]="orgQuery()"
-          (input)="setOrgQuery($any($event.target).value)"
-        />
+        <bb-search-input
+                class="org-search-input"
+                placeholder="Search organisation, branch or role"
+                ariaLabel="Search organizations"
+                [debounceMs]="0"
+                [ngModel]="orgQuery()"
+                (ngModelChange)="setOrgQuery($event)"
+              />
 
         <div class="org-list-container">
           @for (org of filteredOrgs(); track org.orgId) {
@@ -103,14 +103,14 @@
             <span class="popover-title">New transaction</span>
             <span class="popover-count">{{ newCount() }}</span>
           </div>
-          <input
-            class="input popover-search"
-            type="search"
-            placeholder="Search transaction types"
-            aria-label="Search transaction types"
-            [value]="newQuery()"
-            (input)="setNewQuery($any($event.target).value)"
-          />
+          <bb-search-input
+                class="popover-search"
+                placeholder="Search transaction types"
+                ariaLabel="Search transaction types"
+                [debounceMs]="0"
+                [ngModel]="newQuery()"
+                (ngModelChange)="setNewQuery($event)"
+              />
           <div class="popover-body popover-body--columns">
             @for (grp of newFilteredGroups(); track grp.name) {
               <div class="popover-group">
@@ -141,14 +141,14 @@
       </button>
       @if (searchOpen()) {
         <div class="popover popover--right popover--tall popover--search" role="dialog" aria-label="Search">
-          <input
-            class="input popover-search"
-            type="search"
-            placeholder="Screen, document type or setting"
-            aria-label="Search everything"
-            [value]="searchQuery()"
-            (input)="setSearchQuery($any($event.target).value)"
-          />
+          <bb-search-input
+                class="popover-search"
+                placeholder="Screen, document type or setting"
+                ariaLabel="Search everything"
+                [debounceMs]="0"
+                [ngModel]="searchQuery()"
+                (ngModelChange)="setSearchQuery($event)"
+              />
           <div class="popover-body popover-body--rows">
             @for (grp of searchGroups(); track grp.name) {
               <div>
@@ -182,14 +182,14 @@
             <span class="popover-title">Favourites</span>
             <span class="popover-count">{{ favCount() }}</span>
           </div>
-          <input
-            class="input popover-search"
-            type="search"
-            placeholder="Search favourites"
-            aria-label="Search favourites"
-            [value]="favQuery()"
-            (input)="setFavQuery($any($event.target).value)"
-          />
+          <bb-search-input
+                class="popover-search"
+                placeholder="Search favourites"
+                ariaLabel="Search favourites"
+                [debounceMs]="0"
+                [ngModel]="favQuery()"
+                (ngModelChange)="setFavQuery($event)"
+              />
           <div class="popover-body popover-body--columns">
             @for (grp of favGroups(); track grp.name) {
               <div class="popover-group">

@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PortalApi } from '../retail/portal-api.service';
@@ -13,7 +17,14 @@ import { PortalStatement, invoiceLink } from '../retail/portal.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-statement-list',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, NgTemplateOutlet, RouterLink],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    NgTemplateOutlet,
+    RouterLink,
+    CardTableComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './portal-statement.list.html',
   styleUrl: '../retail/retail-portal.scss',
 })

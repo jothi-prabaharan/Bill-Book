@@ -35,7 +35,7 @@
       @if (members().length === 0) {
         <p class="bb-empty-state">No reporting team members found.</p>
       } @else {
-        <table class="bb-table" style="width: 100%; margin-top: 1rem;">
+        <bb-card-table class="bb-table" style="width: 100%; margin-top: 1rem;" flush>
           <thead>
             <tr>
               <th>Employee</th>
@@ -73,7 +73,7 @@
               </tr>
             }
           </tbody>
-        </table>
+        </bb-card-table>
       }
     </div>
   }

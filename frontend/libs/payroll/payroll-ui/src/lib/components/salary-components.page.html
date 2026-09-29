@@ -6,7 +6,7 @@
 <bb-message-box [messages]="messages()" />
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Name</th>
@@ -36,7 +36,7 @@
         </tr>
       }
     </tbody>
-  </table>
+  </bb-card-table>
 </div>
 
 @if (editingId() !== undefined) {

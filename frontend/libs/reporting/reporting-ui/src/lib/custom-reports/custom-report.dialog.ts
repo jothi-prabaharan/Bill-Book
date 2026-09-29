@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CustomReport, CustomReportService, ReportQuery } from '@bill-book/reporting-core';
-import { CheckboxComponent, TextInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  MessageBoxComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 /**
  * Saves the layout on screen as a custom report (TK-113): a new one from a
@@ -12,7 +16,12 @@ import { CheckboxComponent, TextInputComponent } from '@bill-book/ui-components'
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-custom-report-dialog',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, CheckboxComponent],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    CheckboxComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './custom-report.dialog.html',
   styleUrl: './custom-report.dialog.scss',
 })

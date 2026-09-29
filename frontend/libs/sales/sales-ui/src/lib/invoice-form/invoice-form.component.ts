@@ -25,7 +25,11 @@ import {
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
+  ApprovalPanelComponent,
+  CardTableComponent,
+  CustomFieldValues,
   DateInputComponent,
+  DocumentCustomFieldsComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
@@ -34,18 +38,15 @@ import {
   LookupDialogComponent,
   LookupRow,
   MessageBoxComponent,
-  TextareaComponent,
-  TextInputComponent,
-  totalsOf,
-  UiMessage,
   NumberInputComponent,
-  ApprovalPanelComponent,
   ProjectOption,
   ProjectOptionsService,
-  recalculate,
-  CustomFieldValues,
-  DocumentCustomFieldsComponent,
+  TextInputComponent,
+  TextareaComponent,
+  UiMessage,
   compactValues,
+  recalculate,
+  totalsOf,
 } from '@bill-book/ui-components';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
 import { ProjectItemsDialogComponent } from '../project-items/project-items.dialog';
@@ -96,6 +97,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     TextareaComponent,
     DateInputComponent,
     ExchangeRateInputComponent,
+    CardTableComponent,
   ],
   templateUrl: './invoice-form.component.html',
   styleUrl: './invoice-form.component.scss',

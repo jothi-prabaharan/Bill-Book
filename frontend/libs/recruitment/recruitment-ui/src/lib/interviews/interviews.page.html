@@ -1,44 +1,28 @@
 <div class="page-head">
   <h1>Interviews</h1>
   <div style="display: flex; gap: 8px; align-items: center;">
-    <label>Candidate Application:</label>
-    <select [ngModel]="selectedAppId()" (ngModelChange)="selectApplication($event)" style="min-width: 250px;">
-      <option *ngFor="let app of applications()" [value]="app.applicationId">
-        {{ app.candidateName }} – {{ app.openingTitle }} ({{ app.stage }})
-      </option>
-    </select>
+    <bb-select label="Candidate Application" name="selectedAppId" [options]="selectedAppOptions()" [clearable]="false" [ngModel]="selectedAppId()" (ngModelChange)="selectApplication($event)" />
     <button type="button" class="btn btn-primary" (click)="openSchedule()" [disabled]="!selectedAppId()">Schedule Round</button>
   </div>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div *ngIf="showScheduleModal()" class="sheet" style="background: #f0fdf4; border-color: #bbf7d0;">
   <h3>Schedule Interview Round</h3>
   <div class="fields">
-    <label>
-      <span>Round Number</span>
-      <input type="number" [(ngModel)]="scheduleForm().roundNo" min="1" max="10" />
-    </label>
-    <label>
-      <span>Round Type</span>
-      <select [(ngModel)]="scheduleForm().roundKind">
-        <option value="Telephonic">Telephonic</option>
-        <option value="Technical">Technical</option>
-        <option value="Hr">HR</option>
-        <option value="Managerial">Managerial</option>
-      </select>
-    </label>
-    <label>
-      <span>Scheduled Time</span>
-      <input type="datetime-local" [(ngModel)]="scheduleForm().scheduledAt" />
-    </label>
-    <label>
-      <span>Interviewer Employee ID</span>
-      <input type="number" [(ngModel)]="scheduleForm().interviewerEmployeeId" />
-    </label>
+    <div>
+      <bb-number-input label="Round Number" [min]="1" [max]="10" name="roundNo" [(ngModel)]="scheduleForm().roundNo" />
+    </div>
+    <div>
+      <bb-select label="Round Type" name="roundKind" [options]="roundKindOptions" [clearable]="false" [(ngModel)]="scheduleForm().roundKind" />
+    </div>
+    <div>
+      <bb-datetime-input label="Scheduled Time" name="scheduledAt" [(ngModel)]="scheduleForm().scheduledAt" />
+    </div>
+    <div>
+      <bb-number-input label="Interviewer Employee ID" name="interviewerEmployeeId" [(ngModel)]="scheduleForm().interviewerEmployeeId" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button type="button" class="btn btn-secondary" (click)="showScheduleModal.set(false)">Cancel</button>
@@ -49,29 +33,15 @@
 <div *ngIf="showFeedbackModal()" class="sheet" style="background: #faf5ff; border-color: #e9d5ff;">
   <h3>Interview Feedback & Evaluation</h3>
   <div class="fields">
-    <label>
-      <span>Rating (1 to 5)</span>
-      <select [(ngModel)]="feedbackForm().rating">
-        <option [ngValue]="1">1 - Poor</option>
-        <option [ngValue]="2">2 - Below Average</option>
-        <option [ngValue]="3">3 - Average</option>
-        <option [ngValue]="4">4 - Good</option>
-        <option [ngValue]="5">5 - Excellent</option>
-      </select>
-    </label>
-    <label>
-      <span>Outcome</span>
-      <select [(ngModel)]="feedbackForm().outcome">
-        <option value="Pending">Pending</option>
-        <option value="Pass">Pass (Recommended)</option>
-        <option value="Fail">Fail</option>
-        <option value="NoShow">No Show</option>
-      </select>
-    </label>
-    <label style="grid-column: 1 / -1;">
-      <span>Evaluation Feedback</span>
-      <textarea rows="3" [(ngModel)]="feedbackForm().feedback" placeholder="Candidate's technical ability, strengths, weaknesses..."></textarea>
-    </label>
+    <div>
+      <bb-select label="Rating (1 to 5)" name="rating" [options]="ratingOptions" [clearable]="false" [(ngModel)]="feedbackForm().rating" />
+    </div>
+    <div>
+      <bb-select label="Outcome" name="outcome" [options]="outcomeOptions" [clearable]="false" [(ngModel)]="feedbackForm().outcome" />
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="Evaluation Feedback" [rows]="3" placeholder="Candidate's technical ability, strengths, weaknesses..." name="feedback" [(ngModel)]="feedbackForm().feedback" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button type="button" class="btn btn-secondary" (click)="showFeedbackModal.set(false)">Cancel</button>
@@ -80,7 +50,7 @@
 </div>
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Round</th>
@@ -112,5 +82,5 @@
         <td colspan="7" class="empty-state">No interview rounds scheduled for this candidate application.</td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

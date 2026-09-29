@@ -209,6 +209,15 @@ export default tseslint.config(
     rules: { 'no-restricted-syntax': commonComponentRule({ input: inputAllowing('file') }) },
   },
   {
+    // The print-template band editor. Clicking a merge field inserts it at the
+    // caret, which the page does through each band's native <textarea>
+    // (selectionStart, setRangeText). bb-textarea does not expose its element,
+    // and a source editor is not a form field anyway. Only the <textarea> is
+    // let through; the page's other controls are common components.
+    files: ['libs/settings/print-templates/src/lib/print-templates.page.html'],
+    rules: { 'no-restricted-syntax': commonComponentRule({ textarea: false }) },
+  },
+  {
     // One radio per card or per grid row, sharing a name, marking "this one is
     // the default". bb-radio-group renders a list of options together and is
     // not that shape. Only `type="radio"` is let through — any other raw input

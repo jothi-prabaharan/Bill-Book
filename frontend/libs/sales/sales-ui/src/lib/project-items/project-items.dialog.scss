@@ -52,8 +52,9 @@
 .pi__error { color: var(--color-danger); margin: 0; }
 
 .pi__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
-.pi__list label { display: flex; align-items: center; gap: var(--space-2); }
-.pi__what { flex: 1; min-width: 0; }
+.pi__row { display: flex; align-items: center; gap: var(--space-2); }
+/* The tick and its description take the row; the amount keeps its width. */
+.pi__row bb-checkbox { flex: 1; min-width: 0; }
 .pi__amount { font-variant-numeric: tabular-nums; }
 
 .pi__close,

@@ -1,3 +1,4 @@
+import { MessageBoxComponent } from '@bill-book/ui-components';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PortalApi } from '../retail/portal-api.service';
@@ -11,6 +12,7 @@ import { PortalApi } from '../retail/portal-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-sandbox-checkout',
   standalone: true,
+  imports: [MessageBoxComponent],
   templateUrl: './portal-sandbox-checkout.page.html',
   styleUrl: '../retail/retail-portal.scss',
 })

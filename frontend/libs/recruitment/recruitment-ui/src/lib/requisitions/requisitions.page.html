@@ -3,39 +3,26 @@
   <button type="button" class="btn btn-primary" (click)="openCreate()">New Requisition</button>
 </div>
 
-<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
-  {{ errorMessage() }}
-</div>
+<bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div *ngIf="showForm()" class="sheet">
   <h3>Create Job Requisition</h3>
   <div class="fields">
-    <label>
-      <span>Openings</span>
-      <input type="number" [(ngModel)]="form().openings" min="1" max="100" />
-    </label>
-    <label>
-      <span>Employment Type</span>
-      <select [(ngModel)]="form().employmentType">
-        <option value="Permanent">Permanent</option>
-        <option value="Probation">Probation</option>
-        <option value="Contract">Contract</option>
-        <option value="PartTime">Part Time</option>
-        <option value="Intern">Intern</option>
-      </select>
-    </label>
-    <label>
-      <span>Min CTC (₹)</span>
-      <input type="number" [(ngModel)]="form().minCtc" />
-    </label>
-    <label>
-      <span>Max CTC (₹)</span>
-      <input type="number" [(ngModel)]="form().maxCtc" />
-    </label>
-    <label style="grid-column: 1 / -1;">
-      <span>Justification</span>
-      <textarea rows="3" [(ngModel)]="form().justification"></textarea>
-    </label>
+    <div>
+      <bb-number-input label="Openings" [min]="1" [max]="100" name="openings" [(ngModel)]="form().openings" />
+    </div>
+    <div>
+      <bb-select label="Employment Type" name="employmentType" [options]="employmentTypeOptions" [clearable]="false" [(ngModel)]="form().employmentType" />
+    </div>
+    <div>
+      <bb-money-input label="Min CTC (₹)" name="minCtc" [(ngModel)]="form().minCtc" />
+    </div>
+    <div>
+      <bb-money-input label="Max CTC (₹)" name="maxCtc" [(ngModel)]="form().maxCtc" />
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <bb-textarea label="Justification" [rows]="3" name="justification" [(ngModel)]="form().justification" />
+    </div>
   </div>
   <div class="sheet-actions">
     <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
@@ -44,7 +31,7 @@
 </div>
 
 <div class="table-container">
-  <table>
+  <bb-card-table flush>
     <thead>
       <tr>
         <th>Code</th>
@@ -80,5 +67,5 @@
         <td colspan="7" class="empty-state">No job requisitions found.</td>
       </tr>
     </tbody>
-  </table>
+  </bb-card-table>
 </div>

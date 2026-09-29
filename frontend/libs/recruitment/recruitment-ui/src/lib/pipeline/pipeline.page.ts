@@ -1,5 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+  SelectComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ApplicationListItem,
@@ -11,7 +15,12 @@ import {
 @Component({
   selector: 'rec-pipeline-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MessageBoxComponent,
+    SelectComponent,
+  ],
   templateUrl: './pipeline.page.html',
   styleUrl: '../recruitment-page.scss',
 })
@@ -21,6 +30,10 @@ export class PipelinePage implements OnInit {
   readonly openings = signal<JobOpeningListItem[]>([]);
   readonly applications = signal<ApplicationListItem[]>([]);
   readonly selectedOpeningId = signal<number | undefined>(undefined);
+
+  protected readonly openingOptions = computed(() =>
+    this.openings().map((op) => ({ value: op.jobOpeningId, label: `${op.title} (${op.openingStatus})` })),
+  );
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -60,7 +73,7 @@ export class PipelinePage implements OnInit {
     }
   }
 
-  onOpeningChange(opIdStr: string): void {
+  onOpeningChange(opIdStr: number | string | null): void {
     const opId = opIdStr ? Number(opIdStr) : undefined;
     this.selectedOpeningId.set(opId);
     void this.loadApplications();

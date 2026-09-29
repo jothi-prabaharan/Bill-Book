@@ -47,9 +47,9 @@
         <legend>Options</legend>
         @for (option of form.options; track $index; let i = $index) {
           <div class="option">
-            <input aria-label="Option value" placeholder="value" [name]="'ov' + i" [(ngModel)]="option.value" [disabled]="option.saved" maxlength="60" />
-            <input aria-label="Option label" placeholder="Label" [name]="'ol' + i" [(ngModel)]="option.label" maxlength="80" />
-            <label class="check"><input type="checkbox" [name]="'oa' + i" [(ngModel)]="option.active" /> Active</label>
+            <bb-text-input ariaLabel="Option value" placeholder="value" [name]="'ov' + i" [(ngModel)]="option.value" [disabled]="option.saved" [maxlength]="60" />
+            <bb-text-input ariaLabel="Option label" placeholder="Label" [name]="'ol' + i" [(ngModel)]="option.label" [maxlength]="80" />
+            <bb-checkbox class="check" text="Active" [name]="'oa' + i" [(ngModel)]="option.active" />
             @if (!option.saved) {
               <button type="button" class="link" (click)="removeOption(i)" aria-label="Remove option">×</button>
             }

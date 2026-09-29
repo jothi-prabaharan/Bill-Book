@@ -9,26 +9,18 @@
     <div class="sheet">
       <h3>Regularise Attendance - {{ regForm.attendanceDate }}</h3>
       <div class="fields">
-        <label>
-          Status
-          <select [(ngModel)]="regForm.requestedStatus">
-            <option value="Present">Present</option>
-            <option value="HalfDay">Half Day</option>
-            <option value="OnDuty">On Duty</option>
-          </select>
-        </label>
-        <label>
-          In Time
-          <input type="datetime-local" [(ngModel)]="regForm.requestedIn" />
-        </label>
-        <label>
-          Out Time
-          <input type="datetime-local" [(ngModel)]="regForm.requestedOut" />
-        </label>
-        <label style="grid-column: 1 / -1">
-          Reason
-          <input type="text" [(ngModel)]="regForm.reason" placeholder="Reason for regularisation" />
-        </label>
+        <div>
+          <bb-select label="Status" name="requestedStatus" [options]="requestedStatusOptions" [clearable]="false" [(ngModel)]="regForm.requestedStatus" />
+        </div>
+        <div>
+          <bb-datetime-input label="In Time" name="requestedIn" [(ngModel)]="regForm.requestedIn" />
+        </div>
+        <div>
+          <bb-datetime-input label="Out Time" name="requestedOut" [(ngModel)]="regForm.requestedOut" />
+        </div>
+        <div style="grid-column: 1 / -1">
+          <bb-text-input label="Reason" placeholder="Reason for regularisation" name="reason" [(ngModel)]="regForm.reason" />
+        </div>
       </div>
       <div class="sheet-actions">
         <button class="btn" (click)="closeRegularise()">Cancel</button>
@@ -38,7 +30,7 @@
   }
 
   <div class="table-container">
-    <table>
+    <bb-card-table flush>
       <thead>
         <tr>
           <th>Date</th>
@@ -81,6 +73,6 @@
           </tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
   </div>
 }

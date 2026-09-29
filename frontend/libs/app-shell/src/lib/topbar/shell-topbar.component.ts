@@ -1,3 +1,5 @@
+import { FormsModule } from '@angular/forms';
+import { SearchInputComponent } from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -61,7 +63,8 @@ type Panel = 'org' | 'new' | 'search' | 'fav' | 'notif' | null;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-topbar',
   standalone: true,
-  imports: [],
+  imports: [
+    SearchInputComponent, FormsModule],
   templateUrl: './shell-topbar.component.html',
   styleUrl: './shell-topbar.component.scss',
 })

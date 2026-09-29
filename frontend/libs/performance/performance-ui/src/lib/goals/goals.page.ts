@@ -1,16 +1,39 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  NumberInputComponent,
+  PercentageInputComponent,
+  SelectComponent,
+  TextInputComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Goal, PerformanceApiService, ReviewCycle } from '@bill-book/performance-core';
 
 @Component({
   selector: 'bb-performance-goals',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    NumberInputComponent,
+    PercentageInputComponent,
+    SelectComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './goals.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class GoalsPage implements OnInit {
+  protected readonly selectedCycleOptions = computed(() =>
+    this.cycles().map((c) => ({ value: c.reviewCycleId, label: `${c.name}` })),
+  );
+
   private readonly api = inject(PerformanceApiService);
 
   readonly cycles = signal<ReviewCycle[]>([]);

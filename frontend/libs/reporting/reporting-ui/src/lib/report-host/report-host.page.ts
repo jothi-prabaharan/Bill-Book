@@ -17,10 +17,14 @@ import {
 } from '@bill-book/reporting-core';
 import {
   ColumnChooserDialog,
+  DateInputComponent,
   FilterBarComponent,
   GroupPanelComponent,
+  MessageBoxComponent,
   PivotPanelComponent,
-  ReportGridComponent } from '@bill-book/ui-components';
+  ReportGridComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { SavedViewDialog } from '../saved-views/saved-view.dialog';
 import { CustomReportDialog } from '../custom-reports/custom-report.dialog';
 import { ReportScheduleDialog } from '../schedules/report-schedule.dialog';
@@ -52,6 +56,9 @@ import { ReportScheduleDialog } from '../schedules/report-schedule.dialog';
     SavedViewDialog,
     CustomReportDialog,
     ReportScheduleDialog,
+    DateInputComponent,
+    MessageBoxComponent,
+    TextInputComponent,
   ],
   templateUrl: './report-host.page.html',
   styleUrl: './report-host.page.scss',

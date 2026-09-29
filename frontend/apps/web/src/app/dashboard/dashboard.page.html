@@ -86,7 +86,7 @@
 
         @case ('stock') {
           <div class="card-kicker">Top products by profit</div>
-          <table class="table">
+          <bb-card-table class="table" flush>
             <thead><tr><th>Item</th><th class="text-right">Sold</th><th class="text-right">Profit</th><th class="text-right">Margin</th></tr></thead>
             <tbody>
               <tr><td>Cotton shirting 2×2 — 44"</td><td class="text-right tabular-nums">1,840 m</td><td class="text-right tabular-nums">₹2,46,300</td><td class="text-right tabular-nums">31.4%</td></tr>
@@ -95,13 +95,13 @@
               <tr><td>Brass buttons 18L</td><td class="text-right tabular-nums">312 gr</td><td class="text-right tabular-nums">₹84,900</td><td class="text-right tabular-nums">42.8%</td></tr>
               <tr><td>Corrugated cartons 5-ply</td><td class="text-right tabular-nums">4,600 pc</td><td class="text-right tabular-nums">₹61,200</td><td class="text-right tabular-nums">14.2%</td></tr>
             </tbody>
-          </table>
+          </bb-card-table>
           <div class="card-meta">April – August 2026 · weighted average cost</div>
         }
 
         @case ('aging') {
           <div class="card-kicker">Outstanding — largest and oldest first</div>
-          <table class="table">
+          <bb-card-table class="table" flush>
             <thead><tr><th>Party</th><th>Due</th><th class="text-right">Amount</th><th class="text-right">Overdue</th></tr></thead>
             <tbody>
               <tr><td>Suriya Textiles</td><td class="tabular-nums">12 Apr</td><td class="text-right tabular-nums">₹3,42,000</td><td class="text-right"><span class="tag tag-accent">121 d</span></td></tr>
@@ -110,7 +110,7 @@
               <tr><td>Kavitha Stores</td><td class="tabular-nums">09 Jul</td><td class="text-right tabular-nums">₹96,300</td><td class="text-right"><span class="tag tag-outline">33 d</span></td></tr>
               <tr><td>Raja Packaging</td><td class="tabular-nums">28 Jul</td><td class="text-right tabular-nums">₹48,900</td><td class="text-right"><span class="tag tag-neutral">14 d</span></td></tr>
             </tbody>
-          </table>
+          </bb-card-table>
           <div class="card-meta">₹9,42,100 total · ₹1,20,400 over 90 days</div>
         }
       }

@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  DateInputComponent,
+  MoneyInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ApplyClaimSelf,
@@ -12,11 +19,28 @@ import {
 @Component({
   standalone: true,
   selector: 'bb-my-claims',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    DateInputComponent,
+    MoneyInputComponent,
+    SelectComponent,
+    TextInputComponent,
+  ],
   templateUrl: './my-claims.page.html',
   styleUrl: '../claims-page.scss',
 })
 export class MyClaimsPage implements OnInit {
+  protected readonly claimCategoryOptions = computed(() =>
+    this.categories().map((cat) => ({ value: cat.claimCategoryId, label: `${cat.name}` })),
+  );
+
+  protected readonly payoutModeOptions = [
+    { value: 'Direct', label: 'Direct Bank Transfer' },
+    { value: 'Payroll', label: 'With Monthly Salary' },
+  ];
+
   private readonly api = inject(ClaimsApiService);
 
   readonly loading = signal(false);

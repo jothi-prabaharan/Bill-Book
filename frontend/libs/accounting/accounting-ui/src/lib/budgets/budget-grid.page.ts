@@ -6,7 +6,15 @@ import { firstValueFrom } from 'rxjs';
 import { SessionContextService } from '@bill-book/auth';
 import { readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
-import { BbSelectOption, CheckboxComponent, SelectComponent, TextInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  CardTableComponent,
+  CheckboxComponent,
+  FileInputComponent,
+  MoneyInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { ProjectListItem, loadProjects } from '../projects/project-options';
 import { BudgetAccount, BudgetLineView, BudgetView } from './budget.models';
 import { MONTHS, columnTotals, monthLabels, rowTotal, spreadByShape, spreadEvenly, yearLabel } from './budget-math';
@@ -45,7 +53,16 @@ function keyOf(accountId: number, projectId: number | null): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-budget-grid-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, TextInputComponent, SelectComponent, CheckboxComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    TextInputComponent,
+    SelectComponent,
+    CheckboxComponent,
+    CardTableComponent,
+    FileInputComponent,
+    MoneyInputComponent,
+  ],
   templateUrl: './budget-grid.page.html',
   styleUrl: './budget-grid.page.scss',
 })
@@ -66,6 +83,11 @@ export class BudgetGridPage implements OnInit {
   protected readonly messageIsError = signal(false);
   protected readonly unknownCodes = signal<string[]>([]);
   protected readonly spreadMode = signal<'even' | 'shape'>('even');
+
+  protected readonly spreadOptions = [
+    { value: 'even', label: 'evenly' },
+    { value: 'shape', label: "by last year's shape" },
+  ];
   protected readonly month = signal(0);
   protected readonly lastYear = signal<Map<string, number[]> | null>(null);
 
@@ -204,10 +226,9 @@ export class BudgetGridPage implements OnInit {
     });
   }
 
-  protected async importFile(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
+  /** bb-file-input clears its own element, so the same file can be picked twice. */
+  protected async importFile(files: readonly File[]): Promise<void> {
+    const file = files[0];
     if (!file) {
       return;
     }

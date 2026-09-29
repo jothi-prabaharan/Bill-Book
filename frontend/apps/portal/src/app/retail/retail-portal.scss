@@ -79,7 +79,7 @@ section {
   color: var(--color-text-muted, #666);
 }
 
-table {
+bb-card-table {
   width: 100%;
   border-collapse: collapse;
 }
@@ -108,7 +108,7 @@ td {
 
 // At phone width a table becomes one card per row, each cell labelled.
 @media (max-width: 600px) {
-  table,
+  bb-card-table,
   tbody,
   tr,
   td {

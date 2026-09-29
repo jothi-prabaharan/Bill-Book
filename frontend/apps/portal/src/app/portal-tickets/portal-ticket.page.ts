@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,7 +15,13 @@ import { PortalTicketDetail, ticketStatusLabel } from '../retail/portal.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-ticket',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [
+    DatePipe,
+    FormsModule,
+    RouterLink,
+    MessageBoxComponent,
+    TextareaComponent,
+  ],
   templateUrl: './portal-ticket.page.html',
   styleUrl: '../retail/retail-portal.scss',
 })

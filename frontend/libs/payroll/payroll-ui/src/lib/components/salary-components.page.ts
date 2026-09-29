@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ComponentKind, PayrollApiService, SalaryComponentView, SalaryValueType, SaveSalaryComponent } from '@bill-book/payroll-core';
 import {
   BbSelectOption,
+  CardTableComponent,
   CheckboxComponent,
   MessageBoxComponent,
   SelectComponent,
@@ -14,7 +15,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-salary-components-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, SelectComponent, CheckboxComponent, MessageBoxComponent],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    SelectComponent,
+    CheckboxComponent,
+    MessageBoxComponent,
+    CardTableComponent,
+  ],
   templateUrl: './salary-components.page.html',
   styleUrl: '../payroll-page.scss',
 })

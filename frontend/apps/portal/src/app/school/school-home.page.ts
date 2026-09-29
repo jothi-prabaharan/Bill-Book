@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SchoolPortalApi } from './school-portal-api.service';
@@ -12,7 +15,11 @@ import { PortalChild, PortalDemand, PortalReceipt, totalDue } from './school-por
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-school-home',
   standalone: true,
-  imports: [RouterLink, DecimalPipe],
+  imports: [
+    RouterLink,
+    DecimalPipe,
+    MessageBoxComponent,
+  ],
   templateUrl: './school-home.page.html',
   styleUrl: './school-portal.scss',
 })

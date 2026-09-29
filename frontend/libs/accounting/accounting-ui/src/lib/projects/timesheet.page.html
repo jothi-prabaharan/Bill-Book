@@ -78,7 +78,7 @@
   <p class="empty">No hours logged this week.</p>
 } @else {
   <div class="grid-wrap">
-    <table class="week">
+    <bb-card-table class="week" flush>
       <thead>
         <tr>
           <th scope="col">Project · task</th>
@@ -108,7 +108,7 @@
           <td class="num strong">{{ hoursText(weekTotal()) }}</td>
         </tr>
       </tfoot>
-    </table>
+    </bb-card-table>
   </div>
 }
 

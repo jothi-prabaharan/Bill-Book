@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  CardTableComponent,
+  MessageBoxComponent,
+  SelectComponent,
+  TextInputComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CreateJobOpening,
@@ -12,11 +19,29 @@ import {
 @Component({
   selector: 'rec-openings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardTableComponent,
+    MessageBoxComponent,
+    SelectComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './openings.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class OpeningsPage implements OnInit {
+  protected readonly jobRequisitionOptions = computed(() =>
+    this.requisitions().map((req) => ({ value: req.jobRequisitionId, label: `${req.requisitionCode} (${req.employmentType} - ${req.openings} openings)` })),
+  );
+
+  protected readonly openingStatusOptions = [
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Open', label: 'Open' },
+    { value: 'OnHold', label: 'On Hold' },
+  ];
+
   private readonly api = inject(RecruitmentApiService);
 
   readonly openings = signal<JobOpeningListItem[]>([]);

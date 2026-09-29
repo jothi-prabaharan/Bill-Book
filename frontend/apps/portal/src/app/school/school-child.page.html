@@ -5,16 +5,15 @@
     <p class="muted">{{ c.admissionNo }}@if (c.className) { · Class {{ c.className }}{{ c.sectionName ? ' - ' + c.sectionName : '' }} }</p>
   }
 
-  @if (error()) {
-    <p class="error" role="alert">{{ error() }}</p>
+  @if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
   <section aria-labelledby="attendance-title">
     <h2 id="attendance-title">Attendance</h2>
-    <label class="field">
-      <span>Month</span>
-      <input type="month" [(ngModel)]="month" (change)="loadMonth()" />
-    </label>
+    <div class="field">
+          <bb-month-input label="Month" name="month" [ngModel]="month" (ngModelChange)="month = $event ?? month; loadMonth()" />
+        </div>
     @if (attendance(); as a) {
       <p>
         @if (percent() !== null) { <strong>{{ percent() }}%</strong> · }
@@ -37,7 +36,7 @@
     @for (exam of exams(); track exam.examId) {
       <article class="exam">
         <h3>{{ exam.examName }} <span class="muted">· {{ exam.academicYearCode }}</span></h3>
-        <table>
+        <bb-card-table flush>
           <thead><tr><th scope="col">Subject</th><th scope="col">Marks</th><th scope="col">Result</th></tr></thead>
           <tbody>
             @for (s of exam.subjects; track s.subjectName) {
@@ -48,7 +47,7 @@
               </tr>
             }
           </tbody>
-        </table>
+        </bb-card-table>
       </article>
     } @empty {
       <p class="muted">No results published yet.</p>

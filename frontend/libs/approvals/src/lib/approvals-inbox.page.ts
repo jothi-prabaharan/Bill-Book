@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  MessageBoxComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -30,7 +34,12 @@ type Move = 'Approve' | 'Reject' | 'SendBack';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-approvals-inbox-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [
+    FormsModule,
+    RouterLink,
+    MessageBoxComponent,
+    TextareaComponent,
+  ],
   templateUrl: './approvals-inbox.page.html',
   styleUrl: './approvals-inbox.page.scss',
 })

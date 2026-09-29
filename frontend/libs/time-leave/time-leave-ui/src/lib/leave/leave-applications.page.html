@@ -21,42 +21,24 @@
     <div class="sheet">
       <h3>Apply for Leave</h3>
       <div class="fields">
-        <label>
-          Leave Type
-          <select [(ngModel)]="form.leaveTypeId">
-            @for (t of leaveTypes(); track t.leaveTypeId) {
-              <option [value]="t.leaveTypeId">{{ t.name }} ({{ t.code }})</option>
-            }
-          </select>
-        </label>
-        <label>
-          From Date
-          <input type="date" [(ngModel)]="form.fromDate" />
-        </label>
-        <label>
-          From Half
-          <select [(ngModel)]="form.fromHalf">
-            <option value="Full">Full Day</option>
-            <option value="FirstHalf">First Half</option>
-            <option value="SecondHalf">Second Half</option>
-          </select>
-        </label>
-        <label>
-          To Date
-          <input type="date" [(ngModel)]="form.toDate" />
-        </label>
-        <label>
-          To Half
-          <select [(ngModel)]="form.toHalf">
-            <option value="Full">Full Day</option>
-            <option value="FirstHalf">First Half</option>
-            <option value="SecondHalf">Second Half</option>
-          </select>
-        </label>
-        <label style="grid-column: 1 / -1">
-          Reason
-          <input type="text" [(ngModel)]="form.reason" placeholder="Reason for leave" />
-        </label>
+        <div>
+          <bb-select label="Leave Type" name="leaveTypeId" [options]="leaveTypeOptions()" [clearable]="false" [(ngModel)]="form.leaveTypeId" />
+        </div>
+        <div>
+          <bb-date-input label="From Date" name="fromDate" [(ngModel)]="form.fromDate" />
+        </div>
+        <div>
+          <bb-select label="From Half" name="fromHalf" [options]="fromHalfOptions" [clearable]="false" [(ngModel)]="form.fromHalf" />
+        </div>
+        <div>
+          <bb-date-input label="To Date" name="toDate" [(ngModel)]="form.toDate" />
+        </div>
+        <div>
+          <bb-select label="To Half" name="toHalf" [options]="toHalfOptions" [clearable]="false" [(ngModel)]="form.toHalf" />
+        </div>
+        <div style="grid-column: 1 / -1">
+          <bb-text-input label="Reason" placeholder="Reason for leave" name="reason" [(ngModel)]="form.reason" />
+        </div>
       </div>
       <div class="sheet-actions">
         <button class="btn" (click)="closeModal()">Cancel</button>
@@ -67,7 +49,7 @@
 
   <!-- Applications Table -->
   <div class="table-container">
-    <table>
+    <bb-card-table flush>
       <thead>
         <tr>
           <th>Leave Type</th>
@@ -106,6 +88,6 @@
           </tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
   </div>
 }

@@ -20,6 +20,7 @@ import { IfCanDirective } from '@bill-book/auth';
 import { FacilityApiService } from '@bill-book/facility-core';
 import {
   BbSelectOption,
+  CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
@@ -29,6 +30,7 @@ import {
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
+  TextareaComponent,
   UiMessage,
 } from '@bill-book/ui-components';
 
@@ -53,6 +55,8 @@ import {
     SelectComponent,
     MessageBoxComponent,
     IfCanDirective,
+    CheckboxComponent,
+    TextareaComponent,
   ],
   templateUrl: './contracts.page.html',
   styleUrl: '../maintenance-contract-page.scss',
