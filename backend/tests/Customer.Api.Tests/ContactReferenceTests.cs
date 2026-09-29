@@ -64,6 +64,9 @@ public sealed class ContactReferenceTests
                 : Task.FromResult<CreatedContact?>(
                     Created ?? new CreatedContact(9001, "CON-9001", request.DisplayName));
         }
+
+        public Task<List<ContactItemDto>> ListContactsAsync(CancellationToken ct) =>
+            Task.FromResult(new List<ContactItemDto>());
     }
 
     /// <summary>

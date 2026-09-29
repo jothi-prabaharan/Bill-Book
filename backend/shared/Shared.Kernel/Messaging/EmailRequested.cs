@@ -38,6 +38,9 @@ public sealed class EmailRequested
     /// </summary>
     public List<EmailRequestedAttachment> Attachments { get; init; } = [];
 
+    /// <summary>Custom headers such as List-Unsubscribe (TK-121).</summary>
+    public Dictionary<string, string> Headers { get; init; } = [];
+
     public static EmailRequested From(EmailMessage message, string messageId, DateTimeOffset requestedAt) => new()
     {
         MessageId = messageId,
@@ -48,6 +51,7 @@ public sealed class EmailRequested
         Subject = message.Subject,
         HtmlBody = message.HtmlBody,
         TextBody = message.TextBody,
+        Headers = new Dictionary<string, string>(message.Headers),
         Attachments =
         [
             .. message.Attachments.Select(a => new EmailRequestedAttachment
@@ -67,6 +71,7 @@ public sealed class EmailRequested
         Subject = Subject,
         HtmlBody = HtmlBody,
         TextBody = TextBody,
+        Headers = new Dictionary<string, string>(Headers),
         Attachments =
         [
             .. Attachments.Select(a => new EmailAttachment

@@ -93,6 +93,22 @@ public sealed class ContactsClient : IContactsClient
             : new CreatedContact(created.ContactId, created.ContactCode, request.DisplayName);
     }
 
+    public async Task<List<ContactItemDto>> ListContactsAsync(CancellationToken ct)
+    {
+        HttpRequestMessage request = Authorized(
+            HttpMethod.Get,
+            "api/contacts?includeInactive=false");
+
+        HttpResponseMessage response = await _http.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return [];
+        }
+
+        var list = await response.Content.ReadFromJsonAsync<List<ContactItemDto>>(ct);
+        return list ?? [];
+    }
+
     /// <summary>The <c>{ message }</c> on a refusal, when there is one.</summary>
     private static async Task<string?> ReasonAsync(
         HttpResponseMessage response, CancellationToken ct)
@@ -111,12 +127,14 @@ public sealed class ContactsClient : IContactsClient
         }
     }
 
-    private HttpRequestMessage Authorized(HttpMethod method, string route, object body)
+    private HttpRequestMessage Authorized(HttpMethod method, string route, object? body = null)
     {
-        var request = new HttpRequestMessage(method, route)
+        var request = new HttpRequestMessage(method, route);
+
+        if (body is not null)
         {
-            Content = JsonContent.Create(body),
-        };
+            request.Content = JsonContent.Create(body);
+        }
 
         string? authorization = _accessor.HttpContext?.Request.Headers.Authorization.ToString();
 
@@ -155,3 +173,4 @@ public sealed class ContactCreationFailedException : Exception
 
     public HttpStatusCode Status { get; }
 }
+

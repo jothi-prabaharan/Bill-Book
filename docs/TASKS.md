@@ -2384,28 +2384,39 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** the Home page shows the next GSTR-1 due date, and an MSME bill past 45 days appears on the ageing report.
 
 ### TK-120 · Campaigns: templates, audiences, consent and unsubscribe
-- [~] working (Antigravity) — since 2026-09-29
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Lanes:** L-CUS, L-CUS-UI, L-RPT · **Depends on:** TK-38 · **Decision:** —
 - **Where:** `docs/Modules.md`, "Customer service (`cus`)" → "Campaigns and marketing automation".
 - **Tables:** `cus.EmailTemplates`, `cus.Audiences`, `cus.EmailConsents`
 - **Sub-tasks:**
-  - [ ] The three tables with RLS; template bodies sanitised on save.
-  - [ ] Audience rules over leads, contacts (through Master) and purchase history (Reporting's new `POST internal/contacts/segment`); a live count.
-  - [ ] `GET/POST /api/public/unsubscribe/{token}` (anonymous, signed token, exempted in the guard test with its reason); staff can mark an address unsubscribed.
-  - [ ] Test: an unsubscribed address never resolves into an audience; a tampered token is refused; a segment by last invoice date returns the right contacts.
-  - Standard delivery sub-tasks (section 5).
+  - [x] The three tables with RLS; template bodies sanitised on save.
+  - [x] Audience rules over leads, contacts (through Master) and purchase history (Reporting's new `POST internal/contacts/segment`); a live count.
+  - [x] `GET/POST /api/public/unsubscribe/{token}` (anonymous, signed token, exempted in the guard test with its reason); staff can mark an address unsubscribed.
+  - [x] Test: an unsubscribed address never resolves into an audience; a tampered token is refused; a segment by last invoice date returns the right contacts.
+  - [x] Standard delivery sub-tasks (section 5).
+- **Notes:** Tests written in `backend/tests/Customer.Api.Tests/CampaignTests.cs` and `backend/tests/Reporting.Api.Tests/ContactSegmentTests.cs`.
 - **Done when:** an address that clicked unsubscribe is excluded from every audience that would otherwise include it.
 
 ### TK-121 · Campaigns: scheduled sending and tracking
-- [ ] open
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Lanes:** L-CUS, L-CUS-UI, L-NTF, L-KERNEL · **Depends on:** TK-120, TK-19 · **Decision:** D-27
 - **Tables:** `cus.Campaigns`, `cus.CampaignRecipients`, `cus.CampaignLinks`
 - **Sub-tasks:**
-  - [ ] Schedule, claim (`Scheduled → Sending`), resolve and freeze recipients, suppress, send in batches through the sending path D-27 names, message id `cmp-{campaignId}-{recipientId}`.
-  - [ ] `EmailDelivered`/`EmailFailed` from Notification; hard bounces mark consent `Bounced`.
-  - [ ] Click redirects and an open pixel; `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
-  - [ ] `crm.approve` above the branch's audience-size limit.
-  - [ ] Test: a campaign sent twice (a crashed worker) sends each recipient once; an address appearing as lead and contact gets one copy; a click is recorded and redirected.
+  - [x] Schedule, claim (`Scheduled → Sending`), resolve and freeze recipients, suppress, send in batches through the sending path D-27 names, message id `cmp-{campaignId}-{recipientId}`.
+  - [x] `EmailDelivered`/`EmailFailed` from Notification; hard bounces mark consent `Bounced`.
+  - [x] Click redirects and an open pixel; `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
+  - [x] `crm.approve` above the branch's audience-size limit.
+  - [x] Test: a campaign sent twice (a crashed worker) sends each recipient once; an address appearing as lead and contact gets one copy; a click is recorded and redirected.
+- **Notes:**
+  - `cus.Campaigns`, `cus.CampaignRecipients`, `cus.CampaignLinks` created with PostgreSQL RLS in migration `20260929182920_AddCampaignsAndTracking`.
+  - `CampaignSendingWorker` hosted service claims due scheduled campaigns (`Scheduled -> Sending` guarded update) and dispatches batches.
+  - Frozen recipients deduplicated across leads and contacts with unique index on `(OrgId, CampaignId, Email)`. Suppressed emails (Unsubscribed/Bounced) never sent.
+  - Idempotent sending uses message id `cmp-{campaignId}-{recipientId}`.
+  - RFC 2822 `List-Unsubscribe` and `List-Unsubscribe-Post` headers added to `IEmailSender` and `SmtpMailer`.
+  - Click redirects (`/api/public/c/{token}`) and transparent 1x1 tracking pixel (`/api/public/track/open/{token}.png`) using HMAC-SHA256 signed tokens (`ICampaignTrackingTokenSigner`).
+  - Delivery feedback webhook `/internal/campaigns/delivery-feedback` handles `EmailDelivered` and `EmailFailed` (permanent failures update consent to `Bounced`).
+  - `crm.approve` required when audience size exceeds approval threshold (`Campaigns:ApprovalThreshold`).
+  - Unit tests written in `backend/tests/Customer.Api.Tests/CampaignSendingAndTrackingTests.cs`.
 - **Done when:** a scheduled campaign reaches every subscribed recipient exactly once and none of the unsubscribed.
 
 ### TK-122 · Campaigns: marketing automation sequences

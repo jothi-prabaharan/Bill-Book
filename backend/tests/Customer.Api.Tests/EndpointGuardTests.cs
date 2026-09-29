@@ -26,9 +26,15 @@ public sealed class EndpointGuardTests
     {
         // Compared as joined text rather than as an empty collection, so a
         // failure names every open endpoint instead of the first few.
+        // PublicUnsubscribeController and PublicTrackingController are exempted:
+        // one-click unsubscribe links, click redirects, and open tracking pixels in campaign emails
+        // are accessed by public recipients without authentication; requests are guarded by HMAC-SHA256 signatures or tokens.
         Assert.Equal(
             string.Empty,
-            string.Join(", ", EndpointGuardAudit.Unguarded(Service)));
+            string.Join(", ", EndpointGuardAudit.Unguarded(
+                Service,
+                nameof(Customer.Api.Controllers.PublicUnsubscribeController),
+                nameof(Customer.Api.Controllers.PublicTrackingController))));
     }
 
     /// <summary>
@@ -39,7 +45,13 @@ public sealed class EndpointGuardTests
     [Fact]
     public void Every_controller_names_its_apps()
     {
-        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.WithoutApp(Service)));
+        // PublicUnsubscribeController and PublicTrackingController are anonymous and app-agnostic.
+        Assert.Equal(
+            string.Empty,
+            string.Join(", ", EndpointGuardAudit.WithoutApp(
+                Service,
+                nameof(Customer.Api.Controllers.PublicUnsubscribeController),
+                nameof(Customer.Api.Controllers.PublicTrackingController))));
     }
 
     [Fact]

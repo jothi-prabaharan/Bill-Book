@@ -30,6 +30,15 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Campaigns: templates, audiences, consent and unsubscribe (TK-120).**
+  - **Email templates**: Rich HTML templates with sanitisation against unsafe scripts and attributes, with plain text alternatives.
+  - **Dynamic audiences**: Segment recipients by lead statuses/sources, contact properties, purchase history (last invoice date, total sales, item categories via Reporting), and manual inclusion/exclusion lists, with live recipient counts and suppression preview.
+  - **Consent and unsubscribe**: Cryptographically signed one-click unsubscribe links (`/api/public/unsubscribe/{token}`) and staff consent management. Unsubscribed and bounced recipients are automatically suppressed from all campaign resolutions.
+- **Added**: **Campaigns: scheduled sending, click tracking and bounce handling (TK-121).**
+  - **Scheduled sending**: Background worker advances scheduled campaigns with guarded concurrency claim, deduplicating recipients across leads and contacts (`cmp-{campaignId}-{recipientId}`).
+  - **Click redirects and open tracking**: URLs in templates are rewritten to signed tracking links (`/api/public/c/{token}`) recording clicks and redirecting; open tracking pixel (`/api/public/track/open/{token}.png`) records approximate email opens.
+  - **RFC compliance and delivery events**: Outgoing campaign emails carry `List-Unsubscribe` and `List-Unsubscribe-Post` headers. Delivery events update recipient statuses, and hard bounces mark email consent as Bounced.
+  - **Audience limit guard**: Enforces `crm.approve` permission when scheduling or sending campaigns to an audience larger than the branch's approval threshold.
 - **Changed**: **Warnings and errors look the same on every screen.** Around seventy messages across sales, purchase, accounting, inventory, reports, settings, sign-in, HR (claims, performance, recruitment, approvals) and the client and school portals were each styled by hand — some red text, some tinted boxes, some grey notes — and now use one message box, with one colour and edge per kind of message and a screen reader announcing each the same way. What each message says has not changed.
 - **Changed**: **Tables that were drawn by hand now use the shared table.** About forty hand-drawn tables — the settle-documents workspace, the invoice's posting preview, the stock-availability drawer, the balance sheet, the profit and loss, the API clients list, the dashboard, the metal-rate screen, the budget grid, the timesheet, GSTR-2B, every payroll, claims, performance, recruitment and leave list, and the client and school portals — now share the product's table style — the same headings, row spacing and hover as every other list. The balance sheet and profit and loss also stop hard-coding their colours, so they follow the theme.
 - **Changed**: **The amount you apply on Settle documents is grouped like every other amount** — `4,00,000.00` on a rupee branch — once you leave the box.

@@ -19,6 +19,18 @@ public class CustomerDbContext : TenantDbContext
 
     public DbSet<SlaPolicy> SlaPolicies => Set<SlaPolicy>();
 
+    public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
+
+    public DbSet<Audience> Audiences => Set<Audience>();
+
+    public DbSet<EmailConsent> EmailConsents => Set<EmailConsent>();
+
+    public DbSet<Campaign> Campaigns => Set<Campaign>();
+
+    public DbSet<CampaignRecipient> CampaignRecipients => Set<CampaignRecipient>();
+
+    public DbSet<CampaignLink> CampaignLinks => Set<CampaignLink>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("cus");
@@ -71,6 +83,51 @@ public class CustomerDbContext : TenantDbContext
 
             // One policy per priority per branch.
             b.HasIndex(e => new { e.OrgId, e.Priority }).IsUnique();
+        });
+
+        modelBuilder.Entity<EmailTemplate>(b =>
+        {
+            b.HasKey(e => e.EmailTemplateId);
+            b.HasIndex(e => new { e.OrgId, e.IsActive });
+        });
+
+        modelBuilder.Entity<Audience>(b =>
+        {
+            b.HasKey(e => e.AudienceId);
+            b.Property(e => e.Rules).HasColumnType("jsonb");
+            b.HasIndex(e => new { e.OrgId, e.IsActive });
+        });
+
+        modelBuilder.Entity<EmailConsent>(b =>
+        {
+            b.HasKey(e => e.EmailConsentId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Source).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.OrgId, e.Email }).IsUnique();
+        });
+
+        modelBuilder.Entity<Campaign>(b =>
+        {
+            b.HasKey(e => e.CampaignId);
+            b.Property(e => e.Channel).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.OrgId, e.Status });
+            b.HasIndex(e => new { e.OrgId, e.ScheduledAt });
+        });
+
+        modelBuilder.Entity<CampaignRecipient>(b =>
+        {
+            b.HasKey(e => e.CampaignRecipientId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.OrgId, e.CampaignId, e.Email }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.CampaignId, e.Status });
+        });
+
+        modelBuilder.Entity<CampaignLink>(b =>
+        {
+            b.HasKey(e => e.CampaignLinkId);
+            b.HasIndex(e => new { e.OrgId, e.TrackingToken }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.CampaignId });
         });
 
         base.OnModelCreating(modelBuilder);

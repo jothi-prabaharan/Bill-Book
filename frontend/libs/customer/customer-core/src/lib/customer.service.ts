@@ -1,6 +1,26 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ContactOption, ConvertedLead, Lead, Ticket, TicketMessage } from './models';
+import {
+  Audience,
+  AudiencePreviewResponse,
+  AudienceRules,
+  Campaign,
+  CampaignLink,
+  CampaignRecipient,
+  ConsentStatus,
+  ContactOption,
+  ConvertedLead,
+  EmailConsent,
+  EmailTemplate,
+  Lead,
+  SaveAudienceRequest,
+  SaveCampaignRequest,
+  SaveConsentRequest,
+  SaveEmailTemplateRequest,
+  ScheduleCampaignRequest,
+  Ticket,
+  TicketMessage
+} from './models';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -76,4 +96,129 @@ export class CustomerService {
   createTicketMessage(ticketId: string, body: string, isInternal = false): Promise<TicketMessage> {
     return firstValueFrom(this.http.post<TicketMessage>(`/api/tickets/${ticketId}/messages`, { body, isInternal }));
   }
+
+  // Email Templates
+  getEmailTemplates(): Promise<EmailTemplate[]> {
+    return firstValueFrom(this.http.get<EmailTemplate[]>('/api/campaigns/templates'));
+  }
+
+  getEmailTemplate(id: number): Promise<EmailTemplate> {
+    return firstValueFrom(this.http.get<EmailTemplate>(`/api/campaigns/templates/${id}`));
+  }
+
+  createEmailTemplate(request: SaveEmailTemplateRequest): Promise<EmailTemplate> {
+    return firstValueFrom(this.http.post<EmailTemplate>('/api/campaigns/templates', request));
+  }
+
+  updateEmailTemplate(id: number, request: SaveEmailTemplateRequest): Promise<EmailTemplate> {
+    return firstValueFrom(this.http.put<EmailTemplate>(`/api/campaigns/templates/${id}`, request));
+  }
+
+  deleteEmailTemplate(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`/api/campaigns/templates/${id}`));
+  }
+
+  // Audiences
+  getAudiences(): Promise<Audience[]> {
+    return firstValueFrom(this.http.get<Audience[]>('/api/campaigns/audiences'));
+  }
+
+  getAudience(id: number): Promise<Audience> {
+    return firstValueFrom(this.http.get<Audience>(`/api/campaigns/audiences/${id}`));
+  }
+
+  createAudience(request: SaveAudienceRequest): Promise<Audience> {
+    return firstValueFrom(this.http.post<Audience>('/api/campaigns/audiences', request));
+  }
+
+  updateAudience(id: number, request: SaveAudienceRequest): Promise<Audience> {
+    return firstValueFrom(this.http.put<Audience>(`/api/campaigns/audiences/${id}`, request));
+  }
+
+  deleteAudience(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`/api/campaigns/audiences/${id}`));
+  }
+
+  previewAudience(rules: AudienceRules): Promise<AudiencePreviewResponse> {
+    return firstValueFrom(this.http.post<AudiencePreviewResponse>('/api/campaigns/audiences/preview', rules));
+  }
+
+  countAudience(rules: AudienceRules): Promise<{ count: number; suppressedCount: number }> {
+    return firstValueFrom(this.http.post<{ count: number; suppressedCount: number }>('/api/campaigns/audiences/count', rules));
+  }
+
+  getAudienceRecipients(id: number): Promise<AudiencePreviewResponse> {
+    return firstValueFrom(this.http.get<AudiencePreviewResponse>(`/api/campaigns/audiences/${id}/recipients`));
+  }
+
+  // Email Consents
+  getEmailConsents(search?: string, status?: ConsentStatus, page = 1, pageSize = 50): Promise<EmailConsent[]> {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (status) params.set('status', status);
+    params.set('page', page.toString());
+    params.set('pageSize', pageSize.toString());
+
+    return firstValueFrom(this.http.get<EmailConsent[]>(`/api/campaigns/consent?${params.toString()}`));
+  }
+
+  getEmailConsent(email: string): Promise<EmailConsent> {
+    return firstValueFrom(this.http.get<EmailConsent>(`/api/campaigns/consent/${encodeURIComponent(email)}`));
+  }
+
+  recordEmailConsent(request: SaveConsentRequest): Promise<EmailConsent> {
+    return firstValueFrom(this.http.post<EmailConsent>('/api/campaigns/consent', request));
+  }
+
+  // Public Unsubscribe
+  verifyUnsubscribeToken(token: string): Promise<{ email: string; message: string }> {
+    return firstValueFrom(this.http.get<{ email: string; message: string }>(`/api/public/unsubscribe/${encodeURIComponent(token)}`));
+  }
+
+  unsubscribeByToken(token: string): Promise<{ email: string; message: string }> {
+    return firstValueFrom(this.http.post<{ email: string; message: string }>(`/api/public/unsubscribe/${encodeURIComponent(token)}`, {}));
+  }
+
+  // Campaigns
+  getCampaigns(): Promise<Campaign[]> {
+    return firstValueFrom(this.http.get<Campaign[]>('/api/campaigns'));
+  }
+
+  getCampaign(id: number): Promise<Campaign> {
+    return firstValueFrom(this.http.get<Campaign>(`/api/campaigns/${id}`));
+  }
+
+  createCampaign(request: SaveCampaignRequest): Promise<Campaign> {
+    return firstValueFrom(this.http.post<Campaign>('/api/campaigns', request));
+  }
+
+  updateCampaign(id: number, request: SaveCampaignRequest): Promise<Campaign> {
+    return firstValueFrom(this.http.put<Campaign>(`/api/campaigns/${id}`, request));
+  }
+
+  deleteCampaign(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`/api/campaigns/${id}`));
+  }
+
+  scheduleCampaign(id: number, request: ScheduleCampaignRequest): Promise<Campaign> {
+    return firstValueFrom(this.http.post<Campaign>(`/api/campaigns/${id}/schedule`, request));
+  }
+
+  sendCampaignNow(id: number): Promise<Campaign> {
+    return firstValueFrom(this.http.post<Campaign>(`/api/campaigns/${id}/send-now`, {}));
+  }
+
+  cancelCampaign(id: number): Promise<Campaign> {
+    return firstValueFrom(this.http.post<Campaign>(`/api/campaigns/${id}/cancel`, {}));
+  }
+
+  getCampaignRecipients(id: number, page = 1, pageSize = 50): Promise<CampaignRecipient[]> {
+    return firstValueFrom(this.http.get<CampaignRecipient[]>(`/api/campaigns/${id}/recipients?page=${page}&pageSize=${pageSize}`));
+  }
+
+  getCampaignLinks(id: number): Promise<CampaignLink[]> {
+    return firstValueFrom(this.http.get<CampaignLink[]>(`/api/campaigns/${id}/links`));
+  }
 }
+
+

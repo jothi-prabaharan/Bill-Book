@@ -50,10 +50,30 @@ public interface IContactsClient
     /// something worth showing the person.
     /// </summary>
     Task<CreatedContact?> CreateAsync(NewContactRequest request, CancellationToken ct);
+
+    /// <summary>
+    /// Lists active contacts in the caller's branch for campaign audience resolution.
+    /// </summary>
+    Task<List<ContactItemDto>> ListContactsAsync(CancellationToken ct);
 }
 
 /// <summary>What Master gives back when it has made a contact.</summary>
 public sealed record CreatedContact(long ContactId, string ContactCode, string DisplayName);
+
+public sealed class ContactItemDto
+{
+    public long ContactId { get; set; }
+    public string ContactCode { get; set; } = null!;
+    public string DisplayName { get; set; } = null!;
+    public string? Email { get; set; }
+    public string? MobileNumber { get; set; }
+    public bool IsCustomer { get; set; }
+    public bool IsVendor { get; set; }
+    public string? ContactCategory { get; set; }
+    public string? City { get; set; }
+    public bool IsActive { get; set; }
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
+}
 
 /// <summary>
 /// The few fields a lead can supply. Deliberately not the whole of

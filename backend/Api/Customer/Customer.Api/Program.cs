@@ -1,9 +1,11 @@
 using Shared.Kernel.Security;
 using System.Text;
 using Customer.Repository;
-using Customer.Api.Services;
-using Customer.Repository.Repositories;
 using Customer.Repository.Clients;
+using Customer.Repository.Repositories;
+using Customer.Repository.Security;
+using Customer.Api.Services;
+using Shared.Kernel.Messaging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +41,13 @@ builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantCon
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<SlaPolicyRepository>();
 builder.Services.AddScoped<PortalTicketRepository>();
+builder.Services.AddSingleton<IUnsubscribeTokenSigner, UnsubscribeTokenSigner>();
+builder.Services.AddSingleton<ICampaignTrackingTokenSigner, CampaignTrackingTokenSigner>();
+builder.Services.AddScoped<EmailTemplateRepository>();
+builder.Services.AddScoped<EmailConsentRepository>();
+builder.Services.AddScoped<AudienceRepository>();
+builder.Services.AddScoped<CampaignRepository>();
+builder.Services.AddEventPublisher(builder.Configuration);
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
 // Key Vault when KeyVault:Uri is set, configuration otherwise — and a
@@ -90,6 +99,19 @@ builder.Services.AddHttpClient<IContactsClient, ContactsClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+builder.Services.AddHttpClient<IReportingClient, ReportingClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Reporting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHostedService<CampaignSendingWorker>();
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();

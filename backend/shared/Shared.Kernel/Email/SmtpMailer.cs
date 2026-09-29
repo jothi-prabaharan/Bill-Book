@@ -63,6 +63,11 @@ public static class SmtpMailer
 
         mail.To.Add(new MailAddress(message.ToEmail, message.ToName ?? message.ToEmail));
 
+        foreach (var (key, value) in message.Headers)
+        {
+            mail.Headers[key] = value;
+        }
+
         if (!string.IsNullOrEmpty(message.TextBody))
         {
             mail.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(

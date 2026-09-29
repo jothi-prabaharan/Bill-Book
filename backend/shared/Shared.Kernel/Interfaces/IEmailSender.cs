@@ -28,6 +28,9 @@ public sealed class EmailMessage
 
     /// <summary>Files sent with the message, a scheduled report's workbook say (TK-114).</summary>
     public IReadOnlyList<EmailAttachment> Attachments { get; init; } = [];
+
+    /// <summary>Custom RFC 2822 headers, such as List-Unsubscribe (TK-121).</summary>
+    public Dictionary<string, string> Headers { get; init; } = [];
 }
 
 /// <summary>One file attached to an <see cref="EmailMessage"/>.</summary>
