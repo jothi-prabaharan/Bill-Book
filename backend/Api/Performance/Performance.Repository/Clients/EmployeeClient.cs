@@ -1,7 +1,8 @@
+using Performance.Repository.Repositories;
 using System.Net.Http.Json;
 using Shared.Kernel.Employees;
 
-namespace Performance.Api.Services;
+namespace Performance.Repository.Clients;
 
 public interface IEmployeeClient
 {

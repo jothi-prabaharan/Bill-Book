@@ -1,3 +1,4 @@
+using Performance.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Performance.Entity.Enums;
 using Performance.Entity.Models;
@@ -7,9 +8,9 @@ using Shared.Kernel.Approvals;
 using Shared.Kernel.Employees;
 using Shared.Kernel.Tenancy;
 
-namespace Performance.Api.Services;
+namespace Performance.Repository.Repositories;
 
-public sealed class PerformanceService
+public sealed class PerformanceRepository
 {
     private readonly PerformanceDbContext _db;
     private readonly ITenantContext _tenant;
@@ -17,7 +18,7 @@ public sealed class PerformanceService
     private readonly IMasterClient _master;
     private readonly IPayrollClient _payroll;
 
-    public PerformanceService(
+    public PerformanceRepository(
         PerformanceDbContext db,
         ITenantContext tenant,
         IEmployeeClient hrm,

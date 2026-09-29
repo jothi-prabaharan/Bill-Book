@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Performance.Api.Services;
+using Performance.Repository.Repositories;
+using Performance.Repository.Clients;
 using Performance.Entity.Enums;
 using Performance.Entity.Models;
 using Shared.Kernel.Apps;
@@ -16,13 +18,13 @@ namespace Performance.Api.Controllers;
 [Route("api/prf/reviews")]
 public sealed class ReviewsController : ControllerBase
 {
-    private readonly PerformanceService _service;
+    private readonly PerformanceRepository _service;
     private readonly IEmployeeClient _hrm;
     private readonly ITenantContext _tenant;
     private readonly ICallerPermissions _caller;
 
     public ReviewsController(
-        PerformanceService service,
+        PerformanceRepository service,
         IEmployeeClient hrm,
         ITenantContext tenant,
         ICallerPermissions caller)

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Performance.Api.Services;
+using Performance.Repository.Repositories;
+using Performance.Repository.Clients;
 using Performance.Repository;
 using Shared.Kernel.Tenancy;
 using Xunit;
@@ -48,7 +50,7 @@ public sealed class PerformanceSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using PerformanceDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        var seeder = new PerformanceSeeder(db);
+        var seeder = new PerformanceSeederRepository(db);
         await seeder.SeedAsync(customerId, orgId, default);
         int initialScales = await db.RatingScales.CountAsync();
         int initialGroups = await db.CompetencyGroups.CountAsync();

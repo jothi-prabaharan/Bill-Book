@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Performance.Api.Services;
+using Performance.Repository.Repositories;
+using Performance.Repository.Clients;
 using Performance.Entity.Enums;
 using Performance.Entity.Models;
 using Shared.Kernel.Apps;
@@ -15,9 +17,9 @@ namespace Performance.Api.Controllers;
 [Route("api/prf/cycles")]
 public sealed class ReviewCyclesController : ControllerBase
 {
-    private readonly PerformanceService _service;
+    private readonly PerformanceRepository _service;
 
-    public ReviewCyclesController(PerformanceService service) => _service = service;
+    public ReviewCyclesController(PerformanceRepository service) => _service = service;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) =>

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Performance.Api.Services;
+using Performance.Repository.Repositories;
+using Performance.Repository.Clients;
 using Performance.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -14,9 +16,9 @@ namespace Performance.Api.Controllers;
 [Route("api/prf/rating-scales")]
 public sealed class RatingScalesController : ControllerBase
 {
-    private readonly PerformanceService _service;
+    private readonly PerformanceRepository _service;
 
-    public RatingScalesController(PerformanceService service) => _service = service;
+    public RatingScalesController(PerformanceRepository service) => _service = service;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) =>

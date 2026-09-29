@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Performance.Api.Services;
+using Performance.Repository.Repositories;
+using Performance.Repository.Clients;
 using Performance.Entity.Enums;
 using Performance.Entity.Models;
 using Performance.Entity.TableEntities;
@@ -74,7 +76,7 @@ public sealed class PerformanceApprovalRoutingTests
         hrm.Add(new EmployeeProfile { EmployeeId = 1, FullName = "Dev 1", DepartmentId = 1, ReportsToEmployeeId = 10 });
         hrm.Add(new EmployeeProfile { EmployeeId = 2, FullName = "Sales 1", DepartmentId = 2, ReportsToEmployeeId = 20 });
 
-        var svc = new PerformanceService(db, tenant, hrm, master, payroll);
+        var svc = new PerformanceRepository(db, tenant, hrm, master, payroll);
 
         var scale = await svc.SaveRatingScaleAsync(new SaveRatingScaleRequest
         {
@@ -125,7 +127,7 @@ public sealed class PerformanceApprovalRoutingTests
         var payroll = new FakePayrollClient();
 
         hrm.Add(new EmployeeProfile { EmployeeId = 1, FullName = "Dev 1", DepartmentId = 1, ReportsToEmployeeId = 10 });
-        var svc = new PerformanceService(db, tenant, hrm, master, payroll);
+        var svc = new PerformanceRepository(db, tenant, hrm, master, payroll);
 
         var scale = await svc.SaveRatingScaleAsync(new SaveRatingScaleRequest
         {
@@ -198,7 +200,7 @@ public sealed class PerformanceApprovalRoutingTests
         var payroll = new FakePayrollClient();
 
         hrm.Add(new EmployeeProfile { EmployeeId = 1, FullName = "Dev 1", DepartmentId = 2, ReportsToEmployeeId = 10 });
-        var svc = new PerformanceService(db, tenant, hrm, master, payroll);
+        var svc = new PerformanceRepository(db, tenant, hrm, master, payroll);
 
         var scale = await svc.SaveRatingScaleAsync(new SaveRatingScaleRequest
         {
@@ -300,7 +302,7 @@ public sealed class PerformanceApprovalRoutingTests
         var master = new FakeMasterClient();
         var payroll = new FakePayrollClient();
 
-        var svc = new PerformanceService(db, tenant, hrm, master, payroll);
+        var svc = new PerformanceRepository(db, tenant, hrm, master, payroll);
 
         var scale = await svc.SaveRatingScaleAsync(new SaveRatingScaleRequest
         {

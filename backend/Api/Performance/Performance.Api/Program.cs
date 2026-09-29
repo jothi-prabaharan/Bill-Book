@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Performance.Api.Services;
+using Performance.Repository.Repositories;
+using Performance.Repository.Clients;
 using Performance.Repository;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
@@ -76,8 +78,8 @@ builder.Services.AddHttpClient<IPayrollClient, PayrollClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Payroll:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddScoped<PerformanceService>();
-builder.Services.AddScoped<PerformanceSeeder>();
+builder.Services.AddScoped<PerformanceRepository>();
+builder.Services.AddScoped<PerformanceSeederRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

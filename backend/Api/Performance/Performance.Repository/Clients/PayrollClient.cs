@@ -1,6 +1,7 @@
+using Performance.Repository.Repositories;
 using System.Net.Http.Json;
 
-namespace Performance.Api.Services;
+namespace Performance.Repository.Clients;
 
 public interface IPayrollClient
 {

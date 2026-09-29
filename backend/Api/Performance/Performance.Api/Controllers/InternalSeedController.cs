@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Performance.Api.Services;
+using Performance.Repository.Repositories;
+using Performance.Repository.Clients;
 using Shared.Kernel.Internal;
 
 namespace Performance.Api.Controllers;
@@ -11,9 +13,9 @@ namespace Performance.Api.Controllers;
 [Route("internal/seed")]
 public sealed class InternalSeedController : ControllerBase
 {
-    private readonly PerformanceSeeder _seeder;
+    private readonly PerformanceSeederRepository _seeder;
 
-    public InternalSeedController(PerformanceSeeder seeder) => _seeder = seeder;
+    public InternalSeedController(PerformanceSeederRepository seeder) => _seeder = seeder;
 
     [HttpPost]
     public async Task<IActionResult> Seed([FromBody] SeedRequest request, CancellationToken ct)

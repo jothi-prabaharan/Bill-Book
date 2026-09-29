@@ -1,15 +1,16 @@
+using Performance.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Performance.Entity.Enums;
 using Performance.Entity.TableEntities;
 using Performance.Repository;
 
-namespace Performance.Api.Services;
+namespace Performance.Repository.Repositories;
 
-public sealed class PerformanceSeeder
+public sealed class PerformanceSeederRepository
 {
     private readonly PerformanceDbContext _db;
 
-    public PerformanceSeeder(PerformanceDbContext db) => _db = db;
+    public PerformanceSeederRepository(PerformanceDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedAsync(Guid customerId, Guid orgId, CancellationToken ct)
     {
