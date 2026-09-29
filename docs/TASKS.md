@@ -2333,7 +2333,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Left as they were.** GSTR-2 still answers 501; GSTR-2B reconciliation is the next part of the bundle. CDNUR is netted into B2CS.
 
 ### TK-116 · Compliance: GSTR-2B reconciliation
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-29
+- **Issue:** [#104](https://github.com/jothi-prabaharan/Bill-Book/issues/104)
 - **Lanes:** L-PUR, L-PURCHASE-UI · **Depends on:** TK-115 · **Decision:** —
 - **Tables:** `pur.Gstr2bImports`, `pur.Gstr2bLines`
 - **Sub-tasks:**
