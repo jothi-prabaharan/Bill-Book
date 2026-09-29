@@ -1,9 +1,10 @@
+using Employee.Repository.Clients;
 using Employee.Entity.Models;
 using Employee.Entity.TableEntities;
 using Employee.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace Employee.Api.Services;
+namespace Employee.Repository.Repositories;
 
 /// <summary>
 /// Organisation setup (H1, TK-48): departments, designations, grades, cost
@@ -11,11 +12,11 @@ namespace Employee.Api.Services;
 /// deactivated, never deleted, because employees and history rows name it.
 /// Every read and write is the caller's branch's, through the query filter.
 /// </summary>
-public sealed class OrganisationService
+public sealed class OrganisationRepository
 {
     private readonly EmployeeDbContext _db;
 
-    public OrganisationService(EmployeeDbContext db) => _db = db;
+    public OrganisationRepository(EmployeeDbContext db) => _db = db;
 
     // ---- Lists -----------------------------------------------------------
 

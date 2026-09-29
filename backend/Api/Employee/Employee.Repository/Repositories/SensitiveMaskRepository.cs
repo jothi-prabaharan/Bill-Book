@@ -1,10 +1,12 @@
-namespace Employee.Api.Services;
+using Employee.Repository.Clients;
+
+namespace Employee.Repository.Repositories;
 
 /// <summary>
 /// Masks the numbers an employee list must not show (TK-48): PAN, Aadhaar and
 /// bank account numbers keep their last four characters and hide the rest.
 /// </summary>
-public static class SensitiveMask
+public static class SensitiveMaskRepository
 {
     public const char MaskChar = 'X';
 

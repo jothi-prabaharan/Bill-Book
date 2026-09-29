@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.Models;
 using Employee.Repository;
@@ -28,7 +30,7 @@ public sealed class EmployeeServiceTests
 
     private sealed class Caller(bool salary, Guid? userId = null) : ICallerPermissions
     {
-        public bool Has(string permission) => salary && permission == EmployeeService.SalaryPermission;
+        public bool Has(string permission) => salary && permission == EmployeeRepository.SalaryPermission;
 
         public Guid? UserId => userId;
     }
@@ -39,7 +41,7 @@ public sealed class EmployeeServiceTests
     {
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         EmployeeDbContext db = _postgres.CreateContext(customerId, orgId);
-        await new EmployeeSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new EmployeeSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
         return new Branch(
             db,
@@ -49,7 +51,7 @@ public sealed class EmployeeServiceTests
             await db.WorkLocations.Select(d => d.WorkLocationId).SingleAsync());
     }
 
-    private static EmployeeService Service(EmployeeDbContext db, ICallerPermissions caller) =>
+    private static EmployeeRepository Service(EmployeeDbContext db, ICallerPermissions caller) =>
         new(db, new NumberGenerator(db, Options.Create(new NumberingOptions()), new AprilYear()), caller, TimeProvider.System);
 
     private static SaveEmployeeRequest Priya(Branch b, Guid? userId = null) => new()
@@ -139,7 +141,7 @@ public sealed class EmployeeServiceTests
 
         Branch b = await NewBranchAsync();
         await using EmployeeDbContext _ = b.Db;
-        EmployeeService hr = Service(b.Db, new Caller(false));
+        EmployeeRepository hr = Service(b.Db, new Caller(false));
         long id = (await hr.CreateAsync(Priya(b), default)).EmployeeId;
 
         EmployeeDetail masked = (await hr.GetAsync(id, default))!;
@@ -177,7 +179,7 @@ public sealed class EmployeeServiceTests
 
         Branch b = await NewBranchAsync();
         await using EmployeeDbContext _ = b.Db;
-        EmployeeService hr = Service(b.Db, new Caller(false));
+        EmployeeRepository hr = Service(b.Db, new Caller(false));
         long boss = (await hr.CreateAsync(Priya(b), default)).EmployeeId;
         SaveEmployeeRequest report = Priya(b);
         report.FirstName = "Arun";
@@ -197,9 +199,9 @@ public sealed class EmployeeServiceTests
 
         Branch b = await NewBranchAsync();
         await using EmployeeDbContext _ = b.Db;
-        EmployeeService hr = Service(b.Db, new Caller(true));
+        EmployeeRepository hr = Service(b.Db, new Caller(true));
         long id = (await hr.CreateAsync(Priya(b), default)).EmployeeId;
-        long sales = (await new OrganisationService(b.Db).SaveDepartmentAsync(null, new SaveDepartmentRequest { Code = "SAL", Name = "Sales" }, default)).Id;
+        long sales = (await new OrganisationRepository(b.Db).SaveDepartmentAsync(null, new SaveDepartmentRequest { Code = "SAL", Name = "Sales" }, default)).Id;
 
         EmployeeDetail detail = (await hr.GetAsync(id, default))!;
         detail.DepartmentId = sales;
@@ -218,7 +220,7 @@ public sealed class EmployeeServiceTests
         Branch b = await NewBranchAsync();
         await using EmployeeDbContext _ = b.Db;
         Guid login = Guid.NewGuid();
-        EmployeeService hr = Service(b.Db, new Caller(false));
+        EmployeeRepository hr = Service(b.Db, new Caller(false));
         await hr.CreateAsync(Priya(b, login), default);
 
         Assert.Equal(EmployeeOutcome.UserAlreadyLinked, (await hr.CreateAsync(Priya(b, login), default)).Outcome);
@@ -252,14 +254,14 @@ public sealed class EmployeeRuleTests
 
     [Fact]
     public void A_valid_request_passes() =>
-        Assert.Equal(EmployeeOutcome.Ok, EmployeeService.CheckRules(Valid(), "ABCDE1234F", "123412341234"));
+        Assert.Equal(EmployeeOutcome.Ok, EmployeeRepository.CheckRules(Valid(), "ABCDE1234F", "123412341234"));
 
     [Fact]
     public void Younger_than_fourteen_on_joining_is_refused()
     {
         SaveEmployeeRequest r = Valid();
         r.DateOfBirth = new DateOnly(2013, 1, 1);
-        Assert.Equal(EmployeeOutcome.TooYoung, EmployeeService.CheckRules(r, null, null));
+        Assert.Equal(EmployeeOutcome.TooYoung, EmployeeRepository.CheckRules(r, null, null));
     }
 
     [Fact]
@@ -267,21 +269,21 @@ public sealed class EmployeeRuleTests
     {
         SaveEmployeeRequest r = Valid();
         r.EmployeeStatus = EmployeeStatus.Exited;
-        Assert.Equal(EmployeeOutcome.ExitDateRequired, EmployeeService.CheckRules(r, null, null));
+        Assert.Equal(EmployeeOutcome.ExitDateRequired, EmployeeRepository.CheckRules(r, null, null));
     }
 
     [Theory]
     [InlineData("ABCD1234F", null)]
     [InlineData(null, "12345")]
     public void A_malformed_pan_or_aadhaar_is_refused(string? pan, string? aadhaar) =>
-        Assert.Equal(EmployeeOutcome.InvalidIdentityNumber, EmployeeService.CheckRules(Valid(), pan, aadhaar));
+        Assert.Equal(EmployeeOutcome.InvalidIdentityNumber, EmployeeRepository.CheckRules(Valid(), pan, aadhaar));
 
     [Fact]
     public void Bank_accounts_need_exactly_one_primary()
     {
         SaveEmployeeRequest r = Valid();
         r.BankDetails = [new() { AccountHolder = "A", AccountNo = "1", Ifsc = "HDFC0001234", BankName = "B" }];
-        Assert.Equal(EmployeeOutcome.PrimaryBank, EmployeeService.CheckRules(r, null, null));
+        Assert.Equal(EmployeeOutcome.PrimaryBank, EmployeeRepository.CheckRules(r, null, null));
     }
 
     [Fact]
@@ -289,7 +291,7 @@ public sealed class EmployeeRuleTests
     {
         SaveEmployeeRequest r = Valid();
         r.Addresses = [new() { AddressKind = AddressKind.Current, AddressLine1 = "1" }, new() { AddressKind = AddressKind.Current, AddressLine1 = "2" }];
-        Assert.Equal(EmployeeOutcome.DuplicateAddress, EmployeeService.CheckRules(r, null, null));
+        Assert.Equal(EmployeeOutcome.DuplicateAddress, EmployeeRepository.CheckRules(r, null, null));
     }
 
     [Fact]
@@ -297,7 +299,7 @@ public sealed class EmployeeRuleTests
     {
         SaveEmployeeRequest r = Valid();
         r.Nominees = [new() { FamilyMemberIndex = 0, NominationKind = NominationKind.Pf, SharePercent = 100m }];
-        Assert.Equal(EmployeeOutcome.NomineeFamilyMember, EmployeeService.CheckRules(r, null, null));
+        Assert.Equal(EmployeeOutcome.NomineeFamilyMember, EmployeeRepository.CheckRules(r, null, null));
     }
 
     [Fact]
@@ -321,13 +323,13 @@ public sealed class SensitiveMaskTests
     [InlineData("12", "X2")]
     [InlineData(null, null)]
     public void Keeps_the_last_four_and_hides_the_rest(string? value, string? masked) =>
-        Assert.Equal(masked, SensitiveMask.Mask(value));
+        Assert.Equal(masked, SensitiveMaskRepository.Mask(value));
 
     [Fact]
     public void A_masked_value_sent_back_means_unchanged_and_a_new_value_replaces()
     {
-        Assert.Equal("ABCDE1234F", SensitiveMask.Resolve("XXXXXX234F", "ABCDE1234F"));
-        Assert.Equal("PQRSX9876Z", SensitiveMask.Resolve("PQRSX9876Z", "ABCDE1234F"));
-        Assert.Null(SensitiveMask.Resolve(null, "ABCDE1234F"));
+        Assert.Equal("ABCDE1234F", SensitiveMaskRepository.Resolve("XXXXXX234F", "ABCDE1234F"));
+        Assert.Equal("PQRSX9876Z", SensitiveMaskRepository.Resolve("PQRSX9876Z", "ABCDE1234F"));
+        Assert.Null(SensitiveMaskRepository.Resolve(null, "ABCDE1234F"));
     }
 }

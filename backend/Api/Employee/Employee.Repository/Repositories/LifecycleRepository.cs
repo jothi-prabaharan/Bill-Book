@@ -1,17 +1,18 @@
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.Models;
 using Employee.Entity.TableEntities;
 using Employee.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace Employee.Api.Services;
+namespace Employee.Repository.Repositories;
 
-public sealed class LifecycleService
+public sealed class LifecycleRepository
 {
     private readonly EmployeeDbContext _db;
     private readonly IMasterUserClient _masterUsers;
 
-    public LifecycleService(EmployeeDbContext db, IMasterUserClient masterUsers)
+    public LifecycleRepository(EmployeeDbContext db, IMasterUserClient masterUsers)
     {
         _db = db;
         _masterUsers = masterUsers;

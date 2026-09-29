@@ -1,19 +1,20 @@
+using Employee.Repository.Clients;
 using Employee.Repository;
 using Employee.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 
-namespace Employee.Api.Services;
+namespace Employee.Repository.Repositories;
 
 /// <summary>
 /// A branch's starting organisation and its <c>EMP</c> series (TK-48).
 /// Re-runnable: each part is added only when the branch has none, so a retry
 /// from <c>apps/admin</c> or a second app's trial adds nothing twice.
 /// </summary>
-public sealed class EmployeeSeeder
+public sealed class EmployeeSeederRepository
 {
     private readonly EmployeeDbContext _db;
 
-    public EmployeeSeeder(EmployeeDbContext db) => _db = db;
+    public EmployeeSeederRepository(EmployeeDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {

@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -21,9 +23,9 @@ namespace Employee.Api.Controllers;
 [Route("api/hrm/employees")]
 public sealed class EmployeesController : ControllerBase
 {
-    private readonly EmployeeService _employees;
+    private readonly EmployeeRepository _employees;
 
-    public EmployeesController(EmployeeService employees) => _employees = employees;
+    public EmployeesController(EmployeeRepository employees) => _employees = employees;
 
     [HttpGet]
     public async Task<IActionResult> List(

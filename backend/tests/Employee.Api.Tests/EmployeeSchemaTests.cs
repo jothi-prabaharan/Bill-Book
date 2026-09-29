@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.TableEntities;
 using Employee.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -63,8 +65,8 @@ public sealed class EmployeeSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using EmployeeDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        Dictionary<string, int> first = await new EmployeeSeeder(db).SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new EmployeeSeeder(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> first = await new EmployeeSeederRepository(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new EmployeeSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
         Assert.All(first.Values, v => Assert.Equal(1, v));
         Assert.All(second.Values, v => Assert.Equal(0, v));

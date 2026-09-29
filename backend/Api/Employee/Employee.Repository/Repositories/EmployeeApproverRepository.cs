@@ -1,3 +1,4 @@
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.TableEntities;
 using Employee.Repository;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Approvals;
 using Shared.Kernel.Employees;
 
-namespace Employee.Api.Services;
+namespace Employee.Repository.Repositories;
 
 /// <summary>
 /// The approvers only the employee graph can answer (D-26, TK-49): the
@@ -16,7 +17,7 @@ namespace Employee.Api.Services;
 /// An approver who has left, or who has no login, is no approver: the level
 /// comes back empty and Master's skip rules decide what that means.
 /// </summary>
-public sealed class EmployeeApproverService
+public sealed class EmployeeApproverRepository
 {
     /// <summary>The longest reporting chain walked, so a loop in the data ends.</summary>
     public const int MaxDepth = 10;
@@ -24,7 +25,7 @@ public sealed class EmployeeApproverService
     private readonly EmployeeDbContext _db;
     private readonly TimeProvider _clock;
 
-    public EmployeeApproverService(EmployeeDbContext db, TimeProvider clock)
+    public EmployeeApproverRepository(EmployeeDbContext db, TimeProvider clock)
     {
         _db = db;
         _clock = clock;

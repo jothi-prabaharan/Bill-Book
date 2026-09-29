@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -15,9 +17,9 @@ namespace Employee.Api.Controllers;
 [Route("api/hrm/lifecycle")]
 public sealed class LifecycleController : ControllerBase
 {
-    private readonly LifecycleService _lifecycle;
+    private readonly LifecycleRepository _lifecycle;
 
-    public LifecycleController(LifecycleService lifecycle) => _lifecycle = lifecycle;
+    public LifecycleController(LifecycleRepository lifecycle) => _lifecycle = lifecycle;
 
     // ---- Templates ----
     [HttpGet("templates")]

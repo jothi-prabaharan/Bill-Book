@@ -1,3 +1,4 @@
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.Models;
 using Employee.Entity.TableEntities;
@@ -6,7 +7,7 @@ using Employee.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Numbering;
 
-namespace Employee.Api.Services;
+namespace Employee.Repository.Repositories;
 
 /// <summary>
 /// The shared employee master (H1, TK-48): an employee and every child table,
@@ -18,13 +19,13 @@ namespace Employee.Api.Services;
 /// <item><b>PAN, Aadhaar and bank numbers are masked</b> on the list always, and on
 /// the detail unless the caller holds <c>payroll.view</c> or is the employee. A
 /// masked value sent back on save keeps what is stored
-/// (<see cref="SensitiveMask.Resolve"/>).</item>
+/// (<see cref="SensitiveMaskRepository.Resolve"/>).</item>
 /// <item><b>History is appended, never updated</b>: a Joined row at creation, and a
 /// row at every change of department, designation, grade, location, manager,
 /// confirmation or exit.</item>
 /// </list>
 /// </summary>
-public sealed class EmployeeService
+public sealed class EmployeeRepository
 {
     public const string SalaryPermission = "payroll.view";
     private const int MinimumAgeAtJoining = 14;
@@ -34,7 +35,7 @@ public sealed class EmployeeService
     private readonly ICallerPermissions _caller;
     private readonly TimeProvider _clock;
 
-    public EmployeeService(EmployeeDbContext db, INumberGenerator numbers, ICallerPermissions caller, TimeProvider clock)
+    public EmployeeRepository(EmployeeDbContext db, INumberGenerator numbers, ICallerPermissions caller, TimeProvider clock)
     {
         _db = db;
         _numbers = numbers;
@@ -105,8 +106,8 @@ public sealed class EmployeeService
                 EmploymentType = r.EmploymentType.ToString(),
                 Phone = r.Phone,
                 // Masked on the list, always, whoever asks.
-                MaskedPan = SensitiveMask.Mask(r.Pan),
-                MaskedAadhaar = SensitiveMask.Mask(r.Aadhaar),
+                MaskedPan = SensitiveMaskRepository.Mask(r.Pan),
+                MaskedAadhaar = SensitiveMaskRepository.Mask(r.Aadhaar),
                 HasLogin = r.UserId.HasValue,
             }).ToList(),
         };
@@ -157,8 +158,8 @@ public sealed class EmployeeService
             WorkEmail = e.WorkEmail,
             PersonalEmail = e.PersonalEmail,
             Phone = e.Phone,
-            Pan = shown ? e.Pan : SensitiveMask.Mask(e.Pan),
-            Aadhaar = shown ? e.Aadhaar : SensitiveMask.Mask(e.Aadhaar),
+            Pan = shown ? e.Pan : SensitiveMaskRepository.Mask(e.Pan),
+            Aadhaar = shown ? e.Aadhaar : SensitiveMaskRepository.Mask(e.Aadhaar),
             Uan = e.Uan,
             PfNumber = e.PfNumber,
             EsiNumber = e.EsiNumber,
@@ -198,7 +199,7 @@ public sealed class EmployeeService
             {
                 EmployeeBankDetailId = b.EmployeeBankDetailId,
                 AccountHolder = b.AccountHolder,
-                AccountNo = shown ? b.AccountNo : SensitiveMask.Mask(b.AccountNo)!,
+                AccountNo = shown ? b.AccountNo : SensitiveMaskRepository.Mask(b.AccountNo)!,
                 Ifsc = b.Ifsc,
                 BankName = b.BankName,
                 IsPrimary = b.IsPrimary,
@@ -259,8 +260,8 @@ public sealed class EmployeeService
             return new EmployeeResult(EmployeeOutcome.NotFound);
         }
 
-        string? pan = SensitiveMask.Resolve(NormalizePan(request.Pan), employee.Pan);
-        string? aadhaar = SensitiveMask.Resolve(NormalizeAadhaar(request.Aadhaar), employee.Aadhaar);
+        string? pan = SensitiveMaskRepository.Resolve(NormalizePan(request.Pan), employee.Pan);
+        string? aadhaar = SensitiveMaskRepository.Resolve(NormalizeAadhaar(request.Aadhaar), employee.Aadhaar);
 
         EmployeeOutcome check = await ValidateAsync(employeeId, request, pan, aadhaar, ct);
         if (check != EmployeeOutcome.Ok)
@@ -555,7 +556,7 @@ public sealed class EmployeeService
             e.BankDetails.Add(new EmployeeBankDetail
             {
                 AccountHolder = b.AccountHolder.Trim(),
-                AccountNo = SensitiveMask.Resolve(b.AccountNo.Trim(), stored)!,
+                AccountNo = SensitiveMaskRepository.Resolve(b.AccountNo.Trim(), stored)!,
                 Ifsc = b.Ifsc.Trim().ToUpperInvariant(),
                 BankName = b.BankName.Trim(),
                 IsPrimary = b.IsPrimary,

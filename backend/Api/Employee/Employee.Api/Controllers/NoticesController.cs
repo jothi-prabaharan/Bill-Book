@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,9 +20,9 @@ namespace Employee.Api.Controllers;
 [Route("api/hrm")]
 public sealed class NoticesController : ControllerBase
 {
-    private readonly NoticeService _notices;
+    private readonly NoticeRepository _notices;
 
-    public NoticesController(NoticeService notices) => _notices = notices;
+    public NoticesController(NoticeRepository notices) => _notices = notices;
 
     [HttpGet("announcements")]
     public async Task<IActionResult> Announcements(CancellationToken ct) => Ok(await _notices.AnnouncementsAsync(ct));

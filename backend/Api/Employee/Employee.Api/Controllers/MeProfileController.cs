@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.Models;
 using Employee.Entity.TableEntities;
@@ -83,8 +85,8 @@ public sealed class MeProfileController : ControllerBase
             PersonalEmail = e.PersonalEmail,
             EmergencyContactName = primaryContact?.Name,
             EmergencyContactPhone = primaryContact?.Phone,
-            Pan = SensitiveMask.Mask(e.Pan),
-            Aadhaar = SensitiveMask.Mask(e.Aadhaar),
+            Pan = SensitiveMaskRepository.Mask(e.Pan),
+            Aadhaar = SensitiveMaskRepository.Mask(e.Aadhaar),
             Uan = e.Uan,
             DepartmentId = e.DepartmentId,
             DepartmentName = deptName,
@@ -126,7 +128,7 @@ public sealed class MeProfileController : ControllerBase
             {
                 EmployeeBankDetailId = b.EmployeeBankDetailId,
                 AccountHolder = b.AccountHolder,
-                AccountNo = SensitiveMask.Mask(b.AccountNo)!,
+                AccountNo = SensitiveMaskRepository.Mask(b.AccountNo)!,
                 Ifsc = b.Ifsc,
                 BankName = b.BankName,
                 IsPrimary = b.IsPrimary,

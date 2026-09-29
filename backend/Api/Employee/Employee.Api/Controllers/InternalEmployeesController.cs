@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Approvals;
@@ -34,7 +36,7 @@ public sealed class InternalEmployeesController : ControllerBase
     {
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
-        return Ok(await _services.GetRequiredService<EmployeeApproverService>().ResolveAsync(request, ct));
+        return Ok(await _services.GetRequiredService<EmployeeApproverRepository>().ResolveAsync(request, ct));
     }
 
     [HttpPost("employees/lookup")]
@@ -42,7 +44,7 @@ public sealed class InternalEmployeesController : ControllerBase
     {
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
-        return Ok(await _services.GetRequiredService<EmployeeProfileService>().FindAsync(request, ct));
+        return Ok(await _services.GetRequiredService<EmployeeProfileRepository>().FindAsync(request, ct));
     }
 
     [HttpPost("employees/onboard")]
@@ -50,6 +52,6 @@ public sealed class InternalEmployeesController : ControllerBase
     {
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
-        return Ok(await _services.GetRequiredService<EmployeeProfileService>().OnboardAsync(request, ct));
+        return Ok(await _services.GetRequiredService<EmployeeProfileRepository>().OnboardAsync(request, ct));
     }
 }

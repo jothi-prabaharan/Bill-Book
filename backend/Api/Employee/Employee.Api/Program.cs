@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -84,13 +86,13 @@ builder.Services.AddHttpClient<IMasterUserClient, MasterUserClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddScoped<OrganisationService>();
-builder.Services.AddScoped<EmployeeService>();
-builder.Services.AddScoped<NoticeService>();
-builder.Services.AddScoped<LifecycleService>();
-builder.Services.AddScoped<EmployeeSeeder>();
-builder.Services.AddScoped<EmployeeApproverService>();
-builder.Services.AddScoped<EmployeeProfileService>();
+builder.Services.AddScoped<OrganisationRepository>();
+builder.Services.AddScoped<EmployeeRepository>();
+builder.Services.AddScoped<NoticeRepository>();
+builder.Services.AddScoped<LifecycleRepository>();
+builder.Services.AddScoped<EmployeeSeederRepository>();
+builder.Services.AddScoped<EmployeeApproverRepository>();
+builder.Services.AddScoped<EmployeeProfileRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

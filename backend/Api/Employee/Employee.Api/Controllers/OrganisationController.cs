@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +22,9 @@ namespace Employee.Api.Controllers;
 [Route("api/hrm/organisation")]
 public sealed class OrganisationController : ControllerBase
 {
-    private readonly OrganisationService _organisation;
+    private readonly OrganisationRepository _organisation;
 
-    public OrganisationController(OrganisationService organisation) => _organisation = organisation;
+    public OrganisationController(OrganisationRepository organisation) => _organisation = organisation;
 
     [HttpGet("departments")]
     public async Task<IActionResult> Departments(CancellationToken ct) => Ok(await _organisation.DepartmentsAsync(ct));

@@ -1,4 +1,6 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.Models;
 using Employee.Entity.TableEntities;
@@ -35,7 +37,7 @@ public sealed class LifecycleServiceTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using EmployeeDbContext db = _postgres.CreateContext(customerId, orgId);
         var fakeMaster = new FakeMasterUserClient();
-        var lifecycle = new LifecycleService(db, fakeMaster);
+        var lifecycle = new LifecycleRepository(db, fakeMaster);
 
         // 1. Create Onboarding template
         long templateId = await lifecycle.SaveTemplateAsync(null, new SaveChecklistTemplateRequest
@@ -88,7 +90,7 @@ public sealed class LifecycleServiceTests
         Guid userId = Guid.NewGuid();
         await using EmployeeDbContext db = _postgres.CreateContext(customerId, orgId);
         var fakeMaster = new FakeMasterUserClient();
-        var lifecycle = new LifecycleService(db, fakeMaster);
+        var lifecycle = new LifecycleRepository(db, fakeMaster);
 
         // Create an employee with 30-day notice and a linked user login
         var emp = new EmployeeRecord

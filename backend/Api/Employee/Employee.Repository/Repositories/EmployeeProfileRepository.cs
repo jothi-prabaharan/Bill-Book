@@ -1,3 +1,4 @@
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Employee.Entity.TableEntities;
 using Employee.Repository;
@@ -6,19 +7,19 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Employees;
 using Shared.Kernel.Numbering;
 
-namespace Employee.Api.Services;
+namespace Employee.Repository.Repositories;
 
 /// <summary>
 /// The employee as other services see them (TK-49): leave and attendance read
 /// the grade, location and reporting line to pick a policy and a chain. No
 /// statutory numbers, no pay, no bank details ever leave by this route.
 /// </summary>
-public sealed class EmployeeProfileService
+public sealed class EmployeeProfileRepository
 {
     private readonly EmployeeDbContext _db;
     private readonly INumberGenerator _numbers;
 
-    public EmployeeProfileService(EmployeeDbContext db, INumberGenerator numbers)
+    public EmployeeProfileRepository(EmployeeDbContext db, INumberGenerator numbers)
     {
         _db = db;
         _numbers = numbers;

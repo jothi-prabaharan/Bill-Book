@@ -1,4 +1,6 @@
-namespace Employee.Api.Services;
+using Employee.Repository.Repositories;
+
+namespace Employee.Repository.Clients;
 
 public interface IMasterUserClient
 {

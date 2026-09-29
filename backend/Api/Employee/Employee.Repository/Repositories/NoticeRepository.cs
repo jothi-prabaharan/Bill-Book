@@ -1,16 +1,17 @@
+using Employee.Repository.Clients;
 using Employee.Entity.Models;
 using Employee.Entity.TableEntities;
 using Employee.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace Employee.Api.Services;
+namespace Employee.Repository.Repositories;
 
 /// <summary>Announcements and policy documents (H1, TK-48). HRMS only.</summary>
-public sealed class NoticeService
+public sealed class NoticeRepository
 {
     private readonly EmployeeDbContext _db;
 
-    public NoticeService(EmployeeDbContext db) => _db = db;
+    public NoticeRepository(EmployeeDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<AnnouncementRow>> AnnouncementsAsync(CancellationToken ct) =>
         await _db.Announcements.AsNoTracking()

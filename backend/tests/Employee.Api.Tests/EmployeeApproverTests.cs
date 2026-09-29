@@ -1,7 +1,9 @@
 using Employee.Api.Services;
+using Employee.Repository.Repositories;
+using Employee.Repository.Clients;
 using Employee.Entity.Enums;
 using Xunit;
-using Node = Employee.Api.Services.EmployeeApproverService.Node;
+using Node = Employee.Repository.Repositories.EmployeeApproverRepository.Node;
 
 namespace Employee.Api.Tests;
 
@@ -27,11 +29,11 @@ public sealed class EmployeeApproverTests
     [InlineData(2, 3L)]
     [InlineData(3, null)]
     public void Depth_counts_managers_up_the_chain(int depth, long? expected) =>
-        Assert.Equal(expected, EmployeeApproverService.Manager(Chain(), 1, depth));
+        Assert.Equal(expected, EmployeeApproverRepository.Manager(Chain(), 1, depth));
 
     [Fact]
     public void Someone_with_no_manager_has_no_reporting_approver() =>
-        Assert.Null(EmployeeApproverService.Manager(Chain(), 3, 1));
+        Assert.Null(EmployeeApproverRepository.Manager(Chain(), 3, 1));
 
     [Fact]
     public void A_loop_in_the_reporting_line_ends_rather_than_spins()
@@ -42,14 +44,14 @@ public sealed class EmployeeApproverTests
             [2] = new Node(2, 1, 10, null, EmployeeStatus.Active),
         };
 
-        Assert.Equal(2, EmployeeApproverService.Manager(loop, 1, 1));
-        Assert.Null(EmployeeApproverService.Manager(loop, 1, 2));
+        Assert.Equal(2, EmployeeApproverRepository.Manager(loop, 1, 1));
+        Assert.Null(EmployeeApproverRepository.Manager(loop, 1, 2));
     }
 
     [Fact]
     public void An_approver_with_a_login_is_answered_with_it()
     {
-        var answer = EmployeeApproverService.Answer(Chain(), 1, 2);
+        var answer = EmployeeApproverRepository.Answer(Chain(), 1, 2);
 
         Assert.Equal(2, answer.EmployeeId);
         Assert.Equal(AsokUser, answer.UserId);
@@ -62,7 +64,7 @@ public sealed class EmployeeApproverTests
         Dictionary<long, Node> graph = Chain();
         graph[2] = graph[2] with { EmployeeStatus = EmployeeStatus.Exited };
 
-        Assert.Null(EmployeeApproverService.Answer(graph, 1, 2).UserId);
+        Assert.Null(EmployeeApproverRepository.Answer(graph, 1, 2).UserId);
     }
 
     [Fact]
@@ -71,13 +73,13 @@ public sealed class EmployeeApproverTests
         Dictionary<long, Node> graph = Chain();
         graph[2] = graph[2] with { UserId = null };
 
-        Assert.Null(EmployeeApproverService.Answer(graph, 1, 2).UserId);
+        Assert.Null(EmployeeApproverRepository.Answer(graph, 1, 2).UserId);
     }
 
     [Fact]
     public void No_approver_found_is_an_empty_answer()
     {
-        var answer = EmployeeApproverService.Answer(Chain(), 4, null);
+        var answer = EmployeeApproverRepository.Answer(Chain(), 4, null);
 
         Assert.Equal(4, answer.Sequence);
         Assert.Null(answer.EmployeeId);
