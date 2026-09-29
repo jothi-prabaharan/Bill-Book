@@ -1,4 +1,5 @@
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
@@ -17,9 +18,9 @@ namespace Fee.Api.Controllers;
 [Route("api/portal/school/fees")]
 public sealed class PortalFeesController : ControllerBase
 {
-    private readonly PortalFeeService _portal;
+    private readonly PortalFeeRepository _portal;
 
-    public PortalFeesController(PortalFeeService portal) => _portal = portal;
+    public PortalFeesController(PortalFeeRepository portal) => _portal = portal;
 
     private long ContactId => long.Parse(User.FindFirst(RequirePortalAccessAttribute.ContactClaim)!.Value);
 

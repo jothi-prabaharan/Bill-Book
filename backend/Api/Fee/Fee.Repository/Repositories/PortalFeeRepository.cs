@@ -3,7 +3,7 @@ using Fee.Entity.Models;
 using Fee.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace Fee.Api.Services;
+namespace Fee.Repository.Repositories;
 
 /// <summary>
 /// A guardian's fees in the parent portal (S9, TK-69): the posted demands
@@ -11,11 +11,11 @@ namespace Fee.Api.Services;
 /// documents are staff's business and never shown. A demand is addressed to a
 /// student's primary guardian, so only that guardian sees it.
 /// </summary>
-public sealed class PortalFeeService
+public sealed class PortalFeeRepository
 {
     private readonly FeeDbContext _db;
 
-    public PortalFeeService(FeeDbContext db) => _db = db;
+    public PortalFeeRepository(FeeDbContext db) => _db = db;
 
     public async Task<List<PortalDemandView>> DemandsAsync(long contactId, CancellationToken ct)
     {

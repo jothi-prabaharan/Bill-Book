@@ -1,4 +1,5 @@
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Fee.Entity.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,7 +13,7 @@ namespace Fee.Api.Controllers;
 /// </summary>
 internal static class FeeAnswers
 {
-    public static IActionResult Answer(this ControllerBase controller, FeeResult result) => result.Outcome switch
+    public static IActionResult Answer(this ControllerBase controller, FeeResultRepository result) => result.Outcome switch
     {
         FeeOutcome.Ok => controller.Ok(result.Body ?? new { id = result.Id }),
         FeeOutcome.NotFound => controller.NotFound(),

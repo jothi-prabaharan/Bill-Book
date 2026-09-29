@@ -9,7 +9,7 @@ using Shared.Kernel.Ledgers;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 
-namespace Fee.Api.Services;
+namespace Fee.Repository.Repositories;
 
 /// <summary>
 /// Fee receipts and their allocation (S4, TK-64).
@@ -25,7 +25,7 @@ namespace Fee.Api.Services;
 /// ties to the open demands.</item>
 /// </list>
 /// </summary>
-public sealed class ReceiptService
+public sealed class ReceiptRepository
 {
     public const string TypeCode = "FRC";
 
@@ -36,9 +36,9 @@ public sealed class ReceiptService
     private readonly IFeeLedger _ledger;
     private readonly IBaseCurrencyProvider _currency;
     private readonly ITenantContext _tenant;
-    private readonly ILogger<ReceiptService> _log;
+    private readonly ILogger<ReceiptRepository> _log;
 
-    public ReceiptService(
+    public ReceiptRepository(
         FeeDbContext db,
         INumberGenerator numbers,
         IContactDirectory contacts,
@@ -46,7 +46,7 @@ public sealed class ReceiptService
         IFeeLedger ledger,
         IBaseCurrencyProvider currency,
         ITenantContext tenant,
-        ILogger<ReceiptService> log)
+        ILogger<ReceiptRepository> log)
     {
         _db = db;
         _numbers = numbers;
@@ -68,7 +68,7 @@ public sealed class ReceiptService
         return [.. rows.Select(View)];
     }
 
-    public async Task<FeeResult> CreateAsync(SaveReceiptRequest request, CancellationToken ct)
+    public async Task<FeeResultRepository> CreateAsync(SaveReceiptRequest request, CancellationToken ct)
     {
         string? currency;
         try
@@ -76,12 +76,12 @@ public sealed class ReceiptService
             IReadOnlyDictionary<long, ContactSummary> contact = await _contacts.FindAsync([request.ContactId], ct);
             if (!contact.TryGetValue(request.ContactId, out ContactSummary? guardian) || !guardian.IsGuardian || !guardian.IsActive)
             {
-                return FeeResult.Fail(FeeOutcome.Invalid, "Choose an active guardian of this branch.");
+                return FeeResultRepository.Fail(FeeOutcome.Invalid, "Choose an active guardian of this branch.");
             }
 
             if ((await _accounts.BankAccountsAsync(ct)).All(b => b.BankAccountId != request.BankAccountId))
             {
-                return FeeResult.Fail(FeeOutcome.Invalid, "Choose an active bank or cash account of this branch.");
+                return FeeResultRepository.Fail(FeeOutcome.Invalid, "Choose an active bank or cash account of this branch.");
             }
 
             currency = await _currency.GetBaseCurrencyAsync(ct);
@@ -89,12 +89,12 @@ public sealed class ReceiptService
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _log.LogError(ex, "A fee receipt could not check its guardian or bank account.");
-            return FeeResult.Fail(FeeOutcome.Unavailable);
+            return FeeResultRepository.Fail(FeeOutcome.Unavailable);
         }
 
         if (currency is null)
         {
-            return FeeResult.Fail(FeeOutcome.Unavailable);
+            return FeeResultRepository.Fail(FeeOutcome.Unavailable);
         }
 
         var open = await _db.FeeDemands.AsNoTracking()
@@ -106,14 +106,14 @@ public sealed class ReceiptService
         List<(long FeeDemandId, decimal Amount)> allocations;
         if (request.Allocations.Count == 0)
         {
-            allocations = FeeRules.AutoAllocate(request.Amount, open.Select(o => (o.FeeDemandId, o.Open)));
+            allocations = FeeRulesRepository.AutoAllocate(request.Amount, open.Select(o => (o.FeeDemandId, o.Open)));
         }
         else
         {
             allocations = [.. request.Allocations.Select(a => (a.FeeDemandId, a.Amount))];
-            if (FeeRules.AllocationProblem(request.Amount, allocations, open.ToDictionary(o => o.FeeDemandId, o => o.Open)) is string problem)
+            if (FeeRulesRepository.AllocationProblem(request.Amount, allocations, open.ToDictionary(o => o.FeeDemandId, o => o.Open)) is string problem)
             {
-                return FeeResult.Fail(FeeOutcome.Invalid, problem);
+                return FeeResultRepository.Fail(FeeOutcome.Invalid, problem);
             }
         }
 
@@ -145,26 +145,26 @@ public sealed class ReceiptService
             if (settled != 1)
             {
                 // Another receipt settled it first. The transaction rolls this one back whole.
-                return FeeResult.Fail(FeeOutcome.StateRule, "A demand was settled by another receipt meanwhile. Reload and try again.");
+                return FeeResultRepository.Fail(FeeOutcome.StateRule, "A demand was settled by another receipt meanwhile. Reload and try again.");
             }
         }
 
-        FeeResult posted = await SendAsync(receipt, FeeRules.ReceiptLegs(receipt), [], ct);
-        return posted.Outcome == FeeOutcome.Ok ? FeeResult.Ok(receipt.FeeReceiptId, View(receipt)) : posted;
+        FeeResultRepository posted = await SendAsync(receipt, FeeRulesRepository.ReceiptLegs(receipt), [], ct);
+        return posted.Outcome == FeeOutcome.Ok ? FeeResultRepository.Ok(receipt.FeeReceiptId, View(receipt)) : posted;
     }
 
     /// <summary>Voids a receipt: its allocations come off the demands they settled, and its ledger rows are withdrawn.</summary>
-    public async Task<FeeResult> VoidAsync(long id, string reason, CancellationToken ct)
+    public async Task<FeeResultRepository> VoidAsync(long id, string reason, CancellationToken ct)
     {
         FeeReceipt? receipt = await _db.FeeReceipts.Include(r => r.Allocations).FirstOrDefaultAsync(r => r.FeeReceiptId == id, ct);
         if (receipt is null)
         {
-            return FeeResult.Fail(FeeOutcome.NotFound);
+            return FeeResultRepository.Fail(FeeOutcome.NotFound);
         }
 
         if (receipt.DocumentStatus == FeeDocumentStatus.Void)
         {
-            return FeeResult.Fail(FeeOutcome.StateRule, "That receipt is already void.");
+            return FeeResultRepository.Fail(FeeOutcome.StateRule, "That receipt is already void.");
         }
 
         foreach (FeeReceiptAllocation allocation in receipt.Allocations)
@@ -175,7 +175,7 @@ public sealed class ReceiptService
                 .ExecuteUpdateAsync(s => s.SetProperty(d => d.PaidAmount, d => d.PaidAmount - amount), ct);
             if (undone != 1)
             {
-                return FeeResult.Fail(FeeOutcome.StateRule, "The receipt's allocations no longer match its demands. Reload and try again.");
+                return FeeResultRepository.Fail(FeeOutcome.StateRule, "The receipt's allocations no longer match its demands. Reload and try again.");
             }
         }
 
@@ -184,11 +184,11 @@ public sealed class ReceiptService
         receipt.VoidReason = reason.Trim();
         await _db.SaveChangesAsync(ct);
 
-        FeeResult withdrawn = await SendAsync(receipt, [], [LedgerType.Control], ct);
-        return withdrawn.Outcome == FeeOutcome.Ok ? FeeResult.Ok(id) : withdrawn;
+        FeeResultRepository withdrawn = await SendAsync(receipt, [], [LedgerType.Control], ct);
+        return withdrawn.Outcome == FeeOutcome.Ok ? FeeResultRepository.Ok(id) : withdrawn;
     }
 
-    private async Task<FeeResult> SendAsync(FeeReceipt receipt, List<LedgerLeg> legs, List<int> withdraw, CancellationToken ct)
+    private async Task<FeeResultRepository> SendAsync(FeeReceipt receipt, List<LedgerLeg> legs, List<int> withdraw, CancellationToken ct)
     {
         (Guid customerId, Guid orgId) = _tenant.Require();
         LedgerOutcome outcome;
@@ -212,16 +212,16 @@ public sealed class ReceiptService
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _log.LogError(ex, "Fee receipt {ReceiptId} could not reach the ledger.", receipt.FeeReceiptId);
-            return FeeResult.Fail(FeeOutcome.Unavailable);
+            return FeeResultRepository.Fail(FeeOutcome.Unavailable);
         }
 
         if (!outcome.Posted)
         {
             _log.LogError("The ledger refused fee receipt {ReceiptId}: {Detail}", receipt.FeeReceiptId, outcome.Detail);
-            return FeeResult.Fail(FeeOutcome.LedgerRefused);
+            return FeeResultRepository.Fail(FeeOutcome.LedgerRefused);
         }
 
-        return FeeResult.Ok(receipt.FeeReceiptId);
+        return FeeResultRepository.Ok(receipt.FeeReceiptId);
     }
 
     private static FeeReceiptView View(FeeReceipt r) => new()

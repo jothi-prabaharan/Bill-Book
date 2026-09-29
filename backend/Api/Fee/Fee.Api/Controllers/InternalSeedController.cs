@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -36,7 +37,7 @@ public sealed class InternalSeedController : ControllerBase
 
         var response = new SeedOrganizationResponse
         {
-            Seeded = await _services.GetRequiredService<FeeSeeder>().SeedForOrganizationAsync(request.OrgId, ct),
+            Seeded = await _services.GetRequiredService<FeeSeederRepository>().SeedForOrganizationAsync(request.OrgId, ct),
         };
 
         _log.LogInformation("Seeded Fee for organization {OrgId}: {@Seeded}", request.OrgId, response.Seeded);

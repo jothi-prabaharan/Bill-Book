@@ -1,10 +1,7 @@
+using Fee.Repository.Repositories;
 namespace Fee.Api.Services;
 
-/// <summary>What the caller may do beyond the route's own permission (S4, TK-64). From the token.</summary>
-public interface ICallerPermissions
-{
-    bool Has(string permission);
-}
+
 
 public sealed class HttpCallerPermissions : ICallerPermissions
 {

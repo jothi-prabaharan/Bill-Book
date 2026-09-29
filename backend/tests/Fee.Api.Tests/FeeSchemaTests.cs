@@ -1,4 +1,5 @@
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Fee.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class FeeSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using FeeDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new FeeSeeder(db).SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new FeeSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new FeeSeederRepository(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new FeeSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }

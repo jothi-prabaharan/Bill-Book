@@ -1,4 +1,5 @@
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Fee.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,10 +20,10 @@ namespace Fee.Api.Controllers;
 [Route("api/fee")]
 public sealed class FeeSetupController : ControllerBase
 {
-    private readonly FeeSetupService _setup;
+    private readonly FeeSetupRepository _setup;
     private readonly ICallerPermissions _caller;
 
-    public FeeSetupController(FeeSetupService setup, ICallerPermissions caller)
+    public FeeSetupController(FeeSetupRepository setup, ICallerPermissions caller)
     {
         _setup = setup;
         _caller = caller;

@@ -1,4 +1,5 @@
-namespace Fee.Api.Services;
+
+namespace Fee.Repository.Repositories;
 
 public enum FeeOutcome
 {
@@ -18,9 +19,9 @@ public enum FeeOutcome
 }
 
 /// <param name="Detail">A sentence for the caller that never names a table, a column or a figure.</param>
-public sealed record FeeResult(FeeOutcome Outcome, long? Id = null, string? Detail = null, object? Body = null)
+public sealed record FeeResultRepository(FeeOutcome Outcome, long? Id = null, string? Detail = null, object? Body = null)
 {
-    public static FeeResult Ok(long id, object? body = null) => new(FeeOutcome.Ok, id, null, body);
+    public static FeeResultRepository Ok(long id, object? body = null) => new(FeeOutcome.Ok, id, null, body);
 
-    public static FeeResult Fail(FeeOutcome outcome, string? detail = null) => new(outcome, null, detail);
+    public static FeeResultRepository Fail(FeeOutcome outcome, string? detail = null) => new(outcome, null, detail);
 }

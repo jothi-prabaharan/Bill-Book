@@ -2,14 +2,14 @@ using Fee.Repository;
 using Fee.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 
-namespace Fee.Api.Services;
+namespace Fee.Repository.Repositories;
 
 /// <summary>A branch's starting fee heads and its FDM and FRC series (S4, TK-64). Each part only when missing.</summary>
-public sealed class FeeSeeder
+public sealed class FeeSeederRepository
 {
     private readonly FeeDbContext _db;
 
-    public FeeSeeder(FeeDbContext db) => _db = db;
+    public FeeSeederRepository(FeeDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {

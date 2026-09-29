@@ -1,4 +1,5 @@
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Fee.Entity.Enums;
 using Fee.Entity.Models;
 using Fee.Entity.TableEntities;
@@ -44,7 +45,7 @@ internal sealed class RecordingLedger : IFeeLedger
     /// <summary>The guardian's receivable, one purpose of it: debits less credits.</summary>
     public decimal Receivable(long contactId, int purpose) =>
         Postings.Values.SelectMany(p => p.Legs)
-            .Where(l => l.AccountSystemName == FeeRules.AccountsReceivable && l.SubAccountReferenceId == contactId && l.SubAccountPurpose == purpose)
+            .Where(l => l.AccountSystemName == FeeRulesRepository.AccountsReceivable && l.SubAccountReferenceId == contactId && l.SubAccountPurpose == purpose)
             .Sum(l => l.DebitAmount - l.CreditAmount);
 }
 
@@ -120,12 +121,12 @@ public sealed class FeeServiceTests
     {
         var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid() };
         FeeDbContext db = _postgres.CreateContext(tenant.CustomerId!.Value, tenant.OrgId!.Value);
-        await new FeeSeeder(db).SeedForOrganizationAsync(tenant.OrgId.Value, default);
+        await new FeeSeederRepository(db).SeedForOrganizationAsync(tenant.OrgId.Value, default);
 
         long tuition = await db.FeeHeads.Where(h => h.Code == "TUITION").Select(h => h.FeeHeadId).SingleAsync();
         long exam = await db.FeeHeads.Where(h => h.Code == "EXAM").Select(h => h.FeeHeadId).SingleAsync();
         var school = new FakeSchool();
-        var setup = new FeeSetupService(db, new FakeAccounts(), school, NullLogger<FeeSetupService>.Instance);
+        var setup = new FeeSetupRepository(db, new FakeAccounts(), school, NullLogger<FeeSetupRepository>.Instance);
         long structure = (await setup.SaveStructureAsync(null, new SaveFeeStructureRequest
         {
             AcademicYearId = 1,
@@ -144,11 +145,11 @@ public sealed class FeeServiceTests
 
     private static NumberGenerator Numbers(FeeDbContext db) => new(db, Options.Create(new NumberingOptions()), new AprilYear());
 
-    private static DemandService Demands(Branch b) =>
-        new(b.Db, Numbers(b.Db), b.School, b.Ledger, new Rupees(), b.Tenant, NullLogger<DemandService>.Instance);
+    private static DemandRepository Demands(Branch b) =>
+        new(b.Db, Numbers(b.Db), b.School, b.Ledger, new Rupees(), b.Tenant, NullLogger<DemandRepository>.Instance);
 
-    private static ReceiptService Receipts(Branch b) =>
-        new(b.Db, Numbers(b.Db), new FakeGuardians(), new FakeAccounts(), b.Ledger, new Rupees(), b.Tenant, NullLogger<ReceiptService>.Instance);
+    private static ReceiptRepository Receipts(Branch b) =>
+        new(b.Db, Numbers(b.Db), new FakeGuardians(), new FakeAccounts(), b.Ledger, new Rupees(), b.Tenant, NullLogger<ReceiptRepository>.Instance);
 
     private static GenerateDemandsRequest June(Branch b) =>
         new() { FeeStructureId = b.Structure, PeriodKey = "2026-06", DemandDate = new DateOnly(2026, 6, 1) };
@@ -169,18 +170,18 @@ public sealed class FeeServiceTests
         Assert.StartsWith("FDM/", arun.DemandNo);
 
         // A part payment.
-        FeeResult receipt = await Receipts(b).CreateAsync(new SaveReceiptRequest
+        FeeResultRepository receipt = await Receipts(b).CreateAsync(new SaveReceiptRequest
         {
             ContactId = 501, ReceiptDate = new DateOnly(2026, 6, 5), BankAccountId = 7, Amount = 2000m,
         }, default);
         Assert.Equal(FeeOutcome.Ok, receipt.Outcome);
 
-        Assert.All(b.Ledger.Postings.Values, p => Assert.True(FeeRules.Balances(p.Legs), $"{p.TransactionTypeCode} {p.TransactionId} does not balance."));
+        Assert.All(b.Ledger.Postings.Values, p => Assert.True(FeeRulesRepository.Balances(p.Legs), $"{p.TransactionTypeCode} {p.TransactionId} does not balance."));
 
         decimal open = await b.Db.FeeDemands.Where(d => d.ContactId == 501 && d.DocumentStatus == FeeDocumentStatus.Posted)
             .SumAsync(d => d.NetAmount - d.PaidAmount);
         Assert.Equal(1100m, open);
-        Assert.Equal(open, b.Ledger.Receivable(501, FeeRules.TradePurpose));
+        Assert.Equal(open, b.Ledger.Receivable(501, FeeRulesRepository.TradePurpose));
     }
 
     [SkippableFact]
@@ -195,8 +196,8 @@ public sealed class FeeServiceTests
 
         await Receipts(b).CreateAsync(new SaveReceiptRequest { ContactId = 501, ReceiptDate = new DateOnly(2026, 6, 5), BankAccountId = 7, Amount = 5000m }, default);
 
-        Assert.Equal(0m, b.Ledger.Receivable(501, FeeRules.TradePurpose));
-        Assert.Equal(-1900m, b.Ledger.Receivable(501, FeeRules.OverpaymentPurpose));
+        Assert.Equal(0m, b.Ledger.Receivable(501, FeeRulesRepository.TradePurpose));
+        Assert.Equal(-1900m, b.Ledger.Receivable(501, FeeRulesRepository.OverpaymentPurpose));
         Assert.Equal(1900m, await b.Db.FeeReceipts.Select(r => r.UnallocatedAmount).SingleAsync());
     }
 
@@ -225,7 +226,7 @@ public sealed class FeeServiceTests
         Branch b = await NewBranchAsync();
         await using FeeDbContext _ = b.Db;
 
-        var setup = new FeeSetupService(b.Db, new FakeAccounts(), b.School, NullLogger<FeeSetupService>.Instance);
+        var setup = new FeeSetupRepository(b.Db, new FakeAccounts(), b.School, NullLogger<FeeSetupRepository>.Instance);
         await setup.SaveConcessionAsync(null, new SaveConcessionRequest
         {
             StudentId = 11, FeeHeadId = b.Tuition, ConcessionKind = ConcessionKind.Percent, Value = 50m, Reason = "Sibling",
@@ -240,8 +241,8 @@ public sealed class FeeServiceTests
         Assert.Equal(1850m, arun.NetAmount);
 
         LedgerPosting posting = b.Ledger.Postings[("FDM", arun.FeeDemandId)];
-        Assert.True(FeeRules.Balances(posting.Legs));
-        Assert.Equal(1250m, posting.Legs.Where(l => l.AccountSystemName == FeeRules.DiscountGiven).Sum(l => l.DebitAmount));
+        Assert.True(FeeRulesRepository.Balances(posting.Legs));
+        Assert.Equal(1250m, posting.Legs.Where(l => l.AccountSystemName == FeeRulesRepository.DiscountGiven).Sum(l => l.DebitAmount));
     }
 
     [SkippableFact]
@@ -251,8 +252,8 @@ public sealed class FeeServiceTests
         Branch b = await NewBranchAsync();
         await using FeeDbContext _ = b.Db;
 
-        var setup = new FeeSetupService(b.Db, new FakeAccounts(), b.School, NullLogger<FeeSetupService>.Instance);
-        FeeResult result = await setup.SaveConcessionAsync(null, new SaveConcessionRequest
+        var setup = new FeeSetupRepository(b.Db, new FakeAccounts(), b.School, NullLogger<FeeSetupRepository>.Instance);
+        FeeResultRepository result = await setup.SaveConcessionAsync(null, new SaveConcessionRequest
         {
             StudentId = 11, FeeHeadId = b.Tuition, Value = 10m, Reason = "Staff child",
             ValidFrom = new DateOnly(2026, 6, 1), ValidTo = new DateOnly(2027, 3, 31), IsApproved = true,
@@ -281,7 +282,7 @@ public sealed class FeeServiceTests
 
         Assert.DoesNotContain(("FDM", demand), b.Ledger.Postings.Keys);
         Assert.DoesNotContain(("FRC", receipt), b.Ledger.Postings.Keys);
-        Assert.Equal(0m, b.Ledger.Receivable(501, FeeRules.TradePurpose));
+        Assert.Equal(0m, b.Ledger.Receivable(501, FeeRulesRepository.TradePurpose));
     }
 
     [SkippableFact]
@@ -333,7 +334,7 @@ public sealed class FeeRuleTests
     [InlineData(FeeFrequency.Termly, 6, 2, true)]
     [InlineData(FeeFrequency.Termly, 6, 3, false)]
     public void A_line_falls_due_by_its_frequency_from_the_years_first_month(FeeFrequency frequency, int firstMonth, int month, bool due) =>
-        Assert.Equal(due, FeeRules.IsDue(frequency, firstMonth, month));
+        Assert.Equal(due, FeeRulesRepository.IsDue(frequency, firstMonth, month));
 
     [Theory]
     [InlineData(ConcessionKind.Percent, 2500, 50, 1250)]
@@ -342,7 +343,7 @@ public sealed class FeeRuleTests
     [InlineData(ConcessionKind.Amount, 600, 200, 200)]
     [InlineData(ConcessionKind.Amount, 600, 900, 600)]
     public void A_concession_is_a_rounded_share_or_a_sum_never_above_the_fee(ConcessionKind kind, double amount, double value, double expected) =>
-        Assert.Equal((decimal)expected, FeeRules.ConcessionOn((decimal)amount, kind, (decimal)value));
+        Assert.Equal((decimal)expected, FeeRulesRepository.ConcessionOn((decimal)amount, kind, (decimal)value));
 
     [Fact]
     public void Only_an_approved_concession_in_force_applies_and_the_best_of_two_wins()
@@ -356,8 +357,8 @@ public sealed class FeeRuleTests
             new() { FeeHeadId = 1, ConcessionKind = ConcessionKind.Percent, Value = 80, IsApproved = true, ValidFrom = on.AddDays(40), ValidTo = on.AddDays(60) },
         ];
 
-        Assert.Equal(500m, FeeRules.BestConcession(2500m, concessions, 1, on));
-        Assert.Equal(0m, FeeRules.BestConcession(2500m, concessions, 2, on));
+        Assert.Equal(500m, FeeRulesRepository.BestConcession(2500m, concessions, 1, on));
+        Assert.Equal(0m, FeeRulesRepository.BestConcession(2500m, concessions, 2, on));
     }
 
     [Fact]
@@ -380,14 +381,14 @@ public sealed class FeeRuleTests
             ],
         };
 
-        List<LedgerLeg> legs = FeeRules.DemandLegs(demand, heads);
+        List<LedgerLeg> legs = FeeRulesRepository.DemandLegs(demand, heads);
 
-        Assert.True(FeeRules.Balances(legs));
-        Assert.Equal(5500m, legs.Single(l => l.AccountSystemName == FeeRules.AccountsReceivable).DebitAmount);
-        Assert.Equal(2500m, legs.Single(l => l.AccountSystemName == FeeRules.FeeIncome).CreditAmount);
-        Assert.Equal(3000m, legs.Single(l => l.AccountSystemName == FeeRules.RefundableDeposits).CreditAmount);
+        Assert.True(FeeRulesRepository.Balances(legs));
+        Assert.Equal(5500m, legs.Single(l => l.AccountSystemName == FeeRulesRepository.AccountsReceivable).DebitAmount);
+        Assert.Equal(2500m, legs.Single(l => l.AccountSystemName == FeeRulesRepository.FeeIncome).CreditAmount);
+        Assert.Equal(3000m, legs.Single(l => l.AccountSystemName == FeeRulesRepository.RefundableDeposits).CreditAmount);
         Assert.Equal(500m, legs.Single(l => l.AccountId == 77).CreditAmount);
-        Assert.Equal(500m, legs.Single(l => l.AccountSystemName == FeeRules.DiscountGiven).DebitAmount);
+        Assert.Equal(500m, legs.Single(l => l.AccountSystemName == FeeRulesRepository.DiscountGiven).DebitAmount);
     }
 
     [Fact]
@@ -400,27 +401,27 @@ public sealed class FeeRuleTests
             Lines = [new() { FeeDemandLineId = 10, FeeHeadId = 1, Amount = 2500m, ConcessionAmount = 2500m }],
         };
 
-        List<LedgerLeg> legs = FeeRules.DemandLegs(demand, heads);
+        List<LedgerLeg> legs = FeeRulesRepository.DemandLegs(demand, heads);
 
-        Assert.True(FeeRules.Balances(legs));
-        Assert.DoesNotContain(legs, l => l.AccountSystemName == FeeRules.AccountsReceivable);
+        Assert.True(FeeRulesRepository.Balances(legs));
+        Assert.DoesNotContain(legs, l => l.AccountSystemName == FeeRulesRepository.AccountsReceivable);
     }
 
     [Fact]
     public void A_receipt_splits_between_the_receivable_and_an_advance()
     {
-        List<LedgerLeg> legs = FeeRules.ReceiptLegs(new FeeReceipt { ContactId = 501, BankAccountId = 7, Amount = 5000m, UnallocatedAmount = 1900m });
+        List<LedgerLeg> legs = FeeRulesRepository.ReceiptLegs(new FeeReceipt { ContactId = 501, BankAccountId = 7, Amount = 5000m, UnallocatedAmount = 1900m });
 
-        Assert.True(FeeRules.Balances(legs));
+        Assert.True(FeeRulesRepository.Balances(legs));
         Assert.Equal(5000m, legs.Single(l => l.BankAccountId == 7).DebitAmount);
-        Assert.Equal(3100m, legs.Single(l => l.SubAccountPurpose == FeeRules.TradePurpose && l.CreditAmount > 0).CreditAmount);
-        Assert.Equal(1900m, legs.Single(l => l.SubAccountPurpose == FeeRules.OverpaymentPurpose).CreditAmount);
+        Assert.Equal(3100m, legs.Single(l => l.SubAccountPurpose == FeeRulesRepository.TradePurpose && l.CreditAmount > 0).CreditAmount);
+        Assert.Equal(1900m, legs.Single(l => l.SubAccountPurpose == FeeRulesRepository.OverpaymentPurpose).CreditAmount);
     }
 
     [Fact]
     public void Money_settles_the_oldest_demands_first_and_keeps_the_rest()
     {
-        var allocations = FeeRules.AutoAllocate(4000m, [(1, 3100m), (2, 2500m), (3, 2500m)]);
+        var allocations = FeeRulesRepository.AutoAllocate(4000m, [(1, 3100m), (2, 2500m), (3, 2500m)]);
 
         Assert.Equal([(1L, 3100m), (2L, 900m)], allocations);
     }
@@ -430,10 +431,10 @@ public sealed class FeeRuleTests
     {
         var open = new Dictionary<long, decimal> { [1] = 3100m, [2] = 2500m };
 
-        Assert.Null(FeeRules.AllocationProblem(4000m, [(1, 3100m), (2, 900m)], open));
-        Assert.NotNull(FeeRules.AllocationProblem(4000m, [(1, 3200m)], open));
-        Assert.NotNull(FeeRules.AllocationProblem(1000m, [(1, 600m), (2, 600m)], open));
-        Assert.NotNull(FeeRules.AllocationProblem(4000m, [(9, 100m)], open));
-        Assert.NotNull(FeeRules.AllocationProblem(4000m, [(1, 100m), (1, 100m)], open));
+        Assert.Null(FeeRulesRepository.AllocationProblem(4000m, [(1, 3100m), (2, 900m)], open));
+        Assert.NotNull(FeeRulesRepository.AllocationProblem(4000m, [(1, 3200m)], open));
+        Assert.NotNull(FeeRulesRepository.AllocationProblem(1000m, [(1, 600m), (2, 600m)], open));
+        Assert.NotNull(FeeRulesRepository.AllocationProblem(4000m, [(9, 100m)], open));
+        Assert.NotNull(FeeRulesRepository.AllocationProblem(4000m, [(1, 100m), (1, 100m)], open));
     }
 }

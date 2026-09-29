@@ -1,13 +1,13 @@
 using Fee.Entity.Enums;
 using Fee.Entity.TableEntities;
 
-namespace Fee.Api.Services;
+namespace Fee.Repository.Repositories;
 
 /// <summary>
 /// The fee arithmetic and the postings it makes (S4, TK-64). Pure, so every
 /// rule and every leg is tested without a database or Accounting.
 /// </summary>
-public static class FeeRules
+public static class FeeRulesRepository
 {
     public const string AccountsReceivable = "Accounts Receivable";
     public const string FeeIncome = "Fee Income";

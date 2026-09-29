@@ -1,4 +1,5 @@
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Fee.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,10 +20,10 @@ namespace Fee.Api.Controllers;
 [Route("api/fee")]
 public sealed class FeeDocumentsController : ControllerBase
 {
-    private readonly DemandService _demands;
-    private readonly ReceiptService _receipts;
+    private readonly DemandRepository _demands;
+    private readonly ReceiptRepository _receipts;
 
-    public FeeDocumentsController(DemandService demands, ReceiptService receipts)
+    public FeeDocumentsController(DemandRepository demands, ReceiptRepository receipts)
     {
         _demands = demands;
         _receipts = receipts;

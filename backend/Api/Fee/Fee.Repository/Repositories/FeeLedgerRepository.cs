@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace Fee.Api.Services;
+namespace Fee.Repository.Repositories;
 
 // Where Fee posts to the general ledger (S4, TK-64): Accounting's internal
 // posting route, in Accounting's own shape, the way Sales' LedgerClient does.

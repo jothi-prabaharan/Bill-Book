@@ -8,7 +8,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.School;
 using Shared.Kernel.Tenancy;
 
-namespace Fee.Api.Services;
+namespace Fee.Repository.Repositories;
 
 /// <summary>
 /// Fee demands (S4, TK-64).
@@ -24,7 +24,7 @@ namespace Fee.Api.Services;
 /// nothing has been paid against it.</item>
 /// </list>
 /// </summary>
-public sealed class DemandService
+public sealed class DemandRepository
 {
     public const string TypeCode = "FDM";
 
@@ -34,16 +34,16 @@ public sealed class DemandService
     private readonly IFeeLedger _ledger;
     private readonly IBaseCurrencyProvider _currency;
     private readonly ITenantContext _tenant;
-    private readonly ILogger<DemandService> _log;
+    private readonly ILogger<DemandRepository> _log;
 
-    public DemandService(
+    public DemandRepository(
         FeeDbContext db,
         INumberGenerator numbers,
         IStudentClient sis,
         IFeeLedger ledger,
         IBaseCurrencyProvider currency,
         ITenantContext tenant,
-        ILogger<DemandService> log)
+        ILogger<DemandRepository> log)
     {
         _db = db;
         _numbers = numbers;
@@ -54,27 +54,27 @@ public sealed class DemandService
         _log = log;
     }
 
-    public async Task<FeeResult> GenerateAsync(GenerateDemandsRequest request, CancellationToken ct)
+    public async Task<FeeResultRepository> GenerateAsync(GenerateDemandsRequest request, CancellationToken ct)
     {
         FeeStructure? structure = await _db.FeeStructures.AsNoTracking().Include(s => s.Lines)
             .FirstOrDefaultAsync(s => s.FeeStructureId == request.FeeStructureId, ct);
         if (structure is null)
         {
-            return FeeResult.Fail(FeeOutcome.NotFound);
+            return FeeResultRepository.Fail(FeeOutcome.NotFound);
         }
 
         if (!structure.IsActive)
         {
-            return FeeResult.Fail(FeeOutcome.StateRule, "That fee structure is inactive.");
+            return FeeResultRepository.Fail(FeeOutcome.StateRule, "That fee structure is inactive.");
         }
 
-        (_, int month) = FeeRules.Period(request.PeriodKey);
-        List<FeeStructureLine> due = [.. structure.Lines.Where(l => FeeRules.IsDue(l.Frequency, structure.FirstMonth, month))];
+        (_, int month) = FeeRulesRepository.Period(request.PeriodKey);
+        List<FeeStructureLine> due = [.. structure.Lines.Where(l => FeeRulesRepository.IsDue(l.Frequency, structure.FirstMonth, month))];
         var response = new GenerateDemandsResponse();
         if (due.Count == 0)
         {
             response.Notes.Add("Nothing in the structure falls due in that month.");
-            return FeeResult.Ok(structure.FeeStructureId, response);
+            return FeeResultRepository.Ok(structure.FeeStructureId, response);
         }
 
         IReadOnlyList<EnrolmentInfo> enrolments;
@@ -91,12 +91,12 @@ public sealed class DemandService
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _log.LogError(ex, "The class's students could not be read for fee structure {StructureId}.", structure.FeeStructureId);
-            return FeeResult.Fail(FeeOutcome.Unavailable);
+            return FeeResultRepository.Fail(FeeOutcome.Unavailable);
         }
 
         if (currency is null)
         {
-            return FeeResult.Fail(FeeOutcome.Unavailable);
+            return FeeResultRepository.Fail(FeeOutcome.Unavailable);
         }
 
         HashSet<long> raised = [.. await _db.FeeDemands
@@ -132,7 +132,7 @@ public sealed class DemandService
                 PeriodKey = request.PeriodKey,
                 ContactId = contactId,
                 DemandDate = request.DemandDate,
-                DueDate = FeeRules.DueDate(request.PeriodKey, due.Min(l => l.DueDay)),
+                DueDate = FeeRulesRepository.DueDate(request.PeriodKey, due.Min(l => l.DueDay)),
                 CurrencyCode = currency,
                 ExchangeRate = 1m,
             };
@@ -140,7 +140,7 @@ public sealed class DemandService
             List<FeeConcession> theirs = [.. concessions.Where(c => c.StudentId == enrolment.StudentId)];
             foreach (FeeStructureLine line in due)
             {
-                decimal concession = FeeRules.BestConcession(line.Amount, theirs, line.FeeHeadId, request.DemandDate);
+                decimal concession = FeeRulesRepository.BestConcession(line.Amount, theirs, line.FeeHeadId, request.DemandDate);
                 demand.Lines.Add(new FeeDemandLine { FeeHeadId = line.FeeHeadId, Amount = line.Amount, ConcessionAmount = concession });
             }
 
@@ -152,7 +152,7 @@ public sealed class DemandService
         }
 
         await _db.SaveChangesAsync(ct);
-        return FeeResult.Ok(structure.FeeStructureId, response);
+        return FeeResultRepository.Ok(structure.FeeStructureId, response);
     }
 
     public async Task<List<FeeDemandView>> ListAsync(long? contactId, long? feeStructureId, string? periodKey, bool openOnly, CancellationToken ct)
@@ -174,7 +174,7 @@ public sealed class DemandService
     /// refusal stops the run, and the request's transaction takes back every
     /// number it took; the postings already made are replaced on the retry.
     /// </summary>
-    public async Task<FeeResult> PostAsync(PostDemandsRequest request, CancellationToken ct)
+    public async Task<FeeResultRepository> PostAsync(PostDemandsRequest request, CancellationToken ct)
     {
         IQueryable<FeeDemand> query = _db.FeeDemands.Include(d => d.Lines).Where(d => d.DocumentStatus == FeeDocumentStatus.Draft);
         if (request.FeeDemandIds.Count > 0)
@@ -187,7 +187,7 @@ public sealed class DemandService
         }
         else
         {
-            return FeeResult.Fail(FeeOutcome.Invalid, "Choose the demands, or a structure and period, to post.");
+            return FeeResultRepository.Fail(FeeOutcome.Invalid, "Choose the demands, or a structure and period, to post.");
         }
 
         List<FeeDemand> drafts = await query.OrderBy(d => d.FeeDemandId).ToListAsync(ct);
@@ -199,32 +199,32 @@ public sealed class DemandService
             demand.DocumentStatus = FeeDocumentStatus.Posted;
             await _db.SaveChangesAsync(ct);
 
-            FeeResult posted = await SendAsync(demand, FeeRules.DemandLegs(demand, heads), [], ct);
+            FeeResultRepository posted = await SendAsync(demand, FeeRulesRepository.DemandLegs(demand, heads), [], ct);
             if (posted.Outcome != FeeOutcome.Ok)
             {
                 return posted;
             }
         }
 
-        return FeeResult.Ok(drafts.Count, new { posted = drafts.Count });
+        return FeeResultRepository.Ok(drafts.Count, new { posted = drafts.Count });
     }
 
-    public async Task<FeeResult> VoidAsync(long id, string reason, CancellationToken ct)
+    public async Task<FeeResultRepository> VoidAsync(long id, string reason, CancellationToken ct)
     {
         FeeDemand? demand = await _db.FeeDemands.Include(d => d.Lines).FirstOrDefaultAsync(d => d.FeeDemandId == id, ct);
         if (demand is null)
         {
-            return FeeResult.Fail(FeeOutcome.NotFound);
+            return FeeResultRepository.Fail(FeeOutcome.NotFound);
         }
 
         if (demand.DocumentStatus == FeeDocumentStatus.Void)
         {
-            return FeeResult.Fail(FeeOutcome.StateRule, "That demand is already void.");
+            return FeeResultRepository.Fail(FeeOutcome.StateRule, "That demand is already void.");
         }
 
         if (demand.PaidAmount > 0 || await _db.FeeReceiptAllocations.AnyAsync(a => a.FeeDemandId == id, ct))
         {
-            return FeeResult.Fail(FeeOutcome.StateRule, "A demand with money received against it cannot be voided. Void the receipt first.");
+            return FeeResultRepository.Fail(FeeOutcome.StateRule, "A demand with money received against it cannot be voided. Void the receipt first.");
         }
 
         bool wasPosted = demand.DocumentStatus == FeeDocumentStatus.Posted;
@@ -235,14 +235,14 @@ public sealed class DemandService
         // A draft never reached the ledger; a posted demand's rows are withdrawn.
         if (!wasPosted)
         {
-            return FeeResult.Ok(id);
+            return FeeResultRepository.Ok(id);
         }
 
-        FeeResult withdrawn = await SendAsync(demand, [], [LedgerType.Item, LedgerType.Control], ct);
-        return withdrawn.Outcome == FeeOutcome.Ok ? FeeResult.Ok(id) : withdrawn;
+        FeeResultRepository withdrawn = await SendAsync(demand, [], [LedgerType.Item, LedgerType.Control], ct);
+        return withdrawn.Outcome == FeeOutcome.Ok ? FeeResultRepository.Ok(id) : withdrawn;
     }
 
-    private async Task<FeeResult> SendAsync(FeeDemand demand, List<LedgerLeg> legs, List<int> withdraw, CancellationToken ct)
+    private async Task<FeeResultRepository> SendAsync(FeeDemand demand, List<LedgerLeg> legs, List<int> withdraw, CancellationToken ct)
     {
         (Guid customerId, Guid orgId) = _tenant.Require();
         LedgerOutcome outcome;
@@ -266,16 +266,16 @@ public sealed class DemandService
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _log.LogError(ex, "Fee demand {DemandId} could not reach the ledger.", demand.FeeDemandId);
-            return FeeResult.Fail(FeeOutcome.Unavailable);
+            return FeeResultRepository.Fail(FeeOutcome.Unavailable);
         }
 
         if (!outcome.Posted)
         {
             _log.LogError("The ledger refused fee demand {DemandId}: {Detail}", demand.FeeDemandId, outcome.Detail);
-            return FeeResult.Fail(FeeOutcome.LedgerRefused);
+            return FeeResultRepository.Fail(FeeOutcome.LedgerRefused);
         }
 
-        return FeeResult.Ok(demand.FeeDemandId);
+        return FeeResultRepository.Ok(demand.FeeDemandId);
     }
 
     internal static FeeDemandView View(FeeDemand d) => new()

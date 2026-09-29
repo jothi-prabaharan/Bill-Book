@@ -1,4 +1,5 @@
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Fee.Entity.Enums;
 using Fee.Entity.Models;
 using Fee.Entity.TableEntities;
@@ -70,7 +71,7 @@ public sealed class PortalFeeTests
             new FeeReceipt { ReceiptNo = "FRC-00002", ContactId = Neighbour, ReceiptDate = new DateOnly(2026, 6, 5), BankAccountId = 1, Amount = 100m });
         await db.SaveChangesAsync();
 
-        var portal = new PortalFeeService(db);
+        var portal = new PortalFeeRepository(db);
 
         PortalDemandView demand = Assert.Single(await portal.DemandsAsync(Mother, default));
         Assert.Equal("FDM-00001", demand.DemandNo);

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Fee.Api.Services;
+using Fee.Repository.Repositories;
 using Fee.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -97,12 +98,12 @@ builder.Services.AddHttpClient<IFeeLedger, HttpFeeLedger>(client => client.BaseA
     .AddHttpMessageHandler<InternalKeyHandler>();
 
 // ---- Service registrations ----
-builder.Services.AddScoped<FeeSeeder>();
+builder.Services.AddScoped<FeeSeederRepository>();
 builder.Services.AddScoped<ICallerPermissions, HttpCallerPermissions>();
-builder.Services.AddScoped<FeeSetupService>();
-builder.Services.AddScoped<DemandService>();
-builder.Services.AddScoped<ReceiptService>();
-builder.Services.AddScoped<PortalFeeService>();
+builder.Services.AddScoped<FeeSetupRepository>();
+builder.Services.AddScoped<DemandRepository>();
+builder.Services.AddScoped<ReceiptRepository>();
+builder.Services.AddScoped<PortalFeeRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
