@@ -2287,7 +2287,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Not built:** only the invoice has a print route, so the other eight documents print custom fields once theirs exist (TK-22).
 
 ### TK-113 · Custom reports: datasets and the report builder
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-29
+- **Issue:** [#101](https://github.com/jothi-prabaharan/Bill-Book/issues/101)
 - **Lanes:** L-RPT, L-REPORTING-UI · **Depends on:** TK-111, TK-112 · **Decision:** —
 - **Tables:** `rpt.CustomReports`
 - **Sub-tasks:**
