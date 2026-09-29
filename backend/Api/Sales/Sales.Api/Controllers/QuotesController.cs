@@ -78,6 +78,7 @@ public sealed class QuotesController : ControllerBase
         outcome switch
         {
             QuoteOutcome.NotFound => NotFound(),
+            QuoteOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = detail ?? "A custom field value was refused." }),
             QuoteOutcome.LifecycleRefused => BadRequest(new MessageResponse { Message = detail ?? "Action refused by document lifecycle." }),
             QuoteOutcome.LineInvalid => BadRequest(new MessageResponse { Message = detail ?? "One or more lines are invalid." }),
             QuoteOutcome.ValidityInvalid => BadRequest(new MessageResponse { Message = detail ?? "Validity date is invalid." }),

@@ -228,6 +228,7 @@
 
     <div class="field dlc-form__wide">
       <bb-textarea id="dlc-notes" label="Notes" rows="2" formControlName="notes" />
+      <bb-document-custom-fields source="/api/sales/custom-fields?kind=DeliveryChallan" [(value)]="customValues" [isNew]="challanId() === null" />
     </div>
   </form>
 

@@ -58,6 +58,8 @@ export interface CreditNoteView {
   totalAmount: number;
   totalAmountBase: number;
   lines: CreditNoteLineView[];
+  /** The document's custom field values (TK-112). */
+  customFields?: Record<string, unknown> | null;
 }
 
 export interface CreditNoteLineView extends ApiDocumentLine {
@@ -81,6 +83,8 @@ export interface SaveCreditNoteRequest {
   billingAddress?: string;
   shippingAddress?: string;
   lines: SaveCreditNoteLineRequest[];
+  /** Custom field values (TK-112); left out on an update, what is stored stays. */
+  customFields?: Record<string, unknown>;
 }
 
 /**

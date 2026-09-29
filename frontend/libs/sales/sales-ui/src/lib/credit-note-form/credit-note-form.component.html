@@ -182,6 +182,7 @@
 
     <div class="field crn-form__wide">
       <bb-textarea id="crn-notes" label="Notes" rows="2" formControlName="notes" />
+      <bb-document-custom-fields source="/api/sales/custom-fields?kind=CreditNote" [(value)]="customValues" [isNew]="creditNoteId() === null" />
     </div>
   </form>
 

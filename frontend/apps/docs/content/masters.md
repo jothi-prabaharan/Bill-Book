@@ -1113,7 +1113,7 @@ The **Financial** tab's **Over-budget warnings compare** setting chooses whether
 
 # Custom fields
 
-**Status: partial.** Fields can be defined, and contacts and items show, save and search them. Documents come in a later release.
+**Status: built.** Fields can be defined. Contacts and items show, save and search them. Sales and purchase documents show and save them, carry them from the document they were made from, and print them.
 
 **Settings › Custom fields** lets a branch add fields of its own to contacts, items, warehouses, quotes, orders, challans, invoices, credit notes, purchase documents, leads, tickets and projects. Choose the kind of record at the top. The page lists that kind's fields and previews how they will look on its form.
 
@@ -1145,6 +1145,24 @@ A **contact** or an **item** form shows the branch's fields for that kind of rec
 - A contact created quickly, from a lead or at the till, has no custom fields and is not checked for required ones. Fill them in when you next open it.
 
 Anyone who can read contacts, or items, sees their fields. Settings access is not needed.
+
+## On sales and purchase documents
+
+Quotes, sales orders, delivery challans, invoices, credit notes, purchase orders, goods receipts, bills and debit notes each have their own kind of custom field. The form shows them under **More details**, after Notes. A new document starts with each field's default.
+
+- **Carry forward.** When a document is made from another, it takes the source's values for fields marked **Carry forward to the next document**, where it has a field with the same key. This covers:
+  - a quote to an order;
+  - an order to a challan or an invoice;
+  - a challan to an invoice;
+  - an invoice to a credit note;
+  - a purchase order to a goods receipt or a bill;
+  - a goods receipt to a bill;
+  - a bill to a debit note.
+
+  An invoice takes from its nearest source: the challan, then the order, then the quote. A value typed on the new document wins over the carried one. A carried value that the new field would refuse, such as an option it does not have, is left behind rather than stopping the conversion.
+- **Printing.** A field marked **Offer on print templates** can be printed as `{{custom.key}}`, for example `{{custom.site_ref}}`. In Settings › Print templates, those fields appear under **Custom** in the field panel. Choices print as their labels, yes / no fields as Yes or No, and dates like the template's other dates. A tag for a field the document has no value for prints nothing. Invoices print through templates today; the other documents print this way once their print routes exist.
+
+Anyone who can read sales, or purchase, documents sees their fields.
 
 # Print templates
 

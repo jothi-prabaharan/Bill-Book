@@ -85,6 +85,12 @@ public class SaveBillRequest
     public string? TermsAndConditions { get; set; }
 
     public List<SaveBillLineRequest> Lines { get; set; } = [];
+
+    /// <summary>
+    /// Custom field values (TK-112), checked against the branch's definitions
+    /// for this kind of document. Left out on an update, what is stored stays.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 public class SaveBillLineRequest
@@ -192,6 +198,9 @@ public enum BillOutcome
 
     /// <summary>A line was charged on to a client, so the bill cannot be voided until that invoice is (TK-106).</summary>
     BilledToClient = 14,
+
+    /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
+    CustomFieldsRefused = 900,
 }
 
 public sealed record BillResult(BillOutcome Outcome, long BillId = 0, string? Detail = null);
@@ -279,6 +288,9 @@ public class BillView : BillListItem
     public string? VoidReason { get; set; }
 
     public List<BillLineView> Lines { get; set; } = [];
+
+    /// <summary>The document's custom field values (TK-112), as stored.</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
 
 public class BillLineView

@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Enums;
@@ -61,6 +62,9 @@ public sealed class DebitNoteService
     /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
     private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public DebitNoteService(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -75,8 +79,10 @@ public sealed class DebitNoteService
         ICurrentUser user,
         TimeProvider clock,
         PurchaseApprovalService? approvals = null,
-        Shared.Kernel.Projects.IProjectDirectory? projects = null)
+        Shared.Kernel.Projects.IProjectDirectory? projects = null,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _projects = projects;
         _approvals = approvals;
         _db = db;
@@ -233,6 +239,16 @@ public sealed class DebitNoteService
         note.ContactGstin = request.ContactGstin;
         note.IsInterState = pos.IsInterState;
         note.Notes = request.Notes;
+
+        CustomFieldSource? customFieldSource = note.DebitNoteId != 0 || request.BillId <= 0
+            ? null
+            : new CustomFieldSource(CustomFieldEntityKind.Bill, await _db.Bills.Where(b => b.BillId == request.BillId).Select(b => b.CustomFields).FirstOrDefaultAsync(ct));
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, note, CustomFieldEntityKind.DebitNote, request.CustomFields, isNew: note.DebitNoteId == 0, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new DebitNoteResult(DebitNoteOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
         if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
@@ -733,6 +749,7 @@ public sealed class DebitNoteService
                 RoundOffAmount = n.RoundOffAmount,
                 TotalAmountBase = n.TotalAmountBase,
                 Notes = n.Notes,
+                CustomFields = n.CustomFields,
                 PostedAt = n.PostedAt,
                 VoidedAt = n.VoidedAt,
                 VoidReason = n.VoidReason,

@@ -34,6 +34,9 @@ import {
   ApprovalPanelComponent,
   ProjectOption,
   ProjectOptionsService,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
 import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-availability.drawer';
@@ -66,6 +69,7 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
   selector: 'bb-sales-order-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     FormFieldComponent,
     LookupDialogComponent,
@@ -85,6 +89,9 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
   styleUrl: './sales-order-form.component.scss',
 })
 export class SalesOrderFormComponent implements OnInit {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private readonly fb = inject(FormBuilder);
   private readonly orders = inject(SalesOrderService);
   private readonly route = inject(ActivatedRoute);
@@ -297,6 +304,7 @@ export class SalesOrderFormComponent implements OnInit {
       notes: order.notes ?? '',
       termsAndConditions: order.termsAndConditions ?? '',
     });
+    this.customValues.set(order.customFields ?? {});
 
     // Through the scale boundary. Straight in, a ₹100 line reads as zero.
     this.lines.set(
@@ -384,6 +392,7 @@ export class SalesOrderFormComponent implements OnInit {
       billingAddress: value.billingAddress || undefined,
       shippingAddress: value.shippingAddress || undefined,
       notes: value.notes || undefined,
+      customFields: compactValues(this.customValues()),
       termsAndConditions: value.termsAndConditions || undefined,
       lines: priced.map(toApiLine),
       requestApproval,

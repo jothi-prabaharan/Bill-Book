@@ -166,6 +166,7 @@ public sealed class SalesOrdersController : ControllerBase
         result.Outcome switch
         {
             InvoiceOutcome.NotFound => NotFound(),
+            InvoiceOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "A custom field value was refused." }),
             InvoiceOutcome.AlreadyFulfilled => Conflict(new MessageResponse { Message = result.Detail ?? "There is nothing left to bill on this sales order." }),
             InvoiceOutcome.LineInvalid => BadRequest(new MessageResponse { Message = result.Detail ?? "One or more lines are invalid." }),
             InvoiceOutcome.InsufficientStock => Conflict(new MessageResponse { Message = result.Detail ?? "Insufficient stock to fulfill the Sales Order." }),
@@ -185,6 +186,7 @@ public sealed class SalesOrdersController : ControllerBase
         outcome switch
         {
             SalesOrderOutcome.NotFound => NotFound(),
+            SalesOrderOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = detail ?? "A custom field value was refused." }),
             SalesOrderOutcome.Forbidden => Forbid(),
             SalesOrderOutcome.LifecycleRefused => BadRequest(new MessageResponse { Message = detail ?? "Action refused by document lifecycle." }),
             SalesOrderOutcome.LineInvalid => BadRequest(new MessageResponse { Message = detail ?? "One or more lines are invalid." }),

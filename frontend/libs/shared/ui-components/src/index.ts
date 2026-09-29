@@ -23,6 +23,7 @@ export * from './lib/attendance-register/attendance-register.model';
 export * from './lib/attendance-register/attendance-register.component';
 export * from './lib/custom-fields/custom-fields.model';
 export * from './lib/custom-fields/custom-fields.component';
+export * from './lib/custom-fields/document-custom-fields.component';
 
 export * from './lib/data-grid/data-grid.component';
 export * from './lib/data-grid/data-grid.models';

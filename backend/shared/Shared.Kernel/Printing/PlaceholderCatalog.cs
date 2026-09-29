@@ -115,9 +115,33 @@ public static class PlaceholderCatalog
                 Placeholders = [.. g.OrderBy(p => p.Sort)],
             })];
 
+    /// <summary>
+    /// The prefix of a branch's own field on a document (TK-112):
+    /// <c>{{custom.site_ref}}</c>. Custom keys are the branch's, not the
+    /// catalog's, so any well-formed one is accepted on a document type that
+    /// can carry custom fields, and prints nothing where the document holds no value.
+    /// </summary>
+    public const string CustomPrefix = "custom.";
+
     /// <summary>Looks one tag up for a document type. Null means the renderer must print nothing.</summary>
     public static PlaceholderDefinition? Find(string documentTypeCode, string tag) =>
-        For(documentTypeCode).FirstOrDefault(p => string.Equals(p.Tag, tag, StringComparison.OrdinalIgnoreCase));
+        For(documentTypeCode).FirstOrDefault(p => string.Equals(p.Tag, tag, StringComparison.OrdinalIgnoreCase))
+        ?? CustomTag(documentTypeCode, tag);
+
+    /// <summary>The definition a <c>custom.</c> tag resolves to, or null when the tag or document type cannot carry one.</summary>
+    public static PlaceholderDefinition? CustomTag(string documentTypeCode, string tag)
+    {
+        if (!tag.StartsWith(CustomPrefix, StringComparison.OrdinalIgnoreCase)
+            || CustomFields.CustomFieldKinds.ForDocumentType(documentTypeCode) is null)
+        {
+            return null;
+        }
+
+        string key = tag[CustomPrefix.Length..];
+        return key.Length is > 0 and <= 40 && key[0] is >= 'a' and <= 'z' && key.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')
+            ? Single(CustomPrefix + key, "Custom", "A custom field", PlaceholderType.Text, 900)
+            : null;
+    }
 
     private static PlaceholderDefinition Single(
         string tag, string group, string description, PlaceholderType type, int sort, string? format = null) =>

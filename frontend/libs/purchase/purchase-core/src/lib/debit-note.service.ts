@@ -21,6 +21,8 @@ export interface SaveDebitNoteRequest {
   exchangeRate?: number | null;
   notes?: string | null;
   lines: SaveDebitNoteLineRequest[];
+  /** Custom field values (TK-112); left out on an update, what is stored stays. */
+  customFields?: Record<string, unknown>;
 }
 
 export interface SaveDebitNoteLineRequest {
@@ -88,6 +90,8 @@ export interface DebitNoteView extends DebitNoteListItem {
   voidedAt?: string | null;
   voidReason?: string | null;
   lines: DebitNoteLineView[];
+  /** The document's custom field values (TK-112). */
+  customFields?: Record<string, unknown> | null;
 }
 
 export interface DebitNoteLineView {

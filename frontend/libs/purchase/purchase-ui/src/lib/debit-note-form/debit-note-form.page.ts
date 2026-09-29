@@ -17,6 +17,9 @@ import {
   TextInputComponent,
   TextareaComponent,
   ApprovalPanelComponent,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 
 import {
@@ -71,6 +74,7 @@ interface ReturnLine {
   selector: 'bb-debit-note-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     DataGridComponent,
     CommonModule,
@@ -87,6 +91,9 @@ interface ReturnLine {
   styleUrl: './debit-note-form.page.scss',
 })
 export class DebitNoteFormPage {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
 
   /** A getter for the same reason: `reasons` is declared below this. */
   protected get reasonOptions(): BbSelectOption<string>[] {
@@ -184,6 +191,7 @@ export class DebitNoteFormPage {
       this.billLabel.set(view.billNo ?? String(view.billId));
       this.reasonCode.set(view.reasonCode);
       this.notes_.set(view.notes ?? '');
+      this.customValues.set(view.customFields ?? {});
 
       this.lines.set(
         view.lines.map((line) => ({
@@ -471,6 +479,7 @@ export class DebitNoteFormPage {
       contactGstin: this.contactGstin() || null,
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
       notes: this.notes_() || null,
+      customFields: compactValues(this.customValues()),
       lines,
     };
   }

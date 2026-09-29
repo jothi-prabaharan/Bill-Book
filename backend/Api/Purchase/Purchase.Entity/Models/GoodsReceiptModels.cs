@@ -63,6 +63,12 @@ public class SaveGoodsReceiptRequest
     public string? TermsAndConditions { get; set; }
 
     public List<SaveGoodsReceiptLineRequest> Lines { get; set; } = [];
+
+    /// <summary>
+    /// Custom field values (TK-112), checked against the branch's definitions
+    /// for this kind of document. Left out on an update, what is stored stays.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 /// <summary>One line of a goods receipt.</summary>
@@ -186,6 +192,9 @@ public enum GoodsReceiptOutcome
 
     /// <summary>A bill has already been raised against this receipt, so it cannot be withdrawn.</summary>
     AlreadyBilled = 10,
+
+    /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
+    CustomFieldsRefused = 900,
 }
 
 public sealed record GoodsReceiptResult(
@@ -270,6 +279,9 @@ public class GoodsReceiptView : GoodsReceiptListItem
     public string? VoidReason { get; set; }
 
     public List<GoodsReceiptLineView> Lines { get; set; } = [];
+
+    /// <summary>The document's custom field values (TK-112), as stored.</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
 
 public class GoodsReceiptLineView

@@ -68,6 +68,12 @@ public class SavePurchaseOrderRequest
     public string? TermsAndConditions { get; set; }
 
     public List<SavePurchaseOrderLineRequest> Lines { get; set; } = [];
+
+    /// <summary>
+    /// Custom field values (TK-112), checked against the branch's definitions
+    /// for this kind of document. Left out on an update, what is stored stays.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 /// <summary>One line as the screen sends it. Money figures are derived, not sent.</summary>
@@ -167,6 +173,9 @@ public enum PurchaseOrderOutcome
 
     /// <summary>Goods have already been received against this order, so it cannot be withdrawn.</summary>
     AlreadyReceived = 7,
+
+    /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
+    CustomFieldsRefused = 900,
 }
 
 public sealed record PurchaseOrderResult(
@@ -250,6 +259,9 @@ public class PurchaseOrderView : PurchaseOrderListItem
     public string? VoidReason { get; set; }
 
     public List<PurchaseOrderLineView> Lines { get; set; } = [];
+
+    /// <summary>The document's custom field values (TK-112), as stored.</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
 
 public class PurchaseOrderLineView

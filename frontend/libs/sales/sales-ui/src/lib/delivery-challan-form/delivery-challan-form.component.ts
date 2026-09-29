@@ -36,6 +36,9 @@ import {
   UiMessage,
   ProjectOption,
   ProjectOptionsService,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
 
@@ -71,6 +74,7 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
   selector: 'bb-delivery-challan-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     FormFieldComponent,
     LookupDialogComponent,
     CommonModule,
@@ -90,6 +94,9 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
   styleUrl: './delivery-challan-form.component.scss',
 })
 export class DeliveryChallanFormComponent implements OnInit {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private readonly fb = inject(FormBuilder);
   private readonly challans = inject(DeliveryChallanService);
   private readonly orders = inject(SalesOrderService);
@@ -232,6 +239,7 @@ export class DeliveryChallanFormComponent implements OnInit {
       shippingAddress: challan.shippingAddress ?? '',
       notes: challan.notes ?? '',
     });
+    this.customValues.set(challan.customFields ?? {});
 
     // Through the scale boundary, carrying each line's order line with it.
     this.lines.set(
@@ -403,6 +411,7 @@ export class DeliveryChallanFormComponent implements OnInit {
       billingAddress: value.billingAddress || undefined,
       shippingAddress: value.shippingAddress || undefined,
       notes: value.notes || undefined,
+      customFields: compactValues(this.customValues()),
       lines: priced.map((line) => ({
         ...toApiLine(line),
         salesOrderDetailId: line.salesOrderDetailId ?? undefined,

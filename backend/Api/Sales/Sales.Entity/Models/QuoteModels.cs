@@ -61,6 +61,12 @@ public class SaveQuoteRequest
     public string? TermsAndConditions { get; set; }
 
     public List<SaveQuoteLineRequest> Lines { get; set; } = [];
+
+    /// <summary>
+    /// Custom field values (TK-112), checked against the branch's definitions
+    /// for this kind of document. Left out on an update, what is stored stays.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 /// <summary>One line as the screen sends it. Money figures are derived, not sent.</summary>
@@ -151,6 +157,9 @@ public enum QuoteOutcome
 
     /// <summary>A lapsed quote cannot be converted. Raise a fresh one.</summary>
     Lapsed = 8,
+
+    /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
+    CustomFieldsRefused = 900,
 }
 
 public sealed record QuoteResult(QuoteOutcome Outcome, long QuoteId = 0, string? Detail = null);
@@ -246,6 +255,9 @@ public class QuoteView : QuoteListItem
     public string? VoidReason { get; set; }
 
     public List<QuoteLineView> Lines { get; set; } = [];
+
+    /// <summary>The document's custom field values (TK-112), as stored.</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
 
 public class QuoteLineView

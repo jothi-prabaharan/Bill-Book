@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Storage;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Models;
@@ -52,6 +53,9 @@ public sealed class CreditNoteService
     /// <summary>Approval chains (TK-102). Null in tests that do not exercise them.</summary>
     private readonly CreditNoteApprovalService? _approvals;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public CreditNoteService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -68,8 +72,10 @@ public sealed class CreditNoteService
         Sales.Api.Services.Pdf.SalesDocumentArchive archive,
         Shared.Kernel.Stock.IUqcLookup uqc,
         EInvoicing.IEInvoicePosting eInvoicing,
-        CreditNoteApprovalService? approvals = null)
+        CreditNoteApprovalService? approvals = null,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _approvals = approvals;
         _db = db;
         _tenant = tenant;
@@ -156,6 +162,7 @@ public sealed class CreditNoteService
             CurrencyCode = creditNote.CurrencyCode,
             ExchangeRate = creditNote.ExchangeRate,
             Notes = creditNote.Notes,
+            CustomFields = creditNote.CustomFields,
             BillingAddress = creditNote.BillingAddress,
             ShippingAddress = creditNote.ShippingAddress,
             PlaceOfSupplyStateId = creditNote.PlaceOfSupplyStateId,
@@ -324,6 +331,16 @@ public sealed class CreditNoteService
         creditNote.DocumentDate = request.DocumentDate;
         creditNote.PrintTemplateId = request.PrintTemplateId;
         creditNote.Notes = request.Notes;
+
+        CustomFieldSource? customFieldSource = creditNoteId.HasValue || request.InvoiceId <= 0
+            ? null
+            : new CustomFieldSource(CustomFieldEntityKind.Invoice, await _db.Invoices.Where(i => i.InvoiceId == request.InvoiceId).Select(i => i.CustomFields).FirstOrDefaultAsync(ct));
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, creditNote, CustomFieldEntityKind.CreditNote, request.CustomFields, isNew: !creditNoteId.HasValue, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new CreditNoteResult(CreditNoteOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         // The branch's own currency when none is given. This defaulted to "USD".
         creditNote.CurrencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode)

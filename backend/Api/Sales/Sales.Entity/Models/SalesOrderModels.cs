@@ -70,6 +70,12 @@ public class SaveSalesOrderRequest
     public string? TermsAndConditions { get; set; }
 
     public List<SaveSalesOrderLineRequest> Lines { get; set; } = [];
+
+    /// <summary>
+    /// Custom field values (TK-112), checked against the branch's definitions
+    /// for this kind of document. Left out on an update, what is stored stays.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 /// <summary>One line as the screen sends it. Money figures are derived, not sent.</summary>
@@ -195,6 +201,9 @@ public enum SalesOrderOutcome
 
     /// <summary>A limit or the approval rules could not be read. Transient.</summary>
     LimitsUnavailable = 15,
+
+    /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
+    CustomFieldsRefused = 900,
 }
 
 public sealed record SalesOrderResult(SalesOrderOutcome Outcome, long SalesOrderId = 0, string? Detail = null);
@@ -356,6 +365,9 @@ public class SalesOrderView : SalesOrderListItem
     public string? ShortCloseReason { get; set; }
 
     public List<SalesOrderLineView> Lines { get; set; } = [];
+
+    /// <summary>The document's custom field values (TK-112), as stored.</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
 
 public class SalesOrderLineView

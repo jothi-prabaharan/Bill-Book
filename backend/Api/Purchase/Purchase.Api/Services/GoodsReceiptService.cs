@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
@@ -70,6 +71,9 @@ public sealed class GoodsReceiptService
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public GoodsReceiptService(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -82,8 +86,10 @@ public sealed class GoodsReceiptService
         IInventoryClient inventory,
         ILedgerClient ledger,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -244,6 +250,16 @@ public sealed class GoodsReceiptService
         receipt.IsInterState = pos.IsInterState;
         receipt.Notes = request.Notes;
         receipt.TermsAndConditions = request.TermsAndConditions;
+
+        CustomFieldSource? customFieldSource = receipt.GoodsReceiptId == 0 && request.PurchaseOrderId is long sourceOrderId
+            ? new CustomFieldSource(CustomFieldEntityKind.PurchaseOrder, await _db.PurchaseOrders.Where(o => o.PurchaseOrderId == sourceOrderId).Select(o => o.CustomFields).FirstOrDefaultAsync(ct))
+            : null;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, receipt, CustomFieldEntityKind.GoodsReceipt, request.CustomFields, isNew: receipt.GoodsReceiptId == 0, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new GoodsReceiptResult(GoodsReceiptOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
         List<TaxLineResult> taxLines = new(request.Lines.Count);
@@ -693,6 +709,7 @@ public sealed class GoodsReceiptService
                 RoundOffAmount = r.RoundOffAmount,
                 TotalAmountBase = r.TotalAmountBase,
                 Notes = r.Notes,
+                CustomFields = r.CustomFields,
                 TermsAndConditions = r.TermsAndConditions,
                 PostedAt = r.PostedAt,
                 VoidedAt = r.VoidedAt,

@@ -215,4 +215,12 @@ public abstract class DocumentHeaderBase : OrgScopedEntity, Approvals.IApprovalS
     /// never makes a document unprintable.
     /// </summary>
     public long? PrintTemplateId { get; set; }
+
+    /// <summary>
+    /// The branch's own fields on this document (TK-112): <c>{ "key": value }</c>
+    /// as jsonb, checked against Settings › Custom fields for the document's
+    /// kind, carried from the document it was made from, and printable as
+    /// <c>{{custom.key}}</c>.
+    /// </summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }

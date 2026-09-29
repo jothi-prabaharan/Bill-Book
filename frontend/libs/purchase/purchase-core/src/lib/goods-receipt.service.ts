@@ -26,6 +26,8 @@ export interface SaveGoodsReceiptRequest {
   notes?: string | null;
   termsAndConditions?: string | null;
   lines: SaveGoodsReceiptLineRequest[];
+  /** Custom field values (TK-112); left out on an update, what is stored stays. */
+  customFields?: Record<string, unknown>;
 }
 
 export interface SaveGoodsReceiptLineRequest {
@@ -106,6 +108,8 @@ export interface GoodsReceiptView extends GoodsReceiptListItem {
   voidedAt?: string | null;
   voidReason?: string | null;
   lines: GoodsReceiptLineView[];
+  /** The document's custom field values (TK-112). */
+  customFields?: Record<string, unknown> | null;
 }
 
 export interface GoodsReceiptLineView {

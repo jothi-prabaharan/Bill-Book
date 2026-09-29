@@ -66,6 +66,9 @@ public class DeliveryChallanView
     public decimal TotalAmountBase { get; set; }
 
     public List<DeliveryChallanLineView> Lines { get; set; } = [];
+
+    /// <summary>The document's custom field values (TK-112), as stored.</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
 
 public class DeliveryChallanLineView
@@ -151,6 +154,12 @@ public class SaveDeliveryChallanRequest
     public string? ShippingAddress { get; set; }
 
     public List<SaveDeliveryChallanLineRequest> Lines { get; set; } = [];
+
+    /// <summary>
+    /// Custom field values (TK-112), checked against the branch's definitions
+    /// for this kind of document. Left out on an update, what is stored stays.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 public class SaveDeliveryChallanLineRequest
@@ -237,6 +246,9 @@ public enum DeliveryChallanOutcome
 
     /// <summary>Accounting refused the challan's posting to Goods Delivered Not Invoiced (TK-90).</summary>
     PostingRefused = 9,
+
+    /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
+    CustomFieldsRefused = 900,
 }
 
 public sealed record DeliveryChallanResult(

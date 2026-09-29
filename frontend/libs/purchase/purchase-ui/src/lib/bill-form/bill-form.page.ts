@@ -17,6 +17,9 @@ import {
   ApprovalPanelComponent,
   ProjectOption,
   ProjectOptionsService,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 import {
   BillService,
@@ -46,6 +49,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
   selector: 'bb-bill-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     CommonModule,
     FormsModule,
@@ -60,6 +64,9 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
   styleUrl: './bill-form.page.scss',
 })
 export class BillFormPage {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private readonly bills = inject(BillService);
   private readonly receipts = inject(GoodsReceiptService);
   private readonly lookups = inject(PurchaseLookupService);
@@ -199,6 +206,7 @@ export class BillFormPage {
       this.vendorBillDate.set(view.vendorBillDate);
       this.dueDate.set(view.dueDate);
       this.notes.set(view.notes ?? '');
+      this.customValues.set(view.customFields ?? {});
       this.isInterState.set(view.isInterState);
 
       this.receiptLineIds = view.lines.map((l) => l.goodsReceiptDetailId ?? null);
@@ -601,6 +609,7 @@ export class BillFormPage {
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
       landedCostAmount: 0,
       notes: this.notes() || null,
+      customFields: compactValues(this.customValues()),
       lines,
     };
   }

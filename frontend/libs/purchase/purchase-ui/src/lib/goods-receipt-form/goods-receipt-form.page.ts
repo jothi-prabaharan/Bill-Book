@@ -21,6 +21,9 @@ import {
   recalculate,
   ProjectOption,
   ProjectOptionsService,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 
 import {
@@ -69,6 +72,7 @@ interface ReceivingLine {
   selector: 'bb-goods-receipt-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     DataGridComponent,
     CommonModule,
     FormsModule,
@@ -84,6 +88,9 @@ interface ReceivingLine {
   styleUrl: './goods-receipt-form.page.scss',
 })
 export class GoodsReceiptFormPage {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private readonly receipts = inject(GoodsReceiptService);
   private readonly orders = inject(PurchaseOrderService);
   private readonly lookups = inject(PurchaseLookupService);
@@ -216,6 +223,7 @@ export class GoodsReceiptFormPage {
       this.vendorDeliveryNoteDate.set(view.vendorDeliveryNoteDate ?? '');
       this.shippingAddress.set(view.shippingAddress ?? '');
       this.notes.set(view.notes ?? '');
+      this.customValues.set(view.customFields ?? {});
       this.isInterState.set(view.isInterState);
 
       this.lines.set(
@@ -701,6 +709,7 @@ export class GoodsReceiptFormPage {
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
       shippingAddress: this.shippingAddress() || null,
       notes: this.notes() || null,
+      customFields: compactValues(this.customValues()),
       lines,
     };
   }

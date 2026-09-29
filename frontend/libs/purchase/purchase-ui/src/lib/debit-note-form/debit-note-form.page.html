@@ -194,6 +194,7 @@
           (ngModelChange)="notes_.set($event)"
           name="notes"
         />
+        <bb-document-custom-fields source="/api/purchase/custom-fields?kind=DebitNote" [(value)]="customValues" [isNew]="debitNoteId() === null" />
       </div>
     </section>
 

@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Storage;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Models;
@@ -40,6 +41,9 @@ public sealed class DeliveryChallanService
     private const int DocumentLedgerSource = 1;
     private const int ItemReference = 2;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public DeliveryChallanService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -53,8 +57,10 @@ public sealed class DeliveryChallanService
         TimeProvider clock,
         IInventoryClient inventoryClient,
         Sales.Api.Services.Pdf.SalesDocumentArchive archive,
-        ILedgerClient ledger)
+        ILedgerClient ledger,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -145,6 +151,7 @@ public sealed class DeliveryChallanService
             CurrencyCode = deliveryChallan.CurrencyCode,
             ExchangeRate = deliveryChallan.ExchangeRate,
             Notes = deliveryChallan.Notes,
+            CustomFields = deliveryChallan.CustomFields,
             BillingAddress = deliveryChallan.BillingAddress,
             ShippingAddress = deliveryChallan.ShippingAddress,
             PlaceOfSupplyStateId = deliveryChallan.PlaceOfSupplyStateId,
@@ -308,6 +315,16 @@ public sealed class DeliveryChallanService
         deliveryChallan.DocumentDate = request.DocumentDate;
         deliveryChallan.PrintTemplateId = request.PrintTemplateId;
         deliveryChallan.Notes = request.Notes;
+
+        CustomFieldSource? customFieldSource = !deliveryChallanId.HasValue && request.SalesOrderId is long sourceOrderId
+            ? new CustomFieldSource(CustomFieldEntityKind.SalesOrder, await _db.SalesOrders.Where(o => o.SalesOrderId == sourceOrderId).Select(o => o.CustomFields).FirstOrDefaultAsync(ct))
+            : null;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, deliveryChallan, CustomFieldEntityKind.DeliveryChallan, request.CustomFields, isNew: !deliveryChallanId.HasValue, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new DeliveryChallanResult(DeliveryChallanOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         // The branch's own currency when none is given. This defaulted to "USD",
         // so a challan keyed without a currency was a foreign-currency document.

@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
@@ -35,6 +36,9 @@ public sealed class SalesOrderService
     /// <summary>Credit and discount overrides (TK-102). Null in tests that do not exercise them.</summary>
     private readonly SalesOrderOverrideService? _overrides;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public SalesOrderService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -49,8 +53,10 @@ public sealed class SalesOrderService
         IInventoryClient inventoryClient,
         ICreditCheckClient creditCheckClient,
         IDiscountLimitClient? discountLimits = null,
-        SalesOrderOverrideService? overrides = null)
+        SalesOrderOverrideService? overrides = null,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _discountLimits = discountLimits;
         _overrides = overrides;
         _db = db;
@@ -114,6 +120,16 @@ public sealed class SalesOrderService
             Notes = request.Notes,
             TermsAndConditions = request.TermsAndConditions,
         };
+
+        CustomFieldSource? customFieldSource = request.QuoteId is long sourceQuoteId
+            ? new CustomFieldSource(CustomFieldEntityKind.Quote, await _db.Quotes.Where(q => q.QuoteId == sourceQuoteId).Select(q => q.CustomFields).FirstOrDefaultAsync(ct))
+            : null;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, SalesOrder, CustomFieldEntityKind.SalesOrder, request.CustomFields, isNew: true, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
 
@@ -298,6 +314,12 @@ public sealed class SalesOrderService
 
         SalesOrder.Notes = request.Notes;
         SalesOrder.TermsAndConditions = request.TermsAndConditions;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, SalesOrder, CustomFieldEntityKind.SalesOrder, request.CustomFields, isNew: false, source: null, ct) is string customFieldsRefused)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
         SalesOrder.Lines.Clear();
@@ -892,6 +914,7 @@ public sealed class SalesOrderService
                 RoundOffAmount = q.RoundOffAmount,
                 TotalAmountBase = q.TotalAmountBase,
                 Notes = q.Notes,
+                CustomFields = q.CustomFields,
                 TermsAndConditions = q.TermsAndConditions,
                 PostedAt = q.PostedAt,
                 VoidedAt = q.VoidedAt,

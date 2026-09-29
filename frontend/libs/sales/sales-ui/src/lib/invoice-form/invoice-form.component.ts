@@ -43,6 +43,9 @@ import {
   ProjectOption,
   ProjectOptionsService,
   recalculate,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
 import { ProjectItemsDialogComponent } from '../project-items/project-items.dialog';
@@ -76,6 +79,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
   selector: 'bb-invoice-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     FormFieldComponent,
     LookupDialogComponent,
@@ -97,6 +101,9 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
   styleUrl: './invoice-form.component.scss',
 })
 export class InvoiceFormComponent implements OnInit {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private readonly fb = inject(FormBuilder);
   private readonly invoices = inject(InvoiceService);
   private readonly route = inject(ActivatedRoute);
@@ -280,6 +287,7 @@ export class InvoiceFormComponent implements OnInit {
       transporterName: invoice.transporterName ?? '',
       transportDistanceKm: invoice.transportDistanceKm ?? 0,
     });
+    this.customValues.set(invoice.customFields ?? {});
 
     // Through the scale boundary. Straight in, a ₹100 line reads as zero.
     this.lines.set(
@@ -376,6 +384,7 @@ export class InvoiceFormComponent implements OnInit {
       billingAddress: value.billingAddress || undefined,
       shippingAddress: value.shippingAddress || undefined,
       notes: value.notes || undefined,
+      customFields: compactValues(this.customValues()),
       termsAndConditions: value.termsAndConditions || undefined,
       vehicleNo: value.vehicleNo || undefined,
       transporterId: value.transporterId || undefined,

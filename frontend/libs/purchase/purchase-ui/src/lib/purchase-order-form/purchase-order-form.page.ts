@@ -17,6 +17,9 @@ import {
   ApprovalPanelComponent,
   ProjectOption,
   ProjectOptionsService,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 import {
   PurchaseLookupService,
@@ -56,6 +59,7 @@ type Picker = 'none' | 'vendor' | 'item';
   selector: 'bb-purchase-order-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     CommonModule,
     FormsModule,
@@ -70,6 +74,9 @@ type Picker = 'none' | 'vendor' | 'item';
   styleUrl: './purchase-order-form.page.scss',
 })
 export class PurchaseOrderFormPage {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private readonly orders = inject(PurchaseOrderService);
   private readonly lookups = inject(PurchaseLookupService);
   private readonly route = inject(ActivatedRoute);
@@ -214,6 +221,7 @@ export class PurchaseOrderFormPage {
       this.billingAddress.set(view.billingAddress ?? '');
       this.shippingAddress.set(view.shippingAddress ?? '');
       this.notes.set(view.notes ?? '');
+      this.customValues.set(view.customFields ?? {});
       this.termsAndConditions.set(view.termsAndConditions ?? '');
       this.isInterState.set(view.isInterState);
 
@@ -501,6 +509,7 @@ export class PurchaseOrderFormPage {
       billingAddress: this.billingAddress() || null,
       shippingAddress: this.shippingAddress() || null,
       notes: this.notes() || null,
+      customFields: compactValues(this.customValues()),
       termsAndConditions: this.termsAndConditions() || null,
       lines,
     };

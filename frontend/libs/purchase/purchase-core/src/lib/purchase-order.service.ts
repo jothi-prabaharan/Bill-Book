@@ -24,6 +24,8 @@ export interface SavePurchaseOrderRequest {
   notes?: string | null;
   termsAndConditions?: string | null;
   lines: SavePurchaseOrderLineRequest[];
+  /** Custom field values (TK-112); left out on an update, what is stored stays. */
+  customFields?: Record<string, unknown>;
 }
 
 export interface SavePurchaseOrderLineRequest {
@@ -93,6 +95,8 @@ export interface PurchaseOrderView extends PurchaseOrderListItem {
   voidedAt?: string | null;
   voidReason?: string | null;
   lines: PurchaseOrderLineView[];
+  /** The document's custom field values (TK-112). */
+  customFields?: Record<string, unknown> | null;
 }
 
 export interface PurchaseOrderLineView {

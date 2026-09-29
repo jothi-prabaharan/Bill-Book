@@ -61,6 +61,7 @@ public static class DocumentModelConfiguration
         b.Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         b.Property(e => e.ApprovalStatus).HasConversion<string>().HasMaxLength(12);
         b.Property(e => e.CurrentStepLabel).HasMaxLength(50);
+        b.Property(e => e.CustomFields).HasColumnType("jsonb");
         b.Property(e => e.ExchangeRate).HasColumnType("decimal(18,8)");
 
         foreach (string amount in HeaderAmounts)

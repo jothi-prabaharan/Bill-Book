@@ -84,6 +84,7 @@ public sealed class GoodsReceiptsController : ControllerBase
         result.Outcome switch
         {
             GoodsReceiptOutcome.NotFound => NotFound(),
+            GoodsReceiptOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "A custom field value was refused." }),
 
             GoodsReceiptOutcome.LifecycleRefused => BadRequest(new MessageResponse
             {

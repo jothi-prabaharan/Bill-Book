@@ -30,6 +30,8 @@ export interface SaveBillRequest {
   notes?: string | null;
   termsAndConditions?: string | null;
   lines: SaveBillLineRequest[];
+  /** Custom field values (TK-112); left out on an update, what is stored stays. */
+  customFields?: Record<string, unknown>;
 }
 
 export interface SaveBillLineRequest {
@@ -108,6 +110,8 @@ export interface BillView extends BillListItem {
   voidedAt?: string | null;
   voidReason?: string | null;
   lines: BillLineView[];
+  /** The document's custom field values (TK-112). */
+  customFields?: Record<string, unknown> | null;
 }
 
 export interface BillLineView {

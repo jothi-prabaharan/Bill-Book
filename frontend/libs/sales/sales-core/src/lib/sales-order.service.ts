@@ -26,6 +26,8 @@ export interface SaveSalesOrderRequest {
   notes?: string;
   termsAndConditions?: string;
   lines: SalesOrderLineRequest[];
+  /** Custom field values (TK-112); left out on an update, what is stored stays. */
+  customFields?: Record<string, unknown>;
 }
 
 export type SalesOrderLineRequest = ApiDocumentLine;
@@ -138,6 +140,8 @@ export interface SalesOrderView extends SalesOrderListItem {
   voidReason?: string;
   shortCloseReason?: string;
   lines: SalesOrderLineView[];
+  /** The document's custom field values (TK-112). */
+  customFields?: Record<string, unknown> | null;
 }
 
 export interface SalesOrderLineView extends ApiDocumentLine {

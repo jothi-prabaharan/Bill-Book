@@ -241,6 +241,7 @@
           (ngModelChange)="notes.set($event)"
           name="notes"
         />
+        <bb-document-custom-fields source="/api/purchase/custom-fields?kind=GoodsReceipt" [(value)]="customValues" [isNew]="goodsReceiptId() === null" />
       </div>
     </section>
 

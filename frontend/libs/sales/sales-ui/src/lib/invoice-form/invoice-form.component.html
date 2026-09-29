@@ -314,6 +314,7 @@
 
     <div class="field inv-form__wide">
       <bb-textarea id="inv-notes" label="Notes" rows="2" formControlName="notes" />
+      <bb-document-custom-fields source="/api/sales/custom-fields?kind=Invoice" [(value)]="customValues" [isNew]="invoiceId() === null" />
     </div>
 
     <div class="field inv-form__wide">

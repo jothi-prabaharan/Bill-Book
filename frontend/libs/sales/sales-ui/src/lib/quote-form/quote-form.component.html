@@ -74,6 +74,7 @@
     </div>
     <div class="form-group full-width">
       <bb-textarea id="notes" label="Notes" rows="2" formControlName="notes" />
+      <bb-document-custom-fields source="/api/sales/custom-fields?kind=Quote" [(value)]="customValues" [isNew]="!quoteId" />
     </div>
     <div class="form-group full-width">
       <bb-textarea

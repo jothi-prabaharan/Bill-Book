@@ -25,7 +25,23 @@ import {
   PrintTemplateService,
   insertTag,
 } from '@bill-book/master-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import { CustomFieldDefinition, MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+/** The kind of custom field each printable document type carries (TK-112), as the server maps it. */
+const CUSTOM_FIELD_KINDS: Record<string, string> = {
+  QTE: 'Quote',
+  SOR: 'SalesOrder',
+  DLC: 'DeliveryChallan',
+  INV: 'Invoice',
+  POS: 'Invoice',
+  CRN: 'CreditNote',
+  POR: 'PurchaseOrder',
+  GRN: 'GoodsReceipt',
+  BIL: 'Bill',
+  DBN: 'DebitNote',
+};
 
 /**
  * The print template editor: how each document type looks on paper, per branch.
@@ -55,6 +71,7 @@ import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
 })
 export class PrintTemplatesPage implements OnInit {
   private readonly api = inject(PrintTemplateService);
+  private readonly http = inject(HttpClient);
   private readonly session = inject(SessionContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -156,7 +173,7 @@ export class PrintTemplatesPage implements OnInit {
       }
 
       this.templates.set(templates);
-      this.placeholders.set(placeholders);
+      this.placeholders.set([...placeholders, ...(await this.customPlaceholders(code))]);
 
       const first = templates.find((t) => t.isDefault) ?? templates[0];
       if (first) {
@@ -362,5 +379,32 @@ export class PrintTemplatesPage implements OnInit {
   private fail(error: unknown): void {
     const failure = readApiFailure(error);
     this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+  }
+
+  /**
+   * The branch's own fields marked to print on this document type, as a
+   * "Custom" group of `{{custom.key}}` tags (TK-112). Empty for a type that
+   * carries none, or when they cannot be read.
+   */
+  private async customPlaceholders(code: string): Promise<PlaceholderGroup[]> {
+    const kind = CUSTOM_FIELD_KINDS[code];
+    if (!kind) {
+      return [];
+    }
+    try {
+      const fields = await firstValueFrom(this.http.get<CustomFieldDefinition[]>(`/api/custom-fields?kind=${kind}`));
+      const printed = fields.filter((f) => f.isActive && f.showOnPrint);
+      return printed.length === 0
+        ? []
+        : [
+            {
+              group: 'Custom',
+              isList: false,
+              placeholders: printed.map((f) => ({ tag: `custom.${f.key}`, group: 'Custom', description: f.label })),
+            },
+          ];
+    } catch {
+      return [];
+    }
   }
 }

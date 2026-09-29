@@ -15,6 +15,8 @@ export interface SaveQuoteRequest {
   notes?: string;
   termsAndConditions?: string;
   lines: QuoteLineRequest[];
+  /** Custom field values (TK-112); left out on an update, what is stored stays. */
+  customFields?: Record<string, unknown>;
 }
 
 export interface QuoteLineRequest {
@@ -83,6 +85,8 @@ export interface QuoteView {
   termsAndConditions?: string;
   convertedToSalesOrderId?: number;
   lines: QuoteLineView[];
+  /** The document's custom field values (TK-112). */
+  customFields?: Record<string, unknown> | null;
 }
 
 export interface QuoteLineView {

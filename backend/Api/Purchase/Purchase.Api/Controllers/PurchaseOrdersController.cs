@@ -104,6 +104,7 @@ public sealed class PurchaseOrdersController : ControllerBase
         result.Outcome switch
         {
             PurchaseOrderOutcome.NotFound => NotFound(),
+            PurchaseOrderOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "A custom field value was refused." }),
 
             PurchaseOrderOutcome.LifecycleRefused => BadRequest(new MessageResponse
             {

@@ -180,6 +180,7 @@
             (ngModelChange)="notes.set($event)"
             name="notes"
           />
+          <bb-document-custom-fields source="/api/purchase/custom-fields?kind=PurchaseOrder" [(value)]="customValues" [isNew]="purchaseOrderId() === null" />
         </div>
 
         <div class="field field--wide">

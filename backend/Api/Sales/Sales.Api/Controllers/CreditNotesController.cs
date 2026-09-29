@@ -114,6 +114,7 @@ public sealed class CreditNotesController : ControllerBase
         result.Outcome switch
         {
             CreditNoteOutcome.NotFound => NotFound(),
+            CreditNoteOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "A custom field value was refused." }),
             CreditNoteOutcome.LifecycleRefused or CreditNoteOutcome.OverReturned
                 or CreditNoteOutcome.AllocationRefused or CreditNoteOutcome.StockRefused
                 or CreditNoteOutcome.PostingRefused or CreditNoteOutcome.EInvoiceRefused => Conflict(Message(result)),

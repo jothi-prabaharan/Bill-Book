@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -23,6 +24,9 @@ public sealed class QuoteService
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public QuoteService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -33,8 +37,10 @@ public sealed class QuoteService
         IContactNameLookup contactNames,
         IItemNameLookup itemNames,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -91,6 +97,12 @@ public sealed class QuoteService
             Notes = request.Notes,
             TermsAndConditions = request.TermsAndConditions,
         };
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, Quote, CustomFieldEntityKind.Quote, request.CustomFields, isNew: true, source: null, ct) is string customFieldsRefused)
+        {
+            return new QuoteResult(QuoteOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
 
@@ -253,6 +265,12 @@ public sealed class QuoteService
 
         Quote.Notes = request.Notes;
         Quote.TermsAndConditions = request.TermsAndConditions;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, Quote, CustomFieldEntityKind.Quote, request.CustomFields, isNew: false, source: null, ct) is string customFieldsRefused)
+        {
+            return new QuoteResult(QuoteOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
         Quote.Lines.Clear();
@@ -448,6 +466,7 @@ public sealed class QuoteService
                 RoundOffAmount = q.RoundOffAmount,
                 TotalAmountBase = q.TotalAmountBase,
                 Notes = q.Notes,
+                CustomFields = q.CustomFields,
                 TermsAndConditions = q.TermsAndConditions,
                 PostedAt = q.PostedAt,
                 VoidedAt = q.VoidedAt,

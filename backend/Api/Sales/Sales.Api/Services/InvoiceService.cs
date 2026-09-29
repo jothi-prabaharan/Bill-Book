@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
@@ -95,6 +96,9 @@ public sealed class InvoiceService : IInvoiceService
     /// <summary>Claims and releases the project items an invoice bills (TK-106). Null in tests that do not exercise it.</summary>
     private readonly Shared.Kernel.Projects.IProjectBillingClient? _projectBilling;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public InvoiceService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -117,8 +121,10 @@ public sealed class InvoiceService : IInvoiceService
         IDiscountLimitClient? discountLimits = null,
         InvoiceOverrideService? overrides = null,
         Shared.Kernel.Projects.IProjectDirectory? projects = null,
-        Shared.Kernel.Projects.IProjectBillingClient? projectBilling = null)
+        Shared.Kernel.Projects.IProjectBillingClient? projectBilling = null,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _projectBilling = projectBilling;
         _projects = projects;
         _discountLimits = discountLimits;
@@ -495,6 +501,14 @@ public sealed class InvoiceService : IInvoiceService
             Status = DocumentStatus.Draft,
         };
 
+        CustomFieldSource? customFieldSource = await CustomFieldSourceAsync(request, ct);
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, invoice, CustomFieldEntityKind.Invoice, request.CustomFields, isNew: true, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new InvoiceResult(InvoiceOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
+
         if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
         {
             return new InvoiceResult(InvoiceOutcome.LineInvalid, Detail: projectRefusal);
@@ -727,6 +741,12 @@ public sealed class InvoiceService : IInvoiceService
         invoice.TransporterName = string.IsNullOrWhiteSpace(request.TransporterName) ? null : request.TransporterName.Trim();
         invoice.TransportDistanceKm = request.TransportDistanceKm;
         invoice.TermsAndConditions = request.TermsAndConditions;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, invoice, CustomFieldEntityKind.Invoice, request.CustomFields, isNew: false, source: null, ct) is string customFieldsRefused)
+        {
+            return new InvoiceResult(InvoiceOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         var existingLines = await _db.InvoiceDetails
             .Where(d => d.InvoiceId == invoiceId)
@@ -972,6 +992,30 @@ public sealed class InvoiceService : IInvoiceService
         await _db.SaveChangesAsync(ct);
     }
 
+    /// <summary>
+    /// The nearest document an invoice was made from, whose custom fields may
+    /// carry to it (TK-112): its challan, else its order, else its quote.
+    /// </summary>
+    private async Task<CustomFieldSource?> CustomFieldSourceAsync(SaveInvoiceRequest request, CancellationToken ct)
+    {
+        if (request.DeliveryChallanId is long challanId)
+        {
+            return new CustomFieldSource(CustomFieldEntityKind.DeliveryChallan,
+                await _db.DeliveryChallans.Where(c => c.DeliveryChallanId == challanId).Select(c => c.CustomFields).FirstOrDefaultAsync(ct));
+        }
+
+        if (request.SalesOrderId is long orderId)
+        {
+            return new CustomFieldSource(CustomFieldEntityKind.SalesOrder,
+                await _db.SalesOrders.Where(o => o.SalesOrderId == orderId).Select(o => o.CustomFields).FirstOrDefaultAsync(ct));
+        }
+
+        return request.QuoteId is long quoteId
+            ? new CustomFieldSource(CustomFieldEntityKind.Quote,
+                await _db.Quotes.Where(q => q.QuoteId == quoteId).Select(q => q.CustomFields).FirstOrDefaultAsync(ct))
+            : null;
+    }
+
     public async Task<InvoiceResult> SaveAsync(
         SaveInvoiceRequest request, long? invoiceId, CancellationToken ct)
     {
@@ -1045,6 +1089,7 @@ public sealed class InvoiceService : IInvoiceService
             DocumentDate = invoice.DocumentDate,
             DocumentNo = invoice.DocumentNo,
             Notes = invoice.Notes,
+            CustomFields = invoice.CustomFields,
             TermsAndConditions = invoice.TermsAndConditions,
             Status = invoice.Status.ToString(),
             CurrencyCode = invoice.CurrencyCode,

@@ -17,6 +17,9 @@ import {
   totalsOf,
   ProjectOption,
   ProjectOptionsService,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SalesPicker } from '../sales-picker';
@@ -26,6 +29,7 @@ import { SalesPicker } from '../sales-picker';
   selector: 'bb-quote-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     CommonModule,
     ReactiveFormsModule,
     DocumentLineGridComponent,
@@ -41,6 +45,9 @@ import { SalesPicker } from '../sales-picker';
   styleUrls: ['./quote-form.component.scss']
 })
 export class QuoteFormComponent implements OnInit {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private fb = inject(FormBuilder);
   private quoteService = inject(QuoteService);
   private route = inject(ActivatedRoute);
@@ -119,6 +126,7 @@ export class QuoteFormComponent implements OnInit {
         notes: q.notes,
         termsAndConditions: q.termsAndConditions
       });
+      this.customValues.set(q.customFields ?? {});
       // Map lines if API returned them
       this.lines = (q.lines || []).map(l => ({
         itemId: l.itemId,
@@ -173,6 +181,7 @@ export class QuoteFormComponent implements OnInit {
       billingAddress: val.billingAddress || undefined,
       shippingAddress: val.shippingAddress || undefined,
       notes: val.notes || undefined,
+      customFields: compactValues(this.customValues()),
       termsAndConditions: val.termsAndConditions || undefined,
       lines: this.lines.map(l => ({
         itemId: l.itemId ?? undefined,

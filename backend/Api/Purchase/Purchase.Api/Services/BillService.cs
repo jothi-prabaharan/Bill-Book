@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Models;
@@ -70,6 +71,9 @@ public sealed class BillService
     /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
     private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public BillService(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -86,8 +90,10 @@ public sealed class BillService
         ICurrentUser user,
         TimeProvider clock,
         PurchaseApprovalService? approvals = null,
-        Shared.Kernel.Projects.IProjectDirectory? projects = null)
+        Shared.Kernel.Projects.IProjectDirectory? projects = null,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _projects = projects;
         _approvals = approvals;
         _db = db;
@@ -321,6 +327,21 @@ public sealed class BillService
         bill.IsInterState = pos.IsInterState;
         bill.Notes = request.Notes;
         bill.TermsAndConditions = request.TermsAndConditions;
+
+        // The nearest source: its goods receipt, else its purchase order.
+        CustomFieldSource? customFieldSource = bill.BillId != 0
+            ? null
+            : request.GoodsReceiptId is long sourceReceiptId
+                ? new CustomFieldSource(CustomFieldEntityKind.GoodsReceipt, await _db.GoodsReceipts.Where(r => r.GoodsReceiptId == sourceReceiptId).Select(r => r.CustomFields).FirstOrDefaultAsync(ct))
+                : request.PurchaseOrderId is long sourceOrderId
+                    ? new CustomFieldSource(CustomFieldEntityKind.PurchaseOrder, await _db.PurchaseOrders.Where(o => o.PurchaseOrderId == sourceOrderId).Select(o => o.CustomFields).FirstOrDefaultAsync(ct))
+                    : null;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, bill, CustomFieldEntityKind.Bill, request.CustomFields, isNew: bill.BillId == 0, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new BillResult(BillOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
         if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
@@ -966,6 +987,7 @@ public sealed class BillService
                 TotalAmountBase = b.TotalAmountBase,
                 LandedCostAmount = b.LandedCostAmount,
                 Notes = b.Notes,
+                CustomFields = b.CustomFields,
                 TermsAndConditions = b.TermsAndConditions,
                 PostedAt = b.PostedAt,
                 VoidedAt = b.VoidedAt,

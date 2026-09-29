@@ -2258,15 +2258,33 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `ContactCustomFieldTests` (done-when search, not searchable, deactivated field kept and shown, store round trip), `ItemCustomFieldTests`, and the list-column spec.
 
 ### TK-112 · Custom fields on sales and purchase documents, carried forward and printed
-- [~] working (Claude Opus 5.5) — since 2026-09-29
+- [x] completed (Claude Opus 5.5) — 2026-09-29 · tests written, not run
 - **Issue:** [#100](https://github.com/jothi-prabaharan/Bill-Book/issues/100)
 - **Lanes:** L-SAL, L-PUR, L-KERNEL, L-SAL-UI, L-PUR-UI · **Depends on:** TK-110 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] `CustomFields jsonb` on the header of every `sal` and `pur` document (via `DocumentHeaderBase`); validated on save.
-  - [ ] Carry-forward on every conversion (quote → order → challan → invoice; PO → receipt → bill) for keys marked `CarryForward`.
-  - [ ] `custom.` placeholders in `PlaceholderCatalog`; values in the print payload.
-  - [ ] Test: a quote's carried field arrives on the invoice made from it; an invoice prints `{{custom.site_ref}}`.
+  - [x] `CustomFields jsonb` on the header of every `sal` and `pur` document (via `DocumentHeaderBase`); validated on save.
+  - [x] Carry-forward on every conversion (quote → order → challan → invoice; PO → receipt → bill) for keys marked `CarryForward`.
+  - [x] `custom.` placeholders in `PlaceholderCatalog`; values in the print payload.
+  - [x] Test: a quote's carried field arrives on the invoice made from it; an invoice prints `{{custom.site_ref}}`.
 - **Done when:** a custom field typed on a quote prints on the invoice converted from it.
+- **As built:**
+  - **Column.** `DocumentHeaderBase.CustomFields` (jsonb, set in `DocumentModelConfiguration`) on all nine headers: five `sal` tables and four `pur` tables, one migration per service.
+  - **The gate.** Every create and update goes through `Shared.Kernel.CustomFields.DocumentCustomFieldGate.ApplyAsync`, called beside each service's `Notes` assignment:
+    - An update without values keeps what is stored.
+    - A new document takes carried values from its source. `Carry` takes keys the source marks `CarryForward` that the target has active and would accept, and a requested value wins.
+    - The result is validated, required fields on new documents only.
+    - A refusal is each outcome enum's new `CustomFieldsRefused` (900), a 422 with the validator's sentences.
+    - A service built without the gate (tests) stores the request as given.
+  - **Sources.** Conversions already compose a request that names their source, so the carry keys off it: quote → order (`QuoteId`), order → challan, challan/order/quote → invoice (nearest first), invoice → credit note, PO → receipt, receipt/PO → bill, bill → debit note.
+  - **Printing.**
+    - `PlaceholderCatalog.CustomTag` resolves any well-formed `custom.key` on a document type that `CustomFieldKinds` maps, so templates accept branch keys the static catalog cannot list.
+    - `CustomFieldPrint.Add` puts `ShowOnPrint` values into the payload as text (option labels, Yes/No, dates), and invoice printing calls it.
+    - The template editor adds a "Custom" group from `api/custom-fields`.
+  - **Frontend.**
+    - `GET api/sales/custom-fields?kind=` and `GET api/purchase/custom-fields?kind=` serve each service's kinds under its `view` permission.
+    - `bb-document-custom-fields` loads a kind, applies defaults on a new document, and is on all nine forms.
+  - Tests: `DocumentCustomFieldCarryTests` (done-when: quote → invoice carries `site_ref` and it lands in the payload), `DocumentCustomFieldTests` (carry rules, print text, kind map), `CustomFieldPrintTests` (the renderer prints `{{custom.site_ref}}`; an absent value prints nothing and is not unknown; tag shapes).
+  - **Not built:** only the invoice has a print route, so the other eight documents print custom fields once theirs exist (TK-22).
 
 ### TK-113 · Custom reports: datasets and the report builder
 - [ ] open

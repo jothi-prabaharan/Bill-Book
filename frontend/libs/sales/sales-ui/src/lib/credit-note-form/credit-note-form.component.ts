@@ -39,6 +39,9 @@ import {
   totalsOf,
   UiMessage,
   ApprovalPanelComponent,
+  CustomFieldValues,
+  DocumentCustomFieldsComponent,
+  compactValues,
 } from '@bill-book/ui-components';
 
 /**
@@ -65,6 +68,7 @@ type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
   selector: 'bb-credit-note-form',
   standalone: true,
   imports: [
+    DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     FormFieldComponent,
     LookupDialogComponent,
@@ -85,6 +89,9 @@ type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
   styleUrl: './credit-note-form.component.scss',
 })
 export class CreditNoteFormComponent implements OnInit {
+  /** The document's custom field values (TK-112). */
+  protected readonly customValues = signal<CustomFieldValues>({});
+
   private readonly fb = inject(FormBuilder);
   private readonly creditNotes = inject(CreditNoteService);
   private readonly invoices = inject(InvoiceService);
@@ -219,6 +226,7 @@ export class CreditNoteFormComponent implements OnInit {
       shippingAddress: note.shippingAddress ?? '',
       notes: note.notes ?? '',
     });
+    this.customValues.set(note.customFields ?? {});
 
     this.lines.set(
       note.lines.map((line, index) => ({
@@ -430,6 +438,7 @@ export class CreditNoteFormComponent implements OnInit {
       billingAddress: value.billingAddress || undefined,
       shippingAddress: value.shippingAddress || undefined,
       notes: value.notes || undefined,
+      customFields: compactValues(this.customValues()),
       lines: priced.map((line) => {
         const api = toApiLine(line);
         return {

@@ -75,6 +75,7 @@ public sealed class DebitNotesController : ControllerBase
         result.Outcome switch
         {
             DebitNoteOutcome.NotFound => NotFound(),
+            DebitNoteOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "A custom field value was refused." }),
 
             DebitNoteOutcome.LifecycleRefused => BadRequest(new MessageResponse
             {

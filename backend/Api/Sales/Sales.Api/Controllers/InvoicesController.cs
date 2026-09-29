@@ -245,6 +245,7 @@ public sealed class InvoicesController : ControllerBase
         result.Outcome switch
         {
             InvoiceOutcome.NotFound => NotFound(),
+            InvoiceOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "A custom field value was refused." }),
             InvoiceOutcome.LifecycleRefused => BadRequest(new MessageResponse
             {
                 Message = result.Detail ?? "Action refused by document lifecycle."

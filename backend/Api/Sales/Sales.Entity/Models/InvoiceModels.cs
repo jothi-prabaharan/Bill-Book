@@ -114,6 +114,12 @@ public class SaveInvoiceRequest
     public int? TransportDistanceKm { get; set; }
 
     public List<SaveInvoiceLineRequest> Lines { get; set; } = [];
+
+    /// <summary>
+    /// Custom field values (TK-112), checked against the branch's definitions
+    /// for this kind of document. Left out on an update, what is stored stays.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 /// <summary>
@@ -308,6 +314,9 @@ public enum InvoiceOutcome
 
     /// <summary>A project item on the invoice was billed elsewhere or could not be claimed (TK-106).</summary>
     ProjectItemsRefused = 20,
+
+    /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
+    CustomFieldsRefused = 900,
 }
 
 /// <param name="EInvoice">
@@ -466,6 +475,9 @@ public class InvoiceView : InvoiceListItem
     /// raised off the till. The receipt prints these (TK-41).
     /// </summary>
     public List<InvoiceTenderView> Tenders { get; set; } = [];
+
+    /// <summary>The document's custom field values (TK-112), as stored.</summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
 
 /// <summary>One tender on a till sale, as the receipt prints it.</summary>

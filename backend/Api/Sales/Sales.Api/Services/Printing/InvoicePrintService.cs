@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Enums;
 using Sales.Entity.TableEntities;
@@ -23,13 +24,17 @@ public sealed class InvoicePrintService
     private readonly IItemNameLookup _itemNames;
     private readonly IPrintingClient _printing;
 
+    private readonly ICustomFieldDefinitions? _customFields;
+
     public InvoicePrintService(
         SalesDbContext db,
         IOrgIdentityProvider orgIdentity,
         IContactNameLookup contactNames,
         IItemNameLookup itemNames,
-        IPrintingClient printing)
+        IPrintingClient printing,
+        ICustomFieldDefinitions? customFields = null)
     {
+        _customFields = customFields;
         _db = db;
         _orgIdentity = orgIdentity;
         _contactNames = contactNames;
@@ -72,6 +77,10 @@ public sealed class InvoicePrintService
             .ToDictionary(pair => pair.Key, pair => pair.Value.Name);
 
         PrintPayload payload = InvoicePrintPayload.Build(invoice, seller, customerName, itemNames);
+
+        // The branch's own fields marked to print, as {{custom.key}} (TK-112).
+        CustomFieldPrint.Add(payload, invoice.CustomFields,
+            _customFields is null ? null : await _customFields.GetAsync(CustomFieldEntityKind.Invoice, ct));
 
         // The IRP's answer, when the invoice was registered (TK-92). Printing
         // puts the IRN and the QR code on it even where the template does not.

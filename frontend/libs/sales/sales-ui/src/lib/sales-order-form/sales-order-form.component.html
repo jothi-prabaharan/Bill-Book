@@ -241,6 +241,7 @@
 
     <div class="field sor-form__wide">
       <bb-textarea id="sor-notes" label="Notes" rows="2" formControlName="notes" />
+      <bb-document-custom-fields source="/api/sales/custom-fields?kind=SalesOrder" [(value)]="customValues" [isNew]="salesOrderId() === null" />
     </div>
 
     <div class="field sor-form__wide">

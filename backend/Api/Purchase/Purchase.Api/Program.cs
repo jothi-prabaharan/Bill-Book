@@ -218,6 +218,15 @@ builder.Services.AddHttpClient<Shared.Kernel.Budgets.IBudgetCheckClient, Shared.
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// Custom fields on documents (TK-112): the branch's definitions, read from
+// Master and cached, and the gate every document save goes through.
+builder.Services.AddHttpClient<Shared.Kernel.CustomFields.ICustomFieldDefinitions, Shared.Kernel.CustomFields.HttpCustomFieldDefinitions>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddScoped<Shared.Kernel.CustomFields.DocumentCustomFieldGate>();
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())

@@ -1,3 +1,4 @@
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Enums;
@@ -40,6 +41,9 @@ public sealed class PurchaseOrderService
     /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
     private readonly PurchaseApprovalService? _approvals;
 
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
     public PurchaseOrderService(
         PurchaseDbContext db,
         INumberGenerator numbering,
@@ -50,8 +54,10 @@ public sealed class PurchaseOrderService
         IItemNameLookup itemNames,
         ICurrentUser user,
         TimeProvider clock,
-        PurchaseApprovalService? approvals = null)
+        PurchaseApprovalService? approvals = null,
+        DocumentCustomFieldGate? customFields = null)
     {
+        _customFields = customFields;
         _approvals = approvals;
         _db = db;
         _numbering = numbering;
@@ -204,6 +210,12 @@ public sealed class PurchaseOrderService
         order.IsInterState = pos.IsInterState;
         order.Notes = request.Notes;
         order.TermsAndConditions = request.TermsAndConditions;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, order, CustomFieldEntityKind.PurchaseOrder, request.CustomFields, isNew: order.PurchaseOrderId == 0, source: null, ct) is string customFieldsRefused)
+        {
+            return new PurchaseOrderResult(PurchaseOrderOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
         List<TaxLineResult> taxLines = new(request.Lines.Count);
@@ -502,6 +514,7 @@ public sealed class PurchaseOrderService
                 RoundOffAmount = o.RoundOffAmount,
                 TotalAmountBase = o.TotalAmountBase,
                 Notes = o.Notes,
+                CustomFields = o.CustomFields,
                 TermsAndConditions = o.TermsAndConditions,
                 PostedAt = o.PostedAt,
                 VoidedAt = o.VoidedAt,

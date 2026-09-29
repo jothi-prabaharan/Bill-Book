@@ -102,6 +102,7 @@ public sealed class DeliveryChallansController : ControllerBase
         result.Outcome switch
         {
             DeliveryChallanOutcome.NotFound => NotFound(),
+            DeliveryChallanOutcome.CustomFieldsRefused => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "A custom field value was refused." }),
             DeliveryChallanOutcome.LifecycleRefused or DeliveryChallanOutcome.OverDelivered
                 or DeliveryChallanOutcome.StockRefused
                 or DeliveryChallanOutcome.PostingRefused => Conflict(Message(result)),
