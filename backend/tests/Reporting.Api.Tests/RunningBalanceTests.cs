@@ -1,5 +1,5 @@
 using Reporting.Api.Services;
-using Reporting.Api.Services.Sources;
+using Reporting.Repository.Repositories;
 using Xunit;
 
 namespace Reporting.Api.Tests;
@@ -15,7 +15,7 @@ namespace Reporting.Api.Tests;
 /// </summary>
 public class RunningBalanceTests
 {
-    private readonly AccountTransactionSource _report = new();
+    private readonly AccountTransactionSourceRepository _report = new();
 
     private static AccountTransactionRow Leg(long id, decimal debit, decimal credit) =>
         new()

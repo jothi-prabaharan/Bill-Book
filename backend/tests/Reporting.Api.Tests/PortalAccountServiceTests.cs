@@ -1,4 +1,5 @@
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Repository.ReadModels;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Numbering;
@@ -83,7 +84,7 @@ public sealed class PortalAccountServiceTests
     [InlineData(2026, 1, 1, 1, 2026, 1)]
     [InlineData(2026, 5, 1, 13, 2026, 4)]
     public void The_financial_year_starts_in_the_branchs_month(int y, int m, int d, int startMonth, int startYear, int expectedMonth) =>
-        Assert.Equal(new DateOnly(startYear, expectedMonth, 1), PortalAccountService.FinancialYearStart(new DateOnly(y, m, d), startMonth));
+        Assert.Equal(new DateOnly(startYear, expectedMonth, 1), PortalAccountRepository.FinancialYearStart(new DateOnly(y, m, d), startMonth));
 
     [Fact]
     public async Task The_statement_runs_the_receivable_from_an_opening_balance_and_names_documents_by_number()
@@ -122,7 +123,7 @@ public sealed class PortalAccountServiceTests
 
     private sealed record LedgerLine(long TransactionId, decimal Debit);
 
-    private static PortalAccountService Service(Books? books = null) =>
+    private static PortalAccountRepository Service(Books? books = null) =>
         new(books ?? Standard(), new AprilYear(), new FixedClock(Today));
 
     /// <summary>The worked books every figure above is checked against.</summary>

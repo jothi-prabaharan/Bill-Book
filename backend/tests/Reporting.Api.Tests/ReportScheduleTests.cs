@@ -1,8 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Api.Services;
-using Reporting.Api.Services.Schedules;
-using Reporting.Api.Services.Sources;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Reporting.Entity.TableEntities;
@@ -77,7 +76,7 @@ public sealed class ReportScheduleTests
         bool[] claims = await Task.WhenAll(Enumerable.Range(0, 8).Select(async _ =>
         {
             await using ReportingDbContext db = _postgres.CreateContext(customer, org);
-            return await ReportScheduleRun.TryClaimAsync(db, id, MondayEight, next, MondayEight.AddMinutes(1), CancellationToken.None);
+            return await ReportScheduleRunRepository.TryClaimAsync(db, id, MondayEight, next, MondayEight.AddMinutes(1), CancellationToken.None);
         }));
 
         Assert.Equal(1, claims.Count(c => c));
@@ -189,12 +188,12 @@ public sealed class ReportScheduleTests
     public void A_weekly_slot_is_the_next_monday_at_eight_in_india(string after, string expected) =>
         Assert.Equal(
             DateTimeOffset.Parse(expected),
-            ReportScheduleCalendar.NextRun(ReportScheduleFrequency.Weekly, DayOfWeek.Monday, null, 8, "Asia/Kolkata", DateTimeOffset.Parse(after)));
+            ReportScheduleCalendarRepository.NextRun(ReportScheduleFrequency.Weekly, DayOfWeek.Monday, null, 8, "Asia/Kolkata", DateTimeOffset.Parse(after)));
 
     [Fact]
     public void A_daily_slot_is_tomorrow_once_todays_hour_has_passed()
     {
-        DateTimeOffset next = ReportScheduleCalendar.NextRun(
+        DateTimeOffset next = ReportScheduleCalendarRepository.NextRun(
             ReportScheduleFrequency.Daily, null, null, 8, "Asia/Kolkata", new DateTimeOffset(2026, 10, 5, 3, 0, 0, TimeSpan.Zero));
 
         Assert.Equal(new DateTimeOffset(2026, 10, 6, 2, 30, 0, TimeSpan.Zero), next);
@@ -203,7 +202,7 @@ public sealed class ReportScheduleTests
     [Fact]
     public void A_monthly_slot_is_the_chosen_day_of_the_next_month_once_this_months_has_passed()
     {
-        DateTimeOffset next = ReportScheduleCalendar.NextRun(
+        DateTimeOffset next = ReportScheduleCalendarRepository.NextRun(
             ReportScheduleFrequency.Monthly, null, 1, 9, "Asia/Kolkata", new DateTimeOffset(2026, 10, 5, 0, 0, 0, TimeSpan.Zero));
 
         Assert.Equal(new DateTimeOffset(2026, 11, 1, 3, 30, 0, TimeSpan.Zero), next);
@@ -212,14 +211,14 @@ public sealed class ReportScheduleTests
     [Fact]
     public void India_is_half_past_five_ahead_even_without_a_zone_database()
     {
-        Assert.Equal(TimeSpan.FromMinutes(330), ReportScheduleCalendar.Zone("Asia/Kolkata").BaseUtcOffset);
-        Assert.Equal(TimeSpan.FromMinutes(330), ReportScheduleCalendar.Zone(null).BaseUtcOffset);
+        Assert.Equal(TimeSpan.FromMinutes(330), ReportScheduleCalendarRepository.Zone("Asia/Kolkata").BaseUtcOffset);
+        Assert.Equal(TimeSpan.FromMinutes(330), ReportScheduleCalendarRepository.Zone(null).BaseUtcOffset);
     }
 
     [Fact]
     public void The_attachment_is_named_for_the_schedule_and_cannot_carry_a_path()
     {
-        string name = ReportScheduleRun.FileName(new ReportSchedule { ReportKey = "dataset-sales-lines", Title = "Weekly ../sales: by site", LayoutJson = "{}" });
+        string name = ReportScheduleRunRepository.FileName(new ReportSchedule { ReportKey = "dataset-sales-lines", Title = "Weekly ../sales: by site", LayoutJson = "{}" });
 
         Assert.StartsWith("Weekly-sales-by-site-", name);
         Assert.EndsWith(".xlsx", name);
@@ -260,9 +259,9 @@ public sealed class ReportScheduleTests
         return schedule.ReportScheduleId;
     }
 
-    private static ReportScheduleRun Run(
+    private static ReportScheduleRunRepository Run(
         ReportingDbContext db, RecordingMailer mailer, IBranchUsers users, RecordingExporter? exporter = null) =>
-        new(db, new ReportCatalogService([new SalesLinesDataset()], db), users, exporter ?? new RecordingExporter(), mailer);
+        new(db, new ReportCatalogRepository([new SalesLinesDataset()], db), users, exporter ?? new RecordingExporter(), mailer);
 
     private sealed class StubUsers(IReadOnlyList<BranchUserAccess>? users) : IBranchUsers
     {

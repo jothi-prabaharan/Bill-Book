@@ -1,4 +1,5 @@
-using Reporting.Api.Services.Sources;
+using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Repository.ReadModels;
 using Shared.Kernel.Documents;
 using Xunit;

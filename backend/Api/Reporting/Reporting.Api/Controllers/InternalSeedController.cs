@@ -1,3 +1,4 @@
+using Reporting.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reporting.Repository.SeedData;

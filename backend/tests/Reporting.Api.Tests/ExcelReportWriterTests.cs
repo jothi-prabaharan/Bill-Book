@@ -1,6 +1,7 @@
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Xunit;
@@ -69,13 +70,13 @@ public class ExcelReportWriterTests
     {
         // The cheapest real check there is: a corrupt package throws here rather
         // than in front of whoever opened the download.
-        Assert.NotNull(Read(ExcelReportWriter.Write(Sample())));
+        Assert.NotNull(Read(ExcelReportWriterRepository.Write(Sample())));
     }
 
     [Fact]
     public void Every_row_is_written_beneath_a_header()
     {
-        List<Row> rows = [.. Read(ExcelReportWriter.Write(Sample())).Elements<Row>()];
+        List<Row> rows = [.. Read(ExcelReportWriterRepository.Write(Sample())).Elements<Row>()];
 
         // header + 2 detail + 1 group footer + 1 grand total
         Assert.Equal(5, rows.Count);
@@ -87,7 +88,7 @@ public class ExcelReportWriterTests
     [Fact]
     public void Money_is_written_as_a_number_so_a_spreadsheet_can_total_it()
     {
-        List<Row> rows = [.. Read(ExcelReportWriter.Write(Sample())).Elements<Row>()];
+        List<Row> rows = [.. Read(ExcelReportWriterRepository.Write(Sample())).Elements<Row>()];
         Cell debit = rows[1].Elements<Cell>().Last();
 
         Assert.Equal(CellValues.Number, debit.DataType?.Value);
@@ -100,7 +101,7 @@ public class ExcelReportWriterTests
         // So the column sorts and filters as dates in the spreadsheet. Text dates
         // sort "2026-04-10" before "2026-04-2", which nobody notices until a report
         // is sorted by date and the order is wrong.
-        Cell date = Read(ExcelReportWriter.Write(Sample()))
+        Cell date = Read(ExcelReportWriterRepository.Write(Sample()))
             .Elements<Row>().ElementAt(1).Elements<Cell>().First();
 
         Assert.Equal(CellValues.Number, date.DataType?.Value);
@@ -112,7 +113,7 @@ public class ExcelReportWriterTests
     [Fact]
     public void Subtotals_and_the_grand_total_arrive_as_rows()
     {
-        List<Row> rows = [.. Read(ExcelReportWriter.Write(Sample())).Elements<Row>()];
+        List<Row> rows = [.. Read(ExcelReportWriterRepository.Write(Sample())).Elements<Row>()];
 
         Assert.Equal("Asset", rows[3].Elements<Cell>().First().InnerText);
         Assert.Equal("350.50", rows[3].Elements<Cell>().Last().CellValue?.InnerText);
@@ -124,7 +125,7 @@ public class ExcelReportWriterTests
     [Fact]
     public void The_header_row_is_frozen()
     {
-        using var buffer = new MemoryStream(ExcelReportWriter.Write(Sample()));
+        using var buffer = new MemoryStream(ExcelReportWriterRepository.Write(Sample()));
         using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, false);
 
         Pane? pane = Sheet(document).GetFirstChild<SheetViews>()
@@ -143,7 +144,7 @@ public class ExcelReportWriterTests
         result.GroupFooters = [];
         result.GrandTotal = null;
 
-        Row row = Read(ExcelReportWriter.Write(result)).Elements<Row>().ElementAt(1);
+        Row row = Read(ExcelReportWriterRepository.Write(result)).Elements<Row>().ElementAt(1);
 
         Assert.All(row.Elements<Cell>(), cell => Assert.Empty(cell.InnerText));
     }
@@ -156,7 +157,7 @@ public class ExcelReportWriterTests
         ReportResultView result = Sample();
         result.Title = "Invoice/DN Payment Collection Report";
 
-        using var buffer = new MemoryStream(ExcelReportWriter.Write(result));
+        using var buffer = new MemoryStream(ExcelReportWriterRepository.Write(result));
         using SpreadsheetDocument document = SpreadsheetDocument.Open(buffer, false);
 
         WorkbookPart workbook = document.WorkbookPart

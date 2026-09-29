@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
-using Reporting.Api.Services.Gst;
+using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Repository.ReadModels;
 using Xunit;
 
@@ -43,7 +44,7 @@ public sealed class GstReturnTests
             Purchase("BIL-2", 2, taxable: 1_000m, cgst: 90m, sgst: 90m, eligibility: "Blocked"),
         ];
 
-        Gstr3bView view = Gstr3b.Build(June1, June30, sales, purchases, States);
+        Gstr3bView view = Gstr3bRepository.Build(June1, June30, sales, purchases, States);
 
         Assert.Equal(15_000m, view.OutwardTaxable31a.Taxable);
         Assert.Equal(2_700m, view.OutwardTaxable31a.Tax);
@@ -66,7 +67,7 @@ public sealed class GstReturnTests
             Purchase("DBN-1", 1, taxable: 1_000m, cgst: 90m, sgst: 90m, type: "DBN"),
         ];
 
-        Gstr3bView view = Gstr3b.Build(June1, June30, [], purchases, States);
+        Gstr3bView view = Gstr3bRepository.Build(June1, June30, [], purchases, States);
 
         decimal eligible = purchases
             .Where(p => p.ItcEligibility == "Eligible")
@@ -95,7 +96,7 @@ public sealed class GstReturnTests
             Sale("INV-9", 9, taxable: 7_777m, cgst: 1m, sgst: 1m, date: new DateOnly(2026, 7, 1)),
         ];
 
-        Gstr3bView view = Gstr3b.Build(June1, June30, sales, [], States);
+        Gstr3bView view = Gstr3bRepository.Build(June1, June30, sales, [], States);
 
         Assert.Equal(9_000m, view.OutwardTaxable31a.Taxable);
         Assert.Equal(1_620m, view.OutwardTaxable31a.Tax);
@@ -110,7 +111,7 @@ public sealed class GstReturnTests
         sale.ExchangeRate = 83m;
         sale.TaxableAmountBase = 8_300m;
 
-        Gstr3bView view = Gstr3b.Build(June1, June30, [sale], [], States);
+        Gstr3bView view = Gstr3bRepository.Build(June1, June30, [sale], [], States);
 
         Assert.Equal(8_300m, view.OutwardTaxable31a.Taxable);
         Assert.Equal(1_494m, view.OutwardTaxable31a.Igst);
@@ -130,8 +131,8 @@ public sealed class GstReturnTests
             Sale("INV-4", 4, taxable: 3_000m, state: Abroad, inter: true, rate: 0m, hsn: "6109"),
         ];
 
-        Gstr1ExportResult result = Gstr1Export.Build(BranchGstin, June1, June30, sales, States,
-            [new IssuedDocuments(Gstr1Export.InvoicesNature, "INV-1", "INV-5", 5, 1)]);
+        Gstr1ExportResult result = Gstr1ExportRepository.Build(BranchGstin, June1, June30, sales, States,
+            [new IssuedDocuments(Gstr1ExportRepository.InvoicesNature, "INV-1", "INV-5", 5, 1)]);
 
         Assert.True(result.IsValid, string.Join("; ", result.Problems));
         Assert.Equal(result.SectionTaxable, result.HsnTaxable);
@@ -174,7 +175,7 @@ public sealed class GstReturnTests
             Sale("INV-2", 2, taxable: 1_000m, cgst: 90m, sgst: 90m, hsn: null),
         ];
 
-        Gstr1ExportResult result = Gstr1Export.Build(null, June1, June30, sales, States, []);
+        Gstr1ExportResult result = Gstr1ExportRepository.Build(null, June1, June30, sales, States, []);
 
         Assert.False(result.IsValid);
         Assert.Null(result.Payload);
@@ -192,7 +193,7 @@ public sealed class GstReturnTests
             Sale("INV-2", 2, taxable: 90_000m, igst: 16_200m, state: Karnataka, inter: true, hsn: "8471"),
         ];
 
-        JsonObject json = Gstr1Export.Build(BranchGstin, June1, June30, sales, States, []).Payload!;
+        JsonObject json = Gstr1ExportRepository.Build(BranchGstin, June1, June30, sales, States, []).Payload!;
 
         // 94,400 is not above one lakh; 1,06,200 is.
         Assert.Equal("INV-2", json["b2cl"]![0]!["inv"]![0]!["inum"]!.GetValue<string>());

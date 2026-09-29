@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Shared.Kernel.Internal;
@@ -28,11 +29,11 @@ namespace Reporting.Api.Controllers;
 [RequireApp(App.RetailErp | App.Hrms | App.Payroll)]
 public sealed class ReportsController : ControllerBase
 {
-    private readonly ReportCatalogService _catalog;
-    private readonly ReportRunner _runner;
-    private readonly CustomReportService _custom;
+    private readonly ReportCatalogRepository _catalog;
+    private readonly ReportRunnerRepository _runner;
+    private readonly CustomReportRepository _custom;
 
-    public ReportsController(ReportCatalogService catalog, ReportRunner runner, CustomReportService custom)
+    public ReportsController(ReportCatalogRepository catalog, ReportRunnerRepository runner, CustomReportRepository custom)
     {
         _catalog = catalog;
         _runner = runner;
@@ -169,12 +170,12 @@ public sealed class ReportsController : ControllerBase
             // with the screen.
             return format == ExportFormat.Csv
                 ? File(
-                    CsvReportWriter.Write(result),
-                    CsvReportWriter.ContentType,
+                    CsvReportWriterRepository.Write(result),
+                    CsvReportWriterRepository.ContentType,
                     FileName(reportKey, "csv"))
                 : File(
-                    ExcelReportWriter.Write(result),
-                    ExcelReportWriter.ContentType,
+                    ExcelReportWriterRepository.Write(result),
+                    ExcelReportWriterRepository.ContentType,
                     FileName(reportKey, "xlsx"));
         }
         catch (ReportQueryException ex)
@@ -187,7 +188,7 @@ public sealed class ReportsController : ControllerBase
     /// Reporting.md §5.6. When a broker exists this becomes the threshold at which an
     /// export is queued rather than refused.
     /// </summary>
-    public const int ExportRowCap = 100_000;
+    public const int ExportRowCap = ScheduledReportExporterRepository.ExportRowCap;
 
     /// <summary>
     /// A download name that cannot escape the download folder.

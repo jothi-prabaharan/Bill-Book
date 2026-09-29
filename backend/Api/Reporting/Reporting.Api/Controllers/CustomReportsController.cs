@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -24,9 +25,9 @@ namespace Reporting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class CustomReportsController : ControllerBase
 {
-    private readonly CustomReportService _reports;
+    private readonly CustomReportRepository _reports;
 
-    public CustomReportsController(CustomReportService reports) => _reports = reports;
+    public CustomReportsController(CustomReportRepository reports) => _reports = reports;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) =>

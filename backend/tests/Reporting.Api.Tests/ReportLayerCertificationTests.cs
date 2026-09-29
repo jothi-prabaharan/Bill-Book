@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Reporting.Api.Services;
-using Reporting.Api.Services.Sources;
+using Reporting.Repository.Repositories;
 using Reporting.Repository.SeedData;
 using Xunit;
 
@@ -28,7 +28,7 @@ namespace Reporting.Api.Tests;
 /// theory over a list, and a report absent from the list is a report no theory
 /// runs on.
 ///
-/// So this asks the assembly rather than the list: every <see cref="IReportSource"/>
+/// So this asks the assembly rather than the list: every <see cref="IReportSourceRepository"/>
 /// implementation, discovered by reflection, must appear in all four places.
 /// A report added tomorrow and wired into three of them fails the build.
 /// </summary>
@@ -38,16 +38,16 @@ public sealed class ReportLayerCertificationTests
     /// The sources the theory suite runs on, unwrapped from xUnit's
     /// <c>TheoryData</c> so they can be compared with what the assembly holds.
     /// </summary>
-    private static IReadOnlyList<IReportSource> Tested =>
+    private static IReadOnlyList<IReportSourceRepository> Tested =>
         [.. ReportSourceTests.Sources
             .Cast<object?[]>()
-            .Select(row => (IReportSource)row[0]!)];
+            .Select(row => (IReportSourceRepository)row[0]!)];
 
     /// <summary>Every concrete source in the service assembly, however it was wired.</summary>
     private static IReadOnlyList<Type> SourceTypes =>
-        [.. typeof(AccountMovementSource).Assembly
+        [.. typeof(AccountMovementSourceRepository).Assembly
             .GetTypes()
-            .Where(t => typeof(IReportSource).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+            .Where(t => typeof(IReportSourceRepository).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
             .OrderBy(t => t.Name, StringComparer.Ordinal)];
 
     /// <summary>
@@ -65,7 +65,7 @@ public sealed class ReportLayerCertificationTests
             string program = File.ReadAllText(ProgramPath());
 
             return Regex
-                .Matches(program, @"AddScoped<IReportSource,\s*(\w+)>")
+                .Matches(program, @"AddScoped<IReportSourceRepository,\s*(\w+)>")
                 .Select(m => m.Groups[1].Value)
                 .ToHashSet(StringComparer.Ordinal);
         }

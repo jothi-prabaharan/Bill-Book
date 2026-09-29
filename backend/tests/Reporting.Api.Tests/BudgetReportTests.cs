@@ -1,4 +1,5 @@
-using Reporting.Api.Services.Sources;
+using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Repository.ReadModels;
 using Shared.Kernel.Numbering;
 using Xunit;
@@ -62,7 +63,7 @@ public sealed class BudgetReportTests
     {
         BudgetWindow ytd = BudgetWindows.For(April, new DateOnly(2026, 5, 15), BudgetWindows.YearToDate);
 
-        Dictionary<long, decimal> pnl = ProfitAndLossSource
+        Dictionary<long, decimal> pnl = ProfitAndLossSourceRepository
             .Rows(Accounts.AsQueryable(), Ledger.AsQueryable(), ytd.From, ytd.To)
             .ToDictionary(r => r.AccountId, r => r.NetAmount);
         List<BudgetActualRow> rows = [.. BudgetReports.AgainstActual(Accounts.AsQueryable(), Ledger.AsQueryable(), Lines.AsQueryable(), BudgetId, ytd)];

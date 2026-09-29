@@ -118,7 +118,7 @@ public sealed class ReportCatalogSeeder
     }
 
     /// <summary>
-    /// The catalog. <b>Every column an <c>IReportSource</c> declares needs a row
+    /// The catalog. <b>Every column an <c>IReportSourceRepository</c> declares needs a row
     /// here and nothing else does</b> — the two lists are compared when a report's
     /// columns are built, and a mismatch refuses the report by name. Adding a
     /// column to a source without adding it here breaks that report rather than
@@ -869,7 +869,7 @@ public sealed class ReportCatalogSeeder
         // --- The tracker and finance reports -----------------------------
         //
         // Their sources landed written and wired to nothing: registered in
-        // neither the container nor this catalog, so ReportCatalogService —
+        // neither the container nor this catalog, so ReportCatalogRepository —
         // which needs a source and a seeded row to agree before it will list a
         // report — could not see them. Real queries, unreachable from any
         // screen. Both halves are here now, and ReportSourceTests.Sources
@@ -1287,7 +1287,7 @@ public sealed class ReportCatalogSeeder
         },
 
         // The fixed-asset register, read by four reports over one roll-forward
-        // (FixedAssetRegister). Columns reports.json lists that the register has
+        // (FixedAssetRegisterRepository). Columns reports.json lists that the register has
         // no field for — Brand, Outlet, Warranty Expiry, Cost Limit, Averaging
         // Method — are not seeded, because their sources do not declare them.
         new()

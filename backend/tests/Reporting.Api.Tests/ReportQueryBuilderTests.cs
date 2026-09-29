@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Xunit;
@@ -46,7 +47,7 @@ public class ReportQueryBuilderTests
     private static readonly LambdaExpression ById = (Expression<Func<Row, long>>)(r => r.Id);
 
     private static IQueryable<Row> Filter(params ReportFilterModel[] filters) =>
-        ReportQueryBuilder<Row>.ApplyFilters(Rows, filters, Columns);
+        ReportQueryBuilderRepository<Row>.ApplyFilters(Rows, filters, Columns);
 
     private static ReportFilterModel Where(
         string column, FilterOperator op, string? value = null, string? value2 = null) =>
@@ -65,7 +66,7 @@ public class ReportQueryBuilderTests
 
     [Fact]
     public void A_sort_on_a_column_the_report_does_not_declare_is_refused() =>
-        Assert.Throws<ReportQueryException>(() => ReportQueryBuilder<Row>.ApplySorts(
+        Assert.Throws<ReportQueryException>(() => ReportQueryBuilderRepository<Row>.ApplySorts(
             Rows,
             [new ReportSortModel { Column = "nonsense" }],
             Columns,
@@ -87,7 +88,7 @@ public class ReportQueryBuilderTests
 
     [Fact]
     public void A_column_marked_unsortable_refuses_a_sort() =>
-        Assert.Throws<ReportQueryException>(() => ReportQueryBuilder<Row>.ApplySorts(
+        Assert.Throws<ReportQueryException>(() => ReportQueryBuilderRepository<Row>.ApplySorts(
             Rows, [new ReportSortModel { Column = "locked" }], Columns, ById).ToList());
 
     // ---- operators ----
@@ -197,7 +198,7 @@ public class ReportQueryBuilderTests
     [Fact]
     public void Sort_keys_apply_in_the_order_given()
     {
-        List<Row> sorted = ReportQueryBuilder<Row>.ApplySorts(
+        List<Row> sorted = ReportQueryBuilderRepository<Row>.ApplySorts(
             Rows,
             [
                 new ReportSortModel { Column = "account" },
@@ -215,7 +216,7 @@ public class ReportQueryBuilderTests
     {
         // Postgres promises no order without ORDER BY, so paging an unordered query
         // can show one row twice and another never.
-        List<Row> sorted = ReportQueryBuilder<Row>.ApplySorts(Rows, [], Columns, ById).ToList();
+        List<Row> sorted = ReportQueryBuilderRepository<Row>.ApplySorts(Rows, [], Columns, ById).ToList();
 
         Assert.Equal([1L, 2L, 3L, 4L], sorted.Select(r => r.Id));
     }
@@ -223,7 +224,7 @@ public class ReportQueryBuilderTests
     [Fact]
     public void The_fallback_breaks_ties_the_sort_keys_leave()
     {
-        List<Row> sorted = ReportQueryBuilder<Row>.ApplySorts(
+        List<Row> sorted = ReportQueryBuilderRepository<Row>.ApplySorts(
             Rows, [new ReportSortModel { Column = "account" }], Columns, ById).ToList();
 
         // Both Cash rows tie on the only sort key; the tie-break settles them.
@@ -238,9 +239,9 @@ public class ReportQueryBuilderTests
     [InlineData(3, 2, new long[0])]
     public void Paging_walks_the_ordered_set(int number, int size, long[] expected)
     {
-        IQueryable<Row> ordered = ReportQueryBuilder<Row>.ApplySorts(Rows, [], Columns, ById);
+        IQueryable<Row> ordered = ReportQueryBuilderRepository<Row>.ApplySorts(Rows, [], Columns, ById);
 
-        List<Row> page = ReportQueryBuilder<Row>
+        List<Row> page = ReportQueryBuilderRepository<Row>
             .Page(ordered, new ReportPageModel { Number = number, Size = size })
             .ToList();
 

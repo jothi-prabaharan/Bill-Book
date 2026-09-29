@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Repository;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -16,9 +17,9 @@ namespace Reporting.Api.Controllers;
 public sealed class StatementsController : ControllerBase
 {
     private readonly ReportingDbContext _db;
-    private readonly BatchedNameResolver _resolver;
+    private readonly BatchedNameResolverRepository _resolver;
 
-    public StatementsController(ReportingDbContext db, BatchedNameResolver resolver)
+    public StatementsController(ReportingDbContext db, BatchedNameResolverRepository resolver)
     {
         _db = db;
         _resolver = resolver;

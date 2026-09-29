@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Reporting.Api.Services.Schedules;
+using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Shared.Kernel.CustomFields;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Security;
@@ -8,9 +9,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Reporting.Api.Services;
-using Reporting.Api.Services.Sources;
-using Reporting.Api.Services.Sources.Hrms;
 using Reporting.Repository;
 using Reporting.Repository.SeedData;
 using Shared.Kernel.Interfaces;
@@ -81,7 +79,7 @@ builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-// Every report, registered as an IReportSource. The catalog service discovers
+// Every report, registered as an IReportSourceRepository. The catalog service discovers
 // them from DI, so adding a report is adding a line here and a seed entry —
 // there is no registry to keep in step.
 // The branch's financial year, for the portal's trade value this year (TK-95).
@@ -91,127 +89,127 @@ builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<IPortalAccountData, ReportingPortalAccountData>();
-builder.Services.AddScoped<PortalAccountService>();
+builder.Services.AddScoped<PortalAccountRepository>();
 
-builder.Services.AddHttpClient<BatchedNameResolver>(client =>
+builder.Services.AddHttpClient<BatchedNameResolverRepository>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<IReportSource, AccountMovementSource>();
-builder.Services.AddScoped<IReportSource, AccountTransactionSource>();
-builder.Services.AddScoped<IReportSource, TrialBalanceSource>();
-builder.Services.AddScoped<IReportSource, GeneralLedgerSummarySource>();
-builder.Services.AddScoped<IReportSource, JournalReportSource>();
-builder.Services.AddScoped<IReportSource, BankSummarySource>();
-builder.Services.AddScoped<IReportSource, ReconciliationSource>();
-builder.Services.AddScoped<IReportSource, InventoryAgingSource>();
-builder.Services.AddScoped<IReportSource, ItemListSource>();
-builder.Services.AddScoped<IReportSource, ItemDetailSource>();
-builder.Services.AddScoped<IReportSource, ItemSummarySource>();
-builder.Services.AddScoped<IReportSource, BatchTrackingStatusSource>();
-builder.Services.AddScoped<IReportSource, BatchTrackingDetailSource>();
-builder.Services.AddScoped<IReportSource, SerialTrackingStatusSource>();
-builder.Services.AddScoped<IReportSource, SerialTrackingDetailSource>();
-builder.Services.AddScoped<IReportSource, WarehouseTrackingStatusSource>();
-builder.Services.AddScoped<IReportSource, WarehouseTrackingDetailSource>();
-builder.Services.AddScoped<IReportSource, SalesRegisterSource>();
-builder.Services.AddScoped<IReportSource, FxGainLossSource>();
-builder.Services.AddScoped<IReportSource, FxGainLossDetailsSource>();
-builder.Services.AddScoped<IReportSource, ArAgingSummarySource>();
-builder.Services.AddScoped<IReportSource, ApAgingSummarySource>();
-builder.Services.AddScoped<IReportSource, CustomerStatementSource>();
-builder.Services.AddScoped<IReportSource, VendorStatementSource>();
-builder.Services.AddScoped<IReportSource, PurchaseRegisterSource>();
-builder.Services.AddScoped<IReportSource, Gstr1SummarySource>();
+builder.Services.AddScoped<IReportSourceRepository, AccountMovementSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, AccountTransactionSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, TrialBalanceSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, GeneralLedgerSummarySourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, JournalReportSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, BankSummarySourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ReconciliationSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, InventoryAgingSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ItemListSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ItemDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ItemSummarySourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, BatchTrackingStatusSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, BatchTrackingDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, SerialTrackingStatusSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, SerialTrackingDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, WarehouseTrackingStatusSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, WarehouseTrackingDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, SalesRegisterSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, FxGainLossSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, FxGainLossDetailsSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ArAgingSummarySourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ApAgingSummarySourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, CustomerStatementSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, VendorStatementSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, PurchaseRegisterSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, Gstr1SummarySourceRepository>();
 
 // The tracker and finance reports. Registering a source is half of making a
-// report reachable — ReportCatalogService lists one only when a source and a
+// report reachable — ReportCatalogRepository lists one only when a source and a
 // seeded rpt.Reports row agree — so each of these has an entry in
 // ReportCatalogSeeder.Catalog beside it.
-builder.Services.AddScoped<IReportSource, BalanceSheetSource>();
-builder.Services.AddScoped<IReportSource, ProfitAndLossSource>();
-builder.Services.AddScoped<IReportSource, CashFlowSource>();
-builder.Services.AddScoped<IReportSource, QuotationTrackSource>();
-builder.Services.AddScoped<IReportSource, SalesOrderTrackSource>();
-builder.Services.AddScoped<IReportSource, DeliveryOrderTrackSource>();
-builder.Services.AddScoped<IReportSource, InvoiceTrackSource>();
-builder.Services.AddScoped<IReportSource, AgedReceivablesDetailSource>();
-builder.Services.AddScoped<IReportSource, SalesAnalysisSource>();
-builder.Services.AddScoped<IReportSource, SalesAnalysisDetailSource>();
-builder.Services.AddScoped<IReportSource, PurchaseOrderTrackSource>();
-builder.Services.AddScoped<IReportSource, ReceiveOrderTrackSource>();
-builder.Services.AddScoped<IReportSource, BillsTrackSource>();
-builder.Services.AddScoped<IReportSource, AgedPayablesDetailsSource>();
-builder.Services.AddScoped<IReportSource, PurchaseAnalysisSource>();
-builder.Services.AddScoped<IReportSource, ReceivableInvoiceDetailSource>();
-builder.Services.AddScoped<IReportSource, ReceivableInvoiceSummarySource>();
-builder.Services.AddScoped<IReportSource, InvoiceDnPaymentCollectionSource>();
-builder.Services.AddScoped<IReportSource, PayableInvoiceDetailSource>();
-builder.Services.AddScoped<IReportSource, PayableInvoiceSummarySource>();
-builder.Services.AddScoped<IReportSource, BillDnPaymentSource>();
-builder.Services.AddScoped<IReportSource, PurchaseReceiveOrderDetailsSource>();
-builder.Services.AddScoped<IReportSource, DepreciationScheduleSource>();
-builder.Services.AddScoped<IReportSource, DisposalScheduleSource>();
-builder.Services.AddScoped<IReportSource, FixedAssetReconciliationSource>();
-builder.Services.AddScoped<IReportSource, FixedAssetsScheduleSource>();
-builder.Services.AddScoped<IReportSource, BusinessPerformanceSource>();
+builder.Services.AddScoped<IReportSourceRepository, BalanceSheetSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ProfitAndLossSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, CashFlowSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, QuotationTrackSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, SalesOrderTrackSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, DeliveryOrderTrackSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, InvoiceTrackSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, AgedReceivablesDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, SalesAnalysisSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, SalesAnalysisDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, PurchaseOrderTrackSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ReceiveOrderTrackSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, BillsTrackSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, AgedPayablesDetailsSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, PurchaseAnalysisSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ReceivableInvoiceDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, ReceivableInvoiceSummarySourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, InvoiceDnPaymentCollectionSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, PayableInvoiceDetailSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, PayableInvoiceSummarySourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, BillDnPaymentSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, PurchaseReceiveOrderDetailsSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, DepreciationScheduleSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, DisposalScheduleSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, FixedAssetReconciliationSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, FixedAssetsScheduleSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, BusinessPerformanceSourceRepository>();
 
 // HRMS and Payroll reports (TK-59)
-builder.Services.AddScoped<IReportSource, HeadcountSummarySource>();
-builder.Services.AddScoped<IReportSource, JoinersLeaversSource>();
-builder.Services.AddScoped<IReportSource, AttritionRateSource>();
-builder.Services.AddScoped<IReportSource, ProbationDueSource>();
-builder.Services.AddScoped<IReportSource, BirthdaysAnniversariesSource>();
-builder.Services.AddScoped<IReportSource, DocumentExpirySource>();
+builder.Services.AddScoped<IReportSourceRepository, HeadcountSummarySource>();
+builder.Services.AddScoped<IReportSourceRepository, JoinersLeaversSource>();
+builder.Services.AddScoped<IReportSourceRepository, AttritionRateSource>();
+builder.Services.AddScoped<IReportSourceRepository, ProbationDueSource>();
+builder.Services.AddScoped<IReportSourceRepository, BirthdaysAnniversariesSource>();
+builder.Services.AddScoped<IReportSourceRepository, DocumentExpirySource>();
 
-builder.Services.AddScoped<IReportSource, DailyAttendanceSource>();
-builder.Services.AddScoped<IReportSource, MonthlyMusterRollSource>();
-builder.Services.AddScoped<IReportSource, LateEarlyOutSource>();
-builder.Services.AddScoped<IReportSource, OvertimeSummarySource>();
-builder.Services.AddScoped<IReportSource, AttendanceRegularisationsSource>();
+builder.Services.AddScoped<IReportSourceRepository, DailyAttendanceSource>();
+builder.Services.AddScoped<IReportSourceRepository, MonthlyMusterRollSource>();
+builder.Services.AddScoped<IReportSourceRepository, LateEarlyOutSource>();
+builder.Services.AddScoped<IReportSourceRepository, OvertimeSummarySource>();
+builder.Services.AddScoped<IReportSourceRepository, AttendanceRegularisationsSource>();
 
-builder.Services.AddScoped<IReportSource, LeaveRegisterSource>();
-builder.Services.AddScoped<IReportSource, LeaveBalancesSource>();
-builder.Services.AddScoped<IReportSource, LeaveEncashmentSource>();
-builder.Services.AddScoped<IReportSource, TeamAvailabilitySource>();
+builder.Services.AddScoped<IReportSourceRepository, LeaveRegisterSource>();
+builder.Services.AddScoped<IReportSourceRepository, LeaveBalancesSource>();
+builder.Services.AddScoped<IReportSourceRepository, LeaveEncashmentSource>();
+builder.Services.AddScoped<IReportSourceRepository, TeamAvailabilitySource>();
 
-builder.Services.AddScoped<IReportSource, SalaryRegisterSource>();
-builder.Services.AddScoped<IReportSource, PayslipSummarySource>();
-builder.Services.AddScoped<IReportSource, CtcReportSource>();
-builder.Services.AddScoped<IReportSource, SalaryVarianceSource>();
-builder.Services.AddScoped<IReportSource, BankAdviceSource>();
-builder.Services.AddScoped<IReportSource, HeldSalariesSource>();
-builder.Services.AddScoped<IReportSource, SalaryArrearsSource>();
-builder.Services.AddScoped<IReportSource, LoansOutstandingSource>();
+builder.Services.AddScoped<IReportSourceRepository, SalaryRegisterSource>();
+builder.Services.AddScoped<IReportSourceRepository, PayslipSummarySource>();
+builder.Services.AddScoped<IReportSourceRepository, CtcReportSource>();
+builder.Services.AddScoped<IReportSourceRepository, SalaryVarianceSource>();
+builder.Services.AddScoped<IReportSourceRepository, BankAdviceSource>();
+builder.Services.AddScoped<IReportSourceRepository, HeldSalariesSource>();
+builder.Services.AddScoped<IReportSourceRepository, SalaryArrearsSource>();
+builder.Services.AddScoped<IReportSourceRepository, LoansOutstandingSource>();
 
-builder.Services.AddScoped<IReportSource, PfStatementSource>();
-builder.Services.AddScoped<IReportSource, EsiStatementSource>();
-builder.Services.AddScoped<IReportSource, PtStatementSource>();
-builder.Services.AddScoped<IReportSource, LwfStatementSource>();
-builder.Services.AddScoped<IReportSource, GratuityProvisionSource>();
-builder.Services.AddScoped<IReportSource, BonusRegisterSource>();
-builder.Services.AddScoped<IReportSource, TdsSummarySource>();
+builder.Services.AddScoped<IReportSourceRepository, PfStatementSource>();
+builder.Services.AddScoped<IReportSourceRepository, EsiStatementSource>();
+builder.Services.AddScoped<IReportSourceRepository, PtStatementSource>();
+builder.Services.AddScoped<IReportSourceRepository, LwfStatementSource>();
+builder.Services.AddScoped<IReportSourceRepository, GratuityProvisionSource>();
+builder.Services.AddScoped<IReportSourceRepository, BonusRegisterSource>();
+builder.Services.AddScoped<IReportSourceRepository, TdsSummarySource>();
 
-builder.Services.AddScoped<IReportSource, RecruitmentPipelineSource>();
-builder.Services.AddScoped<IReportSource, TimeToHireSource>();
-builder.Services.AddScoped<IReportSource, SourceEffectivenessSource>();
-builder.Services.AddScoped<IReportSource, OfferAcceptanceSource>();
+builder.Services.AddScoped<IReportSourceRepository, RecruitmentPipelineSource>();
+builder.Services.AddScoped<IReportSourceRepository, TimeToHireSource>();
+builder.Services.AddScoped<IReportSourceRepository, SourceEffectivenessSource>();
+builder.Services.AddScoped<IReportSourceRepository, OfferAcceptanceSource>();
 
-builder.Services.AddScoped<IReportSource, ClaimsByCategorySource>();
-builder.Services.AddScoped<IReportSource, ClaimsByEmployeeSource>();
-builder.Services.AddScoped<IReportSource, ClaimsPendingApprovalSource>();
+builder.Services.AddScoped<IReportSourceRepository, ClaimsByCategorySource>();
+builder.Services.AddScoped<IReportSourceRepository, ClaimsByEmployeeSource>();
+builder.Services.AddScoped<IReportSourceRepository, ClaimsPendingApprovalSource>();
 
 // Project reports (TK-107)
-builder.Services.AddScoped<IReportSource, ProjectProfitabilitySource>();
-builder.Services.AddScoped<IReportSource, ProjectBudgetSource>();
-builder.Services.AddScoped<IReportSource, ProjectUnbilledSource>();
-builder.Services.AddScoped<IReportSource, ProjectTimeByUserSource>();
+builder.Services.AddScoped<IReportSourceRepository, ProjectProfitabilitySource>();
+builder.Services.AddScoped<IReportSourceRepository, ProjectBudgetSource>();
+builder.Services.AddScoped<IReportSourceRepository, ProjectUnbilledSource>();
+builder.Services.AddScoped<IReportSourceRepository, ProjectTimeByUserSource>();
 
 // Budget reports (TK-109)
-builder.Services.AddScoped<IReportSource, BudgetAgainstActualSource>();
-builder.Services.AddScoped<IReportSource, BudgetAgainstActualByProjectSource>();
-builder.Services.AddScoped<IReportSource, BudgetMonthlyTrendSource>();
+builder.Services.AddScoped<IReportSourceRepository, BudgetAgainstActualSource>();
+builder.Services.AddScoped<IReportSourceRepository, BudgetAgainstActualByProjectSource>();
+builder.Services.AddScoped<IReportSourceRepository, BudgetMonthlyTrendSource>();
 
 // The report builder's datasets (TK-113). Their custom field columns come
 // from Master's definitions, cached five minutes per branch and kind.
@@ -220,13 +218,13 @@ builder.Services.AddHttpClient<ICustomFieldDefinitions, HttpCustomFieldDefinitio
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<IReportSource, SalesLinesDataset>();
-builder.Services.AddScoped<IReportSource, PurchaseLinesDataset>();
-builder.Services.AddScoped<IReportSource, LedgerRowsDataset>();
-builder.Services.AddScoped<IReportSource, StockMovementsDataset>();
-builder.Services.AddScoped<IReportSource, ItemsDataset>();
-builder.Services.AddScoped<IReportSource, ContactsDataset>();
-builder.Services.AddScoped<CustomReportService>();
+builder.Services.AddScoped<IReportSourceRepository, SalesLinesDataset>();
+builder.Services.AddScoped<IReportSourceRepository, PurchaseLinesDataset>();
+builder.Services.AddScoped<IReportSourceRepository, LedgerRowsDataset>();
+builder.Services.AddScoped<IReportSourceRepository, StockMovementsDataset>();
+builder.Services.AddScoped<IReportSourceRepository, ItemsDataset>();
+builder.Services.AddScoped<IReportSourceRepository, ContactsDataset>();
+builder.Services.AddScoped<CustomReportRepository>();
 
 // Scheduled report email (TK-114). Master lists the branches and their users
 // with current permissions, and sends the mail (through Notification.Worker
@@ -249,9 +247,9 @@ builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.TryAddSingleton(TimeProvider.System);
 builder.Services.AddBillBookWorkerErrorAudit<ReportingDbContext>();
-builder.Services.AddScoped<IScheduledReportExporter, ScheduledReportExporter>();
-builder.Services.AddScoped<ReportScheduleRun>();
-builder.Services.AddScoped<ReportScheduleService>();
+builder.Services.AddScoped<IScheduledReportExporter, ScheduledReportExporterRepository>();
+builder.Services.AddScoped<ReportScheduleRunRepository>();
+builder.Services.AddScoped<ReportScheduleRepository>();
 
 // The branch's own GSTIN for the GSTR-1 export (TK-115), as Sales reads it for its documents.
 builder.Services.AddHttpClient<IOrgIdentityProvider, HttpOrgIdentityProvider>(client =>
@@ -261,9 +259,9 @@ builder.Services.AddHttpClient<IOrgIdentityProvider, HttpOrgIdentityProvider>(cl
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHostedService<ReportScheduleWorker>();
 
-builder.Services.AddScoped<ReportCatalogService>();
-builder.Services.AddScoped<ReportRunner>();
-builder.Services.AddScoped<SavedViewService>();
+builder.Services.AddScoped<ReportCatalogRepository>();
+builder.Services.AddScoped<ReportRunnerRepository>();
+builder.Services.AddScoped<SavedViewRepository>();
 builder.Services.AddScoped<ReportCatalogSeeder>();
 
 // Every write endpoint runs in a transaction and rolls back unless the action

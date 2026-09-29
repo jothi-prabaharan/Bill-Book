@@ -1,4 +1,5 @@
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Xunit;
@@ -45,7 +46,7 @@ public class PivotTests
     };
 
     private static Task<ReportResultView> Build(ReportPivotModel pivot) =>
-        PivotBuilder<Row>.BuildAsync(Query, pivot, Columns, CancellationToken.None);
+        PivotBuilderRepository<Row>.BuildAsync(Query, pivot, Columns, CancellationToken.None);
 
     [Fact]
     public async Task The_column_axis_comes_from_the_data()
@@ -122,12 +123,12 @@ public class PivotTests
         // spreadsheet nobody can read. The message names the field so the person
         // can pick another rather than watching it hang.
         IQueryable<Row> wide = AsyncQueryable.Of(Enumerable
-            .Range(0, PivotBuilder<Row>.MaxColumns + 1)
+            .Range(0, PivotBuilderRepository<Row>.MaxColumns + 1)
             .Select(index => new Row("Asset", $"M{index:D4}", 1m))
             .ToList());
 
         ReportQueryException error = await Assert.ThrowsAsync<ReportQueryException>(
-            () => PivotBuilder<Row>.BuildAsync(
+            () => PivotBuilderRepository<Row>.BuildAsync(
                 wide, Pivot("month"), Columns, CancellationToken.None));
 
         Assert.Contains("month", error.Message);

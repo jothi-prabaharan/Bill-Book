@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reporting.Api.Services;
-using Reporting.Api.Services.Schedules;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -21,9 +21,9 @@ namespace Reporting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class ReportSchedulesController : ControllerBase
 {
-    private readonly ReportScheduleService _schedules;
+    private readonly ReportScheduleRepository _schedules;
 
-    public ReportSchedulesController(ReportScheduleService schedules) => _schedules = schedules;
+    public ReportSchedulesController(ReportScheduleRepository schedules) => _schedules = schedules;
 
     /// <summary>The caller's own schedules, for one report or all.</summary>
     [HttpGet]

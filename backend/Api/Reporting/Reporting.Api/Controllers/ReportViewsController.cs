@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -22,9 +23,9 @@ namespace Reporting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class ReportViewsController : ControllerBase
 {
-    private readonly SavedViewService _views;
+    private readonly SavedViewRepository _views;
 
-    public ReportViewsController(SavedViewService views) => _views = views;
+    public ReportViewsController(SavedViewRepository views) => _views = views;
 
     /// <summary>This user's views, and the branch's. Never anybody else's private ones.</summary>
     [HttpGet]

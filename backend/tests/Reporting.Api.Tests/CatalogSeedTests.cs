@@ -1,4 +1,5 @@
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Repository.SeedData;
 using Xunit;
 
@@ -8,7 +9,7 @@ namespace Reporting.Api.Tests;
 /// The source and the seed must agree about which columns a report has.
 ///
 /// <b>They already do agree at run time, and that is the problem.</b>
-/// <c>ReportCatalogService.Validate</c> refuses a report whose two lists differ —
+/// <c>ReportCatalogRepository.Validate</c> refuses a report whose two lists differ —
 /// but it only runs when somebody opens that report, on a branch with data. A
 /// column added to a source and forgotten here is invisible until a customer hits
 /// it; a report seeded with no source row never appears in the list at all and
@@ -20,7 +21,7 @@ public class CatalogSeedTests
 {
     [Theory]
     [MemberData(nameof(ReportSourceTests.Sources), MemberType = typeof(ReportSourceTests))]
-    public void Every_declared_column_has_a_seed_row(IReportSource source)
+    public void Every_declared_column_has_a_seed_row(IReportSourceRepository source)
     {
         Assert.True(
             ReportCatalogSeeder.SeededColumnKeys.TryGetValue(
@@ -43,7 +44,7 @@ public class CatalogSeedTests
 
     [Theory]
     [MemberData(nameof(ReportSourceTests.Sources), MemberType = typeof(ReportSourceTests))]
-    public void Every_seeded_column_is_declared_by_the_source(IReportSource source)
+    public void Every_seeded_column_is_declared_by_the_source(IReportSourceRepository source)
     {
         if (!ReportCatalogSeeder.SeededColumnKeys.TryGetValue(
                 source.ReportKey, out IReadOnlyList<string>? seeded))

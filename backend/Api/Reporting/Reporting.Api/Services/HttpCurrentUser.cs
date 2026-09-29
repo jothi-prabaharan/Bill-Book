@@ -1,3 +1,4 @@
+using Reporting.Repository.Repositories;
 using System.Security.Claims;
 using Shared.Kernel.Interfaces;
 

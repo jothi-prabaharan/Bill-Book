@@ -6,7 +6,7 @@ using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Apps;
 using Reporting.Api.Services;
-using Reporting.Api.Services.Gst;
+using Reporting.Repository.Repositories;
 using Reporting.Repository.ReadModels;
 using Shared.Kernel.Documents;
 
@@ -33,10 +33,10 @@ public class GstController : ControllerBase
 {
     private readonly ReportingDbContext _db;
     private readonly ITenantContext _tenant;
-    private readonly BatchedNameResolver _names;
+    private readonly BatchedNameResolverRepository _names;
     private readonly IOrgIdentityProvider _identity;
 
-    public GstController(ReportingDbContext db, ITenantContext tenant, BatchedNameResolver names, IOrgIdentityProvider identity)
+    public GstController(ReportingDbContext db, ITenantContext tenant, BatchedNameResolverRepository names, IOrgIdentityProvider identity)
     {
         _db = db;
         _tenant = tenant;
@@ -118,7 +118,7 @@ public class GstController : ControllerBase
     /// GSTR-3B for the period (TK-115): outward supplies and reverse-charge
     /// inward supplies in table 3.1, claimable credit in 4A, blocked and
     /// ineligible credit apart in 4D, and the tax payable and net of credit.
-    /// From the sales and purchase registers; see <see cref="Gstr3b"/> for each rule.
+    /// From the sales and purchase registers; see <see cref="Gstr3bRepository"/> for each rule.
     /// </summary>
     [HttpGet("gstr3b")]
     public async Task<IActionResult> GetGstr3b([FromQuery] DateOnly from, [FromQuery] DateOnly to, CancellationToken ct)
@@ -131,7 +131,7 @@ public class GstController : ControllerBase
             .Where(p => p.DocumentDate >= from && p.DocumentDate <= to)
             .ToListAsync(ct);
 
-        return Ok(Gstr3b.Build(from, to, sales, purchases, await _names.GetStateCodesAsync(ct)));
+        return Ok(Gstr3bRepository.Build(from, to, sales, purchases, await _names.GetStateCodesAsync(ct)));
     }
 
     /// <summary>
@@ -169,7 +169,7 @@ public class GstController : ControllerBase
         if (invoices.Count > 0)
         {
             issued.Add(new IssuedDocuments(
-                Gstr1Export.InvoicesNature,
+                Gstr1ExportRepository.InvoicesNature,
                 invoices.Select(i => i.DocumentNo).Min(StringComparer.Ordinal)!,
                 invoices.Select(i => i.DocumentNo).Max(StringComparer.Ordinal)!,
                 invoices.Count,
@@ -179,7 +179,7 @@ public class GstController : ControllerBase
         if (creditNotes.Count > 0)
         {
             issued.Add(new IssuedDocuments(
-                Gstr1Export.CreditNotesNature,
+                Gstr1ExportRepository.CreditNotesNature,
                 creditNotes.Select(c => c.DocumentNo).Min(StringComparer.Ordinal)!,
                 creditNotes.Select(c => c.DocumentNo).Max(StringComparer.Ordinal)!,
                 creditNotes.Count,
@@ -187,7 +187,7 @@ public class GstController : ControllerBase
         }
 
         OrgIdentity? branch = await _identity.GetIdentityAsync(ct);
-        Gstr1ExportResult result = Gstr1Export.Build(
+        Gstr1ExportResult result = Gstr1ExportRepository.Build(
             branch?.Gstin, from, to, rows, await _names.GetStateCodesAsync(ct), issued);
 
         if (!result.IsValid)

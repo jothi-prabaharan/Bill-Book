@@ -1,11 +1,12 @@
+using Reporting.Repository.Repositories;
 using Shared.Kernel.Tenancy;
 
-namespace Reporting.Api.Services.Schedules;
+namespace Reporting.Api.Services;
 
 /// <summary>
 /// Every five minutes, each branch Master lists, in its own scope with its
 /// tenant set, the way the payment reminders do (TK-114). Several replicas may
-/// run it; the guarded claim in <see cref="ReportScheduleRun"/> is what keeps
+/// run it; the guarded claim in <see cref="ReportScheduleRunRepository"/> is what keeps
 /// a schedule to one email per run.
 /// </summary>
 public sealed class ReportScheduleWorker : BackgroundService
@@ -55,7 +56,7 @@ public sealed class ReportScheduleWorker : BackgroundService
                 tenant.OrgId = branch.OrgId;
 
                 ScheduleRunResult result = await scope.ServiceProvider
-                    .GetRequiredService<ReportScheduleRun>()
+                    .GetRequiredService<ReportScheduleRunRepository>()
                     .RunDueAsync(_clock.GetUtcNow(), ct);
 
                 if (result.Claimed > 0)

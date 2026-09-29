@@ -1,5 +1,5 @@
 using Reporting.Api.Services;
-using Reporting.Api.Services.Sources;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Repository.ReadModels;
 using Xunit;
@@ -361,18 +361,18 @@ public sealed class FixedAssetReportTests
 
     // ---- the sources -----------------------------------------------------------
 
-    public static TheoryData<IReportSource> FixedAssetSources =>
+    public static TheoryData<IReportSourceRepository> FixedAssetSources =>
     [
-        new DepreciationScheduleSource(),
-        new DisposalScheduleSource(),
-        new FixedAssetReconciliationSource(),
-        new FixedAssetsScheduleSource(),
+        new DepreciationScheduleSourceRepository(),
+        new DisposalScheduleSourceRepository(),
+        new FixedAssetReconciliationSourceRepository(),
+        new FixedAssetsScheduleSourceRepository(),
     ];
 
     [Theory]
     [MemberData(nameof(FixedAssetSources))]
     public void Every_fixed_asset_report_is_filed_under_fixed_assets_and_needs_accounting_view(
-        IReportSource source)
+        IReportSourceRepository source)
     {
         Assert.Equal(ReportModule.FixedAssets, source.Module);
         Assert.Equal("accounting.view", source.RequiredPermission);
@@ -382,7 +382,7 @@ public sealed class FixedAssetReportTests
     [Theory]
     [MemberData(nameof(FixedAssetSources))]
     public void No_fixed_asset_report_declares_a_column_the_register_cannot_fill(
-        IReportSource source)
+        IReportSourceRepository source)
     {
         // reports.json lists these, and the register has no field for any of them.
         string[] unfillable = ["brand", "outlet", "warrantyExpiry", "costLimit", "averagingMethod", "avgMethod"];
@@ -394,7 +394,7 @@ public sealed class FixedAssetReportTests
     public void The_reconciliation_totals_nothing()
     {
         // A total over both sides adds the register to the ledger.
-        Assert.DoesNotContain(new FixedAssetReconciliationSource().Columns, c => c.IsAggregatable);
+        Assert.DoesNotContain(new FixedAssetReconciliationSourceRepository().Columns, c => c.IsAggregatable);
     }
 
     // ---- fixtures ----------------------------------------------------------------
@@ -533,7 +533,7 @@ public sealed class FixedAssetReportTests
             [.. Query(start, end)];
 
         public List<FixedAssetReconciliationRow> Reconciliation(DateOnly? start, DateOnly? end) =>
-            [.. FixedAssetReconciliationSource.Rows(
+            [.. FixedAssetReconciliationSourceRepository.Rows(
                 Query(start, end),
                 _categories.AsQueryable(),
                 _accounts.AsQueryable(),
@@ -542,7 +542,7 @@ public sealed class FixedAssetReportTests
                 end)];
 
         private IQueryable<FixedAssetPeriodRow> Query(DateOnly? start, DateOnly? end) =>
-            FixedAssetRegister.Rows(
+            FixedAssetRegisterRepository.Rows(
                 _assets.AsQueryable(),
                 _categories.AsQueryable(),
                 _schedules.AsQueryable(),

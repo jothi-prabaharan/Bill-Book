@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 
@@ -18,9 +19,9 @@ namespace Reporting.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PortalStatementsController : ControllerBase
 {
-    private readonly PortalAccountService _accounts;
+    private readonly PortalAccountRepository _accounts;
 
-    public PortalStatementsController(PortalAccountService accounts) => _accounts = accounts;
+    public PortalStatementsController(PortalAccountRepository accounts) => _accounts = accounts;
 
     [HttpGet]
     public async Task<IActionResult> GetContactStatement(

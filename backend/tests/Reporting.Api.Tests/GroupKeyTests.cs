@@ -1,4 +1,5 @@
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Xunit;
 
@@ -54,7 +55,7 @@ public class GroupKeyTests
     public void One_level_groups_on_that_column()
     {
         var groups = Rows
-            .GroupBy(ReportQueryBuilder<Row>.GroupKeySelector(["type"], Columns).Compile())
+            .GroupBy(ReportQueryBuilderRepository<Row>.GroupKeySelector(["type"], Columns).Compile())
             .ToDictionary(g => g.Key, g => g.Sum(r => r.Debit));
 
         Assert.Equal(400m, groups["Asset"]);
@@ -65,11 +66,11 @@ public class GroupKeyTests
     public void Levels_round_trip_through_the_separator()
     {
         var groups = Rows
-            .GroupBy(ReportQueryBuilder<Row>
+            .GroupBy(ReportQueryBuilderRepository<Row>
                 .GroupKeySelector(["type", "account"], Columns).Compile())
             .Select(g => new
             {
-                Path = g.Key.Split(ReportQueryBuilder<Row>.GroupSeparator),
+                Path = g.Key.Split(ReportQueryBuilderRepository<Row>.GroupSeparator),
                 Total = g.Sum(r => r.Debit),
             })
             .ToList();
@@ -87,11 +88,11 @@ public class GroupKeyTests
         // The two Income rows have no account. They must still total together and
         // still appear — a group that vanishes takes its rows' money with it.
         var groups = Rows
-            .GroupBy(ReportQueryBuilder<Row>
+            .GroupBy(ReportQueryBuilderRepository<Row>
                 .GroupKeySelector(["type", "account"], Columns).Compile())
             .Select(g => new
             {
-                Path = g.Key.Split(ReportQueryBuilder<Row>.GroupSeparator),
+                Path = g.Key.Split(ReportQueryBuilderRepository<Row>.GroupSeparator),
                 Total = g.Sum(r => r.Debit),
             })
             .ToList();
@@ -106,15 +107,15 @@ public class GroupKeyTests
     [Fact]
     public void Grouping_by_a_column_the_report_does_not_declare_is_refused() =>
         Assert.Throws<ReportQueryException>(
-            () => ReportQueryBuilder<Row>.GroupKeySelector(["ghost"], Columns));
+            () => ReportQueryBuilderRepository<Row>.GroupKeySelector(["ghost"], Columns));
 
     [Fact]
     public void Grouping_by_a_column_not_marked_groupable_is_refused() =>
         Assert.Throws<ReportQueryException>(
-            () => ReportQueryBuilder<Row>.GroupKeySelector(["debit"], Columns));
+            () => ReportQueryBuilderRepository<Row>.GroupKeySelector(["debit"], Columns));
 
     [Fact]
     public void Grouping_by_nothing_is_refused_rather_than_grouping_everything() =>
         Assert.Throws<ReportQueryException>(
-            () => ReportQueryBuilder<Row>.GroupKeySelector([], Columns));
+            () => ReportQueryBuilderRepository<Row>.GroupKeySelector([], Columns));
 }

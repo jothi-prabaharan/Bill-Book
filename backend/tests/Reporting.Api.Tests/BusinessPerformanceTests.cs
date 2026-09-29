@@ -1,4 +1,5 @@
-using Reporting.Api.Services.Sources;
+using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Repository.ReadModels;
 using Xunit;
@@ -182,7 +183,7 @@ public sealed class BusinessPerformanceTests
     [Fact]
     public void The_report_holds_its_own_order_and_totals_nothing()
     {
-        BusinessPerformanceSource source = new();
+        BusinessPerformanceSourceRepository source = new();
 
         // One column mixes percentages, days and amounts; a total of it is nonsense.
         Assert.True(source.ForcesSortOrder);
@@ -282,7 +283,7 @@ public sealed class BusinessPerformanceTests
         }
 
         public List<BusinessPerformanceRow> Rows(DateOnly start, DateOnly end) =>
-            [.. BusinessPerformanceSource.Rows(
+            [.. BusinessPerformanceSourceRepository.Rows(
                 _accounts.AsQueryable(),
                 _ledger.AsQueryable(),
                 _categories.AsQueryable(),

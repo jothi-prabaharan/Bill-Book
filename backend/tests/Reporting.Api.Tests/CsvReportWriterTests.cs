@@ -1,5 +1,6 @@
 using System.Text;
 using Reporting.Api.Services;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Xunit;
@@ -58,7 +59,7 @@ public class CsvReportWriterTests
     [Fact]
     public void Writes_the_declared_headers_in_their_declared_order()
     {
-        string csv = Decode(CsvReportWriter.Write(Sample()));
+        string csv = Decode(CsvReportWriterRepository.Write(Sample()));
 
         Assert.StartsWith("Date,Account,Debit(INR)\r\n", csv, StringComparison.Ordinal);
     }
@@ -66,7 +67,7 @@ public class CsvReportWriterTests
     [Fact]
     public void Writes_a_row_per_result_row_then_the_footers()
     {
-        string[] lines = Decode(CsvReportWriter.Write(Sample()))
+        string[] lines = Decode(CsvReportWriterRepository.Write(Sample()))
             .Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         // header + 2 rows + 1 group footer + grand total
@@ -83,7 +84,7 @@ public class CsvReportWriterTests
         ReportResultView result = Sample();
         result.Rows = [new() { ["account"] = "Kumar, Ravi & Sons" }];
 
-        Assert.Contains("\"Kumar, Ravi & Sons\"", Decode(CsvReportWriter.Write(result)), StringComparison.Ordinal);
+        Assert.Contains("\"Kumar, Ravi & Sons\"", Decode(CsvReportWriterRepository.Write(result)), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -94,7 +95,7 @@ public class CsvReportWriterTests
 
         Assert.Contains(
             "\"The \"\"Cash\"\" account\"",
-            Decode(CsvReportWriter.Write(result)),
+            Decode(CsvReportWriterRepository.Write(result)),
             StringComparison.Ordinal);
     }
 
@@ -106,7 +107,7 @@ public class CsvReportWriterTests
         result.GroupFooters = [];
         result.GrandTotal = null;
 
-        string csv = Decode(CsvReportWriter.Write(result));
+        string csv = Decode(CsvReportWriterRepository.Write(result));
 
         Assert.Contains("\"Line one\nLine two\"", csv, StringComparison.Ordinal);
 
@@ -125,7 +126,7 @@ public class CsvReportWriterTests
             new() { ["account"] = "现金账户" },
         ];
 
-        string csv = Decode(CsvReportWriter.Write(result));
+        string csv = Decode(CsvReportWriterRepository.Write(result));
 
         Assert.Contains("ரொக்கம்", csv, StringComparison.Ordinal);
         Assert.Contains("现金账户", csv, StringComparison.Ordinal);
@@ -139,7 +140,7 @@ public class CsvReportWriterTests
 
         // Indian grouping would render this 12,34,567.89 — which is right on the
         // screen and unparseable in a CSV column.
-        Assert.Contains(",1234567.89", Decode(CsvReportWriter.Write(result)), StringComparison.Ordinal);
+        Assert.Contains(",1234567.89", Decode(CsvReportWriterRepository.Write(result)), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -148,7 +149,7 @@ public class CsvReportWriterTests
         ReportResultView result = Sample();
         result.Rows = [new() { ["date"] = null, ["account"] = null, ["debit"] = null }];
 
-        string[] lines = Decode(CsvReportWriter.Write(result))
+        string[] lines = Decode(CsvReportWriterRepository.Write(result))
             .Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         Assert.Equal(",,", lines[1]);
@@ -163,7 +164,7 @@ public class CsvReportWriterTests
         result.GroupFooters = [];
         result.GrandTotal = null;
 
-        string[] lines = Decode(CsvReportWriter.Write(result))
+        string[] lines = Decode(CsvReportWriterRepository.Write(result))
             .Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         Assert.Equal("Yes", lines[1]);
@@ -190,7 +191,7 @@ public class CsvReportWriterTests
         result.GroupFooters = [];
         result.GrandTotal = null;
 
-        string[] lines = Decode(CsvReportWriter.Write(result))
+        string[] lines = Decode(CsvReportWriterRepository.Write(result))
             .Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         Assert.Equal("2026-12-31,2026-12-31 18:45:03", lines[1]);
@@ -215,7 +216,7 @@ public class CsvReportWriterTests
         result.GroupFooters = [];
         result.GrandTotal = null;
 
-        string[] lines = Decode(CsvReportWriter.Write(result))
+        string[] lines = Decode(CsvReportWriterRepository.Write(result))
             .Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
 
         Assert.Equal("Debit(INR),Account", lines[0]);
@@ -229,7 +230,7 @@ public class CsvReportWriterTests
         ReportResultView result = Sample();
         result.Rows = [new() { ["account"] = "  indented" }];
 
-        Assert.Contains("\"  indented\"", Decode(CsvReportWriter.Write(result)), StringComparison.Ordinal);
+        Assert.Contains("\"  indented\"", Decode(CsvReportWriterRepository.Write(result)), StringComparison.Ordinal);
     }
 
     /// <summary>

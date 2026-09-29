@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Reporting.Api.Services;
-using Reporting.Api.Services.Sources;
-using Reporting.Api.Services.Sources.Hrms;
+using Reporting.Repository.Repositories;
 using Xunit;
 
 namespace Reporting.Api.Tests;
@@ -12,67 +11,67 @@ namespace Reporting.Api.Tests;
 /// </summary>
 public class ReportSourceTests
 {
-    private static readonly AccountMovementSource Movement = new(OfflineResolver());
-    private static readonly AccountTransactionSource AccountTransaction = new();
-    private static readonly TrialBalanceSource TrialBalance = new(OfflineResolver());
-    private static readonly GeneralLedgerSummarySource GeneralLedgerSummary = new();
-    private static readonly JournalReportSource JournalReport = new(OfflineResolver());
-    private static readonly BankSummarySource BankSummary = new(OfflineResolver());
-    private static readonly ReconciliationSource Reconciliation = new();
-    private static readonly InventoryAgingSource InventoryAging = new();
-    private static readonly ItemListSource ItemList = new(OfflineResolver());
-    private static readonly ItemDetailSource ItemDetail = new();
-    private static readonly ItemSummarySource ItemSummary = new();
-    private static readonly BatchTrackingStatusSource BatchTrackingStatus = new();
-    private static readonly BatchTrackingDetailSource BatchTrackingDetail = new();
-    private static readonly SerialTrackingStatusSource SerialTrackingStatus = new();
-    private static readonly SerialTrackingDetailSource SerialTrackingDetail = new();
-    private static readonly WarehouseTrackingStatusSource WarehouseTrackingStatus = new(OfflineResolver());
-    private static readonly WarehouseTrackingDetailSource WarehouseTrackingDetail = new();
-    private static readonly SalesRegisterSource SalesRegister = new();
-    private static readonly FxGainLossSource FxGainLoss = new();
-    private static readonly FxGainLossDetailsSource FxGainLossDetails = new();
-    private static readonly ArAgingSummarySource ArAgingSummary = new();
-    private static readonly ApAgingSummarySource ApAgingSummary = new();
-    private static readonly CustomerStatementSource CustomerStatement = new();
-    private static readonly VendorStatementSource VendorStatement = new();
-    private static readonly PurchaseRegisterSource PurchaseRegister = new();
-    private static readonly Gstr1SummarySource Gstr1Summary = new();
+    private static readonly AccountMovementSourceRepository Movement = new(OfflineResolver());
+    private static readonly AccountTransactionSourceRepository AccountTransaction = new();
+    private static readonly TrialBalanceSourceRepository TrialBalance = new(OfflineResolver());
+    private static readonly GeneralLedgerSummarySourceRepository GeneralLedgerSummary = new();
+    private static readonly JournalReportSourceRepository JournalReport = new(OfflineResolver());
+    private static readonly BankSummarySourceRepository BankSummary = new(OfflineResolver());
+    private static readonly ReconciliationSourceRepository Reconciliation = new();
+    private static readonly InventoryAgingSourceRepository InventoryAging = new();
+    private static readonly ItemListSourceRepository ItemList = new(OfflineResolver());
+    private static readonly ItemDetailSourceRepository ItemDetail = new();
+    private static readonly ItemSummarySourceRepository ItemSummary = new();
+    private static readonly BatchTrackingStatusSourceRepository BatchTrackingStatus = new();
+    private static readonly BatchTrackingDetailSourceRepository BatchTrackingDetail = new();
+    private static readonly SerialTrackingStatusSourceRepository SerialTrackingStatus = new();
+    private static readonly SerialTrackingDetailSourceRepository SerialTrackingDetail = new();
+    private static readonly WarehouseTrackingStatusSourceRepository WarehouseTrackingStatus = new(OfflineResolver());
+    private static readonly WarehouseTrackingDetailSourceRepository WarehouseTrackingDetail = new();
+    private static readonly SalesRegisterSourceRepository SalesRegister = new();
+    private static readonly FxGainLossSourceRepository FxGainLoss = new();
+    private static readonly FxGainLossDetailsSourceRepository FxGainLossDetails = new();
+    private static readonly ArAgingSummarySourceRepository ArAgingSummary = new();
+    private static readonly ApAgingSummarySourceRepository ApAgingSummary = new();
+    private static readonly CustomerStatementSourceRepository CustomerStatement = new();
+    private static readonly VendorStatementSourceRepository VendorStatement = new();
+    private static readonly PurchaseRegisterSourceRepository PurchaseRegister = new();
+    private static readonly Gstr1SummarySourceRepository Gstr1Summary = new();
 
     // The tracker and finance reports. They were written, registered nowhere,
     // and listed here nowhere either — which is why 239 tests passed over a
     // catalog that could not serve any of them.
-    private static readonly BalanceSheetSource BalanceSheet = new(OfflineResolver());
-    private static readonly ProfitAndLossSource ProfitAndLoss = new(OfflineResolver());
-    private static readonly CashFlowSource CashFlow = new();
-    private static readonly QuotationTrackSource QuotationTrack = new();
-    private static readonly SalesOrderTrackSource SalesOrderTrack = new();
-    private static readonly DeliveryOrderTrackSource DeliveryOrderTrack = new();
-    private static readonly InvoiceTrackSource InvoiceTrack = new();
-    private static readonly AgedReceivablesDetailSource AgedReceivablesDetail = new();
-    private static readonly SalesAnalysisSource SalesAnalysis = new();
-    private static readonly SalesAnalysisDetailSource SalesAnalysisDetail = new();
-    private static readonly PurchaseOrderTrackSource PurchaseOrderTrack = new();
-    private static readonly ReceiveOrderTrackSource ReceiveOrderTrack = new();
-    private static readonly BillsTrackSource BillsTrack = new();
-    private static readonly AgedPayablesDetailsSource AgedPayablesDetails = new();
-    private static readonly PurchaseAnalysisSource PurchaseAnalysis = new();
-    private static readonly ReceivableInvoiceDetailSource ReceivableInvoiceDetail = new();
-    private static readonly ReceivableInvoiceSummarySource ReceivableInvoiceSummary = new();
-    private static readonly InvoiceDnPaymentCollectionSource InvoiceDnPaymentCollection = new();
-    private static readonly PayableInvoiceDetailSource PayableInvoiceDetail = new();
-    private static readonly PayableInvoiceSummarySource PayableInvoiceSummary = new();
-    private static readonly BillDnPaymentSource BillDnPayment = new();
-    private static readonly PurchaseReceiveOrderDetailsSource PurchaseReceiveOrderDetails = new();
+    private static readonly BalanceSheetSourceRepository BalanceSheet = new(OfflineResolver());
+    private static readonly ProfitAndLossSourceRepository ProfitAndLoss = new(OfflineResolver());
+    private static readonly CashFlowSourceRepository CashFlow = new();
+    private static readonly QuotationTrackSourceRepository QuotationTrack = new();
+    private static readonly SalesOrderTrackSourceRepository SalesOrderTrack = new();
+    private static readonly DeliveryOrderTrackSourceRepository DeliveryOrderTrack = new();
+    private static readonly InvoiceTrackSourceRepository InvoiceTrack = new();
+    private static readonly AgedReceivablesDetailSourceRepository AgedReceivablesDetail = new();
+    private static readonly SalesAnalysisSourceRepository SalesAnalysis = new();
+    private static readonly SalesAnalysisDetailSourceRepository SalesAnalysisDetail = new();
+    private static readonly PurchaseOrderTrackSourceRepository PurchaseOrderTrack = new();
+    private static readonly ReceiveOrderTrackSourceRepository ReceiveOrderTrack = new();
+    private static readonly BillsTrackSourceRepository BillsTrack = new();
+    private static readonly AgedPayablesDetailsSourceRepository AgedPayablesDetails = new();
+    private static readonly PurchaseAnalysisSourceRepository PurchaseAnalysis = new();
+    private static readonly ReceivableInvoiceDetailSourceRepository ReceivableInvoiceDetail = new();
+    private static readonly ReceivableInvoiceSummarySourceRepository ReceivableInvoiceSummary = new();
+    private static readonly InvoiceDnPaymentCollectionSourceRepository InvoiceDnPaymentCollection = new();
+    private static readonly PayableInvoiceDetailSourceRepository PayableInvoiceDetail = new();
+    private static readonly PayableInvoiceSummarySourceRepository PayableInvoiceSummary = new();
+    private static readonly BillDnPaymentSourceRepository BillDnPayment = new();
+    private static readonly PurchaseReceiveOrderDetailsSourceRepository PurchaseReceiveOrderDetails = new();
 
     // The fixed-asset register's four reports, over one roll-forward.
-    private static readonly DepreciationScheduleSource DepreciationSchedule = new();
-    private static readonly DisposalScheduleSource DisposalSchedule = new();
-    private static readonly FixedAssetReconciliationSource FixedAssetReconciliation = new();
-    private static readonly FixedAssetsScheduleSource FixedAssetsSchedule = new();
+    private static readonly DepreciationScheduleSourceRepository DepreciationSchedule = new();
+    private static readonly DisposalScheduleSourceRepository DisposalSchedule = new();
+    private static readonly FixedAssetReconciliationSourceRepository FixedAssetReconciliation = new();
+    private static readonly FixedAssetsScheduleSourceRepository FixedAssetsSchedule = new();
 
     // D-15: Xero-style KPI ratios.
-    private static readonly BusinessPerformanceSource BusinessPerformance = new();
+    private static readonly BusinessPerformanceSourceRepository BusinessPerformance = new();
 
     // HRMS & Payroll reports (TK-59)
     private static readonly HeadcountSummarySource HeadcountSummary = new();
@@ -142,12 +141,12 @@ public class ReportSourceTests
     /// constructor, and a test that made it reach the network would fail loudly
     /// rather than quietly resolve a name.
     /// </summary>
-    private static BatchedNameResolver OfflineResolver() =>
+    private static BatchedNameResolverRepository OfflineResolver() =>
         new(
             new HttpClient { BaseAddress = new Uri("http://reporting.tests.invalid") },
             new MemoryCache(new MemoryCacheOptions()));
 
-    public static TheoryData<IReportSource> Sources =>
+    public static TheoryData<IReportSourceRepository> Sources =>
     [
         Movement,
         AccountTransaction,
@@ -256,7 +255,7 @@ public class ReportSourceTests
 
     [Theory]
     [MemberData(nameof(Sources))]
-    public void Every_column_key_is_unique(IReportSource source)
+    public void Every_column_key_is_unique(IReportSourceRepository source)
     {
         // The column map is keyed on these. A duplicate would silently shadow the
         // earlier column, and the shadowed one would be unfilterable in a way no
@@ -268,7 +267,7 @@ public class ReportSourceTests
 
     [Theory]
     [MemberData(nameof(Sources))]
-    public void Only_money_and_quantity_columns_carry_an_aggregate(IReportSource source)
+    public void Only_money_and_quantity_columns_carry_an_aggregate(IReportSourceRepository source)
     {
         // Summing a code, a date or a reference produces a footer figure that looks
         // like an answer and is not one.
@@ -283,14 +282,14 @@ public class ReportSourceTests
 
     [Theory]
     [MemberData(nameof(Sources))]
-    public void Every_groupable_column_is_text(IReportSource source) =>
+    public void Every_groupable_column_is_text(IReportSourceRepository source) =>
         Assert.All(
             source.Columns.Where(c => c.IsGroupable),
             column => Assert.Equal(typeof(string), column.ValueType));
 
     [Theory]
     [MemberData(nameof(Sources))]
-    public void Every_boolean_valued_column_is_typed_boolean(IReportSource source)
+    public void Every_boolean_valued_column_is_typed_boolean(IReportSourceRepository source)
     {
         // A C# bool declared as anything else — Enum was the mistake found here —
         // renders as the literal words "True"/"False" instead of "Yes"/"No", and
@@ -305,7 +304,7 @@ public class ReportSourceTests
 
     [Theory]
     [MemberData(nameof(Sources))]
-    public void A_report_declares_a_permission_beyond_reporting_view(IReportSource source)
+    public void A_report_declares_a_permission_beyond_reporting_view(IReportSourceRepository source)
     {
         // reports.view gets you the catalog. Reading the general ledger through a
         // report must still need accounting.view, or the engine becomes a way round

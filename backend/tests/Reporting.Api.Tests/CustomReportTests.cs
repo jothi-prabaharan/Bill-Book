@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Reporting.Api.Services;
-using Reporting.Api.Services.Sources;
+using Reporting.Repository.Repositories;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Reporting.Repository;
@@ -41,7 +41,7 @@ public sealed class CustomReportTests
         Branch branch = await BranchAsync();
         Guid me = Guid.NewGuid();
         await using ReportingDbContext db = _postgres.CreateContext(branch.CustomerId, branch.OrgId);
-        CustomReportService service = Service(db, me);
+        CustomReportRepository service = Service(db, me);
 
         CustomReportModel saved = (await service.CreateAsync(new CustomReportModel
         {
@@ -97,7 +97,7 @@ public sealed class CustomReportTests
             Layout = new ReportQueryRequest { Columns = ["vendor", "lineTotalBase"], GroupBy = ["vendor"] },
         }, mayShare: true, Buyer, CancellationToken.None))!;
 
-        CustomReportService other = Service(db, Guid.NewGuid());
+        CustomReportRepository other = Service(db, Guid.NewGuid());
 
         Assert.Contains(await other.CatalogAsync(Buyer, CancellationToken.None), i => i.CustomReportId == saved.CustomReportId);
         Assert.DoesNotContain(await other.CatalogAsync(NoPurchases, CancellationToken.None), i => i.CustomReportId == saved.CustomReportId);
@@ -167,7 +167,7 @@ public sealed class CustomReportTests
             Service(db, Guid.NewGuid()).CreateAsync(model, mayShare: false, SalesUser, CancellationToken.None));
 
         CustomReportModel saved = (await Service(db, Guid.NewGuid()).CreateAsync(model, mayShare: true, SalesUser, CancellationToken.None))!;
-        CustomReportService reader = Service(db, Guid.NewGuid());
+        CustomReportRepository reader = Service(db, Guid.NewGuid());
 
         Assert.False((await reader.GetAsync(saved.CustomReportId, false, SalesUser, CancellationToken.None))!.MayEdit);
         Assert.Null(await reader.UpdateAsync(saved.CustomReportId, model, false, SalesUser, CancellationToken.None));
@@ -199,7 +199,7 @@ public sealed class CustomReportTests
     public void Only_active_fields_become_columns_but_every_field_keeps_its_label()
     {
         (List<ReportColumn> columns, Dictionary<string, string> labels) =
-            DatasetSource<SalesLineRow>.Build(Invoice(siteReferenceActive: false), r => r.CustomFields);
+            DatasetSourceRepository<SalesLineRow>.Build(Invoice(siteReferenceActive: false), r => r.CustomFields);
 
         ReportColumn salesperson = Assert.Single(columns);
         Assert.Equal("custom.salesperson", salesperson.Key);
@@ -265,7 +265,7 @@ public sealed class CustomReportTests
             },
         };
 
-        List<string> dropped = CustomReportService.Prune(layout, new HashSet<string> { "customer", "lineTotalBase" });
+        List<string> dropped = CustomReportRepository.Prune(layout, new HashSet<string> { "customer", "lineTotalBase" });
 
         Assert.Equal(["custom.old"], dropped);
         Assert.Equal(["customer", "lineTotalBase"], layout.Columns);
@@ -324,11 +324,11 @@ public sealed class CustomReportTests
         return branch;
     }
 
-    private static ReportCatalogService Catalog(ReportingDbContext db, IReadOnlyList<CustomFieldDefinitionDto>? invoice = null)
+    private static ReportCatalogRepository Catalog(ReportingDbContext db, IReadOnlyList<CustomFieldDefinitionDto>? invoice = null)
     {
         StubDefinitions definitions = new(invoice ?? Invoice());
 
-        return new ReportCatalogService(
+        return new ReportCatalogRepository(
             [
                 new SalesLinesDataset(definitions),
                 new PurchaseLinesDataset(definitions),
@@ -340,7 +340,7 @@ public sealed class CustomReportTests
             db);
     }
 
-    private static CustomReportService Service(ReportingDbContext db, Guid userId, IReadOnlyList<CustomFieldDefinitionDto>? invoice = null) =>
+    private static CustomReportRepository Service(ReportingDbContext db, Guid userId, IReadOnlyList<CustomFieldDefinitionDto>? invoice = null) =>
         new(db, new User(userId), Catalog(db, invoice));
 
     private sealed class User(Guid userId) : ICurrentUser
