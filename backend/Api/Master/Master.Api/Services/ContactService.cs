@@ -1,9 +1,12 @@
+using System.Linq.Expressions;
+using System.Text.Json;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Apps;
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Validation;
@@ -34,6 +37,7 @@ public sealed class ContactService
     private readonly IAccountingSubAccounts _subAccounts;
     private readonly TimeProvider _clock;
     private readonly ITenantContext _tenant;
+    private readonly ICustomFieldDefinitions? _customFields;
 
     public ContactService(
         ContactsDbContext db,
@@ -42,8 +46,10 @@ public sealed class ContactService
         IStateDirectory states,
         IAccountingSubAccounts subAccounts,
         TimeProvider clock,
-        ITenantContext tenant)
+        ITenantContext tenant,
+        ICustomFieldDefinitions? customFields = null)
     {
+        _customFields = customFields;
         _db = db;
         _admin = admin;
         _numbers = numbers;
@@ -81,10 +87,18 @@ public sealed class ContactService
         if (!string.IsNullOrWhiteSpace(search))
         {
             string term = search.Trim();
-            query = query.Where(c =>
-                EF.Functions.ILike(c.DisplayName, $"%{term}%")
-                || EF.Functions.ILike(c.ContactCode, $"%{term}%")
-                || (c.Gstin != null && EF.Functions.ILike(c.Gstin, $"%{term}%")));
+            string pattern = $"%{term}%";
+            Expression<Func<Contact, bool>> usual = c =>
+                EF.Functions.ILike(c.DisplayName, pattern)
+                || EF.Functions.ILike(c.ContactCode, pattern)
+                || (c.Gstin != null && EF.Functions.ILike(c.Gstin, pattern));
+
+            // And the custom fields the branch marked searchable (TK-111).
+            List<string> searchable = await SearchableKeysAsync(ct);
+            query = query.Where(searchable.Count == 0
+                ? usual
+                : CustomFieldStore.Either(usual, CustomFieldStore.Matching<Contact>(
+                    c => c.CustomFields, searchable, v => EF.Functions.ILike(v!, pattern))));
         }
 
         List<Contact> contacts = await query
@@ -396,6 +410,12 @@ public sealed class ContactService
             return new SaveContactResult(invalid, null, null);
         }
 
+        // A new contact meets every required custom field (TK-111).
+        if (await CustomFieldRefusalAsync(request.CustomFields ?? [], previous: null, ct) is string refused)
+        {
+            return new SaveContactResult(SaveContactOutcome.CustomFieldsRefused, null, null, refused);
+        }
+
         string code = await ResolveCodeAsync(request, ct);
 
         // Reserved for the branch's walk-in, whichever case it is typed in: the
@@ -408,6 +428,7 @@ public sealed class ContactService
 
         var contact = new Contact { ContactCode = code };
         Apply(contact, request, category, registration);
+        contact.CustomFields = CustomFieldStore.Write(request.CustomFields);
 
         _db.Contacts.Add(contact);
         await _db.SaveChangesAsync(ct);
@@ -492,9 +513,20 @@ public sealed class ContactService
             return new SaveContactResult(invalid, null, null);
         }
 
+        // Custom fields left out of the request are kept as stored (TK-111).
+        if (request.CustomFields is not null
+            && await CustomFieldRefusalAsync(request.CustomFields, CustomFieldStore.Read(contact.CustomFields), ct) is string refused)
+        {
+            return new SaveContactResult(SaveContactOutcome.CustomFieldsRefused, null, null, refused);
+        }
+
         // The code is not reissued on update: it is on documents already, and
         // the numbering series has moved on.
         Apply(contact, request, category, registration);
+        if (request.CustomFields is not null)
+        {
+            contact.CustomFields = CustomFieldStore.Write(request.CustomFields);
+        }
 
         await ReplaceChildrenAsync(contactId, request, ct);
         await _db.SaveChangesAsync(ct);
@@ -878,6 +910,37 @@ public sealed class ContactService
         Enum.TryParse(request.ContactCategory, ignoreCase: true, out category)
         & Enum.TryParse(request.GstRegistrationType, ignoreCase: true, out registration);
 
+    /// <summary>
+    /// Why a contact's custom field values cannot be saved, or null. The
+    /// definitions are Master's own; if they cannot be read, nothing is saved
+    /// rather than stored unchecked.
+    /// </summary>
+    private async Task<string?> CustomFieldRefusalAsync(
+        IReadOnlyDictionary<string, JsonElement> values,
+        IReadOnlyDictionary<string, JsonElement>? previous,
+        CancellationToken ct)
+    {
+        if (_customFields is null)
+        {
+            return null;
+        }
+
+        IReadOnlyList<CustomFieldDefinitionDto>? definitions = await _customFields.GetAsync(CustomFieldEntityKind.Contact, ct);
+        if (definitions is null)
+        {
+            return "Custom fields could not be checked just now, so nothing was saved. Try again.";
+        }
+
+        IReadOnlyList<string> errors = CustomFieldValidator.Validate(definitions, values, previous);
+        return errors.Count == 0 ? null : string.Join(" ", errors);
+    }
+
+    /// <summary>The keys of active custom fields on contacts that the branch made searchable.</summary>
+    private async Task<List<string>> SearchableKeysAsync(CancellationToken ct) =>
+        _customFields is null || await _customFields.GetAsync(CustomFieldEntityKind.Contact, ct) is not { } definitions
+            ? []
+            : [.. definitions.Where(d => d.IsActive && d.IsSearchable).Select(d => d.Key)];
+
     private static ContactListItem MapSummary(Contact c) => new()
     {
         ContactId = c.ContactId,
@@ -895,6 +958,7 @@ public sealed class ContactService
         CreditLimit = c.CreditLimit,
         IsActive = c.IsActive,
         IsSubLedgerLinked = c.SubLedgerProvisionedAt is not null,
+        CustomFields = CustomFieldStore.Read(c.CustomFields),
     };
 
     private static ContactDetail MapDetail(Contact c) => new()
@@ -929,6 +993,7 @@ public sealed class ContactService
         IsMsme = c.IsMsme,
         UdyamNumber = c.UdyamNumber,
         Notes = c.Notes,
+        CustomFields = CustomFieldStore.Read(c.CustomFields),
     };
 
     private static ContactAddressModel MapAddress(ContactAddress a) => new()

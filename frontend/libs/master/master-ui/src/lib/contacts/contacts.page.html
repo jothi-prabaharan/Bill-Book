@@ -54,7 +54,7 @@
 }
 
 <div class="card bg-surface">
-  <bb-data-grid [gridCode]="'CONTACTS'" [columns]="columns" [data]="rows()" (rowClick)="openEdit($event)">
+  <bb-data-grid [gridCode]="'CONTACTS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
     <ng-template bbCellTemplate="contactCode" let-row>
       {{ row.contactCode }}
     </ng-template>
@@ -228,6 +228,10 @@
 
         <div class="field wide">
           <bb-textarea label="Notes" name="notes" maxlength="500" rows="2" [(ngModel)]="form.notes" />
+          @if (customFieldDefs().length > 0) {
+            <!-- The branch's own fields on contacts (TK-111). -->
+            <bb-custom-fields [definitions]="customFieldDefs()" [(value)]="form.customFields" />
+          }
         </div>
 
         <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />

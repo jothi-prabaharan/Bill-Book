@@ -32,6 +32,9 @@ public class ItemListItem
     public bool IsActive { get; set; }
 
     public int DisplayOrder { get; set; }
+
+    /// <summary>The item's custom field values (TK-111), for the list's custom columns and the form.</summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 public class ItemDetail : ItemListItem
@@ -287,6 +290,12 @@ public class SaveItemRequest
 
     public ItemPharmaModel? Pharma { get; set; }
 
+    /// <summary>
+    /// Custom field values (TK-111), checked against the branch's definitions.
+    /// Left out (null) on an update, the stored values are kept as they are.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
+
     public List<ItemBarcodeModel> Barcodes { get; set; } = [];
 }
 
@@ -310,9 +319,12 @@ public enum SaveItemOutcome
     ServiceCannotBeStocked = 10,
     InvalidValue = 11,
     UnknownCategory = 12,
+
+    /// <summary>A custom field value does not fit its definition (TK-111); the detail says which.</summary>
+    CustomFieldsRefused = 13,
 }
 
-public sealed record SaveItemResult(SaveItemOutcome Outcome, long? ItemId, string? ItemCode);
+public sealed record SaveItemResult(SaveItemOutcome Outcome, long? ItemId, string? ItemCode, string? Detail = null);
 
 /// <summary>
 /// One page of items, and how many matched in all (TK-14). Returned only when

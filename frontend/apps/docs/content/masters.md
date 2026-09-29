@@ -1113,7 +1113,7 @@ The **Financial** tab's **Over-budget warnings compare** setting chooses whether
 
 # Custom fields
 
-**Status: partial.** Fields can be defined and are checked by the shared validator. Showing and saving them on contacts, items and documents comes in later releases.
+**Status: partial.** Fields can be defined, and contacts and items show, save and search them. Documents come in a later release.
 
 **Settings › Custom fields** lets a branch add fields of its own to contacts, items, warehouses, quotes, orders, challans, invoices, credit notes, purchase documents, leads, tickets and projects. Choose the kind of record at the top. The page lists that kind's fields and previews how they will look on its form.
 
@@ -1133,6 +1133,18 @@ A kind of record holds at most **50 active fields**. More than that is a sign it
 Every service checks values against these definitions when a record is saved. It refuses a key with no field, a value of the wrong type, a dropdown value that is not one of the field's active options, and a missing required field on a new record. A value already stored stays valid after its field or option is deactivated.
 
 Reading the page needs **settings.view**, and saving a field needs **settings.edit**.
+
+## On contacts and items
+
+A **contact** or an **item** form shows the branch's fields for that kind of record, after Notes on a contact and after the flags on an item. The fields appear in their order, with a red star on required ones.
+
+- **Show in the list** adds a column for the field to the contacts or items list.
+- **Searchable** makes the list's search look in the field too. Searching `tower-b` finds a contact whose site reference is `TOWER-B-17`.
+- Saving checks every value. A new record must fill every required field. An existing one saved again is not refused for a field made required since.
+- A deactivated field still shows its stored value, read only, and the value is kept when the record is saved. It is no longer searched.
+- A contact created quickly, from a lead or at the till, has no custom fields and is not checked for required ones. Fill them in when you next open it.
+
+Anyone who can read contacts, or items, sees their fields. Settings access is not needed.
 
 # Print templates
 

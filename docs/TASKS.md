@@ -2235,14 +2235,27 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `CustomFieldValidatorTests` (done-when, unknown key, required only on new saves, each type, max length, inactive field and option), `CustomFieldTests` (done-when end to end, key change refused and reuse duplicate, the 50 limit, RLS on `cfd`, the pure rules), `custom-fields.model.spec.ts` and `custom-fields-settings.model.spec.ts`.
 
 ### TK-111 · Custom fields on contacts and items
-- [~] working (Claude Opus 5.5) — since 2026-09-29
+- [x] completed (Claude Opus 5.5) — 2026-09-29 · tests written, not run
 - **Issue:** [#99](https://github.com/jothi-prabaharan/Bill-Book/issues/99)
 - **Lanes:** L-CON, L-INV, L-MASTER-UI, L-INVENTORY-UI · **Depends on:** TK-110 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] `CustomFields jsonb` (mapped as `JsonDocument`) on `con.Contacts` and `inv.Items`, with a GIN index; validated on save.
-  - [ ] Rendered on the forms, `ShowInList` columns and `IsSearchable` search on the lists.
-  - [ ] Test: a search by a custom value finds the contact; a deactivated field keeps its stored value.
+  - [x] `CustomFields jsonb` (mapped as `JsonDocument`) on `con.Contacts` and `inv.Items`, with a GIN index; validated on save.
+  - [x] Rendered on the forms, `ShowInList` columns and `IsSearchable` search on the lists.
+  - [x] Test: a search by a custom value finds the contact; a deactivated field keeps its stored value.
 - **Done when:** a contact saved with a custom field can be found by searching that value.
+- **As built:**
+  - **Columns.** `CustomFields` (`JsonDocument`, jsonb, GIN index) on `con.Contacts` and `inv.Items`, with one migration each.
+  - **Kernel helpers.** `Shared.Kernel.CustomFields.CustomFieldStore`:
+    - reads the column into a dictionary, and writes it back with empty values dropped, or null when nothing is left;
+    - builds the search: `Matching` makes one `"CustomFields" ->> 'key'` test per searchable key, from a caller-supplied match (`v => EF.Functions.ILike(v!, pattern)`), which keeps the Npgsql provider out of the kernel. `Either` ORs that with a list's usual search.
+  - **Validation on save.**
+    - Master validates through `LocalCustomFieldDefinitions`, which reads its own tenant database. Inventory reads Master through `HttpCustomFieldDefinitions`.
+    - A new record is checked for required fields. An update that leaves `customFields` out keeps what is stored, and one that sends it is validated against the previous values, so a deactivated field or option stands unchanged.
+    - Unreadable definitions refuse the save. A refusal is a 422 carrying the validator's sentences (`CustomFieldsRefused`).
+    - Quick create (lead conversion, walk-in) carries no custom fields and skips the check.
+  - **Definitions for the forms.** `GET api/contacts/custom-fields` and `GET api/items/custom-fields` serve the kind's definitions under the module's own `view` permission, so a form needs no `settings.view`.
+  - **Frontend.** `bb-custom-fields` is on both forms. `customListColumns` and `withCustomColumns` add the `ShowInList` columns to the grids, and `customFieldText` renders option labels, Yes/No and lists.
+  - Tests: `ContactCustomFieldTests` (done-when search, not searchable, deactivated field kept and shown, store round trip), `ItemCustomFieldTests`, and the list-column spec.
 
 ### TK-112 · Custom fields on sales and purchase documents, carried forward and printed
 - [ ] open

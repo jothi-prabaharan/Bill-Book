@@ -72,3 +72,21 @@ describe('custom fields', () => {
     expect(compactValues({ a: '', b: [], c: null, d: 0, e: false, f: 'x' })).toEqual({ d: 0, e: false, f: 'x' });
   });
 });
+
+describe('custom field list columns', () => {
+  it('adds a column per shown active field, with the value as text', async () => {
+    const { customListColumns, withCustomColumns, customFieldText } = await import('./custom-fields.model');
+    const region = field({ showInList: true });
+    const hidden = field({ key: 'note', label: 'Note', dataType: 'Text', showInList: false });
+    const vip = field({ key: 'vip', label: 'VIP', dataType: 'Boolean', showInList: true, displayOrder: 5 });
+
+    expect(customListColumns([region, hidden, vip])).toEqual([
+      { field: 'cf_region', header: 'REGION' },
+      { field: 'cf_vip', header: 'VIP' },
+    ]);
+    const [row] = withCustomColumns([{ id: 1, customFields: { region: 'north', vip: true } }], [region, hidden, vip]);
+    expect(row['cf_region']).toBe('North');
+    expect(row['cf_vip']).toBe('Yes');
+    expect(customFieldText(field({ dataType: 'MultiSelect' }), ['north', 'east'])).toBe('North, East');
+  });
+});

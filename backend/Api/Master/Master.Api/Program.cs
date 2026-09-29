@@ -186,6 +186,7 @@ builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<ApprovalChainResolver>();
 builder.Services.AddScoped<ApprovalWorkflowService>();
 builder.Services.AddScoped<CustomFieldService>();
+builder.Services.AddScoped<Shared.Kernel.CustomFields.ICustomFieldDefinitions, LocalCustomFieldDefinitions>();
 builder.Services.AddHttpClient<IEmployeeApproverClient, EmployeeApproverClient>(client =>
 {
     if (builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } hrm)

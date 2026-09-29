@@ -139,4 +139,10 @@ public class Item : OrgScopedEntity
     public int DisplayOrder { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// The branch's own fields on this item (TK-111): <c>{ "key": value }</c>
+    /// as jsonb, checked against Settings › Custom fields on every save.
+    /// </summary>
+    public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }

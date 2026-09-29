@@ -79,6 +79,12 @@ builder.Services.AddHttpClient<Shared.Kernel.Approvals.IApprovalChainClient, Sha
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<WarehouseService>();
+// The branch's custom field definitions (TK-111), read from Master and cached.
+builder.Services.AddHttpClient<Shared.Kernel.CustomFields.ICustomFieldDefinitions, Shared.Kernel.CustomFields.HttpCustomFieldDefinitions>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<CostingService>();
 builder.Services.AddScoped<StockService>();

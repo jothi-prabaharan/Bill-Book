@@ -181,6 +181,10 @@ public class InventoryDbContext : TenantDbContext
             b.HasKey(e => e.ItemId);
             b.HasIndex(e => new { e.OrgId, e.ItemCode }).IsUnique();
             b.HasIndex(e => new { e.OrgId, e.ItemName });
+
+            // Custom field values (TK-111), with a GIN index for containment queries.
+            b.Property(e => e.CustomFields).HasColumnType("jsonb");
+            b.HasIndex(e => e.CustomFields).HasMethod("gin");
             b.HasIndex(e => new { e.OrgId, e.ItemCategoryId });
             b.HasIndex(e => new { e.OrgId, e.HsnSacCodeId });
             b.HasIndex(e => new { e.OrgId, e.DisplayOrder, e.ItemName })

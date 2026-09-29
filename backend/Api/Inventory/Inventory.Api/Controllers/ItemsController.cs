@@ -2,6 +2,7 @@ using Inventory.Api.Services;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
 using Shared.Kernel.Apps;
@@ -43,6 +44,14 @@ public sealed class ItemsController : ControllerBase
             ? Ok(await _items.ListAsync(search, profile, categoryId, includeInactive, ct))
             : Ok(await _items.PageAsync(search, profile, categoryId, includeInactive, skip ?? 0, take ?? 50, ct));
 
+    /// <summary>
+    /// The branch's custom fields on items (TK-111), for the item form and list.
+    /// Here rather than under Settings so anyone who can read items can see them.
+    /// </summary>
+    [HttpGet("custom-fields")]
+    public async Task<IActionResult> CustomFields([FromServices] ICustomFieldDefinitions definitions, CancellationToken ct) =>
+        await definitions.GetAsync(CustomFieldEntityKind.Item, ct) is { } fields ? Ok(fields) : StatusCode(StatusCodes.Status503ServiceUnavailable);
+
     [HttpGet("{itemId:long}")]
     public async Task<IActionResult> Get(long itemId, CancellationToken ct)
     {
@@ -54,6 +63,11 @@ public sealed class ItemsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] SaveItemRequest request, CancellationToken ct)
     {
         SaveItemResult result = await _items.CreateAsync(request, ct);
+        if (result.Outcome == SaveItemOutcome.CustomFieldsRefused)
+        {
+            return UnprocessableEntity(new { message = result.Detail });
+        }
+
         return InventoryResponses.From(this, result.Outcome, () => CreatedAtAction(
             nameof(Get),
             new { itemId = result.ItemId },
@@ -65,6 +79,11 @@ public sealed class ItemsController : ControllerBase
         long itemId, [FromBody] SaveItemRequest request, CancellationToken ct)
     {
         SaveItemResult result = await _items.UpdateAsync(itemId, request, ct);
+        if (result.Outcome == SaveItemOutcome.CustomFieldsRefused)
+        {
+            return UnprocessableEntity(new { message = result.Detail });
+        }
+
         return InventoryResponses.From(this, result.Outcome, NoContent);
     }
 

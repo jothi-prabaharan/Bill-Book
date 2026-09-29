@@ -109,3 +109,52 @@ export function offeredOptions(field: CustomFieldDefinition, current: unknown): 
 export function compactValues(values: CustomFieldValues): CustomFieldValues {
   return Object.fromEntries(Object.entries(values).filter(([, v]) => !isEmptyValue(v)));
 }
+
+/** A value as a list cell shows it: option labels for choices, Yes or No, a list joined by commas. */
+export function customFieldText(field: CustomFieldDefinition, value: unknown): string {
+  if (isEmptyValue(value)) {
+    return '';
+  }
+  const labelOf = (v: unknown) => field.options.find((o) => o.value === v)?.label ?? String(v);
+  switch (field.dataType) {
+    case 'Boolean':
+      return value === true ? 'Yes' : 'No';
+    case 'Dropdown':
+      return labelOf(value);
+    case 'MultiSelect':
+      return Array.isArray(value) ? value.map(labelOf).join(', ') : String(value);
+    default:
+      return String(value);
+  }
+}
+
+/** The grid field a custom column is keyed on, kept apart from the record's own properties. */
+export function customColumnField(key: string): string {
+  return `cf_${key}`;
+}
+
+/** Columns for the active fields a branch chose to show in the list (`ShowInList`), in order. */
+export function customListColumns(definitions: readonly CustomFieldDefinition[]): { field: string; header: string }[] {
+  return definitions
+    .filter((d) => d.isActive && d.showInList)
+    .sort((a, b) => a.displayOrder - b.displayOrder || a.label.localeCompare(b.label))
+    .map((d) => ({ field: customColumnField(d.key), header: d.label.toUpperCase() }));
+}
+
+/** Rows with each shown custom field's text added under its column field, for a grid that reads `row[field]`. */
+export function withCustomColumns<T extends { customFields?: CustomFieldValues | null }>(
+  rows: readonly T[],
+  definitions: readonly CustomFieldDefinition[],
+): (T & Record<string, unknown>)[] {
+  const shown = definitions.filter((d) => d.isActive && d.showInList);
+  if (shown.length === 0) {
+    return rows as (T & Record<string, unknown>)[];
+  }
+  return rows.map((row) => {
+    const extra: Record<string, string> = {};
+    for (const d of shown) {
+      extra[customColumnField(d.key)] = customFieldText(d, row.customFields?.[d.key]);
+    }
+    return { ...row, ...extra };
+  });
+}

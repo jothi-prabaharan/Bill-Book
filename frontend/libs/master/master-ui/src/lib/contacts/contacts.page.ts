@@ -16,6 +16,13 @@ import {
   SelectComponent,
   TextInputComponent,
   TextareaComponent,
+  CustomFieldDefinition,
+  CustomFieldValues,
+  CustomFieldsComponent,
+  compactValues,
+  customListColumns,
+  defaultValues,
+  withCustomColumns,
 } from '@bill-book/ui-components';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -48,6 +55,8 @@ interface ContactListItem {
   email: string | null;
   mobileNumber: string | null;
   city: string | null;
+  /** The contact's custom field values (TK-111). */
+  customFields?: CustomFieldValues | null;
 }
 
 interface AddressModel {
@@ -137,6 +146,7 @@ interface ContactDetail extends ContactListItem {
   isMsme: boolean;
   udyamNumber: string | null;
   notes: string | null;
+  customFields: CustomFieldValues;
   defaultPriceListId: string | null;
   addresses: AddressModel[];
   persons: PersonModel[];
@@ -211,6 +221,7 @@ interface PortalAccessState {
   imports: [
     DatePipe,
     DataGridComponent,
+    CustomFieldsComponent,
     FormsModule,
     ContactPersonRolesDialog,
     DateInputComponent,
@@ -236,6 +247,11 @@ export class ContactsPage implements OnInit {
   private readonly defaultCountryId = 1;
 
   protected readonly rows = signal<ContactListItem[]>([]);
+
+  /** The branch's custom fields on contacts (TK-111): the form section, list columns and search. */
+  protected readonly customFieldDefs = signal<CustomFieldDefinition[]>([]);
+  protected readonly gridColumns = computed<ColumnDef[]>(() => [...this.columns, ...customListColumns(this.customFieldDefs())]);
+  protected readonly gridRows = computed(() => withCustomColumns(this.rows(), this.customFieldDefs()));
   protected readonly roles = signal<ContactPersonRole[]>([]);
   protected readonly terms = signal<PaymentTerm[]>([]);
   protected readonly states = signal<State[]>([]);
@@ -400,6 +416,12 @@ export class ContactsPage implements OnInit {
     }
 
     try {
+      this.customFieldDefs.set(await this.get<CustomFieldDefinition[]>('/api/contacts/custom-fields'));
+    } catch {
+      /* a branch with no custom fields, or Master briefly unreachable: the form works without them */
+    }
+
+    try {
       this.terms.set(await this.get<PaymentTerm[]>('/api/payment-terms'));
     } catch {
       /* payment terms are optional on a contact */
@@ -438,6 +460,7 @@ export class ContactsPage implements OnInit {
         bankDetails: detail.bankDetails ?? [],
         licences: detail.licences ?? [],
         attachments: detail.attachments ?? [],
+        customFields: detail.customFields ?? {},
       };
       this.editingId.set(row.contactId);
       this.portalLink.set(null);
@@ -748,6 +771,7 @@ export class ContactsPage implements OnInit {
       tdsSection: this.cleanOptional(this.form.tdsSection),
       udyamNumber: this.cleanOptional(this.form.udyamNumber),
       notes: this.cleanOptional(this.form.notes),
+      customFields: compactValues(this.form.customFields ?? {}),
       addresses: this.form.addresses.map((address) => ({
         ...address,
         label: this.cleanOptional(address.label),
@@ -1071,6 +1095,7 @@ export class ContactsPage implements OnInit {
       isMsme: false,
       udyamNumber: null,
       notes: null,
+      customFields: defaultValues(this.customFieldDefs()),
       addresses: [],
       persons: [],
       bankDetails: [],

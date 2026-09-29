@@ -46,6 +46,9 @@ public class ContactListItem
     public string? MobileNumber { get; set; }
 
     public string? City { get; set; }
+
+    /// <summary>The contact's custom field values (TK-111), for the list's custom columns and the form.</summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 }
 
 public class ContactDetail : ContactListItem
@@ -261,6 +264,12 @@ public class SaveContactRequest
     [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
     public string? Notes { get; set; }
 
+    /// <summary>
+    /// Custom field values (TK-111), checked against the branch's definitions.
+    /// Left out (null) on an update, the stored values are kept as they are.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public List<ContactAddressModel> Addresses { get; set; } = [];
@@ -302,9 +311,12 @@ public enum SaveContactOutcome
     SubLedgerUnavailable = 18,
     /// <summary>Retrying the sub-ledger for a contact that already has one.</summary>
     SubLedgerAlreadyLinked = 19,
+
+    /// <summary>A custom field value does not fit its definition (TK-111); the detail says which.</summary>
+    CustomFieldsRefused = 20,
 }
 
-public sealed record SaveContactResult(SaveContactOutcome Outcome, long? ContactId, string? ContactCode);
+public sealed record SaveContactResult(SaveContactOutcome Outcome, long? ContactId, string? ContactCode, string? Detail = null);
 
 /// <summary>
 /// The little a caller knows when it has a name and a way to reach someone, and

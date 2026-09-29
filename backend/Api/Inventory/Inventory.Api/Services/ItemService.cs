@@ -1,8 +1,11 @@
+using System.Linq.Expressions;
+using System.Text.Json;
 using Inventory.Entity.Enums;
 using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Ordering;
 
@@ -24,12 +27,14 @@ public sealed class ItemService
     private readonly InventoryDbContext _db;
     private readonly INumberGenerator _numbers;
     private readonly TimeProvider _clock;
+    private readonly ICustomFieldDefinitions? _customFields;
 
-    public ItemService(InventoryDbContext db, INumberGenerator numbers, TimeProvider clock)
+    public ItemService(InventoryDbContext db, INumberGenerator numbers, TimeProvider clock, ICustomFieldDefinitions? customFields = null)
     {
         _db = db;
         _numbers = numbers;
         _clock = clock;
+        _customFields = customFields;
     }
 
     /// <summary>How many rows one page may ask for, however large a number it sends.</summary>
@@ -45,7 +50,7 @@ public sealed class ItemService
     public async Task<IReadOnlyList<ItemListItem>> ListAsync(
         string? search, string? profile, long? categoryId, bool includeInactive, CancellationToken ct)
     {
-        List<Item> items = await Filtered(search, profile, categoryId, includeInactive)
+        List<Item> items = await Filtered(search, profile, categoryId, includeInactive, await SearchableKeysAsync(search, ct))
             .Take(UnpagedLimit)
             .ToListAsync(ct);
 
@@ -65,7 +70,7 @@ public sealed class ItemService
         int safeSkip = Math.Max(skip, 0);
         int safeTake = Math.Clamp(take, 1, MaxPageSize);
 
-        IQueryable<Item> query = Filtered(search, profile, categoryId, includeInactive);
+        IQueryable<Item> query = Filtered(search, profile, categoryId, includeInactive, await SearchableKeysAsync(search, ct));
 
         // Counted before paging: the pager needs how many matched, not how many
         // fitted on the page.
@@ -92,7 +97,8 @@ public sealed class ItemService
     /// not outrank the item the code is printed on. Name and code still match
     /// anywhere, case-insensitively, as before; an exact item code ranks next.
     /// </summary>
-    private IQueryable<Item> Filtered(string? search, string? profile, long? categoryId, bool includeInactive)
+    private IQueryable<Item> Filtered(
+        string? search, string? profile, long? categoryId, bool includeInactive, IReadOnlyCollection<string> searchableKeys)
     {
         IQueryable<Item> query = _db.Items;
 
@@ -122,11 +128,18 @@ public sealed class ItemService
             .Where(b => b.IsActive && b.Barcode == term)
             .Select(b => b.ItemId);
 
+        string pattern = $"%{term}%";
+        Expression<Func<Item, bool>> usual = i =>
+            scanned.Contains(i.ItemId)
+            || EF.Functions.ILike(i.ItemName, pattern)
+            || EF.Functions.ILike(i.ItemCode, pattern);
+
+        // And the custom fields the branch marked searchable (TK-111).
         return query
-            .Where(i =>
-                scanned.Contains(i.ItemId)
-                || EF.Functions.ILike(i.ItemName, $"%{term}%")
-                || EF.Functions.ILike(i.ItemCode, $"%{term}%"))
+            .Where(searchableKeys.Count == 0
+                ? usual
+                : CustomFieldStore.Either(usual, CustomFieldStore.Matching<Item>(
+                    i => i.CustomFields, searchableKeys, v => EF.Functions.ILike(v!, pattern))))
             .OrderBy(i => scanned.Contains(i.ItemId) ? 0 : i.ItemCode == term ? 1 : 2)
             .ThenBy(i => i.DisplayOrder)
             .ThenBy(i => i.ItemName);
@@ -208,6 +221,12 @@ public sealed class ItemService
             return new SaveItemResult(invalid, null, null);
         }
 
+        // A new item meets every required custom field (TK-111).
+        if (await CustomFieldRefusalAsync(request.CustomFields ?? [], previous: null, ct) is string refused)
+        {
+            return new SaveItemResult(SaveItemOutcome.CustomFieldsRefused, null, null, refused);
+        }
+
         string code = await ResolveCodeAsync(request, ct);
         if (await _db.Items.AnyAsync(i => i.ItemCode == code, ct))
         {
@@ -218,6 +237,7 @@ public sealed class ItemService
 
         var item = new Item { ItemCode = code, DisplayOrder = highest + Reordering.Gap };
         Apply(item, request, parsed);
+        item.CustomFields = CustomFieldStore.Write(request.CustomFields);
 
         _db.Items.Add(item);
         await _db.SaveChangesAsync(ct);
@@ -263,8 +283,19 @@ public sealed class ItemService
             return new SaveItemResult(SaveItemOutcome.LockedAfterMovement, null, null);
         }
 
+        // Custom fields left out of the request are kept as stored (TK-111).
+        if (request.CustomFields is not null
+            && await CustomFieldRefusalAsync(request.CustomFields, CustomFieldStore.Read(item.CustomFields), ct) is string refused)
+        {
+            return new SaveItemResult(SaveItemOutcome.CustomFieldsRefused, null, null, refused);
+        }
+
         ItemProfile previousProfile = item.ItemProfile;
         Apply(item, request, parsed);
+        if (request.CustomFields is not null)
+        {
+            item.CustomFields = CustomFieldStore.Write(request.CustomFields);
+        }
 
         if (previousProfile != parsed.Profile)
         {
@@ -614,6 +645,34 @@ public sealed class ItemService
         return ok;
     }
 
+    /// <summary>Why an item's custom field values cannot be saved, or null. Unreadable definitions refuse the save rather than store unchecked values.</summary>
+    private async Task<string?> CustomFieldRefusalAsync(
+        IReadOnlyDictionary<string, JsonElement> values,
+        IReadOnlyDictionary<string, JsonElement>? previous,
+        CancellationToken ct)
+    {
+        if (_customFields is null)
+        {
+            return null;
+        }
+
+        IReadOnlyList<CustomFieldDefinitionDto>? definitions = await _customFields.GetAsync(CustomFieldEntityKind.Item, ct);
+        if (definitions is null)
+        {
+            return "Custom fields could not be checked just now, so nothing was saved. Try again.";
+        }
+
+        IReadOnlyList<string> errors = CustomFieldValidator.Validate(definitions, values, previous);
+        return errors.Count == 0 ? null : string.Join(" ", errors);
+    }
+
+    /// <summary>The keys of active custom fields on items the branch made searchable; none asked for without a search.</summary>
+    private async Task<IReadOnlyCollection<string>> SearchableKeysAsync(string? search, CancellationToken ct) =>
+        string.IsNullOrWhiteSpace(search) || _customFields is null
+            || await _customFields.GetAsync(CustomFieldEntityKind.Item, ct) is not { } definitions
+            ? []
+            : [.. definitions.Where(d => d.IsActive && d.IsSearchable).Select(d => d.Key)];
+
     private static ItemListItem MapSummary(
         Item i, Dictionary<long, string> unitCodes, Dictionary<long, string> categoryNames) => new()
     {
@@ -631,6 +690,7 @@ public sealed class ItemService
         Mrp = i.Mrp,
         IsActive = i.IsActive,
         DisplayOrder = i.DisplayOrder,
+        CustomFields = CustomFieldStore.Read(i.CustomFields),
     };
 
     private static ItemDetail MapDetail(
@@ -654,6 +714,7 @@ public sealed class ItemService
             Mrp = summary.Mrp,
             IsActive = summary.IsActive,
             DisplayOrder = summary.DisplayOrder,
+            CustomFields = summary.CustomFields,
             PrintName = i.PrintName,
             Description = i.Description,
             HsnSacCodeId = i.HsnSacCodeId,

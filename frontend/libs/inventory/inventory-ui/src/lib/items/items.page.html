@@ -39,7 +39,7 @@
 }
 
 <div class="card bg-surface">
-  <bb-data-grid [gridCode]="'ITEMS'" [columns]="columns" [data]="rows()" (rowClick)="openEdit($event)">
+  <bb-data-grid [gridCode]="'ITEMS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
     <ng-template bbCellTemplate="itemCode" let-row>
       {{ row.itemCode }}
     </ng-template>
@@ -245,6 +245,12 @@
 
         <bb-checkbox text="Returnable" name="isReturnable" [(ngModel)]="form.isReturnable" />
 
+        @if (customFieldDefs().length > 0) {
+          <!-- The branch's own fields on items (TK-111). -->
+          <div class="field wide">
+            <bb-custom-fields [definitions]="customFieldDefs()" [(value)]="customValues" />
+          </div>
+        }
         <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
       </div>
     }

@@ -11,6 +11,13 @@ import {
   SelectComponent,
   TextInputComponent,
   UnitPriceInputComponent,
+  CustomFieldDefinition,
+  CustomFieldValues,
+  CustomFieldsComponent,
+  compactValues,
+  customListColumns,
+  defaultValues,
+  withCustomColumns,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -103,6 +110,8 @@ interface ItemListRow {
   salesPrice: number | null;
   mrp: number | null;
   isActive: boolean;
+  /** The item's custom field values (TK-111). */
+  customFields?: CustomFieldValues | null;
 }
 
 interface ItemDetail extends ItemListRow {
@@ -166,6 +175,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
     QuantityInputComponent,
     SelectComponent,
     CheckboxComponent,
+    CustomFieldsComponent,
   ],
   templateUrl: './items.page.html',
   styleUrl: './items.page.scss',
@@ -180,6 +190,12 @@ export class ItemsPage implements OnInit {
   protected readonly batchMrpHint = "A batch's own MRP wins over this.";
 
   protected readonly rows = signal<ItemListRow[]>([]);
+
+  /** The branch's custom fields on items (TK-111): the form section, list columns and search. */
+  protected readonly customFieldDefs = signal<CustomFieldDefinition[]>([]);
+  protected readonly customValues = signal<CustomFieldValues>({});
+  protected readonly gridColumns = computed<ColumnDef[]>(() => [...this.columns, ...customListColumns(this.customFieldDefs())]);
+  protected readonly gridRows = computed(() => withCustomColumns(this.rows(), this.customFieldDefs()));
   protected readonly types = signal<UomType[]>([]);
   protected readonly categories = signal<Category[]>([]);
   protected readonly taxRates = signal<TaxRate[]>([]);
@@ -409,12 +425,14 @@ export class ItemsPage implements OnInit {
       load<Purity>('/api/metal-purities', (r) => this.purities.set(r)),
       load<Warehouse>('/api/warehouses', (r) => this.warehouses.set(r)),
       load<TaxRate>('/api/tax-masters', (r) => this.taxRates.set(r)),
+      load<CustomFieldDefinition>('/api/items/custom-fields', (r) => this.customFieldDefs.set(r)),
     ]);
   }
 
   openAdd(): void {
     this.editingId.set(null);
     this.form = this.blank();
+    this.customValues.set(defaultValues(this.customFieldDefs()));
     this.clearHsnSearch();
     this.tab.set('general');
     this.editorOpen.set(true);
@@ -424,6 +442,7 @@ export class ItemsPage implements OnInit {
     this.busy.set(true);
     try {
       this.form = await this.get<ItemDetail>(`/api/items/${row.itemId}`);
+      this.customValues.set(this.form.customFields ?? {});
       this.editingId.set(row.itemId);
       this.clearHsnSearch();
       void this.showCurrentHsn();
@@ -664,6 +683,7 @@ export class ItemsPage implements OnInit {
       itemName: this.form.itemName.trim(),
       printName: this.cleanOptional(this.form.printName),
       description: this.cleanOptional(this.form.description),
+      customFields: compactValues(this.customValues()),
       taxPreference: this.form.taxPreference.trim(),
       jewellery:
         jewellery === null

@@ -2,6 +2,7 @@ using Master.Api.Services;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.CustomFields;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
 
@@ -39,6 +40,15 @@ public sealed class ContactsController : ControllerBase
         CancellationToken ct) =>
         Ok(await _contacts.ListAsync(search, role, includeInactive, ct));
 
+    /// <summary>
+    /// The branch's custom fields on contacts (TK-111), for the contact form and
+    /// list. Here rather than under Settings so anyone who can read contacts can
+    /// see them without <c>settings.view</c>.
+    /// </summary>
+    [HttpGet("custom-fields")]
+    public async Task<IActionResult> CustomFields([FromServices] ICustomFieldDefinitions definitions, CancellationToken ct) =>
+        await definitions.GetAsync(CustomFieldEntityKind.Contact, ct) is { } fields ? Ok(fields) : StatusCode(StatusCodes.Status503ServiceUnavailable);
+
     [HttpGet("{contactId:long}")]
     public async Task<IActionResult> Get(long contactId, CancellationToken ct)
     {
@@ -50,6 +60,11 @@ public sealed class ContactsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] SaveContactRequest request, CancellationToken ct)
     {
         SaveContactResult result = await _contacts.CreateAsync(request, ct);
+        if (result.Outcome == SaveContactOutcome.CustomFieldsRefused)
+        {
+            return UnprocessableEntity(new MessageResponse { Message = result.Detail! });
+        }
+
         return Respond(result.Outcome, () => CreatedAtAction(
             nameof(Get),
             new { contactId = result.ContactId },
@@ -86,6 +101,11 @@ public sealed class ContactsController : ControllerBase
         long contactId, [FromBody] SaveContactRequest request, CancellationToken ct)
     {
         SaveContactResult result = await _contacts.UpdateAsync(contactId, request, ct);
+        if (result.Outcome == SaveContactOutcome.CustomFieldsRefused)
+        {
+            return UnprocessableEntity(new MessageResponse { Message = result.Detail! });
+        }
+
         return Respond(result.Outcome, NoContent);
     }
 
