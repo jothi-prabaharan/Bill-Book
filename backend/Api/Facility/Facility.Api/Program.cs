@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Facility.Api.Services;
+using Facility.Repository.Repositories;
 using Facility.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -64,8 +65,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddTransient<InternalKeyHandler>();
 
 // ---- Service registrations ----
-builder.Services.AddScoped<FacilitySeeder>();
-builder.Services.AddScoped<FacilityService>();
+builder.Services.AddScoped<FacilitySeederRepository>();
+builder.Services.AddScoped<FacilityRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

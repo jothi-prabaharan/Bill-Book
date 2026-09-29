@@ -1,4 +1,5 @@
 using Facility.Api.Services;
+using Facility.Repository.Repositories;
 using Facility.Entity.Enums;
 using Facility.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -19,9 +20,9 @@ namespace Facility.Api.Controllers;
 [Route("api/facility")]
 public sealed class FacilityController : ControllerBase
 {
-    private readonly FacilityService _facility;
+    private readonly FacilityRepository _facility;
 
-    public FacilityController(FacilityService facility) => _facility = facility;
+    public FacilityController(FacilityRepository facility) => _facility = facility;
 
     [HttpGet("buildings")]
     public async Task<IActionResult> Buildings(CancellationToken ct) => Ok(await _facility.BuildingsAsync(ct));

@@ -4,7 +4,7 @@ using Facility.Entity.TableEntities;
 using Facility.Repository;
 using Microsoft.EntityFrameworkCore;
 
-namespace Facility.Api.Services;
+namespace Facility.Repository.Repositories;
 
 public enum FacilityOutcome
 {
@@ -27,12 +27,12 @@ public sealed record FacilityResult(FacilityOutcome Outcome, long? Id = null, st
 /// building or space is deactivated and an asset disposed, because work orders,
 /// plans and contracts name them. Codes and tags are unique per branch.
 /// </summary>
-public sealed class FacilityService
+public sealed class FacilityRepository
 {
     private readonly FacilityDbContext _db;
     private readonly TimeProvider _clock;
 
-    public FacilityService(FacilityDbContext db, TimeProvider clock)
+    public FacilityRepository(FacilityDbContext db, TimeProvider clock)
     {
         _db = db;
         _clock = clock;

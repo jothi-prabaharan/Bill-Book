@@ -1,4 +1,5 @@
 using Facility.Api.Services;
+using Facility.Repository.Repositories;
 using Facility.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class FacilitySchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using FacilityDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new FacilitySeeder().SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new FacilitySeeder().SeedForOrganizationAsync(orgId, default);
+        await new FacilitySeederRepository().SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new FacilitySeederRepository().SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }

@@ -1,4 +1,5 @@
 using Facility.Api.Services;
+using Facility.Repository.Repositories;
 using Facility.Entity.Enums;
 using Facility.Entity.Models;
 using Facility.Repository;
@@ -18,14 +19,14 @@ public sealed class FacilityServiceTests
 
     public FacilityServiceTests(PostgresFixture postgres) => _postgres = postgres;
 
-    private static FacilityService Service(FacilityDbContext db) => new(db, TimeProvider.System);
+    private static FacilityRepository Service(FacilityDbContext db) => new(db, TimeProvider.System);
 
     [SkippableFact]
     public async Task A_building_space_and_asset_are_created_listed_and_deactivated()
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using FacilityDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        FacilityService service = Service(db);
+        FacilityRepository service = Service(db);
 
         long building = (await service.SaveBuildingAsync(null, new SaveBuildingRequest { Code = "b1", Name = "Main block", Floors = 3 }, default)).Id!.Value;
         long space = (await service.SaveSpaceAsync(null, new SaveSpaceRequest { BuildingId = building, Code = "b1-204", Name = "Class VI A", Floor = 2 }, default)).Id!.Value;
@@ -75,7 +76,7 @@ public sealed class FacilityServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using FacilityDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        FacilityService service = Service(db);
+        FacilityRepository service = Service(db);
 
         long building = (await service.SaveBuildingAsync(null, new SaveBuildingRequest { Code = "OLD", Name = "Old block", IsActive = false }, default)).Id!.Value;
 
@@ -89,7 +90,7 @@ public sealed class FacilityServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using FacilityDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        FacilityService service = Service(db);
+        FacilityRepository service = Service(db);
 
         long asset = (await service.SaveAssetAsync(null, new SaveAssetRequest { AssetTag = "P1", Name = "Projector", AssetStatus = AssetStatus.Disposed }, default)).Id!.Value;
 
@@ -107,14 +108,14 @@ public sealed class FacilityRuleTests
     [InlineData(3, 3, false)]
     [InlineData(-1, 3, true)]
     public void A_floor_is_below_the_buildings_top(int floor, int floors, bool fine) =>
-        Assert.Equal(fine, FacilityService.FloorProblem(floor, floors) is null);
+        Assert.Equal(fine, FacilityRepository.FloorProblem(floor, floors) is null);
 
     [Fact]
     public void A_warranty_runs_through_its_last_day()
     {
         var today = new DateOnly(2026, 9, 25);
-        Assert.True(FacilityService.UnderWarranty(today, today));
-        Assert.False(FacilityService.UnderWarranty(today.AddDays(-1), today));
-        Assert.False(FacilityService.UnderWarranty(null, today));
+        Assert.True(FacilityRepository.UnderWarranty(today, today));
+        Assert.False(FacilityRepository.UnderWarranty(today.AddDays(-1), today));
+        Assert.False(FacilityRepository.UnderWarranty(null, today));
     }
 }
