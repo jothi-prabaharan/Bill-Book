@@ -20,6 +20,8 @@
     <button class="btn btn-secondary" type="button" (click)="setType('DebitNote')" [attr.aria-pressed]="selectedType === 'DebitNote'">Debit notes</button>
     <button class="btn btn-secondary" type="button" routerLink="/purchase/debit-notes/new" title="New Debit note" aria-label="New Debit note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
   </span>
+
+  <a class="btn btn-secondary text-sm" routerLink="/purchase/gstr2b">GSTR-2B reconciliation</a>
 </nav>
 
 <bb-period-filter-bar [total]="periodTotal()" (rangeChange)="setRange($event)" />

@@ -1390,6 +1390,185 @@ namespace Purchase.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Purchase.Entity.TableEntities.Gstr2bImport", b =>
+                {
+                    b.Property<long>("Gstr2bImportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Gstr2bImportId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("ItcAtRisk")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<int>("MatchedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MismatchedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MissingIn2bCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MissingInBooksCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("PeriodFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodTo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("RawJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("RecipientGstin")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<string>("ReturnPeriod")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Gstr2bImportId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ReturnPeriod")
+                        .HasDatabaseName("IX_Gstr2bImports_Period");
+
+                    b.ToTable("Gstr2bImports", "pur");
+                });
+
+            modelBuilder.Entity("Purchase.Entity.TableEntities.Gstr2bLine", b =>
+                {
+                    b.Property<long>("Gstr2bLineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Gstr2bLineId"));
+
+                    b.Property<long?>("BillId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("BillNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal?>("BooksTax")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal?>("BooksTaxable")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Gstr2bImportId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly>("InvoiceDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("InvoiceNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool?>("ItcAvailable")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MatchState")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ReverseCharge")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SupplierGstin")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<string>("SupplierName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal?>("TwoBTax")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal?>("TwoBTaxable")
+                        .HasColumnType("decimal(28,2)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Gstr2bLineId");
+
+                    b.HasIndex("Gstr2bImportId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "Gstr2bImportId", "MatchState")
+                        .HasDatabaseName("IX_Gstr2bLines_State");
+
+                    b.ToTable("Gstr2bLines", "pur");
+                });
+
             modelBuilder.Entity("Purchase.Entity.TableEntities.PurchaseApprovalStep", b =>
                 {
                     b.Property<long>("PurchaseApprovalStepId")
@@ -2471,6 +2650,15 @@ namespace Purchase.Repository.Migrations.Tenant
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Purchase.Entity.TableEntities.Gstr2bLine", b =>
+                {
+                    b.HasOne("Purchase.Entity.TableEntities.Gstr2bImport", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("Gstr2bImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Purchase.Entity.TableEntities.PurchaseOrderDetail", b =>
                 {
                     b.HasOne("Purchase.Entity.TableEntities.PurchaseOrder", null)
@@ -2517,6 +2705,11 @@ namespace Purchase.Repository.Migrations.Tenant
             modelBuilder.Entity("Purchase.Entity.TableEntities.GoodsReceiptDetail", b =>
                 {
                     b.Navigation("Taxes");
+                });
+
+            modelBuilder.Entity("Purchase.Entity.TableEntities.Gstr2bImport", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Purchase.Entity.TableEntities.PurchaseOrder", b =>

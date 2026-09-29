@@ -77,6 +77,14 @@ builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(cl
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<GoodsReceiptService>();
 builder.Services.AddScoped<BillService>();
+
+// GSTR-2B reconciliation (TK-116). The branch's GSTIN, to refuse another registration's file.
+builder.Services.AddHttpClient<Shared.Kernel.Tenancy.IOrgIdentityProvider, Shared.Kernel.Tenancy.HttpOrgIdentityProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddScoped<Purchase.Api.Services.Gstr2b.Gstr2bService>();
 builder.Services.AddScoped<BillBillingService>();
 builder.Services.AddScoped<BillBudgetCheck>();
 builder.Services.AddScoped<DebitNoteService>();

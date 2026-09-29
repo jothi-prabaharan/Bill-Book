@@ -3780,7 +3780,7 @@ Checked against the code on 24 September 2026:
   **GSTR-2 answers 501** ("Purchase Register pending"), and GSTR-3B aggregates **outward supplies
   only**, so it shows no input tax credit. There is **no purchase register**: `pur` has no table like
   `sal.SalesRegister`. Nothing exports a return in the GST portal's format.
-- **Update, 29 September 2026 (TK-115):** `pur.PurchaseRegister` exists, bills carry reverse charge (D-30) and per-line ITC eligibility (D-31), GSTR-3B is complete from both registers, and GSTR-1 exports the offline tool's JSON. GSTR-2 still answers 501 until 2B reconciliation is built.
+- **Update, 29 September 2026 (TK-115):** `pur.PurchaseRegister` exists, bills carry reverse charge (D-30) and per-line ITC eligibility (D-31), GSTR-3B is complete from both registers, and GSTR-1 exports the offline tool's JSON. GSTR-2 still answers 501; the 2B reconciliation itself is Purchase's screen (TK-116, built the same day).
 - **TDS**: a contact has `Pan`, `IsTdsApplicable` and `TdsSection` (a free string of up to 10
   characters). **Nothing deducts TDS** on a bill or a payment, nothing tracks thresholds, and there is
   no TDS-receivable handling when a customer deducts on a receipt. The chart has a TDS Payable account.

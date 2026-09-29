@@ -341,9 +341,36 @@ assets are already on the register: dispose of the asset, or raise a debit note.
 
 ## Not built yet
 
-Landed cost — freight and duty spread across the lines — is held on the document but not yet apportioned. Reconciling the purchase register with GSTR-2B is not built yet.
+Landed cost — freight and duty spread across the lines — is held on the document but not yet apportioned.
 
 
+
+# GSTR-2B reconciliation
+
+Your GSTR-2B lists the invoices your suppliers reported for the month. Credit you claim that is not in it is at risk. **Purchase › GSTR-2B reconciliation** compares the two.
+
+1. On the GST portal, download the month's GSTR-2B as **JSON**.
+2. Choose **Import 2B JSON** and pick the file. A file for another GSTIN is refused, and so is one that is not a GSTR-2B.
+3. Each supplier invoice in the file is matched to a posted bill from the same supplier GSTIN with the same invoice number. An exact number is tried first. If that fails, case, separators and leading zeros are ignored, so `AC/0012` matches `ac-12`, and the line's note says so.
+
+The results come in four groups:
+
+| Group | Meaning |
+|---|---|
+| **In the books, not in 2B** | A bill for an invoice dated in the month that the supplier has not reported. Its claimable GST is at risk |
+| **In 2B, not in the books** | The supplier reported it, and no posted bill records it |
+| **Mismatched** | In both, but the taxable value or the tax differs by more than a rupee, or the dates differ. The note gives the difference |
+| **Matched** | In both and agreeing |
+
+**Credit at risk** adds up three things:
+
+- the claimable GST on bills that are missing from 2B;
+- the claimable GST a mismatched bill holds above 2B's figure;
+- the claimable GST on invoices 2B marks as "ITC not available".
+
+Each import is kept with its file, so you can import again after suppliers file late, and compare. Deleting an import changes nothing in the books.
+
+Not matched yet: supplier credit and debit notes (CDNR) and amended invoices (B2BA).
 
 # Debit notes
 

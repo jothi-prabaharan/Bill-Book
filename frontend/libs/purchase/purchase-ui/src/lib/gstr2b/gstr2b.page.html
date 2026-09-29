@@ -1,0 +1,99 @@
+<header class="page-head">
+  <div>
+    <a routerLink="/purchase/transactions" class="back">← Purchase</a>
+    <h1>GSTR-2B reconciliation</h1>
+  </div>
+  <label class="btn btn-primary upload">
+    {{ busy() ? 'Working…' : 'Import 2B JSON' }}
+    <input type="file" accept=".json,application/json" (change)="upload($event)" [disabled]="busy()" />
+  </label>
+</header>
+
+<p class="hint">
+  Download GSTR-2B for a month from the GST portal as JSON and import it. Each supplier invoice is
+  matched to a posted bill by the supplier's GSTIN and invoice number, ignoring case, separators
+  and leading zeros where needed.
+</p>
+
+@if (message()) {
+  <p class="error">{{ message() }}</p>
+}
+
+@if (imports().length > 0) {
+  <ul class="imports">
+    @for (view of imports(); track view.gstr2bImportId) {
+      <li [class.active]="selected()?.gstr2bImportId === view.gstr2bImportId">
+        <button type="button" class="open" (click)="open(view.gstr2bImportId)">
+          <span class="period">{{ period(view) }}</span>
+          <span class="file">{{ view.fileName }}</span>
+          <span class="risk">At risk {{ view.itcAtRisk | number: '1.2-2' }}</span>
+        </button>
+        <button type="button" class="remove" (click)="remove(view)" [attr.aria-label]="'Delete import ' + view.fileName">×</button>
+      </li>
+    }
+  </ul>
+}
+
+@if (selected(); as detail) {
+  <section class="summary">
+    <div class="tile risk">
+      <span class="label">Credit at risk</span>
+      <span class="value">{{ detail.itcAtRisk | number: '1.2-2' }}</span>
+    </div>
+    @for (g of groups; track g.state) {
+      <button type="button" class="tile" [class.active]="group() === g.state" (click)="group.set(g.state)">
+        <span class="label">{{ g.label }}</span>
+        <span class="value">{{ count(g.state) }}</span>
+      </button>
+    }
+  </section>
+
+  @for (g of groups; track g.state) {
+    @if (group() === g.state) {
+      <p class="hint">{{ g.hint }}</p>
+    }
+  }
+
+  <div class="card">
+    <table class="lines">
+      <thead>
+        <tr>
+          <th scope="col">Supplier</th>
+          <th scope="col">Invoice</th>
+          <th scope="col">Date</th>
+          <th scope="col" class="num">2B taxable</th>
+          <th scope="col" class="num">2B tax</th>
+          <th scope="col" class="num">Books taxable</th>
+          <th scope="col" class="num">Books tax</th>
+          <th scope="col">Bill</th>
+          <th scope="col">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of lines(); track line.gstr2bLineId) {
+          <tr>
+            <td data-label="Supplier">{{ line.supplierName || line.supplierGstin }}<br /><small>{{ line.supplierGstin }}</small></td>
+            <td data-label="Invoice">{{ line.invoiceNo }}</td>
+            <td data-label="Date">{{ line.invoiceDate | date: 'dd-MM-yyyy' }}</td>
+            <td data-label="2B taxable" class="num">{{ line.twoBTaxable ?? '—' }}</td>
+            <td data-label="2B tax" class="num">{{ line.twoBTax ?? '—' }}</td>
+            <td data-label="Books taxable" class="num">{{ line.booksTaxable ?? '—' }}</td>
+            <td data-label="Books tax" class="num">{{ line.booksTax ?? '—' }}</td>
+            <td data-label="Bill">
+              @if (line.billId) {
+                <a [routerLink]="['/purchase/bills', line.billId]">{{ line.billNo }}</a>
+              } @else {
+                —
+              }
+            </td>
+            <td data-label="Note">{{ line.note }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="9" class="empty">Nothing in this group.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (!busy()) {
+  <p class="empty">No GSTR-2B imported yet.</p>
+}

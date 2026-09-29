@@ -14,6 +14,11 @@ export const purchaseRoutes: Routes = [
     data: { access: { permission: 'purchase.view' } }
   },
   {
+    path: 'gstr2b',
+    loadComponent: () => import('./gstr2b/gstr2b.page').then((m) => m.Gstr2bPage),
+    data: { access: { permission: 'purchase.view' } },
+  },
+  {
     path: '',
     redirectTo: 'transactions',
     pathMatch: 'full'

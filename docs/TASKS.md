@@ -2333,7 +2333,7 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Left as they were.** GSTR-2 still answers 501; GSTR-2B reconciliation is the next part of the bundle. CDNUR is netted into B2CS.
 
 ### TK-116 · Compliance: GSTR-2B reconciliation
-- [~] working (Claude Opus 5.5) — since 2026-09-29
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
 - **Issue:** [#104](https://github.com/jothi-prabaharan/Bill-Book/issues/104)
 - **Lanes:** L-PUR, L-PURCHASE-UI · **Depends on:** TK-115 · **Decision:** —
 - **Tables:** `pur.Gstr2bImports`, `pur.Gstr2bLines`
@@ -2342,6 +2342,12 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] The four result groups on a screen, with the ITC at risk totalled.
   - [ ] Test: a recorded 2B sample against seeded bills gives the expected matched, mismatched and missing rows.
 - **Done when:** importing a month's 2B lists every supplier invoice missing from the books and every bill missing from 2B.
+- **As built:**
+  - **Tables.** `pur.Gstr2bImports` keeps the file as jsonb, its period, counts and credit at risk. `pur.Gstr2bLines` holds one row per invoice on either side, with its match state, both sides' figures, the bill and a note. Both have RLS.
+  - **Parsing and matching.** `Gstr2bFile.Parse` reads the portal's B2B section. `Gstr2bMatcher.Match` is pure: it matches by GSTIN and number, exact first, then normalised; flags a date or value off by more than ₹1 as a mismatch; and totals the credit at risk.
+  - **Endpoint and screen.** `api/purchase/gstr2b` handles list, get, multipart import and delete. The Purchase › GSTR-2B reconciliation page shows the four groups and the at-risk tile.
+  - **Also.** A file generated for another GSTIN is refused.
+  - **Not matched yet.** CDNR and B2BA.
 
 ### TK-117 · Compliance: TDS on purchases and receipts
 - [ ] open

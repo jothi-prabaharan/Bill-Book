@@ -73,6 +73,11 @@ public class PurchaseDbContext : TenantDbContext
     /// <summary>The purchase GST register (TK-115), written by the bill and debit note posters.</summary>
     public DbSet<PurchaseRegister> PurchaseRegister => Set<PurchaseRegister>();
 
+    /// <summary>GSTR-2B files imported and what matching them found (TK-116).</summary>
+    public DbSet<Gstr2bImport> Gstr2bImports => Set<Gstr2bImport>();
+
+    public DbSet<Gstr2bLine> Gstr2bLines => Set<Gstr2bLine>();
+
     /// <summary>Approval chains of purchase orders, bills and debit notes (TK-100).</summary>
     public DbSet<PurchaseApprovalStep> ApprovalSteps => Set<PurchaseApprovalStep>();
 
@@ -372,6 +377,29 @@ public class PurchaseDbContext : TenantDbContext
             // What a void removes, and what 2B matching joins on.
             b.HasIndex(e => new { e.OrgId, e.TransactionTypeCode, e.SourceId }).HasDatabaseName("IX_PurchaseRegister_Source");
             b.HasIndex(e => new { e.OrgId, e.ContactGstin, e.SupplierInvoiceNo }).HasDatabaseName("IX_PurchaseRegister_Supplier");
+        });
+
+        // GSTR-2B reconciliation (TK-116).
+        modelBuilder.Entity<Gstr2bImport>(b =>
+        {
+            b.HasKey(e => e.Gstr2bImportId);
+            b.Property(e => e.RawJson).HasColumnType("jsonb");
+            b.Property(e => e.ItcAtRisk).HasColumnType("decimal(28,2)");
+            b.HasIndex(e => new { e.OrgId, e.ReturnPeriod }).HasDatabaseName("IX_Gstr2bImports_Period");
+        });
+
+        modelBuilder.Entity<Gstr2bLine>(b =>
+        {
+            b.HasKey(e => e.Gstr2bLineId);
+            b.Property(e => e.MatchState).HasConversion<string>().HasMaxLength(16);
+            foreach (string money in new[] { "TwoBTaxable", "TwoBTax", "BooksTaxable", "BooksTax" })
+            {
+                b.Property(money).HasColumnType("decimal(28,2)");
+            }
+
+            b.HasOne<Gstr2bImport>().WithMany(i => i.Lines).HasForeignKey(e => e.Gstr2bImportId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(e => new { e.OrgId, e.Gstr2bImportId, e.MatchState }).HasDatabaseName("IX_Gstr2bLines_State");
         });
 
         modelBuilder.Entity<PurchaseApprovalStep>(b =>

@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **GSTR-2B reconciliation.** Import the month's GSTR-2B JSON under **Purchase › GSTR-2B reconciliation**. Each supplier invoice is matched to your bills, tolerating differences in case, separators and leading zeros in invoice numbers. You see what matched, what differs, what 2B has and your books don't, and which bills the supplier hasn't reported, with the credit at risk totalled. See [Purchase](purchase#gstr-2b-reconciliation).
 - **Added**: **Reverse charge and input tax credit on bills.**
   - A bill can be marked **Reverse charge**. The vendor is then owed the total without tax, and the tax goes to a new **GST Payable (Reverse Charge)** account.
   - Each bill line is **Claimable**, **Not claimable** or **Blocked (section 17(5))**. GST you cannot claim is added to the line's cost instead of Input GST.

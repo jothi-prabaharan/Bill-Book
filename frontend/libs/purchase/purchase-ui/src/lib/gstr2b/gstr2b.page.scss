@@ -1,0 +1,173 @@
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+h1 {
+  font-size: 1.3rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.back {
+  font-size: 0.85rem;
+}
+
+.upload {
+  position: relative;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+.hint,
+.empty {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.error {
+  color: var(--color-danger, #97302f);
+}
+
+.imports {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border, #e2e5ea);
+    border-radius: 4px;
+
+    &.active {
+      border-color: var(--color-primary, #14605c);
+    }
+  }
+
+  .open {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    padding: 0.4rem 0.6rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .period {
+    font-weight: 600;
+  }
+
+  .file,
+  .risk {
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+
+  .remove {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 0.5rem;
+    opacity: 0.6;
+  }
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-border, #e2e5ea);
+  border-radius: 4px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+
+  &.active {
+    border-color: var(--color-primary, #14605c);
+    background: var(--color-surface-2, #f6f7f9);
+  }
+
+  &.risk {
+    cursor: default;
+  }
+
+  .label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+
+  .value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th,
+  td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--color-border, #e2e5ea);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (max-width: 640px) {
+  .lines thead {
+    display: none;
+  }
+
+  .lines tr {
+    display: block;
+    border-bottom: 1px solid var(--color-border, #e2e5ea);
+    padding: 0.4rem 0;
+  }
+
+  .lines td {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 0;
+    text-align: right;
+
+    &::before {
+      content: attr(data-label);
+      font-weight: 600;
+      text-align: left;
+    }
+  }
+}
