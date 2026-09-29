@@ -1,5 +1,7 @@
 using System.Text.Json;
-using Sales.Api.Services.EInvoicing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Shared.Kernel.Contacts;
 using Shared.Kernel.Documents;
@@ -60,7 +62,7 @@ public sealed class EInvoiceMapperTests
     [Fact]
     public void A_b2b_intra_state_invoice_maps_to_the_recorded_sample()
     {
-        Inv01Document document = Inv01Mapper.Map(IntraStateInvoice());
+        Inv01DocumentRepository document = Inv01MapperRepository.Map(IntraStateInvoice());
 
         AssertJsonEquivalent(RecordedIntraStateSample, Inv01Json.Serialize(document));
     }
@@ -68,15 +70,15 @@ public sealed class EInvoiceMapperTests
     [Fact]
     public void The_recorded_sample_passes_local_validation()
     {
-        Inv01Document document = Inv01Mapper.Map(IntraStateInvoice());
+        Inv01DocumentRepository document = Inv01MapperRepository.Map(IntraStateInvoice());
 
-        Assert.Empty(EInvoiceValidator.Validate(document, new DateOnly(2026, 9, 20), new DateOnly(2026, 9, 21)));
+        Assert.Empty(EInvoiceValidatorRepository.Validate(document, new DateOnly(2026, 9, 20), new DateOnly(2026, 9, 21)));
     }
 
     [Fact]
     public void Nulls_are_left_out_and_names_are_the_schemas_own()
     {
-        string json = Inv01Json.Serialize(Inv01Mapper.Map(IntraStateInvoice()));
+        string json = Inv01Json.Serialize(Inv01MapperRepository.Map(IntraStateInvoice()));
 
         Assert.DoesNotContain("null", json);
         Assert.Contains("\"SellerDtls\"", json);
@@ -100,7 +102,7 @@ public sealed class EInvoiceMapperTests
             RoundOffAmount = 0m,
         };
 
-        Inv01Document document = Inv01Mapper.Map(input);
+        Inv01DocumentRepository document = Inv01MapperRepository.Map(input);
 
         Assert.Equal("29", document.BuyerDtls.Pos);
         Assert.Equal(18m, document.ItemList[0].GstRt);
@@ -126,7 +128,7 @@ public sealed class EInvoiceMapperTests
             RoundOffAmount = 0m,
         };
 
-        Inv01Item item = Inv01Mapper.Map(input).ItemList[0];
+        Inv01Item item = Inv01MapperRepository.Map(input).ItemList[0];
 
         Assert.Equal(9m, item.SgstAmt);
         Assert.Equal(18m, item.GstRt);
@@ -150,11 +152,11 @@ public sealed class EInvoiceMapperTests
             RoundOffAmount = 0m,
         };
 
-        Inv01Document document = Inv01Mapper.Map(input);
+        Inv01DocumentRepository document = Inv01MapperRepository.Map(input);
 
         Assert.Equal(30m, document.ValDtls.Discount);
         Assert.Equal(1000m, document.ItemList[0].AssAmt);
-        Assert.Empty(EInvoiceValidator.Validate(document, input.DocumentDate, input.DocumentDate));
+        Assert.Empty(EInvoiceValidatorRepository.Validate(document, input.DocumentDate, input.DocumentDate));
     }
 
     [Fact]
@@ -168,7 +170,7 @@ public sealed class EInvoiceMapperTests
             PrecedingDocumentDate = new DateOnly(2026, 9, 20),
         };
 
-        Inv01Document document = Inv01Mapper.Map(input);
+        Inv01DocumentRepository document = Inv01MapperRepository.Map(input);
 
         Assert.Equal("CRN", document.DocDtls.Typ);
         Assert.NotNull(document.RefDtls);
@@ -193,7 +195,7 @@ public sealed class EInvoiceMapperTests
             RoundOffAmount = 0m,
         };
 
-        Inv01Document document = Inv01Mapper.Map(input);
+        Inv01DocumentRepository document = Inv01MapperRepository.Map(input);
 
         Assert.Equal("EXPWOP", document.TranDtls.SupTyp);
         Assert.Equal("URP", document.BuyerDtls.Gstin);

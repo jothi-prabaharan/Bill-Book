@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Controllers;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -634,8 +636,8 @@ public sealed class DeliveryChallanServiceTests
 
     private sealed record Harness(
         SalesDbContext Db,
-        DeliveryChallanService Service,
-        SalesOrderService Orders,
+        DeliveryChallanRepository Service,
+        SalesOrderRepository Orders,
         RecordingInventory Inventory,
         RecordingDocumentStorage Storage,
         RecordingLedger Ledger)
@@ -658,7 +660,7 @@ public sealed class DeliveryChallanServiceTests
             TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
             RecordingDocumentStorage storage = new();
 
-            DeliveryChallanService service = new(
+            DeliveryChallanRepository service = new(
                 db,
                 tenant,
                 numbering,
@@ -673,7 +675,7 @@ public sealed class DeliveryChallanServiceTests
                 TestArchive.For(db, tenant, storage),
                 ledger);
 
-            SalesOrderService orders = new(
+            SalesOrderRepository orders = new(
                 db,
                 tenant,
                 numbering,

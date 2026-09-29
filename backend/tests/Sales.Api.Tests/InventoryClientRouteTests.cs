@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Shared.Kernel.Tenancy;
 using Xunit;
 

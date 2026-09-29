@@ -41,7 +41,7 @@ public sealed class DocumentLineFieldTests
         db.Invoices.Add(invoice);
         await db.SaveChangesAsync(CancellationToken.None);
 
-        // Exactly the fields InvoiceService.SaveAsync sets, and no others.
+        // Exactly the fields InvoiceRepository.SaveAsync sets, and no others.
         db.InvoiceDetails.Add(new InvoiceDetail
         {
             InvoiceId = invoice.InvoiceId,

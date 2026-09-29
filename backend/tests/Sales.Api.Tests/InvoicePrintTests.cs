@@ -2,7 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
-using Sales.Api.Services.Printing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.TableEntities;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Printing;
@@ -67,7 +69,7 @@ public sealed class InvoicePrintPayloadTests
         ],
     };
 
-    private static PrintPayload Build() => InvoicePrintPayload.Build(
+    private static PrintPayload Build() => InvoicePrintPayloadRepository.Build(
         Invoice(), Seller, "Karnataka Traders", new Dictionary<long, string> { [10] = "Gold bar 24K" });
 
     [Fact]
@@ -129,7 +131,7 @@ public sealed class InvoicePrintPayloadTests
     [InlineData(DocumentStatus.Void, "VOID")]
     public void Only_a_posted_invoice_prints_without_a_watermark(DocumentStatus status, string? expected)
     {
-        Assert.Equal(expected, InvoicePrintService.Watermark(status));
+        Assert.Equal(expected, InvoicePrintRepository.Watermark(status));
     }
 
     [Theory]
@@ -140,7 +142,7 @@ public sealed class InvoicePrintPayloadTests
     public void Place_of_supply_is_the_customers_state_or_else_the_branchs(
         string? customerGstin, string? branchState, string? expected)
     {
-        Assert.Equal(expected, InvoicePrintPayload.PlaceOfSupply(customerGstin, branchState));
+        Assert.Equal(expected, InvoicePrintPayloadRepository.PlaceOfSupply(customerGstin, branchState));
     }
 }
 

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -179,9 +181,9 @@ public sealed class SalesApprovalTests
 
         List<TaxLineResult> lines = [Line(1_000m, 100m), Line(1_000m, 150m), Line(1_000m, 200m)];
 
-        Assert.Equal(2, SalesLimits.WorstLine(lines, 10m));
-        Assert.Null(SalesLimits.WorstLine(lines, 20m));
-        Assert.Null(SalesLimits.WorstLine(lines, 100m));
+        Assert.Equal(2, SalesLimitsRepository.WorstLine(lines, 10m));
+        Assert.Null(SalesLimitsRepository.WorstLine(lines, 20m));
+        Assert.Null(SalesLimitsRepository.WorstLine(lines, 100m));
     }
 
     [Fact]
@@ -271,7 +273,7 @@ public sealed class SalesApprovalTests
 
     private sealed record Harness(
         SalesDbContext Db,
-        InvoiceService Invoices,
+        InvoiceRepository Invoices,
         InvoiceOverrideService Overrides,
         StubCreditCheck Credit,
         StubDiscountLimits Discounts,
@@ -295,7 +297,7 @@ public sealed class SalesApprovalTests
             NumberGenerator numbering = new(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
             InvoiceOverrideService overrides = new(db, chains ?? new FakeChains(), tenant, user, TimeProvider.System);
 
-            InvoiceService invoices = new(
+            InvoiceRepository invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, user, TimeProvider.System, new RecordingInventory(), new RecordingLedger(),
                 credit, new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing(),

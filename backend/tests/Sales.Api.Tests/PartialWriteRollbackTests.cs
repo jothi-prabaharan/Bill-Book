@@ -10,7 +10,7 @@ namespace Sales.Api.Tests;
 /// <summary>
 /// What happens to the header when the lines fail.
 ///
-/// <c>InvoiceService.CreateAsync</c> writes an invoice across three tables and
+/// <c>InvoiceRepository.CreateAsync</c> writes an invoice across three tables and
 /// calls <c>SaveChangesAsync</c> between each — the header, then every line, then
 /// every line's taxes. A five-line invoice is <b>eleven</b> separate saves.
 ///

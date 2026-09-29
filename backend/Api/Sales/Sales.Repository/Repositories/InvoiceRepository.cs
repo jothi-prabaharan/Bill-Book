@@ -1,0 +1,2556 @@
+using Sales.Repository.Clients;
+using Shared.Kernel.CustomFields;
+using Microsoft.EntityFrameworkCore;
+using Sales.Entity.Enums;
+using Sales.Entity.Models;
+using Sales.Entity.TableEntities;
+using Sales.Repository;
+using Shared.Kernel.Approvals;
+using Shared.Kernel.Contacts;
+using Shared.Kernel.Documents;
+using Shared.Kernel.Interfaces;
+using Shared.Kernel.Numbering;
+using Shared.Kernel.Tax;
+using Shared.Kernel.Tenancy;
+using Shared.Kernel.Storage;
+
+namespace Sales.Repository.Repositories;
+
+/// <summary>
+/// The Sales Invoice and POS Sale service — <c>INV</c> and <c>POS</c>.
+///
+/// Handles draft save/update with GST calculations via <see cref="GstCalculator"/>,
+/// consecutive atomic CAS number generation via <see cref="INumberGenerator"/>,
+/// double-entry accounting ledger posting via <see cref="ILedgerClient"/>,
+/// inventory depletion / reservation releases via <see cref="IInventoryClient"/>,
+/// and GSTR-1 synchronous sales register recording.
+/// </summary>
+public sealed class InvoiceRepository : IInvoiceRepository
+{
+    private const string InventoryAccount = "Inventory";
+    private const string GdniAccount = "Goods Delivered Not Invoiced";
+    private const string CogsAccount = "Cost of Goods Sold";
+    // The chart's own names — SystemAccountNames in Accounting. The ledger finds
+    // an account by exact name, and "Sales" and "Tax Payable", which these were,
+    // exist in no chart, so every invoice post was refused (TK-77).
+    // SalesAccountNameTests holds every name here to Accounting's seed.
+    private const string SalesRevenueAccount = "Sales Revenue";
+    private const string TaxPayableAccount = "Output GST";
+    private const string AccountsReceivableAccount = "Accounts Receivable";
+    private const string RoundOffAccount = "Round Off";
+
+    private const int ItemLedgerType = 1;
+    private const int TaxLedgerType = 2;
+    private const int ControlLedgerType = 3;
+    private const int CogsLedgerType = 4;
+    private const int RoundOffLedgerType = 6;
+
+    /// <summary>Goods delivered not invoiced clearing: <c>mst.LedgerTypes</c> 7 (TK-90).</summary>
+    private const int GdniLedgerType = 7;
+    private const int TransactionLedgerSource = 3;
+
+    private const int ContactReference = 1;
+    private const int ItemReference = 2;
+    private const int TaxReference = 3;
+
+    /// <summary>
+    /// "Document posting" in <c>mst.LedgerSources</c> — what the costing worker
+    /// files a sale's cost under. The provisional cost of sales uses it too, so
+    /// the rows it writes and the settled rows that replace them read the same.
+    /// </summary>
+    private const int DocumentLedgerSource = 1;
+
+    private readonly SalesDbContext _db;
+    private readonly ITenantContext _tenant;
+    private readonly INumberGenerator _numbering;
+    private readonly IBaseCurrencyProvider _baseCurrency;
+    private readonly IBranchSettingsProvider _branchSettings;
+    private readonly ITaxRateProvider _rates;
+    private readonly IContactNameLookup _contactNames;
+    private readonly IItemNameLookup _itemNames;
+    private readonly ICurrentUser _user;
+    private readonly TimeProvider _clock;
+    private readonly IInventoryClient _inventoryClient;
+    private readonly ILedgerClient _ledgerClient;
+    private readonly ICreditCheckClient _creditCheckClient;
+    private readonly Shared.Kernel.Storage.IFileStorage _storage;
+    private readonly Sales.Repository.Repositories.IInvoicePdfRendererRepository _pdfRenderer;
+
+    /// <summary>
+    /// Who this branch is, for the seller block. Read from Master rather than
+    /// written here: the two lines it replaces were a hard-coded company name
+    /// and a hard-coded GSTIN, printed on every customer's tax invoices alike.
+    /// </summary>
+    private readonly IOrgIdentityProvider _orgIdentity;
+    private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
+    private readonly IEInvoicePosting _eInvoicing;
+
+    /// <summary>The discount limit (D-29). Null in tests that do not exercise it.</summary>
+    private readonly IDiscountLimitClient? _discountLimits;
+
+    /// <summary>Credit and discount overrides (TK-102). Null in tests that do not exercise them.</summary>
+    private readonly InvoiceOverrideService? _overrides;
+
+    /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
+    private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
+
+    /// <summary>Claims and releases the project items an invoice bills (TK-106). Null in tests that do not exercise it.</summary>
+    private readonly Shared.Kernel.Projects.IProjectBillingClient? _projectBilling;
+
+    /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
+    private readonly DocumentCustomFieldGate? _customFields;
+
+    public InvoiceRepository(
+        SalesDbContext db,
+        ITenantContext tenant,
+        INumberGenerator numbering,
+        IBaseCurrencyProvider baseCurrency,
+        IBranchSettingsProvider branchSettings,
+        ITaxRateProvider rates,
+        IContactNameLookup contactNames,
+        IItemNameLookup itemNames,
+        ICurrentUser user,
+        TimeProvider clock,
+        IInventoryClient inventoryClient,
+        ILedgerClient ledgerClient,
+        ICreditCheckClient creditCheckClient,
+        Shared.Kernel.Storage.IFileStorage storage,
+        Sales.Repository.Repositories.IInvoicePdfRendererRepository pdfRenderer,
+        IOrgIdentityProvider orgIdentity,
+        Shared.Kernel.Stock.IUqcLookup uqc,
+        IEInvoicePosting eInvoicing,
+        IDiscountLimitClient? discountLimits = null,
+        InvoiceOverrideService? overrides = null,
+        Shared.Kernel.Projects.IProjectDirectory? projects = null,
+        Shared.Kernel.Projects.IProjectBillingClient? projectBilling = null,
+        DocumentCustomFieldGate? customFields = null)
+    {
+        _customFields = customFields;
+        _projectBilling = projectBilling;
+        _projects = projects;
+        _discountLimits = discountLimits;
+        _overrides = overrides;
+        _db = db;
+        _tenant = tenant;
+        _numbering = numbering;
+        _baseCurrency = baseCurrency;
+        _branchSettings = branchSettings;
+        _rates = rates;
+        _contactNames = contactNames;
+        _itemNames = itemNames;
+        _user = user;
+        _clock = clock;
+        _inventoryClient = inventoryClient;
+        _ledgerClient = ledgerClient;
+        _creditCheckClient = creditCheckClient;
+        _storage = storage;
+        _pdfRenderer = pdfRenderer;
+        _orgIdentity = orgIdentity;
+        _uqc = uqc;
+        _eInvoicing = eInvoicing;
+    }
+
+    /// <summary>
+    /// A confirmed sales order, turned into an invoice.
+    ///
+    /// <b>The lines are read from the order, never sent by the caller</b>, and
+    /// they go through <see cref="CreateAsync"/> like any other invoice — so the
+    /// tax is recomputed at the rates in force on the invoice's own date rather
+    /// than copied from an order that may have been taken months ago. That is
+    /// also why nothing here touches <c>GstCalculator</c>: one path computes an
+    /// invoice, and this is not a second one.
+    ///
+    /// Each invoice line keeps the <c>SalesOrderDetailId</c> it came from, which
+    /// is what lets the order's reservation be released line by line when the
+    /// invoice posts.
+    /// </summary>
+    public async Task<InvoiceResult> CreateFromSalesOrderAsync(
+        long salesOrderId, CreateInvoiceFromOrderRequest request, CancellationToken ct)
+    {
+        SalesOrder? order = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == salesOrderId, ct);
+
+        InvoiceResult? refusal = CheckBillable(order);
+        if (refusal is not null)
+        {
+            return refusal;
+        }
+
+        // What is left to bill on each line — the whole order the first time,
+        // the remainder after a partial invoice. It used to refuse any order
+        // that had an invoice at all, so an order billed in part could never
+        // be billed for the rest this way.
+        List<(SalesOrderDetail Line, decimal Quantity)> lines = order!.Lines
+            .Select(l => (Line: l, Quantity: Billable(order, l)))
+            .Where(x => x.Quantity > 0m)
+            .ToList();
+
+        if (lines.Count == 0)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.AlreadyFulfilled,
+                Detail: "Everything on this sales order has already been invoiced.");
+        }
+
+        DateOnly documentDate = request.DocumentDate
+            ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        return await CreateAsync(
+            FromOrder(order, lines, documentDate, request.DueDate, request.PaymentTermId,
+                request.PlaceOfSupplyStateCode, request.Notes),
+            ct);
+    }
+
+    /// <summary>
+    /// Bills some or all of what a confirmed order has left, and posts the
+    /// invoice, in the caller's transaction.
+    ///
+    /// Moved here from <c>SalesOrdersController</c>, which held all of it and
+    /// opened its own transaction. It also counted only what had been
+    /// <i>invoiced</i>, so an order delivered in part on a challan and then
+    /// fulfilled here issued the challan's goods a second time. The posting
+    /// now bills delivered-but-unbilled goods without issuing them, and moves
+    /// the order's delivered, reserved and invoiced quantities itself — so this
+    /// method only chooses the lines.
+    ///
+    /// Empty <c>Lines</c> means everything still unbilled.
+    /// </summary>
+    public async Task<(InvoiceResult Result, FulfillSalesOrderResult? Fulfilled)> FulfillSalesOrderAsync(
+        long salesOrderId, FulfillSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrder? order = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == salesOrderId, ct);
+
+        InvoiceResult? refusal = CheckBillable(order);
+        if (refusal is not null)
+        {
+            return (refusal, null);
+        }
+
+        if (request.DueDate is null)
+        {
+            return (new InvoiceResult(
+                InvoiceOutcome.DueDateMissing,
+                Detail: "An invoice requires a due date. Set the due date or payment term before fulfilment."), null);
+        }
+
+        Dictionary<long, decimal> requested = request.Lines
+            .GroupBy(l => l.SalesOrderDetailId)
+            .ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
+
+        foreach (long lineId in requested.Keys)
+        {
+            if (order!.Lines.All(l => l.SalesOrderDetailId != lineId))
+            {
+                return (new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Sales order line {lineId} does not belong to this order."), null);
+            }
+        }
+
+        var lines = new List<(SalesOrderDetail Line, decimal Quantity, decimal PreviouslyInvoiced)>();
+
+        foreach (SalesOrderDetail line in order!.Lines.OrderBy(l => l.LineNumber))
+        {
+            decimal billable = Billable(order, line);
+
+            if (requested.Count == 0)
+            {
+                if (billable > 0m)
+                {
+                    lines.Add((line, billable, line.InvoicedQuantity));
+                }
+
+                continue;
+            }
+
+            if (!requested.TryGetValue(line.SalesOrderDetailId, out decimal quantity))
+            {
+                continue;
+            }
+
+            if (quantity <= 0m)
+            {
+                return (new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Line {line.LineNumber} quantity must be greater than zero."), null);
+            }
+
+            if (quantity > billable)
+            {
+                return (new InvoiceResult(
+                    InvoiceOutcome.AlreadyFulfilled,
+                    Detail: $"Line {line.LineNumber} has {billable:0.####} left to bill; "
+                        + $"{quantity:0.####} were requested."), null);
+            }
+
+            lines.Add((line, quantity, line.InvoicedQuantity));
+        }
+
+        if (lines.Count == 0)
+        {
+            return (new InvoiceResult(
+                InvoiceOutcome.AlreadyFulfilled,
+                Detail: "There is nothing left to bill on this sales order."), null);
+        }
+
+        DateOnly documentDate = request.DocumentDate
+            ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        InvoiceResult created = await CreateAsync(
+            FromOrder(order, lines.Select(x => (x.Line, x.Quantity)), documentDate, request.DueDate,
+                request.PaymentTermId, request.PlaceOfSupplyStateCode, request.Notes),
+            ct);
+        if (created.Outcome != InvoiceOutcome.Ok)
+        {
+            return (created, null);
+        }
+
+        InvoiceResult posted = await PostAsync(created.InvoiceId, ct);
+        if (posted.Outcome != InvoiceOutcome.Ok)
+        {
+            return (posted, null);
+        }
+
+        // The same tracked order the posting moved, so this is its new status.
+        return (posted, new FulfillSalesOrderResult
+        {
+            SalesOrderId = order.SalesOrderId,
+            InvoiceId = created.InvoiceId,
+            Status = order.FulfilmentStatus.ToString(),
+            Lines = lines.Select(x => new FulfilledSalesOrderLine
+            {
+                SalesOrderDetailId = x.Line.SalesOrderDetailId,
+                OrderedQuantity = x.Line.Quantity,
+                PreviouslyInvoicedQuantity = x.PreviouslyInvoiced,
+                FulfilledQuantity = x.Quantity,
+                RemainingQuantity = Math.Max(0m, x.Line.Quantity - x.PreviouslyInvoiced - x.Quantity),
+            }).ToList(),
+        });
+    }
+
+    /// <summary>Why an order cannot be billed, or null when it can.</summary>
+    private InvoiceResult? CheckBillable(SalesOrder? order)
+    {
+        if (order is null || _tenant.OrgId is not Guid callerOrgId || order.OrgId != callerOrgId)
+        {
+            return new InvoiceResult(InvoiceOutcome.NotFound, Detail: "No such sales order.");
+        }
+
+        // Confirmed, not merely keyed. An order that has not been confirmed is
+        // holding no stock, so invoicing it would issue goods nobody reserved.
+        if (order.Status != DocumentStatus.Posted)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.SourceInvalid,
+                Detail: "Only a confirmed sales order becomes an invoice. Confirm the order first.");
+        }
+
+        if (order.FulfilmentStatus == FulfilmentStatus.Cancelled)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.SourceInvalid, Detail: "This sales order has been cancelled.");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// What an order line has left to bill: all of it not yet invoiced — or,
+    /// on an order closed short, only what was actually delivered, since the
+    /// rest was agreed never to go.
+    /// </summary>
+    private static decimal Billable(SalesOrder order, SalesOrderDetail line) =>
+        Math.Max(0m, (order.ShortCloseReason is null ? line.Quantity : line.DeliveredQuantity)
+            - line.InvoicedQuantity);
+
+    /// <summary>
+    /// An invoice request built from order lines. <b>The lines are read from the
+    /// order, never sent by the caller</b>, and they go through
+    /// <see cref="CreateAsync"/> like any other invoice — so the tax is
+    /// recomputed at the rates in force on the invoice's own date rather than
+    /// copied from an order that may have been taken months ago.
+    ///
+    /// The place of supply is re-resolved from the GSTIN rather than copied:
+    /// the order stored the answer (IsInterState), and copying an answer is how
+    /// a branch that has since changed state files the wrong return.
+    /// </summary>
+    private static SaveInvoiceRequest FromOrder(
+        SalesOrder order,
+        IEnumerable<(SalesOrderDetail Line, decimal Quantity)> lines,
+        DateOnly documentDate,
+        DateOnly? dueDate,
+        long? paymentTermId,
+        string? placeOfSupplyStateCode,
+        string? notes) =>
+        new()
+        {
+            DocumentDate = documentDate,
+            DueDate = dueDate,
+            PaymentTermId = paymentTermId,
+            ContactId = order.ContactId,
+            QuoteId = order.QuoteId,
+            SalesOrderId = order.SalesOrderId,
+            ContactGstin = order.ContactGstin,
+            PlaceOfSupplyStateCode = placeOfSupplyStateCode,
+            BillingAddress = order.BillingAddress,
+            ShippingAddress = order.ShippingAddress,
+            CurrencyCode = order.CurrencyCode,
+            ExchangeRate = order.ExchangeRate,
+            Notes = notes ?? order.Notes,
+            TermsAndConditions = order.TermsAndConditions,
+            Lines = [.. lines
+                .OrderBy(x => x.Line.LineNumber)
+                .Select(x => new SaveInvoiceLineRequest
+                {
+                    ItemId = x.Line.ItemId,
+                    Description = x.Line.Description,
+                    HsnSacCode = x.Line.HsnSacCode,
+                    WarehouseId = x.Line.WarehouseId,
+                    Quantity = x.Quantity,
+                    UomId = x.Line.UomId,
+                    ConversionFactor = x.Line.ConversionFactor,
+                    UnitPrice = x.Line.UnitPrice,
+                    IsPriceInclusive = x.Line.IsPriceInclusive,
+                    DiscountPercent = x.Line.DiscountPercent,
+                    DiscountAmount = x.Line.DiscountAmount,
+                    TaxTreatment = x.Line.TaxTreatment,
+                    TaxGroupId = x.Line.TaxGroupId,
+                    LineType = x.Line.LineType,
+                    AccountId = x.Line.AccountId,
+                    FixedAssetCategoryId = x.Line.FixedAssetCategoryId,
+                    ProjectId = x.Line.ProjectId,
+                    ItemBatchId = x.Line.ItemBatchId,
+                    LineNotes = x.Line.LineNotes,
+
+                    // The thread back to the order line. Posting reads it to
+                    // bill the line, and to release exactly what it issues.
+                    SalesOrderDetailId = x.Line.SalesOrderDetailId,
+                })],
+        };
+
+    public async Task<InvoiceResult> CreateAsync(SaveInvoiceRequest request, CancellationToken ct)
+    {
+        string? baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
+        if (baseCurrency is null)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.RatesUnavailable, Detail: "Branch base currency could not be read.");
+        }
+
+        BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
+        if (settings is null)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.RatesUnavailable, Detail: "Branch settings could not be read.");
+        }
+
+        PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
+            settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
+
+        if (!pos.IsOk)
+        {
+            return new InvoiceResult(InvoiceOutcome.PlaceOfSupplyRefused, Detail: pos.Detail);
+        }
+
+        bool isPos = request.TillId.HasValue;
+        if (!isPos && request.DueDate is null)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.DueDateMissing,
+                Detail: "An invoice requires a due date. Choose a payment term or set the due date directly.");
+        }
+
+        string typeCode = isPos ? "POS" : "INV";
+        TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
+
+        NumberAllocation alloc = await _numbering.NextAsync(typeCode, request.DocumentDate, ct);
+
+        Invoice invoice = new()
+        {
+            TransactionTypeCode = typeCode,
+            PrintTemplateId = request.PrintTemplateId,
+            DocumentNo = alloc.Code,
+            DocumentDate = request.DocumentDate,
+            DueDate = request.DueDate,
+            QuoteId = request.QuoteId,
+            SalesOrderId = request.SalesOrderId,
+            DeliveryChallanId = request.DeliveryChallanId,
+            PaymentTermId = request.PaymentTermId,
+            TillId = request.TillId,
+            CashierUserId = request.CashierUserId,
+            PaymentMode = request.PaymentMode,
+            TenderedAmount = request.TenderedAmount,
+            ChangeAmount = request.ChangeAmount,
+            ContactId = request.ContactId,
+            ContactGstin = request.ContactGstin,
+            BillingAddress = request.BillingAddress,
+            ShippingAddress = request.ShippingAddress,
+            PlaceOfSupplyStateId = 0,
+            IsInterState = pos.IsInterState,
+            CurrencyCode = request.CurrencyCode ?? baseCurrency,
+            ExchangeRate = request.ExchangeRate ?? 1m,
+            Notes = request.Notes,
+            TransportMode = request.TransportMode,
+            VehicleNo = Blank(request.VehicleNo),
+            TransporterId = Blank(request.TransporterId),
+            TransporterName = string.IsNullOrWhiteSpace(request.TransporterName) ? null : request.TransporterName.Trim(),
+            TransportDistanceKm = request.TransportDistanceKm,
+            TermsAndConditions = request.TermsAndConditions,
+            Status = DocumentStatus.Draft,
+        };
+
+        CustomFieldSource? customFieldSource = await CustomFieldSourceAsync(request, ct);
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, invoice, CustomFieldEntityKind.Invoice, request.CustomFields, isNew: true, customFieldSource, ct) is string customFieldsRefused)
+        {
+            return new InvoiceResult(InvoiceOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
+
+        if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new InvoiceResult(InvoiceOutcome.LineInvalid, Detail: projectRefusal);
+        }
+
+        var taxLines = new List<TaxLineResult>(request.Lines.Count);
+
+        for (int i = 0; i < request.Lines.Count; i++)
+        {
+            SaveInvoiceLineRequest lineReq = request.Lines[i];
+            int lineNumber = i + 1;
+
+            if (lineReq.ItemId is null && string.IsNullOrWhiteSpace(lineReq.Description))
+            {
+                return new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Line {lineNumber} is a free-text line and must have a description.");
+            }
+            if (lineReq.ItemId is null && lineReq.AccountId is null)
+            {
+                return new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Line {lineNumber} is a free-text line and must have an account selected.");
+            }
+
+            long? taxGroupId = lineReq.TaxGroupId
+                ?? (lineReq.TaxGroupIds.Count > 0 ? lineReq.TaxGroupIds[0] : null);
+
+            TaxRate? rate = null;
+            if (taxGroupId.HasValue)
+            {
+                rate = await _rates.GetRateAsync(taxGroupId.Value, request.DocumentDate, ct);
+                if (rate is null)
+                {
+                    return new InvoiceResult(
+                        InvoiceOutcome.RatesUnavailable,
+                        Detail: $"Tax rate for group {taxGroupId.Value} could not be read for date {request.DocumentDate}.");
+                }
+            }
+
+            TaxLineInput taxInput = new()
+            {
+                Quantity = lineReq.Quantity,
+                UnitPrice = lineReq.UnitPrice,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = lineReq.DiscountAmount,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                TaxTreatment = lineReq.TaxTreatment,
+                Rate = rate,
+                ConversionFactor = lineReq.ConversionFactor,
+            };
+
+            TaxLineResult computed = GstCalculator.Compute(taxInput, taxContext);
+            taxLines.Add(computed);
+
+            InvoiceDetail detail = new()
+            {
+                LineNumber = lineNumber,
+                SalesOrderDetailId = lineReq.SalesOrderDetailId,
+                ItemId = lineReq.ItemId,
+                Description = lineReq.Description,
+                HsnSacCode = lineReq.HsnSacCode,
+                WarehouseId = lineReq.WarehouseId,
+                Quantity = lineReq.Quantity,
+                UomId = lineReq.UomId,
+                ConversionFactor = lineReq.ConversionFactor,
+                BaseQuantity = computed.BaseQuantity,
+                UnitPrice = lineReq.UnitPrice,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = computed.DiscountAmount,
+                GrossAmount = computed.GrossAmount,
+                TaxableAmount = computed.TaxableAmount,
+                TaxTreatment = lineReq.TaxTreatment,
+                TaxMasterId = rate?.TaxMasterId,
+                TaxGroupId = rate?.TaxGroupId ?? taxGroupId,
+                TaxAmount = computed.TaxAmount,
+                LineType = lineReq.LineType,
+                AccountId = lineReq.AccountId,
+                FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                ProjectId = lineReq.ProjectId,
+                LineTotal = computed.LineTotal,
+                ItemBatchId = lineReq.ItemBatchId,
+                LineNotes = lineReq.LineNotes,
+                ReturnedQuantity = 0m,
+            };
+
+            foreach (var comp in computed.Components)
+            {
+                detail.Taxes.Add(new InvoiceDetailTax
+                {
+                    TaxComponent = comp.Component,
+                    Rate = comp.Rate,
+                    TaxableAmount = comp.TaxableAmount,
+                    Amount = comp.Amount,
+                    AmountBase = comp.Amount * invoice.ExchangeRate,
+                });
+            }
+
+            invoice.Lines.Add(detail);
+        }
+
+        TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
+
+        invoice.SubTotal = totals.SubTotal;
+        invoice.DiscountAmount = totals.DiscountAmount;
+        invoice.TaxableAmount = totals.TaxableAmount;
+        invoice.CgstAmount = totals.CgstAmount;
+        invoice.SgstAmount = totals.SgstAmount;
+        invoice.IgstAmount = totals.IgstAmount;
+        invoice.CessAmount = totals.CessAmount;
+        invoice.RoundOffAmount =
+            Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        invoice.TotalAmount = totals.TotalAmount + invoice.RoundOffAmount;
+        invoice.TotalAmountBase = invoice.TotalAmount * invoice.ExchangeRate;
+
+        SalesLimitCheck limits = await SalesLimitsRepository.CheckAsync(
+            _creditCheckClient, _discountLimits, invoice.ContactId, invoice.TotalAmountBase, taxLines, ct);
+        if (LimitRefusal(limits, request.RequestApproval) is InvoiceResult refusedAtLimit)
+        {
+            return refusedAtLimit;
+        }
+
+        var detailLines = invoice.Lines.ToList();
+        invoice.Lines.Clear();
+
+        _db.Invoices.Add(invoice);
+        await _db.SaveChangesAsync(ct);
+
+        foreach (var detail in detailLines)
+        {
+            detail.InvoiceId = invoice.InvoiceId;
+            var detailTaxes = detail.Taxes.ToList();
+            detail.Taxes.Clear();
+
+            _db.InvoiceDetails.Add(detail);
+            await _db.SaveChangesAsync(ct);
+
+            foreach (var tax in detailTaxes)
+            {
+                tax.InvoiceDetailId = detail.InvoiceDetailId;
+                _db.InvoiceDetailTaxes.Add(tax);
+            }
+            await _db.SaveChangesAsync(ct);
+            detail.Taxes.AddRange(detailTaxes);
+        }
+
+        invoice.Lines.AddRange(detailLines);
+        await SaveProjectItemsAsync(invoice, request.ProjectItems, ct);
+        return await RequestOverridesAsync(invoice, limits, ct)
+            ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+    }
+
+    public async Task<InvoiceResult> UpdateAsync(
+        long invoiceId, SaveInvoiceRequest request, CancellationToken ct)
+    {
+        Invoice? invoice = await _db.Invoices
+            .Include(x => x.Lines)
+            .ThenInclude(l => l.Taxes)
+            .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
+
+        if (invoice is null)
+        {
+            return new InvoiceResult(InvoiceOutcome.NotFound);
+        }
+
+        DocumentTransition transition = DocumentLifecycle.CanEdit(invoice.Status);
+        if (!transition.IsAllowed)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.LifecycleRefused, Detail: "Only draft invoices can be updated.");
+        }
+
+        BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
+        if (settings is null)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.RatesUnavailable, Detail: "Branch settings could not be read.");
+        }
+
+        PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
+            settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
+
+        if (!pos.IsOk)
+        {
+            return new InvoiceResult(InvoiceOutcome.PlaceOfSupplyRefused, Detail: pos.Detail);
+        }
+
+        bool isPos = request.TillId.HasValue || invoice.TransactionTypeCode == "POS";
+        if (!isPos && request.DueDate is null)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.DueDateMissing,
+                Detail: "An invoice requires a due date. Choose a payment term or set the due date directly.");
+        }
+
+        TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
+
+        invoice.DocumentDate = request.DocumentDate;
+        invoice.PrintTemplateId = request.PrintTemplateId;
+        invoice.DueDate = request.DueDate;
+        invoice.QuoteId = request.QuoteId;
+        invoice.SalesOrderId = request.SalesOrderId;
+        invoice.DeliveryChallanId = request.DeliveryChallanId;
+        invoice.PaymentTermId = request.PaymentTermId;
+        invoice.TillId = request.TillId;
+        invoice.CashierUserId = request.CashierUserId;
+        invoice.PaymentMode = request.PaymentMode;
+        invoice.TenderedAmount = request.TenderedAmount;
+        invoice.ChangeAmount = request.ChangeAmount;
+        invoice.ContactId = request.ContactId;
+        invoice.ContactGstin = request.ContactGstin;
+        invoice.BillingAddress = request.BillingAddress;
+        invoice.ShippingAddress = request.ShippingAddress;
+        invoice.IsInterState = pos.IsInterState;
+
+        if (request.CurrencyCode is not null)
+        {
+            invoice.CurrencyCode = request.CurrencyCode;
+        }
+        if (request.ExchangeRate.HasValue)
+        {
+            invoice.ExchangeRate = request.ExchangeRate.Value;
+        }
+
+        invoice.Notes = request.Notes;
+        invoice.TransportMode = request.TransportMode;
+        invoice.VehicleNo = Blank(request.VehicleNo);
+        invoice.TransporterId = Blank(request.TransporterId);
+        invoice.TransporterName = string.IsNullOrWhiteSpace(request.TransporterName) ? null : request.TransporterName.Trim();
+        invoice.TransportDistanceKm = request.TransportDistanceKm;
+        invoice.TermsAndConditions = request.TermsAndConditions;
+
+        // Custom fields (TK-112): validated, kept when left out of an update, and carried from the source document.
+        if (await DocumentCustomFieldGate.ApplyAsync(_customFields, invoice, CustomFieldEntityKind.Invoice, request.CustomFields, isNew: false, source: null, ct) is string customFieldsRefused)
+        {
+            return new InvoiceResult(InvoiceOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
+        }
+
+        var existingLines = await _db.InvoiceDetails
+            .Where(d => d.InvoiceId == invoiceId)
+            .Include(d => d.Taxes)
+            .ToListAsync(ct);
+
+        _db.InvoiceDetailTaxes.RemoveRange(existingLines.SelectMany(l => l.Taxes));
+        _db.InvoiceDetails.RemoveRange(existingLines);
+        invoice.Lines.Clear();
+        await _db.SaveChangesAsync(ct);
+
+        if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new InvoiceResult(InvoiceOutcome.LineInvalid, Detail: projectRefusal);
+        }
+
+        var taxLines = new List<TaxLineResult>(request.Lines.Count);
+        var newDetails = new List<InvoiceDetail>(request.Lines.Count);
+
+        for (int i = 0; i < request.Lines.Count; i++)
+        {
+            SaveInvoiceLineRequest lineReq = request.Lines[i];
+            int lineNumber = i + 1;
+
+            if (lineReq.ItemId is null && string.IsNullOrWhiteSpace(lineReq.Description))
+            {
+                return new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Line {lineNumber} is a free-text line and must have a description.");
+            }
+            if (lineReq.ItemId is null && lineReq.AccountId is null)
+            {
+                return new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Line {lineNumber} is a free-text line and must have an account selected.");
+            }
+
+            long? taxGroupId = lineReq.TaxGroupId
+                ?? (lineReq.TaxGroupIds.Count > 0 ? lineReq.TaxGroupIds[0] : null);
+
+            TaxRate? rate = null;
+            if (taxGroupId.HasValue)
+            {
+                rate = await _rates.GetRateAsync(taxGroupId.Value, request.DocumentDate, ct);
+                if (rate is null)
+                {
+                    return new InvoiceResult(
+                        InvoiceOutcome.RatesUnavailable,
+                        Detail: $"Tax rate for group {taxGroupId.Value} could not be read for date {request.DocumentDate}.");
+                }
+            }
+
+            TaxLineInput taxInput = new()
+            {
+                Quantity = lineReq.Quantity,
+                UnitPrice = lineReq.UnitPrice,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = lineReq.DiscountAmount,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                TaxTreatment = lineReq.TaxTreatment,
+                Rate = rate,
+                ConversionFactor = lineReq.ConversionFactor,
+            };
+
+            TaxLineResult computed = GstCalculator.Compute(taxInput, taxContext);
+            taxLines.Add(computed);
+
+            InvoiceDetail detail = new()
+            {
+                LineNumber = lineNumber,
+                SalesOrderDetailId = lineReq.SalesOrderDetailId,
+                ItemId = lineReq.ItemId,
+                Description = lineReq.Description,
+                HsnSacCode = lineReq.HsnSacCode,
+                WarehouseId = lineReq.WarehouseId,
+                Quantity = lineReq.Quantity,
+                UomId = lineReq.UomId,
+                ConversionFactor = lineReq.ConversionFactor,
+                BaseQuantity = computed.BaseQuantity,
+                UnitPrice = lineReq.UnitPrice,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = computed.DiscountAmount,
+                GrossAmount = computed.GrossAmount,
+                TaxableAmount = computed.TaxableAmount,
+                TaxTreatment = lineReq.TaxTreatment,
+                TaxMasterId = rate?.TaxMasterId,
+                TaxGroupId = rate?.TaxGroupId ?? taxGroupId,
+                TaxAmount = computed.TaxAmount,
+                LineType = lineReq.LineType,
+                AccountId = lineReq.AccountId,
+                FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                ProjectId = lineReq.ProjectId,
+                LineTotal = computed.LineTotal,
+                ItemBatchId = lineReq.ItemBatchId,
+                LineNotes = lineReq.LineNotes,
+                ReturnedQuantity = 0m,
+            };
+
+            foreach (var comp in computed.Components)
+            {
+                detail.Taxes.Add(new InvoiceDetailTax
+                {
+                    TaxComponent = comp.Component,
+                    Rate = comp.Rate,
+                    TaxableAmount = comp.TaxableAmount,
+                    Amount = comp.Amount,
+                    AmountBase = comp.Amount * invoice.ExchangeRate,
+                });
+            }
+
+            newDetails.Add(detail);
+        }
+
+        TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
+
+        invoice.SubTotal = totals.SubTotal;
+        invoice.DiscountAmount = totals.DiscountAmount;
+        invoice.TaxableAmount = totals.TaxableAmount;
+        invoice.CgstAmount = totals.CgstAmount;
+        invoice.SgstAmount = totals.SgstAmount;
+        invoice.IgstAmount = totals.IgstAmount;
+        invoice.CessAmount = totals.CessAmount;
+        invoice.RoundOffAmount =
+            Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        invoice.TotalAmount = totals.TotalAmount + invoice.RoundOffAmount;
+        invoice.TotalAmountBase = invoice.TotalAmount * invoice.ExchangeRate;
+
+        // An edit ends any override the invoice had: an approval approves what
+        // the approver saw, so the check below decides afresh (TK-102).
+        if (_overrides is not null)
+        {
+            await _overrides.ResetAsync(invoice, ct);
+        }
+
+        SalesLimitCheck limits = await SalesLimitsRepository.CheckAsync(
+            _creditCheckClient, _discountLimits, invoice.ContactId, invoice.TotalAmountBase, taxLines, ct);
+        if (LimitRefusal(limits, request.RequestApproval) is InvoiceResult refusedAtLimit)
+        {
+            return refusedAtLimit;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        foreach (var detail in newDetails)
+        {
+            detail.InvoiceId = invoice.InvoiceId;
+            var detailTaxes = detail.Taxes.ToList();
+            detail.Taxes.Clear();
+
+            _db.InvoiceDetails.Add(detail);
+            await _db.SaveChangesAsync(ct);
+
+            foreach (var tax in detailTaxes)
+            {
+                tax.InvoiceDetailId = detail.InvoiceDetailId;
+                _db.InvoiceDetailTaxes.Add(tax);
+            }
+            await _db.SaveChangesAsync(ct);
+            detail.Taxes.AddRange(detailTaxes);
+        }
+
+        invoice.Lines.AddRange(newDetails);
+        await SaveProjectItemsAsync(invoice, request.ProjectItems, ct);
+        return await RequestOverridesAsync(invoice, limits, ct)
+            ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+    }
+
+    /// <summary>
+    /// The refusal a save gets at the credit or discount limit (TK-102), or null
+    /// when it may go on: nothing breached, or approval was asked for.
+    /// </summary>
+    private InvoiceResult? LimitRefusal(SalesLimitCheck limits, bool requestApproval)
+    {
+        if (limits.Unavailable)
+        {
+            return new InvoiceResult(InvoiceOutcome.LimitsUnavailable,
+                Detail: "The discount limit could not be read. Nothing was saved; try again in a moment.");
+        }
+
+        if (!limits.Breached || (requestApproval && _overrides is not null))
+        {
+            return null;
+        }
+
+        return new InvoiceResult(
+            limits.CreditBreach is not null ? InvoiceOutcome.CreditLimitExceeded : InvoiceOutcome.DiscountLimitExceeded,
+            Detail: limits.Refusal());
+    }
+
+    /// <summary>
+    /// Sends each breached limit to its approvers, once the invoice is saved
+    /// (TK-102). A refusal here comes after the save, so it is returned as a
+    /// failure and the request's transaction takes the save back with it.
+    /// </summary>
+    private async Task<InvoiceResult?> RequestOverridesAsync(Invoice invoice, SalesLimitCheck limits, CancellationToken ct)
+    {
+        if (!limits.Breached || _overrides is null)
+        {
+            return null;
+        }
+
+        foreach (ApprovalRequestKind kind in limits.Kinds())
+        {
+            ApprovalResult asked = await _overrides.SubmitAsync(kind, invoice.InvoiceId, ct);
+            switch (asked.Outcome)
+            {
+                case ApprovalResultOutcome.Ok:
+                    continue;
+                case ApprovalResultOutcome.Unavailable:
+                    return new InvoiceResult(InvoiceOutcome.LimitsUnavailable, invoice.InvoiceId, asked.Detail);
+                case ApprovalResultOutcome.NoWorkflow:
+                    return new InvoiceResult(InvoiceOutcome.OverrideRefused, invoice.InvoiceId, SalesLimitCheck.NoWorkflow(kind));
+                default:
+                    return new InvoiceResult(InvoiceOutcome.OverrideRefused, invoice.InvoiceId, asked.Detail);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Replaces the project items a draft bills (TK-106). They are only
+    /// recorded here; nothing is claimed until the invoice posts.
+    /// </summary>
+    private async Task SaveProjectItemsAsync(
+        Invoice invoice, List<Shared.Kernel.Projects.ProjectItemRef> items, CancellationToken ct)
+    {
+        await _db.InvoiceProjectItems.Where(p => p.InvoiceId == invoice.InvoiceId).ExecuteDeleteAsync(ct);
+
+        foreach (var item in items.GroupBy(i => (i.Kind, i.ItemId)).Select(g => g.First()))
+        {
+            _db.InvoiceProjectItems.Add(new InvoiceProjectItem
+            {
+                OrgId = invoice.OrgId,
+                InvoiceId = invoice.InvoiceId,
+                Kind = item.Kind,
+                ItemId = item.ItemId,
+                ProjectId = item.ProjectId ?? 0,
+            });
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// The nearest document an invoice was made from, whose custom fields may
+    /// carry to it (TK-112): its challan, else its order, else its quote.
+    /// </summary>
+    private async Task<CustomFieldSource?> CustomFieldSourceAsync(SaveInvoiceRequest request, CancellationToken ct)
+    {
+        if (request.DeliveryChallanId is long challanId)
+        {
+            return new CustomFieldSource(CustomFieldEntityKind.DeliveryChallan,
+                await _db.DeliveryChallans.Where(c => c.DeliveryChallanId == challanId).Select(c => c.CustomFields).FirstOrDefaultAsync(ct));
+        }
+
+        if (request.SalesOrderId is long orderId)
+        {
+            return new CustomFieldSource(CustomFieldEntityKind.SalesOrder,
+                await _db.SalesOrders.Where(o => o.SalesOrderId == orderId).Select(o => o.CustomFields).FirstOrDefaultAsync(ct));
+        }
+
+        return request.QuoteId is long quoteId
+            ? new CustomFieldSource(CustomFieldEntityKind.Quote,
+                await _db.Quotes.Where(q => q.QuoteId == quoteId).Select(q => q.CustomFields).FirstOrDefaultAsync(ct))
+            : null;
+    }
+
+    public async Task<InvoiceResult> SaveAsync(
+        SaveInvoiceRequest request, long? invoiceId, CancellationToken ct)
+    {
+        if (invoiceId.HasValue && invoiceId.Value > 0)
+        {
+            return await UpdateAsync(invoiceId.Value, request, ct);
+        }
+
+        return await CreateAsync(request, ct);
+    }
+
+    public async Task<InvoiceView?> GetAsync(long invoiceId, CancellationToken ct)
+    {
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        var invoice = await _db.Invoices
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
+
+        if (invoice is null) return null;
+
+        var lines = await _db.InvoiceDetails
+            .Where(d => d.InvoiceId == invoiceId)
+            .AsNoTracking()
+            .OrderBy(d => d.LineNumber)
+            .ToListAsync(ct);
+
+        var detailIds = lines.Select(l => l.InvoiceDetailId).ToList();
+        var taxes = await _db.InvoiceDetailTaxes
+            .Where(t => detailIds.Contains(t.InvoiceDetailId))
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        foreach (var line in lines)
+        {
+            line.Taxes = taxes.Where(t => t.InvoiceDetailId == line.InvoiceDetailId).ToList();
+        }
+
+        invoice.Lines = lines;
+
+        var contacts = await _contactNames.ResolveAsync([invoice.ContactId], ct);
+        var itemIds = invoice.Lines
+            .Where(l => l.ItemId.HasValue)
+            .Select(l => l.ItemId!.Value)
+            .Distinct()
+            .ToList();
+        var items = itemIds.Count > 0
+            ? await _itemNames.ResolveAsync(itemIds, ct)
+            : new Dictionary<long, NamedRef>();
+
+        var view = new InvoiceView
+        {
+            InvoiceId = invoice.InvoiceId,
+            CreditOverrideStatus = invoice.CreditOverrideStatus?.ToString(),
+            DiscountOverrideStatus = invoice.DiscountOverrideStatus?.ToString(),
+            TransportMode = invoice.TransportMode,
+            VehicleNo = invoice.VehicleNo,
+            TransporterId = invoice.TransporterId,
+            TransporterName = invoice.TransporterName,
+            TransportDistanceKm = invoice.TransportDistanceKm,
+            QuoteId = invoice.QuoteId,
+            SalesOrderId = invoice.SalesOrderId,
+            DeliveryChallanId = invoice.DeliveryChallanId,
+            PaymentTermId = invoice.PaymentTermId,
+            DueDate = invoice.DueDate,
+            TillId = invoice.TillId,
+            CashierUserId = invoice.CashierUserId,
+            PaymentMode = invoice.PaymentMode,
+            TenderedAmount = invoice.TenderedAmount,
+            ChangeAmount = invoice.ChangeAmount,
+            DocumentDate = invoice.DocumentDate,
+            DocumentNo = invoice.DocumentNo,
+            Notes = invoice.Notes,
+            CustomFields = invoice.CustomFields,
+            TermsAndConditions = invoice.TermsAndConditions,
+            Status = invoice.Status.ToString(),
+            CurrencyCode = invoice.CurrencyCode,
+            ExchangeRate = invoice.ExchangeRate,
+            ContactId = invoice.ContactId,
+            ContactName = contacts.TryGetValue(invoice.ContactId, out var c) ? c.Name : null,
+            ContactCode = contacts.TryGetValue(invoice.ContactId, out var cCode) ? cCode.Code : null,
+            ContactGstin = invoice.ContactGstin,
+            PlaceOfSupplyStateId = invoice.PlaceOfSupplyStateId,
+            BillingAddress = invoice.BillingAddress,
+            ShippingAddress = invoice.ShippingAddress,
+            IsInterState = invoice.IsInterState,
+            SubTotal = invoice.SubTotal,
+            DiscountAmount = invoice.DiscountAmount,
+            TaxableAmount = invoice.TaxableAmount,
+            CgstAmount = invoice.CgstAmount,
+            SgstAmount = invoice.SgstAmount,
+            IgstAmount = invoice.IgstAmount,
+            CessAmount = invoice.CessAmount,
+            RoundOffAmount = invoice.RoundOffAmount,
+            TotalAmount = invoice.TotalAmount,
+            TotalAmountBase = invoice.TotalAmountBase,
+            PostedAt = invoice.PostedAt,
+            VoidedAt = invoice.VoidedAt,
+            VoidReason = invoice.VoidReason,
+            DaysOverdue = invoice.Status == DocumentStatus.Posted && invoice.DueDate.HasValue
+                ? Math.Max(0, today.DayNumber - invoice.DueDate.Value.DayNumber)
+                : 0,
+        };
+
+        if (invoice.TillId.HasValue)
+        {
+            view.Tenders = await _db.InvoiceTenders
+                .AsNoTracking()
+                .Where(t => t.InvoiceId == invoiceId)
+                .OrderBy(t => t.InvoiceTenderId)
+                .Select(t => new InvoiceTenderView
+                {
+                    Mode = t.Mode.ToString(),
+                    Amount = t.Amount,
+                    BankAccountId = t.BankAccountId,
+                    Reference = t.Reference,
+                })
+                .ToListAsync(ct);
+        }
+
+        foreach (var line in invoice.Lines.OrderBy(l => l.LineNumber))
+        {
+            var lineView = new InvoiceLineView
+            {
+                InvoiceDetailId = line.InvoiceDetailId,
+                LineNumber = line.LineNumber,
+                SalesOrderDetailId = line.SalesOrderDetailId,
+                ItemId = line.ItemId,
+                ItemLabel = (line.ItemId.HasValue && items.TryGetValue(line.ItemId.Value, out var item))
+                    ? $"{item.Code} - {item.Name}"
+                    : null,
+                Description = line.Description,
+                HsnSacCode = line.HsnSacCode,
+                WarehouseId = line.WarehouseId,
+                Quantity = line.Quantity,
+                UomId = line.UomId,
+                ConversionFactor = line.ConversionFactor,
+                BaseQuantity = line.BaseQuantity,
+                ReturnedQuantity = line.ReturnedQuantity,
+                UnitPrice = line.UnitPrice,
+                IsPriceInclusive = line.IsPriceInclusive,
+                DiscountPercent = line.DiscountPercent,
+                DiscountAmount = line.DiscountAmount,
+                GrossAmount = line.GrossAmount,
+                TaxableAmount = line.TaxableAmount,
+                TaxTreatment = line.TaxTreatment.ToString(),
+                TaxMasterId = line.TaxMasterId,
+                TaxGroupId = line.TaxGroupId,
+                TaxAmount = line.TaxAmount,
+                LineType = line.LineType.ToString(),
+                AccountId = line.AccountId,
+                FixedAssetCategoryId = line.FixedAssetCategoryId,
+                ProjectId = line.ProjectId,
+                LineTotal = line.LineTotal,
+                ItemBatchId = line.ItemBatchId,
+                LineNotes = line.LineNotes,
+            };
+
+            foreach (var tax in line.Taxes)
+            {
+                lineView.Taxes.Add(new InvoiceLineTaxView
+                {
+                    InvoiceDetailTaxId = tax.InvoiceDetailTaxId,
+                    TaxComponent = tax.TaxComponent.ToString(),
+                    SubAccountId = tax.SubAccountId,
+                    Rate = tax.Rate,
+                    TaxableAmount = tax.TaxableAmount,
+                    Amount = tax.Amount,
+                    AmountBase = tax.AmountBase,
+                });
+            }
+
+            view.Lines.Add(lineView);
+        }
+
+        view.ProjectItems = await _db.InvoiceProjectItems.AsNoTracking()
+            .Where(p => p.InvoiceId == invoiceId)
+            .OrderBy(p => p.InvoiceProjectItemId)
+            .Select(p => new Shared.Kernel.Projects.ProjectItemRef { Kind = p.Kind, ItemId = p.ItemId, ProjectId = p.ProjectId })
+            .ToListAsync(ct);
+
+        return view;
+    }
+
+    /// <summary>How many rows one page may ask for, however large a number it sends.</summary>
+    private const int MaxPageSize = 200;
+
+    /// <summary>
+    /// One page of invoices, newest first, with the total that matched.
+    ///
+    /// <b>Both bounds are clamped rather than trusted.</b> <c>skip</c> comes off
+    /// a query string, and a negative one is not merely odd — <c>Skip(-1)</c>
+    /// throws on some providers and silently returns the first page on others,
+    /// so a hand-edited URL either 500s or quietly shows page one while the
+    /// pager says otherwise. <c>take</c> is clamped at both ends for the same
+    /// reason and a second one: <c>take=1000000</c> is a way to ask for every
+    /// invoice in the branch in a single response.
+    ///
+    /// Same shape and the same reasoning as the sales order list; an invoice
+    /// list is the one that grows fastest, so paging it here rather than in the
+    /// browser matters most on this screen.
+    /// </summary>
+    public async Task<InvoiceListPage> ListPageAsync(
+        int skip,
+        int take,
+        string? status,
+        string? search,
+        DateOnly? from,
+        DateOnly? to,
+        bool overdueOnly,
+        bool eInvoiceAttentionOnly,
+        CancellationToken ct)
+    {
+        int safeSkip = Math.Max(skip, 0);
+        int safeTake = Math.Clamp(take, 1, MaxPageSize);
+
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        IQueryable<Invoice> query = _db.Invoices.AsNoTracking();
+
+        if (from.HasValue)
+        {
+            query = query.Where(x => x.DocumentDate >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(x => x.DocumentDate <= to.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse(status.Trim(), ignoreCase: true, out DocumentStatus wanted))
+        {
+            query = query.Where(x => x.Status == wanted);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            string term = search.Trim();
+            query = query.Where(x => x.DocumentNo.Contains(term));
+        }
+
+        // Only a posted invoice can be overdue: a draft owes nothing yet, and a
+        // voided one never will.
+        if (overdueOnly)
+        {
+            query = query.Where(x =>
+                x.Status == DocumentStatus.Posted && x.DueDate.HasValue && x.DueDate.Value < today);
+        }
+
+        // The e-invoices a person has to look at (TK-92): refused, or still not
+        // registered. These are the invoices that are not yet valid tax invoices.
+        if (eInvoiceAttentionOnly)
+        {
+            query = query.Where(x => _db.EInvoices.Any(e =>
+                e.SourceType == EInvoiceSource.Invoice
+                && e.SourceId == x.InvoiceId
+                && (e.Status == EInvoiceStatus.Failed || e.Status == EInvoiceStatus.Pending)));
+        }
+
+        // Counted before paging: the screen has to say how many matched, not how
+        // many fitted on the page.
+        int total = await query.CountAsync(ct);
+
+        List<InvoiceListItem> rows = await query
+            .OrderByDescending(x => x.DocumentDate)
+            .ThenByDescending(x => x.DocumentNo)
+            .Skip(safeSkip)
+            .Take(safeTake)
+            .Select(x => new InvoiceListItem
+            {
+                InvoiceId = x.InvoiceId,
+                DocumentNo = x.DocumentNo,
+                DocumentDate = x.DocumentDate,
+                DueDate = x.DueDate,
+                QuoteId = x.QuoteId,
+                SalesOrderId = x.SalesOrderId,
+                DeliveryChallanId = x.DeliveryChallanId,
+                ContactId = x.ContactId,
+                CurrencyCode = x.CurrencyCode,
+                TaxableAmount = x.TaxableAmount,
+                TotalAmount = x.TotalAmount,
+                Status = x.Status.ToString(),
+                IsInterState = x.IsInterState,
+                DaysOverdue = x.Status == DocumentStatus.Posted && x.DueDate.HasValue
+                    ? Math.Max(0, today.DayNumber - x.DueDate.Value.DayNumber)
+                    : 0,
+                PaymentMode = x.PaymentMode,
+                EInvoiceStatus = _db.EInvoices
+                    .Where(e => e.SourceType == EInvoiceSource.Invoice && e.SourceId == x.InvoiceId)
+                    .Select(e => (EInvoiceStatus?)e.Status)
+                    .FirstOrDefault(),
+            })
+            .ToListAsync(ct);
+
+        // One call for the whole page, never one per row — Contacts is another
+        // database and this is the list screen that would make it an N+1.
+        List<long> contactIds = [.. rows.Select(r => r.ContactId).Distinct()];
+        if (contactIds.Count > 0)
+        {
+            IReadOnlyDictionary<long, NamedRef> contacts = await _contactNames.ResolveAsync(contactIds, ct);
+            foreach (InvoiceListItem row in rows)
+            {
+                if (contacts.TryGetValue(row.ContactId, out NamedRef? contact))
+                {
+                    row.ContactName = contact.Name;
+                    row.ContactCode = contact.Code;
+                }
+            }
+        }
+
+        await ApplySettlementAsync(rows, ct);
+
+        return new InvoiceListPage
+        {
+            Total = total,
+            Skip = safeSkip,
+            Take = safeTake,
+            Rows = rows,
+        };
+    }
+
+    /// <summary>
+    /// How much of each invoice on the page has been received, from Accounting.
+    ///
+    /// <b>One call for the page, and only for the posted rows.</b> A draft has no
+    /// ledger rows, so asking about it would be a wasted id and reading zero back
+    /// would say "unpaid" about something that is not yet owed.
+    ///
+    /// The money is Accounting's fact, not the invoice's. Storing a paid figure
+    /// on <c>sal.Invoices</c> would be a copy that drifts the first time an
+    /// allocation is undone, and the two would then disagree about what the
+    /// customer owes — which is the disagreement nobody notices until a
+    /// statement goes out.
+    /// </summary>
+    private async Task ApplySettlementAsync(List<InvoiceListItem> rows, CancellationToken ct)
+    {
+        List<long> postedIds = [.. rows
+            .Where(r => r.Status == nameof(DocumentStatus.Posted))
+            .Select(r => r.InvoiceId)];
+
+        if (postedIds.Count == 0 || _tenant.OrgId is not Guid orgId
+            || _tenant.CustomerId is not Guid customerId)
+        {
+            return;
+        }
+
+        IReadOnlyDictionary<long, Settlement> settlements = await _ledgerClient.GetSettlementsAsync(
+            new SettlementQueryRequest
+            {
+                CustomerId = customerId,
+                OrgId = orgId,
+                TransactionTypeCode = "INV",
+                TransactionIds = postedIds,
+            },
+            ct);
+
+        foreach (InvoiceListItem row in rows)
+        {
+            if (!settlements.TryGetValue(row.InvoiceId, out Settlement? settlement))
+            {
+                continue;
+            }
+
+            row.PaidAmount = settlement.PaidAmount;
+            row.OutstandingAmount = settlement.OutstandingAmount;
+            row.SettlementStatus = SettlementStatusOf(settlement);
+        }
+    }
+
+    /// <summary>
+    /// Paid, PartPaid or Unpaid.
+    ///
+    /// <b>Compared against a rounding tolerance rather than zero.</b> A payment
+    /// in another currency settles at its own rate, so an invoice can come out a
+    /// few paise short of square and is settled for every practical purpose;
+    /// calling that PartPaid would leave a chasing list full of invoices nobody
+    /// can collect on. A paisa is the unit money is kept in, so that is the
+    /// tolerance.
+    /// </summary>
+    private static string SettlementStatusOf(Settlement settlement)
+    {
+        const decimal tolerance = 0.01m;
+
+        if (Math.Abs(settlement.OutstandingAmount) <= tolerance)
+        {
+            return "Paid";
+        }
+
+        return settlement.PaidAmount > tolerance ? "PartPaid" : "Unpaid";
+    }
+
+    public async Task<List<InvoiceListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)
+    {
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        var query = _db.Invoices.AsNoTracking();
+
+        if (from.HasValue) query = query.Where(x => x.DocumentDate >= from.Value);
+        if (to.HasValue) query = query.Where(x => x.DocumentDate <= to.Value);
+
+        var list = await query
+            .OrderByDescending(x => x.DocumentDate)
+            .ThenByDescending(x => x.DocumentNo)
+            .Select(x => new InvoiceListItem
+            {
+                InvoiceId = x.InvoiceId,
+                DocumentNo = x.DocumentNo,
+                DocumentDate = x.DocumentDate,
+                DueDate = x.DueDate,
+                QuoteId = x.QuoteId,
+                SalesOrderId = x.SalesOrderId,
+                DeliveryChallanId = x.DeliveryChallanId,
+                ContactId = x.ContactId,
+                CurrencyCode = x.CurrencyCode,
+                TaxableAmount = x.TaxableAmount,
+                TotalAmount = x.TotalAmount,
+                Status = x.Status.ToString(),
+                IsInterState = x.IsInterState,
+                DaysOverdue = x.Status == DocumentStatus.Posted && x.DueDate.HasValue
+                    ? Math.Max(0, today.DayNumber - x.DueDate.Value.DayNumber)
+                    : 0,
+                PaymentMode = x.PaymentMode,
+            })
+            .ToListAsync(ct);
+
+        var contactIds = list.Select(x => x.ContactId).Distinct().ToList();
+        if (contactIds.Count > 0)
+        {
+            var contacts = await _contactNames.ResolveAsync(contactIds, ct);
+            foreach (var item in list)
+            {
+                if (contacts.TryGetValue(item.ContactId, out var c))
+                {
+                    item.ContactName = c.Name;
+                    item.ContactCode = c.Code;
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public Task<List<InvoiceListItem>> ListAsync(CancellationToken ct) =>
+        ListAsync(null, null, ct);
+
+    public async Task<GlPreviewResult?> PreviewGlAsync(long invoiceId, CancellationToken ct)
+    {
+        var invoice = await _db.Invoices
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
+
+        if (invoice is null)
+        {
+            return null;
+        }
+
+        var lines = await _db.InvoiceDetails
+            .Where(d => d.InvoiceId == invoiceId)
+            .AsNoTracking()
+            .OrderBy(d => d.LineNumber)
+            .ToListAsync(ct);
+
+        var detailIds = lines.Select(l => l.InvoiceDetailId).ToList();
+        var detailTaxes = await _db.InvoiceDetailTaxes
+            .Where(t => detailIds.Contains(t.InvoiceDetailId))
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        foreach (var line in lines)
+        {
+            line.Taxes = detailTaxes.Where(t => t.InvoiceDetailId == line.InvoiceDetailId).ToList();
+        }
+
+        invoice.Lines = lines;
+
+        var legs = new List<GlEntryLegView>();
+
+        // The same control side PostAsync writes: each tender's account for a
+        // paid till sale, the customer's receivable otherwise.
+        List<InvoiceTender> tenders = invoice.TillId.HasValue
+            ? await _db.InvoiceTenders.AsNoTracking().Where(t => t.InvoiceId == invoice.InvoiceId)
+                .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct)
+            : [];
+
+        if (tenders.Count > 0)
+        {
+            foreach ((InvoiceTender tender, decimal debit) in TenderDebits(invoice.TotalAmount, invoice.ChangeAmount ?? 0m, tenders))
+            {
+                legs.Add(new GlEntryLegView
+                {
+                    LedgerTypeId = ControlLedgerType,
+                    AccountName = $"Bank or cash account {tender.BankAccountId}",
+                    DebitAmount = debit,
+                    CreditAmount = 0m,
+                    Description = $"Till sale, {tender.Mode}",
+                });
+            }
+        }
+        else
+        {
+            legs.Add(new GlEntryLegView
+            {
+                LedgerTypeId = ControlLedgerType,
+                AccountName = AccountsReceivableAccount,
+                SubAccountName = $"Contact {invoice.ContactId}",
+                DebitAmount = invoice.TotalAmount,
+                CreditAmount = 0m,
+                Description = "Receivable from customer",
+            });
+        }
+
+        // Credit Sales Revenue (ITEM leg)
+        decimal netSales = invoice.SubTotal - invoice.DiscountAmount;
+        if (netSales > 0)
+        {
+            legs.Add(new GlEntryLegView
+            {
+                LedgerTypeId = ItemLedgerType,
+                AccountName = SalesRevenueAccount,
+                DebitAmount = 0m,
+                CreditAmount = netSales,
+                Description = "Sales revenue",
+            });
+        }
+
+        // Credit Tax Payable (TAX legs)
+        var taxGroups = invoice.Lines.SelectMany(l => l.Taxes)
+            .GroupBy(t => new { t.SubAccountId, t.TaxComponent })
+            .Select(g => new
+            {
+                g.Key.SubAccountId,
+                g.Key.TaxComponent,
+                Amount = g.Sum(t => t.Amount),
+            });
+
+        foreach (var tax in taxGroups.Where(t => t.Amount > 0))
+        {
+            legs.Add(new GlEntryLegView
+            {
+                LedgerTypeId = TaxLedgerType,
+                AccountName = TaxPayableAccount,
+                SubAccountName = $"{tax.TaxComponent} (SubAccount {tax.SubAccountId})",
+                DebitAmount = 0m,
+                CreditAmount = tax.Amount,
+                Description = $"Output {tax.TaxComponent}",
+            });
+        }
+
+        // Round Off leg
+        if (invoice.RoundOffAmount != 0)
+        {
+            legs.Add(new GlEntryLegView
+            {
+                LedgerTypeId = RoundOffLedgerType,
+                AccountName = RoundOffAccount,
+                DebitAmount = invoice.RoundOffAmount < 0 ? -invoice.RoundOffAmount : 0m,
+                CreditAmount = invoice.RoundOffAmount > 0 ? invoice.RoundOffAmount : 0m,
+                Description = "Round off difference",
+            });
+        }
+
+        decimal totalDebit = legs.Sum(l => l.DebitAmount);
+        decimal totalCredit = legs.Sum(l => l.CreditAmount);
+
+        return new GlPreviewResult
+        {
+            Legs = legs,
+            TotalDebit = totalDebit,
+            TotalCredit = totalCredit,
+            IsBalanced = Math.Round(totalDebit, 2) == Math.Round(totalCredit, 2),
+        };
+    }
+
+    /// <summary>
+    /// Posts a draft. When it bills project items, they are claimed first
+    /// (TK-106), and given back if the post then fails, so a refused post holds
+    /// nothing another invoice could have billed.
+    /// </summary>
+    public async Task<InvoiceResult> PostAsync(long invoiceId, CancellationToken ct)
+    {
+        if (_projectBilling is null)
+        {
+            return await PostInvoiceAsync(invoiceId, ct);
+        }
+
+        var header = await _db.Invoices.AsNoTracking()
+            .Where(i => i.InvoiceId == invoiceId)
+            .Select(i => new { i.Status })
+            .FirstOrDefaultAsync(ct);
+
+        List<Shared.Kernel.Projects.ProjectItemRef> items = await _db.InvoiceProjectItems.AsNoTracking()
+            .Where(p => p.InvoiceId == invoiceId)
+            .Select(p => new Shared.Kernel.Projects.ProjectItemRef { Kind = p.Kind, ItemId = p.ItemId })
+            .ToListAsync(ct);
+
+        // Only a draft about to post claims: a posted invoice already holds its
+        // items, and releasing them on its refused re-post would free them.
+        if (header is null || items.Count == 0 || !DocumentLifecycle.CanPost(header.Status, 1).IsAllowed)
+        {
+            return await PostInvoiceAsync(invoiceId, ct);
+        }
+
+        (Guid customerId, Guid orgId) = _tenant.Require();
+        if (await _projectBilling.ClaimAsync(customerId, orgId, invoiceId, items, ct) is string refused)
+        {
+            return new InvoiceResult(InvoiceOutcome.ProjectItemsRefused, invoiceId, refused);
+        }
+
+        InvoiceResult posted = await PostInvoiceAsync(invoiceId, ct);
+        if (posted.Outcome != InvoiceOutcome.Ok)
+        {
+            await _projectBilling.ReleaseAsync(customerId, orgId, invoiceId, ct);
+        }
+
+        return posted;
+    }
+
+    private async Task<InvoiceResult> PostInvoiceAsync(long invoiceId, CancellationToken ct)
+    {
+        (Guid customerId, Guid orgId) = _tenant.Require();
+
+        // Resolved first, not where the PDF is written. Posting calls Accounting
+        // and Inventory over HTTP before it archives, so a scope that could only
+        // fail at the end would leave the ledger and the stock posted while this
+        // invoice rolled back. Here it fails before anything has happened.
+        StorageScope archiveScope = StorageScope.For(_tenant, StorageApp.RetailErp, StorageModule.Sales);
+
+        Invoice? invoice = await _db.Invoices
+            .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
+
+        if (invoice is null)
+        {
+            return new InvoiceResult(InvoiceOutcome.NotFound);
+        }
+
+        var lines = await _db.InvoiceDetails
+            .Where(d => d.InvoiceId == invoiceId)
+            .OrderBy(d => d.LineNumber)
+            .ToListAsync(ct);
+
+        var detailIds = lines.Select(l => l.InvoiceDetailId).ToList();
+        var detailTaxes = await _db.InvoiceDetailTaxes
+            .Where(t => detailIds.Contains(t.InvoiceDetailId))
+            .ToListAsync(ct);
+
+        foreach (var line in lines)
+        {
+            line.Taxes = detailTaxes.Where(t => t.InvoiceDetailId == line.InvoiceDetailId).ToList();
+        }
+
+        invoice.Lines = lines;
+
+        DocumentTransition transition = DocumentLifecycle.CanPost(invoice.Status, invoice.Lines.Count);
+        if (!transition.IsAllowed)
+        {
+            return new InvoiceResult(InvoiceOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // An override the invoice asked for must be approved first (TK-102).
+        if (SalesOverrideService<Invoice>.Blocks(invoice) is string awaiting)
+        {
+            return new InvoiceResult(InvoiceOutcome.AwaitingApproval, invoiceId, awaiting);
+        }
+
+        // The order lines this invoice bills, checked before anything moves.
+        (SalesOrder? order, InvoiceResult? orderRefusal) = await ReadBilledOrderAsync(invoice, ct);
+        if (orderRefusal is not null)
+        {
+            return orderRefusal;
+        }
+
+        // How much of each line leaves stock on this invoice. Against an order
+        // line, goods already delivered on a challan and not yet billed are
+        // billed first and issued never; only the rest is issued. Against a
+        // named challan, nothing is issued at all.
+        Dictionary<long, decimal> issued = IssueQuantities(invoice, order);
+
+        // Each issued line's cost as the request path valued it: provisional,
+        // until the costing worker settles the movement behind it (TK-10).
+        List<(long LineId, long ItemId, decimal Value)> provisionalCogs = [];
+
+        // Goods a challan already took out, billed here and issued never: which
+        // challan line delivered each invoice line, and whether that challan was
+        // a sale (TK-90).
+        List<(InvoiceDetail Line, DeliveryChallanDetail ChallanLine, bool Sale)> namedDeliveries = [];
+
+        if (invoice.DeliveryChallanId.HasValue)
+        {
+            var challan = await _db.DeliveryChallans
+                .Include(c => c.Lines)
+                .FirstOrDefaultAsync(c => c.DeliveryChallanId == invoice.DeliveryChallanId.Value, ct);
+
+            if (challan is not null)
+            {
+                foreach (var line in invoice.Lines)
+                {
+                    var challanLine = challan.Lines.FirstOrDefault(l => l.ItemId == line.ItemId);
+                    if (challanLine is not null)
+                    {
+                        line.UnitCost = challanLine.UnitCost;
+                        line.StockMovementId = challanLine.StockMovementId;
+                        challanLine.InvoicedQuantity += line.Quantity;
+                        namedDeliveries.Add((line, challanLine, challan.ChallanType == ChallanType.Sale));
+                    }
+                }
+            }
+        }
+        else
+        {
+            var stockLines = invoice.Lines
+                .Where(l => l.LineType == DocumentLineType.Stock
+                    && l.ItemId.HasValue
+                    && issued.GetValueOrDefault(l.InvoiceDetailId) > 0m)
+                .ToList();
+
+            if (stockLines.Count > 0)
+            {
+                var issueRequest = new IssueStockRequest
+                {
+                    OrgId = invoice.OrgId,
+                    CustomerId = customerId,
+                    MovementDate = invoice.DocumentDate,
+                    SourceType = invoice.TransactionTypeCode,
+                    SourceId = invoice.InvoiceId,
+                    Lines = stockLines.Select(l => new IssueStockLine
+                    {
+                        SourceLineId = l.InvoiceDetailId,
+                        ItemId = l.ItemId!.Value,
+                        Quantity = issued[l.InvoiceDetailId],
+                        WarehouseId = l.WarehouseId,
+
+                        // Per line: only a line billed against an order line
+                        // has a hold to release. Keyed on the header's order,
+                        // a line added beside the order's lines released a
+                        // reservation nobody had taken.
+                        ReleaseReservation = l.SalesOrderDetailId.HasValue,
+                    }).ToList(),
+                };
+
+                var issueResult = await _inventoryClient.IssueAsync(issueRequest, ct);
+                if (!issueResult.Success)
+                {
+                    // The last unit sold at another till a moment ago is the
+                    // common case, and a cashier needs to know which item (TK-39).
+                    long[] outOfStock = issueResult.Lines
+                        .Where(l => !l.Success && l.Outcome == "InsufficientStock")
+                        .Select(l => l.ItemId)
+                        .Distinct()
+                        .ToArray();
+
+                    if (outOfStock.Length > 0)
+                    {
+                        var names = await _itemNames.ResolveAsync(outOfStock, ct);
+                        string items = string.Join(", ", outOfStock.Select(id =>
+                            names.TryGetValue(id, out var named) ? named.Name : $"item {id}"));
+
+                        return new InvoiceResult(
+                            InvoiceOutcome.InsufficientStock,
+                            Detail: $"Not enough stock of {items} to complete this sale. Nothing was sold.");
+                    }
+
+                    return new InvoiceResult(InvoiceOutcome.StockRefused, Detail: "Stock issue failed.");
+                }
+
+                foreach (var issueLine in issueResult.Lines)
+                {
+                    var line = invoice.Lines.FirstOrDefault(l => l.InvoiceDetailId == issueLine.SourceLineId);
+                    if (line is not null)
+                    {
+                        line.StockMovementId = issueLine.StockMovementId;
+                        line.UnitCost = issueLine.UnitCost;
+                    }
+
+                    if (issueLine.LineValue > 0m)
+                    {
+                        provisionalCogs.Add((issueLine.SourceLineId, issueLine.ItemId, issueLine.LineValue));
+                    }
+                }
+            }
+        }
+
+        // What the delivered goods cost, as Inventory holds it now (D-21 b).
+        (List<DeliveredCost>? deliveredCosts, string? costRefusal) =
+            await DeliveredCostsAsync(invoice, customerId, namedDeliveries, issued, ct);
+        if (deliveredCosts is null)
+        {
+            return new InvoiceResult(InvoiceOutcome.StockRefused, Detail: costRefusal);
+        }
+
+        // 2. Post Ledger
+        var baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
+        var postRequest = new PostLedgerRequest
+        {
+            CustomerId = customerId,
+            OrgId = invoice.OrgId,
+            TransactionTypeCode = invoice.TransactionTypeCode,
+            TransactionId = invoice.InvoiceId,
+            // The number on the document's face, so the ledger can report it
+            // without reaching into this service's schema to look it up.
+            DocumentNo = invoice.DocumentNo,
+            LedgerDate = invoice.DocumentDate,
+            CurrencyCode = invoice.CurrencyCode == baseCurrency ? null : invoice.CurrencyCode,
+            ExchangeRate = invoice.CurrencyCode == baseCurrency ? null : invoice.ExchangeRate,
+            ContactId = invoice.ContactId,
+            SourceDocumentId = invoice.InvoiceId,
+            Legs = new List<LedgerLegRequest>(),
+        };
+
+        decimal totalAmount = invoice.TotalAmount;
+        decimal totalRevenue = invoice.SubTotal - invoice.DiscountAmount;
+
+        // The CONTROL side (type 3). A paid till sale debits the bank or cash
+        // account each tender landed in (TK-39); anything else, a till sale
+        // with no tenders included, is owed and goes to the customer's
+        // receivable. It used to debit an account named "Cash", which no chart
+        // has, so every till sale was refused at posting.
+        List<InvoiceTender> tenders = invoice.TillId.HasValue
+            ? await _db.InvoiceTenders.Where(t => t.InvoiceId == invoice.InvoiceId)
+                .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct)
+            : [];
+
+        if (tenders.Count > 0)
+        {
+            foreach ((InvoiceTender tender, decimal debit) in TenderDebits(totalAmount, invoice.ChangeAmount ?? 0m, tenders))
+            {
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = ControlLedgerType,
+                    LedgerSourceId = TransactionLedgerSource,
+                    TransactionDetailId = 0,
+                    BankAccountId = tender.BankAccountId,
+                    DebitAmount = debit,
+                    TransactionDesc = $"Till sale, {tender.Mode}",
+                });
+            }
+        }
+        else
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = ControlLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                AccountSystemName = AccountsReceivableAccount,
+                SubAccountReferenceType = ContactReference,
+                SubAccountReferenceId = invoice.ContactId,
+                SubAccountPurpose = 0,
+                DebitAmount = totalAmount,
+                TransactionDesc = "Receivable from customer",
+            });
+        }
+
+        // Credit Sales Revenue (ITEM leg, type 1). One leg per project the lines
+        // name, in proportion to each line's taxable value (TK-105), so each
+        // job's revenue lands on it; the parts add up to the revenue exactly.
+        if (totalRevenue > 0)
+        {
+            foreach ((long? project, decimal revenue) in Shared.Kernel.Projects.ProjectLegs.Split(
+                totalRevenue, invoice.Lines.Select(l => (l.ProjectId, l.TaxableAmount))))
+            {
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = ItemLedgerType,
+                    LedgerSourceId = TransactionLedgerSource,
+                    TransactionDetailId = 0,
+                    AccountSystemName = SalesRevenueAccount,
+                    CreditAmount = revenue,
+                    TransactionDesc = "Sales revenue",
+                    ProjectId = project,
+                });
+            }
+        }
+
+        // Credit Tax Payable (TAX legs, type 2)
+        var taxGroups = invoice.Lines.SelectMany(l => l.Taxes)
+            .GroupBy(t => new { t.SubAccountId, t.TaxComponent })
+            .Select(g => new
+            {
+                g.Key.SubAccountId,
+                g.Key.TaxComponent,
+                Amount = g.Sum(t => t.Amount),
+            });
+
+        foreach (var tax in taxGroups.Where(t => t.Amount > 0))
+        {
+            int subAccountTaxComp = tax.TaxComponent switch
+            {
+                TaxComponent.Cgst => 1,
+                TaxComponent.Sgst => 2,
+                TaxComponent.Igst => 3,
+                TaxComponent.Cess => 4,
+                _ => 1,
+            };
+
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = TaxLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                SubAccountReferenceType = TaxReference,
+                SubAccountReferenceId = tax.SubAccountId,
+                SubAccountTaxComponent = subAccountTaxComp,
+                AccountSystemName = TaxPayableAccount,
+                CreditAmount = tax.Amount,
+                TransactionDesc = $"Output {tax.TaxComponent}",
+            });
+        }
+
+        // Round Off leg
+        if (invoice.RoundOffAmount != 0)
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = RoundOffLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                AccountSystemName = RoundOffAccount,
+                DebitAmount = invoice.RoundOffAmount < 0 ? -invoice.RoundOffAmount : 0m,
+                CreditAmount = invoice.RoundOffAmount > 0 ? invoice.RoundOffAmount : 0m,
+                TransactionDesc = "Rounding",
+            });
+        }
+
+        // Goods a challan delivered move from Goods Delivered Not Invoiced into
+        // cost of sales now that they are billed: Dr COGS / Cr GDNI per line, at
+        // the cost Inventory holds for the challan's movement today (TK-90,
+        // D-21 b). Filed under their own leg type, because the COGS type is the
+        // key the costing worker replaces per line, and an invoice line can
+        // both clear delivered goods and issue more. Goods a non-sale challan
+        // took out (approval, say) never left Inventory in the ledger, so their
+        // credit is Inventory itself.
+        foreach (DeliveredCost delivered in deliveredCosts)
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = GdniLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = delivered.LineId,
+                AccountSystemName = CogsAccount,
+                SubAccountReferenceType = ItemReference,
+                SubAccountReferenceId = delivered.ItemId,
+                DebitAmount = delivered.Value,
+                TransactionDesc = "Cost of goods sold (delivered on challan)",
+            });
+
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = GdniLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = delivered.LineId,
+                AccountSystemName = delivered.FromGdni ? GdniAccount : InventoryAccount,
+                SubAccountReferenceType = delivered.FromGdni ? null : ItemReference,
+                SubAccountReferenceId = delivered.FromGdni ? null : delivered.ItemId,
+                CreditAmount = delivered.Value,
+                TransactionDesc = delivered.FromGdni ? "Goods delivered not invoiced cleared" : "Inventory relief",
+            });
+        }
+
+        // The cost of what this invoice issued, provisionally, on the key the
+        // costing worker settles it on: this document, the line, the COGS leg
+        // type — the same pair of accounts and item sub-accounts the worker
+        // writes. The worker's posting replaces these rows with the settled
+        // cost; if it got there first, Accounting keeps its rows and drops these
+        // (ProvisionalLedgerTypeIds). Either way the sale's cost is in the
+        // ledger once, at the settled figure (TK-10).
+        //
+        // Before TK-10 the invoice posted one aggregate pair at line 0 and the
+        // worker posted a pair per line, on different keys, so both stood and
+        // every direct sale's cost of goods was booked twice.
+        foreach ((long lineId, long itemId, decimal value) in provisionalCogs)
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = CogsLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = lineId,
+                AccountSystemName = CogsAccount,
+                SubAccountReferenceType = ItemReference,
+                SubAccountReferenceId = itemId,
+                DebitAmount = value,
+                TransactionDesc = "Cost of goods sold (provisional)",
+            });
+
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = CogsLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = lineId,
+                AccountSystemName = InventoryAccount,
+                SubAccountReferenceType = ItemReference,
+                SubAccountReferenceId = itemId,
+                CreditAmount = value,
+                TransactionDesc = "Inventory relief (provisional)",
+            });
+        }
+
+        if (provisionalCogs.Count > 0)
+        {
+            postRequest.ProvisionalLedgerTypeIds = [CogsLedgerType];
+        }
+
+        // The receivable, tax and round-off carry the project every line shares;
+        // cost legs carry their own line's (TK-105).
+        postRequest.TagProjects(invoice.Lines.Select(l => (l.InvoiceDetailId, l.ProjectId)));
+
+        var result = await _ledgerClient.PostAsync(postRequest, ct);
+        if (!result.Posted)
+        {
+            return new InvoiceResult(InvoiceOutcome.PostingRefused, Detail: result.Detail);
+        }
+
+        // 3. Sales Register Synchronous Insertion. Each line's GST unit is
+        // copied onto it first (TK-91), so the register and the IRP read one answer.
+        await LineUqcRepository.StampAsync(
+            _uqc, invoice.Lines, l => l.UomId, l => l.UqcCode, (l, code) => l.UqcCode = code, ct);
+
+        foreach (var l in invoice.Lines)
+        {
+            // The line's whole rate: IGST alone, or CGST and SGST together (TK-115).
+            var rate = l.Taxes.Where(t => t.TaxComponent != TaxComponent.Cess).Sum(t => t.Rate);
+            _db.SalesRegister.Add(new SalesRegister
+            {
+                OrgId = invoice.OrgId,
+                TransactionTypeCode = invoice.TransactionTypeCode,
+                SourceId = invoice.InvoiceId,
+                DocumentNo = invoice.DocumentNo,
+                DocumentDate = invoice.DocumentDate,
+                ContactId = invoice.ContactId,
+                ContactGstin = invoice.ContactGstin,
+                PlaceOfSupplyStateId = invoice.PlaceOfSupplyStateId,
+                IsInterState = invoice.IsInterState,
+                SupplyType = invoice.ContactGstin != null ? "B2B" : "B2CS",
+                ReverseCharge = false,
+                HsnSacCode = l.HsnSacCode,
+                GstRate = rate,
+                Quantity = l.Quantity,
+                UqcCode = l.UqcCode,
+                TaxableAmount = l.TaxableAmount,
+                CgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Cgst)?.Amount ?? 0,
+                SgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Sgst)?.Amount ?? 0,
+                IgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Igst)?.Amount ?? 0,
+                CessAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Cess)?.Amount ?? 0,
+                TotalAmount = l.LineTotal,
+                CurrencyCode = invoice.CurrencyCode,
+                ExchangeRate = invoice.ExchangeRate,
+                TaxableAmountBase = l.TaxableAmount * invoice.ExchangeRate,
+            });
+        }
+
+        // The order catches up only once the ledger has accepted the invoice:
+        // billed on every line, delivered by what this invoice actually issued.
+        if (order is not null)
+        {
+            foreach (InvoiceDetail line in invoice.Lines.Where(l => l.SalesOrderDetailId.HasValue))
+            {
+                SalesOrderDetail orderLine = order.Lines.First(o => o.SalesOrderDetailId == line.SalesOrderDetailId);
+                decimal issuedHere = issued.GetValueOrDefault(line.InvoiceDetailId);
+
+                orderLine.InvoicedQuantity += line.Quantity;
+                orderLine.DeliveredQuantity += issuedHere;
+                orderLine.ReservedQuantity = Math.Max(0m, orderLine.ReservedQuantity - issuedHere);
+            }
+
+            SalesOrderFulfilmentRepository.Refresh(order);
+        }
+
+        invoice.Status = DocumentStatus.Posted;
+        invoice.PostedAt = _clock.GetUtcNow();
+        invoice.PostedBy = _user.UserId;
+
+        // 4. Generate and Archive PDF
+        //
+        // The seller comes from Master, and a branch that cannot be resolved
+        // stops the posting. A tax invoice names the supplier whose GSTIN the
+        // buyer claims an input credit against; printing a placeholder there is
+        // worse than printing nothing, because the document looks filed. This
+        // used to print "Our Company" and a made-up registration on every
+        // customer's invoices alike.
+        OrgIdentity? seller = await _orgIdentity.GetIdentityAsync(ct)
+            ?? throw new InvalidOperationException(
+                "The branch issuing this invoice could not be identified, so its seller "
+                + "details cannot be printed. The invoice was not posted.");
+
+        var contactNames = await _contactNames.ResolveAsync([invoice.ContactId], ct);
+        string customerName = contactNames.TryGetValue(invoice.ContactId, out var contactRef) ? contactRef.Name : "Unknown";
+
+        var pdfModel = new Sales.Repository.Repositories.PdfInvoiceModel
+        {
+            Invoice = invoice,
+            OrgName = seller.Name,
+            OrgGstin = seller.Gstin,
+            CustomerName = customerName,
+            ItemNames = (await _itemNames.ResolveAsync(invoice.Lines.Where(l => l.ItemId.HasValue).Select(l => (long)l.ItemId!).Distinct().ToArray(), ct)).ToDictionary(k => k.Key, v => v.Value.Name)
+        };
+        
+        byte[] pdfBytes = _pdfRenderer.Render(pdfModel);
+        string objectKey = Sales.Repository.Repositories.SalesDocumentArchiveRepository.Key(
+            archiveScope, Sales.Repository.Repositories.ArchivedSalesDocument.Invoice, invoice.InvoiceId);
+        // Replace, deliberately. The archive is written before the commit below,
+        // so a post whose commit fails leaves its PDF behind; a strict
+        // create-only save would then find that leftover on the retry and stop
+        // this invoice ever posting. The same key is the same invoice, and blob
+        // versioning keeps whatever is replaced.
+        await _storage.SaveAsync(objectKey, new MemoryStream(pdfBytes), "application/pdf", FileWriteMode.Replace, ct);
+
+        await _db.SaveChangesAsync(ct);
+
+        // A B2B, export or SEZ invoice on an e-invoicing branch gets a Pending
+        // e-invoice in this transaction and one registration attempt after it
+        // commits (TK-92). The posting answers 200 whatever the IRP says.
+        Sales.Entity.Models.EInvoiceStateView? eInvoice = await _eInvoicing.OnPostedAsync(
+            EInvoiceSource.Invoice, invoice.InvoiceId, invoice, ct);
+
+        return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId, EInvoice: eInvoice);
+    }
+
+    /// <summary>
+    /// What each tender debits (TK-39): its amount, except that change handed
+    /// back comes off the cash tenders, in order. The debits add up to the
+    /// invoice total; a set that cannot — change larger than the cash, or
+    /// tenders short of the total — is a bug upstream, refused here rather than
+    /// posted unbalanced.
+    /// </summary>
+    public static IReadOnlyList<(InvoiceTender Tender, decimal Debit)> TenderDebits(
+        decimal total, decimal change, IReadOnlyList<InvoiceTender> tenders)
+    {
+        decimal changeLeft = change;
+        var debits = new List<(InvoiceTender, decimal)>(tenders.Count);
+
+        foreach (InvoiceTender tender in tenders)
+        {
+            decimal debit = tender.Amount;
+            if (tender.Mode == PosTenderMode.Cash && changeLeft > 0m)
+            {
+                decimal taken = Math.Min(debit, changeLeft);
+                debit -= taken;
+                changeLeft -= taken;
+            }
+
+            if (debit > 0m)
+            {
+                debits.Add((tender, debit));
+            }
+        }
+
+        if (changeLeft != 0m || debits.Sum(d => d.Item2) != total)
+        {
+            throw new InvalidOperationException(
+                "The till tenders do not add up to the invoice total after change. The sale was not posted.");
+        }
+
+        return debits;
+    }
+
+    public Task<InvoiceResult> VoidAsync(long invoiceId, CancellationToken ct) =>
+        VoidAsync(invoiceId, new VoidInvoiceRequest { Reason = "Voided by user." }, ct);
+
+    /// <summary>Voids an invoice, and gives back the project items it billed (TK-106).</summary>
+    public async Task<InvoiceResult> VoidAsync(
+        long invoiceId, VoidInvoiceRequest request, CancellationToken ct)
+    {
+        InvoiceResult voided = await VoidInvoiceAsync(invoiceId, request, ct);
+
+        if (voided.Outcome == InvoiceOutcome.Ok && _projectBilling is not null
+            && await _db.InvoiceProjectItems.AnyAsync(p => p.InvoiceId == invoiceId, ct))
+        {
+            (Guid customerId, Guid orgId) = _tenant.Require();
+            await _projectBilling.ReleaseAsync(customerId, orgId, invoiceId, ct);
+        }
+
+        return voided;
+    }
+
+    private async Task<InvoiceResult> VoidInvoiceAsync(
+        long invoiceId, VoidInvoiceRequest request, CancellationToken ct)
+    {
+        // With its lines: the challan and order reversals below walk them, and
+        // without the Include they walked an empty list and reversed nothing.
+        Invoice? invoice = await _db.Invoices
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
+
+        if (invoice is null)
+        {
+            return new InvoiceResult(InvoiceOutcome.NotFound);
+        }
+
+        bool hasCreditNote = await _db.CreditNotes.AnyAsync(c => c.InvoiceId == invoiceId, ct);
+
+        DocumentTransition transition =
+            DocumentLifecycle.CanVoid(invoice.Status, hasCreditNote, request.Reason);
+
+        if (!transition.IsAllowed)
+        {
+            return transition.Outcome == DocumentTransitionOutcome.HasDownstream
+                ? new InvoiceResult(InvoiceOutcome.AlreadyCredited, Detail: transition.Detail)
+                : new InvoiceResult(InvoiceOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // The IRN is cancelled first, before anything else changes: if the IRP
+        // refuses, or the 24 hours have passed, the void is refused and nothing
+        // moves (TK-92, design decision 5).
+        if (await _eInvoicing.BeforeVoidAsync(
+                EInvoiceSource.Invoice, invoice.InvoiceId, request.Reason, request.CancelReason, ct) is string refusal)
+        {
+            return new InvoiceResult(InvoiceOutcome.EInvoiceRefused, invoice.InvoiceId, refusal);
+        }
+
+        invoice.Status = DocumentStatus.Void;
+        invoice.VoidedAt = _clock.GetUtcNow();
+        invoice.VoidedBy = _user.UserId;
+        invoice.VoidReason = request.Reason;
+
+        if (invoice.DeliveryChallanId.HasValue)
+        {
+            var challan = await _db.DeliveryChallans
+                .Include(c => c.Lines)
+                .FirstOrDefaultAsync(c => c.DeliveryChallanId == invoice.DeliveryChallanId.Value, ct);
+
+            if (challan is not null)
+            {
+                foreach (var line in invoice.Lines)
+                {
+                    var challanLine = challan.Lines.FirstOrDefault(l => l.ItemId == line.ItemId);
+                    if (challanLine is not null)
+                    {
+                        challanLine.InvoicedQuantity -= line.Quantity;
+                    }
+                }
+            }
+        }
+
+
+        if (invoice.PostedAt is not null)
+        {
+            (Guid customerId, Guid orgId) = _tenant.Require();
+
+            var withdrawResult = await _ledgerClient.PostAsync(
+                new PostLedgerRequest
+                {
+                    CustomerId = customerId,
+                    OrgId = orgId,
+                    TransactionTypeCode = invoice.TransactionTypeCode,
+                    TransactionId = invoice.InvoiceId,
+                    // The number on the document's face, so the ledger can report it
+                    // without reaching into this service's schema to look it up.
+                    DocumentNo = invoice.DocumentNo,
+                    LedgerDate = invoice.DocumentDate,
+                    ContactId = invoice.ContactId,
+                    SourceDocumentId = invoice.InvoiceId,
+                    // GDNI too: the void puts delivered goods' cost back where the
+                    // challan left it, delivered and not invoiced (TK-90).
+                    WithdrawLedgerTypeIds = [ItemLedgerType, TaxLedgerType, ControlLedgerType, CogsLedgerType, RoundOffLedgerType, GdniLedgerType],
+                    Legs = [],
+                },
+                ct);
+
+            if (!withdrawResult.Posted)
+            {
+                return new InvoiceResult(InvoiceOutcome.PostingRefused, Detail: withdrawResult.Detail);
+            }
+
+            // The bill is withdrawn; the goods it issued are not. So the order
+            // lines give back what this invoice billed and keep what it
+            // delivered — delivered and not billed again, which the next
+            // invoice against them bills without issuing a second time.
+            if (invoice.SalesOrderId.HasValue)
+            {
+                SalesOrder? order = await _db.SalesOrders
+                    .Include(o => o.Lines)
+                    .FirstOrDefaultAsync(o => o.SalesOrderId == invoice.SalesOrderId.Value, ct);
+
+                if (order is not null)
+                {
+                    foreach (InvoiceDetail line in invoice.Lines.Where(l => l.SalesOrderDetailId.HasValue))
+                    {
+                        SalesOrderDetail? orderLine = order.Lines
+                            .FirstOrDefault(o => o.SalesOrderDetailId == line.SalesOrderDetailId);
+                        if (orderLine is not null)
+                        {
+                            orderLine.InvoicedQuantity = Math.Max(0m, orderLine.InvoicedQuantity - line.Quantity);
+                        }
+                    }
+                }
+            }
+
+            var registers = await _db.SalesRegister
+                .Where(r => r.SourceId == invoiceId && r.TransactionTypeCode == invoice.TransactionTypeCode)
+                .ToListAsync(ct);
+            _db.SalesRegister.RemoveRange(registers);
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+    }
+
+    /// <summary>
+    /// The sales order an invoice bills, checked line by line: the order is
+    /// confirmed and for this customer, every line naming an order line names
+    /// one of its lines for the same item, and none bills more than the line
+    /// has left to bill. Null order when the invoice names none.
+    /// </summary>
+    private async Task<(SalesOrder? Order, InvoiceResult? Refusal)> ReadBilledOrderAsync(
+        Invoice invoice, CancellationToken ct)
+    {
+        List<InvoiceDetail> billed = invoice.Lines.Where(l => l.SalesOrderDetailId.HasValue).ToList();
+
+        if (!invoice.SalesOrderId.HasValue)
+        {
+            return billed.Count == 0
+                ? (null, null)
+                : (null, new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: "A line names a sales order line, but the invoice names no sales order."));
+        }
+
+        SalesOrder? order = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == invoice.SalesOrderId.Value, ct);
+
+        if (order is null)
+        {
+            return (null, new InvoiceResult(
+                InvoiceOutcome.SourceInvalid,
+                Detail: "The sales order this invoice bills could not be found in this branch."));
+        }
+
+        if (order.Status != DocumentStatus.Posted)
+        {
+            return (null, new InvoiceResult(
+                InvoiceOutcome.SourceInvalid, Detail: "Only a confirmed sales order can be billed."));
+        }
+
+        if (order.ContactId != invoice.ContactId)
+        {
+            return (null, new InvoiceResult(
+                InvoiceOutcome.SourceInvalid,
+                Detail: "The invoice's customer is not the sales order's customer."));
+        }
+
+        foreach (var byOrderLine in billed.GroupBy(l => l.SalesOrderDetailId!.Value))
+        {
+            SalesOrderDetail? orderLine = order.Lines.FirstOrDefault(o => o.SalesOrderDetailId == byOrderLine.Key);
+            if (orderLine is null)
+            {
+                return (null, new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: "A line on this invoice is not a line of its sales order."));
+            }
+
+            if (byOrderLine.Any(l => l.ItemId != orderLine.ItemId))
+            {
+                return (null, new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"A line's item is not the item on order line {orderLine.LineNumber}."));
+            }
+
+            decimal left = orderLine.Quantity - orderLine.InvoicedQuantity;
+            decimal billing = byOrderLine.Sum(l => l.Quantity);
+            if (billing > left)
+            {
+                return (null, new InvoiceResult(
+                    InvoiceOutcome.AlreadyFulfilled,
+                    Detail: $"Order line {orderLine.LineNumber} has {left:0.####} left to bill, "
+                        + $"and this invoice bills {billing:0.####}."));
+            }
+        }
+
+        return (order, null);
+    }
+
+    /// <summary>One invoice line's delivered goods, and what they cost now (TK-90).</summary>
+    private sealed record DeliveredCost(long LineId, long ItemId, decimal Value, bool FromGdni);
+
+    /// <summary>
+    /// What the goods this invoice bills without issuing cost, as Inventory
+    /// holds them now — decision D-21 (b): no record of which challan lines were
+    /// cleared, the cost the challan's movement carries today (TK-90).
+    ///
+    /// <b>Against a named challan</b>, each line takes its challan line's
+    /// movement cost in proportion to the quantity billed. <b>Against an order</b>,
+    /// the part of a line an earlier sale challan delivered (what
+    /// <see cref="IssueQuantities"/> did not issue) takes the average cost of
+    /// every posted sale challan line against that order line, so the invoices
+    /// that bill it all clear, between them, what the challans put in.
+    ///
+    /// Null, with the reason, when Inventory cannot be asked: posting a cost it
+    /// does not have would leave GDNI wrong with nothing saying so.
+    /// </summary>
+    private async Task<(List<DeliveredCost>? Costs, string? Refusal)> DeliveredCostsAsync(
+        Invoice invoice,
+        Guid customerId,
+        List<(InvoiceDetail Line, DeliveryChallanDetail ChallanLine, bool Sale)> named,
+        Dictionary<long, decimal> issued,
+        CancellationToken ct)
+    {
+        // Order lines this invoice bills beyond what it issues: the delivered part.
+        List<(InvoiceDetail Line, decimal Covered)> ordered = invoice.DeliveryChallanId.HasValue
+            ? []
+            : [.. invoice.Lines
+                .Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue && l.SalesOrderDetailId.HasValue)
+                .Select(l => (Line: l, Covered: l.Quantity - issued.GetValueOrDefault(l.InvoiceDetailId, l.Quantity)))
+                .Where(x => x.Covered > 0m)];
+
+        List<long> orderLineIds = [.. ordered.Select(o => o.Line.SalesOrderDetailId!.Value).Distinct()];
+
+        List<DeliveryChallanDetail> delivering = orderLineIds.Count == 0
+            ? []
+            : await _db.DeliveryChallans
+                .AsNoTracking()
+                .Where(c => c.Status == DocumentStatus.Posted && c.ChallanType == ChallanType.Sale)
+                .SelectMany(c => c.Lines)
+                .Where(d => d.SalesOrderDetailId != null
+                    && orderLineIds.Contains(d.SalesOrderDetailId.Value)
+                    && d.StockMovementId != null)
+                .ToListAsync(ct);
+
+        List<long> movementIds = [.. named.Select(n => n.ChallanLine.StockMovementId)
+            .Concat(delivering.Select(d => d.StockMovementId))
+            .OfType<long>()
+            .Distinct()];
+
+        if (movementIds.Count == 0)
+        {
+            return ([], null);
+        }
+
+        StockMovementCostsResponse? answer = await _inventoryClient.GetMovementCostsAsync(
+            new StockMovementCostsRequest
+            {
+                CustomerId = customerId,
+                OrgId = invoice.OrgId,
+                StockMovementIds = movementIds,
+            },
+            ct);
+
+        if (answer is null || movementIds.Any(id => answer.Lines.All(l => l.StockMovementId != id)))
+        {
+            return (null, "Inventory could not say what the delivered goods cost, so nothing was posted. Try again.");
+        }
+
+        Dictionary<long, decimal> movementCost = answer.Lines.ToDictionary(l => l.StockMovementId, l => l.TotalCost);
+        List<DeliveredCost> costs = [];
+
+        foreach ((InvoiceDetail line, DeliveryChallanDetail challanLine, bool sale) in named)
+        {
+            if (challanLine.StockMovementId is not long movementId)
+            {
+                continue;
+            }
+
+            decimal delivered = BaseQuantity(challanLine);
+            decimal value = delivered == 0m
+                ? 0m
+                : Money(movementCost[movementId] * BaseQuantity(line) / delivered);
+
+            if (value > 0m)
+            {
+                costs.Add(new DeliveredCost(line.InvoiceDetailId, line.ItemId!.Value, value, sale));
+            }
+        }
+
+        foreach ((InvoiceDetail line, decimal covered) in ordered)
+        {
+            List<DeliveryChallanDetail> against = [.. delivering.Where(d => d.SalesOrderDetailId == line.SalesOrderDetailId)];
+            decimal quantity = against.Sum(BaseQuantity);
+            if (quantity == 0m)
+            {
+                continue;
+            }
+
+            decimal rate = against.Sum(d => movementCost[d.StockMovementId!.Value]) / quantity;
+            decimal value = Money(rate * covered * (line.ConversionFactor == 0m ? 1m : line.ConversionFactor));
+
+            if (value > 0m)
+            {
+                costs.Add(new DeliveredCost(line.InvoiceDetailId, line.ItemId!.Value, value, true));
+            }
+        }
+
+        return (costs, null);
+    }
+
+    /// <summary>A line's quantity in the item's inventory unit.</summary>
+    private static decimal BaseQuantity(DocumentLineBase line) =>
+        line.BaseQuantity > 0m ? line.BaseQuantity : line.Quantity * (line.ConversionFactor == 0m ? 1m : line.ConversionFactor);
+
+    private static decimal Money(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    /// <summary>
+    /// How much of each stock line this invoice issues, by invoice line.
+    ///
+    /// Against a named challan: nothing — the challan already took the goods out.
+    /// Against an order line: the line's quantity less what that order line has
+    /// delivered and not yet billed, taken in line order when two invoice lines
+    /// bill the same order line. That second rule is what stops an invoice raised
+    /// after a challan, without naming it, from issuing the goods again.
+    /// </summary>
+    private static Dictionary<long, decimal> IssueQuantities(Invoice invoice, SalesOrder? order)
+    {
+        var issued = new Dictionary<long, decimal>();
+
+        if (invoice.DeliveryChallanId.HasValue)
+        {
+            return issued;
+        }
+
+        Dictionary<long, decimal> deliveredNotBilled = order?.Lines.ToDictionary(
+            o => o.SalesOrderDetailId, SalesOrderFulfilmentRepository.DeliveredNotInvoiced) ?? [];
+
+        foreach (InvoiceDetail line in invoice.Lines.OrderBy(l => l.LineNumber))
+        {
+            if (line.LineType != DocumentLineType.Stock || !line.ItemId.HasValue)
+            {
+                continue;
+            }
+
+            decimal quantity = line.Quantity;
+
+            if (line.SalesOrderDetailId is long orderLineId
+                && deliveredNotBilled.TryGetValue(orderLineId, out decimal alreadyOut))
+            {
+                decimal covered = Math.Min(quantity, alreadyOut);
+                deliveredNotBilled[orderLineId] = alreadyOut - covered;
+                quantity -= covered;
+            }
+
+            issued[line.InvoiceDetailId] = quantity;
+        }
+
+        return issued;
+    }
+
+    /// <summary>A code (vehicle number, transporter id): trimmed and upper-cased, or null when empty.</summary>
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
+}

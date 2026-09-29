@@ -2,7 +2,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Sales.Api.Services.EInvoicing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Xunit;
 
@@ -19,15 +21,15 @@ public sealed class SandboxEInvoiceGatewayTests
 
     private readonly ManualClock _clock = new(new DateTimeOffset(2026, 9, 20, 10, 0, 0, TimeSpan.Zero));
 
-    private SandboxEInvoiceGateway Gateway() => new(_clock);
+    private SandboxEInvoiceGatewayRepository Gateway() => new(_clock);
 
-    private static Inv01Document Invoice() => Inv01Mapper.Map(EInvoiceMapperTests.IntraStateInvoice());
+    private static Inv01DocumentRepository Invoice() => Inv01MapperRepository.Map(EInvoiceMapperTests.IntraStateInvoice());
 
     [Fact]
     public async Task A_b2b_invoice_maps_and_the_sandbox_returns_an_irn()
     {
-        Inv01Document document = Invoice();
-        Assert.Empty(EInvoiceValidator.Validate(document, new DateOnly(2026, 9, 20), new DateOnly(2026, 9, 20)));
+        Inv01DocumentRepository document = Invoice();
+        Assert.Empty(EInvoiceValidatorRepository.Validate(document, new DateOnly(2026, 9, 20), new DateOnly(2026, 9, 20)));
 
         IrpResult<IrnDetails> result = await Gateway().GenerateIrnAsync(Seller, document, default);
 
@@ -41,19 +43,19 @@ public sealed class SandboxEInvoiceGatewayTests
     [Fact]
     public void The_irn_is_the_hash_of_gstin_type_number_and_financial_year()
     {
-        string september = SandboxEInvoiceGateway.IrnFor(Seller, "INV", "INV/26-27/0042", new DateOnly(2026, 9, 20));
-        string march = SandboxEInvoiceGateway.IrnFor(Seller, "INV", "INV/26-27/0042", new DateOnly(2027, 3, 31));
-        string april = SandboxEInvoiceGateway.IrnFor(Seller, "INV", "INV/26-27/0042", new DateOnly(2027, 4, 1));
+        string september = SandboxEInvoiceGatewayRepository.IrnFor(Seller, "INV", "INV/26-27/0042", new DateOnly(2026, 9, 20));
+        string march = SandboxEInvoiceGatewayRepository.IrnFor(Seller, "INV", "INV/26-27/0042", new DateOnly(2027, 3, 31));
+        string april = SandboxEInvoiceGatewayRepository.IrnFor(Seller, "INV", "INV/26-27/0042", new DateOnly(2027, 4, 1));
 
         Assert.Equal(september, march);
         Assert.NotEqual(september, april);
-        Assert.NotEqual(september, SandboxEInvoiceGateway.IrnFor(Seller, "CRN", "INV/26-27/0042", new DateOnly(2026, 9, 20)));
+        Assert.NotEqual(september, SandboxEInvoiceGatewayRepository.IrnFor(Seller, "CRN", "INV/26-27/0042", new DateOnly(2026, 9, 20)));
     }
 
     [Fact]
     public async Task Registering_twice_is_a_duplicate_and_the_first_irn_can_be_fetched_by_document()
     {
-        SandboxEInvoiceGateway gateway = Gateway();
+        SandboxEInvoiceGatewayRepository gateway = Gateway();
         IrpResult<IrnDetails> first = await gateway.GenerateIrnAsync(Seller, Invoice(), default);
 
         IrpResult<IrnDetails> second = await gateway.GenerateIrnAsync(Seller, Invoice(), default);
@@ -71,7 +73,7 @@ public sealed class SandboxEInvoiceGatewayTests
     [Fact]
     public async Task An_irn_cancels_within_24_hours_once_and_not_after()
     {
-        SandboxEInvoiceGateway gateway = Gateway();
+        SandboxEInvoiceGatewayRepository gateway = Gateway();
         string irn = (await gateway.GenerateIrnAsync(Seller, Invoice(), default)).Value!.Irn;
 
         _clock.Advance(TimeSpan.FromHours(23));
@@ -85,7 +87,7 @@ public sealed class SandboxEInvoiceGatewayTests
     [Fact]
     public async Task An_irn_older_than_24_hours_is_refused_a_cancel()
     {
-        SandboxEInvoiceGateway gateway = Gateway();
+        SandboxEInvoiceGatewayRepository gateway = Gateway();
         string irn = (await gateway.GenerateIrnAsync(Seller, Invoice(), default)).Value!.Irn;
 
         _clock.Advance(TimeSpan.FromHours(25));
@@ -98,7 +100,7 @@ public sealed class SandboxEInvoiceGatewayTests
     [Fact]
     public async Task An_e_way_bill_asked_for_with_the_irn_comes_back_with_it()
     {
-        Inv01Document document = Invoice() with
+        Inv01DocumentRepository document = Invoice() with
         {
             EwbDtls = new Inv01EwayBill { Distance = 450, TransMode = "1", VehNo = "TN01AB1234", VehType = "R" },
         };
@@ -133,7 +135,7 @@ public sealed class SandboxEInvoiceGatewayTests
     {
         IServiceProvider provider = Register(environment, setting).BuildServiceProvider();
 
-        Assert.Equal(expected, provider.GetRequiredService<IEInvoiceGateway>().Name);
+        Assert.Equal(expected, provider.GetRequiredService<IEInvoiceGatewayRepository>().Name);
     }
 
     [Fact]

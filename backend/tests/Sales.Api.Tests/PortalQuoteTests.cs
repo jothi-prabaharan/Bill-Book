@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
@@ -100,7 +102,7 @@ public sealed class PortalQuoteTests
         Assert.False(Assert.Single(await h.Portal.ListAsync(Contact, default)).CanRespond);
     }
 
-    private sealed record Harness(SalesDbContext Db, Guid OrgId, PortalQuoteService Portal)
+    private sealed record Harness(SalesDbContext Db, Guid OrgId, PortalQuoteRepository Portal)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -109,7 +111,7 @@ public sealed class PortalQuoteTests
             Guid orgId = Guid.NewGuid();
             SalesDbContext db = pg.CreateContext(Guid.NewGuid(), orgId);
             await Task.CompletedTask;
-            return new Harness(db, orgId, new PortalQuoteService(db, new FixedClock()));
+            return new Harness(db, orgId, new PortalQuoteRepository(db, new FixedClock()));
         }
 
         public async Task<long> QuoteAsync(long contactId, DocumentStatus status, DateOnly validUntil)

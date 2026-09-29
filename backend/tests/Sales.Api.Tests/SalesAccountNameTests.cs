@@ -35,7 +35,7 @@ public sealed class SalesAccountNameTests
     {
         var data = new TheoryData<string, string>();
 
-        foreach (Type type in typeof(Sales.Api.Services.InvoiceService).Assembly.GetTypes()
+        foreach (Type type in typeof(Sales.Repository.Repositories.InvoiceRepository).Assembly.GetTypes()
             .Where(t => t.Namespace == "Sales.Api.Services"))
         {
             foreach (FieldInfo field in type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
@@ -53,8 +53,8 @@ public sealed class SalesAccountNameTests
     {
         // Guards the theory below: if reflection found nothing, it would pass
         // over an empty set and prove the opposite of what it claims.
-        Assert.Contains(PostedAccounts(), row => (string)row[0] == "InvoiceService");
-        Assert.Contains(PostedAccounts(), row => (string)row[0] == "CreditNoteService");
+        Assert.Contains(PostedAccounts(), row => (string)row[0] == "InvoiceRepository");
+        Assert.Contains(PostedAccounts(), row => (string)row[0] == "CreditNoteRepository");
     }
 
     [Theory]

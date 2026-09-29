@@ -1,9 +1,11 @@
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Enums;
 using Sales.Repository;
 using Shared.Kernel.Tenancy;
 
-namespace Sales.Api.Services.EInvoicing;
+namespace Sales.Api.Services;
 
 /// <summary>
 /// Retries e-invoices still waiting for the IRP (TK-92): every Pending row
@@ -78,7 +80,7 @@ public sealed class EInvoiceRetryWorker : BackgroundService
         // Resolved only now: the context takes its connection and its query
         // filter from the tenant when it is built.
         var db = scope.ServiceProvider.GetRequiredService<SalesDbContext>();
-        var registrar = scope.ServiceProvider.GetRequiredService<EInvoiceRegistrar>();
+        var registrar = scope.ServiceProvider.GetRequiredService<EInvoiceRegistrarRepository>();
         DateTimeOffset now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow();
 
         List<long> due = await db.EInvoices.AsNoTracking()

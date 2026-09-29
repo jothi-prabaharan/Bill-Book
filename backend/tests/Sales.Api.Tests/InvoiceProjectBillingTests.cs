@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Sales.Repository;
 using Shared.Kernel.Documents;
@@ -123,7 +125,7 @@ public sealed class InvoiceProjectBillingTests
         }
     }
 
-    private sealed record Harness(SalesDbContext Db, InvoiceService Invoices, RecordingLedger Ledger, RecordingBilling Billing)
+    private sealed record Harness(SalesDbContext Db, InvoiceRepository Invoices, RecordingLedger Ledger, RecordingBilling Billing)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -141,7 +143,7 @@ public sealed class InvoiceProjectBillingTests
             RecordingBilling billing = new();
             NumberGenerator numbering = new(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            InvoiceService invoices = new(
+            InvoiceRepository invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, new RecordingInventory(), ledger,
                 new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing(),

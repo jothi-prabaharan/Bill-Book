@@ -2,8 +2,8 @@ using Shared.Kernel.Security;
 using Shared.Kernel.Storage;
 using System.Text;
 using Sales.Api.Services;
-using Sales.Api.Services.EInvoicing;
-using Sales.Api.Services.Printing;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -83,22 +83,22 @@ builder.Services.AddFileStorage(builder.Configuration);
 
 // T2.2 is schema only. The document services arrive with the screens that use
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.
-builder.Services.AddScoped<SalesSeeder>();
-builder.Services.AddScoped<QuoteService>();
-builder.Services.AddScoped<SalesOrderService>();
-builder.Services.AddScoped<InvoiceService>();
-builder.Services.AddScoped<PortalInvoiceService>();
-builder.Services.AddScoped<PortalQuoteService>();
-builder.Services.AddScoped<PosSaleService>();
-builder.Services.AddScoped<OutstandingService>();
+builder.Services.AddScoped<SalesSeederRepository>();
+builder.Services.AddScoped<QuoteRepository>();
+builder.Services.AddScoped<SalesOrderRepository>();
+builder.Services.AddScoped<InvoiceRepository>();
+builder.Services.AddScoped<PortalInvoiceRepository>();
+builder.Services.AddScoped<PortalQuoteRepository>();
+builder.Services.AddScoped<PosSaleRepository>();
+builder.Services.AddScoped<OutstandingRepository>();
 
 // Resolved from the concrete registration rather than registered separately, so
 // a request that touches both InvoicesController (the interface) and
 // TransactionsController (the concrete type) gets one instance and therefore one
 // DbContext change tracker.
-builder.Services.AddScoped<IInvoiceService>(sp => sp.GetRequiredService<InvoiceService>());
-builder.Services.AddScoped<DeliveryChallanService>();
-builder.Services.AddScoped<CreditNoteService>();
+builder.Services.AddScoped<IInvoiceRepository>(sp => sp.GetRequiredService<InvoiceRepository>());
+builder.Services.AddScoped<DeliveryChallanRepository>();
+builder.Services.AddScoped<CreditNoteRepository>();
 
 // Approval chains (TK-102): credit notes, and the credit-limit and discount
 // overrides on invoices and orders. Master resolves the chains and answers
@@ -116,9 +116,9 @@ builder.Services.AddHttpClient<Shared.Kernel.Contacts.IDiscountLimitClient, Shar
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<Sales.Api.Services.Pdf.IInvoicePdfRenderer, Sales.Api.Services.Pdf.PdfSharpInvoiceRenderer>();
-builder.Services.AddScoped<Sales.Api.Services.Pdf.ISalesDocumentPdfRenderer, Sales.Api.Services.Pdf.PdfSharpSalesDocumentRenderer>();
-builder.Services.AddScoped<Sales.Api.Services.Pdf.SalesDocumentArchive>();
+builder.Services.AddScoped<Sales.Repository.Repositories.IInvoicePdfRendererRepository, Sales.Repository.Repositories.PdfSharpInvoiceRendererRepository>();
+builder.Services.AddScoped<Sales.Repository.Repositories.ISalesDocumentPdfRendererRepository, Sales.Repository.Repositories.PdfSharpSalesDocumentRenderer>();
+builder.Services.AddScoped<Sales.Repository.Repositories.SalesDocumentArchiveRepository>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an
@@ -210,16 +210,16 @@ builder.Services.AddHttpClient<IPrintingClient, PrintingClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Printing:BaseUrl"));
 });
-builder.Services.AddScoped<InvoicePrintService>();
+builder.Services.AddScoped<InvoicePrintRepository>();
 
 // E-invoicing (TK-91): the IRP gateway, chosen by EInvoicing:Gateway, and the
 // builder that turns a posted document into INV-01. Sandbox in Development,
 // refusing everywhere else until the provider is chosen (D-24).
 builder.Services.AddEInvoiceGateway(builder.Configuration, builder.Environment);
-builder.Services.AddScoped<EInvoiceRegistrar>();
-builder.Services.AddScoped<IEInvoicePosting, EInvoicePosting>();
-builder.Services.AddScoped<EInvoiceActions>();
-builder.Services.AddScoped<EwayBillService>();
+builder.Services.AddScoped<EInvoiceRegistrarRepository>();
+builder.Services.AddScoped<IEInvoicePosting, EInvoicePostingRepository>();
+builder.Services.AddScoped<EInvoiceActionsRepository>();
+builder.Services.AddScoped<EwayBillRepository>();
 
 // Refused e-invoices go to sal.ErrorLogs with FollowUpStatus Open (TK-92).
 builder.Services.AddBillBookWorkerErrorAudit<SalesDbContext>();

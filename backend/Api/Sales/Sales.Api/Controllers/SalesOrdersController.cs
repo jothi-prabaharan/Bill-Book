@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Entity.Enums;
@@ -26,12 +28,12 @@ public sealed class SalesOrdersController : ControllerBase
 {
     private const int DefaultPageSize = 50;
 
-    private readonly SalesOrderService _SalesOrders;
-    private readonly IInvoiceService _invoices;
+    private readonly SalesOrderRepository _SalesOrders;
+    private readonly IInvoiceRepository _invoices;
 
     public SalesOrdersController(
-        SalesOrderService SalesOrders,
-        IInvoiceService invoices)
+        SalesOrderRepository SalesOrders,
+        IInvoiceRepository invoices)
     {
         _SalesOrders = SalesOrders;
         _invoices = invoices;
@@ -94,7 +96,7 @@ public sealed class SalesOrdersController : ControllerBase
     /// <summary>
     /// Bills some or all of what the order has left, on an invoice that is
     /// created and posted in one go. Empty <c>Lines</c> means everything still
-    /// unbilled. The work is <see cref="IInvoiceService.FulfillSalesOrderAsync"/>'s;
+    /// unbilled. The work is <see cref="IInvoiceRepository.FulfillSalesOrderAsync"/>'s;
     /// this action maps its answer and nothing else.
     /// </summary>
     [HttpPost("{SalesOrderId:long}/fulfill")]

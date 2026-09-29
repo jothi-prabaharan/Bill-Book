@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Sales.Api.Services;
-using Sales.Api.Services.Pdf;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;
@@ -32,15 +33,15 @@ public sealed class PortalInvoiceTests
     {
         Invoice due(DateOnly? on, DocumentStatus status = DocumentStatus.Posted) => new() { DueDate = on, Status = status };
 
-        Assert.Equal("Void", PortalInvoiceService.StatusOf(due(null, DocumentStatus.Void), null, Today));
-        Assert.Equal("Paid", PortalInvoiceService.StatusOf(due(Today.AddDays(-9)), new Settlement(100m, 99.995m, 0.005m), Today));
-        Assert.Equal("Overdue", PortalInvoiceService.StatusOf(due(Today.AddDays(-1)), new Settlement(100m, 40m, 60m), Today));
-        Assert.Equal("PartPaid", PortalInvoiceService.StatusOf(due(Today), new Settlement(100m, 40m, 60m), Today));
-        Assert.Equal("Open", PortalInvoiceService.StatusOf(due(Today.AddDays(5)), new Settlement(100m, 0m, 100m), Today));
+        Assert.Equal("Void", PortalInvoiceRepository.StatusOf(due(null, DocumentStatus.Void), null, Today));
+        Assert.Equal("Paid", PortalInvoiceRepository.StatusOf(due(Today.AddDays(-9)), new Settlement(100m, 99.995m, 0.005m), Today));
+        Assert.Equal("Overdue", PortalInvoiceRepository.StatusOf(due(Today.AddDays(-1)), new Settlement(100m, 40m, 60m), Today));
+        Assert.Equal("PartPaid", PortalInvoiceRepository.StatusOf(due(Today), new Settlement(100m, 40m, 60m), Today));
+        Assert.Equal("Open", PortalInvoiceRepository.StatusOf(due(Today.AddDays(5)), new Settlement(100m, 0m, 100m), Today));
 
         // Without Accounting's answer an invoice is never called paid.
-        Assert.Equal("Open", PortalInvoiceService.StatusOf(due(Today.AddDays(5)), null, Today));
-        Assert.Equal("Overdue", PortalInvoiceService.StatusOf(due(Today.AddDays(-5)), null, Today));
+        Assert.Equal("Open", PortalInvoiceRepository.StatusOf(due(Today.AddDays(5)), null, Today));
+        Assert.Equal("Overdue", PortalInvoiceRepository.StatusOf(due(Today.AddDays(-5)), null, Today));
     }
 
     [SkippableFact]
@@ -96,7 +97,7 @@ public sealed class PortalInvoiceTests
         Assert.Equal("INV-26-0020.pdf", pdf.FileName);
     }
 
-    private sealed record Harness(SalesDbContext Db, TenantContext Tenant, PortalInvoiceService Portal, RecordingLedger Ledger, RecordingDocumentStorage Storage)
+    private sealed record Harness(SalesDbContext Db, TenantContext Tenant, PortalInvoiceRepository Portal, RecordingLedger Ledger, RecordingDocumentStorage Storage)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -107,7 +108,7 @@ public sealed class PortalInvoiceTests
             RecordingLedger ledger = new();
             RecordingDocumentStorage storage = new();
 
-            PortalInvoiceService portal = new(
+            PortalInvoiceRepository portal = new(
                 db, ledger, tenant, new StubNameLookup(), TestArchive.For(db, tenant, storage), new FixedClock());
 
             return new Harness(db, tenant, portal, ledger, storage);
@@ -166,7 +167,7 @@ public sealed class PortalInvoiceTests
         /// <summary>Files a PDF where posting would have archived it.</summary>
         public async Task FileAsync(long invoiceId) =>
             await Storage.SaveAsync(
-                SalesDocumentArchive.Key(
+                SalesDocumentArchiveRepository.Key(
                     StorageScope.For(Tenant, StorageApp.RetailErp, StorageModule.Sales),
                     ArchivedSalesDocument.Invoice,
                     invoiceId),

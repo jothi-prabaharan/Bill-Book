@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
@@ -242,7 +244,7 @@ public sealed class InvoiceLineEditTests
         Description = description,
     };
 
-    private sealed record Harness(SalesDbContext Db, InvoiceService Invoices, TenantContext Tenant)
+    private sealed record Harness(SalesDbContext Db, InvoiceRepository Invoices, TenantContext Tenant)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -257,7 +259,7 @@ public sealed class InvoiceLineEditTests
 
             StubNameLookup names = new();
 
-            InvoiceService invoices = new(
+            InvoiceRepository invoices = new(
                 db,
                 tenant,
                 new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),

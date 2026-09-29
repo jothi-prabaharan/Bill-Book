@@ -1,4 +1,6 @@
-using Sales.Api.Services.Pdf;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.TableEntities;
 using Shared.Kernel.Documents;
 using Xunit;
@@ -20,7 +22,7 @@ public sealed class SalesPdfLayoutTests
     {
         // The old renderer compared against "Voided", which the enum never says,
         // so a voided document was never stamped.
-        Assert.Equal(expected, SalesPdfLayout.Watermark(status));
+        Assert.Equal(expected, SalesPdfLayoutRepository.Watermark(status));
     }
 
     [Fact]
@@ -38,7 +40,7 @@ public sealed class SalesPdfLayoutTests
             Lines = [new InvoiceDetail { LineNumber = 1, Description = "Soap", Quantity = 1m, UnitPrice = 100m, TaxableAmount = 100m, LineTotal = 100m }],
         };
 
-        byte[] pdf = new PdfSharpInvoiceRenderer().Render(new PdfInvoiceModel
+        byte[] pdf = new PdfSharpInvoiceRendererRepository().Render(new PdfInvoiceModel
         {
             Invoice = invoice,
             OrgName = "Kumar Traders",
@@ -53,7 +55,7 @@ public sealed class SalesPdfLayoutTests
     [InlineData("CRN-7", "CRN-7.pdf")]
     public void The_download_is_named_after_the_document_number(string documentNo, string expected)
     {
-        Assert.Equal(expected, SalesDocumentArchive.FileName(documentNo));
+        Assert.Equal(expected, SalesDocumentArchiveRepository.FileName(documentNo));
     }
 
     [Theory]
@@ -62,6 +64,6 @@ public sealed class SalesPdfLayoutTests
     [InlineData(ArchivedSalesDocument.DeliveryChallan, "delivery-challans")]
     public void Each_document_type_has_its_own_folder(ArchivedSalesDocument kind, string folder)
     {
-        Assert.Equal(folder, SalesDocumentArchive.Folder(kind));
+        Assert.Equal(folder, SalesDocumentArchiveRepository.Folder(kind));
     }
 }

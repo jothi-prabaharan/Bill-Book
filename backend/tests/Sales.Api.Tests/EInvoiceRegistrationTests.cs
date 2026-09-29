@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Sales.Api.Services.EInvoicing;
-using Sales.Api.Services.Printing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -323,16 +324,16 @@ public sealed class EInvoiceRegistrationTests
     [InlineData(DocumentStatus.Draft, null, "PROFORMA")]
     public void A_pending_invoice_prints_stamped(DocumentStatus status, EInvoiceStatus? eInvoice, string? expected)
     {
-        Assert.Equal(expected, InvoicePrintService.Watermark(status, eInvoice));
+        Assert.Equal(expected, InvoicePrintRepository.Watermark(status, eInvoice));
     }
 
     [Fact]
     public void Only_a_registered_e_invoice_puts_its_irn_in_the_payload()
     {
         var pending = new PrintPayload();
-        InvoicePrintService.AddEInvoice(pending, new EInvoice { Status = EInvoiceStatus.Pending, Irn = "x" });
+        InvoicePrintRepository.AddEInvoice(pending, new EInvoice { Status = EInvoiceStatus.Pending, Irn = "x" });
         var registered = new PrintPayload();
-        InvoicePrintService.AddEInvoice(registered, new EInvoice
+        InvoicePrintRepository.AddEInvoice(registered, new EInvoice
         {
             Status = EInvoiceStatus.Registered,
             Irn = "abc",
@@ -353,22 +354,22 @@ public sealed class EInvoiceRegistrationTests
     private sealed class Harness : IAsyncDisposable
     {
         public required SalesDbContext Db { get; init; }
-        public required EInvoicePosting Posting { get; init; }
-        public required EInvoiceRegistrar Registrar { get; init; }
-        public required EInvoiceActions Actions { get; init; }
-        public required EInvoiceDocumentBuilder Builder { get; init; }
-        public required IEInvoiceGateway Gateway { get; init; }
+        public required EInvoicePostingRepository Posting { get; init; }
+        public required EInvoiceRegistrarRepository Registrar { get; init; }
+        public required EInvoiceActionsRepository Actions { get; init; }
+        public required EInvoiceDocumentBuilderRepository Builder { get; init; }
+        public required IEInvoiceGatewayRepository Gateway { get; init; }
         public required RecordingAfterCommit AfterCommit { get; init; }
         public required RecordingAuditor Auditor { get; init; }
         public required Book Book { get; init; }
         public required Branch Branch { get; init; }
         public required ManualClock Clock { get; init; }
 
-        public static Task<Harness> StartAsync(PostgresFixture postgres, IEInvoiceGateway? gateway = null)
+        public static Task<Harness> StartAsync(PostgresFixture postgres, IEInvoiceGatewayRepository? gateway = null)
         {
             SalesDbContext db = postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
             var clock = new ManualClock(new DateTimeOffset(2026, 9, 21, 4, 0, 0, TimeSpan.Zero));
-            gateway ??= new SandboxEInvoiceGateway(clock);
+            gateway ??= new SandboxEInvoiceGatewayRepository(clock);
             var branch = new Branch { From = new DateOnly(2026, 4, 1) };
             var book = new Book
             {
@@ -386,9 +387,9 @@ public sealed class EInvoiceRegistrationTests
             };
             var identity = new StubOrgIdentity(new OrgIdentity(
                 "Test Traders", EInvoiceMapperTests.SellerGstin, "1 Test Street", null, "Chennai", "33", "600001"));
-            var builder = new EInvoiceDocumentBuilder(db, branch, identity, book, new StubNameLookup(), clock);
+            var builder = new EInvoiceDocumentBuilderRepository(db, branch, identity, book, new StubNameLookup(), clock);
             var auditor = new RecordingAuditor();
-            var registrar = new EInvoiceRegistrar(db, builder, gateway, auditor, clock);
+            var registrar = new EInvoiceRegistrarRepository(db, builder, gateway, auditor, clock);
             var afterCommit = new RecordingAfterCommit();
 
             return Task.FromResult(new Harness
@@ -397,8 +398,8 @@ public sealed class EInvoiceRegistrationTests
                 Builder = builder,
                 Gateway = gateway,
                 Registrar = registrar,
-                Posting = new EInvoicePosting(db, branch, book, identity, gateway, afterCommit, registrar, clock),
-                Actions = new EInvoiceActions(db, afterCommit, registrar),
+                Posting = new EInvoicePostingRepository(db, branch, book, identity, gateway, afterCommit, registrar, clock),
+                Actions = new EInvoiceActionsRepository(db, afterCommit, registrar),
                 AfterCommit = afterCommit,
                 Auditor = auditor,
                 Book = book,

@@ -1,4 +1,6 @@
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
@@ -390,7 +392,7 @@ public sealed class RecordingInventory : IInventoryClient
 
 /// <summary>
 /// Saves nothing and reports the key back. Public here rather than private to
-/// one test class, so a second suite needing an InvoiceService does not have to
+/// one test class, so a second suite needing an InvoiceRepository does not have to
 /// write its own.
 /// </summary>
 public sealed class StubDocumentStorage : Shared.Kernel.Storage.IFileStorage
@@ -408,9 +410,9 @@ public sealed class StubDocumentStorage : Shared.Kernel.Storage.IFileStorage
 }
 
 /// <summary>Renders a single byte, which is enough for anything not about the PDF.</summary>
-public sealed class StubInvoicePdf : Sales.Api.Services.Pdf.IInvoicePdfRenderer
+public sealed class StubInvoicePdf : Sales.Repository.Repositories.IInvoicePdfRendererRepository
 {
-    public byte[] Render(Sales.Api.Services.Pdf.PdfInvoiceModel model) => [0x25];
+    public byte[] Render(Sales.Repository.Repositories.PdfInvoiceModel model) => [0x25];
 }
 
 /// <summary>
@@ -452,11 +454,11 @@ public sealed class RecordingDocumentStorage : Shared.Kernel.Storage.IFileStorag
 }
 
 /// <summary>Keeps each model it draws, so a test can read what would have printed.</summary>
-public sealed class RecordingSalesPdf : Sales.Api.Services.Pdf.ISalesDocumentPdfRenderer
+public sealed class RecordingSalesPdf : Sales.Repository.Repositories.ISalesDocumentPdfRendererRepository
 {
-    public List<Sales.Api.Services.Pdf.SalesPdfModel> Rendered { get; } = [];
+    public List<Sales.Repository.Repositories.SalesPdfModel> Rendered { get; } = [];
 
-    public byte[] Render(Sales.Api.Services.Pdf.SalesPdfModel model)
+    public byte[] Render(Sales.Repository.Repositories.SalesPdfModel model)
     {
         Rendered.Add(model);
         return "%PDF"u8.ToArray();
@@ -466,11 +468,11 @@ public sealed class RecordingSalesPdf : Sales.Api.Services.Pdf.ISalesDocumentPdf
 /// <summary>The archive a credit note or challan service is built with in tests.</summary>
 public static class TestArchive
 {
-    public static Sales.Api.Services.Pdf.SalesDocumentArchive For(
+    public static Sales.Repository.Repositories.SalesDocumentArchiveRepository For(
         Sales.Repository.SalesDbContext db,
         ITenantContext tenant,
         Shared.Kernel.Storage.IFileStorage? storage = null,
-        Sales.Api.Services.Pdf.ISalesDocumentPdfRenderer? pdf = null) =>
+        Sales.Repository.Repositories.ISalesDocumentPdfRendererRepository? pdf = null) =>
         new(db, tenant, storage ?? new StubDocumentStorage(), new StubOrgIdentity(),
             new StubNameLookup(), new StubNameLookup(), pdf ?? new RecordingSalesPdf());
 }
@@ -503,7 +505,7 @@ internal sealed class StubUqcLookup : Shared.Kernel.Stock.IUqcLookup
 /// E-invoicing that records what posting and voiding asked of it (TK-92).
 /// Needs no IRN by default; <see cref="VoidRefusal"/> makes a void refused.
 /// </summary>
-internal sealed class StubEInvoicing : Sales.Api.Services.EInvoicing.IEInvoicePosting
+internal sealed class StubEInvoicing : Sales.Repository.Repositories.IEInvoicePosting
 {
     public List<(Sales.Entity.Enums.EInvoiceSource Source, long Id)> Posted { get; } = [];
 

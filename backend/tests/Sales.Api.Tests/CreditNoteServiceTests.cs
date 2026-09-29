@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Controllers;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -566,8 +568,8 @@ public sealed class CreditNoteServiceTests
         Assert.Equal(Shared.Kernel.Storage.FileWriteMode.Replace, mode);
 
         var tenant = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = h.Db.CurrentOrgId, CustomerCode = "0000000042" };
-        Sales.Api.Services.Pdf.ArchivedPdf? pdf = await TestArchive.For(h.Db, tenant, h.Storage)
-            .OpenAsync(Sales.Api.Services.Pdf.ArchivedSalesDocument.CreditNote, id, default);
+        Sales.Repository.Repositories.ArchivedPdf? pdf = await TestArchive.For(h.Db, tenant, h.Storage)
+            .OpenAsync(Sales.Repository.Repositories.ArchivedSalesDocument.CreditNote, id, default);
 
         Assert.NotNull(pdf);
         Assert.EndsWith(".pdf", pdf!.FileName);
@@ -606,7 +608,7 @@ public sealed class CreditNoteServiceTests
 
         var mine = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = h.Db.CurrentOrgId, CustomerCode = "0000000042" };
         Assert.Null(await TestArchive.For(h.Db, mine, h.Storage)
-            .OpenAsync(Sales.Api.Services.Pdf.ArchivedSalesDocument.CreditNote, draft, default));
+            .OpenAsync(Sales.Repository.Repositories.ArchivedSalesDocument.CreditNote, draft, default));
 
         // Another branch of the same customer asks for the posted note by id.
         Guid otherOrg = Guid.NewGuid();
@@ -614,12 +616,12 @@ public sealed class CreditNoteServiceTests
         var theirs = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = otherOrg, CustomerCode = "0000000042" };
 
         Assert.Null(await TestArchive.For(other, theirs, h.Storage)
-            .OpenAsync(Sales.Api.Services.Pdf.ArchivedSalesDocument.CreditNote, posted, default));
+            .OpenAsync(Sales.Repository.Repositories.ArchivedSalesDocument.CreditNote, posted, default));
     }
 
     private sealed record Harness(
         SalesDbContext Db,
-        CreditNoteService Service,
+        CreditNoteRepository Service,
         long InvoiceId,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
@@ -659,7 +661,7 @@ public sealed class CreditNoteServiceTests
             TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
             RecordingDocumentStorage storage = new();
 
-            CreditNoteService service = new(
+            CreditNoteRepository service = new(
                 db,
                 tenant,
                 numbering,

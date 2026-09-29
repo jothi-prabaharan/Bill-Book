@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Sales.Api.Services.EInvoicing;
-using Sales.Api.Services.Printing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -34,14 +35,14 @@ public sealed class EwayBillTests
     [InlineData(ChallanType.Approval, 8)]
     [InlineData(ChallanType.Sample, 8)]
     public void A_challans_type_decides_why_the_goods_move(ChallanType type, int subSupply) =>
-        Assert.Equal(subSupply, EwayBillMapper.SubSupplyTypeFor(type));
+        Assert.Equal(subSupply, EwayBillMapperRepository.SubSupplyTypeFor(type));
 
     [Fact]
     public void Part_b_needs_a_vehicle_or_a_transporter()
     {
-        Assert.Contains(EwayBillMapper.ValidateTransport(new EwayTransport(TransportMode.Road, 100, null, null, null)), p => p.Code == "PART_B");
-        Assert.Empty(EwayBillMapper.ValidateTransport(new EwayTransport(TransportMode.Road, 100, "TN01AB1234", null, null)));
-        Assert.Empty(EwayBillMapper.ValidateTransport(new EwayTransport(TransportMode.Road, 100, null, EInvoiceMapperTests.InterBuyerGstin, "Fast Freight")));
+        Assert.Contains(EwayBillMapperRepository.ValidateTransport(new EwayTransport(TransportMode.Road, 100, null, null, null)), p => p.Code == "PART_B");
+        Assert.Empty(EwayBillMapperRepository.ValidateTransport(new EwayTransport(TransportMode.Road, 100, "TN01AB1234", null, null)));
+        Assert.Empty(EwayBillMapperRepository.ValidateTransport(new EwayTransport(TransportMode.Road, 100, null, EInvoiceMapperTests.InterBuyerGstin, "Fast Freight")));
     }
 
     [Theory]
@@ -50,12 +51,12 @@ public sealed class EwayBillTests
     [InlineData("TN-01", false)]
     [InlineData("1234", false)]
     public void A_road_vehicle_number_has_the_portals_shape(string vehicle, bool valid) =>
-        Assert.Equal(valid, !EwayBillMapper.ValidateTransport(new EwayTransport(TransportMode.Road, 10, vehicle, null, null)).Any());
+        Assert.Equal(valid, !EwayBillMapperRepository.ValidateTransport(new EwayTransport(TransportMode.Road, 10, vehicle, null, null)).Any());
 
     [Fact]
     public void The_transport_block_carries_the_portals_mode_code()
     {
-        Inv01EwayBill details = EwayBillMapper.Details(new EwayTransport(TransportMode.Rail, 450, null, "29AAGCB7383J1Z4", "Rail Co"));
+        Inv01EwayBill details = EwayBillMapperRepository.Details(new EwayTransport(TransportMode.Rail, 450, null, "29AAGCB7383J1Z4", "Rail Co"));
 
         Assert.Equal("2", details.TransMode);
         Assert.Equal(450, details.Distance);
@@ -186,7 +187,7 @@ public sealed class EwayBillTests
 
         challan.EwayBillNo = "331000000001";
         challan.EwayBillDate = Dated;
-        await EwayBillService.SyncManualAsync(h.Db, challan, default);
+        await EwayBillRepository.SyncManualAsync(h.Db, challan, default);
 
         EwayBill manual = await h.Db.EwayBills.AsNoTracking().SingleAsync();
         Assert.Equal(EwayBillOrigin.Manual, manual.Origin);
@@ -194,7 +195,7 @@ public sealed class EwayBillTests
         Assert.Equal("331000000001", manual.EwbNo);
 
         challan.EwayBillNo = null;
-        await EwayBillService.SyncManualAsync(h.Db, challan, default);
+        await EwayBillRepository.SyncManualAsync(h.Db, challan, default);
         Assert.Equal(0, await h.Db.EwayBills.CountAsync());
     }
 
@@ -216,7 +217,7 @@ public sealed class EwayBillTests
     public void A_live_e_way_bill_reaches_the_invoice_payload()
     {
         var payload = new PrintPayload();
-        InvoicePrintService.AddEwayBill(payload, new EwayBill
+        InvoicePrintRepository.AddEwayBill(payload, new EwayBill
         {
             EwbNo = "331000000001",
             EwbDate = new DateTimeOffset(2026, 9, 20, 5, 0, 0, TimeSpan.Zero),
@@ -234,7 +235,7 @@ public sealed class EwayBillTests
     private sealed class Harness : IAsyncDisposable
     {
         public required SalesDbContext Db { get; init; }
-        public required EwayBillService Service { get; init; }
+        public required EwayBillRepository Service { get; init; }
         public required HeldAfterCommit AfterCommit { get; init; }
         public required RecordingSalesPdf Pdf { get; init; }
         public required ManualClock Clock { get; init; }
@@ -247,7 +248,7 @@ public sealed class EwayBillTests
             var identity = new StubOrgIdentity(new OrgIdentity(
                 "Test Traders", EInvoiceMapperTests.SellerGstin, "1 Test Street", null, "Chennai", "33", "600001"));
             var pdf = new RecordingSalesPdf();
-            var archive = new Sales.Api.Services.Pdf.SalesDocumentArchive(
+            var archive = new Sales.Repository.Repositories.SalesDocumentArchiveRepository(
                 db, tenant, new RecordingDocumentStorage(), identity, new StubNameLookup(), new StubNameLookup(), pdf);
             var afterCommit = new HeldAfterCommit();
 
@@ -257,18 +258,18 @@ public sealed class EwayBillTests
                 AfterCommit = afterCommit,
                 Pdf = pdf,
                 Clock = clock,
-                Service = new EwayBillService(
+                Service = new EwayBillRepository(
                     db,
                     new Branch(ewayEnabled),
                     identity,
                     new Book(),
                     new StubNameLookup(),
                     new StubUqcLookup(),
-                    new SandboxEInvoiceGateway(clock),
+                    new SandboxEInvoiceGatewayRepository(clock),
                     afterCommit,
                     archive,
                     clock,
-                    NullLogger<EwayBillService>.Instance),
+                    NullLogger<EwayBillRepository>.Instance),
             };
         }
 

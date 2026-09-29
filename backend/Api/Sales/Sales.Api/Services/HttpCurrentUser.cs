@@ -1,3 +1,5 @@
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using System.Security.Claims;
 using Shared.Kernel.Interfaces;
 

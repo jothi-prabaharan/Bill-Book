@@ -2,6 +2,8 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
@@ -64,7 +66,7 @@ public sealed class DocumentCustomFieldCarryTests
 
         TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
         StubNameLookup names = new();
-        InvoiceService invoices = new(
+        InvoiceRepository invoices = new(
             db, tenant, new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
             new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(), names, names, new StubCurrentUser(), TimeProvider.System,
             new RecordingInventory(), new RecordingLedger(), new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(),

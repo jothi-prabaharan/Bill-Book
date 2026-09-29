@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -14,9 +16,9 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class QuotesController : ControllerBase
 {
-    private readonly QuoteService _Quotes;
+    private readonly QuoteRepository _Quotes;
 
-    public QuotesController(QuoteService Quotes) => _Quotes = Quotes;
+    public QuotesController(QuoteRepository Quotes) => _Quotes = Quotes;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -305,9 +307,9 @@ public sealed class PartialFulfilmentTests
     /// </summary>
     private sealed record Harness(
         SalesDbContext Db,
-        SalesOrderService Orders,
-        DeliveryChallanService Challans,
-        InvoiceService Invoices,
+        SalesOrderRepository Orders,
+        DeliveryChallanRepository Challans,
+        InvoiceRepository Invoices,
         RecordingInventory Inventory,
         RecordingLedger Ledger)
     {
@@ -327,15 +329,15 @@ public sealed class PartialFulfilmentTests
             NumberGenerator numbering = new(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            SalesOrderService orders = new(
+            SalesOrderRepository orders = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, inventory, new StubCreditCheck());
 
-            DeliveryChallanService challans = new(
+            DeliveryChallanRepository challans = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, inventory, TestArchive.For(db, tenant), ledger);
 
-            InvoiceService invoices = new(
+            InvoiceRepository invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, inventory, ledger,
                 new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing());

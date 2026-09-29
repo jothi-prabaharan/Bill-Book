@@ -1,4 +1,6 @@
-using Sales.Api.Services.EInvoicing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Shared.Kernel.Documents;
 using Xunit;
 
@@ -12,10 +14,10 @@ public sealed class EInvoiceValidatorTests
 {
     private static readonly DateOnly Dated = new(2026, 9, 20);
 
-    private static Inv01Document Good() => Inv01Mapper.Map(EInvoiceMapperTests.IntraStateInvoice());
+    private static Inv01DocumentRepository Good() => Inv01MapperRepository.Map(EInvoiceMapperTests.IntraStateInvoice());
 
-    private static IReadOnlyList<string> Codes(Inv01Document document, DateOnly? today = null, int? window = null) =>
-        [.. EInvoiceValidator.Validate(document, Dated, today ?? Dated, window).Select(p => p.Code)];
+    private static IReadOnlyList<string> Codes(Inv01DocumentRepository document, DateOnly? today = null, int? window = null) =>
+        [.. EInvoiceValidatorRepository.Validate(document, Dated, today ?? Dated, window).Select(p => p.Code)];
 
     [Fact]
     public void A_good_document_has_no_problems() => Assert.Empty(Codes(Good()));
@@ -23,7 +25,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void An_invalid_seller_gstin_is_refused()
     {
-        Inv01Document document = Good() with { SellerDtls = Good().SellerDtls with { Gstin = "33AAACH7409R1Z9" } };
+        Inv01DocumentRepository document = Good() with { SellerDtls = Good().SellerDtls with { Gstin = "33AAACH7409R1Z9" } };
 
         Assert.Contains("SELLER_GSTIN", Codes(document));
     }
@@ -31,7 +33,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void A_missing_buyer_gstin_is_refused_on_b2b()
     {
-        Inv01Document document = Good() with { BuyerDtls = Good().BuyerDtls with { Gstin = "" } };
+        Inv01DocumentRepository document = Good() with { BuyerDtls = Good().BuyerDtls with { Gstin = "" } };
 
         Assert.Contains("BUYER_GSTIN", Codes(document));
     }
@@ -39,7 +41,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void A_state_that_disagrees_with_the_gstin_is_refused()
     {
-        Inv01Document document = Good() with { BuyerDtls = Good().BuyerDtls with { Stcd = "29" } };
+        Inv01DocumentRepository document = Good() with { BuyerDtls = Good().BuyerDtls with { Stcd = "29" } };
 
         Assert.Contains("BUYER_STATE", Codes(document));
     }
@@ -47,9 +49,9 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void A_pin_that_is_not_six_digits_is_refused()
     {
-        Inv01Document document = Good() with { BuyerDtls = Good().BuyerDtls with { Pin = 0 } };
+        Inv01DocumentRepository document = Good() with { BuyerDtls = Good().BuyerDtls with { Pin = 0 } };
 
-        IReadOnlyList<EInvoiceProblem> problems = EInvoiceValidator.Validate(document, Dated, Dated);
+        IReadOnlyList<EInvoiceProblem> problems = EInvoiceValidatorRepository.Validate(document, Dated, Dated);
 
         EInvoiceProblem pin = Assert.Single(problems);
         Assert.Equal("BUYER_PIN", pin.Code);
@@ -59,7 +61,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void An_address_without_a_city_is_refused()
     {
-        Inv01Document document = Good() with { SellerDtls = Good().SellerDtls with { Loc = "" } };
+        Inv01DocumentRepository document = Good() with { SellerDtls = Good().SellerDtls with { Loc = "" } };
 
         Assert.Contains("SELLER_ADDRESS", Codes(document));
     }
@@ -67,7 +69,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void A_missing_place_of_supply_is_refused()
     {
-        Inv01Document document = Good() with { BuyerDtls = Good().BuyerDtls with { Pos = "" } };
+        Inv01DocumentRepository document = Good() with { BuyerDtls = Good().BuyerDtls with { Pos = "" } };
 
         Assert.Contains("POS", Codes(document));
     }
@@ -79,12 +81,12 @@ public sealed class EInvoiceValidatorTests
     [InlineData("72A42090")]
     public void An_hsn_that_is_not_six_or_eight_digits_is_refused(string hsn)
     {
-        Inv01Document document = Good() with
+        Inv01DocumentRepository document = Good() with
         {
             ItemList = [Good().ItemList[0] with { HsnCd = hsn }, Good().ItemList[1]],
         };
 
-        EInvoiceProblem problem = Assert.Single(EInvoiceValidator.Validate(document, Dated, Dated));
+        EInvoiceProblem problem = Assert.Single(EInvoiceValidatorRepository.Validate(document, Dated, Dated));
         Assert.Equal("HSN", problem.Code);
         Assert.StartsWith("Line 1 ", problem.Message);
     }
@@ -92,7 +94,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void Goods_without_a_uqc_are_refused_and_a_service_is_not()
     {
-        Inv01Document goods = Good() with { ItemList = [Good().ItemList[0] with { Unit = null }, Good().ItemList[1]] };
+        Inv01DocumentRepository goods = Good() with { ItemList = [Good().ItemList[0] with { Unit = null }, Good().ItemList[1]] };
 
         Assert.Equal(new[] { "UQC" }, Codes(goods));
         Assert.Null(Good().ItemList[1].Unit);
@@ -102,7 +104,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void Totals_that_do_not_add_up_are_refused()
     {
-        Inv01Document document = Good() with { ValDtls = Good().ValDtls with { TotInvVal = 7100m } };
+        Inv01DocumentRepository document = Good() with { ValDtls = Good().ValDtls with { TotInvVal = 7100m } };
 
         Assert.Contains("TOTALS", Codes(document));
     }
@@ -110,7 +112,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void Totals_within_a_rupee_pass()
     {
-        Inv01Document document = Good() with { ValDtls = Good().ValDtls with { TotInvVal = 6992.90m } };
+        Inv01DocumentRepository document = Good() with { ValDtls = Good().ValDtls with { TotInvVal = 6992.90m } };
 
         Assert.DoesNotContain("TOTALS", Codes(document));
     }
@@ -118,7 +120,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void A_line_whose_amounts_do_not_add_up_is_refused()
     {
-        Inv01Document document = Good() with
+        Inv01DocumentRepository document = Good() with
         {
             ItemList = [Good().ItemList[0] with { TotItemVal = 6000m }, Good().ItemList[1]],
         };
@@ -129,7 +131,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void Igst_beside_cgst_on_one_line_is_refused()
     {
-        Inv01Document document = Good() with
+        Inv01DocumentRepository document = Good() with
         {
             ItemList = [Good().ItemList[0] with { IgstAmt = 1m, TotItemVal = 5930.50m }, Good().ItemList[1]],
         };
@@ -158,7 +160,7 @@ public sealed class EInvoiceValidatorTests
     [InlineData("INV 1")]
     public void A_document_number_the_irp_would_refuse_is_refused(string number)
     {
-        Inv01Document document = Good() with { DocDtls = Good().DocDtls with { No = number } };
+        Inv01DocumentRepository document = Good() with { DocDtls = Good().DocDtls with { No = number } };
 
         Assert.Contains("DOC_NO", Codes(document));
     }
@@ -166,7 +168,7 @@ public sealed class EInvoiceValidatorTests
     [Fact]
     public void A_document_with_no_lines_is_refused()
     {
-        Inv01Document document = Good() with { ItemList = [] };
+        Inv01DocumentRepository document = Good() with { ItemList = [] };
 
         Assert.Contains("ITEMS", Codes(document));
     }
@@ -187,7 +189,7 @@ public sealed class EInvoiceValidatorTests
             RoundOffAmount = 0m,
         };
 
-        Assert.Empty(EInvoiceValidator.Validate(Inv01Mapper.Map(input), Dated, Dated));
+        Assert.Empty(EInvoiceValidatorRepository.Validate(Inv01MapperRepository.Map(input), Dated, Dated));
     }
 
     [Fact]
@@ -208,9 +210,9 @@ public sealed class EInvoiceValidatorTests
             RoundOffAmount = 0m,
         };
 
-        Inv01Document document = Inv01Mapper.Map(input);
+        Inv01DocumentRepository document = Inv01MapperRepository.Map(input);
 
         Assert.Equal(10m, document.ValDtls.CesVal);
-        Assert.Empty(EInvoiceValidator.Validate(document, Dated, Dated));
+        Assert.Empty(EInvoiceValidatorRepository.Validate(document, Dated, Dated));
     }
 }

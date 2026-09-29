@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Controllers;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 using Xunit;
@@ -372,7 +374,7 @@ public sealed class InvoicesControllerTests
     // Stub Service Implementation for Controller Tests
     // =========================================================================
 
-    private sealed class StubInvoiceService : IInvoiceService
+    private sealed class StubInvoiceService : IInvoiceRepository
     {
         public InvoiceView? GetResult { get; set; }
         public GlPreviewResult? PreviewResult { get; set; }

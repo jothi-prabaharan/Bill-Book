@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sales.Api.Services.Pdf;
 using Sales.Api.Services;
-using Sales.Api.Services.Printing;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -16,20 +16,20 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class InvoicesController : ControllerBase
 {
-    private readonly IInvoiceService _service;
+    private readonly IInvoiceRepository _service;
 
     /// <summary>
     /// One constructor, taking the interface.
     ///
-    /// There were two — one on the concrete <c>InvoiceService</c> and one on the
-    /// interface — which worked only because <c>IInvoiceService</c> was never
+    /// There were two — one on the concrete <c>InvoiceRepository</c> and one on the
+    /// interface — which worked only because <c>IInvoiceRepository</c> was never
     /// registered, so exactly one was resolvable. Registering it later, as this
     /// commit does, would have made both resolvable and
     /// <c>ActivatorUtilities</c> throws on an ambiguous constructor: every
     /// invoice request would have 500'd, at runtime, with a message about
     /// constructors rather than about invoices.
     /// </summary>
-    public InvoicesController(IInvoiceService service)
+    public InvoicesController(IInvoiceRepository service)
     {
         _service = service;
     }
@@ -87,7 +87,7 @@ public sealed class InvoicesController : ControllerBase
     [HttpGet("{id:long}/print")]
     [PermissionAction("print")]
     public async Task<IActionResult> Print(
-        long id, [FromServices] InvoicePrintService printing, CancellationToken ct)
+        long id, [FromServices] InvoicePrintRepository printing, CancellationToken ct)
     {
         PrintedDocument? printed = await printing.PrintAsync(id, ct);
         return printed is null ? NotFound() : Ok(printed);
@@ -102,7 +102,7 @@ public sealed class InvoicesController : ControllerBase
     [HttpGet("{id:long}/pdf")]
     [PermissionAction("print")]
     public async Task<IActionResult> DownloadPdf(
-        long id, [FromServices] SalesDocumentArchive archive, CancellationToken ct)
+        long id, [FromServices] SalesDocumentArchiveRepository archive, CancellationToken ct)
     {
         ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.Invoice, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
@@ -180,7 +180,7 @@ public sealed class InvoicesController : ControllerBase
     [HttpGet("{id:long}/e-invoice")]
     [PermissionAction("view")]
     public async Task<IActionResult> EInvoice(
-        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+        long id, [FromServices] Sales.Repository.Repositories.EInvoiceActionsRepository actions, CancellationToken ct)
     {
         EInvoiceStateView? state = await actions.GetAsync(Sales.Entity.Enums.EInvoiceSource.Invoice, id, ct);
         return state is null ? NotFound() : Ok(state);
@@ -193,7 +193,7 @@ public sealed class InvoicesController : ControllerBase
     [HttpPost("{id:long}/e-invoice/retry")]
     [PermissionAction("einvoice")]
     public async Task<IActionResult> RetryEInvoice(
-        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+        long id, [FromServices] Sales.Repository.Repositories.EInvoiceActionsRepository actions, CancellationToken ct)
     {
         EInvoiceStateView? state = await actions.RetryAsync(Sales.Entity.Enums.EInvoiceSource.Invoice, id, ct);
         return state is null ? NotFound() : Ok(state);
@@ -203,7 +203,7 @@ public sealed class InvoicesController : ControllerBase
     [HttpGet("{id:long}/eway-bill")]
     [PermissionAction("view")]
     public async Task<IActionResult> EwayBill(
-        long id, [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct)
+        long id, [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct)
     {
         EwayBillView? view = await ewayBills.GetAsync(Sales.Entity.Enums.EwayBillSource.Invoice, id, ct);
         return view is null ? NotFound() : Ok(view);
@@ -214,7 +214,7 @@ public sealed class InvoicesController : ControllerBase
     [PermissionAction("einvoice")]
     public async Task<IActionResult> GenerateEwayBill(
         long id, [FromBody] GenerateEwayBillRequest request,
-        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct) =>
         EwayBillAnswer(await ewayBills.GenerateAsync(Sales.Entity.Enums.EwayBillSource.Invoice, id, request, ct));
 
     /// <summary>Changes the vehicle on the invoice's live e-way bill (TK-93).</summary>
@@ -222,7 +222,7 @@ public sealed class InvoicesController : ControllerBase
     [PermissionAction("einvoice")]
     public async Task<IActionResult> UpdateEwayBillPartB(
         long id, [FromBody] UpdatePartBRequest request,
-        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct) =>
         EwayBillAnswer(await ewayBills.UpdatePartBAsync(Sales.Entity.Enums.EwayBillSource.Invoice, id, request, ct));
 
     /// <summary>Cancels the invoice's live e-way bill, within 24 hours of generating it (TK-93).</summary>
@@ -230,7 +230,7 @@ public sealed class InvoicesController : ControllerBase
     [PermissionAction("einvoice")]
     public async Task<IActionResult> CancelEwayBill(
         long id, [FromBody] CancelEwayBillRequest request,
-        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct) =>
         EwayBillAnswer(await ewayBills.CancelAsync(Sales.Entity.Enums.EwayBillSource.Invoice, id, request, ct));
 
     private IActionResult EwayBillAnswer(EwayBillResult result) => result.Outcome switch

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -14,16 +16,16 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class TransactionsController : ControllerBase
 {
-    private readonly QuoteService _quotes;
-    private readonly SalesOrderService _salesOrders;
-    private readonly InvoiceService _invoices;
-    private readonly CreditNoteService _creditNotes;
+    private readonly QuoteRepository _quotes;
+    private readonly SalesOrderRepository _salesOrders;
+    private readonly InvoiceRepository _invoices;
+    private readonly CreditNoteRepository _creditNotes;
 
     public TransactionsController(
-        QuoteService quotes,
-        SalesOrderService salesOrders,
-        InvoiceService invoices,
-        CreditNoteService creditNotes)
+        QuoteRepository quotes,
+        SalesOrderRepository salesOrders,
+        InvoiceRepository invoices,
+        CreditNoteRepository creditNotes)
     {
         _quotes = quotes;
         _salesOrders = salesOrders;

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -37,7 +39,7 @@ public sealed class PosSaleTests
     public void Cash_over_the_total_is_change()
     {
         (PosSaleOutcome outcome, decimal change, _) =
-            PosSaleService.CheckTenders(118m, [Tender(PosTenderMode.Cash, 200m)]);
+            PosSaleRepository.CheckTenders(118m, [Tender(PosTenderMode.Cash, 200m)]);
 
         Assert.Equal(PosSaleOutcome.Ok, outcome);
         Assert.Equal(82m, change);
@@ -46,7 +48,7 @@ public sealed class PosSaleTests
     [Fact]
     public void Tenders_short_of_the_total_are_refused()
     {
-        (PosSaleOutcome outcome, _, string? detail) = PosSaleService.CheckTenders(
+        (PosSaleOutcome outcome, _, string? detail) = PosSaleRepository.CheckTenders(
             118m, [Tender(PosTenderMode.Card, 50m, CardTerminal), Tender(PosTenderMode.Cash, 50m)]);
 
         Assert.Equal(PosSaleOutcome.TenderShort, outcome);
@@ -58,7 +60,7 @@ public sealed class PosSaleTests
     [InlineData(PosTenderMode.Upi)]
     public void Card_or_upi_over_the_total_is_refused_because_only_cash_gives_change(PosTenderMode mode)
     {
-        (PosSaleOutcome outcome, _, _) = PosSaleService.CheckTenders(118m, [Tender(mode, 120m, CardTerminal)]);
+        (PosSaleOutcome outcome, _, _) = PosSaleRepository.CheckTenders(118m, [Tender(mode, 120m, CardTerminal)]);
 
         Assert.Equal(PosSaleOutcome.TenderOverpaid, outcome);
     }
@@ -66,7 +68,7 @@ public sealed class PosSaleTests
     [Fact]
     public void A_split_tender_with_change_from_cash_is_accepted()
     {
-        (PosSaleOutcome outcome, decimal change, _) = PosSaleService.CheckTenders(
+        (PosSaleOutcome outcome, decimal change, _) = PosSaleRepository.CheckTenders(
             118m, [Tender(PosTenderMode.Upi, 100m, CardTerminal), Tender(PosTenderMode.Cash, 20m)]);
 
         Assert.Equal(PosSaleOutcome.Ok, outcome);
@@ -79,7 +81,7 @@ public sealed class PosSaleTests
         InvoiceTender upi = new() { Mode = PosTenderMode.Upi, Amount = 100m, BankAccountId = CardTerminal };
         InvoiceTender cash = new() { Mode = PosTenderMode.Cash, Amount = 20m, BankAccountId = CounterCash };
 
-        var debits = InvoiceService.TenderDebits(118m, 2m, [upi, cash]);
+        var debits = InvoiceRepository.TenderDebits(118m, 2m, [upi, cash]);
 
         Assert.Equal(100m, debits.Single(d => d.Tender == upi).Debit);
         Assert.Equal(18m, debits.Single(d => d.Tender == cash).Debit);
@@ -92,7 +94,7 @@ public sealed class PosSaleTests
         InvoiceTender card = new() { Mode = PosTenderMode.Card, Amount = 120m, BankAccountId = CardTerminal };
 
         // Change of 2 with no cash to take it from.
-        Assert.Throws<InvalidOperationException>(() => InvoiceService.TenderDebits(118m, 2m, [card]));
+        Assert.Throws<InvalidOperationException>(() => InvoiceRepository.TenderDebits(118m, 2m, [card]));
     }
 
     // ── Against a database ─────────────────────────────────────────────
@@ -140,7 +142,7 @@ public sealed class PosSaleTests
             Task.FromResult<StockMovementCostsResponse?>(new StockMovementCostsResponse());
     }
 
-    private sealed record Till(SalesDbContext Db, PosSaleService Sales, RecordingLedger Ledger, InvoiceService Invoices);
+    private sealed record Till(SalesDbContext Db, PosSaleRepository Sales, RecordingLedger Ledger, InvoiceRepository Invoices);
 
     private static Till OpenTill(PostgresFixture pg, Guid customerId, Guid orgId, IInventoryClient inventory)
     {
@@ -150,14 +152,14 @@ public sealed class PosSaleTests
         RecordingLedger ledger = new();
         StubCurrentUser cashier = new();
 
-        InvoiceService invoices = new(
+        InvoiceRepository invoices = new(
             db, tenant,
             new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
             new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
             names, names, cashier, TimeProvider.System, inventory, ledger,
             new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing());
 
-        return new Till(db, new PosSaleService(invoices, db, cashier, TimeProvider.System), ledger, invoices);
+        return new Till(db, new PosSaleRepository(invoices, db, cashier, TimeProvider.System), ledger, invoices);
     }
 
     private static async Task<(Guid CustomerId, Guid OrgId)> NewBranchAsync(PostgresFixture pg)

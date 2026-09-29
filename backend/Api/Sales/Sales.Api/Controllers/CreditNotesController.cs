@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sales.Api.Services.Pdf;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -28,9 +29,9 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class CreditNotesController : ControllerBase
 {
-    private readonly CreditNoteService _service;
+    private readonly CreditNoteRepository _service;
 
-    public CreditNotesController(CreditNoteService service)
+    public CreditNotesController(CreditNoteRepository service)
     {
         _service = service;
     }
@@ -91,7 +92,7 @@ public sealed class CreditNotesController : ControllerBase
     [HttpGet("{id:long}/e-invoice")]
     [PermissionAction("view")]
     public async Task<IActionResult> EInvoice(
-        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+        long id, [FromServices] Sales.Repository.Repositories.EInvoiceActionsRepository actions, CancellationToken ct)
     {
         EInvoiceStateView? state = await actions.GetAsync(Sales.Entity.Enums.EInvoiceSource.CreditNote, id, ct);
         return state is null ? NotFound() : Ok(state);
@@ -104,7 +105,7 @@ public sealed class CreditNotesController : ControllerBase
     [HttpPost("{id:long}/e-invoice/retry")]
     [PermissionAction("einvoice")]
     public async Task<IActionResult> RetryEInvoice(
-        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+        long id, [FromServices] Sales.Repository.Repositories.EInvoiceActionsRepository actions, CancellationToken ct)
     {
         EInvoiceStateView? state = await actions.RetryAsync(Sales.Entity.Enums.EInvoiceSource.CreditNote, id, ct);
         return state is null ? NotFound() : Ok(state);
@@ -135,7 +136,7 @@ public sealed class CreditNotesController : ControllerBase
     [HttpGet("{id:long}/pdf")]
     [PermissionAction("print")]
     public async Task<IActionResult> DownloadPdf(
-        long id, [FromServices] SalesDocumentArchive archive, CancellationToken ct)
+        long id, [FromServices] SalesDocumentArchiveRepository archive, CancellationToken ct)
     {
         ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.CreditNote, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);

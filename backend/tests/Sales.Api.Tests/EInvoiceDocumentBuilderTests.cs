@@ -1,4 +1,6 @@
-using Sales.Api.Services.EInvoicing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Contacts;
@@ -32,7 +34,7 @@ public sealed class EInvoiceDocumentBuilderTests
         EInvoiceBuild build = await Builder(db).BuildForInvoiceAsync(invoice.InvoiceId, default);
 
         Assert.True(build.Ready, string.Join("; ", build.Problems.Select(p => p.Message)));
-        Inv01Document document = build.Document!;
+        Inv01DocumentRepository document = build.Document!;
         Assert.Equal("B2B", document.TranDtls.SupTyp);
         Assert.Equal("INV", document.DocDtls.Typ);
         Assert.Equal(invoice.DocumentNo, document.DocDtls.No);
@@ -187,7 +189,7 @@ public sealed class EInvoiceDocumentBuilderTests
 
     /// <param name="eInvoicing">False for a branch that does not e-invoice at all.</param>
     /// <param name="from">When the branch starts; 1 April 2026 when not given.</param>
-    private static EInvoiceDocumentBuilder Builder(
+    private static EInvoiceDocumentBuilderRepository Builder(
         SalesDbContext db, bool eInvoicing = true, DateOnly? from = null, AddressBook? book = null) =>
         new(
             db,

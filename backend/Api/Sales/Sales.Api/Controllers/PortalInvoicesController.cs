@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
-using Sales.Api.Services.Pdf;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 
@@ -19,9 +20,9 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PortalInvoicesController : ControllerBase
 {
-    private readonly PortalInvoiceService _invoices;
+    private readonly PortalInvoiceRepository _invoices;
 
-    public PortalInvoicesController(PortalInvoiceService invoices) => _invoices = invoices;
+    public PortalInvoicesController(PortalInvoiceRepository invoices) => _invoices = invoices;
 
     private long ContactId => long.Parse(User.FindFirst(RequirePortalAccessAttribute.ContactClaim)!.Value);
 

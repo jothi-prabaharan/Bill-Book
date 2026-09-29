@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -719,7 +721,7 @@ public sealed class InvoicePostingTests
 
     private sealed record Harness(
         SalesDbContext Db,
-        InvoiceService Invoices,
+        InvoiceRepository Invoices,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
         TenantContext Tenant,
@@ -758,7 +760,7 @@ public sealed class InvoicePostingTests
             var numbering = new NumberGenerator(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            InvoiceService invoices = new(
+            InvoiceRepository invoices = new(
                 db,
                 tenant,
                 numbering,
@@ -959,11 +961,11 @@ public sealed class InvoicePostingTests
     /// Keeps the model it was handed, so a test can read the seller block that
     /// would have been printed.
     /// </summary>
-    private sealed class StubPdfRenderer : Sales.Api.Services.Pdf.IInvoicePdfRenderer
+    private sealed class StubPdfRenderer : Sales.Repository.Repositories.IInvoicePdfRendererRepository
     {
-        public Sales.Api.Services.Pdf.PdfInvoiceModel? Rendered { get; private set; }
+        public Sales.Repository.Repositories.PdfInvoiceModel? Rendered { get; private set; }
 
-        public byte[] Render(Sales.Api.Services.Pdf.PdfInvoiceModel model)
+        public byte[] Render(Sales.Repository.Repositories.PdfInvoiceModel model)
         {
             Rendered = model;
 

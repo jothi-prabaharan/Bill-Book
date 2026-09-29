@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -447,7 +449,7 @@ public sealed class SalesOrderServiceTests
     /// </summary>
     private sealed record Harness(
         SalesDbContext Db,
-        SalesOrderService Service,
+        SalesOrderRepository Service,
         StubNameLookup Names,
         RecordingInventory Inventory)
     {
@@ -466,7 +468,7 @@ public sealed class SalesOrderServiceTests
             NumberGenerator numbering = new(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            SalesOrderService service = new(
+            SalesOrderRepository service = new(
                 db,
                 new TenantContext { CustomerId = customerId ?? Guid.NewGuid(), OrgId = orgId, CustomerCode = "0000000042" },
                 numbering,

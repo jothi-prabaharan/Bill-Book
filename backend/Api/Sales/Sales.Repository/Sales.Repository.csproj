@@ -10,6 +10,21 @@
     <ProjectReference Include="..\Sales.Entity\Sales.Entity.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="PDFsharp" />
+    <PackageReference Include="Azure.Storage.Blobs" />
+  </ItemGroup>
+
+  <!-- The Web SDK's implicit usings, so business logic moved out of the Api project compiles unchanged. -->
+  <ItemGroup>
+    <Using Include="System.Net.Http.Json" />
+    <Using Include="Microsoft.Extensions.Configuration" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
 </Project>
 
 

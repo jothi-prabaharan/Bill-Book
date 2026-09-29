@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -20,9 +22,9 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PosSalesController : ControllerBase
 {
-    private readonly PosSaleService _sales;
+    private readonly PosSaleRepository _sales;
 
-    public PosSalesController(PosSaleService sales) => _sales = sales;
+    public PosSalesController(PosSaleRepository sales) => _sales = sales;
 
     /// <summary>
     /// 200 with the number, total and change; 409 when an item has run out,

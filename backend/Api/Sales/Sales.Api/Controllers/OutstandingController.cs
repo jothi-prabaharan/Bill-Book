@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
 
@@ -13,9 +15,9 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public class OutstandingController : ControllerBase
 {
-    private readonly OutstandingService _outstanding;
+    private readonly OutstandingRepository _outstanding;
 
-    public OutstandingController(OutstandingService outstanding)
+    public OutstandingController(OutstandingRepository outstanding)
     {
         _outstanding = outstanding;
     }

@@ -1,4 +1,6 @@
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -44,7 +46,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var seeder = _services.GetRequiredService<SalesSeeder>();
+        var seeder = _services.GetRequiredService<SalesSeederRepository>();
 
         var response = new SeedOrganizationResponse
         {

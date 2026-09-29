@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sales.Api.Services.Pdf;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -18,7 +19,7 @@ namespace Sales.Api.Controllers;
 ///
 /// <b>Posting writes nothing to the ledger from here.</b> The stock issue reaches
 /// it through Inventory's costing worker, like every other issue. See
-/// <see cref="DeliveryChallanService.PostAsync"/> for why the challan's own
+/// <see cref="DeliveryChallanRepository.PostAsync"/> for why the challan's own
 /// GDNI post was withdrawn.
 ///
 /// <b>Every refusal is an outcome, never an exception.</b> A challan outside
@@ -35,9 +36,9 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class DeliveryChallansController : ControllerBase
 {
-    private readonly DeliveryChallanService _service;
+    private readonly DeliveryChallanRepository _service;
 
-    public DeliveryChallansController(DeliveryChallanService service)
+    public DeliveryChallansController(DeliveryChallanRepository service)
     {
         _service = service;
     }
@@ -123,7 +124,7 @@ public sealed class DeliveryChallansController : ControllerBase
     [HttpGet("{id:long}/pdf")]
     [PermissionAction("print")]
     public async Task<IActionResult> DownloadPdf(
-        long id, [FromServices] SalesDocumentArchive archive, CancellationToken ct)
+        long id, [FromServices] SalesDocumentArchiveRepository archive, CancellationToken ct)
     {
         ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.DeliveryChallan, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
@@ -133,7 +134,7 @@ public sealed class DeliveryChallansController : ControllerBase
     [HttpGet("{id:long}/eway-bill")]
     [PermissionAction("view")]
     public async Task<IActionResult> EwayBill(
-        long id, [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct)
+        long id, [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct)
     {
         EwayBillView? view = await ewayBills.GetAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, ct);
         return view is null ? NotFound() : Ok(view);
@@ -144,7 +145,7 @@ public sealed class DeliveryChallansController : ControllerBase
     [PermissionAction("einvoice")]
     public async Task<IActionResult> GenerateEwayBill(
         long id, [FromBody] GenerateEwayBillRequest request,
-        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct) =>
         EwayBillAnswer(await ewayBills.GenerateAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, request, ct));
 
     /// <summary>Changes the vehicle on the challan's live e-way bill (TK-93).</summary>
@@ -152,7 +153,7 @@ public sealed class DeliveryChallansController : ControllerBase
     [PermissionAction("einvoice")]
     public async Task<IActionResult> UpdateEwayBillPartB(
         long id, [FromBody] UpdatePartBRequest request,
-        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct) =>
         EwayBillAnswer(await ewayBills.UpdatePartBAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, request, ct));
 
     /// <summary>Cancels the challan's live e-way bill, within 24 hours of generating it (TK-93).</summary>
@@ -160,7 +161,7 @@ public sealed class DeliveryChallansController : ControllerBase
     [PermissionAction("einvoice")]
     public async Task<IActionResult> CancelEwayBill(
         long id, [FromBody] CancelEwayBillRequest request,
-        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        [FromServices] Sales.Repository.Repositories.EwayBillRepository ewayBills, CancellationToken ct) =>
         EwayBillAnswer(await ewayBills.CancelAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, request, ct));
 
     private IActionResult EwayBillAnswer(EwayBillResult result) => result.Outcome switch

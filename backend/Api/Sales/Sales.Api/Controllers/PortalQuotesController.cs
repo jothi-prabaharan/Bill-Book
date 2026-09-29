@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -19,9 +21,9 @@ namespace Sales.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PortalQuotesController : ControllerBase
 {
-    private readonly PortalQuoteService _quotes;
+    private readonly PortalQuoteRepository _quotes;
 
-    public PortalQuotesController(PortalQuoteService quotes) => _quotes = quotes;
+    public PortalQuotesController(PortalQuoteRepository quotes) => _quotes = quotes;
 
     private long ContactId => long.Parse(User.FindFirst(RequirePortalAccessAttribute.ContactClaim)!.Value);
 

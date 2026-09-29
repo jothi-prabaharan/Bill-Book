@@ -1,4 +1,6 @@
-using Sales.Api.Services.EInvoicing;
+using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Xunit;
 
 namespace Sales.Api.Tests;
@@ -14,7 +16,7 @@ public sealed class LineUqcTests
     }
 
     private static Task Stamp(StubUqcLookup lookup, params Line[] lines) =>
-        LineUqc.StampAsync(lookup, lines, l => l.UomId, l => l.UqcCode, (l, code) => l.UqcCode = code, default);
+        LineUqcRepository.StampAsync(lookup, lines, l => l.UomId, l => l.UqcCode, (l, code) => l.UqcCode = code, default);
 
     [Fact]
     public async Task Each_line_takes_its_units_uqc()

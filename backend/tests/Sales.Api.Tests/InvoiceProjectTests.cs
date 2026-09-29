@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Repository;
@@ -110,7 +112,7 @@ public sealed class InvoiceProjectTests
         }
     }
 
-    private sealed record Harness(SalesDbContext Db, InvoiceService Invoices, RecordingLedger Ledger)
+    private sealed record Harness(SalesDbContext Db, InvoiceRepository Invoices, RecordingLedger Ledger)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -127,7 +129,7 @@ public sealed class InvoiceProjectTests
             RecordingLedger ledger = new();
             NumberGenerator numbering = new(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            InvoiceService invoices = new(
+            InvoiceRepository invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, new RecordingInventory(), ledger,
                 new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing(),

@@ -1,3 +1,5 @@
+using Sales.Repository.Repositories;
+using Sales.Repository.Clients;
 using Sales.Repository;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
