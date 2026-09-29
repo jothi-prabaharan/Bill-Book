@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MaintenanceContract.Api.Services;
+using MaintenanceContract.Repository.Repositories;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -36,7 +37,7 @@ public sealed class InternalSeedController : ControllerBase
 
         var response = new SeedOrganizationResponse
         {
-            Seeded = await _services.GetRequiredService<MaintenanceContractSeeder>().SeedForOrganizationAsync(request.OrgId, ct),
+            Seeded = await _services.GetRequiredService<MaintenanceContractSeederRepository>().SeedForOrganizationAsync(request.OrgId, ct),
         };
 
         _log.LogInformation("Seeded MaintenanceContract for organization {OrgId}: {@Seeded}", request.OrgId, response.Seeded);

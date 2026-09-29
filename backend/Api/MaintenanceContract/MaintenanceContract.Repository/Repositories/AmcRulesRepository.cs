@@ -1,9 +1,9 @@
 using MaintenanceContract.Entity.Enums;
 
-namespace MaintenanceContract.Api.Services;
+namespace MaintenanceContract.Repository.Repositories;
 
 /// <summary>A contract's rules (S8, TK-68). Pure, so they are tested without a database.</summary>
-public static class AmcRules
+public static class AmcRulesRepository
 {
     /// <summary>The status a contract shows on <paramref name="today"/>: an Active one past its end date is Expired.</summary>
     public static ContractStatus Effective(ContractStatus stored, DateOnly endDate, DateOnly today) =>

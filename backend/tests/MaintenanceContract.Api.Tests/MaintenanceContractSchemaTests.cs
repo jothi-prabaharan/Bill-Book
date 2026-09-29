@@ -1,4 +1,5 @@
 using MaintenanceContract.Api.Services;
+using MaintenanceContract.Repository.Repositories;
 using MaintenanceContract.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class MaintenanceContractSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using MaintenanceContractDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new MaintenanceContractSeeder().SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new MaintenanceContractSeeder().SeedForOrganizationAsync(orgId, default);
+        await new MaintenanceContractSeederRepository().SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new MaintenanceContractSeederRepository().SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }

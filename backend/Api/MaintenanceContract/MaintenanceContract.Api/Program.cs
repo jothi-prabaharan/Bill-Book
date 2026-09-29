@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using MaintenanceContract.Api.Services;
+using MaintenanceContract.Repository.Repositories;
 using MaintenanceContract.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -66,8 +67,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddTransient<InternalKeyHandler>();
 
 // ---- Service registrations ----
-builder.Services.AddScoped<MaintenanceContractSeeder>();
-builder.Services.AddScoped<MaintenanceContractService>();
+builder.Services.AddScoped<MaintenanceContractSeederRepository>();
+builder.Services.AddScoped<MaintenanceContractRepository>();
 
 // The vendor (Master's contacts), the covered assets (Facility) and the work
 // orders a visit raises (WorkOrder).

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Contacts;
 using Shared.Kernel.School;
 
-namespace MaintenanceContract.Api.Services;
+namespace MaintenanceContract.Repository.Repositories;
 
 public enum AmcOutcome
 {
@@ -32,22 +32,22 @@ public sealed record AmcResult(AmcOutcome Outcome, long? Id = null, string? Deta
 /// order is raised through WorkOrder under <c>AMC:{visitId}</c>, which WorkOrder
 /// is idempotent on.
 /// </summary>
-public sealed class MaintenanceContractService
+public sealed class MaintenanceContractRepository
 {
     private readonly MaintenanceContractDbContext _db;
     private readonly IContactDirectory _contacts;
     private readonly IFacilityClient _facility;
     private readonly IWorkOrderClient _workOrders;
     private readonly TimeProvider _clock;
-    private readonly ILogger<MaintenanceContractService> _log;
+    private readonly ILogger<MaintenanceContractRepository> _log;
 
-    public MaintenanceContractService(
+    public MaintenanceContractRepository(
         MaintenanceContractDbContext db,
         IContactDirectory contacts,
         IFacilityClient facility,
         IWorkOrderClient workOrders,
         TimeProvider clock,
-        ILogger<MaintenanceContractService> log)
+        ILogger<MaintenanceContractRepository> log)
     {
         _db = db;
         _contacts = contacts;
@@ -116,12 +116,12 @@ public sealed class MaintenanceContractService
                 return AmcResult.Fail(AmcOutcome.NotFound);
             }
 
-            if (!AmcRules.TakesChanges(contract.ContractStatus) || AmcRules.Effective(contract.ContractStatus, contract.EndDate, Today) == ContractStatus.Expired)
+            if (!AmcRulesRepository.TakesChanges(contract.ContractStatus) || AmcRulesRepository.Effective(contract.ContractStatus, contract.EndDate, Today) == ContractStatus.Expired)
             {
                 return AmcResult.Fail(AmcOutcome.StateRule, "An expired or terminated contract takes no changes. Record a renewal as a new contract.");
             }
 
-            if (!AmcRules.TermsEditable(contract.ContractStatus) && TermsChanged(contract, request))
+            if (!AmcRulesRepository.TermsEditable(contract.ContractStatus) && TermsChanged(contract, request))
             {
                 return AmcResult.Fail(AmcOutcome.StateRule,
                     "An active contract's vendor, number, dates, value and cover are fixed. Change its covered assets, reminder or remarks only.");
@@ -221,7 +221,7 @@ public sealed class MaintenanceContractService
             return AmcResult.Fail(AmcOutcome.NotFound);
         }
 
-        if (!AmcRules.TakesChanges(contract.ContractStatus))
+        if (!AmcRulesRepository.TakesChanges(contract.ContractStatus))
         {
             return AmcResult.Fail(AmcOutcome.StateRule, "The contract has already ended.");
         }
@@ -245,7 +245,7 @@ public sealed class MaintenanceContractService
             return AmcResult.Fail(AmcOutcome.NotFound);
         }
 
-        if (!AmcRules.IsInForce(contract.ContractStatus, contract.StartDate, contract.EndDate, request.VisitDate))
+        if (!AmcRulesRepository.IsInForce(contract.ContractStatus, contract.StartDate, contract.EndDate, request.VisitDate))
         {
             return AmcResult.Fail(AmcOutcome.StateRule, "A visit is recorded against an active contract, within its dates.");
         }
@@ -314,7 +314,7 @@ public sealed class MaintenanceContractService
         List<AmcContract> due = (await _db.AmcContracts.AsNoTracking()
                 .Where(c => c.ContractStatus == ContractStatus.Active && c.RenewalReminderDays > 0 && c.EndDate >= on)
                 .ToListAsync(ct))
-            .Where(c => AmcRules.IsRenewalDue(c.ContractStatus, c.EndDate, c.RenewalReminderDays, on))
+            .Where(c => AmcRulesRepository.IsRenewalDue(c.ContractStatus, c.EndDate, c.RenewalReminderDays, on))
             .ToList();
         if (due.Count == 0)
         {
@@ -421,7 +421,7 @@ public sealed class MaintenanceContractService
             AmcCoverage = c.AmcCoverage,
             RenewalReminderDays = c.RenewalReminderDays,
             ReminderEmail = c.ReminderEmail,
-            ContractStatus = AmcRules.Effective(c.ContractStatus, c.EndDate, today),
+            ContractStatus = AmcRulesRepository.Effective(c.ContractStatus, c.EndDate, today),
             TerminationReason = c.TerminationReason,
             Remarks = c.Remarks,
             FacilityAssetIds = [.. assets[c.AmcContractId]],

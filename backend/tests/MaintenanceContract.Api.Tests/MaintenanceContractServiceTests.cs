@@ -1,4 +1,5 @@
 using MaintenanceContract.Api.Services;
+using MaintenanceContract.Repository.Repositories;
 using MaintenanceContract.Entity.Enums;
 using MaintenanceContract.Entity.Models;
 using MaintenanceContract.Entity.TableEntities;
@@ -77,8 +78,8 @@ public sealed class MaintenanceContractServiceTests
 
     public MaintenanceContractServiceTests(PostgresFixture postgres) => _postgres = postgres;
 
-    private static MaintenanceContractService Service(MaintenanceContractDbContext db, FakeWorkOrders workOrders, FixedClock clock) =>
-        new(db, new FakeContacts(), new FakeFacility(), workOrders, clock, NullLogger<MaintenanceContractService>.Instance);
+    private static MaintenanceContractRepository Service(MaintenanceContractDbContext db, FakeWorkOrders workOrders, FixedClock clock) =>
+        new(db, new FakeContacts(), new FakeFacility(), workOrders, clock, NullLogger<MaintenanceContractRepository>.Instance);
 
     private static FixedClock On(int year, int month, int day) => new(new DateTimeOffset(year, month, day, 9, 0, 0, TimeSpan.Zero));
 
@@ -102,7 +103,7 @@ public sealed class MaintenanceContractServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using MaintenanceContractDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
         var workOrders = new FakeWorkOrders();
-        MaintenanceContractService service = Service(db, workOrders, On(2026, 5, 1));
+        MaintenanceContractRepository service = Service(db, workOrders, On(2026, 5, 1));
 
         long id = (await service.SaveAsync(null, CoolAir(7, 8), default)).Id!.Value;
         Assert.Equal(AmcOutcome.Ok, (await service.ActivateAsync(id, default)).Outcome);
@@ -134,7 +135,7 @@ public sealed class MaintenanceContractServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using MaintenanceContractDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        MaintenanceContractService service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
+        MaintenanceContractRepository service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
 
         long first = (await service.SaveAsync(null, CoolAir(7), default)).Id!.Value;
         await service.ActivateAsync(first, default);
@@ -160,7 +161,7 @@ public sealed class MaintenanceContractServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using MaintenanceContractDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        MaintenanceContractService service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
+        MaintenanceContractRepository service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
 
         foreach (long vendor in new long[] { 51, 52, 99 })
         {
@@ -181,7 +182,7 @@ public sealed class MaintenanceContractServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using MaintenanceContractDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        MaintenanceContractService service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
+        MaintenanceContractRepository service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
         long id = (await service.SaveAsync(null, CoolAir(7), default)).Id!.Value;
         await service.ActivateAsync(id, default);
 
@@ -199,7 +200,7 @@ public sealed class MaintenanceContractServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using MaintenanceContractDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
         var workOrders = new FakeWorkOrders();
-        MaintenanceContractService service = Service(db, workOrders, On(2026, 5, 1));
+        MaintenanceContractRepository service = Service(db, workOrders, On(2026, 5, 1));
         long id = (await service.SaveAsync(null, CoolAir(7), default)).Id!.Value;
 
         var visit = new RecordVisitRequest { VisitDate = new DateOnly(2026, 6, 1) };
@@ -223,7 +224,7 @@ public sealed class MaintenanceContractServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using MaintenanceContractDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        MaintenanceContractService service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
+        MaintenanceContractRepository service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
         long id = (await service.SaveAsync(null, CoolAir(7), default)).Id!.Value;
         await service.ActivateAsync(id, default);
 
@@ -243,7 +244,7 @@ public sealed class MaintenanceContractServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using MaintenanceContractDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        MaintenanceContractService service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
+        MaintenanceContractRepository service = Service(db, new FakeWorkOrders(), On(2026, 5, 1));
         long id = (await service.SaveAsync(null, CoolAir(7), default)).Id!.Value;
         await service.ActivateAsync(id, default);
 

@@ -1,4 +1,5 @@
 using MaintenanceContract.Api.Services;
+using MaintenanceContract.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -34,6 +35,6 @@ public sealed class InternalMaintenanceContractsController : ControllerBase
             return BadRequest();
         }
 
-        return Ok(await _services.GetRequiredService<MaintenanceContractService>().RenewalsDueAsync(request.On, ct));
+        return Ok(await _services.GetRequiredService<MaintenanceContractRepository>().RenewalsDueAsync(request.On, ct));
     }
 }

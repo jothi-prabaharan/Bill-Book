@@ -1,4 +1,5 @@
 using MaintenanceContract.Api.Services;
+using MaintenanceContract.Repository.Repositories;
 using MaintenanceContract.Entity.Enums;
 using MaintenanceContract.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -20,9 +21,9 @@ namespace MaintenanceContract.Api.Controllers;
 [Route("api/amc")]
 public sealed class MaintenanceContractsController : ControllerBase
 {
-    private readonly MaintenanceContractService _amc;
+    private readonly MaintenanceContractRepository _amc;
 
-    public MaintenanceContractsController(MaintenanceContractService amc) => _amc = amc;
+    public MaintenanceContractsController(MaintenanceContractRepository amc) => _amc = amc;
 
     [HttpGet("contracts")]
     public async Task<IActionResult> List([FromQuery] ContractStatus? status, CancellationToken ct) => Ok(await _amc.ListAsync(status, ct));
