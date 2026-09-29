@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Models;
 
 namespace Student.Api.Controllers;
@@ -20,9 +21,9 @@ namespace Student.Api.Controllers;
 [Route("api/portal/school/children")]
 public sealed class PortalSchoolController : ControllerBase
 {
-    private readonly PortalService _portal;
+    private readonly PortalRepository _portal;
 
-    public PortalSchoolController(PortalService portal) => _portal = portal;
+    public PortalSchoolController(PortalRepository portal) => _portal = portal;
 
     private long ContactId => long.Parse(User.FindFirst(RequirePortalAccessAttribute.ContactClaim)!.Value);
 

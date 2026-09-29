@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Models;
 
 namespace Student.Api.Controllers;
@@ -11,7 +12,7 @@ namespace Student.Api.Controllers;
 /// </summary>
 internal static class StudentAnswers
 {
-    public static IActionResult Answer(this ControllerBase controller, StudentResult result) => result.Outcome switch
+    public static IActionResult Answer(this ControllerBase controller, StudentResultRepository result) => result.Outcome switch
     {
         StudentOutcome.Ok => controller.Ok(new { id = result.Id }),
         StudentOutcome.NotFound => controller.NotFound(),

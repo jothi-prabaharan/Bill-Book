@@ -1,3 +1,4 @@
+using Student.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Student.Repository;

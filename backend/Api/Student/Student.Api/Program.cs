@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -85,11 +86,11 @@ builder.Services.AddHttpClient<IContactDirectory, HttpContactDirectory>(client =
     .AddHttpMessageHandler<InternalKeyHandler>();
 
 // ---- Service registrations ----
-builder.Services.AddScoped<StudentSeeder>();
-builder.Services.AddScoped<AcademicService>();
-builder.Services.AddScoped<StudentService>();
-builder.Services.AddScoped<PortalService>();
-builder.Services.AddScoped<ExamService>();
+builder.Services.AddScoped<StudentSeederRepository>();
+builder.Services.AddScoped<AcademicRepository>();
+builder.Services.AddScoped<StudentRepository>();
+builder.Services.AddScoped<PortalRepository>();
+builder.Services.AddScoped<ExamRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

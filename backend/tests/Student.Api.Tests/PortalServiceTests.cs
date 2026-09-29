@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Enums;
 using Student.Entity.Models;
 using Student.Entity.TableEntities;
@@ -30,9 +31,9 @@ public sealed class PortalServiceTests
     {
         Guid orgId = Guid.NewGuid();
         StudentDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
-        await new StudentSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new StudentSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
-        var academic = new AcademicService(db);
+        var academic = new AcademicRepository(db);
         long year = (await academic.SaveYearAsync(null, new SaveAcademicYearRequest
         {
             Code = "2026-27", StartDate = new DateOnly(2026, 6, 1), EndDate = new DateOnly(2027, 3, 31), IsCurrent = true,
@@ -53,7 +54,7 @@ public sealed class PortalServiceTests
         db.Enrolments.Add(enrolment);
         await db.SaveChangesAsync();
 
-        var exams = new ExamService(db);
+        var exams = new ExamRepository(db);
         long exam = (await exams.SaveAsync(null, new SaveExamRequest
         {
             AcademicYearId = year, Name = "Term 1", StartDate = new DateOnly(2026, 9, 1), EndDate = new DateOnly(2026, 9, 10),
@@ -76,7 +77,7 @@ public sealed class PortalServiceTests
         School s = await NewSchoolAsync();
         await using StudentDbContext _ = s.Db;
 
-        List<PortalChildView> children = await new PortalService(s.Db).ChildrenAsync(Mother, default);
+        List<PortalChildView> children = await new PortalRepository(s.Db).ChildrenAsync(Mother, default);
 
         Assert.Equal(["Arun Raman", "Meera Raman"], children.Select(c => c.StudentName));
         PortalChildView meera = children.Single(c => c.StudentId == s.Meera);
@@ -92,7 +93,7 @@ public sealed class PortalServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         School s = await NewSchoolAsync();
         await using StudentDbContext _ = s.Db;
-        var portal = new PortalService(s.Db);
+        var portal = new PortalRepository(s.Db);
 
         Assert.Empty(await portal.ChildrenAsync(Uncle, default));
         Assert.Empty(await portal.ChildrenAsync(Stranger, default));
@@ -106,11 +107,11 @@ public sealed class PortalServiceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         School s = await NewSchoolAsync();
         await using StudentDbContext _ = s.Db;
-        var portal = new PortalService(s.Db);
+        var portal = new PortalRepository(s.Db);
 
         Assert.Empty((await portal.MarksAsync(Mother, s.Meera, default))!);
 
-        await new ExamService(s.Db).MoveAsync(s.Exam, ExamStatus.Published, default);
+        await new ExamRepository(s.Db).MoveAsync(s.Exam, ExamStatus.Published, default);
         PortalExamView exam = Assert.Single((await portal.MarksAsync(Mother, s.Meera, default))!);
 
         Assert.Equal("Term 1", exam.ExamName);

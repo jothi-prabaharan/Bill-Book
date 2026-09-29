@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Enums;
 using Student.Entity.Models;
 
@@ -19,9 +20,9 @@ namespace Student.Api.Controllers;
 [Route("api/sis")]
 public sealed class StudentsController : ControllerBase
 {
-    private readonly StudentService _students;
+    private readonly StudentRepository _students;
 
-    public StudentsController(StudentService students) => _students = students;
+    public StudentsController(StudentRepository students) => _students = students;
 
     [HttpGet("students")]
     public async Task<IActionResult> List(

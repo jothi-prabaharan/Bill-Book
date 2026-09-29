@@ -1,4 +1,5 @@
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class StudentSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using StudentDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new StudentSeeder(db).SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new StudentSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new StudentSeederRepository(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new StudentSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }

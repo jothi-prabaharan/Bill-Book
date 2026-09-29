@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Models;
 
 namespace Student.Api.Controllers;
@@ -18,9 +19,9 @@ namespace Student.Api.Controllers;
 [Route("api/sis")]
 public sealed class AcademicController : ControllerBase
 {
-    private readonly AcademicService _academic;
+    private readonly AcademicRepository _academic;
 
-    public AcademicController(AcademicService academic) => _academic = academic;
+    public AcademicController(AcademicRepository academic) => _academic = academic;
 
     [HttpGet("years")]
     public async Task<IActionResult> Years(CancellationToken ct) => Ok(await _academic.YearsAsync(ct));

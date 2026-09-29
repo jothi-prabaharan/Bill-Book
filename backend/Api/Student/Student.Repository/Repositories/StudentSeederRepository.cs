@@ -2,17 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using Student.Repository;
 using Student.Repository.SeedData;
 
-namespace Student.Api.Services;
+namespace Student.Repository.Repositories;
 
 /// <summary>
 /// A branch's classes LKG–XII and its ADM series (S1, TK-61). Re-runnable:
 /// each part is added only when the branch has none, so a retry adds nothing twice.
 /// </summary>
-public sealed class StudentSeeder
+public sealed class StudentSeederRepository
 {
     private readonly StudentDbContext _db;
 
-    public StudentSeeder(StudentDbContext db) => _db = db;
+    public StudentSeederRepository(StudentDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {

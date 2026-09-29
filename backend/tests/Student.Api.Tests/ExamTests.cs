@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Enums;
 using Student.Entity.Models;
 using Student.Repository;
@@ -20,19 +21,19 @@ public sealed class ExamRuleTests
     [InlineData(ExamStatus.Locked, ExamStatus.MarksOpen, false)]
     [InlineData(ExamStatus.Locked, ExamStatus.Published, false)]
     public void An_exam_moves_only_forward_except_to_correct_a_published_one(ExamStatus from, ExamStatus to, bool allowed) =>
-        Assert.Equal(allowed, ExamService.CanMove(from, to));
+        Assert.Equal(allowed, ExamRepository.CanMove(from, to));
 
     [Fact]
     public void Subjects_are_needed_once_per_class_with_pass_within_max()
     {
-        Assert.NotNull(ExamService.CheckSubjects([]));
-        Assert.NotNull(ExamService.CheckSubjects(
+        Assert.NotNull(ExamRepository.CheckSubjects([]));
+        Assert.NotNull(ExamRepository.CheckSubjects(
         [
             new() { SubjectId = 1, SchoolClassId = 1, MaxMarks = 100, PassMarks = 35 },
             new() { SubjectId = 1, SchoolClassId = 1, MaxMarks = 50, PassMarks = 20 },
         ]));
-        Assert.NotNull(ExamService.CheckSubjects([new() { SubjectId = 1, SchoolClassId = 1, MaxMarks = 50, PassMarks = 60 }]));
-        Assert.Null(ExamService.CheckSubjects(
+        Assert.NotNull(ExamRepository.CheckSubjects([new() { SubjectId = 1, SchoolClassId = 1, MaxMarks = 50, PassMarks = 60 }]));
+        Assert.Null(ExamRepository.CheckSubjects(
         [
             new() { SubjectId = 1, SchoolClassId = 1, MaxMarks = 100, PassMarks = 35 },
             new() { SubjectId = 1, SchoolClassId = 2, MaxMarks = 100, PassMarks = 35 },
@@ -47,7 +48,7 @@ public sealed class ExamRuleTests
     [InlineData(100.0, false, true)]
     [InlineData(100.5, false, false)]
     public void A_mark_is_absent_or_between_zero_and_the_maximum(double? marks, bool absent, bool valid) =>
-        Assert.Equal(valid, ExamService.CheckMark(new MarkRow { EnrolmentId = 1, Marks = (decimal?)marks, IsAbsent = absent }, 100m) is null);
+        Assert.Equal(valid, ExamRepository.CheckMark(new MarkRow { EnrolmentId = 1, Marks = (decimal?)marks, IsAbsent = absent }, 100m) is null);
 }
 
 /// <summary>Marks against a real database: only while open, only for the class's students.</summary>
@@ -65,9 +66,9 @@ public sealed class ExamServiceTests
 
         Guid orgId = Guid.NewGuid();
         await using StudentDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
-        await new StudentSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new StudentSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
-        var academic = new AcademicService(db);
+        var academic = new AcademicRepository(db);
         long year = (await academic.SaveYearAsync(null, new SaveAcademicYearRequest
         {
             Code = "2026-27", StartDate = new DateOnly(2026, 6, 1), EndDate = new DateOnly(2027, 3, 31), IsCurrent = true,
@@ -87,7 +88,7 @@ public sealed class ExamServiceTests
         db.Enrolments.Add(enrolment);
         await db.SaveChangesAsync();
 
-        var exams = new ExamService(db);
+        var exams = new ExamRepository(db);
         long exam = (await exams.SaveAsync(null, new SaveExamRequest
         {
             AcademicYearId = year, Name = "Term 1", StartDate = new DateOnly(2026, 9, 1), EndDate = new DateOnly(2026, 9, 10),

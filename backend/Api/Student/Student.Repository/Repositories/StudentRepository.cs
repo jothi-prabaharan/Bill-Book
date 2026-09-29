@@ -7,7 +7,7 @@ using Student.Entity.TableEntities;
 using Student.Repository;
 using Student.Repository.SeedData;
 
-namespace Student.Api.Services;
+namespace Student.Repository.Repositories;
 
 /// <summary>
 /// Students, their guardians and their enrolments (S1, TK-61).
@@ -22,16 +22,16 @@ namespace Student.Api.Services;
 /// that year, never past its capacity, never into a closed year.</item>
 /// </list>
 /// </summary>
-public sealed class StudentService
+public sealed class StudentRepository
 {
     public const int MaxGuardians = 2;
 
     private readonly StudentDbContext _db;
     private readonly INumberGenerator _numbers;
     private readonly IContactDirectory _contacts;
-    private readonly ILogger<StudentService> _log;
+    private readonly ILogger<StudentRepository> _log;
 
-    public StudentService(StudentDbContext db, INumberGenerator numbers, IContactDirectory contacts, ILogger<StudentService> log)
+    public StudentRepository(StudentDbContext db, INumberGenerator numbers, IContactDirectory contacts, ILogger<StudentRepository> log)
     {
         _db = db;
         _numbers = numbers;
@@ -145,20 +145,20 @@ public sealed class StudentService
     /// enrolment. With <paramref name="sourceApplicationId"/> it is idempotent:
     /// an application admitted twice returns the student the first admit made.
     /// </summary>
-    public async Task<StudentResult> CreateAsync(SaveStudentRequest request, CancellationToken ct, long? sourceApplicationId = null)
+    public async Task<StudentResultRepository> CreateAsync(SaveStudentRequest request, CancellationToken ct, long? sourceApplicationId = null)
     {
         if (sourceApplicationId is long applicationId
             && await _db.Students.Where(s => s.SourceApplicationId == applicationId).Select(s => (long?)s.StudentId).FirstOrDefaultAsync(ct) is long already)
         {
-            return StudentResult.Ok(already);
+            return StudentResultRepository.Ok(already);
         }
 
         if (CheckStudent(request) is string problem)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, problem);
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, problem);
         }
 
-        StudentResult? guardians = await CheckGuardiansAsync(request.Guardians, ct);
+        StudentResultRepository? guardians = await CheckGuardiansAsync(request.Guardians, ct);
         if (guardians is not null)
         {
             return guardians;
@@ -177,7 +177,7 @@ public sealed class StudentService
         if (request.Enrol is EnrolRequest enrol)
         {
             enrol.StudentId = student.StudentId;
-            StudentResult enrolled = await EnrolAsync(enrol, ct);
+            StudentResultRepository enrolled = await EnrolAsync(enrol, ct);
             if (enrolled.Outcome != StudentOutcome.Ok)
             {
                 // The request's transaction rolls back on a refusal, taking the
@@ -186,23 +186,23 @@ public sealed class StudentService
             }
         }
 
-        return StudentResult.Ok(student.StudentId);
+        return StudentResultRepository.Ok(student.StudentId);
     }
 
-    public async Task<StudentResult> UpdateAsync(long id, SaveStudentRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> UpdateAsync(long id, SaveStudentRequest request, CancellationToken ct)
     {
         StudentRecord? student = await _db.Students.Include(s => s.Guardians).FirstOrDefaultAsync(s => s.StudentId == id, ct);
         if (student is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         if (CheckStudent(request) is string problem)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, problem);
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, problem);
         }
 
-        StudentResult? guardians = await CheckGuardiansAsync(request.Guardians, ct);
+        StudentResultRepository? guardians = await CheckGuardiansAsync(request.Guardians, ct);
         if (guardians is not null)
         {
             return guardians;
@@ -214,53 +214,53 @@ public sealed class StudentService
 
         Apply(student, request);
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(student.StudentId);
+        return StudentResultRepository.Ok(student.StudentId);
     }
 
-    public async Task<StudentResult> EnrolAsync(EnrolRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> EnrolAsync(EnrolRequest request, CancellationToken ct)
     {
         StudentRecord? student = await _db.Students.AsNoTracking().FirstOrDefaultAsync(s => s.StudentId == request.StudentId, ct);
         if (student is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         if (student.StudentStatus != StudentStatus.Active)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, "Only an active student can be enrolled.");
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, "Only an active student can be enrolled.");
         }
 
         AcademicYear? year = await _db.AcademicYears.AsNoTracking().FirstOrDefaultAsync(y => y.AcademicYearId == request.AcademicYearId, ct);
         Section? section = await _db.Sections.AsNoTracking().FirstOrDefaultAsync(s => s.SectionId == request.SectionId, ct);
         if (year is null || section is null)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, "Choose a school year and a section from this branch.");
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, "Choose a school year and a section from this branch.");
         }
 
         if (section.AcademicYearId != year.AcademicYearId)
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "The section belongs to another school year.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "The section belongs to another school year.");
         }
 
         if (year.IsClosed)
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "That school year is closed.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "That school year is closed.");
         }
 
         if (await _db.Enrolments.AnyAsync(e => e.StudentId == request.StudentId && e.AcademicYearId == request.AcademicYearId, ct))
         {
-            return StudentResult.Fail(StudentOutcome.Duplicate, "The student is already enrolled in that school year.");
+            return StudentResultRepository.Fail(StudentOutcome.Duplicate, "The student is already enrolled in that school year.");
         }
 
         int enrolled = await _db.Enrolments.CountAsync(e => e.SectionId == section.SectionId && e.EnrolmentStatus == EnrolmentStatus.Active, ct);
         if (IsFull(section.Capacity, enrolled))
         {
-            return StudentResult.Fail(StudentOutcome.SectionFull, "The section is full.");
+            return StudentResultRepository.Fail(StudentOutcome.SectionFull, "The section is full.");
         }
 
         if (request.RollNo is int roll && await _db.Enrolments.AnyAsync(e => e.SectionId == section.SectionId && e.RollNo == roll, ct))
         {
-            return StudentResult.Fail(StudentOutcome.Duplicate, "Another student in the section has that roll number.");
+            return StudentResultRepository.Fail(StudentOutcome.Duplicate, "Another student in the section has that roll number.");
         }
 
         var enrolment = new Enrolment
@@ -272,7 +272,7 @@ public sealed class StudentService
         };
         _db.Enrolments.Add(enrolment);
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(enrolment.EnrolmentId);
+        return StudentResultRepository.Ok(enrolment.EnrolmentId);
     }
 
     /// <summary>Who is in a section, by roll number: the attendance register's and the fee run's list.</summary>
@@ -346,7 +346,7 @@ public sealed class StudentService
 
     // ---- Helpers ---------------------------------------------------------------
 
-    private async Task<StudentResult?> CheckGuardiansAsync(IReadOnlyCollection<StudentGuardianModel> guardians, CancellationToken ct)
+    private async Task<StudentResultRepository?> CheckGuardiansAsync(IReadOnlyCollection<StudentGuardianModel> guardians, CancellationToken ct)
     {
         IReadOnlyDictionary<long, ContactSummary> found;
         try
@@ -356,12 +356,12 @@ public sealed class StudentService
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             _log.LogError(ex, "Guardian contacts could not be checked.");
-            return StudentResult.Fail(StudentOutcome.Unavailable);
+            return StudentResultRepository.Fail(StudentOutcome.Unavailable);
         }
 
         return guardians.All(g => found.TryGetValue(g.ContactId, out ContactSummary? c) && c.IsGuardian && c.IsActive)
             ? null
-            : StudentResult.Fail(StudentOutcome.GuardianRule, "Each guardian must be an active contact of this branch marked as a guardian.");
+            : StudentResultRepository.Fail(StudentOutcome.GuardianRule, "Each guardian must be an active contact of this branch marked as a guardian.");
     }
 
     private async Task<Dictionary<long, ContactSummary>> NamesAsync(IEnumerable<long> ids, CancellationToken ct)

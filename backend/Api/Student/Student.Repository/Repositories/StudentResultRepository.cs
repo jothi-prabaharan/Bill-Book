@@ -1,4 +1,5 @@
-namespace Student.Api.Services;
+
+namespace Student.Repository.Repositories;
 
 /// <summary>How a sis write ended. The controller turns each into a status and one curated sentence.</summary>
 public enum StudentOutcome
@@ -25,9 +26,9 @@ public enum StudentOutcome
 }
 
 /// <param name="Detail">A sentence for the caller that never names a table, a column or a figure.</param>
-public sealed record StudentResult(StudentOutcome Outcome, long? Id = null, string? Detail = null)
+public sealed record StudentResultRepository(StudentOutcome Outcome, long? Id = null, string? Detail = null)
 {
-    public static StudentResult Ok(long id) => new(StudentOutcome.Ok, id);
+    public static StudentResultRepository Ok(long id) => new(StudentOutcome.Ok, id);
 
-    public static StudentResult Fail(StudentOutcome outcome, string? detail = null) => new(outcome, null, detail);
+    public static StudentResultRepository Fail(StudentOutcome outcome, string? detail = null) => new(outcome, null, detail);
 }

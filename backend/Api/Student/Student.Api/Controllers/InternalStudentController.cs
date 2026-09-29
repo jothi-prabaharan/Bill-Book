@@ -5,6 +5,7 @@ using Shared.Kernel.Internal;
 using Shared.Kernel.School;
 using Shared.Kernel.Tenancy;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Enums;
 using Student.Entity.Models;
 using Student.Repository;
@@ -72,8 +73,8 @@ public sealed class InternalStudentController : ControllerBase
             return UnprocessableEntity(new StudentMessage("The gender or the guardian's relationship is not one this system knows."));
         }
 
-        var students = _services.GetRequiredService<StudentService>();
-        StudentResult result = await students.CreateAsync(new SaveStudentRequest
+        var students = _services.GetRequiredService<StudentRepository>();
+        StudentResultRepository result = await students.CreateAsync(new SaveStudentRequest
         {
             FirstName = request.FirstName,
             LastName = request.LastName,
@@ -118,7 +119,7 @@ public sealed class InternalStudentController : ControllerBase
             return Ok(new SectionRollResponse { SectionExists = false });
         }
 
-        List<RollEntry> roll = await _services.GetRequiredService<StudentService>().RollAsync(request.SectionId, ct);
+        List<RollEntry> roll = await _services.GetRequiredService<StudentRepository>().RollAsync(request.SectionId, ct);
         return Ok(new SectionRollResponse
         {
             SectionExists = true,
@@ -173,7 +174,7 @@ public sealed class InternalStudentController : ControllerBase
         {
             EnrolmentId = r.EnrolmentId,
             StudentId = r.StudentId,
-            StudentName = StudentService.FullName(r.FirstName, r.LastName),
+            StudentName = StudentRepository.FullName(r.FirstName, r.LastName),
             AdmissionNo = r.AdmissionNo,
             AcademicYearId = r.AcademicYearId,
             SectionId = r.SectionId,

@@ -3,18 +3,18 @@ using Student.Entity.Models;
 using Student.Entity.TableEntities;
 using Student.Repository;
 
-namespace Student.Api.Services;
+namespace Student.Repository.Repositories;
 
 /// <summary>
 /// Academic years, classes, sections and subjects (S1, TK-61). Codes are unique
 /// per branch; one year is current; years in a branch never overlap; a section
 /// belongs to one year and one class.
 /// </summary>
-public sealed class AcademicService
+public sealed class AcademicRepository
 {
     private readonly StudentDbContext _db;
 
-    public AcademicService(StudentDbContext db) => _db = db;
+    public AcademicRepository(StudentDbContext db) => _db = db;
 
     // ---- Years ---------------------------------------------------------------
 
@@ -27,17 +27,17 @@ public sealed class AcademicService
             })
             .ToListAsync(ct);
 
-    public async Task<StudentResult> SaveYearAsync(long? id, SaveAcademicYearRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> SaveYearAsync(long? id, SaveAcademicYearRequest request, CancellationToken ct)
     {
         if (request.EndDate <= request.StartDate)
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "A school year must end after it starts.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "A school year must end after it starts.");
         }
 
         string code = request.Code.Trim();
         if (await _db.AcademicYears.AnyAsync(y => y.AcademicYearId != (id ?? 0) && y.Code == code, ct))
         {
-            return StudentResult.Fail(StudentOutcome.Duplicate);
+            return StudentResultRepository.Fail(StudentOutcome.Duplicate);
         }
 
         List<(DateOnly Start, DateOnly End)> others = await _db.AcademicYears
@@ -46,7 +46,7 @@ public sealed class AcademicService
             .ToListAsync(ct);
         if (Overlaps(request.StartDate, request.EndDate, others))
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "School years in a branch cannot overlap.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "School years in a branch cannot overlap.");
         }
 
         AcademicYear? year = id is long existing
@@ -54,12 +54,12 @@ public sealed class AcademicService
             : new AcademicYear();
         if (year is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         if (request.IsCurrent && request.IsClosed)
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "The current school year cannot be closed.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "The current school year cannot be closed.");
         }
 
         // Making this year current makes every other one not current, in the
@@ -83,7 +83,7 @@ public sealed class AcademicService
         }
 
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(year.AcademicYearId);
+        return StudentResultRepository.Ok(year.AcademicYearId);
     }
 
     /// <summary>Whether a date range meets any other. Inclusive at both ends. Public for tests.</summary>
@@ -97,12 +97,12 @@ public sealed class AcademicService
             .Select(c => new SchoolClassView { SchoolClassId = c.SchoolClassId, Code = c.Code, Name = c.Name, SortOrder = c.SortOrder, IsActive = c.IsActive })
             .ToListAsync(ct);
 
-    public async Task<StudentResult> SaveClassAsync(long? id, SaveSchoolClassRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> SaveClassAsync(long? id, SaveSchoolClassRequest request, CancellationToken ct)
     {
         string code = request.Code.Trim();
         if (await _db.SchoolClasses.AnyAsync(c => c.SchoolClassId != (id ?? 0) && c.Code == code, ct))
         {
-            return StudentResult.Fail(StudentOutcome.Duplicate);
+            return StudentResultRepository.Fail(StudentOutcome.Duplicate);
         }
 
         SchoolClass? row = id is long existing
@@ -110,7 +110,7 @@ public sealed class AcademicService
             : new SchoolClass();
         if (row is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         row.Code = code;
@@ -123,7 +123,7 @@ public sealed class AcademicService
         }
 
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(row.SchoolClassId);
+        return StudentResultRepository.Ok(row.SchoolClassId);
     }
 
     // ---- Sections ------------------------------------------------------------
@@ -148,24 +148,24 @@ public sealed class AcademicService
              RoomSpaceId = s.RoomSpaceId,
          }).ToListAsync(ct);
 
-    public async Task<StudentResult> SaveSectionAsync(long? id, SaveSectionRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> SaveSectionAsync(long? id, SaveSectionRequest request, CancellationToken ct)
     {
         AcademicYear? year = await _db.AcademicYears.AsNoTracking().FirstOrDefaultAsync(y => y.AcademicYearId == request.AcademicYearId, ct);
         if (year is null || !await _db.SchoolClasses.AnyAsync(c => c.SchoolClassId == request.SchoolClassId, ct))
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, "Choose a school year and a class from this branch.");
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, "Choose a school year and a class from this branch.");
         }
 
         if (year.IsClosed)
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "That school year is closed.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "That school year is closed.");
         }
 
         string name = request.Name.Trim();
         if (await _db.Sections.AnyAsync(s => s.SectionId != (id ?? 0) && s.AcademicYearId == request.AcademicYearId
             && s.SchoolClassId == request.SchoolClassId && s.Name == name, ct))
         {
-            return StudentResult.Fail(StudentOutcome.Duplicate);
+            return StudentResultRepository.Fail(StudentOutcome.Duplicate);
         }
 
         Section? row = id is long existing
@@ -173,7 +173,7 @@ public sealed class AcademicService
             : new Section();
         if (row is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         // A section with students keeps its year and class; moving it would
@@ -181,13 +181,13 @@ public sealed class AcademicService
         if (id is not null && (row.AcademicYearId != request.AcademicYearId || row.SchoolClassId != request.SchoolClassId)
             && await _db.Enrolments.AnyAsync(e => e.SectionId == row.SectionId, ct))
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "A section with students cannot move to another year or class.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "A section with students cannot move to another year or class.");
         }
 
         if (request.Capacity is int capacity
             && await _db.Enrolments.CountAsync(e => e.SectionId == row.SectionId && e.EnrolmentStatus == Entity.Enums.EnrolmentStatus.Active, ct) > capacity)
         {
-            return StudentResult.Fail(StudentOutcome.SectionFull, "The section already has more students than that capacity.");
+            return StudentResultRepository.Fail(StudentOutcome.SectionFull, "The section already has more students than that capacity.");
         }
 
         row.AcademicYearId = request.AcademicYearId;
@@ -202,7 +202,7 @@ public sealed class AcademicService
         }
 
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(row.SectionId);
+        return StudentResultRepository.Ok(row.SectionId);
     }
 
     // ---- Subjects ------------------------------------------------------------
@@ -212,12 +212,12 @@ public sealed class AcademicService
             .Select(s => new SubjectView { SubjectId = s.SubjectId, Code = s.Code, Name = s.Name, SubjectKind = s.SubjectKind, IsActive = s.IsActive })
             .ToListAsync(ct);
 
-    public async Task<StudentResult> SaveSubjectAsync(long? id, SaveSubjectRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> SaveSubjectAsync(long? id, SaveSubjectRequest request, CancellationToken ct)
     {
         string code = request.Code.Trim();
         if (await _db.Subjects.AnyAsync(s => s.SubjectId != (id ?? 0) && s.Code == code, ct))
         {
-            return StudentResult.Fail(StudentOutcome.Duplicate);
+            return StudentResultRepository.Fail(StudentOutcome.Duplicate);
         }
 
         Subject? row = id is long existing
@@ -225,7 +225,7 @@ public sealed class AcademicService
             : new Subject();
         if (row is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         row.Code = code;
@@ -238,6 +238,6 @@ public sealed class AcademicService
         }
 
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(row.SubjectId);
+        return StudentResultRepository.Ok(row.SubjectId);
     }
 }

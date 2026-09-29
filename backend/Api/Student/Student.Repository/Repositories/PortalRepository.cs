@@ -3,7 +3,7 @@ using Student.Entity.Enums;
 using Student.Entity.Models;
 using Student.Repository;
 
-namespace Student.Api.Services;
+namespace Student.Repository.Repositories;
 
 /// <summary>
 /// What a guardian sees of their children in the parent portal (S9, TK-69).
@@ -11,11 +11,11 @@ namespace Student.Api.Services;
 /// portal access; anything else answers as not found. Marks show only for
 /// published or locked exams, never while teachers are still entering them.
 /// </summary>
-public sealed class PortalService
+public sealed class PortalRepository
 {
     private readonly StudentDbContext _db;
 
-    public PortalService(StudentDbContext db) => _db = db;
+    public PortalRepository(StudentDbContext db) => _db = db;
 
     public static readonly ExamStatus[] Visible = [ExamStatus.Published, ExamStatus.Locked];
 
@@ -44,7 +44,7 @@ public sealed class PortalService
         return [.. students.Select(s => new PortalChildView
         {
             StudentId = s.StudentId,
-            StudentName = StudentService.FullName(s.FirstName, s.LastName),
+            StudentName = StudentRepository.FullName(s.FirstName, s.LastName),
             AdmissionNo = s.AdmissionNo,
             ClassName = latest.GetValueOrDefault(s.StudentId)?.ClassName,
             SectionName = latest.GetValueOrDefault(s.StudentId)?.SectionName,

@@ -4,7 +4,7 @@ using Student.Entity.Models;
 using Student.Entity.TableEntities;
 using Student.Repository;
 
-namespace Student.Api.Services;
+namespace Student.Repository.Repositories;
 
 /// <summary>
 /// Exams, their subjects per class, and marks (S1, TK-61).
@@ -13,11 +13,11 @@ namespace Student.Api.Services;
 /// only while MarksOpen; Published is what the parent portal shows; Locked is
 /// final. A published exam may be reopened for a correction, a locked one never.
 /// </summary>
-public sealed class ExamService
+public sealed class ExamRepository
 {
     private readonly StudentDbContext _db;
 
-    public ExamService(StudentDbContext db) => _db = db;
+    public ExamRepository(StudentDbContext db) => _db = db;
 
     public async Task<List<ExamView>> ListAsync(long? academicYearId, CancellationToken ct)
     {
@@ -29,27 +29,27 @@ public sealed class ExamService
         return [.. exams.Select(View)];
     }
 
-    public async Task<StudentResult> SaveAsync(long? id, SaveExamRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> SaveAsync(long? id, SaveExamRequest request, CancellationToken ct)
     {
         if (request.EndDate < request.StartDate)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, "An exam must end on or after the day it starts.");
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, "An exam must end on or after the day it starts.");
         }
 
         if (CheckSubjects(request.Subjects) is string problem)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, problem);
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, problem);
         }
 
         AcademicYear? year = await _db.AcademicYears.AsNoTracking().FirstOrDefaultAsync(y => y.AcademicYearId == request.AcademicYearId, ct);
         if (year is null)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, "Choose a school year from this branch.");
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, "Choose a school year from this branch.");
         }
 
         if (year.IsClosed)
         {
-            return StudentResult.Fail(StudentOutcome.YearRule, "That school year is closed.");
+            return StudentResultRepository.Fail(StudentOutcome.YearRule, "That school year is closed.");
         }
 
         HashSet<long> subjectIds = [.. request.Subjects.Select(s => s.SubjectId)];
@@ -57,7 +57,7 @@ public sealed class ExamService
         if (await _db.Subjects.CountAsync(s => subjectIds.Contains(s.SubjectId), ct) != subjectIds.Count
             || await _db.SchoolClasses.CountAsync(c => classIds.Contains(c.SchoolClassId), ct) != classIds.Count)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, "Choose subjects and classes from this branch.");
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, "Choose subjects and classes from this branch.");
         }
 
         Exam? exam = id is long existing
@@ -65,13 +65,13 @@ public sealed class ExamService
             : new Exam();
         if (exam is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         // The subjects are the exam's structure: fixed once marks can be entered.
         if (id is not null && exam.ExamStatus != ExamStatus.Planned)
         {
-            return StudentResult.Fail(StudentOutcome.ExamState, "An exam can be changed only while it is planned.");
+            return StudentResultRepository.Fail(StudentOutcome.ExamState, "An exam can be changed only while it is planned.");
         }
 
         exam.AcademicYearId = request.AcademicYearId;
@@ -96,25 +96,25 @@ public sealed class ExamService
         }
 
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(exam.ExamId);
+        return StudentResultRepository.Ok(exam.ExamId);
     }
 
-    public async Task<StudentResult> MoveAsync(long id, ExamStatus to, CancellationToken ct)
+    public async Task<StudentResultRepository> MoveAsync(long id, ExamStatus to, CancellationToken ct)
     {
         Exam? exam = await _db.Exams.FirstOrDefaultAsync(e => e.ExamId == id, ct);
         if (exam is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         if (!CanMove(exam.ExamStatus, to))
         {
-            return StudentResult.Fail(StudentOutcome.ExamState, $"An exam that is {Words(exam.ExamStatus)} cannot be made {Words(to)}.");
+            return StudentResultRepository.Fail(StudentOutcome.ExamState, $"An exam that is {Words(exam.ExamStatus)} cannot be made {Words(to)}.");
         }
 
         exam.ExamStatus = to;
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(exam.ExamId);
+        return StudentResultRepository.Ok(exam.ExamId);
     }
 
     /// <summary>The marks sheet for one exam subject and one section: every student on the roll, with marks where entered.</summary>
@@ -138,29 +138,29 @@ public sealed class ExamService
 
         return [.. rows.Select(r => new MarkRow
         {
-            EnrolmentId = r.EnrolmentId, RollNo = r.RollNo, StudentName = StudentService.FullName(r.FirstName, r.LastName),
+            EnrolmentId = r.EnrolmentId, RollNo = r.RollNo, StudentName = StudentRepository.FullName(r.FirstName, r.LastName),
             Marks = r.Marks, IsAbsent = r.IsAbsent,
         })];
     }
 
-    public async Task<StudentResult> SaveMarksAsync(long examId, SaveMarksRequest request, CancellationToken ct)
+    public async Task<StudentResultRepository> SaveMarksAsync(long examId, SaveMarksRequest request, CancellationToken ct)
     {
         Exam? exam = await _db.Exams.AsNoTracking().FirstOrDefaultAsync(e => e.ExamId == examId, ct);
         ExamSubject? subject = await _db.ExamSubjects.AsNoTracking()
             .FirstOrDefaultAsync(s => s.ExamSubjectId == request.ExamSubjectId && s.ExamId == examId, ct);
         if (exam is null || subject is null)
         {
-            return StudentResult.Fail(StudentOutcome.NotFound);
+            return StudentResultRepository.Fail(StudentOutcome.NotFound);
         }
 
         if (exam.ExamStatus != ExamStatus.MarksOpen)
         {
-            return StudentResult.Fail(StudentOutcome.ExamState, "Marks can be entered only while the exam is open for marks.");
+            return StudentResultRepository.Fail(StudentOutcome.ExamState, "Marks can be entered only while the exam is open for marks.");
         }
 
         if (request.Marks.FirstOrDefault(m => CheckMark(m, subject.MaxMarks) is not null) is MarkRow bad)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, CheckMark(bad, subject.MaxMarks));
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, CheckMark(bad, subject.MaxMarks));
         }
 
         // Every student marked must be enrolled in that class for the exam's year.
@@ -174,7 +174,7 @@ public sealed class ExamService
             select en.EnrolmentId).CountAsync(ct);
         if (eligible != enrolmentIds.Count)
         {
-            return StudentResult.Fail(StudentOutcome.Invalid, "Marks can be entered only for students of that class in the exam's year.");
+            return StudentResultRepository.Fail(StudentOutcome.Invalid, "Marks can be entered only for students of that class in the exam's year.");
         }
 
         Dictionary<long, ExamMark> existing = await _db.ExamMarks
@@ -194,7 +194,7 @@ public sealed class ExamService
         }
 
         await _db.SaveChangesAsync(ct);
-        return StudentResult.Ok(exam.ExamId);
+        return StudentResultRepository.Ok(exam.ExamId);
     }
 
     // ---- Rules, pure and public for tests -----------------------------------

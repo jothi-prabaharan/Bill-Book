@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Enums;
 using Student.Entity.Models;
 
@@ -19,9 +20,9 @@ namespace Student.Api.Controllers;
 [Route("api/sis/exams")]
 public sealed class ExamsController : ControllerBase
 {
-    private readonly ExamService _exams;
+    private readonly ExamRepository _exams;
 
-    public ExamsController(ExamService exams) => _exams = exams;
+    public ExamsController(ExamRepository exams) => _exams = exams;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] long? academicYearId, CancellationToken ct) =>

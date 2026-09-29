@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Shared.Kernel.Contacts;
 using Shared.Kernel.Numbering;
 using Student.Api.Services;
+using Student.Repository.Repositories;
 using Student.Entity.Enums;
 using Student.Entity.Models;
 using Student.Repository;
@@ -68,9 +69,9 @@ public sealed class StudentServiceTests
     {
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         StudentDbContext db = _postgres.CreateContext(customerId, orgId);
-        await new StudentSeeder(db).SeedForOrganizationAsync(orgId, default);
+        await new StudentSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
-        var academic = new AcademicService(db);
+        var academic = new AcademicRepository(db);
         long year = (await academic.SaveYearAsync(null, new SaveAcademicYearRequest
         {
             Code = "2026-27", StartDate = new DateOnly(2026, 6, 1), EndDate = new DateOnly(2027, 3, 31), IsCurrent = true,
@@ -84,8 +85,8 @@ public sealed class StudentServiceTests
         return new Branch(db, year, section, new FakeContacts().Guardian(501, "Lakshmi Raman").Guardian(502, "Raman K"));
     }
 
-    private static StudentService Service(Branch b) =>
-        new(b.Db, new NumberGenerator(b.Db, Options.Create(new NumberingOptions()), new AprilYear()), b.Contacts, NullLogger<StudentService>.Instance);
+    private static StudentRepository Service(Branch b) =>
+        new(b.Db, new NumberGenerator(b.Db, Options.Create(new NumberingOptions()), new AprilYear()), b.Contacts, NullLogger<StudentRepository>.Instance);
 
     private static SaveStudentRequest Arun(Branch b, int? roll = 1) => new()
     {
@@ -110,7 +111,7 @@ public sealed class StudentServiceTests
         Branch b = await NewBranchAsync();
         await using StudentDbContext _ = b.Db;
 
-        StudentResult created = await Service(b).CreateAsync(Arun(b), default);
+        StudentResultRepository created = await Service(b).CreateAsync(Arun(b), default);
 
         Assert.Equal(StudentOutcome.Ok, created.Outcome);
         StudentView view = (await Service(b).GetAsync(created.Id!.Value, default))!;
@@ -208,7 +209,7 @@ public sealed class StudentServiceTests
         Branch b = await NewBranchAsync();
         await using StudentDbContext _ = b.Db;
 
-        await new AcademicService(b.Db).SaveYearAsync(b.Year, new SaveAcademicYearRequest
+        await new AcademicRepository(b.Db).SaveYearAsync(b.Year, new SaveAcademicYearRequest
         {
             Code = "2026-27", StartDate = new DateOnly(2026, 6, 1), EndDate = new DateOnly(2027, 3, 31), IsClosed = true,
         }, default);
@@ -223,8 +224,8 @@ public sealed class StudentServiceTests
         Branch b = await NewBranchAsync();
         await using StudentDbContext _ = b.Db;
 
-        StudentResult first = await Service(b).CreateAsync(Arun(b), default, sourceApplicationId: 77);
-        StudentResult second = await Service(b).CreateAsync(Arun(b, roll: 2), default, sourceApplicationId: 77);
+        StudentResultRepository first = await Service(b).CreateAsync(Arun(b), default, sourceApplicationId: 77);
+        StudentResultRepository second = await Service(b).CreateAsync(Arun(b, roll: 2), default, sourceApplicationId: 77);
 
         Assert.Equal(first.Id, second.Id);
         Assert.Equal(1, await b.Db.Students.CountAsync());
@@ -237,7 +238,7 @@ public sealed class StudentServiceTests
         Branch b = await NewBranchAsync();
         await using StudentDbContext _ = b.Db;
 
-        await new AcademicService(b.Db).SaveYearAsync(null, new SaveAcademicYearRequest
+        await new AcademicRepository(b.Db).SaveYearAsync(null, new SaveAcademicYearRequest
         {
             Code = "2027-28", StartDate = new DateOnly(2027, 6, 1), EndDate = new DateOnly(2028, 3, 31), IsCurrent = true,
         }, default);
@@ -272,14 +273,14 @@ public sealed class StudentRuleTests
     };
 
     [Fact]
-    public void A_valid_student_passes() => Assert.Null(StudentService.CheckStudent(Valid()));
+    public void A_valid_student_passes() => Assert.Null(StudentRepository.CheckStudent(Valid()));
 
     [Fact]
     public void Born_on_or_after_admission_is_refused()
     {
         SaveStudentRequest r = Valid();
         r.DateOfBirth = r.AdmissionDate;
-        Assert.NotNull(StudentService.CheckStudent(r));
+        Assert.NotNull(StudentRepository.CheckStudent(r));
     }
 
     [Theory]
@@ -290,16 +291,16 @@ public sealed class StudentRuleTests
     {
         SaveStudentRequest r = Valid();
         r.StudentStatus = status;
-        Assert.NotNull(StudentService.CheckStudent(r));
+        Assert.NotNull(StudentRepository.CheckStudent(r));
         r.LeavingDate = new DateOnly(2027, 3, 31);
-        Assert.Null(StudentService.CheckStudent(r));
+        Assert.Null(StudentRepository.CheckStudent(r));
     }
 
     [Fact]
     public void No_guardian_or_three_guardians_is_refused()
     {
-        Assert.NotNull(StudentService.CheckGuardianShape([]));
-        Assert.NotNull(StudentService.CheckGuardianShape(
+        Assert.NotNull(StudentRepository.CheckGuardianShape([]));
+        Assert.NotNull(StudentRepository.CheckGuardianShape(
         [
             new() { ContactId = 1, IsPrimary = true }, new() { ContactId = 2 }, new() { ContactId = 3 },
         ]));
@@ -308,21 +309,21 @@ public sealed class StudentRuleTests
     [Fact]
     public void Exactly_one_guardian_is_primary()
     {
-        Assert.NotNull(StudentService.CheckGuardianShape([new() { ContactId = 1 }, new() { ContactId = 2 }]));
-        Assert.NotNull(StudentService.CheckGuardianShape([new() { ContactId = 1, IsPrimary = true }, new() { ContactId = 2, IsPrimary = true }]));
-        Assert.Null(StudentService.CheckGuardianShape([new() { ContactId = 1, IsPrimary = true }, new() { ContactId = 2 }]));
+        Assert.NotNull(StudentRepository.CheckGuardianShape([new() { ContactId = 1 }, new() { ContactId = 2 }]));
+        Assert.NotNull(StudentRepository.CheckGuardianShape([new() { ContactId = 1, IsPrimary = true }, new() { ContactId = 2, IsPrimary = true }]));
+        Assert.Null(StudentRepository.CheckGuardianShape([new() { ContactId = 1, IsPrimary = true }, new() { ContactId = 2 }]));
     }
 
     [Fact]
     public void The_same_guardian_twice_is_refused() =>
-        Assert.NotNull(StudentService.CheckGuardianShape([new() { ContactId = 1, IsPrimary = true }, new() { ContactId = 1 }]));
+        Assert.NotNull(StudentRepository.CheckGuardianShape([new() { ContactId = 1, IsPrimary = true }, new() { ContactId = 1 }]));
 
     [Theory]
     [InlineData(null, 500, false)]
     [InlineData(40, 39, false)]
     [InlineData(40, 40, true)]
     public void A_section_is_full_at_its_capacity(int? capacity, int enrolled, bool full) =>
-        Assert.Equal(full, StudentService.IsFull(capacity, enrolled));
+        Assert.Equal(full, StudentRepository.IsFull(capacity, enrolled));
 
     [Theory]
     [InlineData(null, null)]
@@ -330,14 +331,14 @@ public sealed class StudentRuleTests
     [InlineData("123", "•••")]
     [InlineData("123456789012", "••••••••9012")]
     public void A_national_id_shows_only_its_last_four(string? value, string? masked) =>
-        Assert.Equal(masked, StudentService.Mask(value));
+        Assert.Equal(masked, StudentRepository.Mask(value));
 
     [Fact]
     public void Years_that_touch_overlap()
     {
         (DateOnly, DateOnly)[] others = [(new DateOnly(2026, 6, 1), new DateOnly(2027, 3, 31))];
 
-        Assert.True(AcademicService.Overlaps(new DateOnly(2027, 3, 31), new DateOnly(2028, 3, 31), others));
-        Assert.False(AcademicService.Overlaps(new DateOnly(2027, 4, 1), new DateOnly(2028, 3, 31), others));
+        Assert.True(AcademicRepository.Overlaps(new DateOnly(2027, 3, 31), new DateOnly(2028, 3, 31), others));
+        Assert.False(AcademicRepository.Overlaps(new DateOnly(2027, 4, 1), new DateOnly(2028, 3, 31), others));
     }
 }
