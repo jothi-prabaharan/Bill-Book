@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -14,9 +16,9 @@ namespace Payroll.Api.Controllers;
 [Route("api/payroll/fnf")]
 public sealed class FnfController : ControllerBase
 {
-    private readonly FnfSettlementService _fnf;
+    private readonly FnfSettlementRepository _fnf;
 
-    public FnfController(FnfSettlementService fnf) => _fnf = fnf;
+    public FnfController(FnfSettlementRepository fnf) => _fnf = fnf;
 
     [HttpGet("{id:long}")]
     public async Task<IActionResult> GetSettlement(long id, CancellationToken ct)

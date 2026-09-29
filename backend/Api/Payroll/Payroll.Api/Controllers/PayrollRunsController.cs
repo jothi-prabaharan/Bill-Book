@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -14,9 +16,9 @@ namespace Payroll.Api.Controllers;
 [Route("api/payroll/runs")]
 public sealed class PayrollRunsController : ControllerBase
 {
-    private readonly PayrollRunService _runs;
+    private readonly PayrollRunRepository _runs;
 
-    public PayrollRunsController(PayrollRunService runs) => _runs = runs;
+    public PayrollRunsController(PayrollRunRepository runs) => _runs = runs;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) =>

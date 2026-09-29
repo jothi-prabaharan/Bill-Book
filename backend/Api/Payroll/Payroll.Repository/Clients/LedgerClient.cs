@@ -1,6 +1,7 @@
+using Payroll.Repository.Repositories;
 using System.Net.Http.Json;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Clients;
 
 public interface ILedgerClient
 {

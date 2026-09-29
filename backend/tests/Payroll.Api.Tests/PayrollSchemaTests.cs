@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.TableEntities;
 using Payroll.Repository;
 using Shared.Kernel.Tenancy;
@@ -49,8 +51,8 @@ public sealed class PayrollSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        Dictionary<string, int> first = await new PayrollSeeder(db).SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new PayrollSeeder(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> first = await new PayrollSeederRepository(db).SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new PayrollSeederRepository(db).SeedForOrganizationAsync(orgId, default);
 
         Assert.All(first.Values, v => Assert.True(v >= 1));
         Assert.All(second.Values, v => Assert.Equal(0, v));

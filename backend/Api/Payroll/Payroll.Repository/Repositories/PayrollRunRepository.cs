@@ -1,3 +1,4 @@
+using Payroll.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Entity.Enums;
 using Payroll.Entity.Models;
@@ -6,15 +7,15 @@ using Payroll.Repository;
 using Shared.Kernel.Tenancy;
 using System.Text;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
-public sealed class PayrollRunService
+public sealed class PayrollRunRepository
 {
     private readonly PayrollDbContext _db;
     private readonly TenantContext _tenant;
     private readonly ILedgerClient _ledger;
 
-    public PayrollRunService(PayrollDbContext db, TenantContext tenant, ILedgerClient ledger)
+    public PayrollRunRepository(PayrollDbContext db, TenantContext tenant, ILedgerClient ledger)
     {
         _db = db;
         _tenant = tenant;
@@ -166,7 +167,7 @@ public sealed class PayrollRunService
             var empArrears = arrears.Where(r => r.EmployeeId == salary.EmployeeId).ToList();
             bool isHeld = activeHolds.Any(h => h.EmployeeId == salary.EmployeeId);
 
-            CalculatedPayslipData calculated = PayrollCalculationEngine.Compute(
+            CalculatedPayslipData calculated = PayrollCalculationEngineRepository.Compute(
                 salary, paidDays, daysInMonth, empOneTimes, empLoan, empArrears, isHeld);
 
             var payslip = new Payslip

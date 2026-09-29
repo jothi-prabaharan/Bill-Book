@@ -1,3 +1,4 @@
+using Payroll.Repository.Clients;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Entity.Enums;
@@ -5,13 +6,13 @@ using Payroll.Entity.Models;
 using Payroll.Entity.TableEntities;
 using Payroll.Repository;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
-public sealed class StatutoryService
+public sealed class StatutoryRepository
 {
     private readonly PayrollDbContext _db;
 
-    public StatutoryService(PayrollDbContext db) => _db = db;
+    public StatutoryRepository(PayrollDbContext db) => _db = db;
 
     // ---- PF Settings --------------------------------------------------------
 

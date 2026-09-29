@@ -1,6 +1,9 @@
 using System.Text.Json.Serialization;
 
-using Payroll.Api.Services;using Payroll.Repository;
+using Payroll.Api.Services;
+using Payroll.Repository;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -94,13 +97,13 @@ builder.Services.AddHttpClient<IMasterUserClient, MasterUserClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddScoped<SalarySetupService>();
-builder.Services.AddScoped<PayrollAdjustmentService>();
-builder.Services.AddScoped<PayrollRunService>();
-builder.Services.AddScoped<StatutoryService>();
-builder.Services.AddScoped<TaxCalculationService>();
-builder.Services.AddScoped<FnfSettlementService>();
-builder.Services.AddScoped<PayrollSeeder>();
+builder.Services.AddScoped<SalarySetupRepository>();
+builder.Services.AddScoped<PayrollAdjustmentRepository>();
+builder.Services.AddScoped<PayrollRunRepository>();
+builder.Services.AddScoped<StatutoryRepository>();
+builder.Services.AddScoped<TaxCalculationRepository>();
+builder.Services.AddScoped<FnfSettlementRepository>();
+builder.Services.AddScoped<PayrollSeederRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

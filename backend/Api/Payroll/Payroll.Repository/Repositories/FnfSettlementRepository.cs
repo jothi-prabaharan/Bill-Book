@@ -1,3 +1,4 @@
+using Payroll.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Entity.Enums;
 using Payroll.Entity.Models;
@@ -5,9 +6,9 @@ using Payroll.Entity.TableEntities;
 using Payroll.Repository;
 using Shared.Kernel.Tenancy;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
-public sealed class FnfSettlementService
+public sealed class FnfSettlementRepository
 {
     private readonly PayrollDbContext _db;
     private readonly ITenantContext _tenant;
@@ -15,7 +16,7 @@ public sealed class FnfSettlementService
     private readonly IEmployeeClient _hrmClient;
     private readonly IMasterUserClient _masterUserClient;
 
-    public FnfSettlementService(
+    public FnfSettlementRepository(
         PayrollDbContext db,
         ITenantContext tenant,
         ILedgerClient ledgerClient,

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -14,9 +16,9 @@ namespace Payroll.Api.Controllers;
 [Route("api/payroll/tax")]
 public sealed class TaxController : ControllerBase
 {
-    private readonly TaxCalculationService _taxService;
+    private readonly TaxCalculationRepository _taxService;
 
-    public TaxController(TaxCalculationService taxService) => _taxService = taxService;
+    public TaxController(TaxCalculationRepository taxService) => _taxService = taxService;
 
     [HttpGet("declarations/{employeeId:long}")]
     public async Task<IActionResult> GetDeclaration(long employeeId, [FromQuery] string financialYear = "2026-2027", CancellationToken ct = default)

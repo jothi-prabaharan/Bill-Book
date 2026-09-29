@@ -1,7 +1,8 @@
+using Payroll.Repository.Clients;
 using Payroll.Entity.Enums;
 using Payroll.Entity.TableEntities;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
 public sealed class CalculatedPayslipData
 {
@@ -21,7 +22,7 @@ public sealed class CalculatedLineData
     public decimal Amount { get; set; }
 }
 
-public static class PayrollCalculationEngine
+public static class PayrollCalculationEngineRepository
 {
     public static CalculatedPayslipData Compute(
         EmployeeSalary salary,

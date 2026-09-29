@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Enums;
 using Payroll.Entity.Models;
 using Payroll.Entity.TableEntities;
@@ -30,14 +32,14 @@ public sealed class MePayrollController : ControllerBase
     private readonly ICurrentUser _currentUser;
     private readonly ITenantContext _tenant;
     private readonly IEmployeeClient _hrm;
-    private readonly TaxCalculationService _taxService;
+    private readonly TaxCalculationRepository _taxService;
 
     public MePayrollController(
         PayrollDbContext db,
         ICurrentUser currentUser,
         ITenantContext tenant,
         IEmployeeClient hrm,
-        TaxCalculationService taxService)
+        TaxCalculationRepository taxService)
     {
         _db = db;
         _currentUser = currentUser;

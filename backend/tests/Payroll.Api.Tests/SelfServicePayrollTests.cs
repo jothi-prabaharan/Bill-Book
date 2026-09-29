@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Api.Controllers;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Enums;
 using Payroll.Entity.TableEntities;
 using Payroll.Repository;
@@ -73,7 +75,7 @@ public sealed class SelfServicePayrollTests
 
         var currentUser = new FakeCurrentUser(empUserId);
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-        var taxService = new TaxCalculationService(db);
+        var taxService = new TaxCalculationRepository(db);
 
         var meController = new MePayrollController(db, currentUser, tenant, fakeEmployee, taxService);
 
@@ -132,7 +134,7 @@ public sealed class SelfServicePayrollTests
 
         var currentUser = new FakeCurrentUser(empUserId);
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-        var taxService = new TaxCalculationService(db);
+        var taxService = new TaxCalculationRepository(db);
 
         var meController = new MePayrollController(db, currentUser, tenant, fakeEmployee, taxService);
 

@@ -1,10 +1,11 @@
+using Payroll.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Entity.Enums;
 using Payroll.Entity.Models;
 using Payroll.Entity.TableEntities;
 using Payroll.Repository;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
 public sealed class TaxComputationResult
 {
@@ -27,11 +28,11 @@ public sealed class TaxComputationResult
     public decimal MonthlyTds { get; set; }
 }
 
-public sealed class TaxCalculationService
+public sealed class TaxCalculationRepository
 {
     private readonly PayrollDbContext _db;
 
-    public TaxCalculationService(PayrollDbContext db) => _db = db;
+    public TaxCalculationRepository(PayrollDbContext db) => _db = db;
 
     public async Task<TaxDeclaration?> GetDeclarationAsync(long employeeId, string financialYear, CancellationToken ct) =>
         await _db.TaxDeclarations.AsNoTracking()

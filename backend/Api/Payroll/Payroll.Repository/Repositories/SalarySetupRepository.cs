@@ -1,15 +1,16 @@
+using Payroll.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Entity.Models;
 using Payroll.Entity.TableEntities;
 using Payroll.Repository;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
-public sealed class SalarySetupService
+public sealed class SalarySetupRepository
 {
     private readonly PayrollDbContext _db;
 
-    public SalarySetupService(PayrollDbContext db) => _db = db;
+    public SalarySetupRepository(PayrollDbContext db) => _db = db;
 
     // ---- Salary Components --------------------------------------------------
 

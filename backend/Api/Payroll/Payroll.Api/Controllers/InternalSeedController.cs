@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -31,7 +33,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var seeder = _services.GetRequiredService<PayrollSeeder>();
+        var seeder = _services.GetRequiredService<PayrollSeederRepository>();
 
         var response = new SeedOrganizationResponse
         {

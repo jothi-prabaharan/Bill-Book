@@ -1,15 +1,16 @@
+using Payroll.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Payroll.Entity.Models;
 using Payroll.Entity.TableEntities;
 using Payroll.Repository;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
-public sealed class PayrollAdjustmentService
+public sealed class PayrollAdjustmentRepository
 {
     private readonly PayrollDbContext _db;
 
-    public PayrollAdjustmentService(PayrollDbContext db) => _db = db;
+    public PayrollAdjustmentRepository(PayrollDbContext db) => _db = db;
 
     // ---- One Time Payments --------------------------------------------------
 

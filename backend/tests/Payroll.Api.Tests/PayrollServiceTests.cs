@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Enums;
 using Payroll.Entity.Models;
 using Payroll.Entity.TableEntities;
@@ -37,8 +39,8 @@ public sealed class PayrollServiceTests
         await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
         var ledger = new FakeLedgerClient();
 
-        var setup = new SalarySetupService(db);
-        var runService = new PayrollRunService(db, tenant, ledger);
+        var setup = new SalarySetupRepository(db);
+        var runService = new PayrollRunRepository(db, tenant, ledger);
 
         // 1. Setup Component and Structure
         long compId = await setup.SaveComponentAsync(null, new SaveSalaryComponentRequest
@@ -119,8 +121,8 @@ public sealed class PayrollServiceTests
         await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
         var ledger = new FakeLedgerClient();
 
-        var setup = new SalarySetupService(db);
-        var runService = new PayrollRunService(db, tenant, ledger);
+        var setup = new SalarySetupRepository(db);
+        var runService = new PayrollRunRepository(db, tenant, ledger);
 
         long compId = await setup.SaveComponentAsync(null, new SaveSalaryComponentRequest
         {
@@ -192,8 +194,8 @@ public sealed class PayrollServiceTests
         await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
         var ledger = new FakeLedgerClient();
 
-        var setup = new SalarySetupService(db);
-        var runService = new PayrollRunService(db, tenant, ledger);
+        var setup = new SalarySetupRepository(db);
+        var runService = new PayrollRunRepository(db, tenant, ledger);
 
         long compId = await setup.SaveComponentAsync(null, new SaveSalaryComponentRequest
         {
@@ -244,9 +246,9 @@ public sealed class PayrollServiceTests
         await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
         var ledger = new FakeLedgerClient();
 
-        var setup = new SalarySetupService(db);
-        var runService = new PayrollRunService(db, tenant, ledger);
-        var statutory = new StatutoryService(db);
+        var setup = new SalarySetupRepository(db);
+        var runService = new PayrollRunRepository(db, tenant, ledger);
+        var statutory = new StatutoryRepository(db);
 
         // Configure PF setting
         await statutory.SavePfSettingAsync(new SavePfSettingRequest
@@ -311,8 +313,8 @@ public sealed class PayrollServiceTests
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
         await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        var taxService = new TaxCalculationService(db);
-        var seeder = new PayrollSeeder(db);
+        var taxService = new TaxCalculationRepository(db);
+        var seeder = new PayrollSeederRepository(db);
         await seeder.SeedForOrganizationAsync(orgId, default);
 
         long employeeId = 999;
@@ -385,8 +387,8 @@ public sealed class PayrollServiceTests
         var ledger = new FakeLedgerClient();
         var hrm = new FakeEmployeeClient();
         var master = new FakeMasterUserClient();
-        var setup = new SalarySetupService(db);
-        var fnfService = new FnfSettlementService(db, tenant, ledger, hrm, master);
+        var setup = new SalarySetupRepository(db);
+        var fnfService = new FnfSettlementRepository(db, tenant, ledger, hrm, master);
 
         // 1. Setup Employee Salary
         long compId = await setup.SaveComponentAsync(null, new SaveSalaryComponentRequest

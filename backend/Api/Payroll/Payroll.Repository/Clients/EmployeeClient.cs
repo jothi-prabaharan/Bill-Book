@@ -1,7 +1,8 @@
+using Payroll.Repository.Repositories;
 using System.Net.Http.Json;
 using Shared.Kernel.Employees;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Clients;
 
 public interface IEmployeeClient
 {

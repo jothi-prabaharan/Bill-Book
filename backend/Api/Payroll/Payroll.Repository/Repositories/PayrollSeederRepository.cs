@@ -1,14 +1,15 @@
+using Payroll.Repository.Clients;
 using Payroll.Repository;
 using Payroll.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 
-namespace Payroll.Api.Services;
+namespace Payroll.Repository.Repositories;
 
-public sealed class PayrollSeeder
+public sealed class PayrollSeederRepository
 {
     private readonly PayrollDbContext _db;
 
-    public PayrollSeeder(PayrollDbContext db) => _db = db;
+    public PayrollSeederRepository(PayrollDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {

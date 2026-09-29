@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -14,9 +16,9 @@ namespace Payroll.Api.Controllers;
 [Route("api/payroll/employee-salaries")]
 public sealed class EmployeeSalariesController : ControllerBase
 {
-    private readonly SalarySetupService _setup;
+    private readonly SalarySetupRepository _setup;
 
-    public EmployeeSalariesController(SalarySetupService setup) => _setup = setup;
+    public EmployeeSalariesController(SalarySetupRepository setup) => _setup = setup;
 
     [HttpGet("employee/{employeeId:long}")]
     public async Task<IActionResult> GetByEmployee(long employeeId, CancellationToken ct)

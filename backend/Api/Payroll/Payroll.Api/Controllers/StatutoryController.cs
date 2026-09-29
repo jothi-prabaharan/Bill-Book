@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+using Payroll.Repository.Clients;
 using Payroll.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -14,9 +16,9 @@ namespace Payroll.Api.Controllers;
 [Route("api/payroll/statutory")]
 public sealed class StatutoryController : ControllerBase
 {
-    private readonly StatutoryService _statutory;
+    private readonly StatutoryRepository _statutory;
 
-    public StatutoryController(StatutoryService statutory) => _statutory = statutory;
+    public StatutoryController(StatutoryRepository statutory) => _statutory = statutory;
 
     [HttpGet("pf")]
     public async Task<IActionResult> GetPf(CancellationToken ct) =>

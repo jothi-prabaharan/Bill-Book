@@ -1,4 +1,6 @@
-namespace Payroll.Api.Services;
+using Payroll.Repository.Repositories;
+
+namespace Payroll.Repository.Clients;
 
 public interface IMasterUserClient
 {
