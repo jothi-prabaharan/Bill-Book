@@ -1,6 +1,8 @@
 using System.Net;
 using Customer.Api.Controllers;
 using Customer.Api.Services;
+using Customer.Repository.Repositories;
+using Customer.Repository.Clients;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Microsoft.AspNetCore.Http;
@@ -107,7 +109,7 @@ public sealed class ContactReferenceTests
     private static TicketsController Tickets(
         CustomerDbContext db, Guid orgId, IContactsClient contacts) =>
         new(db, new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId }, contacts,
-            new SlaPolicyService(db), TimeProvider.System);
+            new SlaPolicyRepository(db), TimeProvider.System);
 
     private async Task<(CustomerDbContext Db, Guid CustomerId, Guid OrgId, Lead Lead)> SeedLeadAsync()
     {

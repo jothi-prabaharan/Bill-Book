@@ -1,5 +1,7 @@
 using System.Net;
 using Customer.Api.Services;
+using Customer.Repository.Repositories;
+using Customer.Repository.Clients;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Microsoft.AspNetCore.Authorization;

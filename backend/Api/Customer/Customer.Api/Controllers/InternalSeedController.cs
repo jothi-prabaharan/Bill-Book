@@ -1,4 +1,6 @@
 using Customer.Api.Services;
+using Customer.Repository.Repositories;
+using Customer.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -42,7 +44,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var sla = _services.GetRequiredService<SlaPolicyService>();
+        var sla = _services.GetRequiredService<SlaPolicyRepository>();
 
         SeedOrganizationResponse response = new()
         {

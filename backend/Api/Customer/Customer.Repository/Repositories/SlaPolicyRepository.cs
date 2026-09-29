@@ -1,20 +1,21 @@
+using Customer.Repository.Clients;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Customer.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Customer;
 
-namespace Customer.Api.Services;
+namespace Customer.Repository.Repositories;
 
 /// <summary>
 /// A branch's SLA policies (D-18, TK-18): seeding them, and working out when a
 /// ticket falls due.
 /// </summary>
-public sealed class SlaPolicyService
+public sealed class SlaPolicyRepository
 {
     private readonly CustomerDbContext _db;
 
-    public SlaPolicyService(CustomerDbContext db) => _db = db;
+    public SlaPolicyRepository(CustomerDbContext db) => _db = db;
 
     /// <summary>
     /// Adds whichever priorities the branch is missing, and changes none it has —

@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Customer.Api.Services;
+using Customer.Repository.Repositories;
+using Customer.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
@@ -19,9 +21,9 @@ namespace Customer.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class PortalTicketsController : ControllerBase
 {
-    private readonly PortalTicketService _tickets;
+    private readonly PortalTicketRepository _tickets;
 
-    public PortalTicketsController(PortalTicketService tickets) => _tickets = tickets;
+    public PortalTicketsController(PortalTicketRepository tickets) => _tickets = tickets;
 
     private long ContactId => long.Parse(User.FindFirst(RequirePortalAccessAttribute.ContactClaim)!.Value);
 

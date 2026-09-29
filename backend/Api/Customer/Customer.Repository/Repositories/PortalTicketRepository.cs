@@ -1,9 +1,10 @@
+using Customer.Repository.Clients;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Customer;
 
-namespace Customer.Api.Services;
+namespace Customer.Repository.Repositories;
 
 public sealed class PortalTicketItem
 {
@@ -52,13 +53,13 @@ public enum PortalTicketOutcome
 /// internal note: those are staff talking to staff. A ticket raised here gets
 /// its SLA from the branch's policies like any other, at Medium priority.
 /// </summary>
-public sealed class PortalTicketService
+public sealed class PortalTicketRepository
 {
     private readonly CustomerDbContext _db;
-    private readonly SlaPolicyService _sla;
+    private readonly SlaPolicyRepository _sla;
     private readonly TimeProvider _clock;
 
-    public PortalTicketService(CustomerDbContext db, SlaPolicyService sla, TimeProvider clock)
+    public PortalTicketRepository(CustomerDbContext db, SlaPolicyRepository sla, TimeProvider clock)
     {
         _db = db;
         _sla = sla;

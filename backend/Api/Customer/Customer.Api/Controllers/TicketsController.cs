@@ -1,4 +1,6 @@
 using Customer.Api.Services;
+using Customer.Repository.Repositories;
+using Customer.Repository.Clients;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -25,14 +27,14 @@ public sealed class TicketsController : ControllerBase
     private readonly CustomerDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly IContactsClient _contacts;
-    private readonly SlaPolicyService _sla;
+    private readonly SlaPolicyRepository _sla;
     private readonly TimeProvider _clock;
 
     public TicketsController(
         CustomerDbContext db,
         ITenantContext tenant,
         IContactsClient contacts,
-        SlaPolicyService sla,
+        SlaPolicyRepository sla,
         TimeProvider clock)
     {
         _db = db;

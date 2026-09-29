@@ -1,4 +1,6 @@
 using Customer.Api.Services;
+using Customer.Repository.Repositories;
+using Customer.Repository.Clients;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -73,7 +75,7 @@ public sealed class PortalTicketTests
     public async Task A_portal_ticket_takes_its_sla_from_the_branchs_policy_at_medium_priority()
     {
         Harness h = await Harness.CreateAsync(_postgres);
-        await new SlaPolicyService(h.Db).SeedAsync(h.OrgId, default);
+        await new SlaPolicyRepository(h.Db).SeedAsync(h.OrgId, default);
         SlaPolicy medium = await h.Db.SlaPolicies.SingleAsync(p => p.Priority == TicketPriority.Medium);
         medium.ResolutionHours = 10;
         await h.Db.SaveChangesAsync();
@@ -109,7 +111,7 @@ public sealed class PortalTicketTests
         Assert.False(reply.IsInternal);
     }
 
-    private sealed record Harness(CustomerDbContext Db, Guid OrgId, PortalTicketService Portal)
+    private sealed record Harness(CustomerDbContext Db, Guid OrgId, PortalTicketRepository Portal)
     {
         public static Task<Harness> CreateAsync(PostgresFixture postgres)
         {
@@ -117,7 +119,7 @@ public sealed class PortalTicketTests
 
             Guid orgId = Guid.NewGuid();
             CustomerDbContext db = postgres.CreateContext(Guid.NewGuid(), orgId);
-            return Task.FromResult(new Harness(db, orgId, new PortalTicketService(db, new SlaPolicyService(db), new FixedClock())));
+            return Task.FromResult(new Harness(db, orgId, new PortalTicketRepository(db, new SlaPolicyRepository(db), new FixedClock())));
         }
     }
 

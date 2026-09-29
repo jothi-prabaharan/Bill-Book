@@ -1,4 +1,6 @@
 using Customer.Api.Services;
+using Customer.Repository.Repositories;
+using Customer.Repository.Clients;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Customer.Repository.SeedData;
@@ -29,7 +31,7 @@ public sealed class SlaPolicyTests
 
         Guid orgId = Guid.NewGuid();
         await using CustomerDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
-        var service = new SlaPolicyService(db);
+        var service = new SlaPolicyRepository(db);
 
         Assert.Equal(4, await service.SeedAsync(orgId, default));
         Assert.Equal(0, await service.SeedAsync(orgId, default));
@@ -48,7 +50,7 @@ public sealed class SlaPolicyTests
 
         Guid orgId = Guid.NewGuid();
         await using CustomerDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
-        var service = new SlaPolicyService(db);
+        var service = new SlaPolicyRepository(db);
 
         await service.SeedAsync(orgId, default);
 
@@ -75,16 +77,16 @@ public sealed class SlaPolicyTests
         await using CustomerDbContext a = _postgres.CreateContext(customerId, branchA);
         await using CustomerDbContext b = _postgres.CreateContext(customerId, branchB);
 
-        await new SlaPolicyService(a).SeedAsync(branchA, default);
-        await new SlaPolicyService(b).SeedAsync(branchB, default);
+        await new SlaPolicyRepository(a).SeedAsync(branchA, default);
+        await new SlaPolicyRepository(b).SeedAsync(branchB, default);
 
         // Branch B promises a High ticket in a day rather than eight hours.
         SlaPolicy bHigh = await b.SlaPolicies.SingleAsync(p => p.Priority == TicketPriority.High);
         bHigh.ResolutionHours = 24;
         await b.SaveChangesAsync();
 
-        Assert.Equal(Raised.AddHours(8), await new SlaPolicyService(a).DueAtAsync(TicketPriority.High, Raised, default));
-        Assert.Equal(Raised.AddHours(24), await new SlaPolicyService(b).DueAtAsync(TicketPriority.High, Raised, default));
+        Assert.Equal(Raised.AddHours(8), await new SlaPolicyRepository(a).DueAtAsync(TicketPriority.High, Raised, default));
+        Assert.Equal(Raised.AddHours(24), await new SlaPolicyRepository(b).DueAtAsync(TicketPriority.High, Raised, default));
     }
 
     [SkippableFact]
@@ -93,7 +95,7 @@ public sealed class SlaPolicyTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         await using CustomerDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        var service = new SlaPolicyService(db);
+        var service = new SlaPolicyRepository(db);
 
         Assert.Equal(Raised.AddHours(2), await service.DueAtAsync(TicketPriority.Urgent, Raised, default));
         Assert.Equal(Raised.AddDays(7), await service.DueAtAsync(TicketPriority.Low, Raised, default));
@@ -104,10 +106,10 @@ public sealed class SlaPolicyTests
     {
         // Urgent 2 h, High 8 h, Medium 2 days, Low 7 days — so no branch sees a
         // change until it edits its own policy.
-        Assert.Equal(2, SlaPolicyService.DefaultResolutionHours(TicketPriority.Urgent));
-        Assert.Equal(8, SlaPolicyService.DefaultResolutionHours(TicketPriority.High));
-        Assert.Equal(48, SlaPolicyService.DefaultResolutionHours(TicketPriority.Medium));
-        Assert.Equal(168, SlaPolicyService.DefaultResolutionHours(TicketPriority.Low));
+        Assert.Equal(2, SlaPolicyRepository.DefaultResolutionHours(TicketPriority.Urgent));
+        Assert.Equal(8, SlaPolicyRepository.DefaultResolutionHours(TicketPriority.High));
+        Assert.Equal(48, SlaPolicyRepository.DefaultResolutionHours(TicketPriority.Medium));
+        Assert.Equal(168, SlaPolicyRepository.DefaultResolutionHours(TicketPriority.Low));
 
         Assert.All(SlaPolicySeed.Defaults, d => Assert.True(d.ResponseHours <= d.ResolutionHours));
         Assert.Equal(Enum.GetValues<TicketPriority>().Length, SlaPolicySeed.Defaults.Count);
