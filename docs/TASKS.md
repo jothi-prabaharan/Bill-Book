@@ -2258,7 +2258,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `ContactCustomFieldTests` (done-when search, not searchable, deactivated field kept and shown, store round trip), `ItemCustomFieldTests`, and the list-column spec.
 
 ### TK-112 · Custom fields on sales and purchase documents, carried forward and printed
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-29
+- **Issue:** [#100](https://github.com/jothi-prabaharan/Bill-Book/issues/100)
 - **Lanes:** L-SAL, L-PUR, L-KERNEL, L-SAL-UI, L-PUR-UI · **Depends on:** TK-110 · **Decision:** —
 - **Sub-tasks:**
   - [ ] `CustomFields jsonb` on the header of every `sal` and `pur` document (via `DocumentHeaderBase`); validated on save.
