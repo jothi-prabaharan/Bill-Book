@@ -2235,7 +2235,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `CustomFieldValidatorTests` (done-when, unknown key, required only on new saves, each type, max length, inactive field and option), `CustomFieldTests` (done-when end to end, key change refused and reuse duplicate, the 50 limit, RLS on `cfd`, the pure rules), `custom-fields.model.spec.ts` and `custom-fields-settings.model.spec.ts`.
 
 ### TK-111 · Custom fields on contacts and items
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-29
+- **Issue:** [#99](https://github.com/jothi-prabaharan/Bill-Book/issues/99)
 - **Lanes:** L-CON, L-INV, L-MASTER-UI, L-INVENTORY-UI · **Depends on:** TK-110 · **Decision:** —
 - **Sub-tasks:**
   - [ ] `CustomFields jsonb` (mapped as `JsonDocument`) on `con.Contacts` and `inv.Items`, with a GIN index; validated on save.
