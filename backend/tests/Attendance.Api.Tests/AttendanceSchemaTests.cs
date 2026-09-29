@@ -1,4 +1,5 @@
 using Attendance.Api.Services;
+using Attendance.Repository.Repositories;
 using Attendance.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class AttendanceSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using AttendanceDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new AttendanceSeeder().SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new AttendanceSeeder().SeedForOrganizationAsync(orgId, default);
+        await new AttendanceSeederRepository().SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new AttendanceSeederRepository().SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }

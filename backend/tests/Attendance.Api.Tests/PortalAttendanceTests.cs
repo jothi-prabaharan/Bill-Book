@@ -1,4 +1,5 @@
 using Attendance.Api.Services;
+using Attendance.Repository.Repositories;
 using Attendance.Entity.Enums;
 using Attendance.Entity.Models;
 using Attendance.Entity.TableEntities;
@@ -66,7 +67,7 @@ public sealed class PortalAttendanceTests
         var sis = new FakeGuardians();
 
         (PortalAttendanceOutcome outcome, PortalAttendanceView? view) =
-            await new PortalAttendanceService(db, sis, NullLogger<PortalAttendanceService>.Instance).MonthAsync(800, 1, new DateOnly(2026, 7, 15), default);
+            await new PortalAttendanceRepository(db, sis, NullLogger<PortalAttendanceRepository>.Instance).MonthAsync(800, 1, new DateOnly(2026, 7, 15), default);
 
         Assert.Equal(PortalAttendanceOutcome.Ok, outcome);
         Assert.Equal(new DateOnly(2026, 7, 1), view!.Month);
@@ -81,7 +82,7 @@ public sealed class PortalAttendanceTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
         var sis = new FakeGuardians();
-        var portal = new PortalAttendanceService(db, sis, NullLogger<PortalAttendanceService>.Instance);
+        var portal = new PortalAttendanceRepository(db, sis, NullLogger<PortalAttendanceRepository>.Instance);
 
         Assert.Equal(PortalAttendanceOutcome.NotFound, (await portal.MonthAsync(800, 2, new DateOnly(2026, 7, 1), default)).Outcome);
         Assert.Equal(PortalAttendanceOutcome.NotFound, (await portal.MonthAsync(801, 1, new DateOnly(2026, 7, 1), default)).Outcome);
@@ -93,7 +94,7 @@ public sealed class PortalAttendanceTests
     [Fact]
     public void Counts_add_up_by_status()
     {
-        PortalAttendanceView view = PortalAttendanceService.Summarise(1, new DateOnly(2026, 7, 1),
+        PortalAttendanceView view = PortalAttendanceRepository.Summarise(1, new DateOnly(2026, 7, 1),
         [
             new() { AttendanceDate = new DateOnly(2026, 7, 1), AttendanceStatus = AttendanceStatus.Holiday },
             new() { AttendanceDate = new DateOnly(2026, 7, 2), AttendanceStatus = AttendanceStatus.Leave },

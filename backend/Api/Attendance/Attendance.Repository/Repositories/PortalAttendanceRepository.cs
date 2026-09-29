@@ -4,7 +4,7 @@ using Attendance.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.School;
 
-namespace Attendance.Api.Services;
+namespace Attendance.Repository.Repositories;
 
 public enum PortalAttendanceOutcome
 {
@@ -22,13 +22,13 @@ public enum PortalAttendanceOutcome
 /// enrolments, not guardians, so Student is asked which of the child's enrolments
 /// belong to a guardian with portal access, and only those days are shown.
 /// </summary>
-public sealed class PortalAttendanceService
+public sealed class PortalAttendanceRepository
 {
     private readonly AttendanceDbContext _db;
     private readonly IStudentClient _sis;
-    private readonly ILogger<PortalAttendanceService> _log;
+    private readonly ILogger<PortalAttendanceRepository> _log;
 
-    public PortalAttendanceService(AttendanceDbContext db, IStudentClient sis, ILogger<PortalAttendanceService> log)
+    public PortalAttendanceRepository(AttendanceDbContext db, IStudentClient sis, ILogger<PortalAttendanceRepository> log)
     {
         _db = db;
         _sis = sis;

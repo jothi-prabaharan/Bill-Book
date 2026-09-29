@@ -1,4 +1,5 @@
 using Attendance.Api.Services;
+using Attendance.Repository.Repositories;
 using Attendance.Entity.Enums;
 using Attendance.Entity.Models;
 using Attendance.Repository;
@@ -52,7 +53,7 @@ internal sealed class FakeRoll : IStudentClient
 
 internal sealed class Caller(bool mayUnlock) : ICallerPermissions
 {
-    public bool Has(string permission) => mayUnlock && permission == RegisterService.UnlockPermission;
+    public bool Has(string permission) => mayUnlock && permission == RegisterRepository.UnlockPermission;
 }
 
 internal sealed class FixedClock(DateOnly today) : TimeProvider
@@ -74,8 +75,8 @@ public sealed class RegisterTests
 
     public RegisterTests(PostgresFixture postgres) => _postgres = postgres;
 
-    private static RegisterService Service(AttendanceDbContext db, bool mayUnlock, FakeRoll? roll = null) =>
-        new(db, roll ?? new FakeRoll(), new Caller(mayUnlock), new FixedClock(new DateOnly(2026, 7, 20)), NullLogger<RegisterService>.Instance);
+    private static RegisterRepository Service(AttendanceDbContext db, bool mayUnlock, FakeRoll? roll = null) =>
+        new(db, roll ?? new FakeRoll(), new Caller(mayUnlock), new FixedClock(new DateOnly(2026, 7, 20)), NullLogger<RegisterRepository>.Instance);
 
     private static SaveRegisterRequest Register(AttendanceStatus arun = AttendanceStatus.Present) => new()
     {
@@ -95,14 +96,14 @@ public sealed class RegisterTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
 
-        RegisterService teacher = Service(db, mayUnlock: false);
+        RegisterRepository teacher = Service(db, mayUnlock: false);
         Assert.Equal(RegisterOutcome.Ok, (await teacher.SaveAsync(Register(), default)).Outcome);
         Assert.Equal(RegisterOutcome.Ok, (await teacher.LockAsync(new LockRequest { SectionId = 10, AttendanceDate = Day }, default)).Outcome);
 
         Assert.Equal(RegisterOutcome.Locked, (await teacher.SaveAsync(Register(AttendanceStatus.Absent), default)).Outcome);
         Assert.Equal(AttendanceStatus.Present, await db.StudentAttendance.Where(a => a.EnrolmentId == 1).Select(a => a.AttendanceStatus).SingleAsync());
 
-        RegisterService principal = Service(db, mayUnlock: true);
+        RegisterRepository principal = Service(db, mayUnlock: true);
         Assert.Equal(RegisterOutcome.Ok, (await principal.SaveAsync(Register(AttendanceStatus.Absent), default)).Outcome);
         db.ChangeTracker.Clear();
         Assert.Equal(AttendanceStatus.Absent, await db.StudentAttendance.Where(a => a.EnrolmentId == 1).Select(a => a.AttendanceStatus).SingleAsync());
@@ -117,7 +118,7 @@ public sealed class RegisterTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        RegisterService service = Service(db, mayUnlock: false);
+        RegisterRepository service = Service(db, mayUnlock: false);
 
         await service.SaveAsync(Register(), default);
         await service.SaveAsync(Register(AttendanceStatus.HalfDay), default);
@@ -134,7 +135,7 @@ public sealed class RegisterTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        RegisterService service = Service(db, mayUnlock: false);
+        RegisterRepository service = Service(db, mayUnlock: false);
 
         (RegisterResult _, RegisterView? view) = await service.GetAsync(10, Day, default);
         Assert.False(view!.IsTaken);
@@ -189,7 +190,7 @@ public sealed class RegisterTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        RegisterService service = Service(db, false);
+        RegisterRepository service = Service(db, false);
 
         await service.SaveAsync(Register(), default);
         SaveRegisterRequest next = Register(AttendanceStatus.Absent);
@@ -211,16 +212,16 @@ public sealed class RegisterRuleTests
     [InlineData(true, false, false)]
     [InlineData(true, true, true)]
     public void A_locked_day_changes_only_for_someone_who_may_unlock(bool locked, bool mayUnlock, bool allowed) =>
-        Assert.Equal(allowed, RegisterService.MayChange(locked, mayUnlock));
+        Assert.Equal(allowed, RegisterRepository.MayChange(locked, mayUnlock));
 
     [Fact]
     public void A_day_is_inside_the_open_year_and_not_in_the_future()
     {
         DateOnly start = new(2026, 6, 1), end = new(2027, 3, 31), today = new(2026, 7, 20);
 
-        Assert.Null(RegisterService.DayProblem(today, today, start, end, false));
-        Assert.NotNull(RegisterService.DayProblem(today.AddDays(1), today, start, end, false));
-        Assert.NotNull(RegisterService.DayProblem(start.AddDays(-1), today, start, end, false));
-        Assert.NotNull(RegisterService.DayProblem(today, today, start, end, true));
+        Assert.Null(RegisterRepository.DayProblem(today, today, start, end, false));
+        Assert.NotNull(RegisterRepository.DayProblem(today.AddDays(1), today, start, end, false));
+        Assert.NotNull(RegisterRepository.DayProblem(start.AddDays(-1), today, start, end, false));
+        Assert.NotNull(RegisterRepository.DayProblem(today, today, start, end, true));
     }
 }

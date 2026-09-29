@@ -1,4 +1,5 @@
 using Attendance.Api.Services;
+using Attendance.Repository.Repositories;
 using Attendance.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +19,10 @@ namespace Attendance.Api.Controllers;
 [Route("api/portal/school/attendance")]
 public sealed class PortalAttendanceController : ControllerBase
 {
-    private readonly PortalAttendanceService _portal;
+    private readonly PortalAttendanceRepository _portal;
     private readonly TimeProvider _clock;
 
-    public PortalAttendanceController(PortalAttendanceService portal, TimeProvider clock)
+    public PortalAttendanceController(PortalAttendanceRepository portal, TimeProvider clock)
     {
         _portal = portal;
         _clock = clock;

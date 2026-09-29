@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Attendance.Api.Services;
+using Attendance.Repository.Repositories;
 using Attendance.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -72,10 +73,10 @@ builder.Services.AddHttpClient<IStudentClient, HttpStudentClient>(client =>
     .AddHttpMessageHandler<InternalKeyHandler>();
 
 // ---- Service registrations ----
-builder.Services.AddScoped<AttendanceSeeder>();
+builder.Services.AddScoped<AttendanceSeederRepository>();
 builder.Services.AddScoped<ICallerPermissions, HttpCallerPermissions>();
-builder.Services.AddScoped<RegisterService>();
-builder.Services.AddScoped<PortalAttendanceService>();
+builder.Services.AddScoped<RegisterRepository>();
+builder.Services.AddScoped<PortalAttendanceRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

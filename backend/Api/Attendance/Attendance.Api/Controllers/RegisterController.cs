@@ -1,4 +1,5 @@
 using Attendance.Api.Services;
+using Attendance.Repository.Repositories;
 using Attendance.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +21,9 @@ namespace Attendance.Api.Controllers;
 [Route("api/student-attendance")]
 public sealed class RegisterController : ControllerBase
 {
-    private readonly RegisterService _register;
+    private readonly RegisterRepository _register;
 
-    public RegisterController(RegisterService register) => _register = register;
+    public RegisterController(RegisterRepository register) => _register = register;
 
     [HttpGet("register")]
     public async Task<IActionResult> Get([FromQuery] long sectionId, [FromQuery] DateOnly date, CancellationToken ct)
@@ -42,7 +43,7 @@ public sealed class RegisterController : ControllerBase
 
     [HttpPost("register/unlock")]
     [PermissionAction("edit")]
-    [RequirePermission(RegisterService.UnlockPermission)]
+    [RequirePermission(RegisterRepository.UnlockPermission)]
     public async Task<IActionResult> Unlock([FromBody] LockRequest request, CancellationToken ct) =>
         Answer(await _register.UnlockAsync(request, ct));
 

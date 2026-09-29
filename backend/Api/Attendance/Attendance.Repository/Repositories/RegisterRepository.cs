@@ -5,7 +5,7 @@ using Attendance.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.School;
 
-namespace Attendance.Api.Services;
+namespace Attendance.Repository.Repositories;
 
 public enum RegisterOutcome
 {
@@ -35,7 +35,7 @@ public sealed record RegisterResult(RegisterOutcome Outcome, string? Detail = nu
 /// reopens it.</item>
 /// </list>
 /// </summary>
-public sealed class RegisterService
+public sealed class RegisterRepository
 {
     public const string UnlockPermission = "attendance.unlock";
 
@@ -43,9 +43,9 @@ public sealed class RegisterService
     private readonly IStudentClient _sis;
     private readonly ICallerPermissions _caller;
     private readonly TimeProvider _clock;
-    private readonly ILogger<RegisterService> _log;
+    private readonly ILogger<RegisterRepository> _log;
 
-    public RegisterService(AttendanceDbContext db, IStudentClient sis, ICallerPermissions caller, TimeProvider clock, ILogger<RegisterService> log)
+    public RegisterRepository(AttendanceDbContext db, IStudentClient sis, ICallerPermissions caller, TimeProvider clock, ILogger<RegisterRepository> log)
     {
         _db = db;
         _sis = sis;
