@@ -2300,7 +2300,8 @@ The build cards each design in section E produced. Each design section in `docs/
 - **As built:** six `DatasetSource` sources (`dataset-sales-lines`, `-purchase-lines`, `-ledger-rows`, `-stock-movements`, `-items`, `-contacts`) under `ReportModule.Custom`; each active custom field of the kind is a `custom.{key}` text column read from the jsonb in SQL, never seeded. `rpt.CustomReports` (RLS) holds the layout as a `ReportQueryRequest`; `api/reports/custom` saves and reopens, and the catalog appends the caller's visible reports. A deactivated field's column is pruned on open and named in `droppedColumns`. The builder is the report host page on a dataset, with **Save as custom report**. Datasets have no date parameter; a date filter narrows them. Running a dataset against real schemas is not covered by the tests (the Reporting test database has only `rpt`).
 
 ### TK-114 · Scheduled report email
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-29
+- **Issue:** [#102](https://github.com/jothi-prabaharan/Bill-Book/issues/102)
 - **Lanes:** L-RPT, L-NTF · **Depends on:** TK-113, TK-19 · **Decision:** —
 - **Tables:** `rpt.ReportSchedules`
 - **Sub-tasks:**
