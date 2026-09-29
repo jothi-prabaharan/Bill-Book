@@ -1,3 +1,4 @@
+using Preventive.Repository.Repositories;
 using Shared.Kernel.Tenancy;
 
 namespace Preventive.Api.Services;
@@ -57,7 +58,7 @@ public sealed class PreventiveGenerator : BackgroundService
                 tenant.CustomerId = branch.CustomerId;
                 tenant.OrgId = branch.OrgId;
 
-                var result = await scope.ServiceProvider.GetRequiredService<PreventiveService>().GenerateAsync(today, ct);
+                var result = await scope.ServiceProvider.GetRequiredService<PreventiveRepository>().GenerateAsync(today, ct);
                 if (result.Generated > 0 || result.Raised > 0 || result.Failed > 0)
                 {
                     _log.LogInformation("Preventive plans for {OrgId}: {Generated} generated, {Raised} raised, {Failed} to retry.",

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Preventive.Api.Services;
+using Preventive.Repository.Repositories;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -36,7 +37,7 @@ public sealed class InternalSeedController : ControllerBase
 
         var response = new SeedOrganizationResponse
         {
-            Seeded = await _services.GetRequiredService<PreventiveSeeder>().SeedForOrganizationAsync(request.OrgId, ct),
+            Seeded = await _services.GetRequiredService<PreventiveSeederRepository>().SeedForOrganizationAsync(request.OrgId, ct),
         };
 
         _log.LogInformation("Seeded Preventive for organization {OrgId}: {@Seeded}", request.OrgId, response.Seeded);

@@ -1,4 +1,5 @@
 using Preventive.Api.Services;
+using Preventive.Repository.Repositories;
 using Preventive.Entity.Enums;
 using Xunit;
 
@@ -11,8 +12,8 @@ public sealed class RecurrenceTests
     public void A_monthly_plan_keeps_its_day_through_short_months()
     {
         var start = new DateOnly(2026, 1, 31);
-        DateOnly feb = Recurrence.NextAfter(start, Frequency.Monthly, 1, start);
-        DateOnly mar = Recurrence.NextAfter(start, Frequency.Monthly, 1, feb);
+        DateOnly feb = RecurrenceRepository.NextAfter(start, Frequency.Monthly, 1, start);
+        DateOnly mar = RecurrenceRepository.NextAfter(start, Frequency.Monthly, 1, feb);
 
         Assert.Equal(new DateOnly(2026, 2, 28), feb);
         Assert.Equal(new DateOnly(2026, 3, 31), mar);
@@ -27,20 +28,20 @@ public sealed class RecurrenceTests
     public void The_next_date_after_the_start_steps_by_frequency_and_interval(Frequency frequency, int interval, string expected)
     {
         var start = new DateOnly(2026, 4, 1);
-        Assert.Equal(DateOnly.Parse(expected), Recurrence.NextAfter(start, frequency, interval, start));
+        Assert.Equal(DateOnly.Parse(expected), RecurrenceRepository.NextAfter(start, frequency, interval, start));
     }
 
     [Fact]
     public void The_next_date_after_a_day_before_the_start_is_the_start() =>
-        Assert.Equal(new DateOnly(2026, 4, 1), Recurrence.NextAfter(new DateOnly(2026, 4, 1), Frequency.Monthly, 1, new DateOnly(2026, 1, 1)));
+        Assert.Equal(new DateOnly(2026, 4, 1), RecurrenceRepository.NextAfter(new DateOnly(2026, 4, 1), Frequency.Monthly, 1, new DateOnly(2026, 1, 1)));
 
     [Fact]
     public void A_date_between_occurrences_lands_on_the_next_one() =>
-        Assert.Equal(new DateOnly(2027, 1, 1), Recurrence.NextAfter(new DateOnly(2026, 4, 1), Frequency.Quarterly, 1, new DateOnly(2026, 11, 15)));
+        Assert.Equal(new DateOnly(2027, 1, 1), RecurrenceRepository.NextAfter(new DateOnly(2026, 4, 1), Frequency.Quarterly, 1, new DateOnly(2026, 11, 15)));
 
     [Fact]
     public void A_years_old_daily_plan_steps_quickly_and_exactly() =>
-        Assert.Equal(new DateOnly(2026, 9, 26), Recurrence.NextAfter(new DateOnly(2020, 1, 1), Frequency.Daily, 1, new DateOnly(2026, 9, 25)));
+        Assert.Equal(new DateOnly(2026, 9, 26), RecurrenceRepository.NextAfter(new DateOnly(2020, 1, 1), Frequency.Daily, 1, new DateOnly(2026, 9, 25)));
 
     [Theory]
     [InlineData("2026-07-10", 0, null, "2026-07-10", true)]
@@ -48,5 +49,5 @@ public sealed class RecurrenceTests
     [InlineData("2026-07-10", 3, null, "2026-07-07", true)]
     [InlineData("2026-07-10", 0, "2026-07-01", "2026-07-20", false)]
     public void An_occurrence_is_generated_lead_days_early_and_never_after_the_end(string due, int lead, string? end, string today, bool expected) =>
-        Assert.Equal(expected, Recurrence.IsInWindow(DateOnly.Parse(due), lead, end is null ? null : DateOnly.Parse(end), DateOnly.Parse(today)));
+        Assert.Equal(expected, RecurrenceRepository.IsInWindow(DateOnly.Parse(due), lead, end is null ? null : DateOnly.Parse(end), DateOnly.Parse(today)));
 }

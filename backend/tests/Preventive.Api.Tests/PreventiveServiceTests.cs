@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Preventive.Api.Services;
+using Preventive.Repository.Repositories;
 using Preventive.Entity.Enums;
 using Preventive.Entity.Models;
 using Preventive.Entity.TableEntities;
@@ -69,8 +70,8 @@ public sealed class PreventiveServiceTests
 
     public PreventiveServiceTests(PostgresFixture postgres) => _postgres = postgres;
 
-    private static PreventiveService Service(PreventiveDbContext db, FakeWorkOrders workOrders) =>
-        new(db, new FakeFacility(), new FakeEmployees(), workOrders, NullLogger<PreventiveService>.Instance);
+    private static PreventiveRepository Service(PreventiveDbContext db, FakeWorkOrders workOrders) =>
+        new(db, new FakeFacility(), new FakeEmployees(), workOrders, NullLogger<PreventiveRepository>.Instance);
 
     private static SavePlanRequest AcService(DateOnly start, Frequency frequency = Frequency.Monthly, int leadDays = 0) => new()
     {
@@ -106,7 +107,7 @@ public sealed class PreventiveServiceTests
             await db.PreventiveOccurrences.OrderBy(o => o.DueDate).Select(o => o.DueDate).ToListAsync());
         Assert.All(await db.PreventiveOccurrences.ToListAsync(), o => Assert.Equal(OccurrenceStatus.Raised, o.OccurrenceStatus));
         Assert.Equal(new DateOnly(2026, 7, 1), (await db.PreventivePlans.SingleAsync(p => p.PreventivePlanId == plan)).NextDueDate);
-        Assert.Contains(PreventiveService.SourceKey(plan, new DateOnly(2026, 5, 1)), workOrders.Raised.Keys);
+        Assert.Contains(PreventiveRepository.SourceKey(plan, new DateOnly(2026, 5, 1)), workOrders.Raised.Keys);
     }
 
     [SkippableFact]
@@ -139,7 +140,7 @@ public sealed class PreventiveServiceTests
         long plan = (await Service(db, workOrders).SavePlanAsync(null, AcService(new DateOnly(2026, 6, 1)), default)).Id!.Value;
 
         // WorkOrder already holds this occurrence's work order, as if the last run died before recording it.
-        await workOrders.RaiseAsync(new RaiseWorkOrder { SourceKey = PreventiveService.SourceKey(plan, new DateOnly(2026, 6, 1)), Title = "AC service" }, default);
+        await workOrders.RaiseAsync(new RaiseWorkOrder { SourceKey = PreventiveRepository.SourceKey(plan, new DateOnly(2026, 6, 1)), Title = "AC service" }, default);
 
         GenerationResult result = await Service(db, workOrders).GenerateAsync(new DateOnly(2026, 6, 2), default);
 
@@ -190,7 +191,7 @@ public sealed class PreventiveServiceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using PreventiveDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        PreventiveService service = Service(db, new FakeWorkOrders());
+        PreventiveRepository service = Service(db, new FakeWorkOrders());
 
         SavePlanRequest nowhere = AcService(new DateOnly(2026, 6, 1));
         nowhere.FacilityAssetId = null;

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Preventive.Api.Services;
+using Preventive.Repository.Repositories;
 using Preventive.Entity.Enums;
 using Preventive.Entity.Models;
 using Shared.Kernel.Apps;
@@ -20,10 +21,10 @@ namespace Preventive.Api.Controllers;
 [Route("api/preventive")]
 public sealed class PreventiveController : ControllerBase
 {
-    private readonly PreventiveService _plans;
+    private readonly PreventiveRepository _plans;
     private readonly TimeProvider _clock;
 
-    public PreventiveController(PreventiveService plans, TimeProvider clock)
+    public PreventiveController(PreventiveRepository plans, TimeProvider clock)
     {
         _plans = plans;
         _clock = clock;

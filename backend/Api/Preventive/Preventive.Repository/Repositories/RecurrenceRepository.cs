@@ -1,6 +1,6 @@
 using Preventive.Entity.Enums;
 
-namespace Preventive.Api.Services;
+namespace Preventive.Repository.Repositories;
 
 /// <summary>
 /// A plan's due dates (S7, TK-67). Pure. Month-based frequencies count from the
@@ -8,7 +8,7 @@ namespace Preventive.Api.Services;
 /// 31st falls on the 30th in April and back on the 31st in May rather than
 /// drifting to the 28th for ever.
 /// </summary>
-public static class Recurrence
+public static class RecurrenceRepository
 {
     public static int MonthsPer(Frequency frequency) => frequency switch
     {

@@ -1,4 +1,5 @@
 using Preventive.Api.Services;
+using Preventive.Repository.Repositories;
 using Preventive.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -63,8 +64,8 @@ public sealed class PreventiveSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using PreventiveDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        await new PreventiveSeeder().SeedForOrganizationAsync(orgId, default);
-        Dictionary<string, int> second = await new PreventiveSeeder().SeedForOrganizationAsync(orgId, default);
+        await new PreventiveSeederRepository().SeedForOrganizationAsync(orgId, default);
+        Dictionary<string, int> second = await new PreventiveSeederRepository().SeedForOrganizationAsync(orgId, default);
 
         Assert.All(second.Values, v => Assert.Equal(0, v));
     }

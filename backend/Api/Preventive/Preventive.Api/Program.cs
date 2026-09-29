@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Preventive.Api.Services;
+using Preventive.Repository.Repositories;
 using Preventive.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -66,8 +67,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddTransient<InternalKeyHandler>();
 
 // ---- Service registrations ----
-builder.Services.AddScoped<PreventiveSeeder>();
-builder.Services.AddScoped<PreventiveService>();
+builder.Services.AddScoped<PreventiveSeederRepository>();
+builder.Services.AddScoped<PreventiveRepository>();
 
 // What a plan maintains (Facility), its default assignee (Employee), the work orders
 // it raises (WorkOrder), and the branches the generator walks (Master).

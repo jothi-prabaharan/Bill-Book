@@ -7,7 +7,7 @@ using Shared.Kernel.Employees;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.School;
 
-namespace Preventive.Api.Services;
+namespace Preventive.Repository.Repositories;
 
 public enum PreventiveOutcome
 {
@@ -36,7 +36,7 @@ public sealed record PreventiveResult(PreventiveOutcome Outcome, long? Id = null
 /// <c>PPM:{plan}:{date}</c>, which WorkOrder is idempotent on, so a run that
 /// dies between the two steps raises nothing twice when the next one retries.
 /// </summary>
-public sealed class PreventiveService
+public sealed class PreventiveRepository
 {
     /// <summary>At most this many occurrences per plan per run, so a plan dated years back catches up over several runs.</summary>
     public const int CatchUpPerRun = 60;
@@ -45,14 +45,14 @@ public sealed class PreventiveService
     private readonly IFacilityClient _facility;
     private readonly IEmployeeDirectory _employees;
     private readonly IWorkOrderClient _workOrders;
-    private readonly ILogger<PreventiveService> _log;
+    private readonly ILogger<PreventiveRepository> _log;
 
-    public PreventiveService(
+    public PreventiveRepository(
         PreventiveDbContext db,
         IFacilityClient facility,
         IEmployeeDirectory employees,
         IWorkOrderClient workOrders,
-        ILogger<PreventiveService> log)
+        ILogger<PreventiveRepository> log)
     {
         _db = db;
         _facility = facility;
@@ -151,7 +151,7 @@ public sealed class PreventiveService
                 ? await _db.PreventiveOccurrences.Where(o => o.PreventivePlanId == planId).MaxAsync(o => (DateOnly?)o.DueDate, ct)
                 : null;
             plan.NextDueDate = last is DateOnly after
-                ? Recurrence.NextAfter(plan.StartDate, plan.Frequency, plan.Interval, after)
+                ? RecurrenceRepository.NextAfter(plan.StartDate, plan.Frequency, plan.Interval, after)
                 : plan.StartDate;
         }
 
@@ -205,9 +205,9 @@ public sealed class PreventiveService
         foreach (PreventivePlan plan in plans)
         {
             DateOnly due = plan.NextDueDate;
-            for (int step = 0; step < CatchUpPerRun && Recurrence.IsInWindow(due, plan.LeadDays, plan.EndDate, today); step++)
+            for (int step = 0; step < CatchUpPerRun && RecurrenceRepository.IsInWindow(due, plan.LeadDays, plan.EndDate, today); step++)
             {
-                DateOnly next = Recurrence.NextAfter(plan.StartDate, plan.Frequency, plan.Interval, due);
+                DateOnly next = RecurrenceRepository.NextAfter(plan.StartDate, plan.Frequency, plan.Interval, due);
                 if (!await ClaimAsync(plan.PreventivePlanId, due, next, ct))
                 {
                     break;
@@ -256,7 +256,7 @@ public sealed class PreventiveService
             .Take(500)
             .ToListAsync(ct);
 
-        foreach (var row in pending.Where(r => Recurrence.IsInWindow(r.Occurrence.DueDate, r.Plan.LeadDays, null, today)))
+        foreach (var row in pending.Where(r => RecurrenceRepository.IsInWindow(r.Occurrence.DueDate, r.Plan.LeadDays, null, today)))
         {
             RaisedWorkOrder raised;
             try
