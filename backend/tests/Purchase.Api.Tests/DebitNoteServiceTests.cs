@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
 using Purchase.Entity.TableEntities;
@@ -351,8 +352,8 @@ public sealed class DebitNoteServiceTests
 
     private sealed record Harness(
         PurchaseDbContext Db,
-        DebitNoteService Notes,
-        BillService Bills,
+        DebitNoteRepository Notes,
+        BillRepository Bills,
         RecordingInventory Inventory,
         RecordingLedger Ledger)
     {
@@ -374,12 +375,12 @@ public sealed class DebitNoteServiceTests
             var numbering = new NumberGenerator(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            BillService bills = new(
+            BillRepository bills = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),
                 new StubTaxRates(), names, names, inventory, ledger, new StubPaymentTerms(),
                 new RecordingFixedAssets(), new StubCurrentUser(), TimeProvider.System);
 
-            DebitNoteService notes = new(
+            DebitNoteRepository notes = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),
                 new StubTaxRates(), names, names, inventory, ledger,
                 new StubCurrentUser(), TimeProvider.System);

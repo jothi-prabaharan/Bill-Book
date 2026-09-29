@@ -1,4 +1,5 @@
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 
 namespace Purchase.Api.Tests;
 

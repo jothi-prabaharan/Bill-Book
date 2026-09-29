@@ -1,3 +1,4 @@
+using Purchase.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Enums;
@@ -10,7 +11,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// The goods receipt — <c>GRN</c>. The goods arrived.
@@ -38,7 +39,7 @@ namespace Purchase.Api.Services;
 /// Accounting replaces a posting keyed on the same document rather than adding
 /// to it.
 /// </summary>
-public sealed class GoodsReceiptService
+public sealed class GoodsReceiptRepository
 {
     /// <summary>Goods on the shelf. Debited by what was accepted, at what it cost.</summary>
     private const string InventoryAccount = "Inventory";
@@ -74,7 +75,7 @@ public sealed class GoodsReceiptService
     /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
     private readonly DocumentCustomFieldGate? _customFields;
 
-    public GoodsReceiptService(
+    public GoodsReceiptRepository(
         PurchaseDbContext db,
         ITenantContext tenant,
         INumberGenerator numbering,

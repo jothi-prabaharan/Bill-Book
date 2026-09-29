@@ -26,6 +26,8 @@ These are non-negotiable. Violating them means the code gets rejected.
 14. **No `catch` block writes its own message for a caller.** Every failure goes through `SqlErrorCatalog` → status, `ApiErrorCode`, curated sentence. **Development returns the exact database error; every other environment returns the sentence and an `errorReference`**, with the detail in the service's own `{schema}.ErrorLogs`. A curated message may never name a table, column, constraint or figure. Workers audit to the same table with `FollowUpStatus = Open` — that set is the task list.
 15. **Every task has a GitHub issue, and every commit names it.** Open the card's issue in `jothi-prabaharan/Bill-Book` at the claim, titled `TK-nn · Title`, and put its `- **Issue:** #N` line on the card. Every commit for the card carries `Refs #N`; the commit that completes it carries `Closes #N`. Never rewrite a pushed commit to add a reference — comment the commit id on the issue instead. Full rules in section 0.6 of [`docs/TASKS.md`](./docs/TASKS.md).
 
+16. **Business logic lives in `{Module}.Repository`, in files whose name ends `Repository`.** Every rule, posting, calculation, lifecycle change and query that is not plain HTTP plumbing goes in a `{Name}Repository.cs` under `{Module}.Repository/Repositories/` (namespace `{Module}.Repository.Repositories`), never in `{Module}.Api`. `{Module}.Api` holds only controllers, `Program.cs`, DI, `ICurrentUser`/hosting adapters and the startup migration host, and a controller only calls a repository and maps the result to a status. No new `*Service.cs` in `Api`. Being migrated module by module — Purchase first; a module not yet moved keeps its `*Service` files until its turn, but new logic in it still goes to a `*Repository`.
+
 ---
 
 ## Pending work — `docs/TASKS.md`
@@ -169,8 +171,8 @@ Three projects per service, no more — all three under `backend/Api/{Module}/`:
 
 ```
 {Module}.Entity/       TableEntities/ · Models/ · Enums/
-{Module}.Repository/   DbContext, repositories, seed data
-{Module}.Api/          controllers, services, DI
+{Module}.Repository/   DbContext, business logic (*Repository.cs), seed data
+{Module}.Api/          controllers, DI, hosting adapters
 ```
 
 Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. Never backwards.

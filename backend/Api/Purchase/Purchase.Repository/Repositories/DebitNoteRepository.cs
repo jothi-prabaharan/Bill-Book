@@ -1,3 +1,4 @@
+using Purchase.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// The debit note — <c>DBN</c>. The way back out of a purchase.
@@ -28,7 +29,7 @@ namespace Purchase.Api.Services;
 /// corrections to a bill whose goods stayed on the shelf. Moving stock for those
 /// would take away inventory the branch still has.
 /// </summary>
-public sealed class DebitNoteService
+public sealed class DebitNoteRepository
 {
     private const string InventoryAccount = "Inventory";
     private const string PurchaseReturnsAccount = "Purchase Returns";
@@ -57,7 +58,7 @@ public sealed class DebitNoteService
     private readonly TimeProvider _clock;
 
     /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
-    private readonly PurchaseApprovalService? _approvals;
+    private readonly PurchaseApprovalRepository? _approvals;
 
     /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
     private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
@@ -65,7 +66,7 @@ public sealed class DebitNoteService
     /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
     private readonly DocumentCustomFieldGate? _customFields;
 
-    public DebitNoteService(
+    public DebitNoteRepository(
         PurchaseDbContext db,
         ITenantContext tenant,
         INumberGenerator numbering,
@@ -78,7 +79,7 @@ public sealed class DebitNoteService
         ILedgerClient ledger,
         ICurrentUser user,
         TimeProvider clock,
-        PurchaseApprovalService? approvals = null,
+        PurchaseApprovalRepository? approvals = null,
         Shared.Kernel.Projects.IProjectDirectory? projects = null,
         DocumentCustomFieldGate? customFields = null)
     {

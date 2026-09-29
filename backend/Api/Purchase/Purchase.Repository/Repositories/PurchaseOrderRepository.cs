@@ -1,3 +1,4 @@
+using Purchase.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// The purchase order — <c>POR</c>.
@@ -26,7 +27,7 @@ namespace Purchase.Api.Services;
 /// and no <c>ILedgerClient</c> in it. A sales order has both; ordering from a
 /// vendor has nothing to hold back and nothing to record.
 /// </summary>
-public sealed class PurchaseOrderService
+public sealed class PurchaseOrderRepository
 {
     private readonly PurchaseDbContext _db;
     private readonly INumberGenerator _numbering;
@@ -39,12 +40,12 @@ public sealed class PurchaseOrderService
     private readonly TimeProvider _clock;
 
     /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
-    private readonly PurchaseApprovalService? _approvals;
+    private readonly PurchaseApprovalRepository? _approvals;
 
     /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
     private readonly DocumentCustomFieldGate? _customFields;
 
-    public PurchaseOrderService(
+    public PurchaseOrderRepository(
         PurchaseDbContext db,
         INumberGenerator numbering,
         IBaseCurrencyProvider baseCurrency,
@@ -54,7 +55,7 @@ public sealed class PurchaseOrderService
         IItemNameLookup itemNames,
         ICurrentUser user,
         TimeProvider clock,
-        PurchaseApprovalService? approvals = null,
+        PurchaseApprovalRepository? approvals = null,
         DocumentCustomFieldGate? customFields = null)
     {
         _customFields = customFields;

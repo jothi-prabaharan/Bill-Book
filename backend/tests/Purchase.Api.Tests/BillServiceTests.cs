@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Models;
 using Purchase.Entity.TableEntities;
 using Purchase.Repository;
@@ -530,8 +531,8 @@ public sealed class BillServiceTests
 
     private sealed record Harness(
         PurchaseDbContext Db,
-        BillService Bills,
-        GoodsReceiptService Receipts,
+        BillRepository Bills,
+        GoodsReceiptRepository Receipts,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
         StubPaymentTerms PaymentTerms,
@@ -557,12 +558,12 @@ public sealed class BillServiceTests
             var numbering = new NumberGenerator(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            GoodsReceiptService receipts = new(
+            GoodsReceiptRepository receipts = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),
                 new StubTaxRates(), names, names, inventory, ledger,
                 new StubCurrentUser(), TimeProvider.System);
 
-            BillService bills = new(
+            BillRepository bills = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),
                 new StubTaxRates(), names, names, inventory, ledger, terms, fixedAssets,
                 new StubCurrentUser(), TimeProvider.System);

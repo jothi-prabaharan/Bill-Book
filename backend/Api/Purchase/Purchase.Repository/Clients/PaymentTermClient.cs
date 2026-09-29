@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Clients;
 
 /// <summary>
 /// The due date a payment term implies.

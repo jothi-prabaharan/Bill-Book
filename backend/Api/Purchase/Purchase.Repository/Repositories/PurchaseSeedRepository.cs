@@ -1,8 +1,9 @@
+using Purchase.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Repository;
 using Shared.Kernel.Numbering;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// Purchase's master data for a newly created organization — today, its document
@@ -16,11 +17,11 @@ namespace Purchase.Api.Services;
 /// <b>Must run after Accounting</b>, which owns and migrates the numbering-series
 /// table this writes rows into.
 /// </summary>
-public sealed class PurchaseSeeder
+public sealed class PurchaseSeedRepository
 {
     private readonly PurchaseDbContext _db;
 
-    public PurchaseSeeder(PurchaseDbContext db) => _db = db;
+    public PurchaseSeedRepository(PurchaseDbContext db) => _db = db;
 
     public async Task<int> SeedNumberingSeriesAsync(Guid orgId, CancellationToken ct)
     {

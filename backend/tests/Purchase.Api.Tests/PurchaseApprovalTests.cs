@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
 using Purchase.Entity.TableEntities;
@@ -258,7 +259,7 @@ public sealed class PurchaseApprovalTests
         public Task<bool> IsDelegateAsync(DelegateCheckRequest request, CancellationToken ct) => Task.FromResult(false);
     }
 
-    private sealed record Harness(PurchaseDbContext Db, PurchaseOrderService Orders, PurchaseApprovalService Approvals, SwitchableUser User)
+    private sealed record Harness(PurchaseDbContext Db, PurchaseOrderRepository Orders, PurchaseApprovalRepository Approvals, SwitchableUser User)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg, FakeChains? chains = null)
         {
@@ -272,9 +273,9 @@ public sealed class PurchaseApprovalTests
             StubNameLookup names = new();
             SwitchableUser user = new();
             var numbering = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
-            var approvals = new PurchaseApprovalService(db, chains ?? new FakeChains(), tenant, user, TimeProvider.System);
+            var approvals = new PurchaseApprovalRepository(db, chains ?? new FakeChains(), tenant, user, TimeProvider.System);
 
-            PurchaseOrderService orders = new(
+            PurchaseOrderRepository orders = new(
                 db, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, user, TimeProvider.System, approvals);
 

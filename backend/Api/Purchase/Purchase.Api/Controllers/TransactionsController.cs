@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -14,16 +15,16 @@ namespace Purchase.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class TransactionsController : ControllerBase
 {
-    private readonly BillService _bills;
-    private readonly PurchaseOrderService _purchaseOrders;
-    private readonly DebitNoteService _debitNotes;
-    private readonly GoodsReceiptService _goodsReceipts;
+    private readonly BillRepository _bills;
+    private readonly PurchaseOrderRepository _purchaseOrders;
+    private readonly DebitNoteRepository _debitNotes;
+    private readonly GoodsReceiptRepository _goodsReceipts;
 
     public TransactionsController(
-        BillService bills,
-        PurchaseOrderService purchaseOrders,
-        DebitNoteService debitNotes,
-        GoodsReceiptService goodsReceipts)
+        BillRepository bills,
+        PurchaseOrderRepository purchaseOrders,
+        DebitNoteRepository debitNotes,
+        GoodsReceiptRepository goodsReceipts)
     {
         _bills = bills;
         _purchaseOrders = purchaseOrders;

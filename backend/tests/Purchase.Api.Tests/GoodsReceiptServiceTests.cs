@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
 using Purchase.Entity.TableEntities;
@@ -421,8 +422,8 @@ public sealed class GoodsReceiptServiceTests
 
     private sealed record Harness(
         PurchaseDbContext Db,
-        GoodsReceiptService Receipts,
-        PurchaseOrderService Orders,
+        GoodsReceiptRepository Receipts,
+        PurchaseOrderRepository Orders,
         RecordingInventory Inventory,
         RecordingLedger Ledger)
     {
@@ -448,7 +449,7 @@ public sealed class GoodsReceiptServiceTests
                 Options.Create(new NumberingOptions()),
                 new StubFinancialYear());
 
-            GoodsReceiptService receipts = new(
+            GoodsReceiptRepository receipts = new(
                 db,
                 tenant,
                 numbering,
@@ -462,7 +463,7 @@ public sealed class GoodsReceiptServiceTests
                 new StubCurrentUser(),
                 TimeProvider.System);
 
-            PurchaseOrderService orders = new(
+            PurchaseOrderRepository orders = new(
                 db,
                 numbering,
                 new StubBaseCurrency(),
