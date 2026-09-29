@@ -8,6 +8,8 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Repository;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -63,10 +65,10 @@ builder.Services.AddHttpClient<IEmployeeClient, EmployeeClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddScoped<LeaveCalculationEngine>();
-builder.Services.AddScoped<LeaveService>();
-builder.Services.AddScoped<AttendanceService>();
-builder.Services.AddScoped<TimeLeaveSeeder>();
+builder.Services.AddScoped<LeaveCalculationEngineRepository>();
+builder.Services.AddScoped<LeaveRepository>();
+builder.Services.AddScoped<AttendanceRepository>();
+builder.Services.AddScoped<TimeLeaveSeederRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

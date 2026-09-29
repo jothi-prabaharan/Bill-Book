@@ -1,16 +1,17 @@
+using TimeLeave.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using TimeLeave.Entity.Enums;
 using TimeLeave.Entity.TableEntities;
 using TimeLeave.Repository;
 
-namespace TimeLeave.Api.Services;
+namespace TimeLeave.Repository.Repositories;
 
-public class TimeLeaveSeeder
+public class TimeLeaveSeederRepository
 {
     private readonly TimeLeaveDbContext _db;
-    private readonly ILogger<TimeLeaveSeeder> _logger;
+    private readonly ILogger<TimeLeaveSeederRepository> _logger;
 
-    public TimeLeaveSeeder(TimeLeaveDbContext db, ILogger<TimeLeaveSeeder> logger)
+    public TimeLeaveSeederRepository(TimeLeaveDbContext db, ILogger<TimeLeaveSeederRepository> logger)
     {
         _db = db;
         _logger = logger;

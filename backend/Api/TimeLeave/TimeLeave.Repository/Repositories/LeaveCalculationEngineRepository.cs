@@ -1,9 +1,10 @@
+using TimeLeave.Repository.Clients;
 using TimeLeave.Entity.Enums;
 using TimeLeave.Entity.TableEntities;
 
-namespace TimeLeave.Api.Services;
+namespace TimeLeave.Repository.Repositories;
 
-public class LeaveCalculationEngine
+public class LeaveCalculationEngineRepository
 {
     /// <summary>
     /// Calculates the number of leave days between fromDate and toDate.

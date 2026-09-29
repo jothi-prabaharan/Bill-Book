@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 
 namespace TimeLeave.Api.Controllers;
 
@@ -31,7 +33,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var seeder = _services.GetRequiredService<TimeLeaveSeeder>();
+        var seeder = _services.GetRequiredService<TimeLeaveSeederRepository>();
         await seeder.SeedBranchAsync(request.OrgId, ct);
 
         var response = new SeedOrganizationResponse

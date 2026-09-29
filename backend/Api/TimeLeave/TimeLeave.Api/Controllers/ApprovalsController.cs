@@ -6,6 +6,8 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Entity.Enums;
 using TimeLeave.Entity.Models;
 using TimeLeave.Entity.TableEntities;
@@ -28,14 +30,14 @@ public sealed class ApprovalsController : ControllerBase
     private readonly ICurrentUser _currentUser;
     private readonly ITenantContext _tenant;
     private readonly IEmployeeClient _hrm;
-    private readonly LeaveService _leave;
+    private readonly LeaveRepository _leave;
 
     public ApprovalsController(
         TimeLeaveDbContext db,
         ICurrentUser currentUser,
         ITenantContext tenant,
         IEmployeeClient hrm,
-        LeaveService leave)
+        LeaveRepository leave)
     {
         _db = db;
         _currentUser = currentUser;

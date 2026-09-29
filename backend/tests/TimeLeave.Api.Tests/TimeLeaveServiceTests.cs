@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Entity.Enums;
 using TimeLeave.Entity.Models;
 using TimeLeave.Entity.TableEntities;
@@ -18,7 +20,7 @@ public sealed class TimeLeaveServiceTests
     [Fact]
     public void The_sandwich_rule_counts_a_weekend_between_two_leave_days()
     {
-        var engine = new LeaveCalculationEngine();
+        var engine = new LeaveCalculationEngineRepository();
 
         // 2026-10-02 is a Friday, 2026-10-05 is a Monday
         var fromDate = new DateOnly(2026, 10, 2);
@@ -135,8 +137,8 @@ public sealed class TimeLeaveServiceTests
         db.LeaveApplications.AddRange(app1, app2);
         await db.SaveChangesAsync();
 
-        var engine = new LeaveCalculationEngine();
-        var service1 = new LeaveService(db, engine);
+        var engine = new LeaveCalculationEngineRepository();
+        var service1 = new LeaveRepository(db, engine);
 
         // First approval succeeds
         var approved1 = await service1.ApproveLeaveAsync(app1.LeaveApplicationId);
@@ -179,8 +181,8 @@ public sealed class TimeLeaveServiceTests
         });
         await db.SaveChangesAsync();
 
-        var engine = new LeaveCalculationEngine();
-        var service = new LeaveService(db, engine);
+        var engine = new LeaveCalculationEngineRepository();
+        var service = new LeaveRepository(db, engine);
 
         var appDto = await service.ApplyLeaveAsync(new ApplyLeaveRequest(
             employeeId,
@@ -252,8 +254,8 @@ public sealed class TimeLeaveServiceTests
         db.Shifts.Add(shift);
         await db.SaveChangesAsync();
 
-        var engine = new LeaveCalculationEngine();
-        var attendanceService = new AttendanceService(db, engine);
+        var engine = new LeaveCalculationEngineRepository();
+        var attendanceService = new AttendanceRepository(db, engine);
 
         var date = new DateOnly(2026, 8, 10); // A Monday
 

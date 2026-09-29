@@ -5,6 +5,8 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Tenancy;
 using TimeLeave.Api.Controllers;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Entity.Enums;
 using TimeLeave.Entity.Models;
 using TimeLeave.Entity.TableEntities;
@@ -75,9 +77,9 @@ public sealed class SelfServiceAndApprovalsTests
 
         var empUser = new FakeCurrentUser(empUserId);
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-        var engine = new LeaveCalculationEngine();
-        var leaveService = new LeaveService(db, engine);
-        var attendanceService = new AttendanceService(db, engine);
+        var engine = new LeaveCalculationEngineRepository();
+        var leaveService = new LeaveRepository(db, engine);
+        var attendanceService = new AttendanceRepository(db, engine);
 
         var meController = new MeTimeLeaveController(db, empUser, tenant, fakeEmployee, leaveService, attendanceService);
 
@@ -170,9 +172,9 @@ public sealed class SelfServiceAndApprovalsTests
         var empUser = new FakeCurrentUser(empUserId);
         var managerUser = new FakeCurrentUser(managerUserId);
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-        var engine = new LeaveCalculationEngine();
-        var leaveService = new LeaveService(db, engine);
-        var attendanceService = new AttendanceService(db, engine);
+        var engine = new LeaveCalculationEngineRepository();
+        var leaveService = new LeaveRepository(db, engine);
+        var attendanceService = new AttendanceRepository(db, engine);
 
         var meController = new MeTimeLeaveController(db, empUser, tenant, fakeEmployee, leaveService, attendanceService);
         var approvalsController = new ApprovalsController(db, managerUser, tenant, fakeEmployee, leaveService);

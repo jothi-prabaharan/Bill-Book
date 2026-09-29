@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Entity.Models;
 
 namespace TimeLeave.Api.Controllers;
@@ -14,9 +16,9 @@ namespace TimeLeave.Api.Controllers;
 public sealed class InternalTimeLeaveController : ControllerBase
 {
     private readonly TenantContext _tenant;
-    private readonly AttendanceService _attendanceService;
+    private readonly AttendanceRepository _attendanceService;
 
-    public InternalTimeLeaveController(TenantContext tenant, AttendanceService attendanceService)
+    public InternalTimeLeaveController(TenantContext tenant, AttendanceRepository attendanceService)
     {
         _tenant = tenant;
         _attendanceService = attendanceService;

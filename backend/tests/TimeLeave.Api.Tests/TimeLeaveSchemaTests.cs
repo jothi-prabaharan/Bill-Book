@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Repository;
 using Xunit;
 
@@ -48,7 +50,7 @@ public sealed class TimeLeaveSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using TimeLeaveDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        var seeder = new TimeLeaveSeeder(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<TimeLeaveSeeder>.Instance);
+        var seeder = new TimeLeaveSeederRepository(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<TimeLeaveSeederRepository>.Instance);
         await seeder.SeedBranchAsync(orgId, default);
         int initialCount = await db.LeaveTypes.CountAsync();
 

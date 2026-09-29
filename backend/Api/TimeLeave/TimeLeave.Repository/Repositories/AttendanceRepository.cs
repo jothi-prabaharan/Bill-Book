@@ -1,17 +1,18 @@
+using TimeLeave.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using TimeLeave.Entity.Enums;
 using TimeLeave.Entity.Models;
 using TimeLeave.Entity.TableEntities;
 using TimeLeave.Repository;
 
-namespace TimeLeave.Api.Services;
+namespace TimeLeave.Repository.Repositories;
 
-public class AttendanceService
+public class AttendanceRepository
 {
     private readonly TimeLeaveDbContext _db;
-    private readonly LeaveCalculationEngine _leaveEngine;
+    private readonly LeaveCalculationEngineRepository _leaveEngine;
 
-    public AttendanceService(TimeLeaveDbContext db, LeaveCalculationEngine leaveEngine)
+    public AttendanceRepository(TimeLeaveDbContext db, LeaveCalculationEngineRepository leaveEngine)
     {
         _db = db;
         _leaveEngine = leaveEngine;

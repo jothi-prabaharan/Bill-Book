@@ -5,6 +5,8 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Security;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Entity.Models;
 
 namespace TimeLeave.Api.Controllers;
@@ -16,10 +18,10 @@ namespace TimeLeave.Api.Controllers;
 [RequireModulePermission("attendance")]
 public class AttendanceController : ControllerBase
 {
-    private readonly AttendanceService _attendanceService;
+    private readonly AttendanceRepository _attendanceService;
     private readonly ICurrentUser _currentUser;
 
-    public AttendanceController(AttendanceService attendanceService, ICurrentUser currentUser)
+    public AttendanceController(AttendanceRepository attendanceService, ICurrentUser currentUser)
     {
         _attendanceService = attendanceService;
         _currentUser = currentUser;

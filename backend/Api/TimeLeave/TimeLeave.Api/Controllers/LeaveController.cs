@@ -5,6 +5,8 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Security;
 using TimeLeave.Api.Services;
+using TimeLeave.Repository.Repositories;
+using TimeLeave.Repository.Clients;
 using TimeLeave.Entity.Models;
 
 namespace TimeLeave.Api.Controllers;
@@ -16,10 +18,10 @@ namespace TimeLeave.Api.Controllers;
 [RequireModulePermission("leave")]
 public class LeaveController : ControllerBase
 {
-    private readonly LeaveService _leaveService;
+    private readonly LeaveRepository _leaveService;
     private readonly ICurrentUser _currentUser;
 
-    public LeaveController(LeaveService leaveService, ICurrentUser currentUser)
+    public LeaveController(LeaveRepository leaveService, ICurrentUser currentUser)
     {
         _leaveService = leaveService;
         _currentUser = currentUser;

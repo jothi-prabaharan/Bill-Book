@@ -1,7 +1,8 @@
+using TimeLeave.Repository.Repositories;
 using System.Net.Http.Json;
 using Shared.Kernel.Employees;
 
-namespace TimeLeave.Api.Services;
+namespace TimeLeave.Repository.Clients;
 
 public interface IEmployeeClient
 {
