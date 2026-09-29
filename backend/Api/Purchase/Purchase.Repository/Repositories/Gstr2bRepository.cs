@@ -6,19 +6,19 @@ using Purchase.Repository;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Tenancy;
 
-namespace Purchase.Api.Services.Gstr2b;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// GSTR-2B reconciliation (TK-116): import a month's file, match it against the
-/// purchase register, and keep what was found. Matching is <see cref="Gstr2bMatcher"/>'s;
+/// purchase register, and keep what was found. Matching is <see cref="Gstr2bMatcherRepository"/>'s;
 /// this reads the books and stores the result.
 /// </summary>
-public sealed class Gstr2bService
+public sealed class Gstr2bRepository
 {
     private readonly PurchaseDbContext _db;
     private readonly IOrgIdentityProvider? _identity;
 
-    public Gstr2bService(PurchaseDbContext db, IOrgIdentityProvider? identity = null)
+    public Gstr2bRepository(PurchaseDbContext db, IOrgIdentityProvider? identity = null)
     {
         _db = db;
         _identity = identity;
@@ -29,7 +29,7 @@ public sealed class Gstr2bService
         Gstr2bDocument document;
         try
         {
-            document = Gstr2bFile.Parse(json);
+            document = Gstr2bFileRepository.Parse(json);
         }
         catch (Gstr2bFormatException ex)
         {
@@ -54,7 +54,7 @@ public sealed class Gstr2bService
         List<BooksBill> period = await BillsAsync(
             r => r.ContactGstin != null && r.SupplierInvoiceDate >= document.From && r.SupplierInvoiceDate <= document.To, ct);
 
-        Gstr2bMatchResult result = Gstr2bMatcher.Match(document.Invoices, candidates, period);
+        Gstr2bMatchResult result = Gstr2bMatcherRepository.Match(document.Invoices, candidates, period);
 
         Gstr2bImport import = new()
         {

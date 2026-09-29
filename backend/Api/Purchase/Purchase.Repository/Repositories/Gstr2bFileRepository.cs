@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 
-namespace Purchase.Api.Services.Gstr2b;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>One supplier invoice as GSTR-2B reports it.</summary>
 public sealed record Gstr2bInvoice(
@@ -29,7 +29,7 @@ public sealed class Gstr2bFormatException(string message) : Exception(message);
 /// offline tool differ, and strict about what matching needs: a period, a
 /// supplier GSTIN, a number and a date on every invoice.
 /// </summary>
-public static class Gstr2bFile
+public static class Gstr2bFileRepository
 {
     public static Gstr2bDocument Parse(string json)
     {

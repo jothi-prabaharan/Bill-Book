@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Clients;
 
 /// <summary>
 /// Where Purchase posts to the general ledger.

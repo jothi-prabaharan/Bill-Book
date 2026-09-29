@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -17,9 +18,9 @@ namespace Purchase.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class DebitNotesController : ControllerBase
 {
-    private readonly DebitNoteService _notes;
+    private readonly DebitNoteRepository _notes;
 
-    public DebitNotesController(DebitNoteService notes) => _notes = notes;
+    public DebitNotesController(DebitNoteRepository notes) => _notes = notes;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) => Ok(await _notes.ListAsync(ct));

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -44,7 +45,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        PurchaseSeeder seeder = _services.GetRequiredService<PurchaseSeeder>();
+        PurchaseSeedRepository seeder = _services.GetRequiredService<PurchaseSeedRepository>();
 
         SeedOrganizationResponse response = new()
         {

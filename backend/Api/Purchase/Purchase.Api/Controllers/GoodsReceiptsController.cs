@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -21,9 +22,9 @@ namespace Purchase.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class GoodsReceiptsController : ControllerBase
 {
-    private readonly GoodsReceiptService _receipts;
+    private readonly GoodsReceiptRepository _receipts;
 
-    public GoodsReceiptsController(GoodsReceiptService receipts) => _receipts = receipts;
+    public GoodsReceiptsController(GoodsReceiptRepository receipts) => _receipts = receipts;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) =>

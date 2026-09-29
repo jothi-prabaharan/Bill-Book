@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services.Gstr2b;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -22,9 +22,9 @@ public sealed class Gstr2bController : ControllerBase
     /// <summary>A branch's month of supplier invoices; a larger file is not a 2B.</summary>
     private const long MaxUploadBytes = 20 * 1024 * 1024;
 
-    private readonly Gstr2bService _gstr2b;
+    private readonly Gstr2bRepository _gstr2b;
 
-    public Gstr2bController(Gstr2bService gstr2b) => _gstr2b = gstr2b;
+    public Gstr2bController(Gstr2bRepository gstr2b) => _gstr2b = gstr2b;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) => Ok(await _gstr2b.ListAsync(ct));

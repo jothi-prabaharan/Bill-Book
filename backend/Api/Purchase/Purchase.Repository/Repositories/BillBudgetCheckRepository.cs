@@ -1,9 +1,10 @@
+using Purchase.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Repository;
 using Shared.Kernel.Budgets;
 using Shared.Kernel.Tenancy;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// After a bill is saved, asks Accounting whether its lines pass the branch's
@@ -11,13 +12,13 @@ namespace Purchase.Api.Services;
 /// value in base currency; Accounting keeps only expense accounts. The answer is
 /// warnings for the form, never a refusal.
 /// </summary>
-public sealed class BillBudgetCheck
+public sealed class BillBudgetCheckRepository
 {
     private readonly PurchaseDbContext _db;
     private readonly IBudgetCheckClient _client;
     private readonly ITenantContext _tenant;
 
-    public BillBudgetCheck(PurchaseDbContext db, IBudgetCheckClient client, ITenantContext tenant)
+    public BillBudgetCheckRepository(PurchaseDbContext db, IBudgetCheckClient client, ITenantContext tenant)
     {
         _db = db;
         _client = client;

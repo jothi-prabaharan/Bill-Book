@@ -1,3 +1,5 @@
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Purchase.Api.Services;
@@ -72,7 +74,7 @@ public sealed class PurchaseRegisterTests
         Assert.Equal(BillOutcome.Ok, (await h.Bills.PostAsync(created.BillId, default)).Outcome);
 
         Assert.Equal(1000m, h.Ledger.CreditOf(AccountsPayableAccount));
-        Assert.Equal(180m, h.Ledger.CreditOf(BillService.ReverseChargeAccount));
+        Assert.Equal(180m, h.Ledger.CreditOf(BillRepository.ReverseChargeAccount));
         Assert.Equal(180m, h.Ledger.DebitOf(InputGstAccount));
         AssertBalanced(h.Ledger.Posts[^1]);
 
@@ -107,7 +109,7 @@ public sealed class PurchaseRegisterTests
     {
         Bill bill = Bill(isReverseCharge: false, Detail(1, DocumentLineType.Expense, ItcEligibility.Ineligible));
 
-        List<LedgerLegRequest> legs = BillService.BuildLegs(bill, againstReceipt: false);
+        List<LedgerLegRequest> legs = BillRepository.BuildLegs(bill, againstReceipt: false);
 
         LedgerLegRequest expense = Assert.Single(legs, l => l.TransactionDetailId == 1 && l.AccountSystemName is null);
         Assert.Equal(1180m, expense.DebitAmount);
@@ -120,7 +122,7 @@ public sealed class PurchaseRegisterTests
     {
         Bill bill = Bill(isReverseCharge: false, Detail(1, DocumentLineType.Stock, ItcEligibility.Blocked));
 
-        List<LedgerLegRequest> legs = BillService.BuildLegs(bill, againstReceipt: true);
+        List<LedgerLegRequest> legs = BillRepository.BuildLegs(bill, againstReceipt: true);
 
         Assert.Equal(1000m, legs.Where(l => l.AccountSystemName == "Goods Received Not Invoiced").Sum(l => l.DebitAmount));
         Assert.Equal(180m, legs.Where(l => l.AccountSystemName == InventoryAccount).Sum(l => l.DebitAmount));
@@ -138,7 +140,7 @@ public sealed class PurchaseRegisterTests
             Detail(1, DocumentLineType.Stock, eligibility),
             Detail(2, DocumentLineType.Capital, ItcEligibility.Eligible));
 
-        AssertBalanced(BillService.BuildLegs(bill, againstReceipt: false));
+        AssertBalanced(BillRepository.BuildLegs(bill, againstReceipt: false));
 
         // And a debit note for the first line reverses it, balanced too.
         DebitNote note = new()
@@ -164,9 +166,9 @@ public sealed class PurchaseRegisterTests
             ],
         };
 
-        List<LedgerLegRequest> reversal = DebitNoteService.BuildLegs(note, 0m, bill);
+        List<LedgerLegRequest> reversal = DebitNoteRepository.BuildLegs(note, 0m, bill);
         AssertBalanced(reversal);
-        Assert.Equal(reverseCharge ? 180m : 0m, reversal.Where(l => l.AccountSystemName == BillService.ReverseChargeAccount).Sum(l => l.DebitAmount));
+        Assert.Equal(reverseCharge ? 180m : 0m, reversal.Where(l => l.AccountSystemName == BillRepository.ReverseChargeAccount).Sum(l => l.DebitAmount));
         Assert.Equal(eligibility == ItcEligibility.Eligible ? 180m : 0m, reversal.Where(l => l.AccountSystemName == InputGstAccount).Sum(l => l.CreditAmount));
     }
 
@@ -186,7 +188,7 @@ public sealed class PurchaseRegisterTests
             Lines = [new DebitNoteDetail { DebitNoteDetailId = 4, BillDetailId = 1, LineNumber = 1, Quantity = 2m, TaxableAmount = 200m, Taxes = [] }],
         };
 
-        PurchaseRegister row = Assert.Single(PurchaseRegisterRows.ForDebitNote(note, bill));
+        PurchaseRegister row = Assert.Single(PurchaseRegisterRowsRepository.ForDebitNote(note, bill));
 
         Assert.Equal("DBN", row.TransactionTypeCode);
         Assert.Equal(bill.BillId, row.OriginalBillId);
@@ -256,7 +258,7 @@ public sealed class PurchaseRegisterTests
         LineType = DocumentLineType.Stock,
     };
 
-    private sealed record Harness(PurchaseDbContext Db, BillService Bills, RecordingInventory Inventory, RecordingLedger Ledger)
+    private sealed record Harness(PurchaseDbContext Db, BillRepository Bills, RecordingInventory Inventory, RecordingLedger Ledger)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -274,7 +276,7 @@ public sealed class PurchaseRegisterTests
             RecordingLedger ledger = new();
             var numbering = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
-            BillService bills = new(
+            BillRepository bills = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),
                 new StubTaxRates(), names, names, inventory, ledger, new StubPaymentTerms(), new RecordingFixedAssets(),
                 new StubCurrentUser(), TimeProvider.System);

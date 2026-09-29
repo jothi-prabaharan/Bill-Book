@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -18,9 +19,9 @@ namespace Purchase.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class BillsController : ControllerBase
 {
-    private readonly BillService _bills;
+    private readonly BillRepository _bills;
 
-    public BillsController(BillService bills) => _bills = bills;
+    public BillsController(BillRepository bills) => _bills = bills;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) => Ok(await _bills.ListAsync(ct));
@@ -34,7 +35,7 @@ public sealed class BillsController : ControllerBase
 
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheck budget, CancellationToken ct)
+        [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheckRepository budget, CancellationToken ct)
     {
         BillResult result = await _bills.CreateAsync(request, ct);
         if (result.Outcome != BillOutcome.Ok)
@@ -50,7 +51,7 @@ public sealed class BillsController : ControllerBase
 
     [HttpPut("{billId:long}")]
     public async Task<IActionResult> Update(
-        long billId, [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheck budget, CancellationToken ct)
+        long billId, [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheckRepository budget, CancellationToken ct)
     {
         BillResult result = await _bills.UpdateAsync(billId, request, ct);
         if (result.Outcome != BillOutcome.Ok)

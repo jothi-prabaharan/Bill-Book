@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 
@@ -14,9 +15,9 @@ namespace Purchase.Api.Controllers;
 [RequireApp(App.RetailErp)]
 public sealed class BillBillingController : ControllerBase
 {
-    private readonly BillBillingService _billing;
+    private readonly BillBillingRepository _billing;
 
-    public BillBillingController(BillBillingService billing) => _billing = billing;
+    public BillBillingController(BillBillingRepository billing) => _billing = billing;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] long projectId, CancellationToken ct) =>

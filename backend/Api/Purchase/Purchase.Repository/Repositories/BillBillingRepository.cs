@@ -1,3 +1,4 @@
+using Purchase.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Models;
 using Purchase.Repository;
@@ -5,7 +6,7 @@ using Shared.Kernel.Documents;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Projects;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// Re-billing bill lines to a project's client (TK-106). A billable line of a
@@ -13,11 +14,11 @@ namespace Purchase.Api.Services;
 /// update whose row count is the answer, so two invoices cannot both charge the
 /// same cost on. A void of the invoice releases it.
 /// </summary>
-public sealed class BillBillingService
+public sealed class BillBillingRepository
 {
     private readonly PurchaseDbContext _db;
 
-    public BillBillingService(PurchaseDbContext db) => _db = db;
+    public BillBillingRepository(PurchaseDbContext db) => _db = db;
 
     public async Task<List<BillableBillLine>> BillableAsync(long projectId, CancellationToken ct)
     {

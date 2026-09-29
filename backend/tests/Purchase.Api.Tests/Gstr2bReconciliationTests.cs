@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Purchase.Api.Services.Gstr2b;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
 using Purchase.Entity.TableEntities;
@@ -64,7 +64,7 @@ public sealed class Gstr2bReconciliationTests
     [Fact]
     public void A_recorded_2b_against_seeded_bills_gives_the_expected_groups()
     {
-        Gstr2bDocument document = Gstr2bFile.Parse(Sample);
+        Gstr2bDocument document = Gstr2bFileRepository.Parse(Sample);
 
         List<BooksBill> bills =
         [
@@ -78,7 +78,7 @@ public sealed class Gstr2bReconciliationTests
             new(4, "BIL-4", Blue, "B-7", new DateOnly(2026, 6, 25), 400m, 72m, 72m, false),
         ];
 
-        Gstr2bMatchResult result = Gstr2bMatcher.Match(document.Invoices, bills, bills);
+        Gstr2bMatchResult result = Gstr2bMatcherRepository.Match(document.Invoices, bills, bills);
 
         Gstr2bLine loose = result.Lines.Single(l => l.InvoiceNo == "AC/0012");
         Assert.Equal(Gstr2bMatchState.Matched, loose.MatchState);
@@ -104,7 +104,7 @@ public sealed class Gstr2bReconciliationTests
     [Fact]
     public void The_file_is_read_for_its_period_recipient_and_invoice_totals()
     {
-        Gstr2bDocument document = Gstr2bFile.Parse(Sample);
+        Gstr2bDocument document = Gstr2bFileRepository.Parse(Sample);
 
         Assert.Equal("33AAAAA0000A1Z5", document.RecipientGstin);
         Assert.Equal("062026", document.ReturnPeriod);
@@ -123,7 +123,7 @@ public sealed class Gstr2bReconciliationTests
     [InlineData("""{ "data": { "docdata": { "b2b": [] } } }""")]
     [InlineData("""{ "data": { "rtnprd": "132026" } }""")]
     public void A_file_that_is_not_a_2b_is_refused_with_a_reason(string json) =>
-        Assert.Throws<Gstr2bFormatException>(() => Gstr2bFile.Parse(json));
+        Assert.Throws<Gstr2bFormatException>(() => Gstr2bFileRepository.Parse(json));
 
     [Theory]
     [InlineData("INV/0007-A", "INV7A")]
@@ -131,7 +131,7 @@ public sealed class Gstr2bReconciliationTests
     [InlineData("000", "0")]
     [InlineData("2026-27/0045", "20262745")]
     public void An_invoice_number_is_normalised_to_letters_and_digits_without_leading_zeros(string number, string expected) =>
-        Assert.Equal(expected, Gstr2bMatcher.Normalise(number));
+        Assert.Equal(expected, Gstr2bMatcherRepository.Normalise(number));
 
     [Fact]
     public void A_date_that_differs_is_a_mismatch_and_2b_withholding_credit_puts_it_at_risk()
@@ -142,12 +142,12 @@ public sealed class Gstr2bReconciliationTests
         ];
         List<BooksBill> bills = [new(3, "BIL-3", Blue, "B-1", new DateOnly(2026, 6, 10), 1000m, 180m, 180m, false)];
 
-        Gstr2bLine line = Assert.Single(Gstr2bMatcher.Match(invoices, bills, bills).Lines);
+        Gstr2bLine line = Assert.Single(Gstr2bMatcherRepository.Match(invoices, bills, bills).Lines);
 
         Assert.Equal(Gstr2bMatchState.Mismatched, line.MatchState);
         Assert.Contains("Dated 11-06-2026 in 2B and 10-06-2026 in the books", line.Note);
         Assert.Contains("not available", line.Note);
-        Assert.Equal(180m, Gstr2bMatcher.Match(invoices, bills, bills).ItcAtRisk);
+        Assert.Equal(180m, Gstr2bMatcherRepository.Match(invoices, bills, bills).ItcAtRisk);
     }
 
     [SkippableFact]
@@ -165,7 +165,7 @@ public sealed class Gstr2bReconciliationTests
             Row(5, "BIL-5", Blue, "B-2", new DateOnly(2026, 5, 2), 100m, 18m));
         await db.SaveChangesAsync();
 
-        Gstr2bService service = new(db);
+        Gstr2bRepository service = new(db);
         Gstr2bImportResult result = await service.ImportAsync("2b-june.json", Sample, default);
 
         Assert.Equal(Gstr2bImportOutcome.Ok, result.Outcome);

@@ -1,3 +1,4 @@
+using Purchase.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// The vendor bill — <c>BIL</c>. What is owed, and the document input tax credit
@@ -32,7 +33,7 @@ namespace Purchase.Api.Services;
 /// meaning from the sales side, where the identical arithmetic yields a
 /// liability.
 /// </summary>
-public sealed class BillService
+public sealed class BillRepository
 {
     private const string InventoryAccount = "Inventory";
     private const string GrniAccount = "Goods Received Not Invoiced";
@@ -69,7 +70,7 @@ public sealed class BillService
     private readonly TimeProvider _clock;
 
     /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
-    private readonly PurchaseApprovalService? _approvals;
+    private readonly PurchaseApprovalRepository? _approvals;
 
     /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
     private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
@@ -77,7 +78,7 @@ public sealed class BillService
     /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
     private readonly DocumentCustomFieldGate? _customFields;
 
-    public BillService(
+    public BillRepository(
         PurchaseDbContext db,
         ITenantContext tenant,
         INumberGenerator numbering,
@@ -92,7 +93,7 @@ public sealed class BillService
         IFixedAssetClient fixedAssets,
         ICurrentUser user,
         TimeProvider clock,
-        PurchaseApprovalService? approvals = null,
+        PurchaseApprovalRepository? approvals = null,
         Shared.Kernel.Projects.IProjectDirectory? projects = null,
         DocumentCustomFieldGate? customFields = null)
     {
@@ -695,7 +696,7 @@ public sealed class BillService
         await _db.PurchaseRegister
             .Where(r => r.TransactionTypeCode == "BIL" && r.SourceId == bill.BillId)
             .ExecuteDeleteAsync(ct);
-        _db.PurchaseRegister.AddRange(PurchaseRegisterRows.ForBill(bill));
+        _db.PurchaseRegister.AddRange(PurchaseRegisterRowsRepository.ForBill(bill));
 
         // Each capital line goes onto the fixed asset register, and Accounting
         // reclassifies its cost out of the shared Fixed Asset account into its

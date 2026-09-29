@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Clients;
 
 /// <summary>
 /// Where a posted bill's capital lines go onto Accounting's fixed asset register

@@ -2,7 +2,7 @@ using System.Text;
 using Purchase.Entity.Enums;
 using Purchase.Entity.TableEntities;
 
-namespace Purchase.Api.Services.Gstr2b;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>A posted bill as the purchase register totals it, for reconciliation.</summary>
 public sealed record BooksBill(
@@ -36,7 +36,7 @@ public sealed record Gstr2bMatchResult(IReadOnlyList<Gstr2bLine> Lines, decimal 
 /// mismatched bill holds above 2B's figure, and a matched bill's claimable
 /// tax where 2B marks the credit unavailable.
 /// </summary>
-public static class Gstr2bMatcher
+public static class Gstr2bMatcherRepository
 {
     public const decimal Tolerance = 1m;
 

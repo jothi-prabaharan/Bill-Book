@@ -1,3 +1,4 @@
+using Purchase.Api.Services;
 using Shared.Kernel.Approvals;
 using Shared.Kernel.Security;
 using System.Text;
@@ -6,7 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Repository;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Interfaces;
@@ -65,29 +67,28 @@ builder.Services.AddDbContext<PurchaseDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-builder.Services.AddScoped<PurchaseSeeder>();
-builder.Services.AddScoped<PurchaseOrderService>();
+builder.Services.AddScoped<PurchaseSeedRepository>();
+builder.Services.AddScoped<PurchaseOrderRepository>();
 
 // Approval chains (TK-100): Master resolves them, this service stores the steps.
-builder.Services.AddScoped<PurchaseApprovalService>();
+builder.Services.AddScoped<PurchaseApprovalRepository>();
 builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<GoodsReceiptService>();
-builder.Services.AddScoped<BillService>();
-
 // GSTR-2B reconciliation (TK-116). The branch's GSTIN, to refuse another registration's file.
 builder.Services.AddHttpClient<Shared.Kernel.Tenancy.IOrgIdentityProvider, Shared.Kernel.Tenancy.HttpOrgIdentityProvider>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<Purchase.Api.Services.Gstr2b.Gstr2bService>();
-builder.Services.AddScoped<BillBillingService>();
-builder.Services.AddScoped<BillBudgetCheck>();
-builder.Services.AddScoped<DebitNoteService>();
+builder.Services.AddScoped<Gstr2bRepository>();
+builder.Services.AddScoped<GoodsReceiptRepository>();
+builder.Services.AddScoped<BillRepository>();
+builder.Services.AddScoped<BillBillingRepository>();
+builder.Services.AddScoped<BillBudgetCheckRepository>();
+builder.Services.AddScoped<DebitNoteRepository>();
 
 // The due date a payment term implies. Asked rather than computed: the rule is
 // Accounting's, and a second implementation here would disagree with it the

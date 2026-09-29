@@ -1,13 +1,13 @@
 using Purchase.Entity.TableEntities;
 using Shared.Kernel.Documents;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// A posted document's rows in <c>pur.PurchaseRegister</c> (TK-115), one per
 /// line. Pure, so what a bill puts in the register is tested without a database.
 /// </summary>
-public static class PurchaseRegisterRows
+public static class PurchaseRegisterRowsRepository
 {
     public static IEnumerable<PurchaseRegister> ForBill(Bill bill) =>
         bill.Lines

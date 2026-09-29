@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Shared.Kernel.Approvals;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -24,19 +25,19 @@ public sealed class PurchaseApprovalsController : ControllerBase
 {
     private const string Documents = "{document:regex(^(purchase-orders|bills|debit-notes)$)}";
 
-    private readonly PurchaseApprovalService _approvals;
+    private readonly PurchaseApprovalRepository _approvals;
 
-    public PurchaseApprovalsController(PurchaseApprovalService approvals) => _approvals = approvals;
+    public PurchaseApprovalsController(PurchaseApprovalRepository approvals) => _approvals = approvals;
 
     [HttpPost(Documents + "/{id:long}/submit")]
     [PermissionAction("edit")]
     public async Task<IActionResult> Submit(string document, long id, CancellationToken ct) =>
-        Respond(await _approvals.SubmitAsync(PurchaseApprovalService.KindOf(document)!.Value, id, ct));
+        Respond(await _approvals.SubmitAsync(PurchaseApprovalRepository.KindOf(document)!.Value, id, ct));
 
     [HttpGet(Documents + "/{id:long}/approval")]
     [PermissionAction("view")]
     public async Task<IActionResult> Chain(string document, long id, CancellationToken ct) =>
-        await _approvals.ChainAsync(PurchaseApprovalService.KindOf(document)!.Value, id, ct) is { } chain
+        await _approvals.ChainAsync(PurchaseApprovalRepository.KindOf(document)!.Value, id, ct) is { } chain
             ? Ok(chain)
             : NotFound();
 
@@ -44,7 +45,7 @@ public sealed class PurchaseApprovalsController : ControllerBase
     [PermissionAction("view")]
     public async Task<IActionResult> Act(string document, long id, [FromBody] DocumentApprovalActionRequest request, CancellationToken ct) =>
         Respond(await _approvals.ActAsync(
-            PurchaseApprovalService.KindOf(document)!.Value, id, request.Action, request.Comments, ct));
+            PurchaseApprovalRepository.KindOf(document)!.Value, id, request.Action, request.Comments, ct));
 
     /// <summary>
     /// Purchase documents waiting on the signed-in user. Each service answers

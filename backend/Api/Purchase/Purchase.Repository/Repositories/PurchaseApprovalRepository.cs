@@ -1,3 +1,4 @@
+using Purchase.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.TableEntities;
 using Purchase.Repository;
@@ -6,7 +7,7 @@ using Shared.Kernel.Documents;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Tenancy;
 
-namespace Purchase.Api.Services;
+namespace Purchase.Repository.Repositories;
 
 /// <summary>
 /// Approval chains for purchase orders, bills and debit notes (TK-100): the
@@ -14,11 +15,11 @@ namespace Purchase.Api.Services;
 /// <c>pur.ApprovalSteps</c>. Approving makes a draft <c>ReadyToPost</c>, and an
 /// edit's return to draft takes <c>ReadyToPost</c> back to Draft.
 /// </summary>
-public sealed class PurchaseApprovalService : DocumentApprovalService<PurchaseApprovalStep>
+public sealed class PurchaseApprovalRepository : DocumentApprovalService<PurchaseApprovalStep>
 {
     private readonly PurchaseDbContext _db;
 
-    public PurchaseApprovalService(
+    public PurchaseApprovalRepository(
         PurchaseDbContext db, IApprovalChainClient chains, ITenantContext tenant, ICurrentUser user, TimeProvider clock)
         : base(db, chains, tenant, user, clock)
     {

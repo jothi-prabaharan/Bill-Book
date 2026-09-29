@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Purchase.Api.Services;
+using Purchase.Repository.Clients;
+using Purchase.Repository.Repositories;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
 using Purchase.Entity.TableEntities;
@@ -430,7 +431,7 @@ public sealed class PurchaseOrderServiceTests
     /// for everything that would otherwise be an HTTP call.
     /// </summary>
     private sealed record Harness(
-        PurchaseDbContext Db, PurchaseOrderService Service, StubNameLookup Names)
+        PurchaseDbContext Db, PurchaseOrderRepository Service, StubNameLookup Names)
     {
         public static async Task<Harness> CreateAsync(
             PostgresFixture pg, IBranchSettingsProvider? settings = null)
@@ -452,7 +453,7 @@ public sealed class PurchaseOrderServiceTests
                 Options.Create(new NumberingOptions()),
                 new StubFinancialYear());
 
-            PurchaseOrderService service = new(
+            PurchaseOrderRepository service = new(
                 db,
                 numbering,
                 new StubBaseCurrency(),
