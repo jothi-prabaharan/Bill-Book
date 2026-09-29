@@ -25,4 +25,17 @@ public sealed class EmailMessage
 
     /// <summary>Null uses the system default mailbox; set to send from a customer's own SMTP row.</summary>
     public Guid? CustomerId { get; init; }
+
+    /// <summary>Files sent with the message, a scheduled report's workbook say (TK-114).</summary>
+    public IReadOnlyList<EmailAttachment> Attachments { get; init; } = [];
+}
+
+/// <summary>One file attached to an <see cref="EmailMessage"/>.</summary>
+public sealed class EmailAttachment
+{
+    public required string FileName { get; init; }
+
+    public required string ContentType { get; init; }
+
+    public required byte[] Content { get; init; }
 }

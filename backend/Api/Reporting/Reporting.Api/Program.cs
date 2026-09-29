@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Reporting.Api.Services.Schedules;
 using Shared.Kernel.CustomFields;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Security;
@@ -225,6 +227,32 @@ builder.Services.AddScoped<IReportSource, StockMovementsDataset>();
 builder.Services.AddScoped<IReportSource, ItemsDataset>();
 builder.Services.AddScoped<IReportSource, ContactsDataset>();
 builder.Services.AddScoped<CustomReportService>();
+
+// Scheduled report email (TK-114). Master lists the branches and their users
+// with current permissions, and sends the mail (through Notification.Worker
+// where it runs); the worker claims due schedules with a guarded update.
+builder.Services.AddHttpClient<IBranchUsers, HttpBranchUsers>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHttpClient<IReportMailer, MasterReportMailer>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+    client.Timeout = TimeSpan.FromMinutes(2);
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.TryAddSingleton(TimeProvider.System);
+builder.Services.AddBillBookWorkerErrorAudit<ReportingDbContext>();
+builder.Services.AddScoped<IScheduledReportExporter, ScheduledReportExporter>();
+builder.Services.AddScoped<ReportScheduleRun>();
+builder.Services.AddScoped<ReportScheduleService>();
+builder.Services.AddHostedService<ReportScheduleWorker>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();

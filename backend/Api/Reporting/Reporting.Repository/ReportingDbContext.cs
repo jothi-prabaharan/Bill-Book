@@ -34,6 +34,9 @@ public class ReportingDbContext : TenantDbContext
     /// <summary>Reports built from a dataset and saved (TK-113).</summary>
     public DbSet<CustomReport> CustomReports => Set<CustomReport>();
 
+    /// <summary>Reports emailed on a schedule (TK-114).</summary>
+    public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
+
     public DbSet<ReportMaster> ReportMasters => Set<ReportMaster>();
 
     public DbSet<ReportColumn> ReportColumns => Set<ReportColumn>();
@@ -241,6 +244,24 @@ public class ReportingDbContext : TenantDbContext
 
             b.HasIndex(e => new { e.OrgId, e.DatasetKey })
                 .HasDatabaseName("IX_CustomReports_Dataset");
+        });
+
+        modelBuilder.Entity<ReportSchedule>(b =>
+        {
+            b.HasKey(e => e.ReportScheduleId);
+
+            b.Property(e => e.LayoutJson).HasColumnType("jsonb");
+            b.Property(e => e.Frequency).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.DayOfWeek).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.LastStatus).HasConversion<string>().HasMaxLength(20);
+
+            // What the worker reads every tick: the active schedules now due.
+            b.HasIndex(e => e.NextRunAt)
+                .HasFilter("\"IsActive\" = true")
+                .HasDatabaseName("IX_ReportSchedules_Due");
+
+            b.HasIndex(e => new { e.OrgId, e.OwnerUserId })
+                .HasDatabaseName("IX_ReportSchedules_Owner");
         });
 
         ConfigureReadModels(modelBuilder);

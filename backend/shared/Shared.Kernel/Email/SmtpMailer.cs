@@ -69,6 +69,12 @@ public static class SmtpMailer
                 message.TextBody, null, "text/plain"));
         }
 
+        // The streams belong to the message and are disposed with it.
+        foreach (EmailAttachment file in message.Attachments)
+        {
+            mail.Attachments.Add(new Attachment(new MemoryStream(file.Content), file.FileName, file.ContentType));
+        }
+
         return mail;
     }
 }

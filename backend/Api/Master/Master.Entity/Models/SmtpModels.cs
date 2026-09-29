@@ -93,4 +93,23 @@ public class SendEmailRequest
 
     /// <summary>Null uses the platform default mailbox.</summary>
     public Guid? CustomerId { get; set; }
+
+    /// <summary>Attached files (TK-114). At most five, and 10 MB together, which most mail servers accept.</summary>
+    [MaxLength(5, ErrorMessage = "Attach at most five files.")]
+    public List<SendEmailAttachment> Attachments { get; set; } = [];
+}
+
+public class SendEmailAttachment
+{
+    [Required(ErrorMessage = "File name is required.")]
+    [MaxLength(200, ErrorMessage = "File name cannot exceed 200 characters.")]
+    public string FileName { get; set; } = null!;
+
+    [Required(ErrorMessage = "Content type is required.")]
+    [MaxLength(200, ErrorMessage = "Content type cannot exceed 200 characters.")]
+    public string ContentType { get; set; } = null!;
+
+    /// <summary>The file, base64. JSON carries a byte array this way.</summary>
+    [Required(ErrorMessage = "Attachment content is required.")]
+    public byte[] Content { get; set; } = [];
 }

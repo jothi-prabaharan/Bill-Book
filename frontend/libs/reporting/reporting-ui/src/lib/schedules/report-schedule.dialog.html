@@ -1,0 +1,96 @@
+<div class="schedules">
+  <header>
+    <h2>Email on a schedule</h2>
+    <button type="button" class="ghost" (click)="close()">Done</button>
+  </header>
+
+  @if (message()) {
+    <p class="error">{{ message() }}</p>
+  }
+
+  <ul>
+    @for (schedule of existing(); track schedule.reportScheduleId) {
+      <li>
+        <div class="entry">
+          <span class="name">{{ schedule.title }}</span>
+          <span class="when">{{ describe(schedule) }}{{ schedule.isActive ? '' : ' · paused' }}</span>
+          @if (schedule.lastMessage) {
+            <span class="last" [class.bad]="schedule.lastStatus !== 'Sent'">Last run: {{ schedule.lastMessage }}</span>
+          }
+        </div>
+        <button type="button" class="ghost" (click)="setActive(schedule, !schedule.isActive)" [disabled]="busy()">
+          {{ schedule.isActive ? 'Pause' : 'Resume' }}
+        </button>
+        <button
+          type="button"
+          class="remove"
+          (click)="remove(schedule)"
+          [disabled]="busy()"
+          [attr.aria-label]="'Delete ' + schedule.title"
+        >
+          ×
+        </button>
+      </li>
+    } @empty {
+      <li class="empty">
+        @if (busy()) {
+          Loading…
+        } @else {
+          This report is not scheduled yet.
+        }
+      </li>
+    }
+  </ul>
+
+  <form (ngSubmit)="save()">
+    <p class="hint">
+      Sends the report as laid out now — its columns, filters and grouping — as an Excel
+      workbook, with your permissions at the time it runs.
+    </p>
+
+    <label>
+      Subject
+      <bb-text-input name="title" [(ngModel)]="title" />
+    </label>
+
+    <div class="row">
+      <div class="field">
+          <span>How often</span>
+          <bb-select ariaLabel="How often" name="frequency" [options]="frequencies" [clearable]="false" [(ngModel)]="frequency" />
+        </div>
+
+      @if (frequency === 'Weekly') {
+        <div class="field">
+          <span>On</span>
+          <bb-select ariaLabel="On" name="dayOfWeek" [options]="weekDays" [clearable]="false" [(ngModel)]="dayOfWeek" />
+        </div>
+      }
+
+      @if (frequency === 'Monthly') {
+        <div class="field">
+          <span>Day</span>
+          <bb-select ariaLabel="Day" name="dayOfMonth" [options]="monthDays" [clearable]="false" [(ngModel)]="dayOfMonth" />
+        </div>
+      }
+
+      <div class="field">
+          <span>At</span>
+          <bb-select ariaLabel="At" name="sendAtHour" [options]="hours" [clearable]="false" [(ngModel)]="sendAtHour" />
+        </div>
+    </div>
+
+    <fieldset>
+      <legend>Send to</legend>
+      @for (person of recipients(); track person.userId) {
+        <bb-checkbox
+          [text]="person.displayName"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="chosen.has(person.userId)"
+          (ngModelChange)="toggle(person.userId, $event)"
+        />
+      }
+    </fieldset>
+
+    <button type="submit" [disabled]="busy() || title.trim() === '' || chosen.size === 0">Schedule</button>
+  </form>
+</div>

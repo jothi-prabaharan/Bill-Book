@@ -19,6 +19,9 @@
     <button type="button" (click)="choosingView.set(true)" [disabled]="busy()">
       Views
     </button>
+    <button type="button" (click)="scheduling.set(true)" [disabled]="busy()">
+      Schedule
+    </button>
     <button type="button" (click)="choosingColumns.set(true)" [disabled]="busy()">
       Columns
     </button>
@@ -110,6 +113,18 @@
         [layout]="query()"
         (applied)="onSavedViewApplied($event)"
         (closed)="choosingView.set(false)"
+      />
+    </div>
+  }
+
+  @if (scheduling()) {
+    <div class="overlay">
+      <bb-report-schedule-dialog
+        [reportKey]="report.reportKey"
+        [reportTitle]="title()"
+        [layout]="query()"
+        [customReportId]="custom()?.customReportId ?? null"
+        (closed)="scheduling.set(false)"
       />
     </div>
   }

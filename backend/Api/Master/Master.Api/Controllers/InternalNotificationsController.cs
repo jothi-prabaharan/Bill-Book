@@ -27,9 +27,17 @@ public sealed class InternalNotificationsController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>What most mail servers accept in one message, attachments together.</summary>
+    public const int MaxAttachmentBytes = 10 * 1024 * 1024;
+
     [HttpPost("email")]
     public async Task<IActionResult> SendEmail([FromBody] SendEmailRequest request, CancellationToken ct)
     {
+        if (request.Attachments.Sum(a => (long)a.Content.Length) > MaxAttachmentBytes)
+        {
+            return BadRequest(new MessageResponse { Message = "The attachments are larger than 10 MB together." });
+        }
+
         try
         {
             await _email.SendAsync(new EmailMessage
@@ -40,6 +48,15 @@ public sealed class InternalNotificationsController : ControllerBase
                 HtmlBody = request.HtmlBody,
                 TextBody = request.TextBody,
                 CustomerId = request.CustomerId,
+                Attachments =
+                [
+                    .. request.Attachments.Select(a => new EmailAttachment
+                    {
+                        FileName = a.FileName,
+                        ContentType = a.ContentType,
+                        Content = a.Content,
+                    }),
+                ],
             }, ct);
             return Accepted();
         }

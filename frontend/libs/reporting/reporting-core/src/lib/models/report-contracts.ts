@@ -225,6 +225,39 @@ export interface CustomReport {
   droppedColumns: string[];
 }
 
+export type ReportScheduleFrequency = 'Daily' | 'Weekly' | 'Monthly';
+
+export type ReportScheduleRunStatus = 'Sent' | 'Skipped' | 'Failed';
+
+export type WeekDay = 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
+
+/** A report emailed as a workbook on a schedule (TK-114). The owner is whoever saves it. */
+export interface ReportSchedule {
+  reportScheduleId: number;
+  reportKey: string;
+  customReportId: number | null;
+  title: string;
+  frequency: ReportScheduleFrequency;
+  dayOfWeek: WeekDay | null;
+  dayOfMonth: number | null;
+  /** The hour it sends at, 0 to 23, in the branch's time zone. */
+  sendAtHour: number;
+  timeZoneId: string | null;
+  recipientUserIds: string[];
+  isActive: boolean;
+  layout: ReportQuery;
+  nextRunAt: string | null;
+  lastRunAt: string | null;
+  lastStatus: ReportScheduleRunStatus | null;
+  /** What the last run did: sent to whom, or why nothing was sent. */
+  lastMessage: string | null;
+}
+
+export interface ReportRecipient {
+  userId: string;
+  displayName: string;
+}
+
 export interface ReportParameter {
   name: string;
   label: string;

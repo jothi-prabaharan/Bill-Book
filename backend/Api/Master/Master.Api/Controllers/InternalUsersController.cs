@@ -5,6 +5,7 @@ using Master.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Validation;
 
@@ -74,6 +75,48 @@ public sealed class InternalUsersController : ControllerBase
     /// or posted something (Reporting's <c>BatchedNameResolver</c>). An id with
     /// no user is left out. At most 500 ids a call.
     /// </summary>
+    /// <summary>
+    /// The branch's active users in an app, each with the permissions a token
+    /// for that branch would carry now (TK-114). Built the way sign-in builds
+    /// them: the user's active roles in the branch for the app, never
+    /// <c>platform.*</c> from a role. A deactivated user is not listed.
+    /// </summary>
+    [HttpGet("branch")]
+    public async Task<IActionResult> Branch([FromQuery] Guid orgId, [FromQuery] App app = App.RetailErp, CancellationToken ct = default)
+    {
+        var grants = await (
+            from u in _db.UserOrganizationRoles
+            join r in _db.Roles on u.RoleId equals r.RoleId
+            join user in _db.Users on u.UserId equals user.UserId
+            where u.OrgId == orgId && u.IsActive && r.IsActive && r.App == app && user.IsActive
+            select new { user.UserId, user.DisplayName, user.Email, u.RoleId }).ToListAsync(ct);
+
+        List<int> roleIds = [.. grants.Select(g => g.RoleId).Distinct()];
+        var rolePermissions = await (
+            from rp in _db.RolePermissions
+            join p in _db.Permissions on rp.PermissionId equals p.PermissionId
+            where roleIds.Contains(rp.RoleId) && p.Module != PlatformOperatorService.PlatformModule
+            select new { rp.RoleId, p.Code }).ToListAsync(ct);
+
+        ILookup<int, string> byRole = rolePermissions.ToLookup(x => x.RoleId, x => x.Code);
+
+        List<BranchUserAccess> users =
+        [
+            .. grants
+                .GroupBy(g => g.UserId)
+                .Select(g => new BranchUserAccess
+                {
+                    UserId = g.Key,
+                    DisplayName = g.First().DisplayName,
+                    Email = g.First().Email,
+                    Permissions = [.. g.SelectMany(x => byRole[x.RoleId]).Distinct().Order(StringComparer.Ordinal)],
+                })
+                .OrderBy(u => u.DisplayName),
+        ];
+
+        return Ok(users);
+    }
+
     [HttpPost("batch")]
     public async Task<IActionResult> Names([FromBody] List<Guid> userIds, CancellationToken ct)
     {

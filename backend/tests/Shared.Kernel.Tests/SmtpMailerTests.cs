@@ -56,4 +56,52 @@ public sealed class SmtpMailerTests
         Assert.Equal("ravi@example.com", mail.To[0].DisplayName);
         Assert.Equal("text/plain", Assert.Single(mail.AlternateViews).ContentType.MediaType);
     }
+
+    [Fact]
+    public void An_attachment_goes_with_the_message_under_its_name_and_type()
+    {
+        byte[] workbook = [0x50, 0x4B, 0x03, 0x04];
+
+        using MailMessage mail = SmtpMailer.Build(Mailbox, new EmailMessage
+        {
+            ToEmail = "ravi@example.com",
+            Subject = "Weekly sales",
+            HtmlBody = "<p>Attached</p>",
+            Attachments =
+            [
+                new EmailAttachment
+                {
+                    FileName = "weekly-sales.xlsx",
+                    ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    Content = workbook,
+                },
+            ],
+        });
+
+        Attachment attached = Assert.Single(mail.Attachments);
+        Assert.Equal("weekly-sales.xlsx", attached.Name);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", attached.ContentType.MediaType);
+        using MemoryStream read = new();
+        attached.ContentStream.CopyTo(read);
+        Assert.Equal(workbook, read.ToArray());
+    }
+
+    [Fact]
+    public void An_attachment_survives_the_trip_through_the_event()
+    {
+        byte[] content = [1, 2, 3, 250];
+        EmailMessage message = new()
+        {
+            ToEmail = "ravi@example.com",
+            Subject = "Report",
+            HtmlBody = "<p>x</p>",
+            Attachments = [new EmailAttachment { FileName = "r.xlsx", ContentType = "application/octet-stream", Content = content }],
+        };
+
+        EmailAttachment back = Assert.Single(
+            Messaging.EmailRequested.From(message, "id", DateTimeOffset.UtcNow).ToMessage().Attachments);
+
+        Assert.Equal("r.xlsx", back.FileName);
+        Assert.Equal(content, back.Content);
+    }
 }

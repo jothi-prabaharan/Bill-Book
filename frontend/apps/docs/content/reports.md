@@ -142,6 +142,16 @@ To build one, open a dataset and choose the columns, filters, grouping and sorti
 - A report reads its dataset, so it needs the same permission. A shared purchase-lines report is not listed for someone without **purchase.view**.
 - When a custom field is deactivated, its column goes from the dataset. A saved report that used it opens without it, with a notice naming the field. Reactivating the field brings the column back.
 
+## Scheduled reports
+
+Any report can be emailed as an Excel workbook on a schedule. Open the report, lay it out the way you want it, and choose **Schedule**. Pick how often it goes (daily, weekly on a chosen day, or monthly on day 1 to 28), the hour, and who it goes to from the branch's users. Times are India time. Scheduling needs **reports.export**, because each run is an export.
+
+- The workbook is the same one **Export to Excel** would give you, with the same columns, filters and grouping, and the same 100,000-row limit.
+- Each run uses **your** permissions at the time it runs, not when you saved it. If you lose access to the report, or to exporting, nothing is sent. The schedule says why under **Last run** and stays in place, so the emails start again when the access comes back. A recipient who is no longer a user of the branch is left out.
+- The email comes from the branch's own mailbox (Settings › Email).
+- **Pause** stops a schedule without losing it. **×** deletes it. You see and change only your own schedules.
+- Each schedule sends once per run, however many servers are running.
+
 ## If a branch shows no reports
 
 The report catalog is seeded per branch. A branch created before reporting existed has an empty catalog until it is seeded, which an administrator can trigger; it only adds what is missing, so it is safe to run again.

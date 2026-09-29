@@ -187,7 +187,7 @@ public sealed class ReportsController : ControllerBase
     /// Reporting.md §5.6. When a broker exists this becomes the threshold at which an
     /// export is queued rather than refused.
     /// </summary>
-    private const int ExportRowCap = 100_000;
+    public const int ExportRowCap = 100_000;
 
     /// <summary>
     /// A download name that cannot escape the download folder.

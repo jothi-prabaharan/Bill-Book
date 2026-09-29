@@ -31,6 +31,13 @@ public sealed class EmailRequested
 
     public string? TextBody { get; init; }
 
+    /// <summary>
+    /// Attached files, base64 in the body (TK-114). Service Bus Standard caps a
+    /// message at 256 KB, so Master sends a message too large for that itself
+    /// rather than publishing it; see <c>EventEmailSender</c>.
+    /// </summary>
+    public List<EmailRequestedAttachment> Attachments { get; init; } = [];
+
     public static EmailRequested From(EmailMessage message, string messageId, DateTimeOffset requestedAt) => new()
     {
         MessageId = messageId,
@@ -41,6 +48,15 @@ public sealed class EmailRequested
         Subject = message.Subject,
         HtmlBody = message.HtmlBody,
         TextBody = message.TextBody,
+        Attachments =
+        [
+            .. message.Attachments.Select(a => new EmailRequestedAttachment
+            {
+                FileName = a.FileName,
+                ContentType = a.ContentType,
+                ContentBase64 = Convert.ToBase64String(a.Content),
+            }),
+        ],
     };
 
     public EmailMessage ToMessage() => new()
@@ -51,5 +67,24 @@ public sealed class EmailRequested
         Subject = Subject,
         HtmlBody = HtmlBody,
         TextBody = TextBody,
+        Attachments =
+        [
+            .. Attachments.Select(a => new EmailAttachment
+            {
+                FileName = a.FileName,
+                ContentType = a.ContentType,
+                Content = Convert.FromBase64String(a.ContentBase64),
+            }),
+        ],
     };
+}
+
+/// <summary>One attached file as <see cref="EmailRequested"/> carries it.</summary>
+public sealed class EmailRequestedAttachment
+{
+    public required string FileName { get; init; }
+
+    public required string ContentType { get; init; }
+
+    public required string ContentBase64 { get; init; }
 }

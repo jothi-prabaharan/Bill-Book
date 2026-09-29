@@ -134,19 +134,38 @@ public sealed class EmailDispatchWorker : BackgroundService
 /// </summary>
 public sealed class EventEmailSender : IEmailSender
 {
+    /// <summary>
+    /// Service Bus Standard refuses a message over 256 KB. Attachments past this
+    /// much, which base64 grows by a third, are sent in process instead (TK-114):
+    /// a scheduled report's workbook is routinely larger than a topic carries.
+    /// </summary>
+    public const int MaxPublishedAttachmentBytes = 160 * 1024;
+
     private readonly IEventPublisher _events;
     private readonly TimeProvider _clock;
+    private readonly SmtpEmailSender? _direct;
 
-    public EventEmailSender(IEventPublisher events, TimeProvider clock)
+    public EventEmailSender(IEventPublisher events, TimeProvider clock, SmtpEmailSender? direct = null)
     {
         _events = events;
         _clock = clock;
+        _direct = direct;
     }
 
-    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default) =>
-        _events.PublishAsync(
+    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    {
+        if (_direct is not null && TooLargeToPublish(message))
+        {
+            return _direct.SendAsync(message, cancellationToken);
+        }
+
+        return _events.PublishAsync(
             Shared.Kernel.Messaging.EmailRequested.From(message, Guid.NewGuid().ToString("N"), _clock.GetUtcNow()),
             cancellationToken);
+    }
+
+    public static bool TooLargeToPublish(EmailMessage message) =>
+        message.Attachments.Sum(a => (long)a.Content.Length) > MaxPublishedAttachmentBytes;
 }
 
 /// <summary>Which of the two mail paths this deployment takes.</summary>

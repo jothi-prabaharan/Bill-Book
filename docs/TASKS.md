@@ -2300,7 +2300,7 @@ The build cards each design in section E produced. Each design section in `docs/
 - **As built:** six `DatasetSource` sources (`dataset-sales-lines`, `-purchase-lines`, `-ledger-rows`, `-stock-movements`, `-items`, `-contacts`) under `ReportModule.Custom`; each active custom field of the kind is a `custom.{key}` text column read from the jsonb in SQL, never seeded. `rpt.CustomReports` (RLS) holds the layout as a `ReportQueryRequest`; `api/reports/custom` saves and reopens, and the catalog appends the caller's visible reports. A deactivated field's column is pruned on open and named in `droppedColumns`. The builder is the report host page on a dataset, with **Save as custom report**. Datasets have no date parameter; a date filter narrows them. Running a dataset against real schemas is not covered by the tests (the Reporting test database has only `rpt`).
 
 ### TK-114 · Scheduled report email
-- [~] working (Claude Opus 5.5) — since 2026-09-29
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
 - **Issue:** [#102](https://github.com/jothi-prabaharan/Bill-Book/issues/102)
 - **Lanes:** L-RPT, L-NTF · **Depends on:** TK-113, TK-19 · **Decision:** —
 - **Tables:** `rpt.ReportSchedules`
@@ -2309,6 +2309,7 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Each run re-checks the owner's permission and sends the Excel export through Notification.
   - [ ] Test: a due schedule runs once under concurrency; a schedule whose owner lost the permission sends nothing and records why.
 - **Done when:** a weekly schedule emails its report once per week.
+- **As built:** `rpt.ReportSchedules` (RLS) with frequency, day, hour in the branch's zone (default `Asia/Kolkata`), owner and recipient user ids, and the layout. `ReportScheduleWorker` in Reporting ticks every five minutes over the branches Master lists; `ReportScheduleRun` claims a due row by moving `NextRunAt` with an update guarded on the value read. It then reads the branch's users and their current permissions from Master's new `internal/users/branch`, and needs `reports.view`, `reports.export` and the report's own permission. It exports through the export route's runner, cap and writer, and posts each email with the xlsx to Master's `internal/notifications/email`. Master sends through Notification.Worker where it runs. `EmailMessage` and `EmailRequested` carry attachments now, and Master sends in process any attachment over 160 KB, since Service Bus Standard refuses a message over 256 KB. Skips and failures are recorded on the row, and failures in `rpt.ErrorLogs` too. **Schedule** button on every report.
 
 ### TK-115 · Compliance: the purchase register, complete GSTR-3B and the GSTR-1 export
 - [ ] open

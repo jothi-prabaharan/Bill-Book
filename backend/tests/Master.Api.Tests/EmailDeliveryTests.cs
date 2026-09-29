@@ -103,4 +103,33 @@ public sealed class EmailDeliveryTests
         Assert.Equal("<p>Join</p>", roundTrip.HtmlBody);
         Assert.Equal("Join", roundTrip.TextBody);
     }
+
+    [Fact]
+    public void An_attachment_too_large_for_a_topic_is_not_published()
+    {
+        EmailMessage small = Report(EventEmailSender.MaxPublishedAttachmentBytes);
+        EmailMessage large = Report(EventEmailSender.MaxPublishedAttachmentBytes + 1);
+
+        Assert.False(EventEmailSender.TooLargeToPublish(small));
+        Assert.True(EventEmailSender.TooLargeToPublish(large));
+    }
+
+    [Fact]
+    public async Task A_small_attachment_is_published_with_the_message()
+    {
+        var events = new RecordingPublisher();
+
+        await new EventEmailSender(events, TimeProvider.System).SendAsync(Report(1024));
+
+        EmailRequested published = Assert.Single(events.Published.Cast<EmailRequested>());
+        Assert.Equal(1024, Convert.FromBase64String(Assert.Single(published.Attachments).ContentBase64).Length);
+    }
+
+    private static EmailMessage Report(int bytes) => new()
+    {
+        ToEmail = "ravi@example.com",
+        Subject = "Weekly sales",
+        HtmlBody = "<p>Attached</p>",
+        Attachments = [new EmailAttachment { FileName = "sales.xlsx", ContentType = "application/octet-stream", Content = new byte[bytes] }],
+    };
 }

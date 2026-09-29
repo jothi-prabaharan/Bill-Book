@@ -23,6 +23,7 @@ import {
   ReportGridComponent } from '@bill-book/ui-components';
 import { SavedViewDialog } from '../saved-views/saved-view.dialog';
 import { CustomReportDialog } from '../custom-reports/custom-report.dialog';
+import { ReportScheduleDialog } from '../schedules/report-schedule.dialog';
 
 /**
  * Every report's screen.
@@ -50,6 +51,7 @@ import { CustomReportDialog } from '../custom-reports/custom-report.dialog';
     PivotPanelComponent,
     SavedViewDialog,
     CustomReportDialog,
+    ReportScheduleDialog,
   ],
   templateUrl: './report-host.page.html',
   styleUrl: './report-host.page.scss',
@@ -73,6 +75,7 @@ export class ReportHostPage implements OnInit {
   /** The custom report open over this dataset, when opened with `?custom=` (TK-113). */
   protected readonly custom = signal<CustomReport | null>(null);
   protected readonly savingCustom = signal(false);
+  protected readonly scheduling = signal(false);
 
   private reportKey = '';
 
