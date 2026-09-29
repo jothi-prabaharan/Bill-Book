@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,10 +17,10 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class RolesController : ControllerBase
 {
-    private readonly RoleService _roles;
+    private readonly RoleRepository _roles;
     private readonly ICurrentUser _currentUser;
 
-    public RolesController(RoleService roles, ICurrentUser currentUser)
+    public RolesController(RoleRepository roles, ICurrentUser currentUser)
     {
         _roles = roles;
         _currentUser = currentUser;

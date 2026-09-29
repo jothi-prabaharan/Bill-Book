@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
@@ -12,9 +14,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class MenuController : ControllerBase
 {
-    private readonly MenuService _menuService;
+    private readonly MenuRepository _menuService;
 
-    public MenuController(MenuService menuService) => _menuService = menuService;
+    public MenuController(MenuRepository menuService) => _menuService = menuService;
 
     /// <summary>
     /// The caller's menu in the app their token is for (TK-44). The shell also

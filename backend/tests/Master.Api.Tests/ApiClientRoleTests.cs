@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +48,7 @@ public sealed class ApiClientRoleTests
         Guid customer = Guid.NewGuid();
         Role role = await RoleAsync(db, customer, active: true, "sales.view", "platform.view");
 
-        List<string> codes = await ApiClientRoles.PermissionsAsync(db, customer, role.RoleId, default);
+        List<string> codes = await ApiClientRolesRepository.PermissionsAsync(db, customer, role.RoleId, default);
 
         Assert.Equal(["sales.view"], codes);
     }
@@ -61,9 +63,9 @@ public sealed class ApiClientRoleTests
         Role theirs = await RoleAsync(db, Guid.NewGuid(), active: true, "sales.view");
         Role inactive = await RoleAsync(db, customer, active: false, "sales.view");
 
-        Assert.Empty(await ApiClientRoles.PermissionsAsync(db, customer, theirs.RoleId, default));
-        Assert.Empty(await ApiClientRoles.PermissionsAsync(db, customer, inactive.RoleId, default));
-        Assert.Empty(await ApiClientRoles.PermissionsAsync(db, customer, 0, default));
+        Assert.Empty(await ApiClientRolesRepository.PermissionsAsync(db, customer, theirs.RoleId, default));
+        Assert.Empty(await ApiClientRolesRepository.PermissionsAsync(db, customer, inactive.RoleId, default));
+        Assert.Empty(await ApiClientRolesRepository.PermissionsAsync(db, customer, 0, default));
     }
 
     [SkippableFact]
@@ -78,10 +80,10 @@ public sealed class ApiClientRoleTests
         Role theirs = await RoleAsync(db, Guid.NewGuid(), active: true, "sales.view");
         Role system = await RoleAsync(db, null, active: true, "sales.view");
 
-        Assert.True(await ApiClientRoles.IsAssignableAsync(db, customer, mine.RoleId, default));
-        Assert.True(await ApiClientRoles.IsAssignableAsync(db, customer, system.RoleId, default));
-        Assert.False(await ApiClientRoles.IsAssignableAsync(db, customer, platform.RoleId, default));
-        Assert.False(await ApiClientRoles.IsAssignableAsync(db, customer, theirs.RoleId, default));
-        Assert.False(await ApiClientRoles.IsAssignableAsync(db, customer, 0, default));
+        Assert.True(await ApiClientRolesRepository.IsAssignableAsync(db, customer, mine.RoleId, default));
+        Assert.True(await ApiClientRolesRepository.IsAssignableAsync(db, customer, system.RoleId, default));
+        Assert.False(await ApiClientRolesRepository.IsAssignableAsync(db, customer, platform.RoleId, default));
+        Assert.False(await ApiClientRolesRepository.IsAssignableAsync(db, customer, theirs.RoleId, default));
+        Assert.False(await ApiClientRolesRepository.IsAssignableAsync(db, customer, 0, default));
     }
 }

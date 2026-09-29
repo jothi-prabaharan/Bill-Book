@@ -1,0 +1,543 @@
+using Master.Repository.Clients;
+using Microsoft.EntityFrameworkCore;
+using Master.Entity.Enums;
+using Master.Entity.Models;
+using Master.Entity.TableEntities;
+using Master.Repository;
+using Shared.Kernel.Validation;
+
+namespace Master.Repository.Repositories;
+
+/// <summary>
+/// Branches, under one head office.
+///
+/// A branch is a complete set of books, so creating one is not an insert — it is
+/// a small provisioning. The row is written and then every service is asked to
+/// seed its master data into the customer's existing database: chart of
+/// accounts, tax rates, numbering series, payment terms, contact roles, unit
+/// types, units, metal purities. Skip that and the branch comes up empty and
+/// cannot save an item, because saving one needs a unit type. That was the exact
+/// failure new customers had before provisioning learned to seed.
+///
+/// No new database. A branch shares its head office's, separated by OrgId.
+/// </summary>
+public sealed class OrganizationRepository
+{
+    /// <summary>
+    /// How long a branch created beyond the licence runs before it stops.
+    /// Thirty days rather than the account's fourteen: a branch is set up, its
+    /// masters adjusted and its first month traded before anyone can judge it,
+    /// and a fortnight does not cover a monthly cycle.
+    /// </summary>
+    private const int BranchTrialDays = 30;
+
+    /// <summary>
+    /// How many branches one account may run on trial at once, by the owner's
+    /// decision (master.md 5.19). Two, because a business opens a second
+    /// counter to try the model before paying for it — and a cap at all,
+    /// because thirty trial branches is not a trial, it is a licence being
+    /// evaded. A third branch must be paid for.
+    /// </summary>
+    private const int MaxTrialBranches = 2;
+
+    private readonly AdminDbContext _db;
+    private readonly ITenantSeeder _seeder;
+    private readonly IMasterCurrenciesRepository _master;
+    private readonly IStateDirectory _states;
+    private readonly ILogger<OrganizationRepository> _log;
+
+    public OrganizationRepository(
+        AdminDbContext db,
+        ITenantSeeder seeder,
+        IMasterCurrenciesRepository master,
+        IStateDirectory states,
+        ILogger<OrganizationRepository> log)
+    {
+        _db = db;
+        _seeder = seeder;
+        _master = master;
+        _states = states;
+        _log = log;
+    }
+
+    /// <summary>
+    /// Every branch on the account. Scoped by the caller's customer id, which
+    /// the controller has already checked against the token — <c>mst</c> holds
+    /// every customer's rows, so this filter is the whole boundary.
+    /// </summary>
+    public async Task<IReadOnlyList<OrganizationListItem>> ListAsync(
+        Guid customerId, CancellationToken ct)
+    {
+        List<Organization> rows = await _db.Organizations
+            .Where(o => o.CustomerId == customerId)
+            .OrderBy(o => o.CreatedAt)
+            .ThenBy(o => o.Name)
+            .ToListAsync(ct);
+
+        // The first branch is the one that cannot be deactivated. Decided by
+        // creation order rather than a flag: a stored "is first" could drift
+        // from the truth, and this cannot.
+        Guid? firstOrgId = rows.Count > 0 ? rows[0].OrgId : null;
+
+        IReadOnlyDictionary<Guid, CurrencyDetails> currencies =
+            await BaseCurrenciesAsync(rows.Select(o => o.OrgId).ToList(), ct);
+
+        return rows
+            .Select(o => Project(
+                o,
+                o.OrgId == firstOrgId,
+                currencies.TryGetValue(o.OrgId, out CurrencyDetails? currency) ? currency : null))
+            .ToList();
+    }
+
+    public async Task<OrganizationListItem?> GetAsync(
+        Guid customerId, Guid orgId, CancellationToken ct)
+    {
+        IReadOnlyList<OrganizationListItem> all = await ListAsync(customerId, ct);
+        return all.FirstOrDefault(o => o.OrgId == orgId);
+    }
+
+    public async Task<SaveOrganizationResult> CreateAsync(
+        Guid customerId, SaveOrganizationRequest request, CancellationToken ct)
+    {
+        SaveOrganizationOutcome validation =
+            await ValidateAsync(customerId, request, null, ct);
+
+        if (validation != SaveOrganizationOutcome.Ok)
+        {
+            return new SaveOrganizationResult(validation, null, []);
+        }
+
+        int existing = await _db.Organizations.CountAsync(o => o.CustomerId == customerId, ct);
+
+        // The branch cap is RetailErp's and School's (D-12); HRMS and Payroll
+        // count employees instead. With several licences, the most generous
+        // branch cap applies, since a branch is shared by every app (TK-43).
+        var licence = await _db.Licenses
+            .Where(l => l.CustomerId == customerId)
+            .OrderByDescending(l => l.MaxOrganizations)
+            .ThenByDescending(l => l.ExpiryDate)
+            .Select(l => new { l.MaxOrganizations, l.ExpiryDate })
+            .FirstOrDefaultAsync(ct);
+
+        int allowed = licence?.MaxOrganizations ?? 0;
+
+        // Beyond the licence, a branch is not refused — it is created on its own
+        // trial. A business opening a second counter should be able to set it up
+        // and see it working before paying for it; refusing outright means the
+        // decision is made against an empty screen.
+        //
+        // The entitlement still means something: past it the branch carries its
+        // own expiry instead of the licence's, so an unpaid branch stops on its
+        // own without touching the account or the branches already paid for.
+        bool beyondLicence = allowed > 0 && existing >= allowed;
+
+        // The trial itself is capped, though. Two trial branches are a business
+        // trying the model; a third is a licence being evaded, and it is refused
+        // until one of the two is paid for — recording a payment clears a trial
+        // and raises the entitlement together (master.md 5.19).
+        if (beyondLicence)
+        {
+            int trials = await _db.Organizations.CountAsync(
+                o => o.CustomerId == customerId && o.IsTrial, ct);
+
+            if (trials >= MaxTrialBranches)
+            {
+                return new SaveOrganizationResult(
+                    SaveOrganizationOutcome.TrialLimitReached, null, []);
+            }
+        }
+
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var organization = new Organization
+        {
+            OrgId = Guid.NewGuid(),
+            CustomerId = customerId,
+            // Provisioning until its master data is written. A branch nobody can
+            // use is better than one that looks ready and cannot save an item.
+            Status = TenantStatus.Provisioning,
+            // Within the entitlement a branch starts where the account's licence
+            // ends — never longer than the head office has, and not settable
+            // from the request, since a customer extending their own branch
+            // would be extending their own licence.
+            //
+            // Beyond it, the branch trial is its own 30 days. It is still a cap
+            // rather than an extension: login enforces whichever of the two ends
+            // first, so a trial branch under a licence expiring next week stops
+            // next week.
+            ExpiryDate = beyondLicence ? today.AddDays(BranchTrialDays) : licence?.ExpiryDate,
+            IsTrial = beyondLicence,
+        };
+
+        Apply(organization, request);
+        _db.Organizations.Add(organization);
+
+        // The base currency is enabled and active from creation and can never be
+        // deactivated, because every posting in the branch converts to it.
+        int? baseCurrencyId = await _master.FindCurrencyIdAsync(organization.BaseCurrency, ct);
+        if (baseCurrencyId is int currencyId)
+        {
+            _db.OrgCurrencies.Add(new OrgCurrency
+            {
+                OrgCurrencyId = Guid.NewGuid(),
+                OrgId = organization.OrgId,
+                CurrencyId = currencyId,
+                IsBaseCurrency = true,
+                IsActive = true,
+            });
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        IReadOnlyList<string> unseeded =
+            await _seeder.SeedAsync(customerId, organization.OrgId, ct);
+
+        if (unseeded.Count > 0)
+        {
+            // Left as Provisioning deliberately. The row stays so the seeding can
+            // be retried against it — every seed is idempotent — rather than
+            // handing over a branch that looks finished and has no chart of
+            // accounts behind it.
+            _log.LogError(
+                "Branch {OrgId} created but not seeded by: {Services}",
+                organization.OrgId,
+                string.Join(", ", unseeded));
+
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.SeedingFailed, organization.OrgId, unseeded);
+        }
+
+        organization.Status = TenantStatus.Active;
+        await _db.SaveChangesAsync(ct);
+
+        return new SaveOrganizationResult(
+            beyondLicence ? SaveOrganizationOutcome.CreatedOnTrial : SaveOrganizationOutcome.Ok,
+            organization.OrgId,
+            []);
+    }
+
+    /// <summary>
+    /// Retries seeding for a branch that was created but could not be finished.
+    /// Every seed is idempotent, so this is safe to run repeatedly.
+    /// </summary>
+    public async Task<SaveOrganizationResult> RetrySeedingAsync(
+        Guid customerId, Guid orgId, CancellationToken ct)
+    {
+        Organization? organization = await _db.Organizations
+            .FirstOrDefaultAsync(o => o.CustomerId == customerId && o.OrgId == orgId, ct);
+
+        if (organization is null)
+        {
+            return new SaveOrganizationResult(SaveOrganizationOutcome.NotFound, null, []);
+        }
+
+        IReadOnlyList<string> unseeded = await _seeder.SeedAsync(customerId, orgId, ct);
+
+        if (unseeded.Count > 0)
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.SeedingFailed, orgId, unseeded);
+        }
+
+        organization.Status = TenantStatus.Active;
+        await _db.SaveChangesAsync(ct);
+
+        return new SaveOrganizationResult(SaveOrganizationOutcome.Ok, orgId, []);
+    }
+
+    public async Task<SaveOrganizationResult> UpdateAsync(
+        Guid customerId, Guid orgId, SaveOrganizationRequest request, CancellationToken ct)
+    {
+        Organization? organization = await _db.Organizations
+            .FirstOrDefaultAsync(o => o.CustomerId == customerId && o.OrgId == orgId, ct);
+
+        if (organization is null)
+        {
+            return new SaveOrganizationResult(SaveOrganizationOutcome.NotFound, null, []);
+        }
+
+        SaveOrganizationOutcome validation =
+            await ValidateAsync(customerId, request, orgId, ct);
+
+        if (validation != SaveOrganizationOutcome.Ok)
+        {
+            return new SaveOrganizationResult(validation, null, []);
+        }
+
+        // Frozen: every amount already posted in this branch was converted to
+        // it, so changing it would restate the whole set of books.
+        if (!string.Equals(
+                organization.BaseCurrency, request.BaseCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.BaseCurrencyLocked, null, []);
+        }
+
+        if (!Enum.TryParse(request.DiscountLevel, ignoreCase: true, out DiscountLevel level))
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.InvalidDiscountLevel, null, []);
+        }
+
+        if (!Enum.IsDefined(request.Vertical))
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.InvalidValue, null, []);
+        }
+
+        Vertical vertical = request.Vertical;
+
+        // The same freeze the base currency gets, for the same kind of reason:
+        // these three decide how a document's tax and discount are computed, so
+        // changing one after the branch has traded leaves earlier documents
+        // computed one way beside later ones computed another, with nothing on
+        // either row saying which.
+        bool documentSettingsChanged =
+            organization.AllowFreeTextLines != request.AllowFreeTextLines
+            || organization.DiscountLevel != level
+            || organization.DiscountBeforeTax != request.DiscountBeforeTax;
+
+        if (documentSettingsChanged && await HasTradedAsync(organization.OrgId, ct))
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.DocumentSettingsLocked, null, []);
+        }
+
+        // A vertical change re-seeds what the new trade adds, because seeding is
+        // idempotent and keyed on system names. What the old trade seeded stays
+        // as data — the branch may still be selling off stock priced in it —
+        // which is the owner's decision for 5.14: rows are added, never removed.
+        bool verticalChanged = organization.Vertical != vertical;
+
+        Apply(organization, request);
+        await _db.SaveChangesAsync(ct);
+
+        if (verticalChanged)
+        {
+            IReadOnlyList<string> unseeded =
+                await _seeder.SeedAsync(customerId, organization.OrgId, ct);
+
+            if (unseeded.Count > 0)
+            {
+                _log.LogError(
+                    "Vertical change for branch {OrgId} could not be re-seeded by: {Services}",
+                    organization.OrgId,
+                    string.Join(", ", unseeded));
+            }
+        }
+
+        return new SaveOrganizationResult(SaveOrganizationOutcome.Ok, orgId, []);
+    }
+
+    /// <summary>
+    /// Suspends a branch. Never deleted — its books, documents and ledger rows
+    /// all live under its <c>OrgId</c>, and removing the row would leave them
+    /// belonging to nothing.
+    /// </summary>
+    public async Task<SaveOrganizationOutcome> SuspendAsync(
+        Guid customerId, Guid orgId, CancellationToken ct)
+    {
+        List<Organization> all = await _db.Organizations
+            .Where(o => o.CustomerId == customerId)
+            .OrderBy(o => o.CreatedAt)
+            .ToListAsync(ct);
+
+        Organization? organization = all.FirstOrDefault(o => o.OrgId == orgId);
+
+        if (organization is null)
+        {
+            return SaveOrganizationOutcome.NotFound;
+        }
+
+        // The account has to keep one usable branch, or the next sign-in has
+        // nowhere to land.
+        if (all.Count > 0 && all[0].OrgId == orgId)
+        {
+            return SaveOrganizationOutcome.FirstOrganizationLocked;
+        }
+
+        organization.Status = TenantStatus.Suspended;
+        await _db.SaveChangesAsync(ct);
+
+        return SaveOrganizationOutcome.Ok;
+    }
+
+    private async Task<SaveOrganizationOutcome> ValidateAsync(
+        Guid customerId, SaveOrganizationRequest request, Guid? orgId, CancellationToken ct)
+    {
+        string code = request.OrgCode.Trim().ToUpperInvariant();
+        string name = request.Name.Trim();
+
+        if (await _db.Organizations.AnyAsync(
+                o => o.CustomerId == customerId
+                    && o.OrgCode == code
+                    && (orgId == null || o.OrgId != orgId), ct))
+        {
+            return SaveOrganizationOutcome.DuplicateCode;
+        }
+
+        if (await _db.Organizations.AnyAsync(
+                o => o.CustomerId == customerId
+                    && o.Name == name
+                    && (orgId == null || o.OrgId != orgId), ct))
+        {
+            return SaveOrganizationOutcome.DuplicateName;
+        }
+
+        // Same rule as a contact's GSTIN: the first two digits are the state
+        // code, and a mismatch splits every document's tax the wrong way.
+        if (!string.IsNullOrWhiteSpace(request.Gstin) && request.StateId is int stateId)
+        {
+            string? stateCode = await _states.GetStateCodeAsync(stateId, ct);
+
+            if (stateCode is not null
+                && !request.Gstin.Trim().StartsWith(stateCode, StringComparison.Ordinal))
+            {
+                return SaveOrganizationOutcome.GstinStateMismatch;
+            }
+        }
+
+        // The IRP and the e-way bill portal both key everything on the seller's
+        // GSTIN, so neither can be switched on for an unregistered branch.
+        if ((request.EInvoiceFrom is not null || request.EwayBillEnabled)
+            && string.IsNullOrWhiteSpace(request.Gstin))
+        {
+            return SaveOrganizationOutcome.EInvoiceNeedsGstin;
+        }
+
+        return SaveOrganizationOutcome.Ok;
+    }
+
+    /// <summary>
+    /// Whether this branch has posted its first sales or purchase document.
+    ///
+    /// <b>Deliberately false for now.</b> Neither service exists yet, so nothing
+    /// can have been posted and no document setting can be frozen — which is the
+    /// correct answer today, not a stub returning a convenient one. Point it at
+    /// the real query when <c>sal.*</c> and <c>pur.*</c> land (TRANSACTIONS.md
+    /// T2.2 and T4.2); it is deliberately the only line that has to change, the
+    /// same way <c>HasStockMovementsAsync</c> was.
+    /// </summary>
+    private Task<bool> HasTradedAsync(Guid orgId, CancellationToken ct) =>
+        Task.FromResult(false);
+
+    private static void Apply(Organization organization, SaveOrganizationRequest request)
+    {
+        organization.OrgCode = request.OrgCode.Trim().ToUpperInvariant();
+        organization.Name = request.Name.Trim();
+        organization.BaseCurrency = request.BaseCurrency.Trim().ToUpperInvariant();
+        organization.FinancialYearStartMonth = request.FinancialYearStartMonth;
+        organization.AllowFreeTextLines = request.AllowFreeTextLines;
+        organization.DiscountLevel = Enum.Parse<DiscountLevel>(request.DiscountLevel, ignoreCase: true);
+        organization.Vertical = request.Vertical;
+        organization.DiscountBeforeTax = request.DiscountBeforeTax;
+        organization.EInvoiceFrom = request.EInvoiceFrom;
+        organization.EwayBillEnabled = request.EwayBillEnabled;
+        organization.BudgetWarningYearToDate = request.BudgetWarningYearToDate;
+        organization.Gstin = Trimmed(request.Gstin)?.ToUpperInvariant();
+        organization.Pan = Trimmed(request.Pan)?.ToUpperInvariant();
+        organization.Tan = Trimmed(request.Tan)?.ToUpperInvariant();
+        organization.Tin = Trimmed(request.Tin)?.ToUpperInvariant();
+        organization.Cin = Trimmed(request.Cin)?.ToUpperInvariant();
+        organization.UdyamNumber = Trimmed(request.UdyamNumber)?.ToUpperInvariant();
+        organization.LogoUrl = Trimmed(request.LogoUrl);
+        organization.AddressLine1 = Trimmed(request.AddressLine1);
+        organization.AddressLine2 = Trimmed(request.AddressLine2);
+        organization.City = Trimmed(request.City);
+        organization.StateId = request.StateId;
+        organization.PostalCode = Trimmed(request.PostalCode);
+        organization.CountryId = request.CountryId;
+        organization.PhoneNumber = PhoneNumbers.NormalizeOptional(request.PhoneNumber);
+        organization.MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber);
+        organization.Email = Trimmed(request.Email);
+        organization.Website = Trimmed(request.Website);
+    }
+
+    private static string? Trimmed(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Each branch's base currency, in one query rather than one per branch.
+    ///
+    /// <b>Batched because this feeds a list.</b> The branches screen draws every
+    /// branch on the account, and a lookup inside the projection would be the
+    /// N+1 the house rules call out for <c>CreatedBy</c> name resolution.
+    ///
+    /// A branch with no active base currency simply has no entry: it is
+    /// mid-setup, and the caller falls back to the shipped default rather than
+    /// the response failing.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, CurrencyDetails>> BaseCurrenciesAsync(
+        IReadOnlyList<Guid> orgIds, CancellationToken ct)
+    {
+        if (orgIds.Count == 0)
+        {
+            return new Dictionary<Guid, CurrencyDetails>();
+        }
+
+        var rows = await _db.OrgCurrencies
+            .Where(oc => orgIds.Contains(oc.OrgId) && oc.IsBaseCurrency && oc.IsActive)
+            .Join(
+                _db.Currencies,
+                oc => oc.CurrencyId,
+                c => c.CurrencyId,
+                (oc, c) => new { oc.OrgId, Currency = c })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        return rows.ToDictionary(
+            row => row.OrgId,
+            row => new CurrencyDetails
+            {
+                CurrencyId = row.Currency.CurrencyId,
+                Code = row.Currency.Code,
+                Name = row.Currency.Name,
+                Symbol = row.Currency.Symbol,
+                Format = row.Currency.Format,
+                DecimalPlaces = row.Currency.DecimalPlaces,
+                SymbolPosition = row.Currency.SymbolPosition == SymbolPosition.Suffix
+                    ? nameof(SymbolPosition.Suffix)
+                    : nameof(SymbolPosition.Prefix),
+            });
+    }
+
+    private static OrganizationListItem Project(
+        Organization o, bool isFirst, CurrencyDetails? currency) => new()
+    {
+        OrgId = o.OrgId,
+        OrgCode = o.OrgCode,
+        Name = o.Name,
+        BaseCurrency = o.BaseCurrency,
+        Currency = currency,
+        AllowFreeTextLines = o.AllowFreeTextLines,
+        DiscountLevel = o.DiscountLevel.ToString(),
+        Vertical = o.Vertical,
+        DiscountBeforeTax = o.DiscountBeforeTax,
+        EInvoiceFrom = o.EInvoiceFrom,
+        EwayBillEnabled = o.EwayBillEnabled,
+        BudgetWarningYearToDate = o.BudgetWarningYearToDate,
+        FinancialYearStartMonth = o.FinancialYearStartMonth,
+        Gstin = o.Gstin,
+        Pan = o.Pan,
+        Tan = o.Tan,
+        Tin = o.Tin,
+        Cin = o.Cin,
+        UdyamNumber = o.UdyamNumber,
+        LogoUrl = o.LogoUrl,
+        ExpiryDate = o.ExpiryDate,
+        IsTrial = o.IsTrial,
+        AddressLine1 = o.AddressLine1,
+        AddressLine2 = o.AddressLine2,
+        City = o.City,
+        StateId = o.StateId,
+        PostalCode = o.PostalCode,
+        CountryId = o.CountryId,
+        PhoneNumber = o.PhoneNumber,
+        MobileNumber = o.MobileNumber,
+        Email = o.Email,
+        Website = o.Website,
+        Status = o.Status.ToString(),
+        IsFirst = isFirst,
+    };
+}

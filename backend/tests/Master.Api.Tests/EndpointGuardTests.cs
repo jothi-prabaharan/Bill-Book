@@ -136,8 +136,8 @@ public sealed class EndpointGuardTests
         // the branch the caller is signed in to, and administering the other
         // branches of your own account is exactly what these screens are for.
         // The real invariant is that the org is only ever looked up with
-        // `CustomerId == <the token's customer>` beside it — OrganizationService
-        // does that in every method, and LicenseService the same — so a branch
+        // `CustomerId == <the token's customer>` beside it — OrganizationRepository
+        // does that in every method, and LicenseRepository the same — so a branch
         // belonging to another customer resolves to nothing rather than to
         // somebody else's books.
         //

@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +23,9 @@ namespace Master.Api.Controllers;
 [Route("api/custom-fields")]
 public sealed class CustomFieldsController : ControllerBase
 {
-    private readonly CustomFieldService _fields;
+    private readonly CustomFieldRepository _fields;
 
-    public CustomFieldsController(CustomFieldService fields) => _fields = fields;
+    public CustomFieldsController(CustomFieldRepository fields) => _fields = fields;
 
     /// <summary>The branch's fields, every kind or one (<c>?kind=Contact</c>), inactive ones included.</summary>
     [HttpGet]

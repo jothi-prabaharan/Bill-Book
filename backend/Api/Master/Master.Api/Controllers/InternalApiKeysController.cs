@@ -90,7 +90,7 @@ public class InternalApiKeysController : ControllerBase
         // service caches this answer for five minutes, so a role change reaches
         // a key within that.
         var admin = _serviceProvider.GetRequiredService<AdminDbContext>();
-        List<string> permissions = await Master.Api.Services.ApiClientRoles.PermissionsAsync(
+        List<string> permissions = await Master.Repository.Repositories.ApiClientRolesRepository.PermissionsAsync(
             admin, customerId, apiClient.RoleId, cancellationToken);
 
         return new ApiKeyValidationResult

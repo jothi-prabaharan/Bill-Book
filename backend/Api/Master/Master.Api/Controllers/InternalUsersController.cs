@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -25,9 +27,9 @@ public sealed class InternalUsersController : ControllerBase
     private const int OwnerRoleId = 1;
 
     private readonly AdminDbContext _db;
-    private readonly IPasswordHasher _hasher;
+    private readonly IPasswordHasherRepository _hasher;
 
-    public InternalUsersController(AdminDbContext db, IPasswordHasher hasher)
+    public InternalUsersController(AdminDbContext db, IPasswordHasherRepository hasher)
     {
         _db = db;
         _hasher = hasher;
@@ -95,7 +97,7 @@ public sealed class InternalUsersController : ControllerBase
         var rolePermissions = await (
             from rp in _db.RolePermissions
             join p in _db.Permissions on rp.PermissionId equals p.PermissionId
-            where roleIds.Contains(rp.RoleId) && p.Module != PlatformOperatorService.PlatformModule
+            where roleIds.Contains(rp.RoleId) && p.Module != PlatformOperatorRepository.PlatformModule
             select new { rp.RoleId, p.Code }).ToListAsync(ct);
 
         ILookup<int, string> byRole = rolePermissions.ToLookup(x => x.RoleId, x => x.Code);

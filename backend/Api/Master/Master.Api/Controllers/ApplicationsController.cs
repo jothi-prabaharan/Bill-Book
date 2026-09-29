@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +21,11 @@ namespace Master.Api.Controllers;
 [Route("api/applications")]
 public sealed class ApplicationsController : ControllerBase
 {
-    private readonly LicenseService _licences;
-    private readonly ApplicationService _applications;
+    private readonly LicenseRepository _licences;
+    private readonly ApplicationRepository _applications;
     private readonly ICurrentUser _currentUser;
 
-    public ApplicationsController(LicenseService licences, ApplicationService applications, ICurrentUser currentUser)
+    public ApplicationsController(LicenseRepository licences, ApplicationRepository applications, ICurrentUser currentUser)
     {
         _licences = licences;
         _applications = applications;

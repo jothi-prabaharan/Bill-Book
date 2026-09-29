@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Microsoft.AspNetCore.Authorization;
@@ -21,9 +23,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.RetailErp | App.School)]
 public sealed class ContactAttachmentsController : ControllerBase
 {
-    private readonly ContactAttachmentService _attachments;
+    private readonly ContactAttachmentRepository _attachments;
 
-    public ContactAttachmentsController(ContactAttachmentService attachments) =>
+    public ContactAttachmentsController(ContactAttachmentRepository attachments) =>
         _attachments = attachments;
 
     [HttpGet("{contactId:long}/attachments")]

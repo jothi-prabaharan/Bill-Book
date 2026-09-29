@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -38,7 +40,7 @@ public sealed class CustomFieldTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using ContactsDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        CustomFieldService service = new(db);
+        CustomFieldRepository service = new(db);
 
         CustomFieldResult saved = await service.SaveAsync(null, Region(), default);
         Assert.Equal(CustomFieldOutcome.Ok, saved.Outcome);
@@ -57,7 +59,7 @@ public sealed class CustomFieldTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using ContactsDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        CustomFieldService service = new(db);
+        CustomFieldRepository service = new(db);
         long id = (await service.SaveAsync(null, Region(), default)).Id;
         db.ChangeTracker.Clear();
 
@@ -81,9 +83,9 @@ public sealed class CustomFieldTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using ContactsDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
-        CustomFieldService service = new(db);
+        CustomFieldRepository service = new(db);
 
-        for (int i = 0; i < CustomFieldService.MaxActivePerKind; i++)
+        for (int i = 0; i < CustomFieldRepository.MaxActivePerKind; i++)
         {
             SaveCustomFieldRequest field = new() { EntityKind = "Item", Key = $"f{i}", Label = $"Field {i}", DataType = "Text" };
             Assert.Equal(CustomFieldOutcome.Ok, (await service.SaveAsync(null, field, default)).Outcome);

@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -54,16 +56,16 @@ public sealed class RefreshTokenRotationTests
     /// code: in production the two are separate scopes, and a test that shared
     /// one would be asserting against a state no request ever sees.
     /// </summary>
-    private (AuthService Auth, AdminDbContext Db) Request(FixedClock clock)
+    private (AuthRepository Auth, AdminDbContext Db) Request(FixedClock clock)
     {
         AdminDbContext db = _admin.CreateContext();
 
         return (Service(db, clock), db);
     }
 
-    private AuthService Service(AdminDbContext db, FixedClock clock)
+    private AuthRepository Service(AdminDbContext db, FixedClock clock)
     {
-        var options = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        var options = Microsoft.Extensions.Options.Options.Create(new JwtOptionsRepository
         {
             Issuer = "bill-book",
             Audience = "bill-book",
@@ -73,21 +75,21 @@ public sealed class RefreshTokenRotationTests
             RefreshTokenDays = 7,
         });
 
-        var tokens = new JwtTokenService(options, clock);
+        var tokens = new JwtTokenRepository(options, clock);
 
-        return new AuthService(
+        return new AuthRepository(
             db,
             new BcryptPasswordHasher(),
             tokens,
             new OtpService(),
-            new OrgContextService(db, clock),
+            new OrgContextRepository(db, clock),
             new NoEmail(),
             clock);
     }
 
     /// <summary>
     /// A signed-in user in a live branch: customer, organization, licence, user,
-    /// role assignment. Everything <c>OrgContextService</c> joins.
+    /// role assignment. Everything <c>OrgContextRepository</c> joins.
     /// </summary>
     private async Task<(Guid UserId, Guid OrgId)> SeedSessionAsync(
         AdminDbContext db, FixedClock clock, bool userActive = true)
@@ -173,7 +175,7 @@ public sealed class RefreshTokenRotationTests
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId) = await SeedSessionAsync(db, clock);
 
-        AuthService auth = Service(db, clock);
+        AuthRepository auth = Service(db, clock);
         TokenResponse first = await auth.SelectOrganizationAsync(userId, orgId, null, null, default);
 
         TokenResponse second = await auth.RefreshAsync(first.RefreshToken, null, null, default);
@@ -183,7 +185,7 @@ public sealed class RefreshTokenRotationTests
 
         // The presented token is spent, not merely still valid alongside its
         // successor. That is the difference between rotation and renewal.
-        string firstHash = HashUtil.Sha256(first.RefreshToken);
+        string firstHash = HashUtilRepository.Sha256(first.RefreshToken);
         RefreshToken spent = await db.RefreshTokens.AsNoTracking()
             .FirstAsync(t => t.TokenHash == firstHash);
 
@@ -199,7 +201,7 @@ public sealed class RefreshTokenRotationTests
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId) = await SeedSessionAsync(db, clock);
 
-        AuthService auth = Service(db, clock);
+        AuthRepository auth = Service(db, clock);
         TokenResponse first = await auth.SelectOrganizationAsync(userId, orgId, null, null, default);
         TokenResponse second = await auth.RefreshAsync(first.RefreshToken, null, null, default);
 
@@ -227,7 +229,7 @@ public sealed class RefreshTokenRotationTests
 
         Assert.False(await db.RefreshTokens.AnyAsync(t => t.TokenHash == issued.RefreshToken));
         Assert.True(await db.RefreshTokens.AnyAsync(
-            t => t.TokenHash == HashUtil.Sha256(issued.RefreshToken)));
+            t => t.TokenHash == HashUtilRepository.Sha256(issued.RefreshToken)));
     }
 
     // ---- Refusals ---------------------------------------------------------
@@ -253,7 +255,7 @@ public sealed class RefreshTokenRotationTests
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId) = await SeedSessionAsync(db, clock);
 
-        AuthService auth = Service(db, clock);
+        AuthRepository auth = Service(db, clock);
         TokenResponse issued = await auth.SelectOrganizationAsync(userId, orgId, null, null, default);
 
         // Seven days is the refresh lifetime; a day past it is past it.
@@ -280,7 +282,7 @@ public sealed class RefreshTokenRotationTests
             .Where(t => t.UserId == userId && t.RevokedAt == null)
             .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, clock.Now));
 
-        (AuthService auth, AdminDbContext next) = Request(clock);
+        (AuthRepository auth, AdminDbContext next) = Request(clock);
         await using AdminDbContext _ = next;
 
         // A revoked token presented again is reuse, and reuse is refused.
@@ -304,7 +306,7 @@ public sealed class RefreshTokenRotationTests
             .Where(u => u.UserId == userId)
             .ExecuteUpdateAsync(set => set.SetProperty(u => u.IsActive, false));
 
-        (AuthService auth, AdminDbContext next) = Request(clock);
+        (AuthRepository auth, AdminDbContext next) = Request(clock);
         await using AdminDbContext _ = next;
 
         await Assert.ThrowsAsync<InvalidRefreshTokenException>(
@@ -327,7 +329,7 @@ public sealed class RefreshTokenRotationTests
             .Where(u => u.UserId == userId && u.OrgId == orgId)
             .ExecuteUpdateAsync(set => set.SetProperty(u => u.IsActive, false));
 
-        (AuthService auth, AdminDbContext next) = Request(clock);
+        (AuthRepository auth, AdminDbContext next) = Request(clock);
         await using AdminDbContext _ = next;
 
         await Assert.ThrowsAsync<InvalidRefreshTokenException>(
@@ -348,12 +350,12 @@ public sealed class RefreshTokenRotationTests
         TokenResponse first = await Service(db, clock)
             .SelectOrganizationAsync(userId, orgId, null, null, default);
 
-        (AuthService rotate, AdminDbContext rotateDb) = Request(clock);
+        (AuthRepository rotate, AdminDbContext rotateDb) = Request(clock);
         await using AdminDbContext _ = rotateDb;
         TokenResponse second = await rotate.RefreshAsync(first.RefreshToken, null, null, default);
 
         // The stolen copy, replayed.
-        (AuthService replay, AdminDbContext replayDb) = Request(clock);
+        (AuthRepository replay, AdminDbContext replayDb) = Request(clock);
         await using AdminDbContext __ = replayDb;
         await Assert.ThrowsAsync<RefreshTokenReuseException>(
             () => replay.RefreshAsync(first.RefreshToken, null, null, default));
@@ -363,7 +365,7 @@ public sealed class RefreshTokenRotationTests
         await using AdminDbContext check = _admin.CreateContext();
         Assert.NotNull((await Token(check, second.RefreshToken)).RevokedAt);
 
-        (AuthService after, AdminDbContext afterDb) = Request(clock);
+        (AuthRepository after, AdminDbContext afterDb) = Request(clock);
         await using AdminDbContext ___ = afterDb;
         await Assert.ThrowsAsync<RefreshTokenReuseException>(
             () => after.RefreshAsync(second.RefreshToken, null, null, default));
@@ -378,7 +380,7 @@ public sealed class RefreshTokenRotationTests
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId) = await SeedSessionAsync(db, clock);
 
-        AuthService auth = Service(db, clock);
+        AuthRepository auth = Service(db, clock);
         TokenResponse first = await auth.SelectOrganizationAsync(userId, orgId, null, null, default);
         await auth.RefreshAsync(first.RefreshToken, null, null, default);
 
@@ -406,7 +408,7 @@ public sealed class RefreshTokenRotationTests
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId) = await SeedSessionAsync(db, clock);
 
-        AuthService auth = Service(db, clock);
+        AuthRepository auth = Service(db, clock);
 
         // Two separate sign-ins: two families, as a phone and a laptop would be.
         TokenResponse phone = await auth.SelectOrganizationAsync(userId, orgId, null, null, default);
@@ -482,18 +484,18 @@ public sealed class RefreshTokenRotationTests
         TokenResponse issued = await Service(db, clock)
             .SelectOrganizationAsync(userId, orgId, null, null, default);
 
-        (AuthService rotate, AdminDbContext rotateDb) = Request(clock);
+        (AuthRepository rotate, AdminDbContext rotateDb) = Request(clock);
         await using AdminDbContext _ = rotateDb;
         TokenResponse rotated = await rotate.RefreshAsync(issued.RefreshToken, null, null, default);
 
-        (AuthService signOut, AdminDbContext signOutDb) = Request(clock);
+        (AuthRepository signOut, AdminDbContext signOutDb) = Request(clock);
         await using AdminDbContext __ = signOutDb;
         await signOut.LogoutAsync(rotated.RefreshToken, default);
 
         await using AdminDbContext check = _admin.CreateContext();
         Assert.NotNull((await Token(check, rotated.RefreshToken)).RevokedAt);
 
-        (AuthService after, AdminDbContext afterDb) = Request(clock);
+        (AuthRepository after, AdminDbContext afterDb) = Request(clock);
         await using AdminDbContext ___ = afterDb;
         await Assert.ThrowsAsync<RefreshTokenReuseException>(
             () => after.RefreshAsync(rotated.RefreshToken, null, null, default));
@@ -514,7 +516,7 @@ public sealed class RefreshTokenRotationTests
 
     private static async Task<RefreshToken> Token(AdminDbContext db, string plaintext)
     {
-        string hash = HashUtil.Sha256(plaintext);
+        string hash = HashUtilRepository.Sha256(plaintext);
 
         return await db.RefreshTokens.AsNoTracking().FirstAsync(t => t.TokenHash == hash);
     }

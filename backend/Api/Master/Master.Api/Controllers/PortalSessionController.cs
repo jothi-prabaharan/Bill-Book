@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +21,7 @@ namespace Master.Api.Controllers;
 /// <b>Anonymous, because the code is the credential</b>: a contact has no
 /// account to sign in with. It is rate-limited per address, and every failure
 /// is the same 401, so the route tells a guesser nothing about which codes
-/// exist. The tenant comes from the code (<see cref="PortalAccessService.TryReadCode"/>),
+/// exist. The tenant comes from the code (<see cref="PortalAccessRepository.TryReadCode"/>),
 /// and the database is opened only after it is set, which is why the service is
 /// resolved in the action and the request carries no filter transaction.
 /// </summary>
@@ -45,7 +47,7 @@ public sealed class PortalSessionController : ControllerBase
     [EnableRateLimiting(PortalRateLimit.Policy)]
     public async Task<IActionResult> Exchange([FromBody] PortalSessionRequest request, CancellationToken ct)
     {
-        if (!PortalAccessService.TryReadCode(request.Code, out Guid customerId, out Guid orgId))
+        if (!PortalAccessRepository.TryReadCode(request.Code, out Guid customerId, out Guid orgId))
         {
             return Unauthorized(new MessageResponse { Message = Refused });
         }
@@ -64,7 +66,7 @@ public sealed class PortalSessionController : ControllerBase
         _tenant.CustomerCode = customerCode;
 
         PortalSessionToken? session = await _services
-            .GetRequiredService<PortalAccessService>()
+            .GetRequiredService<PortalAccessRepository>()
             .ExchangeAsync(request.Code!, ct, customerCode);
 
         if (session is null)

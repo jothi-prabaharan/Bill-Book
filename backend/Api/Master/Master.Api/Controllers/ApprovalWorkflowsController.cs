@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,9 +20,9 @@ namespace Master.Api.Controllers;
 [Route("api/approval-workflows")]
 public sealed class ApprovalWorkflowsController : ControllerBase
 {
-    private readonly ApprovalWorkflowService _workflows;
+    private readonly ApprovalWorkflowRepository _workflows;
 
-    public ApprovalWorkflowsController(ApprovalWorkflowService workflows) => _workflows = workflows;
+    public ApprovalWorkflowsController(ApprovalWorkflowRepository workflows) => _workflows = workflows;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct) => Ok(await _workflows.ListAsync(ct));

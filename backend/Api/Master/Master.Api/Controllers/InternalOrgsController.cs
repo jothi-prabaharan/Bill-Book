@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
 
@@ -16,9 +18,9 @@ namespace Master.Api.Controllers;
 [Route("internal/orgs")]
 public sealed class InternalOrgsController : ControllerBase
 {
-    private readonly OrgContextService _context;
+    private readonly OrgContextRepository _context;
 
-    public InternalOrgsController(OrgContextService context) => _context = context;
+    public InternalOrgsController(OrgContextRepository context) => _context = context;
 
     [HttpGet("{orgId:guid}/context")]
     public async Task<IActionResult> GetContext(Guid orgId, CancellationToken ct)

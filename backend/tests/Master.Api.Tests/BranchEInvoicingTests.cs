@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -56,7 +58,7 @@ public sealed class BranchEInvoicingTests
 
         SaveOrganizationResult result = await Service(db).UpdateAsync(
             customerId, orgId, Request(gstin: "33AAACH7409R1Z8", from: new DateOnly(2026, 10, 1), eway: true), default);
-        OrgContextResponse? context = await new OrgContextService(db, TimeProvider.System).ResolveAsync(orgId, default);
+        OrgContextResponse? context = await new OrgContextRepository(db, TimeProvider.System).ResolveAsync(orgId, default);
 
         Assert.Equal(SaveOrganizationOutcome.Ok, result.Outcome);
         Organization saved = await db.Organizations.AsNoTracking().SingleAsync(o => o.OrgId == orgId);
@@ -80,12 +82,12 @@ public sealed class BranchEInvoicingTests
         Assert.Equal(SaveOrganizationOutcome.Ok, result.Outcome);
     }
 
-    private static OrganizationService Service(AdminDbContext db) => new(
+    private static OrganizationRepository Service(AdminDbContext db) => new(
         db,
         new NoSeeding(),
         new NoCurrencies(),
-        new StateDirectory(db, new MemoryCache(new MemoryCacheOptions())),
-        NullLogger<OrganizationService>.Instance);
+        new StateDirectoryRepository(db, new MemoryCache(new MemoryCacheOptions())),
+        NullLogger<OrganizationRepository>.Instance);
 
     private static SaveOrganizationRequest Request(string? gstin, DateOnly? from, bool eway) => new()
     {
@@ -142,7 +144,7 @@ public sealed class BranchEInvoicingTests
             Task.FromResult<IReadOnlyList<string>>([]);
     }
 
-    private sealed class NoCurrencies : IMasterCurrencies
+    private sealed class NoCurrencies : IMasterCurrenciesRepository
     {
         public Task<IReadOnlyList<MasterCurrency>> GetAllAsync(CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<MasterCurrency>>([]);

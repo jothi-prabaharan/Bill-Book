@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -24,9 +26,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class OrganizationsController : ControllerBase
 {
-    private readonly OrganizationService _organizations;
+    private readonly OrganizationRepository _organizations;
 
-    public OrganizationsController(OrganizationService organizations) =>
+    public OrganizationsController(OrganizationRepository organizations) =>
         _organizations = organizations;
 
     [HttpGet]

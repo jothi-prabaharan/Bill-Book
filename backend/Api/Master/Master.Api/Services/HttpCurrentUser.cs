@@ -1,3 +1,5 @@
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using System.Security.Claims;
 using Shared.Kernel.Interfaces;
 

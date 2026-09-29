@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.CustomFields;
@@ -39,6 +41,6 @@ public sealed class InternalCustomFieldsController : ControllerBase
             return BadRequest(new CustomFieldDefinitionsResponse());
         }
 
-        return Ok(await _services.GetRequiredService<CustomFieldService>().ForKindAsync(parsed, ct));
+        return Ok(await _services.GetRequiredService<CustomFieldRepository>().ForKindAsync(parsed, ct));
     }
 }

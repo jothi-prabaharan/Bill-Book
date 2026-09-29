@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -79,7 +81,7 @@ public sealed class ContactCustomFieldTests
         return (db, tenant);
     }
 
-    private static ContactService Service(ContactsDbContext db, TenantContext tenant, ICustomFieldDefinitions definitions) =>
+    private static ContactRepository Service(ContactsDbContext db, TenantContext tenant, ICustomFieldDefinitions definitions) =>
         new(db, null!, null!, null!, new NoSubAccounts(), TimeProvider.System, tenant, definitions);
 
     /// <summary>The card's "done when".</summary>
@@ -110,7 +112,7 @@ public sealed class ContactCustomFieldTests
     {
         (ContactsDbContext db, TenantContext tenant) = await BranchWithContactAsync("TOWER-B-17");
         await using ContactsDbContext _ = db;
-        ContactService service = Service(db, tenant, new Definitions(SiteRef(active: false)));
+        ContactRepository service = Service(db, tenant, new Definitions(SiteRef(active: false)));
 
         IReadOnlyList<ContactListItem> all = await service.ListAsync(null, null, false, default);
         ContactListItem acme = all.Single(c => c.ContactCode == "C-0001");

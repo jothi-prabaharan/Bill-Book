@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -13,9 +15,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class CustomersController : ControllerBase
 {
-    private readonly SignupService _signup;
+    private readonly SignupRepository _signup;
 
-    public CustomersController(SignupService signup) => _signup = signup;
+    public CustomersController(SignupRepository signup) => _signup = signup;
 
     /// <summary>Public trial signup. Returns 202 — provisioning is asynchronous.</summary>
     [HttpPost("signup")]

@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Xunit;

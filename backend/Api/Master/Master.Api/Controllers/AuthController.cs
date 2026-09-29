@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,10 +17,10 @@ public sealed class AuthController : ControllerBase
 {
     private const string PreAuthHeader = "X-PreAuth-Token";
 
-    private readonly AuthService _auth;
-    private readonly ITokenService _tokens;
+    private readonly AuthRepository _auth;
+    private readonly ITokenRepository _tokens;
 
-    public AuthController(AuthService auth, ITokenService tokens)
+    public AuthController(AuthRepository auth, ITokenRepository tokens)
     {
         _auth = auth;
         _tokens = tokens;
@@ -103,7 +105,7 @@ public sealed class AuthController : ControllerBase
         try
         {
             TokenResponse response = await _auth.SelectOrganizationAsync(
-                userId.Value, request.OrgId, Ip(), UserAgent(), ct, AuthService.AppOrDefault(request.App));
+                userId.Value, request.OrgId, Ip(), UserAgent(), ct, AuthRepository.AppOrDefault(request.App));
             return Ok(response);
         }
         catch (NoOrganizationAccessException)
@@ -131,7 +133,7 @@ public sealed class AuthController : ControllerBase
     public async Task<IActionResult> Organizations([FromQuery] string? app, CancellationToken ct) =>
         CallerUserId() is Guid userId
             ? Ok(await _auth.AccessibleOrgsAsync(
-                userId, ct, app is null ? CallerApp() : AuthService.AppOrDefault(app)))
+                userId, ct, app is null ? CallerApp() : AuthRepository.AppOrDefault(app)))
             : Unauthorized();
 
     /// <summary>
@@ -157,7 +159,7 @@ public sealed class AuthController : ControllerBase
         {
             // No app named: stay in the caller's app. Naming one is the app
             // switcher: the same branch, another app's token (TK-43).
-            App app = request.App is null ? CallerApp() : AuthService.AppOrDefault(request.App);
+            App app = request.App is null ? CallerApp() : AuthRepository.AppOrDefault(request.App);
 
             TokenResponse response = await _auth.SelectOrganizationAsync(
                 userId, request.OrgId, Ip(), UserAgent(), ct, app);

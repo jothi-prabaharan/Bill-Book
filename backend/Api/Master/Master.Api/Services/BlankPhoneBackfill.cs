@@ -1,3 +1,5 @@
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Customer.Repository;
 using Inventory.Repository;
 using Master.Repository;

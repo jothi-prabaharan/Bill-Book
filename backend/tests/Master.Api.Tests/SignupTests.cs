@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -14,7 +16,7 @@ namespace Master.Api.Tests;
 ///
 /// <b>This test did not exist, and that is why signup was broken on main for
 /// ten days.</b> <c>Customer.DatabaseName</c> was <c>[Required]</c> over a NOT
-/// NULL column and <c>SignupService</c> never set it, so every
+/// NULL column and <c>SignupRepository</c> never set it, so every
 /// <c>POST /api/customers/signup</c> died on a not-null violation — there was no
 /// way to create a customer through the product at all. Nothing caught it,
 /// because no test signed a customer up and the seeded fixtures everywhere else
@@ -55,7 +57,7 @@ public sealed class SignupTests
             throw new NotSupportedException("The test never drains the queue.");
     }
 
-    private sealed class StubCurrencies : IMasterCurrencies
+    private sealed class StubCurrencies : IMasterCurrenciesRepository
     {
         public Task<IReadOnlyList<MasterCurrency>> GetAllAsync(CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<MasterCurrency>>([]);
@@ -120,18 +122,18 @@ public sealed class SignupTests
         db.TenantDatabases.ExecuteUpdateAsync(
             set => set.SetProperty(d => d.CurrentCustomers, d => d.MaxCustomers));
 
-    private (SignupService Service, AdminDbContext Db, RecordingQueue Queue) Create()
+    private (SignupRepository Service, AdminDbContext Db, RecordingQueue Queue) Create()
     {
         AdminDbContext db = _admin.CreateContext();
         RecordingQueue queue = new();
 
         return (
-            new SignupService(
+            new SignupRepository(
                 db,
                 queue,
                 new StubCurrencies(),
                 new StubSeeder(),
-                new TenantDatabaseAllocator(db, NullLogger<TenantDatabaseAllocator>.Instance),
+                new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance),
                 new FixedClock()),
             db,
             queue);
@@ -142,7 +144,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         string suffix = Guid.NewGuid().ToString("N")[..8];
@@ -167,7 +169,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         await SeedShardAsync(db);
@@ -205,7 +207,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, RecordingQueue queue) = Create();
+        (SignupRepository signup, AdminDbContext context, RecordingQueue queue) = Create();
         await using AdminDbContext db = context;
 
         await SeedShardAsync(db);
@@ -225,7 +227,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         await SeedShardAsync(db);
@@ -258,7 +260,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         await SeedShardAsync(db);
@@ -280,7 +282,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         await SeedShardAsync(db);
@@ -316,7 +318,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         // Fill whatever other tests in this collection left behind, so the
@@ -347,7 +349,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         await FillEveryShardAsync(db);
@@ -380,7 +382,7 @@ public sealed class SignupTests
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
-        (SignupService signup, AdminDbContext context, _) = Create();
+        (SignupRepository signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
         // Every shard in the database at its limit, including any left by
@@ -415,9 +417,9 @@ public sealed class SignupTests
         await using AdminDbContext two = _admin.CreateContext();
 
         string?[] results = await Task.WhenAll(
-            new TenantDatabaseAllocator(one, NullLogger<TenantDatabaseAllocator>.Instance)
+            new TenantDatabaseAllocatorRepository(one, NullLogger<TenantDatabaseAllocatorRepository>.Instance)
                 .AllocateAsync(PlanTier.Trial, default),
-            new TenantDatabaseAllocator(two, NullLogger<TenantDatabaseAllocator>.Instance)
+            new TenantDatabaseAllocatorRepository(two, NullLogger<TenantDatabaseAllocatorRepository>.Instance)
                 .AllocateAsync(PlanTier.Trial, default));
 
         Assert.Equal(1, results.Count(r => r == shard));

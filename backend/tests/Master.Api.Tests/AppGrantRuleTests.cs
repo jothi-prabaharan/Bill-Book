@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -175,7 +177,7 @@ public sealed class AppGrantRuleTests
     }
 }
 
-/// <summary>The grant rule enforced by <see cref="RoleService"/> against a real database.</summary>
+/// <summary>The grant rule enforced by <see cref="RoleRepository"/> against a real database.</summary>
 [Collection(nameof(AdminCollection))]
 public sealed class RoleServiceAppTests
 {
@@ -205,7 +207,7 @@ public sealed class RoleServiceAppTests
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         await using AdminDbContext db = _admin.CreateContext();
-        RoleService roles = new(db);
+        RoleRepository roles = new(db);
         Guid customer = Guid.NewGuid();
         int payrollOnly = await PayrollOnlyPermissionAsync(db);
 
@@ -227,7 +229,7 @@ public sealed class RoleServiceAppTests
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         await using AdminDbContext db = _admin.CreateContext();
-        RoleService roles = new(db);
+        RoleRepository roles = new(db);
         Guid customer = Guid.NewGuid();
         int salesView = await PermissionIdAsync(db, "sales.view");
         int payrollOnly = await PayrollOnlyPermissionAsync(db);
@@ -254,7 +256,7 @@ public sealed class RoleServiceAppTests
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         await using AdminDbContext db = _admin.CreateContext();
-        RoleService roles = new(db);
+        RoleRepository roles = new(db);
         Guid customer = Guid.NewGuid();
         int settingsView = await PermissionIdAsync(db, "settings.view");
         int payrollOnly = await PayrollOnlyPermissionAsync(db);
@@ -278,7 +280,7 @@ public sealed class RoleServiceAppTests
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         await using AdminDbContext db = _admin.CreateContext();
-        (SaveRoleResult created, _) = await new RoleService(db).CreateAsync(Guid.NewGuid(), new SaveRoleRequest
+        (SaveRoleResult created, _) = await new RoleRepository(db).CreateAsync(Guid.NewGuid(), new SaveRoleRequest
         {
             DisplayName = "Everything",
             App = "All",
@@ -293,7 +295,7 @@ public sealed class RoleServiceAppTests
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         await using AdminDbContext db = _admin.CreateContext();
-        IReadOnlyList<PermissionGroup> payroll = await new RoleService(db).PermissionMatrixAsync(false, default, App.Payroll);
+        IReadOnlyList<PermissionGroup> payroll = await new RoleRepository(db).PermissionMatrixAsync(false, default, App.Payroll);
 
         Assert.Contains(payroll, g => g.Module == "settings");
         Assert.DoesNotContain(payroll, g => g.Module == "sales");

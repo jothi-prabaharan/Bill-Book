@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -27,9 +29,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class RatesController : ControllerBase
 {
-    private readonly RateService _rates;
+    private readonly RateRepository _rates;
 
-    public RatesController(RateService rates) => _rates = rates;
+    public RatesController(RateRepository rates) => _rates = rates;
 
     /// <summary>The latest rate on or before <c>on</c> (today when omitted), or 404 when none is on file.</summary>
     [HttpGet("exchange")]

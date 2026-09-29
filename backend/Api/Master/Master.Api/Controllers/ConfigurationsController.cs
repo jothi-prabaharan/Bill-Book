@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +21,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class ConfigurationsController : ControllerBase
 {
-    private readonly ConfigurationService _config;
+    private readonly ConfigurationRepository _config;
 
-    public ConfigurationsController(ConfigurationService config) => _config = config;
+    public ConfigurationsController(ConfigurationRepository config) => _config = config;
 
     [HttpGet]
     public async Task<IActionResult> List(Guid orgId, CancellationToken ct) =>

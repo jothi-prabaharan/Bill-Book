@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -24,10 +26,10 @@ namespace Master.Api.Controllers;
 public sealed class MeController : ControllerBase
 {
     private readonly AdminDbContext _db;
-    private readonly OrgContextService _orgs;
+    private readonly OrgContextRepository _orgs;
     private readonly ICurrentUser _currentUser;
 
-    public MeController(AdminDbContext db, OrgContextService orgs, ICurrentUser currentUser)
+    public MeController(AdminDbContext db, OrgContextRepository orgs, ICurrentUser currentUser)
     {
         _db = db;
         _orgs = orgs;

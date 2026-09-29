@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Approvals;
@@ -36,7 +38,7 @@ public sealed class InternalApprovalChainsController : ControllerBase
         }
 
         // Resolved after the tenant is set, so the context binds to this branch.
-        var resolver = _services.GetRequiredService<ApprovalChainResolver>();
+        var resolver = _services.GetRequiredService<ApprovalChainResolverRepository>();
         return Ok(await resolver.ResolveAsync(request, ct));
     }
 
@@ -49,7 +51,7 @@ public sealed class InternalApprovalChainsController : ControllerBase
             return Forbid();
         }
 
-        var resolver = _services.GetRequiredService<ApprovalChainResolver>();
+        var resolver = _services.GetRequiredService<ApprovalChainResolverRepository>();
         return Ok(new { isDelegate = await resolver.IsDelegateAsync(request.ApproverUserId, request.ActorUserId, request.OnDate, ct) });
     }
 }

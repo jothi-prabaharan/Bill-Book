@@ -1,3 +1,5 @@
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Master.Entity.Enums;
 using Master.Entity.TableEntities;
@@ -60,7 +62,7 @@ public sealed class ProvisioningWorker : BackgroundService
     {
         using IServiceScope scope = _scopes.CreateScope();
         AdminDbContext db = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
-        IIdentityAdmin identity = scope.ServiceProvider.GetRequiredService<IIdentityAdmin>();
+        IIdentityAdminRepository identity = scope.ServiceProvider.GetRequiredService<IIdentityAdminRepository>();
 
         // 1. Owner user + Owner role assignment, via Identity's internal API.
         await identity.CreateOwnerUserAsync(new CreateOwnerUser(

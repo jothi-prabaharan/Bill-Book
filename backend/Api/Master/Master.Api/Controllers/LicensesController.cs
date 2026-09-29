@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Interfaces;
@@ -14,9 +16,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class LicensesController : ControllerBase
 {
-    private readonly LicenseService _service;
+    private readonly LicenseRepository _service;
 
-    public LicensesController(LicenseService service)
+    public LicensesController(LicenseRepository service)
     {
         _service = service;
     }
@@ -27,7 +29,7 @@ public sealed class LicensesController : ControllerBase
     public async Task<IActionResult> Get(Guid customerId, [FromQuery] string? app, CancellationToken ct)
     {
         // The licence of the app named, or of the app the caller is signed in to (TK-43).
-        App forApp = app is null ? CallerApp() : AuthService.AppOrDefault(app);
+        App forApp = app is null ? CallerApp() : AuthRepository.AppOrDefault(app);
         LicenseDto? dto = await _service.GetAsync(customerId, ct, forApp);
         return dto is null ? NotFound() : Ok(dto);
     }
@@ -53,7 +55,7 @@ public sealed class LicensesController : ControllerBase
     public async Task<IActionResult> Renew(
         Guid customerId, [FromBody] RenewLicenseRequest request, CancellationToken ct)
     {
-        bool ok = await _service.RenewAsync(customerId, request.NewExpiryDate, ct, AuthService.AppOrDefault(request.App));
+        bool ok = await _service.RenewAsync(customerId, request.NewExpiryDate, ct, AuthRepository.AppOrDefault(request.App));
         return ok ? NoContent() : NotFound();
     }
 

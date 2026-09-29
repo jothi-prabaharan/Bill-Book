@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -40,8 +42,8 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var roles = _services.GetRequiredService<ContactPersonRoleService>();
-        var contacts = _services.GetRequiredService<ContactService>();
+        var roles = _services.GetRequiredService<ContactPersonRoleRepository>();
+        var contacts = _services.GetRequiredService<ContactRepository>();
 
         var response = new SeedOrganizationResponse
         {

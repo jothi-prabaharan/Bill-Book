@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Security.Claims;
 using Master.Api.Controllers;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -37,9 +39,9 @@ public sealed class PlatformOperatorTests
         public Task SendAsync(EmailMessage message, CancellationToken ct = default) => Task.CompletedTask;
     }
 
-    private static AuthService Auth(AdminDbContext db)
+    private static AuthRepository Auth(AdminDbContext db)
     {
-        var options = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        var options = Microsoft.Extensions.Options.Options.Create(new JwtOptionsRepository
         {
             Issuer = "bill-book",
             Audience = "bill-book",
@@ -47,9 +49,9 @@ public sealed class PlatformOperatorTests
             RefreshTokenDays = 7,
         });
 
-        return new AuthService(
-            db, new BcryptPasswordHasher(), new JwtTokenService(options, TimeProvider.System),
-            new OtpService(), new OrgContextService(db, TimeProvider.System), new NoEmail(), TimeProvider.System);
+        return new AuthRepository(
+            db, new BcryptPasswordHasher(), new JwtTokenRepository(options, TimeProvider.System),
+            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System);
     }
 
     private static string[] Permissions(string accessToken) =>
@@ -216,7 +218,7 @@ public sealed class PlatformOperatorTests
 
         await using (AdminDbContext db = _admin.CreateContext())
         {
-            PlatformOperatorOutcome revoked = await new PlatformOperatorService(db)
+            PlatformOperatorOutcome revoked = await new PlatformOperatorRepository(db)
                 .SetAsync(userId, isOperator: false, callerId: otherOperator, default);
 
             Assert.Equal(PlatformOperatorOutcome.Ok, revoked);
@@ -237,7 +239,7 @@ public sealed class PlatformOperatorTests
         (Guid userId, _, _) = await SeedWith(isOperator: true);
 
         await using AdminDbContext db = _admin.CreateContext();
-        var service = new PlatformOperatorService(db);
+        var service = new PlatformOperatorRepository(db);
 
         Assert.Equal(PlatformOperatorOutcome.CannotRevokeSelf, await service.SetAsync(userId, false, userId, default));
         Assert.Equal(PlatformOperatorOutcome.NotFound, await service.SetAsync(Guid.NewGuid(), true, userId, default));
@@ -254,8 +256,8 @@ public sealed class PlatformOperatorTests
 
         await using AdminDbContext db = _admin.CreateContext();
 
-        int granted = await PlatformOperatorService.ApplyBootstrapAsync(
-            db, PlatformOperatorService.BootstrapEmails(Config(("Bootstrap:OperatorEmails", $" {namedEmail.ToUpperInvariant()} ; nobody@example.com"))),
+        int granted = await PlatformOperatorRepository.ApplyBootstrapAsync(
+            db, PlatformOperatorRepository.BootstrapEmails(Config(("Bootstrap:OperatorEmails", $" {namedEmail.ToUpperInvariant()} ; nobody@example.com"))),
             default);
 
         Assert.Equal(1, granted);
@@ -263,7 +265,7 @@ public sealed class PlatformOperatorTests
         Assert.False((await db.Users.AsNoTracking().SingleAsync(u => u.UserId == other)).IsPlatformOperator);
 
         // Idempotent: a second start grants nobody new.
-        Assert.Equal(0, await PlatformOperatorService.ApplyBootstrapAsync(db, [namedEmail], default));
+        Assert.Equal(0, await PlatformOperatorRepository.ApplyBootstrapAsync(db, [namedEmail], default));
     }
 
     [Fact]
@@ -271,15 +273,15 @@ public sealed class PlatformOperatorTests
     {
         Assert.Equal(
             ["a@x.in", "b@x.in"],
-            PlatformOperatorService.BootstrapEmails(Config(("Bootstrap:OperatorEmails", " A@x.in,b@X.in ;; a@x.in"))));
+            PlatformOperatorRepository.BootstrapEmails(Config(("Bootstrap:OperatorEmails", " A@x.in,b@X.in ;; a@x.in"))));
 
         Assert.Equal(
             ["a@x.in", "b@x.in"],
-            PlatformOperatorService.BootstrapEmails(Config(
+            PlatformOperatorRepository.BootstrapEmails(Config(
                 ("Bootstrap:OperatorEmails:0", "A@x.in"),
                 ("Bootstrap:OperatorEmails:1", "b@x.in"))));
 
-        Assert.Empty(PlatformOperatorService.BootstrapEmails(Config()));
+        Assert.Empty(PlatformOperatorRepository.BootstrapEmails(Config()));
     }
 
     [Fact]

@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -144,7 +146,7 @@ public sealed class InternalContactLookupController : ControllerBase
             return Ok(new EnsureGuardianResponse { ContactId = found, Created = false });
         }
 
-        SaveContactResult created = await _services.GetRequiredService<ContactService>().CreateQuickAsync(new QuickContactRequest
+        SaveContactResult created = await _services.GetRequiredService<ContactRepository>().CreateQuickAsync(new QuickContactRequest
         {
             DisplayName = request.DisplayName.Trim(),
             MobileNumber = mobile,

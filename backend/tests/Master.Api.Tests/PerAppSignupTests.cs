@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -36,7 +38,7 @@ public sealed class PerAppSignupTests
             throw new NotSupportedException();
     }
 
-    private sealed class StubCurrencies : IMasterCurrencies
+    private sealed class StubCurrencies : IMasterCurrenciesRepository
     {
         public Task<IReadOnlyList<MasterCurrency>> GetAllAsync(CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<MasterCurrency>>([]);
@@ -60,7 +62,7 @@ public sealed class PerAppSignupTests
         }
     }
 
-    private sealed class Hasher : IPasswordHasher
+    private sealed class Hasher : IPasswordHasherRepository
     {
         public string Hash(string password) => "hashed";
 
@@ -80,9 +82,9 @@ public sealed class PerAppSignupTests
         await db.SaveChangesAsync();
 
         RecordingQueue queue = new();
-        SignupService signup = new(
+        SignupRepository signup = new(
             db, queue, new StubCurrencies(), new RecordingSeeder(),
-            new TenantDatabaseAllocator(db, NullLogger<TenantDatabaseAllocator>.Instance), TimeProvider.System);
+            new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance), TimeProvider.System);
 
         SignupResponse response = await signup.SignupAsync(new SignupRequest
         {
@@ -130,7 +132,7 @@ public sealed class PerAppSignupTests
         (Guid customerId, Guid orgId, Guid userId) = await SignUpForPayrollAsync(db);
         RecordingSeeder seeder = new();
 
-        StartTrialResult started = await new ApplicationService(db, seeder, TimeProvider.System)
+        StartTrialResult started = await new ApplicationRepository(db, seeder, TimeProvider.System)
             .StartTrialAsync(customerId, userId, App.Hrms, default);
 
         Assert.Equal(StartTrialOutcome.Ok, started.Outcome);
@@ -157,7 +159,7 @@ public sealed class PerAppSignupTests
         await using AdminDbContext db = _admin.CreateContext();
         (Guid customerId, _, Guid userId) = await SignUpForPayrollAsync(db);
 
-        StartTrialResult again = await new ApplicationService(db, new RecordingSeeder(), TimeProvider.System)
+        StartTrialResult again = await new ApplicationRepository(db, new RecordingSeeder(), TimeProvider.System)
             .StartTrialAsync(customerId, userId, App.Payroll, default);
 
         Assert.Equal(StartTrialOutcome.AlreadyLicensed, again.Outcome);
@@ -172,7 +174,7 @@ public sealed class PerAppSignupTests
         await using AdminDbContext db = _admin.CreateContext();
         (Guid customerId, _, Guid userId) = await SignUpForPayrollAsync(db);
 
-        StartTrialResult started = await new ApplicationService(db, new RecordingSeeder(fail: true), TimeProvider.System)
+        StartTrialResult started = await new ApplicationRepository(db, new RecordingSeeder(fail: true), TimeProvider.System)
             .StartTrialAsync(customerId, userId, App.RetailErp, default);
 
         // The controller answers 503 on this, and the reliability filter

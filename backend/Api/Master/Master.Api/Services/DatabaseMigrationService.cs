@@ -1,3 +1,5 @@
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using System.Data.Common;
 using Accounting.Repository;
 using Customer.Repository;
@@ -96,8 +98,8 @@ public class DatabaseMigrationService : IHostedService
         // 4. Platform operators named by configuration (D-01). Every start, not
         // only the first, so an operator added to the setting later is granted
         // at the next deploy. Grant-only; revoking is an operator's action.
-        IReadOnlyList<string> operatorEmails = PlatformOperatorService.BootstrapEmails(_config);
-        int granted = await PlatformOperatorService.ApplyBootstrapAsync(adminDb, operatorEmails, cancellationToken);
+        IReadOnlyList<string> operatorEmails = PlatformOperatorRepository.BootstrapEmails(_config);
+        int granted = await PlatformOperatorRepository.ApplyBootstrapAsync(adminDb, operatorEmails, cancellationToken);
         if (granted > 0)
         {
             _logger.LogInformation("Granted platform operator access to {Count} user(s) from Bootstrap:OperatorEmails.", granted);

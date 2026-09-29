@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using Xunit;
@@ -14,7 +16,7 @@ namespace Master.Api.Tests;
 /// </summary>
 public sealed class PortalTokenTests
 {
-    private static JwtTokenService Tokens() => new(Microsoft.Extensions.Options.Options.Create(new JwtOptions
+    private static JwtTokenRepository Tokens() => new(Microsoft.Extensions.Options.Options.Create(new JwtOptionsRepository
     {
         Issuer = "bill-book",
         Audience = "bill-book",

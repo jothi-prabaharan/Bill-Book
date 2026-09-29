@@ -2,6 +2,8 @@ global using CustomerEntity = Master.Entity.TableEntities.Customer;
 using Shared.Kernel.Security;
 using System.Text;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -54,7 +56,7 @@ builder.Services.AddSingleton<ITenantDatabaseResolver, TenantDatabaseResolver>()
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<JwtOptionsRepository>(builder.Configuration.GetSection(JwtOptionsRepository.SectionName));
 
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
@@ -91,51 +93,51 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 });
 
 // ---- Auth. ----
-builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
-builder.Services.AddScoped<ITokenService, JwtTokenService>();
-builder.Services.AddScoped<IOtpService, OtpService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<RoleService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<PlatformOperatorService>();
-builder.Services.AddScoped<RateService>();
+builder.Services.AddScoped<IPasswordHasherRepository, BcryptPasswordHasher>();
+builder.Services.AddScoped<ITokenRepository, JwtTokenRepository>();
+builder.Services.AddScoped<IOtpRepository, OtpService>();
+builder.Services.AddScoped<AuthRepository>();
+builder.Services.AddScoped<RoleRepository>();
+builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<PlatformOperatorRepository>();
+builder.Services.AddScoped<RateRepository>();
 
 // ---- Tenant directory, signup and provisioning. ----
-builder.Services.AddScoped<SignupService>();
+builder.Services.AddScoped<SignupRepository>();
 // Picks the physical database a new customer's books go in, and claims the
 // capacity for it with a guarded update. The sharded-tenancy work built the
 // registry and the resolver and left this step out, which is why every signup
 // died on the not-null DatabaseName column.
 builder.Services.AddScoped<ITenantShardProvisioner, TenantShardProvisioner>();
-builder.Services.AddScoped<ITenantDatabaseAllocator>(sp => new TenantDatabaseAllocator(
+builder.Services.AddScoped<ITenantDatabaseAllocator>(sp => new TenantDatabaseAllocatorRepository(
     sp.GetRequiredService<Master.Repository.AdminDbContext>(),
-    sp.GetRequiredService<ILogger<TenantDatabaseAllocator>>(),
+    sp.GetRequiredService<ILogger<TenantDatabaseAllocatorRepository>>(),
     sp.GetRequiredService<ITenantShardProvisioner>(),
     sp.GetRequiredService<IConfiguration>()));
-builder.Services.AddScoped<OrgContextService>();
-builder.Services.AddScoped<ApplicationService>();
-builder.Services.AddScoped<OrgCurrencyService>();
-builder.Services.AddScoped<ConfigurationService>();
-builder.Services.AddScoped<FormatSettingsService>();
-builder.Services.AddScoped<SmtpSettingsService>();
-builder.Services.AddScoped<OrganizationService>();
-builder.Services.AddScoped<LicenseService>();
-builder.Services.AddSingleton<ISecretProtector, AesSecretProtector>();
+builder.Services.AddScoped<OrgContextRepository>();
+builder.Services.AddScoped<ApplicationRepository>();
+builder.Services.AddScoped<OrgCurrencyRepository>();
+builder.Services.AddScoped<ConfigurationRepository>();
+builder.Services.AddScoped<FormatSettingsRepository>();
+builder.Services.AddScoped<SmtpSettingsRepository>();
+builder.Services.AddScoped<OrganizationRepository>();
+builder.Services.AddScoped<LicenseRepository>();
+builder.Services.AddSingleton<ISecretProtectorRepository, AesSecretProtector>();
 
 // A branch GSTIN is checked against its state's code, and so is a contact's.
 // Both callers are in this service now, so it reads mst.States directly.
-builder.Services.AddScoped<IStateDirectory, StateDirectory>();
+builder.Services.AddScoped<IStateDirectory, StateDirectoryRepository>();
 
 // Currency reference data, and the owner user provisioning creates. Both were
 // HTTP calls between Platform, Identity and Master; all three are here.
-builder.Services.AddScoped<IMasterCurrencies, MasterCurrencies>();
-builder.Services.AddScoped<IIdentityAdmin, InProcessIdentityAdmin>();
+builder.Services.AddScoped<IMasterCurrenciesRepository, MasterCurrencies>();
+builder.Services.AddScoped<IIdentityAdminRepository, InProcessIdentityAdmin>();
 
 // Mail is queued and delivered on a background worker, so an SMTP round-trip
-// never blocks a request. SmtpEmailSender is resolved by the worker only, and
+// never blocks a request. SmtpEmailSenderRepository is resolved by the worker only, and
 // the decrypted password never leaves this process — which is what the old
 // Identity-to-Platform hop existed to guarantee and now gets for free.
-builder.Services.AddScoped<SmtpEmailSender>();
+builder.Services.AddScoped<SmtpEmailSenderRepository>();
 
 // Two paths (TK-19). With the notification worker running, a mail is an
 // EmailRequested event and the worker sends it, surviving a restart here.
@@ -165,28 +167,28 @@ builder.Services.AddHttpClient("seeding");
 builder.Services.AddScoped<ITenantSeeder, HttpTenantSeeder>();
 
 // ---- Contacts. ----
-builder.Services.AddScoped<ContactService>();
+builder.Services.AddScoped<ContactRepository>();
 
 // Revocable portal links and the one-hour sessions they open (TK-94).
-builder.Services.AddScoped<PortalAccessService>();
+builder.Services.AddScoped<PortalAccessRepository>();
 builder.Services.AddScoped<IPortalLinkLifetime, ConfigurationPortalLinkLifetime>();
 builder.Services.AddScoped<IDiscountLimitSetting, ConfigurationDiscountLimitSetting>();
 builder.Services.AddPortalRateLimit();
-builder.Services.AddScoped<ContactPersonRoleService>();
-builder.Services.AddScoped<ContactAttachmentService>();
+builder.Services.AddScoped<ContactPersonRoleRepository>();
+builder.Services.AddScoped<ContactAttachmentRepository>();
 
 // ---- Menu. ----
-builder.Services.AddScoped<MenuService>();
+builder.Services.AddScoped<MenuRepository>();
 
 // Only Accounting writes ledger rows, so a contact's six sub-accounts are
 // created by calling it. This one stays a real HTTP seam — Accounting is still
 // a separate service with its own database.
 // The approval engine (D-26, TK-99). Employee answers the employee approver kinds;
 // with Employee:BaseUrl unset, those levels are simply unresolved.
-builder.Services.AddScoped<ApprovalChainResolver>();
-builder.Services.AddScoped<ApprovalWorkflowService>();
-builder.Services.AddScoped<CustomFieldService>();
-builder.Services.AddScoped<Shared.Kernel.CustomFields.ICustomFieldDefinitions, LocalCustomFieldDefinitions>();
+builder.Services.AddScoped<ApprovalChainResolverRepository>();
+builder.Services.AddScoped<ApprovalWorkflowRepository>();
+builder.Services.AddScoped<CustomFieldRepository>();
+builder.Services.AddScoped<Shared.Kernel.CustomFields.ICustomFieldDefinitions, LocalCustomFieldDefinitionsRepository>();
 builder.Services.AddHttpClient<IEmployeeApproverClient, EmployeeApproverClient>(client =>
 {
     if (builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } hrm)
@@ -241,7 +243,7 @@ builder.Services.AddEventPublisher(builder.Configuration);
 // is the one every other service is configured with. Never fall back to a
 // constant: every deployment sharing a key means tokens minted anywhere are
 // accepted everywhere.
-JwtOptions jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+JwtOptionsRepository jwt = builder.Configuration.GetSection(JwtOptionsRepository.SectionName).Get<JwtOptionsRepository>() ?? new JwtOptionsRepository();
 if (string.IsNullOrWhiteSpace(jwt.SigningKey))
 {
     throw new InvalidOperationException(

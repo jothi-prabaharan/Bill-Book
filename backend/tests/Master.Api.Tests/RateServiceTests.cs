@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -45,7 +47,7 @@ public sealed class RateServiceTests
             new ExchangeRate { FromCurrencyCode = "QXA", ToCurrencyCode = "QXB", RateDate = Monday.AddDays(3), Rate = 83.40m, Source = RateSource.Rbi });
         await db.SaveChangesAsync();
 
-        var rates = new RateService(db);
+        var rates = new RateRepository(db);
 
         Assert.Null(await rates.LatestExchangeAsync("QXA", "QXB", Monday.AddDays(-1), default));
         Assert.Equal(83.10m, (await rates.LatestExchangeAsync("QXA", "QXB", Monday, default))!.Rate);
@@ -70,7 +72,7 @@ public sealed class RateServiceTests
             new ExchangeRate { FromCurrencyCode = "QXC", ToCurrencyCode = "QXD", RateDate = Monday, Rate = 1.6m, Source = RateSource.Manual });
         await db.SaveChangesAsync();
 
-        ExchangeRateDto? rate = await new RateService(db).LatestExchangeAsync("QXC", "QXD", Monday, default);
+        ExchangeRateDto? rate = await new RateRepository(db).LatestExchangeAsync("QXC", "QXD", Monday, default);
 
         Assert.Equal(1.6m, rate!.Rate);
         Assert.Equal("Manual", rate.Source);
@@ -114,7 +116,7 @@ public sealed class RateServiceTests
         await using AdminDbContext db = _admin.CreateContext();
         DateOnly date = new(1999, 1, 4);
         await db.ExchangeRates.Where(r => r.FromCurrencyCode == "USD" && r.ToCurrencyCode == "INR" && r.RateDate == date).ExecuteDeleteAsync();
-        var rates = new RateService(db);
+        var rates = new RateRepository(db);
 
         Assert.Equal(RateSaveOutcome.Ok, await rates.SetExchangeAsync(
             new SaveExchangeRateRequest { FromCurrencyCode = "usd", ToCurrencyCode = "INR", RateDate = date, Rate = 42.5m }, default));
@@ -133,7 +135,7 @@ public sealed class RateServiceTests
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         await using AdminDbContext db = _admin.CreateContext();
-        var rates = new RateService(db);
+        var rates = new RateRepository(db);
 
         Assert.Equal(RateSaveOutcome.UnknownCurrency, await rates.SetExchangeAsync(
             new SaveExchangeRateRequest { FromCurrencyCode = "QQQ", ToCurrencyCode = "INR", RateDate = Monday, Rate = 1m }, default));
@@ -150,7 +152,7 @@ public sealed class RateServiceTests
 
         await using AdminDbContext db = _admin.CreateContext();
 
-        Assert.Equal(1m, (await new RateService(db).LatestExchangeAsync("INR", "INR", Monday, default))!.Rate);
+        Assert.Equal(1m, (await new RateRepository(db).LatestExchangeAsync("INR", "INR", Monday, default))!.Rate);
     }
 
     [SkippableFact]
@@ -165,7 +167,7 @@ public sealed class RateServiceTests
         db.MetalRates.Add(fetched);
         await db.SaveChangesAsync();
 
-        var rates = new RateService(db);
+        var rates = new RateRepository(db);
         Assert.Equal(RateSaveOutcome.Ok, await rates.SetMetalAsync(
             new SaveMetalRateRequest { Metal = "gold", PurityCode = "qx2", RateDate = Monday.AddDays(1), RatePerGram = 7050m }, default));
 

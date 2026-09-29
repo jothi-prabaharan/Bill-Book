@@ -1,0 +1,172 @@
+using Master.Repository.Clients;
+using Microsoft.EntityFrameworkCore;
+using Master.Entity.Enums;
+using Master.Entity.Models;
+using Master.Repository;
+using Shared.Kernel.Apps;
+
+namespace Master.Repository.Repositories;
+
+/// <summary>Resolves what Identity needs at login: customer, database readiness, licence.</summary>
+public sealed class OrgContextRepository
+{
+    private readonly AdminDbContext _db;
+    private readonly TimeProvider _clock;
+
+    public OrgContextRepository(AdminDbContext db, TimeProvider clock)
+    {
+        _db = db;
+        _clock = clock;
+    }
+
+    /// <summary>
+    /// The branch, its customer and the customer's licence for one app.
+    ///
+    /// <b>The licence is the app's own</b> (H0.2, TK-43): a lapsed RetailErp
+    /// trial reports Expired here for RetailErp and leaves a Payroll sign-in
+    /// Active. A customer with no licence for the app resolves with
+    /// <see cref="LicenseStatus.NotLicensed"/>, never null, because the branch
+    /// itself exists and services read its GSTIN and address from here.
+    /// </summary>
+    public async Task<OrgContextResponse?> ResolveAsync(Guid orgId, CancellationToken ct, App app = App.RetailErp)
+    {
+        var row = await (
+            from o in _db.Organizations
+            join c in _db.Customers on o.CustomerId equals c.CustomerId
+            join l in _db.Licenses.Where(x => x.App == app) on c.CustomerId equals l.CustomerId into lGroup
+            from l in lGroup.DefaultIfEmpty()
+            join s in _db.States on o.StateId equals s.StateId into sGroup
+            from s in sGroup.DefaultIfEmpty()
+            where o.OrgId == orgId
+            select new
+            {
+                o.OrgId,
+                o.CustomerId,
+                c.CustomerCode,
+                OrgName = o.Name,
+                o.FinancialYearStartMonth,
+                o.BaseCurrency,
+                o.DiscountBeforeTax,
+                o.Vertical,
+                o.Gstin,
+                o.AddressLine1,
+                o.AddressLine2,
+                o.City,
+                o.PostalCode,
+                o.EInvoiceFrom,
+                o.EwayBillEnabled,
+                o.BudgetWarningYearToDate,
+                o.PhoneNumber,
+                o.Email,
+                StateCode = s != null ? s.StateCode : null,
+                OrgExpiryDate = o.ExpiryDate,
+                CustomerStatus = c.Status,
+                HasLicence = l != null,
+                ExpiryDate = l != null ? l.ExpiryDate : DateOnly.MinValue,
+                GraceDays = l != null ? l.GraceDays : 0,
+                LicenseType = l != null ? l.LicenseType : LicenseType.Trial,
+                LicenseActive = l != null && l.IsActive,
+                MaxUsers = l != null ? l.MaxUsers : 0,
+            }).FirstOrDefaultAsync(ct);
+
+        if (row is null)
+        {
+            return null;
+        }
+
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        // The branch's own date can only bring access forward, never push it
+        // out — otherwise a branch would be a way to outlive the licence paying
+        // for it. So the effective date is whichever ends first.
+        DateOnly effectiveExpiry =
+            row.OrgExpiryDate is DateOnly branchExpiry && branchExpiry < row.ExpiryDate
+                ? branchExpiry
+                : row.ExpiryDate;
+
+        // Grace is applied once, to whichever date ended access. Applying it to
+        // the licence alone would let a wound-down branch keep working past the
+        // date it was wound down on.
+        bool expired = today > effectiveExpiry.AddDays(row.GraceDays);
+
+        // Expiry blocks the app, never the login — the caller gates on this.
+        // That is deliberate for a branch too: a user whose Chennai branch has
+        // ended still has to sign in to see why, and to switch to one that
+        // has not.
+        LicenseStatus licenseStatus = !row.HasLicence
+            ? LicenseStatus.NotLicensed
+            : !row.LicenseActive
+            ? LicenseStatus.Suspended
+            : expired
+                ? LicenseStatus.Expired
+                : row.LicenseType == LicenseType.Trial
+                    ? LicenseStatus.Trial
+                    : LicenseStatus.Active;
+
+        // Only the licence's own expiry marks the account expired. A branch that
+        // has been wound down says nothing about the account paying for it —
+        // stamping the customer here would expire a head office because one
+        // seasonal counter reached its end date.
+        //
+        // With one licence per app (TK-43), the account is expired only when
+        // every one of its licences is: a lapsed RetailErp trial says nothing
+        // about a customer still paying for Payroll.
+        bool licenceItselfExpired = row.HasLicence && today > row.ExpiryDate.AddDays(row.GraceDays);
+
+        if (licenceItselfExpired
+            && row.CustomerStatus != TenantStatus.Expired
+            && !await _db.Licenses.AnyAsync(
+                x => x.CustomerId == row.CustomerId && x.ExpiryDate.AddDays(x.GraceDays) >= today, ct))
+        {
+            // Stamp lazily at first observation; no nightly job required.
+            Entity.TableEntities.Customer customer =
+                await _db.Customers.FirstAsync(c => c.CustomerId == row.CustomerId, ct);
+            customer.Status = TenantStatus.Expired;
+            await _db.SaveChangesAsync(ct);
+        }
+
+        return new OrgContextResponse
+        {
+            OrgId = row.OrgId,
+            CustomerId = row.CustomerId,
+            CustomerCode = row.CustomerCode,
+            OrgName = row.OrgName,
+            // No per-customer database to be ready any more — "ready" now means
+            // this customer's own seeding finished (Trial/Active) rather than
+            // never having started (Provisioning) or having failed (Failed).
+            // Suspended and Expired both still count as ready: expiry blocks the
+            // app below, never the login itself, per the comment there.
+            DatabaseReady = row.CustomerStatus is not (TenantStatus.Provisioning or TenantStatus.Failed),
+            LicenseStatus = licenseStatus.ToString(),
+            // The date that actually governs, which is the one the user needs to
+            // be shown. Reporting the licence date while refusing on the branch
+            // date would put a future date on the screen that says access ended.
+            LicenseExpiry = row.HasLicence ? effectiveExpiry : null,
+            // Which of the two dates it is. Without this the caller cannot tell
+            // "your licence has lapsed, renew it" from "this branch was wound
+            // down, talk to your head office" — and telling a paying customer
+            // to renew a licence that is perfectly valid is the worse message.
+            ExpiryIsBranchLevel = row.HasLicence && row.OrgExpiryDate is DateOnly branchDate && branchDate < row.ExpiryDate,
+            MaxUsers = row.MaxUsers,
+            FinancialYearStartMonth = row.FinancialYearStartMonth,
+            BaseCurrency = row.BaseCurrency,
+            StateCode = row.StateCode,
+            DiscountBeforeTax = row.DiscountBeforeTax,
+            Vertical = row.Vertical.ToString(),
+            // The seller block on a printed tax invoice. Sales cannot read
+            // mst.Organizations, so the only alternative to carrying it here is
+            // the placeholder it used to print — an invoice headed "Our Company"
+            // with somebody else's GSTIN under it.
+            Gstin = row.Gstin,
+            AddressLine1 = row.AddressLine1,
+            AddressLine2 = row.AddressLine2,
+            City = row.City,
+            PostalCode = row.PostalCode,
+            EInvoiceFrom = row.EInvoiceFrom,
+            EwayBillEnabled = row.EwayBillEnabled,
+            BudgetWarningYearToDate = row.BudgetWarningYearToDate,
+            PhoneNumber = row.PhoneNumber,
+            Email = row.Email,
+        };
+    }
+}

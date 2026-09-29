@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,10 +22,10 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class PlatformOperatorsController : ControllerBase
 {
-    private readonly PlatformOperatorService _operators;
+    private readonly PlatformOperatorRepository _operators;
     private readonly ICurrentUser _user;
 
-    public PlatformOperatorsController(PlatformOperatorService operators, ICurrentUser user)
+    public PlatformOperatorsController(PlatformOperatorRepository operators, ICurrentUser user)
     {
         _operators = operators;
         _user = user;

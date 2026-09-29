@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Repository;
 using Shared.Kernel.Apps;
@@ -25,7 +27,7 @@ public sealed class AppMenuTests
         {
             Permissions = new HashSet<string> { "settings.view", "sales.view", "accounting.view" },
         };
-        return await new MenuService(db, tenant).GetUserMenuAsync(default, app);
+        return await new MenuRepository(db, tenant).GetUserMenuAsync(default, app);
     }
 
     [SkippableFact]

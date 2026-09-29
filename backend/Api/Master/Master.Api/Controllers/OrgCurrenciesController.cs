@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -23,9 +25,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class OrgCurrenciesController : ControllerBase
 {
-    private readonly OrgCurrencyService _service;
+    private readonly OrgCurrencyRepository _service;
 
-    public OrgCurrenciesController(OrgCurrencyService service) => _service = service;
+    public OrgCurrenciesController(OrgCurrencyRepository service) => _service = service;
 
     /// <summary>The org's currencies — active only unless includeInactive is set.</summary>
     [HttpGet]

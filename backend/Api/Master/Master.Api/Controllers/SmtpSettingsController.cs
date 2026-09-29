@@ -4,6 +4,8 @@ using System.Security.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
@@ -23,19 +25,19 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class SmtpSettingsController : ControllerBase
 {
-    private readonly SmtpSettingsService _service;
+    private readonly SmtpSettingsRepository _service;
 
     /// <summary>
     /// The concrete SMTP sender, not the queued one: a test must report the real
     /// failure to the admin debugging their credentials, so it sends inline.
     /// </summary>
-    private readonly SmtpEmailSender _email;
+    private readonly SmtpEmailSenderRepository _email;
 
     private readonly ILogger<SmtpSettingsController> _logger;
 
     public SmtpSettingsController(
-        SmtpSettingsService service,
-        SmtpEmailSender email,
+        SmtpSettingsRepository service,
+        SmtpEmailSenderRepository email,
         ILogger<SmtpSettingsController> logger)
     {
         _service = service;
@@ -65,7 +67,7 @@ public sealed class SmtpSettingsController : ControllerBase
             Guid id = await _service.SaveAsync(null, request, ct);
             return Ok(new { smtpSettingsId = id });
         }
-        catch (SmtpConfigurationException ex)
+        catch (SmtpConfigurationExceptionRepository ex)
         {
             // Only this type. Its message is written to be read by the
             // administrator; any other failure goes to GlobalExceptionHandler,
@@ -95,7 +97,7 @@ public sealed class SmtpSettingsController : ControllerBase
             Guid id = await _service.SaveAsync(customerId, request, ct);
             return Ok(new { smtpSettingsId = id });
         }
-        catch (SmtpConfigurationException ex)
+        catch (SmtpConfigurationExceptionRepository ex)
         {
             // Only this type. Its message is written to be read by the
             // administrator; any other failure goes to GlobalExceptionHandler,
@@ -158,7 +160,7 @@ public sealed class SmtpSettingsController : ControllerBase
 
             return Ok(new MessageResponse { Message = $"Test email sent to {request.ToEmail}." });
         }
-        catch (SmtpConfigurationException ex)
+        catch (SmtpConfigurationExceptionRepository ex)
         {
             return BadRequest(new MessageResponse { Message = ex.Message });
         }

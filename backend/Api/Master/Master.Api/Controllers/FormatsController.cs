@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Apps;
@@ -27,9 +29,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class FormatsController : ControllerBase
 {
-    private readonly FormatSettingsService _formats;
+    private readonly FormatSettingsRepository _formats;
 
-    public FormatsController(FormatSettingsService formats) => _formats = formats;
+    public FormatsController(FormatSettingsRepository formats) => _formats = formats;
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct) =>

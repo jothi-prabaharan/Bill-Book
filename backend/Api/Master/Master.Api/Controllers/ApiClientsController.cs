@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -24,7 +26,7 @@ namespace Master.Api.Controllers;
 ///
 /// <b>A key acts as a role</b> (D-07, TK-29): its requests carry that role's
 /// <c>{module}.{action}</c> permissions, exactly as a user's token does. Only a
-/// role <see cref="ApiClientRoles.Assignable"/> offers can be chosen — never one
+/// role <see cref="ApiClientRolesRepository.Assignable"/> offers can be chosen — never one
 /// granting <c>platform.*</c>.
 /// </summary>
 [ApiController]
@@ -67,7 +69,7 @@ public class ApiClientsController : ControllerBase
     {
         (Guid customerId, _) = _tenant.Require();
 
-        List<ApiClientRoleOption> roles = await ApiClientRoles.Assignable(_admin, customerId)
+        List<ApiClientRoleOption> roles = await ApiClientRolesRepository.Assignable(_admin, customerId)
             .OrderByDescending(r => r.IsSystemRole)
             .ThenBy(r => r.DisplayName)
             .Select(r => new ApiClientRoleOption(r.RoleId, r.DisplayName, r.IsSystemRole))
@@ -81,7 +83,7 @@ public class ApiClientsController : ControllerBase
     {
         (Guid customerId, Guid orgId) = _tenant.Require();
 
-        if (!await ApiClientRoles.IsAssignableAsync(_admin, customerId, request.RoleId, ct))
+        if (!await ApiClientRolesRepository.IsAssignableAsync(_admin, customerId, request.RoleId, ct))
         {
             return UnprocessableEntity(RoleRefused());
         }
@@ -125,7 +127,7 @@ public class ApiClientsController : ControllerBase
             return NotFound();
         }
 
-        if (!await ApiClientRoles.IsAssignableAsync(_admin, customerId, request.RoleId, ct))
+        if (!await ApiClientRolesRepository.IsAssignableAsync(_admin, customerId, request.RoleId, ct))
         {
             return UnprocessableEntity(RoleRefused());
         }

@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -65,8 +67,8 @@ public sealed class ShardingTests
     private static Task<int> FillEveryShardAsync(AdminDbContext db) =>
         db.TenantDatabases.ExecuteUpdateAsync(set => set.SetProperty(d => d.CurrentCustomers, d => d.MaxCustomers));
 
-    private static TenantDatabaseAllocator Allocator(AdminDbContext db, ITenantShardProvisioner provisioner) =>
-        new(db, NullLogger<TenantDatabaseAllocator>.Instance, provisioner);
+    private static TenantDatabaseAllocatorRepository Allocator(AdminDbContext db, ITenantShardProvisioner provisioner) =>
+        new(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance, provisioner);
 
     private static async Task<string> PoolAsync(AdminDbContext db, int max, int current)
     {
@@ -94,7 +96,7 @@ public sealed class ShardingTests
 
         (PlanTier plan, int capacity, string name) = Assert.Single(provisioner.Provisioned);
         Assert.Equal(name, placed);
-        Assert.Equal(TenantDatabaseAllocator.DefaultCustomersPerPool, capacity);
+        Assert.Equal(TenantDatabaseAllocatorRepository.DefaultCustomersPerPool, capacity);
         Assert.NotEqual(PlanTier.Elite, plan);
         Assert.Equal(1, await CurrentAsync(db, name));
         Assert.Equal(100, await CurrentAsync(db, full));

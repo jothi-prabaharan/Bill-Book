@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -38,7 +40,7 @@ public sealed class WalkInContactTests
     /// Only the walk-in seed and the create path's code check are exercised. The
     /// admin database, numbering, states and tokens are never reached by them.
     /// </summary>
-    private static ContactService Service(ContactsDbContext db, TenantContext tenant, IAccountingSubAccounts subAccounts) =>
+    private static ContactRepository Service(ContactsDbContext db, TenantContext tenant, IAccountingSubAccounts subAccounts) =>
         new(db, null!, null!, null!, subAccounts, TimeProvider.System, tenant);
 
     private (ContactsDbContext Db, TenantContext Tenant) Branch(Guid? customerId = null, Guid? orgId = null)
@@ -61,7 +63,7 @@ public sealed class WalkInContactTests
         (ContactsDbContext db, TenantContext tenant) = Branch();
         await using ContactsDbContext _ = db;
         var accounting = new RecordingSubAccounts();
-        ContactService service = Service(db, tenant, accounting);
+        ContactRepository service = Service(db, tenant, accounting);
 
         Assert.Equal(1, await service.SeedWalkInAsync("INR", default));
         Assert.Equal(0, await service.SeedWalkInAsync("INR", default));
@@ -104,7 +106,7 @@ public sealed class WalkInContactTests
         (ContactsDbContext db, TenantContext tenant) = Branch();
         await using ContactsDbContext _ = db;
         var accounting = new RecordingSubAccounts { Succeed = false };
-        ContactService service = Service(db, tenant, accounting);
+        ContactRepository service = Service(db, tenant, accounting);
 
         await service.SeedWalkInAsync("INR", default);
         Assert.Null((await db.Contacts.AsNoTracking().SingleAsync(c => c.ContactCode == "WALKIN")).SubLedgerProvisionedAt);

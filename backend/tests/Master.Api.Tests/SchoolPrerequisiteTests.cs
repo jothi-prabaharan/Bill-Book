@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -167,7 +169,7 @@ public sealed class GuardianContactTests
 
     public GuardianContactTests(PostgresFixture postgres) => _postgres = postgres;
 
-    private static ContactService Service(ContactsDbContext db, TenantContext tenant) =>
+    private static ContactRepository Service(ContactsDbContext db, TenantContext tenant) =>
         new(db, null!, null!, null!, null!, TimeProvider.System, tenant);
 
     [SkippableFact]

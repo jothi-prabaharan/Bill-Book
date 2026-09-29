@@ -1,5 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -27,9 +29,9 @@ public sealed class PerAppSignInTests
         public Task SendAsync(EmailMessage message, CancellationToken ct = default) => Task.CompletedTask;
     }
 
-    private static AuthService Auth(AdminDbContext db)
+    private static AuthRepository Auth(AdminDbContext db)
     {
-        var options = Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        var options = Microsoft.Extensions.Options.Options.Create(new JwtOptionsRepository
         {
             Issuer = "bill-book",
             Audience = "bill-book",
@@ -37,9 +39,9 @@ public sealed class PerAppSignInTests
             RefreshTokenDays = 7,
         });
 
-        return new AuthService(
-            db, new BcryptPasswordHasher(), new JwtTokenService(options, TimeProvider.System),
-            new OtpService(), new OrgContextService(db, TimeProvider.System), new NoEmail(), TimeProvider.System);
+        return new AuthRepository(
+            db, new BcryptPasswordHasher(), new JwtTokenRepository(options, TimeProvider.System),
+            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System);
     }
 
     private static JwtSecurityToken Read(string token) => new JwtSecurityTokenHandler().ReadJwtToken(token);
@@ -164,7 +166,7 @@ public sealed class PerAppSignInTests
 
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId, Guid customerId) = await SeedAsync(db);
-        AuthService auth = Auth(db);
+        AuthRepository auth = Auth(db);
 
         TokenResponse retail = await auth.SelectOrganizationAsync(userId, orgId, null, null, default, App.RetailErp);
         TokenResponse payroll = await auth.SelectOrganizationAsync(userId, orgId, null, null, default, App.Payroll);
@@ -184,7 +186,7 @@ public sealed class PerAppSignInTests
 
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId, _) = await SeedAsync(db);
-        AuthService auth = Auth(db);
+        AuthRepository auth = Auth(db);
 
         Assert.Equal([orgId], (await auth.AccessibleOrgsAsync(userId, default, App.Payroll)).Select(o => o.OrgId));
         Assert.Empty(await auth.AccessibleOrgsAsync(userId, default, App.Hrms));
@@ -199,7 +201,7 @@ public sealed class PerAppSignInTests
 
         await using AdminDbContext db = _admin.CreateContext();
         (Guid userId, Guid orgId, _) = await SeedAsync(db);
-        AuthService auth = Auth(db);
+        AuthRepository auth = Auth(db);
 
         TokenResponse first = await auth.SelectOrganizationAsync(userId, orgId, null, null, default, App.Payroll);
         TokenResponse refreshed = await auth.RefreshAsync(first.RefreshToken, null, null, default);
@@ -216,7 +218,7 @@ public sealed class PerAppSignInTests
         await using AdminDbContext db = _admin.CreateContext();
         (_, Guid orgId, _) = await SeedAsync(db);
 
-        OrgContextResponse? hrms = await new OrgContextService(db, TimeProvider.System).ResolveAsync(orgId, default, App.Hrms);
+        OrgContextResponse? hrms = await new OrgContextRepository(db, TimeProvider.System).ResolveAsync(orgId, default, App.Hrms);
 
         Assert.NotNull(hrms);
         Assert.Equal("NotLicensed", hrms.LicenseStatus);

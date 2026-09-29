@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.TableEntities;
 using Shared.Kernel.Approvals;
 using Xunit;
@@ -46,7 +48,7 @@ public sealed class ApprovalChainResolverTests
         ApprovalWorkflow department = Workflow(2, department: 10);
         ApprovalWorkflow departmentAndGrade = Workflow(3, department: 10, grade: 20);
 
-        Assert.Same(departmentAndGrade, ApprovalChainResolver.MostSpecific([general, department, departmentAndGrade], For()));
+        Assert.Same(departmentAndGrade, ApprovalChainResolverRepository.MostSpecific([general, department, departmentAndGrade], For()));
     }
 
     [Fact]
@@ -55,8 +57,8 @@ public sealed class ApprovalChainResolverTests
         ApprovalWorkflow general = Workflow(1);
         ApprovalWorkflow sales = Workflow(2, department: 99);
 
-        Assert.Same(general, ApprovalChainResolver.MostSpecific([general, sales], For()));
-        Assert.Null(ApprovalChainResolver.MostSpecific([sales], For()));
+        Assert.Same(general, ApprovalChainResolverRepository.MostSpecific([general, sales], For()));
+        Assert.Null(ApprovalChainResolverRepository.MostSpecific([sales], For()));
     }
 
     [Fact]
@@ -65,7 +67,7 @@ public sealed class ApprovalChainResolverTests
         ApprovalWorkflow older = Workflow(1, day: 1);
         ApprovalWorkflow newer = Workflow(2, day: 15);
 
-        Assert.Same(newer, ApprovalChainResolver.MostSpecific([older, newer], For()));
+        Assert.Same(newer, ApprovalChainResolverRepository.MostSpecific([older, newer], For()));
     }
 
     // ---- Amount thresholds -------------------------------------------------
@@ -79,12 +81,12 @@ public sealed class ApprovalChainResolverTests
         var level = new ApprovalWorkflowLevel { AboveAmount = 50000m };
 
         // No amount at all never clears a floor.
-        Assert.Equal(applies, ApprovalChainResolver.AppliesTo(level, (decimal?)amount));
+        Assert.Equal(applies, ApprovalChainResolverRepository.AppliesTo(level, (decimal?)amount));
     }
 
     [Fact]
     public void A_level_with_no_floor_always_applies() =>
-        Assert.True(ApprovalChainResolver.AppliesTo(new ApprovalWorkflowLevel(), null));
+        Assert.True(ApprovalChainResolverRepository.AppliesTo(new ApprovalWorkflowLevel(), null));
 
     // ---- Skip rules ----------------------------------------------------------
 
@@ -104,7 +106,7 @@ public sealed class ApprovalChainResolverTests
     [Fact]
     public void Each_level_takes_its_approver_from_the_right_source()
     {
-        ResolveChainResponse chain = ApprovalChainResolver.Apply("W",
+        ResolveChainResponse chain = ApprovalChainResolverRepository.Apply("W",
             [Level(1, ApproverKind.ReportingChain), Level(2, ApproverKind.RoleHolder, role: 7), Level(3, ApproverKind.NamedUser, user: Director)],
             Employees((1, Manager)), Requester);
 
@@ -118,7 +120,7 @@ public sealed class ApprovalChainResolverTests
     [Fact]
     public void Nobody_approves_their_own_request()
     {
-        ResolveChainResponse chain = ApprovalChainResolver.Apply("W",
+        ResolveChainResponse chain = ApprovalChainResolverRepository.Apply("W",
             [Level(1, ApproverKind.NamedUser, user: Requester), Level(2, ApproverKind.NamedUser, user: Director)],
             Employees(), Requester);
 
@@ -130,7 +132,7 @@ public sealed class ApprovalChainResolverTests
     public void Nobody_approves_the_same_request_twice_in_a_row()
     {
         // The manager is also the department head: one approval, not two.
-        ResolveChainResponse chain = ApprovalChainResolver.Apply("W",
+        ResolveChainResponse chain = ApprovalChainResolverRepository.Apply("W",
             [Level(1, ApproverKind.ReportingChain), Level(2, ApproverKind.DepartmentHead)],
             Employees((1, Manager), (2, Manager)), Requester);
 
@@ -141,7 +143,7 @@ public sealed class ApprovalChainResolverTests
     [Fact]
     public void An_optional_level_with_no_approver_is_skipped()
     {
-        ResolveChainResponse chain = ApprovalChainResolver.Apply("W",
+        ResolveChainResponse chain = ApprovalChainResolverRepository.Apply("W",
             [Level(1, ApproverKind.ReportingChain, optional: true), Level(2, ApproverKind.NamedUser, user: Director)],
             Employees(), Requester);
 
@@ -152,7 +154,7 @@ public sealed class ApprovalChainResolverTests
     [Fact]
     public void An_employee_approver_with_no_login_cannot_act()
     {
-        ResolveChainResponse chain = ApprovalChainResolver.Apply("W",
+        ResolveChainResponse chain = ApprovalChainResolverRepository.Apply("W",
             [Level(1, ApproverKind.ReportingChain, optional: true)],
             Employees((1, null)), Requester);
 
@@ -162,7 +164,7 @@ public sealed class ApprovalChainResolverTests
     [Fact]
     public void A_required_level_with_no_approver_refuses_the_chain_and_names_the_level()
     {
-        ResolveChainResponse chain = ApprovalChainResolver.Apply("W",
+        ResolveChainResponse chain = ApprovalChainResolverRepository.Apply("W",
             [Level(1, ApproverKind.NamedUser, user: Director), Level(2, ApproverKind.DepartmentHead)],
             Employees(), Requester);
 
@@ -184,9 +186,9 @@ public sealed class ApprovalChainResolverTests
         owner.AboveAmount = 100000m;
 
         List<ApprovalWorkflowLevel> levels = new[] { accountant, owner }
-            .Where(l => ApprovalChainResolver.AppliesTo(l, (decimal)amount))
+            .Where(l => ApprovalChainResolverRepository.AppliesTo(l, (decimal)amount))
             .ToList();
-        ResolveChainResponse chain = ApprovalChainResolver.Apply("Purchase bills", levels, Employees(), Requester);
+        ResolveChainResponse chain = ApprovalChainResolverRepository.Apply("Purchase bills", levels, Employees(), Requester);
 
         Assert.Equal(ResolveChainOutcome.Resolved, chain.Outcome);
         Assert.Equal(expectedSteps, chain.Steps.Count);

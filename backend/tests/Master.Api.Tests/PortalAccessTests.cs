@@ -1,5 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -26,11 +28,11 @@ public sealed class PortalAccessTests
     [Fact]
     public void A_code_that_is_not_a_portal_code_is_not_read()
     {
-        Assert.False(PortalAccessService.TryReadCode(null, out _, out _));
-        Assert.False(PortalAccessService.TryReadCode("", out _, out _));
-        Assert.False(PortalAccessService.TryReadCode("bb_abc_def", out _, out _));
-        Assert.False(PortalAccessService.TryReadCode($"pg_{Guid.NewGuid():N}_{Guid.NewGuid():N}_short", out _, out _));
-        Assert.False(PortalAccessService.TryReadCode($"pg_{Guid.Empty:N}_{Guid.NewGuid():N}_{new string('a', 43)}", out _, out _));
+        Assert.False(PortalAccessRepository.TryReadCode(null, out _, out _));
+        Assert.False(PortalAccessRepository.TryReadCode("", out _, out _));
+        Assert.False(PortalAccessRepository.TryReadCode("bb_abc_def", out _, out _));
+        Assert.False(PortalAccessRepository.TryReadCode($"pg_{Guid.NewGuid():N}_{Guid.NewGuid():N}_short", out _, out _));
+        Assert.False(PortalAccessRepository.TryReadCode($"pg_{Guid.Empty:N}_{Guid.NewGuid():N}_{new string('a', 43)}", out _, out _));
     }
 
     [Theory]
@@ -52,14 +54,14 @@ public sealed class PortalAccessTests
 
         PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
 
-        Assert.True(PortalAccessService.TryReadCode(link.Code, out Guid customerId, out Guid orgId));
+        Assert.True(PortalAccessRepository.TryReadCode(link.Code, out Guid customerId, out Guid orgId));
         Assert.Equal(h.Tenant.CustomerId, customerId);
         Assert.Equal(h.Tenant.OrgId, orgId);
 
         PortalGrant grant = await h.Db.PortalGrants.AsNoTracking().SingleAsync();
         string secret = link.Code.Split('_', 4)[3];
 
-        Assert.Equal(HashUtil.Sha256(link.Code), grant.CodeHash);
+        Assert.Equal(HashUtilRepository.Sha256(link.Code), grant.CodeHash);
         Assert.DoesNotContain(secret, grant.CodeHash, StringComparison.Ordinal);
         Assert.Equal(h.Clock.GetUtcNow().AddDays(90), grant.ExpiresAt);
     }
@@ -194,7 +196,7 @@ public sealed class PortalAccessTests
         public int? RoleId => null;
     }
 
-    private sealed record Harness(ContactsDbContext Db, TenantContext Tenant, PortalAccessService Portal, ManualClock Clock, long ContactId)
+    private sealed record Harness(ContactsDbContext Db, TenantContext Tenant, PortalAccessRepository Portal, ManualClock Clock, long ContactId)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture postgres, Guid? customerId = null)
         {
@@ -221,7 +223,7 @@ public sealed class PortalAccessTests
             await db.SaveChangesAsync();
 
             var clock = new ManualClock(new DateTimeOffset(2026, 9, 26, 6, 0, 0, TimeSpan.Zero));
-            var tokens = new JwtTokenService(Microsoft.Extensions.Options.Options.Create(new JwtOptions
+            var tokens = new JwtTokenRepository(Microsoft.Extensions.Options.Options.Create(new JwtOptionsRepository
             {
                 Issuer = "bill-book",
                 Audience = "bill-book",
@@ -229,7 +231,7 @@ public sealed class PortalAccessTests
                 RefreshTokenDays = 7,
             }), clock);
 
-            var portal = new PortalAccessService(db, new FixedLifetime(90), tenant, tokens, new StaffUser(), clock);
+            var portal = new PortalAccessRepository(db, new FixedLifetime(90), tenant, tokens, new StaffUser(), clock);
             return new Harness(db, tenant, portal, clock, contact.ContactId);
         }
     }

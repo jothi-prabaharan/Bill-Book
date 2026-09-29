@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +22,9 @@ namespace Master.Api.Controllers;
 [RequireApp(App.RetailErp | App.School)]
 public sealed class ContactPersonRolesController : ControllerBase
 {
-    private readonly ContactPersonRoleService _roles;
+    private readonly ContactPersonRoleRepository _roles;
 
-    public ContactPersonRolesController(ContactPersonRoleService roles) => _roles = roles;
+    public ContactPersonRolesController(ContactPersonRoleRepository roles) => _roles = roles;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] bool includeInactive, CancellationToken ct) =>

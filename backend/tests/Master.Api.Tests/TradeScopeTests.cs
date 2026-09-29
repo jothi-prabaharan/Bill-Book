@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Repository.SeedData;
@@ -20,7 +22,7 @@ public sealed class TradeScopeTests
     [InlineData(Vertical.Pharma, false)]
     public void Metal_purity_is_shown_to_general_and_jewellery_branches_only(Vertical trade, bool shown)
     {
-        Assert.Equal(shown, TradeScope.ShowsMenu("mtp", trade));
+        Assert.Equal(shown, TradeScopeRepository.ShowsMenu("mtp", trade));
     }
 
     [Theory]
@@ -29,8 +31,8 @@ public sealed class TradeScopeTests
     [InlineData(Vertical.Jewellery)]
     public void A_screen_no_trade_claims_is_every_trades(Vertical trade)
     {
-        Assert.True(TradeScope.ShowsMenu("usr", trade));
-        Assert.True(TradeScope.ShowsMenu("smtp", trade));
+        Assert.True(TradeScopeRepository.ShowsMenu("usr", trade));
+        Assert.True(TradeScopeRepository.ShowsMenu("smtp", trade));
     }
 
     [Fact]
@@ -40,7 +42,7 @@ public sealed class TradeScopeTests
 
         // A code listed here but absent from the seed would scope nothing and
         // read as if it did.
-        Assert.All(TradeScope.MenuTrades.Keys, code => Assert.Contains(code, codes));
+        Assert.All(TradeScopeRepository.MenuTrades.Keys, code => Assert.Contains(code, codes));
     }
 
     [Fact]

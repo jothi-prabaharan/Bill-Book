@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
@@ -20,10 +22,10 @@ namespace Master.Api.Controllers;
 [RequireApp(App.All)]
 public sealed class AdminCustomersController : ControllerBase
 {
-    private readonly SignupService _signup;
-    private readonly OrganizationService _organizations;
+    private readonly SignupRepository _signup;
+    private readonly OrganizationRepository _organizations;
 
-    public AdminCustomersController(SignupService signup, OrganizationService organizations)
+    public AdminCustomersController(SignupRepository signup, OrganizationRepository organizations)
     {
         _signup = signup;
         _organizations = organizations;
@@ -35,7 +37,7 @@ public sealed class AdminCustomersController : ControllerBase
         Ok(await _signup.ListAsync(ct));
 
     /// <summary>
-    /// A customer's branches. OrganizationService.ListAsync already does
+    /// A customer's branches. OrganizationRepository.ListAsync already does
     /// exactly this — it is what the customer's own Settings screen calls —
     /// scoped here to the route's customerId instead of the caller's own,
     /// since a platform operator is never signed in to any one customer.

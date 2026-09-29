@@ -18,7 +18,7 @@ namespace Master.Repository.SeedData;
 /// that are not built yet — account types, units of measure, licences. They are
 /// here with <c>RoutePath = null</c> and <c>IsActive = false</c> so the tree stays
 /// complete and switching one on later is a data change rather
-/// than a code change. <c>MenuService</c> filters on <c>IsActive</c>, so nothing
+/// than a code change. <c>MenuRepository</c> filters on <c>IsActive</c>, so nothing
 /// unbuilt reaches a user today.</para>
 ///
 /// <para><b>Placement and permission are separate.</b> The design groups HSN/SAC,

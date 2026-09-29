@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Email;
@@ -23,9 +25,9 @@ namespace Master.Api.Controllers;
 [Route("internal/smtp")]
 public sealed class InternalSmtpController : ControllerBase
 {
-    private readonly SmtpSettingsService _settings;
+    private readonly SmtpSettingsRepository _settings;
 
-    public InternalSmtpController(SmtpSettingsService settings) => _settings = settings;
+    public InternalSmtpController(SmtpSettingsRepository settings) => _settings = settings;
 
     /// <summary>
     /// The customer's own active mailbox, or the platform default when it has

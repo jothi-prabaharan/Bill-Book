@@ -1,4 +1,6 @@
 using Master.Api.Services;
+using Master.Repository.Repositories;
+using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,12 +22,12 @@ namespace Master.Api.Controllers;
 [RequireApp(App.RetailErp | App.School)]
 public sealed class ContactsController : ControllerBase
 {
-    private readonly ContactService _contacts;
+    private readonly ContactRepository _contacts;
 
     /// <summary>Read for <c>Portal:BaseUrl</c> only — see GeneratePortalLink.</summary>
     private readonly IConfiguration _configuration;
 
-    public ContactsController(ContactService contacts, IConfiguration configuration)
+    public ContactsController(ContactRepository contacts, IConfiguration configuration)
     {
         _contacts = contacts;
         _configuration = configuration;
@@ -81,7 +83,7 @@ public sealed class ContactsController : ControllerBase
     /// it this answers 403 and the conversion tells them why.
     ///
     /// Contacts composes the rest of the request — see
-    /// <c>ContactService.CreateQuickAsync</c> — so a caller never has to know
+    /// <c>ContactRepository.CreateQuickAsync</c> — so a caller never has to know
     /// about person roles, categories or the branch's base currency.
     /// </summary>
     [HttpPost("quick")]
@@ -127,7 +129,7 @@ public sealed class ContactsController : ControllerBase
     /// </summary>
     [HttpPost("{contactId:long}/portal-link")]
     public async Task<IActionResult> GeneratePortalLink(
-        long contactId, [FromServices] PortalAccessService portal, CancellationToken ct)
+        long contactId, [FromServices] PortalAccessRepository portal, CancellationToken ct)
     {
         // The link opens the portal of the app it was made from: a School
         // guardian's link opens the parent portal (TK-69).
@@ -155,7 +157,7 @@ public sealed class ContactsController : ControllerBase
     /// <summary>How many of the contact's portal links still work, and when one was last used.</summary>
     [HttpGet("{contactId:long}/portal-access")]
     public async Task<IActionResult> GetPortalAccess(
-        long contactId, [FromServices] PortalAccessService portal, CancellationToken ct) =>
+        long contactId, [FromServices] PortalAccessRepository portal, CancellationToken ct) =>
         await portal.GetStateAsync(contactId, ct) is { } state ? Ok(state) : NotFound();
 
     /// <summary>
@@ -164,7 +166,7 @@ public sealed class ContactsController : ControllerBase
     /// </summary>
     [HttpPost("{contactId:long}/portal-access/revoke")]
     public async Task<IActionResult> RevokePortalAccess(
-        long contactId, [FromServices] PortalAccessService portal, CancellationToken ct) =>
+        long contactId, [FromServices] PortalAccessRepository portal, CancellationToken ct) =>
         await portal.RevokeAsync(contactId, ct) is int revoked ? Ok(new { revoked }) : NotFound();
 
     [HttpDelete("{contactId:long}")]
