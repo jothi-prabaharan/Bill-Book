@@ -65,32 +65,6 @@
   padding: var(--space-4);
 }
 
-/* The rows are projected into bb-card-table, which owns the <table> and the
-   horizontal scroll; these selectors reach them because the cells are this
-   template's own. */
-.sad__table {
-  font-size: 13px;
-
-  th,
-  td {
-    padding: var(--space-2);
-    text-align: left;
-    border-bottom: 1px solid var(--color-divider);
-  }
-
-  thead th {
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--color-text) 60%, transparent);
-    white-space: nowrap;
-  }
-}
-
-.sad__row--short {
-  background: color-mix(in srgb, var(--color-danger) 7%, transparent);
-}
-
 .sad__num {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -116,7 +90,4 @@
     padding: var(--space-3);
   }
 
-  .sad__table {
-    white-space: nowrap;
-  }
 }

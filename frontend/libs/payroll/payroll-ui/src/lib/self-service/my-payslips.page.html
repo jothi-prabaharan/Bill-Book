@@ -18,58 +18,54 @@
     </div>
   } @else {
     <div class="bb-card">
-      <bb-card-table class="bb-table" style="width: 100%;" flush>
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th style="text-align: right;">Paid Days</th>
-            <th style="text-align: right;">Gross Earnings</th>
-            <th style="text-align: right;">Deductions</th>
-            <th style="text-align: right;">Net Pay</th>
-            <th>Status</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of payslips(); track p.payslipId) {
-            <tr>
-              <td>
-                <strong>{{ p.monthName }}</strong>
-                <div style="font-size: 0.8rem; color: var(--bb-text-muted);">{{ p.month }}</div>
-              </td>
-              <td style="text-align: right;">{{ p.paidDays }}</td>
-              <td style="text-align: right;">₹{{ p.grossEarnings | number:'1.2-2' }}</td>
-              <td style="text-align: right;">₹{{ p.grossDeductions | number:'1.2-2' }}</td>
-              <td style="text-align: right; font-weight: bold; color: var(--bb-primary, #0070f3);">
-                ₹{{ p.netPay | number:'1.2-2' }}
-              </td>
-              <td>
-                <span class="bb-badge" [class.is-primary]="p.status === 'Posted' || p.status === 'MarkedPaid'">
-                  {{ p.status }}
-                </span>
-              </td>
-              <td style="text-align: right; white-space: nowrap;">
-                <button
-                  type="button"
-                  class="bb-button"
-                  style="margin-right: 0.5rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;"
-                  (click)="viewDetail(p.payslipId)"
-                >
-                  View
-                </button>
-                <button
-                  type="button"
-                  class="bb-button is-primary"
-                  style="font-size: 0.8rem; padding: 0.25rem 0.5rem;"
-                  (click)="downloadHtml(p.payslipId)"
-                >
-                  Download
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </bb-card-table>
+      <bb-data-grid
+        class="bb-table"
+        style="width: 100%;"
+        [columns]="payslipsColumns"
+        [data]="payslips()"
+        flush
+        [sortable]="false"
+        [showColumnFilters]="false"
+        [showCount]="false"
+        [paged]="false"
+      >
+        <ng-template bbCellTemplate="monthName" let-p>
+          <strong>{{ p.monthName }}</strong>
+          <div style="font-size: 0.8rem; color: var(--bb-text-muted);">{{ p.month }}</div>
+        </ng-template>
+        <ng-template bbCellTemplate="grossEarnings" let-p>
+          ₹{{ p.grossEarnings | number:'1.2-2' }}
+        </ng-template>
+        <ng-template bbCellTemplate="grossDeductions" let-p>
+          ₹{{ p.grossDeductions | number:'1.2-2' }}
+        </ng-template>
+        <ng-template bbCellTemplate="netPay" let-p>
+          ₹{{ p.netPay | number:'1.2-2' }}
+        </ng-template>
+        <ng-template bbCellTemplate="status" let-p>
+          <span class="bb-badge" [class.is-primary]="p.status === 'Posted' || p.status === 'MarkedPaid'">
+            {{ p.status }}
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="payslipId" let-p>
+          <button
+            type="button"
+            class="bb-button"
+            style="margin-right: 0.5rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;"
+            (click)="viewDetail(p.payslipId)"
+          >
+            View
+          </button>
+          <button
+            type="button"
+            class="bb-button is-primary"
+            style="font-size: 0.8rem; padding: 0.25rem 0.5rem;"
+            (click)="downloadHtml(p.payslipId)"
+          >
+            Download
+          </button>
+        </ng-template>
+      </bb-data-grid>
     </div>
   }
 
@@ -89,28 +85,26 @@
 
         <div style="margin-top: 1.5rem;">
           <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Earnings & Deductions</h3>
-          <bb-card-table class="bb-table" style="width: 100%; font-size: 0.875rem;" flush>
-            <thead>
-              <tr>
-                <th>Component</th>
-                <th>Type</th>
-                <th style="text-align: right;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (line of detail.lines; track line.payslipLineId) {
-                <tr>
-                  <td>{{ line.componentName }}</td>
-                  <td>
-                    <span class="bb-badge" [class.is-primary]="line.kind === 'Earning'">
-                      {{ line.kind }}
-                    </span>
-                  </td>
-                  <td style="text-align: right;">₹{{ line.amount | number:'1.2-2' }}</td>
-                </tr>
-              }
-            </tbody>
-            <tfoot>
+          <bb-data-grid
+            class="bb-table"
+            style="width: 100%; font-size: 0.875rem;"
+            [columns]="linesColumns"
+            [data]="detail.lines"
+            flush
+            [sortable]="false"
+            [showColumnFilters]="false"
+            [showCount]="false"
+            [paged]="false"
+          >
+            <ng-template bbCellTemplate="kind" let-line>
+              <span class="bb-badge" [class.is-primary]="line.kind === 'Earning'">
+                {{ line.kind }}
+              </span>
+            </ng-template>
+            <ng-template bbCellTemplate="amount" let-line>
+              ₹{{ line.amount | number:'1.2-2' }}
+            </ng-template>
+            <ng-template bbGridFooter>
               <tr style="font-weight: bold; border-top: 2px solid var(--bb-border, #eee);">
                 <td colspan="2">Gross Earnings</td>
                 <td style="text-align: right;">₹{{ detail.grossEarnings | number:'1.2-2' }}</td>
@@ -123,8 +117,8 @@
                 <td colspan="2">Net Pay</td>
                 <td style="text-align: right;">₹{{ detail.netPay | number:'1.2-2' }}</td>
               </tr>
-            </tfoot>
-          </bb-card-table>
+            </ng-template>
+          </bb-data-grid>
         </div>
 
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">

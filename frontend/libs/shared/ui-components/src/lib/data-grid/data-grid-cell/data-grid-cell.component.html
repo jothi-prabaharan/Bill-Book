@@ -1,5 +1,5 @@
 <ng-container *ngIf="template; else defaultCell">
-  <ng-container *ngTemplateOutlet="template; context: { $implicit: row }"></ng-container>
+  <ng-container *ngTemplateOutlet="template; context: { $implicit: row, index: index, column: col }"></ng-container>
 </ng-container>
 <ng-template #defaultCell>
   <ng-container [ngSwitch]="col.dataType">

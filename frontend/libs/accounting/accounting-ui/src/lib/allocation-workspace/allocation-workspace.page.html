@@ -56,54 +56,51 @@
       @if (sources().length === 0) {
         <p class="empty">Nothing on account to apply.</p>
       } @else {
-        <bb-card-table class="grid" label="Available credits" flush>
-          <thead>
-            <tr>
-              <th>Document</th>
-              <th class="num">Total</th>
-              <th class="num">Unallocated</th>
-              <th class="num">Apply</th>
-              <th>After</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of sources(); track row.transactionTypeCode + row.transactionId) {
-              <tr [class.over]="isOver(row)">
-                <td data-label="Document">
-                  <strong>{{ row.documentNo }}</strong>
-                  <span class="sub">{{ row.documentDate }}</span>
-                </td>
-                <td class="num" data-label="Total">{{ row.totalAmount | number: '1.2-2' }}</td>
-                <td class="num" data-label="Unallocated">
-                  {{ row.unallocatedAmount | number: '1.2-2' }}
-                </td>
-                <td class="num apply-cell" data-label="Apply">
-                  <bb-money-input
-                    [ngModel]="row.apply"
-                    (ngModelChange)="onApplyChange('source', row, $event)"
-                    [name]="'src-' + row.transactionTypeCode + row.transactionId"
-                    [min]="0"
-                    [max]="row.unallocatedAmount"
-                    [decimals]="2"
-                    align="right"
-                    ariaLabel="Amount to apply from this credit">
-                  </bb-money-input>
-                </td>
-                <td data-label="After">
-                  <span class="pill" [class]="'pill-' + previewStatus(row)">
-                    {{ previewStatus(row) }}
-                  </span>
-                </td>
-                <td data-label="">
-                  <button type="button" class="ghost" (click)="applyMax(row, 'source')">
-                    Apply max
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </bb-card-table>
+        <bb-data-grid
+          label="Available credits"
+          flush
+          stackOnPhone
+          [columns]="sourceColumns"
+          [data]="sources()"
+          [rowClass]="overRow"
+          [sortable]="false"
+          [showColumnFilters]="false"
+          [showCount]="false"
+          [paged]="false"
+        >
+          <ng-template bbCellTemplate="documentNo" let-row>
+            <strong>{{ row.documentNo }}</strong>
+            <span class="sub">{{ row.documentDate }}</span>
+          </ng-template>
+          <ng-template bbCellTemplate="totalAmount" let-row>
+            {{ row.totalAmount | number: '1.2-2' }}
+          </ng-template>
+          <ng-template bbCellTemplate="unallocatedAmount" let-row>
+            {{ row.unallocatedAmount | number: '1.2-2' }}
+          </ng-template>
+          <ng-template bbCellTemplate="apply" let-row>
+            <bb-money-input
+              [ngModel]="row.apply"
+              (ngModelChange)="onApplyChange('source', row, $event)"
+              [name]="'src-' + row.transactionTypeCode + row.transactionId"
+              [min]="0"
+              [max]="row.unallocatedAmount"
+              [decimals]="2"
+              align="right"
+              ariaLabel="Amount to apply from this credit"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="after" let-row>
+            <span class="pill" [class]="'pill-' + previewStatus(row)">
+              {{ previewStatus(row) }}
+            </span>
+          </ng-template>
+          <ng-template bbCellTemplate="actions" let-row>
+            <button type="button" class="ghost" (click)="applyMax(row, 'source')">
+              Apply max
+            </button>
+          </ng-template>
+        </bb-data-grid>
       }
     </section>
 
@@ -113,54 +110,51 @@
       @if (targets().length === 0) {
         <p class="empty">Nothing outstanding.</p>
       } @else {
-        <bb-card-table class="grid" label="Documents to settle" flush>
-          <thead>
-            <tr>
-              <th>Document</th>
-              <th class="num">Total</th>
-              <th class="num">Outstanding</th>
-              <th class="num">Apply</th>
-              <th>After</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of targets(); track row.transactionTypeCode + row.transactionId) {
-              <tr [class.over]="isOver(row)">
-                <td data-label="Document">
-                  <strong>{{ row.documentNo }}</strong>
-                  <span class="sub">{{ row.documentDate }}</span>
-                </td>
-                <td class="num" data-label="Total">{{ row.totalAmount | number: '1.2-2' }}</td>
-                <td class="num" data-label="Outstanding">
-                  {{ row.unallocatedAmount | number: '1.2-2' }}
-                </td>
-                <td class="num apply-cell" data-label="Apply">
-                  <bb-money-input
-                    [ngModel]="row.apply"
-                    (ngModelChange)="onApplyChange('target', row, $event)"
-                    [name]="'tgt-' + row.transactionTypeCode + row.transactionId"
-                    [min]="0"
-                    [max]="row.unallocatedAmount"
-                    [decimals]="2"
-                    align="right"
-                    ariaLabel="Amount to apply to this document">
-                  </bb-money-input>
-                </td>
-                <td data-label="After">
-                  <span class="pill" [class]="'pill-' + previewStatus(row)">
-                    {{ previewStatus(row) }}
-                  </span>
-                </td>
-                <td data-label="">
-                  <button type="button" class="ghost" (click)="applyMax(row, 'target')">
-                    Apply max
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </bb-card-table>
+        <bb-data-grid
+          label="Documents to settle"
+          flush
+          stackOnPhone
+          [columns]="targetColumns"
+          [data]="targets()"
+          [rowClass]="overRow"
+          [sortable]="false"
+          [showColumnFilters]="false"
+          [showCount]="false"
+          [paged]="false"
+        >
+          <ng-template bbCellTemplate="documentNo" let-row>
+            <strong>{{ row.documentNo }}</strong>
+            <span class="sub">{{ row.documentDate }}</span>
+          </ng-template>
+          <ng-template bbCellTemplate="totalAmount" let-row>
+            {{ row.totalAmount | number: '1.2-2' }}
+          </ng-template>
+          <ng-template bbCellTemplate="unallocatedAmount" let-row>
+            {{ row.unallocatedAmount | number: '1.2-2' }}
+          </ng-template>
+          <ng-template bbCellTemplate="apply" let-row>
+            <bb-money-input
+              [ngModel]="row.apply"
+              (ngModelChange)="onApplyChange('target', row, $event)"
+              [name]="'tgt-' + row.transactionTypeCode + row.transactionId"
+              [min]="0"
+              [max]="row.unallocatedAmount"
+              [decimals]="2"
+              align="right"
+              ariaLabel="Amount to apply to this document"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="after" let-row>
+            <span class="pill" [class]="'pill-' + previewStatus(row)">
+              {{ previewStatus(row) }}
+            </span>
+          </ng-template>
+          <ng-template bbCellTemplate="actions" let-row>
+            <button type="button" class="ghost" (click)="applyMax(row, 'target')">
+              Apply max
+            </button>
+          </ng-template>
+        </bb-data-grid>
       }
     </section>
   </div>

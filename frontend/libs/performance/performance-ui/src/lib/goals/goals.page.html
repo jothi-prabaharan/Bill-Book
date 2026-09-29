@@ -49,31 +49,29 @@
 </div>
 
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Title</th>
-        <th>Description</th>
-        <th>Weightage</th>
-        <th>Measure</th>
-        <th>Target</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let g of goals()">
-        <td><strong>{{ g.title }}</strong></td>
-        <td>{{ g.description || '—' }}</td>
-        <td>{{ g.weightage }}%</td>
-        <td>{{ g.measure || '—' }}</td>
-        <td>{{ g.target || '—' }}</td>
-        <td>
-          <span class="badge" [ngClass]="'badge-' + g.goalStatus.toLowerCase()">{{ g.goalStatus }}</span>
-        </td>
-      </tr>
-      <tr *ngIf="goals().length === 0 && !loading()">
-        <td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">No goals defined for this employee in this cycle.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="goalsColumns"
+    [data]="goals()"
+    flush
+    emptyText="No goals defined for this employee in this cycle."
+  >
+    <ng-template bbCellTemplate="title" let-g>
+      <strong>{{ g.title }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="description" let-g>
+      {{ g.description || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="weightage" let-g>
+      {{ g.weightage }}%
+    </ng-template>
+    <ng-template bbCellTemplate="measure" let-g>
+      {{ g.measure || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="target" let-g>
+      {{ g.target || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="goalStatus" let-g>
+      <span class="badge" [ngClass]="'badge-' + g.goalStatus.toLowerCase()">{{ g.goalStatus }}</span>
+    </ng-template>
+  </bb-data-grid>
 </div>

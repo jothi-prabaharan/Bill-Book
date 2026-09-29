@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   SelectComponent,
   TextInputComponent,
@@ -22,16 +24,26 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     SelectComponent,
     TextInputComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './openings.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class OpeningsPage implements OnInit {
+  protected readonly openingsColumns: ColumnDef[] = [
+    { field: 'title', header: 'Title' },
+    { field: 'requisitionCode', header: 'Requisition' },
+    { field: 'openingStatus', header: 'Status' },
+    { field: 'applicationsCount', header: 'Applications' },
+    { field: 'publishedDate', header: 'Published Date' },
+    { field: 'col5', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly jobRequisitionOptions = computed(() =>
     this.requisitions().map((req) => ({ value: req.jobRequisitionId, label: `${req.requisitionCode} (${req.employmentType} - ${req.openings} openings)` })),
   );

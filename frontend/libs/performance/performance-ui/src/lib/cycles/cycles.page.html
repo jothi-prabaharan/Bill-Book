@@ -58,41 +58,32 @@
 
 <!-- Table of Cycles -->
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Cycle Name</th>
-        <th>Period</th>
-        <th>Kind</th>
-        <th>Rating Scale</th>
-        <th>Status</th>
-        <th>Weights (Goal/Comp)</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let c of cycles()">
-        <td><strong>{{ c.name }}</strong></td>
-        <td>{{ c.periodFrom }} to {{ c.periodTo }}</td>
-        <td>{{ c.cycleKind }}</td>
-        <td>{{ c.ratingScaleName }}</td>
-        <td>
-          <span class="badge" [ngClass]="'badge-' + c.cycleStatus.toLowerCase()">{{ c.cycleStatus }}</span>
-        </td>
-        <td>{{ c.goalWeightPercent }}% / {{ c.competencyWeightPercent }}%</td>
-        <td>
-          <div style="display: flex; gap: 6px;">
-            <button class="btn btn-sm" *ngIf="c.cycleStatus === 'Draft'" (click)="setStatus(c.reviewCycleId, 'GoalSetting')">Open Goals</button>
-            <button class="btn btn-sm" *ngIf="c.cycleStatus === 'GoalSetting'" (click)="setStatus(c.reviewCycleId, 'SelfEvaluation')">Open Self-Eval</button>
-            <button class="btn btn-sm" *ngIf="c.cycleStatus === 'SelfEvaluation'" (click)="setStatus(c.reviewCycleId, 'InReview')">Start Reviews</button>
-            <button class="btn btn-sm btn-outline" (click)="openEnroll(c.reviewCycleId)">Enroll</button>
-            <button class="btn btn-sm btn-danger" *ngIf="c.cycleStatus !== 'Closed'" (click)="closeCycle(c.reviewCycleId)">Close Cycle</button>
-          </div>
-        </td>
-      </tr>
-      <tr *ngIf="cycles().length === 0 && !loading()">
-        <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No review cycles found. Click 'New Review Cycle' to create one.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="cyclesColumns"
+    [data]="cycles()"
+    flush
+    emptyText="No review cycles found. Click 'New Review Cycle' to create one."
+  >
+    <ng-template bbCellTemplate="name" let-c>
+      <strong>{{ c.name }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="periodFrom" let-c>
+      {{ c.periodFrom }} to {{ c.periodTo }}
+    </ng-template>
+    <ng-template bbCellTemplate="cycleStatus" let-c>
+      <span class="badge" [ngClass]="'badge-' + c.cycleStatus.toLowerCase()">{{ c.cycleStatus }}</span>
+    </ng-template>
+    <ng-template bbCellTemplate="goalWeightPercent" let-c>
+      {{ c.goalWeightPercent }}% / {{ c.competencyWeightPercent }}%
+    </ng-template>
+    <ng-template bbCellTemplate="col6" let-c>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn btn-sm" *ngIf="c.cycleStatus === 'Draft'" (click)="setStatus(c.reviewCycleId, 'GoalSetting')">Open Goals</button>
+        <button class="btn btn-sm" *ngIf="c.cycleStatus === 'GoalSetting'" (click)="setStatus(c.reviewCycleId, 'SelfEvaluation')">Open Self-Eval</button>
+        <button class="btn btn-sm" *ngIf="c.cycleStatus === 'SelfEvaluation'" (click)="setStatus(c.reviewCycleId, 'InReview')">Start Reviews</button>
+        <button class="btn btn-sm btn-outline" (click)="openEnroll(c.reviewCycleId)">Enroll</button>
+        <button class="btn btn-sm btn-danger" *ngIf="c.cycleStatus !== 'Closed'" (click)="closeCycle(c.reviewCycleId)">Close Cycle</button>
+      </div>
+    </ng-template>
+  </bb-data-grid>
 </div>

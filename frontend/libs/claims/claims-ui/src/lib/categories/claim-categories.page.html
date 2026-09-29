@@ -16,78 +16,59 @@
 <div class="sheet" style="margin-bottom: 24px;">
   <h2>Categories</h2>
   <div class="table-container">
-    <bb-card-table flush>
-      <thead>
-        <tr>
-          <th>Code</th>
-          <th>Name</th>
-          <th>Receipt Required?</th>
-          <th>Taxable?</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (c of categories(); track c.claimCategoryId) {
-          <tr>
-            <td><strong>{{ c.code }}</strong></td>
-            <td>{{ c.name }}</td>
-            <td>{{ c.isReceiptRequired ? 'Yes' : 'No' }}</td>
-            <td>{{ c.isTaxable ? 'Yes' : 'No' }}</td>
-            <td>
-              <span class="badge" [class.status-approved]="c.isActive" [class.status-draft]="!c.isActive">
-                {{ c.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="openCreateLimit(c.claimCategoryId)">
-                Add Limit
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" style="text-align: center; color: var(--color-text-muted);">No categories defined.</td>
-          </tr>
-        }
-      </tbody>
-    </bb-card-table>
+    <bb-data-grid
+      [columns]="categoriesColumns"
+      [data]="categories()"
+      flush
+      emptyText="No categories defined."
+    >
+      <ng-template bbCellTemplate="code" let-c>
+        <strong>{{ c.code }}</strong>
+      </ng-template>
+      <ng-template bbCellTemplate="isReceiptRequired" let-c>
+        {{ c.isReceiptRequired ? 'Yes' : 'No' }}
+      </ng-template>
+      <ng-template bbCellTemplate="isTaxable" let-c>
+        {{ c.isTaxable ? 'Yes' : 'No' }}
+      </ng-template>
+      <ng-template bbCellTemplate="isActive" let-c>
+        <span class="badge" [class.status-approved]="c.isActive" [class.status-draft]="!c.isActive">
+          {{ c.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </ng-template>
+      <ng-template bbCellTemplate="claimCategoryId" let-c>
+        <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="openCreateLimit(c.claimCategoryId)">
+          Add Limit
+        </button>
+      </ng-template>
+    </bb-data-grid>
   </div>
 </div>
 
 <div class="sheet">
   <h2>Spending Limits</h2>
   <div class="table-container">
-    <bb-card-table flush>
-      <thead>
-        <tr>
-          <th>Category</th>
-          <th>Grade</th>
-          <th>Period</th>
-          <th>Limit Amount</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (l of limits(); track l.claimLimitId) {
-          <tr>
-            <td><strong>{{ l.categoryName }}</strong></td>
-            <td>{{ l.gradeId ? 'Grade ' + l.gradeId : 'All Grades' }}</td>
-            <td>{{ l.limitPeriod }}</td>
-            <td>{{ l.amount | currency:'INR' }}</td>
-            <td>
-              <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; color: #dc2626;" (click)="deleteLimit(l.claimLimitId)">
-                Delete
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" style="text-align: center; color: var(--color-text-muted);">No limits defined.</td>
-          </tr>
-        }
-      </tbody>
-    </bb-card-table>
+    <bb-data-grid
+      [columns]="limitsColumns"
+      [data]="limits()"
+      flush
+      emptyText="No limits defined."
+    >
+      <ng-template bbCellTemplate="categoryName" let-l>
+        <strong>{{ l.categoryName }}</strong>
+      </ng-template>
+      <ng-template bbCellTemplate="gradeId" let-l>
+        {{ l.gradeId ? 'Grade ' + l.gradeId : 'All Grades' }}
+      </ng-template>
+      <ng-template bbCellTemplate="amount" let-l>
+        {{ l.amount | currency:'INR' }}
+      </ng-template>
+      <ng-template bbCellTemplate="claimLimitId" let-l>
+        <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; color: #dc2626;" (click)="deleteLimit(l.claimLimitId)">
+          Delete
+        </button>
+      </ng-template>
+    </bb-data-grid>
   </div>
 </div>
 

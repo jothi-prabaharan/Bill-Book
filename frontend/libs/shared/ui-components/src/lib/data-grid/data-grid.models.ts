@@ -11,6 +11,8 @@ export interface ColumnDef {
   visible?: boolean;
   numeric?: boolean;
   sortable?: boolean;
+  /** False for a column with nothing to filter on — actions, a tick box. */
+  filterable?: boolean;
 }
 
 export type SortDirection = 'asc' | 'desc';

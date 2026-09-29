@@ -44,70 +44,62 @@
     </div>
   } @else {
     <div class="table-container">
-      <bb-card-table flush>
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Employee</th>
-            <th>Details</th>
-            <th>Reason</th>
-            <th>Requested Date</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of pendingItems(); track item.approvalStepId) {
-            <tr>
-              <td>
-                <span class="badge" [style.background]="item.requestKind === 'Leave' ? '#e0f2fe' : item.requestKind === 'Overtime' ? '#fef3c7' : '#f3e8ff'">
-                  {{ item.requestKind }}
-                </span>
-                <div style="font-size: 0.75rem; color: var(--color-text-muted, #666);">{{ item.label }}</div>
-              </td>
-              <td>
-                <strong>{{ item.employeeName || 'Employee #' + item.employeeId }}</strong>
-              </td>
-              <td>
-                @if (item.requestKind === 'Leave') {
-                  <span>{{ item.fromDate }} to {{ item.toDate }} ({{ item.days }} days)</span>
-                } @else if (item.requestKind === 'Overtime') {
-                  <span>{{ item.attendanceDate }} — {{ item.overtimeMinutes }} mins</span>
-                } @else if (item.requestKind === 'Regularisation') {
-                  <span>{{ item.attendanceDate }}</span>
-                }
-              </td>
-              <td>{{ item.reason || '—' }}</td>
-              <td>{{ item.createdAt ? (item.createdAt | slice:0:10) : '—' }}</td>
-              <td style="text-align: right; white-space: nowrap;">
-                <button
-                  type="button"
-                  class="button is-primary"
-                  style="margin-right: 0.25rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;"
-                  (click)="openActionModal(item, 'Approve')"
-                >
-                  Approve
-                </button>
-                <button
-                  type="button"
-                  class="button"
-                  style="margin-right: 0.25rem; font-size: 0.8rem; padding: 0.25rem 0.5rem; color: #b91c1c;"
-                  (click)="openActionModal(item, 'Reject')"
-                >
-                  Reject
-                </button>
-                <button
-                  type="button"
-                  class="button"
-                  style="font-size: 0.8rem; padding: 0.25rem 0.5rem;"
-                  (click)="openActionModal(item, 'SendBack')"
-                >
-                  Send Back
-                </button>
-              </td>
-            </tr>
+      <bb-data-grid
+        [columns]="pendingItemsColumns"
+        [data]="pendingItems()"
+        flush
+      >
+        <ng-template bbCellTemplate="requestKind" let-item>
+          <span class="badge" [style.background]="item.requestKind === 'Leave' ? '#e0f2fe' : item.requestKind === 'Overtime' ? '#fef3c7' : '#f3e8ff'">
+            {{ item.requestKind }}
+          </span>
+          <div style="font-size: 0.75rem; color: var(--color-text-muted, #666);">{{ item.label }}</div>
+        </ng-template>
+        <ng-template bbCellTemplate="employeeName" let-item>
+          <strong>{{ item.employeeName || 'Employee #' + item.employeeId }}</strong>
+        </ng-template>
+        <ng-template bbCellTemplate="col2" let-item>
+          @if (item.requestKind === 'Leave') {
+            <span>{{ item.fromDate }} to {{ item.toDate }} ({{ item.days }} days)</span>
+          } @else if (item.requestKind === 'Overtime') {
+            <span>{{ item.attendanceDate }} — {{ item.overtimeMinutes }} mins</span>
+          } @else if (item.requestKind === 'Regularisation') {
+            <span>{{ item.attendanceDate }}</span>
           }
-        </tbody>
-      </bb-card-table>
+        </ng-template>
+        <ng-template bbCellTemplate="reason" let-item>
+          {{ item.reason || '—' }}
+        </ng-template>
+        <ng-template bbCellTemplate="createdAt" let-item>
+          {{ item.createdAt ? (item.createdAt | slice:0:10) : '—' }}
+        </ng-template>
+        <ng-template bbCellTemplate="col5" let-item>
+          <button
+            type="button"
+            class="button is-primary"
+            style="margin-right: 0.25rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;"
+            (click)="openActionModal(item, 'Approve')"
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            class="button"
+            style="margin-right: 0.25rem; font-size: 0.8rem; padding: 0.25rem 0.5rem; color: #b91c1c;"
+            (click)="openActionModal(item, 'Reject')"
+          >
+            Reject
+          </button>
+          <button
+            type="button"
+            class="button"
+            style="font-size: 0.8rem; padding: 0.25rem 0.5rem;"
+            (click)="openActionModal(item, 'SendBack')"
+          >
+            Send Back
+          </button>
+        </ng-template>
+      </bb-data-grid>
     </div>
   }
 }
@@ -119,42 +111,33 @@
     </div>
   } @else {
     <div class="table-container">
-      <bb-card-table flush>
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Employee</th>
-            <th>Details</th>
-            <th>Reason</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of historyItems(); track item.approvalStepId) {
-            <tr>
-              <td>
-                <span class="badge">{{ item.requestKind }}</span>
-              </td>
-              <td>
-                <strong>{{ item.employeeName || 'Employee #' + item.employeeId }}</strong>
-              </td>
-              <td>
-                @if (item.requestKind === 'Leave') {
-                  <span>{{ item.fromDate }} to {{ item.toDate }} ({{ item.days }} days)</span>
-                } @else if (item.requestKind === 'Overtime') {
-                  <span>{{ item.attendanceDate }} — {{ item.overtimeMinutes }} mins</span>
-                } @else {
-                  <span>{{ item.attendanceDate }}</span>
-                }
-              </td>
-              <td>{{ item.reason || '—' }}</td>
-              <td>
-                <span class="badge">{{ item.label }}</span>
-              </td>
-            </tr>
+      <bb-data-grid
+        [columns]="historyItemsColumns"
+        [data]="historyItems()"
+        flush
+      >
+        <ng-template bbCellTemplate="requestKind" let-item>
+          <span class="badge">{{ item.requestKind }}</span>
+        </ng-template>
+        <ng-template bbCellTemplate="employeeName" let-item>
+          <strong>{{ item.employeeName || 'Employee #' + item.employeeId }}</strong>
+        </ng-template>
+        <ng-template bbCellTemplate="col2" let-item>
+          @if (item.requestKind === 'Leave') {
+            <span>{{ item.fromDate }} to {{ item.toDate }} ({{ item.days }} days)</span>
+          } @else if (item.requestKind === 'Overtime') {
+            <span>{{ item.attendanceDate }} — {{ item.overtimeMinutes }} mins</span>
+          } @else {
+            <span>{{ item.attendanceDate }}</span>
           }
-        </tbody>
-      </bb-card-table>
+        </ng-template>
+        <ng-template bbCellTemplate="reason" let-item>
+          {{ item.reason || '—' }}
+        </ng-template>
+        <ng-template bbCellTemplate="label" let-item>
+          <span class="badge">{{ item.label }}</span>
+        </ng-template>
+      </bb-data-grid>
     </div>
   }
 }

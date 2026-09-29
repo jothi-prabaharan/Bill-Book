@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
 } from '@bill-book/ui-components';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -17,13 +19,22 @@ import { PortalInvoiceDetail, statusLabel, statusTone } from '../retail/portal.m
     DatePipe,
     DecimalPipe,
     RouterLink,
-    CardTableComponent,
     MessageBoxComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './portal-invoice.page.html',
   styleUrl: '../retail/retail-portal.scss',
 })
 export class PortalInvoicePage implements OnInit {
+  protected readonly linesColumns: ColumnDef[] = [
+    { field: 'description', header: 'Item' },
+    { field: 'quantity', header: 'Quantity', numeric: true },
+    { field: 'unitPrice', header: 'Rate', numeric: true },
+    { field: 'taxAmount', header: 'Tax', numeric: true },
+    { field: 'lineTotal', header: 'Amount', numeric: true },
+  ];
+
   private readonly api = inject(PortalApi);
   private readonly route = inject(ActivatedRoute);
 

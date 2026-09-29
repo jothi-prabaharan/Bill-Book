@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   DateTimeInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -20,15 +22,29 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     DateTimeInputComponent,
     SelectComponent,
     TextInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './attendance-dashboard.page.html',
   styleUrl: '../time-leave-page.scss',
 })
 export class AttendanceDashboardPage implements OnInit {
+  protected readonly attendancesColumns: ColumnDef[] = [
+    { field: 'attendanceDate', header: 'Date' },
+    { field: 'shiftName', header: 'Shift' },
+    { field: 'firstIn', header: 'First In' },
+    { field: 'lastOut', header: 'Last Out' },
+    { field: 'workedMinutes', header: 'Worked' },
+    { field: 'lateMinutes', header: 'Late' },
+    { field: 'earlyOutMinutes', header: 'Early Out' },
+    { field: 'attendanceStatus', header: 'Status' },
+    { field: 'attendanceSource', header: 'Source' },
+    { field: 'isLocked', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly requestedStatusOptions = [
     { value: 'Present', label: 'Present' },
     { value: 'HalfDay', label: 'Half Day' },

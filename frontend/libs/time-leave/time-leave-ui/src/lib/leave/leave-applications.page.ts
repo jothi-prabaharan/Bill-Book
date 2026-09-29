@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   DateInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -21,15 +23,27 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     DateInputComponent,
     SelectComponent,
     TextInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './leave-applications.page.html',
   styleUrl: '../time-leave-page.scss',
 })
 export class LeaveApplicationsPage implements OnInit {
+  protected readonly applicationsColumns: ColumnDef[] = [
+    { field: 'leaveTypeName', header: 'Leave Type' },
+    { field: 'fromDate', header: 'From' },
+    { field: 'toDate', header: 'To' },
+    { field: 'days', header: 'Days' },
+    { field: 'reason', header: 'Reason' },
+    { field: 'leaveStatus', header: 'Status' },
+    { field: 'currentStepLabel', header: 'Approval Step' },
+    { field: 'col7', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly leaveTypeOptions = computed(() =>
     this.leaveTypes().map((t) => ({ value: t.leaveTypeId, label: `${t.name} (${t.code})` })),
   );

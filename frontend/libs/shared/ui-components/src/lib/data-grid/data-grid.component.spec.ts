@@ -563,4 +563,46 @@ describe('DataGridComponent (shared/ui-components/data-grid)', () => {
       expect(comp.showExport).toBe(false);
     });
   });
+
+  describe('One table for every table (the bb-card-table cases)', () => {
+    const many = Array.from({ length: 120 }, (_, i) => ({ id: i + 1, docNo: `INV-${i + 1}` }));
+
+    it('GRID-T9-01: paged=false shows every row and draws no pager', () => {
+      const comp = createComponent();
+      comp.columns = sampleColumns;
+      comp.data = many;
+      expect(comp.displayData().length).toBe(50);
+      expect(comp.showPager()).toBe(true);
+
+      comp.paged = false;
+      expect(comp.displayData().length).toBe(120);
+      expect(comp.showPager()).toBe(false);
+    });
+
+    it('GRID-T9-02: an empty header stays empty rather than showing the field name', () => {
+      const comp = createComponent();
+      expect(comp.headerOf({ field: 'actions', header: '' })).toBe('');
+      expect(comp.headerOf({ field: 'docNo' })).toBe('docNo');
+      expect(comp.headerOf({ field: 'docNo', title: 'Doc' })).toBe('Doc');
+    });
+
+    it('GRID-T9-03: rows only look clickable when a rowClick listener exists', () => {
+      const comp = createComponent();
+      expect(comp.clickable).toBe(false);
+      const sub = comp.rowClick.subscribe(() => undefined);
+      expect(comp.clickable).toBe(true);
+      sub.unsubscribe();
+    });
+
+    it('GRID-T9-04: plain-table defaults — the inputs a composed table turns off', () => {
+      const comp = createComponent();
+      expect(comp.paged).toBe(true);
+      expect(comp.showCount).toBe(true);
+      expect(comp.flush).toBe(false);
+      expect(comp.stackOnPhone).toBe(false);
+      expect(comp.emptyText).toBe('No records found.');
+      expect(comp.rowClass).toBeUndefined();
+    });
+  });
 });
+

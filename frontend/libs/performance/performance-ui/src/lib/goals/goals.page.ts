@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   NumberInputComponent,
   PercentageInputComponent,
@@ -18,18 +20,28 @@ import { Goal, PerformanceApiService, ReviewCycle } from '@bill-book/performance
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     NumberInputComponent,
     PercentageInputComponent,
     SelectComponent,
     TextInputComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './goals.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class GoalsPage implements OnInit {
+  protected readonly goalsColumns: ColumnDef[] = [
+    { field: 'title', header: 'Title' },
+    { field: 'description', header: 'Description' },
+    { field: 'weightage', header: 'Weightage' },
+    { field: 'measure', header: 'Measure' },
+    { field: 'target', header: 'Target' },
+    { field: 'goalStatus', header: 'Status' },
+  ];
+
   protected readonly selectedCycleOptions = computed(() =>
     this.cycles().map((c) => ({ value: c.reviewCycleId, label: `${c.name}` })),
   );

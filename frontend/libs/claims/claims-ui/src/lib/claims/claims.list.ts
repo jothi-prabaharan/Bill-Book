@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   DateInputComponent,
   MoneyInputComponent,
   NumberInputComponent,
@@ -26,17 +28,29 @@ import {
     CommonModule,
     FormsModule,
     RouterLink,
-    CardTableComponent,
     DateInputComponent,
     MoneyInputComponent,
     NumberInputComponent,
     SelectComponent,
     TextInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './claims.list.html',
   styleUrl: '../claims-page.scss',
 })
 export class ClaimsListPage implements OnInit {
+  protected readonly claimsColumns: ColumnDef[] = [
+    { field: 'expenseClaimId', header: 'Claim No' },
+    { field: 'employeeName', header: 'Employee' },
+    { field: 'claimDate', header: 'Date' },
+    { field: 'totalAmount', header: 'Total Amount', numeric: true },
+    { field: 'payoutMode', header: 'Payout Mode' },
+    { field: 'claimStatus', header: 'Status' },
+    { field: 'currentStepLabel', header: 'Step / Approver' },
+    { field: 'col7', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly claimCategoryOptions = computed(() =>
     this.categories().map((cat) => ({ value: cat.claimCategoryId, label: `${cat.name}` })),
   );

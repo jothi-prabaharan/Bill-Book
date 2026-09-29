@@ -8,7 +8,9 @@ import {
   TimeLeaveApiService,
 } from '@bill-book/time-leave-core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   TextareaComponent,
   UiMessage,
@@ -22,13 +24,31 @@ import {
     CommonModule,
     FormsModule,
     MessageBoxComponent,
-    CardTableComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './approvals-inbox.page.html',
   styleUrl: '../time-leave-page.scss',
 })
 export class ApprovalsInboxPage implements OnInit {
+  protected readonly pendingItemsColumns: ColumnDef[] = [
+    { field: 'requestKind', header: 'Type' },
+    { field: 'employeeName', header: 'Employee' },
+    { field: 'col2', header: 'Details', sortable: false, filterable: false },
+    { field: 'reason', header: 'Reason' },
+    { field: 'createdAt', header: 'Requested Date' },
+    { field: 'col5', header: 'Actions', numeric: true, sortable: false, filterable: false },
+  ];
+
+  protected readonly historyItemsColumns: ColumnDef[] = [
+    { field: 'requestKind', header: 'Type' },
+    { field: 'employeeName', header: 'Employee' },
+    { field: 'col2', header: 'Details', sortable: false, filterable: false },
+    { field: 'reason', header: 'Reason' },
+    { field: 'label', header: 'Status' },
+  ];
+
   private readonly api = inject(TimeLeaveApiService);
 
   protected readonly activeTab = signal<'pending' | 'history'>('pending');

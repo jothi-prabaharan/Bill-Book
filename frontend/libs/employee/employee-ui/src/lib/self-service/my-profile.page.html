@@ -166,24 +166,24 @@
         @if (documents().length === 0) {
           <p class="bb-empty-state">No documents uploaded.</p>
         } @else {
-          <bb-card-table class="bb-table" style="width: 100%; margin-top: 1rem;" flush>
-            <thead>
-              <tr>
-                <th>Document Type</th>
-                <th>Attachment Key</th>
-                <th>Valid Until</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (doc of documents(); track $index) {
-                <tr>
-                  <td>{{ doc.documentKind }}</td>
-                  <td><code>{{ doc.attachmentKey }}</code></td>
-                  <td>{{ doc.validUntil || '—' }}</td>
-                </tr>
-              }
-            </tbody>
-          </bb-card-table>
+          <bb-data-grid
+            class="bb-table"
+            style="width: 100%; margin-top: 1rem;"
+            [columns]="documentsColumns"
+            [data]="documents()"
+            flush
+            [sortable]="false"
+            [showColumnFilters]="false"
+            [showCount]="false"
+            [paged]="false"
+          >
+            <ng-template bbCellTemplate="attachmentKey" let-doc>
+              <code>{{ doc.attachmentKey }}</code>
+            </ng-template>
+            <ng-template bbCellTemplate="validUntil" let-doc>
+              {{ doc.validUntil || '—' }}
+            </ng-template>
+          </bb-data-grid>
         }
       </div>
     }

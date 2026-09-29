@@ -6,8 +6,11 @@ import { readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   BbSelectOption,
-  CardTableComponent,
   CheckboxComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridFooterDirective,
   DateInputComponent,
   NumberInputComponent,
   SelectComponent,
@@ -68,7 +71,9 @@ const TIMER_KEY = 'bb.timesheet.timer';
     DateInputComponent,
     TextInputComponent,
     CheckboxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    DataGridFooterDirective,
   ],
   templateUrl: './timesheet.page.html',
   styleUrl: './timesheet.page.scss',
@@ -83,6 +88,13 @@ export class TimesheetPage implements OnInit, OnDestroy {
   protected readonly rows = computed(() => weekGrid(this.entries(), this.days()));
   protected readonly totals = computed(() => dayTotals(this.rows()));
   protected readonly weekTotal = computed(() => roundHours(this.totals().reduce((a, b) => a + b, 0)));
+
+  /** A column per day of the week shown, between the task and its total. */
+  protected readonly weekColumns = computed<ColumnDef[]>(() => [
+    { field: 'label', header: 'Project · task' },
+    ...this.days().map((day, i) => ({ field: `day${i}`, header: this.dayLabel(day), numeric: true })),
+    { field: 'total', header: 'Total', numeric: true },
+  ]);
   protected readonly projects = signal<ProjectListItem[]>([]);
   protected readonly projectChoices = computed(() => projectOptions(this.projects(), [this.form.projectId]));
   protected readonly taskChoices = signal<BbSelectOption<number>[]>([]);

@@ -59,44 +59,40 @@
   }
 
   <div class="card">
-    <bb-card-table class="lines" flush>
-      <thead>
-        <tr>
-          <th scope="col">Supplier</th>
-          <th scope="col">Invoice</th>
-          <th scope="col">Date</th>
-          <th scope="col" class="num">2B taxable</th>
-          <th scope="col" class="num">2B tax</th>
-          <th scope="col" class="num">Books taxable</th>
-          <th scope="col" class="num">Books tax</th>
-          <th scope="col">Bill</th>
-          <th scope="col">Note</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (line of lines(); track line.gstr2bLineId) {
-          <tr>
-            <td data-label="Supplier">{{ line.supplierName || line.supplierGstin }}<br /><small>{{ line.supplierGstin }}</small></td>
-            <td data-label="Invoice">{{ line.invoiceNo }}</td>
-            <td data-label="Date">{{ line.invoiceDate | date: 'dd-MM-yyyy' }}</td>
-            <td data-label="2B taxable" class="num">{{ line.twoBTaxable ?? '—' }}</td>
-            <td data-label="2B tax" class="num">{{ line.twoBTax ?? '—' }}</td>
-            <td data-label="Books taxable" class="num">{{ line.booksTaxable ?? '—' }}</td>
-            <td data-label="Books tax" class="num">{{ line.booksTax ?? '—' }}</td>
-            <td data-label="Bill">
-              @if (line.billId) {
-                <a [routerLink]="['/purchase/bills', line.billId]">{{ line.billNo }}</a>
-              } @else {
-                —
-              }
-            </td>
-            <td data-label="Note">{{ line.note }}</td>
-          </tr>
-        } @empty {
-          <tr><td colspan="9" class="empty">Nothing in this group.</td></tr>
+    <bb-data-grid
+      class="lines"
+      [columns]="linesColumns"
+      [data]="lines()"
+      stackOnPhone
+      flush
+      emptyText="Nothing in this group."
+    >
+      <ng-template bbCellTemplate="supplierName" let-line>
+        {{ line.supplierName || line.supplierGstin }}<br /><small>{{ line.supplierGstin }}</small>
+      </ng-template>
+      <ng-template bbCellTemplate="invoiceDate" let-line>
+        {{ line.invoiceDate | date: 'dd-MM-yyyy' }}
+      </ng-template>
+      <ng-template bbCellTemplate="twoBTaxable" let-line>
+        {{ line.twoBTaxable ?? '—' }}
+      </ng-template>
+      <ng-template bbCellTemplate="twoBTax" let-line>
+        {{ line.twoBTax ?? '—' }}
+      </ng-template>
+      <ng-template bbCellTemplate="booksTaxable" let-line>
+        {{ line.booksTaxable ?? '—' }}
+      </ng-template>
+      <ng-template bbCellTemplate="booksTax" let-line>
+        {{ line.booksTax ?? '—' }}
+      </ng-template>
+      <ng-template bbCellTemplate="billId" let-line>
+        @if (line.billId) {
+          <a [routerLink]="['/purchase/bills', line.billId]">{{ line.billNo }}</a>
+        } @else {
+          —
         }
-      </tbody>
-    </bb-card-table>
+      </ng-template>
+    </bb-data-grid>
   </div>
 } @else if (!busy()) {
   <p class="empty">No GSTR-2B imported yet.</p>

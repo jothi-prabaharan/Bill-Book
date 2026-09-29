@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Changed**: **Every table in the product is now the same table.** Some forty tables — payroll, claims, performance, recruitment, leave, the client and school portals, the budget grid, timesheets, the balance sheet and profit and loss, Settle documents, GSTR-2B, the invoice's posting preview, the dashboard and more — were drawn by a second, simpler table component, and the allocation dialog drew a third. They now all use the shared grid. Lists gain what the rest of the product's lists already had: click a heading to sort, a filter box under each heading, and a count of what is shown. Composed tables — statements, previews, the budget and timesheet — keep their totals rows and stay as they are laid out. A row that needs attention (short of stock, over-allocated, fully settled) is highlighted the same way everywhere, and on a phone the tables that had a card-per-row layout still do. The balance sheet and profit and loss gain column headings.
 - **Added**: **Campaigns: templates, audiences, consent and unsubscribe (TK-120).**
   - **Email templates**: Rich HTML templates with sanitisation against unsafe scripts and attributes, with plain text alternatives.
   - **Dynamic audiences**: Segment recipients by lead statuses/sources, contact properties, purchase history (last invoice date, total sales, item categories via Reporting), and manual inclusion/exclusion lists, with live recipient counts and suppression preview.

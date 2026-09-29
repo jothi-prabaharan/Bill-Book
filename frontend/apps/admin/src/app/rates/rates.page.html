@@ -27,28 +27,23 @@
     </form>
   }
 
-  <bb-card-table class="rates" flush>
-    <thead>
-      <tr><th scope="col">Date</th><th scope="col">Pair</th><th scope="col" class="num">Rate</th><th scope="col">Source</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
-    </thead>
-    <tbody>
-      @for (row of exchangeRows(); track row.exchangeRateId) {
-        <tr>
-          <td data-label="Date">{{ row.rateDate }}</td>
-          <td data-label="Pair">1 {{ row.fromCurrencyCode }} = {{ row.toCurrencyCode }}</td>
-          <td data-label="Rate" class="num">{{ row.rate }}</td>
-          <td data-label="Source">{{ row.source }}</td>
-          <td>
-            @if (canEdit() && row.source === 'Manual') {
-              <button type="button" class="link" [disabled]="busy()" (click)="removeExchange(row)">Remove</button>
-            }
-          </td>
-        </tr>
-      } @empty {
-        <tr><td colspan="5" class="empty">No exchange rates yet.</td></tr>
+  <bb-data-grid
+    class="rates"
+    [columns]="exchangeRowsColumns"
+    [data]="exchangeRows()"
+    stackOnPhone
+    flush
+    emptyText="No exchange rates yet."
+  >
+    <ng-template bbCellTemplate="fromCurrencyCode" let-row>
+      1 {{ row.fromCurrencyCode }} = {{ row.toCurrencyCode }}
+    </ng-template>
+    <ng-template bbCellTemplate="col4" let-row>
+      @if (canEdit() && row.source === 'Manual') {
+        <button type="button" class="link" [disabled]="busy()" (click)="removeExchange(row)">Remove</button>
       }
-    </tbody>
-  </bb-card-table>
+    </ng-template>
+  </bb-data-grid>
 </section>
 
 <section class="panel" aria-labelledby="metal-heading">
@@ -66,27 +61,18 @@
     </form>
   }
 
-  <bb-card-table class="rates" flush>
-    <thead>
-      <tr><th scope="col">Date</th><th scope="col">Metal</th><th scope="col">Purity</th><th scope="col" class="num">Per gram</th><th scope="col">Source</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
-    </thead>
-    <tbody>
-      @for (row of metalRows(); track row.metalRateId) {
-        <tr>
-          <td data-label="Date">{{ row.rateDate }}</td>
-          <td data-label="Metal">{{ row.metal }}</td>
-          <td data-label="Purity">{{ row.purityCode }}</td>
-          <td data-label="Per gram" class="num">{{ row.ratePerGram }}</td>
-          <td data-label="Source">{{ row.source }}</td>
-          <td>
-            @if (canEdit() && row.source === 'Manual') {
-              <button type="button" class="link" [disabled]="busy()" (click)="removeMetal(row)">Remove</button>
-            }
-          </td>
-        </tr>
-      } @empty {
-        <tr><td colspan="6" class="empty">No metal rates yet.</td></tr>
+  <bb-data-grid
+    class="rates"
+    [columns]="metalRowsColumns"
+    [data]="metalRows()"
+    stackOnPhone
+    flush
+    emptyText="No metal rates yet."
+  >
+    <ng-template bbCellTemplate="col5" let-row>
+      @if (canEdit() && row.source === 'Manual') {
+        <button type="button" class="link" [disabled]="busy()" (click)="removeMetal(row)">Remove</button>
       }
-    </tbody>
-  </bb-card-table>
+    </ng-template>
+  </bb-data-grid>
 </section>

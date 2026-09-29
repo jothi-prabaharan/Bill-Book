@@ -18,7 +18,6 @@ export * from './lib/pivot-panel/pivot-panel.component';
 export * from './lib/message-box/message-box.model';
 export * from './lib/message-box/message-box.component';
 export * from './lib/bank-graph-card/bank-graph-card.component';
-export * from './lib/card-table/card-table.component';
 export * from './lib/attendance-register/attendance-register.model';
 export * from './lib/attendance-register/attendance-register.component';
 export * from './lib/custom-fields/custom-fields.model';
@@ -30,6 +29,7 @@ export * from './lib/data-grid/data-grid.models';
 export * from './lib/data-grid/data-grid.service';
 
 export * from './lib/data-grid/data-grid-cell-template.directive';
+export * from './lib/data-grid/data-grid-footer.directive';
 
 /*
  * The common input system. One wrapper, four bases and nineteen controls —

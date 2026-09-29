@@ -78,37 +78,38 @@
   <p class="empty">No hours logged this week.</p>
 } @else {
   <div class="grid-wrap">
-    <bb-card-table class="week" flush>
-      <thead>
-        <tr>
-          <th scope="col">Project · task</th>
-          @for (day of days(); track day) {
-            <th scope="col" class="num">{{ dayLabel(day) }}</th>
-          }
-          <th scope="col" class="num">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of rows(); track row.key) {
-          <tr>
-            <th scope="row">{{ row.label }}</th>
-            @for (hours of row.hours; track $index) {
-              <td class="num">{{ hours ? hoursText(hours) : '' }}</td>
-            }
-            <td class="num strong">{{ hoursText(row.total) }}</td>
-          </tr>
-        }
-      </tbody>
-      <tfoot>
+    <bb-data-grid
+      class="week"
+      flush
+      label="Hours this week"
+      [columns]="weekColumns()"
+      [data]="rows()"
+      [sortable]="false"
+      [showColumnFilters]="false"
+      [showCount]="false"
+      [paged]="false"
+    >
+      <ng-template bbCellTemplate="label" let-row>
+        <strong>{{ row.label }}</strong>
+      </ng-template>
+      @for (day of days(); track day; let i = $index) {
+        <ng-template [bbCellTemplate]="'day' + i" let-row>
+          {{ row.hours[i] ? hoursText(row.hours[i]) : '' }}
+        </ng-template>
+      }
+      <ng-template bbCellTemplate="total" let-row>
+        <span class="strong">{{ hoursText(row.total) }}</span>
+      </ng-template>
+      <ng-template bbGridFooter>
         <tr>
           <th scope="row">Total</th>
           @for (total of totals(); track $index) {
-            <td class="num">{{ total ? hoursText(total) : '' }}</td>
+            <td class="numeric">{{ total ? hoursText(total) : '' }}</td>
           }
-          <td class="num strong">{{ hoursText(weekTotal()) }}</td>
+          <td class="numeric">{{ hoursText(weekTotal()) }}</td>
         </tr>
-      </tfoot>
-    </bb-card-table>
+      </ng-template>
+    </bb-data-grid>
   </div>
 }
 

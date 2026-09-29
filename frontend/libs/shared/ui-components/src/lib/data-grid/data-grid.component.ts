@@ -11,7 +11,8 @@ import {
   ContentChildren,
   ContentChild,
   QueryList,
-  TemplateRef
+  TemplateRef,
+  booleanAttribute,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,10 +20,28 @@ import { ColumnDef, FilterState, SortDirection, SortState } from './data-grid.mo
 import { DataGridService } from './data-grid.service';
 import { DataGridRowComponent } from './data-grid-row/data-grid-row.component';
 import { DataGridCellTemplateDirective } from './data-grid-cell-template.directive';
+import { DataGridFooterDirective } from './data-grid-footer.directive';
 
+/** Classes for one row, from the row itself — an over-allocated line, a short item. */
+export type DataGridRowClass = (row: any) => string | string[] | Record<string, boolean> | null | undefined;
+
+/**
+ * The product's one table.
+ *
+ * A list of records someone browses gets the defaults: sorting, a filter per
+ * column, a row count and paging. A table the page composes — a posting
+ * preview with a totals footer, a statement section, rows of editable amounts
+ * — turns those off (`[sortable]="false"`, `[showColumnFilters]="false"`,
+ * `[showCount]="false"`, `[paged]="false"`), adds `flush` when it already sits
+ * in a card, and uses `rowClass` and a `bbGridFooter` template for what a list
+ * never needs. There is deliberately no second table component: every table in
+ * the product draws through this one, so they all look, scroll and read the
+ * same. (`bb-report-grid` and `bb-document-line-grid` are not tables in that
+ * sense — one is the report engine, the other the document line editor.)
+ */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  selector: 'bb-data-grid, bb-data-table',
+  selector: 'bb-data-grid',
   standalone: true,
   imports: [CommonModule, FormsModule, DataGridRowComponent],
   templateUrl: './data-grid.component.html',
@@ -31,6 +50,7 @@ import { DataGridCellTemplateDirective } from './data-grid-cell-template.directi
 export class DataGridComponent implements OnInit {
   @ContentChildren(DataGridCellTemplateDirective) cellTemplates!: QueryList<DataGridCellTemplateDirective>;
   @ContentChild('emptyTemplate') contentEmptyTemplate?: TemplateRef<any>;
+  @ContentChild(DataGridFooterDirective) footer?: DataGridFooterDirective;
 
   get templateMap(): Record<string, TemplateRef<any>> {
     const map: Record<string, TemplateRef<any>> = {};
@@ -95,17 +115,48 @@ export class DataGridComponent implements OnInit {
     this._currentPage.set(val || 1);
   }
 
-  @Input() compact = true;
+  @Input({ transform: booleanAttribute }) compact = true;
 
   /**
    * The permanent column-filter row. Filtering is per column and always
    * available — there is no list-level search box and no toggle to reveal this,
    * because a filter you have to go and find is a filter nobody uses.
    */
-  @Input() showColumnFilters = true;
+  @Input({ transform: booleanAttribute }) showColumnFilters = true;
   @Input() emptyTemplate?: TemplateRef<any>;
-  @Input() sortable = true;
-  @Input() showExport = true;
+  @Input({ transform: booleanAttribute }) sortable = true;
+  @Input({ transform: booleanAttribute }) showExport = true;
+
+  /**
+   * Split the rows into pages. Off for a table that is read as a whole — a
+   * statement section, a posting preview, a timesheet week.
+   */
+  private _paged = signal(true);
+  @Input({ transform: booleanAttribute })
+  get paged(): boolean {
+    return this._paged();
+  }
+  set paged(val: boolean) {
+    this._paged.set(val);
+  }
+
+  /** The "N shown" strip above the table, with its Clear button. */
+  @Input({ transform: booleanAttribute }) showCount = true;
+
+  /** No border or radius of its own, for a table already inside a card, panel or drawer. */
+  @Input({ transform: booleanAttribute }) flush = false;
+
+  /** The table's accessible name, when no heading beside it gives one. */
+  @Input() label = '';
+
+  /** What an empty table says. `emptyTemplate` overrides it when the message needs markup. */
+  @Input() emptyText = 'No records found.';
+
+  /** One card per row below 640px, each cell labelled with its column's name. */
+  @Input({ transform: booleanAttribute }) stackOnPhone = false;
+
+  /** Classes for a row, computed from it: `row--danger`, `row--warning`, `row--success`, `row--muted`. */
+  @Input() rowClass?: DataGridRowClass;
 
   // Outputs
   @Output() rowClick = new EventEmitter<any>();
@@ -321,8 +372,8 @@ export class DataGridComponent implements OnInit {
     const size = this._pageSize();
     const page = this._currentPage();
 
-    if (total > 0) {
-      // Server-side pagination: parent already passed the sliced page
+    if (total > 0 || !this.paged) {
+      // Server-side pagination (the parent passed the page), or no paging at all.
       return list;
     }
     // Client-side pagination if list exceeds pageSize
@@ -365,6 +416,11 @@ export class DataGridComponent implements OnInit {
     }
   }
 
+  /** A column's heading. An empty one stays empty — an actions column has none. */
+  headerOf(col: ColumnDef): string {
+    return col.header ?? col.title ?? col.field;
+  }
+
   isNumericCol(col: ColumnDef): boolean {
     if (!col) return false;
     return (
@@ -376,6 +432,18 @@ export class DataGridComponent implements OnInit {
 
   onRowClick(row: any) {
     this.rowClick.emit(row);
+  }
+
+  /** Rows only look clickable when somebody is listening for the click. */
+  get clickable(): boolean {
+    return this.rowClick.observed;
+  }
+
+  /** Whether the pager strip is drawn at all. */
+  showPager(): boolean {
+    if (!this.paged) return false;
+    const total = this._totalCount() > 0 ? this._totalCount() : this.filteredData().length;
+    return total > this._pageSize() || this.totalPages() > 1;
   }
 
   exportToCsv() {

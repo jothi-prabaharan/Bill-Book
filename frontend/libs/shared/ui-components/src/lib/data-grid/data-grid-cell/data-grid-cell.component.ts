@@ -13,6 +13,8 @@ import { ColumnDef } from '../data-grid.models';
 export class DataGridCellComponent {
   @Input() col!: ColumnDef;
   @Input() row: any;
+  /** Passed to a cell template as `let-i="index"`. */
+  @Input() index = 0;
   @Input() template?: TemplateRef<any>;
 
   get value(): any {

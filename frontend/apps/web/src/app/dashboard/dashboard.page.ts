@@ -1,4 +1,8 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+} from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -34,11 +38,43 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-dashboard-page',
   standalone: true,
-  imports: [CardTableComponent],
+  imports: [DataGridComponent, DataGridCellTemplateDirective],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })
 export class DashboardPage {
+  // Sample figures until the dashboard reads real ones; kept as data so the
+  // cards draw through the one shared table like every other list.
+  protected readonly productColumns: ColumnDef[] = [
+    { field: 'item', header: 'Item' },
+    { field: 'sold', header: 'Sold', numeric: true },
+    { field: 'profit', header: 'Profit', numeric: true },
+    { field: 'margin', header: 'Margin', numeric: true },
+  ];
+
+  protected readonly topProducts = [
+    { item: 'Cotton shirting 2×2 — 44"', sold: '1,840 m', profit: '₹2,46,300', margin: '31.4%' },
+    { item: 'Linen blend — natural', sold: '960 m', profit: '₹1,72,800', margin: '28.1%' },
+    { item: 'Poly viscose suiting', sold: '2,410 m', profit: '₹1,38,400', margin: '19.6%' },
+    { item: 'Brass buttons 18L', sold: '312 gr', profit: '₹84,900', margin: '42.8%' },
+    { item: 'Corrugated cartons 5-ply', sold: '4,600 pc', profit: '₹61,200', margin: '14.2%' },
+  ];
+
+  protected readonly outstandingColumns: ColumnDef[] = [
+    { field: 'party', header: 'Party' },
+    { field: 'due', header: 'Due' },
+    { field: 'amount', header: 'Amount', numeric: true },
+    { field: 'overdue', header: 'Overdue', numeric: true },
+  ];
+
+  protected readonly outstanding = [
+    { party: 'Suriya Textiles', due: '12 Apr', amount: '₹3,42,000', overdue: '121 d', tone: 'accent' },
+    { party: 'Anand Hardware', due: '30 May', amount: '₹2,18,400', overdue: '73 d', tone: 'accent' },
+    { party: 'Meenakshi Agencies', due: '18 Jun', amount: '₹1,64,900', overdue: '54 d', tone: 'outline' },
+    { party: 'Kavitha Stores', due: '09 Jul', amount: '₹96,300', overdue: '33 d', tone: 'outline' },
+    { party: 'Raja Packaging', due: '28 Jul', amount: '₹48,900', overdue: '14 d', tone: 'neutral' },
+  ];
+
   private readonly board = inject(ShellBoardService);
 
   readonly widgets = DASHBOARD_WIDGETS;

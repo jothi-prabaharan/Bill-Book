@@ -36,46 +36,43 @@
     </div>
   }
 
-  <bb-card-table class="keys" flush>
-    <thead>
-      <tr>
-        <th scope="col">Integration</th>
-        <th scope="col">Role</th>
-        <th scope="col">Last used</th>
-        <th scope="col">Status</th>
-        <th scope="col"><span class="sr-only">Actions</span></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (client of clients(); track client.id) {
-        <tr>
-          <td data-label="Integration">{{ client.name }}</td>
-          <td data-label="Role">
-            @if (client.isActive) {
-              <bb-select
-                [ariaLabel]="'Role for ' + client.name"
-                [name]="'role-' + client.id"
-                [options]="roleOptions()"
-                [clearable]="false"
-                [placeholder]="client.roleName ?? 'No role — the key can do nothing'"
-                [ngModel]="client.roleId || null"
-                (ngModelChange)="changeRole(client, $event)"
-              />
-            } @else {
-              {{ client.roleName ?? '—' }}
-            }
-          </td>
-          <td data-label="Last used">{{ client.lastUsedAt ? client.lastUsedAt.slice(0, 10) : 'Never' }}</td>
-          <td data-label="Status">{{ client.isActive ? 'Active' : 'Revoked' }}</td>
-          <td>
-            @if (client.isActive) {
-              <button type="button" class="link" [disabled]="busy()" (click)="revoke(client)">Revoke</button>
-            }
-          </td>
-        </tr>
-      } @empty {
-        <tr><td colspan="5" class="empty">No API keys yet.</td></tr>
+  <bb-data-grid
+    class="keys"
+    [columns]="clientsColumns"
+    [data]="clients()"
+    stackOnPhone
+    flush
+    [sortable]="false"
+    [showColumnFilters]="false"
+    [showCount]="false"
+    [paged]="false"
+    emptyText="No API keys yet."
+  >
+    <ng-template bbCellTemplate="isActive" let-client>
+      @if (client.isActive) {
+        <bb-select
+          [ariaLabel]="'Role for ' + client.name"
+          [name]="'role-' + client.id"
+          [options]="roleOptions()"
+          [clearable]="false"
+          [placeholder]="client.roleName ?? 'No role — the key can do nothing'"
+          [ngModel]="client.roleId || null"
+          (ngModelChange)="changeRole(client, $event)"
+        />
+      } @else {
+        {{ client.roleName ?? '—' }}
       }
-    </tbody>
-  </bb-card-table>
+    </ng-template>
+    <ng-template bbCellTemplate="lastUsedAt" let-client>
+      {{ client.lastUsedAt ? client.lastUsedAt.slice(0, 10) : 'Never' }}
+    </ng-template>
+    <ng-template bbCellTemplate="col3" let-client>
+      {{ client.isActive ? 'Active' : 'Revoked' }}
+    </ng-template>
+    <ng-template bbCellTemplate="col4" let-client>
+      @if (client.isActive) {
+        <button type="button" class="link" [disabled]="busy()" (click)="revoke(client)">Revoke</button>
+      }
+    </ng-template>
+  </bb-data-grid>
 </div>

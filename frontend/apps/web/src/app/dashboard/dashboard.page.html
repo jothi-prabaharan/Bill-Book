@@ -86,31 +86,35 @@
 
         @case ('stock') {
           <div class="card-kicker">Top products by profit</div>
-          <bb-card-table class="table" flush>
-            <thead><tr><th>Item</th><th class="text-right">Sold</th><th class="text-right">Profit</th><th class="text-right">Margin</th></tr></thead>
-            <tbody>
-              <tr><td>Cotton shirting 2×2 — 44"</td><td class="text-right tabular-nums">1,840 m</td><td class="text-right tabular-nums">₹2,46,300</td><td class="text-right tabular-nums">31.4%</td></tr>
-              <tr><td>Linen blend — natural</td><td class="text-right tabular-nums">960 m</td><td class="text-right tabular-nums">₹1,72,800</td><td class="text-right tabular-nums">28.1%</td></tr>
-              <tr><td>Poly viscose suiting</td><td class="text-right tabular-nums">2,410 m</td><td class="text-right tabular-nums">₹1,38,400</td><td class="text-right tabular-nums">19.6%</td></tr>
-              <tr><td>Brass buttons 18L</td><td class="text-right tabular-nums">312 gr</td><td class="text-right tabular-nums">₹84,900</td><td class="text-right tabular-nums">42.8%</td></tr>
-              <tr><td>Corrugated cartons 5-ply</td><td class="text-right tabular-nums">4,600 pc</td><td class="text-right tabular-nums">₹61,200</td><td class="text-right tabular-nums">14.2%</td></tr>
-            </tbody>
-          </bb-card-table>
+          <bb-data-grid
+            flush
+            label="Top products by profit"
+            [columns]="productColumns"
+            [data]="topProducts"
+            [sortable]="false"
+            [showColumnFilters]="false"
+            [showCount]="false"
+            [paged]="false"
+          />
           <div class="card-meta">April – August 2026 · weighted average cost</div>
         }
 
         @case ('aging') {
           <div class="card-kicker">Outstanding — largest and oldest first</div>
-          <bb-card-table class="table" flush>
-            <thead><tr><th>Party</th><th>Due</th><th class="text-right">Amount</th><th class="text-right">Overdue</th></tr></thead>
-            <tbody>
-              <tr><td>Suriya Textiles</td><td class="tabular-nums">12 Apr</td><td class="text-right tabular-nums">₹3,42,000</td><td class="text-right"><span class="tag tag-accent">121 d</span></td></tr>
-              <tr><td>Anand Hardware</td><td class="tabular-nums">30 May</td><td class="text-right tabular-nums">₹2,18,400</td><td class="text-right"><span class="tag tag-accent">73 d</span></td></tr>
-              <tr><td>Meenakshi Agencies</td><td class="tabular-nums">18 Jun</td><td class="text-right tabular-nums">₹1,64,900</td><td class="text-right"><span class="tag tag-outline">54 d</span></td></tr>
-              <tr><td>Kavitha Stores</td><td class="tabular-nums">09 Jul</td><td class="text-right tabular-nums">₹96,300</td><td class="text-right"><span class="tag tag-outline">33 d</span></td></tr>
-              <tr><td>Raja Packaging</td><td class="tabular-nums">28 Jul</td><td class="text-right tabular-nums">₹48,900</td><td class="text-right"><span class="tag tag-neutral">14 d</span></td></tr>
-            </tbody>
-          </bb-card-table>
+          <bb-data-grid
+            flush
+            label="Outstanding — largest and oldest first"
+            [columns]="outstandingColumns"
+            [data]="outstanding"
+            [sortable]="false"
+            [showColumnFilters]="false"
+            [showCount]="false"
+            [paged]="false"
+          >
+            <ng-template bbCellTemplate="overdue" let-row>
+              <span class="tag" [class]="'tag tag-' + row.tone">{{ row.overdue }}</span>
+            </ng-template>
+          </bb-data-grid>
           <div class="card-meta">₹9,42,100 total · ₹1,20,400 over 90 days</div>
         }
       }

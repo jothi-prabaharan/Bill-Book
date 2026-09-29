@@ -30,30 +30,30 @@
 <!-- Table of Department Reviews for Calibration -->
 <h2 style="margin-top: 2rem;">Reviews in this Cycle</h2>
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Employee</th>
-        <th>Status</th>
-        <th>Final Score</th>
-        <th>Final Rating</th>
-        <th>Recommended Increment</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of reviews()">
-        <td><strong>{{ r.employeeName }}</strong> ({{ r.employeeCode }})</td>
-        <td><span class="badge" [ngClass]="'badge-' + r.reviewStatus.toLowerCase()">{{ r.reviewStatus }}</span></td>
-        <td>{{ r.finalScore ? (r.finalScore + ' / 5') : '—' }}</td>
-        <td><strong>{{ r.finalRatingLabel || ('Level ' + r.finalRatingLevelId) || '—' }}</strong></td>
-        <td>{{ r.recommendedIncreasePercent ? (r.recommendedIncreasePercent + '%') : '—' }}</td>
-        <td>
-          <button class="btn btn-sm btn-outline" (click)="openAdjust(r.performanceReviewId)">Calibrate / Adjust</button>
-        </td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="reviewsColumns"
+    [data]="reviews()"
+    flush
+  >
+    <ng-template bbCellTemplate="employeeName" let-r>
+      <strong>{{ r.employeeName }}</strong> ({{ r.employeeCode }})
+    </ng-template>
+    <ng-template bbCellTemplate="reviewStatus" let-r>
+      <span class="badge" [ngClass]="'badge-' + r.reviewStatus.toLowerCase()">{{ r.reviewStatus }}</span>
+    </ng-template>
+    <ng-template bbCellTemplate="finalScore" let-r>
+      {{ r.finalScore ? (r.finalScore + ' / 5') : '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="finalRatingLabel" let-r>
+      <strong>{{ r.finalRatingLabel || ('Level ' + r.finalRatingLevelId) || '—' }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="recommendedIncreasePercent" let-r>
+      {{ r.recommendedIncreasePercent ? (r.recommendedIncreasePercent + '%') : '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="performanceReviewId" let-r>
+      <button class="btn btn-sm btn-outline" (click)="openAdjust(r.performanceReviewId)">Calibrate / Adjust</button>
+    </ng-template>
+  </bb-data-grid>
 </div>
 
 <!-- Adjust Modal -->

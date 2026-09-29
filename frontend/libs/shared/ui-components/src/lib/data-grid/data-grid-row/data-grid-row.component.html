@@ -1,8 +1,9 @@
-<td *ngFor="let col of visibleColumns" 
+<td *ngFor="let col of visibleColumns"
     [class.numeric]="isNumericCol(col)"
-    [ngClass]="{'text-right': isNumericCol(col)}"
+    [ngClass]="col.classes ? [col.classes, isNumericCol(col) ? 'text-right' : ''] : {'text-right': isNumericCol(col)}"
     [style.font-variant-numeric]="isNumericCol(col) || col.dataType === 'date' ? 'tabular-nums' : null"
     [style.width]="col.width"
+    [attr.data-label]="col.header ?? col.title ?? null"
     (click)="onRowClick()">
-  <bb-data-grid-cell [col]="col" [row]="row" [template]="templates[col.field]"></bb-data-grid-cell>
+  <bb-data-grid-cell [col]="col" [row]="row" [index]="index" [template]="templates[col.field]"></bb-data-grid-cell>
 </td>

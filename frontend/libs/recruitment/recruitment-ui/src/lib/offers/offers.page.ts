@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   DateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
@@ -21,16 +23,28 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     DateInputComponent,
     MoneyInputComponent,
     SelectComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './offers.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class OffersPage implements OnInit {
+  protected readonly offersColumns: ColumnDef[] = [
+    { field: 'offerId', header: 'Offer #' },
+    { field: 'candidateName', header: 'Candidate' },
+    { field: 'openingTitle', header: 'Job Opening' },
+    { field: 'offeredCtc', header: 'Offered CTC', numeric: true },
+    { field: 'joiningDate', header: 'Joining Date' },
+    { field: 'offerStatus', header: 'Status' },
+    { field: 'createdEmployeeId', header: 'Employee Created' },
+    { field: 'col7', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly applicationOptions = computed(() =>
     this.applications().map((app) => ({ value: app.applicationId, label: `${app.candidateName} – ${app.openingTitle}` })),
   );

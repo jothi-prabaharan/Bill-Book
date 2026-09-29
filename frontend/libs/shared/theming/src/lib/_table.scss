@@ -54,6 +54,100 @@
   border-bottom: 0;
 }
 
+/* Row states, chosen by bb-data-grid's rowClass. One vocabulary, so a short
+   stock line and an over-allocated document read the same. */
+.table tbody tr.row--danger td {
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.table tbody tr.row--warning td {
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+}
+
+.table tbody tr.row--success td {
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
+}
+
+.table tbody tr.row--muted td {
+  opacity: 0.55;
+}
+
+/* A group heading inside the rows (a budget section), and its subtotal. */
+.table tbody tr.row--group td {
+  padding-top: var(--space-3);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+}
+
+.table tbody tr.row--subtotal td {
+  font-weight: 600;
+  border-top: 1px solid var(--color-divider);
+}
+
+/* A table that becomes one card per row on a phone (bb-data-grid's
+   stackOnPhone). Every cell carries its column's name in data-label. */
+@media (max-width: 640px) {
+  .table--stacked thead {
+    display: none;
+  }
+
+  .table--stacked tbody tr {
+    display: block;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  .table--stacked tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    border: 0;
+    padding: 3px var(--space-3);
+  }
+
+  .table--stacked tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: 11px;
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+
+  .table--stacked tbody td.text-right,
+  .table--stacked tbody td.numeric {
+    text-align: right;
+  }
+
+  .table--stacked tfoot {
+    display: block;
+  }
+}
+
+/* Totals and subtotals: a figure, not a column heading, so the footer's th
+   drops the header's small capitals. */
+.table tfoot th,
+.table tfoot td {
+  padding: 6px var(--space-2);
+  border-top: 1px solid var(--color-divider);
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-text);
+}
+
+.table tfoot th:first-child,
+.table tfoot td:first-child {
+  padding-left: var(--space-3);
+}
+
+.table tfoot th:last-child,
+.table tfoot td:last-child {
+  padding-right: var(--space-3);
+}
+
 .table th.numeric,
 .table td.numeric,
 .table th[numeric],

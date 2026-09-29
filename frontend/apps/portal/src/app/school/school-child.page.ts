@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   MonthInputComponent,
 } from '@bill-book/ui-components';
@@ -17,14 +19,21 @@ import { PortalAttendance, PortalChild, PortalExam, attendancePercent } from './
   imports: [
     FormsModule,
     RouterLink,
-    CardTableComponent,
     MessageBoxComponent,
     MonthInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './school-child.page.html',
   styleUrl: './school-portal.scss',
 })
 export class SchoolChildPage implements OnInit {
+  protected readonly subjectsColumns: ColumnDef[] = [
+    { field: 'subjectName', header: 'Subject' },
+    { field: 'isAbsent', header: 'Marks' },
+    { field: 'col2', header: 'Result', sortable: false, filterable: false },
+  ];
+
   private readonly api = inject(SchoolPortalApi);
   private readonly route = inject(ActivatedRoute);
 

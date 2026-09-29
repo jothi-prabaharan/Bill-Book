@@ -7,7 +7,10 @@ import {
   PayslipView,
 } from '@bill-book/payroll-core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridFooterDirective,
   MessageBoxComponent,
   UiMessage,
 } from '@bill-book/ui-components';
@@ -19,12 +22,30 @@ import {
   imports: [
     CommonModule,
     MessageBoxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    DataGridFooterDirective,
   ],
   templateUrl: './my-payslips.page.html',
   styleUrl: '../payroll-page.scss',
 })
 export class MyPayslipsPage implements OnInit {
+  protected readonly payslipsColumns: ColumnDef[] = [
+    { field: 'monthName', header: 'Month' },
+    { field: 'paidDays', header: 'Paid Days', numeric: true },
+    { field: 'grossEarnings', header: 'Gross Earnings', numeric: true },
+    { field: 'grossDeductions', header: 'Deductions', numeric: true },
+    { field: 'netPay', header: 'Net Pay', numeric: true },
+    { field: 'status', header: 'Status' },
+    { field: 'payslipId', header: 'Actions', numeric: true, sortable: false, filterable: false },
+  ];
+
+  protected readonly linesColumns: ColumnDef[] = [
+    { field: 'componentName', header: 'Component' },
+    { field: 'kind', header: 'Type' },
+    { field: 'amount', header: 'Amount', numeric: true },
+  ];
+
   private readonly api = inject(PayrollApiService);
 
   protected readonly payslips = signal<MyPayslipSummary[]>([]);

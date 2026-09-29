@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
   CheckboxComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   NumberInputComponent,
   PercentageInputComponent,
@@ -26,18 +28,30 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     CheckboxComponent,
     NumberInputComponent,
     PercentageInputComponent,
     SelectComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './reviews.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class ReviewsPage implements OnInit {
+  protected readonly reviewsColumns: ColumnDef[] = [
+    { field: 'employeeName', header: 'Employee' },
+    { field: 'cycleName', header: 'Cycle' },
+    { field: 'reviewStatus', header: 'Status' },
+    { field: 'currentStepLabel', header: 'Current Step' },
+    { field: 'finalScore', header: 'Final Score' },
+    { field: 'recommendedIncreasePercent', header: 'Recommended Increment' },
+    { field: 'isPromotionRecommended', header: 'Promotion' },
+    { field: 'col7', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly selectedCycleOptions = computed(() =>
     this.cycles().map((c) => ({ value: c.reviewCycleId, label: `${c.name}` })),
   );

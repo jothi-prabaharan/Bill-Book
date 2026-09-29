@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   FileInputComponent,
   MessageBoxComponent,
 } from '@bill-book/ui-components';
@@ -27,14 +29,27 @@ import {
   imports: [
     CommonModule,
     RouterModule,
-    CardTableComponent,
     FileInputComponent,
     MessageBoxComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './gstr2b.page.html',
   styleUrl: './gstr2b.page.scss',
 })
 export class Gstr2bPage implements OnInit {
+  protected readonly linesColumns: ColumnDef[] = [
+    { field: 'supplierName', header: 'Supplier' },
+    { field: 'invoiceNo', header: 'Invoice' },
+    { field: 'invoiceDate', header: 'Date' },
+    { field: 'twoBTaxable', header: '2B taxable', numeric: true },
+    { field: 'twoBTax', header: '2B tax', numeric: true },
+    { field: 'booksTaxable', header: 'Books taxable', numeric: true },
+    { field: 'booksTax', header: 'Books tax', numeric: true },
+    { field: 'billId', header: 'Bill' },
+    { field: 'note', header: 'Note' },
+  ];
+
   private readonly gstr2b = inject(Gstr2bService);
 
   protected readonly imports = signal<Gstr2bImportView[]>([]);

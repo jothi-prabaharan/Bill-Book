@@ -8,8 +8,12 @@ import { readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   BbSelectOption,
-  CardTableComponent,
   CheckboxComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridFooterDirective,
+  DataGridRowClass,
   FileInputComponent,
   MoneyInputComponent,
   SelectComponent,
@@ -29,6 +33,16 @@ interface GridRow {
   projectCode: string | null;
   amounts: number[];
 }
+
+/**
+ * One row of the grid as drawn: a section's heading, one of its budget lines,
+ * or its subtotal. The grid is one table, so the sections are flattened into
+ * it and told apart by `kind`.
+ */
+type GridLine =
+  | { kind: 'section'; label: string }
+  | { kind: 'line'; item: { row: GridRow; index: number } }
+  | { kind: 'subtotal'; label: string; months: number[]; total: number };
 
 interface GridSection {
   label: string;
@@ -59,9 +73,11 @@ function keyOf(accountId: number, projectId: number | null): string {
     TextInputComponent,
     SelectComponent,
     CheckboxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
     FileInputComponent,
     MoneyInputComponent,
+    DataGridFooterDirective,
   ],
   templateUrl: './budget-grid.page.html',
   styleUrl: './budget-grid.page.scss',
@@ -110,6 +126,24 @@ export class BudgetGridPage implements OnInit {
       return { label: TYPE_LABELS[type], rows, months: totals.months, total: totals.total };
     }).filter((s) => s.rows.length > 0);
   });
+
+  protected readonly gridRows = computed<GridLine[]>(() =>
+    this.sections().flatMap((s): GridLine[] => [
+      { kind: 'section', label: s.label },
+      ...s.rows.map((item): GridLine => ({ kind: 'line', item })),
+      { kind: 'subtotal', label: s.label, months: s.months, total: s.total },
+    ]),
+  );
+
+  protected readonly gridColumns = computed<ColumnDef[]>(() => [
+    { field: 'account', header: 'Account' },
+    ...this.labels().map((label, m) => ({ field: `month${m}`, header: label, numeric: true })),
+    { field: 'year', header: 'Year', numeric: true },
+    ...(this.editable() ? [{ field: 'remove', header: '' }] : []),
+  ]);
+
+  protected readonly gridRowClass: DataGridRowClass = (line: GridLine) =>
+    line.kind === 'section' ? 'row--group' : line.kind === 'subtotal' ? 'row--subtotal' : null;
 
   /** Income less expenses, month by month: the budgeted profit. */
   protected readonly profit = computed(() => {

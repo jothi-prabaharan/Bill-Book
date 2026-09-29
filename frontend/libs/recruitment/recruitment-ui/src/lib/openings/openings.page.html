@@ -28,39 +28,29 @@
 </div>
 
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Title</th>
-        <th>Requisition</th>
-        <th>Status</th>
-        <th>Applications</th>
-        <th>Published Date</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let op of openings()">
-        <td><strong>{{ op.title }}</strong></td>
-        <td>{{ op.requisitionCode }}</td>
-        <td>
-          <span class="badge" [ngClass]="op.openingStatus.toLowerCase()">
-            {{ op.openingStatus }}
-          </span>
-        </td>
-        <td>{{ op.applicationsCount }}</td>
-        <td>{{ op.publishedDate || '—' }}</td>
-        <td>
-          <div style="display: flex; gap: 6px;">
-            <button *ngIf="op.openingStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="changeStatus(op.jobOpeningId, 'Open')">Publish</button>
-            <button *ngIf="op.openingStatus === 'Open'" type="button" class="btn btn-sm btn-outline-warning" (click)="changeStatus(op.jobOpeningId, 'OnHold')">Hold</button>
-            <button *ngIf="op.openingStatus === 'Open' || op.openingStatus === 'OnHold'" type="button" class="btn btn-sm btn-outline-danger" (click)="changeStatus(op.jobOpeningId, 'Closed')">Close</button>
-          </div>
-        </td>
-      </tr>
-      <tr *ngIf="openings().length === 0 && !loading()">
-        <td colspan="6" class="empty-state">No job openings found.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="openingsColumns"
+    [data]="openings()"
+    flush
+    emptyText="No job openings found."
+  >
+    <ng-template bbCellTemplate="title" let-op>
+      <strong>{{ op.title }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="openingStatus" let-op>
+      <span class="badge" [ngClass]="op.openingStatus.toLowerCase()">
+        {{ op.openingStatus }}
+      </span>
+    </ng-template>
+    <ng-template bbCellTemplate="publishedDate" let-op>
+      {{ op.publishedDate || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="col5" let-op>
+      <div style="display: flex; gap: 6px;">
+        <button *ngIf="op.openingStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="changeStatus(op.jobOpeningId, 'Open')">Publish</button>
+        <button *ngIf="op.openingStatus === 'Open'" type="button" class="btn btn-sm btn-outline-warning" (click)="changeStatus(op.jobOpeningId, 'OnHold')">Hold</button>
+        <button *ngIf="op.openingStatus === 'Open' || op.openingStatus === 'OnHold'" type="button" class="btn btn-sm btn-outline-danger" (click)="changeStatus(op.jobOpeningId, 'Closed')">Close</button>
+      </div>
+    </ng-template>
+  </bb-data-grid>
 </div>

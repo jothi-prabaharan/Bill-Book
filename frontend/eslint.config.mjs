@@ -33,7 +33,7 @@ function inputAllowing(...types) {
 const COMMON_COMPONENTS = {
   table: {
     selector: 'Element[name="table"]',
-    message: `Raw <table> — use <bb-data-grid> for a list of records, or <bb-card-table> for a table the page composes itself (a totals footer, editable rows, a row state). ${SEE}`,
+    message: `Raw <table> — use <bb-data-grid>, the product's one table: columns as a ColumnDef[], a bbCellTemplate for any cell with markup, bbGridFooter for totals, rowClass for a row state, and sortable / showColumnFilters / showCount / paged off for a table the page composes itself. ${SEE}`,
   },
   select: {
     selector: 'Element[name="select"]',
@@ -185,9 +185,32 @@ export default tseslint.config(
   // pass. Everything not named here gets the full rule above.
   // ---------------------------------------------------------------------------
   {
-    // The common components themselves. Something has to be the <table>, the
-    // <input> and the <select> — these are the files that are.
+    // The common components themselves. Something has to be the <input>, the
+    // <select> and the <textarea> — these are the files that are.
+    //
+    // <table> is NOT let through here. There is one table component, and a
+    // shared component drawing a table of its own is how a second one gets
+    // written: bb-card-table and a hand-drawn bb-allocation-grid both happened
+    // that way and were folded back into bb-data-grid. The files that may draw
+    // a <table> are named in the next entry.
     files: ['libs/shared/ui-components/src/lib/**/*.html'],
+    rules: {
+      'no-restricted-syntax': commonComponentRule({ select: false, textarea: false, input: false, banner: false }),
+    },
+  },
+  {
+    // The only <table>s in the product.
+    //   data-grid           — the table, which every list and composed table uses
+    //   report-grid         — the report engine: server-side paging, frozen
+    //                         columns, group subtotals from the server
+    //   document-line-grid  — the document line editor: keyboard entry, tax maths
+    //   branch-date-input   — a calendar month, which is a date grid, not a table
+    files: [
+      'libs/shared/ui-components/src/lib/data-grid/data-grid.component.html',
+      'libs/shared/ui-components/src/lib/report-grid/report-grid.component.html',
+      'libs/shared/ui-components/src/lib/document-line-grid/document-line-grid.component.html',
+      'libs/shared/ui-components/src/lib/branch-date-input/branch-date-input.component.html',
+    ],
     rules: { 'no-restricted-syntax': 'off' },
   },
   {

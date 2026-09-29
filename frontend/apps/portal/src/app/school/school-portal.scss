@@ -78,14 +78,3 @@ section {
   }
 }
 
-bb-card-table {
-  width: 100%;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: var(--space-1, 4px) var(--space-2, 8px);
-    border-bottom: 1px solid var(--color-border, #ddd);
-    text-align: left;
-  }
-}

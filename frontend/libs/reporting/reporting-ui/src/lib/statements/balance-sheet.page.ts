@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
-import { CardTableComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridFooterDirective,
+} from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -20,12 +25,23 @@ interface BSResponse {
 @Component({
   selector: 'bb-balance-sheet',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardTableComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    DataGridFooterDirective,
+  ],
   templateUrl: './balance-sheet.page.html',
   styleUrl: './statements.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BalanceSheetPage implements OnInit {
+  protected readonly columns: ColumnDef[] = [
+    { field: 'accountName', header: 'Account' },
+    { field: 'balance', header: 'Balance', numeric: true },
+  ];
+
   private readonly http = inject(HttpClient);
   readonly data = signal<BSResponse | null>(null);
   readonly loading = signal(false);

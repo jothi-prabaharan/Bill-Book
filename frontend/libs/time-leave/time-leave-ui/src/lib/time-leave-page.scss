@@ -38,22 +38,6 @@
   border: 1px solid var(--color-border);
   border-radius: 6px;
 
-  bb-card-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
-
-    th, td {
-      padding: var(--space-2, 8px) var(--space-3, 12px);
-      text-align: left;
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    th {
-      background: var(--color-surface-hover, #f8f9fa);
-      font-weight: 600;
-    }
-  }
 }
 
 .badge {

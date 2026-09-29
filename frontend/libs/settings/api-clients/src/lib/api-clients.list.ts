@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
   BbSelectOption,
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   SelectComponent,
   TextInputComponent,
@@ -41,14 +43,23 @@ export interface ApiClientRole {
     FormsModule,
     TextInputComponent,
     SelectComponent,
-    CardTableComponent,
     MessageBoxComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './api-clients.list.html',
   styleUrl: './api-clients.list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApiClientsListComponent implements OnInit {
+  protected readonly clientsColumns: ColumnDef[] = [
+    { field: 'name', header: 'Integration' },
+    { field: 'isActive', header: 'Role' },
+    { field: 'lastUsedAt', header: 'Last used' },
+    { field: 'col3', header: 'Status', sortable: false, filterable: false },
+    { field: 'col4', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   private readonly http = inject(HttpClient);
   private readonly base = '/api/master/api-clients';
 

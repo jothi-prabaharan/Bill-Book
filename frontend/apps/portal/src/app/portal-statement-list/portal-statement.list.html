@@ -14,36 +14,37 @@
     <ng-template #side let-side let-title="title" let-balanceLabel="balanceLabel">
       <section>
         <h2>{{ title }}</h2>
-        <bb-card-table flush>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Document</th>
-              <th class="num">Debit</th>
-              <th class="num">Credit</th>
-              <th class="num">{{ balanceLabel }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (t of side.transactions; track $index) {
-              <tr>
-                <td data-label="Date">{{ t.ledgerDate | date: 'mediumDate' }}</td>
-                <td data-label="Document">
-                  @if (invoiceLink(t); as id) {
-                    <a class="link" [routerLink]="['/invoices', id]">{{ t.documentNo }}</a>
-                  } @else {
-                    {{ t.documentNo }}
-                  }
-                </td>
-                <td class="num" data-label="Debit">{{ t.debit ? (t.debit | number: '1.2-2') : '' }}</td>
-                <td class="num" data-label="Credit">{{ t.credit ? (t.credit | number: '1.2-2') : '' }}</td>
-                <td class="num" [attr.data-label]="balanceLabel">{{ t.balance | number: '1.2-2' }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="5" class="muted">No transactions.</td></tr>
+        <bb-data-grid
+          flush
+          stackOnPhone
+          [columns]="columnsFor[balanceLabel]"
+          [data]="side.transactions"
+          [sortable]="false"
+          [showColumnFilters]="false"
+          [showCount]="false"
+          [paged]="false"
+          emptyText="No transactions."
+        >
+          <ng-template bbCellTemplate="ledgerDate" let-t>
+            {{ t.ledgerDate | date: 'mediumDate' }}
+          </ng-template>
+          <ng-template bbCellTemplate="documentNo" let-t>
+            @if (invoiceLink(t); as id) {
+              <a class="link" [routerLink]="['/invoices', id]">{{ t.documentNo }}</a>
+            } @else {
+              {{ t.documentNo }}
             }
-          </tbody>
-        </bb-card-table>
+          </ng-template>
+          <ng-template bbCellTemplate="debit" let-t>
+            {{ t.debit ? (t.debit | number: '1.2-2') : '' }}
+          </ng-template>
+          <ng-template bbCellTemplate="credit" let-t>
+            {{ t.credit ? (t.credit | number: '1.2-2') : '' }}
+          </ng-template>
+          <ng-template bbCellTemplate="balance" let-t>
+            {{ t.balance | number: '1.2-2' }}
+          </ng-template>
+        </bb-data-grid>
         <p class="row"><strong>{{ balanceLabel }}</strong><strong>{{ side.closingBalance | number: '1.2-2' }}</strong></p>
       </section>
     </ng-template>

@@ -35,39 +35,35 @@
 
   <h3>Employee Payslips</h3>
   <div class="table-container">
-    <bb-card-table flush>
-      <thead>
-        <tr>
-          <th>Employee ID</th>
-          <th>Paid Days</th>
-          <th>Gross Earnings</th>
-          <th>Gross Deductions</th>
-          <th>Net Pay</th>
-          <th>Lines</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (slip of payslips(); track slip.payslipId) {
-          <tr>
-            <td><strong>#{{ slip.employeeId }}</strong></td>
-            <td>{{ slip.paidDays }}</td>
-            <td>₹{{ slip.grossEarnings | number:'1.2-2' }}</td>
-            <td>₹{{ slip.grossDeductions | number:'1.2-2' }}</td>
-            <td><strong>₹{{ slip.netPay | number:'1.2-2' }}</strong></td>
-            <td>
-              <small>
-                @for (line of slip.lines; track line.payslipLineId) {
-                  <div>{{ line.componentName }}: ₹{{ line.amount | number:'1.2-2' }} ({{ line.kind }})</div>
-                }
-              </small>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6" class="text-center">No payslips found for this run.</td>
-          </tr>
-        }
-      </tbody>
-    </bb-card-table>
+    <bb-data-grid
+      [columns]="payslipsColumns"
+      [data]="payslips()"
+      flush
+      [sortable]="false"
+      [showColumnFilters]="false"
+      [showCount]="false"
+      [paged]="false"
+      emptyText="No payslips found for this run."
+    >
+      <ng-template bbCellTemplate="employeeId" let-slip>
+        <strong>#{{ slip.employeeId }}</strong>
+      </ng-template>
+      <ng-template bbCellTemplate="grossEarnings" let-slip>
+        ₹{{ slip.grossEarnings | number:'1.2-2' }}
+      </ng-template>
+      <ng-template bbCellTemplate="grossDeductions" let-slip>
+        ₹{{ slip.grossDeductions | number:'1.2-2' }}
+      </ng-template>
+      <ng-template bbCellTemplate="netPay" let-slip>
+        <strong>₹{{ slip.netPay | number:'1.2-2' }}</strong>
+      </ng-template>
+      <ng-template bbCellTemplate="lines" let-slip>
+        <small>
+          @for (line of slip.lines; track line.payslipLineId) {
+            <div>{{ line.componentName }}: ₹{{ line.amount | number:'1.2-2' }} ({{ line.kind }})</div>
+          }
+        </small>
+      </ng-template>
+    </bb-data-grid>
   </div>
 }

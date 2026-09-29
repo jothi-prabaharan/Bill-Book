@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { PayrollApiService, PayrollRunView } from '@bill-book/payroll-core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   MonthInputComponent,
   UiMessage,
@@ -19,13 +21,25 @@ import {
     FormsModule,
     RouterModule,
     MessageBoxComponent,
-    CardTableComponent,
     MonthInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './payroll-runs.list.html',
   styleUrl: '../payroll-page.scss',
 })
 export class PayrollRunsList implements OnInit {
+  protected readonly runsColumns: ColumnDef[] = [
+    { field: 'month', header: 'Month' },
+    { field: 'status', header: 'Status' },
+    { field: 'employeeCount', header: 'Employees' },
+    { field: 'totalGrossEarnings', header: 'Gross Earnings', numeric: true },
+    { field: 'totalGrossDeductions', header: 'Deductions', numeric: true },
+    { field: 'totalNetPay', header: 'Net Pay', numeric: true },
+    { field: 'daysSource', header: 'Source' },
+    { field: 'payrollRunId', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   private readonly api = inject(PayrollApiService);
 
   protected readonly runs = signal<PayrollRunView[]>([]);

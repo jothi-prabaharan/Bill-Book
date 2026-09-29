@@ -59,38 +59,31 @@
       </div>
 
       <div class="payroll-table-container">
-        <bb-card-table class="payroll-table" flush>
-          <thead>
-            <tr>
-              <th>Component / Item</th>
-              <th>Type</th>
-              <th>Remarks</th>
-              <th style="text-align: right;">Amount (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (line of settlement.lines; track line.fnfLineId) {
-              <tr>
-                <td>{{ line.kind }}</td>
-                <td>
-                  <span [class]="line.isDeduction ? 'badge badge--danger' : 'badge badge--success'">
-                    {{ line.isDeduction ? 'Deduction' : 'Earning' }}
-                  </span>
-                </td>
-                <td>{{ line.remarks }}</td>
-                <td style="text-align: right; font-weight: 600;">
-                  {{ line.isDeduction ? '-' : '+' }}₹{{ line.amount | number:'1.2-2' }}
-                </td>
-              </tr>
-            }
-          </tbody>
-          <tfoot>
+        <bb-data-grid
+          class="payroll-table"
+          [columns]="linesColumns"
+          [data]="settlement.lines"
+          flush
+          [sortable]="false"
+          [showColumnFilters]="false"
+          [showCount]="false"
+          [paged]="false"
+        >
+          <ng-template bbCellTemplate="isDeduction" let-line>
+            <span [class]="line.isDeduction ? 'badge badge--danger' : 'badge badge--success'">
+              {{ line.isDeduction ? 'Deduction' : 'Earning' }}
+            </span>
+          </ng-template>
+          <ng-template bbCellTemplate="col3" let-line>
+            {{ line.isDeduction ? '-' : '+' }}₹{{ line.amount | number:'1.2-2' }}
+          </ng-template>
+          <ng-template bbGridFooter>
             <tr style="font-size: 1.1rem; font-weight: bold; background: var(--surface-secondary);">
               <td colspan="3">Net Settlement Payable</td>
               <td style="text-align: right; color: var(--primary);">₹{{ settlement.netPayable | number:'1.2-2' }}</td>
             </tr>
-          </tfoot>
-        </bb-card-table>
+          </ng-template>
+        </bb-data-grid>
       </div>
     </div>
   }

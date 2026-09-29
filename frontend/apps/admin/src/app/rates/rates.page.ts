@@ -3,7 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '@bill-book/auth';
 import {
   BbSelectOption,
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   DateInputComponent,
   NumberInputComponent,
   SelectComponent,
@@ -35,12 +37,30 @@ function today(): string {
     TextInputComponent,
     DateInputComponent,
     NumberInputComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './rates.page.html',
   styleUrl: './rates.page.scss',
 })
 export class RatesPage implements OnInit {
+  protected readonly exchangeRowsColumns: ColumnDef[] = [
+    { field: 'rateDate', header: 'Date' },
+    { field: 'fromCurrencyCode', header: 'Pair' },
+    { field: 'rate', header: 'Rate', numeric: true },
+    { field: 'source', header: 'Source' },
+    { field: 'col4', header: 'Actions', sortable: false, filterable: false },
+  ];
+
+  protected readonly metalRowsColumns: ColumnDef[] = [
+    { field: 'rateDate', header: 'Date' },
+    { field: 'metal', header: 'Metal' },
+    { field: 'purityCode', header: 'Purity' },
+    { field: 'ratePerGram', header: 'Per gram', numeric: true },
+    { field: 'source', header: 'Source' },
+    { field: 'col5', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   private readonly rates = inject(RatesService);
   private readonly auth = inject(AuthService);
 

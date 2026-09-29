@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
   CheckboxComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MoneyInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -22,16 +24,34 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     CheckboxComponent,
     MoneyInputComponent,
     SelectComponent,
     TextInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './claim-categories.page.html',
   styleUrl: '../claims-page.scss',
 })
 export class ClaimCategoriesPage implements OnInit {
+  protected readonly categoriesColumns: ColumnDef[] = [
+    { field: 'code', header: 'Code' },
+    { field: 'name', header: 'Name' },
+    { field: 'isReceiptRequired', header: 'Receipt Required?' },
+    { field: 'isTaxable', header: 'Taxable?' },
+    { field: 'isActive', header: 'Status' },
+    { field: 'claimCategoryId', header: 'Actions', sortable: false, filterable: false },
+  ];
+
+  protected readonly limitsColumns: ColumnDef[] = [
+    { field: 'categoryName', header: 'Category' },
+    { field: 'gradeId', header: 'Grade' },
+    { field: 'limitPeriod', header: 'Period' },
+    { field: 'amount', header: 'Limit Amount', numeric: true },
+    { field: 'claimLimitId', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly claimCategoryOptions = computed(() =>
     this.categories().map((c) => ({ value: c.claimCategoryId, label: `${c.name} (${c.code})` })),
   );

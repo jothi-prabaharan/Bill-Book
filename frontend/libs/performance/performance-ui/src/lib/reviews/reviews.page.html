@@ -16,42 +16,35 @@
 <bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Employee</th>
-        <th>Cycle</th>
-        <th>Status</th>
-        <th>Current Step</th>
-        <th>Final Score</th>
-        <th>Recommended Increment</th>
-        <th>Promotion</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of reviews()">
-        <td>
-          <strong>{{ r.employeeName }}</strong><br />
-          <small style="color: #64748b;">{{ r.employeeCode }}</small>
-        </td>
-        <td>{{ r.cycleName }}</td>
-        <td>
-          <span class="badge" [ngClass]="'badge-' + r.reviewStatus.toLowerCase()">{{ r.reviewStatus }}</span>
-        </td>
-        <td>{{ r.currentStepLabel || '—' }}</td>
-        <td>{{ r.finalScore ? (r.finalScore + ' / 5') : '—' }}</td>
-        <td>{{ r.recommendedIncreasePercent ? (r.recommendedIncreasePercent + '%') : '—' }}</td>
-        <td>{{ r.isPromotionRecommended ? 'Yes' : 'No' }}</td>
-        <td>
-          <button class="btn btn-sm" (click)="openReview(r)">View / Act</button>
-        </td>
-      </tr>
-      <tr *ngIf="reviews().length === 0 && !loading()">
-        <td colspan="8" style="text-align: center; color: #64748b; padding: 24px;">No reviews found for this filter.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="reviewsColumns"
+    [data]="reviews()"
+    flush
+    emptyText="No reviews found for this filter."
+  >
+    <ng-template bbCellTemplate="employeeName" let-r>
+      <strong>{{ r.employeeName }}</strong><br />
+      <small style="color: #64748b;">{{ r.employeeCode }}</small>
+    </ng-template>
+    <ng-template bbCellTemplate="reviewStatus" let-r>
+      <span class="badge" [ngClass]="'badge-' + r.reviewStatus.toLowerCase()">{{ r.reviewStatus }}</span>
+    </ng-template>
+    <ng-template bbCellTemplate="currentStepLabel" let-r>
+      {{ r.currentStepLabel || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="finalScore" let-r>
+      {{ r.finalScore ? (r.finalScore + ' / 5') : '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="recommendedIncreasePercent" let-r>
+      {{ r.recommendedIncreasePercent ? (r.recommendedIncreasePercent + '%') : '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="isPromotionRecommended" let-r>
+      {{ r.isPromotionRecommended ? 'Yes' : 'No' }}
+    </ng-template>
+    <ng-template bbCellTemplate="col7" let-r>
+      <button class="btn btn-sm" (click)="openReview(r)">View / Act</button>
+    </ng-template>
+  </bb-data-grid>
 </div>
 
 <!-- Review Detail Sheet -->

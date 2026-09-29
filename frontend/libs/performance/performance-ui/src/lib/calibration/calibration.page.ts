@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -21,16 +23,26 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     NumberInputComponent,
     SelectComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './calibration.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class CalibrationPage implements OnInit {
+  protected readonly reviewsColumns: ColumnDef[] = [
+    { field: 'employeeName', header: 'Employee' },
+    { field: 'reviewStatus', header: 'Status' },
+    { field: 'finalScore', header: 'Final Score' },
+    { field: 'finalRatingLabel', header: 'Final Rating' },
+    { field: 'recommendedIncreasePercent', header: 'Recommended Increment' },
+    { field: 'performanceReviewId', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly selectedCycleOptions = computed(() =>
     this.cycles().map((c) => ({ value: c.reviewCycleId, label: `${c.name}` })),
   );

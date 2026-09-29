@@ -26,8 +26,11 @@ import {
 import { SalesPicker } from '../sales-picker';
 import {
   ApprovalPanelComponent,
-  CardTableComponent,
+  ColumnDef,
   CustomFieldValues,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridFooterDirective,
   DateInputComponent,
   DocumentCustomFieldsComponent,
   DocumentLine,
@@ -97,12 +100,20 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     TextareaComponent,
     DateInputComponent,
     ExchangeRateInputComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    DataGridFooterDirective,
   ],
   templateUrl: './invoice-form.component.html',
   styleUrl: './invoice-form.component.scss',
 })
 export class InvoiceFormComponent implements OnInit {
+  protected readonly legsColumns: ColumnDef[] = [
+    { field: 'accountSystemName', header: 'Account' },
+    { field: 'debitAmount', header: 'Debit', numeric: true },
+    { field: 'creditAmount', header: 'Credit', numeric: true },
+  ];
+
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
 

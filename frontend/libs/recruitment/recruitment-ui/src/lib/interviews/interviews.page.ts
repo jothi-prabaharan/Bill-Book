@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   DateTimeInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
@@ -25,17 +27,28 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     DateTimeInputComponent,
     NumberInputComponent,
     SelectComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './interviews.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class InterviewsPage implements OnInit {
+  protected readonly interviewsColumns: ColumnDef[] = [
+    { field: 'roundNo', header: 'Round' },
+    { field: 'roundKind', header: 'Type' },
+    { field: 'scheduledAt', header: 'Scheduled At' },
+    { field: 'rating', header: 'Rating' },
+    { field: 'outcome', header: 'Outcome' },
+    { field: 'feedback', header: 'Feedback' },
+    { field: 'col6', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly ratingOptions = [
     { value: 1, label: '1 - Poor' },
     { value: 2, label: '2 - Below Average' },

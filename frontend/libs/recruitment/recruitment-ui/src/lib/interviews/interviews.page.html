@@ -50,37 +50,31 @@
 </div>
 
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Round</th>
-        <th>Type</th>
-        <th>Scheduled At</th>
-        <th>Rating</th>
-        <th>Outcome</th>
-        <th>Feedback</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of interviews()">
-        <td><strong>Round {{ r.roundNo }}</strong></td>
-        <td>{{ r.roundKind }}</td>
-        <td>{{ r.scheduledAt | date:'medium' }}</td>
-        <td>{{ r.rating ? (r.rating + ' / 5') : '—' }}</td>
-        <td>
-          <span class="badge" [ngClass]="r.outcome.toLowerCase()">
-            {{ r.outcome }}
-          </span>
-        </td>
-        <td>{{ r.feedback || '—' }}</td>
-        <td>
-          <button type="button" class="btn btn-sm btn-outline-primary" (click)="openFeedback(r)">Evaluate</button>
-        </td>
-      </tr>
-      <tr *ngIf="interviews().length === 0 && !loading()">
-        <td colspan="7" class="empty-state">No interview rounds scheduled for this candidate application.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="interviewsColumns"
+    [data]="interviews()"
+    flush
+    emptyText="No interview rounds scheduled for this candidate application."
+  >
+    <ng-template bbCellTemplate="roundNo" let-r>
+      <strong>Round {{ r.roundNo }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="scheduledAt" let-r>
+      {{ r.scheduledAt | date:'medium' }}
+    </ng-template>
+    <ng-template bbCellTemplate="rating" let-r>
+      {{ r.rating ? (r.rating + ' / 5') : '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="outcome" let-r>
+      <span class="badge" [ngClass]="r.outcome.toLowerCase()">
+        {{ r.outcome }}
+      </span>
+    </ng-template>
+    <ng-template bbCellTemplate="feedback" let-r>
+      {{ r.feedback || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="col6" let-r>
+      <button type="button" class="btn btn-sm btn-outline-primary" (click)="openFeedback(r)">Evaluate</button>
+    </ng-template>
+  </bb-data-grid>
 </div>

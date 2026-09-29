@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
 } from '@bill-book/ui-components';
 import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
@@ -22,13 +24,34 @@ import { PortalStatement, invoiceLink } from '../retail/portal.models';
     DecimalPipe,
     NgTemplateOutlet,
     RouterLink,
-    CardTableComponent,
     MessageBoxComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './portal-statement.list.html',
   styleUrl: '../retail/retail-portal.scss',
 })
 export class PortalStatementList implements OnInit {
+  /**
+   * One column set per side of the statement — only the running balance's
+   * heading differs. Fixed arrays, so the grid is not handed a new one on
+   * every render.
+   */
+  protected readonly columnsFor: Record<string, ColumnDef[]> = {
+    'Balance owed': PortalStatementList.columns('Balance owed'),
+    'Balance due to you': PortalStatementList.columns('Balance due to you'),
+  };
+
+  private static columns(balanceLabel: string): ColumnDef[] {
+    return [
+      { field: 'ledgerDate', header: 'Date' },
+      { field: 'documentNo', header: 'Document' },
+      { field: 'debit', header: 'Debit', numeric: true },
+      { field: 'credit', header: 'Credit', numeric: true },
+      { field: 'balance', header: balanceLabel, numeric: true },
+    ];
+  }
+
   private readonly api = inject(PortalApi);
 
   protected readonly statement = signal<PortalStatement | null>(null);

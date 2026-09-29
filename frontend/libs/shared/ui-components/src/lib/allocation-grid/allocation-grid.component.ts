@@ -2,6 +2,10 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DataGridComponent, DataGridRowClass } from '../data-grid/data-grid.component';
+import { DataGridCellTemplateDirective } from '../data-grid/data-grid-cell-template.directive';
+import { ColumnDef } from '../data-grid/data-grid.models';
+import { MoneyInputComponent } from '../forms/numeric/money-input.component';
 import {
   DEFAULT_FORMAT_SETTINGS,
   FormatSettings,
@@ -31,7 +35,7 @@ export interface AllocationRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-allocation-grid',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DataGridComponent, DataGridCellTemplateDirective, MoneyInputComponent],
   templateUrl: './allocation-grid.component.html',
   styleUrls: ['./allocation-grid.component.scss']
 })
@@ -74,6 +78,23 @@ export class AllocationGridComponent {
   @Input() showSummary = true;
 
   @Output() rowsChange = new EventEmitter<AllocationRow[]>();
+
+  /**
+   * Drawn through the shared table like every other list; only the summary
+   * strip and the allocation rules are this component's own.
+   */
+  protected readonly columns: ColumnDef[] = [
+    { field: 'documentNo', header: 'Document No' },
+    { field: 'documentDate', header: 'Date' },
+    { field: 'dueDate', header: 'Due Date' },
+    { field: 'totalAmount', header: 'Total Amount', numeric: true },
+    { field: 'outstandingAmount', header: 'Outstanding', numeric: true },
+    { field: 'allocatedAmount', header: 'Allocate', numeric: true, width: '10rem' },
+  ];
+
+  /** A document this allocation settles in full. */
+  protected readonly rowClass: DataGridRowClass = (row: AllocationRow) =>
+    row.allocatedAmount > 0 && row.allocatedAmount === row.outstandingAmount ? 'row--success' : null;
 
   /** Money the branch's way: symbol, decimals and lakh-or-thousands grouping. */
   money(value: number | null | undefined): string {

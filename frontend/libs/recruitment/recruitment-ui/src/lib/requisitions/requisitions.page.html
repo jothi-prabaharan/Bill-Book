@@ -31,41 +31,32 @@
 </div>
 
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Code</th>
-        <th>Openings</th>
-        <th>Type</th>
-        <th>Budget Range</th>
-        <th>Status</th>
-        <th>Workflow</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let req of requisitions()">
-        <td><strong>{{ req.requisitionCode }}</strong></td>
-        <td>{{ req.openings }}</td>
-        <td>{{ req.employmentType }}</td>
-        <td>₹{{ req.minCtc | number }} – ₹{{ req.maxCtc | number }}</td>
-        <td>
-          <span class="badge" [ngClass]="req.approvalStatus.toLowerCase()">
-            {{ req.approvalStatus }}
-          </span>
-        </td>
-        <td>{{ req.currentStepLabel || '—' }}</td>
-        <td>
-          <div style="display: flex; gap: 6px;">
-            <button *ngIf="req.approvalStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-primary" (click)="submit(req.jobRequisitionId)">Submit</button>
-            <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(req.jobRequisitionId)">Approve</button>
-            <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-danger" (click)="reject(req.jobRequisitionId)">Reject</button>
-          </div>
-        </td>
-      </tr>
-      <tr *ngIf="requisitions().length === 0 && !loading()">
-        <td colspan="7" class="empty-state">No job requisitions found.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="requisitionsColumns"
+    [data]="requisitions()"
+    flush
+    emptyText="No job requisitions found."
+  >
+    <ng-template bbCellTemplate="requisitionCode" let-req>
+      <strong>{{ req.requisitionCode }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="minCtc" let-req>
+      ₹{{ req.minCtc | number }} – ₹{{ req.maxCtc | number }}
+    </ng-template>
+    <ng-template bbCellTemplate="approvalStatus" let-req>
+      <span class="badge" [ngClass]="req.approvalStatus.toLowerCase()">
+        {{ req.approvalStatus }}
+      </span>
+    </ng-template>
+    <ng-template bbCellTemplate="currentStepLabel" let-req>
+      {{ req.currentStepLabel || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="col6" let-req>
+      <div style="display: flex; gap: 6px;">
+        <button *ngIf="req.approvalStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-primary" (click)="submit(req.jobRequisitionId)">Submit</button>
+        <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(req.jobRequisitionId)">Approve</button>
+        <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-danger" (click)="reject(req.jobRequisitionId)">Reject</button>
+      </div>
+    </ng-template>
+  </bb-data-grid>
 </div>

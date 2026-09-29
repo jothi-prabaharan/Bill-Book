@@ -7,20 +7,30 @@
   <div *ngIf="data() as d">
     <div *ngFor="let sec of d.sections" class="section">
       <h3>{{ sec.displayName }}</h3>
-      <bb-card-table class="statement" [label]="sec.displayName" flush>
-        <tbody>
-          <tr *ngFor="let acc of sec.accounts">
-            <td>{{ acc.accountCode }} - {{ acc.accountName }}</td>
-            <td class="num">{{ acc.balance | number:'1.2-2' }}</td>
-          </tr>
-        </tbody>
-        <tfoot>
+      <bb-data-grid
+        class="statement"
+        flush
+        [label]="sec.displayName"
+        [columns]="columns"
+        [data]="sec.accounts"
+        [sortable]="false"
+        [showColumnFilters]="false"
+        [showCount]="false"
+        [paged]="false"
+      >
+        <ng-template bbCellTemplate="accountName" let-acc>
+          {{ acc.accountCode }} - {{ acc.accountName }}
+        </ng-template>
+        <ng-template bbCellTemplate="balance" let-acc>
+          {{ acc.balance | number:'1.2-2' }}
+        </ng-template>
+        <ng-template bbGridFooter>
           <tr>
             <th scope="row">Total {{ sec.displayName }}</th>
-            <th class="num">{{ sec.totalBalance | number:'1.2-2' }}</th>
+            <th class="numeric">{{ sec.totalBalance | number:'1.2-2' }}</th>
           </tr>
-        </tfoot>
-      </bb-card-table>
+        </ng-template>
+      </bb-data-grid>
     </div>
 
     <div class="summary">

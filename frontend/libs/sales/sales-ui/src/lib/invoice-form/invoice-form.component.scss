@@ -160,32 +160,6 @@
   font-size: 15px;
 }
 
-/* On the bb-card-table host: the component owns the <table>, and these reach
-   the projected rows because they are this template's own. */
-.inv-form__gl-table {
-  font-size: 13px;
-
-  th,
-  td {
-    padding: var(--space-1) var(--space-2);
-    text-align: left;
-    border-bottom: 1px solid var(--color-divider);
-  }
-
-  thead th {
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    color: color-mix(in srgb, var(--color-text) 70%, transparent);
-  }
-
-  tfoot th,
-  tfoot td {
-    border-bottom: 0;
-    border-top: 1px solid var(--color-divider);
-    font-weight: 600;
-  }
-}
-
 .inv-form__num {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -198,9 +172,6 @@
     padding: var(--space-2) var(--space-3);
   }
 
-  .inv-form__gl-table {
-    min-width: 20rem;
-  }
 }
 
 /* The customer picker: a button that reads like the inputs beside it (TK-15). */

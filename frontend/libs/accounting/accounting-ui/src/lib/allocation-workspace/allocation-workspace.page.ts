@@ -11,7 +11,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridRowClass,
   DateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
@@ -77,7 +80,8 @@ interface Applied extends OpenDocument {
     DateInputComponent,
     MoneyInputComponent,
     MessageBoxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './allocation-workspace.page.html',
   styleUrl: './allocation-workspace.page.scss',
@@ -364,6 +368,23 @@ export class AllocationWorkspacePage implements OnInit {
     }
 
     return after >= row.totalAmount - 0.005 ? 'Paid' : 'PartiallyPaid';
+  }
+
+  protected readonly sourceColumns = this.sideColumns('Unallocated');
+  protected readonly targetColumns = this.sideColumns('Outstanding');
+
+  /** A row keyed past what its document can take. The message box above says why. */
+  protected readonly overRow: DataGridRowClass = (row: Applied) => (this.isOver(row) ? 'row--danger' : null);
+
+  private sideColumns(remaining: string): ColumnDef[] {
+    return [
+      { field: 'documentNo', header: 'Document' },
+      { field: 'totalAmount', header: 'Total', numeric: true },
+      { field: 'unallocatedAmount', header: remaining, numeric: true },
+      { field: 'apply', header: 'Apply', numeric: true, width: '9rem' },
+      { field: 'after', header: 'After' },
+      { field: 'actions', header: '' },
+    ];
   }
 
   protected isOver(row: Applied): boolean {

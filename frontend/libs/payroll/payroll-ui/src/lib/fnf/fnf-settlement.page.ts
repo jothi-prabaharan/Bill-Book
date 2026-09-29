@@ -3,7 +3,10 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { PayrollApiService } from '@bill-book/payroll-core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridFooterDirective,
   MessageBoxComponent,
   NumberInputComponent,
   TextInputComponent,
@@ -21,12 +24,21 @@ import {
     NumberInputComponent,
     TextInputComponent,
     MessageBoxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    DataGridFooterDirective,
   ],
   templateUrl: './fnf-settlement.page.html',
   styleUrl: '../payroll-page.scss',
 })
 export class FnfSettlementPage implements OnInit {
+  protected readonly linesColumns: ColumnDef[] = [
+    { field: 'kind', header: 'Component / Item' },
+    { field: 'isDeduction', header: 'Type' },
+    { field: 'remarks', header: 'Remarks' },
+    { field: 'col3', header: 'Amount (₹)', numeric: true, sortable: false, filterable: false },
+  ];
+
   private readonly api = inject(PayrollApiService);
 
   protected readonly messages = signal<UiMessage[]>([]);

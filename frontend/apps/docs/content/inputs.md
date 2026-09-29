@@ -1,7 +1,7 @@
 # Common components
 
-Every field in Bill-Book is one of twenty common inputs, every table is one of
-two common tables, and every page-level message is one message box. They live in
+Every field in Bill-Book is one of twenty common inputs, every table is the one
+table component, and every page-level message is one message box. They live in
 `libs/shared/ui-components` and are exported from `@bill-book/ui-components`.
 
 A module should never write its own version of one of these. The point is not
@@ -20,7 +20,7 @@ fails, so `npm run check` and CI fail with it.
 
 | Written by hand | Use instead |
 |---|---|
-| `<table>` | `bb-data-grid` for a list of records; `bb-card-table` for a table the page composes itself |
+| `<table>` | `bb-data-grid` — the one table; see below |
 | `<select>` | `bb-select` |
 | `<textarea>` | `bb-textarea`, or `bb-rich-text-input` for formatted text |
 | `<input>` (anything but `type="hidden"`) | the `bb-*-input` for what the field means — see the table below |
@@ -29,20 +29,73 @@ fails, so `npm run check` and CI fail with it.
 It is `no-restricted-syntax` in `eslint.config.mjs`, run against every template,
 including inline ones. The error names the component to use and points here.
 
-### Choosing the table
+### The one table
 
-- **`bb-data-grid`** — a list of records someone browses. Give it a `gridCode`
-  and a `ColumnDef[]`; it sorts, pages, remembers column choices per grid, and
-  takes a `bbCellTemplate` for any cell that needs markup (a badge, a button).
-- **`bb-card-table`** — a table the grid cannot draw: a totals footer (a posting
-  preview, a statement section and its subtotal), rows with a state of their own
-  (short of stock, over-allocated), or rows of editable controls. The page
-  projects `<thead>`, `<tbody>` and `<tfoot>`; the component owns the `<table>`
-  and its scrolling frame. `flush` drops the card border for a table already
-  inside a card, panel or drawer; `label` names it for a screen reader.
+**`bb-data-grid` draws every table in the product.** There was briefly a second
+general table, `bb-card-table` — a bare `<table>` shell the page filled by hand —
+and `bb-allocation-grid` drew a third of its own. Both are gone: two tables
+meant two looks, two sets of phone behaviour and two places to fix every bug.
 
-  Put the page's class on `<bb-card-table class="…">`, not on a `<table>` — the
-  cells are still the page's own template, so its scoped styles reach them.
+A list of records someone browses takes the defaults — sorting, a filter per
+column, a row count and paging:
+
+```html
+<bb-data-grid gridCode="EMPLOYEES" [columns]="columns" [data]="employees()">
+  <ng-template bbCellTemplate="status" let-row>
+    <span class="badge">{{ row.status }}</span>
+  </ng-template>
+</bb-data-grid>
+```
+
+A table the page composes itself — a posting preview, a statement section, a
+row of editable amounts — turns the list features off and uses what a list
+never needs:
+
+```html
+<bb-data-grid
+  flush
+  label="Posting preview"
+  [columns]="legColumns"
+  [data]="preview.legs"
+  [rowClass]="unbalancedRow"
+  [sortable]="false"
+  [showColumnFilters]="false"
+  [showCount]="false"
+  [paged]="false"
+>
+  <ng-template bbCellTemplate="debit" let-leg let-i="index">…</ng-template>
+  <ng-template bbGridFooter>
+    <tr><th scope="row">Total</th><td class="numeric">{{ debit }}</td></tr>
+  </ng-template>
+</bb-data-grid>
+```
+
+| Input / template | What it is for |
+|---|---|
+| `columns: ColumnDef[]` | `field`, `header`, `numeric`, `width`; `sortable: false` and `filterable: false` for an actions column. An empty `header` stays empty |
+| `bbCellTemplate="field"` | Any cell with markup — a badge, a link, a button, an input. The context gives `let-row`, `let-i="index"` and `let-col="column"` |
+| `bbGridFooter` | `<tr>` rows drawn in the table's `<tfoot>`: totals, subtotals |
+| `rowClass` | A function from the row to its state: `row--danger`, `row--warning`, `row--success`, `row--muted`, `row--group` (a heading inside the rows), `row--subtotal` |
+| `sortable` · `showColumnFilters` · `showCount` · `paged` | The list features; all on by default |
+| `flush` | No border of its own, for a table already inside a card, panel or drawer |
+| `stackOnPhone` | Below 640px, one labelled card per row — each cell carries its column's name |
+| `label` | The table's accessible name when no heading beside it gives one |
+| `emptyText` / `#emptyTemplate` | What an empty table says |
+| `(rowClick)` | Rows only look clickable when this is bound |
+
+**Style a cell's contents, not the table.** The rows and cells are the grid's
+own elements, so a page's scoped styles on `th`, `td` or `tr` do not reach them
+— which is the point: a table looks the same everywhere. What a page may style
+is what it puts inside a cell template, and the grid's host (its width, margin).
+Row states come from the shared classes above, not from page CSS.
+
+**Two other components draw a `<table>`, and are not tables in this sense.**
+`bb-report-grid` is the report engine — server-side paging, frozen columns,
+group subtotals computed on the server — and `bb-document-line-grid` is the
+invoice and bill line editor. The lint rule applies inside the shared library
+too: those two, the grid itself and the date picker's calendar are the only
+files allowed a `<table>`, so a new shared component cannot quietly become a
+second table.
 
 ### Choosing how the message box is filled
 
@@ -81,7 +134,8 @@ decision to defend in review. The current list:
 
 | File | May use | Why |
 |---|---|---|
-| `ui-components/src/lib/**` | everything | These are the components. Something has to be the `<table>`. |
+| `ui-components/src/lib/**` | `<input>`, `<select>`, `<textarea>`, banners | These are the components. Something has to be the element. **Not `<table>`** — see the next row. |
+| `data-grid`, `report-grid`, `document-line-grid`, `branch-date-input` (in `ui-components`) | `<table>` | The one table, the report engine, the line editor, and a calendar month. No other file may draw a table. |
 | `invoice-print.page.html` | `<table>` | A printed tax invoice. Paged media wants a bare table that breaks across sheets. |
 | `shell-nav.component.html` | `<input type="checkbox">` | The mobile nav drawer is a CSS-only toggle, not a form field. |
 | `statement-upload-form.component.html` | `<input type="file">` | A drag-and-drop zone; `bb-file-input` has no drag-and-drop. |
@@ -89,7 +143,7 @@ decision to defend in review. The current list:
 | `contacts.page.html`, `items.page.html`, `unit-types.page.html` | `<input type="radio">` | One radio per row marking "this one is the default" — not the shape of `bb-radio-group`. Any *other* raw input in these files is still an error. |
 
 **When the rule catches something no component fits**, the answer is to extend
-the component — that is how `bb-card-table` gained `flush`, `bb-message-box`
+the component — that is how `bb-data-grid` gained footers, row states and a phone layout, `bb-message-box`
 gained projected content and `bb-text-input` gained `inputmode` — or to add an
 exemption with its reason. It is never a lookalike such as
 `<div role="table">`, which dodges the selector and keeps every problem the rule
@@ -458,7 +512,7 @@ fell from 133 to 13.
 | **Auth** | Sign-in, sign-up (all three steps), forgot-password and accept-invitation |
 | **Admin** | Customer creation |
 
-### The 13 direct inputs that remain, and why
+### The direct inputs that remain, and why
 
 These are now enforced rather than listed: the ones in feature code are exactly
 the exemptions in `eslint.config.mjs` above, and the rest are inside the
@@ -483,10 +537,6 @@ parameter fields on a report — both since moved onto `bb-text-input` and
   element.
 - **`bb-currency-input`** is deprecated in favour of `bb-money-input` and has no
   callers left; it keeps its own markup until it is deleted.
-- **`bb-allocation-grid`'s amount cell** is a grid cell sized to its column and
-  formatted from the `formats` it is passed. Folding it into `bb-money-input`
-  would mean the grid rendering two formatting paths at once — the exact defect
-  that component's own history records.
 
 ### Not built, because nothing needs one
 

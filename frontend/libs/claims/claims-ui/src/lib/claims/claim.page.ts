@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -23,16 +25,25 @@ import {
     CommonModule,
     FormsModule,
     RouterLink,
-    CardTableComponent,
     NumberInputComponent,
     SelectComponent,
     TextInputComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './claim.page.html',
   styleUrl: '../claims-page.scss',
 })
 export class ClaimDetailPage implements OnInit {
+  protected readonly linesColumns: ColumnDef[] = [
+    { field: 'expenseDate', header: 'Date' },
+    { field: 'categoryName', header: 'Category' },
+    { field: 'description', header: 'Description' },
+    { field: 'amount', header: 'Amount', numeric: true },
+    { field: 'receiptAttachmentKey', header: 'Receipt' },
+  ];
+
   protected readonly payoutModeOptions = [
     { value: 'Direct', label: 'Direct Spend Money' },
     { value: 'Payroll', label: 'Attach to Payroll Run' },

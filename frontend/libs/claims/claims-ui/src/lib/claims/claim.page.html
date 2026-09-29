@@ -54,34 +54,29 @@
   <div class="sheet">
     <h3>Expense Lines</h3>
     <div class="table-container">
-      <bb-card-table flush>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Category</th>
-            <th>Description</th>
-            <th>Amount</th>
-            <th>Receipt</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (line of c.lines; track line.expenseClaimLineId) {
-            <tr>
-              <td>{{ line.expenseDate }}</td>
-              <td><strong>{{ line.categoryName }} ({{ line.categoryCode }})</strong></td>
-              <td>{{ line.description }}</td>
-              <td>{{ line.amount | currency:'INR' }}</td>
-              <td>
-                @if (line.receiptAttachmentKey) {
-                  <span style="color: var(--color-primary); font-size: 0.75rem;">Attachment: {{ line.receiptAttachmentKey }}</span>
-                } @else {
-                  <span style="color: var(--color-text-muted); font-size: 0.75rem;">No Receipt</span>
-                }
-              </td>
-            </tr>
+      <bb-data-grid
+        [columns]="linesColumns"
+        [data]="c.lines"
+        flush
+        [sortable]="false"
+        [showColumnFilters]="false"
+        [showCount]="false"
+        [paged]="false"
+      >
+        <ng-template bbCellTemplate="categoryName" let-line>
+          <strong>{{ line.categoryName }} ({{ line.categoryCode }})</strong>
+        </ng-template>
+        <ng-template bbCellTemplate="amount" let-line>
+          {{ line.amount | currency:'INR' }}
+        </ng-template>
+        <ng-template bbCellTemplate="receiptAttachmentKey" let-line>
+          @if (line.receiptAttachmentKey) {
+            <span style="color: var(--color-primary); font-size: 0.75rem;">Attachment: {{ line.receiptAttachmentKey }}</span>
+          } @else {
+            <span style="color: var(--color-text-muted); font-size: 0.75rem;">No Receipt</span>
           }
-        </tbody>
-      </bb-card-table>
+        </ng-template>
+      </bb-data-grid>
     </div>
   </div>
 

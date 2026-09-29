@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   NumberInputComponent,
@@ -21,17 +23,28 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     MoneyInputComponent,
     NumberInputComponent,
     SelectComponent,
     TextareaComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './requisitions.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class RequisitionsPage implements OnInit {
+  protected readonly requisitionsColumns: ColumnDef[] = [
+    { field: 'requisitionCode', header: 'Code' },
+    { field: 'openings', header: 'Openings' },
+    { field: 'employmentType', header: 'Type' },
+    { field: 'minCtc', header: 'Budget Range', numeric: true },
+    { field: 'approvalStatus', header: 'Status' },
+    { field: 'currentStepLabel', header: 'Workflow' },
+    { field: 'col6', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly employmentTypeOptions = [
     { value: 'Permanent', label: 'Permanent' },
     { value: 'Probation', label: 'Probation' },

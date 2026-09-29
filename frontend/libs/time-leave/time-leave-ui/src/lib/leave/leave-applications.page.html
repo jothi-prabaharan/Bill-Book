@@ -49,45 +49,25 @@
 
   <!-- Applications Table -->
   <div class="table-container">
-    <bb-card-table flush>
-      <thead>
-        <tr>
-          <th>Leave Type</th>
-          <th>From</th>
-          <th>To</th>
-          <th>Days</th>
-          <th>Reason</th>
-          <th>Status</th>
-          <th>Approval Step</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (app of applications(); track app.leaveApplicationId) {
-          <tr>
-            <td>{{ app.leaveTypeName }}</td>
-            <td>{{ app.fromDate }}</td>
-            <td>{{ app.toDate }}</td>
-            <td>{{ app.days }}</td>
-            <td>{{ app.reason }}</td>
-            <td>
-              <span class="badge" [ngClass]="'status-' + app.leaveStatus.toLowerCase()">
-                {{ app.leaveStatus }}
-              </span>
-            </td>
-            <td>{{ app.currentStepLabel || '-' }}</td>
-            <td>
-              @if (app.leaveStatus === 'Submitted') {
-                <button class="btn btn-sm btn-primary" (click)="approve(app)">Approve</button>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="8">No leave applications found.</td>
-          </tr>
+    <bb-data-grid
+      [columns]="applicationsColumns"
+      [data]="applications()"
+      flush
+      emptyText="No leave applications found."
+    >
+      <ng-template bbCellTemplate="leaveStatus" let-app>
+        <span class="badge" [ngClass]="'status-' + app.leaveStatus.toLowerCase()">
+          {{ app.leaveStatus }}
+        </span>
+      </ng-template>
+      <ng-template bbCellTemplate="currentStepLabel" let-app>
+        {{ app.currentStepLabel || '-' }}
+      </ng-template>
+      <ng-template bbCellTemplate="col7" let-app>
+        @if (app.leaveStatus === 'Submitted') {
+          <button class="btn btn-sm btn-primary" (click)="approve(app)">Approve</button>
         }
-      </tbody>
-    </bb-card-table>
+      </ng-template>
+    </bb-data-grid>
   </div>
 }

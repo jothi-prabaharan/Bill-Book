@@ -11,7 +11,9 @@ import {
 } from '@bill-book/employee-core';
 import {
   BbSelectOption,
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   SelectComponent,
   TextInputComponent,
@@ -29,12 +31,19 @@ type ProfileTab = 'overview' | 'contact' | 'documents' | 'announcements';
     TextInputComponent,
     SelectComponent,
     MessageBoxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './my-profile.page.html',
   styleUrl: '../employee-page.scss',
 })
 export class MyProfilePage implements OnInit {
+  protected readonly documentsColumns: ColumnDef[] = [
+    { field: 'documentKind', header: 'Document Type' },
+    { field: 'attachmentKey', header: 'Attachment Key' },
+    { field: 'validUntil', header: 'Valid Until' },
+  ];
+
   private readonly api = inject(EmployeeApiService);
 
   protected readonly activeTab = signal<ProfileTab>('overview');

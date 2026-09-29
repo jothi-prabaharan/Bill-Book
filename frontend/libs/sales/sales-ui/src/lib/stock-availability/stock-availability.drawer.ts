@@ -1,7 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { StockAvailability } from '@bill-book/sales-core';
-import { CardTableComponent, MessageBoxComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DataGridRowClass,
+  MessageBoxComponent,
+} from '@bill-book/ui-components';
 
 /**
  * What the items on this document have, hold, and can still promise.
@@ -21,7 +27,12 @@ import { CardTableComponent, MessageBoxComponent } from '@bill-book/ui-component
 @Component({
   selector: 'bb-stock-availability-drawer',
   standalone: true,
-  imports: [CommonModule, CardTableComponent, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+  ],
   templateUrl: './stock-availability.drawer.html',
   styleUrl: './stock-availability.drawer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +55,18 @@ export class StockAvailabilityDrawerComponent {
   );
 
   /** Short by how much, or zero. Drives both the row's tone and the summary. */
+  protected readonly columns: ColumnDef[] = [
+    { field: 'itemLabel', header: 'Item' },
+    { field: 'wanted', header: 'Ordered', numeric: true },
+    { field: 'quantityOnHand', header: 'On hand', numeric: true },
+    { field: 'quantityReserved', header: 'Reserved', numeric: true },
+    { field: 'quantityAvailable', header: 'Available', numeric: true },
+  ];
+
+  /** A line the branch cannot cover is drawn in the danger tone. */
+  protected readonly shortRow: DataGridRowClass = (row: StockAvailability) =>
+    this.shortfall(row) > 0 ? 'row--danger' : null;
+
   protected shortfall(row: StockAvailability): number {
     const want = this.wanted().get(row.itemId) ?? 0;
     return Math.max(0, want - row.quantityAvailable);

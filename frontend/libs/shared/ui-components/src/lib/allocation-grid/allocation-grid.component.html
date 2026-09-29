@@ -10,39 +10,34 @@
     <button class="secondary" (click)="autoAllocate()" [disabled]="amountToAllocate <= 0 || rows.length === 0">Auto Allocate</button>
   </div>
 
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Document No</th>
-        <th>Date</th>
-        <th>Due Date</th>
-        <th class="number-cell">Total Amount</th>
-        <th class="number-cell">Outstanding</th>
-        <th class="number-cell">Allocate</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngIf="rows.length === 0">
-        <td colspan="6" class="empty-state">No outstanding documents found.</td>
-      </tr>
-      <tr *ngFor="let row of rows; let i = index" [class.fully-allocated]="row.outstandingAmount === row.allocatedAmount">
-        <td>{{ row.documentNo }}</td>
-        <td>{{ date(row.documentDate) }}</td>
-        <td>{{ date(row.dueDate) }}</td>
-        <td class="number-cell">{{ money(row.totalAmount) }}</td>
-        <td class="number-cell">{{ money(row.outstandingAmount) }}</td>
-        <td class="number-cell">
-          <input 
-            type="number" 
-            [ngModel]="row.allocatedAmount" 
-            (ngModelChange)="onAllocateChange(i, $event)"
-            [max]="row.outstandingAmount"
-            min="0"
-            step="0.01"
-            class="amount-input"
-          />
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <bb-data-grid
+    flush
+    label="Documents to allocate against"
+    [columns]="columns"
+    [data]="rows"
+    [rowClass]="rowClass"
+    [sortable]="false"
+    [showColumnFilters]="false"
+    [showCount]="false"
+    [paged]="false"
+    emptyText="No outstanding documents found."
+  >
+    <ng-template bbCellTemplate="documentDate" let-row>{{ date(row.documentDate) }}</ng-template>
+    <ng-template bbCellTemplate="dueDate" let-row>{{ date(row.dueDate) }}</ng-template>
+    <ng-template bbCellTemplate="totalAmount" let-row>{{ money(row.totalAmount) }}</ng-template>
+    <ng-template bbCellTemplate="outstandingAmount" let-row>{{ money(row.outstandingAmount) }}</ng-template>
+    <ng-template bbCellTemplate="allocatedAmount" let-row let-i="index">
+      <bb-money-input
+        class="amount-input"
+        align="right"
+        [formats]="formats"
+        [min]="0"
+        [max]="row.outstandingAmount"
+        [ariaLabel]="'Allocate to ' + row.documentNo"
+        [ngModel]="row.allocatedAmount"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onAllocateChange(i, $event ?? 0)"
+      />
+    </ng-template>
+  </bb-data-grid>
 </div>

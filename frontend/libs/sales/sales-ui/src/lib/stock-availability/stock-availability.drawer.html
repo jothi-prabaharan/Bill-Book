@@ -32,34 +32,38 @@
         </bb-message-box>
       }
 
-      <bb-card-table class="sad__table" label="Stock by item" flush>
-        <thead>
-          <tr>
-            <th scope="col">Item</th>
-            <th scope="col" class="sad__num">Ordered</th>
-            <th scope="col" class="sad__num">On hand</th>
-            <th scope="col" class="sad__num">Reserved</th>
-            <th scope="col" class="sad__num">Available</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of tracked(); track row.itemId) {
-            <tr [class.sad__row--short]="shortfall(row) > 0">
-              <td>{{ row.itemLabel || 'Item ' + row.itemId }}</td>
-              <td class="sad__num">{{ wantedOf(row) | number: '1.0-3' }}</td>
-              <td class="sad__num">{{ row.quantityOnHand | number: '1.0-3' }}</td>
-              <td class="sad__num">{{ row.quantityReserved | number: '1.0-3' }}</td>
-              <td class="sad__num">
-                {{ row.quantityAvailable | number: '1.0-3' }}
+      <bb-data-grid
+        class="sad__table"
+        label="Stock by item"
+        flush
+        [columns]="columns"
+        [data]="tracked()"
+        [rowClass]="shortRow"
+        [sortable]="false"
+        [showColumnFilters]="false"
+        [showCount]="false"
+        [paged]="false"
+      >
+        <ng-template bbCellTemplate="itemLabel" let-row>
+          {{ row.itemLabel || 'Item ' + row.itemId }}
+        </ng-template>
+        <ng-template bbCellTemplate="wanted" let-row>
+          {{ wantedOf(row) | number: '1.0-3' }}
+        </ng-template>
+        <ng-template bbCellTemplate="quantityOnHand" let-row>
+          {{ row.quantityOnHand | number: '1.0-3' }}
+        </ng-template>
+        <ng-template bbCellTemplate="quantityReserved" let-row>
+          {{ row.quantityReserved | number: '1.0-3' }}
+        </ng-template>
+        <ng-template bbCellTemplate="quantityAvailable" let-row>
+          {{ row.quantityAvailable | number: '1.0-3' }}
 
-                @if (shortfall(row) > 0) {
-                  <span class="badge expired">{{ shortfall(row) | number: '1.0-3' }} short</span>
-                }
-              </td>
-            </tr>
+          @if (shortfall(row) > 0) {
+            <span class="badge expired">{{ shortfall(row) | number: '1.0-3' }} short</span>
           }
-        </tbody>
-      </bb-card-table>
+        </ng-template>
+      </bb-data-grid>
 
       @if (untrackedCount() > 0) {
         <p class="sad__note">

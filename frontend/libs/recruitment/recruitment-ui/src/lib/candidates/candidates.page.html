@@ -67,35 +67,26 @@
 </div>
 
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Current Employer</th>
-        <th>Expected CTC</th>
-        <th>Notice Period</th>
-        <th>Applications</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let c of candidates()">
-        <td><strong>{{ c.fullName }}</strong></td>
-        <td>{{ c.email }}</td>
-        <td>{{ c.phone }}</td>
-        <td>{{ c.currentEmployer || '—' }}</td>
-        <td>{{ c.expectedCtc ? ('₹' + (c.expectedCtc | number)) : '—' }}</td>
-        <td>{{ c.noticePeriodDays ? (c.noticePeriodDays + ' days') : '—' }}</td>
-        <td>{{ c.applicationsCount }}</td>
-        <td>
-          <button type="button" class="btn btn-sm btn-outline-primary" (click)="openApply(c.candidateId)">Apply</button>
-        </td>
-      </tr>
-      <tr *ngIf="candidates().length === 0 && !loading()">
-        <td colspan="8" class="empty-state">No candidates found.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="candidatesColumns"
+    [data]="candidates()"
+    flush
+    emptyText="No candidates found."
+  >
+    <ng-template bbCellTemplate="fullName" let-c>
+      <strong>{{ c.fullName }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="currentEmployer" let-c>
+      {{ c.currentEmployer || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="expectedCtc" let-c>
+      {{ c.expectedCtc ? ('₹' + (c.expectedCtc | number)) : '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="noticePeriodDays" let-c>
+      {{ c.noticePeriodDays ? (c.noticePeriodDays + ' days') : '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="candidateId" let-c>
+      <button type="button" class="btn btn-sm btn-outline-primary" (click)="openApply(c.candidateId)">Apply</button>
+    </ng-template>
+  </bb-data-grid>
 </div>

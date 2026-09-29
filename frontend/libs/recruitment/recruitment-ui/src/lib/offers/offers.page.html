@@ -30,52 +30,39 @@
 </div>
 
 <div class="table-container">
-  <bb-card-table flush>
-    <thead>
-      <tr>
-        <th>Offer #</th>
-        <th>Candidate</th>
-        <th>Job Opening</th>
-        <th>Offered CTC</th>
-        <th>Joining Date</th>
-        <th>Status</th>
-        <th>Employee Created</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let o of offers()">
-        <td><strong>#{{ o.offerId }}</strong></td>
-        <td>{{ o.candidateName }}</td>
-        <td>{{ o.openingTitle }}</td>
-        <td>₹{{ o.offeredCtc | number }}</td>
-        <td>{{ o.joiningDate }}</td>
-        <td>
-          <span class="badge" [ngClass]="o.offerStatus.toLowerCase()">
-            {{ o.offerStatus }}
-          </span>
-        </td>
-        <td>
-          <span *ngIf="o.createdEmployeeId" style="color: #166534; font-weight: 600;">
-            Employee #{{ o.createdEmployeeId }}
-          </span>
-          <span *ngIf="!o.createdEmployeeId" style="color: #64748b;">
-            Not onboarded
-          </span>
-        </td>
-        <td>
-          <div style="display: flex; gap: 6px;">
-            <button *ngIf="o.offerStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(o.offerId)">Approve</button>
-            <button *ngIf="o.offerStatus === 'Approved'" type="button" class="btn btn-sm btn-outline-primary" (click)="send(o.offerId)">Send</button>
-            <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-success" (click)="accept(o.offerId)">Accept & Onboard</button>
-            <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-outline-danger" (click)="decline(o.offerId)">Decline</button>
-            <button *ngIf="o.offerStatus !== 'Accepted' && o.offerStatus !== 'Declined' && o.offerStatus !== 'Revoked'" type="button" class="btn btn-sm btn-outline-secondary" (click)="revoke(o.offerId)">Revoke</button>
-          </div>
-        </td>
-      </tr>
-      <tr *ngIf="offers().length === 0 && !loading()">
-        <td colspan="8" class="empty-state">No offers generated yet.</td>
-      </tr>
-    </tbody>
-  </bb-card-table>
+  <bb-data-grid
+    [columns]="offersColumns"
+    [data]="offers()"
+    flush
+    emptyText="No offers generated yet."
+  >
+    <ng-template bbCellTemplate="offerId" let-o>
+      <strong>#{{ o.offerId }}</strong>
+    </ng-template>
+    <ng-template bbCellTemplate="offeredCtc" let-o>
+      ₹{{ o.offeredCtc | number }}
+    </ng-template>
+    <ng-template bbCellTemplate="offerStatus" let-o>
+      <span class="badge" [ngClass]="o.offerStatus.toLowerCase()">
+        {{ o.offerStatus }}
+      </span>
+    </ng-template>
+    <ng-template bbCellTemplate="createdEmployeeId" let-o>
+      <span *ngIf="o.createdEmployeeId" style="color: #166534; font-weight: 600;">
+        Employee #{{ o.createdEmployeeId }}
+      </span>
+      <span *ngIf="!o.createdEmployeeId" style="color: #64748b;">
+        Not onboarded
+      </span>
+    </ng-template>
+    <ng-template bbCellTemplate="col7" let-o>
+      <div style="display: flex; gap: 6px;">
+        <button *ngIf="o.offerStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(o.offerId)">Approve</button>
+        <button *ngIf="o.offerStatus === 'Approved'" type="button" class="btn btn-sm btn-outline-primary" (click)="send(o.offerId)">Send</button>
+        <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-success" (click)="accept(o.offerId)">Accept & Onboard</button>
+        <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-outline-danger" (click)="decline(o.offerId)">Decline</button>
+        <button *ngIf="o.offerStatus !== 'Accepted' && o.offerStatus !== 'Declined' && o.offerStatus !== 'Revoked'" type="button" class="btn btn-sm btn-outline-secondary" (click)="revoke(o.offerId)">Revoke</button>
+      </div>
+    </ng-template>
+  </bb-data-grid>
 </div>

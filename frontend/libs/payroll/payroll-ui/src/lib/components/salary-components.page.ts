@@ -3,8 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { ComponentKind, PayrollApiService, SalaryComponentView, SalaryValueType, SaveSalaryComponent } from '@bill-book/payroll-core';
 import {
   BbSelectOption,
-  CardTableComponent,
   CheckboxComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   SelectComponent,
   TextInputComponent,
@@ -21,12 +23,22 @@ import {
     SelectComponent,
     CheckboxComponent,
     MessageBoxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './salary-components.page.html',
   styleUrl: '../payroll-page.scss',
 })
 export class SalaryComponentsPage implements OnInit {
+  protected readonly rowsColumns: ColumnDef[] = [
+    { field: 'name', header: 'Name' },
+    { field: 'kind', header: 'Kind' },
+    { field: 'valueType', header: 'Value Type' },
+    { field: 'isTaxable', header: 'Taxable' },
+    { field: 'formula', header: 'Formula' },
+    { field: 'salaryComponentId', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   private readonly api = inject(PayrollApiService);
 
   protected readonly rows = signal<SalaryComponentView[]>([]);

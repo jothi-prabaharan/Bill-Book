@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   DateInputComponent,
   MessageBoxComponent,
   PercentageInputComponent,
@@ -23,17 +25,28 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     DateInputComponent,
     PercentageInputComponent,
     SelectComponent,
     TextInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './cycles.page.html',
   styleUrl: '../performance-page.scss',
 })
 export class CyclesPage implements OnInit {
+  protected readonly cyclesColumns: ColumnDef[] = [
+    { field: 'name', header: 'Cycle Name' },
+    { field: 'periodFrom', header: 'Period' },
+    { field: 'cycleKind', header: 'Kind' },
+    { field: 'ratingScaleName', header: 'Rating Scale' },
+    { field: 'cycleStatus', header: 'Status' },
+    { field: 'goalWeightPercent', header: 'Weights (Goal/Comp)' },
+    { field: 'col6', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly ratingScaleOptions = computed(() =>
     this.ratingScales().map((s) => ({ value: s.ratingScaleId, label: `${s.name}` })),
   );

@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   EmailInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
@@ -23,18 +25,30 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    CardTableComponent,
     MessageBoxComponent,
     EmailInputComponent,
     MoneyInputComponent,
     NumberInputComponent,
     SelectComponent,
     TextInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './candidates.page.html',
   styleUrl: '../recruitment-page.scss',
 })
 export class CandidatesPage implements OnInit {
+  protected readonly candidatesColumns: ColumnDef[] = [
+    { field: 'fullName', header: 'Name' },
+    { field: 'email', header: 'Email' },
+    { field: 'phone', header: 'Phone' },
+    { field: 'currentEmployer', header: 'Current Employer' },
+    { field: 'expectedCtc', header: 'Expected CTC', numeric: true },
+    { field: 'noticePeriodDays', header: 'Notice Period' },
+    { field: 'applicationsCount', header: 'Applications' },
+    { field: 'candidateId', header: 'Actions', sortable: false, filterable: false },
+  ];
+
   protected readonly selectedOpeningOptions = computed(() =>
     this.openings().map((op) => ({ value: op.jobOpeningId, label: `${op.title} (${op.requisitionCode})` })),
   );

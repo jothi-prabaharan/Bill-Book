@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { readApiFailure } from '@bill-book/api-client';
 import { EmployeeApiService, TeamMember, TeamSummary } from '@bill-book/employee-core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   UiMessage,
 } from '@bill-book/ui-components';
@@ -15,12 +17,23 @@ import {
   imports: [
     CommonModule,
     MessageBoxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './team.page.html',
   styleUrl: '../employee-page.scss',
 })
 export class TeamPage implements OnInit {
+  protected readonly membersColumns: ColumnDef[] = [
+    { field: 'fullName', header: 'Employee' },
+    { field: 'designationName', header: 'Department & Role' },
+    { field: 'workLocationName', header: 'Location' },
+    { field: 'level', header: 'Level' },
+    { field: 'workEmail', header: 'Contact' },
+    { field: 'reportsToName', header: 'Reports To' },
+    { field: 'status', header: 'Status' },
+  ];
+
   private readonly api = inject(EmployeeApiService);
 
   protected readonly summary = signal<TeamSummary | null>(null);

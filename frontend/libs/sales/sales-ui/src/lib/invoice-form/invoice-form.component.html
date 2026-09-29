@@ -100,35 +100,30 @@
     <div class="inv-form__gl">
       <h2 class="inv-form__gl-title">What posting will write to the ledger</h2>
 
-      <bb-card-table class="inv-form__gl-table" flush>
-        <thead>
-          <tr>
-            <th scope="col">Account</th>
-            <th scope="col" class="inv-form__num">Debit</th>
-            <th scope="col" class="inv-form__num">Credit</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (leg of preview.legs; track $index) {
-            <tr>
-              <td>{{ leg.accountSystemName }}</td>
-              <td class="inv-form__num">
-                {{ leg.debitAmount ? (leg.debitAmount | number: '1.2-2') : '' }}
-              </td>
-              <td class="inv-form__num">
-                {{ leg.creditAmount ? (leg.creditAmount | number: '1.2-2') : '' }}
-              </td>
-            </tr>
-          }
-        </tbody>
-        <tfoot>
+      <bb-data-grid
+        class="inv-form__gl-table"
+        [columns]="legsColumns"
+        [data]="preview.legs"
+        flush
+        [sortable]="false"
+        [showColumnFilters]="false"
+        [showCount]="false"
+        [paged]="false"
+      >
+        <ng-template bbCellTemplate="debitAmount" let-leg>
+          {{ leg.debitAmount ? (leg.debitAmount | number: '1.2-2') : '' }}
+        </ng-template>
+        <ng-template bbCellTemplate="creditAmount" let-leg>
+          {{ leg.creditAmount ? (leg.creditAmount | number: '1.2-2') : '' }}
+        </ng-template>
+        <ng-template bbGridFooter>
           <tr>
             <th scope="row">Total</th>
             <td class="inv-form__num">{{ preview.totalDebit | number: '1.2-2' }}</td>
             <td class="inv-form__num">{{ preview.totalCredit | number: '1.2-2' }}</td>
           </tr>
-        </tfoot>
-      </bb-card-table>
+        </ng-template>
+      </bb-data-grid>
 
       @if (!preview.isBalanced) {
         <bb-message-box tone="error">

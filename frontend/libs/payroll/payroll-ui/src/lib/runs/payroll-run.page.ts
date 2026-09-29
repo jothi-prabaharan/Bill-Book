@@ -3,7 +3,9 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PayrollApiService, PayrollRunView, PayslipView } from '@bill-book/payroll-core';
 import {
-  CardTableComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
   MessageBoxComponent,
   UiMessage,
 } from '@bill-book/ui-components';
@@ -16,12 +18,22 @@ import {
     CommonModule,
     RouterModule,
     MessageBoxComponent,
-    CardTableComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
   ],
   templateUrl: './payroll-run.page.html',
   styleUrl: '../payroll-page.scss',
 })
 export class PayrollRunPage implements OnInit {
+  protected readonly payslipsColumns: ColumnDef[] = [
+    { field: 'employeeId', header: 'Employee ID' },
+    { field: 'paidDays', header: 'Paid Days' },
+    { field: 'grossEarnings', header: 'Gross Earnings', numeric: true },
+    { field: 'grossDeductions', header: 'Gross Deductions', numeric: true },
+    { field: 'netPay', header: 'Net Pay', numeric: true },
+    { field: 'lines', header: 'Lines', numeric: true },
+  ];
+
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(PayrollApiService);
 

@@ -43,7 +43,6 @@
           </div>
       <button type="button" (click)="save()" [disabled]="busy() || !dirty()">Save</button>
       <bb-file-input
-            class="file"
             accept=".csv,.xlsx"
             buttonText="Import CSV or XLSX"
             ariaLabel="Budget file to import"
@@ -57,91 +56,87 @@
 
   <!-- Wide screens: accounts down, twelve months across. -->
   <div class="grid-wrap wide">
-    <bb-card-table class="grid" flush>
-      <thead>
-        <tr>
-          <th scope="col" class="account">Account</th>
-          @for (label of labels(); track $index) {
-            <th scope="col" class="num">{{ label }}</th>
-          }
-          <th scope="col" class="num">Year</th>
-          @if (editable()) {
-            <th scope="col"><span class="sr-only">Remove</span></th>
-          }
-        </tr>
-      </thead>
-      @for (section of sections(); track section.label) {
-        <tbody>
-          <tr class="section">
-            <th scope="rowgroup" [attr.colspan]="editable() ? 15 : 14">{{ section.label }}</th>
-          </tr>
-          @for (item of section.rows; track item.row.key) {
-            <tr>
-              <th scope="row" class="account">
-                {{ item.row.accountCode }} · {{ item.row.accountName }}
-                @if (item.row.projectCode) {
-                  <span class="muted">· {{ item.row.projectCode }}</span>
-                }
-              </th>
-              @for (amount of item.row.amounts; track $index; let m = $index) {
-                <td class="num">
-                  @if (editable()) {
-                    <bb-money-input
-                          [ariaLabel]="item.row.accountName + ' ' + labels()[m]"
-                          [ngModel]="amount || null"
-                          [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
-                          (ngModelChange)="setCell(item.index, m, $event)"
-                        />
-                  } @else {
-                    {{ amount ? amountText(amount) : '' }}
-                  }
-                </td>
-              }
-              <td class="num strong">
-                @if (editable()) {
-                  <bb-money-input
-                        class="total"
-                        [ariaLabel]="item.row.accountName + ' year total'"
-                        [ngModel]="rowTotalOf(item.row) || null"
-                        [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
-                        (ngModelChange)="setTotal(item.index, $event)"
-                      />
-                } @else {
-                  {{ amountText(rowTotalOf(item.row)) }}
-                }
-              </td>
-              @if (editable()) {
-                <td>
-                  <button type="button" class="link" (click)="removeLine(item.index)" [attr.aria-label]="'Remove ' + item.row.accountName">×</button>
-                </td>
-              }
-            </tr>
-          }
-          <tr class="subtotal">
-            <th scope="row">{{ section.label }} total</th>
-            @for (value of section.months; track $index) {
-              <td class="num">{{ amountText(value) }}</td>
+    <bb-data-grid
+      class="grid"
+      flush
+      label="Budget by account and month"
+      [columns]="gridColumns()"
+      [data]="gridRows()"
+      [rowClass]="gridRowClass"
+      [sortable]="false"
+      [showColumnFilters]="false"
+      [showCount]="false"
+      [paged]="false"
+    >
+      <ng-template bbCellTemplate="account" let-line>
+        @switch (line.kind) {
+          @case ('line') {
+            {{ line.item.row.accountCode }} · {{ line.item.row.accountName }}
+            @if (line.item.row.projectCode) {
+              <span class="muted">· {{ line.item.row.projectCode }}</span>
             }
-            <td class="num strong">{{ amountText(section.total) }}</td>
+          }
+          @case ('subtotal') {
+            {{ line.label }} total
+          }
+          @default {
+            {{ line.label }}
+          }
+        }
+      </ng-template>
+      @for (label of labels(); track $index; let m = $index) {
+        <ng-template [bbCellTemplate]="'month' + m" let-line>
+          @if (line.kind === 'line') {
             @if (editable()) {
-              <td></td>
+              <bb-money-input
+                [ariaLabel]="line.item.row.accountName + ' ' + label"
+                [ngModel]="line.item.row.amounts[m] || null"
+                [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+                (ngModelChange)="setCell(line.item.index, m, $event)"
+              />
+            } @else {
+              {{ line.item.row.amounts[m] ? amountText(line.item.row.amounts[m]) : '' }}
             }
-          </tr>
-        </tbody>
+          } @else if (line.kind === 'subtotal') {
+            {{ amountText(line.months[m]) }}
+          }
+        </ng-template>
       }
-      <tfoot>
+      <ng-template bbCellTemplate="year" let-line>
+        @if (line.kind === 'line') {
+          @if (editable()) {
+            <bb-money-input
+              class="total"
+              [ariaLabel]="line.item.row.accountName + ' year total'"
+              [ngModel]="rowTotalOf(line.item.row) || null"
+              [ngModelOptions]="{ standalone: true, updateOn: 'blur' }"
+              (ngModelChange)="setTotal(line.item.index, $event)"
+            />
+          } @else {
+            <span class="strong">{{ amountText(rowTotalOf(line.item.row)) }}</span>
+          }
+        } @else if (line.kind === 'subtotal') {
+          <span class="strong">{{ amountText(line.total) }}</span>
+        }
+      </ng-template>
+      <ng-template bbCellTemplate="remove" let-line>
+        @if (line.kind === 'line') {
+          <button type="button" class="link" (click)="removeLine(line.item.index)" [attr.aria-label]="'Remove ' + line.item.row.accountName">×</button>
+        }
+      </ng-template>
+      <ng-template bbGridFooter>
         <tr>
           <th scope="row">Budgeted profit</th>
           @for (value of profit().months; track $index) {
-            <td class="num">{{ amountText(value) }}</td>
+            <td class="numeric">{{ amountText(value) }}</td>
           }
-          <td class="num strong">{{ amountText(profit().total) }}</td>
+          <td class="numeric">{{ amountText(profit().total) }}</td>
           @if (editable()) {
             <td></td>
           }
         </tr>
-      </tfoot>
-    </bb-card-table>
+      </ng-template>
+    </bb-data-grid>
   </div>
 
   <!-- Phones: one month at a time. -->

@@ -36,18 +36,22 @@
     @for (exam of exams(); track exam.examId) {
       <article class="exam">
         <h3>{{ exam.examName }} <span class="muted">· {{ exam.academicYearCode }}</span></h3>
-        <bb-card-table flush>
-          <thead><tr><th scope="col">Subject</th><th scope="col">Marks</th><th scope="col">Result</th></tr></thead>
-          <tbody>
-            @for (s of exam.subjects; track s.subjectName) {
-              <tr>
-                <td>{{ s.subjectName }}</td>
-                <td>{{ s.isAbsent ? 'Absent' : (s.marks ?? '—') }} / {{ s.maxMarks }}</td>
-                <td>{{ s.isAbsent ? '—' : (s.passed ? 'Pass' : 'Below pass (' + s.passMarks + ')') }}</td>
-              </tr>
-            }
-          </tbody>
-        </bb-card-table>
+        <bb-data-grid
+          [columns]="subjectsColumns"
+          [data]="exam.subjects"
+          flush
+          [sortable]="false"
+          [showColumnFilters]="false"
+          [showCount]="false"
+          [paged]="false"
+        >
+          <ng-template bbCellTemplate="isAbsent" let-s>
+            {{ s.isAbsent ? 'Absent' : (s.marks ?? '—') }} / {{ s.maxMarks }}
+          </ng-template>
+          <ng-template bbCellTemplate="col2" let-s>
+            {{ s.isAbsent ? '—' : (s.passed ? 'Pass' : 'Below pass (' + s.passMarks + ')') }}
+          </ng-template>
+        </bb-data-grid>
       </article>
     } @empty {
       <p class="muted">No results published yet.</p>

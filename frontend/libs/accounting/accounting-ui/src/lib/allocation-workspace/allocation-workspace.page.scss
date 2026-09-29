@@ -90,40 +90,9 @@
   margin: 0 0 var(--space-compact-2, 7px);
 }
 
-/* `.grid` is on the bb-card-table host, which owns the <table>; the rows are
-   this template's own, so the selectors below still reach them. */
-.grid th,
-.grid td {
-  text-align: left;
-  padding: var(--space-compact-1, 3px) var(--space-compact-2, 7px);
-  border-bottom: 1px solid var(--color-divider, rgba(32, 31, 29, 0.16));
-  vertical-align: middle;
-}
-
-.grid th {
-  font-size: 0.74rem;
-  color: var(--color-neutral-600, #7d7979);
-  font-weight: 600;
-}
-
 .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
-}
-
-.apply-cell {
-  width: 9rem;
-}
-
-/* A row keyed past what the document can take. The message box above carries
-   the rule; this only says which row it is about. */
-.grid tr.over td {
-  background: var(--color-danger-bg, #fbe4e0);
-}
-
-.grid tr.over .apply-cell :is(input, bb-money-input) {
-  border-color: var(--color-danger, #a2332a);
-  outline-color: var(--color-danger, #a2332a);
 }
 
 /* ---- Status pills -------------------------------------------------------- */
@@ -231,34 +200,6 @@ button.primary {
     align-items: stretch;
   }
 
-  .grid thead {
-    display: none;
-  }
-
-  .grid tr {
-    display: block;
-    padding: var(--space-compact-2, 7px) 0;
-    border-bottom: 1px solid var(--color-divider, rgba(32, 31, 29, 0.16));
-  }
-
-  .grid td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-3, 13.8px);
-    border: 0;
-    padding: var(--space-compact-1, 3px) var(--space-compact-2, 7px);
-  }
-
-  .grid td::before {
-    content: attr(data-label);
-    color: var(--color-neutral-500, #9b9797);
-    font-size: 0.72rem;
-  }
-
-  .apply-cell {
-    width: auto;
-  }
 
   .actions button {
     flex: 1 1 auto;
