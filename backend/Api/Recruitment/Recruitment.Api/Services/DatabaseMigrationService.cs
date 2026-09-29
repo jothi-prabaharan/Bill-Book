@@ -1,3 +1,5 @@
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Recruitment.Repository;

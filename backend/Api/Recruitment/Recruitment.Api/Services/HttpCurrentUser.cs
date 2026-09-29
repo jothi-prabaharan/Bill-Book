@@ -1,3 +1,5 @@
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using System.Security.Claims;
 using Shared.Kernel.Interfaces;
 

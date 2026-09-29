@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruitment.Api.Services;
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -32,7 +34,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var seeder = _services.GetRequiredService<RecruitmentSeeder>();
+        var seeder = _services.GetRequiredService<RecruitmentSeederRepository>();
         var seeded = await seeder.SeedAsync(request.CustomerId, request.OrgId, ct);
 
         var response = new SeedOrganizationResponse

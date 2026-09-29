@@ -1,14 +1,15 @@
+using Recruitment.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Recruitment.Repository;
 using Shared.Kernel.Numbering;
 
-namespace Recruitment.Api.Services;
+namespace Recruitment.Repository.Repositories;
 
-public sealed class RecruitmentSeeder
+public sealed class RecruitmentSeederRepository
 {
     private readonly RecruitmentDbContext _db;
 
-    public RecruitmentSeeder(RecruitmentDbContext db) => _db = db;
+    public RecruitmentSeederRepository(RecruitmentDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedAsync(Guid customerId, Guid orgId, CancellationToken ct)
     {

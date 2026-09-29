@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruitment.Api.Services;
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using Recruitment.Entity.Enums;
 using Recruitment.Entity.Models;
 using Shared.Kernel.Apps;
@@ -15,9 +17,9 @@ namespace Recruitment.Api.Controllers;
 [Route("api/rec/openings")]
 public sealed class OpeningsController : ControllerBase
 {
-    private readonly RecruitmentService _recruitment;
+    private readonly RecruitmentRepository _recruitment;
 
-    public OpeningsController(RecruitmentService recruitment) => _recruitment = recruitment;
+    public OpeningsController(RecruitmentRepository recruitment) => _recruitment = recruitment;
 
     [HttpGet]
     public async Task<IActionResult> List(

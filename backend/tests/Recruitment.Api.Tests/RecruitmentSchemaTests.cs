@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Recruitment.Api.Services;
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using Recruitment.Repository;
 using Shared.Kernel.Tenancy;
 using Xunit;
@@ -48,7 +50,7 @@ public sealed class RecruitmentSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using RecruitmentDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        var seeder = new RecruitmentSeeder(db);
+        var seeder = new RecruitmentSeederRepository(db);
         await seeder.SeedAsync(customerId, orgId, default);
         int initialCount = await db.NumberingSeries.CountAsync();
 

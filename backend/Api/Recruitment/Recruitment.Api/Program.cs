@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Recruitment.Api.Services;
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using Recruitment.Repository;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
@@ -84,8 +86,8 @@ builder.Services.AddHttpClient<IPayrollClient, PayrollClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Payroll:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddScoped<RecruitmentService>();
-builder.Services.AddScoped<RecruitmentSeeder>();
+builder.Services.AddScoped<RecruitmentRepository>();
+builder.Services.AddScoped<RecruitmentSeederRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

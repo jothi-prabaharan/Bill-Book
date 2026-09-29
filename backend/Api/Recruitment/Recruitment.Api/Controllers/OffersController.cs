@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruitment.Api.Services;
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using Recruitment.Entity.Models;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -14,9 +16,9 @@ namespace Recruitment.Api.Controllers;
 [Route("api/rec/offers")]
 public sealed class OffersController : ControllerBase
 {
-    private readonly RecruitmentService _recruitment;
+    private readonly RecruitmentRepository _recruitment;
 
-    public OffersController(RecruitmentService recruitment) => _recruitment = recruitment;
+    public OffersController(RecruitmentRepository recruitment) => _recruitment = recruitment;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] long? applicationId = null, CancellationToken ct = default) =>

@@ -1,3 +1,4 @@
+using Recruitment.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Recruitment.Entity.Enums;
 using Recruitment.Entity.Models;
@@ -7,9 +8,9 @@ using Shared.Kernel.Employees;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 
-namespace Recruitment.Api.Services;
+namespace Recruitment.Repository.Repositories;
 
-public sealed class RecruitmentService
+public sealed class RecruitmentRepository
 {
     private readonly RecruitmentDbContext _db;
     private readonly ITenantContext _tenant;
@@ -17,7 +18,7 @@ public sealed class RecruitmentService
     private readonly IEmployeeClient _hrmClient;
     private readonly IPayrollClient _payrollClient;
 
-    public RecruitmentService(
+    public RecruitmentRepository(
         RecruitmentDbContext db,
         ITenantContext tenant,
         INumberGenerator numbers,

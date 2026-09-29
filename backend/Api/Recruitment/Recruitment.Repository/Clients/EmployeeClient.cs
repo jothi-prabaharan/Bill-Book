@@ -1,7 +1,8 @@
+using Recruitment.Repository.Repositories;
 using System.Net.Http.Json;
 using Shared.Kernel.Employees;
 
-namespace Recruitment.Api.Services;
+namespace Recruitment.Repository.Clients;
 
 public interface IEmployeeClient
 {

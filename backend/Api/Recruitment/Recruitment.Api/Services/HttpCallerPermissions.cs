@@ -1,12 +1,9 @@
+using Recruitment.Repository.Repositories;
 using Shared.Kernel.Interfaces;
 
 namespace Recruitment.Api.Services;
 
-public interface ICallerPermissions
-{
-    bool Has(string permission);
-    Guid? UserId { get; }
-}
+
 
 public sealed class HttpCallerPermissions : ICallerPermissions
 {

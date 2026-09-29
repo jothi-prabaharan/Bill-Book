@@ -1,6 +1,7 @@
+using Recruitment.Repository.Repositories;
 using System.Net.Http.Json;
 
-namespace Recruitment.Api.Services;
+namespace Recruitment.Repository.Clients;
 
 public interface IPayrollClient
 {

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Recruitment.Api.Services;
+using Recruitment.Repository.Repositories;
+using Recruitment.Repository.Clients;
 using Recruitment.Entity.Enums;
 using Recruitment.Entity.Models;
 using Recruitment.Entity.TableEntities;
@@ -103,7 +105,7 @@ public sealed class OfferAcceptanceIdempotencyTests
         var payrollClient = new FakePayrollClient();
         var numbers = new FakeNumberGenerator();
 
-        var service = new RecruitmentService(db, tenant, numbers, hrmClient, payrollClient);
+        var service = new RecruitmentRepository(db, tenant, numbers, hrmClient, payrollClient);
 
         // 1. Seed requisition, opening, candidate, application, and offer
         var req = new JobRequisition
