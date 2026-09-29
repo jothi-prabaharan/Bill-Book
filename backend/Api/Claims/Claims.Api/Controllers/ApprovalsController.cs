@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Entity.Enums;
 using Claims.Entity.Models;
 using Claims.Repository;
@@ -19,10 +21,10 @@ namespace Claims.Api.Controllers;
 public sealed class ApprovalsController : ControllerBase
 {
     private readonly ClaimsDbContext _db;
-    private readonly ClaimService _claimService;
+    private readonly ClaimRepository _claimService;
     private readonly ICurrentUser _currentUser;
 
-    public ApprovalsController(ClaimsDbContext db, ClaimService claimService, ICurrentUser currentUser)
+    public ApprovalsController(ClaimsDbContext db, ClaimRepository claimService, ICurrentUser currentUser)
     {
         _db = db;
         _claimService = claimService;

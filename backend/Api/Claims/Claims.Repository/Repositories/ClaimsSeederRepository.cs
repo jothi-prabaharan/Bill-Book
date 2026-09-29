@@ -1,16 +1,17 @@
+using Claims.Repository.Clients;
 using Claims.Entity.Enums;
 using Claims.Entity.TableEntities;
 using Claims.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Numbering;
 
-namespace Claims.Api.Services;
+namespace Claims.Repository.Repositories;
 
-public sealed class ClaimsSeeder
+public sealed class ClaimsSeederRepository
 {
     private readonly ClaimsDbContext _db;
 
-    public ClaimsSeeder(ClaimsDbContext db) => _db = db;
+    public ClaimsSeederRepository(ClaimsDbContext db) => _db = db;
 
     public async Task<Dictionary<string, int>> SeedAsync(Guid customerId, Guid orgId, CancellationToken ct)
     {

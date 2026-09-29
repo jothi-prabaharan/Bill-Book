@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Tenancy;
@@ -48,7 +50,7 @@ public sealed class ClaimsSchemaTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         await using ClaimsDbContext db = _postgres.CreateContext(customerId, orgId);
 
-        var seeder = new ClaimsSeeder(db);
+        var seeder = new ClaimsSeederRepository(db);
         await seeder.SeedAsync(customerId, orgId, default);
         int initialCount = await db.ClaimCategories.CountAsync();
 

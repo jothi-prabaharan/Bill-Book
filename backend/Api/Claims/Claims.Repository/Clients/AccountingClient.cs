@@ -1,6 +1,7 @@
+using Claims.Repository.Repositories;
 using System.Net.Http.Json;
 
-namespace Claims.Api.Services;
+namespace Claims.Repository.Clients;
 
 public interface IAccountingClient
 {

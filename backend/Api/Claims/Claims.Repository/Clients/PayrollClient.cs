@@ -1,4 +1,6 @@
-namespace Claims.Api.Services;
+using Claims.Repository.Repositories;
+
+namespace Claims.Repository.Clients;
 
 public interface IPayrollClient
 {

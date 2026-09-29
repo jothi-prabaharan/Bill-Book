@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,9 +16,9 @@ namespace Claims.Api.Controllers;
 [Route("api/clm/categories")]
 public sealed class ClaimCategoriesController : ControllerBase
 {
-    private readonly ClaimService _claimService;
+    private readonly ClaimRepository _claimService;
 
-    public ClaimCategoriesController(ClaimService claimService) => _claimService = claimService;
+    public ClaimCategoriesController(ClaimRepository claimService) => _claimService = claimService;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] bool includeInactive = false, CancellationToken ct = default) =>

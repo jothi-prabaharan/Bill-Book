@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Entity.Enums;
 using Claims.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -17,13 +19,13 @@ namespace Claims.Api.Controllers;
 [Route("api/me/claims")]
 public sealed class MeClaimsController : ControllerBase
 {
-    private readonly ClaimService _claimService;
+    private readonly ClaimRepository _claimService;
     private readonly ICurrentUser _currentUser;
     private readonly ITenantContext _tenant;
     private readonly IEmployeeClient _hrm;
 
     public MeClaimsController(
-        ClaimService claimService,
+        ClaimRepository claimService,
         ICurrentUser currentUser,
         ITenantContext tenant,
         IEmployeeClient hrm)

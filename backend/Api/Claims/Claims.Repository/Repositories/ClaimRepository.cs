@@ -1,3 +1,4 @@
+using Claims.Repository.Clients;
 using Claims.Entity.Enums;
 using Claims.Entity.Models;
 using Claims.Entity.TableEntities;
@@ -7,9 +8,9 @@ using Shared.Kernel.Employees;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 
-namespace Claims.Api.Services;
+namespace Claims.Repository.Repositories;
 
-public sealed class ClaimService
+public sealed class ClaimRepository
 {
     private readonly ClaimsDbContext _db;
     private readonly ITenantContext _tenant;
@@ -18,7 +19,7 @@ public sealed class ClaimService
     private readonly IPayrollClient _payroll;
     private readonly INumberGenerator _numberGenerator;
 
-    public ClaimService(
+    public ClaimRepository(
         ClaimsDbContext db,
         ITenantContext tenant,
         IEmployeeClient hrm,

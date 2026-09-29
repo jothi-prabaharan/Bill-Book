@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Entity.Enums;
 using Claims.Entity.Models;
 using Claims.Entity.TableEntities;
@@ -78,7 +80,7 @@ public sealed class ClaimServiceTests
         var pay = new MockPayrollClient();
         var num = new MockNumberGenerator();
 
-        var service = new ClaimService(db, tenant, hrm, acc, pay, num);
+        var service = new ClaimRepository(db, tenant, hrm, acc, pay, num);
 
         var cat = await service.CreateCategoryAsync(new CreateClaimCategoryRequest
         {
@@ -126,7 +128,7 @@ public sealed class ClaimServiceTests
         var pay = new MockPayrollClient();
         var num = new MockNumberGenerator();
 
-        var service = new ClaimService(db, tenant, hrm, acc, pay, num);
+        var service = new ClaimRepository(db, tenant, hrm, acc, pay, num);
 
         var cat = await service.CreateCategoryAsync(new CreateClaimCategoryRequest
         {
@@ -177,7 +179,7 @@ public sealed class ClaimServiceTests
         var pay = new MockPayrollClient();
         var num = new MockNumberGenerator();
 
-        var service = new ClaimService(db, tenant, hrm, acc, pay, num);
+        var service = new ClaimRepository(db, tenant, hrm, acc, pay, num);
 
         var cat = await service.CreateCategoryAsync(new CreateClaimCategoryRequest
         {
@@ -235,7 +237,7 @@ public sealed class ClaimServiceTests
         var pay = new MockPayrollClient();
         var num = new MockNumberGenerator();
 
-        var service = new ClaimService(db, tenant, hrm, acc, pay, num);
+        var service = new ClaimRepository(db, tenant, hrm, acc, pay, num);
 
         var cat = await service.CreateCategoryAsync(new CreateClaimCategoryRequest
         {

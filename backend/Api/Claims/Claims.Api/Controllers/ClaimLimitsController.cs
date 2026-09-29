@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,9 +16,9 @@ namespace Claims.Api.Controllers;
 [Route("api/clm/limits")]
 public sealed class ClaimLimitsController : ControllerBase
 {
-    private readonly ClaimService _claimService;
+    private readonly ClaimRepository _claimService;
 
-    public ClaimLimitsController(ClaimService claimService) => _claimService = claimService;
+    public ClaimLimitsController(ClaimRepository claimService) => _claimService = claimService;
 
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] long? categoryId, CancellationToken ct) =>

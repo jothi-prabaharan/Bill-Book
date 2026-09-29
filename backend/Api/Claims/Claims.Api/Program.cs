@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -87,8 +89,8 @@ builder.Services.AddHttpClient<IPayrollClient, PayrollClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Payroll:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddScoped<ClaimService>();
-builder.Services.AddScoped<ClaimsSeeder>();
+builder.Services.AddScoped<ClaimRepository>();
+builder.Services.AddScoped<ClaimsSeederRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

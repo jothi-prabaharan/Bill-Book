@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Claims.Entity.Enums;
 using Claims.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -15,9 +17,9 @@ namespace Claims.Api.Controllers;
 [Route("api/clm/claims")]
 public sealed class ClaimsController : ControllerBase
 {
-    private readonly ClaimService _claimService;
+    private readonly ClaimRepository _claimService;
 
-    public ClaimsController(ClaimService claimService) => _claimService = claimService;
+    public ClaimsController(ClaimRepository claimService) => _claimService = claimService;
 
     [HttpGet]
     public async Task<IActionResult> List(

@@ -1,4 +1,6 @@
 using Claims.Api.Services;
+using Claims.Repository.Repositories;
+using Claims.Repository.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -32,7 +34,7 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.CustomerId = request.CustomerId;
         _tenant.OrgId = request.OrgId;
 
-        var seeder = _services.GetRequiredService<ClaimsSeeder>();
+        var seeder = _services.GetRequiredService<ClaimsSeederRepository>();
         var seeded = await seeder.SeedAsync(request.CustomerId, request.OrgId, ct);
 
         var response = new SeedOrganizationResponse
