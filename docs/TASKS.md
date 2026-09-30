@@ -4336,7 +4336,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the audit passes in every service and an endpoint of a disabled add-on answers 403.
 
 ### TK-129 · Support channel by plan: text on Basic, calls on Pro
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-30
 - **Issue:** [#111](https://github.com/jothi-prabaharan/Bill-Book/issues/111)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-CUS, L-MST · **Depends on:** TK-127 · **Decision:** D-36
