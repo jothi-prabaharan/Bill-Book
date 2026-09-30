@@ -4402,7 +4402,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
 
 ### TK-135 · Use `bb-branch-date-input` on every page, delete `bb-date-input`, and delete unused shared UI components
-- [ ] open
+- [x] completed (Antigravity) - 2026-10-01
 - **Lanes:** L-UI, every `L-{MODULE}-UI` whose template is edited, L-WEB, L-ADM (if `apps/admin` still exists), L-DOC (the `inputs.md` docs page) · **Depends on:** — · **Decision:** —
 - **Where:**
   - `frontend/libs/shared/ui-components/src/lib/date-input/date-input.component.ts`: the native `<input type="date">` to delete. Its base class `forms/datetime/date-control.base.ts` and template `forms/datetime/date-control.html` are shared with `bb-datetime-input` and `bb-month-input`, so they stay.
@@ -4611,6 +4611,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 

@@ -20,7 +20,7 @@ import { StudentApiService } from '@bill-book/student-core';
 import {
   BbSelectOption,
   CheckboxComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   EmailInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
@@ -48,7 +48,7 @@ import { academicOptions } from '../academic-options';
     TextInputComponent,
     PhoneInputComponent,
     EmailInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     NumberInputComponent,
     MoneyInputComponent,
@@ -266,3 +266,4 @@ export class ApplicationPage implements OnInit {
     };
   }
 }
+

@@ -19,7 +19,7 @@
     <form class="fields" (ngSubmit)="saveExchange()">
       <bb-text-input label="From" name="from" [(ngModel)]="exchange.fromCurrencyCode" hint="1 unit of this currency" />
       <bb-text-input label="To" name="to" [(ngModel)]="exchange.toCurrencyCode" hint="is worth this many" />
-      <bb-date-input label="Date" name="exchangeDate" [(ngModel)]="exchange.rateDate" />
+      <bb-branch-date-input label="Date" name="exchangeDate" [(ngModel)]="exchange.rateDate" />
       <bb-number-input label="Rate" name="rate" [decimals]="8" [min]="0" [(ngModel)]="exchange.rate" />
       <div class="actions">
         <button type="submit" [disabled]="busy()">Save exchange rate</button>
@@ -53,7 +53,7 @@
     <form class="fields" (ngSubmit)="saveMetal()">
       <bb-select label="Metal" name="metal" [options]="metals" [clearable]="false" [(ngModel)]="metal.metal" />
       <bb-text-input label="Purity" name="purity" [(ngModel)]="metal.purityCode" hint="As written in the trade: 24K, 22K, 999, 925" />
-      <bb-date-input label="Date" name="metalDate" [(ngModel)]="metal.rateDate" />
+      <bb-branch-date-input label="Date" name="metalDate" [(ngModel)]="metal.rateDate" />
       <bb-number-input label="Rate per gram" name="ratePerGram" [decimals]="4" [min]="0" [(ngModel)]="metal.ratePerGram" />
       <div class="actions">
         <button type="submit" [disabled]="busy()">Save metal rate</button>
@@ -76,3 +76,4 @@
     </ng-template>
   </bb-data-grid>
 </section>
+

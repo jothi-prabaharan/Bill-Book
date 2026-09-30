@@ -11,10 +11,10 @@
   -->
   <form [formGroup]="form" class="form-grid">
     <div class="form-group">
-      <bb-date-input id="documentDate" label="Date" formControlName="documentDate" [required]="true" />
+      <bb-branch-date-input id="documentDate" label="Date" formControlName="documentDate" [required]="true" />
     </div>
     <div class="form-group">
-      <bb-date-input id="validUntil" label="Valid Until" formControlName="validUntil" [required]="true" />
+      <bb-branch-date-input id="validUntil" label="Valid Until" formControlName="validUntil" [required]="true" />
     </div>
     <div class="form-group">
       <bb-form-field
@@ -139,3 +139,4 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
+

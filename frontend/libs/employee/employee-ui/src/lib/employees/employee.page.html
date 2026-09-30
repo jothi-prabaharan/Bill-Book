@@ -23,7 +23,7 @@
       <bb-text-input label="First name" [(ngModel)]="form.firstName" maxlength="100" [required]="true" />
       <bb-text-input label="Middle name" [(ngModel)]="form.middleName" maxlength="100" />
       <bb-text-input label="Last name" [(ngModel)]="form.lastName" maxlength="100" />
-      <bb-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" />
+      <bb-branch-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" />
       <bb-select label="Gender" [options]="genders" [(ngModel)]="form.gender" [clearable]="false" />
       <bb-select label="Marital status" [options]="maritalStatuses" [(ngModel)]="form.maritalStatus" [clearable]="false" />
       <bb-text-input label="Blood group" [(ngModel)]="form.bloodGroup" maxlength="5" />
@@ -40,18 +40,18 @@
       <bb-select label="Work location" [options]="locations()" [(ngModel)]="form.workLocationId" [clearable]="false" />
       <bb-select label="Cost centre" [options]="costCentres()" [(ngModel)]="form.costCentreId" />
       <bb-number-input label="Reports to (employee id)" hint="The manager's employee id." [(ngModel)]="form.reportsToEmployeeId" />
-      <bb-date-input label="Joining date" [(ngModel)]="form.joiningDate" [required]="true" />
-      <bb-date-input label="Probation ends" [(ngModel)]="form.probationEndDate" />
-      <bb-date-input label="Confirmed on" [(ngModel)]="form.confirmationDate" />
+      <bb-branch-date-input label="Joining date" [(ngModel)]="form.joiningDate" [required]="true" />
+      <bb-branch-date-input label="Probation ends" [(ngModel)]="form.probationEndDate" />
+      <bb-branch-date-input label="Confirmed on" [(ngModel)]="form.confirmationDate" />
       <bb-number-input label="Notice period (days)" hint="Blank takes the grade's." [(ngModel)]="form.noticePeriodDays" />
       <bb-select label="Employment type" [options]="employmentTypes" [(ngModel)]="form.employmentType" [clearable]="false" />
       <bb-select label="Status" [options]="statuses" [(ngModel)]="form.employeeStatus" [clearable]="false" />
       @if (form.employeeStatus === 'Exited') {
-        <bb-date-input label="Exit date" [(ngModel)]="form.exitDate" [required]="true" />
+        <bb-branch-date-input label="Exit date" [(ngModel)]="form.exitDate" [required]="true" />
       }
       <bb-text-input label="Login (user id)" hint="Links this employee to a sign-in, for self-service." [(ngModel)]="form.userId" />
       @if (employeeId() !== null) {
-        <bb-date-input label="Change takes effect" hint="For a transfer, promotion or new manager." [(ngModel)]="form.effectiveDate" />
+        <bb-branch-date-input label="Change takes effect" hint="For a transfer, promotion or new manager." [(ngModel)]="form.effectiveDate" />
         <bb-text-input label="Remarks" [(ngModel)]="form.remarks" maxlength="500" />
       }
     </div>
@@ -106,7 +106,7 @@
         <div class="row">
           <bb-text-input label="Name" [(ngModel)]="f.name" maxlength="200" />
           <bb-select label="Relationship" [options]="relationships" [(ngModel)]="f.relationship" [clearable]="false" />
-          <bb-date-input label="Date of birth" [(ngModel)]="f.dateOfBirth" />
+          <bb-branch-date-input label="Date of birth" [(ngModel)]="f.dateOfBirth" />
           <bb-checkbox text="Dependent" [(ngModel)]="f.isDependent" />
           <bb-checkbox text="ESI covered" [(ngModel)]="f.isEsiCovered" />
           <button type="button" class="link danger" (click)="removeAt('familyMembers', i)">Remove</button>
@@ -168,8 +168,8 @@
       @for (x of form.previousEmployments; track $index; let i = $index) {
         <div class="row">
           <bb-text-input label="Employer" [(ngModel)]="x.employer" maxlength="200" />
-          <bb-date-input label="From" [(ngModel)]="x.fromDate" />
-          <bb-date-input label="To" [(ngModel)]="x.toDate" />
+          <bb-branch-date-input label="From" [(ngModel)]="x.fromDate" />
+          <bb-branch-date-input label="To" [(ngModel)]="x.toDate" />
           <bb-text-input label="Last designation" [(ngModel)]="x.lastDesignation" maxlength="100" />
           <button type="button" class="link danger" (click)="removeAt('previousEmployments', i)">Remove</button>
         </div>
@@ -184,7 +184,7 @@
         <div class="row">
           <bb-select label="Document" [options]="documentKinds" [(ngModel)]="d.documentKind" [clearable]="false" />
           <bb-text-input label="File" hint="The stored file's key." [(ngModel)]="d.attachmentKey" maxlength="500" />
-          <bb-date-input label="Valid until" [(ngModel)]="d.validUntil" />
+          <bb-branch-date-input label="Valid until" [(ngModel)]="d.validUntil" />
           <button type="button" class="link danger" (click)="removeAt('documents', i)">Remove</button>
         </div>
       }
@@ -197,8 +197,8 @@
         <div class="row">
           <bb-text-input label="Asset" [(ngModel)]="a.assetName" maxlength="200" />
           <bb-text-input label="Tag" [(ngModel)]="a.assetTag" maxlength="30" />
-          <bb-date-input label="Issued" [(ngModel)]="a.issuedDate" />
-          <bb-date-input label="Returned" [(ngModel)]="a.returnedDate" />
+          <bb-branch-date-input label="Issued" [(ngModel)]="a.issuedDate" />
+          <bb-branch-date-input label="Returned" [(ngModel)]="a.returnedDate" />
           <bb-number-input label="Recovery" [(ngModel)]="a.recoveryAmount" />
           <button type="button" class="link danger" (click)="removeAt('assetIssues', i)">Remove</button>
         </div>
@@ -228,3 +228,4 @@
     }
   }
 }
+

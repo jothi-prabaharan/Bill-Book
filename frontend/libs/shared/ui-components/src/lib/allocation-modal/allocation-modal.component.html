@@ -77,12 +77,12 @@
       <div class="form-grid allocation-modal__fields" [formGroup]="form">
         <div class="field">
           <label for="allocation-date">Allocation date</label>
-          <bb-date-input
+          <bb-branch-date-input
             id="allocation-date"
             class="input"
             ariaLabel="Allocation date"
             formControlName="allocationDate"
-          ></bb-date-input>
+          ></bb-branch-date-input>
           <span class="hint">Leave empty to book it today.</span>
         </div>
 
@@ -112,3 +112,4 @@
     </div>
   </div>
 }
+

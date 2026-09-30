@@ -90,8 +90,8 @@
           <bb-select label="Kind" [options]="kinds" [(ngModel)]="concessionForm.concessionKind" [clearable]="false" />
           <bb-number-input label="Value" [(ngModel)]="concessionForm.value" />
           <bb-text-input label="Reason" [(ngModel)]="concessionForm.reason" maxlength="200" />
-          <bb-date-input label="From" [(ngModel)]="concessionForm.validFrom" />
-          <bb-date-input label="Until" [(ngModel)]="concessionForm.validTo" />
+          <bb-branch-date-input label="From" [(ngModel)]="concessionForm.validFrom" />
+          <bb-branch-date-input label="Until" [(ngModel)]="concessionForm.validTo" />
           <bb-checkbox *bbIfCan="'fee.approve'" text="Approved" [(ngModel)]="concessionForm.isApproved" />
         </div>
         <p class="muted">A concession applies to demands raised after it is approved. Demands already raised keep their amounts.</p>
@@ -103,3 +103,4 @@
     </div>
   </section>
 }
+

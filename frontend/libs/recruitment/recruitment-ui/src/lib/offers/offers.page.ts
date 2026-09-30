@@ -3,7 +3,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   SelectComponent,
@@ -24,7 +24,7 @@ import {
     CommonModule,
     FormsModule,
     MessageBoxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     SelectComponent,
     DataGridComponent,
@@ -179,5 +179,6 @@ export class OffersPage implements OnInit {
     }
   }
 }
+
 
 

@@ -68,7 +68,7 @@
 
   <form class="dlc-form__fields" [formGroup]="form">
     <div class="field">
-      <bb-date-input
+      <bb-branch-date-input
         id="dlc-date"
         label="Challan date"
         formControlName="documentDate"
@@ -78,7 +78,7 @@
     </div>
 
     <div class="field">
-      <bb-date-input
+      <bb-branch-date-input
         id="dlc-dispatch"
         label="Dispatch date"
         formControlName="dispatchDate"
@@ -193,7 +193,7 @@
     </div>
 
     <div class="field">
-      <bb-date-input id="dlc-eway-date" label="E-way bill date" formControlName="ewayBillDate" />
+      <bb-branch-date-input id="dlc-eway-date" label="E-way bill date" formControlName="ewayBillDate" />
     </div>
 
     <div class="field">
@@ -302,3 +302,4 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
+

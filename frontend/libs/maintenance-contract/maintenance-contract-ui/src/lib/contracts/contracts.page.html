@@ -32,8 +32,8 @@
     <div class="fields">
       <bb-select label="Vendor" [options]="vendorOptions()" [(ngModel)]="form.vendorContactId" [clearable]="false" [disabled]="termsLocked()" />
       <bb-text-input label="Vendor's contract number" [(ngModel)]="form.contractNo" maxlength="30" [disabled]="termsLocked()" />
-      <bb-date-input label="Starts" [(ngModel)]="form.startDate" [disabled]="termsLocked()" />
-      <bb-date-input label="Ends" [(ngModel)]="form.endDate" [disabled]="termsLocked()" />
+      <bb-branch-date-input label="Starts" [(ngModel)]="form.startDate" [disabled]="termsLocked()" />
+      <bb-branch-date-input label="Ends" [(ngModel)]="form.endDate" [disabled]="termsLocked()" />
       <bb-money-input label="Value" [(ngModel)]="form.contractValue" [disabled]="termsLocked()" />
       <bb-select label="Billed" [options]="frequencies" [(ngModel)]="form.billingFrequency" [clearable]="false" [disabled]="termsLocked()" />
       <bb-number-input label="Visits a year" [(ngModel)]="form.visitsPerYear" [disabled]="termsLocked()" />
@@ -101,7 +101,7 @@
 
     @if (row.contractStatus === 'Active') {
       <div class="fields" *bbIfCan="'amc.edit'">
-        <bb-date-input label="Visited on" [(ngModel)]="visit.visitDate" />
+        <bb-branch-date-input label="Visited on" [(ngModel)]="visit.visitDate" />
         <bb-select label="Kind" [options]="visitKinds" [(ngModel)]="visit.visitKind" [clearable]="false" />
         <bb-select label="Asset" placeholder="The whole contract" [options]="coveredOptions()" [(ngModel)]="visit.facilityAssetId" />
         <bb-text-input label="Remarks" [(ngModel)]="visit.remarks" maxlength="1000" />
@@ -111,3 +111,4 @@
     }
   </section>
 }
+

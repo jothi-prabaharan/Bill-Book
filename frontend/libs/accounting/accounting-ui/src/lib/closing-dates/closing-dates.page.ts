@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import {
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -56,7 +56,7 @@ interface Row {
   imports: [
     DataGridComponent,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     MessageBoxComponent,
   ],
@@ -204,4 +204,5 @@ export class ClosingDatesPage implements OnInit {
     );
   }
 }
+
 

@@ -31,8 +31,8 @@
       <bb-text-input label="Make" [(ngModel)]="form.make" maxlength="100" />
       <bb-text-input label="Model" [(ngModel)]="form.model" maxlength="100" />
       <bb-text-input label="Serial number" [(ngModel)]="form.serialNo" maxlength="100" />
-      <bb-date-input label="Purchased" [(ngModel)]="form.purchaseDate" />
-      <bb-date-input label="Warranty until" [(ngModel)]="form.warrantyUntil" />
+      <bb-branch-date-input label="Purchased" [(ngModel)]="form.purchaseDate" />
+      <bb-branch-date-input label="Warranty until" [(ngModel)]="form.warrantyUntil" />
       <bb-money-input label="Cost" [(ngModel)]="form.purchaseCost" />
       <bb-select label="Status" [options]="statuses" [(ngModel)]="form.assetStatus" [clearable]="false" />
     </div>
@@ -42,3 +42,4 @@
     </div>
   </section>
 }
+

@@ -18,7 +18,7 @@ import {
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
@@ -80,7 +80,7 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
     MessageBoxComponent,
     TextInputComponent,
     TextareaComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     ExchangeRateInputComponent,
     QuoteToOrderDialogComponent,
     StockAvailabilityDrawerComponent,
@@ -594,4 +594,5 @@ const BRANCH_STATE_FALLBACK = '33';
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
 

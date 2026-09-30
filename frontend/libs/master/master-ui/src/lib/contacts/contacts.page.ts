@@ -5,7 +5,7 @@ import {
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   EmailInputComponent,
   FileInputComponent,
   MoneyInputComponent,
@@ -231,7 +231,7 @@ interface PortalAccessState {
     CustomFieldsComponent,
     FormsModule,
     ContactPersonRolesDialog,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     SearchInputComponent,
@@ -1213,5 +1213,6 @@ export class ContactsPage implements OnInit {
   }
 
 }
+
 
 

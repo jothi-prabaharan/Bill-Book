@@ -23,7 +23,7 @@ import {
   AllocationGridComponent,
   AllocationRow,
   BbSelectOption,
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
@@ -78,7 +78,7 @@ type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
     DocumentLineGridComponent,
     AllocationGridComponent,
     MessageBoxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
     NumberInputComponent,
@@ -556,3 +556,4 @@ function toAllocationRow(b: OutstandingBalance): AllocationRow {
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
+

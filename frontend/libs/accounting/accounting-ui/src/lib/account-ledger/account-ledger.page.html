@@ -19,10 +19,10 @@
     />
   </div>
   <div class="field">
-    <bb-date-input label="From"  [(ngModel)]="from" name="from" />
+    <bb-branch-date-input label="From"  [(ngModel)]="from" name="from" />
   </div>
   <div class="field">
-    <bb-date-input label="To"  [(ngModel)]="to" name="to" />
+    <bb-branch-date-input label="To"  [(ngModel)]="to" name="to" />
   </div>
   <button type="submit" [disabled]="busy() || accountId === null">Show</button>
 </form>
@@ -92,3 +92,4 @@
     </ng-template>
   </bb-data-grid>
 }
+

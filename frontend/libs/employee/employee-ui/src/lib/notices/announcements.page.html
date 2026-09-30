@@ -23,8 +23,8 @@
     <h2 id="ann-title">{{ editingId() === null ? 'New' : 'Edit' }} announcement</h2>
     <div class="fields">
       <bb-text-input label="Title" [(ngModel)]="form.title" maxlength="200" />
-      <bb-date-input label="Publish on" [(ngModel)]="form.publishDate" />
-      <bb-date-input label="Expires on" [(ngModel)]="form.expiryDate" />
+      <bb-branch-date-input label="Publish on" [(ngModel)]="form.publishDate" />
+      <bb-branch-date-input label="Expires on" [(ngModel)]="form.expiryDate" />
       <bb-select label="For" [options]="audiences" [(ngModel)]="form.audience" [clearable]="false" />
       @if (form.audience !== 'Everyone') {
         <bb-number-input label="Which one (id)" [(ngModel)]="form.audienceRefId" />
@@ -38,3 +38,4 @@
     </div>
   </section>
 }
+

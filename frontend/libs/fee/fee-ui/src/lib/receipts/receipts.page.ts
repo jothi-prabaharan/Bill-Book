@@ -20,7 +20,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   SelectComponent,
@@ -42,7 +42,7 @@ import {
     DataGridComponent,
     DataGridCellTemplateDirective,
     SelectComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     TextInputComponent,
     MessageBoxComponent,
@@ -209,3 +209,4 @@ export class ReceiptsPage implements OnInit {
     };
   }
 }
+

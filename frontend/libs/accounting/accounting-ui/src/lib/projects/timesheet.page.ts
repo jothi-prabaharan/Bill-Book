@@ -11,7 +11,7 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   DataGridFooterDirective,
-  DateInputComponent,
+  BranchDateInputComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -68,7 +68,7 @@ const TIMER_KEY = 'bb.timesheet.timer';
     FormsModule,
     SelectComponent,
     NumberInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     CheckboxComponent,
     DataGridComponent,
@@ -395,3 +395,4 @@ export class TimesheetPage implements OnInit, OnDestroy {
     this.messageIsError.set(true);
   }
 }
+

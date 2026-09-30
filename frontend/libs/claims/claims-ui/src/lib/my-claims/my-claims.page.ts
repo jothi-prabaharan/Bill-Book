@@ -3,7 +3,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MoneyInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -24,7 +24,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     SelectComponent,
     TextInputComponent,
@@ -142,3 +142,4 @@ export class MyClaimsPage implements OnInit {
     }
   }
 }
+

@@ -17,7 +17,7 @@ import {
 } from '@bill-book/reporting-core';
 import {
   ColumnChooserDialog,
-  DateInputComponent,
+  BranchDateInputComponent,
   FilterBarComponent,
   GroupPanelComponent,
   MessageBoxComponent,
@@ -56,7 +56,7 @@ import { ReportScheduleDialog } from '../schedules/report-schedule.dialog';
     SavedViewDialog,
     CustomReportDialog,
     ReportScheduleDialog,
-    DateInputComponent,
+    BranchDateInputComponent,
     MessageBoxComponent,
     TextInputComponent,
   ],
@@ -314,4 +314,5 @@ export class ReportHostPage implements OnInit {
     return typeof body?.message === 'string' ? body.message : null;
   }
 }
+
 

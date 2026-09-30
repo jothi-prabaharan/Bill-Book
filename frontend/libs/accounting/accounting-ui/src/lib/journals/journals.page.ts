@@ -9,7 +9,7 @@ import {
   BbSelectOption,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MoneyInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -103,7 +103,7 @@ interface LineForm {
     DecimalPipe,
     FormsModule,
     RouterLink,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     MoneyInputComponent,
     SelectComponent,
@@ -489,4 +489,5 @@ export class JournalsPage implements OnInit {
     );
   }
 }
+
 

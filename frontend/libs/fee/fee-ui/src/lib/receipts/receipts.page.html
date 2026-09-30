@@ -10,7 +10,7 @@
     <h2 id="receipt-title">Take a payment</h2>
     <div class="fields">
       <bb-select label="Guardian" [options]="guardians()" [(ngModel)]="form.contactId" (ngModelChange)="guardianChosen($event)" />
-      <bb-date-input label="Date" [(ngModel)]="form.receiptDate" />
+      <bb-branch-date-input label="Date" [(ngModel)]="form.receiptDate" />
       <bb-money-input label="Amount" [(ngModel)]="form.amount" />
       <bb-select label="Paid by" [options]="modes" [(ngModel)]="form.paymentMode" [clearable]="false" />
       <bb-select label="Into" [options]="bankAccounts()" [(ngModel)]="form.bankAccountId" [clearable]="false" />
@@ -64,3 +64,4 @@
     </div>
   </section>
 }
+

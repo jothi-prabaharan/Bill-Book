@@ -9,7 +9,7 @@ import {
 import { AllocationGridComponent, AllocationRow } from '../allocation-grid/allocation-grid.component';
 import { MessageBoxComponent } from '../message-box/message-box.component';
 import { UiMessage } from '../message-box/message-box.model';
-import { DateInputComponent } from '../date-input/date-input.component';
+import { BranchDateInputComponent } from '../branch-date-input/branch-date-input.component';
 import { TextInputComponent } from '../text-input/text-input.component';
 import {
   AllocationSubmission,
@@ -60,7 +60,7 @@ import {
     ReactiveFormsModule,
     AllocationGridComponent,
     MessageBoxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
   ],
   templateUrl: './allocation-modal.component.html',
@@ -188,3 +188,4 @@ export class AllocationModalComponent {
     });
   }
 }
+

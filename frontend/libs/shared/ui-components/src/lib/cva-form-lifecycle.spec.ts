@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CurrencyInputComponent } from './currency-input/currency-input.component';
-import { DateInputComponent } from './date-input/date-input.component';
+import { BranchDateInputComponent } from './branch-date-input/branch-date-input.component';
 import { NumberInputComponent } from './number-input/number-input.component';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { TextInputComponent } from './text-input/text-input.component';
@@ -86,7 +86,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
         text: new FormControl<string>('Acme Corp', [Validators.required, Validators.minLength(3)]),
       });
 
-      const dateComp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const dateComp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const currComp = TestBed.runInInjectionContext(() => new CurrencyInputComponent());
       const numComp = TestBed.runInInjectionContext(() => new NumberInputComponent());
       const searchComp = TestBed.runInInjectionContext(() => new SearchInputComponent());
@@ -154,7 +154,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
         text: new FormControl<string>('', [Validators.required, Validators.minLength(5)]),
       });
 
-      const dateComp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const dateComp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const currComp = TestBed.runInInjectionContext(() => new CurrencyInputComponent());
       const numComp = TestBed.runInInjectionContext(() => new NumberInputComponent());
       const searchComp = TestBed.runInInjectionContext(() => new SearchInputComponent());
@@ -224,7 +224,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
         text: new FormControl<string>(''),
       });
 
-      const dateComp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const dateComp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const currComp = TestBed.runInInjectionContext(() => new CurrencyInputComponent());
       const numComp = TestBed.runInInjectionContext(() => new NumberInputComponent());
       const searchComp = TestBed.runInInjectionContext(() => new SearchInputComponent());
@@ -253,7 +253,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
     });
 
     it('RF-04: formControl.disable() / enable() and setDisabledState across all 5 components', () => {
-      const dateComp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const dateComp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const currComp = TestBed.runInInjectionContext(() => new CurrencyInputComponent());
       const numComp = TestBed.runInInjectionContext(() => new NumberInputComponent());
       const searchComp = TestBed.runInInjectionContext(() => new SearchInputComponent());
@@ -288,7 +288,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
         text: new FormControl<string>('text'),
       });
 
-      const dateComp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const dateComp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const currComp = TestBed.runInInjectionContext(() => new CurrencyInputComponent());
       const numComp = TestBed.runInInjectionContext(() => new NumberInputComponent());
       const searchComp = TestBed.runInInjectionContext(() => new SearchInputComponent());
@@ -331,7 +331,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
         text: 'Initial Vendor',
       };
 
-      const dateComp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const dateComp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const currComp = TestBed.runInInjectionContext(() => new CurrencyInputComponent());
       const numComp = TestBed.runInInjectionContext(() => new NumberInputComponent());
       const searchComp = TestBed.runInInjectionContext(() => new SearchInputComponent());
@@ -494,7 +494,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
     });
 
     it('BOUND-02: DateInput ISO strings, Date objects, nulls, and leap years', () => {
-      const comp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const comp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const harness = comp as unknown as DateInputHarness;
 
       // Leap year Feb 29
@@ -589,3 +589,4 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
     });
   });
 });
+

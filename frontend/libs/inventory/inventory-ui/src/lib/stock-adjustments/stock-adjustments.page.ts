@@ -3,7 +3,7 @@ import {
   BbSelectOption,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -103,7 +103,7 @@ const REASONS: readonly { value: string; label: string }[] = [
   imports: [
     DataGridComponent,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     SelectComponent,
@@ -461,4 +461,5 @@ export class StockAdjustmentsPage implements OnInit {
     );
   }
 }
+
 

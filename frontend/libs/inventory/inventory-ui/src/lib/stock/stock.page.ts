@@ -5,7 +5,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   LookupDialogComponent,
   LookupRow,
   MessageBoxComponent,
@@ -160,7 +160,7 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
     DataGridComponent,
     DataGridCellTemplateDirective,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     SearchInputComponent,
@@ -557,4 +557,5 @@ export class StockPage implements OnInit {
     );
   }
 }
+
 

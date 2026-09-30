@@ -15,7 +15,7 @@ import {
 import {
   AttendanceRegisterComponent,
   BbSelectOption,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   RegisterEntry,
   SelectComponent,
@@ -31,7 +31,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-student-attendance-register-page',
   standalone: true,
-  imports: [FormsModule, AttendanceRegisterComponent, SelectComponent, DateInputComponent, MessageBoxComponent, IfCanDirective],
+  imports: [FormsModule, AttendanceRegisterComponent, SelectComponent, BranchDateInputComponent, MessageBoxComponent, IfCanDirective],
   templateUrl: './register.page.html',
   styleUrl: './register.page.scss',
 })
@@ -169,3 +169,4 @@ export class RegisterPage implements OnInit {
     this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
   }
 }
+

@@ -63,7 +63,7 @@
       @for (parameter of report.parameters; track parameter.name) {
         <div class="parameter">
           @if (parameter.dataType === 'Date') {
-            <bb-date-input
+            <bb-branch-date-input
               [label]="parameter.label"
               [name]="parameter.name"
               [ngModel]="query().parameters[parameter.name] || null"
@@ -164,3 +164,4 @@
     <div class="loading-pulse"></div>
   </div>
 }
+

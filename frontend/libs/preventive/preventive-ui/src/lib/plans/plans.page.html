@@ -48,8 +48,8 @@
       <bb-select label="Space" placeholder="No particular space" [options]="spaceOptions()" [(ngModel)]="form.spaceId" />
       <bb-select label="Frequency" [options]="frequencies" [(ngModel)]="form.frequency" [clearable]="false" />
       <bb-number-input label="Every" [(ngModel)]="form.interval" />
-      <bb-date-input label="Starts" [(ngModel)]="form.startDate" />
-      <bb-date-input label="Ends" [(ngModel)]="form.endDate" />
+      <bb-branch-date-input label="Starts" [(ngModel)]="form.startDate" />
+      <bb-branch-date-input label="Ends" [(ngModel)]="form.endDate" />
       <bb-number-input label="Raise days early" [(ngModel)]="form.leadDays" />
       <bb-select label="Assign to" placeholder="Nobody by default" [options]="employeeOptions()" [(ngModel)]="form.defaultAssigneeEmployeeId" />
       <bb-checkbox class="check" text="Active" name="isActive" [(ngModel)]="form.isActive" />
@@ -60,3 +60,4 @@
     </div>
   </section>
 }
+

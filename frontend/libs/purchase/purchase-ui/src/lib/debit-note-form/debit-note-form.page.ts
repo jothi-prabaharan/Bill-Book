@@ -9,7 +9,7 @@ import {
   BbSelectOption,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   LookupDialogComponent,
   LookupRow,
   MessageBoxComponent,
@@ -82,7 +82,7 @@ interface ReturnLine {
     FormsModule,
     RouterModule,
     LookupDialogComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     QuantityInputComponent,
     SelectComponent,
@@ -503,6 +503,7 @@ export class DebitNoteFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
 
 
 

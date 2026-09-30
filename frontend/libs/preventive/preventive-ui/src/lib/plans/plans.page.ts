@@ -20,7 +20,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -45,7 +45,7 @@ type Tab = 'plans' | 'occurrences';
     DataGridComponent,
     DataGridCellTemplateDirective,
     TextInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     NumberInputComponent,
     SelectComponent,
     MessageBoxComponent,
@@ -206,3 +206,4 @@ export class PlansPage implements OnInit {
     };
   }
 }
+

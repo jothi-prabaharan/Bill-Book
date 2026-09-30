@@ -75,7 +75,7 @@
         <bb-number-input label="Employee ID" name="employeeId" [(ngModel)]="newClaim.employeeId" />
       </div>
       <div>
-        <bb-date-input label="Claim Date" name="claimDate" [(ngModel)]="newClaim.claimDate" />
+        <bb-branch-date-input label="Claim Date" name="claimDate" [(ngModel)]="newClaim.claimDate" />
       </div>
       <div>
         <bb-select label="Payout Mode" name="payoutMode" [options]="payoutModeOptions" [clearable]="false" [(ngModel)]="newClaim.payoutMode" />
@@ -94,7 +94,7 @@
             <bb-select label="Category" name="claimCategoryId" [options]="claimCategoryOptions()" [clearable]="false" [(ngModel)]="line.claimCategoryId" />
           </div>
           <div>
-            <bb-date-input label="Date" name="expenseDate" [(ngModel)]="line.expenseDate" />
+            <bb-branch-date-input label="Date" name="expenseDate" [(ngModel)]="line.expenseDate" />
           </div>
           <div>
             <bb-text-input label="Description" placeholder="Description" name="description" [(ngModel)]="line.description" />
@@ -118,3 +118,4 @@
     </div>
   </div>
 }
+

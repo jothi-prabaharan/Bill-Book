@@ -59,7 +59,7 @@
 
   <form class="crn-form__fields" [formGroup]="form">
     <div class="field">
-      <bb-date-input
+      <bb-branch-date-input
         id="crn-date"
         label="Credit note date"
         formControlName="documentDate"
@@ -275,3 +275,4 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
+

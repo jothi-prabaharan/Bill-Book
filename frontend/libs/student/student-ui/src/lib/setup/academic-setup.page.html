@@ -53,8 +53,8 @@
       @switch (tab()) {
         @case ('years') {
           <bb-text-input label="Year" placeholder="2026-27" [(ngModel)]="yearForm.code" maxlength="20" />
-          <bb-date-input label="Starts" [(ngModel)]="yearForm.startDate" />
-          <bb-date-input label="Ends" [(ngModel)]="yearForm.endDate" />
+          <bb-branch-date-input label="Starts" [(ngModel)]="yearForm.startDate" />
+          <bb-branch-date-input label="Ends" [(ngModel)]="yearForm.endDate" />
           <bb-checkbox text="Current year" [(ngModel)]="yearForm.isCurrent" />
           <bb-checkbox text="Closed" hint="A closed year takes no new enrolments, attendance or marks." [(ngModel)]="yearForm.isClosed" />
         }
@@ -84,3 +84,4 @@
     </div>
   </section>
 }
+

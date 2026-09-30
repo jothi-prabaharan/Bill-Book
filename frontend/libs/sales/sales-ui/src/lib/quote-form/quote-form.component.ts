@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { QuoteService, SalesLookupService, SaveQuoteRequest } from '@bill-book/sales-core';
 import {
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
@@ -36,7 +36,7 @@ import { SalesPicker } from '../sales-picker';
     RouterModule,
     TextInputComponent,
     TextareaComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     FormFieldComponent,
     LookupDialogComponent,
     ExchangeRateInputComponent,
@@ -203,4 +203,5 @@ export class QuoteFormComponent implements OnInit {
     }
   }
 }
+
 

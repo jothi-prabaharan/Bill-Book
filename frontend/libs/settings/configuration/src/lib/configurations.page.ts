@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -33,7 +33,7 @@ interface ConfigurationRow {
   standalone: true,
   imports: [
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     SelectComponent,
@@ -120,4 +120,5 @@ export class ConfigurationsPage implements OnInit {
     );
   }
 }
+
 

@@ -6,7 +6,7 @@ import { FormatSettingsService } from '@bill-book/currency-format';
 import { DataGridComponent } from '../data-grid/data-grid.component';
 import { DataGridCellTemplateDirective } from '../data-grid/data-grid-cell-template.directive';
 import { ColumnDef } from '../data-grid/data-grid.models';
-import { DateInputComponent } from '../date-input/date-input.component';
+import { BranchDateInputComponent } from '../branch-date-input/branch-date-input.component';
 import { SelectComponent } from '../forms/select/select.component';
 import { BbSelectOption } from '../forms/field.model';
 import { MessageBoxComponent } from '../message-box/message-box.component';
@@ -35,7 +35,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-edit-log-report',
   standalone: true,
-  imports: [FormsModule, DataGridComponent, DataGridCellTemplateDirective, DateInputComponent, SelectComponent, MessageBoxComponent],
+  imports: [FormsModule, DataGridComponent, DataGridCellTemplateDirective, BranchDateInputComponent, SelectComponent, MessageBoxComponent],
   templateUrl: './edit-log-report.component.html',
   styleUrl: './edit-log-report.component.scss',
 })
@@ -153,3 +153,4 @@ export class EditLogReportComponent implements OnInit {
     return `${this.formats.formatDate(value)} ${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
   }
 }
+

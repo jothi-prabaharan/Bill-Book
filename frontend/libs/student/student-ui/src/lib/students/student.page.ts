@@ -17,7 +17,7 @@ import {
 import {
   BbSelectOption,
   CheckboxComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -38,7 +38,7 @@ import {
     FormsModule,
     RouterLink,
     TextInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     NumberInputComponent,
     CheckboxComponent,
@@ -235,3 +235,4 @@ export class StudentPage implements OnInit {
     };
   }
 }
+

@@ -9,7 +9,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   FileInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
@@ -128,7 +128,7 @@ const MATCH_LABELS: Record<Form26asLineRow['matchState'], string> = {
     CheckboxComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
-    DateInputComponent,
+    BranchDateInputComponent,
     FileInputComponent,
     MessageBoxComponent,
     NumberInputComponent,
@@ -468,3 +468,4 @@ export class TdsPage implements OnInit {
     return new Promise((resolve, reject) => this.http.request<T>(method, url, { body }).subscribe({ next: resolve, error: reject }));
   }
 }
+

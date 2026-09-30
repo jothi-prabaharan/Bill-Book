@@ -9,7 +9,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   SelectComponent,
   TextInputComponent,
@@ -25,7 +25,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-fee-demands-page',
   standalone: true,
-  imports: [FormsModule, DataGridComponent, DataGridCellTemplateDirective, SelectComponent, DateInputComponent, TextInputComponent, MessageBoxComponent, IfCanDirective],
+  imports: [FormsModule, DataGridComponent, DataGridCellTemplateDirective, SelectComponent, BranchDateInputComponent, TextInputComponent, MessageBoxComponent, IfCanDirective],
   templateUrl: './demands.page.html',
   styleUrl: '../fee-page.scss',
 })
@@ -156,3 +156,4 @@ export class DemandsPage implements OnInit {
     this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
   }
 }
+

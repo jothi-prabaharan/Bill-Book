@@ -45,7 +45,7 @@
   </ng-template>
 
   <ng-template bbCellTemplate="lock" let-row>
-    <bb-date-input
+    <bb-branch-date-input
       
       [(ngModel)]="row.editing"
       [name]="'lock' + row.role.roleId"
@@ -82,3 +82,4 @@
     }
   </ng-template>
 </bb-data-grid>
+

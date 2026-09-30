@@ -10,7 +10,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   NumberInputComponent,
@@ -57,7 +57,7 @@ const ACTION_LABELS: Record<WorkOrderAction, string> = {
     DataGridComponent,
     DataGridCellTemplateDirective,
     TextInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     NumberInputComponent,
     SelectComponent,
@@ -275,3 +275,4 @@ export class WorkOrdersPage implements OnInit {
     };
   }
 }
+

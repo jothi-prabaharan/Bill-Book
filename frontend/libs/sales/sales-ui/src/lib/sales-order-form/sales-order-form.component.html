@@ -136,7 +136,7 @@
   -->
   <form class="sor-form__fields" [formGroup]="form">
     <div class="field">
-      <bb-date-input
+      <bb-branch-date-input
         id="sor-date"
         label="Order date"
         formControlName="documentDate"
@@ -146,7 +146,7 @@
     </div>
 
     <div class="field">
-      <bb-date-input
+      <bb-branch-date-input
         id="sor-delivery"
         label="Delivery date"
         hint="When the customer is expecting the goods."
@@ -341,3 +341,4 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
+

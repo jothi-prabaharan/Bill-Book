@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
-  DateInputComponent,
+  BranchDateInputComponent,
   EmailInputComponent,
   MessageBoxComponent,
   SelectComponent,
@@ -95,7 +95,7 @@ const MONTHS = [
     TextInputComponent,
     SelectComponent,
     EmailInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     MessageBoxComponent,
   ],
   templateUrl: './organization-settings.page.html',
@@ -374,6 +374,7 @@ export class OrganizationSettingsPage implements OnInit {
     return (value ?? '').trim().length > 0;
   }
 }
+
 
 
 

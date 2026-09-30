@@ -24,7 +24,7 @@
     <div class="fields">
       <bb-text-input label="Title" [(ngModel)]="form.title" maxlength="200" />
       <bb-text-input label="File" hint="The stored file's key." [(ngModel)]="form.attachmentKey" maxlength="500" />
-      <bb-date-input label="Effective from" [(ngModel)]="form.effectiveDate" />
+      <bb-branch-date-input label="Effective from" [(ngModel)]="form.effectiveDate" />
       <bb-checkbox text="Employees must acknowledge it" [(ngModel)]="form.isAcknowledgementRequired" />
       <bb-checkbox text="Active" [(ngModel)]="form.isActive" />
     </div>
@@ -34,3 +34,4 @@
     </div>
   </section>
 }
+

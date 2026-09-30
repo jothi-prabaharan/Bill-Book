@@ -7,7 +7,7 @@ import { RouterLink } from '@angular/router';
 import {
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
 } from '@bill-book/ui-components';
 
@@ -55,7 +55,7 @@ interface AccountType {
     DecimalPipe,
     FormsModule,
     RouterLink,
-    DateInputComponent,
+    BranchDateInputComponent,
     MessageBoxComponent,
   ],
   templateUrl: './trial-balance.page.html',
@@ -146,4 +146,5 @@ export class TrialBalancePage implements OnInit {
     );
   }
 }
+
 

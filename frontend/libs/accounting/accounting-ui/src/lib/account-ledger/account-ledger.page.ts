@@ -3,7 +3,7 @@ import {
   BbSelectOption,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   SelectComponent,
 } from '@bill-book/ui-components';
@@ -80,7 +80,7 @@ interface AccountType {
     DecimalPipe,
     FormsModule,
     RouterLink,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     MessageBoxComponent,
   ],
@@ -208,4 +208,5 @@ export class AccountLedgerPage implements OnInit {
     );
   }
 }
+
 

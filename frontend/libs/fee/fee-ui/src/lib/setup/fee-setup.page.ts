@@ -20,7 +20,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   NumberInputComponent,
@@ -46,7 +46,7 @@ type Tab = 'heads' | 'structures' | 'concessions';
     TextInputComponent,
     NumberInputComponent,
     MoneyInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     CheckboxComponent,
     MessageBoxComponent,
@@ -258,3 +258,4 @@ export class FeeSetupPage implements OnInit {
     return { studentId: 0, feeHeadId: 0, concessionKind: 'Percent', value: 0, reason: '', validFrom: today, validTo: today, isApproved: false };
   }
 }
+

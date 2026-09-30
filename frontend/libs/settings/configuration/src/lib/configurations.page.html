@@ -38,7 +38,7 @@
               <bb-number-input  [(ngModel)]="row.value" (blur)="save(row)" />
             }
             @case ('Date') {
-              <bb-date-input  [(ngModel)]="row.value" (blur)="save(row)" />
+              <bb-branch-date-input  [(ngModel)]="row.value" (blur)="save(row)" />
             }
             @default {
               <bb-text-input  [(ngModel)]="row.value" (blur)="save(row)" />
@@ -60,3 +60,4 @@
 } @empty {
   <p>No configuration keys.</p>
 }
+

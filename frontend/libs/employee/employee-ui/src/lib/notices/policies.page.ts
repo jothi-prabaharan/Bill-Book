@@ -3,14 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { IfCanDirective } from '@bill-book/auth';
 import { EmployeeApiService, PolicyDocument } from '@bill-book/employee-core';
-import { CheckboxComponent, DateInputComponent, MessageBoxComponent, TextInputComponent, UiMessage } from '@bill-book/ui-components';
+import { CheckboxComponent, BranchDateInputComponent, MessageBoxComponent, TextInputComponent, UiMessage } from '@bill-book/ui-components';
 
 /** People › Policies (H1, TK-48). HRMS only. Acknowledgements come with self-service (H8). */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-employee-policies-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, DateInputComponent, CheckboxComponent, MessageBoxComponent, IfCanDirective],
+  imports: [FormsModule, TextInputComponent, BranchDateInputComponent, CheckboxComponent, MessageBoxComponent, IfCanDirective],
   templateUrl: './policies.page.html',
   styleUrl: '../employee-page.scss',
 })
@@ -69,3 +69,4 @@ export class PoliciesPage implements OnInit {
     return { title: '', attachmentKey: '', effectiveDate: new Date().toISOString().slice(0, 10), isAcknowledgementRequired: false, isActive: true };
   }
 }
+

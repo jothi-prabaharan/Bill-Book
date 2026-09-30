@@ -22,7 +22,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -45,7 +45,7 @@ import {
     DataGridCellTemplateDirective,
     TextInputComponent,
     NumberInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     CheckboxComponent,
     MessageBoxComponent,
@@ -267,3 +267,4 @@ export class ExamsPage implements OnInit {
     return { academicYearId: 0, name: '', startDate: '', endDate: '', subjects: [] as ExamSubject[] };
   }
 }
+

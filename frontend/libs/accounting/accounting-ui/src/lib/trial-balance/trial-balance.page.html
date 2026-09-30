@@ -9,10 +9,10 @@
 
 <form class="filters" (ngSubmit)="load()">
   <div class="field">
-    <bb-date-input label="From"  [(ngModel)]="from" name="from" />
+    <bb-branch-date-input label="From"  [(ngModel)]="from" name="from" />
   </div>
   <div class="field">
-    <bb-date-input label="To"  [(ngModel)]="to" name="to" />
+    <bb-branch-date-input label="To"  [(ngModel)]="to" name="to" />
   </div>
   <button type="submit" [disabled]="busy()">Show</button>
   <button type="button" class="ghost" (click)="clear()" [disabled]="busy()">All dates</button>
@@ -58,3 +58,4 @@
     </p>
   }
 }
+

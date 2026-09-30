@@ -47,10 +47,10 @@
         <bb-number-input label="Cost budget" name="budgetAmount" [(ngModel)]="form.budgetAmount" [disabled]="!canEdit()" />
       </div>
       <div class="field">
-        <bb-date-input label="Starts" name="startDate" [(ngModel)]="form.startDate" [disabled]="!canEdit()" />
+        <bb-branch-date-input label="Starts" name="startDate" [(ngModel)]="form.startDate" [disabled]="!canEdit()" />
       </div>
       <div class="field">
-        <bb-date-input label="Ends" name="endDate" [(ngModel)]="form.endDate" [disabled]="!canEdit()" />
+        <bb-branch-date-input label="Ends" name="endDate" [(ngModel)]="form.endDate" [disabled]="!canEdit()" />
       </div>
       <div class="field">
         <bb-select label="Status" name="status" [options]="statusOptions" [clearable]="false" [(ngModel)]="form.status" [disabled]="!canEdit()" />
@@ -107,7 +107,7 @@
               <bb-number-input ariaLabel="Amount" [name]="'msAmount' + i" [(ngModel)]="milestone.amount" (ngModelChange)="touch()" placeholder="Amount" [disabled]="!canEdit() || !!milestone.invoiceId" />
             </div>
             <div class="narrow">
-              <bb-date-input ariaLabel="Due" [name]="'msDue' + i" [(ngModel)]="milestone.dueDate" (ngModelChange)="touch()" [disabled]="!canEdit() || !!milestone.invoiceId" />
+              <bb-branch-date-input ariaLabel="Due" [name]="'msDue' + i" [(ngModel)]="milestone.dueDate" (ngModelChange)="touch()" [disabled]="!canEdit() || !!milestone.invoiceId" />
             </div>
             @if (milestone.invoiceId) {
               <span class="pill">Billed</span>
@@ -189,3 +189,4 @@
     </ul>
   }
 }
+

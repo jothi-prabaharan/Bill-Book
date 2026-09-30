@@ -15,10 +15,10 @@
       <bb-text-input label="Cycle Name" placeholder="e.g. FY 2026-27 Annual Review" name="name" [(ngModel)]="form().name" />
     </div>
     <div>
-      <bb-date-input label="Period From" name="periodFrom" [(ngModel)]="form().periodFrom" />
+      <bb-branch-date-input label="Period From" name="periodFrom" [(ngModel)]="form().periodFrom" />
     </div>
     <div>
-      <bb-date-input label="Period To" name="periodTo" [(ngModel)]="form().periodTo" />
+      <bb-branch-date-input label="Period To" name="periodTo" [(ngModel)]="form().periodTo" />
     </div>
     <div>
       <bb-select label="Rating Scale" name="ratingScaleId" [options]="ratingScaleOptions()" [clearable]="false" [(ngModel)]="form().ratingScaleId" />
@@ -30,10 +30,10 @@
       <bb-percentage-input label="Competency Weight (%)" name="competencyWeightPercent" [(ngModel)]="form().competencyWeightPercent" />
     </div>
     <div>
-      <bb-date-input label="Self Evaluation Due Date" name="selfEvaluationDueDate" [(ngModel)]="form().selfEvaluationDueDate" />
+      <bb-branch-date-input label="Self Evaluation Due Date" name="selfEvaluationDueDate" [(ngModel)]="form().selfEvaluationDueDate" />
     </div>
     <div>
-      <bb-date-input label="Review Due Date" name="reviewDueDate" [(ngModel)]="form().reviewDueDate" />
+      <bb-branch-date-input label="Review Due Date" name="reviewDueDate" [(ngModel)]="form().reviewDueDate" />
     </div>
   </div>
   <div class="sheet-actions">
@@ -47,7 +47,7 @@
   <h2>Enroll Employees into Cycle</h2>
   <div class="fields">
     <div>
-      <bb-date-input label="Joined Before Date" name="joinedBeforeDate" [(ngModel)]="enrollForm().joinedBeforeDate" />
+      <bb-branch-date-input label="Joined Before Date" name="joinedBeforeDate" [(ngModel)]="enrollForm().joinedBeforeDate" />
     </div>
   </div>
   <div class="sheet-actions">
@@ -87,3 +87,4 @@
     </ng-template>
   </bb-data-grid>
 </div>
+

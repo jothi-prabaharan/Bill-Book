@@ -6,7 +6,7 @@ import {
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   NumberInputComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -45,7 +45,7 @@ type Mode = 'create' | 'revise' | 'rename';
   imports: [
     DataGridComponent,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
@@ -221,4 +221,5 @@ export class TaxMasterPage implements OnInit {
     );
   }
 }
+
 

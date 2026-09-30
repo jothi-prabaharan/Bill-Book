@@ -3,7 +3,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MoneyInputComponent,
   NumberInputComponent,
   SelectComponent,
@@ -28,7 +28,7 @@ import {
     CommonModule,
     FormsModule,
     RouterLink,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     NumberInputComponent,
     SelectComponent,
@@ -178,3 +178,4 @@ export class ClaimsListPage implements OnInit {
     }
   }
 }
+

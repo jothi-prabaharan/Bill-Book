@@ -3,7 +3,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -23,7 +23,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     TextInputComponent,
     DataGridComponent,
@@ -135,3 +135,4 @@ export class LeaveApplicationsPage implements OnInit {
     }
   }
 }
+

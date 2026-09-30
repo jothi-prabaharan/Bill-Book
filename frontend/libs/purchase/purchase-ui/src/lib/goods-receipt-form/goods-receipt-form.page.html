@@ -72,7 +72,7 @@
 
         <label class="field">
           <span class="field__label">Receipt date</span>
-          <bb-date-input
+          <bb-branch-date-input
             
             class="input"
             [disabled]="readonlyDoc()"
@@ -98,7 +98,7 @@
 
         <label class="field">
           <span class="field__label">Delivery note date</span>
-          <bb-date-input
+          <bb-branch-date-input
             
             class="input"
             [disabled]="readonlyDoc()"
@@ -212,7 +212,7 @@
             />
           </ng-template>
           <ng-template bbCellTemplate="expiry" let-row="row" let-index="index">
-            <bb-date-input
+            <bb-branch-date-input
               
               class="input"
               [disabled]="readonlyDoc()"
@@ -282,4 +282,5 @@
     (dismiss)="closePicker()"
   />
 </div>
+
 

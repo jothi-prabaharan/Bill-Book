@@ -102,7 +102,7 @@
 
     <div class="fields">
       <div class="field">
-        <bb-date-input label="Date" hint="The date it happened, not the date it was typed."  [(ngModel)]="form.adjustmentDate" />
+        <bb-branch-date-input label="Date" hint="The date it happened, not the date it was typed."  [(ngModel)]="form.adjustmentDate" />
       </div>
 
       <div class="field">
@@ -189,7 +189,7 @@
       </ng-template>
 
       <ng-template bbCellTemplate="batchExpiryDate" let-row let-index="index">
-        <bb-date-input
+        <bb-branch-date-input
           [(ngModel)]="row.batchExpiryDate"
           [name]="'expiry' + index"
         />
@@ -266,3 +266,4 @@
     </div>
   </div>
 }
+

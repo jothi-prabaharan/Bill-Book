@@ -15,7 +15,7 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   DataGridRowClass,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   UiMessage,
@@ -77,7 +77,7 @@ interface Applied extends OpenDocument {
   imports: [
     DecimalPipe,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     MessageBoxComponent,
     DataGridComponent,
@@ -453,3 +453,4 @@ export class AllocationWorkspacePage implements OnInit {
       : `The request was refused${status ? ` (${status})` : ''}.`;
   }
 }
+

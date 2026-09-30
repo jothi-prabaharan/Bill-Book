@@ -25,13 +25,13 @@
           <bb-select label="Leave Type" name="leaveTypeId" [options]="leaveTypeOptions()" [clearable]="false" [(ngModel)]="form.leaveTypeId" />
         </div>
         <div>
-          <bb-date-input label="From Date" name="fromDate" [(ngModel)]="form.fromDate" />
+          <bb-branch-date-input label="From Date" name="fromDate" [(ngModel)]="form.fromDate" />
         </div>
         <div>
           <bb-select label="From Half" name="fromHalf" [options]="fromHalfOptions" [clearable]="false" [(ngModel)]="form.fromHalf" />
         </div>
         <div>
-          <bb-date-input label="To Date" name="toDate" [(ngModel)]="form.toDate" />
+          <bb-branch-date-input label="To Date" name="toDate" [(ngModel)]="form.toDate" />
         </div>
         <div>
           <bb-select label="To Half" name="toHalf" [options]="toHalfOptions" [clearable]="false" [(ngModel)]="form.toHalf" />
@@ -71,3 +71,4 @@
     </bb-data-grid>
   </div>
 }
+

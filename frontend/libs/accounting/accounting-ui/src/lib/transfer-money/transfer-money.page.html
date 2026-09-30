@@ -18,7 +18,7 @@
 
     <div class="head-fields">
       <div class="field">
-        <bb-date-input label="Date"  [(ngModel)]="transactionDate" name="transactionDate" />
+        <bb-branch-date-input label="Date"  [(ngModel)]="transactionDate" name="transactionDate" />
       </div>
       <div class="field wide">
         <bb-select
@@ -70,7 +70,7 @@
         <bb-text-input label="Reference"  [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
       </div>
       <div class="field">
-        <bb-date-input label="Reference date"  [(ngModel)]="referenceDate" name="referenceDate" />
+        <bb-branch-date-input label="Reference date"  [(ngModel)]="referenceDate" name="referenceDate" />
       </div>
       <div class="field wide">
         <bb-text-input label="Memo"  [(ngModel)]="memo" name="memo" placeholder="Why the money was moved" />
@@ -169,3 +169,4 @@
     </div>
   </ng-template>
 </bb-data-grid>
+

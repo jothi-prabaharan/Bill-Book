@@ -26,8 +26,8 @@
     <div class="fields">
       <bb-select label="School year" [options]="yearOptions()" [(ngModel)]="form.academicYearId" [clearable]="false" />
       <bb-text-input label="Name" placeholder="Term 1" [(ngModel)]="form.name" maxlength="100" />
-      <bb-date-input label="Starts" [(ngModel)]="form.startDate" />
-      <bb-date-input label="Ends" [(ngModel)]="form.endDate" />
+      <bb-branch-date-input label="Starts" [(ngModel)]="form.startDate" />
+      <bb-branch-date-input label="Ends" [(ngModel)]="form.endDate" />
     </div>
     <h3>Subjects</h3>
     <div class="rows">
@@ -78,3 +78,4 @@
     </div>
   </section>
 }
+

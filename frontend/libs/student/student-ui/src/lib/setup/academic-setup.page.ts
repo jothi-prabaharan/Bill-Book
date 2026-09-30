@@ -9,7 +9,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -34,7 +34,7 @@ type Tab = 'years' | 'classes' | 'sections' | 'subjects';
     DataGridCellTemplateDirective,
     TextInputComponent,
     NumberInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     CheckboxComponent,
     MessageBoxComponent,
@@ -206,3 +206,4 @@ export class AcademicSetupPage implements OnInit {
     this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
   }
 }
+

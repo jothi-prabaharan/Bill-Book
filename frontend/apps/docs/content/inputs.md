@@ -166,7 +166,7 @@ exists to prevent.
 | Mobile, landline | `bb-phone-input` |
 | Password | `bb-password-input` |
 | Website | `bb-url-input` |
-| Invoice date, due date | `bb-date-input` |
+| Invoice date, due date | `bb-branch-date-input` |
 | A timestamp — when a ticket was raised | `bb-datetime-input` |
 | A calendar month — a payroll month, an attendance month | `bb-month-input` (value `yyyy-MM`) |
 | Notes, terms, an address | `bb-textarea` |
@@ -286,7 +286,7 @@ BbFormField                     label · required mark · hint · error · aria 
         |                         bb-unit-price-input · bb-quantity-input
         |                         bb-percentage-input · bb-exchange-rate-input
         |
-        +-- BbDateControlBase   bb-date-input · bb-datetime-input · bb-month-input
+        +-- BbDateControlBase   bb-branch-date-input · bb-datetime-input · bb-month-input
         |
         +-- bb-checkbox · bb-radio-group · bb-select · bb-search-input
             bb-textarea · bb-file-input · bb-rich-text-input
@@ -454,7 +454,7 @@ what happened rather than dropping them silently.
 
 ## Known limitations
 
-- **`bb-date-input` shows the browser's locale, not the branch's.** It is a
+- **`bb-branch-date-input` shows the browser's locale, not the branch's.** It is a
   native `<input type="date">`, whose placeholder and on-screen format come from
   the browser and cannot be overridden by any attribute — so a branch configured
   for `dd/MM/yyyy` still sees `mm/dd/yyyy` in the field. The value it stores and
@@ -468,13 +468,13 @@ what happened rather than dropping them silently.
   `bb-branch-date-input` is a text field with a calendar button. It shows and
   reads dates in the branch's own pattern: a `dd/MM/yyyy` branch sees and types
   `24/09/2026`, with any separator accepted. Its value is ISO `yyyy-MM-dd` in and
-  out, the same as `bb-date-input`, so replacing one with the other is a change of
+  out, the same as `bb-branch-date-input`, so replacing one with the other is a change of
   selector only. Text that is not a real date in the pattern stays on screen with
   a message, and the form receives no date. The calendar works from the keyboard:
   the arrow keys move a day or a week, Page Up and Page Down move a month, Home
   and End go to the ends of the week, Enter picks a day and Escape closes. At
   phone width the calendar fills the screen. **No screen uses it yet.** It
-  replaces `bb-date-input` only after the owner has tried it.
+  replaces `bb-branch-date-input` only after the owner has tried it.
 - **`bb-select` is a native `<select>`**, so a list too long to scroll needs
   `bb-search-input` beside a `bb-lookup-dialog` instead, which is what the sales
   and purchase screens already do.
@@ -519,7 +519,7 @@ the exemptions in `eslint.config.mjs` above, and the rest are inside the
 components themselves. When the rule was switched on it found **two more that
 this list had missed** — the sign-in code box on *Forgot password* and the
 parameter fields on a report — both since moved onto `bb-text-input` and
-`bb-date-input`.
+`bb-branch-date-input`.
 
 - **Five radios** (contacts ×3, item barcodes, unit types) are a *single* radio
   per card or per grid row, sharing a name, marking "this one is the default".
@@ -549,3 +549,4 @@ add a component with no caller to keep it honest.
 ## Attendance register
 
 `bb-attendance-register` (TK-63) marks a list of people with one of a few statuses: students present or absent today, and later employees. It is not a form control: it takes `entries` (id, label, optional caption, status) and `statuses` (value, label, key, glyph, tone), emits `statusChange` for each mark, and never saves. A tap cycles a tile to the next status in the caller's order; a status's key sets it and moves focus on; arrow keys, Home and End move between tiles; `readonly` shows a locked day. Tones are `good`, `bad`, `warn` and `neutral`, drawn from the theme's success, danger, warning and accent tokens. The tiles wrap, so it works at 360px.
+

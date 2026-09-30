@@ -19,7 +19,7 @@ import {
 import { SalesPicker } from '../sales-picker';
 import {
   BbSelectOption,
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
@@ -82,7 +82,7 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
     RouterModule,
     DocumentLineGridComponent,
     MessageBoxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
     NumberInputComponent,
@@ -514,3 +514,4 @@ const BRANCH_STATE_FALLBACK = '33';
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
+

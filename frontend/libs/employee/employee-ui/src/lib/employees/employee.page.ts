@@ -16,7 +16,7 @@ import {
 import {
   BbSelectOption,
   CheckboxComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -57,7 +57,7 @@ const options = <T extends string>(values: readonly T[]): BbSelectOption<T>[] =>
     FormsModule,
     TextInputComponent,
     SelectComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     NumberInputComponent,
     CheckboxComponent,
     MessageBoxComponent,
@@ -269,3 +269,4 @@ export class EmployeePage implements OnInit {
     }
   }
 }
+

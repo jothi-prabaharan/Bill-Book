@@ -29,7 +29,7 @@
 
     <div class="row">
       <div class="field">
-        <bb-date-input label="Effective from" name="effectiveFrom" [(ngModel)]="draft.effectiveFrom" [disabled]="!canEdit()" />
+        <bb-branch-date-input label="Effective from" name="effectiveFrom" [(ngModel)]="draft.effectiveFrom" [disabled]="!canEdit()" />
       </div>
       <div class="field align-end">
         <bb-checkbox text="Active" name="isActive" [(ngModel)]="draft.isActive" [disabled]="!canEdit()" />
@@ -152,3 +152,4 @@
     </ul>
   }
 }
+

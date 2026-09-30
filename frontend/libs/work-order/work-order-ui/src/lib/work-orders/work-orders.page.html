@@ -27,8 +27,8 @@
       <bb-select label="Space" placeholder="No particular space" [options]="spaceOptions()" [(ngModel)]="form.spaceId" />
       <bb-select label="Priority" [options]="priorities" [(ngModel)]="form.priority" [clearable]="false" />
       <bb-select label="Raised from" [options]="sources" [(ngModel)]="form.workOrderSource" [clearable]="false" />
-      <bb-date-input label="Reported" [(ngModel)]="form.reportedDate" />
-      <bb-date-input label="Due" [(ngModel)]="form.dueDate" />
+      <bb-branch-date-input label="Reported" [(ngModel)]="form.reportedDate" />
+      <bb-branch-date-input label="Due" [(ngModel)]="form.dueDate" />
     </div>
     <div class="block">
           <bb-textarea label="Details" name="description" [rows]="3" [maxlength]="2000" [(ngModel)]="form.description" />
@@ -76,7 +76,7 @@
       </div>
     } @else if (pending === 'Complete') {
       <div class="fields">
-        <bb-date-input label="Completed on" [(ngModel)]="completedDate" />
+        <bb-branch-date-input label="Completed on" [(ngModel)]="completedDate" />
         <bb-money-input label="Labour cost" [(ngModel)]="labourCost" />
       </div>
     } @else if (pending === 'Cancel') {
@@ -118,9 +118,10 @@
         <bb-select label="Item" [options]="itemOptions()" [(ngModel)]="part.itemId" />
         <bb-select label="From store" placeholder="Default" [options]="warehouseOptions()" [(ngModel)]="part.warehouseId" />
         <bb-number-input label="Quantity" [(ngModel)]="part.quantity" />
-        <bb-date-input label="Issued on" [(ngModel)]="part.issueDate" />
+        <bb-branch-date-input label="Issued on" [(ngModel)]="part.issueDate" />
         <button type="button" class="btn btn-primary" (click)="issue()" [disabled]="busy() || part.itemId === null">Issue part</button>
       </div>
     }
   </section>
 }
+

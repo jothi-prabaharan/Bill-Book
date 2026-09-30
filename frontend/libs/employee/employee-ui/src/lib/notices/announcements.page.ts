@@ -6,7 +6,7 @@ import { Announcement, AnnouncementAudience, EmployeeApiService } from '@bill-bo
 import {
   BbSelectOption,
   CheckboxComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -20,7 +20,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-employee-announcements-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, TextareaComponent, DateInputComponent, SelectComponent, NumberInputComponent, CheckboxComponent, MessageBoxComponent, IfCanDirective],
+  imports: [FormsModule, TextInputComponent, TextareaComponent, BranchDateInputComponent, SelectComponent, NumberInputComponent, CheckboxComponent, MessageBoxComponent, IfCanDirective],
   templateUrl: './announcements.page.html',
   styleUrl: '../employee-page.scss',
 })
@@ -89,3 +89,4 @@ export class AnnouncementsPage implements OnInit {
     this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
   }
 }
+

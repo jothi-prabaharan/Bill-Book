@@ -250,10 +250,10 @@
               <bb-money-input label="Certificate limit" name="lowerDeductionLimit" [(ngModel)]="form.lowerDeductionLimit" />
             </div>
             <div class="field">
-              <bb-date-input label="Valid from" name="lowerDeductionValidFrom" [(ngModel)]="form.lowerDeductionValidFrom" />
+              <bb-branch-date-input label="Valid from" name="lowerDeductionValidFrom" [(ngModel)]="form.lowerDeductionValidFrom" />
             </div>
             <div class="field">
-              <bb-date-input label="Valid to" name="lowerDeductionValidTo" [(ngModel)]="form.lowerDeductionValidTo" />
+              <bb-branch-date-input label="Valid to" name="lowerDeductionValidTo" [(ngModel)]="form.lowerDeductionValidTo" />
             </div>
           }
         }
@@ -540,11 +540,11 @@
             </div>
 
             <div class="field">
-              <bb-date-input label="Issued on"  [(ngModel)]="licence.issuedOn" [name]="'licFrom' + $index" />
+              <bb-branch-date-input label="Issued on"  [(ngModel)]="licence.issuedOn" [name]="'licFrom' + $index" />
             </div>
 
             <div class="field">
-              <bb-date-input label="Expires on" hint="Leave empty when the licence does not expire."  [(ngModel)]="licence.expiresOn" [name]="'licTo' + $index" />
+              <bb-branch-date-input label="Expires on" hint="Leave empty when the licence does not expire."  [(ngModel)]="licence.expiresOn" [name]="'licTo' + $index" />
             </div>
 
             <div class="field">
@@ -604,7 +604,7 @@
           </div>
 
           <div class="field">
-            <bb-date-input label="Expires on" hint="Optional — for agreements and certificates that lapse."  [(ngModel)]="uploadExpiryDate" name="uploadExpiry" />
+            <bb-branch-date-input label="Expires on" hint="Optional — for agreements and certificates that lapse."  [(ngModel)]="uploadExpiryDate" name="uploadExpiry" />
           </div>
 
           <div class="field wide">
@@ -694,3 +694,4 @@
 @if (rolesOpen()) {
   <bb-contact-person-roles-dialog (closed)="onRolesClosed()" />
 }
+

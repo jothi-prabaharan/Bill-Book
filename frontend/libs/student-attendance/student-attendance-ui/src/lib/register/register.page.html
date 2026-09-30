@@ -4,7 +4,7 @@
 
 <div class="fields">
   <bb-select label="Section" [options]="sections()" [(ngModel)]="sectionId" (ngModelChange)="load()" />
-  <bb-date-input label="Day" [(ngModel)]="date" (ngModelChange)="load()" />
+  <bb-branch-date-input label="Day" [(ngModel)]="date" (ngModelChange)="load()" />
 </div>
 
 <bb-message-box [messages]="messages()" />
@@ -48,3 +48,4 @@
     }
   </div>
 }
+

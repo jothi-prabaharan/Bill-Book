@@ -24,7 +24,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   NumberInputComponent,
@@ -49,7 +49,7 @@ import {
     DataGridComponent,
     DataGridCellTemplateDirective,
     TextInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     NumberInputComponent,
     SelectComponent,
@@ -258,3 +258,4 @@ export class ContractsPage implements OnInit {
     return { visitDate: ContractsPage.today(), visitKind: 'Scheduled', facilityAssetId: null, remarks: null, raiseWorkOrder: false };
   }
 }
+

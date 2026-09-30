@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { CurrencyInputComponent } from './currency-input/currency-input.component';
-import { DateInputComponent } from './date-input/date-input.component';
+import { BranchDateInputComponent } from './branch-date-input/branch-date-input.component';
 import { NumberInputComponent } from './number-input/number-input.component';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { TextInputComponent } from './text-input/text-input.component';
@@ -196,9 +196,9 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
     });
   });
 
-  describe('3. DateInputComponent ISO Trimming & Date Parsing', () => {
+  describe('3. BranchDateInputComponent ISO Trimming & Date Parsing', () => {
     it('DATE-STRESS-01: ISO timestamps with T...Z or timezones properly trimmed to YYYY-MM-DD', () => {
-      const comp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const comp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
 
       comp.writeValue('2026-08-18T00:00:00Z');
       expect((comp as any).innerValue()).toBe('2026-08-18');
@@ -211,7 +211,7 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
     });
 
     it('DATE-STRESS-02: Date object instances formatted to YYYY-MM-DD with zero padding', () => {
-      const comp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const comp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
 
       // May 4th, 2026 (single-digit month and day)
       const d = new Date(2026, 4, 4);
@@ -225,7 +225,7 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
     });
 
     it('DATE-STRESS-03: Date clearing on user input emits null', () => {
-      const comp = TestBed.runInInjectionContext(() => new DateInputComponent());
+      const comp = TestBed.runInInjectionContext(() => new BranchDateInputComponent());
       const changeSpy = vi.fn();
       const valSpy = vi.fn();
       comp.registerOnChange(changeSpy);
@@ -357,3 +357,4 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
     });
   });
 });
+

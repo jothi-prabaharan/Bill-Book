@@ -6,7 +6,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -35,7 +35,7 @@ function today(): string {
     FormsModule,
     SelectComponent,
     TextInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     NumberInputComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
@@ -160,3 +160,4 @@ export class RatesPage implements OnInit {
     this.messageIsError.set(true);
   }
 }
+

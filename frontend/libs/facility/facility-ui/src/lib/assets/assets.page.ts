@@ -8,7 +8,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   MoneyInputComponent,
   SelectComponent,
@@ -29,7 +29,7 @@ import {
     DataGridComponent,
     DataGridCellTemplateDirective,
     TextInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     MoneyInputComponent,
     SelectComponent,
     MessageBoxComponent,
@@ -127,3 +127,4 @@ export class AssetsPage implements OnInit {
     };
   }
 }
+

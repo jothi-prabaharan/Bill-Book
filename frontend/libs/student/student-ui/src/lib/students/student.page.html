@@ -10,12 +10,12 @@
   <div class="fields">
     <bb-text-input label="First name" [(ngModel)]="form.firstName" maxlength="100" [required]="true" />
     <bb-text-input label="Last name" [(ngModel)]="form.lastName" maxlength="100" />
-    <bb-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" />
+    <bb-branch-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" />
     <bb-select label="Gender" [options]="genders" [(ngModel)]="form.gender" [clearable]="false" />
-    <bb-date-input label="Admission date" [(ngModel)]="form.admissionDate" [required]="true" />
+    <bb-branch-date-input label="Admission date" [(ngModel)]="form.admissionDate" [required]="true" />
     <bb-select label="Status" [options]="statuses" [(ngModel)]="form.studentStatus" [clearable]="false" />
     @if (form.studentStatus !== 'Active') {
-      <bb-date-input label="Leaving date" [(ngModel)]="form.leavingDate" [required]="true" />
+      <bb-branch-date-input label="Leaving date" [(ngModel)]="form.leavingDate" [required]="true" />
     }
     <bb-text-input label="Blood group" [(ngModel)]="form.bloodGroup" maxlength="5" />
     <bb-text-input label="APAAR or Aadhaar" hint="Hidden on every list except its last four characters." [(ngModel)]="form.nationalId" maxlength="20" />
@@ -78,3 +78,4 @@
     Save
   </button>
 </div>
+

@@ -9,7 +9,7 @@ import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   BbSelectOption,
   CheckboxComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -85,7 +85,7 @@ interface ContactOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-projects-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, DateInputComponent, CheckboxComponent],
+  imports: [FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, BranchDateInputComponent, CheckboxComponent],
   templateUrl: './projects.page.html',
   styleUrl: './projects.page.scss',
 })
@@ -293,3 +293,4 @@ export class ProjectsPage implements OnInit {
     this.messageIsError.set(isError);
   }
 }
+

@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { readApiFailure } from '@bill-book/api-client';
 import { QuoteListItem, QuoteService, SalesOrderService } from '@bill-book/sales-core';
 import {
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   TextInputComponent,
   TextareaComponent,
@@ -34,7 +34,7 @@ import {
     CommonModule,
     ReactiveFormsModule,
     MessageBoxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
   ],
@@ -147,4 +147,5 @@ export class QuoteToOrderDialogComponent implements OnInit {
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
 

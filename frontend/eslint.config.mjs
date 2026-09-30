@@ -26,7 +26,7 @@ const inputSelector = (allowedTypes) =>
 function inputAllowing(...types) {
   return {
     selector: inputSelector(['hidden', ...types]),
-    message: `Raw <input> — use the bb-*-input for what the field means (bb-text-input, bb-money-input, bb-date-input, bb-checkbox, bb-file-input, ...). Only type="${types.join('" / type="')}" is exempt in this file. ${SEE}`,
+    message: `Raw <input> — use the bb-*-input for what the field means (bb-text-input, bb-money-input, bb-branch-date-input, bb-checkbox, bb-file-input, ...). Only type="${types.join('" / type="')}" is exempt in this file. ${SEE}`,
   };
 }
 
@@ -45,7 +45,7 @@ const COMMON_COMPONENTS = {
   },
   input: {
     selector: inputSelector(['hidden']),
-    message: `Raw <input> — use the bb-*-input for what the field means (bb-text-input, bb-email-input, bb-money-input, bb-quantity-input, bb-date-input, bb-checkbox, bb-radio-group, bb-file-input, ...). ${SEE}`,
+    message: `Raw <input> — use the bb-*-input for what the field means (bb-text-input, bb-email-input, bb-money-input, bb-quantity-input, bb-branch-date-input, bb-checkbox, bb-radio-group, bb-file-input, ...). ${SEE}`,
   },
   banner: {
     // A page-level message styled by hand: a block element carrying one of the
@@ -165,7 +165,7 @@ export default tseslint.config(
         'error',
         {
           controlComponents: [
-            'bb-date-input',
+            'bb-branch-date-input',
             'bb-number-input',
             'bb-search-input',
             'bb-text-input',
@@ -253,3 +253,4 @@ export default tseslint.config(
     rules: { 'no-restricted-syntax': commonComponentRule({ input: inputAllowing('radio') }) },
   },
 );
+

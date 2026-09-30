@@ -54,7 +54,7 @@
     <h3>Submit Expense Claim</h3>
     <div class="fields" style="margin-top: 12px;">
       <div>
-        <bb-date-input label="Claim Date" name="claimDate" [(ngModel)]="applyForm.claimDate" />
+        <bb-branch-date-input label="Claim Date" name="claimDate" [(ngModel)]="applyForm.claimDate" />
       </div>
       <div>
         <bb-select label="Preferred Payout" name="payoutMode" [options]="payoutModeOptions" [clearable]="false" [(ngModel)]="applyForm.payoutMode" />
@@ -73,7 +73,7 @@
             <bb-select label="Category" name="claimCategoryId" [options]="claimCategoryOptions()" [clearable]="false" [(ngModel)]="line.claimCategoryId" />
           </div>
           <div>
-            <bb-date-input label="Date" name="expenseDate" [(ngModel)]="line.expenseDate" />
+            <bb-branch-date-input label="Date" name="expenseDate" [(ngModel)]="line.expenseDate" />
           </div>
           <div>
             <bb-text-input label="Description" placeholder="Description" name="description" [(ngModel)]="line.description" />
@@ -97,3 +97,4 @@
     </div>
   </div>
 }
+

@@ -126,7 +126,7 @@
       }
 
       <div class="field">
-        <bb-date-input label="Date"  [(ngModel)]="form.movementDate" />
+        <bb-branch-date-input label="Date"  [(ngModel)]="form.movementDate" />
       </div>
 
       <div class="field">
@@ -186,7 +186,7 @@
 
       @if (item.isExpiryTracked) {
         <div class="field">
-          <bb-date-input label="Batch expiry" hint="What FEFO orders by — the soonest to expire goes out first."  
+          <bb-branch-date-input label="Batch expiry" hint="What FEFO orders by — the soonest to expire goes out first."  
             [(ngModel)]="form.batchExpiryDate" 
             [required]="item.costingType === 'Fefo'" />
         </div>
@@ -384,3 +384,4 @@
   (choose)="onBatchChoose($event)"
   (dismiss)="closeBatchPicker()"
 />
+

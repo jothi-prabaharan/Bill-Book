@@ -8,7 +8,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
@@ -80,7 +80,7 @@ interface ReceivingLine {
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     QuantityInputComponent,
     TextareaComponent,
@@ -735,6 +735,7 @@ export class GoodsReceiptFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
 
 
 

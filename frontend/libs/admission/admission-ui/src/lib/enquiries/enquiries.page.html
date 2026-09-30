@@ -24,9 +24,9 @@
   <section class="sheet" aria-labelledby="enquiry-sheet-title">
     <h2 id="enquiry-sheet-title">{{ editingId() === null ? 'New enquiry' : 'Edit enquiry' }}</h2>
     <div class="fields">
-      <bb-date-input label="Date" [(ngModel)]="form.enquiryDate" />
+      <bb-branch-date-input label="Date" [(ngModel)]="form.enquiryDate" />
       <bb-text-input label="Child's name" [(ngModel)]="form.childName" maxlength="200" [required]="true" />
-      <bb-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" />
+      <bb-branch-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" />
       <bb-select label="School year" [options]="years()" [(ngModel)]="form.academicYearId" [clearable]="false" />
       <bb-select label="Class sought" [options]="classes()" [(ngModel)]="form.seekingClassId" [clearable]="false" />
       <bb-text-input label="Parent's name" [(ngModel)]="form.parentName" maxlength="200" [required]="true" />
@@ -34,7 +34,7 @@
       <bb-email-input label="Email" [(ngModel)]="form.email" />
       <bb-select label="Source" [options]="sources" [(ngModel)]="form.enquirySource" [clearable]="false" />
       <bb-select label="Status" [options]="editableStatuses" [(ngModel)]="form.enquiryStatus" [clearable]="false" />
-      <bb-date-input label="Follow up on" [(ngModel)]="form.followUpDate" />
+      <bb-branch-date-input label="Follow up on" [(ngModel)]="form.followUpDate" />
     </div>
     <div class="sheet-actions">
       <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
@@ -42,3 +42,4 @@
     </div>
   </section>
 }
+

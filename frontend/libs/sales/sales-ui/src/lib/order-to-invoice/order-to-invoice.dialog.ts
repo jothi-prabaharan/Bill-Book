@@ -5,7 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { InvoiceService, SalesOrderListItem, SalesOrderService } from '@bill-book/sales-core';
 import {
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   TextInputComponent,
   TextareaComponent,
@@ -36,7 +36,7 @@ const CANDIDATE_PAGE = 100;
     CommonModule,
     ReactiveFormsModule,
     MessageBoxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
   ],
@@ -159,4 +159,5 @@ function inDays(days: number): string {
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
 }
+
 

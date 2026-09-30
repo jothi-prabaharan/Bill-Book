@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
@@ -67,7 +67,7 @@ type Picker = 'none' | 'vendor' | 'item';
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
     MessageBoxComponent,
@@ -531,4 +531,5 @@ export class PurchaseOrderFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
 

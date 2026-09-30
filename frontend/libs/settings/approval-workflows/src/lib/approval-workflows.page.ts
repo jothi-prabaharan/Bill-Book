@@ -8,7 +8,7 @@ import { readApiFailure } from '@bill-book/api-client';
 import {
   BbSelectOption,
   CheckboxComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -57,7 +57,7 @@ interface UserRow {
     TextInputComponent,
     SelectComponent,
     CheckboxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     NumberInputComponent,
   ],
   templateUrl: './approval-workflows.page.html',
@@ -216,3 +216,4 @@ export class ApprovalWorkflowsPage implements OnInit {
     this.messageIsError.set(isError);
   }
 }
+

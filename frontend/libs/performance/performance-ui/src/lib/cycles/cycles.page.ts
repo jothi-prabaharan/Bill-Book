@@ -3,7 +3,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   PercentageInputComponent,
   SelectComponent,
@@ -26,7 +26,7 @@ import {
     CommonModule,
     FormsModule,
     MessageBoxComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     PercentageInputComponent,
     SelectComponent,
     TextInputComponent,
@@ -161,3 +161,4 @@ export class CyclesPage implements OnInit {
     }
   }
 }
+

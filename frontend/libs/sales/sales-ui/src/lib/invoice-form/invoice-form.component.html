@@ -205,7 +205,7 @@
   -->
   <form class="inv-form__fields" [formGroup]="form">
     <div class="field">
-      <bb-date-input
+      <bb-branch-date-input
         id="inv-date"
         label="Invoice date"
         formControlName="documentDate"
@@ -215,7 +215,7 @@
     </div>
 
     <div class="field">
-      <bb-date-input
+      <bb-branch-date-input
         id="inv-due"
         label="Due date"
         hint="When payment is expected."
@@ -444,3 +444,4 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
+

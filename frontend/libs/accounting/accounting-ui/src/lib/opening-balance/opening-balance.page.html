@@ -27,7 +27,7 @@
 
 <div class="head-fields">
   <div class="field">
-    <bb-date-input label="Go-live date"  [(ngModel)]="asOfDate" name="asOfDate" [disabled]="finalized()" />
+    <bb-branch-date-input label="Go-live date"  [(ngModel)]="asOfDate" name="asOfDate" [disabled]="finalized()" />
   </div>
   <div class="field wide">
     <bb-text-input
@@ -104,7 +104,7 @@
         (ngModelChange)="touch()"
         [disabled]="finalized()"
       />
-      <bb-date-input
+      <bb-branch-date-input
         
         [(ngModel)]="row.documentDate"
         [name]="'docdate' + lines().indexOf(row)"
@@ -315,3 +315,4 @@
     </button>
   </div>
 }
+

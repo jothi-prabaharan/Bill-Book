@@ -1,8 +1,8 @@
 <section class="audit">
   <div class="audit__filters">
     <bb-select label="Area" name="auditArea" [clearable]="false" [options]="areaOptions" [(ngModel)]="area" (ngModelChange)="changeArea()" />
-    <bb-date-input label="From" name="auditFrom" [(ngModel)]="from" />
-    <bb-date-input label="To" name="auditTo" [(ngModel)]="to" />
+    <bb-branch-date-input label="From" name="auditFrom" [(ngModel)]="from" />
+    <bb-branch-date-input label="To" name="auditTo" [(ngModel)]="to" />
     <bb-select label="User" name="auditUser" placeholder="Everyone" [options]="userOptions()" [(ngModel)]="userId" />
     <bb-select label="Table" name="auditTable" placeholder="Every table" [options]="entityOptions()" [(ngModel)]="entity" />
     <div class="audit__go">
@@ -65,3 +65,4 @@
     </section>
   }
 </section>
+

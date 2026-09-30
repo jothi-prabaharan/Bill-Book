@@ -5,7 +5,7 @@
 <div class="fields">
   <bb-select label="Fee structure" [options]="structureOptions()" [(ngModel)]="structureId" (ngModelChange)="load()" />
   <bb-text-input label="Period" placeholder="2026-06" hint="The month billed." [(ngModel)]="period" (keyup.enter)="load()" maxlength="7" />
-  <bb-date-input label="Demand date" [(ngModel)]="demandDate" />
+  <bb-branch-date-input label="Demand date" [(ngModel)]="demandDate" />
 </div>
 
 <div class="sheet-actions">
@@ -38,3 +38,4 @@
     </div>
   </section>
 }
+

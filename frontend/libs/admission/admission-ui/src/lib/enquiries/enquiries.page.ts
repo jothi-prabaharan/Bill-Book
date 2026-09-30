@@ -10,7 +10,7 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   EmailInputComponent,
   MessageBoxComponent,
   PhoneInputComponent,
@@ -36,7 +36,7 @@ import { academicOptions } from '../academic-options';
     TextInputComponent,
     PhoneInputComponent,
     EmailInputComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     SelectComponent,
     MessageBoxComponent,
     IfCanDirective,
@@ -176,3 +176,4 @@ export class EnquiriesPage implements OnInit {
     };
   }
 }
+

@@ -9,7 +9,7 @@ import {
   BbSelectOption,
   CheckboxComponent,
   CustomFieldValues,
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentCustomFieldsComponent,
   DocumentLine,
   DocumentLineContext,
@@ -64,7 +64,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
     CheckboxComponent,
@@ -662,4 +662,5 @@ export class BillFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
 

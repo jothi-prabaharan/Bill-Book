@@ -6,7 +6,7 @@ import {
   BbSelectOption,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -59,7 +59,7 @@ interface TransferListItem {
   imports: [
     DataGridComponent,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     SelectComponent,
@@ -355,4 +355,5 @@ export class TransferMoneyPage implements OnInit {
     );
   }
 }
+
 

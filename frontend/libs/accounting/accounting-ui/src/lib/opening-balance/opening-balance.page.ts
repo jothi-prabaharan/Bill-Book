@@ -3,7 +3,7 @@ import {
   BbSelectOption,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -139,7 +139,7 @@ interface LineForm {
     DataGridComponent,
     DecimalPipe,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     SelectComponent,
@@ -540,4 +540,5 @@ export class OpeningBalancePage implements OnInit {
     );
   }
 }
+
 

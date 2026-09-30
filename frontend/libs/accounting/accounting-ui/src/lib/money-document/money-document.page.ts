@@ -15,7 +15,7 @@ import {
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
-  DateInputComponent,
+  BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
   PercentageInputComponent,
@@ -176,7 +176,7 @@ interface LineForm {
     DataGridComponent,
     DecimalPipe,
     FormsModule,
-    DateInputComponent,
+    BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     AllocationFormComponent,
@@ -1055,3 +1055,4 @@ export class MoneyDocumentPage implements OnInit {
     }
   }
 }
+

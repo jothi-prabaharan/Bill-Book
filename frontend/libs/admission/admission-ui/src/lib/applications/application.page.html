@@ -17,10 +17,10 @@
 <section class="sheet" aria-labelledby="app-child">
   <h2 id="app-child">Child</h2>
   <div class="fields">
-    <bb-date-input label="Application date" [(ngModel)]="form.applicationDate" [disabled]="isClosed()" />
+    <bb-branch-date-input label="Application date" [(ngModel)]="form.applicationDate" [disabled]="isClosed()" />
     <bb-text-input label="First name" [(ngModel)]="form.childFirstName" maxlength="100" [required]="true" [disabled]="isClosed()" />
     <bb-text-input label="Last name" [(ngModel)]="form.childLastName" maxlength="100" [disabled]="isClosed()" />
-    <bb-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" [disabled]="isClosed()" />
+    <bb-branch-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" [disabled]="isClosed()" />
     <bb-select label="Gender" [options]="genders" [(ngModel)]="form.childGender" [clearable]="false" [disabled]="isClosed()" />
     <bb-select label="School year" [options]="years()" [(ngModel)]="form.academicYearId" [clearable]="false" [disabled]="isClosed()" />
     <bb-select label="Class sought" [options]="classes()" [(ngModel)]="form.seekingClassId" [clearable]="false" [disabled]="isClosed()" />
@@ -84,7 +84,7 @@
   <section *bbIfCan="'admission.approve'" class="sheet" aria-labelledby="app-admit">
     <h2 id="app-admit">Admit</h2>
     <div class="fields">
-      <bb-date-input label="Admission date" [(ngModel)]="admit.admissionDate" [required]="true" />
+      <bb-branch-date-input label="Admission date" [(ngModel)]="admit.admissionDate" [required]="true" />
       <bb-select label="Enrol in section" placeholder="Enrol later" [options]="sections()" [(ngModel)]="admit.sectionId" />
       <bb-number-input label="Roll number" [(ngModel)]="admit.rollNo" />
     </div>
@@ -93,3 +93,4 @@
     </div>
   </section>
 }
+

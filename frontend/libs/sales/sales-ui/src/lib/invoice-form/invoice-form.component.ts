@@ -32,7 +32,7 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   DataGridFooterDirective,
-  DateInputComponent,
+  BranchDateInputComponent,
   DocumentCustomFieldsComponent,
   DocumentLine,
   DocumentLineContext,
@@ -100,7 +100,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     NumberInputComponent,
     TextInputComponent,
     TextareaComponent,
-    DateInputComponent,
+    BranchDateInputComponent,
     ExchangeRateInputComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
@@ -595,4 +595,5 @@ function inDays(days: number): string {
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
 }
+
 
