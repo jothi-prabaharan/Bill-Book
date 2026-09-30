@@ -233,6 +233,9 @@ public class OrgContextResponse
     /// <summary>Enabled modular add-ons for this branch (D-36, TK-127).</summary>
     public Shared.Kernel.Apps.AddOn AddOns { get; set; } = Shared.Kernel.Apps.AddOn.None;
 
+    /// <summary>The customer's subscription plan tier (TK-129).</summary>
+    public Shared.Kernel.Tenancy.PlanTier PlanTier { get; set; } = Shared.Kernel.Tenancy.PlanTier.Standard;
+
     /// <summary>
     /// The branch's own GSTIN, as it must appear on a tax invoice.
     ///

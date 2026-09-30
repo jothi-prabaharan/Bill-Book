@@ -38,12 +38,20 @@ export enum TicketStatus {
   Closed = 'Closed'
 }
 
+export enum TicketChannel {
+  Web = 'Web',
+  Email = 'Email',
+  Chat = 'Chat',
+  Call = 'Call'
+}
+
 export interface Ticket {
   ticketId: string;
   subject: string;
   description: string;
   priority: TicketPriority;
   status: TicketStatus;
+  channel?: TicketChannel;
   /**
    * A `con.Contacts` id, which is an `int` everywhere else in the product —
    * every picker publishes one and the API takes one. It was declared `string`

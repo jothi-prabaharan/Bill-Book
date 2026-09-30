@@ -16,6 +16,10 @@
     <ProjectReference Include="..\..\Api\Master\Master.Api\Master.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="Shared.Kernel.Tenancy" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <!-- One copy of the RLS audit, linked rather than duplicated: it asks the

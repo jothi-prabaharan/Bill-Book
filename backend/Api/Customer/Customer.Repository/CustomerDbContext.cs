@@ -57,6 +57,7 @@ public class CustomerDbContext : TenantDbContext
 
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.Priority).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Channel).HasConversion<string>().HasMaxLength(20);
 
             b.HasIndex(e => new { e.OrgId, e.ContactId });
             b.HasIndex(e => new { e.OrgId, e.Status });

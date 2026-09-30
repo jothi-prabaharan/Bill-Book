@@ -58,6 +58,7 @@ public sealed class TicketsController : ControllerBase
                 t.Subject,
                 t.Status,
                 t.Priority,
+                t.Channel,
                 t.SlaDueAt,
                 t.AssignedToUserId,
                 t.ResolvedAt,
@@ -100,6 +101,11 @@ public sealed class TicketsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SaveTicketRequest request, CancellationToken ct)
     {
+        if (!TicketChannelRules.IsChannelAllowed(_tenant.PlanTier, request.Channel))
+        {
+            return UnprocessableEntity(new { message = "Call support requires a Pro or Elite plan." });
+        }
+
         if (!await _contacts.ExistsInCallerOrgAsync(request.ContactId, ct))
         {
             return Forbid();
@@ -111,6 +117,7 @@ public sealed class TicketsController : ControllerBase
             Subject = request.Subject,
             Description = request.Description,
             Priority = request.Priority,
+            Channel = request.Channel,
             Status = TicketStatus.Open,
 
             // The branch's own SLA for the priority (D-18, TK-18), not a table
@@ -127,6 +134,11 @@ public sealed class TicketsController : ControllerBase
     [HttpPut("{id:long}")]
     public async Task<IActionResult> Update(long id, [FromBody] SaveTicketRequest request, CancellationToken ct)
     {
+        if (!TicketChannelRules.IsChannelAllowed(_tenant.PlanTier, request.Channel))
+        {
+            return UnprocessableEntity(new { message = "Call support requires a Pro or Elite plan." });
+        }
+
         var ticket = await _db.Tickets.FindAsync(new object[] { id }, ct);
         if (ticket == null) return NotFound();
 
@@ -135,6 +147,7 @@ public sealed class TicketsController : ControllerBase
         ticket.Subject = request.Subject;
         ticket.Description = request.Description;
         ticket.Priority = request.Priority;
+        ticket.Channel = request.Channel;
 
         await _db.SaveChangesAsync(ct);
 
@@ -231,6 +244,8 @@ public class SaveTicketRequest
     public string? Description { get; set; }
 
     public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+
+    public TicketChannel Channel { get; set; } = TicketChannel.Web;
 }
 
 public class UpdateTicketStatusRequest

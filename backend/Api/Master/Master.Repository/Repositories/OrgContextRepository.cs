@@ -63,6 +63,7 @@ public sealed class OrgContextRepository
                 StateCode = s != null ? s.StateCode : null,
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
+                CustomerPlanTier = c.PlanTier,
                 HasLicence = l != null,
                 ExpiryDate = l != null ? l.ExpiryDate : DateOnly.MinValue,
                 GraceDays = l != null ? l.GraceDays : 0,
@@ -157,6 +158,7 @@ public sealed class OrgContextRepository
             Vertical = row.Vertical.ToString(),
             BusinessType = row.BusinessType,
             AddOns = row.AddOns,
+            PlanTier = row.CustomerPlanTier,
             // The seller block on a printed tax invoice. Sales cannot read
             // mst.Organizations, so the only alternative to carrying it here is
             // the placeholder it used to print — an invoice headed "Our Company"

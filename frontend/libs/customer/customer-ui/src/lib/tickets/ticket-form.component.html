@@ -45,6 +45,16 @@
       </div>
 
       <div class="form-group">
+        <bb-select
+          label="Channel"
+          placeholder=""
+          [options]="channelOptions()"
+          formControlName="channel"
+          [required]="true"
+        />
+      </div>
+
+      <div class="form-group">
         <bb-form-field
           label="Contact"
           controlId="ticketContact"

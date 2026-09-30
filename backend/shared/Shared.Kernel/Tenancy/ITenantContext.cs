@@ -27,6 +27,8 @@ public interface ITenantContext
 
     Apps.AddOn AddOns { get; }
 
+    PlanTier PlanTier { get; }
+
     IReadOnlySet<string> Permissions { get; }
 
     /// <summary>Throws when either id is missing, so a query can never silently run unscoped.</summary>
@@ -44,6 +46,8 @@ public sealed class TenantContext : ITenantContext
     public Apps.BusinessType? BusinessType { get; set; }
 
     public Apps.AddOn AddOns { get; set; }
+
+    public PlanTier PlanTier { get; set; } = PlanTier.Standard;
 
     public IReadOnlySet<string> Permissions { get; set; } = new HashSet<string>();
 

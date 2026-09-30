@@ -4323,7 +4323,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a branch with only Hrms gets only HRMS menus and seeds.
 
 ### TK-128 · `[RequireBusinessType]` and `[RequireAddOn]` on every controller
-- [x] completed — 2026-09-30
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Issue:** [#110](https://github.com/jothi-prabaharan/Bill-Book/issues/110)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-KERNEL, every service lane · **Depends on:** TK-127 · **Decision:** D-36
@@ -4336,13 +4336,13 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the audit passes in every service and an endpoint of a disabled add-on answers 403.
 
 ### TK-129 · Support channel by plan: text on Basic, calls on Pro
-- [~] working (Antigravity) — since 2026-09-30
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Issue:** [#111](https://github.com/jothi-prabaharan/Bill-Book/issues/111)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-CUS, L-MST · **Depends on:** TK-127 · **Decision:** D-36
 - **Sub-tasks:**
-  - [ ] Support tickets stay in every branch. The channel follows `PlanType`: Basic is text only; call support needs Pro.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Support tickets stay in every branch. The channel follows `PlanType`: Basic is text only; call support needs Pro.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a Basic customer cannot choose the call channel.
 
 ### TK-130 · `apps/web` serves HRMS, Payroll and School

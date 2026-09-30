@@ -25,6 +25,9 @@ public class SessionContextResponse
     /// <summary>Enabled modular add-ons for this branch (D-36, TK-127).</summary>
     public Shared.Kernel.Apps.AddOn AddOns { get; set; } = Shared.Kernel.Apps.AddOn.None;
 
+    /// <summary>The customer's subscription plan tier (TK-129): Trial, Standard/Basic, Pro, Elite.</summary>
+    public string PlanTier { get; set; } = "Standard";
+
     /// <summary>That app's licence: Active, Trial, Expired, Suspended or NotLicensed.</summary>
     public string LicenseStatus { get; set; } = null!;
 

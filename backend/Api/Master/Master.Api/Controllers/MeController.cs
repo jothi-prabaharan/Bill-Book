@@ -80,6 +80,7 @@ public sealed class MeController : ControllerBase
             App = app != App.None ? app.ToString() : (org.BusinessType?.ToString() ?? "General"),
             BusinessType = org.BusinessType,
             AddOns = org.AddOns,
+            PlanTier = org.PlanTier.ToString(),
             LicenseStatus = org.LicenseStatus,
             LicenseExpiry = org.LicenseExpiry,
             ExpiryIsBranchLevel = org.ExpiryIsBranchLevel,

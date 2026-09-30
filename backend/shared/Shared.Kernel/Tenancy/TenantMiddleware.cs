@@ -22,6 +22,7 @@ public sealed class TenantMiddleware
             writable.CustomerCode = context.User.FindFirst("customer_code")?.Value;
             writable.BusinessType = Internal.ScopeClaims.BusinessTypeOf(context.User);
             writable.AddOns = Internal.ScopeClaims.AddOnsOf(context.User);
+            writable.PlanTier = Internal.ScopeClaims.PlanTierOf(context.User);
             writable.Permissions = new HashSet<string>(
                 context.User.FindAll("permission").Select(c => c.Value),
                 StringComparer.OrdinalIgnoreCase);

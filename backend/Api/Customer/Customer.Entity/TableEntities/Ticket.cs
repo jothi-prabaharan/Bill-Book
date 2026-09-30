@@ -20,6 +20,8 @@ public class Ticket : OrgScopedEntity
 
     public TicketPriority Priority { get; set; } = TicketPriority.Medium;
 
+    public TicketChannel Channel { get; set; } = TicketChannel.Web;
+
     public DateTimeOffset? SlaDueAt { get; set; }
 
     public Guid? AssignedToUserId { get; set; }

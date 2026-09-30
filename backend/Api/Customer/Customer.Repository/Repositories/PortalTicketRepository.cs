@@ -130,6 +130,7 @@ public sealed class PortalTicketRepository
             Subject = subject.Trim(),
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Priority = TicketPriority.Medium,
+            Channel = TicketChannel.Web,
             Status = TicketStatus.Open,
             SlaDueAt = await _sla.DueAtAsync(TicketPriority.Medium, _clock.GetUtcNow(), ct),
         };

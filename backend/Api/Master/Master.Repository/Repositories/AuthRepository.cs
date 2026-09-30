@@ -376,6 +376,7 @@ public sealed class AuthRepository
             App = app,
             BusinessType = ctx.BusinessType,
             AddOns = ctx.AddOns,
+            PlanTier = ctx.PlanTier,
             // The first of the roles: the claim names one role, for the
             // period-lock rule that keys on it.
             RoleId = roleIds[0],

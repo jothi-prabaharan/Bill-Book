@@ -3,7 +3,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TicketFormComponent } from './ticket-form.component';
-import { CustomerService } from '@bill-book/customer-core';
+import { CustomerService, Ticket, TicketChannel } from '@bill-book/customer-core';
+import { SessionContext, SessionContextService } from '@bill-book/auth';
 
 /**
  * Constructed rather than rendered.
@@ -21,7 +22,7 @@ describe('TicketFormComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), CustomerService],
+      providers: [provideHttpClient(), provideHttpClientTesting(), CustomerService, SessionContextService],
     });
 
     component = TestBed.runInInjectionContext(() => new TicketFormComponent());
@@ -77,5 +78,59 @@ describe('TicketFormComponent', () => {
 
     expect(create).not.toHaveBeenCalled();
     expect(component.form.controls.contactId.touched).toBe(true);
+  });
+
+  it('omits Call channel for Standard/Basic plan and includes it for Pro/Elite (TK-129)', () => {
+    const session = TestBed.inject(SessionContextService);
+
+    // Default / Standard plan
+    session.context.set({ planTier: 'Standard' } as unknown as SessionContext);
+    expect(component.isProOrElite()).toBe(false);
+    expect(component.channelOptions().map(o => o.value)).toEqual([
+      TicketChannel.Web,
+      TicketChannel.Email,
+      TicketChannel.Chat,
+    ]);
+
+    // Pro plan
+    session.context.set({ planTier: 'Pro' } as unknown as SessionContext);
+    expect(component.isProOrElite()).toBe(true);
+    expect(component.channelOptions().map(o => o.value)).toEqual([
+      TicketChannel.Web,
+      TicketChannel.Email,
+      TicketChannel.Chat,
+      TicketChannel.Call,
+    ]);
+
+    // Elite plan
+    session.context.set({ planTier: 'Elite' } as unknown as SessionContext);
+    expect(component.isProOrElite()).toBe(true);
+    expect(component.channelOptions().map(o => o.value)).toContain(TicketChannel.Call);
+  });
+
+  it('blocks saving with Call channel on Standard plan and allows on Pro (TK-129)', async () => {
+    const service = TestBed.inject(CustomerService);
+    const session = TestBed.inject(SessionContextService);
+    const create = vi.spyOn(service, 'createTicket').mockResolvedValue({} as unknown as Ticket);
+
+    session.context.set({ planTier: 'Standard' } as unknown as SessionContext);
+    component.form.patchValue({
+      subject: 'Issue',
+      description: 'Detail',
+      contactId: 10,
+      channel: TicketChannel.Call,
+    });
+
+    await component.save();
+    expect(create).not.toHaveBeenCalled();
+    expect(component.errorMessage()).toBe('Call support requires a Pro or Elite plan.');
+
+    // Now switch to Pro
+    session.context.set({ planTier: 'Pro' } as unknown as SessionContext);
+    await component.save();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      channel: TicketChannel.Call,
+      contactId: 10,
+    }));
   });
 });

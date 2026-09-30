@@ -18,6 +18,7 @@ export interface SessionContext {
   permissions: string[];
   /** The apps this user can switch to in this branch, with each one's licence. */
   apps: { app: AppId; licenseStatus: string }[];
+  planTier?: string;
 }
 
 /** A licence that lets its app be used. */

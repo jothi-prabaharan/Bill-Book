@@ -27,6 +27,7 @@ export class TicketList implements OnInit {
     { field: 'ticketId', title: 'ID', dataType: 'number' },
     { field: 'subject', title: 'Subject', dataType: 'string' },
     { field: 'priority', title: 'Priority', dataType: 'string' },
+    { field: 'channel', title: 'Channel', dataType: 'string' },
     { field: 'status', title: 'Status', dataType: 'string' },
     { field: 'slaDueAt', title: 'SLA Due', dataType: 'date' },
     { field: 'actions', title: 'Actions', isTemplate: true }

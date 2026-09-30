@@ -81,6 +81,7 @@ public sealed class JwtTokenRepository : ITokenRepository
         }
 
         claims.Add(new Claim("add_ons", ((int)request.AddOns).ToString()));
+        claims.Add(new Claim("plan_tier", request.PlanTier.ToString()));
 
         foreach (string permission in request.Permissions)
         {

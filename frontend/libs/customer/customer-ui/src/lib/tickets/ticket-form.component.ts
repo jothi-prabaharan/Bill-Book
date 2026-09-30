@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { CustomerService, TicketPriority } from '@bill-book/customer-core';
+import { CustomerService, TicketChannel, TicketPriority } from '@bill-book/customer-core';
+import { SessionContextService } from '@bill-book/auth';
 import {
   BbSelectOption,
   FormFieldComponent,
@@ -30,6 +31,7 @@ import {
 })
 export class TicketFormComponent {
   private readonly customerService = inject(CustomerService);
+  private readonly session = inject(SessionContextService);
 
   @Output() saved = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
@@ -44,10 +46,28 @@ export class TicketFormComponent {
     label: priority,
   }));
 
+  readonly isProOrElite = computed(() => {
+    const tier = this.session.context()?.planTier;
+    return tier === 'Pro' || tier === 'Elite';
+  });
+
+  readonly channelOptions = computed<BbSelectOption<TicketChannel>[]>(() => {
+    const options: BbSelectOption<TicketChannel>[] = [
+      { value: TicketChannel.Web, label: 'Web' },
+      { value: TicketChannel.Email, label: 'Email' },
+      { value: TicketChannel.Chat, label: 'Chat' },
+    ];
+    if (this.isProOrElite()) {
+      options.push({ value: TicketChannel.Call, label: 'Call' });
+    }
+    return options;
+  });
+
   readonly form = new FormGroup({
     subject: new FormControl('', { nonNullable: true, validators: Validators.required }),
     description: new FormControl('', { nonNullable: true, validators: Validators.required }),
     priority: new FormControl<TicketPriority>(TicketPriority.Medium, { nonNullable: true, validators: Validators.required }),
+    channel: new FormControl<TicketChannel>(TicketChannel.Web, { nonNullable: true, validators: Validators.required }),
     contactId: new FormControl<number | null>(null, { validators: Validators.required })
   });
 
@@ -125,11 +145,17 @@ export class TicketFormComponent {
     this.saving.set(true);
     this.errorMessage.set(null);
     try {
-      const { subject, description, priority, contactId } = this.form.getRawValue();
+      const { subject, description, priority, channel, contactId } = this.form.getRawValue();
+      if (channel === TicketChannel.Call && !this.isProOrElite()) {
+        this.errorMessage.set('Call support requires a Pro or Elite plan.');
+        this.saving.set(false);
+        return;
+      }
       await this.customerService.createTicket({
         subject,
         description,
         priority,
+        channel,
         // Guarded by `Validators.required` above, so it is never null here.
         contactId: contactId as number,
       });

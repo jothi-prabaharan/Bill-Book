@@ -11,6 +11,7 @@ public static class ScopeClaims
 {
     public const string BusinessTypeClaim = "business_type";
     public const string AddOnsClaim = "add_ons";
+    public const string PlanTierClaim = "plan_tier";
 
     public static BusinessType? BusinessTypeOf(ClaimsPrincipal user)
     {
@@ -68,5 +69,16 @@ public static class ScopeClaims
         }
 
         return AddOn.None;
+    }
+
+    public static Tenancy.PlanTier PlanTierOf(ClaimsPrincipal user)
+    {
+        string? claim = user.FindFirst(PlanTierClaim)?.Value
+            ?? user.FindFirst("plan_type")?.Value;
+        if (claim is not null && Enum.TryParse<Tenancy.PlanTier>(claim, ignoreCase: true, out var tier))
+        {
+            return tier;
+        }
+        return Tenancy.PlanTier.Standard;
     }
 }
