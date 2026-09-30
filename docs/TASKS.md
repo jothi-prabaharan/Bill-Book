@@ -4309,7 +4309,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** `BusinessType`, `AddOn`, and `AddOnRules` are defined with their rules tested, and the solution builds with `-warnaserror`.
 
 ### TK-127 · Master: branch business type, add-ons, one licence and the token claims
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-30
 - **Issue:** [#109](https://github.com/jothi-prabaharan/Bill-Book/issues/109)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-126 · **Decision:** D-36
