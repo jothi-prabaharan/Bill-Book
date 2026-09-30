@@ -83,6 +83,50 @@ export class OrganizationsPage implements OnInit {
 
   
 
+    protected readonly businessTypeOptions: BbSelectOption<string>[] = [
+    { value: 'General', label: 'General Retail' },
+    { value: 'Pharma', label: 'Pharmacy' },
+    { value: 'Jewellery', label: 'Jewellery' },
+    { value: 'School', label: 'School' }
+  ];
+
+  protected readonly allAddOns = [
+    { value: 'Hrms', label: 'HRMS' },
+    { value: 'Payroll', label: 'Payroll' },
+    { value: 'Crm', label: 'CRM' },
+    { value: 'Pos', label: 'Point of Sale' },
+    { value: 'FixedAssets', label: 'Fixed Assets' },
+    { value: 'ClientPortal', label: 'Client Portal' },
+    { value: 'EInvoicing', label: 'E-Invoicing' },
+    { value: 'Budget', label: 'Budgeting' },
+    { value: 'RecurringBilling', label: 'Recurring Billing' }
+  ];
+
+  protected isAddOnAllowed(addOn: string): boolean {
+    const bt = this.form?.businessType;
+    if (addOn === 'Hrms' || addOn === 'Payroll') return true;
+    if (!bt) return false;
+    if (['Crm', 'FixedAssets', 'ClientPortal', 'Budget', 'RecurringBilling'].includes(addOn)) return true;
+    if (['Pos', 'EInvoicing'].includes(addOn)) return ['General', 'Pharma', 'Jewellery'].includes(bt);
+    return false;
+  }
+
+  protected hasAddOn(addOn: string): boolean {
+    if (!this.form || !this.form.addOns) return false;
+    return this.form.addOns.split(',').map(s => s.trim()).includes(addOn);
+  }
+
+  protected toggleAddOn(addOn: string, enabled: boolean): void {
+    if (!this.form) return;
+    const current = new Set((this.form.addOns || '').split(',').map(s => s.trim()).filter(s => s && s !== 'None'));
+    if (enabled) {
+      current.add(addOn);
+    } else {
+      current.delete(addOn);
+    }
+    this.form.addOns = current.size > 0 ? Array.from(current).join(', ') : 'None';
+  }
+
   protected readonly currencyOptions = computed<BbSelectOption<string>[]>(() =>
     this.currencies().map((currency) => ({
       value: currency.code,
@@ -332,6 +376,7 @@ export class OrganizationsPage implements OnInit {
     );
   }
 }
+
 
 
 
