@@ -2396,8 +2396,9 @@ The build cards each design in section E produced. Each design section in `docs/
     - Rent's monthly threshold is modelled as a per-document threshold.
 
 ### TK-118 · Compliance: the audit trail (edit log)
-- [ ] open
-- **Lanes:** L-KERNEL, every service lane for its migration · **Depends on:** TK-37 · **Decision:** —
+- [~] working (Claude Opus 5.5) — since 2026-09-30
+- **Issue:** [#106](https://github.com/jothi-prabaharan/Bill-Book/issues/106)
+- **Lanes:** L-KERNEL, every service lane for its migration · **Depends on:** TK-37 · **Decision:** D-34, D-35
 - **Tables:** `{schema}.EditLog` in every tenant schema
 - **Sub-tasks:**
   - [ ] `EditLogInterceptor` in `Shared.Kernel`, writing changed columns old and new in the same `SaveChanges`.
@@ -4219,6 +4220,8 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-31 | Ineligible or blocked (section 17(5)) ITC: add the tax to the line's cost, or only report it? Today every bill line's GST is posted to Input GST. | TK-115 | **Add it to the line's cost** (owner, 2026-09-29): a per-line ITC eligibility (Eligible, Ineligible or Blocked; default Eligible). For a line that is not eligible, the GST is posted into the line's expense, stock or asset cost instead of Input GST, and GSTR-3B table 4 shows it apart. TK-115 |
 | D-32 | TDS sections: which section codes does the seed use, now the Income-tax Act 2025 has renumbered the TDS provisions from 1 April 2026? | TK-117 | **The familiar codes** (owner, 2026-09-29): 194C, 194J, 194H, 194I, 194A and 194Q with the 2025-26 rates and thresholds, effective 1 April 2025, per branch and editable. The owner re-labels or re-dates rows to the 2025 Act's numbering on the TDS sections screen. TK-117 |
 | D-33 | TDS deducted by customers: which statement does the reconciliation import? | TK-117 | **The Form 26AS text file** (owner, 2026-09-29): the caret-separated download from TRACES. Part I gives each deductor's TAN and the amounts, which is what matching needs. TK-117 |
+| D-34 | The audit trail: which tenant schemas get an `EditLog` in TK-118, now there are 22 rather than the 8 the design assumed? | TK-118 | **All 22** (owner, 2026-09-30): every tenant schema — RetailErp's eight, HRMS and Payroll's seven and School's eight — gets its append-only `EditLog` with RLS and the update/delete trigger, and each service's bulk statements on audited tables write their rows. TK-118 |
+| D-35 | Where does the History tab appear in TK-118? | TK-118 | **Documents and the main masters** (owner, 2026-09-30): invoices, bills, contacts, items and manual journals. Other screens take the shared component in later cards; the audit-log report covers every audited table meanwhile. TK-118 |
 
 ---
 
