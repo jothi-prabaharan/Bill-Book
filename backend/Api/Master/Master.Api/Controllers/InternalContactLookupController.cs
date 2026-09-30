@@ -67,6 +67,8 @@ public sealed class InternalContactLookupController : ControllerBase
                 IsVendor = c.IsVendor,
                 IsGuardian = c.IsGuardian,
                 IsActive = c.IsActive,
+                IsMsme = c.IsMsme,
+                UdyamNumber = c.UdyamNumber,
             })
             .ToListAsync(ct);
 

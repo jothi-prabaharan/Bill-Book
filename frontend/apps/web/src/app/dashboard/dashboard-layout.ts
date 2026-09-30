@@ -28,6 +28,7 @@ export const DASHBOARD_WIDGETS: readonly DashboardWidget[] = [
   { id: 'gst', label: 'Sales & outstanding', defaultSpan: 6 },
   { id: 'stock', label: 'Top products by profit', defaultSpan: 7 },
   { id: 'aging', label: 'Outstanding list', defaultSpan: 5 },
+  { id: 'compliance', label: 'Compliance calendar', defaultSpan: 6 },
 ];
 
 export interface DashboardLayout {

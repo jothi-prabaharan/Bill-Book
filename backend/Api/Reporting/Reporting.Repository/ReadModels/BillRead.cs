@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -10,6 +10,8 @@ public class BillRead : OrgScopedEntity
     public string TransactionTypeCode { get; set; } = null!;
     public string DocumentNo { get; set; } = null!;
     public DateOnly DocumentDate { get; set; }
+    public string? VendorBillNo { get; set; }
+    public DateOnly VendorBillDate { get; set; }
     public long ContactId { get; set; }
     public DateOnly DueDate { get; set; }
     public string CurrencyCode { get; set; } = null!;

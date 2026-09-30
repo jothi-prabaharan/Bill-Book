@@ -452,5 +452,15 @@ again on a new goods receipt.
 A money-only note **can** be voided: withdrawing its entries puts the payable
 back exactly as it was.
 
+## MSME payment rules
+
+Under the Micro, Small and Medium Enterprises Development (MSMED) Act, payments to registered micro and small enterprises cannot exceed 45 days from the date of acceptance.
+
+When raising a bill for a contact marked as an **MSME** vendor:
+- The **due date** cannot exceed 45 days from the bill's document date. A due date past 45 days is refused by the system.
+- Unpaid MSME bills are monitored in the **MSME Ageing & Sec 43B(h) Disallowance** report (`msme-aging`). Bills unpaid beyond 45 days are flagged as overdue and tracked for Income Tax Section 43B(h) year-end disallowance.
+- The half-yearly **MCA MSME Form 1** return can be exported directly from Reports in CSV and JSON formats to report outstanding balances to the Ministry of Corporate Affairs.
+
+
 
 

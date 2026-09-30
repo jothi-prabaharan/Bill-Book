@@ -96,6 +96,15 @@ IHost host = Host.CreateDefaultBuilder(args)
             .AddHttpMessageHandler<InternalKeyHandler>();
         services.AddScoped<AmcRenewalReminderRun>();
         services.AddHostedService<AmcRenewalReminderWorker>();
+
+        // Compliance filing reminders (TK-119): statutory filings due soon, from Master.
+        services.AddHttpClient<IComplianceReminders, HttpComplianceReminders>(client =>
+        {
+            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+        })
+            .AddHttpMessageHandler<InternalKeyHandler>();
+        services.AddScoped<ComplianceReminderRun>();
+        services.AddHostedService<ComplianceReminderWorker>();
     })
     .Build();
 

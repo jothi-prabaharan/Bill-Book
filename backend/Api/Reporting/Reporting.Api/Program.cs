@@ -151,6 +151,7 @@ builder.Services.AddScoped<IReportSourceRepository, PayableInvoiceDetailSourceRe
 builder.Services.AddScoped<IReportSourceRepository, PayableInvoiceSummarySourceRepository>();
 builder.Services.AddScoped<IReportSourceRepository, BillDnPaymentSourceRepository>();
 builder.Services.AddScoped<IReportSourceRepository, PurchaseReceiveOrderDetailsSourceRepository>();
+builder.Services.AddScoped<IReportSourceRepository, MsmeAgingSourceRepository>();
 builder.Services.AddScoped<IReportSourceRepository, DepreciationScheduleSourceRepository>();
 builder.Services.AddScoped<IReportSourceRepository, DisposalScheduleSourceRepository>();
 builder.Services.AddScoped<IReportSourceRepository, FixedAssetReconciliationSourceRepository>();

@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS8618
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -25,6 +25,10 @@ public class ContactRead : OrgScopedEntity
     public bool IsVendor { get; set; }
 
     public string? Gstin { get; set; }
+    public string? Pan { get; set; }
+
+    public bool IsMsme { get; set; }
+    public string? UdyamNumber { get; set; }
 
     public string CurrencyCode { get; set; }
     public long? PaymentTermId { get; set; }

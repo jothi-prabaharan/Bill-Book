@@ -18,6 +18,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Contacts;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -167,6 +168,12 @@ builder.Services.AddHttpClient<ITaxRateProvider, HttpTaxRateProvider>(client =>
 // affordable if the names come back in one call per page rather than one per
 // row. Contacts live in Master since the service merge; items in Inventory.
 builder.Services.AddHttpClient<IContactNameLookup, HttpContactNameLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<IContactDirectory, HttpContactDirectory>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })

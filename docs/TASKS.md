@@ -2418,13 +2418,13 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `Shared.Kernel.Tests/EditLogWriterTests.cs` (added the Npgsql EF provider to that project to build a model), `Sales.Api.Tests/EditLogTests.cs`, `edit-history.model.spec.ts`, `audit-areas.spec.ts`. The RLS audit in every suite now covers `EditLog`.
 
 ### TK-119 · Compliance: MSME payments and the compliance calendar
-- [ ] open
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Lanes:** L-PUR, L-RPT, L-MST, L-NTF · **Depends on:** TK-115 · **Decision:** —
 - **Tables:** `mst.ComplianceDueDates`; per-branch applicability
 - **Sub-tasks:**
-  - [ ] An MSME vendor's bill refuses a due date past 45 days; the MSME ageing report and year-end disallowance figure; the half-yearly export.
-  - [ ] Seeded, operator-editable due-date rules; per-branch applicability; reminders through Notification; the next three filings on Home.
-  - [ ] Test: a 60-day term on an MSME bill is refused; the calendar computes the right date for a rule across a month end.
+  - [x] An MSME vendor's bill refuses a due date past 45 days; the MSME ageing report and year-end disallowance figure; the half-yearly export.
+  - [x] Seeded, operator-editable due-date rules; per-branch applicability; reminders through Notification; the next three filings on Home.
+  - [x] Test: a 60-day term on an MSME bill is refused; the calendar computes the right date for a rule across a month end.
 - **Done when:** the Home page shows the next GSTR-1 due date, and an MSME bill past 45 days appears on the ageing report.
 
 ### TK-120 · Campaigns: templates, audiences, consent and unsubscribe

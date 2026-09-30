@@ -32,6 +32,12 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ## Unreleased
 - **Fixed**: **Screens that could not reach their service now load.** Display formats, fixed assets, price lists, the Settle documents workspace and Allocate dialog, bank reconciliation, the applications list and the profit and loss, balance sheet and inventory valuation statements were not forwarded by the gateway. Branches now show their own date and money formats instead of the defaults.
 - **Added**: **An audit trail on every record.** Each change to a document or master is recorded with who made it, when, and every field's old and new value — including posting, voiding and allocating. The record cannot be edited or deleted by anyone; the database refuses. Invoices, bills, manual journals, items and contacts show a **History** section, and **Settings › Audit log** lists everything, filtered by date, user and table, in every app.
+- **Added**: **Compliance: MSME payment controls and statutory compliance calendar (TK-119).**
+  - **MSME payment controls**: Purchase bills from MSME vendors refuse due dates past 45 days from acceptance date under the MSMED Act.
+  - **MSME ageing and Sec 43B(h) disallowance**: Dedicated report (`msme-aging`) categorizing MSME payables into 1-15 days, 16-45 days, and overdue > 45 days with Income Tax Section 43B(h) year-end disallowance amounts. Half-yearly MCA MSME Form 1 export in CSV and JSON formats.
+  - **Statutory compliance calendar**: Track upcoming GST (GSTR-1, GSTR-3B), Income Tax (TDS deposits, Forms 26Q/27Q, Advance Tax), and MSME filing dates with operator-customizable rules and per-branch applicability.
+  - **Automated filing reminders**: Email alerts 7, 3, and 1 days before due dates to accounting users via Notification worker.
+  - **Dashboard compliance widget**: Home dashboard displays the next statutory filing due dates, highlighting the next GSTR-1 return.
 - **Added**: **TDS on purchases and receipts.** Under **Accounts › TDS**:
   - **Sections** with their rates and thresholds, effective-dated and editable. Every branch is seeded with 194C, 194JA, 194JB, 194H, 194I(a), 194I(b), 194A and 194Q at the 2025-26 figures. A contact's TDS section is now chosen from this list.
   - A bill deducts TDS when it posts: on its own above the single-document threshold, or on the whole year so far on the bill that takes the vendor past the yearly threshold. **TDS Payable** is credited and the vendor is owed the net. A supplier deposit on Spend money deducts it too.

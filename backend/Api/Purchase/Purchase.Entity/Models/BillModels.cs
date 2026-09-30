@@ -209,6 +209,9 @@ public enum BillOutcome
     /// <summary>A line was charged on to a client, so the bill cannot be voided until that invoice is (TK-106).</summary>
     BilledToClient = 14,
 
+    /// <summary>MSMED Act 2006 / Sec 43B(h): A bill from an MSME vendor cannot exceed 45 days from acceptance (TK-119).</summary>
+    MsmeDueDateExceeded45Days = 15,
+
     /// <summary>A custom field value does not fit its definition (TK-112); the detail says which.</summary>
     CustomFieldsRefused = 900,
 }

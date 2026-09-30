@@ -116,6 +116,11 @@ public sealed class BillsController : ControllerBase
                 Message = result.Detail ?? "A bill needs a due date.",
             }),
 
+            BillOutcome.MsmeDueDateExceeded45Days => BadRequest(new MessageResponse
+            {
+                Message = result.Detail ?? "Payment terms for an MSME vendor cannot exceed 45 days from acceptance.",
+            }),
+
             // 409, not 400: the request is well-formed and the refusal is about
             // a document that already exists.
             BillOutcome.DuplicateVendorBillNo => Conflict(new MessageResponse

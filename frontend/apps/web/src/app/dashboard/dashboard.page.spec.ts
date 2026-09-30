@@ -136,4 +136,11 @@ describe('DashboardPage customize mode', () => {
     expect(page.visible().map((w) => w.id)).toEqual(defaultLayout().order);
     expect(page.span('docs')).toBe(6);
   });
+
+  it('DASH-06: Compliance calendar widget is present with default span', () => {
+    const page = createPage();
+    const compliance = page.widgets.find((w) => w.id === 'compliance');
+    expect(compliance).toBeDefined();
+    expect(compliance?.defaultSpan).toBe(6);
+  });
 });

@@ -137,6 +137,184 @@ namespace Master.Repository.Migrations.Admin
                         });
                 });
 
+            modelBuilder.Entity("Master.Entity.TableEntities.ComplianceDueDate", b =>
+                {
+                    b.Property<int>("ComplianceDueDateId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ApplicabilityCondition")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("DueDay")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DueMonthOffset")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("ExtendedDueDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ExtensionNotice")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("FormName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RuleDescription")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SpecificPeriod")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ComplianceDueDateId");
+
+                    b.HasIndex("Category", "FormName");
+
+                    b.ToTable("ComplianceDueDates", "mst");
+
+                    b.HasData(
+                        new
+                        {
+                            ComplianceDueDateId = 1,
+                            ApplicabilityCondition = "GSTIN",
+                            Category = "GST",
+                            Description = "Outward supplies monthly return",
+                            DueDay = 11,
+                            DueMonthOffset = 1,
+                            FormName = "GSTR-1",
+                            Frequency = 1,
+                            IsActive = true,
+                            RuleDescription = "11th of the following month",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ComplianceDueDateId = 2,
+                            ApplicabilityCondition = "GSTIN",
+                            Category = "GST",
+                            Description = "Monthly summary return and tax payment",
+                            DueDay = 20,
+                            DueMonthOffset = 1,
+                            FormName = "GSTR-3B",
+                            Frequency = 1,
+                            IsActive = true,
+                            RuleDescription = "20th of the following month",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ComplianceDueDateId = 3,
+                            ApplicabilityCondition = "TAN",
+                            Category = "TDS",
+                            Description = "Monthly tax deducted at source deposit (Challan 281)",
+                            DueDay = 7,
+                            DueMonthOffset = 1,
+                            FormName = "TDS Deposit",
+                            Frequency = 1,
+                            IsActive = true,
+                            RuleDescription = "7th of the following month (30th April for March)",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ComplianceDueDateId = 4,
+                            ApplicabilityCondition = "TAN",
+                            Category = "TDS",
+                            Description = "Quarterly TDS return for payments other than salary",
+                            DueDay = 31,
+                            DueMonthOffset = 1,
+                            FormName = "Form 26Q",
+                            Frequency = 2,
+                            IsActive = true,
+                            RuleDescription = "31st of the month following quarter (31st May for Q4)",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ComplianceDueDateId = 5,
+                            ApplicabilityCondition = "TAN",
+                            Category = "TDS",
+                            Description = "Quarterly TDS return for payments to non-residents",
+                            DueDay = 31,
+                            DueMonthOffset = 1,
+                            FormName = "Form 27Q",
+                            Frequency = 2,
+                            IsActive = true,
+                            RuleDescription = "31st of the month following quarter (31st May for Q4)",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ComplianceDueDateId = 6,
+                            ApplicabilityCondition = "All",
+                            Category = "IncomeTax",
+                            Description = "Quarterly advance income tax installment",
+                            DueDay = 15,
+                            DueMonthOffset = 0,
+                            FormName = "Advance Tax",
+                            Frequency = 2,
+                            IsActive = true,
+                            RuleDescription = "15th of June, September, December, and March",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ComplianceDueDateId = 7,
+                            ApplicabilityCondition = "CIN",
+                            Category = "MSME",
+                            Description = "Half-yearly return to MCA for outstanding payments to MSME vendors",
+                            DueDay = 31,
+                            DueMonthOffset = 1,
+                            FormName = "MSME Form 1",
+                            Frequency = 3,
+                            IsActive = true,
+                            RuleDescription = "31st October (for Apr–Sep) and 30th April (for Oct–Mar)",
+                            Version = 0u
+                        });
+                });
+
             modelBuilder.Entity("Master.Entity.TableEntities.Configuration", b =>
                 {
                     b.Property<Guid>("ConfigId")
@@ -14229,6 +14407,59 @@ namespace Master.Repository.Migrations.Admin
                         .IsUnique();
 
                     b.ToTable("MetalRates", "rat");
+                });
+
+            modelBuilder.Entity("Master.Entity.TableEntities.OrgComplianceSetting", b =>
+                {
+                    b.Property<long>("OrgComplianceSettingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("OrgComplianceSettingId"));
+
+                    b.Property<int>("ComplianceDueDateId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool?>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastFiledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastFiledPeriod")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ReminderDaysBefore")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("OrgComplianceSettingId");
+
+                    b.HasIndex("OrgId", "ComplianceDueDateId")
+                        .IsUnique();
+
+                    b.ToTable("OrgComplianceSettings", "mst");
                 });
 
             modelBuilder.Entity("Master.Entity.TableEntities.OrgCurrency", b =>

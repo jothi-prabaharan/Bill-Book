@@ -97,6 +97,12 @@ public class AdminDbContext : DbContext
     /// <summary>Each fetch of a rate source, schema <c>rat</c> (TK-26).</summary>
     public DbSet<RateFetchRun> RateFetchRuns => Set<RateFetchRun>();
 
+    /// <summary>Statutory compliance calendar rules, schema <c>mst</c> (TK-119).</summary>
+    public DbSet<ComplianceDueDate> ComplianceDueDates => Set<ComplianceDueDate>();
+
+    /// <summary>Per-branch statutory filing applicability and tracking, schema <c>mst</c> (TK-119).</summary>
+    public DbSet<OrgComplianceSetting> OrgComplianceSettings => Set<OrgComplianceSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("mst");
@@ -1064,6 +1070,113 @@ public class AdminDbContext : DbContext
                 });
             }
         }
+
+        modelBuilder.Entity<ComplianceDueDate>(b =>
+        {
+            b.HasKey(e => e.ComplianceDueDateId);
+            b.Property(e => e.ComplianceDueDateId).ValueGeneratedNever();
+            b.Property(e => e.Frequency).HasConversion<int>();
+            b.HasIndex(e => new { e.Category, e.FormName });
+            b.HasData(
+                new ComplianceDueDate
+                {
+                    ComplianceDueDateId = 1,
+                    Category = "GST",
+                    FormName = "GSTR-1",
+                    Description = "Outward supplies monthly return",
+                    Frequency = ComplianceFrequency.Monthly,
+                    DueDay = 11,
+                    DueMonthOffset = 1,
+                    RuleDescription = "11th of the following month",
+                    ApplicabilityCondition = "GSTIN",
+                    IsActive = true,
+                },
+                new ComplianceDueDate
+                {
+                    ComplianceDueDateId = 2,
+                    Category = "GST",
+                    FormName = "GSTR-3B",
+                    Description = "Monthly summary return and tax payment",
+                    Frequency = ComplianceFrequency.Monthly,
+                    DueDay = 20,
+                    DueMonthOffset = 1,
+                    RuleDescription = "20th of the following month",
+                    ApplicabilityCondition = "GSTIN",
+                    IsActive = true,
+                },
+                new ComplianceDueDate
+                {
+                    ComplianceDueDateId = 3,
+                    Category = "TDS",
+                    FormName = "TDS Deposit",
+                    Description = "Monthly tax deducted at source deposit (Challan 281)",
+                    Frequency = ComplianceFrequency.Monthly,
+                    DueDay = 7,
+                    DueMonthOffset = 1,
+                    RuleDescription = "7th of the following month (30th April for March)",
+                    ApplicabilityCondition = "TAN",
+                    IsActive = true,
+                },
+                new ComplianceDueDate
+                {
+                    ComplianceDueDateId = 4,
+                    Category = "TDS",
+                    FormName = "Form 26Q",
+                    Description = "Quarterly TDS return for payments other than salary",
+                    Frequency = ComplianceFrequency.Quarterly,
+                    DueDay = 31,
+                    DueMonthOffset = 1,
+                    RuleDescription = "31st of the month following quarter (31st May for Q4)",
+                    ApplicabilityCondition = "TAN",
+                    IsActive = true,
+                },
+                new ComplianceDueDate
+                {
+                    ComplianceDueDateId = 5,
+                    Category = "TDS",
+                    FormName = "Form 27Q",
+                    Description = "Quarterly TDS return for payments to non-residents",
+                    Frequency = ComplianceFrequency.Quarterly,
+                    DueDay = 31,
+                    DueMonthOffset = 1,
+                    RuleDescription = "31st of the month following quarter (31st May for Q4)",
+                    ApplicabilityCondition = "TAN",
+                    IsActive = true,
+                },
+                new ComplianceDueDate
+                {
+                    ComplianceDueDateId = 6,
+                    Category = "IncomeTax",
+                    FormName = "Advance Tax",
+                    Description = "Quarterly advance income tax installment",
+                    Frequency = ComplianceFrequency.Quarterly,
+                    DueDay = 15,
+                    DueMonthOffset = 0,
+                    RuleDescription = "15th of June, September, December, and March",
+                    ApplicabilityCondition = "All",
+                    IsActive = true,
+                },
+                new ComplianceDueDate
+                {
+                    ComplianceDueDateId = 7,
+                    Category = "MSME",
+                    FormName = "MSME Form 1",
+                    Description = "Half-yearly return to MCA for outstanding payments to MSME vendors",
+                    Frequency = ComplianceFrequency.HalfYearly,
+                    DueDay = 31,
+                    DueMonthOffset = 1,
+                    RuleDescription = "31st October (for Apr–Sep) and 30th April (for Oct–Mar)",
+                    ApplicabilityCondition = "CIN",
+                    IsActive = true,
+                }
+            );
+        });
+
+        modelBuilder.Entity<OrgComplianceSetting>(b =>
+        {
+            b.HasKey(e => e.OrgComplianceSettingId);
+            b.HasIndex(e => new { e.OrgId, e.ComplianceDueDateId }).IsUnique();
+        });
 
         modelBuilder.Entity<RolePermission>().HasData(grants);
     }

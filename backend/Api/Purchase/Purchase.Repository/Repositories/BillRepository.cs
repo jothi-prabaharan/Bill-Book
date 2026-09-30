@@ -82,6 +82,9 @@ public sealed class BillRepository
     /// <summary>What TDS a bill owes, from Accounting (TK-117). Null in tests that do not exercise it.</summary>
     private readonly ITdsQuoteClient? _tdsQuotes;
 
+    /// <summary>Checks contact MSME status through Master (TK-119). Null in tests that do not exercise it.</summary>
+    private readonly Shared.Kernel.Contacts.IContactDirectory? _contacts;
+
     /// <summary>Accounting's SystemAccount.TdsPayable (TK-117).</summary>
     public const string TdsPayableAccount = "TDS Payable";
 
@@ -103,8 +106,10 @@ public sealed class BillRepository
         PurchaseApprovalRepository? approvals = null,
         Shared.Kernel.Projects.IProjectDirectory? projects = null,
         DocumentCustomFieldGate? customFields = null,
-        ITdsQuoteClient? tdsQuotes = null)
+        ITdsQuoteClient? tdsQuotes = null,
+        Shared.Kernel.Contacts.IContactDirectory? contacts = null)
     {
+        _contacts = contacts;
         _customFields = customFields;
         _tdsQuotes = tdsQuotes;
         _projects = projects;
@@ -324,6 +329,21 @@ public sealed class BillRepository
                 BillOutcome.DueDateMissing,
                 Detail: "A bill needs a due date. Choose a payment term or set the date "
                     + "directly — payables aging is only as good as this column.");
+        }
+
+        // MSMED Act 2006 / Sec 43B(h): Payment terms for an MSME vendor cannot exceed 45 days from acceptance (TK-119).
+        if (_contacts != null)
+        {
+            var contactMap = await _contacts.FindAsync([request.ContactId], ct);
+            if (contactMap.TryGetValue(request.ContactId, out var contact) && contact.IsMsme)
+            {
+                if (dueDate.Value.DayNumber - request.DocumentDate.DayNumber > 45)
+                {
+                    return new BillResult(
+                        BillOutcome.MsmeDueDateExceeded45Days,
+                        Detail: "Payment terms for an MSME vendor cannot exceed 45 days from acceptance (MSMED Act / Sec 43B(h)).");
+                }
+            }
         }
 
         bill.PurchaseOrderId = request.PurchaseOrderId;

@@ -1145,6 +1145,37 @@ public sealed class ReportCatalogSeeder
         },
         new()
         {
+            ReportKey = "msme-aging",
+            Title = "MSME Ageing & Sec 43B(h) Disallowance Report",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            Description = "Unpaid bills to micro and small enterprises by ageing bucket, tracking 45-day statutory limits and year-end Section 43B(h) disallowances.",
+            SortOrder = 126,
+            Columns =
+            [
+                new("documentNo", "Bill No", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("vendorBillNo", "Vendor Bill No", ColumnDataType.Text, IsDefault: true),
+                new("documentDate", "Bill Date", ColumnDataType.Date, IsDefault: true),
+                new("dueDate", "Due Date", ColumnDataType.Date, IsDefault: true),
+                new("contactCode", "Vendor Code", ColumnDataType.Text, IsDefault: true),
+                new("contactName", "Vendor Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("pan", "PAN", ColumnDataType.Text, IsDefault: true),
+                new("udyamNumber", "Udyam No", ColumnDataType.Text, IsDefault: true),
+                new("daysFromAcceptance", "Days Age", ColumnDataType.Number, IsDefault: true),
+                new("daysPastDue", "Days Overdue", ColumnDataType.Number, IsDefault: true),
+                new("bucket", "Bucket", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("isOverdue45Days", "Overdue > 45d", ColumnDataType.Boolean, IsDefault: true),
+                new("totalAmount", "Total", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("amountDue", "Due", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("disallowedAmount", "Disallowed (43B(h))", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("billId", "Bill", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
             ReportKey = "purchase-analysis",
             Title = "Purchase Analysis",
             Module = ReportModule.Purchase,

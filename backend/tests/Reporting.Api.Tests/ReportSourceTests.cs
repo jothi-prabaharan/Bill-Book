@@ -63,6 +63,7 @@ public class ReportSourceTests
     private static readonly PayableInvoiceSummarySourceRepository PayableInvoiceSummary = new();
     private static readonly BillDnPaymentSourceRepository BillDnPayment = new();
     private static readonly PurchaseReceiveOrderDetailsSourceRepository PurchaseReceiveOrderDetails = new();
+    private static readonly MsmeAgingSourceRepository MsmeAging = new();
 
     // The fixed-asset register's four reports, over one roll-forward.
     private static readonly DepreciationScheduleSourceRepository DepreciationSchedule = new();
@@ -196,6 +197,7 @@ public class ReportSourceTests
         PayableInvoiceSummary,
         BillDnPayment,
         PurchaseReceiveOrderDetails,
+        MsmeAging,
         DepreciationSchedule,
         DisposalSchedule,
         FixedAssetReconciliation,

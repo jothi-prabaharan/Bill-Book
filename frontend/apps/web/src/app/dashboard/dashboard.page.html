@@ -117,6 +117,26 @@
           </bb-data-grid>
           <div class="card-meta">₹9,42,100 total · ₹1,20,400 over 90 days</div>
         }
+
+        @case ('compliance') {
+          <div class="card-kicker">Compliance calendar</div>
+          <div class="card-title">Next GSTR-1: 11 Oct 2026</div>
+          <bb-data-grid
+            flush
+            label="Upcoming statutory filings"
+            [columns]="complianceColumns"
+            [data]="upcomingCompliance"
+            [sortable]="false"
+            [showColumnFilters]="false"
+            [showCount]="false"
+            [paged]="false"
+          >
+            <ng-template bbCellTemplate="status" let-row>
+              <span class="tag" [class]="'tag tag-' + row.tone">{{ row.status }}</span>
+            </ng-template>
+          </bb-data-grid>
+          <div class="card-meta">Statutory filing rules · Reminders sent to accounting users</div>
+        }
       }
     </div>
   }

@@ -75,6 +75,19 @@ export class DashboardPage {
     { party: 'Raja Packaging', due: '28 Jul', amount: '₹48,900', overdue: '14 d', tone: 'neutral' },
   ];
 
+  protected readonly complianceColumns: ColumnDef[] = [
+    { field: 'form', header: 'Filing' },
+    { field: 'period', header: 'Period' },
+    { field: 'due', header: 'Due Date' },
+    { field: 'status', header: 'Status' },
+  ];
+
+  protected readonly upcomingCompliance = [
+    { form: 'GSTR-1', period: 'Sep 2026', due: '11 Oct 2026', status: 'Ready', tone: 'accent' },
+    { form: 'GSTR-3B', period: 'Sep 2026', due: '20 Oct 2026', status: 'In progress', tone: 'outline' },
+    { form: 'TDS Deposit', period: 'Sep 2026', due: '07 Oct 2026', status: 'Due soon', tone: 'neutral' },
+  ];
+
   private readonly board = inject(ShellBoardService);
 
   readonly widgets = DASHBOARD_WIDGETS;

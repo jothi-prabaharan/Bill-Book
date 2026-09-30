@@ -34,6 +34,10 @@ public sealed class ContactSummary
     public bool IsGuardian { get; set; }
 
     public bool IsActive { get; set; }
+
+    public bool IsMsme { get; set; }
+
+    public string? UdyamNumber { get; set; }
 }
 
 /// <summary>
