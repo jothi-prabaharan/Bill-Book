@@ -4381,7 +4381,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a portal contact signs in to web and sees only their statement pages.
 
 ### TK-133 · Settings: a branch's business type and add-ons
-- [ ] open
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#115](https://github.com/jothi-prabaharan/Bill-Book/issues/115)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-MST, L-UI, the settings lib · **Depends on:** TK-127, TK-130 · **Decision:** D-36
@@ -4398,7 +4398,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Sub-tasks:**
   - [ ] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
   - [ ] Update `CLAUDE.md`, `docs/Modules.md`, the docs app pages and manifest, `release-notes.md` and `deploy/*`.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
 
 ### TK-135 · Use `bb-branch-date-input` on every page, delete `bb-date-input`, and delete unused shared UI components
@@ -4611,6 +4611,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 
