@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Employee.Api.Services;
 using Employee.Repository.Repositories;
 using Employee.Repository.Clients;

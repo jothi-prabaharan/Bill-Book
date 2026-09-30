@@ -15,7 +15,7 @@ namespace Fee.Api.Controllers;
 [Authorize]
 [RequireModulePermission("fee")]
 [Route("api/edit-log/fee")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<FeeDbContext>
 {
     public EditLogController(FeeDbContext db)

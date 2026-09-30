@@ -17,13 +17,13 @@ using Shared.Kernel.Apps;
 namespace Sales.Api.Controllers;
 
 /// <summary>
-/// Sales orders — <c>SOR</c>. The document that commits stock without selling it.
+/// Sales orders â€” <c>SOR</c>. The document that commits stock without selling it.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/sales-orders")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class SalesOrdersController : ControllerBase
 {
     private const int DefaultPageSize = 50;
@@ -103,7 +103,7 @@ public sealed class SalesOrdersController : ControllerBase
     [PermissionAction("approve")]
     // Serializable, declared where the request-wide transaction filter can see
     // it: the posting checks what each line has left to bill and decides on
-    // that — two concurrent fulfilments at Read Committed would each read the
+    // that â€” two concurrent fulfilments at Read Committed would each read the
     // same figure, each find room, and each write. The filter opens and
     // commits the transaction; this action never does.
     [Transactional(IsolationLevel.Serializable)]

@@ -15,7 +15,7 @@ namespace MaintenanceContract.Api.Controllers;
 [Authorize]
 [RequireModulePermission("amc")]
 [Route("api/edit-log/amc")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<MaintenanceContractDbContext>
 {
     public EditLogController(MaintenanceContractDbContext db)

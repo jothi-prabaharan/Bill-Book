@@ -13,7 +13,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/customers/{customerId:guid}/licenses")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class LicensesController : ControllerBase
 {
     private readonly LicenseRepository _service;

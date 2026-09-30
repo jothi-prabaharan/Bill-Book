@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Accounting.Api.Services;
 using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
@@ -12,7 +13,7 @@ namespace Accounting.Api.Controllers;
 /// Where Purchase puts a posted bill's capital lines on the fixed asset register
 /// (D-19, TK-12). Purchase never touches <c>acc</c> itself (hard rule 8).
 ///
-/// Guarded by the internal key, with the tenant in the body — set before the
+/// Guarded by the internal key, with the tenant in the body â€” set before the
 /// service is resolved, because its <c>DbContext</c> is built from the tenant.
 /// </summary>
 [ApiController]

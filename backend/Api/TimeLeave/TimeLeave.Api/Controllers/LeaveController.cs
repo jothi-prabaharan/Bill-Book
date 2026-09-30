@@ -13,7 +13,7 @@ namespace TimeLeave.Api.Controllers;
 
 [ApiController]
 [Route("api/tla/leave")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Authorize]
 [RequireModulePermission("leave")]
 public class LeaveController : ControllerBase

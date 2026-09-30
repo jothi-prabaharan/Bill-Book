@@ -15,7 +15,7 @@ namespace Facility.Api.Controllers;
 [Authorize]
 [RequireModulePermission("facility")]
 [Route("api/edit-log/facility")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<FacilityDbContext>
 {
     public EditLogController(FacilityDbContext db)

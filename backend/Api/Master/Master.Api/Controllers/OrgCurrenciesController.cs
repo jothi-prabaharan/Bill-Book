@@ -13,7 +13,7 @@ namespace Master.Api.Controllers;
 /// <summary>
 /// The currencies a branch trades in.
 ///
-/// The organization comes off the URL, and `mst` is the master database — it
+/// The organization comes off the URL, and `mst` is the master database â€” it
 /// holds every customer's rows with no query filter and no row-level security
 /// to fall back on. The claim check is the entire boundary here, which is why it
 /// is an attribute on the controller rather than a line in each action.
@@ -22,14 +22,14 @@ namespace Master.Api.Controllers;
 [RequireModulePermission("settings")]
 [OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/currencies")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class OrgCurrenciesController : ControllerBase
 {
     private readonly OrgCurrencyRepository _service;
 
     public OrgCurrenciesController(OrgCurrencyRepository service) => _service = service;
 
-    /// <summary>The org's currencies — active only unless includeInactive is set.</summary>
+    /// <summary>The org's currencies â€” active only unless includeInactive is set.</summary>
     [HttpGet]
     public async Task<IActionResult> List(
         Guid orgId, [FromQuery] bool includeInactive, CancellationToken ct)
@@ -38,7 +38,7 @@ public sealed class OrgCurrenciesController : ControllerBase
         return Ok(rows);
     }
 
-    /// <summary>Currencies not yet added — the Add dropdown.</summary>
+    /// <summary>Currencies not yet added â€” the Add dropdown.</summary>
     [HttpGet("available")]
     public async Task<IActionResult> Available(Guid orgId, CancellationToken ct)
     {

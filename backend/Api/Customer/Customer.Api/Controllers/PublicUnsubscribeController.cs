@@ -1,3 +1,5 @@
+using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 using Customer.Entity.Enums;
 using Customer.Entity.Models;
 using Customer.Repository;

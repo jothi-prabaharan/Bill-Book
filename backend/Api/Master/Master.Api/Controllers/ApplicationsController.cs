@@ -11,13 +11,13 @@ using Shared.Kernel.Internal;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Settings › Applications (H0.3, TK-44): the caller's customer's licence for
+/// Settings â€º Applications (H0.3, TK-44): the caller's customer's licence for
 /// each of the four apps. The customer is the token's, never the URL's, so the
 /// page needs no internal id.
 /// </summary>
 [ApiController]
 [Authorize]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 [Route("api/applications")]
 public sealed class ApplicationsController : ControllerBase
 {

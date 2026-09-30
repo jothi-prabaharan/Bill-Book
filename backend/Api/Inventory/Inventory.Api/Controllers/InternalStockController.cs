@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Inventory.Api.Services;
 using Inventory.Repository.Repositories;
 using Inventory.Entity.Models;
@@ -18,7 +19,7 @@ namespace Inventory.Api.Controllers;
 /// stock is a quantity and a unit cost, and that cost is what seeds the weighted
 /// average every cost of sale is computed from until the next receipt. Only
 /// Inventory can seed it, and once it has, it posts
-/// <c>Dr Inventory / Cr Opening Balance Equity</c> itself — the same path a
+/// <c>Dr Inventory / Cr Opening Balance Equity</c> itself â€” the same path a
 /// receipt takes. Accounting posting a value of its own would put a second figure
 /// against the Inventory account, free to disagree with the stock the items are
 /// actually carrying.
@@ -168,7 +169,7 @@ public sealed class InternalStockController : ControllerBase
     /// figure once the costing worker has run, the request path's provisional
     /// one until then (TK-90). An invoice billing goods a sale challan delivered
     /// reads this to clear Goods Delivered Not Invoiced at the cost the challan's
-    /// movement carries today — decision D-21 (b). A movement of another branch
+    /// movement carries today â€” decision D-21 (b). A movement of another branch
     /// is simply absent: the query filter hides it.
     /// </summary>
     [HttpPost("movement-costs")]
@@ -380,7 +381,7 @@ public sealed class InternalStockController : ControllerBase
     ///
     /// <b>It posts nothing to the ledger, and that is deliberate.</b> These
     /// movements carry a source type, and <c>StockLedgerMappingRepository</c> refuses a
-    /// posting for a sourced receipt — the other leg is Goods Received Not
+    /// posting for a sourced receipt â€” the other leg is Goods Received Not
     /// Invoiced or Accounts Payable, and only Purchase knows which vendor and
     /// how much of the figure is reclaimable tax. Posting the stock half here as
     /// well would double the inventory asset.
@@ -390,7 +391,7 @@ public sealed class InternalStockController : ControllerBase
     /// Inventory has already decided.
     ///
     /// <b>A line naming <c>ReturnsStockMovementId</c> is a sales return, not a
-    /// receipt</b> — goods coming back on a credit note against the issue that
+    /// receipt</b> â€” goods coming back on a credit note against the issue that
     /// sent them out. It is recorded as <see cref="Entity.Enums.StockMovementType.SalesReturn"/>,
     /// which is what makes the costing engine put it back onto the layers that
     /// issue drew from. Recorded as a receipt, as every line was until TK-77, the
@@ -465,7 +466,7 @@ public sealed class InternalStockController : ControllerBase
                 UnitCost = line.UnitCost,
 
                 // Nothing new landed on a replay, so it contributes nothing to
-                // the value being posted — the first attempt already did.
+                // the value being posted â€” the first attempt already did.
                 LineValue = lineValue,
             });
 
@@ -500,7 +501,7 @@ public sealed class InternalStockController : ControllerBase
     /// Goods going back to a vendor against a purchase document.
     ///
     /// <b>Stock returns to the layers it came from.</b> That is the whole reason
-    /// a debit note has to name the bill line it reverses — a return valued at
+    /// a debit note has to name the bill line it reverses â€” a return valued at
     /// today's weighted average rather than at what those units actually cost
     /// would move value into or out of the branch that never existed.
     ///

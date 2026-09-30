@@ -13,13 +13,13 @@ namespace Master.Api.Controllers;
 /// <summary>
 /// Platform operators, managed by operators (D-01, TK-13). The only route that
 /// can set <c>IsPlatformOperator</c> after bootstrap, and it needs
-/// <c>platform.edit</c> — which no role grants and only an operator's token
-/// carries — so no tenant user, Owner included, can reach it.
+/// <c>platform.edit</c> â€” which no role grants and only an operator's token
+/// carries â€” so no tenant user, Owner included, can reach it.
 /// </summary>
 [ApiController]
 [Authorize]
 [Route("api/admin/platform-operators")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class PlatformOperatorsController : ControllerBase
 {
     private readonly PlatformOperatorRepository _operators;

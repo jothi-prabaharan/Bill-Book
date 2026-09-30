@@ -15,7 +15,7 @@ namespace TimeLeave.Api.Controllers;
 [Authorize]
 [RequireModulePermission("leave")]
 [Route("api/edit-log/timeleave")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 public sealed class EditLogController : EditLogControllerBase<TimeLeaveDbContext>
 {
     public EditLogController(TimeLeaveDbContext db)

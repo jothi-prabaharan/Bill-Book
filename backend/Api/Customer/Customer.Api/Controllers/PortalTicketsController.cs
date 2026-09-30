@@ -18,7 +18,7 @@ namespace Customer.Api.Controllers;
 [Authorize]
 [RequirePortalAccess]
 [Route("api/portal/tickets")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.ClientPortal)]
 public sealed class PortalTicketsController : ControllerBase
 {
     private readonly PortalTicketRepository _tickets;

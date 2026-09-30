@@ -11,7 +11,7 @@ namespace Claims.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [RequireModulePermission("claims")]
 [Route("api/clm/limits")]
 public sealed class ClaimLimitsController : ControllerBase

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
 using Reporting.Repository.ReadModels;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Numbering;
 
 namespace Reporting.Repository.Repositories;
@@ -314,6 +315,7 @@ public sealed class BudgetAgainstActualSource : ReportSource<BudgetActualRow>
     public override string Title => "Budget vs Actual";
     public override ReportModule Module => ReportModule.Accounting;
     public override string RequiredPermission => "accounting.view";
+    public override AddOn RequiredAddOn => AddOn.Budget;
     public override IReadOnlyList<ReportParameterRepository> Parameters => BudgetWindows.Parameters(withScope: true);
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -350,6 +352,7 @@ public sealed class BudgetAgainstActualByProjectSource : ReportSource<BudgetActu
     public override string Title => "Budget vs Actual by Project";
     public override ReportModule Module => ReportModule.Accounting;
     public override string RequiredPermission => "accounting.view";
+    public override AddOn RequiredAddOn => AddOn.Budget;
     public override IReadOnlyList<ReportParameterRepository> Parameters => BudgetWindows.Parameters(withScope: true);
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -393,6 +396,7 @@ public sealed class BudgetMonthlyTrendSource : ReportSource<BudgetTrendRow>
     public override string Title => "Budget Monthly Trend";
     public override ReportModule Module => ReportModule.Accounting;
     public override string RequiredPermission => "accounting.view";
+    public override AddOn RequiredAddOn => AddOn.Budget;
     public override IReadOnlyList<ReportParameterRepository> Parameters => BudgetWindows.Parameters(withScope: false);
 
     public override IReadOnlyList<ReportColumn> Columns =>

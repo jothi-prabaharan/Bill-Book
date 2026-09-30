@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Accounting.Api.Services;
 using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
@@ -12,15 +13,15 @@ namespace Accounting.Api.Controllers;
 /// Payment terms, for the services that raise documents against them.
 ///
 /// <b>Why this exists beside the public controller.</b> A bill's due date is
-/// derived from its payment term, and the rule for deriving it — net days
-/// against day-of-month, and what to do when that day has passed — belongs to
+/// derived from its payment term, and the rule for deriving it â€” net days
+/// against day-of-month, and what to do when that day has passed â€” belongs to
 /// Accounting, which owns the term. Purchase asking for the answer keeps one
 /// implementation of that rule; Purchase reading <c>DueDays</c> and doing the
 /// arithmetic itself would make two, and they would disagree the first time a
 /// day-of-month term was used.
 ///
 /// The public route is behind a user token, and the services calling this hold
-/// the shared internal key instead — so the tenant comes from the query rather
+/// the shared internal key instead â€” so the tenant comes from the query rather
 /// than from claims, like every other internal door.
 /// </summary>
 [ApiController]

@@ -16,7 +16,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequirePortalAccess]
 [Route("api/portal/statements")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.ClientPortal)]
 public sealed class PortalStatementsController : ControllerBase
 {
     private readonly PortalAccountRepository _accounts;

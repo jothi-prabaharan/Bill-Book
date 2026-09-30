@@ -16,7 +16,7 @@ namespace Purchase.Api.Controllers;
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/purchase/gstr2b")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class Gstr2bController : ControllerBase
 {
     /// <summary>A branch's month of supplier invoices; a larger file is not a 2B.</summary>

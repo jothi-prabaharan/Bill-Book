@@ -36,7 +36,7 @@ public sealed class ReportCatalogRepository
     /// a screen they cannot use.
     /// </summary>
     public async Task<List<ReportCatalogItemView>> ListAsync(
-        IReadOnlySet<string> permissions, CancellationToken ct)
+        IReadOnlySet<string> permissions, CancellationToken ct, Shared.Kernel.Apps.AddOn addOns = Shared.Kernel.Apps.AddOn.All)
     {
         List<Report> rows = await _db.Reports
             .Where(r => r.IsActive)
@@ -50,6 +50,8 @@ public sealed class ReportCatalogRepository
             .. rows
                 .Where(r => _sources.ContainsKey(r.ReportKey))
                 .Where(r => permissions.Contains(r.RequiredPermission))
+                .Where(r => _sources[r.ReportKey].RequiredAddOn == Shared.Kernel.Apps.AddOn.None
+                    || (addOns & _sources[r.ReportKey].RequiredAddOn) != 0)
                 .Select(r => new ReportCatalogItemView
                 {
                     ReportKey = r.ReportKey,
@@ -74,10 +76,12 @@ public sealed class ReportCatalogRepository
         string reportKey,
         IReadOnlySet<string> permissions,
         ReportCurrencyView currency,
-        CancellationToken ct)
+        CancellationToken ct,
+        Shared.Kernel.Apps.AddOn addOns = Shared.Kernel.Apps.AddOn.All)
     {
         if (!_sources.TryGetValue(reportKey, out IReportSourceRepository? source)
-            || !permissions.Contains(source.RequiredPermission))
+            || !permissions.Contains(source.RequiredPermission)
+            || (source.RequiredAddOn != Shared.Kernel.Apps.AddOn.None && (addOns & source.RequiredAddOn) == 0))
         {
             return null;
         }
@@ -107,9 +111,13 @@ public sealed class ReportCatalogRepository
         };
     }
 
-    public IReportSourceRepository? Source(string reportKey, IReadOnlySet<string> permissions) =>
+    public IReportSourceRepository? Source(
+        string reportKey,
+        IReadOnlySet<string> permissions,
+        Shared.Kernel.Apps.AddOn addOns = Shared.Kernel.Apps.AddOn.All) =>
         _sources.TryGetValue(reportKey, out IReportSourceRepository? source)
         && permissions.Contains(source.RequiredPermission)
+        && (source.RequiredAddOn == Shared.Kernel.Apps.AddOn.None || (addOns & source.RequiredAddOn) != 0)
             ? source
             : null;
 

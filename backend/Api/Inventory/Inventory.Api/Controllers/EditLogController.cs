@@ -15,7 +15,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/edit-log/inventory")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class EditLogController : EditLogControllerBase<InventoryDbContext>
 {
     public EditLogController(InventoryDbContext db)

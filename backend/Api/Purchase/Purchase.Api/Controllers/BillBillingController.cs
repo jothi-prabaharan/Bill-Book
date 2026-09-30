@@ -12,7 +12,7 @@ namespace Purchase.Api.Controllers;
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/purchase/bills/billable")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class BillBillingController : ControllerBase
 {
     private readonly BillBillingRepository _billing;

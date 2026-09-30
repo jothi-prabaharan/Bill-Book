@@ -13,7 +13,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/metal-purities")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.Jewellery)]
 public sealed class MetalPuritiesController : ControllerBase
 {
     private readonly MetalPurityRepository _purities;

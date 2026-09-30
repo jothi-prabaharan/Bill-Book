@@ -12,7 +12,7 @@ namespace Payroll.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("payroll")]
-[RequireApp(App.Payroll)]
+[RequireAddOn(AddOn.Payroll)]
 [Route("api/payroll/runs")]
 public sealed class PayrollRunsController : ControllerBase
 {

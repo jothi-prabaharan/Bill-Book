@@ -27,7 +27,7 @@ namespace Master.Api.Controllers;
 /// </summary>
 [ApiController]
 [AllowAnonymous]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 [Route("api/portal/session")]
 public sealed class PortalSessionController : ControllerBase
 {

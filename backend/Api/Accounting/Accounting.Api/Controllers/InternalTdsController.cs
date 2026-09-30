@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

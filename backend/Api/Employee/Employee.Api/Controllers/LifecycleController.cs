@@ -13,7 +13,8 @@ namespace Employee.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("employee")]
-[RequireApp(App.Hrms | App.Payroll | App.School)]
+[RequireBusinessType(BusinessType.School)]
+[RequireAddOn(AddOn.Hrms | AddOn.Payroll)]
 [Route("api/hrm/lifecycle")]
 public sealed class LifecycleController : ControllerBase
 {

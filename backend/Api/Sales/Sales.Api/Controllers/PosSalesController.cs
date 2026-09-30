@@ -19,7 +19,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/pos/sales")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.Pos)]
 public sealed class PosSalesController : ControllerBase
 {
     private readonly PosSaleRepository _sales;

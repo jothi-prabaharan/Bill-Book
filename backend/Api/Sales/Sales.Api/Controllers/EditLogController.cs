@@ -15,7 +15,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/edit-log/sales")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class EditLogController : EditLogControllerBase<SalesDbContext>
 {
     public EditLogController(SalesDbContext db)

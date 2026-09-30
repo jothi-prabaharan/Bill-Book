@@ -12,7 +12,7 @@ namespace Claims.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [RequireModulePermission("claims")]
 [Route("api/clm/claims")]
 public sealed class ClaimsController : ControllerBase

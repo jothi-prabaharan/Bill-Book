@@ -11,15 +11,15 @@ namespace Master.Api.Controllers;
 
 /// <summary>
 /// Platform admin: the customer list with provisioning status, and the
-/// actions apps/admin needs on it — create a customer without going through
+/// actions apps/admin needs on it â€” create a customer without going through
 /// public self-service signup, and retry one stuck at Provisioning or
-/// Failed. Operator only, via platform.view/platform.edit — not scoped to
+/// Failed. Operator only, via platform.view/platform.edit â€” not scoped to
 /// any one customer, since the whole point is seeing across all of them.
 /// </summary>
 [ApiController]
 [Authorize]
 [Route("api/admin/customers")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class AdminCustomersController : ControllerBase
 {
     private readonly SignupRepository _signup;
@@ -38,7 +38,7 @@ public sealed class AdminCustomersController : ControllerBase
 
     /// <summary>
     /// A customer's branches. OrganizationRepository.ListAsync already does
-    /// exactly this — it is what the customer's own Settings screen calls —
+    /// exactly this â€” it is what the customer's own Settings screen calls â€”
     /// scoped here to the route's customerId instead of the caller's own,
     /// since a platform operator is never signed in to any one customer.
     /// </summary>
@@ -48,7 +48,7 @@ public sealed class AdminCustomersController : ControllerBase
         Ok(await _organizations.ListAsync(customerId, ct));
 
     /// <summary>
-    /// Admin-initiated provisioning — the same SignupAsync the public trial
+    /// Admin-initiated provisioning â€” the same SignupAsync the public trial
     /// signup form calls, so the two can never seed a customer differently.
     /// Still lands on Trial; picking a paid plan tier at creation is a
     /// follow-up, not something this task needed.

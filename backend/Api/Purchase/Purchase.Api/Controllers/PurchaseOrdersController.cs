@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Purchase.Api.Controllers;
 
 /// <summary>
-/// The purchase order — <c>POR</c>.
+/// The purchase order â€” <c>POR</c>.
 ///
 /// <b>Approve and confirm are both <c>purchase.approve</c>, and void is
 /// <c>purchase.void</c>.</b> The permissions were seeded from the beginning and
@@ -26,7 +26,7 @@ namespace Purchase.Api.Controllers;
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/purchase/purchase-orders")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class PurchaseOrdersController : ControllerBase
 {
     private readonly PurchaseOrderRepository _orders;
@@ -69,7 +69,7 @@ public sealed class PurchaseOrdersController : ControllerBase
             : result.Detail is null ? NoContent() : Ok(new MessageResponse { Message = result.Detail });
     }
 
-    /// <summary>Draft → ReadyToPost. The review step, for branches that want one.</summary>
+    /// <summary>Draft â†’ ReadyToPost. The review step, for branches that want one.</summary>
     [HttpPost("{purchaseOrderId:long}/approve")]
     [PermissionAction("approve")]
     public async Task<IActionResult> Approve(long purchaseOrderId, CancellationToken ct)

@@ -20,20 +20,20 @@ namespace Master.Api.Controllers;
 /// <b>Guarded as a setting, because minting one is granting access.</b> The key
 /// this returns carries the org's own authority for as long as it is active, so
 /// the authority to create one belongs with the other branch-level settings
-/// rather than with anyone who happens to hold a session — which is what it
+/// rather than with anyone who happens to hold a session â€” which is what it
 /// meant when this controller carried no permission attribute at all and the
 /// app's default-deny policy was the only thing in front of it.
 ///
 /// <b>A key acts as a role</b> (D-07, TK-29): its requests carry that role's
 /// <c>{module}.{action}</c> permissions, exactly as a user's token does. Only a
-/// role <see cref="ApiClientRolesRepository.Assignable"/> offers can be chosen — never one
+/// role <see cref="ApiClientRolesRepository.Assignable"/> offers can be chosen â€” never one
 /// granting <c>platform.*</c>.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/master/api-clients")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public class ApiClientsController : ControllerBase
 {
     private readonly ContactsDbContext _context;

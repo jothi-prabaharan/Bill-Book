@@ -32,6 +32,11 @@ public sealed class BillBudgetCheckRepository
             return [];
         }
 
+        if (!_tenant.AddOns.HasFlag(Shared.Kernel.Apps.AddOn.Budget))
+        {
+            return [];
+        }
+
         var bill = await _db.Bills.AsNoTracking()
             .Where(b => b.BillId == billId)
             .Select(b => new { b.DocumentDate, b.ExchangeRate })

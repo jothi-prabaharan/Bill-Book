@@ -43,7 +43,7 @@ public class McaMsmeForm1Item
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports/msme")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class MsmeController : ControllerBase
 {
     private readonly ReportingDbContext _db;

@@ -20,7 +20,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/spend-money")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class SpendMoneyApprovalsController : ControllerBase
 {
     private const ApprovalRequestKind Kind = ApprovalRequestKind.SpendMoney;

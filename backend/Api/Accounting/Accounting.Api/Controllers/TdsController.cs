@@ -12,7 +12,7 @@ using Shared.Kernel.Tenancy;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Accounting › TDS (TK-117): the section master, the register, what is due
+/// Accounting â€º TDS (TK-117): the section master, the register, what is due
 /// to be deposited, the 26Q export and the Form 26AS reconciliation. Reading
 /// takes <c>accounting.view</c>, the section master <c>accounting.create</c>
 /// and <c>accounting.edit</c>, the export <c>accounting.export</c>.
@@ -21,7 +21,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/tds")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class TdsController : ControllerBase
 {
     private const long MaxUploadBytes = 5 * 1024 * 1024;

@@ -15,7 +15,7 @@ namespace Sales.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("sales")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 [Route("api/sales/custom-fields")]
 public sealed class SalesCustomFieldsController : ControllerBase
 {

@@ -11,7 +11,7 @@ namespace Recruitment.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [RequireModulePermission("recruitment")]
 [Route("api/rec/offers")]
 public sealed class OffersController : ControllerBase

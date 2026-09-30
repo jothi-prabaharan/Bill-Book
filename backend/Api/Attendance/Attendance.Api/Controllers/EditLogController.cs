@@ -15,7 +15,7 @@ namespace Attendance.Api.Controllers;
 [Authorize]
 [RequireModulePermission("attendance")]
 [Route("api/edit-log/attendance")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<AttendanceDbContext>
 {
     public EditLogController(AttendanceDbContext db)

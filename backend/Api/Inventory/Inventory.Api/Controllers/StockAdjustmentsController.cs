@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Inventory.Api.Controllers;
 
 /// <summary>
-/// Stock adjustment sheets — a write-off or a physical count, posted as one
+/// Stock adjustment sheets â€” a write-off or a physical count, posted as one
 /// document.
 ///
 /// There is no void. A posted sheet has moved stock that physically moved, and
@@ -20,7 +20,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/stock-adjustments")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class StockAdjustmentsController : ControllerBase
 {
     private readonly StockAdjustmentRepository _adjustments;

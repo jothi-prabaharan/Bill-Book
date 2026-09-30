@@ -15,7 +15,7 @@ namespace Performance.Api.Controllers;
 [Authorize]
 [RequireModulePermission("performance")]
 [Route("api/edit-log/performance")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 public sealed class EditLogController : EditLogControllerBase<PerformanceDbContext>
 {
     public EditLogController(PerformanceDbContext db)

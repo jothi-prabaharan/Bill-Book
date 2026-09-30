@@ -10,7 +10,7 @@ using Shared.Kernel.Apps;
 namespace Sales.Api.Controllers;
 
 /// <summary>
-/// Sales › Credit notes. <c>CRN</c> — the correction of a posted invoice.
+/// Sales Ã¢â‚¬Âº Credit notes. <c>CRN</c> Ã¢â‚¬â€ the correction of a posted invoice.
 ///
 /// <b>Posting is an approval and voiding is its own permission</b>, the same
 /// separation every other sales document has: <c>sales.approve</c> to post,
@@ -26,7 +26,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/credit-notes")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class CreditNotesController : ControllerBase
 {
     private readonly CreditNoteRepository _service;
@@ -78,7 +78,7 @@ public sealed class CreditNotesController : ControllerBase
 
     /// <summary>
     /// Withdraws a credit note. The reason is required by the database, not just
-    /// by convention — see <see cref="VoidCreditNoteRequest"/>.
+    /// by convention Ã¢â‚¬â€ see <see cref="VoidCreditNoteRequest"/>.
     /// </summary>
     [HttpPost("{id:long}/void")]
     [PermissionAction("void")]
@@ -129,7 +129,7 @@ public sealed class CreditNotesController : ControllerBase
 
     /// <summary>
     /// The PDF archived when this credit note was posted (TK-22). Not found for a
-    /// draft, for a credit note in another branch, or when the file is missing — the
+    /// draft, for a credit note in another branch, or when the file is missing Ã¢â‚¬â€ the
     /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
     /// hand the document to someone outside the business.
     /// </summary>

@@ -14,7 +14,7 @@ namespace Purchase.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("purchase")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 [Route("api/purchase/custom-fields")]
 public sealed class PurchaseCustomFieldsController : ControllerBase
 {

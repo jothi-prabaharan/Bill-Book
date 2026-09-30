@@ -15,7 +15,8 @@ namespace Customer.Api.Controllers;
 [Authorize]
 [RequireModulePermission("crm")]
 [Route("api/edit-log/customer")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType]
+[RequireAddOn(AddOn.Crm)]
 public sealed class EditLogController : EditLogControllerBase<CustomerDbContext>
 {
     public EditLogController(CustomerDbContext db)

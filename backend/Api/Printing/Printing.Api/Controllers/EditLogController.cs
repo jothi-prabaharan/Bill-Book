@@ -15,7 +15,7 @@ namespace Printing.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/edit-log/printing")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class EditLogController : EditLogControllerBase<PrintingDbContext>
 {
     public EditLogController(PrintingDbContext db)

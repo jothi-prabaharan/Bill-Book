@@ -17,7 +17,7 @@ namespace Preventive.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("preventive")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/preventive")]
 public sealed class PreventiveController : ControllerBase
 {

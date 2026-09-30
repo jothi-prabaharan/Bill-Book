@@ -11,7 +11,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Route("api/menu")]
 [Authorize]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class MenuController : ControllerBase
 {
     private readonly MenuRepository _menuService;

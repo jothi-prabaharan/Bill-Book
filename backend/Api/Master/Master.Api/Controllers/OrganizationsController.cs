@@ -15,7 +15,7 @@ namespace Master.Api.Controllers;
 ///
 /// Every action reads the customer from the caller's own token and never from
 /// the route. <c>mst</c> is the master database and holds every customer's rows,
-/// so there is no row-level security to fall back on — the claim is the whole
+/// so there is no row-level security to fall back on â€” the claim is the whole
 /// boundary, and taking an id from the URL instead would hand any caller anyone
 /// else's branches.
 /// </summary>
@@ -23,7 +23,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/organizations")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class OrganizationsController : ControllerBase
 {
     private readonly OrganizationRepository _organizations;
@@ -40,7 +40,7 @@ public sealed class OrganizationsController : ControllerBase
     /// <summary>
     /// The branch the caller is signed in to, from the token rather than the
     /// URL. The Organization settings screen edits "this branch" and has no id
-    /// to pass — and taking one from the caller would let them edit a branch
+    /// to pass â€” and taking one from the caller would let them edit a branch
     /// they are not in.
     ///
     /// Declared before the <c>{orgId:guid}</c> route below; "current" is not a
@@ -94,7 +94,7 @@ public sealed class OrganizationsController : ControllerBase
 
     /// <summary>
     /// Creates a branch and seeds its books. Returns 202 when the row was
-    /// written but a service could not be reached — the branch exists, is not
+    /// written but a service could not be reached â€” the branch exists, is not
     /// yet usable, and the seeding can be retried against it.
     /// </summary>
     [HttpPost]
@@ -114,7 +114,7 @@ public sealed class OrganizationsController : ControllerBase
                 CreatedAtAction(nameof(Get), new { orgId = result.OrgId }, result),
 
             // Created, on the branch's own trial. A 201 with the reason on it,
-            // not an error — the branch exists, is seeded and is usable today.
+            // not an error â€” the branch exists, is seeded and is usable today.
             SaveOrganizationOutcome.CreatedOnTrial =>
                 CreatedAtAction(nameof(Get), new { orgId = result.OrgId }, result),
 
@@ -183,7 +183,7 @@ public sealed class OrganizationsController : ControllerBase
     /// pre-auth token, issued before an organization has been chosen, and it
     /// owns nothing.
     /// </summary>
-    /// <summary>The branch on the caller's token — which branch they are working in.</summary>
+    /// <summary>The branch on the caller's token â€” which branch they are working in.</summary>
     private Guid? CallerOrg() =>
         Guid.TryParse(User.FindFirstValue("org_id"), out Guid orgId) ? orgId : null;
 
@@ -218,7 +218,7 @@ public sealed class OrganizationsController : ControllerBase
             }),
             SaveOrganizationOutcome.FirstOrganizationLocked => BadRequest(new MessageResponse
             {
-                Message = "The first branch cannot be suspended — the account would have nowhere "
+                Message = "The first branch cannot be suspended â€” the account would have nowhere "
                     + "to sign in to.",
             }),
             SaveOrganizationOutcome.BaseCurrencyLocked => BadRequest(new MessageResponse

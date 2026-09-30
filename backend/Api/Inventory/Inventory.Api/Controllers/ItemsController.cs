@@ -11,15 +11,15 @@ using Shared.Kernel.Apps;
 namespace Inventory.Api.Controllers;
 
 /// <summary>
-/// The item master. Saves as an aggregate — item, its vertical extension and its
-/// barcodes in one payload — because the extension is only meaningful alongside
+/// The item master. Saves as an aggregate â€” item, its vertical extension and its
+/// barcodes in one payload â€” because the extension is only meaningful alongside
 /// the profile that names it.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/items")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class ItemsController : ControllerBase
 {
     private readonly ItemRepository _items;

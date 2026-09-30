@@ -17,7 +17,7 @@ namespace Student.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequirePortalAccess]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/portal/school/children")]
 public sealed class PortalSchoolController : ControllerBase
 {

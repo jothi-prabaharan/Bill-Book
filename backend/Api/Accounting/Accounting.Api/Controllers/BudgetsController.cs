@@ -10,7 +10,7 @@ using Shared.Kernel.Internal;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Accounting › Budgets (TK-108, design "Budgeting"). Reading takes
+/// Accounting â€º Budgets (TK-108, design "Budgeting"). Reading takes
 /// <c>accounting.view</c>; entering and importing a draft take
 /// <c>accounting.edit</c>; approving, revising and choosing the branch's
 /// budget take <c>accounting.approve</c>.
@@ -19,7 +19,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/budgets")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.Budget)]
 public sealed class BudgetsController : ControllerBase
 {
     private const long MaxUploadBytes = 5 * 1024 * 1024;

@@ -100,17 +100,15 @@ public static class EndpointGuardAudit
     }
 
     /// <summary>
-    /// Controllers that do not name the apps they serve (H0.2, TK-43).
+    /// Controllers that do not declare which business types or add-ons they serve (D-36, TK-128).
     ///
-    /// Every controller a user token can reach carries
-    /// <see cref="RequireAppAttribute"/>, because a permission shared by several
-    /// apps (<c>settings.view</c>) would otherwise let one app's token into
-    /// another app's screens. A controller marked
-    /// <see cref="InternalOnlyAttribute"/> is called by services with the shared
-    /// key, not by a user, and needs none. An action that carries its own
-    /// declaration counts as named.
+    /// Every controller a user token can reach carries <see cref="RequireBusinessTypeAttribute"/>
+    /// or <see cref="RequireAddOnAttribute"/>, because a permission shared across business types
+    /// or add-ons (<c>settings.view</c>) would otherwise let unauthorized callers into another scope's screens.
+    /// A controller marked <see cref="InternalOnlyAttribute"/> is called by services with the shared
+    /// key, not by a user, and needs none. An action that carries its own declaration counts as named.
     /// </summary>
-    public static IReadOnlyList<string> WithoutApp(Assembly assembly, params string[] exempt)
+    public static IReadOnlyList<string> WithoutBusinessTypeOrAddOn(Assembly assembly, params string[] exempt)
     {
         var exemptions = exempt.ToHashSet(StringComparer.Ordinal);
         List<string> open = [];
@@ -119,18 +117,33 @@ public static class EndpointGuardAudit
         {
             if (exemptions.Contains(controller.Name)
                 || Has<InternalOnlyAttribute>(controller)
-                || Has<RequireAppAttribute>(controller))
+                || Has<RequireBusinessTypeAttribute>(controller)
+                || Has<RequireAddOnAttribute>(controller))
             {
                 continue;
             }
 
-            open.AddRange(Actions(controller)
-                .Where(a => !Has<RequireAppAttribute>(a) && !Has<InternalOnlyAttribute>(a))
-                .Select(a => $"{controller.Name}.{a.Name}"));
+            List<MethodInfo> actions = [.. Actions(controller)
+                .Where(a => !Has<RequireBusinessTypeAttribute>(a)
+                    && !Has<RequireAddOnAttribute>(a)
+                    && !Has<InternalOnlyAttribute>(a))];
+
+            if (actions.Count == 0 && Actions(controller).Any())
+            {
+                continue;
+            }
+
+            open.AddRange(actions.Count == 0
+                ? [controller.Name]
+                : actions.Select(a => $"{controller.Name}.{a.Name}"));
         }
 
         return open;
     }
+
+    /// <summary>Backwards-compatibility alias for <see cref="WithoutBusinessTypeOrAddOn"/>.</summary>
+    public static IReadOnlyList<string> WithoutApp(Assembly assembly, params string[] exempt) =>
+        WithoutBusinessTypeOrAddOn(assembly, exempt);
 
     /// <summary>
     /// Every module named by a <see cref="RequireModulePermissionAttribute"/> in

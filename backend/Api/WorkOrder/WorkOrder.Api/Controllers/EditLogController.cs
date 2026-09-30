@@ -15,7 +15,7 @@ namespace WorkOrder.Api.Controllers;
 [Authorize]
 [RequireModulePermission("workorder")]
 [Route("api/edit-log/workorder")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<WorkOrderDbContext>
 {
     public EditLogController(WorkOrderDbContext db)

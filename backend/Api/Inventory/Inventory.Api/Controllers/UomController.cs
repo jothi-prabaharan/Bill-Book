@@ -10,14 +10,14 @@ using Shared.Kernel.Apps;
 namespace Inventory.Api.Controllers;
 
 /// <summary>
-/// Settings › Inventory › Unit types. Types and their units are served and saved
+/// Settings â€º Inventory â€º Unit types. Types and their units are served and saved
 /// through one controller because the screen edits them as one thing.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/uom-types")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class UomController : ControllerBase
 {
     private readonly UomRepository _uom;

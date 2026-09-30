@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Inventory.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,7 @@ namespace Inventory.Api.Controllers;
 ///
 /// <b>POST with the ids in the body</b>, because a document with forty lines
 /// resolves forty ids and a proxy's URL length limit is the thing that would
-/// break first — silently, as a truncated list.
+/// break first â€” silently, as a truncated list.
 /// </summary>
 [ApiController]
 [AllowAnonymous]

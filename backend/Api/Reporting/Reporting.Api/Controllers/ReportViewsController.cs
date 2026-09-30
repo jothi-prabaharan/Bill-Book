@@ -20,7 +20,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports/{reportKey}/views")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType]
 public sealed class ReportViewsController : ControllerBase
 {
     private readonly SavedViewRepository _views;

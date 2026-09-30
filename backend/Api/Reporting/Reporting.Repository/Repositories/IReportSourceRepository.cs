@@ -27,6 +27,8 @@ public interface IReportSourceRepository
 
     App App => App.RetailErp;
 
+    AddOn RequiredAddOn => AddOn.None;
+
     /// <summary>
     /// The module permission a caller needs beyond <c>reports.view</c>. A report
     /// the caller lacks it for is absent from the catalog rather than refused, so
@@ -78,6 +80,8 @@ public abstract class ReportSource<TRow> : IReportSourceRepository
     public abstract ReportModule Module { get; }
 
     public virtual App App => App.RetailErp;
+
+    public virtual AddOn RequiredAddOn => AddOn.None;
 
     public abstract string RequiredPermission { get; }
 

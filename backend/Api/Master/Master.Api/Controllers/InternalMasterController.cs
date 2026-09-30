@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Master.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +32,7 @@ public sealed class InternalMasterController : ControllerBase
 
     /// <summary>
     /// One state. Contacts validates a GSTIN's first two digits against this,
-    /// and Platform validates a branch address — both across a database boundary
+    /// and Platform validates a branch address â€” both across a database boundary
     /// where a foreign key is impossible.
     /// </summary>
     [HttpGet("states/{stateId:int}")]

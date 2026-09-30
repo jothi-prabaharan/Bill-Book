@@ -12,7 +12,7 @@ namespace Customer.Api.Controllers;
 [Authorize]
 [RequireModulePermission("crm")]
 [Route("api/campaigns")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.Crm)]
 public sealed class CampaignsController : ControllerBase
 {
     private readonly CampaignRepository _repo;

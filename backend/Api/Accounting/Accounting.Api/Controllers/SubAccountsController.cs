@@ -18,7 +18,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/sub-accounts")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class SubAccountsController : ControllerBase
 {
     private readonly SubAccountRepository _subAccounts;
@@ -55,8 +55,8 @@ public sealed class InternalSubAccountsController : ControllerBase
     /// <summary>
     /// Creates a master's sub-accounts. The branch comes from the body or from a
     /// forwarded token (<see cref="InternalTenant"/>): before TK-17 only a token
-    /// could name it, so a caller with none — seeding a branch's walk-in
-    /// customer — provisioned into no branch at all.
+    /// could name it, so a caller with none â€” seeding a branch's walk-in
+    /// customer â€” provisioned into no branch at all.
     /// </summary>
     [HttpPost("provision")]
     public async Task<IActionResult> Provision(

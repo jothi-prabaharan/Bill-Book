@@ -10,7 +10,7 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Banking › Bank accounts. Creating one creates its GL account in Accounting,
+/// Banking â€º Bank accounts. Creating one creates its GL account in Accounting,
 /// because only Accounting writes ledger rows and a bank account without one
 /// cannot be posted to.
 /// </summary>
@@ -18,7 +18,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/bank-accounts")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class BankAccountsController : ControllerBase
 {
     private readonly BankRepository _banks;

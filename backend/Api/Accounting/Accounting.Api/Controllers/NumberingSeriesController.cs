@@ -10,12 +10,12 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Settings › Numbering series. Owned by Accounting for the same reason Tax
+/// Settings â€º Numbering series. Owned by Accounting for the same reason Tax
 /// Master is: it is configuration several services read, and it needs one home
 /// rather than a copy per service.
 ///
 /// <b>Guarded by <c>settings</c>, not <c>accounting</c></b> (TK-44). Every app
-/// numbers its documents from this table (<c>EMP</c>, <c>PAY</c>, <c>ADM</c>…),
+/// numbers its documents from this table (<c>EMP</c>, <c>PAY</c>, <c>ADM</c>â€¦),
 /// so the page is a shared settings page. The menu already offered it on
 /// <c>settings.view</c> while the route and this controller asked for
 /// <c>accounting.*</c>, so the two disagreed; they now agree on settings.
@@ -24,7 +24,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/numbering-series")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class NumberingSeriesController : ControllerBase
 {
     private readonly NumberingSeriesRepository _series;
@@ -110,7 +110,7 @@ public sealed class NumberingSeriesController : ControllerBase
             }),
             SaveSeriesOutcome.SeriesCodeLocked => BadRequest(new MessageResponse
             {
-                Message = "The code of a built-in series cannot be changed — it is what the rest "
+                Message = "The code of a built-in series cannot be changed â€” it is what the rest "
                     + "of the system looks the series up by. The name and format are editable.",
             }),
             SaveSeriesOutcome.ManualOverrideOnDocument => BadRequest(new MessageResponse

@@ -9,8 +9,8 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Banking › Transfer money. Between the organization's own accounts, so no
-/// contact and no allocation — the one money document that settles nothing.
+/// Banking â€º Transfer money. Between the organization's own accounts, so no
+/// contact and no allocation â€” the one money document that settles nothing.
 ///
 /// <b>Post and void are their own routes</b>, not a status field on the save.
 /// They are not edits: one takes a number and writes to the general ledger, the
@@ -21,7 +21,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/transfer-money")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class TransferMoneyController : ControllerBase
 {
     private readonly TransferMoneyRepository _documents;
@@ -79,7 +79,7 @@ public sealed class TransferMoneyController : ControllerBase
 
             MoneyDocumentOutcome.NotDraft => BadRequest(new MessageResponse
             {
-                Message = "A posted document is never edited. Void it instead — the document "
+                Message = "A posted document is never edited. Void it instead â€” the document "
                     + "and its number stay, and its ledger rows are withdrawn.",
             }),
 
@@ -97,7 +97,7 @@ public sealed class TransferMoneyController : ControllerBase
             }),
 
             // Transient. The caller should come back rather than treat it as a
-            // refusal — a lock that could not be read is not a lock that passed.
+            // refusal â€” a lock that could not be read is not a lock that passed.
             MoneyDocumentOutcome.PeriodLockUnavailable
                 or MoneyDocumentOutcome.SettlementRateUnavailable => StatusCode(
                 StatusCodes.Status503ServiceUnavailable,

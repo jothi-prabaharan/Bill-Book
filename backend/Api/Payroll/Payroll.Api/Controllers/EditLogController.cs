@@ -15,7 +15,7 @@ namespace Payroll.Api.Controllers;
 [Authorize]
 [RequireModulePermission("payroll")]
 [Route("api/edit-log/payroll")]
-[RequireApp(App.Payroll)]
+[RequireAddOn(AddOn.Payroll)]
 public sealed class EditLogController : EditLogControllerBase<PayrollDbContext>
 {
     public EditLogController(PayrollDbContext db)

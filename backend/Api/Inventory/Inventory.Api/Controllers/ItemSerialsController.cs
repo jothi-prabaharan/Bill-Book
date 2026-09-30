@@ -12,7 +12,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("internal/item-serials")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public class ItemSerialsController : ControllerBase
 {
     private readonly InventoryDbContext _db;

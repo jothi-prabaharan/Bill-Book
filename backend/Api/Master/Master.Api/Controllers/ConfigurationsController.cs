@@ -10,7 +10,7 @@ using Shared.Kernel.Apps;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Configuration values per organization. Keys are seed data — this endpoint
+/// Configuration values per organization. Keys are seed data â€” this endpoint
 /// edits values and clears overrides, but never adds or deletes keys.
 /// </summary>
 [ApiController]
@@ -18,7 +18,7 @@ namespace Master.Api.Controllers;
 [RequireModulePermission("settings")]
 [OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/configurations")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class ConfigurationsController : ControllerBase
 {
     private readonly ConfigurationRepository _config;

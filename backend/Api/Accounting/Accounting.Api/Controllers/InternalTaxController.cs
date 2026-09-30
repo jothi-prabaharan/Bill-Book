@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Accounting.Api.Services;
 using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -44,7 +45,7 @@ public sealed class InternalTaxController : ControllerBase
     /// <summary>
     /// Every active rate in force on <paramref name="on"/>, one per tax group.
     ///
-    /// Both splits come back on every row — CGST/SGST and IGST — and the caller
+    /// Both splits come back on every row â€” CGST/SGST and IGST â€” and the caller
     /// picks. Deciding here which applies would put the intra/inter rule in two
     /// services, and the copy that drifted would be the one nobody read.
     /// </summary>
@@ -82,7 +83,7 @@ public sealed class InternalTaxController : ControllerBase
         IReadOnlyList<Entity.Models.TaxMasterListItem> rows =
             await taxes.ListAsync(includeHistory: true, includeInactive: false, ct);
 
-        // In force on the date, newest first per group, and one row per group —
+        // In force on the date, newest first per group, and one row per group â€”
         // the same rule TaxMasterRepository.ResolveAsync applies to a single group,
         // applied across all of them in one read rather than one call per line.
         List<TaxRate> rates = [.. rows

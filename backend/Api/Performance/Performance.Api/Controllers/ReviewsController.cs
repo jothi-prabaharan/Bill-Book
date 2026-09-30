@@ -14,7 +14,7 @@ namespace Performance.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("performance")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Route("api/prf/reviews")]
 public sealed class ReviewsController : ControllerBase
 {

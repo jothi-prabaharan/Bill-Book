@@ -15,7 +15,7 @@ namespace Attendance.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequirePortalAccess]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/portal/school/attendance")]
 public sealed class PortalAttendanceController : ControllerBase
 {

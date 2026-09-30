@@ -22,7 +22,7 @@ namespace TimeLeave.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms | App.Payroll)]
+[RequireAddOn(AddOn.Hrms | AddOn.Payroll)]
 [Route("api/tla/approvals")]
 [Route("api/approvals")]
 public sealed class ApprovalsController : ControllerBase

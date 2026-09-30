@@ -10,11 +10,11 @@ using Shared.Kernel.Apps;
 namespace Sales.Api.Controllers;
 
 /// <summary>
-/// Sales › Delivery challans. <c>DLC</c> — the document the goods actually leave on.
+/// Sales Ã¢â‚¬Âº Delivery challans. <c>DLC</c> Ã¢â‚¬â€ the document the goods actually leave on.
 ///
 /// <b>Stock moves here, not on the invoice.</b> The challan takes the goods out
 /// and moves its order's delivered and reserved quantities; the invoice that
-/// follows bills what was delivered. Skipping it is normal — an invoice raised
+/// follows bills what was delivered. Skipping it is normal Ã¢â‚¬â€ an invoice raised
 /// directly still issues its own stock.
 ///
 /// <b>Posting writes nothing to the ledger from here.</b> The stock issue reaches
@@ -33,7 +33,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/delivery-challans")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class DeliveryChallansController : ControllerBase
 {
     private readonly DeliveryChallanRepository _service;
@@ -88,7 +88,7 @@ public sealed class DeliveryChallansController : ControllerBase
 
     /// <summary>
     /// Withdraws a draft. The reason is required by the database, not just by
-    /// convention — see <see cref="VoidDeliveryChallanRequest"/>.
+    /// convention Ã¢â‚¬â€ see <see cref="VoidDeliveryChallanRequest"/>.
     /// </summary>
     [HttpPost("{id:long}/void")]
     [PermissionAction("void")]
@@ -117,7 +117,7 @@ public sealed class DeliveryChallansController : ControllerBase
 
     /// <summary>
     /// The PDF archived when this challan was posted (TK-22). Not found for a
-    /// draft, for a challan in another branch, or when the file is missing — the
+    /// draft, for a challan in another branch, or when the file is missing Ã¢â‚¬â€ the
     /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
     /// hand the document to someone outside the business.
     /// </summary>

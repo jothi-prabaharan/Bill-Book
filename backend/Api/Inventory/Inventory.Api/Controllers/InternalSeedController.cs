@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Inventory.Api.Services;
 using Inventory.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +12,7 @@ namespace Inventory.Api.Controllers;
 /// Writes Inventory's master data for a newly created organization: the unit
 /// types with their units, and the standard metal purities.
 ///
-/// The unit types matter most — an item requires one, so until this runs the
+/// The unit types matter most â€” an item requires one, so until this runs the
 /// item master cannot save anything at all.
 ///
 /// **Re-runnable, and meant to be.** Both seeders add only the rows the
@@ -53,7 +54,7 @@ public sealed class InternalSeedController : ControllerBase
             {
                 ["unitTypesAndUnits"] = await uom.SeedForOrganizationAsync(request.OrgId, ct),
                 // A vertical's trade narrows what it is seeded with. The purities
-                // are the jewellery trade — a chemist prices an ornament with no
+                // are the jewellery trade â€” a chemist prices an ornament with no
                 // purity, so none are written (0) rather than written and ignored.
                 ["metalPurities"] = await purities.SeedForOrganizationAsync(
                     request.OrgId, request.Vertical, ct),

@@ -23,6 +23,10 @@ public interface ITenantContext
     /// </summary>
     string? CustomerCode { get; }
 
+    Apps.BusinessType? BusinessType { get; }
+
+    Apps.AddOn AddOns { get; }
+
     IReadOnlySet<string> Permissions { get; }
 
     /// <summary>Throws when either id is missing, so a query can never silently run unscoped.</summary>
@@ -36,6 +40,10 @@ public sealed class TenantContext : ITenantContext
     public Guid? OrgId { get; set; }
 
     public string? CustomerCode { get; set; }
+
+    public Apps.BusinessType? BusinessType { get; set; }
+
+    public Apps.AddOn AddOns { get; set; }
 
     public IReadOnlySet<string> Permissions { get; set; } = new HashSet<string>();
 

@@ -12,7 +12,7 @@ namespace Customer.Api.Controllers;
 [RequireModulePermission("crm")]
 [Route("api/email-templates")]
 [Route("api/campaigns/templates")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.Crm)]
 public sealed class EmailTemplatesController : ControllerBase
 {
     private readonly EmailTemplateRepository _repo;

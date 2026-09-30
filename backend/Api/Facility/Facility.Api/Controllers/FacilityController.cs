@@ -16,7 +16,7 @@ namespace Facility.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("facility")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/facility")]
 public sealed class FacilityController : ControllerBase
 {

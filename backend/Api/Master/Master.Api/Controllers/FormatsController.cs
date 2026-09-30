@@ -14,7 +14,7 @@ namespace Master.Api.Controllers;
 /// <b>Guarded by authentication alone, like the menu.</b> Every other staff
 /// route names a module permission, and this one deliberately does not: formats
 /// are the shell's data rather than a module's, and every role needs them to
-/// render any screen at all. There is no module permission that would work —
+/// render any screen at all. There is no module permission that would work â€”
 /// <c>settings.view</c> is held by Owner, Administrator and Viewer but not by
 /// Accountant or Sales, so gating on it would leave a salesperson unable to
 /// draw a date. <c>MenuController</c> is the precedent and the same argument:
@@ -26,7 +26,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Route("api/formats")]
 [Authorize]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class FormatsController : ControllerBase
 {
     private readonly FormatSettingsRepository _formats;

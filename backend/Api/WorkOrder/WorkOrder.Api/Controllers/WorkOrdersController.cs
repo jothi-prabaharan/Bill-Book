@@ -12,13 +12,13 @@ namespace WorkOrder.Api.Controllers;
 /// <summary>
 /// Work orders (S6, TK-66). Reading takes <c>workorder.view</c>, raising
 /// <c>workorder.create</c>, editing, moving, ticking and issuing parts
-/// <c>workorder.edit</c>, and closing a completed one <c>workorder.close</c> —
+/// <c>workorder.edit</c>, and closing a completed one <c>workorder.close</c> â€”
 /// the sign-off a principal keeps when maintenance staff do the rest.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("workorder")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/work-orders")]
 public sealed class WorkOrdersController : ControllerBase
 {

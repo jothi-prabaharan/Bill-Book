@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Master.Api.Services;
 using Master.Repository.Repositories;
 using Master.Repository.Clients;

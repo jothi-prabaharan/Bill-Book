@@ -12,14 +12,15 @@ namespace Master.Api.Controllers;
 
 /// <summary>
 /// The contact person role master. Served to a popup on the contact list rather
-/// than a page of its own — it exists so somebody filling in a contact can add a
+/// than a page of its own â€” it exists so somebody filling in a contact can add a
 /// missing role without abandoning the form.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("contacts")]
 [Route("api/contact-person-roles")]
-[RequireApp(App.RetailErp | App.School)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
+[RequireAddOn(AddOn.Crm)]
 public sealed class ContactPersonRolesController : ControllerBase
 {
     private readonly ContactPersonRoleRepository _roles;
@@ -67,7 +68,7 @@ public sealed class ContactPersonRolesController : ControllerBase
             }),
             SaveRoleOutcome.RoleInUse => BadRequest(new MessageResponse
             {
-                Message = "Contact people still hold this role. Make it inactive instead — "
+                Message = "Contact people still hold this role. Make it inactive instead â€” "
                     + "existing contacts keep it so their history still reads correctly.",
             }),
             SaveRoleOutcome.DefaultRoleMustStayActive => BadRequest(new MessageResponse

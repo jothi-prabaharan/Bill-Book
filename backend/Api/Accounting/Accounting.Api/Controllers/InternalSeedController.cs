@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Accounting.Api.Services;
 using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +12,7 @@ namespace Accounting.Api.Controllers;
 /// Writes Accounting's master data for a newly created organization: the chart
 /// of accounts, the GST rates, the numbering series and the payment terms.
 ///
-/// Called by Platform's provisioning worker, which holds no user token — so the
+/// Called by Platform's provisioning worker, which holds no user token â€” so the
 /// tenant is taken from the request body and set here, and the endpoint is
 /// guarded by a shared key rather than a JWT.
 ///

@@ -14,7 +14,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/users")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class UsersController : ControllerBase
 {
     private readonly UserRepository _users;
@@ -75,7 +75,7 @@ public sealed class UsersController : ControllerBase
         return sent ? NoContent() : NotFound();
     }
 
-    /// <summary>Revokes org access by deactivating the assignment — the user row survives.</summary>
+    /// <summary>Revokes org access by deactivating the assignment â€” the user row survives.</summary>
     [HttpDelete("{userId:guid}")]
     public async Task<IActionResult> Revoke(Guid userId, CancellationToken ct)
     {

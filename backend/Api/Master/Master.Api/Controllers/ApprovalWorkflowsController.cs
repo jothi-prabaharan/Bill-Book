@@ -10,13 +10,13 @@ using Shared.Kernel.Internal;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Settings › Approval workflows (D-26, TK-99): every app's chains, configured
+/// Settings â€º Approval workflows (D-26, TK-99): every app's chains, configured
 /// in one place. Reading takes <c>settings.view</c> and saving <c>settings.edit</c>.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("settings")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 [Route("api/approval-workflows")]
 public sealed class ApprovalWorkflowsController : ControllerBase
 {

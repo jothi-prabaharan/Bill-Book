@@ -17,7 +17,7 @@ namespace Attendance.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("attendance")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/student-attendance")]
 public sealed class RegisterController : ControllerBase
 {

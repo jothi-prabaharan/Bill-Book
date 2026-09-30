@@ -9,24 +9,24 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Banking › Statements. Importing what the bank says happened, and reconciling
+/// Banking â€º Statements. Importing what the bank says happened, and reconciling
 /// it against what was recorded.
 ///
 /// <b>Nothing here posts.</b> Every route on this controller reads a file, reads
 /// the books, or records a decision about which line corresponds to which
-/// document. The general ledger is untouched by all of it — reconciliation
+/// document. The general ledger is untouched by all of it â€” reconciliation
 /// compares two accounts of the same events rather than producing a third.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/statements")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class BankStatementsController : ControllerBase
 {
     /// <summary>
     /// Statements are a few hundred rows of text. Ten megabytes is far more than
-    /// any of them and far less than a file somebody uploaded by mistake — and
+    /// any of them and far less than a file somebody uploaded by mistake â€” and
     /// the limit exists because the whole file is read into memory to be parsed.
     /// </summary>
     private const long MaxUploadBytes = 10 * 1024 * 1024;
@@ -81,7 +81,7 @@ public sealed class BankStatementsController : ControllerBase
             return BadRequest(new MessageResponse
             {
                 Message = $"That file is larger than {MaxUploadBytes / (1024 * 1024)} MB. "
-                    + "A bank statement should be a fraction of that — check it is the right file.",
+                    + "A bank statement should be a fraction of that â€” check it is the right file.",
             });
         }
 

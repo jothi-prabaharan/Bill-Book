@@ -16,7 +16,7 @@ namespace Student.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("sis")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/sis/exams")]
 public sealed class ExamsController : ControllerBase
 {

@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -185,8 +186,8 @@ public sealed class InternalComplianceController : ControllerBase
 
             case ComplianceFrequency.HalfYearly:
                 int hyYear = currentMonth <= 3 ? currentYear - 1 : currentYear;
-                periods.Add((hyYear, 9, $"Apr–Sep {hyYear}", $"{hyYear:D4}-H1"));
-                periods.Add((hyYear + 1, 3, $"Oct–Mar {hyYear + 1}", $"{hyYear + 1:D4}-H2"));
+                periods.Add((hyYear, 9, $"Aprâ€“Sep {hyYear}", $"{hyYear:D4}-H1"));
+                periods.Add((hyYear + 1, 3, $"Octâ€“Mar {hyYear + 1}", $"{hyYear + 1:D4}-H2"));
                 break;
 
             case ComplianceFrequency.Annual:

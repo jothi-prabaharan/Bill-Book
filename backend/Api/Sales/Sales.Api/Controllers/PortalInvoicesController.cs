@@ -17,7 +17,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequirePortalAccess]
 [Route("api/portal/invoices")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.ClientPortal)]
 public sealed class PortalInvoicesController : ControllerBase
 {
     private readonly PortalInvoiceRepository _invoices;

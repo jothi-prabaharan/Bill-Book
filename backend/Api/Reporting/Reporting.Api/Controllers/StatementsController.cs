@@ -13,7 +13,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/statements")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType]
 public sealed class StatementsController : ControllerBase
 {
     private readonly ReportingDbContext _db;

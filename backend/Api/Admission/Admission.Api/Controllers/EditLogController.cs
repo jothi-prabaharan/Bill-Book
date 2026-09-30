@@ -15,7 +15,7 @@ namespace Admission.Api.Controllers;
 [Authorize]
 [RequireModulePermission("admission")]
 [Route("api/edit-log/admission")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<AdmissionDbContext>
 {
     public EditLogController(AdmissionDbContext db)

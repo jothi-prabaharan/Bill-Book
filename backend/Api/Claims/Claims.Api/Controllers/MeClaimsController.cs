@@ -14,7 +14,7 @@ namespace Claims.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms | App.Payroll)]
+[RequireAddOn(AddOn.Hrms | AddOn.Payroll)]
 [Route("api/clm/me/claims")]
 [Route("api/me/claims")]
 public sealed class MeClaimsController : ControllerBase

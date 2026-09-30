@@ -18,7 +18,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports/schedules")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType]
 public sealed class ReportSchedulesController : ControllerBase
 {
     private readonly ReportScheduleRepository _schedules;

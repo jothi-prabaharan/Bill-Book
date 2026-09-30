@@ -9,13 +9,13 @@ using Shared.Kernel.Apps;
 namespace Purchase.Api.Controllers;
 
 /// <summary>
-/// The debit note — <c>DBN</c>. The way back out of a purchase.
+/// The debit note â€” <c>DBN</c>. The way back out of a purchase.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/purchase/debit-notes")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class DebitNotesController : ControllerBase
 {
     private readonly DebitNoteRepository _notes;
@@ -122,7 +122,7 @@ public sealed class DebitNotesController : ControllerBase
                 new MessageResponse
                 {
                     Message = result.Detail
-                        ?? "The ledger refused the posting. The note is still a draft — post "
+                        ?? "The ledger refused the posting. The note is still a draft â€” post "
                             + "it again.",
                 }),
 

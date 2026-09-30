@@ -26,7 +26,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports")]
-[RequireApp(App.RetailErp | App.Hrms | App.Payroll)]
+[RequireBusinessType]
 public sealed class ReportsController : ControllerBase
 {
     private readonly ReportCatalogRepository _catalog;
@@ -48,7 +48,8 @@ public sealed class ReportsController : ControllerBase
     public async Task<IActionResult> Catalog(CancellationToken ct)
     {
         IReadOnlySet<string> permissions = Permissions();
-        List<ReportCatalogItemView> catalog = await _catalog.ListAsync(permissions, ct);
+        AddOn addOns = ScopeClaims.AddOnsOf(User);
+        List<ReportCatalogItemView> catalog = await _catalog.ListAsync(permissions, ct, addOns);
         catalog.AddRange(await _custom.CatalogAsync(permissions, ct));
         return Ok(catalog);
     }
@@ -57,8 +58,9 @@ public sealed class ReportsController : ControllerBase
     [HttpGet("{reportKey}")]
     public async Task<IActionResult> Metadata(string reportKey, CancellationToken ct)
     {
+        AddOn addOns = ScopeClaims.AddOnsOf(User);
         ReportMetadataView? metadata = await _catalog.MetadataAsync(
-            reportKey, Permissions(), new ReportCurrencyView(), ct);
+            reportKey, Permissions(), new ReportCurrencyView(), ct, addOns);
 
         // NotFound for "no such report" and for "not yours" alike. Which one it is
         // is itself information, and Forbid() here would tell a caller exactly
@@ -84,8 +86,9 @@ public sealed class ReportsController : ControllerBase
     {
         try
         {
+            AddOn addOns = ScopeClaims.AddOnsOf(User);
             ReportResultView? result =
-                await _runner.RunAsync(reportKey, request, Permissions(), ct);
+                await _runner.RunAsync(reportKey, request, Permissions(), ct, addOns);
 
             return result is null ? NotFound() : Ok(result);
         }
@@ -145,8 +148,9 @@ public sealed class ReportsController : ControllerBase
                 IncludeCount = true,
             };
 
+            AddOn addOns = ScopeClaims.AddOnsOf(User);
             ReportResultView? result =
-                await _runner.RunAsync(reportKey, request, Permissions(), ct);
+                await _runner.RunAsync(reportKey, request, Permissions(), ct, addOns);
 
             if (result is null)
             {

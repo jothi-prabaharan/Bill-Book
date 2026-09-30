@@ -16,13 +16,13 @@ namespace Accounting.Api.Controllers;
 /// credential.</b> A body that is not the gateway's, or whose signature does not
 /// verify, is refused and records nothing. The tenant comes from the payment's
 /// reference, which the gateway carries back, and is set before the database is
-/// opened — which is why the service is resolved in the action and the request
+/// opened â€” which is why the service is resolved in the action and the request
 /// carries no filter transaction. A replayed callback is answered 200 and does
 /// nothing, so a gateway retrying delivery stops retrying.
 /// </summary>
 [ApiController]
 [AllowAnonymous]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 [Route("api/payments/{gateway}/callback")]
 public sealed class PaymentCallbacksController : ControllerBase
 {

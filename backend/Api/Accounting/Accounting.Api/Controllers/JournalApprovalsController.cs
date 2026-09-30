@@ -20,7 +20,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/journals")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class JournalApprovalsController : ControllerBase
 {
     private const ApprovalRequestKind Kind = ApprovalRequestKind.ManualJournal;

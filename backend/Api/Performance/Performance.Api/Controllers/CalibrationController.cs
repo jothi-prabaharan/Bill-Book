@@ -13,7 +13,7 @@ namespace Performance.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("performance")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Route("api/prf/calibration")]
 public sealed class CalibrationController : ControllerBase
 {

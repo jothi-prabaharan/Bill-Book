@@ -15,7 +15,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("contacts")]
 [Route("api/edit-log/master")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class EditLogController : EditLogControllerBase<ContactsDbContext>
 {
     public EditLogController(ContactsDbContext db)

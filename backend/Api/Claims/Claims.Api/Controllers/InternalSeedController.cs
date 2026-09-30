@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Claims.Api.Services;
 using Claims.Repository.Repositories;
 using Claims.Repository.Clients;

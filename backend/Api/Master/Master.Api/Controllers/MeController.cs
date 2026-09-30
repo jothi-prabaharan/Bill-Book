@@ -21,7 +21,7 @@ namespace Master.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 [Route("api/me")]
 public sealed class MeController : ControllerBase
 {

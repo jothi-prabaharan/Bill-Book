@@ -16,7 +16,7 @@ namespace Employee.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("hrm")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Route("api/hrm")]
 public sealed class NoticesController : ControllerBase
 {

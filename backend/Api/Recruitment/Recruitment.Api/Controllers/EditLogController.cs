@@ -15,7 +15,7 @@ namespace Recruitment.Api.Controllers;
 [Authorize]
 [RequireModulePermission("recruitment")]
 [Route("api/edit-log/recruitment")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 public sealed class EditLogController : EditLogControllerBase<RecruitmentDbContext>
 {
     public EditLogController(RecruitmentDbContext db)

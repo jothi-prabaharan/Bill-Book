@@ -18,7 +18,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequirePortalAccess]
 [Route("api/portal/payments")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.ClientPortal)]
 public sealed class PortalPaymentsController : ControllerBase
 {
     private readonly OnlinePaymentRepository _payments;

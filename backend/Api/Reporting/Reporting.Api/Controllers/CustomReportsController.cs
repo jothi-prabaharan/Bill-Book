@@ -22,7 +22,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports/custom")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType]
 public sealed class CustomReportsController : ControllerBase
 {
     private readonly CustomReportRepository _reports;

@@ -12,7 +12,7 @@ namespace Customer.Api.Controllers;
 [RequireModulePermission("crm")]
 [Route("api/automations")]
 [Route("api/campaigns/automations")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.Crm)]
 public sealed class AutomationsController : ControllerBase
 {
     private readonly AutomationRepository _repo;

@@ -15,7 +15,7 @@ namespace Student.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sis")]
 [Route("api/edit-log/sis")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<StudentDbContext>
 {
     public EditLogController(StudentDbContext db)

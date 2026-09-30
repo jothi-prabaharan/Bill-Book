@@ -26,7 +26,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/rates")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class RatesController : ControllerBase
 {
     private readonly RateRepository _rates;

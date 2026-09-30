@@ -13,7 +13,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/item-categories")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public sealed class ItemCategoriesController : ControllerBase
 {
     private readonly ItemCategoryRepository _categories;

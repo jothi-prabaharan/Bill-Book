@@ -4323,16 +4323,16 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a branch with only Hrms gets only HRMS menus and seeds.
 
 ### TK-128 · `[RequireBusinessType]` and `[RequireAddOn]` on every controller
-- [~] working (Antigravity) — since 2026-09-30
+- [x] completed — 2026-09-30
 - **Issue:** [#110](https://github.com/jothi-prabaharan/Bill-Book/issues/110)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-KERNEL, every service lane · **Depends on:** TK-127 · **Decision:** D-36
 - **Where:** `Shared.Kernel/Internal/RequireAppAttribute.cs`, `EndpointGuardAudit.cs`
 - **Sub-tasks:**
-  - [ ] Replace `[RequireApp]` in all services; tag the Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget and RecurringBilling controllers.
-  - [ ] Gate the budget check on bills (`BillBudgetCheckRepository`) and the budget cards TK-108 and TK-109 by the Budget add-on.
-  - [ ] `EndpointGuardAudit` fails a controller with neither guard.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Replace `[RequireApp]` in all services; tag the Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget and RecurringBilling controllers.
+  - [x] Gate the budget check on bills (`BillBudgetCheckRepository`) and the budget cards TK-108 and TK-109 by the Budget add-on.
+  - [x] `EndpointGuardAudit` fails a controller with neither guard.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** the audit passes in every service and an endpoint of a disabled add-on answers 403.
 
 ### TK-129 · Support channel by plan: text on Basic, calls on Pro

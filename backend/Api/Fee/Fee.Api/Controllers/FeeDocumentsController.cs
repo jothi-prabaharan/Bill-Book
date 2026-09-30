@@ -16,7 +16,7 @@ namespace Fee.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("fee")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/fee")]
 public sealed class FeeDocumentsController : ControllerBase
 {

@@ -15,7 +15,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/edit-log/reporting")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType]
 public sealed class EditLogController : EditLogControllerBase<ReportingDbContext>
 {
     public EditLogController(ReportingDbContext db)

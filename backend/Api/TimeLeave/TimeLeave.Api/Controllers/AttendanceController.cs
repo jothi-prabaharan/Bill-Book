@@ -13,7 +13,7 @@ namespace TimeLeave.Api.Controllers;
 
 [ApiController]
 [Route("api/tla/attendance")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Authorize]
 [RequireModulePermission("attendance")]
 public class AttendanceController : ControllerBase

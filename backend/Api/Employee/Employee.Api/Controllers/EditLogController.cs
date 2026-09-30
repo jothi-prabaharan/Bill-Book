@@ -15,7 +15,8 @@ namespace Employee.Api.Controllers;
 [Authorize]
 [RequireModulePermission("employee")]
 [Route("api/edit-log/hrm")]
-[RequireApp(App.Hrms | App.Payroll | App.School)]
+[RequireBusinessType(BusinessType.School)]
+[RequireAddOn(AddOn.Hrms | AddOn.Payroll)]
 public sealed class EditLogController : EditLogControllerBase<EmployeeDbContext>
 {
     public EditLogController(EmployeeDbContext db)

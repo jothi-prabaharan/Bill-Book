@@ -15,7 +15,7 @@ namespace Claims.Api.Controllers;
 [Authorize]
 [RequireModulePermission("claims")]
 [Route("api/edit-log/claims")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 public sealed class EditLogController : EditLogControllerBase<ClaimsDbContext>
 {
     public EditLogController(ClaimsDbContext db)

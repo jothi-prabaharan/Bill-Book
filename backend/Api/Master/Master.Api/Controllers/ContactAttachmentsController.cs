@@ -20,7 +20,8 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("contacts")]
 [Route("api/contacts")]
-[RequireApp(App.RetailErp | App.School)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
+[RequireAddOn(AddOn.Crm)]
 public sealed class ContactAttachmentsController : ControllerBase
 {
     private readonly ContactAttachmentRepository _attachments;
@@ -67,7 +68,7 @@ public sealed class ContactAttachmentsController : ControllerBase
     /// <summary>
     /// Streams the file back. The storage key is read from the row rather than
     /// taken from the caller, and the row is org-scoped by the global query
-    /// filter — so an id belonging to another organization is simply not found.
+    /// filter â€” so an id belonging to another organization is simply not found.
     /// </summary>
     [HttpGet("attachments/{attachmentId:long}/download")]
     public async Task<IActionResult> Download(long attachmentId, CancellationToken ct)

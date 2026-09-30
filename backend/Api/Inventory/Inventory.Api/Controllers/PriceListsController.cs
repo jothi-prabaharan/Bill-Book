@@ -17,7 +17,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/inventory/price-lists")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
 public class PriceListsController : ControllerBase
 {
     private readonly InventoryDbContext _context;

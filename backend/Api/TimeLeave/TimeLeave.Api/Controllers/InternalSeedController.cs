@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;

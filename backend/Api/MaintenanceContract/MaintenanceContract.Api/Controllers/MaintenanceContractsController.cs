@@ -17,7 +17,7 @@ namespace MaintenanceContract.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("amc")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 [Route("api/amc")]
 public sealed class MaintenanceContractsController : ControllerBase
 {

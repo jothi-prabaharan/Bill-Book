@@ -12,7 +12,7 @@ namespace Customer.Api.Controllers;
 [RequireModulePermission("crm")]
 [Route("api/audiences")]
 [Route("api/campaigns/audiences")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.Crm)]
 public sealed class AudiencesController : ControllerBase
 {
     private readonly AudienceRepository _repo;

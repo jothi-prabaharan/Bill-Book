@@ -21,7 +21,7 @@ namespace Employee.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms | App.Payroll)]
+[RequireAddOn(AddOn.Hrms | AddOn.Payroll)]
 [Route("api/hrm/me")]
 [Route("api/me")]
 public sealed class MeProfileController : ControllerBase

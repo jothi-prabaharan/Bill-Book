@@ -14,7 +14,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/roles")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class RolesController : ControllerBase
 {
     private readonly RoleRepository _roles;

@@ -15,7 +15,7 @@ namespace Preventive.Api.Controllers;
 [Authorize]
 [RequireModulePermission("preventive")]
 [Route("api/edit-log/preventive")]
-[RequireApp(App.School)]
+[RequireBusinessType(BusinessType.School)]
 public sealed class EditLogController : EditLogControllerBase<PreventiveDbContext>
 {
     public EditLogController(PreventiveDbContext db)

@@ -12,14 +12,14 @@ namespace Master.Api.Controllers;
 [ApiController]
 [AllowAnonymous]
 [Route("api/customers")]
-[RequireApp(App.All)]
+[RequireBusinessType(AllowStandalone = true)]
 public sealed class CustomersController : ControllerBase
 {
     private readonly SignupRepository _signup;
 
     public CustomersController(SignupRepository signup) => _signup = signup;
 
-    /// <summary>Public trial signup. Returns 202 — provisioning is asynchronous.</summary>
+    /// <summary>Public trial signup. Returns 202 â€” provisioning is asynchronous.</summary>
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken ct)
     {

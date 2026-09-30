@@ -16,7 +16,7 @@ namespace Employee.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Route("api/hrm/team")]
 [Route("api/team")]
 public sealed class TeamController : ControllerBase

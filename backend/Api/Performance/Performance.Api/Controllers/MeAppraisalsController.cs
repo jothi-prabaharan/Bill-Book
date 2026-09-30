@@ -13,7 +13,7 @@ namespace Performance.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Route("api/me/appraisals")]
 public sealed class MeAppraisalsController : ControllerBase
 {

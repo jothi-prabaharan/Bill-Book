@@ -12,7 +12,7 @@ namespace Performance.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("performance")]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [Route("api/prf/rating-scales")]
 public sealed class RatingScalesController : ControllerBase
 {

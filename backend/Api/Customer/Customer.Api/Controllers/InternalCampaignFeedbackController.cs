@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Customer.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -9,8 +9,8 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Banking › Spend money. A bill paid, a deposit put down with a supplier, a
-/// customer refunded — six meanings on one document type, told apart by the
+/// Banking â€º Spend money. A bill paid, a deposit put down with a supplier, a
+/// customer refunded â€” six meanings on one document type, told apart by the
 /// ledger source on each line.
 ///
 /// <b>Post and void are their own routes</b>, not a status field on the save.
@@ -22,7 +22,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/spend-money")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class SpendMoneyController : ControllerBase
 {
     private readonly SpendMoneyRepository _documents;
@@ -87,7 +87,7 @@ public sealed class SpendMoneyController : ControllerBase
 
             MoneyDocumentOutcome.NotDraft => BadRequest(new MessageResponse
             {
-                Message = "A posted document is never edited. Void it instead — the document "
+                Message = "A posted document is never edited. Void it instead â€” the document "
                     + "and its number stay, and its ledger rows are withdrawn.",
             }),
 
@@ -105,7 +105,7 @@ public sealed class SpendMoneyController : ControllerBase
             }),
 
             // Transient. The caller should come back rather than treat it as a
-            // refusal — a lock that could not be read is not a lock that passed.
+            // refusal â€” a lock that could not be read is not a lock that passed.
             MoneyDocumentOutcome.PeriodLockUnavailable
                 or MoneyDocumentOutcome.SettlementRateUnavailable
                 or MoneyDocumentOutcome.TdsUnavailable => StatusCode(

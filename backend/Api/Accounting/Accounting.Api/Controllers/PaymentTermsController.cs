@@ -10,15 +10,15 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Settings › Payment terms. Owned by Accounting because Sales and Purchase
-/// both need it, so it cannot live inside either — the same reasoning as Tax
+/// Settings â€º Payment terms. Owned by Accounting because Sales and Purchase
+/// both need it, so it cannot live inside either â€” the same reasoning as Tax
 /// Master and Numbering series.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/payment-terms")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class PaymentTermsController : ControllerBase
 {
     private readonly PaymentTermRepository _terms;
@@ -39,7 +39,7 @@ public sealed class PaymentTermsController : ControllerBase
     /// <summary>
     /// The due date a document dated <paramref name="documentDate"/> gets under
     /// this term. Sales and Purchase call this instead of carrying their own copy
-    /// of the rules — two implementations would disagree about End of Month.
+    /// of the rules â€” two implementations would disagree about End of Month.
     /// </summary>
     [HttpGet("{paymentTermId:long}/due-date")]
     public async Task<IActionResult> DueDate(
@@ -99,7 +99,7 @@ public sealed class PaymentTermsController : ControllerBase
             }),
             SaveTermOutcome.DiscountWindowTooLong => BadRequest(new MessageResponse
             {
-                Message = "The discount period cannot run past the due date — it could never be earned.",
+                Message = "The discount period cannot run past the due date â€” it could never be earned.",
             }),
             SaveTermOutcome.DiscountDaysRequired => BadRequest(new MessageResponse
             {
@@ -107,7 +107,7 @@ public sealed class PaymentTermsController : ControllerBase
             }),
             SaveTermOutcome.SystemTermLocked => BadRequest(new MessageResponse
             {
-                Message = "A built-in term's rule cannot be changed — contacts and unpaid documents "
+                Message = "A built-in term's rule cannot be changed â€” contacts and unpaid documents "
                     + "already use it, and their due dates would move. Rename it, or add a new term.",
             }),
             SaveTermOutcome.InvalidValue => BadRequest(new MessageResponse

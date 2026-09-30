@@ -12,7 +12,7 @@ namespace Payroll.Api.Controllers;
 [ApiController]
 [Authorize]
 [RequireModulePermission("payroll")]
-[RequireApp(App.Payroll)]
+[RequireAddOn(AddOn.Payroll)]
 [Route("api/payroll/employee-salaries")]
 public sealed class EmployeeSalariesController : ControllerBase
 {

@@ -9,12 +9,12 @@ using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
-/// <summary>Accounting › Banks. The institution, entered once and reused by its accounts.</summary>
+/// <summary>Accounting â€º Banks. The institution, entered once and reused by its accounts.</summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/banks")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class BanksController : ControllerBase
 {
     private readonly BankRepository _banks;

@@ -15,7 +15,7 @@ namespace Claims.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireApp(App.Hrms)]
+[RequireAddOn(AddOn.Hrms)]
 [RequireModulePermission("claims")]
 [Route("api/clm/approvals")]
 public sealed class ApprovalsController : ControllerBase

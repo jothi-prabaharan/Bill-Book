@@ -18,7 +18,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequirePortalAccess]
 [Route("api/portal/quotes")]
-[RequireApp(App.RetailErp)]
+[RequireAddOn(AddOn.ClientPortal)]
 public sealed class PortalQuotesController : ControllerBase
 {
     private readonly PortalQuoteRepository _quotes;

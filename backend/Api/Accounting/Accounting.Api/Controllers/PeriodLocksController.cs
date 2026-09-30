@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Settings › Closing dates. How far back the books are closed, per role.
+/// Settings â€º Closing dates. How far back the books are closed, per role.
 ///
 /// <b>A soft close.</b> One date per branch per role, so a month can be shut to
 /// everyone who keys documents while staying open to whoever has to make the
@@ -19,7 +19,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/period-locks")]
-[RequireApp(App.RetailErp)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
 public sealed class PeriodLocksController : ControllerBase
 {
     private readonly PeriodLockRepository _locks;
