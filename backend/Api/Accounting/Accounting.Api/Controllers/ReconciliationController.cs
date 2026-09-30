@@ -13,6 +13,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/reconciliation")]
+[Route("api/accounting/reconciliation")]
 [RequireApp(App.RetailErp)]
 public class ReconciliationController : ControllerBase
 {

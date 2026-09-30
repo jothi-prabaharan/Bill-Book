@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Fixed**: **Screens that could not reach their service now load.** Display formats, fixed assets, price lists, the Settle documents workspace and Allocate dialog, bank reconciliation, the applications list and the profit and loss, balance sheet and inventory valuation statements were not forwarded by the gateway. Branches now show their own date and money formats instead of the defaults.
 - **Added**: **An audit trail on every record.** Each change to a document or master is recorded with who made it, when, and every field's old and new value — including posting, voiding and allocating. The record cannot be edited or deleted by anyone; the database refuses. Invoices, bills, manual journals, items and contacts show a **History** section, and **Settings › Audit log** lists everything, filtered by date, user and table, in every app.
 - **Added**: **TDS on purchases and receipts.** Under **Accounts › TDS**:
   - **Sections** with their rates and thresholds, effective-dated and editable. Every branch is seeded with 194C, 194JA, 194JB, 194H, 194I(a), 194I(b), 194A and 194Q at the 2025-26 figures. A contact's TDS section is now chosen from this list.
