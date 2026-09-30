@@ -178,6 +178,31 @@
         />
       </div>
 
+            <div class="field">
+        <bb-select
+          label="Business type"
+          placeholder="None"
+          name="businessType"
+          [options]="businessTypeOptions"
+          hint="Decides which add-ons are available (e.g. School gets SIS but no POS)."
+          [(ngModel)]="org.businessType"
+        />
+      </div>
+
+      <fieldset class="field">
+        <legend>Add-ons</legend>
+        <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
+          @for (addon of allAddOns; track addon.value) {
+            <bb-checkbox
+              [label]="addon.label"
+              [ngModel]="hasAddOn(addon.value)"
+              (ngModelChange)="toggleAddOn(addon.value, $event)"
+              [disabled]="!isAddOnAllowed(addon.value)"
+            />
+          }
+        </div>
+      </fieldset>
+
       <div class="field">
         <bb-select
           label="Financial year starts"
@@ -260,3 +285,4 @@
 } @else if (!loaded() && !busy()) {
   <p class="hint">Nothing to show.</p>
 }
+

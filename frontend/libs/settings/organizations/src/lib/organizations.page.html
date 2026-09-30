@@ -96,15 +96,30 @@
         <bb-text-input label="Name"  [(ngModel)]="form.name" maxlength="200" />
       </div>
 
-      <div class="field">
+            <div class="field">
         <bb-select
-          label="Trade Vertical"
-          placeholder=""
-          hint="Decides what this branch is seeded with and which settings apply."
-          [options]="verticalOptions"
-          [(ngModel)]="form.vertical"
+          label="Business type"
+          placeholder="None"
+          name="businessType"
+          [options]="businessTypeOptions"
+          hint="Decides which add-ons are available (e.g. School gets SIS but no POS)."
+          [(ngModel)]="form.businessType"
         />
       </div>
+
+      <fieldset class="field">
+        <legend>Add-ons</legend>
+        <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
+          @for (addon of allAddOns; track addon.value) {
+            <bb-checkbox
+              [label]="addon.label"
+              [ngModel]="hasAddOn(addon.value)"
+              (ngModelChange)="toggleAddOn(addon.value, $event)"
+              [disabled]="!isAddOnAllowed(addon.value)"
+            />
+          }
+        </div>
+      </fieldset>
 
       <div class="field">
         <bb-select
@@ -191,3 +206,4 @@
     </div>
   </div>
 }
+

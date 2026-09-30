@@ -10,13 +10,15 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CheckboxComponent } from '@bill-book/ui-components';
 import { AuthService, Currency } from '@bill-book/auth';
 
 interface Organization {
   orgId: string;
   orgCode: string;
   name: string;
-  vertical: 'General' | 'Pharma' | 'Jewellery';
+  businessType?: string;
+  addOns: string;
   baseCurrency: string;
   financialYearStartMonth: number;
   gstin: string | null;
@@ -61,7 +63,7 @@ type OrganizationForm = Omit<
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organizations-page',
   standalone: true,
-  imports: [
+  imports: [CheckboxComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,
@@ -79,11 +81,7 @@ export class OrganizationsPage implements OnInit {
     (_, at) => ({ value: at + 1, label: `Month ${at + 1}` }),
   );
 
-  protected readonly verticalOptions: BbSelectOption<string>[] = [
-    { value: 'General', label: 'General / Other' },
-    { value: 'Pharma', label: 'Pharmacy / Medical Store' },
-    { value: 'Jewellery', label: 'Jewellery Store' },
-  ];
+  
 
   protected readonly currencyOptions = computed<BbSelectOption<string>[]>(() =>
     this.currencies().map((currency) => ({
@@ -172,7 +170,8 @@ export class OrganizationsPage implements OnInit {
     this.form = {
       orgCode: row.orgCode,
       name: row.name,
-      vertical: row.vertical,
+      businessType: row.businessType,
+      addOns: row.addOns,
       baseCurrency: row.baseCurrency,
       financialYearStartMonth: row.financialYearStartMonth,
       gstin: row.gstin,
@@ -268,7 +267,8 @@ export class OrganizationsPage implements OnInit {
     return {
       orgCode: '',
       name: '',
-      vertical: 'General',
+      businessType: 'General',
+      addOns: 'None',
       baseCurrency: 'INR',
       financialYearStartMonth: 4,
       gstin: null,
@@ -332,4 +332,7 @@ export class OrganizationsPage implements OnInit {
     );
   }
 }
+
+
+
 
