@@ -4,15 +4,8 @@ namespace Master.Entity.Enums;
 /// The trade a branch is in — the vertical that narrows what it is seeded with,
 /// what a new item defaults to, and which settings screens apply.
 ///
-/// One per branch, by the owner's decision (master.md 5.14). General is the
-/// everything branch: it is seeded with and shown everything, because the
-/// asymmetry is one-sided — a jeweller without the metal purities cannot price
-/// an ornament, while a chemist with them has unused rows on one screen.
-///
-/// Changeable after the branch has traded: a vertical change re-seeds what the
-/// new vertical adds, and the old vertical's rows stay as data rather than
-/// being deleted. The branch form and the seeding read it; nothing else keys
-/// off it yet.
+/// Superseded by <see cref="Shared.Kernel.Apps.BusinessType"/> (D-36, TK-126).
+/// Kept for backward compatibility until Master.Entity drops Organization.Vertical in TK-127.
 /// </summary>
 public enum Vertical
 {
@@ -22,4 +15,7 @@ public enum Vertical
     Pharma = 2,
 
     Jewellery = 3,
+
+    /// <summary>School/educational institution (aligned with BusinessType.School).</summary>
+    School = 4,
 }
