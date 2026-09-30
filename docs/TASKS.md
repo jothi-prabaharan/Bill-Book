@@ -4323,7 +4323,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a branch with only Hrms gets only HRMS menus and seeds.
 
 ### TK-128 · `[RequireBusinessType]` and `[RequireAddOn]` on every controller
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-30
 - **Issue:** [#110](https://github.com/jothi-prabaharan/Bill-Book/issues/110)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-KERNEL, every service lane · **Depends on:** TK-127 · **Decision:** D-36
