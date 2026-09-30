@@ -31,6 +31,12 @@ public class CustomerDbContext : TenantDbContext
 
     public DbSet<CampaignLink> CampaignLinks => Set<CampaignLink>();
 
+    public DbSet<Automation> Automations => Set<Automation>();
+
+    public DbSet<AutomationStep> AutomationSteps => Set<AutomationStep>();
+
+    public DbSet<AutomationEnrolment> AutomationEnrolments => Set<AutomationEnrolment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("cus");
@@ -128,6 +134,29 @@ public class CustomerDbContext : TenantDbContext
             b.HasKey(e => e.CampaignLinkId);
             b.HasIndex(e => new { e.OrgId, e.TrackingToken }).IsUnique();
             b.HasIndex(e => new { e.OrgId, e.CampaignId });
+        });
+
+        modelBuilder.Entity<Automation>(b =>
+        {
+            b.HasKey(e => e.AutomationId);
+            b.Property(e => e.TriggerType).HasConversion<string>().HasMaxLength(30);
+            b.HasIndex(e => new { e.OrgId, e.IsActive, e.TriggerType });
+            b.HasMany(e => e.Steps).WithOne().HasForeignKey(s => s.AutomationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AutomationStep>(b =>
+        {
+            b.HasKey(e => e.AutomationStepId);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.OrgId, e.AutomationId, e.Sequence });
+        });
+
+        modelBuilder.Entity<AutomationEnrolment>(b =>
+        {
+            b.HasKey(e => e.AutomationEnrolmentId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.OrgId, e.AutomationId, e.Email, e.Status });
+            b.HasIndex(e => new { e.OrgId, e.Status, e.NextRunAt });
         });
 
         base.OnModelCreating(modelBuilder);

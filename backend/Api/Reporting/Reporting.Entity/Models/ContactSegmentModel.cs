@@ -17,3 +17,22 @@ public sealed class ContactSegmentResponse
 {
     public List<long> ContactIds { get; set; } = [];
 }
+
+public sealed class ContactFirstInvoicesRequest
+{
+    public Guid CustomerId { get; set; }
+    public Guid OrgId { get; set; }
+    public List<long> ContactIds { get; set; } = [];
+}
+
+public sealed class ContactFirstInvoiceDto
+{
+    public long ContactId { get; set; }
+    public DateOnly FirstInvoiceDate { get; set; }
+    public decimal FirstInvoiceTotal { get; set; }
+}
+
+public sealed class ContactFirstInvoicesResponse
+{
+    public List<ContactFirstInvoiceDto> FirstInvoices { get; set; } = [];
+}

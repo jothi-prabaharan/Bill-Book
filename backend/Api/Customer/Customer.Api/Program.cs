@@ -26,7 +26,9 @@ builder.Host.UseDefaultServiceProvider(options =>
     options.ValidateScopes = true;
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 builder.Services.AddTransient<InternalKeyHandler>();
 
@@ -47,6 +49,7 @@ builder.Services.AddScoped<EmailTemplateRepository>();
 builder.Services.AddScoped<EmailConsentRepository>();
 builder.Services.AddScoped<AudienceRepository>();
 builder.Services.AddScoped<CampaignRepository>();
+builder.Services.AddScoped<AutomationRepository>();
 builder.Services.AddEventPublisher(builder.Configuration);
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();

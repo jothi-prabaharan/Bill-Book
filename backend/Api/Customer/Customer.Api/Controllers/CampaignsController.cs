@@ -168,4 +168,20 @@ public sealed class CampaignsController : ControllerBase
         var links = await _repo.ListLinksAsync(id, ct);
         return Ok(links);
     }
+
+    [HttpGet("{id:long}/report")]
+    [RequirePermission("crm.view")]
+    public async Task<IActionResult> GetReport(long id, CancellationToken ct)
+    {
+        var report = await _repo.GetCampaignReportAsync(id, ct);
+        return report is null ? NotFound() : Ok(report);
+    }
+
+    [HttpGet("summary-report")]
+    [RequirePermission("crm.view")]
+    public async Task<IActionResult> GetSummaryReport(CancellationToken ct)
+    {
+        var report = await _repo.GetCampaignsSummaryReportAsync(ct);
+        return Ok(report);
+    }
 }

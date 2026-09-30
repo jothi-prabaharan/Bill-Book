@@ -36,3 +36,24 @@ public enum RecipientStatus
     Failed = 3,
     Suppressed = 4,
 }
+
+public enum AutomationTriggerType
+{
+    LeadCreated = 1,
+    LeadStatusChanged = 2,
+    ContactBecameCustomer = 3,
+}
+
+public enum AutomationStepKind
+{
+    Wait = 1,
+    Send = 2,
+}
+
+public enum AutomationEnrolmentStatus
+{
+    Active = 1,
+    Completed = 2,
+    Exited = 3,
+}
+

@@ -133,4 +133,43 @@ public sealed class InternalContactSegmentController : ControllerBase
             ContactIds = (matchingContactIds ?? []).OrderBy(id => id).ToList()
         });
     }
+
+    [HttpPost("first-invoices")]
+    public async Task<IActionResult> GetFirstInvoices([FromBody] ContactFirstInvoicesRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId != Guid.Empty) _tenant.CustomerId = request.CustomerId;
+        if (request.OrgId != Guid.Empty) _tenant.OrgId = request.OrgId;
+
+        if (request.ContactIds.Count == 0)
+        {
+            return Ok(new ContactFirstInvoicesResponse());
+        }
+
+        var contactIds = request.ContactIds.Distinct().ToList();
+
+        var invoices = await _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.Status == DocumentStatus.Posted && contactIds.Contains(i.ContactId))
+            .OrderBy(i => i.ContactId)
+            .ThenBy(i => i.DocumentDate)
+            .ThenBy(i => i.InvoiceId)
+            .Select(i => new { i.ContactId, i.DocumentDate, i.TotalAmountBase })
+            .ToListAsync(ct);
+
+        var firstInvoices = invoices
+            .GroupBy(i => i.ContactId)
+            .Select(g => g.First())
+            .Select(x => new ContactFirstInvoiceDto
+            {
+                ContactId = x.ContactId,
+                FirstInvoiceDate = x.DocumentDate,
+                FirstInvoiceTotal = x.TotalAmountBase
+            })
+            .ToList();
+
+        return Ok(new ContactFirstInvoicesResponse
+        {
+            FirstInvoices = firstInvoices
+        });
+    }
 }

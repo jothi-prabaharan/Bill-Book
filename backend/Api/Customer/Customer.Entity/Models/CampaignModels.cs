@@ -142,6 +142,8 @@ public sealed class UnsubscribeTokenPayload
     public Guid CustomerId { get; set; }
     public Guid OrgId { get; set; }
     public string Email { get; set; } = null!;
+    public long? CampaignId { get; set; }
+    public long? RecipientId { get; set; }
 }
 
 public sealed class CampaignDto
@@ -233,4 +235,119 @@ public sealed class TrackingTokenPayload
     public long RecipientId { get; set; }
     public long? LinkId { get; set; }
 }
+
+public sealed class AutomationDto
+{
+    public long AutomationId { get; set; }
+    public string Name { get; set; } = null!;
+    public AutomationTriggerType TriggerType { get; set; }
+    public string? TriggerSource { get; set; }
+    public string? TriggerStatus { get; set; }
+    public bool IsActive { get; set; }
+    public List<AutomationStepDto> Steps { get; set; } = [];
+    public int ActiveEnrolmentsCount { get; set; }
+    public DateTimeOffset? CreatedAt { get; set; }
+    public DateTimeOffset? ModifiedAt { get; set; }
+}
+
+public sealed class AutomationStepDto
+{
+    public long AutomationStepId { get; set; }
+    public int Sequence { get; set; }
+    public AutomationStepKind Kind { get; set; }
+    public int WaitDays { get; set; }
+    public long? EmailTemplateId { get; set; }
+    public string? EmailTemplateName { get; set; }
+}
+
+public sealed class SaveAutomationRequest
+{
+    [Required(ErrorMessage = "Automation name is required.")]
+    [MaxLength(150, ErrorMessage = "Automation name cannot exceed 150 characters.")]
+    public string Name { get; set; } = null!;
+
+    public AutomationTriggerType TriggerType { get; set; }
+
+    [MaxLength(50, ErrorMessage = "Trigger source cannot exceed 50 characters.")]
+    public string? TriggerSource { get; set; }
+
+    [MaxLength(50, ErrorMessage = "Trigger status cannot exceed 50 characters.")]
+    public string? TriggerStatus { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    public List<SaveAutomationStepRequest> Steps { get; set; } = [];
+}
+
+public sealed class SaveAutomationStepRequest
+{
+    public int Sequence { get; set; }
+    public AutomationStepKind Kind { get; set; }
+    public int WaitDays { get; set; }
+    public long? EmailTemplateId { get; set; }
+}
+
+public sealed class AutomationEnrolmentDto
+{
+    public long AutomationEnrolmentId { get; set; }
+    public long AutomationId { get; set; }
+    public long? LeadId { get; set; }
+    public long? ContactId { get; set; }
+    public string Email { get; set; } = null!;
+    public int CurrentStep { get; set; }
+    public DateTimeOffset NextRunAt { get; set; }
+    public AutomationEnrolmentStatus Status { get; set; }
+    public string? ExitReason { get; set; }
+    public DateTimeOffset? CreatedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+}
+
+public sealed class CampaignConversionItemDto
+{
+    public long LeadId { get; set; }
+    public string Name { get; set; } = null!;
+    public string Email { get; set; } = null!;
+    public DateTimeOffset SentAt { get; set; }
+    public DateTimeOffset ConvertedAt { get; set; }
+    public long? ConvertedContactId { get; set; }
+    public decimal FirstInvoiceTotal { get; set; }
+}
+
+public sealed class CampaignReportDto
+{
+    public long CampaignId { get; set; }
+    public string Name { get; set; } = null!;
+    public DateTimeOffset? SentAt { get; set; }
+    public int TotalRecipients { get; set; }
+    public int TotalSent { get; set; }
+    public int TotalFailed { get; set; }
+    public int TotalSuppressed { get; set; }
+    public int TotalOpened { get; set; }
+    public bool IsOpenedApproximate { get; set; } = true;
+    public int TotalClicked { get; set; }
+    public int TotalUnsubscribed { get; set; }
+    public int TotalConversions { get; set; }
+    public decimal ConversionRatePercent { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public decimal FirstInvoiceTotal { get; set; }
+    public List<CampaignConversionItemDto> Conversions { get; set; } = [];
+}
+
+public sealed class CampaignSummaryReportDto
+{
+    public int TotalCampaigns { get; set; }
+    public int TotalRecipients { get; set; }
+    public int TotalSuppressed { get; set; }
+    public int TotalSent { get; set; }
+    public int TotalFailed { get; set; }
+    public int TotalOpened { get; set; }
+    public bool IsOpenedApproximate { get; set; } = true;
+    public int TotalClicked { get; set; }
+    public int TotalUnsubscribed { get; set; }
+    public int TotalConversions { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public decimal TotalFirstInvoiceAmount { get; set; }
+    public List<CampaignReportDto> Campaigns { get; set; } = [];
+}
+
 

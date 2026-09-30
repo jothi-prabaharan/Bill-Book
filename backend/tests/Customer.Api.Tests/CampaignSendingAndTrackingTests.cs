@@ -56,6 +56,10 @@ public sealed class CampaignSendingAndTrackingTests
     {
         public Task<List<long>> SegmentContactsAsync(Guid customerId, Guid orgId, PurchaseHistoryRule rule, CancellationToken ct) =>
             Task.FromResult(new List<long>());
+
+        public Task<Dictionary<long, (DateOnly Date, decimal Total)>> GetFirstInvoicesAsync(
+            Guid customerId, Guid orgId, List<long> contactIds, CancellationToken ct) =>
+            Task.FromResult(new Dictionary<long, (DateOnly Date, decimal Total)>());
     }
 
     [SkippableFact]

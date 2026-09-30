@@ -30,13 +30,15 @@ public sealed class LeadsController : ControllerBase
     private readonly CustomerDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly IContactsClient _contacts;
+    private readonly AutomationRepository? _automation;
 
     public LeadsController(
-        CustomerDbContext db, ITenantContext tenant, IContactsClient contacts)
+        CustomerDbContext db, ITenantContext tenant, IContactsClient contacts, AutomationRepository? automation = null)
     {
         _db = db;
         _tenant = tenant;
         _contacts = contacts;
+        _automation = automation;
     }
 
     [HttpGet]
@@ -89,6 +91,11 @@ public sealed class LeadsController : ControllerBase
         _db.Leads.Add(lead);
         await _db.SaveChangesAsync(ct);
 
+        if (_automation != null)
+        {
+            await _automation.TriggerLeadCreatedAsync(lead.LeadId, lead.Email, lead.Name, lead.Source, ct);
+        }
+
         return CreatedAtAction(nameof(Get), new { id = lead.LeadId }, lead);
     }
 
@@ -100,13 +107,23 @@ public sealed class LeadsController : ControllerBase
 
         if (lead.OrgId != _tenant.OrgId) return Forbid();
 
+        var oldStatus = lead.Status;
         lead.Name = request.Name;
         lead.CompanyName = request.CompanyName;
         lead.Phone = PhoneNumbers.NormalizeOptional(request.Phone);
         lead.Email = request.Email;
         lead.Source = request.Source;
+        if (request.Status.HasValue)
+        {
+            lead.Status = request.Status.Value;
+        }
 
         await _db.SaveChangesAsync(ct);
+
+        if (_automation != null && request.Status.HasValue && request.Status.Value != oldStatus)
+        {
+            await _automation.TriggerLeadStatusChangedAsync(lead.LeadId, request.Status.Value, ct);
+        }
 
         return NoContent();
     }
@@ -249,6 +266,15 @@ public sealed class LeadsController : ControllerBase
 
         await _db.SaveChangesAsync(ct);
 
+        if (_automation != null)
+        {
+            await _automation.TriggerLeadStatusChangedAsync(lead.LeadId, LeadStatus.Converted, ct);
+            if (contactId > 0 && !string.IsNullOrWhiteSpace(lead.Email))
+            {
+                await _automation.TriggerContactBecameCustomerAsync(contactId, lead.Email, lead.Name, ct);
+            }
+        }
+
         return Ok(new
         {
             leadId = lead.LeadId,
@@ -275,6 +301,8 @@ public class SaveLeadRequest
     public string? Email { get; set; }
 
     public LeadSource Source { get; set; } = LeadSource.Other;
+
+    public LeadStatus? Status { get; set; }
 }
 
 /// <summary>

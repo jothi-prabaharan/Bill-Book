@@ -8,7 +8,7 @@ namespace Customer.Repository.Security;
 
 public interface IUnsubscribeTokenSigner
 {
-    string GenerateToken(Guid customerId, Guid orgId, string email);
+    string GenerateToken(Guid customerId, Guid orgId, string email, long? campaignId = null, long? recipientId = null);
     bool TryValidateToken(string token, out UnsubscribeTokenPayload? payload);
 }
 
@@ -26,13 +26,15 @@ public sealed class UnsubscribeTokenSigner : IUnsubscribeTokenSigner
         _key = SHA256.HashData(Encoding.UTF8.GetBytes(secret));
     }
 
-    public string GenerateToken(Guid customerId, Guid orgId, string email)
+    public string GenerateToken(Guid customerId, Guid orgId, string email, long? campaignId = null, long? recipientId = null)
     {
         var payload = new UnsubscribeTokenPayload
         {
             CustomerId = customerId,
             OrgId = orgId,
-            Email = email.Trim().ToLowerInvariant()
+            Email = email.Trim().ToLowerInvariant(),
+            CampaignId = campaignId,
+            RecipientId = recipientId
         };
 
         string json = JsonSerializer.Serialize(payload);

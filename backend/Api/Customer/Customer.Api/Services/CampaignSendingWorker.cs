@@ -94,6 +94,16 @@ public sealed class CampaignSendingWorker : BackgroundService
                         _log.LogError(ex, "Failed to execute send for campaign {CampaignId} in branch {OrgId}.", campaignId, branch.OrgId);
                     }
                 }
+
+                var automationRepo = scope.ServiceProvider.GetRequiredService<AutomationRepository>();
+                try
+                {
+                    await automationRepo.AdvanceDueEnrolmentsAsync(now, ct);
+                }
+                catch (Exception ex)
+                {
+                    _log.LogError(ex, "Failed to advance automations in branch {OrgId}.", branch.OrgId);
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

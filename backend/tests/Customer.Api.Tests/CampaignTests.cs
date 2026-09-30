@@ -229,5 +229,11 @@ public sealed class CampaignDatabaseTests
             Guid orgId,
             PurchaseHistoryRule rule,
             CancellationToken ct) => Task.FromResult(_contactIds);
+
+        public Task<Dictionary<long, (DateOnly Date, decimal Total)>> GetFirstInvoicesAsync(
+            Guid customerId,
+            Guid orgId,
+            List<long> contactIds,
+            CancellationToken ct) => Task.FromResult(new Dictionary<long, (DateOnly Date, decimal Total)>());
     }
 }

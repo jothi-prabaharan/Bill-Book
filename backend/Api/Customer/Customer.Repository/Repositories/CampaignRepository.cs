@@ -2,10 +2,12 @@ using System.Text.RegularExpressions;
 using Customer.Entity.Enums;
 using Customer.Entity.Models;
 using Customer.Entity.TableEntities;
+using Customer.Repository.Clients;
 using Customer.Repository.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Shared.Kernel.Customer;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Messaging;
 using Shared.Kernel.Tenancy;
@@ -23,6 +25,7 @@ public sealed class CampaignRepository
     private readonly IEventPublisher _events;
     private readonly IConfiguration _config;
     private readonly ILogger<CampaignRepository> _log;
+    private readonly IReportingClient? _reportingClient;
 
     public CampaignRepository(
         CustomerDbContext db,
@@ -33,7 +36,8 @@ public sealed class CampaignRepository
         ICampaignTrackingTokenSigner trackingSigner,
         IEventPublisher events,
         IConfiguration config,
-        ILogger<CampaignRepository> log)
+        ILogger<CampaignRepository> log,
+        IReportingClient? reportingClient = null)
     {
         _db = db;
         _tenant = tenant;
@@ -44,6 +48,7 @@ public sealed class CampaignRepository
         _events = events;
         _config = config;
         _log = log;
+        _reportingClient = reportingClient;
     }
 
     public async Task<List<CampaignDto>> ListAsync(CancellationToken ct)
@@ -346,7 +351,7 @@ public sealed class CampaignRepository
                     RecipientId = recipient.CampaignRecipientId
                 });
 
-                string unsubToken = _unsubSigner.GenerateToken(tenantCustomerId, tenantOrgId, recipient.Email);
+                string unsubToken = _unsubSigner.GenerateToken(tenantCustomerId, tenantOrgId, recipient.Email, campaignId, recipient.CampaignRecipientId);
                 string unsubUrl = $"{baseUrl.TrimEnd('/')}/api/public/unsubscribe/{unsubToken}";
 
                 // Personalize body
@@ -548,6 +553,147 @@ public sealed class CampaignRepository
             FirstClickedAt = l.FirstClickedAt,
             LastClickedAt = l.LastClickedAt
         }).ToList();
+    }
+
+    public async Task<CampaignReportDto?> GetCampaignReportAsync(long campaignId, CancellationToken ct)
+    {
+        var campaign = await _db.Campaigns
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.CampaignId == campaignId, ct);
+
+        if (campaign is null) return null;
+
+        var recipients = await _db.CampaignRecipients
+            .AsNoTracking()
+            .Where(r => r.CampaignId == campaignId)
+            .ToListAsync(ct);
+
+        var leadIds = recipients
+            .Where(r => r.LeadId.HasValue)
+            .Select(r => r.LeadId!.Value)
+            .Distinct()
+            .ToList();
+
+        var leads = leadIds.Count > 0
+            ? await _db.Leads
+                .AsNoTracking()
+                .Where(l => leadIds.Contains(l.LeadId))
+                .ToDictionaryAsync(l => l.LeadId, ct)
+            : new Dictionary<long, Lead>();
+
+        // Conversion window: within 30 days after send
+        var conversions = new List<CampaignConversionItemDto>();
+        var convertedContactIds = new List<long>();
+
+        foreach (var r in recipients)
+        {
+            if (!r.LeadId.HasValue || !leads.TryGetValue(r.LeadId.Value, out var lead))
+            {
+                continue;
+            }
+
+            if (lead.Status == LeadStatus.Converted && lead.ConvertedAt.HasValue)
+            {
+                DateTimeOffset sendTime = r.SentAt ?? campaign.SentAt ?? r.CreatedAt ?? campaign.CreatedAt ?? DateTimeOffset.UtcNow;
+                // Within 30 days after send: [sendTime, sendTime + 30 days]
+                if (lead.ConvertedAt.Value >= sendTime && lead.ConvertedAt.Value <= sendTime.AddDays(30))
+                {
+                    long? contactId = lead.ConvertedContactId ?? r.ContactId;
+                    if (contactId.HasValue)
+                    {
+                        convertedContactIds.Add(contactId.Value);
+                    }
+
+                    conversions.Add(new CampaignConversionItemDto
+                    {
+                        LeadId = lead.LeadId,
+                        Name = lead.Name,
+                        Email = r.Email,
+                        SentAt = sendTime,
+                        ConvertedAt = lead.ConvertedAt.Value,
+                        ConvertedContactId = contactId
+                    });
+                }
+            }
+        }
+
+        // Fetch first invoices from Reporting if available
+        var firstInvoices = new Dictionary<long, (DateOnly Date, decimal Total)>();
+        if (convertedContactIds.Count > 0 && _reportingClient != null)
+        {
+            var (customerId, orgId) = _tenant.Require();
+            firstInvoices = await _reportingClient.GetFirstInvoicesAsync(customerId, orgId, convertedContactIds, ct);
+        }
+
+        decimal totalRevenue = 0m;
+        foreach (var conv in conversions)
+        {
+            if (conv.ConvertedContactId.HasValue &&
+                firstInvoices.TryGetValue(conv.ConvertedContactId.Value, out var inv))
+            {
+                conv.FirstInvoiceTotal = inv.Total;
+                totalRevenue += inv.Total;
+            }
+        }
+
+        decimal conversionRate = campaign.TotalSent > 0
+            ? Math.Round(((decimal)conversions.Count / campaign.TotalSent) * 100m, 2)
+            : 0m;
+
+        return new CampaignReportDto
+        {
+            CampaignId = campaign.CampaignId,
+            Name = campaign.Name,
+            SentAt = campaign.SentAt,
+            TotalRecipients = campaign.TotalRecipients,
+            TotalSent = campaign.TotalSent,
+            TotalFailed = campaign.TotalFailed,
+            TotalSuppressed = campaign.TotalSuppressed,
+            TotalOpened = campaign.TotalOpened,
+            IsOpenedApproximate = true,
+            TotalClicked = campaign.TotalClicked,
+            TotalUnsubscribed = campaign.TotalUnsubscribed,
+            TotalConversions = conversions.Count,
+            ConversionRatePercent = conversionRate,
+            TotalRevenue = totalRevenue,
+            FirstInvoiceTotal = totalRevenue,
+            Conversions = conversions
+        };
+    }
+
+    public async Task<CampaignSummaryReportDto> GetCampaignsSummaryReportAsync(CancellationToken ct)
+    {
+        var campaigns = await _db.Campaigns
+            .AsNoTracking()
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync(ct);
+
+        var campaignReports = new List<CampaignReportDto>();
+        foreach (var c in campaigns)
+        {
+            var report = await GetCampaignReportAsync(c.CampaignId, ct);
+            if (report != null)
+            {
+                campaignReports.Add(report);
+            }
+        }
+
+        return new CampaignSummaryReportDto
+        {
+            TotalCampaigns = campaignReports.Count,
+            TotalRecipients = campaignReports.Sum(c => c.TotalRecipients),
+            TotalSuppressed = campaignReports.Sum(c => c.TotalSuppressed),
+            TotalSent = campaignReports.Sum(c => c.TotalSent),
+            TotalFailed = campaignReports.Sum(c => c.TotalFailed),
+            TotalOpened = campaignReports.Sum(c => c.TotalOpened),
+            IsOpenedApproximate = true,
+            TotalClicked = campaignReports.Sum(c => c.TotalClicked),
+            TotalUnsubscribed = campaignReports.Sum(c => c.TotalUnsubscribed),
+            TotalConversions = campaignReports.Sum(c => c.TotalConversions),
+            TotalRevenue = campaignReports.Sum(c => c.TotalRevenue),
+            TotalFirstInvoiceAmount = campaignReports.Sum(c => c.FirstInvoiceTotal),
+            Campaigns = campaignReports
+        };
     }
 
     private static CampaignDto MapToDto(Campaign c, Dictionary<long, string> templateNames, Dictionary<long, string> audienceNames)

@@ -2455,21 +2455,21 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a scheduled campaign reaches every subscribed recipient exactly once and none of the unsubscribed.
 
 ### TK-122 · Campaigns: marketing automation sequences
-- [ ] open
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Lanes:** L-CUS, L-CUS-UI · **Depends on:** TK-121 · **Decision:** —
 - **Tables:** `cus.Automations`, `cus.AutomationSteps`, `cus.AutomationEnrolments`
 - **Sub-tasks:**
-  - [ ] Triggers (lead created by source, lead status changed, contact became a customer); wait and send steps; exits (unsubscribed, converted, lost).
-  - [ ] The hosted service advances due enrolments with a guarded claim; message id `aut-{enrolmentId}-{step}`.
-  - [ ] Test: a lead converted during a wait exits before the next send; a restarted worker does not send a step twice.
+  - [x] Triggers (lead created by source, lead status changed, contact became a customer); wait and send steps; exits (unsubscribed, converted, lost).
+  - [x] The hosted service advances due enrolments with a guarded claim; message id `aut-{enrolmentId}-{step}`.
+  - [x] Test: a lead converted during a wait exits before the next send; a restarted worker does not send a step twice.
 - **Done when:** a new lead from the website source receives the welcome email and, three days later, the follow-up, unless converted first.
 
 ### TK-123 · Campaigns: reports
-- [ ] open
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Lanes:** L-CUS, L-RPT · **Depends on:** TK-121 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] Per campaign and across campaigns: recipients, suppressed, sent, failed, opened (marked approximate), clicked, unsubscribed, conversions within 30 days and their first invoice total.
-  - [ ] Test: conversions count only leads converted within the window after the send.
+  - [x] Per campaign and across campaigns: recipients, suppressed, sent, failed, opened (marked approximate), clicked, unsubscribed, conversions within 30 days and their first invoice total.
+  - [x] Test: conversions count only leads converted within the window after the send.
 - **Done when:** a sent campaign shows its clicks and conversions.
 
 ### F · Phase 3: POS
@@ -2533,14 +2533,14 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Not verified end to end:** a barcode-scanned sale posting from `apps/desktop` needs a running stack, a scanner or its emulation, and the owner's run.
 
 ### TK-124 · Every service reads enums by name (JSON binding)
-- [ ] open
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Lanes:** L-PUR, L-ACC, L-INV, L-MST, L-CON, L-CUS, L-RPT, L-PRT · **Depends on:** — · **Decision:** —
 - **Where:** each `{Service}.Api/Program.cs` `AddControllers()`; Sales' fix in `Sales.Api/Program.cs` (TK-40).
 - **State (2026-09-24):** only Sales registers `JsonStringEnumConverter`. The screens send enum fields as names (the shared line grid sends `lineType: "Stock"` and `taxTreatment: "Taxable"` to Purchase exactly as to Sales), and the default options refuse a name for an enum, so those saves fail model binding with a 400.
 - **Sub-tasks:**
-  - [ ] Register `JsonStringEnumConverter` in every service's `AddControllers().AddJsonOptions(...)`, or once in a `Shared.Kernel` extension every service calls.
-  - [ ] Check each service's responses for enum-typed properties that a screen reads as a number, and fix the screen if one does (none were found in Sales).
-  - [ ] Test: per service, a request body with an enum by name binds (a `WebApplicationFactory` test, or a test of the shared extension's options).
+  - [x] Register `JsonStringEnumConverter` in every service's `AddControllers().AddJsonOptions(...)`, or once in a `Shared.Kernel` extension every service calls.
+  - [x] Check each service's responses for enum-typed properties that a screen reads as a number, and fix the screen if one does (none were found in Sales).
+  - [x] Test: per service, a request body with an enum by name binds (a `WebApplicationFactory` test, or a test of the shared extension's options).
 - **Done when:** a purchase bill saved from its screen is accepted.
 
 ### TK-125 · Name the Student, MaintenanceContract and Employee services after what they own

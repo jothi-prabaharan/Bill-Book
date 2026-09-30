@@ -136,4 +136,13 @@ public sealed class EmailConsentRepository
 
         return suppressed.ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
+
+    public async Task<bool> IsSuppressedAsync(string email, CancellationToken ct)
+    {
+        string normalized = email.Trim().ToLowerInvariant();
+        return await _db.EmailConsents
+            .AsNoTracking()
+            .AnyAsync(c => c.Email == normalized &&
+                          (c.Status == ConsentStatus.Unsubscribed || c.Status == ConsentStatus.Bounced), ct);
+    }
 }
