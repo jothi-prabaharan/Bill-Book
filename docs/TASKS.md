@@ -237,17 +237,61 @@ start, so you don't have to search the repository again:
 
 If the code has moved on since a card was written, correct the card in your claim commit.
 
-**Reordered on 24 September 2026.** Pending cards run in priority order, and every card sits
-after the cards it depends on. Finished cards are in section Z at the end, in ID order, and stay
-there until the owner has run their tests. If a test fails, the owner moves the card back up.
+**Reordered on 30 September 2026.** The queue is one list in card-number order, TK-01 first, as
+CLAUDE.md says; each card names its group below. A card sits after the cards it depends on because
+numbers were given in that order. Finished cards are marked completed in place and stay until the
+owner has run their tests. If a test fails, the owner reopens the card.
 
-### A · Blockers: security, seeding and data integrity
+### Groups
 
-Nothing else is trustworthy until these land: the rest of RLS, the seeding gap that leaves new branches without purchase numbering or reports, internal endpoints that lose their tenant, and the ledger triggers the squash dropped.
+The queue below is one list in card-number order. Each card names its group.
+
+- **A · Blockers: security, seeding and data integrity**
+  Nothing else is trustworthy until these land: the rest of RLS, the seeding gap that leaves new branches without purchase numbering or reports, internal endpoints that lose their tenant, and the ledger triggers the squash dropped.
+- **B · Money posted right: cost of sales and fixed assets**
+  Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), which reuses the invoice's posting.
+- **C · Phase 1: finish what's in flight**
+- **D · Phase 2**
+- **E · Approved designs (documents only)**
+  All six have the owner's go-ahead (D-17, 2026-09-24). The card is done when the
+  design section exists under `docs/` and new cards for it are added to this queue.
+  All of these share `L-DOC`, so they run one at a time, alongside code work in other lanes. **E-invoicing comes first** because GST law requires it above the turnover threshold; the portal design comes next because the School parent portal (TK-69) builds on it.
+- **E2 · Builds from the approved designs**
+  The build cards each design in section E produced. Each design section in `docs/Modules.md`
+  ("Approved designs") is the specification; a card here names the part it builds.
+- **F · Phase 3: POS**
+- **G · Platform for several apps (stage H0)**
+  The design is in `docs/Modules.md`, section "One customer, many applications" (from line 1068).
+  None of it is built.
+- **H · HRMS and Payroll (H1–H12)**
+  Design: `docs/Modules.md` "HRMS & Payroll" (from line 1417). The sections to read are Columns
+  (1497), Approvals (2117), Endpoints (2234), Frontend (2277) and Tenancy (2305).
+  **Every card also carries the standard delivery sub-tasks in section 5.** A new service also
+  needs these scaffold steps:
+  - `backend/Api/{Service}/{Service}.{Entity,Repository,Api}`, copying `backend/Api/Printing` (the
+  newest scaffold);
+  - `backend/tests/{Service}.Api.Tests`;
+  - a port from the service map;
+  - the `.sln` entry;
+  - a Gateway route;
+  - a `MigrateContextAsync<…>` line in Master's `DatabaseMigrationService`;
+  - a `TenantSeeder.Services` entry;
+  - the `libs/{name}/{name}-core` and `-ui` libs.
+  **Payroll without HRMS** needs TK-48, TK-51, TK-52, TK-53, the settlement half of TK-54, and TK-55. **The first
+  sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
+- **I · School (S0–S9)**
+  Design: `docs/Modules.md` "School" (from line 2403). The sections to read are Service map (2454),
+  Columns (2472), Endpoints (2793) and Stages (2884). Every card also carries section 5's standard
+  delivery sub-tasks, and a new service needs the scaffold steps listed under H.
+- **Z · Done — waiting on the owner's test run**
+  Finished cards, in ID order. A card marked `tests written, not run` needs the owner to run its
+  tests (section 0.5); the owner then adds `· tests passed (owner) — date`, or moves the card back
+  into the queue with the failure under its Notes.
 
 ### TK-01 · New branches are never seeded for Purchase or the report catalog
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#14](https://github.com/jothi-prabaharan/Bill-Book/issues/14)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-MST (plus L-DEPS for the Bicep commit) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/TenantSeeder.cs:41`: `Services = ["Accounting", "Inventory", "Sales"]`.
@@ -310,6 +354,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-02 · RLS for `pur`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#15](https://github.com/jothi-prabaharan/Bill-Book/issues/15)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-PUR · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Purchase/Purchase.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Purchase.Api.Tests/PurchaseQueryFilterTests.cs:140`.
@@ -339,6 +384,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-03 · RLS for `sal`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#16](https://github.com/jothi-prabaharan/Bill-Book/issues/16)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-SAL · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Sales/Sales.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Sales.Api.Tests/SalesQueryFilterTests.cs:218`.
@@ -381,6 +427,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-04 · RLS for `rpt`: replace the broken policies
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#17](https://github.com/jothi-prabaharan/Bill-Book/issues/17)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-RPT · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - `backend/Api/Reporting/Reporting.Repository/Migrations/Tenant/20260918204348_InitialReportingDbContextSchema.cs:1151-1165`
@@ -421,6 +468,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-05 · RLS for `prt`: align it with the template
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#18](https://github.com/jothi-prabaharan/Bill-Book/issues/18)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-PRT · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:160-171`.
 - **State:** `prt` casts `current_setting(…)::uuid` without `NULLIF`, so a request with no tenant
@@ -446,6 +494,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-06 · Internal endpoints that set no tenant
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#19](https://github.com/jothi-prabaharan/Bill-Book/issues/19)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-ACC, L-KERNEL, L-CON, L-INV · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/InternalTaxController.cs`: `GET internal/tax/rates`.
@@ -496,6 +545,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-07 · Restore the ledger's deferred balance and allocation triggers
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#20](https://github.com/jothi-prabaharan/Bill-Book/issues/20)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-ACC · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - What was dropped: `git show 2c5ed6f^:backend/Api/Accounting/Accounting.Repository/Migrations/20260902151402_InitialAccountingSchema.cs`,
@@ -557,6 +607,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-08 · Review of the RLS work
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#21](https://github.com/jothi-prabaharan/Bill-Book/issues/21)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-DOC, L-KERNEL, L-ACC, L-RPT · **Depends on:** TK-71, TK-72, TK-73, TK-74, TK-02, TK-03, TK-04, TK-05, TK-06 · **Decision:** —
 - **State:** two facts decide whether RLS protects anything at all:
   - **A superuser, or any role with `BYPASSRLS`, ignores RLS even when FORCE is set.** The
@@ -640,6 +691,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 ### TK-09 · `ReportLayerCertificationTests`: likely already fixed
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#22](https://github.com/jothi-prabaharan/Bill-Book/issues/22)
+- **Group:** A · Blockers: security, seeding and data integrity
 - **Lanes:** L-RPT · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/tests/Reporting.Api.Tests/ReportLayerCertificationTests.cs:97`, which expects 48.
@@ -674,13 +726,10 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
     - No code or test change was needed. The owner's run of `Reporting.Api.Tests` from a dropped
       `REPORTING_TEST_DB` is what closes this card.
 
-### B · Money posted right: cost of sales and fixed assets
-
-Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), which reuses the invoice's posting.
-
 ### TK-10 · A direct sale's cost of goods posts once (GDNI moved to TK-90)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#23](https://github.com/jothi-prabaharan/Bill-Book/issues/23)
+- **Group:** B · Money posted right: cost of sales and fixed assets
 - **Lanes:** L-ACC, L-SAL · **Depends on:** TK-76 · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Repository/SeedData/ChartOfAccountsSeed.cs`: GRNI is 2150; GDNI is missing.
@@ -762,71 +811,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
       `backend/tests/Sales.Api.Tests/InvoicePostingTests.cs`
       (`A_direct_invoice_posts_its_cost_per_line_provisionally_on_the_workers_key`).
 
-### TK-90 · Sale challans post to Goods Delivered Not Invoiced, and the invoice clears it
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#82](https://github.com/jothi-prabaharan/Bill-Book/issues/82)
-- **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-10 · **Decision:** D-21
-- **Where:** as TK-10's Where. `ChartOfAccountsSeed.cs` (GDNI missing), `StockLedgerMapping.cs:86-87`,
-  `InvoiceService.cs` (the challan branch and the aggregate Dr COGS / Cr GDNI at line 0),
-  `DeliveryChallanService` (posts nothing today), `IssueQuantities` in `InvoiceService.cs` (an
-  order-billed invoice bills delivered goods without naming the challan).
-- **State (2026-09-24):** after TK-10, a direct sale posts its cost once. A sale challan's cost
-  still reaches the ledger through the worker as Dr COGS / Cr Inventory **at dispatch**. An invoice
-  naming a challan posts Dr COGS / Cr GDNI, which is refused while GDNI is unseeded. An invoice
-  billing delivered goods through an order posts no cost for them, which is consistent only
-  because the challan already booked COGS at dispatch.
-- **What the owner has decided:** GDNI is seeded, and each document posts a provisional cost the
-  worker replaces with the settled one (TK-10's `ProvisionalLedgerTypeIds`). A sale challan's
-  provisional entry is Dr GDNI / Cr Inventory. Job-work, approval, transfer and sample challans post
-  nothing: issue them with a flag that creates their movements `LedgerStatus.NotApplicable`, and
-  check that recosting never requeues a `NotApplicable` movement.
-- **What D-21 decided (owner, 2026-09-25): (b), cost at invoice time.** The invoice clears GDNI at
-  whatever cost Inventory holds when it posts — only the `sal` table is touched. No
-  `sal.InvoiceChallanAllocations` or `inv.StockMovementBillings` link tables; a void reverses the
-  invoice's own GDNI-clearing entry rather than walking back to specific challan lines, and a later
-  WAC restatement of the challan's dispatch cost can leave a small residual balance in GDNI rather
-  than being chased down and zeroed.
-- **Sub-tasks:**
-  - [x] Seed GDNI (Asset, off the manual-journal picker like GRNI) with a `SystemAccount` value;
-        backfill existing branches through the seeder's idempotent path; take it off
-        `SalesAccountNameTests`' allow-list.
-  - [x] Challan post: provisional Dr GDNI / Cr Inventory per line on `(DLC, challanId, lineId, 4)`
-        for `ChallanType.Sale`; the worker maps a `DLC`-sourced `Issue` to Dr GDNI / Cr Inventory.
-  - [x] Invoice: Dr COGS / Cr GDNI per line, for challan-named and order-billed delivered goods, at
-        Inventory's current cost when the invoice posts — no allocation record naming which challan
-        lines were cleared.
-  - [x] Test: challan then invoice leaves GDNI at zero (absent a later restatement), Inventory
-        credited once, COGS debited once.
-  - [x] Test: an order-billed invoice of delivered goods clears GDNI, and its void restores it.
-  - [x] Test: a job-work challan posts nothing.
-  - [x] Test: a challan cost restatement after its invoice has posted leaves a residual GDNI balance
-        rather than erroring — document this as the accepted cost of (b) rather than a bug.
-- **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once, GDNI
-  at zero, and one cost-of-sales debit.
-- **Notes:** split from TK-10 by the owner's choice of 2026-09-24.
-- **As built (2026-09-26):**
-  - **Accounting:** `SystemAccount.GoodsDeliveredNotInvoiced` (25) is seeded as 1250, an Asset kept off the journal picker. An existing branch gets it from the idempotent seeder (the retry in `apps/admin`).
-  - **Master:** ledger type **7 `GDNI`** was added (migration `GdniLedgerType`). The invoice's clearing legs cannot use type 4 (COGS). That type is the key the costing worker replaces per line, so on an invoice line that both clears delivered goods and issues more, the worker's settlement would erase the clearing. Type 3 (CONTROL) was also ruled out, because allocation and aging read it per contact.
-  - **Inventory:**
-    - `StockMovement.LedgerExempt` (migration `StockMovementLedgerExempt`) marks a movement that posts nothing. It is created `NotApplicable`, `StockLedgerMapping` returns no posting for it, and neither recosting path (`CostingService` requeue, `WeightedAverageRecosting`) puts it back in the ledger queue.
-    - A flag was needed because the poster already uses `NotApplicable` for a zero-cost movement, and that movement must still be requeued once recosting gives it a value.
-    - A `DLC`-sourced `Issue` maps to Dr GDNI / Cr Inventory, with no item sub-account on GDNI.
-    - New endpoint `POST internal/stock/movement-costs` returns a movement's current `TotalCost`.
-  - **Sales, challan:** a sale challan posts provisional Dr GDNI / Cr Inventory per line on `(DLC, challan, line, 4)` with `ProvisionalLedgerTypeIds = [4]`. If the ledger refuses, the result is `DeliveryChallanOutcome.PostingRefused` (409) and the challan stays a draft. Every other challan type is issued with `LedgerExempt`.
-  - **Sales, invoice:**
-    - Posts Dr COGS / Cr GDNI per line under type 7, at the challan movement's current cost. For a named challan the cost is taken in proportion to the quantity billed. For order-billed delivered goods it is the average cost of every posted sale challan line against the order line.
-    - A named non-sale challan (approval, say) credits Inventory instead, because its goods never left Inventory in the ledger.
-    - If Inventory cannot be reached, the result is `StockRefused` and nothing is posted.
-    - Void withdraws type 7, which puts the cost back in GDNI.
-  - **Tests:**
-    - `Accounting.Api.Tests.GdniClearingTests`: the seed row; challan, worker, then invoice leaves GDNI at zero; void restores GDNI; a restatement leaves a residue rather than failing; the worker's settlement of a line leaves its clearing alone.
-    - `Inventory.Api.Tests`: `StockLedgerMappingTests` covers DLC to GDNI and exempt movements posting nothing. `WeightedAverageRecostingTests` covers an exempt movement that is revalued but not requeued, while a zero-cost one is requeued.
-    - `Sales.Api.Tests`: challan posting per line, non-sale challans (four types), ledger refusal, clearing at current cost, partial billing, Inventory unreachable, approval challan, void, the order-billed path in `PartialFulfilmentTests`, and the client route. The GDNI entry is off `SalesAccountNameTests`' allow-list.
-  - **Found, not fixed:** an order-billed invoice after a *voided direct invoice* posts no cost for the re-billed goods. Those goods were issued by the voided invoice, not a challan, so there is no challan movement to read. This is TK-10's "void leaves stock issued with no Inventory credit" gap, still open.
-  - **Owner step:** run the Accounting, Inventory and Sales suites from dropped databases. Branches that already exist need the admin retry to get GDNI before their next sale challan posts. Until then, the challan's post is refused with Accounting's reason.
 ### TK-11 · Fixed assets: a service layer, guards and tests
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#24](https://github.com/jothi-prabaharan/Bill-Book/issues/24)
+- **Group:** B · Money posted right: cost of sales and fixed assets
 - **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/FixedAssetsController.cs`
@@ -887,10 +875,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     tests added, and the harness parameterised).
   - Not done here: the pages still aren't routed (TK-75's note above).
 
-
 ### TK-12 · Fixed assets: capitalisation and disposal postings
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#25](https://github.com/jothi-prabaharan/Bill-Book/issues/25)
+- **Group:** B · Money posted right: cost of sales and fixed assets
 - **Lanes:** L-ACC, L-PUR · **Depends on:** TK-11 · **Decision:** D-19, D-20
 - **Where:**
   - `FixedAssetsController.cs:95-170`: the doc comments record both open questions.
@@ -965,12 +953,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     - `Purchase.Api.Tests/BillServiceTests.cs`: five added, including the new `RecordingFixedAssets`
       stub.
 
-
-### C · Phase 1: finish what's in flight
-
 ### TK-13 · Platform operators: `IsPlatformOperator` on the user (D-01)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#26](https://github.com/jothi-prabaharan/Bill-Book/issues/26)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** D-01 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/User.cs`, `Master.Api/Services/JwtTokenService.cs`, `Master.Api/Services/DatabaseMigrationService.cs` (`BootstrapFirstOperatorAsync`), `frontend/apps/admin`.
 - **State:** `platform.*` is seeded into the permission catalogue and `apps/admin` checks for it, but nothing grants it, so nobody can sign in to `apps/admin`.
@@ -1004,6 +990,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-14 · Item search: barcode and paging
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#27](https://github.com/jothi-prabaharan/Bill-Book/issues/27)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-INV · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Inventory/Inventory.Api/Services/ItemService.cs:36-78` (`ListAsync`).
@@ -1033,6 +1020,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-15 · Item and customer pickers on the sales forms
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#28](https://github.com/jothi-prabaharan/Bill-Book/issues/28)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - The pattern to copy: `frontend/libs/purchase/purchase-core/src/lib/purchase-lookup.service.ts`
@@ -1089,10 +1077,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     - four in `sales-forms.spec.ts` (which now provides a stub `SalesLookupService`)
   - Owner: `npm run test`, then pick a customer and an item on each form at 360px.
 
-
 ### TK-16 · Contact picker on the support ticket form
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#29](https://github.com/jothi-prabaharan/Bill-Book/issues/29)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-CUSTOMER-UI · **Depends on:** — · **Decision:** —
 - **Where:** `frontend/libs/customer/customer-ui/src/lib/tickets/ticket-form.component.html`
   (was a `bb-master-select`, not a numeric `contactId` as first written. It loaded every contact
@@ -1117,6 +1105,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-17 · Seed a `WALKIN` contact per branch
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#30](https://github.com/jothi-prabaharan/Bill-Book/issues/30)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-CON (+ L-ACC for the provisioning fix, see Notes) · **Depends on:** — · **Decision:** owner, 2026-09-24 (see TK-40)
 - **Where:** `backend/Api/Master/Master.Api/Controllers/InternalSeedController.cs` (Master's own branch seed), the contact service's create path.
 - **Sub-tasks:**
@@ -1148,6 +1137,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-18 · Customer module seed data (stage C4)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#31](https://github.com/jothi-prabaharan/Bill-Book/issues/31)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-CUS, L-MST (the seeder list) · **Depends on:** — · **Decision:** D-18
 - **Where:**
   - `backend/shared/Shared.Kernel/Customer/Enums.cs`: `LeadSource`, `LeadStatus`, `TicketStatus`, `TicketPriority`.
@@ -1189,10 +1179,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Tests: `Customer.Api.Tests/SlaPolicyTests.cs`. `Master.Api.Tests/TenantSeederTests.cs` now
     includes Customer.
 
-
 ### TK-19 · Notification.Worker takes over email from Master
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#32](https://github.com/jothi-prabaharan/Bill-Book/issues/32)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-NTF, L-MST, L-KERNEL, L-DEPS (one commit) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/EmailQueue.cs`: `IEmailQueue`, `InProcessEmailQueue`,
@@ -1269,10 +1259,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     - `Master.Api.Tests/EmailDeliveryTests.cs`;
     - `Shared.Kernel.Tests/SmtpMailerTests.cs`.
 
-
 ### TK-20 · `PaymentReminderWorker` sends nothing, and reads across tenants
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#33](https://github.com/jothi-prabaharan/Bill-Book/issues/33)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-NTF, L-KERNEL, L-CON, L-INV (the enumerator move) · **Depends on:** TK-19 · **Decision:** —
 - **Where:** `backend/worker/Notification.Worker/PaymentReminderWorker.cs:39-100` and `Program.cs`.
 - **State:**
@@ -1325,6 +1315,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-21 · A blank optional phone is NULL everywhere (D-04)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#34](https://github.com/jothi-prabaharan/Bill-Book/issues/34)
+- **Group:** C · Phase 1: finish what's in flight
 - **Lanes:** L-CON, L-MST, L-INV, L-CUS · **Depends on:** — · **Decision:** D-04 (answered)
 - **Where:** the phone columns: `con.ContactAddresses` and `con.ContactPersons` (`PhoneNumber`, `MobileNumber`), `mst.Users.MobileNumber`, `mst.Organizations` (`PhoneNumber`, `MobileNumber`), `inv.Warehouses` (`PhoneNumber`, `MobileNumber`), `cus.Leads.Phone`. No shared normaliser exists.
 - **Sub-tasks:**
@@ -1340,11 +1331,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - **No data migration was written.** A migration can only update rows in raw SQL, which hard rule 1 forbids. Instead, `Master.Api/Services/BlankPhoneBackfill.cs` runs `ExecuteUpdate` from `DatabaseMigrationService` on every start: the `mst` columns after the admin migration, and the `con`, `inv` and `cus` columns after each tenant schema migrates. It is idempotent, because only rows still holding `''` match. It reads past the query filter, as the seeding beside it does. Row-level security still applies, so a deployment login that does not bypass RLS would only clear what it can see. Nothing is deployed (D-13), so this matters only for developer databases.
   - Tests: `Shared.Kernel.Tests.PhoneNumbersTests`, `Inventory.Api.Tests.WarehousePhoneTests`, `Customer.Api.Tests.LeadPhoneTests`, `Master.Api.Tests.BlankPhoneBackfillTests`. Master's contact save needs the admin database, numbering and accounting, so it has no round-trip test of its own. The backfill test covers `mst`.
 
-### D · Phase 2
-
 ### TK-22 · Document archive: PDF/A, every document, a download link
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run · **PDF/A and template rendering not done, see Outcome**
 - **Issue:** [#35](https://github.com/jothi-prabaharan/Bill-Book/issues/35)
+- **Group:** D · Phase 2
 - **Lanes:** L-SAL, L-KERNEL · **Depends on:** — · **Decision:** D-11
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs:1440-1460`
@@ -1382,6 +1372,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-23 · Date input that follows the branch's format
 - [!] blocked — the owner tries `bb-branch-date-input` before it replaces `bb-date-input` (built by Claude Opus 5.5, 2026-09-24 · tests written, not run)
+- **Group:** D · Phase 2
 - **Lanes:** L-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - `frontend/libs/shared/ui-components/src/lib/date-input/date-input.component.ts`: a native `<input type="date">`.
@@ -1416,6 +1407,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-24 · `rat` schema: exchange and metal rate history
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#36](https://github.com/jothi-prabaharan/Bill-Book/issues/36)
+- **Group:** D · Phase 2
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `CLAUDE.md` Schemas: "Master database: `mst`, `rat`".
@@ -1451,6 +1443,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-25 · RateSync.Worker: metals (IBJA)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#37](https://github.com/jothi-prabaharan/Bill-Book/issues/37)
+- **Group:** D · Phase 2
 - **Lanes:** L-RATE · **Depends on:** TK-24 · **Decision:** D-14
 - **Where:** copy `backend/worker/CostingEngine.Worker/Program.cs`, as the note in
   `RateSync.Worker/Program.cs` asks.
@@ -1471,6 +1464,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-26 · RateSync.Worker: currency (RBI)
 - [!] blocked — the parser needs checking against a real saved copy of RBI's page, which this environment cannot fetch (built by Claude Opus 5.5, 2026-09-24 · tests written, not run)
+- **Group:** D · Phase 2
 - **Lanes:** L-RATE · **Depends on:** TK-24 · **Decision:** D-03
 - **Sub-tasks:** follow D-03's answer (scraping, a paid wrapper, or manual entry through TK-24's page).
   - [x] Upsert `rat.ExchangeRates` against INR.
@@ -1499,6 +1493,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-27 · Production databases are created by infrastructure (D-02)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#38](https://github.com/jothi-prabaharan/Bill-Book/issues/38)
+- **Group:** D · Phase 2
 - **Lanes:** L-MST, L-DEPS · **Depends on:** TK-70 · **Decision:** D-02 (answered)
 - **Where:** `backend/Api/Master/Master.Api/Services/DatabaseMigrationService.cs:50,140` (`EnsureDatabaseExistsAsync`, which issues `CREATE DATABASE` at 263), `deploy/azure/` (Bicep).
 - **Sub-tasks:**
@@ -1519,6 +1514,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-28 · Settings: one Nx lib per sub-screen (D-05)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · no tests needed (a move); lint, typecheck and all five app builds clean
 - **Issue:** [#39](https://github.com/jothi-prabaharan/Bill-Book/issues/39)
+- **Group:** D · Phase 2
 - **Lanes:** L-MASTER-UI, L-DEPS, L-WEB · **Depends on:** — · **Decision:** D-05 (answered)
 - **Where:** `frontend/libs/master/master-ui/src/lib/` — today one lib holding `api-clients`, `configurations`, `org-currencies`, `organization-settings`, `organizations`, `print-templates`, `roles`, `smtp-settings`, `users` beside contacts and HSN/SAC.
 - **Sub-tasks:**
@@ -1537,6 +1533,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-29 · API clients get per-action permissions through their role (D-07)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#40](https://github.com/jothi-prabaharan/Bill-Book/issues/40)
+- **Group:** D · Phase 2
 - **Lanes:** L-MST, L-KERNEL · **Depends on:** — · **Decision:** D-07 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/ApiClient.cs` (`RoleId`, stored but unused), `Master.Api/Controllers/InternalApiKeysController.cs` (validation), `backend/shared/Shared.Kernel/Security/ApiKeyAuthenticationHandler.cs:43-47`.
 - **State:** a validated API key produces `customer_id`, `org_id`, `sub`, `name` and `role = ApiClient` — **no `permission` claims**, so every `[RequireModulePermission]` endpoint refuses it.
@@ -1566,6 +1563,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### TK-30 · Seeds and menus follow the branch's trade (D-10)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run · one question raised (D-23)
 - **Issue:** [#41](https://github.com/jothi-prabaharan/Bill-Book/issues/41)
+- **Group:** D · Phase 2
 - **Lanes:** L-MST, L-INV, L-MASTER-UI · **Depends on:** — · **Decision:** D-10 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/Organization.cs:34` (`Vertical`), `Master.Entity/Enums/Vertical.cs`, `Master.Api/Services/TenantSeeder.cs` (`ReadVerticalAsync`), `backend/Api/Inventory/Inventory.Api/Controllers/InternalSeedController.cs:58`, `Master.Api/Services/MenuService.cs`, `docs/Modules.md` §5.14.
 - **State:** the trade exists and seeding already receives it. `OrganizationModels.cs:81,208` carries it as a **string** (hard rule 7 wants the enum). Menus ignore it.
@@ -1585,16 +1583,10 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - **D-23 raised:** the card's test asked that a General branch get no purities, but the enum's recorded decision (5.14) is that General gets everything. The recorded decision was kept, and the test uses a Pharma branch instead.
   - Tests: `Inventory.Api.Tests.TradeSeedTests` (Pharma none, then Jewellery once, then back to Pharma deletes nothing; General seeded) and `Master.Api.Tests.TradeScopeTests` (menu scope by trade, unlisted codes shown, every scoped code exists in `MenuSeed`, the trade read and written by name, an undefined value refused).
 
-### E · Approved designs (documents only)
-
-All six have the owner's go-ahead (D-17, 2026-09-24). The card is done when the
-design section exists under `docs/` and new cards for it are added to this queue.
-
-All of these share `L-DOC`, so they run one at a time, alongside code work in other lanes. **E-invoicing comes first** because GST law requires it above the turnover threshold; the portal design comes next because the School parent portal (TK-69) builds on it.
-
 ### TK-31 · Design: e-invoicing and e-way bill
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#42](https://github.com/jothi-prabaharan/Bill-Book/issues/42)
+- **Group:** E · Approved designs (documents only)
 - **Notes:** delivery challans already carry `EwayBillNo` and `EwayBillDate`.
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "E-invoicing and e-way bill": what the law asks (thresholds as settings, not literals), nine decisions, `sal.EInvoices` and `sal.EwayBills`, the post-then-register flow, local validation, security.
@@ -1606,6 +1598,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 ### TK-32 · Design: `apps/portal`, the next screens
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#43](https://github.com/jothi-prabaharan/Bill-Book/issues/43)
+- **Group:** E · Approved designs (documents only)
 - **State:** `apps/portal` has a dashboard and a statement list over real endpoints.
 - **Notes:**
   - D-16 answered (2026-09-24): design these screens: overall outstanding and overall trade value on the dashboard; invoice list with PDF download (TK-22); online payment; quotes to accept or reject; support tickets (Customer module). Every portal route takes `[RequirePortalAccess]`.
@@ -1619,6 +1612,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 ### TK-33 · Design: workflow approvals
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#44](https://github.com/jothi-prabaharan/Bill-Book/issues/44)
+- **Group:** E · Approved designs (documents only)
 - **Notes:** TK-49 builds an approval engine for HRMS. Design this on top of it rather than as a second engine.
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Workflow approvals for RetailErp documents".
@@ -1630,6 +1624,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 ### TK-34 · Design: project accounting
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#45](https://github.com/jothi-prabaharan/Bill-Book/issues/45)
+- **Group:** E · Approved designs (documents only)
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Project accounting".
   - A project is a **ledger dimension** (`ProjectId` on `acc.JournalLedger` and journal and document lines), owned by Accounting, so profit by project is a query over the books rather than a second ledger.
@@ -1640,6 +1635,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 ### TK-35 · Design: budgeting
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#46](https://github.com/jothi-prabaharan/Bill-Book/issues/46)
+- **Group:** E · Approved designs (documents only)
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Budgeting".
   - A budget is monthly amounts per account for one financial year of one branch, optionally by project (TK-34), entered positive in the account's normal direction. Several budgets per year are allowed; one approved default is used by reports; an approved budget is locked, and changing it is a revision with a reason.
@@ -1649,6 +1645,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 ### TK-36 · Design: custom fields and custom reports
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#47](https://github.com/jothi-prabaharan/Bill-Book/issues/47)
+- **Group:** E · Approved designs (documents only)
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Custom fields and custom reports".
   - **Custom fields**: values in a `jsonb` column on each entity (mapped as `JsonDocument`, so LINQ still queries them). Definitions are central in Master (new tenant schema `cfd`), and each owning service validates against them through a cached client in `Shared.Kernel`. Keys are permanent; removing a field keeps its values. Fields carry forward through document conversions and print as `{{custom.<key>}}`.
@@ -1658,6 +1655,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 ### TK-37 · Design: compliance bundle
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#48](https://github.com/jothi-prabaharan/Bill-Book/issues/48)
+- **Group:** E · Approved designs (documents only)
 
 ---
 - **Outcome (2026-09-24):**
@@ -1669,6 +1667,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 ### TK-38 · Design: CRM campaigns and marketing automation (D-06)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Issue:** [#49](https://github.com/jothi-prabaharan/Bill-Book/issues/49)
+- **Group:** E · Approved designs (documents only)
 - **Sub-tasks:**
   - [x] Write the design under the Customer (`cus`) section of `docs/Modules.md`: campaigns, audiences built from leads and contacts, scheduled sends through Notification (TK-19), unsubscribe handling, and what a campaign reports.
   - [x] Add build cards for it to this queue.
@@ -1679,813 +1678,10 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-120 (templates, audiences, consent), TK-121 (sending and tracking), TK-122 (automation), TK-123 (reports).
   - Raised **D-27**: how bulk email is sent, since a branch's own mailbox would be rate-limited and blacklisted.
 
-### E2 · Builds from the approved designs
-
-The build cards each design in section E produced. Each design section in `docs/Modules.md`
-("Approved designs") is the specification; a card here names the part it builds.
-
-### TK-91 · E-invoice: tables, branch settings and the IRP gateway
-- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run · the real provider waits on D-24
-- **Issue:** [#79](https://github.com/jothi-prabaharan/Bill-Book/issues/79)
-- **Lanes:** L-SAL, L-MST, L-KERNEL · **Depends on:** TK-31 · **Decision:** D-24
-- **Where:** `docs/Modules.md`, "E-invoicing and e-way bill" (Tables, Decisions 3, 7, 8); `Sales.Repository/SalesDbContext.cs`; `Master.Entity/TableEntities/Organization.cs`; `Shared.Kernel/Secrets`.
-- **Tables:** `sal.EInvoices`, `sal.EwayBills`; `mst.Organizations.EInvoiceFrom`, `EwayBillEnabled`
-- **Sub-tasks:**
-  - [x] The two tables and their enums, with the TK-71 RLS block in the migration.
-  - [x] `EInvoiceFrom` and `EwayBillEnabled` on the branch, edited in Settings › Organization, and carried on the org context Sales caches.
-  - [x] `IEInvoiceGateway` (authenticate, generate IRN, get IRN by document, cancel IRN, generate/update/cancel e-way bill) with a **sandbox** implementation first, and the provider D-24 names second. Credentials through `ISecretStore`, keyed by GSTIN.
-  - [x] The INV-01 mapper from an invoice or credit note, and the local validation list in the design.
-  - [x] Carry the line's UQC onto the document line so `SalesRegister.UqcCode` stops being null.
-  - [x] Test: the mapper against a recorded INV-01 sample; each validation refusal; RlsAudit for both tables.
-  - Standard delivery sub-tasks (section 5).
-- **Done when:** a B2B invoice maps to a schema-valid INV-01 document and a sandbox call returns an IRN.
-- **As built:**
-  - `sal.EInvoices` and `sal.EwayBills` as the design lists them, enums stored by name, in migration `AddEInvoicing` with the TK-71 block for both. The e-way bill's cancel reason has its own enum, `EwayBillCancelReason`, because the two portals number the same reasons differently. Unique: one e-invoice per `(OrgId, SourceType, SourceId)`, and the IRN and the e-way bill number where set.
-  - `UqcCode` is a column on invoice, credit note and challan lines. `LineUqc.StampAsync` fills it at posting from Inventory's new `POST internal/items/uqc` (`IUqcLookup`), and the sales register copies it, so `SalesRegister.UqcCode` is no longer null. A line with no unit gets `OTH`. When Inventory can't be reached, the line stays empty rather than guessed, and an e-invoice for it is refused for the missing unit. Challans are stamped in TK-93.
-  - Master: `mst.Organizations.EInvoiceFrom` and `EwayBillEnabled` (migration `OrganizationEInvoicing`), refused without a GSTIN (`EInvoiceNeedsGstin`). They are carried on `internal/orgs/{id}/context` with the branch's phone and email, and reach `BranchSettings` and `OrgIdentity`. The six-hour cache means a change reaches Sales within six hours. Edited in Settings › Organization › Statutory.
-  - Master: `POST internal/contacts/addresses` (`IContactAddressBook`) gives the buyer's legal name, GSTIN, billing address fields, state code and registration type. A document keeps its address only as printable text, and the IRP needs the PIN and state separately.
-  - `Sales.Api/Services/EInvoicing/`:
-    - `Inv01Document` is the schema's own names, serialised with no naming policy and nulls left out.
-    - `Inv01Mapper` is pure and sends the document's figures rather than recomputing them. A discount below the lines lands in `ValDtls.Discount`, and UTGST goes in the SGST column. An export is `URP`, state 96 and PIN 999999.
-    - `EInvoiceApplicability` names the supply type: B2B, SEZWP or SEZWOP, EXPWP or EXPWOP, or none for B2C.
-    - `EInvoiceValidator` runs the design's local checks, with a ₹1 tolerance on totals.
-    - `EInvoiceDocumentBuilder` gathers the inputs and reports whether the document applies. A problem reaching Master comes back as a transient problem.
-  - `Shared.Kernel.Tax.Gstin` checks the GSTIN's shape and its base-36 check character.
-  - `IEInvoiceGateway`:
-    - `SandboxEInvoiceGateway` issues the notified IRN hash, answers `2150` on a duplicate, supports get-by-document, cancels within 24 hours only, and gives e-way bills one day per 200 km.
-    - `UnconfiguredEInvoiceGateway` refuses every call.
-    - `EInvoicing:Gateway` chooses between them. Unset, it is the sandbox in Development and the refusing gateway everywhere else, and the sandbox is refused in Production. Credential names come from `EInvoiceCredentials` (`einvoice-{GSTIN}-username`, and so on).
-  - **Not built here:**
-    - a screen to enter the IRP credentials, which is needed with the real provider (D-24);
-    - storing the document's place-of-supply state. Invoices store `PlaceOfSupplyStateId = 0` and keep only `IsInterState`, so the mapper derives the place of supply: the seller's state intra-state, otherwise the buyer's GSTIN state, then their address state.
-  - Specs: `EInvoiceMapperTests` (the recorded INV-01 sample), `EInvoiceValidatorTests`, `SandboxEInvoiceGatewayTests`, `EInvoiceDocumentBuilderTests`, `LineUqcTests`, `Shared.Kernel.Tests.GstinTests`, `Master.Api.Tests.BranchEInvoicingTests` and `InternalContactAddressesTests`. RLS for both tables is covered by the suite's `RlsAudit`.
-  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
-
-### TK-92 · E-invoice: IRN on post, cancel on void, retry, QR on print
-- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
-- **Issue:** [#80](https://github.com/jothi-prabaharan/Bill-Book/issues/80)
-- **Lanes:** L-SAL, L-PRT, L-SAL-UI · **Depends on:** TK-91 · **Decision:** —
-- **Where:** `InvoiceService.PostAsync` / `VoidAsync`, `CreditNoteService`, `InvoicePrintService`, `Shared.Kernel.Printing.PlaceholderCatalog`.
-- **Sub-tasks:**
-  - [x] Insert the `Pending` row inside the posting transaction; register once after the commit; answer 200 with the e-invoice state.
-  - [x] A hosted retry worker in Sales with backoff; permanent IRP errors stay `Failed` and are written to `sal.ErrorLogs` with `FollowUpStatus = Open`.
-  - [x] Duplicate-IRN recovery through "get IRN by document details" (design, decision 6).
-  - [x] Void cancels the IRN inside 24 hours and is refused after, naming the credit note as the fix.
-  - [x] Print: `Irn`, `AckNo`, `AckDate`, `QrImage` tags; `IRN PENDING` stamp until registered.
-  - [x] The invoice list gains an e-invoice status column and a "needs attention" filter.
-  - [x] Test: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped.
-- **Done when:** posting a B2B invoice on an e-invoicing branch prints it with its IRN and QR, and voiding it the same day cancels the IRN.
-- **As built:**
-  - **After commit.** `Shared.Kernel.Persistence.IAfterCommit` (`AfterCommitQueue`, registered by `AddBillBookReliability`): `TransactionFilter` runs the queued work after it commits and before the response is written, and drops it on rollback. `EInvoicePosting.OnPostedAsync` writes the Pending row at the end of `InvoiceService.PostAsync` and `CreditNoteService.PostAsync`, and queues one `EInvoiceRegistrar.RegisterAsync`. That call fills in the `EInvoiceStateView` the posting returns, so the 200 carries the IRP's answer. Work queued where no request transaction runs never runs from the queue; the retry worker covers it.
-  - **Which documents get a row.** POS sales never do. The branch must e-invoice from the document's date, and the buyer must have a GSTIN on the document or, looked up in Master, be SEZ or overseas. When the lookup fails the row is written provisionally, and the registrar deletes it if the builder then says the document doesn't apply.
-  - **`EInvoiceRegistrar`:**
-    - A guarded `ExecuteUpdate` claim holds `NextAttemptAt` for two minutes, and its row count is the answer.
-    - It builds and validates the document. A validation refusal is `Failed` with the problems as the message.
-    - Duplicate IRN `2150` is recovered through get-by-document.
-    - A transient problem is `Pending` with backoff: 1, 5 and 15 minutes, then 1, 3, 6 and 12 hours.
-    - A permanent refusal is `Failed`.
-    - Every `Failed` goes to `sal.ErrorLogs` through `IWorkerErrorAuditor` (`AddBillBookWorkerErrorAudit<SalesDbContext>`) with `FollowUpStatus = Open`, job reference `EInvoice:{id} {Source}:{id}`.
-  - **`EInvoiceRetryWorker`** is a hosted service in Sales. Every 5 minutes it walks `ITenantEnumerator`'s branches, each in its own scope, taking up to 50 due Pending rows per branch. It leaves Failed rows alone.
-  - **Void.** `BeforeVoidAsync` runs right after the lifecycle check, before the ledger is withdrawn, so a refusal changes nothing (decision 5).
-    - Registered and within 24 hours: cancelled at the IRP with the void's reason as the remark and `VoidInvoiceRequest.CancelReason`, `Other` when not given.
-    - Past 24 hours, or refused by the IRP: `InvoiceOutcome.EInvoiceRefused` / `CreditNoteOutcome.EInvoiceRefused`, answered with a 409 that names the credit note.
-    - Pending or Failed: marked Cancelled.
-    - If the IRP cancels and the ledger withdrawal then fails, the IRN stays cancelled on a posted invoice. That is the design's order, noted rather than solved.
-  - **Endpoints:**
-    - `GET …/invoices|credit-notes/{id}/e-invoice` (`sales.view`).
-    - `POST …/{id}/e-invoice/retry` (`sales.einvoice`, via `[PermissionAction("einvoice")]`). `sales.einvoice` is `ExtraPermissions` id 10003, granted to Owner, Administrator and Sales with fixed ids `900,000,000 + 100,000 × role + id`. Extras are now left out of the sequential grants, so nothing was renumbered. Migration `SalesEInvoicePermission` is inserts only, with menu rows 442 and 443.
-    - The invoice list takes `eInvoiceAttention` (Failed or Pending) and returns `EInvoiceStatus`.
-  - **Print:**
-    - `PlaceholderType.QrCode` and the `EInvoice.Irn`, `AckNo`, `AckDate` and `QrImage` tags, for INV and CRN.
-    - Printing draws the QR itself from the signed text with **QRCoder 1.8.0** (MIT, managed PNG, new in `Directory.Packages.props`). The template sanitiser still refuses a template's own `data:` URIs.
-    - `EInvoiceStrip` adds the IRN block to the header of a registered invoice whose template places no `EInvoice.` tag.
-    - `InvoicePrintService` stamps `IRN PENDING` on a posted invoice whose e-invoice is Pending or Failed.
-  - **UI:** the invoice screen's E-invoice panel shows the status, IRN and acknowledgement, the message, **Retry now**, and the 24-hour note. The invoice list gets an **E-invoice** column and an **E-invoice needs attention** checkbox. The credit note screen has no panel yet; its endpoints exist.
-  - **Specs:**
-    - `EInvoiceRegistrationTests`: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped; validation fails and is audited; transient backoff; claim; manual retry.
-    - `Printing.Api.Tests.EInvoicePrintTests`, `Shared.Kernel.Tests.AfterCommitQueueTests`, `Master.Api.Tests.SalesEInvoicePermissionTests`, `sales-core/e-invoice.spec.ts`.
-  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
-
-### TK-93 · E-way bill: by IRN and standalone for challans
-- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
-- **Issue:** [#81](https://github.com/jothi-prabaharan/Bill-Book/issues/81)
-- **Lanes:** L-SAL, L-SAL-UI · **Depends on:** TK-92 · **Decision:** —
-- **Where:** `DeliveryChallanService`, `sal.DeliveryChallans.EwayBillNo`/`EwayBillDate`, the design's Flow steps 6 and 7.
-- **Sub-tasks:**
-  - [x] Ask for the e-way bill with the IRN when transport details are present and the value passes the branch limit.
-  - [x] `POST api/sales/{invoices|delivery-challans}/{id}/eway-bill`, Part B update, cancel within 24 hours (`sales.einvoice`).
-  - [x] The challan's typed number becomes a `Manual` e-way bill row; the form shows the table's state.
-  - [x] Test: a challan under the limit asks for nothing; one over it generates; a cancel after 24 hours is refused.
-- **Done when:** a delivery challan over the limit gets an e-way bill number from the sandbox and prints it.
-- **As built:**
-  - **With the IRN.** The invoice gains optional transport columns (`TransportMode`, `VehicleNo`, `TransporterId`, `TransporterName`, `TransportDistanceKm`; migration `InvoiceTransport`), because flow step 6 needs the invoice to carry them. `EInvoiceDocumentBuilder` adds `EwbDtls` when the branch has `EwayBillEnabled`, a vehicle or transporter is given, and `TotalAmount` is over `EInvoiceRules.EwayBillThreshold` (₹50,000, a constant rather than a branch setting). When the IRP returns the bill, the registrar writes a `ByIrn` `Generated` row.
-  - **`EwayBillService`** (`Sales.Api/Services/EInvoicing/`) generates for a posted invoice or challan.
-    - It is refused when the branch has e-way bills off, when the document is not posted, at or under the limit ("asks for nothing"), and while another bill is live.
-    - Part B is checked by `EwayBillMapper.ValidateTransport`: a vehicle or a transporter, the vehicle's shape, and the distance.
-    - It writes a Pending row and sends it after the commit (`IAfterCommit`), by IRN when the invoice has a registered IRN, otherwise standalone. The standalone request comes from the document's lines, stamping challan lines' UQC first. Sub-supply types: sale 1, job work 4, branch transfer 5, others 8.
-    - Once generated, the challan's `EwayBillNo` and `EwayBillDate` take the number and date, and its archived PDF is written again (Replace) with the bill in its reference line.
-  - **Part B update and cancel** run inline. Cancel works within 24 hours for a generated bill, and at any time for a Manual one, which the portal never had. Cancelling clears the challan's typed columns.
-  - **Manual bills.** `EwayBillService.SyncManualAsync` runs from `DeliveryChallanService.SaveAsync`: a typed number becomes a `Manual` `Generated` row, a changed number corrects it, and clearing it removes it. A bill generated here is never touched.
-  - **Endpoints**, on `api/sales/invoices` and `api/sales/delivery-challans`: `GET {id}/eway-bill` (view), and `POST {id}/eway-bill`, `…/part-b` and `…/cancel` (`sales.einvoice`). A refusal is 409, and a Part B that fails the checks is 422.
-  - **Print.** The `EInvoice.EwbNo`, `EwbDate` and `EwbValidUntil` tags exist. The strip shows the e-way bill beside the IRN, or alone when there is no IRN. The invoice payload carries the live bill.
-  - **UI.** `bb-eway-bill-panel`, one component on both the invoice and the challan screens: state, **Generate**, **Change vehicle** and **Cancel**. The invoice form gains vehicle, transporter id and name, and distance.
-  - **Not built:** e-way bills for returns (credit notes), and a per-branch threshold.
-  - **Specs:**
-    - `EwayBillTests`: a challan under the limit asks for nothing; one over it generates from the sandbox and its PDF is written again; the branch switch; one live bill at a time; cancel at 23 h and at 25 h; Part B; manual rows; an invoice with an IRN goes by IRN; the print payload.
-    - `EInvoiceRegistrationTests`: the bill with the IRN over the limit, and none under it.
-    - `sales-core/eway-bill.spec.ts`.
-  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and Master. Frontend typecheck and lint pass, and the web build is clean.
-
-### TK-94 · Portal: revocable access and one-hour sessions
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#83](https://github.com/jothi-prabaharan/Bill-Book/issues/83)
-- **Lanes:** L-CON, L-MST, L-PTL, L-KERNEL · **Depends on:** TK-32 · **Decision:** —
-- **Where:** `ContactService.GeneratePortalLinkAsync`, `JwtTokenService.CreatePortalToken`, `ContactsController` (`portal-link`), `apps/portal`; design "Client portal" → Access.
-- **Tables:** `con.PortalGrants`
-- **Sub-tasks:**
-  - [x] `con.PortalGrants` with the RLS block; the link carries a random code whose SHA-256 is stored.
-  - [x] `POST api/portal/session` exchanges the code for a one-hour portal JWT with `portal_grant`; rate-limited; exempted in Master's guard test with its reason.
-  - [x] Revoke portal access on the contact screen; the 30-day token path is removed.
-  - [x] `apps/portal` gains `/access/:code`, keeps the code, and re-exchanges it before the hour runs out.
-  - [x] Test: a revoked or expired grant is refused; a code is never stored in clear; a portal token carries no permission claims.
-  - Standard delivery sub-tasks (section 5).
-- **Done when:** revoking a contact's access stops a fresh session from being issued, and existing sessions expire within an hour.
-- **As built (2026-09-26):**
-  - **Master:**
-    - `con.PortalGrants` (migration `PortalGrants`, with the RLS block) stores `CodeHash` (SHA-256, unique), `App`, `ExpiresAt`, `RevokedAt`/`RevokedBy` and `LastUsedAt`.
-    - `PortalAccessService` creates, reads the state of, revokes and exchanges grants. The code is `pg_{customer}_{org}_{secret}`, and the session controller sets the tenant from the code before opening the database. This departs from the design's "past the query filter" wording: no special RLS policy is needed, and the shard is known up front.
-    - The lifetime comes from `mst.Configurations` `portal.linkDays`, default 90 (migration `PortalLinkDaysSetting`).
-  - **Routes:**
-    - `POST api/portal/session` is anonymous, `[NoTransaction]` (the service opens its own scope after the tenant is set), and rate-limited to 10 a minute per address. Every failure is the same 401.
-    - `POST api/contacts/{id}/portal-link` now returns `{ code, expiresAt, url }` with `url = {Portal:BaseUrl}/access/{code}`.
-    - New: `GET api/contacts/{id}/portal-access` and `POST api/contacts/{id}/portal-access/revoke`.
-    - Gateway route `master-portal-session`.
-  - **Token and guard:**
-    - `CreatePortalToken` issues one hour and carries `portal_grant`. The session never outlives its grant.
-    - `[RequirePortalAccess]` requires `portal_grant`, so old 30-day links are refused by every service.
-    - `ContactService.GeneratePortalLinkAsync` and its `ITokenService` dependency are gone.
-  - **Frontend:**
-    - `apps/portal`: `/access/:code` exchanges the code. `PortalSession` keeps the code for the tab and renews five minutes before expiry. `portalSessionGuard` protects every page. `/portal?token=` and a withdrawn link go to `/expired`.
-    - Contacts page: shows the link once, the access line (live links, last opened) and **Revoke portal access**.
-  - **Tests:**
-    - `Master.Api.Tests.PortalAccessTests`: code format; never stored in clear; exchange claims; revoke all; expiry; a session capped at the grant; a deactivated contact; tampered secret or branch; another branch's contact.
-    - `PortalTokenTests`: one hour, with the grant claim.
-    - `EndpointGuardTests` exemption with its reason.
-    - `portal-session.spec.ts`: renewal timing.
-  - **Owner step:**
-    - Run the Master suite from dropped databases, and the portal specs.
-    - Existing portal links stop working at deploy; send contacts new ones.
-    - Set `Portal:BaseUrl` so the contact screen shows a full link.
-### TK-95 · Portal: dashboard figures and invoices with PDF
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#84](https://github.com/jothi-prabaharan/Bill-Book/issues/84)
-- **Lanes:** L-RPT, L-SAL, L-PTL · **Depends on:** TK-94, TK-22 · **Decision:** —
-- **Where:** `PortalStatementsController`; `SalesDocumentArchive.OpenAsync` (TK-22); `apps/portal/src/app/portal-dashboard`.
-- **Sub-tasks:**
-  - [x] `GET api/portal/summary` (Reporting): outstanding net of advances, overdue, trade value this year and all time.
-  - [x] `GET api/portal/invoices`, `/{id}`, `/{id}/pdf` (Sales), posted and voided only, filtered by the token's contact.
-  - [x] Fix the statement: `DocumentNo` instead of `{code}-{id}`; both sides for a contact who is customer and vendor.
-  - [x] Dashboard and invoice pages in `apps/portal`, at 360px.
-  - [x] Test: another contact's invoice id is 404; a draft never appears; the summary matches the ledger for a seeded contact.
-- **Done when:** a contact signs in by link and downloads their own invoice PDF, and cannot reach another contact's.
-- **As built (2026-09-26):**
-  - **Reporting:** `PortalAccountService` sits over an `IPortalAccountData` seam, so the arithmetic is tested over lists. `GET api/portal/summary`:
-    - Outstanding is the contact's receivable sub-accounts (Asset type) net of advances.
-    - Overdue is each past-due posted invoice's own control-leg balance, capped at the outstanding.
-    - Trade value is posted invoices' `TotalAmountBase` less posted credit notes', for this financial year (branch start month, via `HttpFinancialYearProvider`) and in all.
-    - The last five documents.
-  - **Statement:** `api/portal/statements` now returns `{ receivable, payable? }`, each side with its own running balance (payable as credit less debit). Lines carry `DocumentNo`, with a `{code}-{id}` fallback for old rows.
-  - **Read models:** `DocumentNo` on the ledger, `TotalAmountBase` on invoices, a new `CreditNoteRead`, and a snapshot-only migration `PortalReadModels`.
-  - **Found and fixed:** all eight sales and purchase document read models read `Status` as an integer where the column stores the name, so any report reading one failed on the first row. They now convert.
-  - **Sales:** `PortalInvoiceService` and `api/portal/invoices`, `/{id}` and `/{id}/pdf`. Only invoices with `PostedAt` set, posted or voided, and only the token's contact; anything else is 404. Status is Open, PartPaid, Paid, Overdue or Void, from `internal/ledger/settlements`, asked per type code (INV and POS). The PDF is the TK-22 archive copy.
-  - **Master:** the portal session token now carries `customer_code`, because the archive is foldered by it.
-  - **Gateway:** routes `sales-portal-invoices` and `reporting-portal-summary`.
-  - **Frontend:** `apps/portal` has a dashboard (figures and recent documents), an invoice list, an invoice page with **Download PDF**, and a two-sided statement. All are one column, and tables become labelled cards under 600px. The old statement's download (a staff route) is gone.
-  - **Tests:**
-    - `Reporting.Api.Tests.PortalAccountServiceTests`: outstanding net of advances; other contacts ignored; overdue; overdue capped; trade value by year; recent documents; financial-year start; statement opening and running balance; document number fallback; payable side; customer-only contact.
-    - `Sales.Api.Tests.PortalInvoiceTests`: status rules; the list excludes drafts and other contacts; another contact's or a draft invoice is 404 as invoice and as PDF; own invoice lines and PDF.
-    - `PortalAccessTests`: the `customer_code` claim.
-    - `retail/portal.models.spec.ts`.
-  - **Owner step:** run the Reporting, Sales and Master suites and the portal specs. "The summary matches the ledger for a seeded contact" is covered over lists, not against a database, because Reporting's fixture has no `acc` or `sal` tables.
-### TK-96 · Portal: accept or reject a quote
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#85](https://github.com/jothi-prabaharan/Bill-Book/issues/85)
-- **Lanes:** L-SAL, L-SAL-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
-- **Where:** `sal.Quotes`, `QuoteService`; design "Client portal" → Quotes.
-- **Sub-tasks:**
-  - [x] `CustomerResponse`, `RespondedAt`, `RespondedByName`, `ResponseNote` on `sal.Quotes` (migration).
-  - [x] `GET api/portal/quotes`, `POST …/{id}/accept`, `…/{id}/reject`: posted, unexpired, answered once.
-  - [x] The staff quote list shows the answer; the portal page lists quotes with the two actions.
-  - [x] Test: an expired or already-answered quote is refused; another contact's quote is 404.
-- **Done when:** a contact accepts a posted quote from the portal and staff see it accepted.
-- **As built (2026-09-26):**
-  - **`sal.Quotes`** (migration `QuoteCustomerResponse`) gains `CustomerResponse` (`QuoteResponse` enum, stored as its name, existing rows `None`), `RespondedAt`, `RespondedByName` and `ResponseNote`, with `chk_quotes_response_stamp`: an answer carries its time.
-  - **`PortalQuoteService`:**
-    - Lists the contact's posted quotes, with `CanRespond` meaning unanswered, still valid and not yet an order.
-    - Answering is a guarded `ExecuteUpdate` on unanswered and valid, so two racing answers record one.
-    - The outcomes are NotFound (another contact's quote or a draft), Lapsed, AlreadyAnswered, and Converted (a quote already made into a sales order, which the design did not name; refused so an answer never lands on a decided quote).
-  - **Routes:** `api/portal/quotes` and `/{id}/accept`, `/{id}/reject` with `{ name, note }`, plus gateway route `sales-portal-quotes`.
-  - **Staff:** `SalesTransactionListItem.CustomerResponse`, shown as a tag beside the quote's status on the sales list. The quote view carries the answer fields.
-  - **Portal:** the **Quotes** page, with accept or decline, a name and a note, one column.
-  - **Not built:** the design's "staff notification" on an answer. There is no in-app notification channel for staff yet; the answer shows on the list.
-  - **Tests:** `Sales.Api.Tests.PortalQuoteTests` covers accept once, lapsed refused, another contact's quote and a draft not found, and converted refused. The portal spec covers `quoteState`.
-  - **Owner step:** run the Sales suite and the portal specs.
-### TK-97 · Portal: support tickets
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#86](https://github.com/jothi-prabaharan/Bill-Book/issues/86)
-- **Lanes:** L-CUS, L-CUS-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
-- **Where:** `TicketsController`, `cus.TicketMessages`; design "Client portal" → Tickets.
-- **Sub-tasks:**
-  - [x] `IsInternal` on `cus.TicketMessages`; the staff reply box can mark a note internal.
-  - [x] `GET/POST api/portal/tickets`, `POST api/portal/tickets/{id}/messages`, never returning internal messages.
-  - [x] Portal ticket list, detail and new-ticket pages.
-  - [x] Test: an internal message never reaches the portal; another contact's ticket is 404; a portal ticket gets its SLA from `cus.SlaPolicies`.
-- **Done when:** a contact raises a ticket in the portal, staff reply, and the contact sees the reply but not an internal note.
-- **As built (2026-09-26):**
-  - **`cus.TicketMessages.IsInternal`** (migration `TicketMessageInternal`), with `chk_ticketmessages_internal_by_staff`: only a `User` message can be internal.
-  - **`PortalTicketService` and `api/portal/tickets`** (list, `/{id}`, raise, `/{id}/messages`):
-    - Only the token's contact; another contact's ticket is 404.
-    - Internal notes are filtered out.
-    - A portal ticket is Medium priority with the branch's SLA.
-    - Replying to a Resolved ticket reopens it; a Closed one is 409.
-    - Gateway route `customer-portal-tickets`.
-  - **Found and fixed on the staff side:**
-    - The thread screen called `GET api/tickets/{id}/messages`, which did not exist. It now does, returning the whole thread with `isInternal` and the author type as its name.
-    - `POST api/tickets/{id}/messages` took the author from the request body, so the screen's replies were stored as `Contact` (enum 0). A staff message is now always `User` and the signed-in user.
-  - **Staff UI:** an **Internal note** checkbox on the reply box, and internal notes marked in the thread.
-  - **Portal:** the **Support** list (with New ticket) and a ticket page with replies.
-  - **Tests:** `Customer.Api.Tests.PortalTicketTests` covers internal notes never reaching the portal, the database refusing a contact's internal note, another contact's ticket, the SLA from policy, reopening a resolved ticket and a closed ticket refusing. The portal spec covers the status label.
-  - **Owner step:** run the Customer suite and the portal specs.
-### TK-98 · Portal: pay online
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run · real gateway waits on D-25
-- **Issue:** [#87](https://github.com/jothi-prabaharan/Bill-Book/issues/87)
-- **Lanes:** L-ACC, L-ACC-UI, L-PTL · **Depends on:** TK-95 · **Decision:** D-25
-- **Where:** `ReceiveMoneyService`; design "Client portal" → Online payment.
-- **Tables:** `acc.OnlinePayments`
-- **Sub-tasks:**
-  - [x] `acc.OnlinePayments` with RLS; the branch's settlement bank account setting.
-  - [x] `IPaymentGateway` for the gateway D-25 names: create order, verify callback signature.
-  - [x] `POST api/portal/payments`; `POST api/payments/{gateway}/callback` (anonymous, signature-verified) creates the `RCM` with its allocations once per `GatewayPaymentId`.
-  - [x] Portal pay screen: choose invoices or an amount, go to checkout, show the result from the server, not the redirect.
-  - [x] Test: a replayed callback creates one receipt; a bad signature creates none; the receipt settles the chosen invoices.
-- **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
-- **As built (2026-09-26):**
-  - **`acc.OnlinePayments`** (migration `OnlinePayments`, with the RLS block) holds:
-    - `Reference` (`op_{customer}_{org}_{id}`, unique).
-    - The contact, amount and currency.
-    - `Allocations` (jsonb), and the bank account.
-    - The gateway, `GatewayOrderId` and `GatewayPaymentId` (unique per gateway: the idempotency backstop).
-    - Status (Created, Paid, Failed, Refunded), `ReceiveMoneyId`, `PaidAt` and `Note`, with check constraints: paid carries its time, and a receipt only follows a payment.
-  - **Settlement account:** `acc.BankAccounts.IsOnlinePaymentAccount`, one per branch through a filtered unique index. It is set with `PUT api/bank-accounts/{id}/online-payments` and shown as a column on the bank accounts page. It is locked against deactivation like the default.
-  - **`IPaymentGateway`** has sandbox and unconfigured versions, registered like the IRP gateway: `Payments:Gateway`, sandbox in Development and none elsewhere, and the sandbox is refused in Production. Sandbox callbacks are HMAC-SHA256 under `Payments:Sandbox:Secret`, compared in fixed time.
-  - **`OnlinePaymentService.StartAsync`:**
-    - Only the contact's own invoices (another contact's reads as not found), in base currency, and no more than is owed on the invoice's control leg.
-    - Any excess is an advance.
-    - It opens the gateway order.
-  - **`CompleteAsync`:**
-    - Only a verified callback, and the order and amount must match.
-    - Inside one transaction: a guarded claim `Created → Paid`, then a Receive Money created, posted and allocated (source 3, with source 9 for the excess), then `ReceiveMoneyId` set.
-    - If that is refused, the same again with the whole amount as an advance.
-    - If that is refused too, Paid with a note and no receipt.
-    - A replay finds nothing to claim.
-  - **Routes:**
-    - `api/portal/payments`: start, read, and a `/{id}/sandbox-checkout` that signs and sends the sandbox callback through the same path.
-    - `api/payments/{gateway}/callback`: anonymous, `[NoTransaction]`, tenant from the reference, exempted in the guard test with its reason.
-    - Gateway routes `accounting-portal-payments` and `accounting-payment-callbacks`.
-  - **Portal:** **Pay online** (choose invoices and amounts plus extra), the sandbox checkout page, and a result page that polls the server.
-  - **Tests:**
-    - `Accounting.Api.Tests.OnlinePaymentTests`: a bad signature is not read; the reference; another contact's invoice or overpaying refused; not set up or no gateway; a replayed callback makes one receipt with lines on INV (source 3) plus the advance; a failed payment makes no receipt; an amount mismatch; a refused receipt leaves Paid with a note; another contact's payment.
-    - The portal spec covers `paymentTotal`.
-  - **Owner step:** run the Accounting suite and the portal specs. Set an online payments account per branch. A real gateway is added when D-25 is answered: implement `IPaymentGateway` for it and carry the reference in its order notes.
-### TK-99 · Approvals: the shared engine in Master, with user and role approvers
-- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
-- **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26 (answered 2026-09-24: Master, `apr`)
-- **Where:** design "Workflow approvals for RetailErp documents"; the HRMS design's Approvals section; `Shared.Kernel/Documents/DocumentLifecycle.cs`.
-- **Tables:** `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates`
-- **Sub-tasks:**
-  - [x] `Shared.Kernel.Approvals`: `ApprovalStepBase` (with `ApproverUserId` and `ApproverEmployeeId`), the step state machine and its refusal messages.
-  - [x] `apr` configuration tables on Master's tenant context, with the RLS block.
-  - [x] `POST internal/approval-chains/resolve`: `RoleHolder` and `NamedUser`; the skip rules; the snapshot.
-  - [x] Test: skip rules (requester, repeat approver, optional); a required unresolvable level refuses with its name; amount-conditional levels; a changed workflow leaves resolved snapshots alone.
-  - Standard delivery sub-tasks (section 5).
-- **Done when:** a workflow "Accountant, then Owner above ₹1,00,000" resolves to one step for ₹50,000 and two for ₹2,00,000.
-- **As built (2026-09-24):**
-  - `Shared.Kernel.Approvals`: the enums, `ApprovalStepBase`, the pure `ApprovalChain` (start, approve, reject, send back, cancel, who may act) and the contracts for Master and Employee. Tests: `Shared.Kernel.Tests.ApprovalChainTests`.
-  - Master: `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates` on `ContactsDbContext`, migration `ApprovalWorkflows` with the RLS block. `ApprovalChainResolver` picks the most specific workflow in force, keeps the levels the amount calls for, asks Employee for employee approvers in one call and applies the skip rules. `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`; `api/approval-workflows` (settings). HRMS branches are seeded with a manager-approved Leave and LeaveEncashment workflow. Tests: `Master.Api.Tests.ApprovalChainResolverTests`, including this card's *Done when*.
-  - Employee: `internal/approval-chains/resolve-employees` (reporting chain by depth, relationship, department head, named employee), with `hrm.RelationshipTypes` (seeded Lead and Project Lead) and `hrm.EmployeeRelationships`. Tests: `Employee.Api.Tests.EmployeeApproverTests`.
-  - "A changed workflow leaves resolved snapshots alone" is a property of the owning service's stored steps, so it is tested with the first one, leave (TK-49).
-  - Owner step: none beyond running the tests. The workflow and delegate screens are TK-103.
-
-### TK-100 · Approvals: purchase orders, bills and debit notes
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#88](https://github.com/jothi-prabaharan/Bill-Book/issues/88)
-- **Lanes:** L-PUR, L-PUR-UI · **Depends on:** TK-99 · **Decision:** —
-- **Sub-tasks:**
-  - [x] `pur.ApprovalSteps`; summary columns on the purchase documents.
-  - [x] Submit, act, edit-sends-back, per the design's Flow; the ordinary approve action when no workflow matches.
-  - [x] `GET api/approvals/mine` for Purchase; the chain shown on each document.
-  - [x] Test: a PO over the threshold waits for both levels; editing it mid-chain returns it to Draft; a user who is not the approver is refused.
-- **Done when:** a purchase order above the limit reaches `ReadyToPost` only after both levels approve.
-- **As built (2026-09-26):**
-  - **Shared.Kernel:**
-    - `DocumentHeaderBase` gains `ApprovalStatus?` (stored as its name), `CurrentStepLabel`, `CurrentApproverUserId` and `CurrentApproverRoleId`. Every sales and purchase header carries them, so the Sales migration `DocumentApprovalSummary` ships here for TK-102 to use.
-    - `IApprovalChainClient` / `HttpApprovalChainClient` call Master's `internal/approval-chains` (resolve, delegate-check).
-    - `DocumentApproval` builds a round's steps, keeps the header summary, and gives the refusal while a document is under approval.
-  - **Purchase:**
-    - `pur.ApprovalSteps` (`PurchaseApprovalStep` plus `Round`; migration `PurchaseApprovals`, with the RLS block).
-    - `PurchaseApprovalService` handles submit (NoWorkflow, Unresolvable or a new round), act (approver, role holder or delegate), the chain, the inbox, the gate and return-to-draft.
-    - **The gate:** the ordinary approve, and confirming or posting a *draft*, are refused while a chain is open or rejected, or when a workflow applies. Master unreachable is a refusal.
-    - **Editing** returns the document to Draft, cancels the round's open steps, and says so in the update response.
-    - The three services take the approval service as an optional constructor parameter, so existing test harnesses are unchanged.
-  - **Routes:** `api/purchase/{purchase-orders|bills|debit-notes}/{id}/submit` (`purchase.edit`), `…/approval` GET/POST (`purchase.view`), and `api/purchase/approvals/mine`. The inbox path is per service, not one `api/approvals/mine`, because the gateway routes by prefix and one path cannot reach three services; TK-103 asks each.
-  - **UI:** a shared `bb-approval-panel` (ui-components) on the purchase order, bill and debit note forms.
-  - **Tests:**
-    - `Purchase.Api.Tests.PurchaseApprovalTests`:
-      - Chain behaviour: above the limit, both levels before ReadyToPost; below it, one level; a non-approver refused; reject needs a comment.
-      - Editing mid-chain returns the document to Draft and cancels open steps, and a new round starts on resubmit.
-      - The gate: approve and confirm refused under a workflow; the ordinary approve with no workflow; Master unreachable refuses.
-      - The inbox by user and role.
-    - `approval-panel.model.spec.ts`.
-  - **Not built:** notifying the approver (design flow step 1, TK-19) and escalation. Delegates can act, but their inbox does not list their principal's items.
-  - **Owner step:** run the Purchase and Sales suites and the ui-components spec. Configure a workflow through `api/approval-workflows` until TK-103 gives it a screen.
-### TK-101 · Approvals: spend money and manual journals
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#89](https://github.com/jothi-prabaharan/Bill-Book/issues/89)
-- **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-99 · **Decision:** —
-- **Sub-tasks:**
-  - [x] `acc.ApprovalSteps`; summary columns on `SpendMoney` and `Journal`.
-  - [x] The same flow; `GET api/approvals/mine` for Accounting.
-  - [x] Test: a journal is approved by two levels; the second approver cannot be the first.
-- **Done when:** a manual journal configured for two levels posts only after both.
-- **As built:**
-  - **One flow for every service.** The document flow moved out of Purchase into `Shared.Kernel.Approvals.DocumentApprovalService<TStep>`: submit, act, chain, gate, return to draft and inbox. Purchase and Accounting each supply only how to find their documents and steps. `DocumentApprovalActionRequest` is the shared request body, and the amount hook is asynchronous because a journal's amount is the sum of its saved lines.
-  - **`acc.ApprovalSteps`** (`AccountingApprovalStep`, with `Round`) has RLS. `Journal` and `SpendMoney` carry the four summary columns (migration `AccountingApprovals`).
-  - **Neither document has ReadyToPost**, so approval changes only the summary: `Post` is gated (`SaveJournalOutcome.AwaitingApproval = 14`, `MoneyDocumentOutcome.AwaitingApproval = 16`, both 409). Only the public `JournalService.PostAsync` is gated; `PostSystemAsync` (the fixed asset register's journals) is not. An edit mid-chain returns the draft and the PUT answers 200 with a message.
-  - **Routes:**
-    - `api/journals/{id}/submit|approval` under `accounting`, and `api/spend-money/{id}/submit|approval` under `banking`.
-    - Each has an inbox at `…/approvals/mine`, filtered to its own kind so a banking-only user never sees journals. These sit under the gateway's existing prefixes; TK-103 merges them.
-  - **Nobody approves two levels of one round** (`ApprovalRefusal.ApprovedEarlierLevel`). This is enforced for every document service, Purchase included. HRMS requests are untouched and keep relying on Master's skip rules.
-  - **UI:** `bb-approval-panel` sits under the journal and spend-money draft forms.
-  - **Tests:** `AccountingApprovalTests` and `ApprovalChainTests`.
-
-### TK-102 · Approvals: credit notes and the two overrides
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#90](https://github.com/jothi-prabaharan/Bill-Book/issues/90)
-- **Lanes:** L-SAL, L-SAL-UI, L-INV · **Depends on:** TK-99 · **Decision:** D-29
-- **Sub-tasks:**
-  - [x] `sal.ApprovalSteps` and `inv.ApprovalSteps`; summary columns on sales documents and stock adjustments.
-  - [x] `SalesDiscountOverride` and `CreditLimitOverride`: a save that the discount limit or the credit check would refuse offers "request approval" instead, and an approved override lets that one document through.
-  - [x] Test: a sale past the credit limit is refused without an approved override and accepted with one; the override does not carry to another document.
-- **Done when:** a credit-limit breach can be approved by the Owner and the invoice then posts.
-- **As built:**
-  - **The discount limit (D-29)** is resolved by Master on `internal/contacts/discount-limit`: the contact's `MaxDiscountPercent`, else the branch's new `sales.maxLineDiscountPercent` configuration (seeded at 100, meaning no limit; Admin migration `SalesDiscountLimitSetting`). The contract is `Shared.Kernel.Contacts.IDiscountLimitClient`. A line breaches when its discount exceeds that share of its gross value. If the limit cannot be read, the save is refused (`LimitsUnavailable`, 503).
-  - **Overrides apply to invoices and sales orders**, the two documents that already ran the credit check. `SalesLimits` runs both checks at save.
-    - A breach without `requestApproval` is refused (`CreditLimitExceeded` / `DiscountLimitExceeded`) with `canRequestApproval: true` in the body.
-    - With it, the draft saves and each breached kind is submitted as its own chain.
-    - If no workflow covers the override (`OverrideRefused`), or Master is unreachable, the save fails after writing, and the request's transaction takes it back.
-  - **Where override state lives:** each override's status is its own column on the document (`CreditOverrideStatus`, `DiscountOverrideStatus`). What it waits on goes in the shared summary columns.
-  - **Gating:** post (invoice) and confirm (order) are refused while an override is open, rejected or sent back (`AwaitingApproval`). An edit cancels both overrides and the check runs again, so an approval never carries to changed figures or to another document. An invoice raised from an approved order is checked afresh.
-  - **Step storage:** `sal.ApprovalSteps` carries a `DocumentType` (`INV`, `SOR`, `CRN`), because an invoice and an order can share an id. There is one service per type (`InvoiceOverrideService`, `SalesOrderOverrideService`, `CreditNoteApprovalService`) over a shared `SalesApprovalService`.
-  - **Credit notes** have a document chain like purchase: approval makes them ReadyToPost, and posting a draft is gated.
-  - **Stock adjustments** have `inv.ApprovalSteps` and summary columns on `StockAdjustment` (migration `StockAdjustmentApprovals`), and posting is gated. A sheet's amount is the value of its costed lines; write-offs carry no cost until they post.
-  - **Routes:** `api/sales/credit-notes/{id}/submit|approval`, `api/sales/{invoices|sales-orders}/{id}/overrides/{credit-limit|discount}/approval`, `api/sales/approvals/mine`, `api/stock-adjustments/{id}/submit|approval` and `api/stock-adjustments/approvals/mine`. All tables have RLS (migrations `SalesApprovals`, `StockAdjustmentApprovals`).
-  - **UI:** the invoice and sales-order forms offer **Request approval** after a limit refusal and show an override panel for each override in play. `bb-approval-panel` gains `heading` and `allowSubmit`. The credit note form and the stock adjustment sheet carry the panel.
-  - **Tests:** `SalesApprovalTests`, the new cases in `StockAdjustmentServiceTests`, `DiscountLimitSettingTests` and `limit-refusal.spec.ts`.
-
-### TK-103 · Approvals: the inbox and Settings › Approval workflows
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#91](https://github.com/jothi-prabaharan/Bill-Book/issues/91)
-- **Lanes:** L-UI, L-WEB, L-DEPS · **Depends on:** TK-100 · **Decision:** —
-- **Sub-tasks:**
-  - [x] `libs/settings/approval-workflows`: workflows per kind, levels with drag reorder.
-  - [x] The Approvals inbox, merging every service's `GET api/approvals/mine`, with inline actions, at 360px.
-  - [x] Menu rows and routes; docs page and release note.
-- **Done when:** an approver sees a waiting purchase order in the inbox and approves it there.
-- **As built:**
-  - **Settings page:** `@bill-book/settings-approval-workflows` is mounted from `sharedSettingsRoutes` at `/settings/approval-workflows`, so every app has it. It lists workflows and edits them over Master's existing `api/approval-workflows`, which reads enums as numbers.
-    - Levels reorder by CDK drag or by arrow buttons.
-    - A RetailErp kind offers only role-holder or named-user approvers.
-    - The page is read-only without `settings.edit`.
-  - **Inbox:** `@bill-book/approvals` is at `/approvals` in `apps/web` (signed-in only). It asks every inbox route in parallel: `api/purchase/approvals/mine`, `api/sales/approvals/mine`, `api/journals/…`, `api/spend-money/…` and `api/stock-adjustments/…`. The gateway routes by prefix, so there is no single merged endpoint.
-    - It merges the answers oldest first.
-    - A 403 or 404 source is skipped silently; any other failure is named at the top.
-    - Approve, send back and reject go to each document's own approval route (`actionUrl`), with a comment required for the last two. Cards stack at 360px.
-  - **Menus** (Admin migration `ApprovalMenus`): Settings › Organisation › Approval workflows (1125, every app). A new Approvals rail (14 › 122 › 1126 "Waiting for me", RetailErp), shown to holders of any of `purchase|sales|accounting|banking|inventory.view`.
-  - **Fixed a TK-100 defect:** `DocumentApprovalActionRequest.Action` carries its own `JsonStringEnumConverter`. Purchase, Accounting and Inventory read enums as numbers, so every approve, reject and send-back the panel sent by name had been a 400.
-  - **Known gaps** (named on the docs page): no notification to the approver, escalation days stored but not acted on, and a delegate's inbox does not list their principal's documents.
-  - **Tests:** `approval-workflows.model.spec.ts`, `approvals-inbox.model.spec.ts`, `DocumentApprovalActionRequestTests`, and the menu assertions in `AppGrantRuleTests`.
-
-### TK-104 · Projects: masters and the `ProjectId` ledger dimension
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#92](https://github.com/jothi-prabaharan/Bill-Book/issues/92)
-- **Lanes:** L-ACC, L-ACC-UI, L-MST · **Depends on:** TK-34 · **Decision:** —
-- **Where:** design "Project accounting"; `acc.JournalLedger`, `acc.JournalDetail`, `LedgerPostingService`, `PostLedgerRequest`.
-- **Tables:** `acc.Projects`, `acc.ProjectTasks`, `acc.ProjectMembers`, `acc.ProjectMilestones`
-- **Sub-tasks:**
-  - [x] The four tables with RLS; the `PRJ` numbering series; the `projects` permission module (Master seed).
-  - [x] `ProjectId` on ledger, journal lines, spend- and receive-money lines; `PostLedgerRequest` legs carry it; the posting API refuses another branch's or a completed project.
-  - [x] `internal/projects/exists` for the other services; project list and form pages.
-  - [x] Test: a leg with a completed project is refused; the manual journal carries a project to the ledger; RlsAudit.
-  - [x] Standard delivery sub-tasks (section 5).
-- **As built:**
-  - **Tables:** the four tables have RLS (migration `Projects`). `ProjectId` (FK, Restrict) is on `JournalLedger` (filtered index), `JournalDetails`, `SpendMoneyDetails` and `ReceiveMoneyDetails`.
-  - **Numbering:** `PRJ` is a master series (`PRJ-0001`, never reset). Existing branches get it from the idempotent branch seed.
-  - **Posting check:** `ProjectRules.RefusalAsync` refuses a project the query filter cannot see, or one that is Completed or Cancelled. It runs in `LedgerPostingService.PostAsync` (`PostLedgerOutcome.ProjectRefused`), at journal save (`SaveJournalOutcome.ProjectRefused`) and at money-document save (`MoneyDocumentOutcome.ProjectRefused`). On-hold projects still take postings. Reversing a posting to a completed project needs the project set back to active first.
-  - **Journal and money lines:** a journal line's project rides its own leg, and reversals copy it. A money line's project rides its control leg only; the bank leg belongs to no job.
-  - **Service:** `ProjectService` saves the project, tasks, members and milestones as one form. A dropped task is deactivated, never deleted (TK-106 will log time against tasks), a billed milestone is untouched, and projects are never deleted. Routes are `api/projects` (list, get, `{id}/ledger`, create, update) and `internal/projects/exists`, with the contract and `HttpProjectDirectory` in `Shared.Kernel.Projects` for TK-105.
-  - **Permissions:** the `projects` module has fixed-id grants (910,000,000 + 100,000 × role + permission), so no existing grant is renumbered. Owner, Administrator and Accountant get everything; Sales and Viewer get `projects.view`. Menu row 1127 sits under Accounting (Admin migration `ProjectsPermissions`).
-  - **Gateway:** `/api/projects` added. `/api/approval-workflows` was also missing (TK-99 and TK-103); added.
-  - **UI:** the projects page in `accounting-ui` covers the list, the form with tasks and milestones, and the ledger rows with their net. The journal and money-document line grids gain a project picker, hidden for a user who cannot read projects.
-  - **Fixed a TK-90 defect:** `LedgerLegRequest.LedgerTypeId` was `[Range(1, 6)]`, so the GDNI leg (type 7) failed model validation and every delivery challan's posting was refused. The range is now 1 to 7, with a test.
-  - **Tests:** `ProjectLedgerTests` (done-when, completed refusal, foreign project, cancelled at save, PRJ code and task deactivation, billed milestone, internal lookup, GDNI validation, postable statuses), the projects grants in `AppGrantRuleTests`, and `project-options.spec.ts`. RlsAudit covers the new tables through the linked audit.
-- **Done when:** a manual journal line tagged with a project appears on that project's ledger rows.
-
-### TK-105 · Projects: sales and purchase lines carry the project to the ledger
-- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
-- **Issue:** [#93](https://github.com/jothi-prabaharan/Bill-Book/issues/93)
-- **Lanes:** L-KERNEL, L-SAL, L-PUR, L-SAL-UI, L-PUR-UI · **Depends on:** TK-104 · **Decision:** —
-- **Where:** `DocumentLineBase`; every `sal`/`pur` poster that builds `PostLedgerRequest` legs.
-- **Sub-tasks:**
-  - [x] `ProjectId` on `DocumentLineBase` (migrations in `sal` and `pur`), validated through Accounting.
-  - [x] Line legs carry the line's project; header legs carry it only when every line agrees (design, decision 4).
-  - [x] A project picker in the shared line grid.
-  - [x] Test: an invoice with two projects posts revenue to each and an untagged receivable; one with a single project tags the receivable too.
-- **As built:**
-  - **Lines and saves:** `DocumentLineBase.ProjectId` (migrations `LineProjects` in `sal` and `pur`) is on every sales and purchase line request and view, and on the conversions that copy lines. A credit note line takes its invoice line's project.
-  - **Save check:** invoice, bill and debit note saves check projects through `Shared.Kernel.Projects.ProjectCheck` over `HttpProjectDirectory` (Accounting's `internal/projects/exists`). An unknown, completed or cancelled project is refused as `LineInvalid`, and so is an Accounting that cannot be asked. Other documents are enforced at post by Accounting.
-  - **Tagging legs:** `ProjectTagging.TagProjects` (Sales and Purchase) gives each line-level leg its line's project, and each header leg (detail id 0) `ProjectLegs.Common`. The invoice's one revenue leg and the credit note's one returns leg are split per project by `ProjectLegs.Split`, weighted by line taxable value, with the last part absorbing rounding so the posting still balances. Tagged posters: invoice, credit note, delivery challan (GDNI), bill, debit note, goods receipt.
-  - **Settled cost keeps its project:** `LedgerPostingService` carries a replaced key's project onto an untagged replacement (`CarryProjectsAsync`), so the costing worker's settled cost of sales keeps the line's project.
-  - **UI:** `bb-document-line-grid` takes an optional `projects` input and then shows a Project row per line. `ProjectOptionsService` loads the open projects, or none for a user without `projects.view`. It is wired into the quote, sales order, challan, invoice, purchase order, goods receipt and bill forms.
-  - **Tests:** `InvoiceProjectTests` (the card's two cases, untagged invoice, completed and foreign projects refused at save), `ProjectLegsTests`, the carry-on-replace case in `ProjectLedgerTests`, and `project-options.service.spec.ts`.
-- **Done when:** an invoice's revenue lands on the project its lines name.
-
-### TK-106 · Projects: timesheets and billing time, expenses and milestones
-- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
-- **Issue:** [#94](https://github.com/jothi-prabaharan/Bill-Book/issues/94)
-- **Lanes:** L-ACC, L-ACC-UI, L-SAL, L-SAL-UI, L-PUR · **Depends on:** TK-105 · **Decision:** —
-- **Tables:** `acc.TimeEntries`; `IsBillable`, `MarkupPercent`, `BilledInvoiceId` on bill and spend-money lines
-- **Sub-tasks:**
-  - [x] Weekly timesheet and timer; a user logs only their own time without `projects.edit`; 24 hours a day at most.
-  - [x] "Add project items" on the invoice form; `internal/projects/billing/claim` at post and `…/release` on void, guarded by row count.
-  - [x] Test: two invoices claiming the same hours — exactly one posts; a void releases the hours; markup applies to re-billed expenses.
-- **Done when:** unbilled hours billed on one invoice cannot be billed on another, and come back when it is voided.
-- **As built:** `acc.TimeEntries` (RLS) behind `api/projects/time`, which needs only `projects.view`. The service refuses anyone else's entry without `projects.edit`, refuses more than 24 hours a day and a closed project or inactive task, and locks a billed entry. `GET api/projects/{id}/unbilled` prices hours through `ProjectBillingService.RateFor` (project, task or member rate), lists posted spend-money lines marked billable with their markup, and lists uninvoiced milestones. Purchase serves its own billable bill lines at `GET api/purchase/bills/billable`, because bill lines are Purchase's (rule 8). The claim runs at post, through `Shared.Kernel.Projects.HttpProjectBillingClient`. It claims Accounting's kinds (`internal/projects/billing/claim`), then Purchase's (`internal/bills/billing/claim`), and releases Accounting's if Purchase refuses. Each side is a guarded `ExecuteUpdate` whose row count must equal the items asked for, or it answers 409 so the reliability filter rolls back. A retry by the same invoice is idempotent. `sal.InvoiceProjectItems` (RLS) records what an invoice bills. A failed post and a void release the items. A spend-money document or bill with a billed line refuses a void (`BilledToClient`, 409). Frontend: `TimesheetPage` (a week grid, a timer kept in `localStorage`, and the menu row `1128`); `bb-project-items-dialog` on the invoice form, which turns picked items into lines through `toBillingLines`; and **Charge on** plus a markup on bill lines (the grid's `showBilling`) and on spend-money lines. Tests: `ProjectBillingTests`, `InvoiceProjectBillingTests`, `project-billing.spec.ts`, `timesheet-week.spec.ts`.
-
-### TK-107 · Projects: reports
-- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
-- **Issue:** [#95](https://github.com/jothi-prabaharan/Bill-Book/issues/95)
-- **Lanes:** L-RPT · **Depends on:** TK-106 · **Decision:** —
-- **Sub-tasks:**
-  - [x] Project profitability, budget against actual, unbilled work, time by user, as report sources on `bb-report-grid`.
-  - [x] Test: profitability for a seeded project equals its ledger rows' net by type.
-- **Done when:** the four reports run for a branch with a billed project.
-- **As built:** Four sources in `Reporting.Api/Services/Sources/ProjectReportsSources.cs`, under the new `ReportModule.Projects`, all needing `projects.view`: `project-profitability`, `project-budget-vs-actual`, `project-unbilled-work` and `project-time-by-user`. Their queries live in `ProjectReports` as functions of plain `IQueryable`s, as `FixedAssetRegister` does. Profitability nets income rows as credit less debit and expense rows as debit less credit, so contra accounts need no rule of their own. Unbilled work values items exactly as TK-106's dialog does. New read models map `acc.Projects`, `ProjectTasks`, `ProjectMembers`, `ProjectMilestones` and `TimeEntries`. `ProjectId` and the billing columns were added to the ledger, spend-money and bill line reads, and `ExchangeRate` to the bill read; the migration is snapshot-only. Catalog seeds `1401`–`1404`, plus the menu group `123` with items `1129`–`1132` that link to the report keys directly.
-
-  Three older gaps were found and fixed on the way:
-  - `ReportSource.FormatRowsAsync` was declared and overridden by seven reports but never called, so their account-type, user and state names were always empty.
-  - Master had no `internal/users/batch`, which `BatchedNameResolver` calls.
-  - Master's `internal/master/account-types` sent `NormalBalance` and `ReportSection` as numbers where Reporting reads names. This would also have failed `StatementsController`.
-
-  **Still open:** the older report menu rows link to `/reports/r-{code}`, and those codes are not report keys (`r-journal-report` against `journal-report`). That is left for its own card.
-
-  Tests: `ProjectReportTests` (profitability equals the ledger rows' net by type, the period, budget and hours variance, unbilled valuation by task and person rate with markup, time split), and the source and certification registries (94 sources).
-
-### TK-108 · Budgets: tables, entry grid, import and approval
-- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
-- **Issue:** [#96](https://github.com/jothi-prabaharan/Bill-Book/issues/96)
-- **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-35 · **Decision:** —
-- **Where:** design "Budgeting"; `mst.Organizations.FinancialYearStartMonth` via the org context; `acc.Accounts`.
-- **Tables:** `acc.Budgets`, `acc.BudgetLines`
-- **Sub-tasks:**
-  - [x] Both tables with RLS; a filtered unique index for one approved default per branch and year.
-  - [x] Create blank, from last year's actuals (± % per account group) or from another budget; spread a year total evenly or by last year's shape.
-  - [x] CSV/XLSX import and export in the account-code × month layout; unknown codes listed and refused.
-  - [x] Approve locks; revise copies with a reason and supersedes on approval.
-  - [x] The budget grid page (accounts × 12 months), usable at 360px as one month at a time.
-  - [x] Test: an approved budget refuses edits; a revision supersedes; last year's actuals seed the right months for an April-start branch.
-  - [x] Standard delivery sub-tasks (section 5).
-- **Done when:** an accountant imports a year's budget from a spreadsheet, approves it, and cannot edit it afterwards.
-- **As built:** `acc.Budgets` and `acc.BudgetLines` with RLS. The filtered unique index `IX_Budgets_BranchDefault` is on (`CustomerId`, `OrgId`, `FinancialYearStart`) where `IsBranchDefault`, and a check constraint means only an approved budget can be the default. Lines are unique on (budget, account, project, period) with nulls not distinct; months at zero are not stored.
-
-  `BudgetService` behind `api/budgets` (`accounting.view`; `edit` for create, save, import and delete; `approve` for approve, make-default and revise):
-  - **Create** starts blank, from last year's income and expense actuals in each account's normal direction (`BudgetMath.NormalAmount`, which handles contra accounts), or from another budget. Adjustments are a general percentage plus one per account type, and a negative month clamps to zero.
-  - **Save** refuses parent accounts, inactive or unknown accounts, negatives, duplicates, and projects on a budget that is not by project.
-  - **Import** reads CSV or XLSX through the statement readers in the layout `BudgetMath.SheetHeader` exports. Every code is resolved first, and unknown ones are listed and refused with nothing written.
-  - **Approve** locks the budget. A revision supersedes its original and takes its default.
-  - `GET {id}/last-year` feeds "spread by last year's shape".
-
-  The financial year start comes from `IFinancialYearProvider`. Gateway route `/api/budgets`; menu row `1133`.
-
-  Frontend:
-  - `BudgetsPage` lists budgets and creates them.
-  - `BudgetGridPage` has accounts × 12 months with section subtotals and budgeted profit. A typed year total spreads evenly or by shape (`budget-math.ts`, worked in paise). It handles import and export, approve, revise, make-default and delete, and shows one month at a time below 640px.
-
-  Tests: `BudgetTests` (the done-when, revision supersedes, April-start actuals land in periods 1 and 12, unknown codes, parent and negative refused, one default per year, and the pure maths and sheet parsing) and `budget-math.spec.ts`.
-
-### TK-109 · Budgets: budget against actual, and over-budget warnings
-- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
-- **Issue:** [#97](https://github.com/jothi-prabaharan/Bill-Book/issues/97)
-- **Lanes:** L-RPT, L-ACC, L-ACC-UI · **Depends on:** TK-108 · **Decision:** —
-- **Where:** `Reporting.Api/Services/Sources`, the P&L source's sign rules.
-- **Sub-tasks:**
-  - [x] Report sources: budget against actual (month, quarter, YTD), by project, monthly trend; favourable or adverse by account type.
-  - [x] A warning on bill, spend-money and journal saves that pass the approved budget (month or YTD, a branch setting). Spend money has nothing to check; see As built.
-  - [x] Test: actuals equal the P&L's for the same period; an expense over budget warns and still saves.
-- **Done when:** the budget-against-actual report's actual column matches the P&L for the same period.
-- **As built:**
-  - **Reports.** Three sources in `Reporting.Api/Services/Sources/BudgetReportsSources.cs`, all `accounting.view`: `budget-vs-actual`, `budget-vs-actual-by-project` and `budget-monthly-trend`. Their queries live in `BudgetReports`, over plain `IQueryable`s.
-    - The done-when holds by construction and by test. The P&L's query moved into `ProfitAndLossSource.Rows` (active income and expense accounts; income credit less debit, others debit less credit), and `BudgetReportTests` compares the actual column against that function rather than a copy of its rule.
-    - Budget amounts are negated for contra accounts so they sit on the P&L's sign. Variance is positive when favourable, whatever the type.
-    - The window is always whole months (`BudgetWindows.For`): the date's month, its financial quarter, or the year to date. The budget is the one named, or else the branch's approved default for the year.
-  - **`PrepareAsync`.** A new virtual hook on `ReportSource`, run before `Build`, because a source must look the budget up and `Build` cannot await.
-  - **Read models and menu.** `acc.Budgets` and `acc.BudgetLines` (snapshot-only migration). Catalog seeds `171`–`173`; menu items `1134`–`1136` under Financial performance.
-  - **Warnings.**
-    - `BudgetCheckService` compares each expense account (and project, on a budget by project) in the document with what is posted for the period plus the document. It warns only on accounts the budget names.
-    - The setting is `mst.Organizations.BudgetWarningYearToDate` (the Admin migration adds the column). It is carried to services in the org context as `BranchSettings.BudgetWarningYearToDate` and set on Settings › Organization › Financial.
-    - The journal controller checks after a successful create or update. Purchase's `BillBudgetCheck` reads the saved lines at taxable value × rate and asks `internal/budgets/check` through `Shared.Kernel.Budgets.HttpBudgetCheckClient`, which answers with no warnings rather than an error.
-    - Both return `warnings` in the save response, and the bill form and journal page show them.
-    - **Spend money is not wired, deliberately.** Every spend-money line posts to a payable, receivable or advance control account through `MoneyPostingMap`, never to an expense account, so no spend-money save can pass a budget.
-  - Tests: `BudgetReportTests` (P&L match, favourable and adverse, contra sign, month window, no budget, windows, by project, trend) and `BudgetTests` (an expense over the month's budget warns and the journal still saves; within budget; year to date against month; income and unbudgeted accounts; no approved budget).
-
-### TK-110 · Custom fields: definitions and the shared validator
-- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
-- **Issue:** [#98](https://github.com/jothi-prabaharan/Bill-Book/issues/98)
-- **Lanes:** L-CON, L-KERNEL, L-UI, L-DEPS · **Depends on:** TK-36 · **Decision:** —
-- **Where:** design "Custom fields and custom reports" → Custom fields.
-- **Tables:** `cfd.CustomFieldDefinitions`
-- **Sub-tasks:**
-  - [x] The definitions table on Master's tenant context, with RLS; `api/custom-fields` and `internal/custom-fields`.
-  - [x] `Shared.Kernel.CustomFields`: the cached `ICustomFieldDefinitions` client and the pure `CustomFieldValidator`.
-  - [x] Settings › Custom fields (`libs/settings/custom-fields`) and the shared `bb-custom-fields` form component.
-  - [x] Test: the validator per data type; an unknown key refused; a required field enforced on new saves only; a key cannot be changed; 50-per-kind limit.
-  - [x] Standard delivery sub-tasks (section 5).
-- **Done when:** a branch defines a dropdown field for contacts and the validator refuses a value not in its options.
-- **As built:**
-  - **Table.** `cfd.CustomFieldDefinitions` on Master's `ContactsDbContext`, with RLS in TK-71's form. It is unique on (`OrgId`, `EntityKind`, `Key`), with a check constraint on the key's shape, and its options are an owned JSON collection in a jsonb column.
-  - **Shared kernel.** `Shared.Kernel.CustomFields` holds:
-    - the two enums;
-    - `CustomFieldDefinitionDto`;
-    - `CustomFieldValidator`, which is pure. It refuses unknown keys, checks all eleven types, enforces a required field only on a new record, and keeps a stored value whose field or option has since been deactivated but takes no new one;
-    - `HttpCustomFieldDefinitions`, cached five minutes per branch and kind, which returns null when Master cannot be reached so the caller decides.
-  - **Master.** `CustomFieldService` and `CustomFieldRules`. The key, kind and type are fixed after the first save. Options are never removed, only deactivated. A default must itself validate. The limit is 50 active fields per kind.
-  - **Routes.** `api/custom-fields` (`settings.*`) and `internal/custom-fields?customerId&orgId&kind`, which returns every field of the kind with a `Version`. Gateway route `/api/custom-fields`; shared menu row `1137`.
-  - **Frontend.**
-    - `libs/settings/custom-fields` (`@bill-book/settings-custom-fields`) holds the list per kind, the editor with its options, and a live preview. It is mounted through `shared-routes` for every app.
-    - `bb-custom-fields` in ui-components, with pure helpers in `custom-fields.model.ts`, is ready for TK-111 to put on the contact and item forms.
-  - Tests: `CustomFieldValidatorTests` (done-when, unknown key, required only on new saves, each type, max length, inactive field and option), `CustomFieldTests` (done-when end to end, key change refused and reuse duplicate, the 50 limit, RLS on `cfd`, the pure rules), `custom-fields.model.spec.ts` and `custom-fields-settings.model.spec.ts`.
-
-### TK-111 · Custom fields on contacts and items
-- [x] completed (Claude Opus 5.5) — 2026-09-29 · tests written, not run
-- **Issue:** [#99](https://github.com/jothi-prabaharan/Bill-Book/issues/99)
-- **Lanes:** L-CON, L-INV, L-MASTER-UI, L-INVENTORY-UI · **Depends on:** TK-110 · **Decision:** —
-- **Sub-tasks:**
-  - [x] `CustomFields jsonb` (mapped as `JsonDocument`) on `con.Contacts` and `inv.Items`, with a GIN index; validated on save.
-  - [x] Rendered on the forms, `ShowInList` columns and `IsSearchable` search on the lists.
-  - [x] Test: a search by a custom value finds the contact; a deactivated field keeps its stored value.
-- **Done when:** a contact saved with a custom field can be found by searching that value.
-- **As built:**
-  - **Columns.** `CustomFields` (`JsonDocument`, jsonb, GIN index) on `con.Contacts` and `inv.Items`, with one migration each.
-  - **Kernel helpers.** `Shared.Kernel.CustomFields.CustomFieldStore`:
-    - reads the column into a dictionary, and writes it back with empty values dropped, or null when nothing is left;
-    - builds the search: `Matching` makes one `"CustomFields" ->> 'key'` test per searchable key, from a caller-supplied match (`v => EF.Functions.ILike(v!, pattern)`), which keeps the Npgsql provider out of the kernel. `Either` ORs that with a list's usual search.
-  - **Validation on save.**
-    - Master validates through `LocalCustomFieldDefinitions`, which reads its own tenant database. Inventory reads Master through `HttpCustomFieldDefinitions`.
-    - A new record is checked for required fields. An update that leaves `customFields` out keeps what is stored, and one that sends it is validated against the previous values, so a deactivated field or option stands unchanged.
-    - Unreadable definitions refuse the save. A refusal is a 422 carrying the validator's sentences (`CustomFieldsRefused`).
-    - Quick create (lead conversion, walk-in) carries no custom fields and skips the check.
-  - **Definitions for the forms.** `GET api/contacts/custom-fields` and `GET api/items/custom-fields` serve the kind's definitions under the module's own `view` permission, so a form needs no `settings.view`.
-  - **Frontend.** `bb-custom-fields` is on both forms. `customListColumns` and `withCustomColumns` add the `ShowInList` columns to the grids, and `customFieldText` renders option labels, Yes/No and lists.
-  - Tests: `ContactCustomFieldTests` (done-when search, not searchable, deactivated field kept and shown, store round trip), `ItemCustomFieldTests`, and the list-column spec.
-
-### TK-112 · Custom fields on sales and purchase documents, carried forward and printed
-- [x] completed (Claude Opus 5.5) — 2026-09-29 · tests written, not run
-- **Issue:** [#100](https://github.com/jothi-prabaharan/Bill-Book/issues/100)
-- **Lanes:** L-SAL, L-PUR, L-KERNEL, L-SAL-UI, L-PUR-UI · **Depends on:** TK-110 · **Decision:** —
-- **Sub-tasks:**
-  - [x] `CustomFields jsonb` on the header of every `sal` and `pur` document (via `DocumentHeaderBase`); validated on save.
-  - [x] Carry-forward on every conversion (quote → order → challan → invoice; PO → receipt → bill) for keys marked `CarryForward`.
-  - [x] `custom.` placeholders in `PlaceholderCatalog`; values in the print payload.
-  - [x] Test: a quote's carried field arrives on the invoice made from it; an invoice prints `{{custom.site_ref}}`.
-- **Done when:** a custom field typed on a quote prints on the invoice converted from it.
-- **As built:**
-  - **Column.** `DocumentHeaderBase.CustomFields` (jsonb, set in `DocumentModelConfiguration`) on all nine headers: five `sal` tables and four `pur` tables, one migration per service.
-  - **The gate.** Every create and update goes through `Shared.Kernel.CustomFields.DocumentCustomFieldGate.ApplyAsync`, called beside each service's `Notes` assignment:
-    - An update without values keeps what is stored.
-    - A new document takes carried values from its source. `Carry` takes keys the source marks `CarryForward` that the target has active and would accept, and a requested value wins.
-    - The result is validated, required fields on new documents only.
-    - A refusal is each outcome enum's new `CustomFieldsRefused` (900), a 422 with the validator's sentences.
-    - A service built without the gate (tests) stores the request as given.
-  - **Sources.** Conversions already compose a request that names their source, so the carry keys off it: quote → order (`QuoteId`), order → challan, challan/order/quote → invoice (nearest first), invoice → credit note, PO → receipt, receipt/PO → bill, bill → debit note.
-  - **Printing.**
-    - `PlaceholderCatalog.CustomTag` resolves any well-formed `custom.key` on a document type that `CustomFieldKinds` maps, so templates accept branch keys the static catalog cannot list.
-    - `CustomFieldPrint.Add` puts `ShowOnPrint` values into the payload as text (option labels, Yes/No, dates), and invoice printing calls it.
-    - The template editor adds a "Custom" group from `api/custom-fields`.
-  - **Frontend.**
-    - `GET api/sales/custom-fields?kind=` and `GET api/purchase/custom-fields?kind=` serve each service's kinds under its `view` permission.
-    - `bb-document-custom-fields` loads a kind, applies defaults on a new document, and is on all nine forms.
-  - Tests: `DocumentCustomFieldCarryTests` (done-when: quote → invoice carries `site_ref` and it lands in the payload), `DocumentCustomFieldTests` (carry rules, print text, kind map), `CustomFieldPrintTests` (the renderer prints `{{custom.site_ref}}`; an absent value prints nothing and is not unknown; tag shapes).
-  - **Not built:** only the invoice has a print route, so the other eight documents print custom fields once theirs exist (TK-22).
-
-### TK-113 · Custom reports: datasets and the report builder
-- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
-- **Issue:** [#101](https://github.com/jothi-prabaharan/Bill-Book/issues/101)
-- **Lanes:** L-RPT, L-REPORTING-UI · **Depends on:** TK-111, TK-112 · **Decision:** —
-- **Tables:** `rpt.CustomReports`
-- **Sub-tasks:**
-  - [ ] Six dataset sources (`IsDataset`), with custom-field columns built from the branch's definitions at run time.
-  - [ ] `rpt.CustomReports` with RLS; create from a dataset, save private or shared (`reports.edit`), list under **Custom** by the dataset's permission.
-  - [ ] The builder page: pick a dataset, choose columns, filters, grouping and pivot on `bb-report-grid`, save.
-  - [ ] Test: a user without `purchase.view` does not see a purchase-lines custom report; a deactivated field's column is dropped with a notice.
-- **Done when:** a user builds "sales by salesperson and site reference" from the sales-lines dataset, saves it, and reopens it from the catalog.
-- **As built:** six `DatasetSource` sources (`dataset-sales-lines`, `-purchase-lines`, `-ledger-rows`, `-stock-movements`, `-items`, `-contacts`) under `ReportModule.Custom`; each active custom field of the kind is a `custom.{key}` text column read from the jsonb in SQL, never seeded. `rpt.CustomReports` (RLS) holds the layout as a `ReportQueryRequest`; `api/reports/custom` saves and reopens, and the catalog appends the caller's visible reports. A deactivated field's column is pruned on open and named in `droppedColumns`. The builder is the report host page on a dataset, with **Save as custom report**. Datasets have no date parameter; a date filter narrows them. Running a dataset against real schemas is not covered by the tests (the Reporting test database has only `rpt`).
-
-### TK-114 · Scheduled report email
-- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
-- **Issue:** [#102](https://github.com/jothi-prabaharan/Bill-Book/issues/102)
-- **Lanes:** L-RPT, L-NTF · **Depends on:** TK-113, TK-19 · **Decision:** —
-- **Tables:** `rpt.ReportSchedules`
-- **Sub-tasks:**
-  - [ ] Schedules (daily, weekly, monthly) with recipients among the branch's users; a hosted service claims due rows with a guarded update.
-  - [ ] Each run re-checks the owner's permission and sends the Excel export through Notification.
-  - [ ] Test: a due schedule runs once under concurrency; a schedule whose owner lost the permission sends nothing and records why.
-- **Done when:** a weekly schedule emails its report once per week.
-- **As built:** `rpt.ReportSchedules` (RLS) with frequency, day, hour in the branch's zone (default `Asia/Kolkata`), owner and recipient user ids, and the layout. `ReportScheduleWorker` in Reporting ticks every five minutes over the branches Master lists; `ReportScheduleRun` claims a due row by moving `NextRunAt` with an update guarded on the value read. It then reads the branch's users and their current permissions from Master's new `internal/users/branch`, and needs `reports.view`, `reports.export` and the report's own permission. It exports through the export route's runner, cap and writer, and posts each email with the xlsx to Master's `internal/notifications/email`. Master sends through Notification.Worker where it runs. `EmailMessage` and `EmailRequested` carry attachments now, and Master sends in process any attachment over 160 KB, since Service Bus Standard refuses a message over 256 KB. Skips and failures are recorded on the row, and failures in `rpt.ErrorLogs` too. **Schedule** button on every report.
-
-### TK-115 · Compliance: the purchase register, complete GSTR-3B and the GSTR-1 export
-- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
-- **Issue:** [#103](https://github.com/jothi-prabaharan/Bill-Book/issues/103)
-- **Lanes:** L-PUR, L-RPT, L-REPORTING-UI · **Depends on:** TK-37 · **Decision:** D-30, D-31
-- **Where:** design "Compliance bundle" → part 1; `sal.SalesRegister` and its writers; `GstController` (GSTR-2 501, GSTR-3B outward only).
-- **Tables:** `pur.PurchaseRegister`
-- **Sub-tasks:**
-  - [ ] `pur.PurchaseRegister` with RLS, written by the bill and debit note posters in the posting transaction, with ITC eligibility.
-  - [ ] GSTR-3B completed with eligible ITC, reverse charge and ineligible ITC.
-  - [ ] GSTR-1 offline-tool JSON export with pre-download validation.
-  - [ ] Test: a posted bill writes its register rows; 3B's ITC equals the register's eligible tax; the export's HSN summary equals its sections.
-  - Standard delivery sub-tasks (section 5).
-- **Done when:** GSTR-3B for a month with sales and purchases shows both output tax and eligible ITC.
-- **As built:**
-  - **Register.** `pur.PurchaseRegister` (with RLS) holds one row per bill or debit note line. The posters write it in the posting transaction, and a void removes it. Each row carries the supplier's number and date, reverse charge, `ItcEligibility`, line type and the tax per component.
-  - **Reverse charge (D-30).** `Bill.IsReverseCharge` makes the bill total net of tax. The tax is credited to the new system account *GST Payable (Reverse Charge)* (2210, which reseeding adds to existing branches).
-  - **Eligibility (D-31).** `BillDetail.ItcEligibility` (`Shared.Kernel.Documents.ItcEligibility`) puts non-claimable tax into the line's cost, the stock unit cost or the asset amount. Against a receipt it is debited to Inventory. Debit notes follow the bill line.
-  - **Returns.** `Gstr3b.Build` and `Gstr1Export.Build` are pure. `GET api/reports/gst/gstr3b` is complete, and `GET api/reports/gst/gstr1/export` answers 422 with the problems when validation fails.
-  - **Also fixed.** `sal.SalesRegister.GstRate` now holds the full rate, not CGST's half.
-  - **Left as they were.** GSTR-2 still answers 501; GSTR-2B reconciliation is the next part of the bundle. CDNUR is netted into B2CS.
-
-### TK-116 · Compliance: GSTR-2B reconciliation
-- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
-- **Issue:** [#104](https://github.com/jothi-prabaharan/Bill-Book/issues/104)
-- **Lanes:** L-PUR, L-PURCHASE-UI · **Depends on:** TK-115 · **Decision:** —
-- **Tables:** `pur.Gstr2bImports`, `pur.Gstr2bLines`
-- **Sub-tasks:**
-  - [ ] Import a GSTR-2B JSON; match by supplier GSTIN, invoice number and date with normalised numbers; compare values.
-  - [ ] The four result groups on a screen, with the ITC at risk totalled.
-  - [ ] Test: a recorded 2B sample against seeded bills gives the expected matched, mismatched and missing rows.
-- **Done when:** importing a month's 2B lists every supplier invoice missing from the books and every bill missing from 2B.
-- **As built:**
-  - **Tables.** `pur.Gstr2bImports` keeps the file as jsonb, its period, counts and credit at risk. `pur.Gstr2bLines` holds one row per invoice on either side, with its match state, both sides' figures, the bill and a note. Both have RLS.
-  - **Parsing and matching.** `Gstr2bFile.Parse` reads the portal's B2B section. `Gstr2bMatcher.Match` is pure: it matches by GSTIN and number, exact first, then normalised; flags a date or value off by more than ₹1 as a mismatch; and totals the credit at risk.
-  - **Endpoint and screen.** `api/purchase/gstr2b` handles list, get, multipart import and delete. The Purchase › GSTR-2B reconciliation page shows the four groups and the at-risk tile.
-  - **Also.** A file generated for another GSTIN is refused.
-  - **Not matched yet.** CDNR and B2BA.
-
-### TK-117 · Compliance: TDS on purchases and receipts
-- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
-- **Issue:** [#105](https://github.com/jothi-prabaharan/Bill-Book/issues/105)
-- **Lanes:** L-ACC, L-PUR, L-CON, L-ACC-UI · **Depends on:** TK-115 · **Decision:** D-32, D-33
-- **Tables:** `acc.TdsSections`; lower-deduction certificate columns on `con.Contacts`
-- **Sub-tasks:**
-  - [x] Effective-dated `acc.TdsSections`, seeded; the contact's `TdsSection` becomes a reference.
-  - [x] Deduction on bill and spend-money lines at the single or aggregate threshold; `Cr TDS Payable`; lower-deduction certificates.
-  - [x] TDS challan on spend money; the 26Q data export; TDS receivable on receipts and a 26AS/AIS import-and-match.
-  - [x] Test: the aggregate threshold deducts on the bill that crosses it and not before; a certificate's rate applies within its limit; the vendor is owed the net.
-- **Done when:** a bill that takes a vendor past the year's threshold posts TDS Payable and a net payable.
-- **As built:**
-  - **Accounting.**
-    - `acc.TdsSections` is effective-dated and seeded per branch by `TdsSectionSeed` through the seed endpoint (D-32).
-    - `acc.TdsEntries` is the register. It holds one row per document that counts toward a threshold or deducts, whether the branch deducted (`Deducted`) or a customer withheld (`Suffered`).
-    - `acc.Form26asImports` and `acc.Form26asLines` hold the 26AS imports. All four tables have RLS.
-    - New system accounts: TDS Payable 2220 and TDS Receivable 1310.
-    - `TdsCalculationRepository` is pure. It handles the single and aggregate thresholds (with catch-up, or excess-only for 194Q), picks the rate from the PAN's fourth character or the 206AA rate, applies a certificate within its limit and validity, stops an advance being taxed twice, and rounds to the rupee.
-    - `TdsRepository` handles quote, register write and remove, outstanding, and the challan mark and release. `internal/tds/quote` and `internal/tds/sections/exists` are the internal endpoints. `api/tds/*` covers sections, register, outstanding, a preview quote, `26q` plus `26q/check`, and `26as`.
-  - **Ledger.**
-    - `PostLedgerRequest.Tds` carries the register row, written in the ledger's transaction.
-    - A withdrawal removes the row, and is refused (`TdsDeposited`, 409) once the row is on a challan.
-  - **Purchase.**
-    - `BillRepository` asks for the quote before stock moves. The bill stores `TdsSectionCode`, `TdsBase`, `TdsAmount` and `TdsNote`.
-    - It credits TDS Payable as a TAX leg, so the bill's control legs, and therefore its open balance, come to the net.
-  - **Spend money.**
-    - Supplier-deposit lines (source 8) deduct. The lines stay gross and `Amount` is the bank figure.
-    - `IsTdsChallan` with `ChallanNo`, `BsrCode`, `ChallanSectionCode` and `ChallanMonth` has no lines. It debits TDS Payable, must equal the outstanding amount for its section and month, and marks those rows deposited.
-  - **Receive money.** `TdsAmount`, `DeductorTan` and `TdsSectionCode` are recorded, and TDS Receivable is debited.
-  - **Allocation triggers.** They now require the lines to equal `Amount + TdsAmount` and skip challans. The Down step restores the old functions.
-  - **Master.**
-    - The contact carries a lower-deduction certificate: five columns, all or none.
-    - `internal/contacts/tds-profile`.
-    - The contact's section is checked against Accounting on save.
-    - A TDS menu entry.
-  - **Files.**
-    - The 26Q export is a zip of challans.csv and deductees.csv.
-    - The 26AS import reads the TRACES text file's Part I (D-33) and matches by TAN and amount within a rupee.
-    - The branch's PAN is read from its GSTIN.
-  - **Not built.**
-    - 27Q and section 195: a foreign-currency document is not taxed.
-    - A debit note does not reverse TDS.
-    - Interest and late fees on a challan.
-    - The section code in the 26Q export is not mapped to the utility's own codes.
-    - Rent's monthly threshold is modelled as a per-document threshold.
-
-### TK-118 · Compliance: the audit trail (edit log)
-- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-30
-- **Issue:** [#106](https://github.com/jothi-prabaharan/Bill-Book/issues/106)
-- **Lanes:** L-KERNEL, every service lane for its migration · **Depends on:** TK-37 · **Decision:** D-34, D-35
-- **Tables:** `{schema}.EditLog` in every tenant schema
-- **Sub-tasks:**
-  - [x] `EditLogInterceptor` in `Shared.Kernel`, writing changed columns old and new in the same `SaveChanges`.
-  - [x] Per schema: the table, RLS, and a trigger refusing `UPDATE`/`DELETE` on it.
-  - [x] List every `ExecuteUpdate`/`ExecuteDelete` on an audited table and make each write its log rows.
-  - [x] A History tab component and an audit-log report.
-  - [x] Test: an edited invoice logs old and new values; an `UPDATE` on the log is refused by the database; a rolled-back save leaves no log row.
-- **Done when:** changing an invoice's price leaves a log row with the old and new price that nobody can alter.
-- **As built:**
-  - **In `TenantDbContext`'s `SaveChanges` override, not an interceptor.** An insert's key exists only after the save, and the log must commit with the change, so the override captures updates and deletes before `base.SaveChanges`, saves, materialises inserts with their generated keys, and writes the log rows with a second save — all inside one `BeginScopeAsync` scope that joins the request's transaction or opens its own. Being in the base class also meant no change to 22 `Program.cs` files. `Shared.Kernel/Audit`: `EditLog` (+ `EditOperation`, `[NotAudited]`), `EditLogWriter` (capture, materialise, root resolution), `EditLogBulk`, `EditLogReader`, `EditLogControllerBase`, `EditLogMigration`.
-  - **What a row holds:** table and key, the root document and key (the climb follows a required FK whose principal holds the rows as a collection, up to three tracked levels, so a bill line's tax lands on the bill), `Insert`/`Update`/`Delete`, `Changes` jsonb `{Column:{old,new}}`, user id, the `display_name` claim as the user name (no shared user-name lookup exists; the name is the one at the time), time, trace id and source (`Tracked`, `ExecuteUpdate`, `ExecuteDelete`). Version, created/modified columns, `CustomerId`, `OrgId` and `[NotAudited]` columns are left out; an update that changes nothing else writes no row.
-  - **All 22 tenant schemas** (D-34): one `EditLog` migration each, which calls `EditLogMigration.Up` for the FORCEd RLS policy and `editlog_append_only()` behind a row trigger on `UPDATE OR DELETE` and a statement trigger on `TRUNCATE` (SQLSTATE 42501). A trigger rather than a grant, so it binds a superuser too. **Any future squash must carry these calls forward by hand.**
-  - **Bulk statements:** 49 `ExecuteUpdate`/`ExecuteDelete` sites on audited tables use `ExecuteUpdateLoggedAsync` / `ExecuteDeleteLoggedAsync` (read, run, read back by key, save the log). Left as plain statements, each deliberately: the `StockMovements` costing and ledger-queue claims, `ItemStock`/`CostLayers`/`ItemSerials` running values, `RecostingAdjustments` completion, the `NumberingSeries` counter, `ReportScheduleRuns` claims, the e-invoice retry lease, `BlankPhoneBackfill`, and the non-tenant `mst`/`ntf` tables. `[NotAudited]` on `Form26asImport.RawText`, `Gstr2bImport.RawJson`, `Form26asLine`, `Gstr2bLine`, `CampaignRecipient` and `CampaignLink`.
-  - **Read side:** `GET api/edit-log/{cluster}/history/{entity}/{key}`, `GET api/edit-log/{cluster}` (from, to, userId, entity, paging), `…/entities` and `…/users`, in every service under that module's own view permission and app; 22 gateway routes (and the missing `/api/tds` route from TK-117).
-  - **Frontend:** `bb-edit-history` and `bb-edit-log-report` in ui-components. History on invoices, bills and manual journals (folded section) and on items and contacts (a tab) — D-35. **Settings › Audit log** is a new shared lib, `@bill-book/settings-audit-log`, mounted by every app through `sharedSettingsRoutes`, with each app's areas chosen by `APP_ID`; menu 1139 under Users and access, shared by every app (`AuditLogMenu`, permission 478).
-  - **Known limit:** lines removed by a database cascade when their header is deleted are not logged one by one; the header's delete is.
-  - Tests: `Shared.Kernel.Tests/EditLogWriterTests.cs` (added the Npgsql EF provider to that project to build a model), `Sales.Api.Tests/EditLogTests.cs`, `edit-history.model.spec.ts`, `audit-areas.spec.ts`. The RLS audit in every suite now covers `EditLog`.
-
-### TK-119 · Compliance: MSME payments and the compliance calendar
-- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
-- **Lanes:** L-PUR, L-RPT, L-MST, L-NTF · **Depends on:** TK-115 · **Decision:** —
-- **Tables:** `mst.ComplianceDueDates`; per-branch applicability
-- **Sub-tasks:**
-  - [x] An MSME vendor's bill refuses a due date past 45 days; the MSME ageing report and year-end disallowance figure; the half-yearly export.
-  - [x] Seeded, operator-editable due-date rules; per-branch applicability; reminders through Notification; the next three filings on Home.
-  - [x] Test: a 60-day term on an MSME bill is refused; the calendar computes the right date for a rule across a month end.
-- **Done when:** the Home page shows the next GSTR-1 due date, and an MSME bill past 45 days appears on the ageing report.
-
-### TK-120 · Campaigns: templates, audiences, consent and unsubscribe
-- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
-- **Lanes:** L-CUS, L-CUS-UI, L-RPT · **Depends on:** TK-38 · **Decision:** —
-- **Where:** `docs/Modules.md`, "Customer service (`cus`)" → "Campaigns and marketing automation".
-- **Tables:** `cus.EmailTemplates`, `cus.Audiences`, `cus.EmailConsents`
-- **Sub-tasks:**
-  - [x] The three tables with RLS; template bodies sanitised on save.
-  - [x] Audience rules over leads, contacts (through Master) and purchase history (Reporting's new `POST internal/contacts/segment`); a live count.
-  - [x] `GET/POST /api/public/unsubscribe/{token}` (anonymous, signed token, exempted in the guard test with its reason); staff can mark an address unsubscribed.
-  - [x] Test: an unsubscribed address never resolves into an audience; a tampered token is refused; a segment by last invoice date returns the right contacts.
-  - [x] Standard delivery sub-tasks (section 5).
-- **Notes:** Tests written in `backend/tests/Customer.Api.Tests/CampaignTests.cs` and `backend/tests/Reporting.Api.Tests/ContactSegmentTests.cs`.
-- **Done when:** an address that clicked unsubscribe is excluded from every audience that would otherwise include it.
-
-### TK-121 · Campaigns: scheduled sending and tracking
-- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
-- **Lanes:** L-CUS, L-CUS-UI, L-NTF, L-KERNEL · **Depends on:** TK-120, TK-19 · **Decision:** D-27
-- **Tables:** `cus.Campaigns`, `cus.CampaignRecipients`, `cus.CampaignLinks`
-- **Sub-tasks:**
-  - [x] Schedule, claim (`Scheduled → Sending`), resolve and freeze recipients, suppress, send in batches through the sending path D-27 names, message id `cmp-{campaignId}-{recipientId}`.
-  - [x] `EmailDelivered`/`EmailFailed` from Notification; hard bounces mark consent `Bounced`.
-  - [x] Click redirects and an open pixel; `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
-  - [x] `crm.approve` above the branch's audience-size limit.
-  - [x] Test: a campaign sent twice (a crashed worker) sends each recipient once; an address appearing as lead and contact gets one copy; a click is recorded and redirected.
-- **Notes:**
-  - `cus.Campaigns`, `cus.CampaignRecipients`, `cus.CampaignLinks` created with PostgreSQL RLS in migration `20260929182920_AddCampaignsAndTracking`.
-  - `CampaignSendingWorker` hosted service claims due scheduled campaigns (`Scheduled -> Sending` guarded update) and dispatches batches.
-  - Frozen recipients deduplicated across leads and contacts with unique index on `(OrgId, CampaignId, Email)`. Suppressed emails (Unsubscribed/Bounced) never sent.
-  - Idempotent sending uses message id `cmp-{campaignId}-{recipientId}`.
-  - RFC 2822 `List-Unsubscribe` and `List-Unsubscribe-Post` headers added to `IEmailSender` and `SmtpMailer`.
-  - Click redirects (`/api/public/c/{token}`) and transparent 1x1 tracking pixel (`/api/public/track/open/{token}.png`) using HMAC-SHA256 signed tokens (`ICampaignTrackingTokenSigner`).
-  - Delivery feedback webhook `/internal/campaigns/delivery-feedback` handles `EmailDelivered` and `EmailFailed` (permanent failures update consent to `Bounced`).
-  - `crm.approve` required when audience size exceeds approval threshold (`Campaigns:ApprovalThreshold`).
-  - Unit tests written in `backend/tests/Customer.Api.Tests/CampaignSendingAndTrackingTests.cs`.
-- **Done when:** a scheduled campaign reaches every subscribed recipient exactly once and none of the unsubscribed.
-
-### TK-122 · Campaigns: marketing automation sequences
-- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
-- **Lanes:** L-CUS, L-CUS-UI · **Depends on:** TK-121 · **Decision:** —
-- **Tables:** `cus.Automations`, `cus.AutomationSteps`, `cus.AutomationEnrolments`
-- **Sub-tasks:**
-  - [x] Triggers (lead created by source, lead status changed, contact became a customer); wait and send steps; exits (unsubscribed, converted, lost).
-  - [x] The hosted service advances due enrolments with a guarded claim; message id `aut-{enrolmentId}-{step}`.
-  - [x] Test: a lead converted during a wait exits before the next send; a restarted worker does not send a step twice.
-- **Done when:** a new lead from the website source receives the welcome email and, three days later, the follow-up, unless converted first.
-
-### TK-123 · Campaigns: reports
-- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
-- **Lanes:** L-CUS, L-RPT · **Depends on:** TK-121 · **Decision:** —
-- **Sub-tasks:**
-  - [x] Per campaign and across campaigns: recipients, suppressed, sent, failed, opened (marked approximate), clicked, unsubscribed, conversions within 30 days and their first invoice total.
-  - [x] Test: conversions count only leads converted within the window after the send.
-- **Done when:** a sent campaign shows its clicks and conversions.
-
-### F · Phase 3: POS
-
 ### TK-39 · POS till API (T7.1)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#50](https://github.com/jothi-prabaharan/Bill-Book/issues/50)
+- **Group:** F · Phase 3: POS
 - **Lanes:** L-SAL, L-ACC (added 2026-09-24: the tender leg is resolved in Accounting) · **Depends on:** TK-78, TK-14, TK-10 · **Decision:** —
 - **Where:** `InvoiceService.cs` (create and post) and `InventoryClient.IssueAsync`.
 - **State:** a POS sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'`, and the invoice
@@ -2514,6 +1710,7 @@ The build cards each design in section E produced. Each design section in `docs/
 ### TK-40 · POS till screen (T7.2)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#51](https://github.com/jothi-prabaharan/Bill-Book/issues/51)
+- **Group:** F · Phase 3: POS
 - **Lanes:** L-DSK, L-SAL (added 2026-09-24: the JSON enum fix) · **Depends on:** TK-79, TK-39, TK-17 · **Decision:** —
 - **Sub-tasks:**
   - [x] Keyboard-driven: F-keys for tender, quantity, void line and hold.
@@ -2541,134 +1738,10 @@ The build cards each design in section E produced. Each design section in `docs/
   - Checks: desktop lint and build, typecheck and backend build are clean. Specs: `pos-keys.spec.ts`, `pos-tender.spec.ts`, `pos-sale.service.spec.ts`.
   - **Not verified end to end:** a barcode-scanned sale posting from `apps/desktop` needs a running stack, a scanner or its emulation, and the owner's run.
 
-### TK-124 · Every service reads enums by name (JSON binding)
-- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
-- **Lanes:** L-PUR, L-ACC, L-INV, L-MST, L-CON, L-CUS, L-RPT, L-PRT · **Depends on:** — · **Decision:** —
-- **Where:** each `{Service}.Api/Program.cs` `AddControllers()`; Sales' fix in `Sales.Api/Program.cs` (TK-40).
-- **State (2026-09-24):** only Sales registers `JsonStringEnumConverter`. The screens send enum fields as names (the shared line grid sends `lineType: "Stock"` and `taxTreatment: "Taxable"` to Purchase exactly as to Sales), and the default options refuse a name for an enum, so those saves fail model binding with a 400.
-- **Sub-tasks:**
-  - [x] Register `JsonStringEnumConverter` in every service's `AddControllers().AddJsonOptions(...)`, or once in a `Shared.Kernel` extension every service calls.
-  - [x] Check each service's responses for enum-typed properties that a screen reads as a number, and fix the screen if one does (none were found in Sales).
-  - [x] Test: per service, a request body with an enum by name binds (a `WebApplicationFactory` test, or a test of the shared extension's options).
-- **Done when:** a purchase bill saved from its screen is accepted.
-
-### TK-125 · Name the Student, MaintenanceContract and Employee services after what they own
-- [x] completed (Claude Opus 5.5) — 2026-09-25 · a rename, the existing tests were renamed with it, not run
-- **Issue:** [#78](https://github.com/jothi-prabaharan/Bill-Book/issues/78)
-- **Lanes:** L-SIS, L-AMC, L-HRM, L-MST, L-KERNEL, the school and HR libs · **Depends on:** — · **Decision:** —
-- **Why:** the owner's request of 25 September 2026: a service is named for what it is, not for its schema. `Student` becomes `Student`, `MaintenanceContract` becomes `MaintenanceContract`, `Employee` becomes `Employee`.
-- **Sub-tasks:**
-  - [x] Folders, projects, namespaces, DbContexts, seeders, clients, configuration keys, test projects and their `*_TEST_DB` variables, the solution, and the docs.
-  - [x] Frontend libs `libs/student`, `libs/maintenance-contract`, `libs/employee`, with their aliases and Nx project names.
-  - [x] Kept as they are, because they are stored data or public contracts: the Postgres schemas, migration ids, URL routes, permission and menu codes, and the AMC domain entities.
-- **Done when:** nothing in code or config names a service by its schema, and the backend and all app builds are clean.
-- **As built:**
-  - The entity classes `Student` and `Employee` became `StudentRecord` and `EmployeeRecord`. A class named like its root namespace (`Student.Entity.TableEntities.Student`) can't be named from inside that namespace, the same reason WorkOrder's header is `WorkOrderDocument`. Their DbSets and tables are unchanged.
-  - Renamed along with them: `IStudentClient`, `IEmployeeClient`, `IEmployeeApproverClient`, `StudentRefusedException`, the `Student:BaseUrl`, `Employee:BaseUrl` and `MaintenanceContract:BaseUrl` settings, Master's `Seeding:Student`, `Seeding:Employee` and `Seeding:MaintenanceContract`, and `STUDENT_TEST_DB`, `EMPLOYEE_TEST_DB` and `MAINTENANCE_CONTRACT_TEST_DB`. In the frontend, `StudentApiService`, `EmployeeApiService` and `MaintenanceContractApiService`, `studentRoutes`, `employeeRoutes` and `maintenanceContractRoutes`, and the `bb-student-*`, `bb-employee-*` and `bb-maintenance-contract-*` selectors.
-  - **Deliberately kept:** the schemas `sis`, `hrm` and `amc`; the migration ids (`InitialSisSchema`, `SisMenus`, `AmcMenu`, `EmployeeAndHrmModules`), so a migrated database doesn't reapply them; the URL routes `api/sis`, `api/hrm` and `api/amc`, and the gateway clusters; the `sis.*`, `hrm.*` and `amc.*` permission and menu codes, which are seeded data; `WorkOrderSource.Amc`; and the AMC domain names (`AmcContract`, `AmcVisit`, `AmcRules`, the renewal reminder).
-  - **Environment settings to rename by hand**, where a machine sets them: `Sis__BaseUrl`, `Hrm__BaseUrl`, `Amc__BaseUrl`, `Seeding__Sis`, `Seeding__Hrm` and `Seeding__Amc`. None is in `deploy/`.
-  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` reports no changes for Student, Employee, MaintenanceContract, WorkOrder and both Master contexts. Frontend typecheck and lint pass, and the school, hrms, payroll, portal and web builds are clean.
-
-### TK-126 · `BusinessType` and `AddOn` replace `App` and `Vertical`
-- [ ] open
-- **Issue:** [#108](https://github.com/jothi-prabaharan/Bill-Book/issues/108)
-- **Lanes:** L-KERNEL, L-MST · **Depends on:** — · **Decision:** D-36
-- **Where:** `backend/shared/Shared.Kernel/Apps/App.cs`, `backend/Api/Master/Master.Entity/Enums/Vertical.cs`
-- **Sub-tasks:**
-  - [ ] `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) and `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling).
-  - [ ] `AddOnRules.Allowed(BusinessType?)`: Hrms and Payroll for every type and for none; Crm, FixedAssets, ClientPortal, Budget and RecurringBilling for all four types; Pos and EInvoicing for General, Pharma and Jewellery.
-  - [ ] Remove `App` and `AppRules`.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** nothing in code names `App`, and the solution builds with `-warnaserror`.
-
-### TK-127 · Master: branch business type, add-ons, one licence and the token claims
-- [ ] open
-- **Issue:** [#109](https://github.com/jothi-prabaharan/Bill-Book/issues/109)
-- **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-126 · **Decision:** D-36
-- **Where:** `Organization`, `License`, `Role`, `RefreshToken`, `Menu`, `Permission`, `JwtTokenRepository`, `MenuRepository`, `TradeScopeRepository`, `TenantSeeder`
-- **Sub-tasks:**
-  - [ ] Migration: drop `License.App`, `Role.App`, `RefreshToken.App`; add `Organization.BusinessType` and `Organization.AddOns`; gating columns on menus and permissions. `dotnet ef migrations has-pending-model-changes` clean.
-  - [ ] A branch needs a business type, an add-on, or both; an add-on the type does not allow is refused.
-  - [ ] Login, select-branch, signup, `api/me/context`: no `App` parameter. The token carries `business_type` and `add_ons` instead of `app`.
-  - [ ] Menus and seeds follow the branch: no business type means no retail or school seeds, only the enabled add-ons.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** a branch with only Hrms gets only HRMS menus and seeds.
-
-### TK-128 · `[RequireBusinessType]` and `[RequireAddOn]` on every controller
-- [ ] open
-- **Issue:** [#110](https://github.com/jothi-prabaharan/Bill-Book/issues/110)
-- **Lanes:** L-KERNEL, every service lane · **Depends on:** TK-127 · **Decision:** D-36
-- **Where:** `Shared.Kernel/Internal/RequireAppAttribute.cs`, `EndpointGuardAudit.cs`
-- **Sub-tasks:**
-  - [ ] Replace `[RequireApp]` in all services; tag the Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget and RecurringBilling controllers.
-  - [ ] Gate the budget check on bills (`BillBudgetCheckRepository`) and the budget cards TK-108 and TK-109 by the Budget add-on.
-  - [ ] `EndpointGuardAudit` fails a controller with neither guard.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** the audit passes in every service and an endpoint of a disabled add-on answers 403.
-
-### TK-129 · Support channel by plan: text on Basic, calls on Pro
-- [ ] open
-- **Issue:** [#111](https://github.com/jothi-prabaharan/Bill-Book/issues/111)
-- **Lanes:** L-CUS, L-MST · **Depends on:** TK-127 · **Decision:** D-36
-- **Sub-tasks:**
-  - [ ] Support tickets stay in every branch. The channel follows `PlanType`: Basic is text only; call support needs Pro.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** a Basic customer cannot choose the call channel.
-
-### TK-130 · `apps/web` serves HRMS, Payroll and School
-- [ ] open
-- **Issue:** [#112](https://github.com/jothi-prabaharan/Bill-Book/issues/112)
-- **Lanes:** L-WEB, L-UI · **Depends on:** TK-127 · **Decision:** D-36
-- **Where:** `frontend/apps/{hrms,payroll,school}/src/app/app.routes.ts`, `apps/web/src/app/app.routes.ts`, `libs/app-shell`, `libs/shared/auth/src/lib/app-id.ts`
-- **Sub-tasks:**
-  - [ ] Mount those route tables in `apps/web` gated by business type and add-on.
-  - [ ] Remove `APP_ID`, `APP_URLS` and the app switcher.
-  - [ ] Make `shell-screens.ts` and the topbar "New" menu follow the menu API.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** a branch with only Hrms sees only HRMS pages.
-
-### TK-131 · Merge `apps/admin` into `apps/web`: an Admin portal button
-- [ ] open
-- **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
-- **Lanes:** L-WEB, L-ADM · **Depends on:** TK-130 · **Decision:** D-36
-- **Sub-tasks:**
-  - [ ] Mount the admin routes under `/admin/*`, each requiring `platform.*`.
-  - [ ] The dashboard shows an Admin portal button only to a platform operator (`platform.view`); it opens admin mode with a Back to dashboard button.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** only an operator sees the button and the pages, and the backend still refuses anyone else.
-
-### TK-132 · Merge `apps/portal` into `apps/web`
-- [ ] open
-- **Issue:** [#114](https://github.com/jothi-prabaharan/Bill-Book/issues/114)
-- **Lanes:** L-WEB, L-PTL · **Depends on:** TK-130 · **Decision:** D-36
-- **Sub-tasks:**
-  - [ ] Mount the portal pages under `/portal/*` for portal contacts (`[RequirePortalAccess]`), needing the ClientPortal add-on.
-  - [ ] A portal contact sees no staff menus.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** a portal contact signs in to web and sees only their statement pages.
-
-### TK-133 · Settings: a branch's business type and add-ons
-- [ ] open
-- **Issue:** [#115](https://github.com/jothi-prabaharan/Bill-Book/issues/115)
-- **Lanes:** L-MST, L-UI, the settings lib · **Depends on:** TK-127, TK-130 · **Decision:** D-36
-- **Sub-tasks:**
-  - [ ] A screen to choose the business type and switch on the add-ons its type allows; disabling never deletes data.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** a School branch is offered Hrms but not Pos.
-
-### TK-134 · Retire the five extra apps: docs, release notes and deploy
-- [ ] open
-- **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
-- **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
-- **Sub-tasks:**
-  - [ ] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
-  - [ ] Update `CLAUDE.md`, `docs/Modules.md`, the docs app pages and manifest, `release-notes.md` and `deploy/*`.
-  - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
-
 ### TK-41 · POS receipt, ESC/POS (T7.3)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#52](https://github.com/jothi-prabaharan/Bill-Book/issues/52)
+- **Group:** F · Phase 3: POS
 - **Lanes:** L-DSK (+ L-SAL for the tenders on the invoice view) · **Depends on:** TK-40 · **Decision:** —
 - **Where:** `frontend/apps/desktop/src/app/pos-terminal/{receipt-layout.ts,esc-pos.service.ts,receipt-printer.service.ts}`, `frontend/apps/desktop/{main.js,preload.js,printer.js}`.
 - **Sub-tasks:**
@@ -2688,14 +1761,10 @@ The build cards each design in section E produced. Each design section in `docs/
   - Text is printable ASCII only (`₹` prints as `Rs`), so Tamil names print as `?`. Printing them needs raster rendering, which is not built.
   - Not verified on hardware or an emulator. Nothing here was run.
 
-### G · Platform for several apps (stage H0)
-
-The design is in `docs/Modules.md`, section "One customer, many applications" (from line 1068).
-None of it is built.
-
 ### TK-42 · H0.1: `App` in `mst`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#53](https://github.com/jothi-prabaharan/Bill-Book/issues/53)
+- **Group:** G · Platform for several apps (stage H0)
 - **Lanes:** L-MST (+ L-KERNEL for the enum) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/shared/Shared.Kernel/Apps/App.cs` (`App`, `AppRules`)
@@ -2726,6 +1795,7 @@ None of it is built.
 ### TK-43 · H0.2: per-app sign-in and licences
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#54](https://github.com/jothi-prabaharan/Bill-Book/issues/54)
+- **Group:** G · Platform for several apps (stage H0)
 - **Lanes:** L-MST, L-KERNEL (+ one attribute line on every service's controllers) · **Depends on:** TK-42 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Entity/Models/{AuthModels,LicenseModels,SessionContextModels}.cs`
@@ -2753,6 +1823,7 @@ None of it is built.
 ### TK-44 · H0.3: shell, page validation and shared master pages
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#55](https://github.com/jothi-prabaharan/Bill-Book/issues/55)
+- **Group:** G · Platform for several apps (stage H0)
 - **Lanes:** L-UI, L-MASTER-UI, L-WEB (+ L-MST for the menu filter and `api/applications`, L-ACC for the numbering-series guard) · **Depends on:** TK-43, TK-28 · **Decision:** —
 - **Where:**
   - `frontend/libs/shared/auth/src/lib/{app-id,session-context.service,page-access,if-can.directive,license.guard,auth.service}.ts`
@@ -2787,6 +1858,7 @@ None of it is built.
 ### TK-45 · H0.4: signup and seeding per app
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#56](https://github.com/jothi-prabaharan/Bill-Book/issues/56)
+- **Group:** G · Platform for several apps (stage H0)
 - **Lanes:** L-MST (+ L-UI for `AuthService.signup`) · **Depends on:** TK-43, TK-01 · **Decision:** D-12
 - **Where:** `Master.Api/Services/{SignupService,TenantSeeder,ApplicationService,InProcessSeams,ProvisioningQueue,ProvisioningWorker,IIdentityAdmin}.cs`, `Controllers/ApplicationsController.cs`, `AdminDbContext.cs` (`AppOwnerRoles`, `OwnerRoleOf`), migration `AppOwnerRoles`.
 - **Sub-tasks:**
@@ -2808,6 +1880,7 @@ None of it is built.
 ### TK-46 · H0.5: sharding in the multi-app model
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#57](https://github.com/jothi-prabaharan/Bill-Book/issues/57)
+- **Group:** G · Platform for several apps (stage H0)
 - **Lanes:** L-MST (+ L-DEPS for the Azure README) · **Depends on:** TK-42, TK-27 · **Decision:** —
 - **Where:**
   - `Master.Api/Services/{TenantDatabaseAllocator,TenantShardProvisioner,DatabaseMigrationService,SignupService}.cs`, `Program.cs`, `appsettings.json` (`Sharding`)
@@ -2830,6 +1903,7 @@ None of it is built.
 ### TK-47 · H0.6: `apps/hrms` and `apps/payroll` scaffolds
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#58](https://github.com/jothi-prabaharan/Bill-Book/issues/58)
+- **Group:** G · Platform for several apps (stage H0)
 - **Lanes:** L-DEPS, plus new lanes `L-HRMS-APP` and `L-PAY-APP` (+ L-WEB for the shared route list, L-UI for `appUrls`) · **Depends on:** TK-44 · **Decision:** —
 - **Where:** `frontend/apps/{hrms,payroll}`, `frontend/libs/settings/shared-routes`, `frontend/libs/shared/api-client/src/lib/runtime-config.ts` (`appUrls`).
 - **Sub-tasks:**
@@ -2851,29 +1925,10 @@ None of it is built.
     - Neither app has an icon or a manifest.
   - Not run in a browser.
 
-### H · HRMS and Payroll (H1–H12)
-
-Design: `docs/Modules.md` "HRMS & Payroll" (from line 1417). The sections to read are Columns
-(1497), Approvals (2117), Endpoints (2234), Frontend (2277) and Tenancy (2305).
-
-**Every card also carries the standard delivery sub-tasks in section 5.** A new service also
-needs these scaffold steps:
-- `backend/Api/{Service}/{Service}.{Entity,Repository,Api}`, copying `backend/Api/Printing` (the
-  newest scaffold);
-- `backend/tests/{Service}.Api.Tests`;
-- a port from the service map;
-- the `.sln` entry;
-- a Gateway route;
-- a `MigrateContextAsync<…>` line in Master's `DatabaseMigrationService`;
-- a `TenantSeeder.Services` entry;
-- the `libs/{name}/{name}-core` and `-ui` libs.
-
-**Payroll without HRMS** needs TK-48, TK-51, TK-52, TK-53, the settlement half of TK-54, and TK-55. **The first
-sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
-
 ### TK-48 · H1: Core HR, the shared employee master (`Employee`, `hrm`, port 4509)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#59](https://github.com/jothi-prabaharan/Bill-Book/issues/59)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-HRM (new) (+ L-MST for the catalogue, menus, migration and seeder; L-DEPS for the Gateway) · **Depends on:** TK-47 · **Decision:** —
 - **Tables:**
   - Organisation: `Department`, `Designation`, `Grade`, `CostCentre`, `WorkLocation`.
@@ -2908,6 +1963,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-49 · H2: Leave, and the approval engine (`TimeLeave`, `tla`, port 4510)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#60](https://github.com/jothi-prabaharan/Bill-Book/issues/60)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-TLA (new), L-HRM · **Depends on:** TK-48, TK-99 · **Decision:** D-26 (answered: Master, `apr`)
 - **Tables:**
   - Leave: `LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApplication`, `LeaveEncashment`.
@@ -2940,6 +1996,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-50 · H3: Time and attendance (`tla`)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#61](https://github.com/jothi-prabaharan/Bill-Book/issues/61)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-TLA · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `HolidayList`, `Holiday`, `Shift`, `WeeklyOffPolicy`, `ShiftRoster`, `Punch`, `BiometricDeviceUser`,
   `DailyAttendance`, `RegularisationRequest`, `OvertimeRequest`, `CompOffCredit`.
@@ -2962,6 +2019,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-51 · H4: Payroll core (`Payroll`, `pay`, port 4511)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#62](https://github.com/jothi-prabaharan/Bill-Book/issues/62)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-PAY (new) · **Depends on:** TK-48 · **Decision:** —
 - **Tables:**
   - Setup: `PayGroup`, `SalaryComponent`, `SalaryStructure`, `EmployeeSalary`, `SalaryRevision`,
@@ -2997,6 +2055,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-52 · H5: Statutory (`pay`)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#63](https://github.com/jothi-prabaharan/Bill-Book/issues/63)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `PfSetting`, `EsiSetting`, `ProfessionalTaxSlab`, `LwfSetting`, `GratuitySetting`,
   `BonusSetting`, `StatutoryReturn`. All are effective-dated.
@@ -3018,6 +2077,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-53 · H6: Income tax on salary (`pay`)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#64](https://github.com/jothi-prabaharan/Bill-Book/issues/64)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `TaxSlab`, `TaxRule`, `TaxDeclaration`, `TaxDeclarationLine`, `RentDetail`,
   `PreviousEmployerIncome`.
@@ -3041,6 +2101,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-54 · H7: Lifecycle and exit
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#65](https://github.com/jothi-prabaharan/Bill-Book/issues/65)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-HRM, L-PAY · **Depends on:** TK-48, TK-51 · **Decision:** —
 - **Tables:** `ChecklistTemplate`, `EmployeeChecklist`, `Separation`, `Letters` (in `hrm`), and
   `FullAndFinalSettlement` (in `pay`).
@@ -3066,6 +2127,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-55 · H8: Self-service and approvals
 - [x] done (Antigravity) — 2026-09-25
 - **Issue:** [#66](https://github.com/jothi-prabaharan/Bill-Book/issues/66)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-HRMS-APP, L-PAY-APP · **Depends on:** TK-49, TK-51 · **Decision:** —
 - **Sub-tasks:**
   - [x] `/api/me/...` routes: profile, leave, attendance, punches, claims, documents and
@@ -3081,6 +2143,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-56 · H9: Expense claims (`Claims`, `clm`, port 4514)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#67](https://github.com/jothi-prabaharan/Bill-Book/issues/67)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-CLM (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `ClaimCategory`, `ClaimLimit`, `ExpenseClaim`, `ExpenseClaimLine`.
 - **Sub-tasks:**
@@ -3095,6 +2158,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 ### TK-57 · H10: Recruitment and onboarding (`Recruitment`, `rec`, port 4512)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Issue:** [#68](https://github.com/jothi-prabaharan/Bill-Book/issues/68)
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-REC (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `JobRequisition`, `JobOpening`, `Candidate`, `Application`, `InterviewRound`, `Offer`.
 - **Sub-tasks:**
@@ -3107,6 +2171,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-58 · H11: Performance (`Performance`, `prf`, port 4513)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-PRF (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `ReviewCycle`, `Eligibility`, `RatingScale`, `Competency`, `Goal`,
   `PerformanceReview`, `SelfEvaluation`, `GoalSelfAssessment`, `CompetencySelfAssessment`,
@@ -3131,6 +2196,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-59 · H12: HRMS and Payroll reports
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Group:** H · HRMS and Payroll (H1–H12)
 - **Lanes:** L-RPT · **Depends on:** TK-51 · **Decision:** —
 - **Where:** `docs/Modules.md` HRMS § Reports (line 2217) lists the groups: People, Time, Leave,
   Pay, Statutory, Recruitment and Claims.
@@ -3147,15 +2213,10 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - Updated `ReportLayerCertificationTests` total count to 90 (53 existing + 37 new HRMS/Payroll reports).
   - Extended frontend contracts in `@bill-book/reporting-core` with new report modules and optional `App` flag.
 
-### I · School (S0–S9)
-
-Design: `docs/Modules.md` "School" (from line 2403). The sections to read are Service map (2454),
-Columns (2472), Endpoints (2793) and Stages (2884). Every card also carries section 5's standard
-delivery sub-tasks, and a new service needs the scaffold steps listed under H.
-
 ### TK-60 · S0: School prerequisites
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#2](https://github.com/jothi-prabaharan/Bill-Book/issues/2)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-CON, L-MST, L-DEPS, `L-SCH-APP` (new) · **Depends on:** TK-47, TK-48 · **Decision:** —
 - **Sub-tasks:**
   - [x] Add `IsGuardian` to `con.Contact`, with a migration and a role filter on `/api/contacts`.
@@ -3182,6 +2243,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-61 · S1: Student (`sis`, port 4515)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#3](https://github.com/jothi-prabaharan/Bill-Book/issues/3)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-SIS (new) · **Depends on:** TK-60 · **Decision:** —
 - **Tables:** `AcademicYear`, `SchoolClass`, `Section`, `Subject`, `Student`, `StudentGuardian`,
   `Enrolment`, `Exam`.
@@ -3208,6 +2270,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-62 · S2: Admission (`adm`, port 4516)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#4](https://github.com/jothi-prabaharan/Bill-Book/issues/4)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-ADMN (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `Enquiry`, `Application`, `ApplicationDocument`.
 - **Sub-tasks:**
@@ -3228,6 +2291,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-63 · S3: Student attendance (`att`, port 4517)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#5](https://github.com/jothi-prabaharan/Bill-Book/issues/5)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-ATT (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `StudentAttendance`, `AttendanceLock`.
 - **Sub-tasks:**
@@ -3244,6 +2308,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-64 · S4: Fee (`fee`, port 4518)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#6](https://github.com/jothi-prabaharan/Bill-Book/issues/6)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-FEE (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `FeeHead`, `FeeStructure`, `FeeConcession`, `FeeDemand`, `FeeReceipt`.
 - **Sub-tasks:**
@@ -3269,6 +2334,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-65 · S5: Facility (`fac`, port 4519)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#7](https://github.com/jothi-prabaharan/Bill-Book/issues/7)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-FAC (new) · **Depends on:** TK-60 · **Decision:** —
 - **Tables:** `Building`, `Space`, `FacilityAsset`.
 - **Sub-tasks:**
@@ -3280,6 +2346,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-66 · S6: WorkOrder (`wrk`, port 4520)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#8](https://github.com/jothi-prabaharan/Bill-Book/issues/8)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-WRKO (new) · **Depends on:** TK-65 · **Decision:** —
 - **Tables:** `WorkOrder`, `WorkOrderTask`, `WorkOrderPart`.
 - **Sub-tasks:**
@@ -3302,6 +2369,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-67 · S7: Preventive (`ppm`, port 4521)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#9](https://github.com/jothi-prabaharan/Bill-Book/issues/9)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-PPM (new) · **Depends on:** TK-66 · **Decision:** —
 - **Tables:** `PreventivePlan`, `PreventiveOccurrence`.
 - **Sub-tasks:**
@@ -3322,6 +2390,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-68 · S8: AMC (`amc`, port 4522)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#10](https://github.com/jothi-prabaharan/Bill-Book/issues/10)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-AMC (new) · **Depends on:** TK-65 · **Decision:** —
 - **Tables:** `AmcContract`, `AmcCoveredAsset`, `AmcVisit`.
 - **Sub-tasks:**
@@ -3344,6 +2413,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 ### TK-69 · S9: Parent portal
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#11](https://github.com/jothi-prabaharan/Bill-Book/issues/11)
+- **Group:** I · School (S0–S9)
 - **Lanes:** L-PTL · **Depends on:** TK-63, TK-64, TK-32 · **Decision:** —
 - **Sub-tasks:**
   - [x] Add routes in `apps/portal` for demands, receipts, attendance and published marks.
@@ -3365,15 +2435,10 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Tests: `Student.Api.Tests.PortalServiceTests` (the *Done when* for children and marks, access flag, strangers), `Fee.Api.Tests.PortalFeeTests` (posted only, own only, balances, settlements), `Attendance.Api.Tests.PortalAttendanceTests` (own child's month and counts, another child not found, Student down), `Master.Api.Tests.PortalTokenTests` (app claim, no permissions); `portal-session.spec.ts`, `school-portal.models.spec.ts`.
     - Owner step: run `Student.Api.Tests`, `Fee.Api.Tests`, `Attendance.Api.Tests` and `Master.Api.Tests` from dropped databases.
 
-### Z · Done — waiting on the owner's test run
-
-Finished cards, in ID order. A card marked `tests written, not run` needs the owner to run its
-tests (section 0.5); the owner then adds `· tests passed (owner) — date`, or moves the card back
-into the queue with the failure under its Notes.
-
 ### TK-70 · Master fails to start on a fresh database
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Issue:** [#12](https://github.com/jothi-prabaharan/Bill-Book/issues/12)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-MST · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Repository/AdminDbContext.cs:337-338`: the `Menu` and `MenuPermission` `HasData`.
@@ -3426,6 +2491,7 @@ into the queue with the failure under its Notes.
 ### TK-71 · RLS template: restore it in `acc`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Issue:** [#13](https://github.com/jothi-prabaharan/Bill-Book/issues/13)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-ACC, L-MST (Master's startup bootstrap writes `acc` rows) · **Depends on:** — · **Decision:** —
 - **Where:**
   - The template: `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:130-172`.
@@ -3539,6 +2605,7 @@ into the queue with the failure under its Notes.
 ### TK-72 · RLS for `con`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Issue:** [#69](https://github.com/jothi-prabaharan/Bill-Book/issues/69)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-CON · **Depends on:** TK-70, TK-71 · **Decision:** —
 - **Where:**
   - The migrations: `backend/Api/Master/Master.Repository/Migrations/Tenant/`, via `--context ContactsDbContext`.
@@ -3590,6 +2657,7 @@ into the queue with the failure under its Notes.
 ### TK-73 · RLS for `cus`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#70](https://github.com/jothi-prabaharan/Bill-Book/issues/70)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-CUS · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Customer/Customer.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Customer.Api.Tests/CustomerQueryFilterTests.cs:193`.
@@ -3616,6 +2684,7 @@ into the queue with the failure under its Notes.
 ### TK-74 · RLS for `inv`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#71](https://github.com/jothi-prabaharan/Bill-Book/issues/71)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-INV · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Inventory/Inventory.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Inventory.Api.Tests/InventoryQueryFilterTests.cs:133`.
@@ -3666,6 +2735,7 @@ into the queue with the failure under its Notes.
 ### TK-75 · Correct the stale facts in `CLAUDE.md`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · documentation only, no tests
 - **Issue:** [#72](https://github.com/jothi-prabaharan/Bill-Book/issues/72)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-DOC · **Depends on:** — · **Decision:** —
 - **Where:** `CLAUDE.md` sections "Still not built", "Standing caveats" and "Roadmap"; `docs/Modules.md` §8.2.
 - **Sub-tasks:** fix each statement against the code:
@@ -3702,6 +2772,7 @@ into the queue with the failure under its Notes.
 ### TK-76 · Sales delivery challan: post, void and page
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Issue:** [#73](https://github.com/jothi-prabaharan/Bill-Book/issues/73)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-SAL, L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/DeliveryChallanService.cs`: `SaveAsync`, `PostAsync`, `VoidAsync`.
@@ -3764,6 +2835,7 @@ into the queue with the failure under its Notes.
 ### TK-77 · Sales credit note: guards, void reason and stock return
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#74](https://github.com/jothi-prabaharan/Bill-Book/issues/74)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-SAL, L-SAL-UI, L-INV (one controller line: a return must be recorded as a return), L-ACC (seed Sales Returns and Round Off; owner's decision 2026-09-23) · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/CreditNoteService.cs`, `Controllers/CreditNotesController.cs`
@@ -3840,6 +2912,7 @@ into the queue with the failure under its Notes.
 ### TK-78 · Partial fulfilment (T3.6): what's left
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#75](https://github.com/jothi-prabaharan/Bill-Book/issues/75)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-SAL, L-SAL-UI (the billing tag and the From-an-order filter) · **Depends on:** TK-76 · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs`: `PostAsync` (`ReadBilledOrderAsync`,
@@ -3890,6 +2963,7 @@ into the queue with the failure under its Notes.
 ### TK-79 · `apps/desktop`: a real cart
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Issue:** [#76](https://github.com/jothi-prabaharan/Bill-Book/issues/76)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-DSK · **Depends on:** TK-15 · **Decision:** —
 - **Where:**
   - `frontend/apps/desktop/src/app/pos-terminal/pos-terminal.component.{ts,html,scss}`: the till.
@@ -3933,6 +3007,7 @@ into the queue with the failure under its Notes.
 ### TK-80 · Printing.Api: move the template API and renderer into the service
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#77](https://github.com/jothi-prabaharan/Bill-Book/issues/77)
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-PRT, L-KERNEL · **Depends on:** — · **Decision:** —
 - **Where:**
   - `docs/Modules.md` "Printing" (from about line 974): the design, and the list of what moves.
@@ -3994,6 +3069,7 @@ into the queue with the failure under its Notes.
 
 ### TK-81 · Printing cutover: serve from `prt`, drop `con.PrintTemplates`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-PRT, L-CON, L-SAL, L-SAL-UI (the invoice print page), L-MST (`TenantSeeder`), L-KERNEL (the machinery move), L-DEPS (package references, per commit), L-DOC (the service count in `CLAUDE.md`, last commit) · **Depends on:** TK-80 · **Decision:** D-13 (answered)
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/PrintTemplateSeeder.cs`
@@ -4077,6 +3153,7 @@ into the queue with the failure under its Notes.
 
 ### TK-82 · Print-template editor screen
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-MASTER-UI, L-MST (switch on the print-template menu rows in `MenuSeed`, and the admin migration), L-WEB (the route in `apps/web`), L-UI (the fallback entry in `libs/app-shell/src/lib/shell-screens.ts`) · **Depends on:** TK-80 · **Decision:** —
 - **Where:**
   - `libs/master/master-ui`, a new `print-templates/` page; the shared master pages table in
@@ -4131,6 +3208,7 @@ into the queue with the failure under its Notes.
 
 ### TK-83 · The four fixed-asset reports
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-RPT · **Depends on:** TK-11 · **Decision:** —
 - **Where:**
   - `docs/Modules.md` §8.2 (the four names).
@@ -4191,6 +3269,7 @@ into the queue with the failure under its Notes.
 
 ### TK-84 · *Business Performance* report
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-RPT · **Depends on:** — · **Decision:** D-15 (answered 2026-09-24)
 - **Sub-tasks:**
   - [x] Build what D-15 specifies (Xero-style KPI ratios), wired through the same four layers as
@@ -4231,6 +3310,7 @@ into the queue with the failure under its Notes.
 
 ### TK-85 · Weighted average recalculation in `CostingEngine.Worker`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-INV, L-ACC · **Depends on:** — · **Decision:** —
 - **Touches:** `backend/worker/CostingEngine.Worker`, `backend/Api/Inventory/Inventory.Api/Services`,
   `inv` migrations (unit-cost precision), one internal read in `backend/Api/Accounting` for the lock date
@@ -4272,6 +3352,7 @@ into the queue with the failure under its Notes.
 
 ### TK-86 · Record the owner's answers of 24 September in `CLAUDE.md`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · documentation only, no tests
+- **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-01 … D-20
 - **Where:** `CLAUDE.md` sections "Undecided — ask, don't assume", "Printing", "Journal Entry is the only posting mechanism" (cites the trigger card) and "Roadmap".
 - **Sub-tasks:**
@@ -4283,6 +3364,1042 @@ into the queue with the failure under its Notes.
   - "Undecided" now says nothing is open and summarises each answer with its card; the Printing, Rate sync, fixed-asset and PDF notes state the decisions; the operator-permission paragraph points at TK-13.
 
 ---
+
+### TK-90 · Sale challans post to Goods Delivered Not Invoiced, and the invoice clears it
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#82](https://github.com/jothi-prabaharan/Bill-Book/issues/82)
+- **Group:** B · Money posted right: cost of sales and fixed assets
+- **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-10 · **Decision:** D-21
+- **Where:** as TK-10's Where. `ChartOfAccountsSeed.cs` (GDNI missing), `StockLedgerMapping.cs:86-87`,
+  `InvoiceService.cs` (the challan branch and the aggregate Dr COGS / Cr GDNI at line 0),
+  `DeliveryChallanService` (posts nothing today), `IssueQuantities` in `InvoiceService.cs` (an
+  order-billed invoice bills delivered goods without naming the challan).
+- **State (2026-09-24):** after TK-10, a direct sale posts its cost once. A sale challan's cost
+  still reaches the ledger through the worker as Dr COGS / Cr Inventory **at dispatch**. An invoice
+  naming a challan posts Dr COGS / Cr GDNI, which is refused while GDNI is unseeded. An invoice
+  billing delivered goods through an order posts no cost for them, which is consistent only
+  because the challan already booked COGS at dispatch.
+- **What the owner has decided:** GDNI is seeded, and each document posts a provisional cost the
+  worker replaces with the settled one (TK-10's `ProvisionalLedgerTypeIds`). A sale challan's
+  provisional entry is Dr GDNI / Cr Inventory. Job-work, approval, transfer and sample challans post
+  nothing: issue them with a flag that creates their movements `LedgerStatus.NotApplicable`, and
+  check that recosting never requeues a `NotApplicable` movement.
+- **What D-21 decided (owner, 2026-09-25): (b), cost at invoice time.** The invoice clears GDNI at
+  whatever cost Inventory holds when it posts — only the `sal` table is touched. No
+  `sal.InvoiceChallanAllocations` or `inv.StockMovementBillings` link tables; a void reverses the
+  invoice's own GDNI-clearing entry rather than walking back to specific challan lines, and a later
+  WAC restatement of the challan's dispatch cost can leave a small residual balance in GDNI rather
+  than being chased down and zeroed.
+- **Sub-tasks:**
+  - [x] Seed GDNI (Asset, off the manual-journal picker like GRNI) with a `SystemAccount` value;
+        backfill existing branches through the seeder's idempotent path; take it off
+        `SalesAccountNameTests`' allow-list.
+  - [x] Challan post: provisional Dr GDNI / Cr Inventory per line on `(DLC, challanId, lineId, 4)`
+        for `ChallanType.Sale`; the worker maps a `DLC`-sourced `Issue` to Dr GDNI / Cr Inventory.
+  - [x] Invoice: Dr COGS / Cr GDNI per line, for challan-named and order-billed delivered goods, at
+        Inventory's current cost when the invoice posts — no allocation record naming which challan
+        lines were cleared.
+  - [x] Test: challan then invoice leaves GDNI at zero (absent a later restatement), Inventory
+        credited once, COGS debited once.
+  - [x] Test: an order-billed invoice of delivered goods clears GDNI, and its void restores it.
+  - [x] Test: a job-work challan posts nothing.
+  - [x] Test: a challan cost restatement after its invoice has posted leaves a residual GDNI balance
+        rather than erroring — document this as the accepted cost of (b) rather than a bug.
+- **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once, GDNI
+  at zero, and one cost-of-sales debit.
+- **Notes:** split from TK-10 by the owner's choice of 2026-09-24.
+- **As built (2026-09-26):**
+  - **Accounting:** `SystemAccount.GoodsDeliveredNotInvoiced` (25) is seeded as 1250, an Asset kept off the journal picker. An existing branch gets it from the idempotent seeder (the retry in `apps/admin`).
+  - **Master:** ledger type **7 `GDNI`** was added (migration `GdniLedgerType`). The invoice's clearing legs cannot use type 4 (COGS). That type is the key the costing worker replaces per line, so on an invoice line that both clears delivered goods and issues more, the worker's settlement would erase the clearing. Type 3 (CONTROL) was also ruled out, because allocation and aging read it per contact.
+  - **Inventory:**
+    - `StockMovement.LedgerExempt` (migration `StockMovementLedgerExempt`) marks a movement that posts nothing. It is created `NotApplicable`, `StockLedgerMapping` returns no posting for it, and neither recosting path (`CostingService` requeue, `WeightedAverageRecosting`) puts it back in the ledger queue.
+    - A flag was needed because the poster already uses `NotApplicable` for a zero-cost movement, and that movement must still be requeued once recosting gives it a value.
+    - A `DLC`-sourced `Issue` maps to Dr GDNI / Cr Inventory, with no item sub-account on GDNI.
+    - New endpoint `POST internal/stock/movement-costs` returns a movement's current `TotalCost`.
+  - **Sales, challan:** a sale challan posts provisional Dr GDNI / Cr Inventory per line on `(DLC, challan, line, 4)` with `ProvisionalLedgerTypeIds = [4]`. If the ledger refuses, the result is `DeliveryChallanOutcome.PostingRefused` (409) and the challan stays a draft. Every other challan type is issued with `LedgerExempt`.
+  - **Sales, invoice:**
+    - Posts Dr COGS / Cr GDNI per line under type 7, at the challan movement's current cost. For a named challan the cost is taken in proportion to the quantity billed. For order-billed delivered goods it is the average cost of every posted sale challan line against the order line.
+    - A named non-sale challan (approval, say) credits Inventory instead, because its goods never left Inventory in the ledger.
+    - If Inventory cannot be reached, the result is `StockRefused` and nothing is posted.
+    - Void withdraws type 7, which puts the cost back in GDNI.
+  - **Tests:**
+    - `Accounting.Api.Tests.GdniClearingTests`: the seed row; challan, worker, then invoice leaves GDNI at zero; void restores GDNI; a restatement leaves a residue rather than failing; the worker's settlement of a line leaves its clearing alone.
+    - `Inventory.Api.Tests`: `StockLedgerMappingTests` covers DLC to GDNI and exempt movements posting nothing. `WeightedAverageRecostingTests` covers an exempt movement that is revalued but not requeued, while a zero-cost one is requeued.
+    - `Sales.Api.Tests`: challan posting per line, non-sale challans (four types), ledger refusal, clearing at current cost, partial billing, Inventory unreachable, approval challan, void, the order-billed path in `PartialFulfilmentTests`, and the client route. The GDNI entry is off `SalesAccountNameTests`' allow-list.
+  - **Found, not fixed:** an order-billed invoice after a *voided direct invoice* posts no cost for the re-billed goods. Those goods were issued by the voided invoice, not a challan, so there is no challan movement to read. This is TK-10's "void leaves stock issued with no Inventory credit" gap, still open.
+  - **Owner step:** run the Accounting, Inventory and Sales suites from dropped databases. Branches that already exist need the admin retry to get GDNI before their next sale challan posts. Until then, the challan's post is refused with Accounting's reason.
+
+### TK-91 · E-invoice: tables, branch settings and the IRP gateway
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run · the real provider waits on D-24
+- **Issue:** [#79](https://github.com/jothi-prabaharan/Bill-Book/issues/79)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-SAL, L-MST, L-KERNEL · **Depends on:** TK-31 · **Decision:** D-24
+- **Where:** `docs/Modules.md`, "E-invoicing and e-way bill" (Tables, Decisions 3, 7, 8); `Sales.Repository/SalesDbContext.cs`; `Master.Entity/TableEntities/Organization.cs`; `Shared.Kernel/Secrets`.
+- **Tables:** `sal.EInvoices`, `sal.EwayBills`; `mst.Organizations.EInvoiceFrom`, `EwayBillEnabled`
+- **Sub-tasks:**
+  - [x] The two tables and their enums, with the TK-71 RLS block in the migration.
+  - [x] `EInvoiceFrom` and `EwayBillEnabled` on the branch, edited in Settings › Organization, and carried on the org context Sales caches.
+  - [x] `IEInvoiceGateway` (authenticate, generate IRN, get IRN by document, cancel IRN, generate/update/cancel e-way bill) with a **sandbox** implementation first, and the provider D-24 names second. Credentials through `ISecretStore`, keyed by GSTIN.
+  - [x] The INV-01 mapper from an invoice or credit note, and the local validation list in the design.
+  - [x] Carry the line's UQC onto the document line so `SalesRegister.UqcCode` stops being null.
+  - [x] Test: the mapper against a recorded INV-01 sample; each validation refusal; RlsAudit for both tables.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** a B2B invoice maps to a schema-valid INV-01 document and a sandbox call returns an IRN.
+- **As built:**
+  - `sal.EInvoices` and `sal.EwayBills` as the design lists them, enums stored by name, in migration `AddEInvoicing` with the TK-71 block for both. The e-way bill's cancel reason has its own enum, `EwayBillCancelReason`, because the two portals number the same reasons differently. Unique: one e-invoice per `(OrgId, SourceType, SourceId)`, and the IRN and the e-way bill number where set.
+  - `UqcCode` is a column on invoice, credit note and challan lines. `LineUqc.StampAsync` fills it at posting from Inventory's new `POST internal/items/uqc` (`IUqcLookup`), and the sales register copies it, so `SalesRegister.UqcCode` is no longer null. A line with no unit gets `OTH`. When Inventory can't be reached, the line stays empty rather than guessed, and an e-invoice for it is refused for the missing unit. Challans are stamped in TK-93.
+  - Master: `mst.Organizations.EInvoiceFrom` and `EwayBillEnabled` (migration `OrganizationEInvoicing`), refused without a GSTIN (`EInvoiceNeedsGstin`). They are carried on `internal/orgs/{id}/context` with the branch's phone and email, and reach `BranchSettings` and `OrgIdentity`. The six-hour cache means a change reaches Sales within six hours. Edited in Settings › Organization › Statutory.
+  - Master: `POST internal/contacts/addresses` (`IContactAddressBook`) gives the buyer's legal name, GSTIN, billing address fields, state code and registration type. A document keeps its address only as printable text, and the IRP needs the PIN and state separately.
+  - `Sales.Api/Services/EInvoicing/`:
+    - `Inv01Document` is the schema's own names, serialised with no naming policy and nulls left out.
+    - `Inv01Mapper` is pure and sends the document's figures rather than recomputing them. A discount below the lines lands in `ValDtls.Discount`, and UTGST goes in the SGST column. An export is `URP`, state 96 and PIN 999999.
+    - `EInvoiceApplicability` names the supply type: B2B, SEZWP or SEZWOP, EXPWP or EXPWOP, or none for B2C.
+    - `EInvoiceValidator` runs the design's local checks, with a ₹1 tolerance on totals.
+    - `EInvoiceDocumentBuilder` gathers the inputs and reports whether the document applies. A problem reaching Master comes back as a transient problem.
+  - `Shared.Kernel.Tax.Gstin` checks the GSTIN's shape and its base-36 check character.
+  - `IEInvoiceGateway`:
+    - `SandboxEInvoiceGateway` issues the notified IRN hash, answers `2150` on a duplicate, supports get-by-document, cancels within 24 hours only, and gives e-way bills one day per 200 km.
+    - `UnconfiguredEInvoiceGateway` refuses every call.
+    - `EInvoicing:Gateway` chooses between them. Unset, it is the sandbox in Development and the refusing gateway everywhere else, and the sandbox is refused in Production. Credential names come from `EInvoiceCredentials` (`einvoice-{GSTIN}-username`, and so on).
+  - **Not built here:**
+    - a screen to enter the IRP credentials, which is needed with the real provider (D-24);
+    - storing the document's place-of-supply state. Invoices store `PlaceOfSupplyStateId = 0` and keep only `IsInterState`, so the mapper derives the place of supply: the seller's state intra-state, otherwise the buyer's GSTIN state, then their address state.
+  - Specs: `EInvoiceMapperTests` (the recorded INV-01 sample), `EInvoiceValidatorTests`, `SandboxEInvoiceGatewayTests`, `EInvoiceDocumentBuilderTests`, `LineUqcTests`, `Shared.Kernel.Tests.GstinTests`, `Master.Api.Tests.BranchEInvoicingTests` and `InternalContactAddressesTests`. RLS for both tables is covered by the suite's `RlsAudit`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
+
+### TK-92 · E-invoice: IRN on post, cancel on void, retry, QR on print
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#80](https://github.com/jothi-prabaharan/Bill-Book/issues/80)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-SAL, L-PRT, L-SAL-UI · **Depends on:** TK-91 · **Decision:** —
+- **Where:** `InvoiceService.PostAsync` / `VoidAsync`, `CreditNoteService`, `InvoicePrintService`, `Shared.Kernel.Printing.PlaceholderCatalog`.
+- **Sub-tasks:**
+  - [x] Insert the `Pending` row inside the posting transaction; register once after the commit; answer 200 with the e-invoice state.
+  - [x] A hosted retry worker in Sales with backoff; permanent IRP errors stay `Failed` and are written to `sal.ErrorLogs` with `FollowUpStatus = Open`.
+  - [x] Duplicate-IRN recovery through "get IRN by document details" (design, decision 6).
+  - [x] Void cancels the IRN inside 24 hours and is refused after, naming the credit note as the fix.
+  - [x] Print: `Irn`, `AckNo`, `AckDate`, `QrImage` tags; `IRN PENDING` stamp until registered.
+  - [x] The invoice list gains an e-invoice status column and a "needs attention" filter.
+  - [x] Test: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped.
+- **Done when:** posting a B2B invoice on an e-invoicing branch prints it with its IRN and QR, and voiding it the same day cancels the IRN.
+- **As built:**
+  - **After commit.** `Shared.Kernel.Persistence.IAfterCommit` (`AfterCommitQueue`, registered by `AddBillBookReliability`): `TransactionFilter` runs the queued work after it commits and before the response is written, and drops it on rollback. `EInvoicePosting.OnPostedAsync` writes the Pending row at the end of `InvoiceService.PostAsync` and `CreditNoteService.PostAsync`, and queues one `EInvoiceRegistrar.RegisterAsync`. That call fills in the `EInvoiceStateView` the posting returns, so the 200 carries the IRP's answer. Work queued where no request transaction runs never runs from the queue; the retry worker covers it.
+  - **Which documents get a row.** POS sales never do. The branch must e-invoice from the document's date, and the buyer must have a GSTIN on the document or, looked up in Master, be SEZ or overseas. When the lookup fails the row is written provisionally, and the registrar deletes it if the builder then says the document doesn't apply.
+  - **`EInvoiceRegistrar`:**
+    - A guarded `ExecuteUpdate` claim holds `NextAttemptAt` for two minutes, and its row count is the answer.
+    - It builds and validates the document. A validation refusal is `Failed` with the problems as the message.
+    - Duplicate IRN `2150` is recovered through get-by-document.
+    - A transient problem is `Pending` with backoff: 1, 5 and 15 minutes, then 1, 3, 6 and 12 hours.
+    - A permanent refusal is `Failed`.
+    - Every `Failed` goes to `sal.ErrorLogs` through `IWorkerErrorAuditor` (`AddBillBookWorkerErrorAudit<SalesDbContext>`) with `FollowUpStatus = Open`, job reference `EInvoice:{id} {Source}:{id}`.
+  - **`EInvoiceRetryWorker`** is a hosted service in Sales. Every 5 minutes it walks `ITenantEnumerator`'s branches, each in its own scope, taking up to 50 due Pending rows per branch. It leaves Failed rows alone.
+  - **Void.** `BeforeVoidAsync` runs right after the lifecycle check, before the ledger is withdrawn, so a refusal changes nothing (decision 5).
+    - Registered and within 24 hours: cancelled at the IRP with the void's reason as the remark and `VoidInvoiceRequest.CancelReason`, `Other` when not given.
+    - Past 24 hours, or refused by the IRP: `InvoiceOutcome.EInvoiceRefused` / `CreditNoteOutcome.EInvoiceRefused`, answered with a 409 that names the credit note.
+    - Pending or Failed: marked Cancelled.
+    - If the IRP cancels and the ledger withdrawal then fails, the IRN stays cancelled on a posted invoice. That is the design's order, noted rather than solved.
+  - **Endpoints:**
+    - `GET …/invoices|credit-notes/{id}/e-invoice` (`sales.view`).
+    - `POST …/{id}/e-invoice/retry` (`sales.einvoice`, via `[PermissionAction("einvoice")]`). `sales.einvoice` is `ExtraPermissions` id 10003, granted to Owner, Administrator and Sales with fixed ids `900,000,000 + 100,000 × role + id`. Extras are now left out of the sequential grants, so nothing was renumbered. Migration `SalesEInvoicePermission` is inserts only, with menu rows 442 and 443.
+    - The invoice list takes `eInvoiceAttention` (Failed or Pending) and returns `EInvoiceStatus`.
+  - **Print:**
+    - `PlaceholderType.QrCode` and the `EInvoice.Irn`, `AckNo`, `AckDate` and `QrImage` tags, for INV and CRN.
+    - Printing draws the QR itself from the signed text with **QRCoder 1.8.0** (MIT, managed PNG, new in `Directory.Packages.props`). The template sanitiser still refuses a template's own `data:` URIs.
+    - `EInvoiceStrip` adds the IRN block to the header of a registered invoice whose template places no `EInvoice.` tag.
+    - `InvoicePrintService` stamps `IRN PENDING` on a posted invoice whose e-invoice is Pending or Failed.
+  - **UI:** the invoice screen's E-invoice panel shows the status, IRN and acknowledgement, the message, **Retry now**, and the 24-hour note. The invoice list gets an **E-invoice** column and an **E-invoice needs attention** checkbox. The credit note screen has no panel yet; its endpoints exist.
+  - **Specs:**
+    - `EInvoiceRegistrationTests`: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped; validation fails and is audited; transient backoff; claim; manual retry.
+    - `Printing.Api.Tests.EInvoicePrintTests`, `Shared.Kernel.Tests.AfterCommitQueueTests`, `Master.Api.Tests.SalesEInvoicePermissionTests`, `sales-core/e-invoice.spec.ts`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
+
+### TK-93 · E-way bill: by IRN and standalone for challans
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#81](https://github.com/jothi-prabaharan/Bill-Book/issues/81)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-SAL, L-SAL-UI · **Depends on:** TK-92 · **Decision:** —
+- **Where:** `DeliveryChallanService`, `sal.DeliveryChallans.EwayBillNo`/`EwayBillDate`, the design's Flow steps 6 and 7.
+- **Sub-tasks:**
+  - [x] Ask for the e-way bill with the IRN when transport details are present and the value passes the branch limit.
+  - [x] `POST api/sales/{invoices|delivery-challans}/{id}/eway-bill`, Part B update, cancel within 24 hours (`sales.einvoice`).
+  - [x] The challan's typed number becomes a `Manual` e-way bill row; the form shows the table's state.
+  - [x] Test: a challan under the limit asks for nothing; one over it generates; a cancel after 24 hours is refused.
+- **Done when:** a delivery challan over the limit gets an e-way bill number from the sandbox and prints it.
+- **As built:**
+  - **With the IRN.** The invoice gains optional transport columns (`TransportMode`, `VehicleNo`, `TransporterId`, `TransporterName`, `TransportDistanceKm`; migration `InvoiceTransport`), because flow step 6 needs the invoice to carry them. `EInvoiceDocumentBuilder` adds `EwbDtls` when the branch has `EwayBillEnabled`, a vehicle or transporter is given, and `TotalAmount` is over `EInvoiceRules.EwayBillThreshold` (₹50,000, a constant rather than a branch setting). When the IRP returns the bill, the registrar writes a `ByIrn` `Generated` row.
+  - **`EwayBillService`** (`Sales.Api/Services/EInvoicing/`) generates for a posted invoice or challan.
+    - It is refused when the branch has e-way bills off, when the document is not posted, at or under the limit ("asks for nothing"), and while another bill is live.
+    - Part B is checked by `EwayBillMapper.ValidateTransport`: a vehicle or a transporter, the vehicle's shape, and the distance.
+    - It writes a Pending row and sends it after the commit (`IAfterCommit`), by IRN when the invoice has a registered IRN, otherwise standalone. The standalone request comes from the document's lines, stamping challan lines' UQC first. Sub-supply types: sale 1, job work 4, branch transfer 5, others 8.
+    - Once generated, the challan's `EwayBillNo` and `EwayBillDate` take the number and date, and its archived PDF is written again (Replace) with the bill in its reference line.
+  - **Part B update and cancel** run inline. Cancel works within 24 hours for a generated bill, and at any time for a Manual one, which the portal never had. Cancelling clears the challan's typed columns.
+  - **Manual bills.** `EwayBillService.SyncManualAsync` runs from `DeliveryChallanService.SaveAsync`: a typed number becomes a `Manual` `Generated` row, a changed number corrects it, and clearing it removes it. A bill generated here is never touched.
+  - **Endpoints**, on `api/sales/invoices` and `api/sales/delivery-challans`: `GET {id}/eway-bill` (view), and `POST {id}/eway-bill`, `…/part-b` and `…/cancel` (`sales.einvoice`). A refusal is 409, and a Part B that fails the checks is 422.
+  - **Print.** The `EInvoice.EwbNo`, `EwbDate` and `EwbValidUntil` tags exist. The strip shows the e-way bill beside the IRN, or alone when there is no IRN. The invoice payload carries the live bill.
+  - **UI.** `bb-eway-bill-panel`, one component on both the invoice and the challan screens: state, **Generate**, **Change vehicle** and **Cancel**. The invoice form gains vehicle, transporter id and name, and distance.
+  - **Not built:** e-way bills for returns (credit notes), and a per-branch threshold.
+  - **Specs:**
+    - `EwayBillTests`: a challan under the limit asks for nothing; one over it generates from the sandbox and its PDF is written again; the branch switch; one live bill at a time; cancel at 23 h and at 25 h; Part B; manual rows; an invoice with an IRN goes by IRN; the print payload.
+    - `EInvoiceRegistrationTests`: the bill with the IRN over the limit, and none under it.
+    - `sales-core/eway-bill.spec.ts`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and Master. Frontend typecheck and lint pass, and the web build is clean.
+
+### TK-94 · Portal: revocable access and one-hour sessions
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#83](https://github.com/jothi-prabaharan/Bill-Book/issues/83)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CON, L-MST, L-PTL, L-KERNEL · **Depends on:** TK-32 · **Decision:** —
+- **Where:** `ContactService.GeneratePortalLinkAsync`, `JwtTokenService.CreatePortalToken`, `ContactsController` (`portal-link`), `apps/portal`; design "Client portal" → Access.
+- **Tables:** `con.PortalGrants`
+- **Sub-tasks:**
+  - [x] `con.PortalGrants` with the RLS block; the link carries a random code whose SHA-256 is stored.
+  - [x] `POST api/portal/session` exchanges the code for a one-hour portal JWT with `portal_grant`; rate-limited; exempted in Master's guard test with its reason.
+  - [x] Revoke portal access on the contact screen; the 30-day token path is removed.
+  - [x] `apps/portal` gains `/access/:code`, keeps the code, and re-exchanges it before the hour runs out.
+  - [x] Test: a revoked or expired grant is refused; a code is never stored in clear; a portal token carries no permission claims.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** revoking a contact's access stops a fresh session from being issued, and existing sessions expire within an hour.
+- **As built (2026-09-26):**
+  - **Master:**
+    - `con.PortalGrants` (migration `PortalGrants`, with the RLS block) stores `CodeHash` (SHA-256, unique), `App`, `ExpiresAt`, `RevokedAt`/`RevokedBy` and `LastUsedAt`.
+    - `PortalAccessService` creates, reads the state of, revokes and exchanges grants. The code is `pg_{customer}_{org}_{secret}`, and the session controller sets the tenant from the code before opening the database. This departs from the design's "past the query filter" wording: no special RLS policy is needed, and the shard is known up front.
+    - The lifetime comes from `mst.Configurations` `portal.linkDays`, default 90 (migration `PortalLinkDaysSetting`).
+  - **Routes:**
+    - `POST api/portal/session` is anonymous, `[NoTransaction]` (the service opens its own scope after the tenant is set), and rate-limited to 10 a minute per address. Every failure is the same 401.
+    - `POST api/contacts/{id}/portal-link` now returns `{ code, expiresAt, url }` with `url = {Portal:BaseUrl}/access/{code}`.
+    - New: `GET api/contacts/{id}/portal-access` and `POST api/contacts/{id}/portal-access/revoke`.
+    - Gateway route `master-portal-session`.
+  - **Token and guard:**
+    - `CreatePortalToken` issues one hour and carries `portal_grant`. The session never outlives its grant.
+    - `[RequirePortalAccess]` requires `portal_grant`, so old 30-day links are refused by every service.
+    - `ContactService.GeneratePortalLinkAsync` and its `ITokenService` dependency are gone.
+  - **Frontend:**
+    - `apps/portal`: `/access/:code` exchanges the code. `PortalSession` keeps the code for the tab and renews five minutes before expiry. `portalSessionGuard` protects every page. `/portal?token=` and a withdrawn link go to `/expired`.
+    - Contacts page: shows the link once, the access line (live links, last opened) and **Revoke portal access**.
+  - **Tests:**
+    - `Master.Api.Tests.PortalAccessTests`: code format; never stored in clear; exchange claims; revoke all; expiry; a session capped at the grant; a deactivated contact; tampered secret or branch; another branch's contact.
+    - `PortalTokenTests`: one hour, with the grant claim.
+    - `EndpointGuardTests` exemption with its reason.
+    - `portal-session.spec.ts`: renewal timing.
+  - **Owner step:**
+    - Run the Master suite from dropped databases, and the portal specs.
+    - Existing portal links stop working at deploy; send contacts new ones.
+    - Set `Portal:BaseUrl` so the contact screen shows a full link.
+
+### TK-95 · Portal: dashboard figures and invoices with PDF
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#84](https://github.com/jothi-prabaharan/Bill-Book/issues/84)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-RPT, L-SAL, L-PTL · **Depends on:** TK-94, TK-22 · **Decision:** —
+- **Where:** `PortalStatementsController`; `SalesDocumentArchive.OpenAsync` (TK-22); `apps/portal/src/app/portal-dashboard`.
+- **Sub-tasks:**
+  - [x] `GET api/portal/summary` (Reporting): outstanding net of advances, overdue, trade value this year and all time.
+  - [x] `GET api/portal/invoices`, `/{id}`, `/{id}/pdf` (Sales), posted and voided only, filtered by the token's contact.
+  - [x] Fix the statement: `DocumentNo` instead of `{code}-{id}`; both sides for a contact who is customer and vendor.
+  - [x] Dashboard and invoice pages in `apps/portal`, at 360px.
+  - [x] Test: another contact's invoice id is 404; a draft never appears; the summary matches the ledger for a seeded contact.
+- **Done when:** a contact signs in by link and downloads their own invoice PDF, and cannot reach another contact's.
+- **As built (2026-09-26):**
+  - **Reporting:** `PortalAccountService` sits over an `IPortalAccountData` seam, so the arithmetic is tested over lists. `GET api/portal/summary`:
+    - Outstanding is the contact's receivable sub-accounts (Asset type) net of advances.
+    - Overdue is each past-due posted invoice's own control-leg balance, capped at the outstanding.
+    - Trade value is posted invoices' `TotalAmountBase` less posted credit notes', for this financial year (branch start month, via `HttpFinancialYearProvider`) and in all.
+    - The last five documents.
+  - **Statement:** `api/portal/statements` now returns `{ receivable, payable? }`, each side with its own running balance (payable as credit less debit). Lines carry `DocumentNo`, with a `{code}-{id}` fallback for old rows.
+  - **Read models:** `DocumentNo` on the ledger, `TotalAmountBase` on invoices, a new `CreditNoteRead`, and a snapshot-only migration `PortalReadModels`.
+  - **Found and fixed:** all eight sales and purchase document read models read `Status` as an integer where the column stores the name, so any report reading one failed on the first row. They now convert.
+  - **Sales:** `PortalInvoiceService` and `api/portal/invoices`, `/{id}` and `/{id}/pdf`. Only invoices with `PostedAt` set, posted or voided, and only the token's contact; anything else is 404. Status is Open, PartPaid, Paid, Overdue or Void, from `internal/ledger/settlements`, asked per type code (INV and POS). The PDF is the TK-22 archive copy.
+  - **Master:** the portal session token now carries `customer_code`, because the archive is foldered by it.
+  - **Gateway:** routes `sales-portal-invoices` and `reporting-portal-summary`.
+  - **Frontend:** `apps/portal` has a dashboard (figures and recent documents), an invoice list, an invoice page with **Download PDF**, and a two-sided statement. All are one column, and tables become labelled cards under 600px. The old statement's download (a staff route) is gone.
+  - **Tests:**
+    - `Reporting.Api.Tests.PortalAccountServiceTests`: outstanding net of advances; other contacts ignored; overdue; overdue capped; trade value by year; recent documents; financial-year start; statement opening and running balance; document number fallback; payable side; customer-only contact.
+    - `Sales.Api.Tests.PortalInvoiceTests`: status rules; the list excludes drafts and other contacts; another contact's or a draft invoice is 404 as invoice and as PDF; own invoice lines and PDF.
+    - `PortalAccessTests`: the `customer_code` claim.
+    - `retail/portal.models.spec.ts`.
+  - **Owner step:** run the Reporting, Sales and Master suites and the portal specs. "The summary matches the ledger for a seeded contact" is covered over lists, not against a database, because Reporting's fixture has no `acc` or `sal` tables.
+
+### TK-96 · Portal: accept or reject a quote
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#85](https://github.com/jothi-prabaharan/Bill-Book/issues/85)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-SAL, L-SAL-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
+- **Where:** `sal.Quotes`, `QuoteService`; design "Client portal" → Quotes.
+- **Sub-tasks:**
+  - [x] `CustomerResponse`, `RespondedAt`, `RespondedByName`, `ResponseNote` on `sal.Quotes` (migration).
+  - [x] `GET api/portal/quotes`, `POST …/{id}/accept`, `…/{id}/reject`: posted, unexpired, answered once.
+  - [x] The staff quote list shows the answer; the portal page lists quotes with the two actions.
+  - [x] Test: an expired or already-answered quote is refused; another contact's quote is 404.
+- **Done when:** a contact accepts a posted quote from the portal and staff see it accepted.
+- **As built (2026-09-26):**
+  - **`sal.Quotes`** (migration `QuoteCustomerResponse`) gains `CustomerResponse` (`QuoteResponse` enum, stored as its name, existing rows `None`), `RespondedAt`, `RespondedByName` and `ResponseNote`, with `chk_quotes_response_stamp`: an answer carries its time.
+  - **`PortalQuoteService`:**
+    - Lists the contact's posted quotes, with `CanRespond` meaning unanswered, still valid and not yet an order.
+    - Answering is a guarded `ExecuteUpdate` on unanswered and valid, so two racing answers record one.
+    - The outcomes are NotFound (another contact's quote or a draft), Lapsed, AlreadyAnswered, and Converted (a quote already made into a sales order, which the design did not name; refused so an answer never lands on a decided quote).
+  - **Routes:** `api/portal/quotes` and `/{id}/accept`, `/{id}/reject` with `{ name, note }`, plus gateway route `sales-portal-quotes`.
+  - **Staff:** `SalesTransactionListItem.CustomerResponse`, shown as a tag beside the quote's status on the sales list. The quote view carries the answer fields.
+  - **Portal:** the **Quotes** page, with accept or decline, a name and a note, one column.
+  - **Not built:** the design's "staff notification" on an answer. There is no in-app notification channel for staff yet; the answer shows on the list.
+  - **Tests:** `Sales.Api.Tests.PortalQuoteTests` covers accept once, lapsed refused, another contact's quote and a draft not found, and converted refused. The portal spec covers `quoteState`.
+  - **Owner step:** run the Sales suite and the portal specs.
+
+### TK-97 · Portal: support tickets
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#86](https://github.com/jothi-prabaharan/Bill-Book/issues/86)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CUS, L-CUS-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
+- **Where:** `TicketsController`, `cus.TicketMessages`; design "Client portal" → Tickets.
+- **Sub-tasks:**
+  - [x] `IsInternal` on `cus.TicketMessages`; the staff reply box can mark a note internal.
+  - [x] `GET/POST api/portal/tickets`, `POST api/portal/tickets/{id}/messages`, never returning internal messages.
+  - [x] Portal ticket list, detail and new-ticket pages.
+  - [x] Test: an internal message never reaches the portal; another contact's ticket is 404; a portal ticket gets its SLA from `cus.SlaPolicies`.
+- **Done when:** a contact raises a ticket in the portal, staff reply, and the contact sees the reply but not an internal note.
+- **As built (2026-09-26):**
+  - **`cus.TicketMessages.IsInternal`** (migration `TicketMessageInternal`), with `chk_ticketmessages_internal_by_staff`: only a `User` message can be internal.
+  - **`PortalTicketService` and `api/portal/tickets`** (list, `/{id}`, raise, `/{id}/messages`):
+    - Only the token's contact; another contact's ticket is 404.
+    - Internal notes are filtered out.
+    - A portal ticket is Medium priority with the branch's SLA.
+    - Replying to a Resolved ticket reopens it; a Closed one is 409.
+    - Gateway route `customer-portal-tickets`.
+  - **Found and fixed on the staff side:**
+    - The thread screen called `GET api/tickets/{id}/messages`, which did not exist. It now does, returning the whole thread with `isInternal` and the author type as its name.
+    - `POST api/tickets/{id}/messages` took the author from the request body, so the screen's replies were stored as `Contact` (enum 0). A staff message is now always `User` and the signed-in user.
+  - **Staff UI:** an **Internal note** checkbox on the reply box, and internal notes marked in the thread.
+  - **Portal:** the **Support** list (with New ticket) and a ticket page with replies.
+  - **Tests:** `Customer.Api.Tests.PortalTicketTests` covers internal notes never reaching the portal, the database refusing a contact's internal note, another contact's ticket, the SLA from policy, reopening a resolved ticket and a closed ticket refusing. The portal spec covers the status label.
+  - **Owner step:** run the Customer suite and the portal specs.
+
+### TK-98 · Portal: pay online
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run · real gateway waits on D-25
+- **Issue:** [#87](https://github.com/jothi-prabaharan/Bill-Book/issues/87)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-ACC, L-ACC-UI, L-PTL · **Depends on:** TK-95 · **Decision:** D-25
+- **Where:** `ReceiveMoneyService`; design "Client portal" → Online payment.
+- **Tables:** `acc.OnlinePayments`
+- **Sub-tasks:**
+  - [x] `acc.OnlinePayments` with RLS; the branch's settlement bank account setting.
+  - [x] `IPaymentGateway` for the gateway D-25 names: create order, verify callback signature.
+  - [x] `POST api/portal/payments`; `POST api/payments/{gateway}/callback` (anonymous, signature-verified) creates the `RCM` with its allocations once per `GatewayPaymentId`.
+  - [x] Portal pay screen: choose invoices or an amount, go to checkout, show the result from the server, not the redirect.
+  - [x] Test: a replayed callback creates one receipt; a bad signature creates none; the receipt settles the chosen invoices.
+- **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
+- **As built (2026-09-26):**
+  - **`acc.OnlinePayments`** (migration `OnlinePayments`, with the RLS block) holds:
+    - `Reference` (`op_{customer}_{org}_{id}`, unique).
+    - The contact, amount and currency.
+    - `Allocations` (jsonb), and the bank account.
+    - The gateway, `GatewayOrderId` and `GatewayPaymentId` (unique per gateway: the idempotency backstop).
+    - Status (Created, Paid, Failed, Refunded), `ReceiveMoneyId`, `PaidAt` and `Note`, with check constraints: paid carries its time, and a receipt only follows a payment.
+  - **Settlement account:** `acc.BankAccounts.IsOnlinePaymentAccount`, one per branch through a filtered unique index. It is set with `PUT api/bank-accounts/{id}/online-payments` and shown as a column on the bank accounts page. It is locked against deactivation like the default.
+  - **`IPaymentGateway`** has sandbox and unconfigured versions, registered like the IRP gateway: `Payments:Gateway`, sandbox in Development and none elsewhere, and the sandbox is refused in Production. Sandbox callbacks are HMAC-SHA256 under `Payments:Sandbox:Secret`, compared in fixed time.
+  - **`OnlinePaymentService.StartAsync`:**
+    - Only the contact's own invoices (another contact's reads as not found), in base currency, and no more than is owed on the invoice's control leg.
+    - Any excess is an advance.
+    - It opens the gateway order.
+  - **`CompleteAsync`:**
+    - Only a verified callback, and the order and amount must match.
+    - Inside one transaction: a guarded claim `Created → Paid`, then a Receive Money created, posted and allocated (source 3, with source 9 for the excess), then `ReceiveMoneyId` set.
+    - If that is refused, the same again with the whole amount as an advance.
+    - If that is refused too, Paid with a note and no receipt.
+    - A replay finds nothing to claim.
+  - **Routes:**
+    - `api/portal/payments`: start, read, and a `/{id}/sandbox-checkout` that signs and sends the sandbox callback through the same path.
+    - `api/payments/{gateway}/callback`: anonymous, `[NoTransaction]`, tenant from the reference, exempted in the guard test with its reason.
+    - Gateway routes `accounting-portal-payments` and `accounting-payment-callbacks`.
+  - **Portal:** **Pay online** (choose invoices and amounts plus extra), the sandbox checkout page, and a result page that polls the server.
+  - **Tests:**
+    - `Accounting.Api.Tests.OnlinePaymentTests`: a bad signature is not read; the reference; another contact's invoice or overpaying refused; not set up or no gateway; a replayed callback makes one receipt with lines on INV (source 3) plus the advance; a failed payment makes no receipt; an amount mismatch; a refused receipt leaves Paid with a note; another contact's payment.
+    - The portal spec covers `paymentTotal`.
+  - **Owner step:** run the Accounting suite and the portal specs. Set an online payments account per branch. A real gateway is added when D-25 is answered: implement `IPaymentGateway` for it and carry the reference in its order notes.
+
+### TK-99 · Approvals: the shared engine in Master, with user and role approvers
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26 (answered 2026-09-24: Master, `apr`)
+- **Where:** design "Workflow approvals for RetailErp documents"; the HRMS design's Approvals section; `Shared.Kernel/Documents/DocumentLifecycle.cs`.
+- **Tables:** `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates`
+- **Sub-tasks:**
+  - [x] `Shared.Kernel.Approvals`: `ApprovalStepBase` (with `ApproverUserId` and `ApproverEmployeeId`), the step state machine and its refusal messages.
+  - [x] `apr` configuration tables on Master's tenant context, with the RLS block.
+  - [x] `POST internal/approval-chains/resolve`: `RoleHolder` and `NamedUser`; the skip rules; the snapshot.
+  - [x] Test: skip rules (requester, repeat approver, optional); a required unresolvable level refuses with its name; amount-conditional levels; a changed workflow leaves resolved snapshots alone.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** a workflow "Accountant, then Owner above ₹1,00,000" resolves to one step for ₹50,000 and two for ₹2,00,000.
+- **As built (2026-09-24):**
+  - `Shared.Kernel.Approvals`: the enums, `ApprovalStepBase`, the pure `ApprovalChain` (start, approve, reject, send back, cancel, who may act) and the contracts for Master and Employee. Tests: `Shared.Kernel.Tests.ApprovalChainTests`.
+  - Master: `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates` on `ContactsDbContext`, migration `ApprovalWorkflows` with the RLS block. `ApprovalChainResolver` picks the most specific workflow in force, keeps the levels the amount calls for, asks Employee for employee approvers in one call and applies the skip rules. `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`; `api/approval-workflows` (settings). HRMS branches are seeded with a manager-approved Leave and LeaveEncashment workflow. Tests: `Master.Api.Tests.ApprovalChainResolverTests`, including this card's *Done when*.
+  - Employee: `internal/approval-chains/resolve-employees` (reporting chain by depth, relationship, department head, named employee), with `hrm.RelationshipTypes` (seeded Lead and Project Lead) and `hrm.EmployeeRelationships`. Tests: `Employee.Api.Tests.EmployeeApproverTests`.
+  - "A changed workflow leaves resolved snapshots alone" is a property of the owning service's stored steps, so it is tested with the first one, leave (TK-49).
+  - Owner step: none beyond running the tests. The workflow and delegate screens are TK-103.
+
+### TK-100 · Approvals: purchase orders, bills and debit notes
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#88](https://github.com/jothi-prabaharan/Bill-Book/issues/88)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-PUR, L-PUR-UI · **Depends on:** TK-99 · **Decision:** —
+- **Sub-tasks:**
+  - [x] `pur.ApprovalSteps`; summary columns on the purchase documents.
+  - [x] Submit, act, edit-sends-back, per the design's Flow; the ordinary approve action when no workflow matches.
+  - [x] `GET api/approvals/mine` for Purchase; the chain shown on each document.
+  - [x] Test: a PO over the threshold waits for both levels; editing it mid-chain returns it to Draft; a user who is not the approver is refused.
+- **Done when:** a purchase order above the limit reaches `ReadyToPost` only after both levels approve.
+- **As built (2026-09-26):**
+  - **Shared.Kernel:**
+    - `DocumentHeaderBase` gains `ApprovalStatus?` (stored as its name), `CurrentStepLabel`, `CurrentApproverUserId` and `CurrentApproverRoleId`. Every sales and purchase header carries them, so the Sales migration `DocumentApprovalSummary` ships here for TK-102 to use.
+    - `IApprovalChainClient` / `HttpApprovalChainClient` call Master's `internal/approval-chains` (resolve, delegate-check).
+    - `DocumentApproval` builds a round's steps, keeps the header summary, and gives the refusal while a document is under approval.
+  - **Purchase:**
+    - `pur.ApprovalSteps` (`PurchaseApprovalStep` plus `Round`; migration `PurchaseApprovals`, with the RLS block).
+    - `PurchaseApprovalService` handles submit (NoWorkflow, Unresolvable or a new round), act (approver, role holder or delegate), the chain, the inbox, the gate and return-to-draft.
+    - **The gate:** the ordinary approve, and confirming or posting a *draft*, are refused while a chain is open or rejected, or when a workflow applies. Master unreachable is a refusal.
+    - **Editing** returns the document to Draft, cancels the round's open steps, and says so in the update response.
+    - The three services take the approval service as an optional constructor parameter, so existing test harnesses are unchanged.
+  - **Routes:** `api/purchase/{purchase-orders|bills|debit-notes}/{id}/submit` (`purchase.edit`), `…/approval` GET/POST (`purchase.view`), and `api/purchase/approvals/mine`. The inbox path is per service, not one `api/approvals/mine`, because the gateway routes by prefix and one path cannot reach three services; TK-103 asks each.
+  - **UI:** a shared `bb-approval-panel` (ui-components) on the purchase order, bill and debit note forms.
+  - **Tests:**
+    - `Purchase.Api.Tests.PurchaseApprovalTests`:
+      - Chain behaviour: above the limit, both levels before ReadyToPost; below it, one level; a non-approver refused; reject needs a comment.
+      - Editing mid-chain returns the document to Draft and cancels open steps, and a new round starts on resubmit.
+      - The gate: approve and confirm refused under a workflow; the ordinary approve with no workflow; Master unreachable refuses.
+      - The inbox by user and role.
+    - `approval-panel.model.spec.ts`.
+  - **Not built:** notifying the approver (design flow step 1, TK-19) and escalation. Delegates can act, but their inbox does not list their principal's items.
+  - **Owner step:** run the Purchase and Sales suites and the ui-components spec. Configure a workflow through `api/approval-workflows` until TK-103 gives it a screen.
+
+### TK-101 · Approvals: spend money and manual journals
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#89](https://github.com/jothi-prabaharan/Bill-Book/issues/89)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-99 · **Decision:** —
+- **Sub-tasks:**
+  - [x] `acc.ApprovalSteps`; summary columns on `SpendMoney` and `Journal`.
+  - [x] The same flow; `GET api/approvals/mine` for Accounting.
+  - [x] Test: a journal is approved by two levels; the second approver cannot be the first.
+- **Done when:** a manual journal configured for two levels posts only after both.
+- **As built:**
+  - **One flow for every service.** The document flow moved out of Purchase into `Shared.Kernel.Approvals.DocumentApprovalService<TStep>`: submit, act, chain, gate, return to draft and inbox. Purchase and Accounting each supply only how to find their documents and steps. `DocumentApprovalActionRequest` is the shared request body, and the amount hook is asynchronous because a journal's amount is the sum of its saved lines.
+  - **`acc.ApprovalSteps`** (`AccountingApprovalStep`, with `Round`) has RLS. `Journal` and `SpendMoney` carry the four summary columns (migration `AccountingApprovals`).
+  - **Neither document has ReadyToPost**, so approval changes only the summary: `Post` is gated (`SaveJournalOutcome.AwaitingApproval = 14`, `MoneyDocumentOutcome.AwaitingApproval = 16`, both 409). Only the public `JournalService.PostAsync` is gated; `PostSystemAsync` (the fixed asset register's journals) is not. An edit mid-chain returns the draft and the PUT answers 200 with a message.
+  - **Routes:**
+    - `api/journals/{id}/submit|approval` under `accounting`, and `api/spend-money/{id}/submit|approval` under `banking`.
+    - Each has an inbox at `…/approvals/mine`, filtered to its own kind so a banking-only user never sees journals. These sit under the gateway's existing prefixes; TK-103 merges them.
+  - **Nobody approves two levels of one round** (`ApprovalRefusal.ApprovedEarlierLevel`). This is enforced for every document service, Purchase included. HRMS requests are untouched and keep relying on Master's skip rules.
+  - **UI:** `bb-approval-panel` sits under the journal and spend-money draft forms.
+  - **Tests:** `AccountingApprovalTests` and `ApprovalChainTests`.
+
+### TK-102 · Approvals: credit notes and the two overrides
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#90](https://github.com/jothi-prabaharan/Bill-Book/issues/90)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-SAL, L-SAL-UI, L-INV · **Depends on:** TK-99 · **Decision:** D-29
+- **Sub-tasks:**
+  - [x] `sal.ApprovalSteps` and `inv.ApprovalSteps`; summary columns on sales documents and stock adjustments.
+  - [x] `SalesDiscountOverride` and `CreditLimitOverride`: a save that the discount limit or the credit check would refuse offers "request approval" instead, and an approved override lets that one document through.
+  - [x] Test: a sale past the credit limit is refused without an approved override and accepted with one; the override does not carry to another document.
+- **Done when:** a credit-limit breach can be approved by the Owner and the invoice then posts.
+- **As built:**
+  - **The discount limit (D-29)** is resolved by Master on `internal/contacts/discount-limit`: the contact's `MaxDiscountPercent`, else the branch's new `sales.maxLineDiscountPercent` configuration (seeded at 100, meaning no limit; Admin migration `SalesDiscountLimitSetting`). The contract is `Shared.Kernel.Contacts.IDiscountLimitClient`. A line breaches when its discount exceeds that share of its gross value. If the limit cannot be read, the save is refused (`LimitsUnavailable`, 503).
+  - **Overrides apply to invoices and sales orders**, the two documents that already ran the credit check. `SalesLimits` runs both checks at save.
+    - A breach without `requestApproval` is refused (`CreditLimitExceeded` / `DiscountLimitExceeded`) with `canRequestApproval: true` in the body.
+    - With it, the draft saves and each breached kind is submitted as its own chain.
+    - If no workflow covers the override (`OverrideRefused`), or Master is unreachable, the save fails after writing, and the request's transaction takes it back.
+  - **Where override state lives:** each override's status is its own column on the document (`CreditOverrideStatus`, `DiscountOverrideStatus`). What it waits on goes in the shared summary columns.
+  - **Gating:** post (invoice) and confirm (order) are refused while an override is open, rejected or sent back (`AwaitingApproval`). An edit cancels both overrides and the check runs again, so an approval never carries to changed figures or to another document. An invoice raised from an approved order is checked afresh.
+  - **Step storage:** `sal.ApprovalSteps` carries a `DocumentType` (`INV`, `SOR`, `CRN`), because an invoice and an order can share an id. There is one service per type (`InvoiceOverrideService`, `SalesOrderOverrideService`, `CreditNoteApprovalService`) over a shared `SalesApprovalService`.
+  - **Credit notes** have a document chain like purchase: approval makes them ReadyToPost, and posting a draft is gated.
+  - **Stock adjustments** have `inv.ApprovalSteps` and summary columns on `StockAdjustment` (migration `StockAdjustmentApprovals`), and posting is gated. A sheet's amount is the value of its costed lines; write-offs carry no cost until they post.
+  - **Routes:** `api/sales/credit-notes/{id}/submit|approval`, `api/sales/{invoices|sales-orders}/{id}/overrides/{credit-limit|discount}/approval`, `api/sales/approvals/mine`, `api/stock-adjustments/{id}/submit|approval` and `api/stock-adjustments/approvals/mine`. All tables have RLS (migrations `SalesApprovals`, `StockAdjustmentApprovals`).
+  - **UI:** the invoice and sales-order forms offer **Request approval** after a limit refusal and show an override panel for each override in play. `bb-approval-panel` gains `heading` and `allowSubmit`. The credit note form and the stock adjustment sheet carry the panel.
+  - **Tests:** `SalesApprovalTests`, the new cases in `StockAdjustmentServiceTests`, `DiscountLimitSettingTests` and `limit-refusal.spec.ts`.
+
+### TK-103 · Approvals: the inbox and Settings › Approval workflows
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#91](https://github.com/jothi-prabaharan/Bill-Book/issues/91)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-UI, L-WEB, L-DEPS · **Depends on:** TK-100 · **Decision:** —
+- **Sub-tasks:**
+  - [x] `libs/settings/approval-workflows`: workflows per kind, levels with drag reorder.
+  - [x] The Approvals inbox, merging every service's `GET api/approvals/mine`, with inline actions, at 360px.
+  - [x] Menu rows and routes; docs page and release note.
+- **Done when:** an approver sees a waiting purchase order in the inbox and approves it there.
+- **As built:**
+  - **Settings page:** `@bill-book/settings-approval-workflows` is mounted from `sharedSettingsRoutes` at `/settings/approval-workflows`, so every app has it. It lists workflows and edits them over Master's existing `api/approval-workflows`, which reads enums as numbers.
+    - Levels reorder by CDK drag or by arrow buttons.
+    - A RetailErp kind offers only role-holder or named-user approvers.
+    - The page is read-only without `settings.edit`.
+  - **Inbox:** `@bill-book/approvals` is at `/approvals` in `apps/web` (signed-in only). It asks every inbox route in parallel: `api/purchase/approvals/mine`, `api/sales/approvals/mine`, `api/journals/…`, `api/spend-money/…` and `api/stock-adjustments/…`. The gateway routes by prefix, so there is no single merged endpoint.
+    - It merges the answers oldest first.
+    - A 403 or 404 source is skipped silently; any other failure is named at the top.
+    - Approve, send back and reject go to each document's own approval route (`actionUrl`), with a comment required for the last two. Cards stack at 360px.
+  - **Menus** (Admin migration `ApprovalMenus`): Settings › Organisation › Approval workflows (1125, every app). A new Approvals rail (14 › 122 › 1126 "Waiting for me", RetailErp), shown to holders of any of `purchase|sales|accounting|banking|inventory.view`.
+  - **Fixed a TK-100 defect:** `DocumentApprovalActionRequest.Action` carries its own `JsonStringEnumConverter`. Purchase, Accounting and Inventory read enums as numbers, so every approve, reject and send-back the panel sent by name had been a 400.
+  - **Known gaps** (named on the docs page): no notification to the approver, escalation days stored but not acted on, and a delegate's inbox does not list their principal's documents.
+  - **Tests:** `approval-workflows.model.spec.ts`, `approvals-inbox.model.spec.ts`, `DocumentApprovalActionRequestTests`, and the menu assertions in `AppGrantRuleTests`.
+
+### TK-104 · Projects: masters and the `ProjectId` ledger dimension
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#92](https://github.com/jothi-prabaharan/Bill-Book/issues/92)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-ACC, L-ACC-UI, L-MST · **Depends on:** TK-34 · **Decision:** —
+- **Where:** design "Project accounting"; `acc.JournalLedger`, `acc.JournalDetail`, `LedgerPostingService`, `PostLedgerRequest`.
+- **Tables:** `acc.Projects`, `acc.ProjectTasks`, `acc.ProjectMembers`, `acc.ProjectMilestones`
+- **Sub-tasks:**
+  - [x] The four tables with RLS; the `PRJ` numbering series; the `projects` permission module (Master seed).
+  - [x] `ProjectId` on ledger, journal lines, spend- and receive-money lines; `PostLedgerRequest` legs carry it; the posting API refuses another branch's or a completed project.
+  - [x] `internal/projects/exists` for the other services; project list and form pages.
+  - [x] Test: a leg with a completed project is refused; the manual journal carries a project to the ledger; RlsAudit.
+  - [x] Standard delivery sub-tasks (section 5).
+- **As built:**
+  - **Tables:** the four tables have RLS (migration `Projects`). `ProjectId` (FK, Restrict) is on `JournalLedger` (filtered index), `JournalDetails`, `SpendMoneyDetails` and `ReceiveMoneyDetails`.
+  - **Numbering:** `PRJ` is a master series (`PRJ-0001`, never reset). Existing branches get it from the idempotent branch seed.
+  - **Posting check:** `ProjectRules.RefusalAsync` refuses a project the query filter cannot see, or one that is Completed or Cancelled. It runs in `LedgerPostingService.PostAsync` (`PostLedgerOutcome.ProjectRefused`), at journal save (`SaveJournalOutcome.ProjectRefused`) and at money-document save (`MoneyDocumentOutcome.ProjectRefused`). On-hold projects still take postings. Reversing a posting to a completed project needs the project set back to active first.
+  - **Journal and money lines:** a journal line's project rides its own leg, and reversals copy it. A money line's project rides its control leg only; the bank leg belongs to no job.
+  - **Service:** `ProjectService` saves the project, tasks, members and milestones as one form. A dropped task is deactivated, never deleted (TK-106 will log time against tasks), a billed milestone is untouched, and projects are never deleted. Routes are `api/projects` (list, get, `{id}/ledger`, create, update) and `internal/projects/exists`, with the contract and `HttpProjectDirectory` in `Shared.Kernel.Projects` for TK-105.
+  - **Permissions:** the `projects` module has fixed-id grants (910,000,000 + 100,000 × role + permission), so no existing grant is renumbered. Owner, Administrator and Accountant get everything; Sales and Viewer get `projects.view`. Menu row 1127 sits under Accounting (Admin migration `ProjectsPermissions`).
+  - **Gateway:** `/api/projects` added. `/api/approval-workflows` was also missing (TK-99 and TK-103); added.
+  - **UI:** the projects page in `accounting-ui` covers the list, the form with tasks and milestones, and the ledger rows with their net. The journal and money-document line grids gain a project picker, hidden for a user who cannot read projects.
+  - **Fixed a TK-90 defect:** `LedgerLegRequest.LedgerTypeId` was `[Range(1, 6)]`, so the GDNI leg (type 7) failed model validation and every delivery challan's posting was refused. The range is now 1 to 7, with a test.
+  - **Tests:** `ProjectLedgerTests` (done-when, completed refusal, foreign project, cancelled at save, PRJ code and task deactivation, billed milestone, internal lookup, GDNI validation, postable statuses), the projects grants in `AppGrantRuleTests`, and `project-options.spec.ts`. RlsAudit covers the new tables through the linked audit.
+- **Done when:** a manual journal line tagged with a project appears on that project's ledger rows.
+
+### TK-105 · Projects: sales and purchase lines carry the project to the ledger
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
+- **Issue:** [#93](https://github.com/jothi-prabaharan/Bill-Book/issues/93)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-KERNEL, L-SAL, L-PUR, L-SAL-UI, L-PUR-UI · **Depends on:** TK-104 · **Decision:** —
+- **Where:** `DocumentLineBase`; every `sal`/`pur` poster that builds `PostLedgerRequest` legs.
+- **Sub-tasks:**
+  - [x] `ProjectId` on `DocumentLineBase` (migrations in `sal` and `pur`), validated through Accounting.
+  - [x] Line legs carry the line's project; header legs carry it only when every line agrees (design, decision 4).
+  - [x] A project picker in the shared line grid.
+  - [x] Test: an invoice with two projects posts revenue to each and an untagged receivable; one with a single project tags the receivable too.
+- **As built:**
+  - **Lines and saves:** `DocumentLineBase.ProjectId` (migrations `LineProjects` in `sal` and `pur`) is on every sales and purchase line request and view, and on the conversions that copy lines. A credit note line takes its invoice line's project.
+  - **Save check:** invoice, bill and debit note saves check projects through `Shared.Kernel.Projects.ProjectCheck` over `HttpProjectDirectory` (Accounting's `internal/projects/exists`). An unknown, completed or cancelled project is refused as `LineInvalid`, and so is an Accounting that cannot be asked. Other documents are enforced at post by Accounting.
+  - **Tagging legs:** `ProjectTagging.TagProjects` (Sales and Purchase) gives each line-level leg its line's project, and each header leg (detail id 0) `ProjectLegs.Common`. The invoice's one revenue leg and the credit note's one returns leg are split per project by `ProjectLegs.Split`, weighted by line taxable value, with the last part absorbing rounding so the posting still balances. Tagged posters: invoice, credit note, delivery challan (GDNI), bill, debit note, goods receipt.
+  - **Settled cost keeps its project:** `LedgerPostingService` carries a replaced key's project onto an untagged replacement (`CarryProjectsAsync`), so the costing worker's settled cost of sales keeps the line's project.
+  - **UI:** `bb-document-line-grid` takes an optional `projects` input and then shows a Project row per line. `ProjectOptionsService` loads the open projects, or none for a user without `projects.view`. It is wired into the quote, sales order, challan, invoice, purchase order, goods receipt and bill forms.
+  - **Tests:** `InvoiceProjectTests` (the card's two cases, untagged invoice, completed and foreign projects refused at save), `ProjectLegsTests`, the carry-on-replace case in `ProjectLedgerTests`, and `project-options.service.spec.ts`.
+- **Done when:** an invoice's revenue lands on the project its lines name.
+
+### TK-106 · Projects: timesheets and billing time, expenses and milestones
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
+- **Issue:** [#94](https://github.com/jothi-prabaharan/Bill-Book/issues/94)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-ACC, L-ACC-UI, L-SAL, L-SAL-UI, L-PUR · **Depends on:** TK-105 · **Decision:** —
+- **Tables:** `acc.TimeEntries`; `IsBillable`, `MarkupPercent`, `BilledInvoiceId` on bill and spend-money lines
+- **Sub-tasks:**
+  - [x] Weekly timesheet and timer; a user logs only their own time without `projects.edit`; 24 hours a day at most.
+  - [x] "Add project items" on the invoice form; `internal/projects/billing/claim` at post and `…/release` on void, guarded by row count.
+  - [x] Test: two invoices claiming the same hours — exactly one posts; a void releases the hours; markup applies to re-billed expenses.
+- **Done when:** unbilled hours billed on one invoice cannot be billed on another, and come back when it is voided.
+- **As built:** `acc.TimeEntries` (RLS) behind `api/projects/time`, which needs only `projects.view`. The service refuses anyone else's entry without `projects.edit`, refuses more than 24 hours a day and a closed project or inactive task, and locks a billed entry. `GET api/projects/{id}/unbilled` prices hours through `ProjectBillingService.RateFor` (project, task or member rate), lists posted spend-money lines marked billable with their markup, and lists uninvoiced milestones. Purchase serves its own billable bill lines at `GET api/purchase/bills/billable`, because bill lines are Purchase's (rule 8). The claim runs at post, through `Shared.Kernel.Projects.HttpProjectBillingClient`. It claims Accounting's kinds (`internal/projects/billing/claim`), then Purchase's (`internal/bills/billing/claim`), and releases Accounting's if Purchase refuses. Each side is a guarded `ExecuteUpdate` whose row count must equal the items asked for, or it answers 409 so the reliability filter rolls back. A retry by the same invoice is idempotent. `sal.InvoiceProjectItems` (RLS) records what an invoice bills. A failed post and a void release the items. A spend-money document or bill with a billed line refuses a void (`BilledToClient`, 409). Frontend: `TimesheetPage` (a week grid, a timer kept in `localStorage`, and the menu row `1128`); `bb-project-items-dialog` on the invoice form, which turns picked items into lines through `toBillingLines`; and **Charge on** plus a markup on bill lines (the grid's `showBilling`) and on spend-money lines. Tests: `ProjectBillingTests`, `InvoiceProjectBillingTests`, `project-billing.spec.ts`, `timesheet-week.spec.ts`.
+
+### TK-107 · Projects: reports
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
+- **Issue:** [#95](https://github.com/jothi-prabaharan/Bill-Book/issues/95)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-RPT · **Depends on:** TK-106 · **Decision:** —
+- **Sub-tasks:**
+  - [x] Project profitability, budget against actual, unbilled work, time by user, as report sources on `bb-report-grid`.
+  - [x] Test: profitability for a seeded project equals its ledger rows' net by type.
+- **Done when:** the four reports run for a branch with a billed project.
+- **As built:** Four sources in `Reporting.Api/Services/Sources/ProjectReportsSources.cs`, under the new `ReportModule.Projects`, all needing `projects.view`: `project-profitability`, `project-budget-vs-actual`, `project-unbilled-work` and `project-time-by-user`. Their queries live in `ProjectReports` as functions of plain `IQueryable`s, as `FixedAssetRegister` does. Profitability nets income rows as credit less debit and expense rows as debit less credit, so contra accounts need no rule of their own. Unbilled work values items exactly as TK-106's dialog does. New read models map `acc.Projects`, `ProjectTasks`, `ProjectMembers`, `ProjectMilestones` and `TimeEntries`. `ProjectId` and the billing columns were added to the ledger, spend-money and bill line reads, and `ExchangeRate` to the bill read; the migration is snapshot-only. Catalog seeds `1401`–`1404`, plus the menu group `123` with items `1129`–`1132` that link to the report keys directly.
+
+  Three older gaps were found and fixed on the way:
+  - `ReportSource.FormatRowsAsync` was declared and overridden by seven reports but never called, so their account-type, user and state names were always empty.
+  - Master had no `internal/users/batch`, which `BatchedNameResolver` calls.
+  - Master's `internal/master/account-types` sent `NormalBalance` and `ReportSection` as numbers where Reporting reads names. This would also have failed `StatementsController`.
+
+  **Still open:** the older report menu rows link to `/reports/r-{code}`, and those codes are not report keys (`r-journal-report` against `journal-report`). That is left for its own card.
+
+  Tests: `ProjectReportTests` (profitability equals the ledger rows' net by type, the period, budget and hours variance, unbilled valuation by task and person rate with markup, time split), and the source and certification registries (94 sources).
+
+### TK-108 · Budgets: tables, entry grid, import and approval
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
+- **Issue:** [#96](https://github.com/jothi-prabaharan/Bill-Book/issues/96)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-35 · **Decision:** —
+- **Where:** design "Budgeting"; `mst.Organizations.FinancialYearStartMonth` via the org context; `acc.Accounts`.
+- **Tables:** `acc.Budgets`, `acc.BudgetLines`
+- **Sub-tasks:**
+  - [x] Both tables with RLS; a filtered unique index for one approved default per branch and year.
+  - [x] Create blank, from last year's actuals (± % per account group) or from another budget; spread a year total evenly or by last year's shape.
+  - [x] CSV/XLSX import and export in the account-code × month layout; unknown codes listed and refused.
+  - [x] Approve locks; revise copies with a reason and supersedes on approval.
+  - [x] The budget grid page (accounts × 12 months), usable at 360px as one month at a time.
+  - [x] Test: an approved budget refuses edits; a revision supersedes; last year's actuals seed the right months for an April-start branch.
+  - [x] Standard delivery sub-tasks (section 5).
+- **Done when:** an accountant imports a year's budget from a spreadsheet, approves it, and cannot edit it afterwards.
+- **As built:** `acc.Budgets` and `acc.BudgetLines` with RLS. The filtered unique index `IX_Budgets_BranchDefault` is on (`CustomerId`, `OrgId`, `FinancialYearStart`) where `IsBranchDefault`, and a check constraint means only an approved budget can be the default. Lines are unique on (budget, account, project, period) with nulls not distinct; months at zero are not stored.
+
+  `BudgetService` behind `api/budgets` (`accounting.view`; `edit` for create, save, import and delete; `approve` for approve, make-default and revise):
+  - **Create** starts blank, from last year's income and expense actuals in each account's normal direction (`BudgetMath.NormalAmount`, which handles contra accounts), or from another budget. Adjustments are a general percentage plus one per account type, and a negative month clamps to zero.
+  - **Save** refuses parent accounts, inactive or unknown accounts, negatives, duplicates, and projects on a budget that is not by project.
+  - **Import** reads CSV or XLSX through the statement readers in the layout `BudgetMath.SheetHeader` exports. Every code is resolved first, and unknown ones are listed and refused with nothing written.
+  - **Approve** locks the budget. A revision supersedes its original and takes its default.
+  - `GET {id}/last-year` feeds "spread by last year's shape".
+
+  The financial year start comes from `IFinancialYearProvider`. Gateway route `/api/budgets`; menu row `1133`.
+
+  Frontend:
+  - `BudgetsPage` lists budgets and creates them.
+  - `BudgetGridPage` has accounts × 12 months with section subtotals and budgeted profit. A typed year total spreads evenly or by shape (`budget-math.ts`, worked in paise). It handles import and export, approve, revise, make-default and delete, and shows one month at a time below 640px.
+
+  Tests: `BudgetTests` (the done-when, revision supersedes, April-start actuals land in periods 1 and 12, unknown codes, parent and negative refused, one default per year, and the pure maths and sheet parsing) and `budget-math.spec.ts`.
+
+### TK-109 · Budgets: budget against actual, and over-budget warnings
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
+- **Issue:** [#97](https://github.com/jothi-prabaharan/Bill-Book/issues/97)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-RPT, L-ACC, L-ACC-UI · **Depends on:** TK-108 · **Decision:** —
+- **Where:** `Reporting.Api/Services/Sources`, the P&L source's sign rules.
+- **Sub-tasks:**
+  - [x] Report sources: budget against actual (month, quarter, YTD), by project, monthly trend; favourable or adverse by account type.
+  - [x] A warning on bill, spend-money and journal saves that pass the approved budget (month or YTD, a branch setting). Spend money has nothing to check; see As built.
+  - [x] Test: actuals equal the P&L's for the same period; an expense over budget warns and still saves.
+- **Done when:** the budget-against-actual report's actual column matches the P&L for the same period.
+- **As built:**
+  - **Reports.** Three sources in `Reporting.Api/Services/Sources/BudgetReportsSources.cs`, all `accounting.view`: `budget-vs-actual`, `budget-vs-actual-by-project` and `budget-monthly-trend`. Their queries live in `BudgetReports`, over plain `IQueryable`s.
+    - The done-when holds by construction and by test. The P&L's query moved into `ProfitAndLossSource.Rows` (active income and expense accounts; income credit less debit, others debit less credit), and `BudgetReportTests` compares the actual column against that function rather than a copy of its rule.
+    - Budget amounts are negated for contra accounts so they sit on the P&L's sign. Variance is positive when favourable, whatever the type.
+    - The window is always whole months (`BudgetWindows.For`): the date's month, its financial quarter, or the year to date. The budget is the one named, or else the branch's approved default for the year.
+  - **`PrepareAsync`.** A new virtual hook on `ReportSource`, run before `Build`, because a source must look the budget up and `Build` cannot await.
+  - **Read models and menu.** `acc.Budgets` and `acc.BudgetLines` (snapshot-only migration). Catalog seeds `171`–`173`; menu items `1134`–`1136` under Financial performance.
+  - **Warnings.**
+    - `BudgetCheckService` compares each expense account (and project, on a budget by project) in the document with what is posted for the period plus the document. It warns only on accounts the budget names.
+    - The setting is `mst.Organizations.BudgetWarningYearToDate` (the Admin migration adds the column). It is carried to services in the org context as `BranchSettings.BudgetWarningYearToDate` and set on Settings › Organization › Financial.
+    - The journal controller checks after a successful create or update. Purchase's `BillBudgetCheck` reads the saved lines at taxable value × rate and asks `internal/budgets/check` through `Shared.Kernel.Budgets.HttpBudgetCheckClient`, which answers with no warnings rather than an error.
+    - Both return `warnings` in the save response, and the bill form and journal page show them.
+    - **Spend money is not wired, deliberately.** Every spend-money line posts to a payable, receivable or advance control account through `MoneyPostingMap`, never to an expense account, so no spend-money save can pass a budget.
+  - Tests: `BudgetReportTests` (P&L match, favourable and adverse, contra sign, month window, no budget, windows, by project, trend) and `BudgetTests` (an expense over the month's budget warns and the journal still saves; within budget; year to date against month; income and unbudgeted accounts; no approved budget).
+
+### TK-110 · Custom fields: definitions and the shared validator
+- [x] completed (Claude Opus 5.5) — 2026-09-27 · tests written, not run
+- **Issue:** [#98](https://github.com/jothi-prabaharan/Bill-Book/issues/98)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CON, L-KERNEL, L-UI, L-DEPS · **Depends on:** TK-36 · **Decision:** —
+- **Where:** design "Custom fields and custom reports" → Custom fields.
+- **Tables:** `cfd.CustomFieldDefinitions`
+- **Sub-tasks:**
+  - [x] The definitions table on Master's tenant context, with RLS; `api/custom-fields` and `internal/custom-fields`.
+  - [x] `Shared.Kernel.CustomFields`: the cached `ICustomFieldDefinitions` client and the pure `CustomFieldValidator`.
+  - [x] Settings › Custom fields (`libs/settings/custom-fields`) and the shared `bb-custom-fields` form component.
+  - [x] Test: the validator per data type; an unknown key refused; a required field enforced on new saves only; a key cannot be changed; 50-per-kind limit.
+  - [x] Standard delivery sub-tasks (section 5).
+- **Done when:** a branch defines a dropdown field for contacts and the validator refuses a value not in its options.
+- **As built:**
+  - **Table.** `cfd.CustomFieldDefinitions` on Master's `ContactsDbContext`, with RLS in TK-71's form. It is unique on (`OrgId`, `EntityKind`, `Key`), with a check constraint on the key's shape, and its options are an owned JSON collection in a jsonb column.
+  - **Shared kernel.** `Shared.Kernel.CustomFields` holds:
+    - the two enums;
+    - `CustomFieldDefinitionDto`;
+    - `CustomFieldValidator`, which is pure. It refuses unknown keys, checks all eleven types, enforces a required field only on a new record, and keeps a stored value whose field or option has since been deactivated but takes no new one;
+    - `HttpCustomFieldDefinitions`, cached five minutes per branch and kind, which returns null when Master cannot be reached so the caller decides.
+  - **Master.** `CustomFieldService` and `CustomFieldRules`. The key, kind and type are fixed after the first save. Options are never removed, only deactivated. A default must itself validate. The limit is 50 active fields per kind.
+  - **Routes.** `api/custom-fields` (`settings.*`) and `internal/custom-fields?customerId&orgId&kind`, which returns every field of the kind with a `Version`. Gateway route `/api/custom-fields`; shared menu row `1137`.
+  - **Frontend.**
+    - `libs/settings/custom-fields` (`@bill-book/settings-custom-fields`) holds the list per kind, the editor with its options, and a live preview. It is mounted through `shared-routes` for every app.
+    - `bb-custom-fields` in ui-components, with pure helpers in `custom-fields.model.ts`, is ready for TK-111 to put on the contact and item forms.
+  - Tests: `CustomFieldValidatorTests` (done-when, unknown key, required only on new saves, each type, max length, inactive field and option), `CustomFieldTests` (done-when end to end, key change refused and reuse duplicate, the 50 limit, RLS on `cfd`, the pure rules), `custom-fields.model.spec.ts` and `custom-fields-settings.model.spec.ts`.
+
+### TK-111 · Custom fields on contacts and items
+- [x] completed (Claude Opus 5.5) — 2026-09-29 · tests written, not run
+- **Issue:** [#99](https://github.com/jothi-prabaharan/Bill-Book/issues/99)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CON, L-INV, L-MASTER-UI, L-INVENTORY-UI · **Depends on:** TK-110 · **Decision:** —
+- **Sub-tasks:**
+  - [x] `CustomFields jsonb` (mapped as `JsonDocument`) on `con.Contacts` and `inv.Items`, with a GIN index; validated on save.
+  - [x] Rendered on the forms, `ShowInList` columns and `IsSearchable` search on the lists.
+  - [x] Test: a search by a custom value finds the contact; a deactivated field keeps its stored value.
+- **Done when:** a contact saved with a custom field can be found by searching that value.
+- **As built:**
+  - **Columns.** `CustomFields` (`JsonDocument`, jsonb, GIN index) on `con.Contacts` and `inv.Items`, with one migration each.
+  - **Kernel helpers.** `Shared.Kernel.CustomFields.CustomFieldStore`:
+    - reads the column into a dictionary, and writes it back with empty values dropped, or null when nothing is left;
+    - builds the search: `Matching` makes one `"CustomFields" ->> 'key'` test per searchable key, from a caller-supplied match (`v => EF.Functions.ILike(v!, pattern)`), which keeps the Npgsql provider out of the kernel. `Either` ORs that with a list's usual search.
+  - **Validation on save.**
+    - Master validates through `LocalCustomFieldDefinitions`, which reads its own tenant database. Inventory reads Master through `HttpCustomFieldDefinitions`.
+    - A new record is checked for required fields. An update that leaves `customFields` out keeps what is stored, and one that sends it is validated against the previous values, so a deactivated field or option stands unchanged.
+    - Unreadable definitions refuse the save. A refusal is a 422 carrying the validator's sentences (`CustomFieldsRefused`).
+    - Quick create (lead conversion, walk-in) carries no custom fields and skips the check.
+  - **Definitions for the forms.** `GET api/contacts/custom-fields` and `GET api/items/custom-fields` serve the kind's definitions under the module's own `view` permission, so a form needs no `settings.view`.
+  - **Frontend.** `bb-custom-fields` is on both forms. `customListColumns` and `withCustomColumns` add the `ShowInList` columns to the grids, and `customFieldText` renders option labels, Yes/No and lists.
+  - Tests: `ContactCustomFieldTests` (done-when search, not searchable, deactivated field kept and shown, store round trip), `ItemCustomFieldTests`, and the list-column spec.
+
+### TK-112 · Custom fields on sales and purchase documents, carried forward and printed
+- [x] completed (Claude Opus 5.5) — 2026-09-29 · tests written, not run
+- **Issue:** [#100](https://github.com/jothi-prabaharan/Bill-Book/issues/100)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-SAL, L-PUR, L-KERNEL, L-SAL-UI, L-PUR-UI · **Depends on:** TK-110 · **Decision:** —
+- **Sub-tasks:**
+  - [x] `CustomFields jsonb` on the header of every `sal` and `pur` document (via `DocumentHeaderBase`); validated on save.
+  - [x] Carry-forward on every conversion (quote → order → challan → invoice; PO → receipt → bill) for keys marked `CarryForward`.
+  - [x] `custom.` placeholders in `PlaceholderCatalog`; values in the print payload.
+  - [x] Test: a quote's carried field arrives on the invoice made from it; an invoice prints `{{custom.site_ref}}`.
+- **Done when:** a custom field typed on a quote prints on the invoice converted from it.
+- **As built:**
+  - **Column.** `DocumentHeaderBase.CustomFields` (jsonb, set in `DocumentModelConfiguration`) on all nine headers: five `sal` tables and four `pur` tables, one migration per service.
+  - **The gate.** Every create and update goes through `Shared.Kernel.CustomFields.DocumentCustomFieldGate.ApplyAsync`, called beside each service's `Notes` assignment:
+    - An update without values keeps what is stored.
+    - A new document takes carried values from its source. `Carry` takes keys the source marks `CarryForward` that the target has active and would accept, and a requested value wins.
+    - The result is validated, required fields on new documents only.
+    - A refusal is each outcome enum's new `CustomFieldsRefused` (900), a 422 with the validator's sentences.
+    - A service built without the gate (tests) stores the request as given.
+  - **Sources.** Conversions already compose a request that names their source, so the carry keys off it: quote → order (`QuoteId`), order → challan, challan/order/quote → invoice (nearest first), invoice → credit note, PO → receipt, receipt/PO → bill, bill → debit note.
+  - **Printing.**
+    - `PlaceholderCatalog.CustomTag` resolves any well-formed `custom.key` on a document type that `CustomFieldKinds` maps, so templates accept branch keys the static catalog cannot list.
+    - `CustomFieldPrint.Add` puts `ShowOnPrint` values into the payload as text (option labels, Yes/No, dates), and invoice printing calls it.
+    - The template editor adds a "Custom" group from `api/custom-fields`.
+  - **Frontend.**
+    - `GET api/sales/custom-fields?kind=` and `GET api/purchase/custom-fields?kind=` serve each service's kinds under its `view` permission.
+    - `bb-document-custom-fields` loads a kind, applies defaults on a new document, and is on all nine forms.
+  - Tests: `DocumentCustomFieldCarryTests` (done-when: quote → invoice carries `site_ref` and it lands in the payload), `DocumentCustomFieldTests` (carry rules, print text, kind map), `CustomFieldPrintTests` (the renderer prints `{{custom.site_ref}}`; an absent value prints nothing and is not unknown; tag shapes).
+  - **Not built:** only the invoice has a print route, so the other eight documents print custom fields once theirs exist (TK-22).
+
+### TK-113 · Custom reports: datasets and the report builder
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
+- **Issue:** [#101](https://github.com/jothi-prabaharan/Bill-Book/issues/101)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-RPT, L-REPORTING-UI · **Depends on:** TK-111, TK-112 · **Decision:** —
+- **Tables:** `rpt.CustomReports`
+- **Sub-tasks:**
+  - [ ] Six dataset sources (`IsDataset`), with custom-field columns built from the branch's definitions at run time.
+  - [ ] `rpt.CustomReports` with RLS; create from a dataset, save private or shared (`reports.edit`), list under **Custom** by the dataset's permission.
+  - [ ] The builder page: pick a dataset, choose columns, filters, grouping and pivot on `bb-report-grid`, save.
+  - [ ] Test: a user without `purchase.view` does not see a purchase-lines custom report; a deactivated field's column is dropped with a notice.
+- **Done when:** a user builds "sales by salesperson and site reference" from the sales-lines dataset, saves it, and reopens it from the catalog.
+- **As built:** six `DatasetSource` sources (`dataset-sales-lines`, `-purchase-lines`, `-ledger-rows`, `-stock-movements`, `-items`, `-contacts`) under `ReportModule.Custom`; each active custom field of the kind is a `custom.{key}` text column read from the jsonb in SQL, never seeded. `rpt.CustomReports` (RLS) holds the layout as a `ReportQueryRequest`; `api/reports/custom` saves and reopens, and the catalog appends the caller's visible reports. A deactivated field's column is pruned on open and named in `droppedColumns`. The builder is the report host page on a dataset, with **Save as custom report**. Datasets have no date parameter; a date filter narrows them. Running a dataset against real schemas is not covered by the tests (the Reporting test database has only `rpt`).
+
+### TK-114 · Scheduled report email
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
+- **Issue:** [#102](https://github.com/jothi-prabaharan/Bill-Book/issues/102)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-RPT, L-NTF · **Depends on:** TK-113, TK-19 · **Decision:** —
+- **Tables:** `rpt.ReportSchedules`
+- **Sub-tasks:**
+  - [ ] Schedules (daily, weekly, monthly) with recipients among the branch's users; a hosted service claims due rows with a guarded update.
+  - [ ] Each run re-checks the owner's permission and sends the Excel export through Notification.
+  - [ ] Test: a due schedule runs once under concurrency; a schedule whose owner lost the permission sends nothing and records why.
+- **Done when:** a weekly schedule emails its report once per week.
+- **As built:** `rpt.ReportSchedules` (RLS) with frequency, day, hour in the branch's zone (default `Asia/Kolkata`), owner and recipient user ids, and the layout. `ReportScheduleWorker` in Reporting ticks every five minutes over the branches Master lists; `ReportScheduleRun` claims a due row by moving `NextRunAt` with an update guarded on the value read. It then reads the branch's users and their current permissions from Master's new `internal/users/branch`, and needs `reports.view`, `reports.export` and the report's own permission. It exports through the export route's runner, cap and writer, and posts each email with the xlsx to Master's `internal/notifications/email`. Master sends through Notification.Worker where it runs. `EmailMessage` and `EmailRequested` carry attachments now, and Master sends in process any attachment over 160 KB, since Service Bus Standard refuses a message over 256 KB. Skips and failures are recorded on the row, and failures in `rpt.ErrorLogs` too. **Schedule** button on every report.
+
+### TK-115 · Compliance: the purchase register, complete GSTR-3B and the GSTR-1 export
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
+- **Issue:** [#103](https://github.com/jothi-prabaharan/Bill-Book/issues/103)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-PUR, L-RPT, L-REPORTING-UI · **Depends on:** TK-37 · **Decision:** D-30, D-31
+- **Where:** design "Compliance bundle" → part 1; `sal.SalesRegister` and its writers; `GstController` (GSTR-2 501, GSTR-3B outward only).
+- **Tables:** `pur.PurchaseRegister`
+- **Sub-tasks:**
+  - [ ] `pur.PurchaseRegister` with RLS, written by the bill and debit note posters in the posting transaction, with ITC eligibility.
+  - [ ] GSTR-3B completed with eligible ITC, reverse charge and ineligible ITC.
+  - [ ] GSTR-1 offline-tool JSON export with pre-download validation.
+  - [ ] Test: a posted bill writes its register rows; 3B's ITC equals the register's eligible tax; the export's HSN summary equals its sections.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** GSTR-3B for a month with sales and purchases shows both output tax and eligible ITC.
+- **As built:**
+  - **Register.** `pur.PurchaseRegister` (with RLS) holds one row per bill or debit note line. The posters write it in the posting transaction, and a void removes it. Each row carries the supplier's number and date, reverse charge, `ItcEligibility`, line type and the tax per component.
+  - **Reverse charge (D-30).** `Bill.IsReverseCharge` makes the bill total net of tax. The tax is credited to the new system account *GST Payable (Reverse Charge)* (2210, which reseeding adds to existing branches).
+  - **Eligibility (D-31).** `BillDetail.ItcEligibility` (`Shared.Kernel.Documents.ItcEligibility`) puts non-claimable tax into the line's cost, the stock unit cost or the asset amount. Against a receipt it is debited to Inventory. Debit notes follow the bill line.
+  - **Returns.** `Gstr3b.Build` and `Gstr1Export.Build` are pure. `GET api/reports/gst/gstr3b` is complete, and `GET api/reports/gst/gstr1/export` answers 422 with the problems when validation fails.
+  - **Also fixed.** `sal.SalesRegister.GstRate` now holds the full rate, not CGST's half.
+  - **Left as they were.** GSTR-2 still answers 501; GSTR-2B reconciliation is the next part of the bundle. CDNUR is netted into B2CS.
+
+### TK-116 · Compliance: GSTR-2B reconciliation
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
+- **Issue:** [#104](https://github.com/jothi-prabaharan/Bill-Book/issues/104)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-PUR, L-PURCHASE-UI · **Depends on:** TK-115 · **Decision:** —
+- **Tables:** `pur.Gstr2bImports`, `pur.Gstr2bLines`
+- **Sub-tasks:**
+  - [ ] Import a GSTR-2B JSON; match by supplier GSTIN, invoice number and date with normalised numbers; compare values.
+  - [ ] The four result groups on a screen, with the ITC at risk totalled.
+  - [ ] Test: a recorded 2B sample against seeded bills gives the expected matched, mismatched and missing rows.
+- **Done when:** importing a month's 2B lists every supplier invoice missing from the books and every bill missing from 2B.
+- **As built:**
+  - **Tables.** `pur.Gstr2bImports` keeps the file as jsonb, its period, counts and credit at risk. `pur.Gstr2bLines` holds one row per invoice on either side, with its match state, both sides' figures, the bill and a note. Both have RLS.
+  - **Parsing and matching.** `Gstr2bFile.Parse` reads the portal's B2B section. `Gstr2bMatcher.Match` is pure: it matches by GSTIN and number, exact first, then normalised; flags a date or value off by more than ₹1 as a mismatch; and totals the credit at risk.
+  - **Endpoint and screen.** `api/purchase/gstr2b` handles list, get, multipart import and delete. The Purchase › GSTR-2B reconciliation page shows the four groups and the at-risk tile.
+  - **Also.** A file generated for another GSTIN is refused.
+  - **Not matched yet.** CDNR and B2BA.
+
+### TK-117 · Compliance: TDS on purchases and receipts
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-29
+- **Issue:** [#105](https://github.com/jothi-prabaharan/Bill-Book/issues/105)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-ACC, L-PUR, L-CON, L-ACC-UI · **Depends on:** TK-115 · **Decision:** D-32, D-33
+- **Tables:** `acc.TdsSections`; lower-deduction certificate columns on `con.Contacts`
+- **Sub-tasks:**
+  - [x] Effective-dated `acc.TdsSections`, seeded; the contact's `TdsSection` becomes a reference.
+  - [x] Deduction on bill and spend-money lines at the single or aggregate threshold; `Cr TDS Payable`; lower-deduction certificates.
+  - [x] TDS challan on spend money; the 26Q data export; TDS receivable on receipts and a 26AS/AIS import-and-match.
+  - [x] Test: the aggregate threshold deducts on the bill that crosses it and not before; a certificate's rate applies within its limit; the vendor is owed the net.
+- **Done when:** a bill that takes a vendor past the year's threshold posts TDS Payable and a net payable.
+- **As built:**
+  - **Accounting.**
+    - `acc.TdsSections` is effective-dated and seeded per branch by `TdsSectionSeed` through the seed endpoint (D-32).
+    - `acc.TdsEntries` is the register. It holds one row per document that counts toward a threshold or deducts, whether the branch deducted (`Deducted`) or a customer withheld (`Suffered`).
+    - `acc.Form26asImports` and `acc.Form26asLines` hold the 26AS imports. All four tables have RLS.
+    - New system accounts: TDS Payable 2220 and TDS Receivable 1310.
+    - `TdsCalculationRepository` is pure. It handles the single and aggregate thresholds (with catch-up, or excess-only for 194Q), picks the rate from the PAN's fourth character or the 206AA rate, applies a certificate within its limit and validity, stops an advance being taxed twice, and rounds to the rupee.
+    - `TdsRepository` handles quote, register write and remove, outstanding, and the challan mark and release. `internal/tds/quote` and `internal/tds/sections/exists` are the internal endpoints. `api/tds/*` covers sections, register, outstanding, a preview quote, `26q` plus `26q/check`, and `26as`.
+  - **Ledger.**
+    - `PostLedgerRequest.Tds` carries the register row, written in the ledger's transaction.
+    - A withdrawal removes the row, and is refused (`TdsDeposited`, 409) once the row is on a challan.
+  - **Purchase.**
+    - `BillRepository` asks for the quote before stock moves. The bill stores `TdsSectionCode`, `TdsBase`, `TdsAmount` and `TdsNote`.
+    - It credits TDS Payable as a TAX leg, so the bill's control legs, and therefore its open balance, come to the net.
+  - **Spend money.**
+    - Supplier-deposit lines (source 8) deduct. The lines stay gross and `Amount` is the bank figure.
+    - `IsTdsChallan` with `ChallanNo`, `BsrCode`, `ChallanSectionCode` and `ChallanMonth` has no lines. It debits TDS Payable, must equal the outstanding amount for its section and month, and marks those rows deposited.
+  - **Receive money.** `TdsAmount`, `DeductorTan` and `TdsSectionCode` are recorded, and TDS Receivable is debited.
+  - **Allocation triggers.** They now require the lines to equal `Amount + TdsAmount` and skip challans. The Down step restores the old functions.
+  - **Master.**
+    - The contact carries a lower-deduction certificate: five columns, all or none.
+    - `internal/contacts/tds-profile`.
+    - The contact's section is checked against Accounting on save.
+    - A TDS menu entry.
+  - **Files.**
+    - The 26Q export is a zip of challans.csv and deductees.csv.
+    - The 26AS import reads the TRACES text file's Part I (D-33) and matches by TAN and amount within a rupee.
+    - The branch's PAN is read from its GSTIN.
+  - **Not built.**
+    - 27Q and section 195: a foreign-currency document is not taxed.
+    - A debit note does not reverse TDS.
+    - Interest and late fees on a challan.
+    - The section code in the 26Q export is not mapped to the utility's own codes.
+    - Rent's monthly threshold is modelled as a per-document threshold.
+
+### TK-118 · Compliance: the audit trail (edit log)
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-30
+- **Issue:** [#106](https://github.com/jothi-prabaharan/Bill-Book/issues/106)
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-KERNEL, every service lane for its migration · **Depends on:** TK-37 · **Decision:** D-34, D-35
+- **Tables:** `{schema}.EditLog` in every tenant schema
+- **Sub-tasks:**
+  - [x] `EditLogInterceptor` in `Shared.Kernel`, writing changed columns old and new in the same `SaveChanges`.
+  - [x] Per schema: the table, RLS, and a trigger refusing `UPDATE`/`DELETE` on it.
+  - [x] List every `ExecuteUpdate`/`ExecuteDelete` on an audited table and make each write its log rows.
+  - [x] A History tab component and an audit-log report.
+  - [x] Test: an edited invoice logs old and new values; an `UPDATE` on the log is refused by the database; a rolled-back save leaves no log row.
+- **Done when:** changing an invoice's price leaves a log row with the old and new price that nobody can alter.
+- **As built:**
+  - **In `TenantDbContext`'s `SaveChanges` override, not an interceptor.** An insert's key exists only after the save, and the log must commit with the change, so the override captures updates and deletes before `base.SaveChanges`, saves, materialises inserts with their generated keys, and writes the log rows with a second save — all inside one `BeginScopeAsync` scope that joins the request's transaction or opens its own. Being in the base class also meant no change to 22 `Program.cs` files. `Shared.Kernel/Audit`: `EditLog` (+ `EditOperation`, `[NotAudited]`), `EditLogWriter` (capture, materialise, root resolution), `EditLogBulk`, `EditLogReader`, `EditLogControllerBase`, `EditLogMigration`.
+  - **What a row holds:** table and key, the root document and key (the climb follows a required FK whose principal holds the rows as a collection, up to three tracked levels, so a bill line's tax lands on the bill), `Insert`/`Update`/`Delete`, `Changes` jsonb `{Column:{old,new}}`, user id, the `display_name` claim as the user name (no shared user-name lookup exists; the name is the one at the time), time, trace id and source (`Tracked`, `ExecuteUpdate`, `ExecuteDelete`). Version, created/modified columns, `CustomerId`, `OrgId` and `[NotAudited]` columns are left out; an update that changes nothing else writes no row.
+  - **All 22 tenant schemas** (D-34): one `EditLog` migration each, which calls `EditLogMigration.Up` for the FORCEd RLS policy and `editlog_append_only()` behind a row trigger on `UPDATE OR DELETE` and a statement trigger on `TRUNCATE` (SQLSTATE 42501). A trigger rather than a grant, so it binds a superuser too. **Any future squash must carry these calls forward by hand.**
+  - **Bulk statements:** 49 `ExecuteUpdate`/`ExecuteDelete` sites on audited tables use `ExecuteUpdateLoggedAsync` / `ExecuteDeleteLoggedAsync` (read, run, read back by key, save the log). Left as plain statements, each deliberately: the `StockMovements` costing and ledger-queue claims, `ItemStock`/`CostLayers`/`ItemSerials` running values, `RecostingAdjustments` completion, the `NumberingSeries` counter, `ReportScheduleRuns` claims, the e-invoice retry lease, `BlankPhoneBackfill`, and the non-tenant `mst`/`ntf` tables. `[NotAudited]` on `Form26asImport.RawText`, `Gstr2bImport.RawJson`, `Form26asLine`, `Gstr2bLine`, `CampaignRecipient` and `CampaignLink`.
+  - **Read side:** `GET api/edit-log/{cluster}/history/{entity}/{key}`, `GET api/edit-log/{cluster}` (from, to, userId, entity, paging), `…/entities` and `…/users`, in every service under that module's own view permission and app; 22 gateway routes (and the missing `/api/tds` route from TK-117).
+  - **Frontend:** `bb-edit-history` and `bb-edit-log-report` in ui-components. History on invoices, bills and manual journals (folded section) and on items and contacts (a tab) — D-35. **Settings › Audit log** is a new shared lib, `@bill-book/settings-audit-log`, mounted by every app through `sharedSettingsRoutes`, with each app's areas chosen by `APP_ID`; menu 1139 under Users and access, shared by every app (`AuditLogMenu`, permission 478).
+  - **Known limit:** lines removed by a database cascade when their header is deleted are not logged one by one; the header's delete is.
+  - Tests: `Shared.Kernel.Tests/EditLogWriterTests.cs` (added the Npgsql EF provider to that project to build a model), `Sales.Api.Tests/EditLogTests.cs`, `edit-history.model.spec.ts`, `audit-areas.spec.ts`. The RLS audit in every suite now covers `EditLog`.
+
+### TK-119 · Compliance: MSME payments and the compliance calendar
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-PUR, L-RPT, L-MST, L-NTF · **Depends on:** TK-115 · **Decision:** —
+- **Tables:** `mst.ComplianceDueDates`; per-branch applicability
+- **Sub-tasks:**
+  - [x] An MSME vendor's bill refuses a due date past 45 days; the MSME ageing report and year-end disallowance figure; the half-yearly export.
+  - [x] Seeded, operator-editable due-date rules; per-branch applicability; reminders through Notification; the next three filings on Home.
+  - [x] Test: a 60-day term on an MSME bill is refused; the calendar computes the right date for a rule across a month end.
+- **Done when:** the Home page shows the next GSTR-1 due date, and an MSME bill past 45 days appears on the ageing report.
+
+### TK-120 · Campaigns: templates, audiences, consent and unsubscribe
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CUS, L-CUS-UI, L-RPT · **Depends on:** TK-38 · **Decision:** —
+- **Where:** `docs/Modules.md`, "Customer service (`cus`)" → "Campaigns and marketing automation".
+- **Tables:** `cus.EmailTemplates`, `cus.Audiences`, `cus.EmailConsents`
+- **Sub-tasks:**
+  - [x] The three tables with RLS; template bodies sanitised on save.
+  - [x] Audience rules over leads, contacts (through Master) and purchase history (Reporting's new `POST internal/contacts/segment`); a live count.
+  - [x] `GET/POST /api/public/unsubscribe/{token}` (anonymous, signed token, exempted in the guard test with its reason); staff can mark an address unsubscribed.
+  - [x] Test: an unsubscribed address never resolves into an audience; a tampered token is refused; a segment by last invoice date returns the right contacts.
+  - [x] Standard delivery sub-tasks (section 5).
+- **Notes:** Tests written in `backend/tests/Customer.Api.Tests/CampaignTests.cs` and `backend/tests/Reporting.Api.Tests/ContactSegmentTests.cs`.
+- **Done when:** an address that clicked unsubscribe is excluded from every audience that would otherwise include it.
+
+### TK-121 · Campaigns: scheduled sending and tracking
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CUS, L-CUS-UI, L-NTF, L-KERNEL · **Depends on:** TK-120, TK-19 · **Decision:** D-27
+- **Tables:** `cus.Campaigns`, `cus.CampaignRecipients`, `cus.CampaignLinks`
+- **Sub-tasks:**
+  - [x] Schedule, claim (`Scheduled → Sending`), resolve and freeze recipients, suppress, send in batches through the sending path D-27 names, message id `cmp-{campaignId}-{recipientId}`.
+  - [x] `EmailDelivered`/`EmailFailed` from Notification; hard bounces mark consent `Bounced`.
+  - [x] Click redirects and an open pixel; `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
+  - [x] `crm.approve` above the branch's audience-size limit.
+  - [x] Test: a campaign sent twice (a crashed worker) sends each recipient once; an address appearing as lead and contact gets one copy; a click is recorded and redirected.
+- **Notes:**
+  - `cus.Campaigns`, `cus.CampaignRecipients`, `cus.CampaignLinks` created with PostgreSQL RLS in migration `20260929182920_AddCampaignsAndTracking`.
+  - `CampaignSendingWorker` hosted service claims due scheduled campaigns (`Scheduled -> Sending` guarded update) and dispatches batches.
+  - Frozen recipients deduplicated across leads and contacts with unique index on `(OrgId, CampaignId, Email)`. Suppressed emails (Unsubscribed/Bounced) never sent.
+  - Idempotent sending uses message id `cmp-{campaignId}-{recipientId}`.
+  - RFC 2822 `List-Unsubscribe` and `List-Unsubscribe-Post` headers added to `IEmailSender` and `SmtpMailer`.
+  - Click redirects (`/api/public/c/{token}`) and transparent 1x1 tracking pixel (`/api/public/track/open/{token}.png`) using HMAC-SHA256 signed tokens (`ICampaignTrackingTokenSigner`).
+  - Delivery feedback webhook `/internal/campaigns/delivery-feedback` handles `EmailDelivered` and `EmailFailed` (permanent failures update consent to `Bounced`).
+  - `crm.approve` required when audience size exceeds approval threshold (`Campaigns:ApprovalThreshold`).
+  - Unit tests written in `backend/tests/Customer.Api.Tests/CampaignSendingAndTrackingTests.cs`.
+- **Done when:** a scheduled campaign reaches every subscribed recipient exactly once and none of the unsubscribed.
+
+### TK-122 · Campaigns: marketing automation sequences
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CUS, L-CUS-UI · **Depends on:** TK-121 · **Decision:** —
+- **Tables:** `cus.Automations`, `cus.AutomationSteps`, `cus.AutomationEnrolments`
+- **Sub-tasks:**
+  - [x] Triggers (lead created by source, lead status changed, contact became a customer); wait and send steps; exits (unsubscribed, converted, lost).
+  - [x] The hosted service advances due enrolments with a guarded claim; message id `aut-{enrolmentId}-{step}`.
+  - [x] Test: a lead converted during a wait exits before the next send; a restarted worker does not send a step twice.
+- **Done when:** a new lead from the website source receives the welcome email and, three days later, the follow-up, unless converted first.
+
+### TK-123 · Campaigns: reports
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
+- **Group:** E2 · Builds from the approved designs
+- **Lanes:** L-CUS, L-RPT · **Depends on:** TK-121 · **Decision:** —
+- **Sub-tasks:**
+  - [x] Per campaign and across campaigns: recipients, suppressed, sent, failed, opened (marked approximate), clicked, unsubscribed, conversions within 30 days and their first invoice total.
+  - [x] Test: conversions count only leads converted within the window after the send.
+- **Done when:** a sent campaign shows its clicks and conversions.
+
+### TK-124 · Every service reads enums by name (JSON binding)
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-PUR, L-ACC, L-INV, L-MST, L-CON, L-CUS, L-RPT, L-PRT · **Depends on:** — · **Decision:** —
+- **Where:** each `{Service}.Api/Program.cs` `AddControllers()`; Sales' fix in `Sales.Api/Program.cs` (TK-40).
+- **State (2026-09-24):** only Sales registers `JsonStringEnumConverter`. The screens send enum fields as names (the shared line grid sends `lineType: "Stock"` and `taxTreatment: "Taxable"` to Purchase exactly as to Sales), and the default options refuse a name for an enum, so those saves fail model binding with a 400.
+- **Sub-tasks:**
+  - [x] Register `JsonStringEnumConverter` in every service's `AddControllers().AddJsonOptions(...)`, or once in a `Shared.Kernel` extension every service calls.
+  - [x] Check each service's responses for enum-typed properties that a screen reads as a number, and fix the screen if one does (none were found in Sales).
+  - [x] Test: per service, a request body with an enum by name binds (a `WebApplicationFactory` test, or a test of the shared extension's options).
+- **Done when:** a purchase bill saved from its screen is accepted.
+
+### TK-125 · Name the Student, MaintenanceContract and Employee services after what they own
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · a rename, the existing tests were renamed with it, not run
+- **Issue:** [#78](https://github.com/jothi-prabaharan/Bill-Book/issues/78)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-SIS, L-AMC, L-HRM, L-MST, L-KERNEL, the school and HR libs · **Depends on:** — · **Decision:** —
+- **Why:** the owner's request of 25 September 2026: a service is named for what it is, not for its schema. `Student` becomes `Student`, `MaintenanceContract` becomes `MaintenanceContract`, `Employee` becomes `Employee`.
+- **Sub-tasks:**
+  - [x] Folders, projects, namespaces, DbContexts, seeders, clients, configuration keys, test projects and their `*_TEST_DB` variables, the solution, and the docs.
+  - [x] Frontend libs `libs/student`, `libs/maintenance-contract`, `libs/employee`, with their aliases and Nx project names.
+  - [x] Kept as they are, because they are stored data or public contracts: the Postgres schemas, migration ids, URL routes, permission and menu codes, and the AMC domain entities.
+- **Done when:** nothing in code or config names a service by its schema, and the backend and all app builds are clean.
+- **As built:**
+  - The entity classes `Student` and `Employee` became `StudentRecord` and `EmployeeRecord`. A class named like its root namespace (`Student.Entity.TableEntities.Student`) can't be named from inside that namespace, the same reason WorkOrder's header is `WorkOrderDocument`. Their DbSets and tables are unchanged.
+  - Renamed along with them: `IStudentClient`, `IEmployeeClient`, `IEmployeeApproverClient`, `StudentRefusedException`, the `Student:BaseUrl`, `Employee:BaseUrl` and `MaintenanceContract:BaseUrl` settings, Master's `Seeding:Student`, `Seeding:Employee` and `Seeding:MaintenanceContract`, and `STUDENT_TEST_DB`, `EMPLOYEE_TEST_DB` and `MAINTENANCE_CONTRACT_TEST_DB`. In the frontend, `StudentApiService`, `EmployeeApiService` and `MaintenanceContractApiService`, `studentRoutes`, `employeeRoutes` and `maintenanceContractRoutes`, and the `bb-student-*`, `bb-employee-*` and `bb-maintenance-contract-*` selectors.
+  - **Deliberately kept:** the schemas `sis`, `hrm` and `amc`; the migration ids (`InitialSisSchema`, `SisMenus`, `AmcMenu`, `EmployeeAndHrmModules`), so a migrated database doesn't reapply them; the URL routes `api/sis`, `api/hrm` and `api/amc`, and the gateway clusters; the `sis.*`, `hrm.*` and `amc.*` permission and menu codes, which are seeded data; `WorkOrderSource.Amc`; and the AMC domain names (`AmcContract`, `AmcVisit`, `AmcRules`, the renewal reminder).
+  - **Environment settings to rename by hand**, where a machine sets them: `Sis__BaseUrl`, `Hrm__BaseUrl`, `Amc__BaseUrl`, `Seeding__Sis`, `Seeding__Hrm` and `Seeding__Amc`. None is in `deploy/`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` reports no changes for Student, Employee, MaintenanceContract, WorkOrder and both Master contexts. Frontend typecheck and lint pass, and the school, hrms, payroll, portal and web builds are clean.
+
+### TK-126 · `BusinessType` and `AddOn` replace `App` and `Vertical`
+- [ ] open
+- **Issue:** [#108](https://github.com/jothi-prabaharan/Bill-Book/issues/108)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-KERNEL, L-MST · **Depends on:** — · **Decision:** D-36
+- **Where:** `backend/shared/Shared.Kernel/Apps/App.cs`, `backend/Api/Master/Master.Entity/Enums/Vertical.cs`
+- **Sub-tasks:**
+  - [ ] `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) and `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling).
+  - [ ] `AddOnRules.Allowed(BusinessType?)`: Hrms and Payroll for every type and for none; Crm, FixedAssets, ClientPortal, Budget and RecurringBilling for all four types; Pos and EInvoicing for General, Pharma and Jewellery.
+  - [ ] Remove `App` and `AppRules`.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** nothing in code names `App`, and the solution builds with `-warnaserror`.
+
+### TK-127 · Master: branch business type, add-ons, one licence and the token claims
+- [ ] open
+- **Issue:** [#109](https://github.com/jothi-prabaharan/Bill-Book/issues/109)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-126 · **Decision:** D-36
+- **Where:** `Organization`, `License`, `Role`, `RefreshToken`, `Menu`, `Permission`, `JwtTokenRepository`, `MenuRepository`, `TradeScopeRepository`, `TenantSeeder`
+- **Sub-tasks:**
+  - [ ] Migration: drop `License.App`, `Role.App`, `RefreshToken.App`; add `Organization.BusinessType` and `Organization.AddOns`; gating columns on menus and permissions. `dotnet ef migrations has-pending-model-changes` clean.
+  - [ ] A branch needs a business type, an add-on, or both; an add-on the type does not allow is refused.
+  - [ ] Login, select-branch, signup, `api/me/context`: no `App` parameter. The token carries `business_type` and `add_ons` instead of `app`.
+  - [ ] Menus and seeds follow the branch: no business type means no retail or school seeds, only the enabled add-ons.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a branch with only Hrms gets only HRMS menus and seeds.
+
+### TK-128 · `[RequireBusinessType]` and `[RequireAddOn]` on every controller
+- [ ] open
+- **Issue:** [#110](https://github.com/jothi-prabaharan/Bill-Book/issues/110)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-KERNEL, every service lane · **Depends on:** TK-127 · **Decision:** D-36
+- **Where:** `Shared.Kernel/Internal/RequireAppAttribute.cs`, `EndpointGuardAudit.cs`
+- **Sub-tasks:**
+  - [ ] Replace `[RequireApp]` in all services; tag the Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget and RecurringBilling controllers.
+  - [ ] Gate the budget check on bills (`BillBudgetCheckRepository`) and the budget cards TK-108 and TK-109 by the Budget add-on.
+  - [ ] `EndpointGuardAudit` fails a controller with neither guard.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the audit passes in every service and an endpoint of a disabled add-on answers 403.
+
+### TK-129 · Support channel by plan: text on Basic, calls on Pro
+- [ ] open
+- **Issue:** [#111](https://github.com/jothi-prabaharan/Bill-Book/issues/111)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-CUS, L-MST · **Depends on:** TK-127 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Support tickets stay in every branch. The channel follows `PlanType`: Basic is text only; call support needs Pro.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a Basic customer cannot choose the call channel.
+
+### TK-130 · `apps/web` serves HRMS, Payroll and School
+- [ ] open
+- **Issue:** [#112](https://github.com/jothi-prabaharan/Bill-Book/issues/112)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-WEB, L-UI · **Depends on:** TK-127 · **Decision:** D-36
+- **Where:** `frontend/apps/{hrms,payroll,school}/src/app/app.routes.ts`, `apps/web/src/app/app.routes.ts`, `libs/app-shell`, `libs/shared/auth/src/lib/app-id.ts`
+- **Sub-tasks:**
+  - [ ] Mount those route tables in `apps/web` gated by business type and add-on.
+  - [ ] Remove `APP_ID`, `APP_URLS` and the app switcher.
+  - [ ] Make `shell-screens.ts` and the topbar "New" menu follow the menu API.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a branch with only Hrms sees only HRMS pages.
+
+### TK-131 · Merge `apps/admin` into `apps/web`: an Admin portal button
+- [ ] open
+- **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-WEB, L-ADM · **Depends on:** TK-130 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Mount the admin routes under `/admin/*`, each requiring `platform.*`.
+  - [ ] The dashboard shows an Admin portal button only to a platform operator (`platform.view`); it opens admin mode with a Back to dashboard button.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** only an operator sees the button and the pages, and the backend still refuses anyone else.
+
+### TK-132 · Merge `apps/portal` into `apps/web`
+- [ ] open
+- **Issue:** [#114](https://github.com/jothi-prabaharan/Bill-Book/issues/114)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-WEB, L-PTL · **Depends on:** TK-130 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Mount the portal pages under `/portal/*` for portal contacts (`[RequirePortalAccess]`), needing the ClientPortal add-on.
+  - [ ] A portal contact sees no staff menus.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a portal contact signs in to web and sees only their statement pages.
+
+### TK-133 · Settings: a branch's business type and add-ons
+- [ ] open
+- **Issue:** [#115](https://github.com/jothi-prabaharan/Bill-Book/issues/115)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-MST, L-UI, the settings lib · **Depends on:** TK-127, TK-130 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] A screen to choose the business type and switch on the add-ons its type allows; disabling never deletes data.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a School branch is offered Hrms but not Pos.
+
+### TK-134 · Retire the five extra apps: docs, release notes and deploy
+- [ ] open
+- **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
+- **Group:** F · Phase 3: POS
+- **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
+  - [ ] Update `CLAUDE.md`, `docs/Modules.md`, the docs app pages and manifest, `release-notes.md` and `deploy/*`.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
 
 ## 3. Decisions from the owner
 
