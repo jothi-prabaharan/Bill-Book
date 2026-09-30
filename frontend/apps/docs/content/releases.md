@@ -30,6 +30,18 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+
+### Added
+- A branch can now be configured with a specific business type (General, Pharma, Jewellery, School) and modular add-ons (HRMS, Payroll, POS, CRM, etc.), governing which features are available to it.
+
+### Changed
+- The product is now a single unified application instead of separate portals. Admin tools, customer statements, and all add-ons are accessed from the same unified workspace.
+
+### Removed
+- The separate URLs and apps for HRMS, Payroll, School, Admin, and the Customer Portal have been retired and merged into the main application.
+
+
+## Unreleased
 - **Added**: **Admin portal (D-36, TK-131).** The platform administration pages are now integrated directly into the web application under the /admin path. Platform operators will see an 'Admin portal' button on their dashboard, which opens a dedicated admin view with a 'Back to dashboard' button. Access remains strictly gated by the platform.view permission.
 - **Changed**: **Unified UI serving HRMS, Payroll and School (D-36, TK-130).** The separate apps (HRMS, Payroll, School) have been unified into a single \web\ app. The UI now dynamically mounts navigation routes and menus based on the branch's business type and enabled add-ons instead of relying on a hardcoded \APP_ID\. The topbar no longer shows an app switcher, and the 'New' menu reflects the current branch's capabilities.
 - **Added**: **Support channel gated by plan tier (D-36, TK-129).** Support tickets now carry a channel (Web, Email, Chat or Call). Call support is restricted to Pro and Elite plans — Basic and Standard customers can only use text-based channels. The ticket list shows the channel, and the form hides the Call option when the plan does not allow it.
@@ -439,11 +451,24 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ---
 
+## Unreleased
+
+### Added
+- A branch can now be configured with a specific business type (General, Pharma, Jewellery, School) and modular add-ons (HRMS, Payroll, POS, CRM, etc.), governing which features are available to it.
+
+### Changed
+- The product is now a single unified application instead of separate portals. Admin tools, customer statements, and all add-ons are accessed from the same unified workspace.
+
+### Removed
+- The separate URLs and apps for HRMS, Payroll, School, Admin, and the Customer Portal have been retired and merged into the main application.
+
+
 ## Versioning
 
 Semantic versioning. **Major** for a breaking change to the API or data model, **minor** for new capability, **patch** for fixes.
 
 Releases are cut from `main`; the version in `package.json` and the heading here must match.
+
 
 
 

@@ -1,7 +1,7 @@
 # Deploying to Azure
 
 Eight APIs and a gateway on Container Apps, an always-on costing worker beside
-them, PostgreSQL Flexible Server with no public address, and the four web apps on
+them, PostgreSQL Flexible Server with no public address, and the two web apps on
 Static Web Apps. Secrets, files and events go to Key Vault, Blob Storage and
 Service Bus, all reached by managed identity — there is no connection string with
 a key in it anywhere in the deployment.
@@ -33,7 +33,7 @@ you.
 | Storage account | 1 | ZRS, shared-key access **off**, versioning and 14-day soft delete |
 | Service Bus namespace | 1 | Standard (topics need it), local auth **off**, one topic per event |
 | Container Registry | 1 | Basic, admin user off |
-| Static Web Apps | 4 | Free tier: web, portal, admin, docs |
+| Static Web Apps | 4 | Free tier: web, docs |
 | Managed identities | 11 | one per workload |
 | VNet, private DNS zone, Log Analytics | 1 each | |
 
@@ -180,7 +180,7 @@ mistake rather than auditing for it.
 
 **The web apps find the gateway through `config.js`, not a rebuild.** Step 5
 writes `window.__BB_CONFIG__ = { apiBaseUrl: … }` into each app, and the gateway's
-CORS allows exactly the three Static Web App origins. Serving them from a custom
+CORS allows exactly the two Static Web App origins. Serving them from a custom
 domain means adding that origin to `extraAllowedOrigins`, or every API call from
 it is blocked by the browser.
 
@@ -236,3 +236,4 @@ control plane lives there; content is served from Microsoft's global edge.
   endpoints would take them off the internet entirely.
 - **A staging environment.** Same template, a second resource group and a second
   GitHub environment.
+

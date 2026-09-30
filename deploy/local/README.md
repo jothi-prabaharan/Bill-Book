@@ -17,7 +17,7 @@ PC**, or **split it across PCs**, one part each:
 
 | PC (example address) | Runs | Connects to |
 |---|---|---|
-| **Web** (192.168.1.24) | nginx serving the four web apps, and the Cloudflare Tunnel | Gateway |
+| **Web** (192.168.1.24) | nginx serving the two web apps, and the Cloudflare Tunnel | Gateway |
 | **Gateway** (192.168.1.23) | the gateway every API call passes through | Services, Database |
 | **Services** (192.168.1.21) | the eight services, and the jobs that set up the database | Database, File server |
 | **Worker** (192.168.1.22) | the costing worker, which prices stock movements | Database, Services |
@@ -435,3 +435,4 @@ docker compose up migrate
 - **Emails** (invitations, password resets) need a mailbox. Set one in the app
   under **Settings → Email and SMTP** after signing in. A Gmail account works with an
   [app password](https://myaccount.google.com/apppasswords).
+

@@ -75,7 +75,7 @@ export const DOCS: DocSection[] = [
   },
   {
     title: 'School',
-    // The School app (S0 onward): students, admissions, attendance, fees and
+    // The School add-on (S0 onward): students, admissions, attendance, fees and
     // maintenance, joining this page as each stage is built.
     pages: [{ slug: 'school', title: 'School', status: 'partial' }],
   },
@@ -98,3 +98,4 @@ export const DOCS: DocSection[] = [
 ];
 
 export const ALL_PAGES: DocPage[] = DOCS.flatMap((s) => s.pages);
+

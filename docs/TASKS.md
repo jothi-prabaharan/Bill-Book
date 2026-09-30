@@ -4391,7 +4391,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a School branch is offered Hrms but not Pos.
 
 ### TK-134 · Retire the five extra apps: docs, release notes and deploy
-- [ ] open
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
@@ -4611,6 +4611,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 
