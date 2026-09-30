@@ -148,7 +148,7 @@ describe('ShellBreadcrumbComponent (libs/app-shell)', () => {
     expect(clickedItem).toEqual(item);
   });
   it('CRUMB-11: Admin portal button appears only for platform operators', () => {
-    mockRouter.url = '/dashboard';
+    
     
     // Default mock returns false, so button should not be present in state
     // Note: The template actually renders the button based on `auth.has()`,
@@ -166,4 +166,6 @@ describe('ShellBreadcrumbComponent (libs/app-shell)', () => {
     expect(comp['auth'].has('platform.view')).toBe(false);
   });
 });
+
+
 

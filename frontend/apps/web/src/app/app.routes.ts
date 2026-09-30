@@ -36,6 +36,7 @@ export const appRoutes: Routes = [
   // /expired, a page the user cannot open shows /no-access, and a page that
   // declares no `data.access` is refused. No route here lists a guard.
   ...adminRoutes,
+  { path: 'portal', loadChildren: () => import('@bill-book/portal-ui').then((m) => m.portalRoutes) },
   shellRoutes({
     
     children: [
@@ -316,4 +317,5 @@ export const appRoutes: Routes = [
     ],
   }),
 ];
+
 

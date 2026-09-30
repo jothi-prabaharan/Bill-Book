@@ -2,6 +2,7 @@ import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { authInterceptor } from '@bill-book/auth';
+import { portalTokenInterceptor } from '@bill-book/portal-ui';
 
 import {
   API_BASE_URL,
@@ -23,7 +24,8 @@ export const appConfig: ApplicationConfig = {
     { provide: API_BASE_URL, useValue: resolveApiBaseUrl(environment.apiBaseUrl) },
 
     // Order matters: rewrite the URL onto the configured origin first, then
-    // attach the bearer token.
-    provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor])),
+    // attach the bearer token. portalTokenInterceptor attaches the portal token
+    // (only for /api/portal/ requests) and must run after authInterceptor.
+    provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor, portalTokenInterceptor])),
   ],
 };

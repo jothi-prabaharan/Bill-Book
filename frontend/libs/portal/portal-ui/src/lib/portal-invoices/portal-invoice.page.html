@@ -1,0 +1,67 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/portal/invoices">All invoices</a>
+    <a class="link" routerLink="/portal/dashboard">Your account</a>
+  </nav>
+
+  @if (error(); as message) {
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
+  }
+
+  @if (detail(); as d) {
+    <div class="row">
+      <h1>{{ d.invoice.documentNo }}</h1>
+      <span [class]="'tone-' + statusTone(d.invoice.status)">{{ statusLabel(d.invoice.status) }}</span>
+    </div>
+    <p class="muted">
+      {{ d.invoice.documentDate | date: 'mediumDate' }}
+      @if (d.invoice.dueDate) { · due {{ d.invoice.dueDate | date: 'mediumDate' }} }
+    </p>
+
+    <bb-data-grid
+      [columns]="linesColumns"
+      [data]="d.lines"
+      stackOnPhone
+      flush
+      [sortable]="false"
+      [showColumnFilters]="false"
+      [showCount]="false"
+      [paged]="false"
+    >
+      <ng-template bbCellTemplate="quantity" let-l>
+        {{ l.quantity | number: '1.0-4' }}
+      </ng-template>
+      <ng-template bbCellTemplate="unitPrice" let-l>
+        {{ l.unitPrice | number: '1.2-2' }}
+      </ng-template>
+      <ng-template bbCellTemplate="taxAmount" let-l>
+        {{ l.taxAmount | number: '1.2-2' }}
+      </ng-template>
+      <ng-template bbCellTemplate="lineTotal" let-l>
+        {{ l.lineTotal | number: '1.2-2' }}
+      </ng-template>
+    </bb-data-grid>
+
+    <section class="cards">
+      <span class="row"><span>Subtotal</span><span>{{ d.subTotal | number: '1.2-2' }}</span></span>
+      @if (d.discountAmount) {
+        <span class="row"><span>Discount</span><span>−{{ d.discountAmount | number: '1.2-2' }}</span></span>
+      }
+      <span class="row"><span>Tax</span><span>{{ d.taxAmount | number: '1.2-2' }}</span></span>
+      @if (d.roundOffAmount) {
+        <span class="row"><span>Rounding</span><span>{{ d.roundOffAmount | number: '1.2-2' }}</span></span>
+      }
+      <span class="row"><strong>Total</strong><strong>{{ d.invoice.currencyCode }} {{ d.invoice.totalAmount | number: '1.2-2' }}</strong></span>
+      @if (d.invoice.outstandingAmount !== null && d.invoice.status !== 'Void') {
+        <span class="row"><span>Still owed</span><span>{{ d.invoice.outstandingAmount | number: '1.2-2' }}</span></span>
+      }
+    </section>
+
+    <section>
+      <button type="button" class="button" (click)="download()" [disabled]="downloading()">
+        {{ downloading() ? 'Downloading…' : 'Download PDF' }}
+      </button>
+    </section>
+  }
+</main>
+

@@ -65,7 +65,11 @@ foreach ($app in $frontendApps) {
     }
 
     npx nx build $app -c $envName --base-href "/$app/"
-    Copy-Item -Path "$repoPath\frontend\dist\apps\$app" -Destination "$basePath\frontend\$app" -Recurse -Force
+    if (Test-Path "$repoPath\frontend\dist\apps\$app\browser") {
+        Copy-Item -Path "$repoPath\frontend\dist\apps\$app\browser\*" -Destination "$basePath\frontend\$app" -Recurse -Force
+    } else {
+        Copy-Item -Path "$repoPath\frontend\dist\apps\$app\*" -Destination "$basePath\frontend\$app" -Recurse -Force
+    }
     
     $webConfigContent = @"
 <?xml version="1.0" encoding="UTF-8"?>

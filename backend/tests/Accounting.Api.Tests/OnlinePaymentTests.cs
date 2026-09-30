@@ -80,7 +80,7 @@ public sealed class OnlinePaymentTests
         await using Harness h = await Harness.CreateAsync(_postgres);
         StartPaymentResult started = await h.StartAsync(Contact, 500m, extra: 50m);
         Assert.Equal(StartPaymentOutcome.Ok, started.Outcome);
-        Assert.Equal($"/pay/sandbox/{started.OnlinePaymentId}", started.CheckoutUrl);
+        Assert.Equal($"/portal/pay/sandbox/{started.OnlinePaymentId}", started.CheckoutUrl);
 
         OnlinePayment payment = await h.Db.OnlinePayments.AsNoTracking().SingleAsync();
         Assert.StartsWith("op_", payment.Reference);
@@ -270,3 +270,4 @@ public sealed class OnlinePaymentTests
         public ValueTask DisposeAsync() => Db.DisposeAsync();
     }
 }
+

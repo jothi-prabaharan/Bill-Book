@@ -1,0 +1,65 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/portal/invoices">Invoices</a>
+    <a class="link" routerLink="/portal/statement">Statement</a>
+    <a class="link" routerLink="/portal/quotes">Quotes</a>
+    <a class="link" routerLink="/portal/tickets">Support</a>
+    <a class="link" routerLink="/portal/pay">Pay online</a>
+  </nav>
+
+  <h1>Your account</h1>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+  @if (error(); as message) {
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
+  }
+
+  @if (summary(); as s) {
+    <div class="figures">
+      <div class="figure">
+        <span class="muted">Outstanding</span>
+        <strong>{{ s.outstanding | number: '1.2-2' }}</strong>
+        <span class="muted">after any advance you have paid</span>
+      </div>
+      <div class="figure">
+        <span class="muted">Overdue</span>
+        <strong [class.tone-danger]="s.overdue > 0">{{ s.overdue | number: '1.2-2' }}</strong>
+      </div>
+      <div class="figure">
+        <span class="muted">Traded this year</span>
+        <strong>{{ s.tradeValueThisYear | number: '1.2-2' }}</strong>
+        <span class="muted">since {{ s.financialYearStart | date: 'mediumDate' }}</span>
+      </div>
+      <div class="figure">
+        <span class="muted">Traded in all</span>
+        <strong>{{ s.tradeValueAllTime | number: '1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <section>
+      <h2>Recent documents</h2>
+      @if (s.recent.length === 0) {
+        <p class="muted">Nothing yet.</p>
+      } @else {
+        <div class="cards">
+          @for (d of s.recent; track d.kind + d.id) {
+            @if (d.kind === 'Invoice') {
+              <a class="card" [routerLink]="['/invoices', d.id]">
+                <span class="row"><strong>{{ d.documentNo }}</strong><span>{{ d.totalAmount | number: '1.2-2' }}</span></span>
+                <span class="muted">Invoice · {{ d.documentDate | date: 'mediumDate' }}</span>
+              </a>
+            } @else {
+              <div class="card">
+                <span class="row"><strong>{{ d.documentNo }}</strong><span>{{ d.totalAmount | number: '1.2-2' }}</span></span>
+                <span class="muted">Credit note · {{ d.documentDate | date: 'mediumDate' }}</span>
+              </div>
+            }
+          }
+        </div>
+      }
+    </section>
+  }
+</main>
+

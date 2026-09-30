@@ -210,7 +210,7 @@ public sealed class OnlinePaymentRepository
         await _db.SaveChangesAsync(ct);
 
         return new StartPaymentResult(
-            StartPaymentOutcome.Ok, payment.OnlinePaymentId, order.CheckoutUrl ?? $"/pay/sandbox/{payment.OnlinePaymentId}");
+            StartPaymentOutcome.Ok, payment.OnlinePaymentId, order.CheckoutUrl ?? $"/portal/pay/sandbox/{payment.OnlinePaymentId}");
     }
 
     /// <summary>The contact's payment and what became of it, or null when it is not theirs.</summary>
@@ -434,3 +434,4 @@ public sealed class OnlinePaymentRepository
     /// <summary>One invoice the payment settles, as stored in <see cref="OnlinePayment.Allocations"/>.</summary>
     public sealed record AllocationLine(string Code, long InvoiceId, decimal Amount);
 }
+

@@ -1,0 +1,49 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/portal/dashboard">Your account</a>
+    <a class="link" routerLink="/portal/invoices">Invoices</a>
+    <a class="link" routerLink="/portal/quotes">Quotes</a>
+  </nav>
+
+  <div class="row">
+    <h1>Support</h1>
+    @if (!raising()) {
+      <button type="button" class="button" (click)="raising.set(true)">New ticket</button>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
+  }
+
+  @if (raising()) {
+    <section class="card">
+      <bb-text-input label="Subject" name="subject" [(ngModel)]="subject" [maxlength]="200" />
+      <bb-textarea label="What do you need help with?" name="description" [(ngModel)]="description" [maxlength]="4000" [rows]="5" />
+      <span class="row">
+        <button type="button" class="button" (click)="raise()" [disabled]="busy()">Raise ticket</button>
+        <button type="button" class="link" (click)="raising.set(false)" [disabled]="busy()">Cancel</button>
+      </span>
+    </section>
+  }
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+  @if (!loading() && tickets().length === 0 && !raising()) {
+    <p class="muted">You have not raised any tickets.</p>
+  }
+
+  <section class="cards">
+    @for (t of tickets(); track t.ticketId) {
+      <a class="card" [routerLink]="['/tickets', t.ticketId]">
+        <span class="row"><strong>{{ t.subject }}</strong><span>{{ statusLabel(t.status) }}</span></span>
+        <span class="muted">
+          Raised {{ t.raisedAt | date: 'mediumDate' }}
+          @if (t.lastMessageAt) { · last message {{ t.lastMessageAt | date: 'medium' }} }
+        </span>
+      </a>
+    }
+  </section>
+</main>
+
