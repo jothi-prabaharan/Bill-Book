@@ -4,7 +4,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AuthService } from '@bill-book/auth';
 
 describe('OrganizationsPage (TK-133)', () => {
-  let component: any;
+  let component: OrganizationsPage;
   let fixture: ComponentFixture<OrganizationsPage>;
 
   beforeEach(async () => {
@@ -25,15 +25,22 @@ describe('OrganizationsPage (TK-133)', () => {
   });
 
   it('allows Hrms but not Pos for a School branch', () => {
-    component.form = { businessType: 'School', addOns: '' };
+    component.form = { businessType: 'School', addOns: 'None' } as any;
     
-    expect(component.isAddOnAllowed('Hrms')).toBe(true);
-    expect(component.isAddOnAllowed('Pos')).toBe(false);
+    expect(component['isAddOnAllowed']('Hrms')).toBe(true);
+    expect(component['isAddOnAllowed']('Pos')).toBe(false);
   });
 
   it('allows Pos for a General branch', () => {
-    component.form = { businessType: 'General', addOns: '' };
+    component.form = { businessType: 'General', addOns: 'None' } as any;
     
-    expect(component.isAddOnAllowed('Pos')).toBe(true);
+    expect(component['isAddOnAllowed']('Pos')).toBe(true);
   });
 });
+
+
+
+
+
+
+

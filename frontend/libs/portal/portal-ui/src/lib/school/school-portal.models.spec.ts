@@ -11,3 +11,5 @@ describe('school portal models (TK-69)', () => {
   });
 });
 
+
+

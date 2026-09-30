@@ -12,9 +12,10 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
+    "types": ["node", "jest"],
     "allowJs": true,
     "noEmit": true
   },
   "include": ["apps/**/*.ts", "libs/**/*.ts", "*.mjs"]
 }
+
