@@ -1,0 +1,27 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.error { color: #c0392b; }
+.notice { color: #187a4b; }
+.hint { color: #6a6f80; font-size: .78rem; margin: .3rem 0 1rem; }
+
+.panel { margin-top: 1.25rem; border: 1px solid #e2e4ea; border-radius: 10px; padding: 1rem; }
+.panel h2 { margin: 0 0 .75rem; font-size: 1rem; }
+
+.fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .9rem; align-items: start; margin-bottom: 1rem; }
+.actions { grid-column: 1 / -1; }
+
+.link { background: none; border: 0; color: #3557d6; cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
+button:not(.link) { padding: .5rem .9rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+
+.rates { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.rates .num { text-align: right; font-variant-numeric: tabular-nums; }
+.rates .empty { color: #8a8f9e; text-align: center; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* At phone width the form stacks and each row becomes a card (the 360px rule). */
+@media (max-width: 700px) {
+  .fields { grid-template-columns: 1fr; }
+  .panel { border-radius: 0; margin-left: -1rem; margin-right: -1rem; }
+  .rates .num { text-align: right; }
+}

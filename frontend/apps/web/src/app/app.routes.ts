@@ -1,3 +1,4 @@
+import { adminRoutes } from '@bill-book/admin-ui';
 import { Routes } from '@angular/router';
 import {
   AcceptInvitationPage,
@@ -34,6 +35,7 @@ export const appRoutes: Routes = [
   // The shell attaches its own guards (TK-44): an expired licence lands on
   // /expired, a page the user cannot open shows /no-access, and a page that
   // declares no `data.access` is refused. No route here lists a guard.
+  ...adminRoutes,
   shellRoutes({
     
     children: [
@@ -314,3 +316,4 @@ export const appRoutes: Routes = [
     ],
   }),
 ];
+

@@ -21,7 +21,7 @@ describe('shellRoutes', () => {
   ];
 
   it('attaches the page guard to every page, so no app lists a guard', () => {
-    const shell = shellRoutes({ app: 'Payroll', children: pages });
+    const shell = shellRoutes({ children: pages });
 
     expect(shell.canActivateChild).toContain(pageGuard);
     expect(shell.data?.['app']).toBe('Payroll');
@@ -29,13 +29,13 @@ describe('shellRoutes', () => {
   });
 
   it('passes when every page declares access', () => {
-    expect(auditShellRoutes([shellRoutes({ app: 'Payroll', children: pages })])).toEqual([]);
+    expect(auditShellRoutes([shellRoutes({ children: pages })])).toEqual([]);
   });
 
   it('fails when one page loses its data.access', () => {
     const broken = pages.map((r) => (r.path === 'payroll/runs' ? { ...r, data: {} } : r));
 
-    expect(auditShellRoutes([shellRoutes({ app: 'Payroll', children: broken })])).toEqual(['payroll/runs']);
+    expect(auditShellRoutes([shellRoutes({ children: broken })])).toEqual(['payroll/runs']);
   });
 
   it("lets a child inherit its lazy parent's access, but not the shell's", () => {
@@ -48,10 +48,12 @@ describe('shellRoutes', () => {
       { path: 'orphan', component: PageStub },
     ];
 
-    expect(auditShellRoutes([shellRoutes({ app: 'RetailErp', children: nested })])).toEqual(['orphan']);
+    expect(auditShellRoutes([shellRoutes({ children: nested })])).toEqual(['orphan']);
   });
 
   it('audits a lib route array on its own', () => {
     expect(auditShellRoutes([{ path: 'x', component: PageStub }])).toEqual(['x']);
   });
 });
+
+

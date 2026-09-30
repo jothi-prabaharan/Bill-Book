@@ -49,6 +49,9 @@
         <span class="knob" aria-hidden="true"></span>{{ baseLabel() }}
       </button>
       @if (notEditing()) {
+        @if (auth.has('platform.view')) {
+          <a class="btn btn-ghost" routerLink="/admin">Admin portal</a>
+        }
         <button class="btn btn-secondary" type="button" (click)="onStartEdit()">Customize</button>
       } @else {
         <button class="btn btn-ghost" type="button" (click)="onResetLayout()">Reset</button>
@@ -77,3 +80,4 @@
     }
   </div>
 </nav>
+

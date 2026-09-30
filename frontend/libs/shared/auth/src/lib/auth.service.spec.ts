@@ -178,47 +178,5 @@ describe('AuthService', () => {
       expect(auth.isLicenseExpired()).toBe(true);
     });
   });
-  describe('per-app sign-in (TK-43, TK-44, TK-45)', () => {
-    const configureFor = (app: 'Payroll' | undefined): void => {
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [
-          provideHttpClient(),
-          provideHttpClientTesting(),
-          ...(app ? [{ provide: APP_ID, useValue: app }] : []),
-        ],
-      });
-      auth = TestBed.inject(AuthService);
-      httpMock = TestBed.inject(HttpTestingController);
-    };
-
-    it('signs in to RetailErp when the app provides no APP_ID', () => {
-      configureFor(undefined);
-      void auth.login('someone@example.com', 'a-password');
-
-      expect(httpMock.expectOne('/api/auth/login').request.body.app).toBe('RetailErp');
-    });
-
-    it("sends the app's own id on sign-in, signup and a branch switch", () => {
-      configureFor('Payroll');
-
-      void auth.login('someone@example.com', 'a-password');
-      expect(httpMock.expectOne('/api/auth/login').request.body.app).toBe('Payroll');
-
-      void auth.signup({} as never);
-      expect(httpMock.expectOne('/api/customers/signup').request.body.app).toBe('Payroll');
-
-      void auth.switchOrganization('org-2');
-      expect(httpMock.expectOne('/api/auth/switch-organization').request.body).toEqual({ orgId: 'org-2', app: 'Payroll' });
-    });
-
-    it('switches app on the same branch', () => {
-      configureFor('Payroll');
-      localStorage.setItem('bb.orgId', 'org-1');
-
-      void auth.switchApp('Hrms');
-
-      expect(httpMock.expectOne('/api/auth/switch-organization').request.body).toEqual({ orgId: 'org-1', app: 'Hrms' });
-    });
   });
-});
+

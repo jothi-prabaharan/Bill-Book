@@ -86,10 +86,11 @@ export class CandidatesPage implements OnInit {
   });
 
   ngOnInit(): void {
-    await this.load();
-    const ops = await this.api.openings(1, 100, 'Open');
-    this.openings.set(ops);
-    if (ops.length > 0) this.selectedOpeningId.set(ops[0].jobOpeningId);
+    void this.load();
+    void this.api.openings(1, 100, 'Open').then(ops => {
+      this.openings.set(ops);
+      if (ops.length > 0) this.selectedOpeningId.set(ops[0].jobOpeningId);
+    });
   }
 
   async load(): Promise<void> {
@@ -173,3 +174,5 @@ export class CandidatesPage implements OnInit {
     }
   }
 }
+
+

@@ -66,16 +66,13 @@ export class OffersPage implements OnInit {
   });
 
   ngOnInit(): void {
-    await this.load();
-    try {
-      const apps = await this.api.applications(1, 100);
+    void this.load();
+    void this.api.applications(1, 100).then(apps => {
       this.applications.set(apps);
       if (apps.length > 0) {
         this.form.update(f => ({ ...f, applicationId: apps[0].applicationId }));
       }
-    } catch {
-      // ignore
-    }
+    }).catch(() => {});
   }
 
   async load(): Promise<void> {
@@ -182,3 +179,5 @@ export class OffersPage implements OnInit {
     }
   }
 }
+
+

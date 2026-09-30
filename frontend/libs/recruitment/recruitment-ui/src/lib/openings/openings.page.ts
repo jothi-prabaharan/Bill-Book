@@ -70,7 +70,7 @@ export class OpeningsPage implements OnInit {
   });
 
   ngOnInit(): void {
-    await this.load();
+    void this.load();
   }
 
   async load(): Promise<void> {
@@ -148,3 +148,5 @@ export class OpeningsPage implements OnInit {
     }
   }
 }
+
+

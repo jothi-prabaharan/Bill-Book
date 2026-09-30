@@ -304,16 +304,17 @@ describe('Milestone 3 Empirical Challenger: App Shell Decomposition Suite', () =
       const topbarComp = TestBed.runInInjectionContext(() => new ShellTopbarComponent());
       const groups = topbarComp.newGroups;
 
-      const salesDocs = groups.find((g) => g.name === 'Sales')?.docs.map((d) => d.code);
+      const salesDocs = groups().find((g) => g.name === 'Sales')?.docs.map((d) => d.code);
       // POS is absent on purpose: there is no point-of-sale route to land on,
       // and a tile that leads nowhere is worse than no tile.
       expect(salesDocs).toEqual(['INV', 'SOR', 'QOT', 'DLC', 'CRN']);
 
-      const purchaseDocs = groups.find((g) => g.name === 'Purchase')?.docs.map((d) => d.code);
+      const purchaseDocs = groups().find((g) => g.name === 'Purchase')?.docs.map((d) => d.code);
       expect(purchaseDocs).toEqual(['BIL', 'POR', 'GRN', 'DBN']);
 
-      const bankingDocs = groups.find((g) => g.name === 'Banking')?.docs.map((d) => d.code);
+      const bankingDocs = groups().find((g) => g.name === 'Banking')?.docs.map((d) => d.code);
       expect(bankingDocs).toEqual(['REC', 'PAY', 'TRF']);
     });
   });
 });
+

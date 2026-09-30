@@ -18,16 +18,12 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
     email: 'priya@example.com',
     branchName: 'Chennai',
     branchCode: 'CHN',
-    app: 'RetailErp',
+    businessType: 'RetailErp',
     licenseStatus: 'Active',
     licenseExpiry: null,
     expiryIsBranchLevel: false,
     permissions: [],
-    apps: [
-      { app: 'RetailErp', licenseStatus: 'Active' },
-      { app: 'Payroll', licenseStatus: 'Trial' },
-      { app: 'Hrms', licenseStatus: 'NotLicensed' },
-    ],
+    addOns: 'Payroll',
   });
 
   let mockAuthService: {
@@ -167,7 +163,7 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
       selectedAction = action;
     });
 
-    const invoice = comp.newGroups
+    const invoice = comp.newGroups()
       .flatMap((g) => g.docs)
       .find((d) => d.code === 'INV');
     expect(invoice).toBeDefined();
@@ -299,3 +295,7 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
   });
 
 });
+
+
+
+

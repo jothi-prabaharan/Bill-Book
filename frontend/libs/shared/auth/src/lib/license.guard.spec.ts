@@ -139,13 +139,14 @@ function stubSession(overrides: Partial<SessionContext>): Pick<SessionContextSer
     email: 'priya@example.com',
     branchName: 'Chennai',
     branchCode: 'CHN',
-    app: 'RetailErp',
+    businessType: 'RetailErp',
     licenseStatus: 'Active',
     licenseExpiry: null,
     expiryIsBranchLevel: false,
     permissions: [],
-    apps: [],
+    addOns: '',
     ...overrides,
   };
   return { ensure: () => Promise.resolve(context) };
 }
+

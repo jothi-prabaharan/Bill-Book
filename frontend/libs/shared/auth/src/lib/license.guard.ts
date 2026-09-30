@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { APP_ID } from './app-id';
 import { AuthService } from './auth.service';
 import { accessOf, decideAccess } from './page-access';
 import { SessionContextService, isLicenceOpen } from './session-context.service';
@@ -65,7 +64,6 @@ export const permissionGuard: CanActivateFn = async (route) => {
   const auth = inject(AuthService);
   const session = inject(SessionContextService);
   const router = inject(Router);
-  const app = inject(APP_ID);
 
   let context = null;
   try {
@@ -74,7 +72,7 @@ export const permissionGuard: CanActivateFn = async (route) => {
     context = null;
   }
 
-  const refusal = decideAccess(auth.isAuthenticated(), context, app, accessOf(route));
+  const refusal = decideAccess(auth.isAuthenticated(), context, accessOf(route));
   if (refusal === null) {
     return true;
   }
@@ -84,3 +82,4 @@ export const permissionGuard: CanActivateFn = async (route) => {
         queryParams: refusal.kind === 'permission' ? { need: refusal.permission } : { reason: refusal.kind },
       });
 };
+

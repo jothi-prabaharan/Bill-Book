@@ -4358,8 +4358,8 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** a branch with only Hrms sees only HRMS pages.
 
-### TK-131 · Merge `apps/admin` into `apps/web`: an Admin portal button
-- [ ] open
+### TK-131 � Merge `apps/admin` into `apps/web`: an Admin portal button
+- [~] working (Antigravity) � since 2026-10-01
 - **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-WEB, L-ADM · **Depends on:** TK-130 · **Decision:** D-36
@@ -4611,4 +4611,6 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
+
 

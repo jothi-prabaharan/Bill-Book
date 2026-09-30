@@ -1,0 +1,29 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.head-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.error { color: #c0392b; }
+.notice { color: #187a4b; }
+.hint { color: #6a6f80; font-size: .78rem; margin: .3rem 0 1rem; }
+
+.badge { font-size: .62rem; background: #eceef3; color: #6a6f80; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
+.badge.warn { background: #fdf0d5; color: #8a5b00; }
+.badge.trial { background: #fdf0d5; color: #8a5a00; }
+.badge.danger { background: #fbe4e1; color: #c0392b; }
+
+.link { background: none; border: 0; color: #3557d6; cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
+.link + .link { margin-left: .6rem; }
+button:not(.link) { padding: .5rem .9rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+
+.sheet { margin-top: 1.25rem; border: 1px solid #e2e4ea; border-radius: 10px; padding: 1rem; max-width: 46rem; }
+.sheet h2 { margin: 0 0 .5rem; font-size: 1rem; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; margin-top: .75rem; }
+.fields label { display: grid; gap: .25rem; font-size: .85rem; align-content: start; }
+.fields input, .fields select { padding: .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; }
+.fields small { color: #8a8f9e; font-size: .72rem; }
+.sheet-actions { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
+
+/* Below ~700px the grid becomes cards, per the 360px rule. */
+@media (max-width: 700px) {
+  .fields { grid-template-columns: 1fr; }
+  .sheet { border-radius: 0; margin-left: -1rem; margin-right: -1rem; }
+}

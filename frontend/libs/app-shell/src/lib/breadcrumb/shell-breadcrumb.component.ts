@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { AuthService } from '@bill-book/auth';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SHELL_REGISTERS } from '../shell-screens';
@@ -45,6 +46,7 @@ export interface ExportFormat {
 export class ShellBreadcrumbComponent {
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
+  protected readonly auth = inject(AuthService);
   protected readonly panel = inject(ShellPanelService);
 
   readonly crumbsInput = input<BreadcrumbItem[] | null>(null);
@@ -196,3 +198,4 @@ export class ShellBreadcrumbComponent {
     this.openImport.emit();
   }
 }
+
