@@ -4,8 +4,7 @@ import { PortalSession } from './portal-session';
 import { ActivatedRoute, Router } from '@angular/router';
 
 describe('PortalAccessPage (TK-132)', () => {
-  let component: PortalAccessPage;
-  let fixture: ComponentFixture<PortalAccessPage>;
+    let fixture: ComponentFixture<PortalAccessPage>;
   let mockSession: any;
   let mockRouter: any;
   let mockRoute: any;
@@ -36,8 +35,7 @@ describe('PortalAccessPage (TK-132)', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(PortalAccessPage);
-    component = fixture.componentInstance;
-  });
+      });
 
   it('exchanges the code and navigates to the portal dashboard', async () => {
     mockSession.start.mockResolvedValue(true);
@@ -59,3 +57,4 @@ describe('PortalAccessPage (TK-132)', () => {
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/portal/expired', { replaceUrl: true });
   });
 });
+

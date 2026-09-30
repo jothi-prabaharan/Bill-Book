@@ -4387,7 +4387,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Lanes:** L-MST, L-UI, the settings lib · **Depends on:** TK-127, TK-130 · **Decision:** D-36
 - **Sub-tasks:**
   - [ ] A screen to choose the business type and switch on the add-ons its type allows; disabling never deletes data.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a School branch is offered Hrms but not Pos.
 
 ### TK-134 · Retire the five extra apps: docs, release notes and deploy
@@ -4611,6 +4611,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 
