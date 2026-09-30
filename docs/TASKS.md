@@ -4401,6 +4401,32 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
 
+### TK-135 · Use `bb-branch-date-input` on every page, delete `bb-date-input`, and delete unused shared UI components
+- [ ] open
+- **Lanes:** L-UI, every `L-{MODULE}-UI` whose template is edited, L-WEB, L-ADM (if `apps/admin` still exists), L-DOC (the `inputs.md` docs page) · **Depends on:** — · **Decision:** —
+- **Where:**
+  - `frontend/libs/shared/ui-components/src/lib/date-input/date-input.component.ts`: the native `<input type="date">` to delete. Its base class `forms/datetime/date-control.base.ts` and template `forms/datetime/date-control.html` are shared with `bb-datetime-input` and `bb-month-input`, so they stay.
+  - `frontend/libs/shared/ui-components/src/lib/branch-date-input/`: the replacement (TK-23), built and not yet used by any template.
+  - `frontend/libs/shared/ui-components/src/index.ts`: the exports.
+- **State (checked 30 September 2026):**
+  - `<bb-date-input` appears 119 times across 55 files. Four files import `DateInputComponent` directly: `master-ui/.../contacts.page.ts`, `shared/ui-components/.../edit-history/edit-log-report.component.ts`, `apps/admin/.../rates.page.ts` and `cva-form-lifecycle.spec.ts`.
+  - `apps/docs/content/inputs.md` (lines about 169, 289, 457 to 477, 522) and `frontend/eslint.config.mjs` name `bb-date-input`.
+  - No template uses `<bb-branch-date-input`.
+  - Shared components with no template using them today (starting list, not a verdict): `bb-bank-graph-card`, `bb-currency-input`, `bb-master-select`, `bb-radio-group`, `bb-rich-text-input`, `bb-url-input`.
+- **Sub-tasks:**
+  - [ ] Swap the selector `bb-date-input` → `bb-branch-date-input` in all templates, and `DateInputComponent` → `BranchDateInputComponent` in every `imports` array. The value is ISO in and out, so no other change per caller. Check each caller's `min`, `max`, `placeholder`, `label`, `hint` and `error` bindings are inputs `bb-branch-date-input` has, and add any that are missing to it.
+  - [ ] Delete `date-input/` (component, spec if any) and its export. Point `cva-form-lifecycle.spec.ts` at the new component or remove the case it covers.
+  - [ ] Update `eslint.config.mjs` and `apps/docs/content/inputs.md`: the branch's own format is now what every date field shows, so remove the "shows the browser's locale" limitation and the "not yet swapped" notes. Add a bullet under **Unreleased** in `release-notes.md` (hard rule 10).
+  - [ ] Audit every component under `libs/shared/ui-components/src/lib/`: for each selector and class, search templates, `imports` arrays, `index.ts`, dynamic creation (`ViewContainerRef`, `createComponent`), the docs pages and specs. Delete the ones with no user anywhere, together with their spec, styles and export. Where a component is used only by its own spec, or is documented as part of the input library, delete it only if it is clearly not needed; otherwise leave it and list it in Notes for the owner rather than deciding alone.
+  - [ ] Run the build, lint and typecheck for every app, since a deleted export fails at compile time. (Tests are written, never run: section 0.5.)
+  - [ ] Test: update or add specs so `BranchDateInputComponent` covers what `DateInputComponent`'s spec covered (ISO in and out, `null` for empty, disabled and readonly). Written, never run by an AI.
+  - [ ] Owner: check a `dd/MM/yyyy` branch in the browser (the open check on TK-23), then mark TK-23 completed and point its Notes at this card.
+- **Done when:** `grep -r "bb-date-input\|DateInputComponent" frontend --include=*.ts --include=*.html --include=*.md --include=*.mjs` returns nothing except release notes, no component left in `ui-components` lacks a user or a written reason, and the frontend builds, lints and typechecks.
+- **Notes:**
+  - Owner's instruction, 30 September 2026: use `bb-branch-date-input` on every page and delete `bb-date-input`. That lifts the "show it to the owner before swapping" hold on TK-23, whose remaining step is the owner's own browser check.
+  - `bb-datetime-input` and `bb-month-input` extend the same base class as `bb-date-input`. They are not part of this card and keep their behaviour.
+  - If TK-134 has deleted `apps/admin` by the time this card is claimed, its `rates.page` is gone and needs no swap.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
