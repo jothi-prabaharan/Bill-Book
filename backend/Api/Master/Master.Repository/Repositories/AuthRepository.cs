@@ -128,7 +128,7 @@ public sealed class AuthRepository
         var assignments = (await (
             from uor in _db.UserOrganizationRoles
             join role in _db.Roles on uor.RoleId equals role.RoleId
-            where uor.UserId == userId && uor.IsActive && role.App == app && role.IsActive
+            where uor.UserId == userId && uor.IsActive && role.IsActive
             orderby uor.OrgId, role.RoleId
             select new { uor.OrgId, RoleName = role.DisplayName }).ToListAsync(ct))
             .GroupBy(a => a.OrgId)
@@ -259,7 +259,7 @@ public sealed class AuthRepository
 
         try
         {
-            return await IssueAsync(token.UserId, token.OrgId, token.App, token.FamilyId, ip, userAgent, ct);
+            return await IssueAsync(token.UserId, token.OrgId, App.None, token.FamilyId, ip, userAgent, ct);
         }
         catch (NoOrganizationAccessException)
         {
@@ -322,12 +322,11 @@ public sealed class AuthRepository
         string? userAgent,
         CancellationToken ct)
     {
-        // The roles the user holds in this branch in this app, and only those
-        // (TK-43). A RetailErp role grants nothing to a Payroll token.
+        // The roles the user holds in this branch.
         List<int> roleIds = await (
             from u in _db.UserOrganizationRoles
             join r in _db.Roles on u.RoleId equals r.RoleId
-            where u.UserId == userId && u.OrgId == orgId && u.IsActive && r.App == app && r.IsActive
+            where u.UserId == userId && u.OrgId == orgId && u.IsActive && r.IsActive
             orderby r.RoleId
             select r.RoleId).ToListAsync(ct);
         if (roleIds.Count == 0)
@@ -365,7 +364,7 @@ public sealed class AuthRepository
         if (user.IsPlatformOperator)
         {
             permissions.AddRange(
-                await PlatformOperatorRepository.PlatformPermissionCodes(_db).ToListAsync(ct));
+                 await PlatformOperatorRepository.PlatformPermissionCodes(_db).ToListAsync(ct));
         }
 
         string accessToken = _tokens.CreateAccessToken(new AccessTokenRequest
@@ -375,7 +374,9 @@ public sealed class AuthRepository
             CustomerCode = ctx.CustomerCode,
             OrgId = orgId,
             App = app,
-            // The first of the app's roles: the claim names one role, for the
+            BusinessType = ctx.BusinessType,
+            AddOns = ctx.AddOns,
+            // The first of the roles: the claim names one role, for the
             // period-lock rule that keys on it.
             RoleId = roleIds[0],
             DisplayName = user.DisplayName,
@@ -391,7 +392,6 @@ public sealed class AuthRepository
         {
             UserId = user.UserId,
             OrgId = orgId,
-            App = app,
             FamilyId = familyId,
             TokenHash = hash,
             ExpiresAt = expiresAt,

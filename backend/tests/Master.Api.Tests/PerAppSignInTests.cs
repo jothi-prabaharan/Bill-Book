@@ -90,19 +90,6 @@ public sealed class PerAppSignInTests
         db.Licenses.Add(new License
         {
             CustomerId = customerId,
-            App = App.RetailErp,
-            LicenseType = LicenseType.Trial,
-            StartDate = today.AddDays(-30),
-            ExpiryDate = today.AddDays(-16),
-            MaxUsers = 3,
-            MaxOrganizations = 1,
-            IsActive = true,
-        });
-
-        db.Licenses.Add(new License
-        {
-            CustomerId = customerId,
-            App = App.Payroll,
             LicenseType = LicenseType.Standard,
             StartDate = today.AddDays(-1),
             ExpiryDate = today.AddYears(1),
@@ -126,7 +113,6 @@ public sealed class PerAppSignInTests
             CustomerId = customerId,
             SystemName = "Payroll Admin",
             DisplayName = "Payroll Admin",
-            App = App.Payroll,
             IsActive = true,
         };
         db.Roles.Add(payrollRole);
@@ -135,7 +121,7 @@ public sealed class PerAppSignInTests
         int settingsView = await db.Permissions.Where(p => p.Code == "settings.view").Select(p => p.PermissionId).SingleAsync();
         db.RolePermissions.Add(new RolePermission { RoleId = payrollRole.RoleId, PermissionId = settingsView });
 
-        Role accountant = await db.Roles.FirstAsync(r => r.IsSystemRole && r.SystemName == "Accountant" && r.App == App.RetailErp);
+        Role accountant = await db.Roles.FirstAsync(r => r.IsSystemRole && r.SystemName == "Accountant");
         db.UserOrganizationRoles.Add(new UserOrganizationRole { UserId = userId, OrgId = orgId, RoleId = accountant.RoleId, IsActive = true });
         db.UserOrganizationRoles.Add(new UserOrganizationRole { UserId = userId, OrgId = orgId, RoleId = payrollRole.RoleId, IsActive = true });
 

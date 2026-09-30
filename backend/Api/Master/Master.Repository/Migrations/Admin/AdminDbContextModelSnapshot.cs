@@ -6873,9 +6873,6 @@ namespace Master.Repository.Migrations.Admin
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("App")
-                        .HasColumnType("integer");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -6922,7 +6919,7 @@ namespace Master.Repository.Migrations.Admin
 
                     b.HasKey("LicenseId");
 
-                    b.HasIndex("CustomerId", "App")
+                    b.HasIndex("CustomerId")
                         .IsUnique();
 
                     b.ToTable("Licenses", "mst");
@@ -6993,8 +6990,12 @@ namespace Master.Repository.Migrations.Admin
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MenuId"));
 
-                    b.Property<int>("Apps")
+                    b.Property<int>("AddOns")
                         .HasColumnType("integer");
+
+                    b.Property<string>("BusinessType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<bool>("CanCreate")
                         .HasColumnType("boolean");
@@ -7076,7 +7077,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "home",
                             DisplayOrder = 1,
@@ -7092,7 +7093,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 2,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "contacts",
                             DisplayOrder = 2,
@@ -7107,7 +7109,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 101,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "contacts-g1",
                             DisplayOrder = 1,
@@ -7120,7 +7123,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1001,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "both",
                             DisplayOrder = 1,
@@ -7138,7 +7142,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1002,
-                            Apps = 1,
+                            AddOns = 4,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "cus",
                             DisplayOrder = 2,
@@ -7155,7 +7160,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1003,
-                            Apps = 1,
+                            AddOns = 4,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "ven",
                             DisplayOrder = 3,
@@ -7172,7 +7178,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 3,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "inventory",
                             DisplayOrder = 3,
@@ -7187,7 +7194,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 102,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "inventory-g1",
                             DisplayOrder = 1,
@@ -7200,7 +7208,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1004,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "itm",
                             DisplayOrder = 1,
@@ -7218,7 +7227,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1005,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "adj",
                             DisplayOrder = 2,
@@ -7236,7 +7246,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1006,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "cat",
                             DisplayOrder = 3,
@@ -7254,7 +7265,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1007,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "uom",
                             DisplayOrder = 4,
@@ -7270,7 +7282,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1008,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "uot",
                             DisplayOrder = 5,
@@ -7287,7 +7300,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1009,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "whs",
                             DisplayOrder = 6,
@@ -7304,7 +7318,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1010,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "hsn",
                             DisplayOrder = 7,
@@ -7321,7 +7336,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1011,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "mtp",
                             DisplayOrder = 8,
@@ -7338,7 +7354,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 4,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "purchase",
                             DisplayOrder = 4,
@@ -7353,7 +7370,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 103,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "purchase-g1",
                             DisplayOrder = 1,
@@ -7366,7 +7384,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1012,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "por",
                             DisplayOrder = 1,
@@ -7384,7 +7403,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1013,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "grn",
                             DisplayOrder = 2,
@@ -7402,7 +7422,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1014,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "bil",
                             DisplayOrder = 3,
@@ -7420,7 +7441,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1015,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "dbn",
                             DisplayOrder = 4,
@@ -7438,7 +7460,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 5,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "sales",
                             DisplayOrder = 5,
@@ -7453,7 +7476,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 104,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "sales-g1",
                             DisplayOrder = 1,
@@ -7466,7 +7490,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1016,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "qot",
                             DisplayOrder = 1,
@@ -7484,7 +7509,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1017,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "sor",
                             DisplayOrder = 2,
@@ -7502,7 +7528,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1018,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "dlc",
                             DisplayOrder = 3,
@@ -7520,7 +7547,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1019,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "inv",
                             DisplayOrder = 4,
@@ -7538,7 +7566,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1020,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "crn",
                             DisplayOrder = 5,
@@ -7556,7 +7585,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 6,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "banking",
                             DisplayOrder = 6,
@@ -7571,7 +7601,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 105,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "banking-g1",
                             DisplayOrder = 1,
@@ -7584,7 +7615,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1021,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "dash",
                             DisplayOrder = 1,
@@ -7600,7 +7632,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1022,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "tx",
                             DisplayOrder = 2,
@@ -7616,7 +7649,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1023,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "spd",
                             DisplayOrder = 3,
@@ -7634,7 +7668,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1024,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "rcv",
                             DisplayOrder = 4,
@@ -7652,7 +7687,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1025,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "trf",
                             DisplayOrder = 5,
@@ -7670,7 +7706,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1026,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "sta",
                             DisplayOrder = 6,
@@ -7687,7 +7724,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1027,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "rec",
                             DisplayOrder = 7,
@@ -7704,7 +7742,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 7,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "accounting",
                             DisplayOrder = 7,
@@ -7719,7 +7758,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 106,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "accounting-g1",
                             DisplayOrder = 1,
@@ -7732,7 +7772,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1028,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "coa",
                             DisplayOrder = 1,
@@ -7750,7 +7791,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1029,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "act",
                             DisplayOrder = 2,
@@ -7766,7 +7808,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1030,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "sub",
                             DisplayOrder = 3,
@@ -7783,7 +7826,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1031,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "jrn",
                             DisplayOrder = 4,
@@ -7801,7 +7845,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1032,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "opb",
                             DisplayOrder = 5,
@@ -7818,7 +7863,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 8,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports",
                             DisplayOrder = 8,
@@ -7833,7 +7879,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 107,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g1",
                             DisplayOrder = 1,
@@ -7848,7 +7895,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1033,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-balance-sheet",
                             DisplayOrder = 1,
@@ -7865,7 +7913,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1034,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-profit-loss",
                             DisplayOrder = 2,
@@ -7882,7 +7931,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1035,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-cash-flow-statement-direct",
                             DisplayOrder = 3,
@@ -7899,7 +7949,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1036,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-reconciliation-report",
                             DisplayOrder = 4,
@@ -7916,7 +7967,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 108,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g2",
                             DisplayOrder = 2,
@@ -7931,7 +7983,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1037,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-business-performance",
                             DisplayOrder = 1,
@@ -7948,7 +8001,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 109,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g3",
                             DisplayOrder = 3,
@@ -7963,7 +8017,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1038,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-trial-balance",
                             DisplayOrder = 1,
@@ -7980,7 +8035,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1039,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-general-ledger",
                             DisplayOrder = 2,
@@ -7997,7 +8053,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1040,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-journal-report",
                             DisplayOrder = 3,
@@ -8014,7 +8071,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1041,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-account-transaction",
                             DisplayOrder = 4,
@@ -8031,7 +8089,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1042,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-bank-summary",
                             DisplayOrder = 5,
@@ -8048,7 +8107,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1043,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-foreign-currency-gain-or-loss",
                             DisplayOrder = 6,
@@ -8065,7 +8125,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1044,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-foreign-currency-gain-or-loss-details",
                             DisplayOrder = 7,
@@ -8082,7 +8143,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 110,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g4",
                             DisplayOrder = 4,
@@ -8097,7 +8159,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1045,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-aged-receivables-summary",
                             DisplayOrder = 1,
@@ -8114,7 +8177,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1046,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-aged-receivables-detail",
                             DisplayOrder = 2,
@@ -8131,7 +8195,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1047,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-receivable-invoice-summary",
                             DisplayOrder = 3,
@@ -8148,7 +8213,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1048,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-receivable-invoice-detail",
                             DisplayOrder = 4,
@@ -8165,7 +8231,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1049,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-invoice-track-report",
                             DisplayOrder = 5,
@@ -8182,7 +8249,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1050,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-invoice-dn-payment-collection-report",
                             DisplayOrder = 6,
@@ -8199,7 +8267,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1051,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-sales-analysis",
                             DisplayOrder = 7,
@@ -8216,7 +8285,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1052,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-sales-analysis-detail-report",
                             DisplayOrder = 8,
@@ -8233,7 +8303,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1053,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-sales-order-track-report",
                             DisplayOrder = 9,
@@ -8250,7 +8321,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1054,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-quotation-track-report",
                             DisplayOrder = 10,
@@ -8267,7 +8339,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1055,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-delivery-order-track-report",
                             DisplayOrder = 11,
@@ -8284,7 +8357,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 111,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g5",
                             DisplayOrder = 5,
@@ -8299,7 +8373,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1056,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-aged-payables-summary",
                             DisplayOrder = 1,
@@ -8316,7 +8391,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1057,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-aged-payables-details",
                             DisplayOrder = 2,
@@ -8333,7 +8409,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1058,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-payable-invoice-summary",
                             DisplayOrder = 3,
@@ -8350,7 +8427,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1059,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-payable-invoice-detail",
                             DisplayOrder = 4,
@@ -8367,7 +8445,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1060,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-bills-track-report",
                             DisplayOrder = 5,
@@ -8384,7 +8463,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1061,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-bill-dn-payment-report",
                             DisplayOrder = 6,
@@ -8401,7 +8481,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1062,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-purchase-analysis",
                             DisplayOrder = 7,
@@ -8418,7 +8499,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1063,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-purchase-order-track-report",
                             DisplayOrder = 8,
@@ -8435,7 +8517,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1064,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-purchase-receive-order-details",
                             DisplayOrder = 9,
@@ -8452,7 +8535,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1065,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-receive-order-track-report",
                             DisplayOrder = 10,
@@ -8469,7 +8553,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 112,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g6",
                             DisplayOrder = 6,
@@ -8484,7 +8569,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1066,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-inventory-item-summary",
                             DisplayOrder = 1,
@@ -8501,7 +8587,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1067,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-inventory-item-detail",
                             DisplayOrder = 2,
@@ -8518,7 +8605,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1068,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-inventory-item-list",
                             DisplayOrder = 3,
@@ -8535,7 +8623,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1069,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-inventory-aging-report",
                             DisplayOrder = 4,
@@ -8552,7 +8641,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1070,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-batch-tracking-status-report",
                             DisplayOrder = 5,
@@ -8569,7 +8659,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1071,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-batch-tracking-detail-report",
                             DisplayOrder = 6,
@@ -8586,7 +8677,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1072,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-serial-tracking-status-report",
                             DisplayOrder = 7,
@@ -8603,7 +8695,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1073,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-serial-tracking-detail-report",
                             DisplayOrder = 8,
@@ -8620,7 +8713,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1074,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-warehouse-tracking-status-report",
                             DisplayOrder = 9,
@@ -8637,7 +8731,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 113,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g7",
                             DisplayOrder = 7,
@@ -8652,7 +8747,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1075,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-fixed-assets-schedule",
                             DisplayOrder = 1,
@@ -8669,7 +8765,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1076,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-depreciation-schedule",
                             DisplayOrder = 2,
@@ -8686,7 +8783,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1077,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-disposal-schedule-report",
                             DisplayOrder = 3,
@@ -8703,7 +8801,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1078,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-fixed-asset-reconciliation",
                             DisplayOrder = 4,
@@ -8720,7 +8819,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 9,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "settings",
                             DisplayOrder = 9,
@@ -8735,7 +8834,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 114,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "settings-g1",
                             DisplayOrder = 1,
@@ -8750,7 +8849,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1079,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "org",
                             DisplayOrder = 1,
@@ -8767,7 +8866,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1080,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "brn",
                             DisplayOrder = 2,
@@ -8784,7 +8883,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1081,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "cfg",
                             DisplayOrder = 3,
@@ -8801,7 +8900,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1082,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "ser",
                             DisplayOrder = 4,
@@ -8818,7 +8917,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1083,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "ocu",
                             DisplayOrder = 5,
@@ -8835,7 +8934,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1084,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "smtp",
                             DisplayOrder = 6,
@@ -8852,7 +8951,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1085,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "lic",
                             DisplayOrder = 7,
@@ -8869,7 +8968,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1125,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "apw",
                             DisplayOrder = 8,
@@ -8886,7 +8985,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1137,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "cfd",
                             DisplayOrder = 9,
@@ -8903,7 +9002,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 115,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "settings-g2",
                             DisplayOrder = 2,
@@ -8918,7 +9017,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1086,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "usr",
                             DisplayOrder = 1,
@@ -8935,7 +9034,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1087,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "rol",
                             DisplayOrder = 2,
@@ -8952,7 +9051,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1088,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "prm",
                             DisplayOrder = 3,
@@ -8968,7 +9067,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1089,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "uor",
                             DisplayOrder = 4,
@@ -8984,7 +9083,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1090,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "log",
                             DisplayOrder = 5,
@@ -9000,7 +9099,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1106,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "api",
                             DisplayOrder = 6,
@@ -9017,7 +9116,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1139,
-                            Apps = 15,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "audit",
                             DisplayOrder = 7,
@@ -9034,7 +9133,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 116,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "settings-g3",
                             DisplayOrder = 3,
@@ -9049,7 +9149,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1091,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "tax",
                             DisplayOrder = 1,
@@ -9066,7 +9167,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1092,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "ptm",
                             DisplayOrder = 2,
@@ -9083,7 +9185,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1093,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "lck",
                             DisplayOrder = 3,
@@ -9100,7 +9203,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 117,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "settings-g4",
                             DisplayOrder = 4,
@@ -9115,7 +9219,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1094,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-qot",
                             DisplayOrder = 1,
@@ -9132,7 +9237,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1095,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-sor",
                             DisplayOrder = 2,
@@ -9149,7 +9255,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1096,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-dlc",
                             DisplayOrder = 3,
@@ -9166,7 +9273,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1097,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-inv",
                             DisplayOrder = 4,
@@ -9183,7 +9291,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1098,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-crn",
                             DisplayOrder = 5,
@@ -9200,7 +9309,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1099,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-por",
                             DisplayOrder = 6,
@@ -9217,7 +9327,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1100,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-grn",
                             DisplayOrder = 7,
@@ -9234,7 +9345,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1101,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-bil",
                             DisplayOrder = 8,
@@ -9251,7 +9363,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1102,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-dbn",
                             DisplayOrder = 9,
@@ -9268,7 +9381,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1103,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-rec",
                             DisplayOrder = 10,
@@ -9285,7 +9399,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1104,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-pay",
                             DisplayOrder = 11,
@@ -9302,7 +9417,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1105,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "pt-jrn",
                             DisplayOrder = 12,
@@ -9319,7 +9435,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 10,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "people",
                             DisplayOrder = 10,
@@ -9334,7 +9451,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 118,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "people-g1",
                             DisplayOrder = 1,
@@ -9347,7 +9465,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1107,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "emp",
                             DisplayOrder = 1,
@@ -9365,7 +9484,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1108,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "hrorg",
                             DisplayOrder = 2,
@@ -9382,7 +9502,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1109,
-                            Apps = 4,
+                            AddOns = 1,
                             CanCreate = true,
                             Code = "ann",
                             DisplayOrder = 3,
@@ -9400,7 +9520,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1110,
-                            Apps = 4,
+                            AddOns = 1,
                             CanCreate = true,
                             Code = "pol",
                             DisplayOrder = 4,
@@ -9418,7 +9538,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 11,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "students",
                             DisplayOrder = 11,
@@ -9433,7 +9554,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 12,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "fees",
                             DisplayOrder = 12,
@@ -9448,7 +9570,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 13,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "maintenance",
                             DisplayOrder = 13,
@@ -9463,7 +9586,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 119,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "students-g1",
                             DisplayOrder = 1,
@@ -9476,7 +9600,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 120,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "fees-g1",
                             DisplayOrder = 1,
@@ -9489,7 +9614,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 121,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "maintenance-g1",
                             DisplayOrder = 1,
@@ -9502,7 +9628,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1111,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "stu",
                             DisplayOrder = 1,
@@ -9520,7 +9647,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1112,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "acs",
                             DisplayOrder = 2,
@@ -9537,7 +9665,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1113,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "exm",
                             DisplayOrder = 3,
@@ -9555,7 +9684,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1114,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "enq",
                             DisplayOrder = 4,
@@ -9573,7 +9703,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1115,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "apl",
                             DisplayOrder = 5,
@@ -9591,7 +9722,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1116,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "sat",
                             DisplayOrder = 6,
@@ -9608,7 +9740,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1117,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = false,
                             Code = "fst",
                             DisplayOrder = 1,
@@ -9625,7 +9758,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1118,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "fdm",
                             DisplayOrder = 2,
@@ -9643,7 +9777,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1119,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "frc",
                             DisplayOrder = 3,
@@ -9661,7 +9796,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1120,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "spc",
                             DisplayOrder = 1,
@@ -9679,7 +9815,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1121,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "fas",
                             DisplayOrder = 2,
@@ -9697,7 +9834,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1122,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "wko",
                             DisplayOrder = 3,
@@ -9715,7 +9853,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1123,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "ppm",
                             DisplayOrder = 4,
@@ -9733,7 +9872,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1124,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             CanCreate = true,
                             Code = "amc",
                             DisplayOrder = 5,
@@ -9751,7 +9891,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1127,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = true,
                             Code = "prj",
                             DisplayOrder = 20,
@@ -9769,7 +9910,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1128,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "timesheet",
                             DisplayOrder = 21,
@@ -9786,7 +9928,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1133,
-                            Apps = 1,
+                            AddOns = 128,
                             CanCreate = true,
                             Code = "budgets",
                             DisplayOrder = 22,
@@ -9804,7 +9946,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1138,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "tds",
                             DisplayOrder = 23,
@@ -9821,7 +9964,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1134,
-                            Apps = 1,
+                            AddOns = 128,
                             CanCreate = false,
                             Code = "r-budget-vs-actual",
                             DisplayOrder = 2,
@@ -9838,7 +9981,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1135,
-                            Apps = 1,
+                            AddOns = 128,
                             CanCreate = false,
                             Code = "r-budget-vs-actual-by-project",
                             DisplayOrder = 3,
@@ -9855,7 +9998,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1136,
-                            Apps = 1,
+                            AddOns = 128,
                             CanCreate = false,
                             Code = "r-budget-monthly-trend",
                             DisplayOrder = 4,
@@ -9872,7 +10015,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 123,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "reports-g8",
                             DisplayOrder = 8,
@@ -9887,7 +10031,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1129,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-project-profitability",
                             DisplayOrder = 1,
@@ -9904,7 +10049,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1130,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-project-budget-vs-actual",
                             DisplayOrder = 2,
@@ -9921,7 +10067,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1131,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-project-unbilled-work",
                             DisplayOrder = 3,
@@ -9938,7 +10085,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1132,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             CanCreate = false,
                             Code = "r-project-time-by-user",
                             DisplayOrder = 4,
@@ -9955,7 +10103,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 14,
-                            Apps = 1,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "approvals",
                             DisplayOrder = 14,
@@ -9969,7 +10117,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 122,
-                            Apps = 1,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "approvals-g1",
                             DisplayOrder = 1,
@@ -9982,7 +10130,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1126,
-                            Apps = 1,
+                            AddOns = 0,
                             CanCreate = false,
                             Code = "inbox",
                             DisplayOrder = 1,
@@ -14516,6 +14664,9 @@ namespace Master.Repository.Migrations.Admin
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("AddOns")
+                        .HasColumnType("integer");
+
                     b.Property<string>("AddressLine1")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -14536,6 +14687,10 @@ namespace Master.Repository.Migrations.Admin
 
                     b.Property<bool>("BudgetWarningYearToDate")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("BusinessType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Cin")
                         .HasMaxLength(21)
@@ -14798,8 +14953,12 @@ namespace Master.Repository.Migrations.Admin
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PermissionId"));
 
-                    b.Property<int>("Apps")
+                    b.Property<int>("AddOns")
                         .HasColumnType("integer");
+
+                    b.Property<string>("BusinessType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -14844,7 +15003,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 1,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.view",
                             Module = "dashboard",
                             Version = 0u
@@ -14852,7 +15012,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 2,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.create",
                             Module = "dashboard",
                             Version = 0u
@@ -14860,7 +15021,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 3,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.edit",
                             Module = "dashboard",
                             Version = 0u
@@ -14868,7 +15030,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 4,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.approve",
                             Module = "dashboard",
                             Version = 0u
@@ -14876,7 +15039,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 5,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.void",
                             Module = "dashboard",
                             Version = 0u
@@ -14884,7 +15048,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 6,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.delete",
                             Module = "dashboard",
                             Version = 0u
@@ -14892,7 +15057,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 7,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.print",
                             Module = "dashboard",
                             Version = 0u
@@ -14900,7 +15066,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 8,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.export",
                             Module = "dashboard",
                             Version = 0u
@@ -14908,7 +15075,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 9,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.import",
                             Module = "dashboard",
                             Version = 0u
@@ -14916,7 +15084,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 10,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "dashboard.AllUserData",
                             Module = "dashboard",
                             Version = 0u
@@ -14924,7 +15093,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 11,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.view",
                             Module = "contacts",
                             Version = 0u
@@ -14932,7 +15102,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 12,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.create",
                             Module = "contacts",
                             Version = 0u
@@ -14940,7 +15111,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 13,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.edit",
                             Module = "contacts",
                             Version = 0u
@@ -14948,7 +15120,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 14,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.approve",
                             Module = "contacts",
                             Version = 0u
@@ -14956,7 +15129,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 15,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.void",
                             Module = "contacts",
                             Version = 0u
@@ -14964,7 +15138,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 16,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.delete",
                             Module = "contacts",
                             Version = 0u
@@ -14972,7 +15147,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 17,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.print",
                             Module = "contacts",
                             Version = 0u
@@ -14980,7 +15156,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 18,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.export",
                             Module = "contacts",
                             Version = 0u
@@ -14988,7 +15165,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 19,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.import",
                             Module = "contacts",
                             Version = 0u
@@ -14996,7 +15174,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 20,
-                            Apps = 3,
+                            AddOns = 4,
+                            BusinessType = "General",
                             Code = "contacts.AllUserData",
                             Module = "contacts",
                             Version = 0u
@@ -15004,7 +15183,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 21,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.view",
                             Module = "crm",
                             Version = 0u
@@ -15012,7 +15191,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 22,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.create",
                             Module = "crm",
                             Version = 0u
@@ -15020,7 +15199,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 23,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.edit",
                             Module = "crm",
                             Version = 0u
@@ -15028,7 +15207,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 24,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.approve",
                             Module = "crm",
                             Version = 0u
@@ -15036,7 +15215,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 25,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.void",
                             Module = "crm",
                             Version = 0u
@@ -15044,7 +15223,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 26,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.delete",
                             Module = "crm",
                             Version = 0u
@@ -15052,7 +15231,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 27,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.print",
                             Module = "crm",
                             Version = 0u
@@ -15060,7 +15239,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 28,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.export",
                             Module = "crm",
                             Version = 0u
@@ -15068,7 +15247,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 29,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.import",
                             Module = "crm",
                             Version = 0u
@@ -15076,7 +15255,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 30,
-                            Apps = 1,
+                            AddOns = 4,
                             Code = "crm.AllUserData",
                             Module = "crm",
                             Version = 0u
@@ -15084,7 +15263,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 31,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.view",
                             Module = "inventory",
                             Version = 0u
@@ -15092,7 +15272,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 32,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.create",
                             Module = "inventory",
                             Version = 0u
@@ -15100,7 +15281,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 33,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.edit",
                             Module = "inventory",
                             Version = 0u
@@ -15108,7 +15290,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 34,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.approve",
                             Module = "inventory",
                             Version = 0u
@@ -15116,7 +15299,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 35,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.void",
                             Module = "inventory",
                             Version = 0u
@@ -15124,7 +15308,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 36,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.delete",
                             Module = "inventory",
                             Version = 0u
@@ -15132,7 +15317,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 37,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.print",
                             Module = "inventory",
                             Version = 0u
@@ -15140,7 +15326,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 38,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.export",
                             Module = "inventory",
                             Version = 0u
@@ -15148,7 +15335,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 39,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.import",
                             Module = "inventory",
                             Version = 0u
@@ -15156,7 +15344,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 40,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "inventory.AllUserData",
                             Module = "inventory",
                             Version = 0u
@@ -15164,7 +15353,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 41,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.view",
                             Module = "sales",
                             Version = 0u
@@ -15172,7 +15362,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 42,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.create",
                             Module = "sales",
                             Version = 0u
@@ -15180,7 +15371,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 43,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.edit",
                             Module = "sales",
                             Version = 0u
@@ -15188,7 +15380,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 44,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.approve",
                             Module = "sales",
                             Version = 0u
@@ -15196,7 +15389,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 45,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.void",
                             Module = "sales",
                             Version = 0u
@@ -15204,7 +15398,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 46,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.delete",
                             Module = "sales",
                             Version = 0u
@@ -15212,7 +15407,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 47,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.print",
                             Module = "sales",
                             Version = 0u
@@ -15220,7 +15416,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 48,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.export",
                             Module = "sales",
                             Version = 0u
@@ -15228,7 +15425,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 49,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.import",
                             Module = "sales",
                             Version = 0u
@@ -15236,7 +15434,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 50,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "sales.AllUserData",
                             Module = "sales",
                             Version = 0u
@@ -15244,7 +15443,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 51,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.view",
                             Module = "purchase",
                             Version = 0u
@@ -15252,7 +15452,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 52,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.create",
                             Module = "purchase",
                             Version = 0u
@@ -15260,7 +15461,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 53,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.edit",
                             Module = "purchase",
                             Version = 0u
@@ -15268,7 +15470,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 54,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.approve",
                             Module = "purchase",
                             Version = 0u
@@ -15276,7 +15479,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 55,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.void",
                             Module = "purchase",
                             Version = 0u
@@ -15284,7 +15488,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 56,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.delete",
                             Module = "purchase",
                             Version = 0u
@@ -15292,7 +15497,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 57,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.print",
                             Module = "purchase",
                             Version = 0u
@@ -15300,7 +15506,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 58,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.export",
                             Module = "purchase",
                             Version = 0u
@@ -15308,7 +15515,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 59,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.import",
                             Module = "purchase",
                             Version = 0u
@@ -15316,7 +15524,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 60,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "purchase.AllUserData",
                             Module = "purchase",
                             Version = 0u
@@ -15324,7 +15533,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 61,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.view",
                             Module = "accounting",
                             Version = 0u
@@ -15332,7 +15542,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 62,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.create",
                             Module = "accounting",
                             Version = 0u
@@ -15340,7 +15551,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 63,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.edit",
                             Module = "accounting",
                             Version = 0u
@@ -15348,7 +15560,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 64,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.approve",
                             Module = "accounting",
                             Version = 0u
@@ -15356,7 +15569,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 65,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.void",
                             Module = "accounting",
                             Version = 0u
@@ -15364,7 +15578,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 66,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.delete",
                             Module = "accounting",
                             Version = 0u
@@ -15372,7 +15587,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 67,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.print",
                             Module = "accounting",
                             Version = 0u
@@ -15380,7 +15596,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 68,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.export",
                             Module = "accounting",
                             Version = 0u
@@ -15388,7 +15605,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 69,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.import",
                             Module = "accounting",
                             Version = 0u
@@ -15396,7 +15614,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 70,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "accounting.AllUserData",
                             Module = "accounting",
                             Version = 0u
@@ -15404,7 +15623,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 71,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.view",
                             Module = "banking",
                             Version = 0u
@@ -15412,7 +15632,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 72,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.create",
                             Module = "banking",
                             Version = 0u
@@ -15420,7 +15641,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 73,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.edit",
                             Module = "banking",
                             Version = 0u
@@ -15428,7 +15650,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 74,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.approve",
                             Module = "banking",
                             Version = 0u
@@ -15436,7 +15659,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 75,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.void",
                             Module = "banking",
                             Version = 0u
@@ -15444,7 +15668,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 76,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.delete",
                             Module = "banking",
                             Version = 0u
@@ -15452,7 +15677,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 77,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.print",
                             Module = "banking",
                             Version = 0u
@@ -15460,7 +15686,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 78,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.export",
                             Module = "banking",
                             Version = 0u
@@ -15468,7 +15695,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 79,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.import",
                             Module = "banking",
                             Version = 0u
@@ -15476,7 +15704,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 80,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "banking.AllUserData",
                             Module = "banking",
                             Version = 0u
@@ -15484,7 +15713,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 81,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.view",
                             Module = "reports",
                             Version = 0u
@@ -15492,7 +15722,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 82,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.create",
                             Module = "reports",
                             Version = 0u
@@ -15500,7 +15731,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 83,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.edit",
                             Module = "reports",
                             Version = 0u
@@ -15508,7 +15740,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 84,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.approve",
                             Module = "reports",
                             Version = 0u
@@ -15516,7 +15749,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 85,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.void",
                             Module = "reports",
                             Version = 0u
@@ -15524,7 +15758,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 86,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.delete",
                             Module = "reports",
                             Version = 0u
@@ -15532,7 +15767,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 87,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.print",
                             Module = "reports",
                             Version = 0u
@@ -15540,7 +15776,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 88,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.export",
                             Module = "reports",
                             Version = 0u
@@ -15548,7 +15785,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 89,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.import",
                             Module = "reports",
                             Version = 0u
@@ -15556,7 +15794,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 90,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "reports.AllUserData",
                             Module = "reports",
                             Version = 0u
@@ -15564,7 +15803,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 91,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.view",
                             Module = "settings",
                             Version = 0u
@@ -15572,7 +15811,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 92,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.create",
                             Module = "settings",
                             Version = 0u
@@ -15580,7 +15819,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 93,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.edit",
                             Module = "settings",
                             Version = 0u
@@ -15588,7 +15827,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 94,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.approve",
                             Module = "settings",
                             Version = 0u
@@ -15596,7 +15835,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 95,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.void",
                             Module = "settings",
                             Version = 0u
@@ -15604,7 +15843,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 96,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.delete",
                             Module = "settings",
                             Version = 0u
@@ -15612,7 +15851,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 97,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.print",
                             Module = "settings",
                             Version = 0u
@@ -15620,7 +15859,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 98,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.export",
                             Module = "settings",
                             Version = 0u
@@ -15628,7 +15867,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 99,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.import",
                             Module = "settings",
                             Version = 0u
@@ -15636,7 +15875,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 100,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "settings.AllUserData",
                             Module = "settings",
                             Version = 0u
@@ -15644,7 +15883,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 101,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.view",
                             Module = "support",
                             Version = 0u
@@ -15652,7 +15892,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 102,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.create",
                             Module = "support",
                             Version = 0u
@@ -15660,7 +15901,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 103,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.edit",
                             Module = "support",
                             Version = 0u
@@ -15668,7 +15910,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 104,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.approve",
                             Module = "support",
                             Version = 0u
@@ -15676,7 +15919,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 105,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.void",
                             Module = "support",
                             Version = 0u
@@ -15684,7 +15928,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 106,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.delete",
                             Module = "support",
                             Version = 0u
@@ -15692,7 +15937,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 107,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.print",
                             Module = "support",
                             Version = 0u
@@ -15700,7 +15946,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 108,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.export",
                             Module = "support",
                             Version = 0u
@@ -15708,7 +15955,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 109,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.import",
                             Module = "support",
                             Version = 0u
@@ -15716,7 +15964,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 110,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "support.AllUserData",
                             Module = "support",
                             Version = 0u
@@ -15724,7 +15973,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 111,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.view",
                             Module = "platform",
                             Version = 0u
@@ -15732,7 +15981,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 112,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.create",
                             Module = "platform",
                             Version = 0u
@@ -15740,7 +15989,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 113,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.edit",
                             Module = "platform",
                             Version = 0u
@@ -15748,7 +15997,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 114,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.approve",
                             Module = "platform",
                             Version = 0u
@@ -15756,7 +16005,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 115,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.void",
                             Module = "platform",
                             Version = 0u
@@ -15764,7 +16013,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 116,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.delete",
                             Module = "platform",
                             Version = 0u
@@ -15772,7 +16021,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 117,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.print",
                             Module = "platform",
                             Version = 0u
@@ -15780,7 +16029,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 118,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.export",
                             Module = "platform",
                             Version = 0u
@@ -15788,7 +16037,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 119,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.import",
                             Module = "platform",
                             Version = 0u
@@ -15796,7 +16045,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 120,
-                            Apps = 15,
+                            AddOns = 0,
                             Code = "platform.AllUserData",
                             Module = "platform",
                             Version = 0u
@@ -15804,7 +16053,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 121,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.view",
                             Module = "employee",
                             Version = 0u
@@ -15812,7 +16062,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 122,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.create",
                             Module = "employee",
                             Version = 0u
@@ -15820,7 +16071,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 123,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.edit",
                             Module = "employee",
                             Version = 0u
@@ -15828,7 +16080,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 124,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.approve",
                             Module = "employee",
                             Version = 0u
@@ -15836,7 +16089,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 125,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.void",
                             Module = "employee",
                             Version = 0u
@@ -15844,7 +16098,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 126,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.delete",
                             Module = "employee",
                             Version = 0u
@@ -15852,7 +16107,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 127,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.print",
                             Module = "employee",
                             Version = 0u
@@ -15860,7 +16116,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 128,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.export",
                             Module = "employee",
                             Version = 0u
@@ -15868,7 +16125,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 129,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.import",
                             Module = "employee",
                             Version = 0u
@@ -15876,7 +16134,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 130,
-                            Apps = 14,
+                            AddOns = 3,
+                            BusinessType = "School",
                             Code = "employee.AllUserData",
                             Module = "employee",
                             Version = 0u
@@ -15884,7 +16143,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 131,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.view",
                             Module = "hrm",
                             Version = 0u
@@ -15892,7 +16151,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 132,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.create",
                             Module = "hrm",
                             Version = 0u
@@ -15900,7 +16159,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 133,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.edit",
                             Module = "hrm",
                             Version = 0u
@@ -15908,7 +16167,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 134,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.approve",
                             Module = "hrm",
                             Version = 0u
@@ -15916,7 +16175,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 135,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.void",
                             Module = "hrm",
                             Version = 0u
@@ -15924,7 +16183,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 136,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.delete",
                             Module = "hrm",
                             Version = 0u
@@ -15932,7 +16191,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 137,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.print",
                             Module = "hrm",
                             Version = 0u
@@ -15940,7 +16199,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 138,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.export",
                             Module = "hrm",
                             Version = 0u
@@ -15948,7 +16207,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 139,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.import",
                             Module = "hrm",
                             Version = 0u
@@ -15956,7 +16215,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 140,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "hrm.AllUserData",
                             Module = "hrm",
                             Version = 0u
@@ -15964,7 +16223,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 141,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.view",
                             Module = "payroll",
                             Version = 0u
@@ -15972,7 +16231,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 142,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.create",
                             Module = "payroll",
                             Version = 0u
@@ -15980,7 +16239,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 143,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.edit",
                             Module = "payroll",
                             Version = 0u
@@ -15988,7 +16247,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 144,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.approve",
                             Module = "payroll",
                             Version = 0u
@@ -15996,7 +16255,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 145,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.void",
                             Module = "payroll",
                             Version = 0u
@@ -16004,7 +16263,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 146,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.delete",
                             Module = "payroll",
                             Version = 0u
@@ -16012,7 +16271,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 147,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.print",
                             Module = "payroll",
                             Version = 0u
@@ -16020,7 +16279,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 148,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.export",
                             Module = "payroll",
                             Version = 0u
@@ -16028,7 +16287,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 149,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.import",
                             Module = "payroll",
                             Version = 0u
@@ -16036,7 +16295,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 150,
-                            Apps = 8,
+                            AddOns = 2,
                             Code = "payroll.AllUserData",
                             Module = "payroll",
                             Version = 0u
@@ -16044,7 +16303,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 151,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.view",
                             Module = "leave",
                             Version = 0u
@@ -16052,7 +16311,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 152,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.create",
                             Module = "leave",
                             Version = 0u
@@ -16060,7 +16319,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 153,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.edit",
                             Module = "leave",
                             Version = 0u
@@ -16068,7 +16327,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 154,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.approve",
                             Module = "leave",
                             Version = 0u
@@ -16076,7 +16335,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 155,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.void",
                             Module = "leave",
                             Version = 0u
@@ -16084,7 +16343,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 156,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.delete",
                             Module = "leave",
                             Version = 0u
@@ -16092,7 +16351,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 157,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.print",
                             Module = "leave",
                             Version = 0u
@@ -16100,7 +16359,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 158,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.export",
                             Module = "leave",
                             Version = 0u
@@ -16108,7 +16367,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 159,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.import",
                             Module = "leave",
                             Version = 0u
@@ -16116,7 +16375,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 160,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "leave.AllUserData",
                             Module = "leave",
                             Version = 0u
@@ -16124,7 +16383,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 161,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.view",
                             Module = "attendance",
                             Version = 0u
@@ -16132,7 +16392,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 162,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.create",
                             Module = "attendance",
                             Version = 0u
@@ -16140,7 +16401,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 163,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.edit",
                             Module = "attendance",
                             Version = 0u
@@ -16148,7 +16410,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 164,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.approve",
                             Module = "attendance",
                             Version = 0u
@@ -16156,7 +16419,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 165,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.void",
                             Module = "attendance",
                             Version = 0u
@@ -16164,7 +16428,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 166,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.delete",
                             Module = "attendance",
                             Version = 0u
@@ -16172,7 +16437,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 167,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.print",
                             Module = "attendance",
                             Version = 0u
@@ -16180,7 +16446,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 168,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.export",
                             Module = "attendance",
                             Version = 0u
@@ -16188,7 +16455,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 169,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.import",
                             Module = "attendance",
                             Version = 0u
@@ -16196,7 +16464,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 170,
-                            Apps = 6,
+                            AddOns = 1,
+                            BusinessType = "School",
                             Code = "attendance.AllUserData",
                             Module = "attendance",
                             Version = 0u
@@ -16204,7 +16473,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 171,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.view",
                             Module = "sis",
                             Version = 0u
@@ -16212,7 +16482,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 172,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.create",
                             Module = "sis",
                             Version = 0u
@@ -16220,7 +16491,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 173,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.edit",
                             Module = "sis",
                             Version = 0u
@@ -16228,7 +16500,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 174,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.approve",
                             Module = "sis",
                             Version = 0u
@@ -16236,7 +16509,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 175,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.void",
                             Module = "sis",
                             Version = 0u
@@ -16244,7 +16518,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 176,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.delete",
                             Module = "sis",
                             Version = 0u
@@ -16252,7 +16527,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 177,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.print",
                             Module = "sis",
                             Version = 0u
@@ -16260,7 +16536,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 178,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.export",
                             Module = "sis",
                             Version = 0u
@@ -16268,7 +16545,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 179,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.import",
                             Module = "sis",
                             Version = 0u
@@ -16276,7 +16554,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 180,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "sis.AllUserData",
                             Module = "sis",
                             Version = 0u
@@ -16284,7 +16563,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 181,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.view",
                             Module = "admission",
                             Version = 0u
@@ -16292,7 +16572,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 182,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.create",
                             Module = "admission",
                             Version = 0u
@@ -16300,7 +16581,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 183,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.edit",
                             Module = "admission",
                             Version = 0u
@@ -16308,7 +16590,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 184,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.approve",
                             Module = "admission",
                             Version = 0u
@@ -16316,7 +16599,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 185,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.void",
                             Module = "admission",
                             Version = 0u
@@ -16324,7 +16608,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 186,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.delete",
                             Module = "admission",
                             Version = 0u
@@ -16332,7 +16617,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 187,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.print",
                             Module = "admission",
                             Version = 0u
@@ -16340,7 +16626,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 188,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.export",
                             Module = "admission",
                             Version = 0u
@@ -16348,7 +16635,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 189,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.import",
                             Module = "admission",
                             Version = 0u
@@ -16356,7 +16644,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 190,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "admission.AllUserData",
                             Module = "admission",
                             Version = 0u
@@ -16364,7 +16653,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 191,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.view",
                             Module = "fee",
                             Version = 0u
@@ -16372,7 +16662,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 192,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.create",
                             Module = "fee",
                             Version = 0u
@@ -16380,7 +16671,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 193,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.edit",
                             Module = "fee",
                             Version = 0u
@@ -16388,7 +16680,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 194,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.approve",
                             Module = "fee",
                             Version = 0u
@@ -16396,7 +16689,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 195,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.void",
                             Module = "fee",
                             Version = 0u
@@ -16404,7 +16698,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 196,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.delete",
                             Module = "fee",
                             Version = 0u
@@ -16412,7 +16707,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 197,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.print",
                             Module = "fee",
                             Version = 0u
@@ -16420,7 +16716,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 198,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.export",
                             Module = "fee",
                             Version = 0u
@@ -16428,7 +16725,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 199,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.import",
                             Module = "fee",
                             Version = 0u
@@ -16436,7 +16734,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 200,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "fee.AllUserData",
                             Module = "fee",
                             Version = 0u
@@ -16444,7 +16743,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 201,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.view",
                             Module = "facility",
                             Version = 0u
@@ -16452,7 +16752,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 202,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.create",
                             Module = "facility",
                             Version = 0u
@@ -16460,7 +16761,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 203,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.edit",
                             Module = "facility",
                             Version = 0u
@@ -16468,7 +16770,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 204,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.approve",
                             Module = "facility",
                             Version = 0u
@@ -16476,7 +16779,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 205,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.void",
                             Module = "facility",
                             Version = 0u
@@ -16484,7 +16788,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 206,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.delete",
                             Module = "facility",
                             Version = 0u
@@ -16492,7 +16797,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 207,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.print",
                             Module = "facility",
                             Version = 0u
@@ -16500,7 +16806,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 208,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.export",
                             Module = "facility",
                             Version = 0u
@@ -16508,7 +16815,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 209,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.import",
                             Module = "facility",
                             Version = 0u
@@ -16516,7 +16824,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 210,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "facility.AllUserData",
                             Module = "facility",
                             Version = 0u
@@ -16524,7 +16833,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 211,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.view",
                             Module = "workorder",
                             Version = 0u
@@ -16532,7 +16842,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 212,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.create",
                             Module = "workorder",
                             Version = 0u
@@ -16540,7 +16851,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 213,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.edit",
                             Module = "workorder",
                             Version = 0u
@@ -16548,7 +16860,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 214,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.approve",
                             Module = "workorder",
                             Version = 0u
@@ -16556,7 +16869,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 215,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.void",
                             Module = "workorder",
                             Version = 0u
@@ -16564,7 +16878,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 216,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.delete",
                             Module = "workorder",
                             Version = 0u
@@ -16572,7 +16887,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 217,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.print",
                             Module = "workorder",
                             Version = 0u
@@ -16580,7 +16896,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 218,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.export",
                             Module = "workorder",
                             Version = 0u
@@ -16588,7 +16905,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 219,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.import",
                             Module = "workorder",
                             Version = 0u
@@ -16596,7 +16914,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 220,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.AllUserData",
                             Module = "workorder",
                             Version = 0u
@@ -16604,7 +16923,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 221,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.view",
                             Module = "preventive",
                             Version = 0u
@@ -16612,7 +16932,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 222,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.create",
                             Module = "preventive",
                             Version = 0u
@@ -16620,7 +16941,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 223,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.edit",
                             Module = "preventive",
                             Version = 0u
@@ -16628,7 +16950,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 224,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.approve",
                             Module = "preventive",
                             Version = 0u
@@ -16636,7 +16959,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 225,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.void",
                             Module = "preventive",
                             Version = 0u
@@ -16644,7 +16968,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 226,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.delete",
                             Module = "preventive",
                             Version = 0u
@@ -16652,7 +16977,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 227,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.print",
                             Module = "preventive",
                             Version = 0u
@@ -16660,7 +16986,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 228,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.export",
                             Module = "preventive",
                             Version = 0u
@@ -16668,7 +16995,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 229,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.import",
                             Module = "preventive",
                             Version = 0u
@@ -16676,7 +17004,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 230,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "preventive.AllUserData",
                             Module = "preventive",
                             Version = 0u
@@ -16684,7 +17013,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 231,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.view",
                             Module = "amc",
                             Version = 0u
@@ -16692,7 +17022,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 232,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.create",
                             Module = "amc",
                             Version = 0u
@@ -16700,7 +17031,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 233,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.edit",
                             Module = "amc",
                             Version = 0u
@@ -16708,7 +17040,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 234,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.approve",
                             Module = "amc",
                             Version = 0u
@@ -16716,7 +17049,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 235,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.void",
                             Module = "amc",
                             Version = 0u
@@ -16724,7 +17058,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 236,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.delete",
                             Module = "amc",
                             Version = 0u
@@ -16732,7 +17067,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 237,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.print",
                             Module = "amc",
                             Version = 0u
@@ -16740,7 +17076,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 238,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.export",
                             Module = "amc",
                             Version = 0u
@@ -16748,7 +17085,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 239,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.import",
                             Module = "amc",
                             Version = 0u
@@ -16756,7 +17094,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 240,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "amc.AllUserData",
                             Module = "amc",
                             Version = 0u
@@ -16764,7 +17103,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 241,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.view",
                             Module = "claims",
                             Version = 0u
@@ -16772,7 +17111,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 242,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.create",
                             Module = "claims",
                             Version = 0u
@@ -16780,7 +17119,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 243,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.edit",
                             Module = "claims",
                             Version = 0u
@@ -16788,7 +17127,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 244,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.approve",
                             Module = "claims",
                             Version = 0u
@@ -16796,7 +17135,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 245,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.void",
                             Module = "claims",
                             Version = 0u
@@ -16804,7 +17143,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 246,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.delete",
                             Module = "claims",
                             Version = 0u
@@ -16812,7 +17151,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 247,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.print",
                             Module = "claims",
                             Version = 0u
@@ -16820,7 +17159,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 248,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.export",
                             Module = "claims",
                             Version = 0u
@@ -16828,7 +17167,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 249,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.import",
                             Module = "claims",
                             Version = 0u
@@ -16836,7 +17175,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 250,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "claims.AllUserData",
                             Module = "claims",
                             Version = 0u
@@ -16844,7 +17183,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 251,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.view",
                             Module = "recruitment",
                             Version = 0u
@@ -16852,7 +17191,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 252,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.create",
                             Module = "recruitment",
                             Version = 0u
@@ -16860,7 +17199,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 253,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.edit",
                             Module = "recruitment",
                             Version = 0u
@@ -16868,7 +17207,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 254,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.approve",
                             Module = "recruitment",
                             Version = 0u
@@ -16876,7 +17215,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 255,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.void",
                             Module = "recruitment",
                             Version = 0u
@@ -16884,7 +17223,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 256,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.delete",
                             Module = "recruitment",
                             Version = 0u
@@ -16892,7 +17231,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 257,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.print",
                             Module = "recruitment",
                             Version = 0u
@@ -16900,7 +17239,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 258,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.export",
                             Module = "recruitment",
                             Version = 0u
@@ -16908,7 +17247,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 259,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.import",
                             Module = "recruitment",
                             Version = 0u
@@ -16916,7 +17255,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 260,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "recruitment.AllUserData",
                             Module = "recruitment",
                             Version = 0u
@@ -16924,7 +17263,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 261,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.view",
                             Module = "performance",
                             Version = 0u
@@ -16932,7 +17271,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 262,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.create",
                             Module = "performance",
                             Version = 0u
@@ -16940,7 +17279,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 263,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.edit",
                             Module = "performance",
                             Version = 0u
@@ -16948,7 +17287,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 264,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.approve",
                             Module = "performance",
                             Version = 0u
@@ -16956,7 +17295,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 265,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.void",
                             Module = "performance",
                             Version = 0u
@@ -16964,7 +17303,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 266,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.delete",
                             Module = "performance",
                             Version = 0u
@@ -16972,7 +17311,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 267,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.print",
                             Module = "performance",
                             Version = 0u
@@ -16980,7 +17319,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 268,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.export",
                             Module = "performance",
                             Version = 0u
@@ -16988,7 +17327,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 269,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.import",
                             Module = "performance",
                             Version = 0u
@@ -16996,7 +17335,7 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 270,
-                            Apps = 4,
+                            AddOns = 1,
                             Code = "performance.AllUserData",
                             Module = "performance",
                             Version = 0u
@@ -17004,7 +17343,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 271,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.view",
                             Module = "projects",
                             Version = 0u
@@ -17012,7 +17352,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 272,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.create",
                             Module = "projects",
                             Version = 0u
@@ -17020,7 +17361,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 273,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.edit",
                             Module = "projects",
                             Version = 0u
@@ -17028,7 +17370,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 274,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.approve",
                             Module = "projects",
                             Version = 0u
@@ -17036,7 +17379,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 275,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.void",
                             Module = "projects",
                             Version = 0u
@@ -17044,7 +17388,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 276,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.delete",
                             Module = "projects",
                             Version = 0u
@@ -17052,7 +17397,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 277,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.print",
                             Module = "projects",
                             Version = 0u
@@ -17060,7 +17406,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 278,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.export",
                             Module = "projects",
                             Version = 0u
@@ -17068,7 +17415,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 279,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.import",
                             Module = "projects",
                             Version = 0u
@@ -17076,7 +17424,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 280,
-                            Apps = 1,
+                            AddOns = 0,
+                            BusinessType = "General",
                             Code = "projects.AllUserData",
                             Module = "projects",
                             Version = 0u
@@ -17084,7 +17433,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 10001,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "attendance.unlock",
                             Module = "attendance",
                             Version = 0u
@@ -17092,7 +17442,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 10002,
-                            Apps = 2,
+                            AddOns = 0,
+                            BusinessType = "School",
                             Code = "workorder.close",
                             Module = "workorder",
                             Version = 0u
@@ -17100,7 +17451,8 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             PermissionId = 10003,
-                            Apps = 1,
+                            AddOns = 64,
+                            BusinessType = "General",
                             Code = "sales.einvoice",
                             Module = "sales",
                             Version = 0u
@@ -17183,9 +17535,6 @@ namespace Master.Repository.Migrations.Admin
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RefreshTokenId"));
 
-                    b.Property<int>("App")
-                        .HasColumnType("integer");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -17252,9 +17601,6 @@ namespace Master.Repository.Migrations.Admin
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoleId"));
 
-                    b.Property<int>("App")
-                        .HasColumnType("integer");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -17298,11 +17644,11 @@ namespace Master.Repository.Migrations.Admin
 
                     b.HasKey("RoleId");
 
-                    b.HasIndex("App", "SystemName")
+                    b.HasIndex("SystemName")
                         .IsUnique()
                         .HasFilter("\"CustomerId\" IS NULL");
 
-                    b.HasIndex("CustomerId", "App", "SystemName")
+                    b.HasIndex("CustomerId", "SystemName")
                         .IsUnique();
 
                     b.ToTable("Roles", "mst");
@@ -17311,7 +17657,6 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             RoleId = 1,
-                            App = 1,
                             DisplayName = "Owner",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17321,7 +17666,6 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             RoleId = 2,
-                            App = 1,
                             DisplayName = "Administrator",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17331,7 +17675,6 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             RoleId = 3,
-                            App = 1,
                             DisplayName = "Accountant",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17341,7 +17684,6 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             RoleId = 4,
-                            App = 1,
                             DisplayName = "Sales",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17351,7 +17693,6 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             RoleId = 5,
-                            App = 1,
                             DisplayName = "Viewer",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17360,38 +17701,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            RoleId = 1000002,
-                            App = 2,
-                            DisplayName = "Owner",
-                            IsActive = true,
-                            IsSystemRole = true,
-                            SystemName = "Owner",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RoleId = 1000004,
-                            App = 4,
-                            DisplayName = "Owner",
-                            IsActive = true,
-                            IsSystemRole = true,
-                            SystemName = "Owner",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RoleId = 1000008,
-                            App = 8,
-                            DisplayName = "Owner",
-                            IsActive = true,
-                            IsSystemRole = true,
-                            SystemName = "Owner",
-                            Version = 0u
-                        },
-                        new
-                        {
                             RoleId = 1000101,
-                            App = 2,
                             DisplayName = "Principal",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17401,7 +17711,6 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             RoleId = 1000102,
-                            App = 2,
                             DisplayName = "Office Admin",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17410,18 +17719,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            RoleId = 1000103,
-                            App = 2,
-                            DisplayName = "Accountant",
-                            IsActive = true,
-                            IsSystemRole = true,
-                            SystemName = "Accountant",
-                            Version = 0u
-                        },
-                        new
-                        {
                             RoleId = 1000104,
-                            App = 2,
                             DisplayName = "Teacher",
                             IsActive = true,
                             IsSystemRole = true,
@@ -17431,21 +17729,10 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             RoleId = 1000105,
-                            App = 2,
                             DisplayName = "Maintenance",
                             IsActive = true,
                             IsSystemRole = true,
                             SystemName = "Maintenance",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RoleId = 1000106,
-                            App = 2,
-                            DisplayName = "Viewer",
-                            IsActive = true,
-                            IsSystemRole = true,
-                            SystemName = "Viewer",
                             Version = 0u
                         });
                 });
@@ -19865,1556 +20152,2130 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            RolePermissionId = 2000000011L,
-                            PermissionId = 11,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000012L,
-                            PermissionId = 12,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000013L,
-                            PermissionId = 13,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000014L,
-                            PermissionId = 14,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000015L,
-                            PermissionId = 15,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000016L,
-                            PermissionId = 16,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000017L,
-                            PermissionId = 17,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000018L,
-                            PermissionId = 18,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000019L,
-                            PermissionId = 19,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000020L,
-                            PermissionId = 20,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000091L,
-                            PermissionId = 91,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000092L,
-                            PermissionId = 92,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000093L,
-                            PermissionId = 93,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000094L,
-                            PermissionId = 94,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000095L,
-                            PermissionId = 95,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000096L,
-                            PermissionId = 96,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000097L,
-                            PermissionId = 97,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000098L,
-                            PermissionId = 98,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000099L,
-                            PermissionId = 99,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000100L,
-                            PermissionId = 100,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000121L,
+                            RolePermissionId = 920100121L,
                             PermissionId = 121,
-                            RoleId = 1000002,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2000000122L,
-                            PermissionId = 122,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000123L,
-                            PermissionId = 123,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000124L,
-                            PermissionId = 124,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000125L,
-                            PermissionId = 125,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000126L,
-                            PermissionId = 126,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000127L,
-                            PermissionId = 127,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000128L,
-                            PermissionId = 128,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000129L,
-                            PermissionId = 129,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000130L,
-                            PermissionId = 130,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000161L,
-                            PermissionId = 161,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000162L,
-                            PermissionId = 162,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000163L,
-                            PermissionId = 163,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000164L,
-                            PermissionId = 164,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000165L,
-                            PermissionId = 165,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000166L,
-                            PermissionId = 166,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000167L,
-                            PermissionId = 167,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000168L,
-                            PermissionId = 168,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000169L,
-                            PermissionId = 169,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000170L,
-                            PermissionId = 170,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000171L,
-                            PermissionId = 171,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000172L,
-                            PermissionId = 172,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000173L,
-                            PermissionId = 173,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000174L,
-                            PermissionId = 174,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000175L,
-                            PermissionId = 175,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000176L,
-                            PermissionId = 176,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000177L,
-                            PermissionId = 177,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000178L,
-                            PermissionId = 178,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000179L,
-                            PermissionId = 179,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000180L,
-                            PermissionId = 180,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000181L,
-                            PermissionId = 181,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000182L,
-                            PermissionId = 182,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000183L,
-                            PermissionId = 183,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000184L,
-                            PermissionId = 184,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000185L,
-                            PermissionId = 185,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000186L,
-                            PermissionId = 186,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000187L,
-                            PermissionId = 187,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000188L,
-                            PermissionId = 188,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000189L,
-                            PermissionId = 189,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000190L,
-                            PermissionId = 190,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000191L,
-                            PermissionId = 191,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000192L,
-                            PermissionId = 192,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000193L,
-                            PermissionId = 193,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000194L,
-                            PermissionId = 194,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000195L,
-                            PermissionId = 195,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000196L,
-                            PermissionId = 196,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000197L,
-                            PermissionId = 197,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000198L,
-                            PermissionId = 198,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000199L,
-                            PermissionId = 199,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000200L,
-                            PermissionId = 200,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000201L,
-                            PermissionId = 201,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000202L,
-                            PermissionId = 202,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000203L,
-                            PermissionId = 203,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000204L,
-                            PermissionId = 204,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000205L,
-                            PermissionId = 205,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000206L,
-                            PermissionId = 206,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000207L,
-                            PermissionId = 207,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000208L,
-                            PermissionId = 208,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000209L,
-                            PermissionId = 209,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000210L,
-                            PermissionId = 210,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000211L,
-                            PermissionId = 211,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000212L,
-                            PermissionId = 212,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000213L,
-                            PermissionId = 213,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000214L,
-                            PermissionId = 214,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000215L,
-                            PermissionId = 215,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000216L,
-                            PermissionId = 216,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000217L,
-                            PermissionId = 217,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000218L,
-                            PermissionId = 218,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000219L,
-                            PermissionId = 219,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000220L,
-                            PermissionId = 220,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000221L,
-                            PermissionId = 221,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000222L,
-                            PermissionId = 222,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000223L,
-                            PermissionId = 223,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000224L,
-                            PermissionId = 224,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000225L,
-                            PermissionId = 225,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000226L,
-                            PermissionId = 226,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000227L,
-                            PermissionId = 227,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000228L,
-                            PermissionId = 228,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000229L,
-                            PermissionId = 229,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000230L,
-                            PermissionId = 230,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000231L,
-                            PermissionId = 231,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000232L,
-                            PermissionId = 232,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000233L,
-                            PermissionId = 233,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000234L,
-                            PermissionId = 234,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000235L,
-                            PermissionId = 235,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000236L,
-                            PermissionId = 236,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000237L,
-                            PermissionId = 237,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000238L,
-                            PermissionId = 238,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000239L,
-                            PermissionId = 239,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000000240L,
-                            PermissionId = 240,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000010001L,
-                            PermissionId = 10001,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2000010002L,
-                            PermissionId = 10002,
-                            RoleId = 1000002,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000091L,
-                            PermissionId = 91,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000092L,
-                            PermissionId = 92,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000093L,
-                            PermissionId = 93,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000094L,
-                            PermissionId = 94,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000095L,
-                            PermissionId = 95,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000096L,
-                            PermissionId = 96,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000097L,
-                            PermissionId = 97,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000098L,
-                            PermissionId = 98,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000099L,
-                            PermissionId = 99,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000100L,
-                            PermissionId = 100,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000121L,
+                            RolePermissionId = 920200121L,
                             PermissionId = 121,
-                            RoleId = 1000004,
+                            RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000122L,
+                            RolePermissionId = 920100122L,
                             PermissionId = 122,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000123L,
+                            RolePermissionId = 920200122L,
+                            PermissionId = 122,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100123L,
                             PermissionId = 123,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000124L,
+                            RolePermissionId = 920200123L,
+                            PermissionId = 123,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100124L,
                             PermissionId = 124,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000125L,
+                            RolePermissionId = 920200124L,
+                            PermissionId = 124,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100125L,
                             PermissionId = 125,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000126L,
+                            RolePermissionId = 920200125L,
+                            PermissionId = 125,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100126L,
                             PermissionId = 126,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000127L,
+                            RolePermissionId = 920200126L,
+                            PermissionId = 126,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100127L,
                             PermissionId = 127,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000128L,
+                            RolePermissionId = 920200127L,
+                            PermissionId = 127,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100128L,
                             PermissionId = 128,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000129L,
+                            RolePermissionId = 920200128L,
+                            PermissionId = 128,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100129L,
                             PermissionId = 129,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000130L,
+                            RolePermissionId = 920200129L,
+                            PermissionId = 129,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100130L,
                             PermissionId = 130,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000131L,
+                            RolePermissionId = 920200130L,
+                            PermissionId = 130,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100131L,
                             PermissionId = 131,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000132L,
+                            RolePermissionId = 920200131L,
+                            PermissionId = 131,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100132L,
                             PermissionId = 132,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000133L,
+                            RolePermissionId = 920200132L,
+                            PermissionId = 132,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100133L,
                             PermissionId = 133,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000134L,
+                            RolePermissionId = 920200133L,
+                            PermissionId = 133,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100134L,
                             PermissionId = 134,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000135L,
+                            RolePermissionId = 920200134L,
+                            PermissionId = 134,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100135L,
                             PermissionId = 135,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000136L,
+                            RolePermissionId = 920200135L,
+                            PermissionId = 135,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100136L,
                             PermissionId = 136,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000137L,
+                            RolePermissionId = 920200136L,
+                            PermissionId = 136,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100137L,
                             PermissionId = 137,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000138L,
+                            RolePermissionId = 920200137L,
+                            PermissionId = 137,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100138L,
                             PermissionId = 138,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000139L,
+                            RolePermissionId = 920200138L,
+                            PermissionId = 138,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100139L,
                             PermissionId = 139,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000140L,
+                            RolePermissionId = 920200139L,
+                            PermissionId = 139,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100140L,
                             PermissionId = 140,
-                            RoleId = 1000004,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000151L,
-                            PermissionId = 151,
-                            RoleId = 1000004,
+                            RolePermissionId = 920200140L,
+                            PermissionId = 140,
+                            RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 4000000152L,
-                            PermissionId = 152,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000153L,
-                            PermissionId = 153,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000154L,
-                            PermissionId = 154,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000155L,
-                            PermissionId = 155,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000156L,
-                            PermissionId = 156,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000157L,
-                            PermissionId = 157,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000158L,
-                            PermissionId = 158,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000159L,
-                            PermissionId = 159,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000160L,
-                            PermissionId = 160,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000161L,
-                            PermissionId = 161,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000162L,
-                            PermissionId = 162,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000163L,
-                            PermissionId = 163,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000164L,
-                            PermissionId = 164,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000165L,
-                            PermissionId = 165,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000166L,
-                            PermissionId = 166,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000167L,
-                            PermissionId = 167,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000168L,
-                            PermissionId = 168,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000169L,
-                            PermissionId = 169,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000170L,
-                            PermissionId = 170,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000241L,
-                            PermissionId = 241,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000242L,
-                            PermissionId = 242,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000243L,
-                            PermissionId = 243,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000244L,
-                            PermissionId = 244,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000245L,
-                            PermissionId = 245,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000246L,
-                            PermissionId = 246,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000247L,
-                            PermissionId = 247,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000248L,
-                            PermissionId = 248,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000249L,
-                            PermissionId = 249,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000250L,
-                            PermissionId = 250,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000251L,
-                            PermissionId = 251,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000252L,
-                            PermissionId = 252,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000253L,
-                            PermissionId = 253,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000254L,
-                            PermissionId = 254,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000255L,
-                            PermissionId = 255,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000256L,
-                            PermissionId = 256,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000257L,
-                            PermissionId = 257,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000258L,
-                            PermissionId = 258,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000259L,
-                            PermissionId = 259,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000260L,
-                            PermissionId = 260,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000261L,
-                            PermissionId = 261,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000262L,
-                            PermissionId = 262,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000263L,
-                            PermissionId = 263,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000264L,
-                            PermissionId = 264,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000265L,
-                            PermissionId = 265,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000266L,
-                            PermissionId = 266,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000267L,
-                            PermissionId = 267,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000268L,
-                            PermissionId = 268,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000269L,
-                            PermissionId = 269,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 4000000270L,
-                            PermissionId = 270,
-                            RoleId = 1000004,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000091L,
-                            PermissionId = 91,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000092L,
-                            PermissionId = 92,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000093L,
-                            PermissionId = 93,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000094L,
-                            PermissionId = 94,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000095L,
-                            PermissionId = 95,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000096L,
-                            PermissionId = 96,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000097L,
-                            PermissionId = 97,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000098L,
-                            PermissionId = 98,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000099L,
-                            PermissionId = 99,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000100L,
-                            PermissionId = 100,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000121L,
-                            PermissionId = 121,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000122L,
-                            PermissionId = 122,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000123L,
-                            PermissionId = 123,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000124L,
-                            PermissionId = 124,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000125L,
-                            PermissionId = 125,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000126L,
-                            PermissionId = 126,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000127L,
-                            PermissionId = 127,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000128L,
-                            PermissionId = 128,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000129L,
-                            PermissionId = 129,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000130L,
-                            PermissionId = 130,
-                            RoleId = 1000008,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 8000000141L,
+                            RolePermissionId = 920100141L,
                             PermissionId = 141,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000142L,
+                            RolePermissionId = 920200141L,
+                            PermissionId = 141,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100142L,
                             PermissionId = 142,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000143L,
+                            RolePermissionId = 920200142L,
+                            PermissionId = 142,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100143L,
                             PermissionId = 143,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000144L,
+                            RolePermissionId = 920200143L,
+                            PermissionId = 143,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100144L,
                             PermissionId = 144,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000145L,
+                            RolePermissionId = 920200144L,
+                            PermissionId = 144,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100145L,
                             PermissionId = 145,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000146L,
+                            RolePermissionId = 920200145L,
+                            PermissionId = 145,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100146L,
                             PermissionId = 146,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000147L,
+                            RolePermissionId = 920200146L,
+                            PermissionId = 146,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100147L,
                             PermissionId = 147,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000148L,
+                            RolePermissionId = 920200147L,
+                            PermissionId = 147,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100148L,
                             PermissionId = 148,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000149L,
+                            RolePermissionId = 920200148L,
+                            PermissionId = 148,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100149L,
                             PermissionId = 149,
-                            RoleId = 1000008,
+                            RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 8000000150L,
+                            RolePermissionId = 920200149L,
+                            PermissionId = 149,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100150L,
                             PermissionId = 150,
-                            RoleId = 1000008,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200150L,
+                            PermissionId = 150,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100151L,
+                            PermissionId = 151,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200151L,
+                            PermissionId = 151,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100152L,
+                            PermissionId = 152,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200152L,
+                            PermissionId = 152,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100153L,
+                            PermissionId = 153,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200153L,
+                            PermissionId = 153,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100154L,
+                            PermissionId = 154,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200154L,
+                            PermissionId = 154,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100155L,
+                            PermissionId = 155,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200155L,
+                            PermissionId = 155,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100156L,
+                            PermissionId = 156,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200156L,
+                            PermissionId = 156,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100157L,
+                            PermissionId = 157,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200157L,
+                            PermissionId = 157,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100158L,
+                            PermissionId = 158,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200158L,
+                            PermissionId = 158,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100159L,
+                            PermissionId = 159,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200159L,
+                            PermissionId = 159,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100160L,
+                            PermissionId = 160,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200160L,
+                            PermissionId = 160,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100161L,
+                            PermissionId = 161,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200161L,
+                            PermissionId = 161,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100162L,
+                            PermissionId = 162,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200162L,
+                            PermissionId = 162,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100163L,
+                            PermissionId = 163,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200163L,
+                            PermissionId = 163,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100164L,
+                            PermissionId = 164,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200164L,
+                            PermissionId = 164,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100165L,
+                            PermissionId = 165,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200165L,
+                            PermissionId = 165,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100166L,
+                            PermissionId = 166,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200166L,
+                            PermissionId = 166,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100167L,
+                            PermissionId = 167,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200167L,
+                            PermissionId = 167,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100168L,
+                            PermissionId = 168,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200168L,
+                            PermissionId = 168,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100169L,
+                            PermissionId = 169,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200169L,
+                            PermissionId = 169,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100170L,
+                            PermissionId = 170,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200170L,
+                            PermissionId = 170,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100171L,
+                            PermissionId = 171,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200171L,
+                            PermissionId = 171,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100172L,
+                            PermissionId = 172,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200172L,
+                            PermissionId = 172,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100173L,
+                            PermissionId = 173,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200173L,
+                            PermissionId = 173,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100174L,
+                            PermissionId = 174,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200174L,
+                            PermissionId = 174,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100175L,
+                            PermissionId = 175,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200175L,
+                            PermissionId = 175,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100176L,
+                            PermissionId = 176,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200176L,
+                            PermissionId = 176,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100177L,
+                            PermissionId = 177,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200177L,
+                            PermissionId = 177,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100178L,
+                            PermissionId = 178,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200178L,
+                            PermissionId = 178,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100179L,
+                            PermissionId = 179,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200179L,
+                            PermissionId = 179,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100180L,
+                            PermissionId = 180,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200180L,
+                            PermissionId = 180,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100181L,
+                            PermissionId = 181,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200181L,
+                            PermissionId = 181,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100182L,
+                            PermissionId = 182,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200182L,
+                            PermissionId = 182,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100183L,
+                            PermissionId = 183,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200183L,
+                            PermissionId = 183,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100184L,
+                            PermissionId = 184,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200184L,
+                            PermissionId = 184,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100185L,
+                            PermissionId = 185,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200185L,
+                            PermissionId = 185,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100186L,
+                            PermissionId = 186,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200186L,
+                            PermissionId = 186,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100187L,
+                            PermissionId = 187,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200187L,
+                            PermissionId = 187,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100188L,
+                            PermissionId = 188,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200188L,
+                            PermissionId = 188,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100189L,
+                            PermissionId = 189,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200189L,
+                            PermissionId = 189,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100190L,
+                            PermissionId = 190,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200190L,
+                            PermissionId = 190,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100191L,
+                            PermissionId = 191,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200191L,
+                            PermissionId = 191,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100192L,
+                            PermissionId = 192,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200192L,
+                            PermissionId = 192,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100193L,
+                            PermissionId = 193,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200193L,
+                            PermissionId = 193,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100194L,
+                            PermissionId = 194,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200194L,
+                            PermissionId = 194,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100195L,
+                            PermissionId = 195,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200195L,
+                            PermissionId = 195,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100196L,
+                            PermissionId = 196,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200196L,
+                            PermissionId = 196,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100197L,
+                            PermissionId = 197,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200197L,
+                            PermissionId = 197,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100198L,
+                            PermissionId = 198,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200198L,
+                            PermissionId = 198,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100199L,
+                            PermissionId = 199,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200199L,
+                            PermissionId = 199,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100200L,
+                            PermissionId = 200,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200200L,
+                            PermissionId = 200,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100201L,
+                            PermissionId = 201,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200201L,
+                            PermissionId = 201,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100202L,
+                            PermissionId = 202,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200202L,
+                            PermissionId = 202,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100203L,
+                            PermissionId = 203,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200203L,
+                            PermissionId = 203,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100204L,
+                            PermissionId = 204,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200204L,
+                            PermissionId = 204,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100205L,
+                            PermissionId = 205,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200205L,
+                            PermissionId = 205,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100206L,
+                            PermissionId = 206,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200206L,
+                            PermissionId = 206,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100207L,
+                            PermissionId = 207,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200207L,
+                            PermissionId = 207,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100208L,
+                            PermissionId = 208,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200208L,
+                            PermissionId = 208,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100209L,
+                            PermissionId = 209,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200209L,
+                            PermissionId = 209,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100210L,
+                            PermissionId = 210,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200210L,
+                            PermissionId = 210,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100211L,
+                            PermissionId = 211,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200211L,
+                            PermissionId = 211,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100212L,
+                            PermissionId = 212,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200212L,
+                            PermissionId = 212,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100213L,
+                            PermissionId = 213,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200213L,
+                            PermissionId = 213,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100214L,
+                            PermissionId = 214,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200214L,
+                            PermissionId = 214,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100215L,
+                            PermissionId = 215,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200215L,
+                            PermissionId = 215,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100216L,
+                            PermissionId = 216,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200216L,
+                            PermissionId = 216,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100217L,
+                            PermissionId = 217,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200217L,
+                            PermissionId = 217,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100218L,
+                            PermissionId = 218,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200218L,
+                            PermissionId = 218,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100219L,
+                            PermissionId = 219,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200219L,
+                            PermissionId = 219,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100220L,
+                            PermissionId = 220,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200220L,
+                            PermissionId = 220,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100221L,
+                            PermissionId = 221,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200221L,
+                            PermissionId = 221,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100222L,
+                            PermissionId = 222,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200222L,
+                            PermissionId = 222,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100223L,
+                            PermissionId = 223,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200223L,
+                            PermissionId = 223,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100224L,
+                            PermissionId = 224,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200224L,
+                            PermissionId = 224,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100225L,
+                            PermissionId = 225,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200225L,
+                            PermissionId = 225,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100226L,
+                            PermissionId = 226,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200226L,
+                            PermissionId = 226,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100227L,
+                            PermissionId = 227,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200227L,
+                            PermissionId = 227,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100228L,
+                            PermissionId = 228,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200228L,
+                            PermissionId = 228,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100229L,
+                            PermissionId = 229,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200229L,
+                            PermissionId = 229,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100230L,
+                            PermissionId = 230,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200230L,
+                            PermissionId = 230,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100231L,
+                            PermissionId = 231,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200231L,
+                            PermissionId = 231,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100232L,
+                            PermissionId = 232,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200232L,
+                            PermissionId = 232,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100233L,
+                            PermissionId = 233,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200233L,
+                            PermissionId = 233,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100234L,
+                            PermissionId = 234,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200234L,
+                            PermissionId = 234,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100235L,
+                            PermissionId = 235,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200235L,
+                            PermissionId = 235,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100236L,
+                            PermissionId = 236,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200236L,
+                            PermissionId = 236,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100237L,
+                            PermissionId = 237,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200237L,
+                            PermissionId = 237,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100238L,
+                            PermissionId = 238,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200238L,
+                            PermissionId = 238,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100239L,
+                            PermissionId = 239,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200239L,
+                            PermissionId = 239,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100240L,
+                            PermissionId = 240,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200240L,
+                            PermissionId = 240,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100241L,
+                            PermissionId = 241,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200241L,
+                            PermissionId = 241,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100242L,
+                            PermissionId = 242,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200242L,
+                            PermissionId = 242,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100243L,
+                            PermissionId = 243,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200243L,
+                            PermissionId = 243,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100244L,
+                            PermissionId = 244,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200244L,
+                            PermissionId = 244,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100245L,
+                            PermissionId = 245,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200245L,
+                            PermissionId = 245,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100246L,
+                            PermissionId = 246,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200246L,
+                            PermissionId = 246,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100247L,
+                            PermissionId = 247,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200247L,
+                            PermissionId = 247,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100248L,
+                            PermissionId = 248,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200248L,
+                            PermissionId = 248,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100249L,
+                            PermissionId = 249,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200249L,
+                            PermissionId = 249,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100250L,
+                            PermissionId = 250,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200250L,
+                            PermissionId = 250,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100251L,
+                            PermissionId = 251,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200251L,
+                            PermissionId = 251,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100252L,
+                            PermissionId = 252,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200252L,
+                            PermissionId = 252,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100253L,
+                            PermissionId = 253,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200253L,
+                            PermissionId = 253,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100254L,
+                            PermissionId = 254,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200254L,
+                            PermissionId = 254,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100255L,
+                            PermissionId = 255,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200255L,
+                            PermissionId = 255,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100256L,
+                            PermissionId = 256,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200256L,
+                            PermissionId = 256,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100257L,
+                            PermissionId = 257,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200257L,
+                            PermissionId = 257,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100258L,
+                            PermissionId = 258,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200258L,
+                            PermissionId = 258,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100259L,
+                            PermissionId = 259,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200259L,
+                            PermissionId = 259,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100260L,
+                            PermissionId = 260,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200260L,
+                            PermissionId = 260,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100261L,
+                            PermissionId = 261,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200261L,
+                            PermissionId = 261,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100262L,
+                            PermissionId = 262,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200262L,
+                            PermissionId = 262,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100263L,
+                            PermissionId = 263,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200263L,
+                            PermissionId = 263,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100264L,
+                            PermissionId = 264,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200264L,
+                            PermissionId = 264,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100265L,
+                            PermissionId = 265,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200265L,
+                            PermissionId = 265,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100266L,
+                            PermissionId = 266,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200266L,
+                            PermissionId = 266,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100267L,
+                            PermissionId = 267,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200267L,
+                            PermissionId = 267,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100268L,
+                            PermissionId = 268,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200268L,
+                            PermissionId = 268,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100269L,
+                            PermissionId = 269,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200269L,
+                            PermissionId = 269,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100270L,
+                            PermissionId = 270,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200270L,
+                            PermissionId = 270,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920110001L,
+                            PermissionId = 10001,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920210001L,
+                            PermissionId = 10001,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920110002L,
+                            PermissionId = 10002,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920210002L,
+                            PermissionId = 10002,
+                            RoleId = 2,
                             Version = 0u
                         },
                         new
@@ -22385,387 +23246,219 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            RolePermissionId = 2030000011L,
-                            PermissionId = 11,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000171L,
-                            PermissionId = 171,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000181L,
-                            PermissionId = 181,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000191L,
-                            PermissionId = 191,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000192L,
-                            PermissionId = 192,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000193L,
-                            PermissionId = 193,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000194L,
-                            PermissionId = 194,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000195L,
-                            PermissionId = 195,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000196L,
-                            PermissionId = 196,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000197L,
-                            PermissionId = 197,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000198L,
-                            PermissionId = 198,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000199L,
-                            PermissionId = 199,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2030000200L,
-                            PermissionId = 200,
-                            RoleId = 1000103,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2040000161L,
+                            RolePermissionId = 2030000161L,
                             PermissionId = 161,
                             RoleId = 1000104,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2040000162L,
+                            RolePermissionId = 2030000162L,
                             PermissionId = 162,
                             RoleId = 1000104,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2040000163L,
+                            RolePermissionId = 2030000163L,
                             PermissionId = 163,
                             RoleId = 1000104,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2040000171L,
+                            RolePermissionId = 2030000171L,
                             PermissionId = 171,
                             RoleId = 1000104,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2040000173L,
+                            RolePermissionId = 2030000173L,
                             PermissionId = 173,
                             RoleId = 1000104,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000011L,
+                            RolePermissionId = 2040000011L,
                             PermissionId = 11,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000121L,
+                            RolePermissionId = 2040000121L,
                             PermissionId = 121,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000201L,
+                            RolePermissionId = 2040000201L,
                             PermissionId = 201,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000202L,
+                            RolePermissionId = 2040000202L,
                             PermissionId = 202,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000203L,
+                            RolePermissionId = 2040000203L,
                             PermissionId = 203,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000204L,
+                            RolePermissionId = 2040000204L,
                             PermissionId = 204,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000205L,
+                            RolePermissionId = 2040000205L,
                             PermissionId = 205,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000206L,
+                            RolePermissionId = 2040000206L,
                             PermissionId = 206,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000207L,
+                            RolePermissionId = 2040000207L,
                             PermissionId = 207,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000208L,
+                            RolePermissionId = 2040000208L,
                             PermissionId = 208,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000209L,
+                            RolePermissionId = 2040000209L,
                             PermissionId = 209,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000210L,
+                            RolePermissionId = 2040000210L,
                             PermissionId = 210,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000211L,
+                            RolePermissionId = 2040000211L,
                             PermissionId = 211,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000212L,
+                            RolePermissionId = 2040000212L,
                             PermissionId = 212,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000213L,
+                            RolePermissionId = 2040000213L,
                             PermissionId = 213,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000221L,
+                            RolePermissionId = 2040000221L,
                             PermissionId = 221,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000222L,
+                            RolePermissionId = 2040000222L,
                             PermissionId = 222,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000223L,
+                            RolePermissionId = 2040000223L,
                             PermissionId = 223,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000224L,
+                            RolePermissionId = 2040000224L,
                             PermissionId = 224,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000225L,
+                            RolePermissionId = 2040000225L,
                             PermissionId = 225,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000226L,
+                            RolePermissionId = 2040000226L,
                             PermissionId = 226,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000227L,
+                            RolePermissionId = 2040000227L,
                             PermissionId = 227,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000228L,
+                            RolePermissionId = 2040000228L,
                             PermissionId = 228,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000229L,
+                            RolePermissionId = 2040000229L,
                             PermissionId = 229,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000230L,
+                            RolePermissionId = 2040000230L,
                             PermissionId = 230,
                             RoleId = 1000105,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 2050000231L,
+                            RolePermissionId = 2040000231L,
                             PermissionId = 231,
                             RoleId = 1000105,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000011L,
-                            PermissionId = 11,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000091L,
-                            PermissionId = 91,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000121L,
-                            PermissionId = 121,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000161L,
-                            PermissionId = 161,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000171L,
-                            PermissionId = 171,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000181L,
-                            PermissionId = 181,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000191L,
-                            PermissionId = 191,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000201L,
-                            PermissionId = 201,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000211L,
-                            PermissionId = 211,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000221L,
-                            PermissionId = 221,
-                            RoleId = 1000106,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            RolePermissionId = 2060000231L,
-                            PermissionId = 231,
-                            RoleId = 1000106,
                             Version = 0u
                         });
                 });

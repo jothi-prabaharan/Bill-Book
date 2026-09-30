@@ -19,6 +19,12 @@ public class SessionContextResponse
     /// <summary>The app this token is for: RetailErp, School, Hrms or Payroll.</summary>
     public string App { get; set; } = null!;
 
+    /// <summary>The business vertical of this branch (D-36, TK-127).</summary>
+    public Shared.Kernel.Apps.BusinessType? BusinessType { get; set; }
+
+    /// <summary>Enabled modular add-ons for this branch (D-36, TK-127).</summary>
+    public Shared.Kernel.Apps.AddOn AddOns { get; set; } = Shared.Kernel.Apps.AddOn.None;
+
     /// <summary>That app's licence: Active, Trial, Expired, Suspended or NotLicensed.</summary>
     public string LicenseStatus { get; set; } = null!;
 

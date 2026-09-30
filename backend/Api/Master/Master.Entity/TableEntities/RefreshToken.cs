@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Shared.Kernel.Apps;
 using Shared.Kernel.Entities;
 
 namespace Master.Entity.TableEntities;
@@ -33,12 +32,6 @@ public class RefreshToken : AuditableEntity
     /// the one that was rotated into its place.
     /// </summary>
     public Guid FamilyId { get; set; }
-
-    /// <summary>
-    /// The app the token was minted for (TK-42), so a refresh mints a token for
-    /// the same app, as <c>OrgId</c> makes it mint one for the same branch.
-    /// </summary>
-    public App App { get; set; } = App.RetailErp;
 
     /// <summary>SHA-256 of the token — never the plaintext.</summary>
     [Required(ErrorMessage = "Token hash is required.")]

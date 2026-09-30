@@ -50,7 +50,13 @@ public sealed class AccessTokenRequest
     public required Guid OrgId { get; init; }
 
     /// <summary>The app the token is for; written as the <c>app</c> claim (TK-43).</summary>
-    public Shared.Kernel.Apps.App App { get; init; } = Shared.Kernel.Apps.App.RetailErp;
+    public Shared.Kernel.Apps.App App { get; init; } = Shared.Kernel.Apps.App.None;
+
+    /// <summary>The branch's business vertical (D-36, TK-127).</summary>
+    public Shared.Kernel.Apps.BusinessType? BusinessType { get; init; }
+
+    /// <summary>Enabled modular add-ons for the branch (D-36, TK-127).</summary>
+    public Shared.Kernel.Apps.AddOn AddOns { get; init; } = Shared.Kernel.Apps.AddOn.None;
 
     /// <summary>
     /// The single role this user holds in this organization. A user has exactly

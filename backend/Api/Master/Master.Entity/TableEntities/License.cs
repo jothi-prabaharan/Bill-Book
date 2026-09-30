@@ -1,21 +1,14 @@
 using Master.Entity.Enums;
-using Shared.Kernel.Apps;
 using Shared.Kernel.Entities;
 
 namespace Master.Entity.TableEntities;
 
-/// <summary>One per Customer. A Trial licence is created automatically at signup.</summary>
+/// <summary>One per Customer (D-36, TK-127). A Trial licence is created automatically at signup.</summary>
 public class License : AuditableEntity
 {
     public Guid LicenseId { get; set; }
 
     public Guid CustomerId { get; set; }
-
-    /// <summary>
-    /// The app this licence is for (TK-42). One licence per app per customer, so
-    /// a lapsed RetailErp trial leaves Payroll running.
-    /// </summary>
-    public App App { get; set; } = App.RetailErp;
 
     public LicenseType LicenseType { get; set; } = LicenseType.Trial;
 

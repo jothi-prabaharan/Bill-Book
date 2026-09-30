@@ -90,7 +90,7 @@ public sealed class InternalUsersController : ControllerBase
             from u in _db.UserOrganizationRoles
             join r in _db.Roles on u.RoleId equals r.RoleId
             join user in _db.Users on u.UserId equals user.UserId
-            where u.OrgId == orgId && u.IsActive && r.IsActive && r.App == app && user.IsActive
+            where u.OrgId == orgId && u.IsActive && r.IsActive && user.IsActive
             select new { user.UserId, user.DisplayName, user.Email, u.RoleId }).ToListAsync(ct);
 
         List<int> roleIds = [.. grants.Select(g => g.RoleId).Distinct()];

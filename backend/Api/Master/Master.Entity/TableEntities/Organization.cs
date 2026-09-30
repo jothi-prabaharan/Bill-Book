@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Master.Entity.Enums;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Entities;
 using Shared.Kernel.Validation;
 
@@ -23,6 +24,17 @@ public class Organization : AuditableEntity
 
     /// <summary>The head office this branch belongs to.</summary>
     public Guid CustomerId { get; set; }
+
+    /// <summary>
+    /// The business vertical this branch is in (D-36, TK-126).
+    /// Nullable: a branch can have no business type if the customer bought only standalone add-ons like HRMS or Payroll.
+    /// </summary>
+    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.General;
+
+    /// <summary>
+    /// Modular add-ons enabled for this branch (D-36, TK-126).
+    /// </summary>
+    public AddOn AddOns { get; set; } = AddOn.None;
 
     /// <summary>
     /// The trade this branch is in — General, Pharma or Jewellery — which

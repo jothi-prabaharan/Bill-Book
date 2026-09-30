@@ -4,6 +4,7 @@ using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Validation;
 
 namespace Master.Repository.Repositories;
@@ -100,15 +101,25 @@ public sealed class SignupRepository
             }
         }
 
-        // The app signed up for gets the 14-day trial (TK-45). Other apps are
-        // started later, from Settings › Applications.
+        // The app signed up for sets the initial branch's business type or add-ons (D-36, TK-127).
         Shared.Kernel.Apps.App app = AuthRepository.AppOrDefault(request.App);
+        BusinessType? initialBusinessType = app switch
+        {
+            Shared.Kernel.Apps.App.School => BusinessType.School,
+            Shared.Kernel.Apps.App.Hrms or Shared.Kernel.Apps.App.Payroll => null,
+            _ => BusinessType.General,
+        };
+        AddOn initialAddOns = app switch
+        {
+            Shared.Kernel.Apps.App.Hrms => AddOn.Hrms,
+            Shared.Kernel.Apps.App.Payroll => AddOn.Payroll,
+            _ => AddOn.None,
+        };
 
         var license = new License
         {
             LicenseId = Guid.NewGuid(),
             CustomerId = customer.CustomerId,
-            App = app,
             LicenseType = LicenseType.Trial,
             StartDate = today,
             ExpiryDate = today.AddDays(TrialDays),
@@ -127,6 +138,8 @@ public sealed class SignupRepository
             // it takes the head-office code rather than asking for one during
             // signup. Later branches are named by the customer.
             OrgCode = "HO",
+            BusinessType = initialBusinessType,
+            AddOns = initialAddOns,
             BaseCurrency = request.BaseCurrency ?? defaultCurrency,
             FinancialYearStartMonth = request.FinancialYearStartMonth,
             Gstin = request.Gstin,

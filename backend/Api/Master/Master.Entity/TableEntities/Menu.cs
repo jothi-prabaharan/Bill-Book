@@ -105,8 +105,11 @@ public class Menu : AuditableEntity
     /// <summary>Order among siblings.</summary>
     public int DisplayOrder { get; set; }
 
-    /// <summary>Every app whose menu shows this row (TK-42).</summary>
-    public App Apps { get; set; } = App.RetailErp;
+    /// <summary>The business vertical this menu requires, if any (D-36, TK-127).</summary>
+    public BusinessType? BusinessType { get; set; }
+
+    /// <summary>Modular add-ons this menu belongs to, if any (D-36, TK-127).</summary>
+    public AddOn AddOns { get; set; } = AddOn.None;
 
     public bool IsActive { get; set; } = true;
 

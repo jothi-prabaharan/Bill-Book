@@ -24,17 +24,20 @@ namespace Master.Repository.Repositories;
 public interface ITenantSeeder
 {
     /// <summary>
-    /// Seeds every service the customer's licensed apps need (TK-45), reading
-    /// the licences. Returns the services that could not be reached.
+    /// Seeds every service the customer's branch needs (D-36, TK-127), reading
+    /// the branch's business type and add-ons. Returns the services that could not be reached.
     /// </summary>
     Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, CancellationToken ct);
 
     /// <summary>
-    /// Seeds the services <paramref name="apps"/> need. For a caller whose new
-    /// licence is not committed yet, and so cannot be read by the seeder's own
-    /// scope: starting a trial passes the apps it is about to hold.
+    /// Seeds the services <paramref name="apps"/> need. Backwards-compatibility bridge.
     /// </summary>
     Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, App apps, CancellationToken ct);
+
+    /// <summary>
+    /// Seeds the services for the given business type and add-ons (D-36, TK-127).
+    /// </summary>
+    Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, BusinessType? businessType, AddOn addOns, CancellationToken ct);
 }
 
 public sealed class HttpTenantSeeder : ITenantSeeder
@@ -79,41 +82,39 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         ["Accounting", "Employee", "TimeLeave", "Payroll", .. SchoolServices, "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
 
     /// <summary>
-    /// Which services a set of apps needs, in seeding order (H0.4, TK-45).
+    /// <summary>
+    /// Which services a branch needs, in seeding order (D-36, TK-127).
     ///
-    /// <b>Accounting always</b>, because payroll and school fees post to the
-    /// ledger and every app numbers its documents from Accounting's table.
-    /// <b>Printing always</b>, because payslips and fee receipts are templates
-    /// like invoices. The trading services are RetailErp's. HRMS, Payroll and
-    /// School add their own services here as they are built (TK-48 adds Employee).
+    /// Accounting always, because payroll and school fees post to the ledger and
+    /// every branch numbers its documents from Accounting's table.
+    /// Printing always, because payslips and fee receipts are templates like invoices.
+    /// The trading services are retail's. HRMS, Payroll and School add their own services.
     /// </summary>
-    public static IReadOnlyList<string> ServicesFor(App apps)
+    public static IReadOnlyList<string> ServicesFor(BusinessType? businessType, AddOn addOns)
     {
         HashSet<string> wanted = ["Accounting", "Printing"];
 
-        // The employee master (TK-48), after Accounting because its EMP
-        // series goes into Accounting's numbering table.
-        if ((apps & (App.Hrms | App.Payroll | App.School)) != 0)
+        if (businessType == BusinessType.School || (addOns & (AddOn.Hrms | AddOn.Payroll)) != 0)
         {
             wanted.Add("Employee");
         }
 
-        if (apps.HasFlag(App.Hrms))
+        if (addOns.HasFlag(AddOn.Hrms))
         {
             wanted.Add("TimeLeave");
         }
 
-        if (apps.HasFlag(App.Payroll))
+        if (addOns.HasFlag(AddOn.Payroll))
         {
             wanted.Add("Payroll");
         }
 
-        if (apps.HasFlag(App.School))
+        if (businessType == BusinessType.School)
         {
             wanted.UnionWith(SchoolServices);
         }
 
-        if (apps.HasFlag(App.RetailErp))
+        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery)
         {
             wanted.UnionWith(["Inventory", "Sales", "Purchase", "Reporting", "Customer"]);
         }
@@ -121,34 +122,48 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         return Services.Where(wanted.Contains).ToList();
     }
 
-    /// <summary>Contacts (in process) are RetailErp's and School's: customers, vendors, guardians.</summary>
+    /// <summary>Backwards-compatibility bridge for App-based callers.</summary>
+    public static IReadOnlyList<string> ServicesFor(App apps)
+    {
+        BusinessType? bt = apps.HasFlag(App.School) ? BusinessType.School
+            : apps.HasFlag(App.RetailErp) ? BusinessType.General
+            : null;
+        AddOn ao = AddOn.None;
+        if (apps.HasFlag(App.Hrms)) ao |= AddOn.Hrms;
+        if (apps.HasFlag(App.Payroll)) ao |= AddOn.Payroll;
+        return ServicesFor(bt, ao);
+    }
+
+    /// <summary>Contacts are seeded for any vertical or when CRM add-on is enabled (D-36, TK-127).</summary>
+    public static bool SeedsContacts(BusinessType? businessType, AddOn addOns) =>
+        businessType != null || addOns.HasFlag(AddOn.Crm);
+
+    /// <summary>Backwards-compatibility bridge for App-based callers.</summary>
     public static bool SeedsContacts(App apps) => (apps & (App.RetailErp | App.School)) != 0;
 
     /// <summary>
-    /// The apps the customer holds a licence for, read in a scope of its own.
-    /// None found reads as RetailErp, which is what every customer was before
-    /// apps existed.
+    /// Reads the branch's business type and add-ons from Organizations in a scope of its own.
     /// </summary>
-    private async Task<App> ReadLicensedAppsAsync(Guid customerId, CancellationToken ct)
+    private async Task<(BusinessType? BusinessType, AddOn AddOns)> ReadBranchScopeAsync(
+        Guid customerId, Guid orgId, CancellationToken ct)
     {
         try
         {
             using IServiceScope scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<Repository.AdminDbContext>();
-            List<App> held = await db.Licenses
-                .Where(l => l.CustomerId == customerId)
-                .Select(l => l.App)
-                .ToListAsync(ct);
+            var org = await db.Organizations.AsNoTracking()
+                .Where(o => o.CustomerId == customerId && o.OrgId == orgId)
+                .Select(o => new { o.BusinessType, o.AddOns })
+                .FirstOrDefaultAsync(ct);
 
-            App apps = held.Aggregate(App.None, (all, one) => all | one);
-            return apps == App.None ? App.RetailErp : apps;
+            return org is not null
+                ? (org.BusinessType, org.AddOns)
+                : (BusinessType.General, AddOn.None);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // The same fallback as the vertical's: RetailErp, which is what every
-            // customer was before apps existed, rather than seeding nothing.
-            _log.LogError(ex, "Reading licences for customer {CustomerId} failed; seeding as RetailErp.", customerId);
-            return App.RetailErp;
+            _log.LogError(ex, "Reading branch scope for organization {OrgId} failed; seeding as General.", orgId);
+            return (BusinessType.General, AddOn.None);
         }
     }
 
@@ -192,11 +207,26 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     }
 
     public async Task<IReadOnlyList<string>> SeedAsync(
-        Guid customerId, Guid orgId, CancellationToken ct) =>
-        await SeedAsync(customerId, orgId, await ReadLicensedAppsAsync(customerId, ct), ct);
+        Guid customerId, Guid orgId, CancellationToken ct)
+    {
+        (BusinessType? businessType, AddOn addOns) = await ReadBranchScopeAsync(customerId, orgId, ct);
+        return await SeedAsync(customerId, orgId, businessType, addOns, ct);
+    }
 
     public async Task<IReadOnlyList<string>> SeedAsync(
         Guid customerId, Guid orgId, App apps, CancellationToken ct)
+    {
+        BusinessType? bt = apps.HasFlag(App.School) ? BusinessType.School
+            : apps.HasFlag(App.RetailErp) ? BusinessType.General
+            : null;
+        AddOn ao = AddOn.None;
+        if (apps.HasFlag(App.Hrms)) ao |= AddOn.Hrms;
+        if (apps.HasFlag(App.Payroll)) ao |= AddOn.Payroll;
+        return await SeedAsync(customerId, orgId, bt, ao, ct);
+    }
+
+    public async Task<IReadOnlyList<string>> SeedAsync(
+        Guid customerId, Guid orgId, BusinessType? businessType, AddOn addOns, CancellationToken ct)
     {
         var failed = new List<string>();
 
@@ -212,7 +242,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             Vertical = vertical,
         };
 
-        foreach (string service in ServicesFor(apps))
+        foreach (string service in ServicesFor(businessType, addOns))
         {
             string? baseUrl = _config[$"Seeding:{service}"];
             if (string.IsNullOrWhiteSpace(baseUrl))
@@ -231,14 +261,20 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             }
         }
 
-        if (SeedsContacts(apps) && !await SeedContactRolesAsync(customerId, orgId, ct))
+        if (SeedsContacts(businessType, addOns) && !await SeedContactRolesAsync(customerId, orgId, ct))
         {
             failed.Add("Contacts");
         }
 
+        App approvalApps = App.None;
+        if (addOns.HasFlag(AddOn.Hrms)) approvalApps |= App.Hrms;
+        if (addOns.HasFlag(AddOn.Payroll)) approvalApps |= App.Payroll;
+        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery) approvalApps |= App.RetailErp;
+        if (businessType == BusinessType.School) approvalApps |= App.School;
+
         // The starting approval workflows (TK-49), in process: they are
         // Master's own apr tables, so an HTTP call would be to ourselves.
-        if (apps.HasFlag(App.Hrms) && !await SeedApprovalDefaultsAsync(customerId, orgId, apps, ct))
+        if (addOns.HasFlag(AddOn.Hrms) && !await SeedApprovalDefaultsAsync(customerId, orgId, approvalApps, ct))
         {
             failed.Add("Approvals");
         }

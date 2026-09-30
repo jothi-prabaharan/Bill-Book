@@ -49,46 +49,7 @@ public static class MenuSeed
         1137,                                           // Custom fields (TK-110)
         1139,                                           // Audit log (TK-118)
         115, 1086, 1087, 1088, 1089, 1090, 1106,        // Users and access
-    };
-
-    /// <summary>
-    /// Rows that belong to a set of apps other than RetailErp or all four (TK-48):
-    /// the People rail, shown by HRMS, Payroll and School, and its HRMS-only screens.
-    /// </summary>
-    public static readonly IReadOnlyDictionary<int, App> AppsByMenuId = new Dictionary<int, App>
-    {
-        [10] = App.Hrms | App.Payroll | App.School,
-        [118] = App.Hrms | App.Payroll | App.School,
-        [1107] = App.Hrms | App.Payroll | App.School,
-        [1108] = App.Hrms | App.Payroll | App.School,
-        [1109] = App.Hrms,
-        [1110] = App.Hrms,
-
-        // School (TK-60). The contact master is shared with RetailErp, for
-        // guardians and maintenance vendors.
-        [2] = App.RetailErp | App.School,
-        [101] = App.RetailErp | App.School,
-        [1001] = App.RetailErp | App.School,
-        [11] = App.School,
-        [12] = App.School,
-        [13] = App.School,
-        [119] = App.School,
-        [120] = App.School,
-        [121] = App.School,
-        [1111] = App.School,
-        [1112] = App.School,
-        [1113] = App.School,
-        [1114] = App.School,
-        [1115] = App.School,
-        [1116] = App.School,
-        [1117] = App.School,
-        [1118] = App.School,
-        [1119] = App.School,
-        [1120] = App.School,
-        [1121] = App.School,
-        [1122] = App.School,
-        [1123] = App.School,
-        [1124] = App.School,
+        14, 122, 1126,                                  // Approvals inbox (TK-103)
     };
 
     public static IReadOnlyList<Menu> Build()
@@ -96,9 +57,41 @@ public static class MenuSeed
         IReadOnlyList<Menu> rows = Rows();
         foreach (Menu row in rows)
         {
-            row.Apps = AppsByMenuId.TryGetValue(row.MenuId, out App apps)
-                ? apps
-                : SharedMenuIds.Contains(row.MenuId) ? App.All : App.RetailErp;
+            if (SharedMenuIds.Contains(row.MenuId))
+            {
+                row.BusinessType = null;
+                row.AddOns = AddOn.None;
+            }
+            else if (row.MenuId is 10 or 118 or 1107 or 1108) // People rail, group, employees, org setup
+            {
+                row.BusinessType = BusinessType.School;
+                row.AddOns = AddOn.Hrms | AddOn.Payroll;
+            }
+            else if (row.MenuId is 1109 or 1110) // Announcements, policies
+            {
+                row.BusinessType = null;
+                row.AddOns = AddOn.Hrms;
+            }
+            else if (row.MenuId is 11 or 12 or 13 || (row.MenuId >= 119 && row.MenuId <= 121) || (row.MenuId >= 1111 && row.MenuId <= 1124)) // School
+            {
+                row.BusinessType = BusinessType.School;
+                row.AddOns = AddOn.None;
+            }
+            else if (row.MenuId is 1133 or 1134 or 1135 or 1136) // Budgets
+            {
+                row.BusinessType = null;
+                row.AddOns = AddOn.Budget;
+            }
+            else if (row.MenuId is 2 or 101 || (row.MenuId >= 1001 && row.MenuId <= 1003)) // Contacts
+            {
+                row.BusinessType = BusinessType.General;
+                row.AddOns = AddOn.Crm;
+            }
+            else
+            {
+                row.BusinessType = BusinessType.General;
+                row.AddOns = AddOn.None;
+            }
         }
 
         return rows;

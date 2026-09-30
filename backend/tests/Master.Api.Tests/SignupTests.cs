@@ -7,6 +7,7 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Shared.Kernel.Apps;
 using Xunit;
 
 namespace Master.Api.Tests;
@@ -75,6 +76,10 @@ public sealed class SignupTests
 
         public Task<IReadOnlyList<string>> SeedAsync(
             Guid customerId, Guid orgId, Shared.Kernel.Apps.App apps, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<string>>([]);
+
+        public Task<IReadOnlyList<string>> SeedAsync(
+            Guid customerId, Guid orgId, BusinessType? businessType, AddOn addOns, CancellationToken ct) =>
             Task.FromResult<IReadOnlyList<string>>([]);
     }
 

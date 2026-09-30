@@ -366,6 +366,16 @@ public sealed class OrganizationRepository
     private async Task<SaveOrganizationOutcome> ValidateAsync(
         Guid customerId, SaveOrganizationRequest request, Guid? orgId, CancellationToken ct)
     {
+        if (request.BusinessType is null && request.AddOns == Shared.Kernel.Apps.AddOn.None)
+        {
+            return SaveOrganizationOutcome.NeedsBusinessTypeOrAddOn;
+        }
+
+        if (!Shared.Kernel.Apps.AddOnRules.IsAllowed(request.BusinessType, request.AddOns))
+        {
+            return SaveOrganizationOutcome.DisallowedAddOn;
+        }
+
         string code = request.OrgCode.Trim().ToUpperInvariant();
         string name = request.Name.Trim();
 
@@ -431,6 +441,8 @@ public sealed class OrganizationRepository
         organization.AllowFreeTextLines = request.AllowFreeTextLines;
         organization.DiscountLevel = Enum.Parse<DiscountLevel>(request.DiscountLevel, ignoreCase: true);
         organization.Vertical = request.Vertical;
+        organization.BusinessType = request.BusinessType;
+        organization.AddOns = request.AddOns;
         organization.DiscountBeforeTax = request.DiscountBeforeTax;
         organization.EInvoiceFrom = request.EInvoiceFrom;
         organization.EwayBillEnabled = request.EwayBillEnabled;
@@ -513,6 +525,8 @@ public sealed class OrganizationRepository
         AllowFreeTextLines = o.AllowFreeTextLines,
         DiscountLevel = o.DiscountLevel.ToString(),
         Vertical = o.Vertical,
+        BusinessType = o.BusinessType,
+        AddOns = o.AddOns,
         DiscountBeforeTax = o.DiscountBeforeTax,
         EInvoiceFrom = o.EInvoiceFrom,
         EwayBillEnabled = o.EwayBillEnabled,

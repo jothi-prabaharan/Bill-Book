@@ -139,7 +139,7 @@ public sealed class SchoolSeedTests
         IReadOnlyList<Menu> menus = MenuSeed.Build();
         string[] codes = ["students", "fees", "maintenance", "stu", "acs", "exm", "enq", "apl", "sat", "fst", "fdm", "frc", "spc", "fas", "wko", "ppm", "amc"];
 
-        Assert.All(codes, c => Assert.Equal(App.School, menus.Single(m => m.Code == c).Apps));
+        Assert.All(codes, c => Assert.Equal(BusinessType.School, menus.Single(m => m.Code == c).BusinessType));
 
         // Every item routes somewhere and names a School module.
         Assert.All(menus.Where(m => codes.Contains(m.Code) && m.Type == MenuType.Item), m =>
@@ -154,7 +154,7 @@ public sealed class SchoolSeedTests
     {
         using AdminDbContext db = Model();
         HashSet<string> codes = Seed<Permission>(db).Select(p => (string)p["Code"]!).ToHashSet();
-        HashSet<int> schoolMenus = MenuSeed.AppsByMenuId.Where(kv => kv.Value == App.School).Select(kv => kv.Key).ToHashSet();
+        HashSet<int> schoolMenus = MenuSeed.Build().Where(m => m.BusinessType == BusinessType.School).Select(m => m.MenuId).ToHashSet();
 
         Assert.All(MenuSeed.BuildPermissions().Where(p => schoolMenus.Contains(p.MenuId)),
             p => Assert.Contains(p.PermissionCode, codes));

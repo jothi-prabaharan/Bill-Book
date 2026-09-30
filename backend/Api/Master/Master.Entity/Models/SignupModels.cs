@@ -227,6 +227,12 @@ public class OrgContextResponse
     /// </summary>
     public string Vertical { get; set; } = "General";
 
+    /// <summary>The business vertical of this branch (D-36, TK-127).</summary>
+    public Shared.Kernel.Apps.BusinessType? BusinessType { get; set; }
+
+    /// <summary>Enabled modular add-ons for this branch (D-36, TK-127).</summary>
+    public Shared.Kernel.Apps.AddOn AddOns { get; set; } = Shared.Kernel.Apps.AddOn.None;
+
     /// <summary>
     /// The branch's own GSTIN, as it must appear on a tax invoice.
     ///

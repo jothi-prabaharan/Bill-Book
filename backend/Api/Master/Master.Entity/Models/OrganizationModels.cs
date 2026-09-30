@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Master.Entity.Enums;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Validation;
 
 namespace Master.Entity.Models;
@@ -85,6 +86,14 @@ public class OrganizationListItem
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter<Vertical>))]
     public Vertical Vertical { get; set; } = Vertical.General;
+
+    /// <summary>The business vertical this branch is in (D-36, TK-127).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<BusinessType>))]
+    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.General;
+
+    /// <summary>Modular add-ons enabled for this branch (D-36, TK-127).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<AddOn>))]
+    public AddOn AddOns { get; set; } = AddOn.None;
 
     public bool DiscountBeforeTax { get; set; } = true;
 
@@ -219,12 +228,20 @@ public class SaveOrganizationRequest
     public string DiscountLevel { get; set; } = "Line";
 
     /// <summary>
-    /// General, Pharma or Jewellery. Changeable any time: a change seeds what the
-    /// new trade needs and hides the other trade's screens, and deletes nothing
-    /// (TK-30). Sent and read as the name.
+    /// General, Pharma, Jewellery or School (D-36, TK-127). Nullable for add-on-only setups.
     /// </summary>
-    [Required(ErrorMessage = "Vertical is required.")]
-    [EnumDataType(typeof(Vertical), ErrorMessage = "Vertical must be General, Pharma or Jewellery.")]
+    [JsonConverter(typeof(JsonStringEnumConverter<BusinessType>))]
+    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.General;
+
+    /// <summary>
+    /// Enabled modular add-ons (D-36, TK-127).
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<AddOn>))]
+    public AddOn AddOns { get; set; } = AddOn.None;
+
+    /// <summary>
+    /// Legacy trade vertical. Kept for backward compatibility with older clients.
+    /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter<Vertical>))]
     public Vertical Vertical { get; set; } = Vertical.General;
 
@@ -293,6 +310,12 @@ public enum SaveOrganizationOutcome
     /// slots are full, in which case it is refused until one is paid for.
     /// </summary>
     TrialLimitReached = 14,
+
+    /// <summary>A branch needs a business type, an add-on, or both (D-36, TK-127).</summary>
+    NeedsBusinessTypeOrAddOn = 16,
+
+    /// <summary>An add-on the business type does not allow is refused (D-36, TK-127).</summary>
+    DisallowedAddOn = 17,
 }
 
 public sealed record SaveOrganizationResult(

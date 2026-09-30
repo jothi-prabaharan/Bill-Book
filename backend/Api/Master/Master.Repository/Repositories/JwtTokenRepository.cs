@@ -47,7 +47,7 @@ public sealed class JwtTokenRepository : ITokenRepository
             // The one app this token is for (TK-43). Every service's
             // [RequireApp] reads it; its permissions and licence claims are
             // that app's only.
-            new(Shared.Kernel.Internal.RequireAppAttribute.ClaimType, request.App.ToString()),
+            new(Shared.Kernel.Internal.RequireAppAttribute.ClaimType, EffectiveApp(request).ToString()),
             new("display_name", request.DisplayName),
             new("license_status", request.LicenseStatus),
 
@@ -75,12 +75,49 @@ public sealed class JwtTokenRepository : ITokenRepository
             claims.Add(new Claim("expiry_scope", "branch"));
         }
 
+        if (request.BusinessType.HasValue)
+        {
+            claims.Add(new Claim("business_type", request.BusinessType.Value.ToString()));
+        }
+
+        claims.Add(new Claim("add_ons", ((int)request.AddOns).ToString()));
+
         foreach (string permission in request.Permissions)
         {
             claims.Add(new Claim("permission", permission));
         }
 
         return Write(claims, _clock.GetUtcNow().AddMinutes(_options.AccessTokenMinutes));
+    }
+
+    private static App EffectiveApp(AccessTokenRequest request)
+    {
+        if (request.App != App.None)
+        {
+            return request.App;
+        }
+
+        if (request.BusinessType == BusinessType.School)
+        {
+            return App.School;
+        }
+
+        if (request.BusinessType != null)
+        {
+            return App.RetailErp;
+        }
+
+        if (request.AddOns.HasFlag(AddOn.Hrms))
+        {
+            return App.Hrms;
+        }
+
+        if (request.AddOns.HasFlag(AddOn.Payroll))
+        {
+            return App.Payroll;
+        }
+
+        return App.RetailErp;
     }
 
     public Guid? ValidatePreAuthToken(string token)

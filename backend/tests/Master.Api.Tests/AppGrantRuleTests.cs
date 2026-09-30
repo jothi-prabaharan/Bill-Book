@@ -133,10 +133,8 @@ public sealed class AppGrantRuleTests
             "dashboard", "contacts", "crm", "inventory", "sales", "purchase",
             "accounting", "banking", "reports", "settings", "support", "platform",
         ];
-        Assert.All(Seed<Menu>(db).Where(m => (int)m["MenuId"]! <= 1106 && !MenuSeed.AppsByMenuId.ContainsKey((int)m["MenuId"]!)),
-            m => Assert.True(((App)m["Apps"]!).HasFlag(App.RetailErp), $"Menu {m["Code"]}"));
         Assert.All(Seed<Permission>(db).Where(p => original.Contains((string)p["Module"]!)),
-            p => Assert.True(((App)p["Apps"]!).HasFlag(App.RetailErp), $"Permission {p["Code"]}"));
+            p => Assert.True(p["BusinessType"] is null || (BusinessType)p["BusinessType"]! == BusinessType.General, $"Permission {p["Code"]}"));
     }
 
     /// <summary>The employee master is HRMS's, Payroll's and School's; lifecycle is HRMS's (TK-48).</summary>
@@ -147,13 +145,13 @@ public sealed class AppGrantRuleTests
         List<IDictionary<string, object?>> permissions = Seed<Permission>(db);
 
         Assert.All(permissions.Where(p => (string)p["Module"]! == "employee"),
-            p => Assert.Equal(App.Hrms | App.Payroll | App.School, (App)p["Apps"]!));
+            p => Assert.Equal(AddOn.Hrms | AddOn.Payroll, (AddOn)p["AddOns"]!));
         Assert.All(permissions.Where(p => (string)p["Module"]! == "hrm"),
-            p => Assert.Equal(App.Hrms, (App)p["Apps"]!));
+            p => Assert.Equal(AddOn.Hrms, (AddOn)p["AddOns"]!));
 
         IReadOnlyList<Menu> menus = MenuSeed.Build();
-        Assert.Equal(App.Hrms | App.Payroll | App.School, menus.Single(m => m.Code == "emp").Apps);
-        Assert.Equal(App.Hrms, menus.Single(m => m.Code == "ann").Apps);
+        Assert.Equal(AddOn.Hrms | AddOn.Payroll, menus.Single(m => m.Code == "emp").AddOns);
+        Assert.Equal(AddOn.Hrms, menus.Single(m => m.Code == "ann").AddOns);
     }
 
     [Fact]
@@ -161,19 +159,20 @@ public sealed class AppGrantRuleTests
     {
         IReadOnlyList<Menu> menus = MenuSeed.Build();
 
-        Assert.Equal(App.All, menus.Single(m => m.Code == "usr").Apps);
-        Assert.Equal(App.All, menus.Single(m => m.Code == "rol").Apps);
-        Assert.Equal(App.All, menus.Single(m => m.Code == "brn").Apps);
-        Assert.Equal(App.All, menus.Single(m => m.Code == "settings" && m.ParentId is null).Apps);
-        Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "inv").Apps);
-        Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "tax").Apps);
+        Assert.Null(menus.Single(m => m.Code == "usr").BusinessType);
+        Assert.Equal(AddOn.None, menus.Single(m => m.Code == "usr").AddOns);
+        Assert.Null(menus.Single(m => m.Code == "rol").BusinessType);
+        Assert.Null(menus.Single(m => m.Code == "brn").BusinessType);
+        Assert.Null(menus.Single(m => m.Code == "settings" && m.ParentId is null).BusinessType);
+        Assert.Equal(BusinessType.General, menus.Single(m => m.Code == "inv").BusinessType);
+        Assert.Equal(BusinessType.General, menus.Single(m => m.Code == "tax").BusinessType);
 
         // Projects sit under Accounting, in RetailErp (TK-104).
-        Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "prj").Apps);
+        Assert.Equal(BusinessType.General, menus.Single(m => m.Code == "prj").BusinessType);
 
         // Every app configures its chains on one page; the inbox is RetailErp's documents (TK-103).
-        Assert.Equal(App.All, menus.Single(m => m.Code == "apw").Apps);
-        Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "inbox").Apps);
+        Assert.Null(menus.Single(m => m.Code == "apw").BusinessType);
+        Assert.Null(menus.Single(m => m.Code == "inbox").BusinessType);
     }
 }
 
@@ -191,7 +190,7 @@ public sealed class RoleServiceAppTests
         {
             Code = $"pay{Guid.NewGuid():N}"[..20] + ".view",
             Module = "payrolltest",
-            Apps = App.Payroll,
+            AddOns = AddOn.Payroll,
         };
         db.Permissions.Add(permission);
         await db.SaveChangesAsync();
@@ -270,7 +269,6 @@ public sealed class RoleServiceAppTests
 
         Assert.Equal(SaveRoleResult.Ok, created);
         Role role = await db.Roles.SingleAsync(r => r.RoleId == roleId);
-        Assert.Equal(App.Payroll, role.App);
         Assert.Equal(2, await db.RolePermissions.CountAsync(p => p.RoleId == roleId));
     }
 

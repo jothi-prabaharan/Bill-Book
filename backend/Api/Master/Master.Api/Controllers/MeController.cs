@@ -45,10 +45,6 @@ public sealed class MeController : ControllerBase
         }
 
         App app = RequireAppAttribute.AppOf(User);
-        if (app == App.None)
-        {
-            return Forbid();
-        }
 
         var user = await _db.Users
             .Where(u => u.UserId == userId && u.IsActive)
@@ -65,20 +61,13 @@ public sealed class MeController : ControllerBase
             return Forbid();
         }
 
-        List<App> heldApps = await (
-            from a in _db.UserOrganizationRoles
-            join r in _db.Roles on a.RoleId equals r.RoleId
-            where a.UserId == userId && a.OrgId == orgId && a.IsActive && r.IsActive
-            select r.App).Distinct().ToListAsync(ct);
-
         List<SessionAppResponse> apps = [];
-        foreach (App held in heldApps.Where(AppRules.IsSingle).OrderBy(a => a))
+        if (app != App.None)
         {
-            OrgContextResponse? other = held == app ? org : await _orgs.ResolveAsync(orgId, ct, held);
             apps.Add(new SessionAppResponse
             {
-                App = held.ToString(),
-                LicenseStatus = other?.LicenseStatus ?? nameof(Entity.Enums.LicenseStatus.NotLicensed),
+                App = app.ToString(),
+                LicenseStatus = org.LicenseStatus,
             });
         }
 
@@ -88,7 +77,9 @@ public sealed class MeController : ControllerBase
             Email = user.Email,
             BranchName = org.OrgName,
             BranchCode = code ?? string.Empty,
-            App = app.ToString(),
+            App = app != App.None ? app.ToString() : (org.BusinessType?.ToString() ?? "General"),
+            BusinessType = org.BusinessType,
+            AddOns = org.AddOns,
             LicenseStatus = org.LicenseStatus,
             LicenseExpiry = org.LicenseExpiry,
             ExpiryIsBranchLevel = org.ExpiryIsBranchLevel,

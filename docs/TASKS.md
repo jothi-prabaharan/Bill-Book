@@ -4309,17 +4309,17 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** `BusinessType`, `AddOn`, and `AddOnRules` are defined with their rules tested, and the solution builds with `-warnaserror`.
 
 ### TK-127 · Master: branch business type, add-ons, one licence and the token claims
-- [~] working (Antigravity) — since 2026-09-30
+- [x] completed (Antigravity) — 2026-09-30 · tests written, not run
 - **Issue:** [#109](https://github.com/jothi-prabaharan/Bill-Book/issues/109)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-126 · **Decision:** D-36
 - **Where:** `Organization`, `License`, `Role`, `RefreshToken`, `Menu`, `Permission`, `JwtTokenRepository`, `MenuRepository`, `TradeScopeRepository`, `TenantSeeder`
 - **Sub-tasks:**
-  - [ ] Migration: drop `License.App`, `Role.App`, `RefreshToken.App`; add `Organization.BusinessType` and `Organization.AddOns`; gating columns on menus and permissions. `dotnet ef migrations has-pending-model-changes` clean.
-  - [ ] A branch needs a business type, an add-on, or both; an add-on the type does not allow is refused.
-  - [ ] Login, select-branch, signup, `api/me/context`: no `App` parameter. The token carries `business_type` and `add_ons` instead of `app`.
-  - [ ] Menus and seeds follow the branch: no business type means no retail or school seeds, only the enabled add-ons.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Migration: drop `License.App`, `Role.App`, `RefreshToken.App`; add `Organization.BusinessType` and `Organization.AddOns`; gating columns on menus and permissions. `dotnet ef migrations has-pending-model-changes` clean.
+  - [x] A branch needs a business type, an add-on, or both; an add-on the type does not allow is refused.
+  - [x] Login, select-branch, signup, `api/me/context`: no `App` parameter. The token carries `business_type` and `add_ons` instead of `app`.
+  - [x] Menus and seeds follow the branch: no business type means no retail or school seeds, only the enabled add-ons.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a branch with only Hrms gets only HRMS menus and seeds.
 
 ### TK-128 · `[RequireBusinessType]` and `[RequireAddOn]` on every controller

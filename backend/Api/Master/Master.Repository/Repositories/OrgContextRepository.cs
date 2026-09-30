@@ -33,7 +33,7 @@ public sealed class OrgContextRepository
         var row = await (
             from o in _db.Organizations
             join c in _db.Customers on o.CustomerId equals c.CustomerId
-            join l in _db.Licenses.Where(x => x.App == app) on c.CustomerId equals l.CustomerId into lGroup
+            join l in _db.Licenses on c.CustomerId equals l.CustomerId into lGroup
             from l in lGroup.DefaultIfEmpty()
             join s in _db.States on o.StateId equals s.StateId into sGroup
             from s in sGroup.DefaultIfEmpty()
@@ -48,6 +48,8 @@ public sealed class OrgContextRepository
                 o.BaseCurrency,
                 o.DiscountBeforeTax,
                 o.Vertical,
+                o.BusinessType,
+                o.AddOns,
                 o.Gstin,
                 o.AddressLine1,
                 o.AddressLine2,
@@ -153,6 +155,8 @@ public sealed class OrgContextRepository
             StateCode = row.StateCode,
             DiscountBeforeTax = row.DiscountBeforeTax,
             Vertical = row.Vertical.ToString(),
+            BusinessType = row.BusinessType,
+            AddOns = row.AddOns,
             // The seller block on a printed tax invoice. Sales cannot read
             // mst.Organizations, so the only alternative to carrying it here is
             // the placeholder it used to print — an invoice headed "Our Company"

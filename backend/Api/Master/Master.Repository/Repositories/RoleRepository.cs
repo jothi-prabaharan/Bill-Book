@@ -13,17 +13,10 @@ public sealed class RoleRepository
 
     public RoleRepository(AdminDbContext db) => _db = db;
 
-    /// <summary>System roles plus this customer's own.</summary>
+    /// <summary>System roles plus this customer's own (D-36, TK-127: roles span types).</summary>
     public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, CancellationToken ct, App? app = null)
     {
         IQueryable<Role> roles = _db.Roles.Where(r => r.CustomerId == null || r.CustomerId == customerId);
-
-        // Inside an app, only that app's roles (TK-43): a RetailErp Owner and a
-        // Payroll Owner are different rows, and each app edits its own.
-        if (app is App only)
-        {
-            roles = roles.Where(r => r.App == only);
-        }
 
         return await roles
             .OrderBy(r => r.CustomerId == null ? 0 : 1)
@@ -35,7 +28,7 @@ public sealed class RoleRepository
                 Description = r.Description,
                 IsSystemRole = r.IsSystemRole,
                 IsActive = r.IsActive,
-                App = r.App.ToString(),
+                App = string.Empty,
                 UserCount = _db.UserOrganizationRoles.Count(u => u.RoleId == r.RoleId && u.IsActive),
                 PermissionCount = _db.RolePermissions.Count(p => p.RoleId == r.RoleId),
             })
@@ -63,7 +56,7 @@ public sealed class RoleRepository
             Description = role.Description,
             IsSystemRole = role.IsSystemRole,
             IsActive = role.IsActive,
-            App = role.App.ToString(),
+            App = string.Empty,
             UserCount = await _db.UserOrganizationRoles.CountAsync(
                 u => u.RoleId == roleId && u.IsActive, ct),
             PermissionCount = permissionIds.Count,
@@ -72,8 +65,7 @@ public sealed class RoleRepository
     }
 
     /// <summary>
-    /// The permission matrix, grouped by module. With an app, only the
-    /// permissions a role of that app may be granted (TK-42).
+    /// The permission matrix, grouped by module.
     /// </summary>
     public async Task<IReadOnlyList<PermissionGroup>> PermissionMatrixAsync(
         bool includePlatform, CancellationToken ct, App? forApp = null)
@@ -86,7 +78,22 @@ public sealed class RoleRepository
 
         if (forApp is App app)
         {
-            query = query.Where(p => p.Apps.HasFlag(app));
+            if (app == App.Payroll)
+            {
+                query = query.Where(p => (p.AddOns & AddOn.Payroll) == AddOn.Payroll || (p.BusinessType == null && p.AddOns == AddOn.None));
+            }
+            else if (app == App.Hrms)
+            {
+                query = query.Where(p => (p.AddOns & AddOn.Hrms) == AddOn.Hrms || (p.BusinessType == null && p.AddOns == AddOn.None));
+            }
+            else if (app == App.School)
+            {
+                query = query.Where(p => p.BusinessType == BusinessType.School || p.Module == "contacts" || (p.BusinessType == null && p.AddOns == AddOn.None));
+            }
+            else if (app == App.RetailErp)
+            {
+                query = query.Where(p => p.BusinessType == BusinessType.General || (p.BusinessType == null && p.AddOns == AddOn.None));
+            }
         }
 
         List<Permission> all = await query.ToListAsync(ct);
@@ -112,21 +119,22 @@ public sealed class RoleRepository
     }
 
     /// <summary>
-    /// Creates a customer role in one app. Refused, with nothing written, when
-    /// the app is not a single app or any permission belongs to other apps only.
+    /// Creates a customer role (D-36, TK-127).
     /// </summary>
     public async Task<(SaveRoleResult Result, int RoleId)> CreateAsync(
         Guid customerId, SaveRoleRequest request, CancellationToken ct)
     {
-        App app = App.RetailErp;
-        if (request.App is not null && !AppRules.TryParseSingle(request.App, out app))
+        if (request.App is not null)
         {
-            return (SaveRoleResult.InvalidApp, 0);
-        }
+            if (!AppRules.TryParseSingle(request.App, out App app))
+            {
+                return (SaveRoleResult.InvalidApp, 0);
+            }
 
-        if (!await AllGrantableAsync(app, request.PermissionIds, ct))
-        {
-            return (SaveRoleResult.PermissionNotInApp, 0);
+            if (!await AllGrantableAsync(app, request.PermissionIds, ct))
+            {
+                return (SaveRoleResult.PermissionNotInApp, 0);
+            }
         }
 
         var role = new Role
@@ -135,7 +143,6 @@ public sealed class RoleRepository
             SystemName = request.DisplayName,
             DisplayName = request.DisplayName,
             Description = request.Description,
-            App = app,
             IsSystemRole = false,
             IsActive = true,
         };
@@ -156,10 +163,12 @@ public sealed class RoleRepository
             return SaveRoleResult.NotFound;
         }
 
-        // A role never changes app: its users signed in to that app with it.
-        if (!role.IsSystemRole && !await AllGrantableAsync(role.App, request.PermissionIds, ct))
+        if (request.App is not null && AppRules.TryParseSingle(request.App, out App app))
         {
-            return SaveRoleResult.PermissionNotInApp;
+            if (!await AllGrantableAsync(app, request.PermissionIds, ct))
+            {
+                return SaveRoleResult.PermissionNotInApp;
+            }
         }
 
         // A system role may be relabelled but its permission set is fixed, and
@@ -176,11 +185,6 @@ public sealed class RoleRepository
         return SaveRoleResult.Ok;
     }
 
-    /// <summary>
-    /// The grant rule (TK-42): every requested permission's apps include the
-    /// role's app. platform.* is left out here, as it is dropped on save anyway.
-    /// An id that names no permission is not a grant and is ignored, as before.
-    /// </summary>
     private async Task<bool> AllGrantableAsync(App roleApp, IReadOnlyList<int> permissionIds, CancellationToken ct)
     {
         if (permissionIds.Count == 0)
@@ -188,12 +192,32 @@ public sealed class RoleRepository
             return true;
         }
 
-        List<App> apps = await _db.Permissions
+        List<Permission> perms = await _db.Permissions
             .Where(p => permissionIds.Contains(p.PermissionId) && p.Module != "platform")
-            .Select(p => p.Apps)
             .ToListAsync(ct);
 
-        return apps.All(permissionApps => AppRules.MayGrant(roleApp, permissionApps));
+        foreach (Permission p in perms)
+        {
+            if (roleApp == App.RetailErp)
+            {
+                if (p.BusinessType != BusinessType.General && p.BusinessType != null) return false;
+                if ((p.AddOns & (AddOn.Hrms | AddOn.Payroll)) != 0 && p.AddOns != AddOn.None) return false;
+            }
+            else if (roleApp == App.Payroll)
+            {
+                if ((p.AddOns & AddOn.Payroll) == 0 && (p.BusinessType != null || p.AddOns != AddOn.None)) return false;
+            }
+            else if (roleApp == App.Hrms)
+            {
+                if ((p.AddOns & AddOn.Hrms) == 0 && (p.BusinessType != null || p.AddOns != AddOn.None)) return false;
+            }
+            else if (roleApp == App.School)
+            {
+                if (p.BusinessType != BusinessType.School && p.Module != "contacts" && (p.BusinessType != null || p.AddOns != AddOn.None)) return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>Soft delete. Blocked when the role is assigned to an active user.</summary>

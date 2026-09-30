@@ -228,6 +228,8 @@ public class AdminDbContext : DbContext
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.DiscountLevel).HasConversion<string>().HasMaxLength(10);
             b.Property(e => e.Vertical).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.BusinessType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.AddOns).HasConversion<int>();
             b.Property(e => e.AllowFreeTextLines).HasDefaultValue(true);
             b.Property(e => e.DiscountBeforeTax).HasDefaultValue(true);
 
@@ -242,8 +244,8 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<License>(b =>
         {
             b.HasKey(e => e.LicenseId);
-            // One licence per app per customer (TK-42).
-            b.HasIndex(e => new { e.CustomerId, e.App }).IsUnique();
+            // One licence per customer (D-36, TK-127).
+            b.HasIndex(e => e.CustomerId).IsUnique();
             b.Property(e => e.LicenseType).HasConversion<string>().HasMaxLength(20);
         });
 
@@ -280,11 +282,10 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<Role>(b =>
         {
             b.HasKey(e => e.RoleId);
-            // A name is unique within an app: Owner of RetailErp and Owner of
-            // Payroll are two rows (TK-42).
-            b.HasIndex(e => new { e.CustomerId, e.App, e.SystemName }).IsUnique();
+            // Roles span business types and add-ons (D-36, TK-127).
+            b.HasIndex(e => new { e.CustomerId, e.SystemName }).IsUnique();
             // Postgres treats nulls as distinct, so system-role names need a partial guard.
-            b.HasIndex(e => new { e.App, e.SystemName })
+            b.HasIndex(e => e.SystemName)
                 .IsUnique()
                 .HasFilter("\"CustomerId\" IS NULL");
         });
@@ -293,6 +294,8 @@ public class AdminDbContext : DbContext
         {
             b.HasKey(e => e.PermissionId);
             b.HasIndex(e => e.Code).IsUnique();
+            b.Property(e => e.BusinessType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.AddOns).HasConversion<int>();
         });
 
         modelBuilder.Entity<RolePermission>(b =>
@@ -353,6 +356,8 @@ public class AdminDbContext : DbContext
         {
             b.HasKey(e => e.MenuId);
             b.Property(e => e.Type).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.BusinessType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.AddOns).HasConversion<int>();
 
             // Unique among siblings, which is what a code is for. Postgres treats
             // NULLs as distinct in a unique index, so rail modules — whose ParentId
@@ -741,19 +746,19 @@ public class AdminDbContext : DbContext
     /// module has. Ids from 10,001, so a module appended to the grid later never
     /// meets one.
     /// </summary>
-    public static readonly IReadOnlyList<(int PermissionId, string Module, string Action, App Apps)> ExtraPermissions =
+    public static readonly IReadOnlyList<(int PermissionId, string Module, string Action, BusinessType? BusinessType, AddOn AddOns)> ExtraPermissions =
     [
         // Editing a locked day's register (S3). School's student register only,
         // though the attendance module is shared with HRMS.
-        (10_001, "attendance", "unlock", App.School),
+        (10_001, "attendance", "unlock", BusinessType.School, AddOn.None),
 
         // Closing a work order, which is terminal (S6).
-        (10_002, "workorder", "close", App.School),
+        (10_002, "workorder", "close", BusinessType.School, AddOn.None),
 
         // The manual e-invoice actions: retrying a registration, and generating
         // or cancelling an e-way bill (TK-92). Posting still needs
         // sales.approve and cancelling an IRN rides on sales.void.
-        (10_003, "sales", "einvoice", App.RetailErp),
+        (10_003, "sales", "einvoice", BusinessType.General, AddOn.EInvoicing),
     ];
 
     /// <summary>
@@ -765,66 +770,39 @@ public class AdminDbContext : DbContext
     [
         (1_000_101, "Principal", ["contacts", "sis", "admission", "attendance", "fee", "facility", "workorder", "preventive", "amc", "employee.view", "attendance.unlock", "workorder.close"]),
         (1_000_102, "Office Admin", ["contacts", "sis", "admission", "attendance", "fee.view", "fee.create", "fee.print", "employee.view", "attendance.unlock"]),
-        (1_000_103, "Accountant", ["fee", "contacts.view", "sis.view", "admission.view"]),
         (1_000_104, "Teacher", ["sis.view", "sis.edit", "attendance.view", "attendance.create", "attendance.edit"]),
         (1_000_105, "Maintenance", ["facility", "contacts.view", "workorder.view", "workorder.create", "workorder.edit", "preventive", "amc.view", "employee.view"]),
-        (1_000_106, "Viewer", ["*.view"]),
     ];
 
-    /// <summary>
-    /// Which apps' roles may hold a module's permissions (TK-42).
-    ///
-    /// <c>settings</c> covers users, roles, branches, organization settings,
-    /// currencies, configuration, SMTP, API keys and numbering, which every app
-    /// shares. <c>platform</c> is operator-only and granted by a flag on the user,
-    /// never by a role, so it belongs to no one app. Everything else is RetailErp's
-    /// until another app's module is seeded.
-    /// </summary>
-    /// <summary>
-    /// The seeded Owner role of each app (TK-45). RetailErp's is the original
-    /// Owner, role 1.
-    ///
-    /// <b>The others sit in a reserved range, 1,000,000 plus the app's flag</b>,
-    /// not at 6, 7 and 8. Customer-made roles take ids from the same identity
-    /// column, which the seed moves past the highest seeded id, so on a
-    /// database already in use 6 to 8 belong to somebody's roles.
-    /// </summary>
     public static readonly IReadOnlyList<(App App, int RoleId)> AppOwnerRoles =
     [
         (App.RetailErp, 1),
-        (App.School, 1_000_000 + (int)App.School),
-        (App.Hrms, 1_000_000 + (int)App.Hrms),
-        (App.Payroll, 1_000_000 + (int)App.Payroll),
     ];
 
-    /// <summary>The seeded Owner role of <paramref name="app"/>.</summary>
-    public static int OwnerRoleOf(App app) =>
-        AppOwnerRoles.First(o => o.App == app).RoleId;
+    /// <summary>The seeded Owner role (D-36: roles span types, single Owner role 1).</summary>
+    public static int OwnerRoleOf(App app) => 1;
+
+    public static (BusinessType? BusinessType, AddOn AddOns) ScopeOfModule(string module) => module switch
+    {
+        "settings" or "platform" => (null, AddOn.None),
+        "employee" => (BusinessType.School, AddOn.Hrms | AddOn.Payroll),
+        "hrm" or "leave" or "claims" or "recruitment" or "performance" => (null, AddOn.Hrms),
+        "attendance" => (BusinessType.School, AddOn.Hrms),
+        "payroll" => (null, AddOn.Payroll),
+        "contacts" => (BusinessType.General, AddOn.Crm),
+        "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => (BusinessType.School, AddOn.None),
+        "crm" => (null, AddOn.Crm),
+        _ => (BusinessType.General, AddOn.None),
+    };
 
     public static App AppsOfModule(string module) => module switch
     {
         "settings" or "platform" => App.All,
-
-        // The employee master and organisation setup are shared by the apps
-        // that employ people on the books: HRMS, Payroll and School (TK-48).
         "employee" => App.Hrms | App.Payroll | App.School,
-
-        // Lifecycle, letters, assets, announcements, leave, claims, recruitment and performance are HRMS's own.
         "hrm" or "leave" or "claims" or "recruitment" or "performance" => App.Hrms,
-
-        // Staff attendance in HRMS, student attendance in School (TK-60). A
-        // role belongs to one app and a token carries one app, so the shared
-        // module never lets one app's role into the other's screens.
         "attendance" => App.Hrms | App.School,
-
-        // Guardians and maintenance vendors are contacts, so School shares the
-        // contact master with RetailErp (TK-60).
         "contacts" => App.RetailErp | App.School,
-
-        // School's own (TK-60).
         "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => App.School,
-
-        // Payroll core, statutory, tax, runs (TK-51).
         "payroll" => App.Payroll,
         _ => App.RetailErp,
     };
@@ -841,24 +819,6 @@ public class AdminDbContext : DbContext
                 CustomerId = null,
                 SystemName = systemRoles[i],
                 DisplayName = systemRoles[i],
-                App = App.RetailErp,
-                IsSystemRole = true,
-                IsActive = true,
-            });
-        }
-
-        // One Owner per other app (TK-45): signing up for an app, or starting
-        // its trial, makes the signer that app's Owner. Appended with fixed
-        // ids so the RetailErp roles keep theirs.
-        foreach ((App app, int roleId) in AppOwnerRoles.Where(o => o.App != App.RetailErp))
-        {
-            roles.Add(new Role
-            {
-                RoleId = roleId,
-                CustomerId = null,
-                SystemName = "Owner",
-                DisplayName = "Owner",
-                App = app,
                 IsSystemRole = true,
                 IsActive = true,
             });
@@ -872,7 +832,6 @@ public class AdminDbContext : DbContext
                 CustomerId = null,
                 SystemName = name,
                 DisplayName = name,
-                App = App.School,
                 IsSystemRole = true,
                 IsActive = true,
             });
@@ -891,6 +850,7 @@ public class AdminDbContext : DbContext
         int permissionId = 1;
         foreach (string module in modules)
         {
+            (BusinessType? bType, AddOn addOns) = ScopeOfModule(module);
             foreach (string action in actions)
             {
                 permissions.Add(new Permission
@@ -898,19 +858,21 @@ public class AdminDbContext : DbContext
                     PermissionId = permissionId++,
                     Code = $"{module}.{action}",
                     Module = module,
-                    Apps = AppsOfModule(module),
+                    BusinessType = bType,
+                    AddOns = addOns,
                 });
             }
         }
 
-        foreach ((int extraId, string module, string action, App apps) in ExtraPermissions)
+        foreach ((int extraId, string module, string action, BusinessType? bType, AddOn addOns) in ExtraPermissions)
         {
             permissions.Add(new Permission
             {
                 PermissionId = extraId,
                 Code = $"{module}.{action}",
                 Module = module,
-                Apps = apps,
+                BusinessType = bType,
+                AddOns = addOns,
             });
         }
 
@@ -919,7 +881,7 @@ public class AdminDbContext : DbContext
     }
 
     /// <summary>
-    /// Links the 5 system roles to their permissions. Module-level grants: a role
+    /// Links system roles to their permissions. Module-level grants: a role
     /// that owns a module gets all 10 actions in it, including approve, void and
     /// AllUserData.
     /// </summary>
@@ -954,15 +916,15 @@ public class AdminDbContext : DbContext
         List<Permission> nonPlatform = permissions.Where(p => p.Module != "platform").ToList();
 
         // The five system roles are RetailErp's, so they hold RetailErp's
-        // permissions only (the grant rule, TK-42). Today that is every one; a
-        // module another app adds later is not RetailErp's and stays out.
+        // permissions only (the grant rule, TK-42).
         //
         // The extras (ids from 10,000) are left out of these sequential grants
         // and granted below with fixed ids: appended here they would renumber
         // every grant after them, and a migration of that many updates collided
         // on the unique role-permission index before (TK-70).
+        string[] retailModules = { "dashboard", "contacts", "crm", "inventory", "sales", "purchase", "accounting", "banking", "reports", "settings", "support" };
         List<Permission> retail = nonPlatform
-            .Where(p => p.Apps.HasFlag(App.RetailErp) && p.PermissionId < 10_000 && !FixedGrantModules.Contains(p.Module))
+            .Where(p => retailModules.Contains(p.Module) && p.PermissionId < 10_000)
             .ToList();
 
         Grant(owner, retail);
@@ -974,14 +936,7 @@ public class AdminDbContext : DbContext
         Grant(viewer, retail.Where(p => p.Code.EndsWith(".view", StringComparison.Ordinal)));
 
         // Read-only grants outside a role's own modules, for things the role has
-        // to look at to do its own job. These were invisible until permissions
-        // were actually enforced: Identity minted the claims from the beginning
-        // and no service read one, so the matrix had never met a real screen.
-        //
-        // Sales cannot sell what it cannot look up, and Accountant values stock
-        // and chases receivables that are held per contact. Both are reads —
-        // nothing here lets a salesperson edit an item or an accountant edit a
-        // contact, which would be a different decision.
+        // to look at to do its own job.
         string[] accountantAlsoReads = { "contacts", "inventory" };
         string[] salesAlsoReads = { "inventory" };
 
@@ -996,7 +951,7 @@ public class AdminDbContext : DbContext
         // RetailErp's extra permissions, to the roles that hold their module:
         // 900,000,000 + 100,000 × the role + the permission id, clear of the
         // sequential ids above and of the per-app ranges below.
-        foreach (Permission extra in nonPlatform.Where(p => p.Apps.HasFlag(App.RetailErp) && p.PermissionId >= 10_000))
+        foreach (Permission extra in nonPlatform.Where(p => retailModules.Contains(p.Module) && p.PermissionId >= 10_000))
         {
             foreach (int roleId in new[] { owner, administrator, accountant, sales })
             {
@@ -1036,18 +991,20 @@ public class AdminDbContext : DbContext
             }
         }
 
-        // Each other app's Owner holds every permission its app may hold
-        // (TK-45). Each grant's id is fixed by its app and its permission,
-        // 1,000,000,000 × the app's flag plus the permission id, so a module
-        // added to one app later adds rows without moving any other id, and no
-        // id meets a customer role's grants from the identity column.
-        foreach ((App app, int roleId) in AppOwnerRoles.Where(o => o.App != App.RetailErp))
+        // Owner and Administrator hold all non-platform permissions across all business types
+        // and add-ons (D-36: roles span types). Non-retail permissions granted to Owner and
+        // Administrator take fixed ids: 920,000,000 + 100,000 × the role + the permission id.
+        List<Permission> nonRetail = nonPlatform
+            .Where(p => !retailModules.Contains(p.Module) && !FixedGrantModules.Contains(p.Module))
+            .ToList();
+
+        foreach (Permission permission in nonRetail)
         {
-            foreach (Permission permission in nonPlatform.Where(p => p.Apps.HasFlag(app)))
+            foreach (int roleId in new[] { owner, administrator })
             {
                 grants.Add(new RolePermission
                 {
-                    RolePermissionId = 1_000_000_000L * (int)app + permission.PermissionId,
+                    RolePermissionId = 920_000_000L + (100_000L * roleId) + permission.PermissionId,
                     RoleId = roleId,
                     PermissionId = permission.PermissionId,
                 });
@@ -1056,7 +1013,12 @@ public class AdminDbContext : DbContext
 
         // School's other roles (TK-60): 1,000,000,000 × School's flag, plus
         // 10,000,000 × the role's place in the list, plus the permission id.
-        List<Permission> school = nonPlatform.Where(p => p.Apps.HasFlag(App.School)).ToList();
+        List<Permission> school = nonPlatform.Where(p =>
+            p.BusinessType == BusinessType.School
+            || p.Module == "contacts"
+            || p.Module == "attendance"
+            || p.Module == "employee").ToList();
+
         for (int k = 0; k < SchoolRoles.Count; k++)
         {
             (int roleId, _, string[] granted) = SchoolRoles[k];

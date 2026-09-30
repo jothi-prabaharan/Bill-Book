@@ -44,20 +44,9 @@ public sealed class ApplicationRepository
             return new StartTrialResult(StartTrialOutcome.InvalidApp, []);
         }
 
-        List<App> held = await _db.Licenses
-            .Where(l => l.CustomerId == customerId)
-            .Select(l => l.App)
-            .ToListAsync(ct);
-
-        if (held.Contains(app))
-        {
-            return new StartTrialResult(StartTrialOutcome.AlreadyLicensed, []);
-        }
-
         CustomerEntity? customer = await _db.Customers.FirstOrDefaultAsync(c => c.CustomerId == customerId, ct);
-        List<Guid> branches = await _db.Organizations
+        List<Organization> branches = await _db.Organizations
             .Where(o => o.CustomerId == customerId)
-            .Select(o => o.OrgId)
             .ToListAsync(ct);
 
         if (customer is null || branches.Count == 0)
@@ -65,32 +54,73 @@ public sealed class ApplicationRepository
             return new StartTrialResult(StartTrialOutcome.NotFound, []);
         }
 
+        AddOn newAddOn = app switch
+        {
+            App.Hrms => AddOn.Hrms,
+            App.Payroll => AddOn.Payroll,
+            _ => AddOn.None,
+        };
+        BusinessType? newBusinessType = app switch
+        {
+            App.School => BusinessType.School,
+            App.RetailErp => BusinessType.General,
+            _ => null,
+        };
+
+        bool alreadyHas = branches.All(b =>
+            (newAddOn != AddOn.None && (b.AddOns & newAddOn) == newAddOn) ||
+            (newBusinessType != null && b.BusinessType == newBusinessType));
+
+        if (alreadyHas)
+        {
+            return new StartTrialResult(StartTrialOutcome.AlreadyLicensed, []);
+        }
+
+        foreach (var b in branches)
+        {
+            if (newAddOn != AddOn.None)
+            {
+                b.AddOns |= newAddOn;
+            }
+            if (newBusinessType != null)
+            {
+                b.BusinessType = newBusinessType;
+            }
+        }
+
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
-        _db.Licenses.Add(new License
+        License? license = await _db.Licenses.FirstOrDefaultAsync(l => l.CustomerId == customerId, ct);
+        if (license is null)
         {
-            LicenseId = Guid.NewGuid(),
-            CustomerId = customerId,
-            App = app,
-            LicenseType = LicenseType.Trial,
-            StartDate = today,
-            ExpiryDate = today.AddDays(TrialDays),
-            MaxUsers = TrialMaxUsers,
-            // Every branch the customer already has may use the new app: a
-            // branch is shared by every app, and the trial is for trying it
-            // where the business already trades.
-            MaxOrganizations = branches.Count,
-            IsActive = true,
-        });
+            license = new License
+            {
+                LicenseId = Guid.NewGuid(),
+                CustomerId = customerId,
+                LicenseType = LicenseType.Trial,
+                StartDate = today,
+                ExpiryDate = today.AddDays(TrialDays),
+                MaxUsers = TrialMaxUsers,
+                MaxOrganizations = branches.Count,
+                IsActive = true,
+            };
+            _db.Licenses.Add(license);
+        }
+        else if (license.ExpiryDate < today)
+        {
+            license.ExpiryDate = today.AddDays(TrialDays);
+            license.IsActive = true;
+        }
 
-        // The starter becomes the new app's Owner in every branch.
-        int ownerRoleId = AdminDbContext.OwnerRoleOf(app);
+        // The starter becomes Owner in every branch.
+        const int ownerRoleId = 1;
+        List<Guid> branchIds = branches.Select(b => b.OrgId).ToList();
         List<Guid> alreadyOwner = await _db.UserOrganizationRoles
-            .Where(a => a.UserId == userId && a.RoleId == ownerRoleId && branches.Contains(a.OrgId))
+            .Where(a => a.UserId == userId && a.RoleId == ownerRoleId && branchIds.Contains(a.OrgId))
             .Select(a => a.OrgId)
             .ToListAsync(ct);
 
-        foreach (Guid orgId in branches.Except(alreadyOwner))
+        foreach (Guid orgId in branchIds.Except(alreadyOwner))
         {
             _db.UserOrganizationRoles.Add(new UserOrganizationRole
             {
@@ -109,13 +139,10 @@ public sealed class ApplicationRepository
 
         await _db.SaveChangesAsync(ct);
 
-        // The licence above is not committed yet, so the seeder is told the
-        // apps rather than left to read them.
-        App apps = held.Aggregate(app, (all, one) => all | one);
         List<string> unseeded = [];
-        foreach (Guid orgId in branches)
+        foreach (var b in branches)
         {
-            unseeded.AddRange(await _seeder.SeedAsync(customerId, orgId, apps, ct));
+            unseeded.AddRange(await _seeder.SeedAsync(customerId, b.OrgId, b.BusinessType, b.AddOns, ct));
         }
 
         return unseeded.Count > 0

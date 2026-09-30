@@ -20,22 +20,21 @@ public sealed class LicenseRepository
         _log = log;
     }
 
-    /// <summary>The customer's licence for one app (TK-43), or null when it holds none.</summary>
+    /// <summary>The customer's licence (D-36, TK-127), or null when it holds none.</summary>
     public async Task<LicenseDto?> GetAsync(Guid customerId, CancellationToken ct, App app = App.RetailErp)
     {
         var license = await _db.Licenses
-            .Where(l => l.CustomerId == customerId && l.App == app)
+            .Where(l => l.CustomerId == customerId)
             .FirstOrDefaultAsync(ct);
 
         return license is null ? null : ToDto(license);
     }
 
-    /// <summary>Every licence the customer holds, one per app (TK-43).</summary>
+    /// <summary>The customer's licence as a list (D-36, TK-127: one licence per customer).</summary>
     public async Task<IReadOnlyList<LicenseDto>> ListAsync(Guid customerId, CancellationToken ct)
     {
         List<License> licences = await _db.Licenses
             .Where(l => l.CustomerId == customerId)
-            .OrderBy(l => l.App)
             .ToListAsync(ct);
 
         return licences.Select(ToDto).ToList();
@@ -45,7 +44,7 @@ public sealed class LicenseRepository
     {
         return new LicenseDto
         {
-            App = license.App.ToString(),
+            App = "RetailErp",
             LicenseId = license.LicenseId,
             CustomerId = license.CustomerId,
             LicenseType = license.LicenseType.ToString(),
@@ -66,7 +65,7 @@ public sealed class LicenseRepository
     public async Task<bool> RenewAsync(Guid customerId, DateOnly newExpiryDate, CancellationToken ct, App app = App.RetailErp)
     {
         var license = await _db.Licenses
-            .FirstOrDefaultAsync(l => l.CustomerId == customerId && l.App == app, ct);
+            .FirstOrDefaultAsync(l => l.CustomerId == customerId, ct);
 
         if (license is null)
         {
@@ -101,7 +100,7 @@ public sealed class LicenseRepository
     public async Task<bool> ClearBranchTrialAsync(Guid customerId, Guid orgId, CancellationToken ct, App app = App.RetailErp)
     {
         var license = await _db.Licenses
-            .FirstOrDefaultAsync(l => l.CustomerId == customerId && l.App == app, ct);
+            .FirstOrDefaultAsync(l => l.CustomerId == customerId, ct);
 
         if (license is null)
         {

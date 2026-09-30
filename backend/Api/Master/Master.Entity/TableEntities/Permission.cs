@@ -17,11 +17,11 @@ public class Permission : AuditableEntity
     [MaxLength(50, ErrorMessage = "Module cannot exceed 50 characters.")]
     public string Module { get; set; } = null!;
 
-    /// <summary>
-    /// Every app whose roles may hold this permission (TK-42). The shared
-    /// screens (<c>settings.*</c>) are every app's; <c>sales.*</c> is RetailErp's.
-    /// </summary>
-    public App Apps { get; set; } = App.RetailErp;
+    /// <summary>The business vertical this permission requires, if any (D-36, TK-127).</summary>
+    public BusinessType? BusinessType { get; set; }
+
+    /// <summary>Modular add-ons this permission belongs to, if any (D-36, TK-127).</summary>
+    public AddOn AddOns { get; set; } = AddOn.None;
 
     [MaxLength(200, ErrorMessage = "Description cannot exceed 200 characters.")]
     public string? Description { get; set; }

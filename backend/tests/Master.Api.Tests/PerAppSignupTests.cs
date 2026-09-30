@@ -60,6 +60,16 @@ public sealed class PerAppSignupTests
             Seeded.Add((orgId, apps));
             return Task.FromResult<IReadOnlyList<string>>(fail ? ["Accounting"] : []);
         }
+
+        public Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, BusinessType? businessType, AddOn addOns, CancellationToken ct)
+        {
+            App apps = App.None;
+            if (businessType == BusinessType.School) apps |= App.School;
+            if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery) apps |= App.RetailErp;
+            if (addOns.HasFlag(AddOn.Hrms)) apps |= App.Hrms;
+            if (addOns.HasFlag(AddOn.Payroll)) apps |= App.Payroll;
+            return SeedAsync(customerId, orgId, apps, ct);
+        }
     }
 
     private sealed class Hasher : IPasswordHasherRepository
@@ -115,14 +125,16 @@ public sealed class PerAppSignupTests
         (Guid customerId, Guid orgId, Guid userId) = await SignUpForPayrollAsync(db);
 
         License licence = await db.Licenses.AsNoTracking().SingleAsync(l => l.CustomerId == customerId);
-        Assert.Equal(App.Payroll, licence.App);
         Assert.Equal(LicenseType.Trial, licence.LicenseType);
+
+        Organization org = await db.Organizations.AsNoTracking().SingleAsync(o => o.OrgId == orgId);
+        Assert.Equal(AddOn.Payroll, org.AddOns);
 
         int role = await db.UserOrganizationRoles.Where(a => a.UserId == userId && a.OrgId == orgId).Select(a => a.RoleId).SingleAsync();
         Assert.Equal(AdminDbContext.OwnerRoleOf(App.Payroll), role);
     }
 
-    /// <summary>The card's Done-when line.</summary>
+    /// <summary>The card's Done-when line (updated for D-36: one licence, branch add-ons).</summary>
     [SkippableFact]
     public async Task Payroll_then_hrms_is_one_customer_one_branch_and_two_licences()
     {
@@ -138,14 +150,14 @@ public sealed class PerAppSignupTests
         Assert.Equal(StartTrialOutcome.Ok, started.Outcome);
         Assert.Equal(1, await db.Customers.CountAsync(c => c.CustomerId == customerId));
         Assert.Equal([orgId], await db.Organizations.Where(o => o.CustomerId == customerId).Select(o => o.OrgId).ToListAsync());
-        Assert.Equal(
-            [App.Hrms, App.Payroll],
-            await db.Licenses.Where(l => l.CustomerId == customerId).Select(l => l.App).OrderBy(a => a).ToListAsync());
+        Assert.Equal(1, await db.Licenses.CountAsync(l => l.CustomerId == customerId));
 
-        // The starter is HRMS's Owner in the branch too, beside Payroll's.
+        Organization org = await db.Organizations.AsNoTracking().SingleAsync(o => o.OrgId == orgId);
+        Assert.True((org.AddOns & (AddOn.Payroll | AddOn.Hrms)) == (AddOn.Payroll | AddOn.Hrms));
+
+        // The starter is Owner in the branch.
         List<int> roles = await db.UserOrganizationRoles.Where(a => a.UserId == userId && a.OrgId == orgId).Select(a => a.RoleId).ToListAsync();
-        Assert.Contains(AdminDbContext.OwnerRoleOf(App.Hrms), roles);
-        Assert.Contains(AdminDbContext.OwnerRoleOf(App.Payroll), roles);
+        Assert.Contains(1, roles);
 
         // HRMS's master data went into the existing branch, alongside Payroll's.
         Assert.Equal((orgId, App.Hrms | App.Payroll), Assert.Single(seeder.Seeded));

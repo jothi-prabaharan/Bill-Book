@@ -249,6 +249,14 @@ public sealed class OrganizationsController : ControllerBase
             {
                 Message = "One of the selected options is not a recognised value.",
             }),
+            SaveOrganizationOutcome.NeedsBusinessTypeOrAddOn => BadRequest(new MessageResponse
+            {
+                Message = "A branch needs a business type, an add-on, or both.",
+            }),
+            SaveOrganizationOutcome.DisallowedAddOn => BadRequest(new MessageResponse
+            {
+                Message = "One or more requested add-ons are not allowed for this business type.",
+            }),
             SaveOrganizationOutcome.CreatedOnTrial => NoContent(),
 
             _ => StatusCode(StatusCodes.Status500InternalServerError),

@@ -51,16 +51,43 @@ public sealed class MenuRepository
         // belongs to another trade is not offered. General when unknown, which
         // shows everything — the same default the branch itself has.
         Guid? orgId = _tenant.OrgId;
-        Vertical trade = orgId is null
-            ? Vertical.General
+        var orgScope = orgId is null
+            ? null
             : await _db.Organizations.AsNoTracking()
                 .Where(o => o.OrgId == orgId.Value)
-                .Select(o => (Vertical?)o.Vertical)
-                .FirstOrDefaultAsync(ct) ?? Vertical.General;
+                .Select(o => new
+                {
+                    Trade = (Vertical?)o.Vertical ?? Vertical.General,
+                    o.BusinessType,
+                    o.AddOns
+                })
+                .FirstOrDefaultAsync(ct);
 
-        var rows = await _db.Menus
+        Vertical trade = orgScope?.Trade ?? Vertical.General;
+        BusinessType? businessType = orgScope != null ? orgScope.BusinessType : BusinessType.General;
+        AddOn addOns = orgScope?.AddOns ?? AddOn.None;
+
+        if (orgId is null && app != App.RetailErp)
+        {
+            if (app == App.School)
+            {
+                businessType = BusinessType.School;
+            }
+            else if (app == App.Hrms)
+            {
+                businessType = null;
+                addOns = AddOn.Hrms;
+            }
+            else if (app == App.Payroll)
+            {
+                businessType = null;
+                addOns = AddOn.Payroll;
+            }
+        }
+
+        var rawRows = await _db.Menus
             .AsNoTracking()
-            .Where(m => m.IsActive && m.Apps.HasFlag(app))
+            .Where(m => m.IsActive)
             .OrderBy(m => m.DisplayOrder)
             .Select(m => new Row
             {
@@ -75,12 +102,18 @@ public sealed class MenuRepository
                 IsSearchable = m.IsSearchable,
                 CanCreate = m.CanCreate,
                 SingularName = m.SingularName,
+                BusinessType = m.BusinessType,
+                AddOns = m.AddOns,
                 AllowedActions = m.Permissions
                     .Where(p => permissions.Contains(p.PermissionCode))
                     .Select(p => p.Action)
                     .ToList()
             })
             .ToListAsync(ct);
+
+        var rows = rawRows
+            .Where(r => MenuMatches(businessType, addOns, r.BusinessType, r.AddOns))
+            .ToList();
 
         var childrenOf = rows
             .Where(r => r.ParentId is not null)
@@ -156,6 +189,52 @@ public sealed class MenuRepository
         return menus;
     }
 
+    /// <summary>
+    /// Determines whether a menu row is visible to a branch given the branch's business type and add-ons (D-36, TK-127).
+    /// </summary>
+    public static bool MenuMatches(BusinessType? branchType, AddOn branchAddOns, BusinessType? menuType, AddOn menuAddOns)
+    {
+        // 1. Shared menus (no vertical, no add-on) are available to all branches.
+        if (menuType == null && menuAddOns == AddOn.None)
+        {
+            return true;
+        }
+
+        // 2. If the menu belongs to an add-on the branch has enabled, show it.
+        if (menuAddOns != AddOn.None && (branchAddOns & menuAddOns) != 0)
+        {
+            return true;
+        }
+
+        // 3. If the branch has no business vertical (e.g. standalone HRMS / Payroll),
+        // only menus enabled by add-on flags (checked above) are shown.
+        if (branchType == null)
+        {
+            return false;
+        }
+
+        // 4. Contacts menu (carrying BusinessType.General and AddOn.Crm in seed):
+        // shown to any branch with a business type (retail or school) or with CRM add-on.
+        if (menuType == BusinessType.General && menuAddOns == AddOn.Crm)
+        {
+            return true;
+        }
+
+        // 5. Retail verticals (General, Pharma, Jewellery) match general retail menus.
+        if (menuType == BusinessType.General)
+        {
+            return branchType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery;
+        }
+
+        // 6. School vertical matches school menus.
+        if (menuType == BusinessType.School)
+        {
+            return branchType == BusinessType.School;
+        }
+
+        return branchType == menuType;
+    }
+
     private static List<Row> Children(IReadOnlyDictionary<int, List<Row>> index, int parentId) =>
         index.TryGetValue(parentId, out var kids) ? kids : [];
 
@@ -173,6 +252,8 @@ public sealed class MenuRepository
         public bool IsSearchable { get; init; }
         public bool CanCreate { get; init; }
         public string? SingularName { get; init; }
+        public BusinessType? BusinessType { get; init; }
+        public AddOn AddOns { get; init; }
         public List<string> AllowedActions { get; init; } = [];
     }
 }
