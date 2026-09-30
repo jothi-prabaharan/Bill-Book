@@ -13,5 +13,6 @@ export const environment: AppEnvironment = {
    * hostname here would need a rebuild to change, and would mean the artifact
    * that passed UAT is not the one that ships.
    */
-  apiBaseUrl: '',
+  apiBaseUrl: 'http://localhost:5500',
 };
+

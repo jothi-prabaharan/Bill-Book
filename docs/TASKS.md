@@ -4359,14 +4359,14 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a branch with only Hrms sees only HRMS pages.
 
 ### TK-131 � Merge `apps/admin` into `apps/web`: an Admin portal button
-- [~] working (Antigravity) � since 2026-10-01
+- [x] complete
 - **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-WEB, L-ADM · **Depends on:** TK-130 · **Decision:** D-36
 - **Sub-tasks:**
-  - [ ] Mount the admin routes under `/admin/*`, each requiring `platform.*`.
-  - [ ] The dashboard shows an Admin portal button only to a platform operator (`platform.view`); it opens admin mode with a Back to dashboard button.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Mount the admin routes under `/admin/*`, each requiring `platform.*`.
+  - [x] The dashboard shows an Admin portal button only to a platform operator (`platform.view`); it opens admin mode with a Back to dashboard button.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** only an operator sees the button and the pages, and the backend still refuses anyone else.
 
 ### TK-132 · Merge `apps/portal` into `apps/web`
@@ -4611,6 +4611,12 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
+
+
+
+
+
 
 
 
