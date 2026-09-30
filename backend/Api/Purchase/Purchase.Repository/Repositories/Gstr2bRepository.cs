@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
@@ -153,7 +154,7 @@ public sealed class Gstr2bRepository
 
     /// <summary>Removes an import and its lines. Nothing else depends on it; the books are untouched.</summary>
     public async Task<bool> DeleteAsync(long id, CancellationToken ct) =>
-        await _db.Gstr2bImports.Where(i => i.Gstr2bImportId == id).ExecuteDeleteAsync(ct) == 1;
+        await _db.Gstr2bImports.Where(i => i.Gstr2bImportId == id).ExecuteDeleteLoggedAsync(_db, ct) == 1;
 
     /// <summary>Posted bills, one per bill, totalled from their register rows in base currency.</summary>
     private async Task<List<BooksBill>> BillsAsync(

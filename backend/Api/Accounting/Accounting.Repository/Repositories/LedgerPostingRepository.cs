@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
@@ -428,7 +429,7 @@ public sealed class LedgerPostingRepository
                 .Where(l => l.TransactionTypeCode == typeCode
                     && l.TransactionId == request.TransactionId
                     && withdrawing.Contains(l.LedgerTypeId))
-                .ExecuteDeleteAsync(ct);
+                .ExecuteDeleteLoggedAsync(_db, ct);
         }
 
         int replaced = 0;
@@ -443,7 +444,7 @@ public sealed class LedgerPostingRepository
                     && l.TransactionId == request.TransactionId
                     && l.LedgerTypeId == ledgerTypeId
                     && details.Contains(l.TransactionDetailId))
-                .ExecuteDeleteAsync(ct);
+                .ExecuteDeleteLoggedAsync(_db, ct);
         }
 
         return replaced;

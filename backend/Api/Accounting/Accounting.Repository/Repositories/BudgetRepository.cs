@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -233,7 +234,7 @@ public sealed class BudgetRepository
         }
 
         await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
-        await _db.BudgetLines.Where(l => l.BudgetId == id).ExecuteDeleteAsync(ct);
+        await _db.BudgetLines.Where(l => l.BudgetId == id).ExecuteDeleteLoggedAsync(_db, ct);
         _db.Budgets.Remove(budget);
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
@@ -513,7 +514,7 @@ public sealed class BudgetRepository
     /// <summary>Deletes a draft's lines and writes the new ones. Months at zero are not stored.</summary>
     private async Task ReplaceLinesAsync(Budget budget, IEnumerable<(long AccountId, long? ProjectId, IReadOnlyList<decimal> Amounts)> lines, CancellationToken ct)
     {
-        await _db.BudgetLines.Where(l => l.BudgetId == budget.BudgetId).ExecuteDeleteAsync(ct);
+        await _db.BudgetLines.Where(l => l.BudgetId == budget.BudgetId).ExecuteDeleteLoggedAsync(_db, ct);
 
         foreach ((long accountId, long? projectId, IReadOnlyList<decimal> amounts) in lines)
         {
@@ -547,7 +548,7 @@ public sealed class BudgetRepository
     private async Task ClearDefaultAsync(DateOnly yearStart, CancellationToken ct) =>
         await _db.Budgets
             .Where(b => b.FinancialYearStart == yearStart && b.IsBranchDefault)
-            .ExecuteUpdateAsync(s => s.SetProperty(b => b.IsBranchDefault, false), ct);
+            .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(b => b.IsBranchDefault, false), ct);
 
     /// <summary>A financial year's income and expense movements, month by month, in each account's normal direction.</summary>
     private async Task<List<BudgetLineView>> ActualsAsync(DateOnly yearStart, bool byProject, CancellationToken ct)

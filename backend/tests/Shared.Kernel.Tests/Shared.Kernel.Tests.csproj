@@ -9,6 +9,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
+    <!-- EditLogWriterTests builds a TenantDbContext model: jsonb and xmin need the provider. No connection is opened. -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
   <ItemGroup>

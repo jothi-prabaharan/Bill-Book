@@ -305,6 +305,13 @@
           (changed)="load(id)"
         />
       }
+
+      @if (billId(); as id) {
+        <details class="doc-history">
+          <summary>History</summary>
+          <bb-edit-history service="purchase" entity="Bills" [key]="id" heading="Changes to this bill" />
+        </details>
+      }
     }
   }
 

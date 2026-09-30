@@ -23,6 +23,7 @@ import {
   customListColumns,
   defaultValues,
   withCustomColumns,
+  EditHistoryComponent,
 } from '@bill-book/ui-components';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -173,7 +174,7 @@ interface State {
   stateName: string;
 }
 
-type Tab = 'general' | 'addresses' | 'persons' | 'banking' | 'licences' | 'documents';
+type Tab = 'general' | 'addresses' | 'persons' | 'banking' | 'licences' | 'documents' | 'history';
 
 /** Mirrors Contacts.Entity.Enums.LicenceType. */
 const LICENCE_TYPES: readonly { value: string; label: string }[] = [
@@ -224,6 +225,7 @@ interface PortalAccessState {
   selector: 'bb-contacts-page',
   standalone: true,
   imports: [
+    EditHistoryComponent,
     DatePipe,
     DataGridComponent,
     CustomFieldsComponent,

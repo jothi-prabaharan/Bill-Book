@@ -2396,17 +2396,26 @@ The build cards each design in section E produced. Each design section in `docs/
     - Rent's monthly threshold is modelled as a per-document threshold.
 
 ### TK-118 · Compliance: the audit trail (edit log)
-- [~] working (Claude Opus 5.5) — since 2026-09-30
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-09-30
 - **Issue:** [#106](https://github.com/jothi-prabaharan/Bill-Book/issues/106)
 - **Lanes:** L-KERNEL, every service lane for its migration · **Depends on:** TK-37 · **Decision:** D-34, D-35
 - **Tables:** `{schema}.EditLog` in every tenant schema
 - **Sub-tasks:**
-  - [ ] `EditLogInterceptor` in `Shared.Kernel`, writing changed columns old and new in the same `SaveChanges`.
-  - [ ] Per schema: the table, RLS, and a trigger refusing `UPDATE`/`DELETE` on it.
-  - [ ] List every `ExecuteUpdate`/`ExecuteDelete` on an audited table and make each write its log rows.
-  - [ ] A History tab component and an audit-log report.
-  - [ ] Test: an edited invoice logs old and new values; an `UPDATE` on the log is refused by the database; a rolled-back save leaves no log row.
+  - [x] `EditLogInterceptor` in `Shared.Kernel`, writing changed columns old and new in the same `SaveChanges`.
+  - [x] Per schema: the table, RLS, and a trigger refusing `UPDATE`/`DELETE` on it.
+  - [x] List every `ExecuteUpdate`/`ExecuteDelete` on an audited table and make each write its log rows.
+  - [x] A History tab component and an audit-log report.
+  - [x] Test: an edited invoice logs old and new values; an `UPDATE` on the log is refused by the database; a rolled-back save leaves no log row.
 - **Done when:** changing an invoice's price leaves a log row with the old and new price that nobody can alter.
+- **As built:**
+  - **In `TenantDbContext`'s `SaveChanges` override, not an interceptor.** An insert's key exists only after the save, and the log must commit with the change, so the override captures updates and deletes before `base.SaveChanges`, saves, materialises inserts with their generated keys, and writes the log rows with a second save — all inside one `BeginScopeAsync` scope that joins the request's transaction or opens its own. Being in the base class also meant no change to 22 `Program.cs` files. `Shared.Kernel/Audit`: `EditLog` (+ `EditOperation`, `[NotAudited]`), `EditLogWriter` (capture, materialise, root resolution), `EditLogBulk`, `EditLogReader`, `EditLogControllerBase`, `EditLogMigration`.
+  - **What a row holds:** table and key, the root document and key (the climb follows a required FK whose principal holds the rows as a collection, up to three tracked levels, so a bill line's tax lands on the bill), `Insert`/`Update`/`Delete`, `Changes` jsonb `{Column:{old,new}}`, user id, the `display_name` claim as the user name (no shared user-name lookup exists; the name is the one at the time), time, trace id and source (`Tracked`, `ExecuteUpdate`, `ExecuteDelete`). Version, created/modified columns, `CustomerId`, `OrgId` and `[NotAudited]` columns are left out; an update that changes nothing else writes no row.
+  - **All 22 tenant schemas** (D-34): one `EditLog` migration each, which calls `EditLogMigration.Up` for the FORCEd RLS policy and `editlog_append_only()` behind a row trigger on `UPDATE OR DELETE` and a statement trigger on `TRUNCATE` (SQLSTATE 42501). A trigger rather than a grant, so it binds a superuser too. **Any future squash must carry these calls forward by hand.**
+  - **Bulk statements:** 49 `ExecuteUpdate`/`ExecuteDelete` sites on audited tables use `ExecuteUpdateLoggedAsync` / `ExecuteDeleteLoggedAsync` (read, run, read back by key, save the log). Left as plain statements, each deliberately: the `StockMovements` costing and ledger-queue claims, `ItemStock`/`CostLayers`/`ItemSerials` running values, `RecostingAdjustments` completion, the `NumberingSeries` counter, `ReportScheduleRuns` claims, the e-invoice retry lease, `BlankPhoneBackfill`, and the non-tenant `mst`/`ntf` tables. `[NotAudited]` on `Form26asImport.RawText`, `Gstr2bImport.RawJson`, `Form26asLine`, `Gstr2bLine`, `CampaignRecipient` and `CampaignLink`.
+  - **Read side:** `GET api/edit-log/{cluster}/history/{entity}/{key}`, `GET api/edit-log/{cluster}` (from, to, userId, entity, paging), `…/entities` and `…/users`, in every service under that module's own view permission and app; 22 gateway routes (and the missing `/api/tds` route from TK-117).
+  - **Frontend:** `bb-edit-history` and `bb-edit-log-report` in ui-components. History on invoices, bills and manual journals (folded section) and on items and contacts (a tab) — D-35. **Settings › Audit log** is a new shared lib, `@bill-book/settings-audit-log`, mounted by every app through `sharedSettingsRoutes`, with each app's areas chosen by `APP_ID`; menu 1139 under Users and access, shared by every app (`AuditLogMenu`, permission 478).
+  - **Known limit:** lines removed by a database cascade when their header is deleted are not logged one by one; the header's delete is.
+  - Tests: `Shared.Kernel.Tests/EditLogWriterTests.cs` (added the Npgsql EF provider to that project to build a model), `Sales.Api.Tests/EditLogTests.cs`, `edit-history.model.spec.ts`, `audit-areas.spec.ts`. The RLS audit in every suite now covers `EditLog`.
 
 ### TK-119 · Compliance: MSME payments and the compliance calendar
 - [ ] open

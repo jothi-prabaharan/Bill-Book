@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Purchase.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
@@ -515,7 +516,7 @@ public sealed class DebitNoteRepository
         // The GST register, in this transaction (TK-115).
         await _db.PurchaseRegister
             .Where(r => r.TransactionTypeCode == "DBN" && r.SourceId == note.DebitNoteId)
-            .ExecuteDeleteAsync(ct);
+            .ExecuteDeleteLoggedAsync(_db, ct);
         _db.PurchaseRegister.AddRange(PurchaseRegisterRowsRepository.ForDebitNote(note, bill));
 
         await AdvanceBillAsync(note, ct);
@@ -767,7 +768,7 @@ public sealed class DebitNoteRepository
 
             await _db.PurchaseRegister
                 .Where(r => r.TransactionTypeCode == "DBN" && r.SourceId == note.DebitNoteId)
-                .ExecuteDeleteAsync(ct);
+                .ExecuteDeleteLoggedAsync(_db, ct);
         }
 
         await _db.SaveChangesAsync(ct);

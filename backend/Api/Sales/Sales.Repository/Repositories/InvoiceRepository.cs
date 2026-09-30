@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Sales.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
@@ -976,7 +977,7 @@ public sealed class InvoiceRepository : IInvoiceRepository
     private async Task SaveProjectItemsAsync(
         Invoice invoice, List<Shared.Kernel.Projects.ProjectItemRef> items, CancellationToken ct)
     {
-        await _db.InvoiceProjectItems.Where(p => p.InvoiceId == invoice.InvoiceId).ExecuteDeleteAsync(ct);
+        await _db.InvoiceProjectItems.Where(p => p.InvoiceId == invoice.InvoiceId).ExecuteDeleteLoggedAsync(_db, ct);
 
         foreach (var item in items.GroupBy(i => (i.Kind, i.ItemId)).Select(g => g.First()))
         {

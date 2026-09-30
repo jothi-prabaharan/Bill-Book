@@ -27,6 +27,7 @@ import { SalesPicker } from '../sales-picker';
 import {
   ApprovalPanelComponent,
   ColumnDef,
+  EditHistoryComponent,
   CustomFieldValues,
   DataGridCellTemplateDirective,
   DataGridComponent,
@@ -85,6 +86,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
   imports: [
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
+    EditHistoryComponent,
     FormFieldComponent,
     LookupDialogComponent,
     CommonModule,

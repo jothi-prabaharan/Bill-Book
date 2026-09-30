@@ -1,8 +1,10 @@
+using Shared.Kernel.Audit;
 using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Tenancy;
 
 namespace Customer.Entity.TableEntities;
 
+[NotAudited]
 public class CampaignLink : OrgScopedEntity
 {
     public long CampaignLinkId { get; set; }

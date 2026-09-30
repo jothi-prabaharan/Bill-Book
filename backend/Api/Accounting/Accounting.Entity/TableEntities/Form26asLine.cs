@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using System.ComponentModel.DataAnnotations;
 using Accounting.Entity.Enums;
 using Shared.Kernel.Tenancy;
@@ -9,6 +10,7 @@ namespace Accounting.Entity.TableEntities;
 /// the two compare. Matching is by TAN and amount: 26AS reports a deductor's
 /// transactions, and a receipt records the TDS withheld from it.
 /// </summary>
+[NotAudited]
 public class Form26asLine : OrgScopedEntity
 {
     public long Form26asLineId { get; set; }

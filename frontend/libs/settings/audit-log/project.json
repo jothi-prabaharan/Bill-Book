@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "settings-audit-log",
+  "projectType": "library",
+  "sourceRoot": "libs/settings/audit-log/src",
+  "tags": [
+    "scope:settings",
+    "type:ui"
+  ],
+  "targets": {}
+}

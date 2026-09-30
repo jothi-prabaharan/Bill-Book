@@ -1,0 +1,13 @@
+:host {
+  display: grid;
+  gap: var(--space-3, 12px);
+}
+
+.page-head h1 {
+  margin: 0;
+}
+
+.hint {
+  color: var(--color-text-muted, #666);
+  margin: var(--space-1, 4px) 0 0;
+}

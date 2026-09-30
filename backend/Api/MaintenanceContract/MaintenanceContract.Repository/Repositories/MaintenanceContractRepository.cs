@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using MaintenanceContract.Entity.Enums;
 using MaintenanceContract.Entity.Models;
 using MaintenanceContract.Entity.TableEntities;
@@ -309,7 +310,7 @@ public sealed class MaintenanceContractRepository
     {
         await _db.AmcContracts
             .Where(c => c.ContractStatus == ContractStatus.Active && c.EndDate < on)
-            .ExecuteUpdateAsync(s => s.SetProperty(c => c.ContractStatus, ContractStatus.Expired), ct);
+            .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(c => c.ContractStatus, ContractStatus.Expired), ct);
 
         List<AmcContract> due = (await _db.AmcContracts.AsNoTracking()
                 .Where(c => c.ContractStatus == ContractStatus.Active && c.RenewalReminderDays > 0 && c.EndDate >= on)

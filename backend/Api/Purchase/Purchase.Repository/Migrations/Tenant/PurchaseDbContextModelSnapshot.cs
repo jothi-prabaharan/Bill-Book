@@ -2257,6 +2257,100 @@ namespace Purchase.Repository.Migrations.Tenant
                     b.ToTable("PurchaseRegister", "pur");
                 });
 
+            modelBuilder.Entity("Shared.Kernel.Audit.EditLog", b =>
+                {
+                    b.Property<long>("EditLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("EditLogId"));
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<JsonDocument>("Changes")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequestId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RootEntityKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RootEntityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("EditLogId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ChangedAt");
+
+                    b.HasIndex("OrgId", "EntityName", "ChangedAt");
+
+                    b.HasIndex("OrgId", "UserId", "ChangedAt");
+
+                    b.HasIndex("OrgId", "RootEntityName", "RootEntityKey", "ChangedAt");
+
+                    b.ToTable("EditLog", "pur");
+                });
+
             modelBuilder.Entity("Shared.Kernel.Errors.ErrorLog", b =>
                 {
                     b.Property<long>("ErrorLogId")

@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Repository;
@@ -132,7 +133,7 @@ public sealed class ProjectBillingRepository
                 .Where(t => time.Contains(t.TimeEntryId) && t.IsBillable
                     && (t.BillingStatus == TimeBillingStatus.Unbilled
                         || (t.BillingStatus == TimeBillingStatus.Billed && t.InvoiceId == invoiceId)))
-                .ExecuteUpdateAsync(u => u
+                .ExecuteUpdateLoggedAsync(_db, u => u
                     .SetProperty(t => t.BillingStatus, TimeBillingStatus.Billed)
                     .SetProperty(t => t.InvoiceId, invoiceId), ct);
         }
@@ -142,14 +143,14 @@ public sealed class ProjectBillingRepository
             touched += await _db.SpendMoneyDetails
                 .Where(d => expenses.Contains(d.SpendMoneyDetailId) && d.IsBillable
                     && (d.BilledInvoiceId == null || d.BilledInvoiceId == invoiceId))
-                .ExecuteUpdateAsync(u => u.SetProperty(d => d.BilledInvoiceId, invoiceId), ct);
+                .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(d => d.BilledInvoiceId, invoiceId), ct);
         }
 
         if (milestones.Count > 0)
         {
             touched += await _db.ProjectMilestones
                 .Where(m => milestones.Contains(m.ProjectMilestoneId) && (m.InvoiceId == null || m.InvoiceId == invoiceId))
-                .ExecuteUpdateAsync(u => u.SetProperty(m => m.InvoiceId, invoiceId), ct);
+                .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(m => m.InvoiceId, invoiceId), ct);
         }
 
         if (touched != requested)
@@ -175,17 +176,17 @@ public sealed class ProjectBillingRepository
 
         int released = await _db.TimeEntries
             .Where(t => t.InvoiceId == invoiceId)
-            .ExecuteUpdateAsync(u => u
+            .ExecuteUpdateLoggedAsync(_db, u => u
                 .SetProperty(t => t.BillingStatus, TimeBillingStatus.Unbilled)
                 .SetProperty(t => t.InvoiceId, (long?)null), ct);
 
         released += await _db.SpendMoneyDetails
             .Where(d => d.BilledInvoiceId == invoiceId)
-            .ExecuteUpdateAsync(u => u.SetProperty(d => d.BilledInvoiceId, (long?)null), ct);
+            .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(d => d.BilledInvoiceId, (long?)null), ct);
 
         released += await _db.ProjectMilestones
             .Where(m => m.InvoiceId == invoiceId)
-            .ExecuteUpdateAsync(u => u.SetProperty(m => m.InvoiceId, (long?)null), ct);
+            .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(m => m.InvoiceId, (long?)null), ct);
 
         await tx.CommitAsync(ct);
         return released;

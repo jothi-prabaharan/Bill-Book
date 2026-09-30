@@ -76,3 +76,6 @@ export * from './lib/text-input/text-input.component';
 export * from './lib/master-select/master-select.component';
 export * from './lib/approval-panel/approval-panel.model';
 export * from './lib/approval-panel/approval-panel.component';
+export * from './lib/edit-history/edit-history.model';
+export * from './lib/edit-history/edit-history.component';
+export * from './lib/edit-history/edit-log-report.component';

@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
@@ -127,7 +128,7 @@ public sealed class AllocationRepository
                     && t.TargetTransactionTypeCode == targetCode
                     && t.TargetTransactionId == request.TargetTransactionId
                     && !t.IsVoided)
-                .ExecuteDeleteAsync(ct);
+                .ExecuteDeleteLoggedAsync(_db, ct);
 
             // The change tracker never saw the deleted rows (the delete went
             // straight to the database), so nothing stale can be written back.
@@ -189,7 +190,7 @@ public sealed class AllocationRepository
             .Where(t => t.SourceTransactionTypeCode == sourceCode
                 && t.SourceTransactionId == sourceTransactionId
                 && !t.IsVoided)
-            .ExecuteUpdateAsync(
+            .ExecuteUpdateLoggedAsync(_db, 
                 s => s
                     .SetProperty(t => t.IsVoided, true)
                     .SetProperty(t => t.VoidedAt, now)
@@ -208,7 +209,7 @@ public sealed class AllocationRepository
 
         int affected = await _db.TransactionRatios
             .Where(t => t.TransactionRatioId == transactionRatioId && !t.IsVoided)
-            .ExecuteUpdateAsync(
+            .ExecuteUpdateLoggedAsync(_db, 
                 s => s
                     .SetProperty(t => t.IsVoided, true)
                     .SetProperty(t => t.VoidedAt, now)

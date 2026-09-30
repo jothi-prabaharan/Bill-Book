@@ -1,9 +1,11 @@
+using Shared.Kernel.Audit;
 using System.ComponentModel.DataAnnotations;
 using Customer.Entity.Enums;
 using Shared.Kernel.Tenancy;
 
 namespace Customer.Entity.TableEntities;
 
+[NotAudited]
 public class CampaignRecipient : OrgScopedEntity
 {
     public long CampaignRecipientId { get; set; }

@@ -3830,6 +3830,8 @@ that cannot be switched off. The design:
 | Retention | Kept at least eight years; never purged by the application |
 | Screen | A **History** tab on every document and master, and an audit-log report filterable by user, entity and date |
 
+**Built (TK-118, 30 September 2026)**, in all 22 tenant schemas (D-34), with these differences from the table above. The log is written by `TenantDbContext`'s own `SaveChanges` override rather than an interceptor: an insert's key exists only after the save, so the override captures, saves, materialises the inserts and writes the log in one transaction scope. The append-only trigger also refuses `TRUNCATE`, and binds a superuser because it is a trigger, not a grant. The user's name is the `display_name` claim at the time of the change. History is on invoices, bills, manual journals, items and contacts (D-35), and the report is **Settings › Audit log** in every app, one service at a time. Rows a database cascade removes with their header are not logged one by one. The card has the list of bulk statements that stay unlogged, and why each one does.
+
 ### 4. MSME payments
 
 Payments to micro and small enterprises must be made within the agreed period, capped at 45 days,

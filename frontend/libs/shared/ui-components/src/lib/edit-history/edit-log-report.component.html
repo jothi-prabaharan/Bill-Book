@@ -1,0 +1,67 @@
+<section class="audit">
+  <div class="audit__filters">
+    <bb-select label="Area" name="auditArea" [clearable]="false" [options]="areaOptions" [(ngModel)]="area" (ngModelChange)="changeArea()" />
+    <bb-date-input label="From" name="auditFrom" [(ngModel)]="from" />
+    <bb-date-input label="To" name="auditTo" [(ngModel)]="to" />
+    <bb-select label="User" name="auditUser" placeholder="Everyone" [options]="userOptions()" [(ngModel)]="userId" />
+    <bb-select label="Table" name="auditTable" placeholder="Every table" [options]="entityOptions()" [(ngModel)]="entity" />
+    <div class="audit__go">
+      <button type="button" class="btn btn--primary" (click)="search(1)" [disabled]="loading()">Show</button>
+    </div>
+  </div>
+
+  @if (error(); as text) {
+    <bb-message-box [messages]="[{ tone: 'error', text: text }]" />
+  }
+
+  <bb-data-grid
+    gridCode="EDIT_LOG"
+    label="Audit log"
+    [columns]="columns"
+    [data]="rows()"
+    [loading]="loading()"
+    [paged]="false"
+    [showColumnFilters]="false"
+    [sortable]="false"
+    [showCount]="false"
+    stackOnPhone
+    emptyText="No changes match these filters."
+    (rowClick)="select($event)"
+  >
+    <ng-template bbCellTemplate="changedAt" let-r>{{ when(r.changedAt) }}</ng-template>
+    <ng-template bbCellTemplate="entityName" let-r>{{ humanize(r.entityName) }}</ng-template>
+    <ng-template bbCellTemplate="operation" let-r>{{ operationLabel(r.operation) }}</ng-template>
+    <ng-template bbCellTemplate="summary" let-r>{{ changeSummary(r) }}</ng-template>
+  </bb-data-grid>
+
+  <div class="audit__pager">
+    <span class="audit__muted">{{ total() }} change{{ total() === 1 ? '' : 's' }} · page {{ page }} of {{ pages }}</span>
+    <button type="button" class="btn" (click)="search(page - 1)" [disabled]="loading() || page <= 1">Previous</button>
+    <button type="button" class="btn" (click)="search(page + 1)" [disabled]="loading() || page >= pages">Next</button>
+  </div>
+
+  @if (selected(); as entry) {
+    <section class="audit__detail">
+      <header>
+        <h3>{{ humanize(entry.entityName) }} {{ entry.entityKey }} · {{ operationLabel(entry.operation) }}</h3>
+        <span class="audit__muted">
+          {{ entry.userName || 'System' }} · {{ when(entry.changedAt) }}
+          @if (entry.rootEntityName !== entry.entityName) {
+            · on {{ humanize(entry.rootEntityName) }} {{ entry.rootEntityKey }}
+          }
+          @if (entry.source && entry.source !== 'Tracked') {
+            · {{ entry.source }}
+          }
+        </span>
+      </header>
+      <dl class="audit__changes">
+        @for (row of detail(entry); track row.field) {
+          <div class="audit__change">
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.before }} <span aria-hidden="true">→</span> {{ row.after }}</dd>
+          </div>
+        }
+      </dl>
+    </section>
+  }
+</section>

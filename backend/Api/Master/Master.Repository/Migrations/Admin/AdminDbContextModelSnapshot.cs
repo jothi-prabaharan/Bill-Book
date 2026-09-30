@@ -8838,6 +8838,23 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1139,
+                            Apps = 15,
+                            CanCreate = false,
+                            Code = "audit",
+                            DisplayOrder = 7,
+                            Icon = "history",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "settings",
+                            Name = "Audit log",
+                            ParentId = 115,
+                            RoutePath = "/settings/audit-log",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 116,
                             Apps = 1,
                             CanCreate = false,
@@ -14145,6 +14162,15 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1138,
                             Module = "accounting",
                             PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 478,
+                            Action = "view",
+                            MenuId = 1139,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
                             Version = 0u
                         });
                 });

@@ -84,6 +84,9 @@
       <button type="button" [class.on]="tab() === 'barcodes'" (click)="tab.set('barcodes')">
         Barcodes ({{ form.barcodes.length }})
       </button>
+      @if (editingId() !== null) {
+        <button type="button" [class.on]="tab() === 'history'" (click)="tab.set('history')">History</button>
+      }
     </nav>
 
     @if (tab() === 'general') {
@@ -527,6 +530,10 @@
           <bb-number-input label="Expiry alert (days)"  [(ngModel)]="form.pharma['expiryAlertDays']" min="0" />
         </div>
       </div>
+    }
+
+    @if (tab() === 'history' && editingId() !== null) {
+      <bb-edit-history service="inventory" entity="Items" [key]="editingId()" heading="Changes to this item" />
     }
 
     @if (tab() === 'barcodes') {

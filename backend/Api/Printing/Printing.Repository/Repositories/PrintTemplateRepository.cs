@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Microsoft.EntityFrameworkCore;
 using Printing.Entity.Models;
 using Printing.Entity.TableEntities;
@@ -200,11 +201,11 @@ public sealed class PrintTemplateRepository
             .Where(t => t.DocumentTypeCode == template.DocumentTypeCode
                 && t.IsDefault
                 && t.PrintTemplateId != id)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.IsDefault, false), ct);
+            .ExecuteUpdateLoggedAsync(_db, setters => setters.SetProperty(t => t.IsDefault, false), ct);
 
         await _db.PrintTemplates
             .Where(t => t.PrintTemplateId == id)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.IsDefault, true), ct);
+            .ExecuteUpdateLoggedAsync(_db, setters => setters.SetProperty(t => t.IsDefault, true), ct);
 
         await transaction.CommitAsync(ct);
 

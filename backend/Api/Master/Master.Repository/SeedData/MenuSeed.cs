@@ -47,6 +47,7 @@ public static class MenuSeed
         114, 1079, 1080, 1081, 1082, 1083, 1084, 1085,  // Organisation
         1125,                                           // Approval workflows (TK-103)
         1137,                                           // Custom fields (TK-110)
+        1139,                                           // Audit log (TK-118)
         115, 1086, 1087, 1088, 1089, 1090, 1106,        // Users and access
     };
 
@@ -233,6 +234,8 @@ public static class MenuSeed
         new Menu { MenuId = 1090, ParentId = 115, Type = MenuType.Item, Code = "log", Name = "Login history", Icon = "history", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = false },
         // API keys an integration signs in with, each acting as a role (D-07, TK-29).
         new Menu { MenuId = 1106, ParentId = 115, Type = MenuType.Item, Code = "api", Name = "API keys", Icon = "key-round", Module = "settings", RoutePath = "/settings/api-clients", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
+        // Audit log (TK-118): the edit log of every service the app sells.
+        new Menu { MenuId = 1139, ParentId = 115, Type = MenuType.Item, Code = "audit", Name = "Audit log", Icon = "history", Module = "settings", RoutePath = "/settings/audit-log", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
         new Menu { MenuId = 116, ParentId = 9, Type = MenuType.Group, Code = "settings-g3", Name = "Accounting", Icon = "book-open", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1091, ParentId = 116, Type = MenuType.Item, Code = "tax", Name = "Tax master", Icon = "percent", Module = "settings", RoutePath = "/settings/tax", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1092, ParentId = 116, Type = MenuType.Item, Code = "ptm", Name = "Payment terms", Icon = "calendar-clock", Module = "settings", RoutePath = "/settings/payment-terms", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
@@ -800,5 +803,7 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 475, MenuId = 1138, PermissionCode = "accounting.create", Action = "create", Module = "accounting" },
         new MenuPermission { MenuPermissionId = 476, MenuId = 1138, PermissionCode = "accounting.edit", Action = "edit", Module = "accounting" },
         new MenuPermission { MenuPermissionId = 477, MenuId = 1138, PermissionCode = "accounting.export", Action = "export", Module = "accounting" },
+
+        new MenuPermission { MenuPermissionId = 478, MenuId = 1139, PermissionCode = "settings.view", Action = "view", Module = "settings" },
     ];
 }

@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -232,7 +233,7 @@ public sealed class ReceiveMoneyRepository
         document.MappingTransactionId = headerId;
         ApplyTds(document, request);
 
-        await _db.ReceiveMoneyDetails.Where(l => l.ReceiveMoneyId == id).ExecuteDeleteAsync(ct);
+        await _db.ReceiveMoneyDetails.Where(l => l.ReceiveMoneyId == id).ExecuteDeleteLoggedAsync(_db, ct);
 
         // ExecuteDelete goes straight to the database and the change tracker
         // never hears about it, so any line this context had already read is now

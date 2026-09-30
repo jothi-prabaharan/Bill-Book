@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Microsoft.EntityFrameworkCore;
 using Preventive.Entity.Enums;
 using Preventive.Entity.Models;
@@ -184,7 +185,7 @@ public sealed class PreventiveRepository
         OccurrenceStatus from = occurrence.OccurrenceStatus;
         int changed = await _db.PreventiveOccurrences
             .Where(o => o.PreventiveOccurrenceId == id && o.OccurrenceStatus == from)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.OccurrenceStatus, status), ct);
+            .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(o => o.OccurrenceStatus, status), ct);
         return changed == 1
             ? PreventiveResult.Ok(id)
             : PreventiveResult.Fail(PreventiveOutcome.StateRule, "The occurrence changed while you were looking at it. Refresh and try again.");
@@ -229,7 +230,7 @@ public sealed class PreventiveRepository
 
         int claimed = await _db.PreventivePlans
             .Where(p => p.PreventivePlanId == planId && p.NextDueDate == due && p.IsActive)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.NextDueDate, next), ct);
+            .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(p => p.NextDueDate, next), ct);
         if (claimed == 0)
         {
             // Another run, or an edit, moved the plan first.

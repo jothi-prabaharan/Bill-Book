@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using TimeLeave.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using TimeLeave.Entity.Enums;
@@ -364,7 +365,7 @@ public class LeaveRepository
                         && b.LeaveTypeId == app.LeaveTypeId
                         && b.LeaveYear == year
                         && (b.Opening + b.Accrued + b.Adjusted - b.Taken - b.Encashed - b.Lapsed) >= app.Days)
-            .ExecuteUpdateAsync(s => s.SetProperty(b => b.Taken, b => b.Taken + app.Days), ct);
+            .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(b => b.Taken, b => b.Taken + app.Days), ct);
 
         if (updated == 0)
         {
@@ -453,7 +454,7 @@ public class LeaveRepository
             int year = app.FromDate.Year;
             await _db.LeaveBalances
                 .Where(b => b.EmployeeId == app.EmployeeId && b.LeaveTypeId == app.LeaveTypeId && b.LeaveYear == year)
-                .ExecuteUpdateAsync(s => s.SetProperty(b => b.Taken, b => b.Taken - app.Days), ct);
+                .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(b => b.Taken, b => b.Taken - app.Days), ct);
         }
 
         app.LeaveStatus = LeaveStatus.Cancelled;
@@ -542,7 +543,7 @@ public class LeaveRepository
                         && b.LeaveTypeId == encashment.LeaveTypeId
                         && b.LeaveYear == encashment.LeaveYear
                         && (b.Opening + b.Accrued + b.Adjusted - b.Taken - b.Encashed - b.Lapsed) >= encashment.Days)
-            .ExecuteUpdateAsync(s => s.SetProperty(b => b.Encashed, b => b.Encashed + encashment.Days), ct);
+            .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(b => b.Encashed, b => b.Encashed + encashment.Days), ct);
 
         if (updated == 0)
         {

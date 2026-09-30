@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
@@ -99,7 +100,7 @@ public sealed class ReportScheduleRepository
 
         return await _db.ReportSchedules
             .Where(s => s.ReportScheduleId == id && s.OwnerUserId == me)
-            .ExecuteDeleteAsync(ct) == 1;
+            .ExecuteDeleteLoggedAsync(_db, ct) == 1;
     }
 
     /// <summary>The next slot is worked out again on every save, so a changed day takes effect from its next occurrence.</summary>

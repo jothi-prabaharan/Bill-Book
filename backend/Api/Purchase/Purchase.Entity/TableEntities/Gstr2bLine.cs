@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using System.ComponentModel.DataAnnotations;
 using Purchase.Entity.Enums;
 using Shared.Kernel.Tenancy;
@@ -9,6 +10,7 @@ namespace Purchase.Entity.TableEntities;
 /// the books hold it, or both, and what comparing them found. A bill 2B does
 /// not mention is a line too, with no 2B figures, so the screen reads one table.
 /// </summary>
+[NotAudited]
 public class Gstr2bLine : OrgScopedEntity
 {
     public long Gstr2bLineId { get; set; }

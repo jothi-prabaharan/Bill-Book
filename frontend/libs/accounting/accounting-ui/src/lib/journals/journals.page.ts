@@ -14,6 +14,7 @@ import {
   SelectComponent,
   TextInputComponent,
   ApprovalPanelComponent,
+  EditHistoryComponent,
 } from '@bill-book/ui-components';
 
 interface JournalListItem {
@@ -97,6 +98,7 @@ interface LineForm {
   selector: 'bb-journals-page',
   standalone: true,
   imports: [
+    EditHistoryComponent,
     DataGridComponent,
     DecimalPipe,
     FormsModule,

@@ -86,6 +86,13 @@ export const sharedSettingsRoutes: Routes = [
       import('@bill-book/settings-custom-fields').then((m) => m.CustomFieldsSettingsPage),
     data: { access: { permission: 'settings.view' } },
   },
+  // Every change to a document or master (TK-118), one service at a time. Each
+  // area's API checks that module's own view permission as well.
+  {
+    path: 'settings/audit-log',
+    loadComponent: () => import('@bill-book/settings-audit-log').then((m) => m.AuditLogPage),
+    data: { access: { permission: 'settings.view' } },
+  },
   {
     path: 'settings/applications',
     loadComponent: () => import('@bill-book/settings-applications').then((m) => m.ApplicationsPage),

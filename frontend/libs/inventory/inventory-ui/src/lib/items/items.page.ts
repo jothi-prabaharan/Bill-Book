@@ -18,6 +18,7 @@ import {
   customListColumns,
   defaultValues,
   withCustomColumns,
+  EditHistoryComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -149,7 +150,7 @@ interface ItemDetail extends ItemListRow {
   barcodes: Barcode[];
 }
 
-type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
+type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
 
 /**
  * The item master. One form serving three verticals: the profile decides which
@@ -165,6 +166,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
   selector: 'bb-items-page',
   standalone: true,
   imports: [
+    EditHistoryComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,

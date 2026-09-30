@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -289,7 +290,7 @@ public sealed class JournalRepository
 
         await _db.JournalDetails
             .Where(d => d.JournalId == journalId)
-            .ExecuteDeleteAsync(ct);
+            .ExecuteDeleteLoggedAsync(_db, ct);
 
         // ExecuteDelete goes straight to the database and the change tracker
         // never hears about it. Any line this context had already seen is now a

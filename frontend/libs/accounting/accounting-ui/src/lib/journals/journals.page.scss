@@ -80,3 +80,14 @@ button.icon { background: none; color: #9aa0b0; font-size: 1.1rem; padding: 0 .4
 /* Over-budget warnings (TK-109): the save stood, so this cautions rather than refuses. */
 .budget-warning { background: #fff7e6; border-left: 3px solid #d68a00; color: #6b4a00; padding: .5rem .75rem; margin: .5rem 0; font-size: .9rem; }
 .budget-warning ul { margin: .25rem 0 0; padding-left: 1.25rem; }
+
+// The document's edit history (TK-118), folded away until asked for.
+.doc-history {
+  margin-top: var(--space-3, 12px);
+
+  > summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: var(--space-1, 4px) 0;
+  }
+}

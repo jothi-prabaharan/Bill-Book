@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -249,7 +250,7 @@ public sealed class ApprovalsController : ControllerBase
                         int year = app.FromDate.Year;
                         await _db.LeaveBalances
                             .Where(b => b.EmployeeId == app.EmployeeId && b.LeaveTypeId == app.LeaveTypeId && b.LeaveYear == year)
-                            .ExecuteUpdateAsync(s => s.SetProperty(b => b.Taken, b => b.Taken + app.Days), ct);
+                            .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(b => b.Taken, b => b.Taken + app.Days), ct);
 
                         for (var d = app.FromDate; d <= app.ToDate; d = d.AddDays(1))
                         {

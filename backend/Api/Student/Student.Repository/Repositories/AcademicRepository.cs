@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Microsoft.EntityFrameworkCore;
 using Student.Entity.Models;
 using Student.Entity.TableEntities;
@@ -68,7 +69,7 @@ public sealed class AcademicRepository
         {
             await _db.AcademicYears
                 .Where(y => y.IsCurrent && y.AcademicYearId != (id ?? 0))
-                .ExecuteUpdateAsync(s => s.SetProperty(y => y.IsCurrent, false), ct);
+                .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(y => y.IsCurrent, false), ct);
         }
 
         year.Code = code;

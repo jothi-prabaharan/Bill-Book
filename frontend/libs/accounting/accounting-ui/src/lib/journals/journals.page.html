@@ -166,6 +166,13 @@
       <!-- The journal's approval chain, when a workflow covers it (TK-101). -->
       <bb-approval-panel [basePath]="'/api/journals/' + id" documentStatus="Draft" (changed)="open(id)" />
     }
+
+    @if (editingId; as id) {
+      <details class="doc-history">
+        <summary>History</summary>
+        <bb-edit-history service="accounting" entity="Journals" [key]="id" heading="Changes to this entry" />
+      </details>
+    }
   </section>
 }
 
@@ -232,6 +239,11 @@
         <button type="button" (click)="reverse(j)" [disabled]="busy()">Reverse</button>
       }
     </div>
+
+    <details class="doc-history">
+      <summary>History</summary>
+      <bb-edit-history service="accounting" entity="Journals" [key]="j.journalId" heading="Changes to this entry" />
+    </details>
   </section>
 }
 

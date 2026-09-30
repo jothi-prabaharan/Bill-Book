@@ -107,7 +107,14 @@
       <button type="button" [class.on]="tab() === 'documents'" (click)="tab.set('documents')">
         Documents ({{ form.attachments.length }})
       </button>
+      @if (editingId() !== null) {
+        <button type="button" [class.on]="tab() === 'history'" (click)="tab.set('history')">History</button>
+      }
     </nav>
+
+    @if (tab() === 'history' && editingId() !== null) {
+      <bb-edit-history service="master" entity="Contacts" [key]="editingId()" heading="Changes to this contact" />
+    }
 
     @if (tab() === 'general') {
       <div class="fields">

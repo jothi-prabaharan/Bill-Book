@@ -171,6 +171,13 @@
     <bb-eway-bill-panel document="invoices" [documentId]="id" [total]="totals().totalAmount / 100" [posted]="status() === 'Posted'" />
   }
 
+  @if (invoiceId(); as id) {
+    <details class="doc-history">
+      <summary>History</summary>
+      <bb-edit-history service="sales" entity="Invoices" [key]="id" heading="Changes to this invoice" />
+    </details>
+  }
+
   @if (canVoid()) {
     <form class="field inv-form__void" [formGroup]="voidForm">
       <bb-text-input

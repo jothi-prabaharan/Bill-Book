@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Sales.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Enums;
@@ -128,7 +129,7 @@ public sealed class PortalQuoteRepository
 
         int answered = await Posted(contactId)
             .Where(q => q.QuoteId == quoteId && q.CustomerResponse == QuoteResponse.None && q.ValidUntil >= today)
-            .ExecuteUpdateAsync(q => q
+            .ExecuteUpdateLoggedAsync(_db, q => q
                 .SetProperty(x => x.CustomerResponse, answer)
                 .SetProperty(x => x.RespondedAt, now)
                 .SetProperty(x => x.RespondedByName, trimmedName)

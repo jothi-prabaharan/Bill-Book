@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Inventory.Entity.Enums;
 using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
@@ -274,7 +275,7 @@ public sealed class StockAdjustmentRepository
 
             await _db.StockAdjustmentLines
                 .Where(l => l.StockAdjustmentId == existingId)
-                .ExecuteDeleteAsync(ct);
+                .ExecuteDeleteLoggedAsync(_db, ct);
         }
         else
         {

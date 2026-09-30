@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Purchase.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Shared.Kernel.Approvals;
@@ -719,7 +720,7 @@ public sealed class BillRepository
         // replaces what an earlier attempt left, as the ledger does.
         await _db.PurchaseRegister
             .Where(r => r.TransactionTypeCode == "BIL" && r.SourceId == bill.BillId)
-            .ExecuteDeleteAsync(ct);
+            .ExecuteDeleteLoggedAsync(_db, ct);
         _db.PurchaseRegister.AddRange(PurchaseRegisterRowsRepository.ForBill(bill));
 
         // Each capital line goes onto the fixed asset register, and Accounting
@@ -1101,7 +1102,7 @@ public sealed class BillRepository
             // leaves the sales register.
             await _db.PurchaseRegister
                 .Where(r => r.TransactionTypeCode == "BIL" && r.SourceId == bill.BillId)
-                .ExecuteDeleteAsync(ct);
+                .ExecuteDeleteLoggedAsync(_db, ct);
         }
 
         await _db.SaveChangesAsync(ct);

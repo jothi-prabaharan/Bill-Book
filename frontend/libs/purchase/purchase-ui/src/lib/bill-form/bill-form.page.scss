@@ -235,3 +235,14 @@
     flex: 1 1 12rem;
   }
 }
+
+// The document's edit history (TK-118), folded away until asked for.
+.doc-history {
+  margin-top: var(--space-3, 12px);
+
+  > summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: var(--space-1, 4px) 0;
+  }
+}

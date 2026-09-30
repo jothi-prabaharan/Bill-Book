@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using System.Text.Json;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
@@ -257,7 +258,7 @@ public sealed class OnlinePaymentRepository
         {
             int failed = await _db.OnlinePayments
                 .Where(p => p.OnlinePaymentId == payment.OnlinePaymentId && p.Status == OnlinePaymentStatus.Created)
-                .ExecuteUpdateAsync(p => p.SetProperty(x => x.Status, OnlinePaymentStatus.Failed), ct);
+                .ExecuteUpdateLoggedAsync(_db, p => p.SetProperty(x => x.Status, OnlinePaymentStatus.Failed), ct);
             return failed == 1 ? CompletePaymentOutcome.Ok : CompletePaymentOutcome.AlreadyRecorded;
         }
 
@@ -396,7 +397,7 @@ public sealed class OnlinePaymentRepository
 
         await _db.OnlinePayments
             .Where(p => p.OnlinePaymentId == payment.OnlinePaymentId)
-            .ExecuteUpdateAsync(p => p.SetProperty(x => x.ReceiveMoneyId, created.DocumentId), ct);
+            .ExecuteUpdateLoggedAsync(_db, p => p.SetProperty(x => x.ReceiveMoneyId, created.DocumentId), ct);
 
         await scope.CommitAsync(ct);
         return Attempt.Recorded;
@@ -420,7 +421,7 @@ public sealed class OnlinePaymentRepository
 
         return await _db.OnlinePayments
             .Where(p => p.OnlinePaymentId == payment.OnlinePaymentId && p.Status == OnlinePaymentStatus.Created)
-            .ExecuteUpdateAsync(p => p
+            .ExecuteUpdateLoggedAsync(_db, p => p
                 .SetProperty(x => x.Status, OnlinePaymentStatus.Paid)
                 .SetProperty(x => x.GatewayPaymentId, callback.PaymentId)
                 .SetProperty(x => x.PaidAt, now)

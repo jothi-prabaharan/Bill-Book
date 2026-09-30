@@ -1,7 +1,12 @@
 using System.Linq.Expressions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Shared.Kernel.Audit;
 using Shared.Kernel.Entities;
 using Shared.Kernel.Errors;
+using Shared.Kernel.Interfaces;
+using Shared.Kernel.Persistence;
 
 namespace Shared.Kernel.Tenancy;
 
@@ -49,6 +54,9 @@ public abstract class TenantDbContext : DbContext
     /// <summary>The service's own error log. See <see cref="ErrorLog"/> for why every tenant schema has one.</summary>
     public DbSet<ErrorLog> ErrorLogs => Set<ErrorLog>();
 
+    /// <summary>The service's append-only audit trail (TK-118). See <see cref="EditLog"/>.</summary>
+    public DbSet<EditLog> EditLogs => Set<EditLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -80,6 +88,25 @@ public abstract class TenantDbContext : DbContext
             // first. It is the only query anybody runs against this table
             // often enough to index for.
             b.HasIndex(e => new { e.OrgId, e.FollowUpStatus, e.OccurredAt });
+        });
+
+        // The audit trail (TK-118), mapped here for the same reason as the error
+        // log: every tenant schema gets one, and no service can ship without it.
+        // The append-only trigger and the RLS policy are added by each schema's
+        // migration through EditLogMigration.
+        modelBuilder.Entity<EditLog>(b =>
+        {
+            b.ToTable("EditLog");
+            b.HasKey(e => e.EditLogId);
+            b.Property(e => e.Operation).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Changes).HasColumnType("jsonb");
+
+            // A document's History tab, the audit-log report by date, by user
+            // and by table: the four ways the log is read.
+            b.HasIndex(e => new { e.OrgId, e.RootEntityName, e.RootEntityKey, e.ChangedAt });
+            b.HasIndex(e => new { e.OrgId, e.ChangedAt });
+            b.HasIndex(e => new { e.OrgId, e.UserId, e.ChangedAt });
+            b.HasIndex(e => new { e.OrgId, e.EntityName, e.ChangedAt });
         });
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -127,17 +154,96 @@ public abstract class TenantDbContext : DbContext
         }
     }
 
+    /// <summary>
+    /// Saves, and writes the edit log for what was saved (TK-118) in the same
+    /// transaction: joined when the caller holds one, opened here when not, so
+    /// a save that fails or is rolled back leaves no log row.
+    /// </summary>
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         StampTenant();
-        return base.SaveChanges(acceptAllChangesOnSuccess);
+        List<EditLogWriter.PendingEdit> pending = EditLogWriter.Capture(this);
+        if (pending.Count == 0)
+        {
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        bool owns = Database.CurrentTransaction is null;
+        using var transaction = owns ? Database.BeginTransaction() : null;
+
+        int saved = base.SaveChanges(acceptAllChangesOnSuccess);
+        WriteEditLog(pending);
+        base.SaveChanges(acceptAllChangesOnSuccess: true);
+
+        transaction?.Commit();
+        return saved;
     }
 
-    public override Task<int> SaveChangesAsync(
+    public override async Task<int> SaveChangesAsync(
         bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         StampTenant();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        List<EditLogWriter.PendingEdit> pending = EditLogWriter.Capture(this);
+        if (pending.Count == 0)
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        await using ITransactionScope scope = await Database.BeginScopeAsync(cancellationToken);
+
+        int saved = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        WriteEditLog(pending);
+        await base.SaveChangesAsync(acceptAllChangesOnSuccess: true, cancellationToken);
+
+        await scope.CommitAsync(cancellationToken);
+        return saved;
+    }
+
+    /// <summary>The request's customer and branch, for log rows written beside a bulk statement.</summary>
+    internal (Guid CustomerId, Guid OrgId) RequireTenant() => Tenant.Require();
+
+    private void WriteEditLog(IReadOnlyList<EditLogWriter.PendingEdit> pending)
+    {
+        (Guid customerId, Guid orgId) = Tenant.Require();
+
+        (Guid? userId, string? userName) = EditLogActor();
+        foreach (EditLog row in EditLogWriter.Materialize(this, pending, userId, userName, DateTimeOffset.UtcNow))
+        {
+            row.CustomerId = customerId;
+            row.OrgId = orgId;
+            EditLogs.Add(row);
+        }
+    }
+
+    /// <summary>
+    /// Who is saving, from the request's <see cref="ICurrentUser"/> when the
+    /// context was built by dependency injection. Null in a test that built the
+    /// context by hand; the writer then falls back to the audit columns.
+    /// </summary>
+    protected internal (Guid? UserId, string? UserName) EditLogActor()
+    {
+        Guid? userId = null;
+        string? userName = null;
+
+        try
+        {
+            userId = this.GetService<ICurrentUser>()?.UserId;
+        }
+        catch (InvalidOperationException)
+        {
+            // Built by hand, with no application services behind it.
+        }
+
+        try
+        {
+            userName = this.GetService<IHttpContextAccessor>()?.HttpContext?.User.FindFirst("display_name")?.Value;
+        }
+        catch (InvalidOperationException)
+        {
+            // No request: a worker, a seed or a test.
+        }
+
+        return (userId, userName);
     }
 
     /// <summary>

@@ -1,0 +1,45 @@
+<section class="history">
+  <header class="history__head">
+    <h3>{{ heading }}</h3>
+    <button type="button" class="btn btn--ghost" (click)="load()" [disabled]="loading()">Refresh</button>
+  </header>
+
+  @if (error(); as text) {
+    <bb-message-box [messages]="[{ tone: 'error', text: text }]" />
+  }
+
+  @if (loading() && entries().length === 0) {
+    <span class="history__muted">Loading…</span>
+  } @else if (entries().length === 0 && !error()) {
+    <span class="history__muted">No changes recorded yet.</span>
+  }
+
+  <ol class="history__list">
+    @for (entry of entries(); track entry.editLogId) {
+      <li class="history__entry" [class.is-line]="isLineEntry(entry)">
+        <div class="history__meta">
+          <strong>{{ entrySummary(entry) }}</strong>
+          <span class="history__muted">{{ entry.userName || 'System' }} · {{ when(entry.changedAt) }}</span>
+        </div>
+        <dl class="history__changes">
+          @for (row of rows(entry); track row.field) {
+            <div class="history__change">
+              <dt>{{ row.label }}</dt>
+              <dd>
+                @if (entry.operation === 'Update') {
+                  <span class="history__old">{{ row.before }}</span>
+                  <span aria-hidden="true">→</span>
+                  <span class="history__new">{{ row.after }}</span>
+                } @else if (entry.operation === 'Insert') {
+                  {{ row.after }}
+                } @else {
+                  <span class="history__old">{{ row.before }}</span>
+                }
+              </dd>
+            </div>
+          }
+        </dl>
+      </li>
+    }
+  </ol>
+</section>

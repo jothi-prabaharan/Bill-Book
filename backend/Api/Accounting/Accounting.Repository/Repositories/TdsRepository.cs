@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -179,7 +180,7 @@ public sealed class TdsRepository
 
         await _db.TdsEntries
             .Where(e => e.TransactionTypeCode == type && e.TransactionId == transactionId)
-            .ExecuteDeleteAsync(ct);
+            .ExecuteDeleteLoggedAsync(_db, ct);
 
         // ExecuteDelete bypasses the change tracker; anything it had read is gone.
         foreach (var stale in _db.ChangeTracker.Entries<TdsEntry>()
@@ -236,14 +237,14 @@ public sealed class TdsRepository
         return _db.TdsEntries
             .Where(e => e.Direction == TdsDirection.Deducted && e.ChallanSpendMoneyId == null
                 && e.SectionCode!.ToUpper() == code && e.DocumentDate >= from && e.DocumentDate <= to)
-            .ExecuteUpdateAsync(u => u.SetProperty(e => e.ChallanSpendMoneyId, spendMoneyId), ct);
+            .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(e => e.ChallanSpendMoneyId, spendMoneyId), ct);
     }
 
     /// <summary>A voided challan gives its deductions back to the undeposited pool.</summary>
     public Task<int> ReleaseChallanAsync(long spendMoneyId, CancellationToken ct) =>
         _db.TdsEntries
             .Where(e => e.ChallanSpendMoneyId == spendMoneyId)
-            .ExecuteUpdateAsync(u => u.SetProperty(e => e.ChallanSpendMoneyId, (long?)null), ct);
+            .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(e => e.ChallanSpendMoneyId, (long?)null), ct);
 
     /// <summary>The register for a year and a side, newest first.</summary>
     public async Task<List<TdsEntryView>> ListAsync(int financialYear, TdsDirection direction, CancellationToken ct)

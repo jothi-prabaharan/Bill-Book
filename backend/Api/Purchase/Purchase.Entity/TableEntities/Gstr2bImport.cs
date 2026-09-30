@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Tenancy;
 
@@ -31,6 +32,7 @@ public class Gstr2bImport : OrgScopedEntity
 
     /// <summary>The file as imported, kept so a re-match or a dispute can read what the portal said.</summary>
     [Required(ErrorMessage = "The file content is required.")]
+    [NotAudited]
     public string RawJson { get; set; } = null!;
 
     public int MatchedCount { get; set; }

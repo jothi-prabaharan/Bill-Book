@@ -1170,6 +1170,38 @@ Quotes, sales orders, delivery challans, invoices, credit notes, purchase orders
 
 Anyone who can read sales, or purchase, documents sees their fields.
 
+# Audit log
+
+Every change to a document or a master is recorded: who made it, when, and each field's value before and after. The record is kept per service, beside the data it describes, and **nobody can change or delete it** — not a user, not an administrator, not a support engineer with database access. The database itself refuses.
+
+## History on a record
+
+Invoices, bills, manual journals, items and contacts show a **History** section: every change to the record and to its lines, newest first.
+
+- **Created** lists the values the record started with.
+- **Changed** lists only the fields that changed, with the old value struck through and the new one beside it.
+- **Removed** lists the values a line or record had when it was deleted.
+
+A change to a line says which line, such as *Invoice details 42 · Changed*. **Refresh** reloads it after a save.
+
+## Settings › Audit log
+
+The full log, one area at a time — Sales, Purchase, Accounting and banking, Inventory, Contacts and so on in RetailErp; employees, leave, claims, recruitment and performance in HRMS; payroll in Payroll; students, admissions, fees and maintenance in School.
+
+Filter by date, by user and by table, then **Show**. Pick a row to see every field it changed. Opening the page needs **settings.view**, and each area also needs that module's own view permission, so a user sees the log only of what they may already see.
+
+## What is recorded
+
+- Every insert, edit and delete of a document, its lines, ledger and register rows, allocations, payments, balances and settings — including the changes the product makes in bulk, such as posting, voiding and allocating.
+- Not the log itself, the error log, or the counters and queues the product keeps for itself: stock running totals and cost layers, costing and ledger queue status, numbering series counters, scheduled report runs and e-invoice retry timing. Large imported files (a Form 26AS text file, a GSTR-2B download) are recorded without their raw contents.
+- A change is recorded in the same transaction as the change itself, so a save that fails leaves no entry behind, and a saved change always has one.
+
+## Limits
+
+- **Lines removed by the database along with their document** are not listed one by one. Deleting a draft document records the document's own removal, with its values; its lines go with it.
+- The user's name is the one they had when they made the change.
+- History shows the latest 1,000 changes to one record; the audit log pages through everything.
+
 # Print templates
 
 How your printed documents look — the letterhead, the columns, the terms at the foot — is a

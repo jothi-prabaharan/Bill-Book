@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Tenancy;
 
@@ -22,6 +23,7 @@ public class Form26asImport : OrgScopedEntity
     public string FileName { get; set; } = null!;
 
     [Required(ErrorMessage = "The file's text is required.")]
+    [NotAudited]
     public string RawText { get; set; } = null!;
 
     public int MatchedCount { get; set; }

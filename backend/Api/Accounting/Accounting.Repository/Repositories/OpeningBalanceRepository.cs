@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -197,7 +198,7 @@ public sealed class OpeningBalanceRepository
 
             await _db.OpeningBalanceLines
                 .Where(l => l.OpeningBalanceId == document.OpeningBalanceId)
-                .ExecuteDeleteAsync(ct);
+                .ExecuteDeleteLoggedAsync(_db, ct);
 
             // ExecuteDelete goes straight to the database and the change tracker
             // never hears about it, so a line this context had already read is now

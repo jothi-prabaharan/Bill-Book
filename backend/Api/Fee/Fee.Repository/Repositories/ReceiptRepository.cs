@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Fee.Entity.Enums;
 using Fee.Entity.Models;
 using Fee.Entity.TableEntities;
@@ -141,7 +142,7 @@ public sealed class ReceiptRepository
         {
             int settled = await _db.FeeDemands
                 .Where(d => d.FeeDemandId == demandId && d.DocumentStatus == FeeDocumentStatus.Posted && d.PaidAmount + amount <= d.NetAmount)
-                .ExecuteUpdateAsync(s => s.SetProperty(d => d.PaidAmount, d => d.PaidAmount + amount), ct);
+                .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(d => d.PaidAmount, d => d.PaidAmount + amount), ct);
             if (settled != 1)
             {
                 // Another receipt settled it first. The transaction rolls this one back whole.
@@ -172,7 +173,7 @@ public sealed class ReceiptRepository
             decimal amount = allocation.Amount;
             int undone = await _db.FeeDemands
                 .Where(d => d.FeeDemandId == allocation.FeeDemandId && d.PaidAmount >= amount)
-                .ExecuteUpdateAsync(s => s.SetProperty(d => d.PaidAmount, d => d.PaidAmount - amount), ct);
+                .ExecuteUpdateLoggedAsync(_db, s => s.SetProperty(d => d.PaidAmount, d => d.PaidAmount - amount), ct);
             if (undone != 1)
             {
                 return FeeResultRepository.Fail(FeeOutcome.StateRule, "The receipt's allocations no longer match its demands. Reload and try again.");

@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Models;
@@ -148,7 +149,7 @@ public sealed class SavedViewRepository
     private async Task ClearDefaultAsync(long reportId, Guid? ownerId, CancellationToken ct) =>
         await _db.ReportViews
             .Where(v => v.ReportId == reportId && v.OwnerUserId == ownerId && v.IsDefault)
-            .ExecuteUpdateAsync(v => v.SetProperty(x => x.IsDefault, false), ct);
+            .ExecuteUpdateLoggedAsync(_db, v => v.SetProperty(x => x.IsDefault, false), ct);
 
     private IQueryable<ReportView> Views(string reportKey) =>
         _db.ReportViews.Where(v =>

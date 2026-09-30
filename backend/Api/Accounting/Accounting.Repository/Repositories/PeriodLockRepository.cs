@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
@@ -135,5 +136,5 @@ public sealed class PeriodLockRepository
 
     /// <summary>Removes a role's lock entirely, which reopens every period for it.</summary>
     public async Task<bool> ClearAsync(int roleId, CancellationToken ct) =>
-        await _db.PeriodLocks.Where(p => p.RoleId == roleId).ExecuteDeleteAsync(ct) > 0;
+        await _db.PeriodLocks.Where(p => p.RoleId == roleId).ExecuteDeleteLoggedAsync(_db, ct) > 0;
 }

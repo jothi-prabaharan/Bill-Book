@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
@@ -243,7 +244,7 @@ public sealed class SpendMoneyRepository
         document.MappingTransactionId = headerId;
         ApplyChallan(document, request);
 
-        await _db.SpendMoneyDetails.Where(l => l.SpendMoneyId == id).ExecuteDeleteAsync(ct);
+        await _db.SpendMoneyDetails.Where(l => l.SpendMoneyId == id).ExecuteDeleteLoggedAsync(_db, ct);
 
         // ExecuteDelete goes straight to the database and the change tracker
         // never hears about it, so any line this context had already read is now

@@ -1,3 +1,4 @@
+using Shared.Kernel.Audit;
 using Purchase.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Models;
@@ -58,7 +59,7 @@ public sealed class BillBillingRepository
             .Where(l => ids.Contains(l.BillDetailId) && l.IsBillable
                 && (l.BilledInvoiceId == null || l.BilledInvoiceId == invoiceId)
                 && _db.Bills.Any(b => b.BillId == l.BillId && b.Status == DocumentStatus.Posted))
-            .ExecuteUpdateAsync(u => u.SetProperty(l => l.BilledInvoiceId, invoiceId), ct);
+            .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(l => l.BilledInvoiceId, invoiceId), ct);
 
         if (touched != ids.Count)
         {
@@ -79,5 +80,5 @@ public sealed class BillBillingRepository
     public Task<int> ReleaseAsync(long invoiceId, CancellationToken ct) =>
         _db.BillDetails
             .Where(l => l.BilledInvoiceId == invoiceId)
-            .ExecuteUpdateAsync(u => u.SetProperty(l => l.BilledInvoiceId, (long?)null), ct);
+            .ExecuteUpdateLoggedAsync(_db, u => u.SetProperty(l => l.BilledInvoiceId, (long?)null), ct);
 }
