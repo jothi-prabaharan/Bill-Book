@@ -2569,6 +2569,103 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Environment settings to rename by hand**, where a machine sets them: `Sis__BaseUrl`, `Hrm__BaseUrl`, `Amc__BaseUrl`, `Seeding__Sis`, `Seeding__Hrm` and `Seeding__Amc`. None is in `deploy/`.
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` reports no changes for Student, Employee, MaintenanceContract, WorkOrder and both Master contexts. Frontend typecheck and lint pass, and the school, hrms, payroll, portal and web builds are clean.
 
+### TK-126 · `BusinessType` and `AddOn` replace `App` and `Vertical`
+- [ ] open
+- **Issue:** [#108](https://github.com/jothi-prabaharan/Bill-Book/issues/108)
+- **Lanes:** L-KERNEL, L-MST · **Depends on:** — · **Decision:** D-36
+- **Where:** `backend/shared/Shared.Kernel/Apps/App.cs`, `backend/Api/Master/Master.Entity/Enums/Vertical.cs`
+- **Sub-tasks:**
+  - [ ] `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) and `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling).
+  - [ ] `AddOnRules.Allowed(BusinessType?)`: Hrms and Payroll for every type and for none; Crm, FixedAssets, ClientPortal, Budget and RecurringBilling for all four types; Pos and EInvoicing for General, Pharma and Jewellery.
+  - [ ] Remove `App` and `AppRules`.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** nothing in code names `App`, and the solution builds with `-warnaserror`.
+
+### TK-127 · Master: branch business type, add-ons, one licence and the token claims
+- [ ] open
+- **Issue:** [#109](https://github.com/jothi-prabaharan/Bill-Book/issues/109)
+- **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-126 · **Decision:** D-36
+- **Where:** `Organization`, `License`, `Role`, `RefreshToken`, `Menu`, `Permission`, `JwtTokenRepository`, `MenuRepository`, `TradeScopeRepository`, `TenantSeeder`
+- **Sub-tasks:**
+  - [ ] Migration: drop `License.App`, `Role.App`, `RefreshToken.App`; add `Organization.BusinessType` and `Organization.AddOns`; gating columns on menus and permissions. `dotnet ef migrations has-pending-model-changes` clean.
+  - [ ] A branch needs a business type, an add-on, or both; an add-on the type does not allow is refused.
+  - [ ] Login, select-branch, signup, `api/me/context`: no `App` parameter. The token carries `business_type` and `add_ons` instead of `app`.
+  - [ ] Menus and seeds follow the branch: no business type means no retail or school seeds, only the enabled add-ons.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a branch with only Hrms gets only HRMS menus and seeds.
+
+### TK-128 · `[RequireBusinessType]` and `[RequireAddOn]` on every controller
+- [ ] open
+- **Issue:** [#110](https://github.com/jothi-prabaharan/Bill-Book/issues/110)
+- **Lanes:** L-KERNEL, every service lane · **Depends on:** TK-127 · **Decision:** D-36
+- **Where:** `Shared.Kernel/Internal/RequireAppAttribute.cs`, `EndpointGuardAudit.cs`
+- **Sub-tasks:**
+  - [ ] Replace `[RequireApp]` in all services; tag the Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget and RecurringBilling controllers.
+  - [ ] Gate the budget check on bills (`BillBudgetCheckRepository`) and the budget cards TK-108 and TK-109 by the Budget add-on.
+  - [ ] `EndpointGuardAudit` fails a controller with neither guard.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the audit passes in every service and an endpoint of a disabled add-on answers 403.
+
+### TK-129 · Support channel by plan: text on Basic, calls on Pro
+- [ ] open
+- **Issue:** [#111](https://github.com/jothi-prabaharan/Bill-Book/issues/111)
+- **Lanes:** L-CUS, L-MST · **Depends on:** TK-127 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Support tickets stay in every branch. The channel follows `PlanType`: Basic is text only; call support needs Pro.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a Basic customer cannot choose the call channel.
+
+### TK-130 · `apps/web` serves HRMS, Payroll and School
+- [ ] open
+- **Issue:** [#112](https://github.com/jothi-prabaharan/Bill-Book/issues/112)
+- **Lanes:** L-WEB, L-UI · **Depends on:** TK-127 · **Decision:** D-36
+- **Where:** `frontend/apps/{hrms,payroll,school}/src/app/app.routes.ts`, `apps/web/src/app/app.routes.ts`, `libs/app-shell`, `libs/shared/auth/src/lib/app-id.ts`
+- **Sub-tasks:**
+  - [ ] Mount those route tables in `apps/web` gated by business type and add-on.
+  - [ ] Remove `APP_ID`, `APP_URLS` and the app switcher.
+  - [ ] Make `shell-screens.ts` and the topbar "New" menu follow the menu API.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a branch with only Hrms sees only HRMS pages.
+
+### TK-131 · Merge `apps/admin` into `apps/web`: an Admin portal button
+- [ ] open
+- **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
+- **Lanes:** L-WEB, L-ADM · **Depends on:** TK-130 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Mount the admin routes under `/admin/*`, each requiring `platform.*`.
+  - [ ] The dashboard shows an Admin portal button only to a platform operator (`platform.view`); it opens admin mode with a Back to dashboard button.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** only an operator sees the button and the pages, and the backend still refuses anyone else.
+
+### TK-132 · Merge `apps/portal` into `apps/web`
+- [ ] open
+- **Issue:** [#114](https://github.com/jothi-prabaharan/Bill-Book/issues/114)
+- **Lanes:** L-WEB, L-PTL · **Depends on:** TK-130 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Mount the portal pages under `/portal/*` for portal contacts (`[RequirePortalAccess]`), needing the ClientPortal add-on.
+  - [ ] A portal contact sees no staff menus.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a portal contact signs in to web and sees only their statement pages.
+
+### TK-133 · Settings: a branch's business type and add-ons
+- [ ] open
+- **Issue:** [#115](https://github.com/jothi-prabaharan/Bill-Book/issues/115)
+- **Lanes:** L-MST, L-UI, the settings lib · **Depends on:** TK-127, TK-130 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] A screen to choose the business type and switch on the add-ons its type allows; disabling never deletes data.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a School branch is offered Hrms but not Pos.
+
+### TK-134 · Retire the five extra apps: docs, release notes and deploy
+- [ ] open
+- **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
+- **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
+  - [ ] Update `CLAUDE.md`, `docs/Modules.md`, the docs app pages and manifest, `release-notes.md` and `deploy/*`.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
+
 ### TK-41 · POS receipt, ESC/POS (T7.3)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#52](https://github.com/jothi-prabaharan/Bill-Book/issues/52)
@@ -4231,6 +4328,8 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-33 | TDS deducted by customers: which statement does the reconciliation import? | TK-117 | **The Form 26AS text file** (owner, 2026-09-29): the caret-separated download from TRACES. Part I gives each deductor's TAN and the amounts, which is what matching needs. TK-117 |
 | D-34 | The audit trail: which tenant schemas get an `EditLog` in TK-118, now there are 22 rather than the 8 the design assumed? | TK-118 | **All 22** (owner, 2026-09-30): every tenant schema — RetailErp's eight, HRMS and Payroll's seven and School's eight — gets its append-only `EditLog` with RLS and the update/delete trigger, and each service's bulk statements on audited tables write their rows. TK-118 |
 | D-35 | Where does the History tab appear in TK-118? | TK-118 | **Documents and the main masters** (owner, 2026-09-30): invoices, bills, contacts, items and manual journals. Other screens take the shared component in later cards; the audit-log report covers every audited table meanwhile. TK-118 |
+| D-36 | Replace the `App` flag with a branch business type and add-ons? | TK-126 to TK-134 | **Yes** (owner, 2026-09-30): `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) plus `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling), allowed per type by `AddOnRules`; a customer may buy only Hrms or Payroll. One licence per customer, roles span types. Support tickets stay in every branch (text on Basic, calls on Pro). `apps/admin` and `apps/portal` merge into `apps/web`. Reverses D-12 and the separate-app decisions. TK-126 |
+| D-37 | Add a Restaurant business type (tables, KOT, recipes)? | — | **Open.** Not in scope until answered. |
 
 ---
 
