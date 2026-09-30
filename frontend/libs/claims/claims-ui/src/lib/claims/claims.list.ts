@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
   ClaimCategoryView,
-  ClaimStatus,
+  
   ClaimsApiService,
   CreateExpenseClaim,
   ExpenseClaimView,

@@ -29,12 +29,12 @@ export const employeeRoutes: Routes = [
   {
     path: 'hrm/announcements',
     loadComponent: () => import('./notices/announcements.page').then((m) => m.AnnouncementsPage),
-    data: { access: { permission: 'hrm.view', apps: ['Hrms'] } },
+    data: { access: { permission: 'hrm.view', addOns: ['Hrms'] } },
   },
   {
     path: 'hrm/policies',
     loadComponent: () => import('./notices/policies.page').then((m) => m.PoliciesPage),
-    data: { access: { permission: 'hrm.view', apps: ['Hrms'] } },
+    data: { access: { permission: 'hrm.view', addOns: ['Hrms'] } },
   },
   {
     path: 'me/profile',

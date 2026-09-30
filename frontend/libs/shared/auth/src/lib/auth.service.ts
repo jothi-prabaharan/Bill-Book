@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { APP_ID, AppId } from './app-id';
+
 import { readPermissions } from './token-claims';
 import {
   AccessibleOrg,
@@ -26,9 +26,6 @@ const ORG_KEY = 'bb.orgId';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-
-  /** The app this build signs in to (TK-44); RetailErp unless the app provides another. */
-  private readonly app = inject(APP_ID);
 
   readonly organizations = signal<AccessibleOrg[]>([]);
 
@@ -80,7 +77,7 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await firstValueFrom(
-      this.http.post<LoginResponse>('/api/auth/login', { email, password, app: this.app }),
+      this.http.post<LoginResponse>('/api/auth/login', { email, password }),
     );
     
     // Auto-routed token processing
@@ -109,25 +106,8 @@ export class AuthService {
    * held there — the old token keeps naming the old branch and is replaced.
    */
   async switchOrganization(orgId: string): Promise<TokenResponse> {
-    return this.switchTo(orgId, this.app);
-  }
-
-  /**
-   * The same branch, another app's token (TK-44). The app switcher and the
-   * shell's page guard use it; the server refuses when the user holds no role
-   * in that app there.
-   */
-  async switchApp(app: AppId): Promise<TokenResponse> {
-    const orgId = localStorage.getItem(ORG_KEY);
-    if (orgId === null) {
-      throw new Error('No branch is selected.');
-    }
-    return this.switchTo(orgId, app);
-  }
-
-  private async switchTo(orgId: string, app: AppId): Promise<TokenResponse> {
     const response = await firstValueFrom(
-      this.http.post<TokenResponse>('/api/auth/switch-organization', { orgId, app }),
+      this.http.post<TokenResponse>('/api/auth/switch-organization', { orgId }),
     );
 
     localStorage.setItem(ACCESS_KEY, response.accessToken);
@@ -283,9 +263,8 @@ export class AuthService {
   // ---- Signup -------------------------------------------------------------
 
   signup(request: SignupRequest): Promise<SignupResponse> {
-    // Each app's signup page signs up for its own app (TK-45).
     return firstValueFrom(
-      this.http.post<SignupResponse>('/api/customers/signup', { ...request, app: request.app ?? this.app }),
+      this.http.post<SignupResponse>('/api/customers/signup', request),
     );
   }
 

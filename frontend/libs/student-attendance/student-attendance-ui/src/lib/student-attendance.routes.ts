@@ -5,6 +5,6 @@ export const studentAttendanceRoutes: Routes = [
   {
     path: 'attendance/register',
     loadComponent: () => import('./register/register.page').then((m) => m.RegisterPage),
-    data: { access: { permission: 'attendance.view', apps: ['School'] } },
+    data: { access: { permission: 'attendance.view', businessTypes: ['School'] } },
   },
 ];

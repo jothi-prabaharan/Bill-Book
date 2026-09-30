@@ -18,7 +18,7 @@ import {
 } from '@bill-book/recruitment-core';
 
 @Component({
-  selector: 'rec-requisitions-page',
+  selector: 'bb-rec-requisitions-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -73,7 +73,7 @@ export class RequisitionsPage implements OnInit {
     isReplacement: false,
   });
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     await this.load();
   }
 

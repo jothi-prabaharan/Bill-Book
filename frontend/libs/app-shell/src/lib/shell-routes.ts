@@ -1,11 +1,9 @@
 import { Route, Routes } from '@angular/router';
-import { APP_ID, AppId, PageAccess, authGuard, pageGuard } from '@bill-book/auth';
+import { PageAccess, authGuard, pageGuard } from '@bill-book/auth';
 import { NoAccessPage } from './no-access/no-access.page';
 import { ShellComponent } from './shell/shell.component';
 
 export interface ShellRoutesOptions {
-  /** The app mounting the shell. Provide the same value as `APP_ID` in `app.config.ts`. */
-  app: AppId;
   /** The app's pages. Every one declares `data.access`, or the audit fails. */
   children: Routes;
 }
@@ -20,14 +18,13 @@ export interface ShellRoutesOptions {
  *   that order (`decideAccess`).
  * - `/no-access` is added, so every app has somewhere to explain a refusal.
  */
-export function shellRoutes({ app, children }: ShellRoutesOptions): Route {
+export function shellRoutes({ children }: ShellRoutesOptions): Route {
   return {
     path: '',
     component: ShellComponent,
-    providers: [{ provide: APP_ID, useValue: app }],
     canActivate: [authGuard],
     canActivateChild: [pageGuard],
-    data: { shellRoot: true, app },
+    data: { shellRoot: true },
     children: [
       { path: 'no-access', component: NoAccessPage, data: { access: { signedIn: true } satisfies PageAccess } },
       ...children,

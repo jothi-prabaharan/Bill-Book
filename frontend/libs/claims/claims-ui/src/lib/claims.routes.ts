@@ -8,14 +8,14 @@ export const claimsRoutes: Routes = [
   {
     path: 'claims',
     children: [
-      { path: '', component: ClaimsListPage, data: { access: { permission: 'claims.view' } } },
-      { path: 'categories', component: ClaimCategoriesPage, data: { access: { permission: 'claims.edit' } } },
-      { path: ':id', component: ClaimDetailPage, data: { access: { permission: 'claims.view' } } },
+      { path: '', component: ClaimsListPage, data: { access: { permission: 'claims.view', addOns: ['Hrms'] } } },
+      { path: 'categories', component: ClaimCategoriesPage, data: { access: { permission: 'claims.edit', addOns: ['Hrms'] } } },
+      { path: ':id', component: ClaimDetailPage, data: { access: { permission: 'claims.view', addOns: ['Hrms'] } } },
     ],
   },
   {
     path: 'me/claims',
     component: MyClaimsPage,
-    data: { access: { signedIn: true } },
+    data: { access: { signedIn: true, addOns: ['Hrms'] } },
   },
 ];

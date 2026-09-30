@@ -19,7 +19,7 @@ import {
 } from '@bill-book/recruitment-core';
 
 @Component({
-  selector: 'rec-openings-page',
+  selector: 'bb-rec-openings-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -69,7 +69,7 @@ export class OpeningsPage implements OnInit {
     openingStatus: 'Open',
   });
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     await this.load();
   }
 

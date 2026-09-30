@@ -8,26 +8,26 @@ export const studentRoutes: Routes = [
   {
     path: 'sis/students',
     loadComponent: () => import('./students/students.list').then((m) => m.StudentsList),
-    data: { access: { permission: 'sis.view', apps: ['School'] } },
+    data: { access: { permission: 'sis.view', businessTypes: ['School'] } },
   },
   {
     path: 'sis/students/new',
     loadComponent: () => import('./students/student.page').then((m) => m.StudentPage),
-    data: { access: { permission: 'sis.create', apps: ['School'] } },
+    data: { access: { permission: 'sis.create', businessTypes: ['School'] } },
   },
   {
     path: 'sis/students/:id',
     loadComponent: () => import('./students/student.page').then((m) => m.StudentPage),
-    data: { access: { permission: 'sis.view', apps: ['School'] } },
+    data: { access: { permission: 'sis.view', businessTypes: ['School'] } },
   },
   {
     path: 'sis/setup',
     loadComponent: () => import('./setup/academic-setup.page').then((m) => m.AcademicSetupPage),
-    data: { access: { permission: 'sis.view', apps: ['School'] } },
+    data: { access: { permission: 'sis.view', businessTypes: ['School'] } },
   },
   {
     path: 'sis/exams',
     loadComponent: () => import('./exams/exams.page').then((m) => m.ExamsPage),
-    data: { access: { permission: 'sis.view', apps: ['School'] } },
+    data: { access: { permission: 'sis.view', businessTypes: ['School'] } },
   },
 ];

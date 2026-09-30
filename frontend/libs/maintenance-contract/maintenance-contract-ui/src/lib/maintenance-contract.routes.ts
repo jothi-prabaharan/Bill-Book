@@ -5,6 +5,6 @@ export const maintenanceContractRoutes: Routes = [
   {
     path: 'amc/contracts',
     loadComponent: () => import('./contracts/contracts.page').then((m) => m.ContractsPage),
-    data: { access: { permission: 'amc.view', apps: ['School'] } },
+    data: { access: { permission: 'amc.view', businessTypes: ['School'] } },
   },
 ];

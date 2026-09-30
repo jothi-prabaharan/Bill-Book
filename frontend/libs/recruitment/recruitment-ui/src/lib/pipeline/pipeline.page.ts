@@ -13,7 +13,7 @@ import {
 } from '@bill-book/recruitment-core';
 
 @Component({
-  selector: 'rec-pipeline-page',
+  selector: 'bb-rec-pipeline-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -46,9 +46,9 @@ export class PipelinePage implements OnInit {
     'Rejected',
   ];
 
-  async ngOnInit(): Promise<void> {
-    await this.loadOpenings();
-    await this.loadApplications();
+  ngOnInit(): void {
+    void this.loadOpenings();
+    void this.loadApplications();
   }
 
   async loadOpenings(): Promise<void> {
@@ -87,7 +87,7 @@ export class PipelinePage implements OnInit {
     this.loading.set(true);
     try {
       await this.api.updateApplicationStage(app.applicationId, { stage: nextStage });
-      await this.loadApplications();
+      void this.loadApplications();
     } catch (err: unknown) {
       this.errorMessage.set(err instanceof Error ? err.message : 'Stage update failed');
     } finally {
@@ -103,7 +103,7 @@ export class PipelinePage implements OnInit {
         stage: 'Rejected',
         rejectionReason: reason || undefined,
       });
-      await this.loadApplications();
+      void this.loadApplications();
     } catch (err: unknown) {
       this.errorMessage.set(err instanceof Error ? err.message : 'Rejection failed');
     } finally {

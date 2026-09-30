@@ -20,7 +20,7 @@ import {
 } from '@bill-book/recruitment-core';
 
 @Component({
-  selector: 'rec-candidates-page',
+  selector: 'bb-rec-candidates-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -85,7 +85,7 @@ export class CandidatesPage implements OnInit {
     candidateSource: 'Portal',
   });
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     await this.load();
     const ops = await this.api.openings(1, 100, 'Open');
     this.openings.set(ops);

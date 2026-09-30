@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateFn, Router } from '@angular/router';
-import { APP_ID, AppId } from './app-id';
 import { AuthService } from './auth.service';
 import { SessionContext, SessionContextService, isLicenceOpen } from './session-context.service';
 
@@ -10,21 +9,22 @@ import { SessionContext, SessionContextService, isLicenceOpen } from './session-
  *
  * - `{ permission: 'payroll.view' }`: the user must hold it in the current app;
  * - `{ signedIn: true }`: any signed-in user of the app (the dashboard, a profile);
- * - either may add `apps: [...]` when a shared lib's route may be mounted only
- *   by some apps.
+ * - either may add `businessTypes: [...]` or `addOns: [...]` when a shared lib's route may be mounted only
+ *   by some branch types or add-ons.
  *
  * A route declares nothing: it is refused. Deny by default is the point, since
  * a page nobody remembered to tag would otherwise be open to everyone.
  */
 export type PageAccess =
-  | { permission: string; apps?: readonly AppId[] }
-  | { signedIn: true; apps?: readonly AppId[] };
+  | { permission: string; businessTypes?: readonly string[]; addOns?: readonly string[] }
+  | { signedIn: true; businessTypes?: readonly string[]; addOns?: readonly string[] };
 
 /** Why a page was refused, for the no-access page and for tests. */
 export type AccessRefusal =
   | { kind: 'signIn' }
   | { kind: 'licence' }
-  | { kind: 'app' }
+  | { kind: 'businessType' }
+  | { kind: 'addOn' }
   | { kind: 'undeclared' }
   | { kind: 'permission'; permission: string };
 
@@ -35,7 +35,6 @@ export type AccessRefusal =
 export function decideAccess(
   signedIn: boolean,
   context: SessionContext | null,
-  app: AppId,
   access: PageAccess | undefined,
 ): AccessRefusal | null {
   if (!signedIn || context === null) {
@@ -44,9 +43,19 @@ export function decideAccess(
   if (!isLicenceOpen(context.licenseStatus)) {
     return { kind: 'licence' };
   }
-  if (access?.apps && !access.apps.includes(app)) {
-    return { kind: 'app' };
+  
+  if (access?.businessTypes && context.businessType && !access.businessTypes.includes(context.businessType)) {
+    return { kind: 'businessType' };
   }
+  
+  if (access?.addOns) {
+    const orgAddOns = context.addOns ? context.addOns.split(',').map(a => a.trim()) : [];
+    const hasAddOn = access.addOns.some(a => orgAddOns.includes(a));
+    if (!hasAddOn) {
+      return { kind: 'addOn' };
+    }
+  }
+
   if (access === undefined) {
     return { kind: 'undeclared' };
   }
@@ -87,7 +96,6 @@ export const pageGuard: CanActivateFn = async (route) => {
   const auth = inject(AuthService);
   const session = inject(SessionContextService);
   const router = inject(Router);
-  const app = inject(APP_ID);
 
   if (!auth.isAuthenticated()) {
     return router.parseUrl('/login');
@@ -96,15 +104,11 @@ export const pageGuard: CanActivateFn = async (route) => {
   let context: SessionContext;
   try {
     context = await session.ensure();
-    if (context.app !== app) {
-      await auth.switchApp(app);
-      context = await session.ensure();
-    }
   } catch {
     return router.createUrlTree(['/no-access'], { queryParams: { reason: 'app' } });
   }
 
-  const refusal = decideAccess(true, context, app, accessOf(route));
+  const refusal = decideAccess(true, context, accessOf(route));
   if (refusal === null) {
     return true;
   }

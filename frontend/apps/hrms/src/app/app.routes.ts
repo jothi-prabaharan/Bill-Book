@@ -29,7 +29,7 @@ export const appRoutes: Routes = [
   { path: 'accept-invitation', component: AcceptInvitationPage },
   { path: 'expired', component: TrialExpiredPage, canActivate: [authGuard] },
   shellRoutes({
-    app: 'Hrms',
+    
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: HomePage, data: { access: { signedIn: true } } },

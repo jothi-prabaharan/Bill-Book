@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { AppId } from './app-id';
+
 import { AuthService } from './auth.service';
 
 /** `GET /api/me/context` (TK-43): the session, with no internal ids. */
@@ -10,15 +10,14 @@ export interface SessionContext {
   email: string;
   branchName: string;
   branchCode: string;
-  app: AppId;
+  businessType?: string;
+  addOns?: string;
+  planTier?: string;
   /** Active, Trial, Expired, Suspended or NotLicensed. */
   licenseStatus: string;
   licenseExpiry: string | null;
   expiryIsBranchLevel: boolean;
   permissions: string[];
-  /** The apps this user can switch to in this branch, with each one's licence. */
-  apps: { app: AppId; licenseStatus: string }[];
-  planTier?: string;
 }
 
 /** A licence that lets its app be used. */

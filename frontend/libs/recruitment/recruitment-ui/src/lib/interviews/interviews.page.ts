@@ -16,13 +16,12 @@ import {
   InterviewOutcome,
   InterviewRoundView,
   RecruitmentApiService,
-  RoundKind,
   ScheduleInterviewRound,
   UpdateInterviewFeedback,
 } from '@bill-book/recruitment-core';
 
 @Component({
-  selector: 'rec-interviews-page',
+  selector: 'bb-rec-interviews-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -100,8 +99,8 @@ export class InterviewsPage implements OnInit {
     outcome: 'Pass',
   });
 
-  async ngOnInit(): Promise<void> {
-    await this.loadApplications();
+  ngOnInit(): void {
+    void this.loadApplications();
   }
 
   async loadApplications(): Promise<void> {

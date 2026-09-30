@@ -5,6 +5,6 @@ export const preventiveRoutes: Routes = [
   {
     path: 'preventive/plans',
     loadComponent: () => import('./plans/plans.page').then((m) => m.PlansPage),
-    data: { access: { permission: 'preventive.view', apps: ['School'] } },
+    data: { access: { permission: 'preventive.view', businessTypes: ['School'] } },
   },
 ];

@@ -5,6 +5,6 @@ export const workOrderRoutes: Routes = [
   {
     path: 'work-orders',
     loadComponent: () => import('./work-orders/work-orders.page').then((m) => m.WorkOrdersPage),
-    data: { access: { permission: 'workorder.view', apps: ['School'] } },
+    data: { access: { permission: 'workorder.view', businessTypes: ['School'] } },
   },
 ];

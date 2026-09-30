@@ -7,7 +7,6 @@ export * from './lib/subpanel/shell-subpanel.component';
 
 // Routes: the shell with its page validation, and the audit every app's spec runs
 export * from './lib/shell-routes';
-export * from './lib/app-urls';
 export * from './lib/no-access/no-access.page';
 
 // Services

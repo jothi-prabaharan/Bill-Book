@@ -10,11 +10,11 @@ export const performanceRoutes: Routes = [
     path: 'performance',
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'reviews' },
-      { path: 'cycles', component: CyclesPage, data: { access: { permission: 'performance.view' } } },
-      { path: 'goals', component: GoalsPage, data: { access: { permission: 'performance.view' } } },
-      { path: 'reviews', component: ReviewsPage, data: { access: { permission: 'performance.view' } } },
-      { path: 'calibration', component: CalibrationPage, data: { access: { permission: 'performance.view' } } },
-      { path: 'self-evaluation', component: SelfEvaluationPage, data: { access: { signedIn: true } } },
+      { path: 'cycles', component: CyclesPage, data: { access: { permission: 'performance.view', addOns: ['Hrms'] } } },
+      { path: 'goals', component: GoalsPage, data: { access: { permission: 'performance.view', addOns: ['Hrms'] } } },
+      { path: 'reviews', component: ReviewsPage, data: { access: { permission: 'performance.view', addOns: ['Hrms'] } } },
+      { path: 'calibration', component: CalibrationPage, data: { access: { permission: 'performance.view', addOns: ['Hrms'] } } },
+      { path: 'self-evaluation', component: SelfEvaluationPage, data: { access: { signedIn: true, addOns: ['Hrms'] } } },
     ],
   },
 ];

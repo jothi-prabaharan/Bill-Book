@@ -13,14 +13,11 @@ import {
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import {
-  APP_ID,
-  APP_LABELS,
   AccessibleOrg,
   AuthService,
   SessionContextService,
-  isLicenceOpen,
 } from '@bill-book/auth';
-import { APP_URLS } from '../app-urls';
+
 import { FavouritesService } from '../favourites.service';
 import { MenuService } from '../menu.service';
 import { ShellNotificationsService } from '../notifications.service';
@@ -71,8 +68,6 @@ type Panel = 'org' | 'new' | 'search' | 'fav' | 'notif' | null;
 export class ShellTopbarComponent {
   protected readonly auth = inject(AuthService);
   private readonly session = inject(SessionContextService);
-  private readonly appId = inject(APP_ID);
-  private readonly appUrls = inject(APP_URLS);
   protected readonly favourites = inject(FavouritesService);
   private readonly menuService = inject(MenuService);
   protected readonly notifications = inject(ShellNotificationsService);
@@ -107,65 +102,27 @@ export class ShellTopbarComponent {
    * Every document a person can raise. Each `path` is a route that exists in
    * `app.routes.ts` — a tile that leads nowhere is worse than no tile.
    */
-  readonly newGroups: readonly DocGroup[] = [
-    {
-      name: 'Sales',
-      docs: [
-        { label: 'Invoice', code: 'INV', path: '/sales/invoices/new' },
-        { label: 'Sales order', code: 'SOR', path: '/sales/sales-orders/new' },
-        { label: 'Quote', code: 'QOT', path: '/sales/quotes/new' },
-        { label: 'Delivery challan', code: 'DLC', path: '/sales/delivery-challans/new' },
-        { label: 'Credit note', code: 'CRN', path: '/sales/credit-notes/new' },
-      ],
-    },
-    {
-      name: 'Purchase',
-      docs: [
-        { label: 'Bill', code: 'BIL', path: '/purchase/bills/new' },
-        { label: 'Purchase order', code: 'POR', path: '/purchase/purchase-orders/new' },
-        { label: 'Goods receipt', code: 'GRN', path: '/purchase/goods-receipts/new' },
-        { label: 'Debit note', code: 'DBN', path: '/purchase/debit-notes/new' },
-      ],
-    },
-    {
-      name: 'Banking',
-      docs: [
-        { label: 'Receive money', code: 'REC', path: '/banking/receive-money' },
-        { label: 'Spend money', code: 'PAY', path: '/banking/spend-money' },
-        { label: 'Transfer money', code: 'TRF', path: '/banking/transfer-money' },
-      ],
-    },
-  ];
+  readonly newGroups = computed<readonly DocGroup[]>(() => {
+    return this.menuService.tree()
+      .map((menu) => {
+        const docs = menu.groups
+          .flatMap((g) => g.subMenus)
+          .filter((s) => s.canCreate && s.routePath)
+          .map((s) => ({
+            label: s.singularName ?? s.name,
+            code: s.code.substring(0, 3).toUpperCase(),
+            path: `${s.routePath}/new`,
+          }));
+        return { name: menu.name, docs };
+      })
+      .filter((g) => g.docs.length > 0);
+  });
 
   readonly currentOrgId = computed(() => readOrgId());
 
-  /**
-   * The app switcher (TK-44): the other apps this user holds a role in, in this
-   * branch, from the session context. An app with no URL configured for this
-   * deployment is listed but cannot be opened.
-   */
-  readonly otherApps = computed(() =>
-    (this.session.context()?.apps ?? [])
-      .filter((a) => a.app !== this.appId)
-      .map((a) => ({
-        app: a.app,
-        label: APP_LABELS[a.app] ?? a.app,
-        url: this.appUrls[a.app] ?? null,
-        open: isLicenceOpen(a.licenseStatus),
-      })),
-  );
 
-  /**
-   * Opens another app on the same branch. That app's shell mints its own token
-   * for the branch when it finds this one (`pageGuard`), so nothing is minted
-   * here.
-   */
-  openApp(url: string | null): void {
-    this.closeAll();
-    if (url !== null && typeof window !== 'undefined') {
-      window.location.assign(url);
-    }
-  }
+
+
 
   /**
    * The API returns one name per accessible org and it is the branch name —
@@ -209,8 +166,8 @@ export class ShellTopbarComponent {
 
   readonly newFilteredGroups = computed<readonly DocGroup[]>(() => {
     const query = this.newQuery().trim().toLowerCase();
-    if (!query) return this.newGroups;
-    return this.newGroups
+    if (!query) return this.newGroups();
+    return this.newGroups()
       .map((group) => ({
         name: group.name,
         docs: group.docs.filter(

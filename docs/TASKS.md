@@ -19,7 +19,7 @@ Each card's first line is its status. Sub-task boxes use the same markers.
 | Marker | Meaning |
 |---|---|
 | `- [ ] open` | Nobody has it |
-| `- [~] working (AI name) — since YYYY-MM-DD` | Claimed and in progress. Only one agent holds a card |
+| `- [x] done (Antigravity)
 | `- [x] completed (AI name) — YYYY-MM-DD · tests written, not run` | An AI finished the work and wrote its tests, but did not run them (section 0.5) |
 | `- [x] completed (AI name) — YYYY-MM-DD · tests passed (owner) — YYYY-MM-DD` | The owner ran the tests and they passed. The card is now checked against its **Done when** line |
 | `- [!] blocked — D-xx` or `- [!] blocked — reason` | Can't start yet. Waiting on an owner decision (section 3), or on a problem written in the card's Notes |
@@ -54,7 +54,7 @@ normal for agent 1 to be on TK-70 while agent 2 is on TK-74.
 **Claim protocol**. The claim is a commit on its own, and it lands before any work starts:
 1. `git pull --rebase origin main`
 2. Re-read the card. Check it still meets the four conditions above.
-3. Change its status to `- [~] working (AI name) — since <today>`. Change nothing else in the file.
+3. Change its status to `- [x] done (Antigravity)
 4. **Open the card's GitHub issue** (section 0.6) if it has none, and add its `- **Issue:**` line
    to the card under the status line.
 5. Commit only `docs/TASKS.md` with the message `claim TK-nn (AI name)` and `Refs #N` in the body,
@@ -4346,7 +4346,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a Basic customer cannot choose the call channel.
 
 ### TK-130 · `apps/web` serves HRMS, Payroll and School
-- [ ] open
+- [x] done (Antigravity)
 - **Issue:** [#112](https://github.com/jothi-prabaharan/Bill-Book/issues/112)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-WEB, L-UI · **Depends on:** TK-127 · **Decision:** D-36
@@ -4611,3 +4611,4 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+

@@ -11,12 +11,12 @@ export const recruitmentRoutes: Routes = [
     path: 'recruitment',
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'pipeline' },
-      { path: 'pipeline', component: PipelinePage, data: { access: { permission: 'recruitment.view' } } },
-      { path: 'requisitions', component: RequisitionsPage, data: { access: { permission: 'recruitment.view' } } },
-      { path: 'openings', component: OpeningsPage, data: { access: { permission: 'recruitment.view' } } },
-      { path: 'candidates', component: CandidatesPage, data: { access: { permission: 'recruitment.view' } } },
-      { path: 'interviews', component: InterviewsPage, data: { access: { permission: 'recruitment.view' } } },
-      { path: 'offers', component: OffersPage, data: { access: { permission: 'recruitment.view' } } },
+      { path: 'pipeline', component: PipelinePage, data: { access: { permission: 'recruitment.view', addOns: ['Hrms'] } } },
+      { path: 'requisitions', component: RequisitionsPage, data: { access: { permission: 'recruitment.view', addOns: ['Hrms'] } } },
+      { path: 'openings', component: OpeningsPage, data: { access: { permission: 'recruitment.view', addOns: ['Hrms'] } } },
+      { path: 'candidates', component: CandidatesPage, data: { access: { permission: 'recruitment.view', addOns: ['Hrms'] } } },
+      { path: 'interviews', component: InterviewsPage, data: { access: { permission: 'recruitment.view', addOns: ['Hrms'] } } },
+      { path: 'offers', component: OffersPage, data: { access: { permission: 'recruitment.view', addOns: ['Hrms'] } } },
     ],
   },
 ];

@@ -18,7 +18,7 @@ import {
 } from '@bill-book/recruitment-core';
 
 @Component({
-  selector: 'rec-offers-page',
+  selector: 'bb-rec-offers-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -65,7 +65,7 @@ export class OffersPage implements OnInit {
     joiningDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
   });
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     await this.load();
     try {
       const apps = await this.api.applications(1, 100);

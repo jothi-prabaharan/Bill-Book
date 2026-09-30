@@ -9,6 +9,20 @@ import {
 } from '@bill-book/auth';
 import { shellRoutes } from '@bill-book/app-shell';
 import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
+import { employeeRoutes } from '@bill-book/employee-ui';
+import { timeLeaveRoutes } from '@bill-book/time-leave-ui';
+import { claimsRoutes } from '@bill-book/claims-ui';
+import { recruitmentRoutes } from '@bill-book/recruitment-ui';
+import { performanceRoutes } from '@bill-book/performance-ui';
+import { payrollRoutes } from '@bill-book/payroll-ui';
+import { studentRoutes } from '@bill-book/student-ui';
+import { admissionRoutes } from '@bill-book/admission-ui';
+import { studentAttendanceRoutes } from '@bill-book/student-attendance-ui';
+import { feeRoutes } from '@bill-book/fee-ui';
+import { facilityRoutes } from '@bill-book/facility-ui';
+import { workOrderRoutes } from '@bill-book/work-order-ui';
+import { preventiveRoutes } from '@bill-book/preventive-ui';
+import { maintenanceContractRoutes } from '@bill-book/maintenance-contract-ui';
 import { DashboardPage } from './dashboard/dashboard.page';
 
 export const appRoutes: Routes = [
@@ -21,7 +35,7 @@ export const appRoutes: Routes = [
   // /expired, a page the user cannot open shows /no-access, and a page that
   // declares no `data.access` is refused. No route here lists a guard.
   shellRoutes({
-    app: 'RetailErp',
+    
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: DashboardPage, data: { access: { signedIn: true } } },
@@ -37,6 +51,20 @@ export const appRoutes: Routes = [
       // configuration, email, API keys, print templates, numbering and
       // applications: the pages every app shares, from one lib (TK-47).
       ...sharedSettingsRoutes,
+      ...employeeRoutes,
+      ...timeLeaveRoutes,
+      ...claimsRoutes,
+      ...recruitmentRoutes,
+      ...performanceRoutes,
+      ...payrollRoutes,
+      ...studentRoutes,
+      ...admissionRoutes,
+      ...studentAttendanceRoutes,
+      ...feeRoutes,
+      ...facilityRoutes,
+      ...workOrderRoutes,
+      ...preventiveRoutes,
+      ...maintenanceContractRoutes,
       { path: 'accounting', pathMatch: 'full', redirectTo: 'accounting/trial-balance' },
       {
         path: 'accounting/chart-of-accounts',
