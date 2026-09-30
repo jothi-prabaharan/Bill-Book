@@ -4370,14 +4370,14 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** only an operator sees the button and the pages, and the backend still refuses anyone else.
 
 ### TK-132 · Merge `apps/portal` into `apps/web`
-- [ ] open
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#114](https://github.com/jothi-prabaharan/Bill-Book/issues/114)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-WEB, L-PTL · **Depends on:** TK-130 · **Decision:** D-36
 - **Sub-tasks:**
-  - [ ] Mount the portal pages under `/portal/*` for portal contacts (`[RequirePortalAccess]`), needing the ClientPortal add-on.
-  - [ ] A portal contact sees no staff menus.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Mount the portal pages under `/portal/*` for portal contacts (`[RequirePortalAccess]`), needing the ClientPortal add-on.
+  - [x] A portal contact sees no staff menus.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a portal contact signs in to web and sees only their statement pages.
 
 ### TK-133 · Settings: a branch's business type and add-ons
