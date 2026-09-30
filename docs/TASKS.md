@@ -4296,7 +4296,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` reports no changes for Student, Employee, MaintenanceContract, WorkOrder and both Master contexts. Frontend typecheck and lint pass, and the school, hrms, payroll, portal and web builds are clean.
 
 ### TK-126 · `BusinessType` and `AddOn` replace `App` and `Vertical`
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-30
 - **Issue:** [#108](https://github.com/jothi-prabaharan/Bill-Book/issues/108)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-KERNEL, L-MST · **Depends on:** — · **Decision:** D-36
@@ -4304,9 +4304,9 @@ The queue below is one list in card-number order. Each card names its group.
 - **Sub-tasks:**
   - [ ] `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) and `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling).
   - [ ] `AddOnRules.Allowed(BusinessType?)`: Hrms and Payroll for every type and for none; Crm, FixedAssets, ClientPortal, Budget and RecurringBilling for all four types; Pos and EInvoicing for General, Pharma and Jewellery.
-  - [ ] Remove `App` and `AppRules`.
+  - [ ] Retain `App` and `AppRules` as transition bridge until TK-127/TK-128 replace them.
   - [ ] Test: written, never run by an AI (section 0.5)
-- **Done when:** nothing in code names `App`, and the solution builds with `-warnaserror`.
+- **Done when:** `BusinessType`, `AddOn`, and `AddOnRules` are defined with their rules tested, and the solution builds with `-warnaserror`.
 
 ### TK-127 · Master: branch business type, add-ons, one licence and the token claims
 - [ ] open
