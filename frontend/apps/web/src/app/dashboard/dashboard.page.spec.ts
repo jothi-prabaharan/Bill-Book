@@ -20,7 +20,7 @@ describe('Dashboard layout persistence', () => {
     expect(layout.order.length).toBeGreaterThan(0);
     expect(layout.hidden).toEqual([]);
     expect(layout.spans['sales']).toBe(3);
-    expect(layout.spans['stock']).toBe(7);
+    expect(layout.spans['stock']).toBe(6);
   });
 
   it('LAYOUT-02: Unparseable or foreign stored values fall back to the defaults', () => {

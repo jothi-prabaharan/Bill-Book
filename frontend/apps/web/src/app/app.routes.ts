@@ -257,7 +257,13 @@ export const appRoutes: Routes = [
       },
       // The nav rail points at /banking, so it needs somewhere to land. Spend
       // money is the right default: it is the screen this module is opened for.
-      { path: 'banking', pathMatch: 'full', redirectTo: 'banking/spend-money' },
+      { path: 'banking', pathMatch: 'full', redirectTo: 'banking/dashboard' },
+      {
+        path: 'banking/dashboard',
+        loadComponent: () =>
+          import('@bill-book/accounting-ui').then((m) => m.BankDashboardPage),
+        data: { access: { permission: 'banking.view' } },
+      },
       {
         path: 'banking/banks',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.BanksPage),

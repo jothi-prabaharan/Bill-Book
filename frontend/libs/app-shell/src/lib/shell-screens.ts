@@ -62,6 +62,7 @@ export const SHELL_SCREENS: readonly ShellScreen[] = [
   { label: 'New delivery challan', path: '/sales/delivery-challans/new', group: 'Sales', module: 'accounting' },
   { label: 'New credit note', path: '/sales/credit-notes/new', group: 'Sales', module: 'accounting' },
 
+  { label: 'Dashboard', path: '/banking/dashboard', group: 'Banking', module: 'banking' },
   { label: 'Banks', path: '/banking/banks', group: 'Banking', module: 'banking' },
   { label: 'Bank accounts', path: '/banking/accounts', group: 'Banking', module: 'banking' },
   { label: 'Receive money', path: '/banking/receive-money', group: 'Banking', module: 'banking' },

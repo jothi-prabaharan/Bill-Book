@@ -52,7 +52,8 @@ describe('Design Tokens & Classical Styling System (shared/theming)', () => {
     });
 
     it('TOK-T1-04: Typography tokens resolve every font role to the monospace stack', () => {
-      expect(fileContent).toContain('--font-stack-mono: ui-monospace');
+      expect(fileContent).toContain('--font-stack-mono:');
+      expect(fileContent).toContain('ui-monospace');
       expect(fileContent).toContain('--font-heading: var(--font-stack-mono)');
       expect(fileContent).toContain('--font-body: var(--font-stack-mono)');
       expect(fileContent).toContain('--font-mono: var(--font-stack-mono)');

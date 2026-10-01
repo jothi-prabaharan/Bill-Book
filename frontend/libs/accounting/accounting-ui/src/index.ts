@@ -27,4 +27,5 @@ export * from './lib/statements/statements.page';
 export * from './lib/allocation-form/allocation-form.component';
 export * from './lib/allocation-workspace/allocation-workspace.page';
 export * from './lib/reconciliation/reconciliation.page';
+export * from './lib/bank-dashboard/bank-dashboard.page';
 export * from './lib/reconciliation/statement-upload-form.component';

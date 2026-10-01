@@ -57,7 +57,7 @@
      single advance width, so digits line up in a column without needing the
      `tnum` feature the previous proportional faces depended on. System fonts
      only - no webfont request, so no FOUT and no network dependency. */
-  --font-stack-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+  --font-stack-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", "Courier New", monospace;
   --font-heading: var(--font-stack-mono);
   --font-heading-weight: 600;

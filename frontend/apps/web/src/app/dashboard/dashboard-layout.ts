@@ -26,8 +26,8 @@ export const DASHBOARD_WIDGETS: readonly DashboardWidget[] = [
   { id: 'cash', label: 'Cash & bank total', defaultSpan: 3 },
   { id: 'docs', label: 'Profit & loss', defaultSpan: 6 },
   { id: 'gst', label: 'Sales & outstanding', defaultSpan: 6 },
-  { id: 'stock', label: 'Top products by profit', defaultSpan: 7 },
-  { id: 'aging', label: 'Outstanding list', defaultSpan: 5 },
+  { id: 'stock', label: 'Top products by profit', defaultSpan: 6 },
+  { id: 'aging', label: 'Outstanding list', defaultSpan: 6 },
   { id: 'compliance', label: 'Compliance calendar', defaultSpan: 6 },
 ];
 

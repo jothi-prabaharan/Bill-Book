@@ -1,0 +1,125 @@
+<div class="bank-dashboard">
+  <!-- Action Bar -->
+  <div class="actbar">
+    <button class="btn btn-secondary" type="button" routerLink="/banking/receive-money">Receive money</button>
+    <button class="btn btn-secondary" type="button" routerLink="/banking/spend-money">Spend money</button>
+    <button class="btn btn-secondary" type="button" routerLink="/banking/transfer-money">Transfer money</button>
+    <button
+      class="btn btn-secondary push"
+      type="button"
+      (click)="toggleBase()"
+      [attr.aria-pressed]="base()"
+    >
+      <span class="knob" aria-hidden="true"></span>{{ baseLabel() }}
+    </button>
+  </div>
+
+  <!-- Bank Cards Grid -->
+  <div class="bank-grid">
+    @for (acct of accounts(); track acct.id) {
+      <div class="card bank-card">
+        <!-- Top header: Kicker, Currency Tag, Menu trigger -->
+        <div class="card-head">
+          <div class="card-kicker m-0">{{ acct.name }}</div>
+          <span class="head-right">
+            <span class="tag tag-outline tabular-nums">{{ acct.ccy }}</span>
+            <span class="menu-anchor">
+              <button
+                type="button"
+                class="menu-btn"
+                [attr.aria-expanded]="openMenuId() === acct.id"
+                [attr.aria-label]="acct.name + ' actions'"
+                (click)="toggleMenu(acct.id, $event)"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+              </button>
+
+              @if (openMenuId() === acct.id) {
+                <div class="popover popover--right" role="menu" style="width: 372px; padding: 0;">
+                  <div class="popover-head" style="margin-bottom: 0; border-bottom: 1px solid var(--color-divider); padding: var(--space-3) var(--space-3) var(--space-2);">
+                    <div class="popover-title" style="color: var(--color-neutral-600); letter-spacing: 0.11em;">{{ acct.name }}</div>
+                    <a routerLink="/banking/accounts" class="popover-count" style="color: var(--color-accent-700); font-size: 13px; text-decoration: none;">{{ acct.number }}</a>
+                  </div>
+                  <div class="popover-body popover-body--columns" style="padding: var(--space-2) 0; gap: 0;">
+                    @for (grp of menuGroups; track grp.name) {
+                      <div style="min-width: 0; padding: var(--space-1) 0;">
+                        <div class="menuhead" style="padding: var(--space-1) var(--space-3) 2px;">{{ grp.name }}</div>
+                        @for (it of grp.items; track it.label) {
+                          <button
+                            class="menuitem"
+                            type="button"
+                            role="menuitem"
+                            (click)="onItemClick(it, acct, $event)"
+                            style="border-radius: 0; padding: 5px var(--space-3);"
+                          >
+                            {{ it.label }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </span>
+          </span>
+        </div>
+
+        <!-- Balance -->
+        <div class="card-title tabular-nums">{{ formatBal(acct) }}</div>
+
+        <!-- Trend Chart -->
+        <svg viewBox="0 0 220 76" class="trend-chart" role="img" [attr.aria-label]="'Trend for ' + acct.name">
+          <line x1="0" y1="68" x2="220" y2="68" stroke="var(--color-divider)"></line>
+          <line x1="0" y1="38" x2="220" y2="38" stroke="var(--color-divider)" stroke-dasharray="2 4"></line>
+          <polyline
+            [attr.points]="acct.book"
+            fill="none"
+            stroke="var(--color-accent)"
+            stroke-width="2"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          ></polyline>
+          <polyline
+            [attr.points]="acct.stmt"
+            fill="none"
+            stroke="var(--color-neutral-600)"
+            stroke-width="1.5"
+            stroke-dasharray="4 3"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          ></polyline>
+        </svg>
+
+        <!-- Months & Currency -->
+        <div class="trend-axis text-muted">
+          <span>{{ acct.fromLabel }}</span>
+          <span>{{ acct.toLabel }}</span>
+        </div>
+
+        <!-- Legend -->
+        <div class="trend-legend">
+          <span class="legend-item">
+            <span class="swatch swatch--accent"></span>
+            {{ formatSeriesLabel(acct) }}
+          </span>
+          <span class="legend-item">
+            <span class="swatch swatch--neutral"></span>
+            {{ formatStmt(acct) }}
+          </span>
+        </div>
+
+        <!-- Card Meta -->
+        <div class="card-meta">{{ formatMeta(acct) }}</div>
+      </div>
+    }
+  </div>
+
+  <!-- Mobile primary action block button -->
+  <div class="mobile-action">
+    <button class="btn btn-primary btn-block" type="button" routerLink="/banking/receive-money">Receive money</button>
+  </div>
+</div>
