@@ -304,6 +304,8 @@ The queue below is one list in card-number order. Each card names its group.
   Design: `docs/Modules.md` "School" (from line 2403). The sections to read are Service map (2454),
   Columns (2472), Endpoints (2793) and Stages (2884). Every card also carries section 5's standard
   delivery sub-tasks, and a new service needs the scaffold steps listed under H.
+- **L · Restaurant**
+  One more branch type in the single web app. Billing is the base; Tables and Kitchen are branch switches kept in `mst.Configuration` (D-39). TK-151 waits for the owner.
 - **Z · Done — waiting on the owner's test run**
   Finished cards, in ID order. A card marked `tests written, not run` needs the owner to run its
   tests (section 0.5); the owner then adds `· tests passed (owner) — date`, or moves the card back
@@ -4539,6 +4541,163 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
 
+### TK-143 · Restaurant business type, setting keys and Settings › Restaurant
+- [ ] open
+- **Issue:** [#124](https://github.com/jothi-prabaharan/Bill-Book/issues/124)
+- **Group:** L · Restaurant
+- **Lanes:** L-KERNEL, L-MST, L-WEB, L-RST-UI (new lane: `frontend/libs/restaurant/**`), L-DOC · **Depends on:** TK-136 · **Decision:** D-37, D-39, D-43
+- **Where:** `backend/shared/Shared.Kernel/Apps/App.cs` (`BusinessType`, `AddOnRules`), `Master.Entity/TableEntities/Configuration.cs`, `Master.Repository/AdminDbContext.cs` (the `Configuration` `HasData` rows), `Master.Repository/Repositories/{ConfigurationRepository,FormatSettingsRepository,TradeScopeRepository,MenuRepository}.cs`, `Shared.Kernel/Internal/{RequireBusinessTypeAttribute,EndpointGuardAudit}.cs`, `deploy/local/seed/first-branch.sh`
+- **State:** checked 1 October 2026. `BusinessType` has General, Pharma, Jewellery and School; `origin/main` marks TK-136 completed but `App.cs` still has `General` and no `Service`, so check what TK-136 really left before starting. `mst.Configuration` is a key/value table: a system default row (`OrgId` null) and a per-branch override row, `Code` up to 50 characters, seven keys seeded. `FormatSettingsRepository.Effective` already reads one with its fallback. No Restaurant setting, no switch guard.
+- **Tables:** none. Settings reuse `mst.Configuration`; do not add a table.
+- **Sub-tasks:**
+  - [ ] Add `Restaurant` to `BusinessType`, `IsDefined`, `TryParseBusinessType` and `AddOnRules.Allowed` (D-43 default: every add-on except `Pos`); extend `AddOnRulesTests`.
+  - [ ] One `RestaurantSettingKey` enum in `Shared.Kernel` (rule 7), each member with a fixed string code, and a `RequirementLevel` enum (Off, DineInOnly, Always). The keys: `restaurant.tables.enabled`, `restaurant.kitchen.enabled`, `restaurant.recipes.enabled` (switches, off); `restaurant.table.required` (`RequirementLevel`, needs tables), `restaurant.kot.required` (bool, needs kitchen), `restaurant.customer.required` (`RequirementLevel`) and `restaurant.waiter.required` (bool), which belong to billing itself and need no switch; `restaurant.serviceCharge.percent` (number, 0) and `restaurant.tips.enabled` (bool, off). Everything off and nothing required by default.
+  - [ ] Seed the system default rows with `HasData` and run `dotnet ef migrations has-pending-model-changes` for the admin context (the TK-70 trap); keys are seed data, so no new table.
+  - [ ] `RestaurantSettingsRepository` in `Master.Repository/Repositories/`: reads the effective values through the same fallback as `FormatSettingsRepository` (reuse it, do not copy), validates a write against the key's type, and returns one typed view in which a required key counts only while its switch is on. The API and the page both read that view and nothing else.
+  - [ ] `GET` and `PUT api/restaurant/settings`, an `internal/restaurant/settings` route for Sales, Inventory and Reporting, and a client in `Shared.Kernel` cached per branch (the shape of `ITaxRateProvider`).
+  - [ ] `[RequireRestaurantFeature(Tables|Kitchen|Recipes)]` returns a curated refusal when the switch is off; teach `EndpointGuardAudit` to accept it as a guard.
+  - [ ] Seed a `restaurant` permission module (view, create, edit, void), granted to Owner and Administrator, and Restaurant-only menu entries through `MenuRepository` and `TradeScopeRepository`; teach `first-branch.sh` and the seeders the new vertical.
+  - [ ] `libs/restaurant/{restaurant-core,restaurant-ui}`, lazy-loaded in `apps/web` for Restaurant branches only, with Settings › Restaurant: the nine keys, and four presets that only set the two switches (billing only, counter plus kitchen, dine-in without kitchen printing, full service).
+  - [ ] `CLAUDE.md` and the D-36 text name the new type (`L-DOC`).
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a Restaurant branch with every switch off sees billing only, turning `restaurant.tables.enabled` on makes the table endpoints answer, and `restaurant.table.required = Always` with tables off changes nothing.
+
+### TK-144 · Menu: categories, timed menus, variants, modifiers, availability, price by order type
+- [ ] open
+- **Issue:** [#125](https://github.com/jothi-prabaharan/Bill-Book/issues/125)
+- **Group:** L · Restaurant
+- **Lanes:** L-INV, L-RST-UI · **Depends on:** TK-143 · **Decision:** D-39
+- **Where:** `Inventory.Entity/TableEntities/{Item,PriceList,PriceListItem}.cs`, `Inventory.Entity/Enums/ItemProfile.cs`, `Inventory.Repository/InventoryDbContext.cs`, `PriceListsController.cs`
+- **State:** checked 1 October 2026. A dish can be an `inv.Items` row; `ItemType` is Goods or Service and `ItemProfile` Standard, Pharma or Jewellery. Nothing models categories for a menu, timed menus, portions, modifiers or a sold-out flag. Price lists exist per branch.
+- **Tables:** `inv.MenuCategories`, `inv.MenuSchedules` (days of week, from and to time), `inv.MenuItems` (item, category, station Kitchen or Bar, `IsAvailable`), `inv.ItemVariants` (Half, Full: name, price, portion factor), `inv.ModifierGroups` (minimum, maximum, required), `inv.Modifiers` (price change, optional linked item), `inv.MenuItemPrices` (price by order type). Reuse `PriceList` where it already fits and say so in Notes.
+- **Sub-tasks:**
+  - [ ] Entities, enums (`MenuStation`, `OrderType` lives in Shared.Kernel so Sales can read it) and the migration; `ItemProfile` gains `Restaurant`.
+  - [ ] `MenuRepository` in `Inventory.Repository/Repositories/`: list the menu for an order type at a time of day, flip availability, price a line with its variant and modifiers.
+  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
+  - [ ] Menu management pages and an availability toggle usable from a phone.
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a half portion lists at its own price and a sold-out item cannot be ordered.
+
+### TK-145 · Tables: floors, table master, status, merge, split, move
+- [ ] open
+- **Issue:** [#126](https://github.com/jothi-prabaharan/Bill-Book/issues/126)
+- **Group:** L · Restaurant
+- **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-143 · **Decision:** D-39
+- **Where:** `Sales.Repository/SalesDbContext.cs`, `Sales.Repository/Repositories/`
+- **State:** checked 1 October 2026. Nothing in Sales models a floor or a table.
+- **Tables:** `sal.Floors`, `sal.RestaurantTables` (code, seats, floor, status Free, Occupied, Billed or Cleaning, `MergedIntoTableId`).
+- **Sub-tasks:**
+  - [ ] Entities, enums and the migration with its RLS block.
+  - [ ] `RestaurantTableRepository`: floor and table CRUD, status changes, merge, split and move, each keeping the open order's lines.
+  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Tables)]`; all logic is in `*Repository.cs` (rule 16).
+  - [ ] A floor plan page that works at 360 px.
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** moving a table moves its open order, and a merged group bills as one.
+
+### TK-146 · Order taking: dine-in, takeaway, delivery; waiter on mobile; optional table
+- [ ] open
+- **Issue:** [#127](https://github.com/jothi-prabaharan/Bill-Book/issues/127)
+- **Group:** L · Restaurant
+- **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-144, TK-145 · **Decision:** D-39, D-40
+- **Where:** `Sales.Repository/Repositories/InvoiceRepository.cs` (`CreateFromSalesOrderAsync` is the order-to-document pattern), `Shared.Kernel` `NumberGenerator`
+- **State:** checked 1 October 2026. Sales has quotes, orders, challans and invoices but no running restaurant order.
+- **Tables:** `sal.RestaurantOrders` (number, order type, optional `TableId`, waiter user id, contact id, status Open, Billed or Cancelled), `sal.RestaurantOrderLines` (item, variant, modifiers, quantity, price, note, KOT status).
+- **Sub-tasks:**
+  - [ ] Entities, migration with RLS, and a numbering series seeded per branch.
+  - [ ] `RestaurantOrderRepository`: open, add and remove lines, change order type, move to another table. It applies the effective required rules from TK-143: a table is demanded only when tables are on and the level says so, and so on.
+  - [ ] The waiter is a user id with no foreign key; names are resolved in C# in a batch (rule 8).
+  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; the table field is checked only when the tables switch is on; all logic is in `*Repository.cs` (rule 16).
+  - [ ] Waiter pages, mobile first at 360 px; build them responsive so D-40 (tablet or phone) does not block.
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a takeaway order saves with no table, and a dine-in order is refused without one only when the effective setting requires it.
+
+### TK-147 · KOT: stations, reprint, cancel with reason, item status, kitchen display
+- [ ] open
+- **Issue:** [#128](https://github.com/jothi-prabaharan/Bill-Book/issues/128)
+- **Group:** L · Restaurant
+- **Lanes:** L-SAL, L-PRT, L-RST-UI · **Depends on:** TK-146 · **Decision:** D-39
+- **Where:** `Shared.Kernel/Printing/{DocumentTypeCatalog,PlaceholderCatalog}.cs`, `Printing.Repository/Repositories/PrintTemplateSeederRepository.cs`, `Shared.Kernel/Approvals/ApprovalEnums.cs`
+- **State:** checked 1 October 2026. `DocumentTypeCatalog` has twelve types and no KOT. Receipts and labels print through the browser at an exact paper size; there is no Electron path (`apps/desktop` is being removed).
+- **Tables:** `sal.Kots` (order, station, number, printed count), `sal.KotLines` (order line, quantity, status Sent, Preparing, Ready, Served or Cancelled, cancel reason).
+- **Sub-tasks:**
+  - [ ] Entities and migration with RLS.
+  - [ ] `KotRepository`: send an order's new lines as one ticket per station, reprint, cancel with a mandatory reason, move an item's status. A cancel after Preparing may ask the approvals engine; reuse it, do not build a second one.
+  - [ ] A `KOT` entry in `DocumentTypeCatalog`, its placeholders and a seeded 80 mm template; print through the browser with `@page` at the paper's exact size.
+  - [ ] Kitchen display page per station, refreshed by polling (SignalR needs the backplane, so it is later).
+  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Kitchen)]`; all logic is in `*Repository.cs` (rule 16).
+  - [ ] With `restaurant.kot.required` on, billing refuses an order whose lines were never sent.
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** sending an order prints one ticket per station, a cancel needs a reason, and an item moves from Sent to Ready to Served.
+
+### TK-148 · Billing at the table through the sales invoice posting
+- [ ] open
+- **Issue:** [#129](https://github.com/jothi-prabaharan/Bill-Book/issues/129)
+- **Group:** L · Restaurant
+- **Lanes:** L-SAL, L-ACC, L-PRT, L-RST-UI · **Depends on:** TK-146 · **Decision:** D-39, D-41
+- **Where:** `Sales.Repository/Repositories/InvoiceRepository.cs` (`CreateAsync`, `PostAsync`), `Sales.Entity/TableEntities/InvoiceTender.cs`, `Shared.Kernel/Tax/GstCalculator`
+- **State:** checked 1 October 2026. The invoice already posts the double entry, issues stock, takes several tenders with change, and carries `RoundOffAmount`. A POS sale is an `Invoices` row with `TransactionTypeCode = 'POS'`.
+- **Sub-tasks:**
+  - [ ] `RestaurantBillingRepository`: turn an order into a `SaveInvoiceRequest` and call `InvoiceRepository`. There is no second posting path.
+  - [ ] Split a bill (several invoices from one order, each line billed once) and merge bills (one invoice from several orders or tables).
+  - [ ] A service charge line from `restaurant.serviceCharge.percent` (GST treatment checked against `GstCalculator`), optional tips posted to a tips-payable liability account seeded in the chart, and round-off through `RoundOffAmount`.
+  - [ ] Several payment modes through `InvoiceTender`.
+  - [ ] Refuse a bill missing a field the effective settings require (table, customer, waiter, KOT sent); the billing page marks those fields from the same view.
+  - [ ] Bill printing through the invoice's print template; alcohol items are not supported until D-41 is answered (write that in Notes).
+  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a split bill posts two invoices whose totals equal the order, and a missing required table is refused.
+
+### TK-149 · Recipes, ingredient deduction on sale, wastage, food cost %
+- [ ] open
+- **Issue:** [#130](https://github.com/jothi-prabaharan/Bill-Book/issues/130)
+- **Group:** L · Restaurant
+- **Lanes:** L-INV, L-SAL, L-RST-UI · **Depends on:** TK-144, TK-148 · **Decision:** D-39
+- **Where:** `Inventory.Entity/TableEntities/ItemStock.cs`, `Inventory.Entity/Enums/StockAdjustmentReason.cs`, the guarded stock issue (`IssueStockRequest`), `Shared.Kernel/Approvals/ApprovalEnums.cs` (`StockAdjustment`)
+- **State:** checked 1 October 2026. There is no recipe or bill-of-materials code anywhere, and wastage exists only for jewellery. Quantity is one shared pool per branch; the guarded issue and the costing engine already exist.
+- **Tables:** `inv.Recipes`, `inv.RecipeLines` (ingredient item, quantity, unit), `inv.WastageEntries` (item, quantity, reason, date).
+- **Sub-tasks:**
+  - [ ] Entities and migration with RLS.
+  - [ ] `RecipeRepository`; when a dish's bill posts, issue its ingredients through the existing guarded stock issue, once per bill (a retry deducts nothing twice).
+  - [ ] `WastageRepository` with reasons as an enum, optionally approved through the existing `StockAdjustment` kind.
+  - [ ] Food cost percentage per dish and per period from the costing engine's figures.
+  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Recipes)]`; all logic is in `*Repository.cs` (rule 16).
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** selling one portion reduces each ingredient by its recipe quantity, and a rerun does not deduct twice.
+
+### TK-150 · Restaurant reports
+- [ ] open
+- **Issue:** [#131](https://github.com/jothi-prabaharan/Bill-Book/issues/131)
+- **Group:** L · Restaurant
+- **Lanes:** L-RPT, L-RST-UI · **Depends on:** TK-147, TK-148, TK-149 · **Decision:** D-39
+- **Where:** `Reporting.Repository/ReportingDbContext.cs`, the report sources, `ExcelReportWriter`, `CsvReportWriter`
+- **State:** checked 1 October 2026. 48 report sources run on one grid with Excel and CSV export.
+- **Sub-tasks:**
+  - [ ] Read models and sources for day-end, item and category sales, waiter-wise, table turnover, food cost, wastage and KOT cancellations.
+  - [ ] Hide a report whose feature switch is off, using the effective settings.
+  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the day-end report's totals equal the day's posted invoices.
+
+### TK-151 · Later: reservations, waiting list, loyalty, aggregator intake
+- [!] blocked — not in the first release; claimed only when the owner releases it (D-42 for the aggregator part)
+- **Issue:** [#132](https://github.com/jothi-prabaharan/Bill-Book/issues/132)
+- **Group:** L · Restaurant
+- **Lanes:** L-SAL, L-CUS, L-RST-UI · **Depends on:** TK-146, TK-148 · **Decision:** D-42
+- **Sub-tasks:**
+  - [ ] Reservations and a waiting list.
+  - [ ] Loyalty points on a bill.
+  - [ ] Zomato and Swiggy order intake; the scope is D-42.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the owner releases it and each part has been split into its own card.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -4584,8 +4743,13 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-34 | The audit trail: which tenant schemas get an `EditLog` in TK-118, now there are 22 rather than the 8 the design assumed? | TK-118 | **All 22** (owner, 2026-09-30): every tenant schema — RetailErp's eight, HRMS and Payroll's seven and School's eight — gets its append-only `EditLog` with RLS and the update/delete trigger, and each service's bulk statements on audited tables write their rows. TK-118 |
 | D-35 | Where does the History tab appear in TK-118? | TK-118 | **Documents and the main masters** (owner, 2026-09-30): invoices, bills, contacts, items and manual journals. Other screens take the shared component in later cards; the audit-log report covers every audited table meanwhile. TK-118 |
 | D-36 | Replace the `App` flag with a branch business type and add-ons? | TK-126 to TK-134 | **Yes** (owner, 2026-09-30): `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) plus `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling), allowed per type by `AddOnRules`; a customer may buy only Hrms or Payroll. One licence per customer, roles span types. Support tickets stay in every branch (text on Basic, calls on Pro). `apps/admin` and `apps/portal` merge into `apps/web`. Reverses D-12 and the separate-app decisions. TK-126 |
-| D-37 | Add a Restaurant business type (tables, KOT, recipes)? | — | **Open.** Not in scope until answered. |
+| D-37 | Add a Restaurant business type (tables, KOT, recipes)? | TK-143 to TK-151 | **Yes** (owner, 2026-10-01): `BusinessType` gains `Restaurant`. Billing is the base; tables, kitchen tickets and recipes are optional, see D-39. TK-143 |
 | D-38 | Which background jobs live in `Background.Worker`? | TK-137, TK-138 | **All the jobs that were their own worker projects** (owner, 2026-10-01): Notification, Costing and RateSync move in, and the new recurring billing, service reminder and savings scheme jobs join them, each its own `BackgroundService` class. The four jobs hosted inside services stay where they are for now. `RecurringBilling` is a free add-on and `SavingsScheme` (Jewellery only) is a paid one. TK-137 |
+| D-39 | How does a Restaurant branch choose what it uses? | TK-143 to TK-151 | **Billing is the base; Tables and Kitchen (KOT) are optional branch switches** (owner, 2026-10-01), not paid add-ons, so a branch can use the product for billing only. Four modes: billing only (both off), counter plus kitchen (kitchen on), dine-in without kitchen printing (tables on), full service (both on). Settings are typed keys in `mst.Configuration`, no new table, from one enum, all defaulting off with nothing required on a new Restaurant branch. A required key does nothing unless its feature switch is on; the repository refuses a bill missing a required field and the page marks the field from the same setting. Keys: `restaurant.tables.enabled`, `restaurant.kitchen.enabled`, `restaurant.recipes.enabled`, `restaurant.table.required`, `restaurant.kot.required`, `restaurant.customer.required`, `restaurant.waiter.required`, `restaurant.serviceCharge.percent`, `restaurant.tips.enabled`. TK-143 |
+| D-40 | Is the waiter's and cashier's till a tablet or a phone? | — | *Open.* Not blocking: pages are built responsive from 360 px up. Raised 2026-10-01 by TK-146 |
+| D-41 | Alcohol at a bar: excise and state VAT sit outside GST. How are they taxed and posted? | alcohol items on TK-148 | *Open.* Until answered, alcohol items are not supported. Raised 2026-10-01 by TK-148 |
+| D-42 | Aggregators (Zomato, Swiggy): order intake only, or also menu sync, status and settlement? | TK-151 (aggregator part) | *Open.* Raised 2026-10-01 by TK-151 |
+| D-43 | Does a Restaurant branch allow the paid `Pos` add-on? | TK-143 | *Open.* Billing is the base, so the default in `AddOnRules` is every add-on except `Pos`; the owner confirms. Raised 2026-10-01 by TK-143 |
 
 ---
 
