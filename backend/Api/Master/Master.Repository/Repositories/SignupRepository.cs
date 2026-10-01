@@ -85,6 +85,7 @@ public sealed class SignupRepository
                 BillingEmail = request.Email,
                 Status = TenantStatus.Provisioning,
                 PlanTier = PlanTier.Trial,
+                Kind = request.Kind ?? Master.Entity.Enums.CustomerKind.Standard,
                 DatabaseName = databaseName,
             };
             _db.Customers.Add(customer);
@@ -122,7 +123,7 @@ public sealed class SignupRepository
             CustomerId = customer.CustomerId,
             LicenseType = LicenseType.Trial,
             StartDate = today,
-            ExpiryDate = today.AddDays(TrialDays),
+            ExpiryDate = (request.Kind == Master.Entity.Enums.CustomerKind.Internal || request.Kind == Master.Entity.Enums.CustomerKind.Demo) ? DateOnly.MaxValue.AddDays(-14) : today.AddDays(TrialDays),
             MaxUsers = TrialMaxUsers,
             MaxOrganizations = TrialMaxOrganizations,
             IsActive = true,
@@ -345,3 +346,4 @@ public sealed class SignupRepository
             || await _db.Customers.AnyAsync(c => c.BillingEmail == email, ct);
     }
 }
+

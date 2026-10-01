@@ -23,6 +23,7 @@ public sealed class CustomersController : ControllerBase
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken ct)
     {
+        request.Kind = Master.Entity.Enums.CustomerKind.Standard;
         if (await _signup.EmailExistsAsync(request.Email, ct))
         {
             return BadRequest(new { message = "An account with this email already exists." });
@@ -57,3 +58,4 @@ public sealed class CustomersController : ControllerBase
         return status is null ? NotFound() : Ok(status);
     }
 }
+

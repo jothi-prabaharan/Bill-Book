@@ -27,6 +27,7 @@ public class Customer : AuditableEntity
     [MaxLength(200, ErrorMessage = "Billing email cannot exceed 200 characters.")]
     public string BillingEmail { get; set; } = null!;
 
+    public Master.Entity.Enums.CustomerKind Kind { get; set; } = Master.Entity.Enums.CustomerKind.Standard;
     public TenantStatus Status { get; set; } = TenantStatus.Provisioning;
 
     public PlanTier PlanTier { get; set; } = PlanTier.Standard;
@@ -53,3 +54,4 @@ public class Customer : AuditableEntity
     [MaxLength(50, ErrorMessage = "Database name cannot exceed 50 characters.")]
     public string DatabaseName { get; set; } = null!;
 }
+

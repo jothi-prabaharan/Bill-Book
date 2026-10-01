@@ -13,6 +13,8 @@ public class SignupRequest
     [RegularExpression("(?i)^(RetailErp|School|Hrms|Payroll)$", ErrorMessage = "App must be RetailErp, School, Hrms or Payroll.")]
     public string? App { get; set; }
 
+    public Master.Entity.Enums.CustomerKind? Kind { get; set; }
+
     // ---- Account -----------------------------------------------------------
 
     [Required(ErrorMessage = "Display name is required.")]
@@ -273,3 +275,4 @@ public class OrgContextResponse
 
     public string? Email { get; set; }
 }
+
