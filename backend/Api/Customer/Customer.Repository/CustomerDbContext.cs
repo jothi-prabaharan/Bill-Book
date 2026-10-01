@@ -11,6 +11,8 @@ public class CustomerDbContext : TenantDbContext
     {
     }
 
+    public DbSet<ServicePlan> ServicePlans => Set<ServicePlan>();
+
     public DbSet<Lead> Leads => Set<Lead>();
 
     public DbSet<Ticket> Tickets => Set<Ticket>();
@@ -40,6 +42,8 @@ public class CustomerDbContext : TenantDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("cus");
+
+        modelBuilder.Entity<ServicePlan>().HasKey(e => e.ServicePlanId);
 
         modelBuilder.Entity<Lead>(b =>
         {
@@ -163,3 +167,5 @@ public class CustomerDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+
+

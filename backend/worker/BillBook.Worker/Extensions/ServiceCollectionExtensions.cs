@@ -8,6 +8,8 @@ using Shared.Kernel.Internal;
 // Namespaces for Notification
 using BillBook.Worker.Notification;
 using BillBook.Worker.RecurringBilling;
+using BillBook.Worker.ServiceReminders;
+using Customer.Repository;
 using RecurringBilling.Repository;
 using BillBook.Worker.Notification.Consumers;
 using BillBook.Worker.Notification.Email;
@@ -157,11 +159,30 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
         });
         services.AddHostedService<RecurringBillingWorker>();
+
+        services.AddDbContext<CustomerDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(tenantDatabase);
+            options.AddInterceptors(
+                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
+                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
+        });
+
+        services.AddDbContext<Master.Repository.ContactsDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(tenantDatabase);
+            options.AddInterceptors(
+                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
+                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
+        });
+        services.AddHostedService<ServiceReminderWorker>();
         services.AddHttpClient();
 
         return services;
     }
 }
+
+
 
 
 

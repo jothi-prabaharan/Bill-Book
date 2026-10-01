@@ -4502,15 +4502,15 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a due schedule creates one invoice, and a rerun creates none.
 
 ### TK-140 · Service plans and customer reminders
-- [~] working (Antigravity) - since 2026-10-01
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#121](https://github.com/jothi-prabaharan/Bill-Book/issues/121)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-CUS, L-SAL, L-WEB · **Depends on:** TK-139 · **Decision:** D-38
 - **Sub-tasks:**
-  - [ ] A plan per customer, optionally per item or asset: interval, start and end date, lead days, next due date, status (active, paused, ended). Completing a service moves the next due date.
-  - [ ] `ServiceReminderWorker` emails the customer through Notification's `EmailRequestHandler` once per plan and due date, and skips unsubscribed or address-less contacts.
-  - [ ] A "Services due" list on the dashboard, a per-branch reminder template, and a staff action to raise a work order. Email only; no SMS.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] A plan per customer, optionally per item or asset: interval, start and end date, lead days, next due date, status (active, paused, ended). Completing a service moves the next due date.
+  - [x] `ServiceReminderWorker` emails the customer through Notification's `EmailRequestHandler` once per plan and due date, and skips unsubscribed or address-less contacts.
+  - [x] A "Services due" list on the dashboard, a per-branch reminder template, and a staff action to raise a work order. Email only; no SMS.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a plan due in N days emails the customer once, and a rerun sends nothing.
 
 ### TK-141 · `SavingsScheme` add-on (Jewellery only, paid)
@@ -4724,6 +4724,8 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
+
 
 
 
