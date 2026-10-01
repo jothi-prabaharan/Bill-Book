@@ -85,6 +85,7 @@ builder.Services.AddFileStorage(builder.Configuration);
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.
 builder.Services.AddScoped<SalesSeederRepository>();
 builder.Services.AddScoped<RestaurantOrderRepository>();
+builder.Services.AddScoped<KotRepository>();
 builder.Services.AddScoped<QuoteRepository>();
 builder.Services.AddScoped<SalesOrderRepository>();
 builder.Services.AddScoped<InvoiceRepository>();
@@ -351,6 +352,7 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
 
 
 

@@ -102,6 +102,8 @@ public class SalesDbContext : TenantDbContext
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
     public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
     public DbSet<RestaurantOrderDetail> RestaurantOrderDetails => Set<RestaurantOrderDetail>();
+    public DbSet<Kot> Kots => Set<Kot>();
+    public DbSet<KotLine> KotLines => Set<KotLine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -448,5 +450,6 @@ public class SalesDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+
 
 
