@@ -53,6 +53,10 @@ Whenever an assistant or user requests a task status report, it **must** strictl
   owner orders a renumber, and a renumber updates every reference in the repository in one commit.
 
 
+### 0.1a The Golden Rule: Commit your claim FIRST
+
+**Before you start writing code for a task, you MUST change its status to `- [~] working (AgentName) - since YYYY-MM-DD` and commit this status update to `main`.** This working status commit signals to other agents that the task is claimed and prevents parallel collision.
+
 ### 0.2 Working in parallel
 
 Two agents can't edit the same files at once. **Lanes** make sure they don't (section 1). Each
@@ -4498,7 +4502,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a due schedule creates one invoice, and a rerun creates none.
 
 ### TK-140 · Service plans and customer reminders
-- [ ] open
+- [~] working (Antigravity) - since 2026-10-01
 - **Issue:** [#121](https://github.com/jothi-prabaharan/Bill-Book/issues/121)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-CUS, L-SAL, L-WEB · **Depends on:** TK-139 · **Decision:** D-38
@@ -4720,6 +4724,8 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
+
 
 
 
