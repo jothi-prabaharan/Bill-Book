@@ -294,3 +294,4 @@ public static class EndpointGuardAudit
                 .Concat(member.GetCustomAttributes<HttpMethodAttribute>(inherit: true)
                     .Select(h => h.Template ?? string.Empty)));
 }
+

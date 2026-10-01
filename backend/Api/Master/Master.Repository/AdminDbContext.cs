@@ -724,7 +724,7 @@ public class AdminDbContext : DbContext
         "claims",
 
         // H10, H11 (TK-57, TK-58).
-        "recruitment", "performance",
+        "recruitment", "performance", "restaurant",
 
         // Project accounting (TK-104). RetailErp's, but granted with fixed ids
         // (see FixedGrantModules) so no existing grant is renumbered.
@@ -792,6 +792,7 @@ public class AdminDbContext : DbContext
         "contacts" => (BusinessType.General, AddOn.Crm),
         "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => (BusinessType.School, AddOn.None),
         "crm" => (null, AddOn.Crm),
+        "restaurant" => (BusinessType.Restaurant, AddOn.None),
         _ => (BusinessType.General, AddOn.None),
     };
 
@@ -802,6 +803,7 @@ public class AdminDbContext : DbContext
         "hrm" or "leave" or "claims" or "recruitment" or "performance" => App.Hrms,
         "attendance" => App.Hrms | App.School,
         "contacts" => App.RetailErp | App.School,
+        "restaurant" => App.RetailErp,
         "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => App.School,
         "payroll" => App.Payroll,
         _ => App.RetailErp,
@@ -1154,3 +1156,5 @@ public class AdminDbContext : DbContext
             || (g == "*.view" && permission.Code.EndsWith(".view", StringComparison.Ordinal))
             || (g == permission.Module && permission.PermissionId < ExtraPermissions[0].PermissionId));
 }
+
+

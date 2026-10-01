@@ -6,7 +6,10 @@
     "target": "ES2022",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022", "dom"],
+    "lib": [
+      "ES2022",
+      "dom"
+    ],
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -25,38 +28,78 @@
       "@bill-book/admission-core": [
         "libs/admission/admission-core/src/index.ts"
       ],
-      "@bill-book/admission-ui": ["libs/admission/admission-ui/src/index.ts"],
-      "@bill-book/api-client": ["libs/shared/api-client/src/index.ts"],
-      "@bill-book/app-shell": ["libs/app-shell/src/index.ts"],
-      "@bill-book/approvals": ["libs/approvals/src/index.ts"],
-      "@bill-book/auth": ["libs/shared/auth/src/index.ts"],
-      "@bill-book/claims-core": ["libs/claims/claims-core/src/index.ts"],
-      "@bill-book/claims-ui": ["libs/claims/claims-ui/src/index.ts"],
+      "@bill-book/admission-ui": [
+        "libs/admission/admission-ui/src/index.ts"
+      ],
+      "@bill-book/api-client": [
+        "libs/shared/api-client/src/index.ts"
+      ],
+      "@bill-book/app-shell": [
+        "libs/app-shell/src/index.ts"
+      ],
+      "@bill-book/approvals": [
+        "libs/approvals/src/index.ts"
+      ],
+      "@bill-book/auth": [
+        "libs/shared/auth/src/index.ts"
+      ],
+      "@bill-book/claims-core": [
+        "libs/claims/claims-core/src/index.ts"
+      ],
+      "@bill-book/claims-ui": [
+        "libs/claims/claims-ui/src/index.ts"
+      ],
       "@bill-book/currency-format": [
         "libs/shared/currency-format/src/index.ts"
       ],
-      "@bill-book/customer-core": ["libs/customer/customer-core/src/index.ts"],
-      "@bill-book/customer-ui": ["libs/customer/customer-ui/src/index.ts"],
-      "@bill-book/employee-core": ["libs/employee/employee-core/src/index.ts"],
-      "@bill-book/employee-ui": ["libs/employee/employee-ui/src/index.ts"],
-      "@bill-book/facility-core": ["libs/facility/facility-core/src/index.ts"],
-      "@bill-book/facility-ui": ["libs/facility/facility-ui/src/index.ts"],
-      "@bill-book/fee-core": ["libs/fee/fee-core/src/index.ts"],
-      "@bill-book/fee-ui": ["libs/fee/fee-ui/src/index.ts"],
+      "@bill-book/customer-core": [
+        "libs/customer/customer-core/src/index.ts"
+      ],
+      "@bill-book/customer-ui": [
+        "libs/customer/customer-ui/src/index.ts"
+      ],
+      "@bill-book/employee-core": [
+        "libs/employee/employee-core/src/index.ts"
+      ],
+      "@bill-book/employee-ui": [
+        "libs/employee/employee-ui/src/index.ts"
+      ],
+      "@bill-book/facility-core": [
+        "libs/facility/facility-core/src/index.ts"
+      ],
+      "@bill-book/facility-ui": [
+        "libs/facility/facility-ui/src/index.ts"
+      ],
+      "@bill-book/fee-core": [
+        "libs/fee/fee-core/src/index.ts"
+      ],
+      "@bill-book/fee-ui": [
+        "libs/fee/fee-ui/src/index.ts"
+      ],
       "@bill-book/inventory-core": [
         "libs/inventory/inventory-core/src/index.ts"
       ],
-      "@bill-book/inventory-ui": ["libs/inventory/inventory-ui/src/index.ts"],
+      "@bill-book/inventory-ui": [
+        "libs/inventory/inventory-ui/src/index.ts"
+      ],
       "@bill-book/maintenance-contract-core": [
         "libs/maintenance-contract/maintenance-contract-core/src/index.ts"
       ],
       "@bill-book/maintenance-contract-ui": [
         "libs/maintenance-contract/maintenance-contract-ui/src/index.ts"
       ],
-      "@bill-book/master-core": ["libs/master/master-core/src/index.ts"],
-      "@bill-book/master-ui": ["libs/master/master-ui/src/index.ts"],
-      "@bill-book/payroll-core": ["libs/payroll/payroll-core/src/index.ts"],
-      "@bill-book/payroll-ui": ["libs/payroll/payroll-ui/src/index.ts"],
+      "@bill-book/master-core": [
+        "libs/master/master-core/src/index.ts"
+      ],
+      "@bill-book/master-ui": [
+        "libs/master/master-ui/src/index.ts"
+      ],
+      "@bill-book/payroll-core": [
+        "libs/payroll/payroll-core/src/index.ts"
+      ],
+      "@bill-book/payroll-ui": [
+        "libs/payroll/payroll-ui/src/index.ts"
+      ],
       "@bill-book/performance-core": [
         "libs/performance/performance-core/src/index.ts"
       ],
@@ -69,8 +112,12 @@
       "@bill-book/preventive-ui": [
         "libs/preventive/preventive-ui/src/index.ts"
       ],
-      "@bill-book/purchase-core": ["libs/purchase/purchase-core/src/index.ts"],
-      "@bill-book/purchase-ui": ["libs/purchase/purchase-ui/src/index.ts"],
+      "@bill-book/purchase-core": [
+        "libs/purchase/purchase-core/src/index.ts"
+      ],
+      "@bill-book/purchase-ui": [
+        "libs/purchase/purchase-ui/src/index.ts"
+      ],
       "@bill-book/recruitment-core": [
         "libs/recruitment/recruitment-core/src/index.ts"
       ],
@@ -80,9 +127,15 @@
       "@bill-book/reporting-core": [
         "libs/reporting/reporting-core/src/index.ts"
       ],
-      "@bill-book/reporting-ui": ["libs/reporting/reporting-ui/src/index.ts"],
-      "@bill-book/sales-core": ["libs/sales/sales-core/src/index.ts"],
-      "@bill-book/sales-ui": ["libs/sales/sales-ui/src/index.ts"],
+      "@bill-book/reporting-ui": [
+        "libs/reporting/reporting-ui/src/index.ts"
+      ],
+      "@bill-book/sales-core": [
+        "libs/sales/sales-core/src/index.ts"
+      ],
+      "@bill-book/sales-ui": [
+        "libs/sales/sales-ui/src/index.ts"
+      ],
       "@bill-book/settings-api-clients": [
         "libs/settings/api-clients/src/index.ts"
       ],
@@ -92,7 +145,9 @@
       "@bill-book/settings-approval-workflows": [
         "libs/settings/approval-workflows/src/index.ts"
       ],
-      "@bill-book/settings-audit-log": ["libs/settings/audit-log/src/index.ts"],
+      "@bill-book/settings-audit-log": [
+        "libs/settings/audit-log/src/index.ts"
+      ],
       "@bill-book/settings-configuration": [
         "libs/settings/configuration/src/index.ts"
       ],
@@ -114,38 +169,65 @@
       "@bill-book/settings-print-templates": [
         "libs/settings/print-templates/src/index.ts"
       ],
-      "@bill-book/settings-roles": ["libs/settings/roles/src/index.ts"],
+      "@bill-book/settings-roles": [
+        "libs/settings/roles/src/index.ts"
+      ],
       "@bill-book/settings-shared-routes": [
         "libs/settings/shared-routes/src/index.ts"
       ],
-      "@bill-book/settings-smtp": ["libs/settings/smtp/src/index.ts"],
-      "@bill-book/settings-users": ["libs/settings/users/src/index.ts"],
+      "@bill-book/settings-smtp": [
+        "libs/settings/smtp/src/index.ts"
+      ],
+      "@bill-book/settings-users": [
+        "libs/settings/users/src/index.ts"
+      ],
       "@bill-book/student-attendance-core": [
         "libs/student-attendance/student-attendance-core/src/index.ts"
       ],
       "@bill-book/student-attendance-ui": [
         "libs/student-attendance/student-attendance-ui/src/index.ts"
       ],
-      "@bill-book/student-core": ["libs/student/student-core/src/index.ts"],
-      "@bill-book/student-ui": ["libs/student/student-ui/src/index.ts"],
-      "@bill-book/theming": ["libs/shared/theming/src/index.ts"],
+      "@bill-book/student-core": [
+        "libs/student/student-core/src/index.ts"
+      ],
+      "@bill-book/student-ui": [
+        "libs/student/student-ui/src/index.ts"
+      ],
+      "@bill-book/theming": [
+        "libs/shared/theming/src/index.ts"
+      ],
       "@bill-book/time-leave-core": [
         "libs/time-leave/time-leave-core/src/index.ts"
       ],
       "@bill-book/time-leave-ui": [
         "libs/time-leave/time-leave-ui/src/index.ts"
       ],
-      "@bill-book/ui-components": ["libs/shared/ui-components/src/index.ts"],
+      "@bill-book/ui-components": [
+        "libs/shared/ui-components/src/index.ts"
+      ],
       "@bill-book/work-order-core": [
         "libs/work-order/work-order-core/src/index.ts"
       ],
       "@bill-book/work-order-ui": [
         "libs/work-order/work-order-ui/src/index.ts"
       ],
-      "@bill-book/admin-ui": ["libs/admin/admin-ui/src/index.ts"],
-      "@bill-book/portal-ui": ["libs/portal/portal-ui/src/index.ts"]
+      "@bill-book/admin-ui": [
+        "libs/admin/admin-ui/src/index.ts"
+      ],
+      "@bill-book/portal-ui": [
+        "libs/portal/portal-ui/src/index.ts"
+      ],
+      "@bill-book/restaurant-core": [
+        "libs/restaurant/restaurant-core/src/index.ts"
+      ],
+      "@bill-book/restaurant-ui": [
+        "libs/restaurant/restaurant-ui/src/index.ts"
+      ]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }
 

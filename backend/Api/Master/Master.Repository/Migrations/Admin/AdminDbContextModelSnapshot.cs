@@ -7621,11 +7621,12 @@ namespace Master.Repository.Migrations.Admin
                             Code = "dash",
                             DisplayOrder = 1,
                             Icon = "layout-dashboard",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "banking",
                             Name = "Dashboard",
                             ParentId = 105,
+                            RoutePath = "/banking/dashboard",
                             Type = "Item",
                             Version = 0u
                         },

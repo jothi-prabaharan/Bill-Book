@@ -19,6 +19,7 @@ namespace Master.Repository.Repositories;
 public static class TradeScopeRepository
 {
     private static readonly Vertical[] GeneralAndJewellery = [Vertical.General, Vertical.Jewellery];
+    private static readonly Vertical[] RestaurantOnly = [Vertical.Restaurant];
 
     /// <summary>Menu codes shown to some trades only, and which.</summary>
     public static readonly IReadOnlyDictionary<string, Vertical[]> MenuTrades =
@@ -31,3 +32,4 @@ public static class TradeScopeRepository
     public static bool ShowsMenu(string code, Vertical trade) =>
         !MenuTrades.TryGetValue(code, out Vertical[]? trades) || trades.Contains(trade);
 }
+

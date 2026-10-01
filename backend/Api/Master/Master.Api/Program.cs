@@ -120,6 +120,7 @@ builder.Services.AddScoped<OrgContextRepository>();
 builder.Services.AddScoped<ApplicationRepository>();
 builder.Services.AddScoped<OrgCurrencyRepository>();
 builder.Services.AddScoped<ConfigurationRepository>();
+builder.Services.AddScoped<RestaurantSettingsRepository>();
 builder.Services.AddScoped<FormatSettingsRepository>();
 builder.Services.AddScoped<SmtpSettingsRepository>();
 builder.Services.AddScoped<OrganizationRepository>();
@@ -342,4 +343,5 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
 

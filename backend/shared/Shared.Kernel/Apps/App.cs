@@ -18,6 +18,12 @@ public enum BusinessType
 
     /// <summary>School/educational institution branch with students, terms, exams, and fees.</summary>
     School = 4,
+
+    /// <summary>Services business (e.g. repairs, consultants).</summary>
+    Service = 5,
+
+    /// <summary>Restaurant or food service.</summary>
+    Restaurant = 6,
 }
 
 /// <summary>
@@ -82,8 +88,9 @@ public static class AddOnRules
         businessType switch
         {
             null => AddOn.Hrms | AddOn.Payroll,
-            BusinessType.School => AddOn.Hrms | AddOn.Payroll | AddOn.Crm | AddOn.FixedAssets | AddOn.ClientPortal | AddOn.Budget | AddOn.RecurringBilling,
+            BusinessType.School or BusinessType.Service => AddOn.Hrms | AddOn.Payroll | AddOn.Crm | AddOn.FixedAssets | AddOn.ClientPortal | AddOn.Budget | AddOn.RecurringBilling,
             BusinessType.General or BusinessType.Pharma => AddOn.All & ~AddOn.SavingsScheme,
+            BusinessType.Restaurant => AddOn.All & ~AddOn.SavingsScheme & ~AddOn.Pos,
             BusinessType.Jewellery => AddOn.All,
             _ => AddOn.None,
         };
@@ -111,7 +118,7 @@ public static class AddOnRules
     /// Returns true if <paramref name="businessType"/> is a defined <see cref="BusinessType"/> value.
     /// </summary>
     public static bool IsDefined(BusinessType businessType) =>
-        businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.School;
+        businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.School or BusinessType.Service or BusinessType.Restaurant;
 
     /// <summary>
     /// Parses a string into a <see cref="BusinessType"/>.
@@ -238,5 +245,6 @@ public static class AppRules
         return Enum.TryParse(value.Trim(), ignoreCase: true, out app) && IsSingle(app);
     }
 }
+
 
 

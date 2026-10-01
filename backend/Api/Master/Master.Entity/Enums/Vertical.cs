@@ -18,4 +18,8 @@ public enum Vertical
 
     /// <summary>School/educational institution (aligned with BusinessType.School).</summary>
     School = 4,
+
+    Service = 5,
+
+    Restaurant = 6,
 }

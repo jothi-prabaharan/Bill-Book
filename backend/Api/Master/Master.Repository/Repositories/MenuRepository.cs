@@ -223,7 +223,7 @@ public sealed class MenuRepository
         // 5. Retail verticals (General, Pharma, Jewellery) match general retail menus.
         if (menuType == BusinessType.General)
         {
-            return branchType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery;
+            return branchType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant;
         }
 
         // 6. School vertical matches school menus.
@@ -257,3 +257,4 @@ public sealed class MenuRepository
         public List<string> AllowedActions { get; init; } = [];
     }
 }
+

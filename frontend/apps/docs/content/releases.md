@@ -31,6 +31,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Restaurant Mode:** You can now configure branches as restaurant types with support for kitchen tickets (KOT) and tables. Head to Settings > Restaurant to configure modes (Billing Only, Counter + Kitchen, Dine-in, Full Service).
 ### Added
 - A branch can now be configured with a specific business type (General, Pharma, Jewellery, School) and modular add-ons (HRMS, Payroll, POS, CRM, etc.), governing which features are available to it.
 
@@ -453,6 +454,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Restaurant Mode:** You can now configure branches as restaurant types with support for kitchen tickets (KOT) and tables. Head to Settings > Restaurant to configure modes (Billing Only, Counter + Kitchen, Dine-in, Full Service).
 ### Added
 - A branch can now be configured with a specific business type (General, Pharma, Jewellery, School) and modular add-ons (HRMS, Payroll, POS, CRM, etc.), governing which features are available to it.
 
@@ -468,6 +470,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 Semantic versioning. **Major** for a breaking change to the API or data model, **minor** for new capability, **patch** for fixes.
 
 Releases are cut from `main`; the version in `package.json` and the heading here must match.
+
 
 
 

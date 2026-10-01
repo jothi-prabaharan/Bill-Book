@@ -294,6 +294,7 @@ public static class MenuSeed
         new Menu { MenuId = 1132, ParentId = 123, Type = MenuType.Item, Code = "r-project-time-by-user", Name = "Project Time by User", Icon = "clock", Module = "reports", RoutePath = "/reports/project-time-by-user", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
         // ---- Approvals (TK-103): what waits on the signed-in user, across RetailErp's services ----
         new Menu { MenuId = 14, ParentId = null, Type = MenuType.Rail, Code = "approvals", Name = "Approvals", Icon = "check-circle", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 14, IsActive = true },
+        new Menu { MenuId = 124, ParentId = 15, Type = MenuType.Group, Code = "restaurant-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 122, ParentId = 14, Type = MenuType.Group, Code = "approvals-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1126, ParentId = 122, Type = MenuType.Item, Code = "inbox", Name = "Waiting for me", Icon = "inbox", Module = null, RoutePath = "/approvals", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
     ];
@@ -800,3 +801,4 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 478, MenuId = 1139, PermissionCode = "settings.view", Action = "view", Module = "settings" },
     ];
 }
+
