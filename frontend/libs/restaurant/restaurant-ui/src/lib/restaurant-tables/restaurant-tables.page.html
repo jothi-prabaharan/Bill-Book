@@ -1,0 +1,20 @@
+<div class="p-4">
+  <h1 class="text-xl font-bold mb-4">Restaurant Tables</h1>
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div *ngFor="let table of tables" 
+         class="p-6 rounded-lg text-center cursor-pointer font-bold text-lg shadow-sm border border-gray-200"
+         [ngClass]="{
+           'bg-green-100 text-green-800': table.status === 1,
+           'bg-red-100 text-red-800': table.status === 2,
+           'bg-yellow-100 text-yellow-800': table.status === 3
+         }"
+         tabindex="0"
+         (click)="updateStatus(table)"
+         (keyup.enter)="updateStatus(table)">
+      {{table.number}}
+      <div class="text-xs font-normal mt-2 opacity-75">
+        Capacity: {{table.capacity}}
+      </div>
+    </div>
+  </div>
+</div>

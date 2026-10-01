@@ -37,6 +37,7 @@ public class InventoryDbContext : TenantDbContext
     public DbSet<ModifierGroup> ModifierGroups => Set<ModifierGroup>();
     public DbSet<Modifier> Modifiers => Set<Modifier>();
     public DbSet<MenuItemPrice> MenuItemPrices => Set<MenuItemPrice>();
+    public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
 
     public DbSet<ItemBarcode> ItemBarcodes => Set<ItemBarcode>();
 
@@ -870,6 +871,9 @@ public class InventoryDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+
+
+
 
 
 

@@ -92,6 +92,7 @@ builder.Services.AddScoped<ItemRepository>();
 builder.Services.AddScoped<CostingRepository>();
 builder.Services.AddScoped<StockRepository>();
 builder.Services.AddScoped<MenuRepository>();
+builder.Services.AddScoped<TableRepository>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so an item code is allocated inside the
@@ -174,5 +175,6 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
 
 
