@@ -46,6 +46,9 @@ public class InventoryDbContext : TenantDbContext
     public DbSet<PriceListItem> PriceListItems => Set<PriceListItem>();
 
     public DbSet<ItemStock> ItemStock => Set<ItemStock>();
+    public DbSet<Recipe> Recipes => Set<Recipe>();
+    public DbSet<RecipeLine> RecipeLines => Set<RecipeLine>();
+    public DbSet<WastageEntry> WastageEntries => Set<WastageEntry>();
 
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
 
@@ -871,6 +874,7 @@ public class InventoryDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+
 
 
 

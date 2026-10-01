@@ -72,6 +72,8 @@ builder.Services.AddScoped<ItemCategoryRepository>();
 builder.Services.AddScoped<MetalPurityRepository>();
 builder.Services.AddScoped<InventorySeederRepository>();
 builder.Services.AddScoped<StockAdjustmentRepository>();
+builder.Services.AddScoped<RecipeRepository>();
+builder.Services.AddScoped<WastageRepository>();
 
 // Approval chains for stock adjustments (TK-102): Master resolves them, this
 // service stores the steps.
@@ -175,6 +177,7 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
 
 
 
