@@ -306,6 +306,8 @@ The queue below is one list in card-number order. Each card names its group.
   delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 - **L · Restaurant**
   One more branch type in the single web app. Billing is the base; Tables and Kitchen are branch switches kept in `mst.Configuration` (D-39). TK-151 waits for the owner.
+- **M · Customer kinds and demo customers**
+  Our own organisation's real books (Service type) and one demo customer per business type, told apart from paying customers by a kind (D-44).
 - **Z · Done — waiting on the owner's test run**
   Finished cards, in ID order. A card marked `tests written, not run` needs the owner to run its
   tests (section 0.5); the owner then adds `· tests passed (owner) — date`, or moves the card back
@@ -4698,6 +4700,55 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** the owner releases it and each part has been split into its own card.
 
+### TK-152 · Customer kinds: Standard, Internal and Demo
+- [ ] open
+- **Issue:** [#133](https://github.com/jothi-prabaharan/Bill-Book/issues/133)
+- **Group:** M · Customer kinds and demo customers
+- **Lanes:** L-MST, L-WEB, L-DOC · **Depends on:** — · **Decision:** D-44
+- **Where:** `Master.Entity/TableEntities/Customer.cs`, `Master.Entity/Enums/{TenantStatus,LicenseType}.cs`, `Master.Repository/Repositories/SignupRepository.cs`, `Master.Api/Controllers/{AdminCustomersController,CustomersController}.cs`
+- **State:** checked 1 October 2026. A customer has a status and a plan tier but no kind: a paying signup, an operator-created customer and the bootstrap customer look the same. Licences expire and the licence claims in the token refuse an expired customer.
+- **Sub-tasks:**
+  - [ ] `CustomerKind` enum (Standard, Internal, Demo) in `Master.Entity/Enums`, a `Kind` column defaulting to Standard, and the migration (admin context); existing rows stay Standard.
+  - [ ] Public signup and the retry flow always make Standard. Only a platform operator (`platform.edit`) can create Internal or Demo, through `SignupRepository`.
+  - [ ] Internal and Demo licences never expire and never raise a licence or billing reminder; check every place that reads `ExpiryDate` or the licence status.
+  - [ ] The admin customer list shows the kind and filters by it.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a signup creates a Standard customer, an operator can create the other two, and neither of those is ever expired or billed.
+
+### TK-153 · Internal customer: our own organisation, Service business type
+- [ ] open
+- **Issue:** [#134](https://github.com/jothi-prabaharan/Bill-Book/issues/134)
+- **Group:** M · Customer kinds and demo customers
+- **Lanes:** L-MST, L-DOC · **Depends on:** TK-152, TK-136 · **Decision:** D-44
+- **Where:** `Master.Api/Services/DatabaseMigrationService.cs` (`BootstrapFirstOperatorAsync`), `deploy/local/seed/first-branch.sh`, `Master.Api/appsettings*.json`
+- **State:** checked 1 October 2026. The bootstrap creates one customer (id and branch `00000000-0000-0000-0000-000000000001`, code `0000000001`, branch `HO`, Elite, ten years) only while `mst.Users` is empty, named from `Bootstrap:CompanyName`; its branch has no business type chosen, and `first-branch.sh` seeds it as `General`. That customer is the owner's own company, so it becomes the Internal customer rather than a second one.
+- **Sub-tasks:**
+  - [ ] The bootstrap customer is created with kind Internal and its `HO` branch with business type `Service`.
+  - [ ] Its add-ons come from configuration (`Bootstrap:InternalAddOns`, none by default) and are checked against `AddOnRules` for `Service`.
+  - [ ] A real licence with no expiry, so the customer never lapses (TK-152).
+  - [ ] An install that already has a bootstrap customer converts it to Internal and sets the branch type once, and creates nothing a second time.
+  - [ ] `first-branch.sh` and the seeders pass the branch's real business type instead of `General`.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a fresh install has one Internal customer with a Service branch, a second start creates nothing, and an older install's first customer becomes Internal.
+
+### TK-154 · Demo customers: one per business type, master data only
+- [ ] open
+- **Issue:** [#135](https://github.com/jothi-prabaharan/Bill-Book/issues/135)
+- **Group:** M · Customer kinds and demo customers
+- **Lanes:** L-MST, L-WEB · **Depends on:** TK-152, TK-136, TK-143 · **Decision:** D-44, D-45
+- **Where:** `Master.Repository/Repositories/{SignupRepository,OrganizationRepository}.cs` (`ITenantSeeder`), `Master.Api/Services/DatabaseMigrationService.cs`, `AdminCustomersController`, `deploy/local/seed/first-branch.sh`
+- **State:** checked 1 October 2026. Nothing creates a demo or test customer. A branch is seeded by `ITenantSeeder` through each service's `internal/seed/organization`; the bootstrap customer is the only one made without signup.
+- **Sub-tasks:**
+  - [ ] `DemoCustomerRepository`: for each business type (Retail, Pharma, Jewellery, School, Service, Restaurant) create one Demo customer with fixed code and ids, one branch of that type with the add-ons the type allows switched on (`AddOnRules`), and an owner user. Idempotent: a second run adds only what is missing.
+  - [ ] Seed each branch through the existing seeders so it has the chart of accounts, tax rates, units, numbering series, reports and print templates. **Master data only: no items, contacts or documents** (owner, 2026-10-01).
+  - [ ] An operator action on the admin customer screen, and an optional `Bootstrap:SeedDemoCustomers` switch (off by default), so a production install never gets them by accident.
+  - [ ] Demo owner logins follow D-45; no password is committed to source.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** running it twice leaves six Demo customers, each branch has its business type and the right masters, and none has a transaction.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -4750,6 +4801,8 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-41 | Alcohol at a bar: excise and state VAT sit outside GST. How are they taxed and posted? | alcohol items on TK-148 | *Open.* Until answered, alcohol items are not supported. Raised 2026-10-01 by TK-148 |
 | D-42 | Aggregators (Zomato, Swiggy): order intake only, or also menu sync, status and settlement? | TK-151 (aggregator part) | *Open.* Raised 2026-10-01 by TK-151 |
 | D-43 | Does a Restaurant branch allow the paid `Pos` add-on? | TK-143 | *Open.* Billing is the base, so the default in `AddOnRules` is every add-on except `Pos`; the owner confirms. Raised 2026-10-01 by TK-143 |
+| D-44 | Which kinds of customer are there? | TK-152 to TK-154 | **Three kinds** (owner, 2026-10-01): Standard (paying, from signup or created by an operator), **Internal** (our own organisation, real books, business type Service) and **Demo** (one per business type for testing and demos, master data only, no transactions). The Internal customer is the existing bootstrap customer. TK-152 |
+| D-45 | Demo customers: who signs in, with what, and can they be reset? | TK-154 | *Open.* Default until answered: each Demo owner is created with no password, as the bootstrap does today, and signs in through forgot-password; no password is committed to source. Also open: a way to reset a demo back to empty masters, a plan and licence for them (default Elite, no expiry), and whether an HRMS-only and a Payroll-only demo customer are wanted. Raised 2026-10-01 by TK-154 |
 
 ---
 
