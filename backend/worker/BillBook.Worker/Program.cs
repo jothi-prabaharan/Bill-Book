@@ -6,6 +6,7 @@ using Serilog;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 using BillBook.Worker;
+using BillBook.Worker.Extensions;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -49,6 +50,7 @@ try
             });
 
             services.AddHostedService<BackgroundWorkerService>();
+            services.AddBackgroundJobs();
         })
         .Build();
 
@@ -62,3 +64,4 @@ finally
 {
     Log.CloseAndFlush();
 }
+

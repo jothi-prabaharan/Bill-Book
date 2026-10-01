@@ -4459,15 +4459,15 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** no code names `General` as a business type or the `App` enum, and the solution builds with `-warnaserror`.
 
 ### TK-137 · `Background.Worker`: one host, one `BackgroundService` class per job
-- [ ] open
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#118](https://github.com/jothi-prabaharan/Bill-Book/issues/118)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-KERNEL, L-NTF · **Depends on:** — · **Decision:** D-38
 - **Sub-tasks:**
-  - [ ] New `backend/worker/Background.Worker`, registered in `Bill-Book.sln`, with `AddBackgroundJobs` and one folder per area.
-  - [ ] Per-job on/off switches in configuration (`Workers:<Job>:Enabled`).
-  - [ ] A base class that walks the branches with `ITenantEnumerator`, one scope per branch with its tenant set (the `PaymentReminderWorker` pattern), plus a guarded-claim helper so two replicas never run the same item.
-  - [ ] Each job catches its own failures and audits them through `WorkerErrorAuditor`.
+  - [x] New `backend/worker/Background.Worker`, registered in `Bill-Book.sln`, with `AddBackgroundJobs` and one folder per area.
+  - [x] Per-job on/off switches in configuration (`Workers:<Job>:Enabled`).
+  - [x] A base class that walks the branches with `ITenantEnumerator`, one scope per branch with its tenant set (the `PaymentReminderWorker` pattern), plus a guarded-claim helper so two replicas never run the same item.
+  - [x] Each job catches its own failures and audits them through `WorkerErrorAuditor`.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** the host runs with one job enabled and the others stay idle.
 
@@ -4720,6 +4720,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 
