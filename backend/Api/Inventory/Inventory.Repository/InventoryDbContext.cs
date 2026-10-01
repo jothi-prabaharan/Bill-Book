@@ -30,6 +30,13 @@ public class InventoryDbContext : TenantDbContext
     public DbSet<ItemJewelleryDetails> ItemJewelleryDetails => Set<ItemJewelleryDetails>();
 
     public DbSet<ItemPharmaDetails> ItemPharmaDetails => Set<ItemPharmaDetails>();
+    public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
+    public DbSet<MenuSchedule> MenuSchedules => Set<MenuSchedule>();
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+    public DbSet<ItemVariant> ItemVariants => Set<ItemVariant>();
+    public DbSet<ModifierGroup> ModifierGroups => Set<ModifierGroup>();
+    public DbSet<Modifier> Modifiers => Set<Modifier>();
+    public DbSet<MenuItemPrice> MenuItemPrices => Set<MenuItemPrice>();
 
     public DbSet<ItemBarcode> ItemBarcodes => Set<ItemBarcode>();
 
@@ -288,6 +295,64 @@ public class InventoryDbContext : TenantDbContext
             });
         });
 
+
+        modelBuilder.Entity<MenuItem>(b =>
+        {
+            b.HasKey(e => e.MenuItemId);
+            b.Property(e => e.MenuItemId).ValueGeneratedNever();
+
+            b.HasOne<Item>()
+                .WithOne()
+                .HasForeignKey<MenuItem>(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            b.HasOne<MenuCategory>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuCategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne<MenuSchedule>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuScheduleId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ItemVariant>(b =>
+        {
+            b.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ModifierGroup>(b =>
+        {
+            b.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Modifier>(b =>
+        {
+            b.HasOne<ModifierGroup>()
+                .WithMany()
+                .HasForeignKey(e => e.ModifierGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.LinkedItemId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<MenuItemPrice>(b =>
+        {
+            b.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
         modelBuilder.Entity<ItemPharmaDetails>(b =>
         {
             b.HasKey(e => e.ItemId);
@@ -805,4 +870,7 @@ public class InventoryDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+
+
+
 

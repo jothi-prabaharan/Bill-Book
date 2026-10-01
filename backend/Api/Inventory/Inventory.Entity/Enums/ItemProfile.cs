@@ -10,4 +10,6 @@ public enum ItemProfile
     Standard = 0,
     Pharma = 1,
     Jewellery = 2,
+    Restaurant = 3,
 }
+

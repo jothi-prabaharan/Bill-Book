@@ -294,7 +294,11 @@ public static class MenuSeed
         new Menu { MenuId = 1132, ParentId = 123, Type = MenuType.Item, Code = "r-project-time-by-user", Name = "Project Time by User", Icon = "clock", Module = "reports", RoutePath = "/reports/project-time-by-user", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
         // ---- Approvals (TK-103): what waits on the signed-in user, across RetailErp's services ----
         new Menu { MenuId = 14, ParentId = null, Type = MenuType.Rail, Code = "approvals", Name = "Approvals", Icon = "check-circle", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 14, IsActive = true },
+        // ---- Restaurant ----
+        new Menu { MenuId = 15, ParentId = null, Type = MenuType.Rail, Code = "restaurant", Name = "Restaurant", Icon = "utensils", Module = "restaurant", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 15, IsActive = true },
         new Menu { MenuId = 124, ParentId = 15, Type = MenuType.Group, Code = "restaurant-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1141, ParentId = 124, Type = MenuType.Item, Code = "pos-menu", Name = "Menu", Icon = "book-open", Module = "restaurant", RoutePath = "/restaurant/menu", IsSearchable = true, CanCreate = true, SingularName = "Menu Item", DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1140, ParentId = 114, Type = MenuType.Item, Code = "rst", Name = "Restaurant settings", Icon = "utensils", Module = "settings", RoutePath = "/restaurant/settings", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 20, IsActive = true },
         new Menu { MenuId = 122, ParentId = 14, Type = MenuType.Group, Code = "approvals-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1126, ParentId = 122, Type = MenuType.Item, Code = "inbox", Name = "Waiting for me", Icon = "inbox", Module = null, RoutePath = "/approvals", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
     ];
@@ -799,6 +803,14 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 477, MenuId = 1138, PermissionCode = "accounting.export", Action = "export", Module = "accounting" },
 
         new MenuPermission { MenuPermissionId = 478, MenuId = 1139, PermissionCode = "settings.view", Action = "view", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 479, MenuId = 1140, PermissionCode = "settings.view", Action = "view", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 480, MenuId = 1140, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 481, MenuId = 1141, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 482, MenuId = 1141, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 483, MenuId = 1141, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 484, MenuId = 1141, PermissionCode = "restaurant.void", Action = "void", Module = "restaurant" },
     ];
 }
+
+
 

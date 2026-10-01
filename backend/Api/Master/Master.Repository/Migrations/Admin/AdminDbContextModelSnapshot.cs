@@ -10117,6 +10117,73 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 15,
+                            AddOns = 0,
+                            BusinessType = "General",
+                            CanCreate = false,
+                            Code = "restaurant",
+                            DisplayOrder = 15,
+                            Icon = "utensils",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "restaurant",
+                            Name = "Restaurant",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 124,
+                            AddOns = 0,
+                            BusinessType = "General",
+                            CanCreate = false,
+                            Code = "restaurant-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 15,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1141,
+                            AddOns = 0,
+                            BusinessType = "General",
+                            CanCreate = true,
+                            Code = "pos-menu",
+                            DisplayOrder = 1,
+                            Icon = "book-open",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Menu",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/menu",
+                            SingularName = "Menu Item",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1140,
+                            AddOns = 0,
+                            BusinessType = "General",
+                            CanCreate = false,
+                            Code = "rst",
+                            DisplayOrder = 20,
+                            Icon = "utensils",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Restaurant settings",
+                            ParentId = 114,
+                            RoutePath = "/restaurant/settings",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 122,
                             AddOns = 0,
                             CanCreate = false,
@@ -14499,6 +14566,60 @@ namespace Master.Repository.Migrations.Admin
                             Module = "settings",
                             PermissionCode = "settings.view",
                             Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 479,
+                            Action = "view",
+                            MenuId = 1140,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 480,
+                            Action = "edit",
+                            MenuId = 1140,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 481,
+                            Action = "view",
+                            MenuId = 1141,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 482,
+                            Action = "create",
+                            MenuId = 1141,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 483,
+                            Action = "edit",
+                            MenuId = 1141,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 484,
+                            Action = "void",
+                            MenuId = 1141,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.void",
+                            Version = 0u
                         });
                 });
 
@@ -17345,6 +17466,96 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 271,
                             AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.view",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 272,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.create",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 273,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.edit",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 274,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.approve",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 275,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.void",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 276,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.delete",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 277,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.print",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 278,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.export",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 279,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.import",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 280,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            Code = "restaurant.AllUserData",
+                            Module = "restaurant",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 281,
+                            AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.view",
                             Module = "projects",
@@ -17352,7 +17563,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 272,
+                            PermissionId = 282,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.create",
@@ -17361,7 +17572,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 273,
+                            PermissionId = 283,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.edit",
@@ -17370,7 +17581,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 274,
+                            PermissionId = 284,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.approve",
@@ -17379,7 +17590,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 275,
+                            PermissionId = 285,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.void",
@@ -17388,7 +17599,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 276,
+                            PermissionId = 286,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.delete",
@@ -17397,7 +17608,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 277,
+                            PermissionId = 287,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.print",
@@ -17406,7 +17617,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 278,
+                            PermissionId = 288,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.export",
@@ -17415,7 +17626,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 279,
+                            PermissionId = 289,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.import",
@@ -17424,7 +17635,7 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            PermissionId = 280,
+                            PermissionId = 290,
                             AddOns = 0,
                             BusinessType = "General",
                             Code = "projects.AllUserData",
@@ -19929,225 +20140,225 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            RolePermissionId = 910100271L,
-                            PermissionId = 271,
+                            RolePermissionId = 910100281L,
+                            PermissionId = 281,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200271L,
-                            PermissionId = 271,
+                            RolePermissionId = 910200281L,
+                            PermissionId = 281,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300271L,
-                            PermissionId = 271,
+                            RolePermissionId = 910300281L,
+                            PermissionId = 281,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910400271L,
-                            PermissionId = 271,
+                            RolePermissionId = 910400281L,
+                            PermissionId = 281,
                             RoleId = 4,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910500271L,
-                            PermissionId = 271,
+                            RolePermissionId = 910500281L,
+                            PermissionId = 281,
                             RoleId = 5,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100272L,
-                            PermissionId = 272,
+                            RolePermissionId = 910100282L,
+                            PermissionId = 282,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200272L,
-                            PermissionId = 272,
+                            RolePermissionId = 910200282L,
+                            PermissionId = 282,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300272L,
-                            PermissionId = 272,
+                            RolePermissionId = 910300282L,
+                            PermissionId = 282,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100273L,
-                            PermissionId = 273,
+                            RolePermissionId = 910100283L,
+                            PermissionId = 283,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200273L,
-                            PermissionId = 273,
+                            RolePermissionId = 910200283L,
+                            PermissionId = 283,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300273L,
-                            PermissionId = 273,
+                            RolePermissionId = 910300283L,
+                            PermissionId = 283,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100274L,
-                            PermissionId = 274,
+                            RolePermissionId = 910100284L,
+                            PermissionId = 284,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200274L,
-                            PermissionId = 274,
+                            RolePermissionId = 910200284L,
+                            PermissionId = 284,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300274L,
-                            PermissionId = 274,
+                            RolePermissionId = 910300284L,
+                            PermissionId = 284,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100275L,
-                            PermissionId = 275,
+                            RolePermissionId = 910100285L,
+                            PermissionId = 285,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200275L,
-                            PermissionId = 275,
+                            RolePermissionId = 910200285L,
+                            PermissionId = 285,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300275L,
-                            PermissionId = 275,
+                            RolePermissionId = 910300285L,
+                            PermissionId = 285,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100276L,
-                            PermissionId = 276,
+                            RolePermissionId = 910100286L,
+                            PermissionId = 286,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200276L,
-                            PermissionId = 276,
+                            RolePermissionId = 910200286L,
+                            PermissionId = 286,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300276L,
-                            PermissionId = 276,
+                            RolePermissionId = 910300286L,
+                            PermissionId = 286,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100277L,
-                            PermissionId = 277,
+                            RolePermissionId = 910100287L,
+                            PermissionId = 287,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200277L,
-                            PermissionId = 277,
+                            RolePermissionId = 910200287L,
+                            PermissionId = 287,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300277L,
-                            PermissionId = 277,
+                            RolePermissionId = 910300287L,
+                            PermissionId = 287,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100278L,
-                            PermissionId = 278,
+                            RolePermissionId = 910100288L,
+                            PermissionId = 288,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200278L,
-                            PermissionId = 278,
+                            RolePermissionId = 910200288L,
+                            PermissionId = 288,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300278L,
-                            PermissionId = 278,
+                            RolePermissionId = 910300288L,
+                            PermissionId = 288,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100279L,
-                            PermissionId = 279,
+                            RolePermissionId = 910100289L,
+                            PermissionId = 289,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200279L,
-                            PermissionId = 279,
+                            RolePermissionId = 910200289L,
+                            PermissionId = 289,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300279L,
-                            PermissionId = 279,
+                            RolePermissionId = 910300289L,
+                            PermissionId = 289,
                             RoleId = 3,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910100280L,
-                            PermissionId = 280,
+                            RolePermissionId = 910100290L,
+                            PermissionId = 290,
                             RoleId = 1,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910200280L,
-                            PermissionId = 280,
+                            RolePermissionId = 910200290L,
+                            PermissionId = 290,
                             RoleId = 2,
                             Version = 0u
                         },
                         new
                         {
-                            RolePermissionId = 910300280L,
-                            PermissionId = 280,
+                            RolePermissionId = 910300290L,
+                            PermissionId = 290,
                             RoleId = 3,
                             Version = 0u
                         },
@@ -22248,6 +22459,146 @@ namespace Master.Repository.Migrations.Admin
                         {
                             RolePermissionId = 920200270L,
                             PermissionId = 270,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100271L,
+                            PermissionId = 271,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200271L,
+                            PermissionId = 271,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100272L,
+                            PermissionId = 272,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200272L,
+                            PermissionId = 272,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100273L,
+                            PermissionId = 273,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200273L,
+                            PermissionId = 273,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100274L,
+                            PermissionId = 274,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200274L,
+                            PermissionId = 274,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100275L,
+                            PermissionId = 275,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200275L,
+                            PermissionId = 275,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100276L,
+                            PermissionId = 276,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200276L,
+                            PermissionId = 276,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100277L,
+                            PermissionId = 277,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200277L,
+                            PermissionId = 277,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100278L,
+                            PermissionId = 278,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200278L,
+                            PermissionId = 278,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100279L,
+                            PermissionId = 279,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200279L,
+                            PermissionId = 279,
+                            RoleId = 2,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920100280L,
+                            PermissionId = 280,
+                            RoleId = 1,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 920200280L,
+                            PermissionId = 280,
                             RoleId = 2,
                             Version = 0u
                         },

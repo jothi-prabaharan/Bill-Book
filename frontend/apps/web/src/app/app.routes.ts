@@ -319,10 +319,18 @@ export const appRoutes: Routes = [
           import('@bill-book/reporting-ui').then((m) => m.reportingRoutes),
         data: { access: { permission: 'reports.view' } },
       },
+      {
+        path: 'restaurant',
+        loadChildren: () =>
+          import('@bill-book/restaurant-ui').then((m) => m.restaurantUiRoutes),
+        data: { access: { permission: 'restaurant.view' } },
+      },
       { path: '**', component: DashboardPage, data: { access: { signedIn: true } } },
     ],
   }),
 ];
+
+
 
 
 

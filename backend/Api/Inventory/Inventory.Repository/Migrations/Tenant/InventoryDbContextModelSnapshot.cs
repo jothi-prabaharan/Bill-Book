@@ -1024,6 +1024,276 @@ namespace Inventory.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Inventory.Entity.TableEntities.ItemVariant", b =>
+                {
+                    b.Property<long>("ItemVariantId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ItemVariantId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PortionFactor")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ItemVariantId");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("ItemVariants", "inv");
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.MenuCategory", b =>
+                {
+                    b.Property<long>("MenuCategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MenuCategoryId"));
+
+                    b.Property<string>("ColorCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("MenuCategoryId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("MenuCategories", "inv");
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.MenuItem", b =>
+                {
+                    b.Property<long>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("MenuCategoryId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("MenuScheduleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Station")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("MenuItemId");
+
+                    b.HasIndex("MenuCategoryId");
+
+                    b.HasIndex("MenuScheduleId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("MenuItems", "inv");
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.MenuItemPrice", b =>
+                {
+                    b.Property<long>("MenuItemPriceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MenuItemPriceId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("OrderType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("MenuItemPriceId");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("MenuItemPrices", "inv");
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.MenuSchedule", b =>
+                {
+                    b.Property<long>("MenuScheduleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MenuScheduleId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DaysOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("interval");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("MenuScheduleId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("MenuSchedules", "inv");
+                });
+
             modelBuilder.Entity("Inventory.Entity.TableEntities.MetalPurity", b =>
                 {
                     b.Property<long>("MetalPurityId")
@@ -1101,6 +1371,124 @@ namespace Inventory.Repository.Migrations.Tenant
                         {
                             t.HasCheckConstraint("chk_purity_factor", "\"PurityFactor\" > 0 AND \"PurityFactor\" <= 1");
                         });
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.Modifier", b =>
+                {
+                    b.Property<long>("ModifierId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ModifierId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("LinkedItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ModifierGroupId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PriceChange")
+                        .HasColumnType("numeric");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ModifierId");
+
+                    b.HasIndex("LinkedItemId");
+
+                    b.HasIndex("ModifierGroupId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("Modifiers", "inv");
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.ModifierGroup", b =>
+                {
+                    b.Property<long>("ModifierGroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ModifierGroupId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxChoices")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MinChoices")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ModifierGroupId");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("ModifierGroups", "inv");
                 });
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.PriceList", b =>
@@ -2470,6 +2858,67 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.HasOne("Inventory.Entity.TableEntities.Item", null)
                         .WithOne()
                         .HasForeignKey("Inventory.Entity.TableEntities.ItemStock", "ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.ItemVariant", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.MenuItem", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.MenuCategory", null)
+                        .WithMany()
+                        .HasForeignKey("MenuCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.Entity.TableEntities.Item", null)
+                        .WithOne()
+                        .HasForeignKey("Inventory.Entity.TableEntities.MenuItem", "MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.Entity.TableEntities.MenuSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("MenuScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.MenuItemPrice", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.Modifier", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.Item", null)
+                        .WithMany()
+                        .HasForeignKey("LinkedItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Inventory.Entity.TableEntities.ModifierGroup", null)
+                        .WithMany()
+                        .HasForeignKey("ModifierGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.ModifierGroup", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
