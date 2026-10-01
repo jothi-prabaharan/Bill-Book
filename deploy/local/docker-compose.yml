@@ -10,7 +10,7 @@
 #
 #   db        PostgreSQL
 #   services  the eight APIs, and the migrate and first-branch jobs
-#   worker    the costing worker
+#   worker    the background worker
 #   gateway   the YARP gateway
 #   web       nginx serving the four browser apps
 #   tunnel    Cloudflare Tunnel — the public address; beside web
@@ -38,7 +38,7 @@ x-backend-env: &backend-env
   # either: that returns raw database errors to callers, and this machine is
   # meant to be reachable from the internet.
   ASPNETCORE_ENVIRONMENT: SelfHosted
-  # The costing worker is a plain .NET host, which reads this name and ignores
+  # the background worker is a plain .NET host, which reads this name and ignores
   # the ASP.NET one — without it, it would think it was Production.
   DOTNET_ENVIRONMENT: SelfHosted
   # Secrets are not marked required here, because a PC that runs only the web
@@ -287,13 +287,13 @@ services:
 
   # Needs the database and, by SERVICES_HOST, Master and Accounting. Nothing
   # calls it, so it publishes no port.
-  costing-worker:
+  worker:
     <<: *service
     profiles: [worker]
-    image: billbook/costing-worker:local
+    image: billbook/worker:local
     build:
       <<: *build
-      args: { PROJECT: worker/CostingEngine.Worker, ASSEMBLY: CostingEngine.Worker }
+      args: { PROJECT: Worker/BillBook.Worker, ASSEMBLY: BillBook.Worker }
     environment: *backend-env
 
   gateway:
@@ -399,3 +399,4 @@ services:
 volumes:
   pgdata:
   files:
+

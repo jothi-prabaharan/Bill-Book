@@ -5,8 +5,13 @@ using OpenTelemetry.Trace;
 using Serilog;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Interfaces;
+using Shared.Kernel.Secrets;
+using Shared.Kernel.Internal;
 using BillBook.Worker;
 using BillBook.Worker.Extensions;
+using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -37,9 +42,19 @@ try
                     .AddRuntimeInstrumentation()
                     .AddOtlpExporter());
 
+            services.AddSingleton(TimeProvider.System);
             services.AddScoped<TenantContext>();
+            services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
+            services.AddScoped<ICurrentUser, SystemUser>();
             services.AddScoped<AuditSaveChangesInterceptor>();
             services.AddScoped<RlsConnectionInterceptor>();
+            
+            services.AddTransient<InternalKeyHandler>();
+
+            services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
+            {
+                client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+            }).AddHttpMessageHandler<InternalKeyHandler>();
 
             services.AddDbContext<TenantDbContext>((sp, options) =>
             {
@@ -49,8 +64,17 @@ try
                     sp.GetRequiredService<RlsConnectionInterceptor>());
             });
 
-            services.AddHostedService<BackgroundWorkerService>();
-            services.AddBackgroundJobs();
+            services.AddBillBookWorkerErrorAudit<TenantDbContext>();
+
+            // The master database for RateSync
+            var adminConnectionString = config.GetConnectionString("AdminDatabase") ?? "Host=localhost;Database=billbook_master;Username=postgres;Password=postgres";
+            services.AddDbContext<Master.Repository.AdminDbContext>((sp, options) =>
+            {
+                options.UseNpgsql(adminConnectionString);
+                options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
+            });
+
+            services.AddBackgroundJobs(config);
         })
         .Build();
 
@@ -64,4 +88,3 @@ finally
 {
     Log.CloseAndFlush();
 }
-

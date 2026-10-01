@@ -1,8 +1,8 @@
-# One image definition for all eleven backend services.
+# One image definition for all nine backend services.
 #
 # There is no Dockerfile per service, and that is a decision rather than an
-# omission. The seven APIs, the gateway and the three workers differ in exactly
-# one respect — which .csproj to publish — and eleven files that agree about the
+# omission. The seven APIs, the gateway and the background worker differ in exactly
+# one respect — which .csproj to publish — and nine files that agree about the
 # base image, the runtime user, the port and the health probe would be eleven
 # places to forget when any of those changes. PROJECT is the difference; nothing
 # else is.
@@ -38,7 +38,7 @@ COPY Directory.Build.props Directory.Build.targets Directory.Packages.props ./
 COPY . .
 
 # Restores only this project's graph rather than the whole solution's, which is
-# what makes eleven parallel image builds affordable.
+# what makes nine parallel image builds affordable.
 #
 # -warnaserror because the repository builds that way everywhere else; an image
 # that tolerated a warning the CI gate rejects would be a second standard.
@@ -55,7 +55,7 @@ RUN dotnet publish "${PROJECT}" \
 # The ASP.NET runtime for the workers too, not just the APIs: Shared.Kernel
 # carries a FrameworkReference to Microsoft.AspNetCore.App, so every project in
 # this solution needs it regardless of whether it serves HTTP. Using the smaller
-# `runtime` image for the three workers would fail at start rather than at build,
+# `runtime` image for the background worker would fail at start rather than at build,
 # which is the worst moment to find out.
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS runtime
 ARG ASSEMBLY
@@ -96,3 +96,4 @@ USER app
 # unused and end in a kill — dropping whatever was in flight, which for the
 # costing worker means a movement claimed and never finished.
 ENTRYPOINT ["/app/service"]
+

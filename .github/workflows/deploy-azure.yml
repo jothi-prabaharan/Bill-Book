@@ -122,8 +122,7 @@ jobs:
           - { image: reporting,      project: Api/Reporting/Reporting.Api,       assembly: Reporting.Api }
           - { image: printing,       project: Api/Printing/Printing.Api,         assembly: Printing.Api }
           - { image: gateway,        project: Gateway/Gateway.Api,               assembly: Gateway.Api }
-          - { image: costing-worker, project: worker/CostingEngine.Worker,       assembly: CostingEngine.Worker }
-          # Notification.Worker and RateSync.Worker are a .csproj and an empty
+          - { image: worker, project: Worker/BillBook.Worker, assembly: BillBook.Worker }
           # Consumers folder. Deploying them would run a host that does nothing,
           # so they are left out until they do something.
     steps:
@@ -297,3 +296,4 @@ jobs:
             swa deploy "$dir" --deployment-token "$token" --env production
             echo "Deployed $app to $site"
           done
+

@@ -4472,15 +4472,15 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the host runs with one job enabled and the others stay idle.
 
 ### TK-138 · Move the Notification, Costing and RateSync jobs into `Background.Worker`
-- [ ] open
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#119](https://github.com/jothi-prabaharan/Bill-Book/issues/119)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-NTF, L-INV, L-RATE, L-DEPS · **Depends on:** TK-137 · **Decision:** D-38
 - **Sub-tasks:**
-  - [ ] Move `PaymentReminderWorker` and the email consumer, `CostingWorker` and the ledger drain, and RateSync as separate `BackgroundService` classes.
-  - [ ] Delete `Notification.Worker`, `CostingEngine.Worker` and `RateSync.Worker`; update `Bill-Book.sln`, Dockerfiles, `deploy/azure`, `deploy/local` and CI.
-  - [ ] Business rules stay in `*Repository` classes (hard rule 16); the host references Repository projects, never Api projects.
-  - [ ] The four jobs hosted inside services (`EInvoiceRetryWorker`, `ReportScheduleWorker`, `ProvisioningWorker`, `PreventiveGenerator`) stay where they are for now.
+  - [x] Move `PaymentReminderWorker` and the email consumer, `CostingWorker` and the ledger drain, and RateSync as separate `BackgroundService` classes.
+  - [x] Delete `Notification.Worker`, `CostingEngine.Worker` and `RateSync.Worker`; update `Bill-Book.sln`, Dockerfiles, `deploy/azure`, `deploy/local` and CI.
+  - [x] Business rules stay in `*Repository` classes (hard rule 16); the host references Repository projects, never Api projects.
+  - [x] The four jobs hosted inside services (`EInvoiceRetryWorker`, `ReportScheduleWorker`, `ProvisioningWorker`, `PreventiveGenerator`) stay where they are for now.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** the solution has one worker project and no reference to the three old ones.
 
@@ -4720,6 +4720,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 

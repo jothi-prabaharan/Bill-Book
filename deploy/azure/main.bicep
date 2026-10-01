@@ -1,5 +1,5 @@
 // Bill Book on Azure: eight internal APIs, a public gateway and an always-on
-// costing worker on Container Apps; PostgreSQL Flexible Server with no public
+// background worker on Container Apps; PostgreSQL Flexible Server with no public
 // address; Key Vault, Blob Storage and Service Bus reached by managed identity;
 // the four web apps on Static Web Apps.
 //
@@ -64,7 +64,7 @@ param bootstrapOperatorEmails string = ''
 @description('Extra browser origins allowed to call the gateway, beyond the three Static Web Apps — custom domains, once they exist.')
 param extraAllowedOrigins array = []
 
-@description('Minimum replicas for the HTTP services. Zero bills nothing while idle at the cost of a cold start. The costing worker ignores this and is always one.')
+@description('Minimum replicas for the HTTP services. Zero bills nothing while idle at the cost of a cold start. The background worker ignores this and is always one.')
 @minValue(0)
 param minReplicas int = 0
 
@@ -695,13 +695,13 @@ module gateway 'modules/app.bicep' = if (deployApps) {
 module costing 'modules/app.bicep' = if (deployApps) {
   name: 'app-costing'
   params: {
-    name: 'costing-worker'
+    name: 'worker'
     location: location
     environmentId: environment.id
     identityId: identities[indexOf(identityKeys, 'costing')].id
     identityClientId: identities[indexOf(identityKeys, 'costing')].properties.clientId
     registryServer: registry.properties.loginServer
-    image: format(image, 'costing-worker')
+    image: format(image, 'worker')
     ingress: 'none'
     minReplicas: 1
     maxReplicas: 1
@@ -732,3 +732,4 @@ output sites array = [for (w, i) in webApps: {
 
 output postgresServer string = postgres.properties.fullyQualifiedDomainName
 output keyVaultName string = vault.name
+

@@ -1,4 +1,4 @@
-// One Container App. Used for the eight APIs, the gateway and the costing worker,
+// One Container App. Used for the eight APIs, the gateway and the background worker,
 // which differ only in the parameters below — so the parts they must agree on
 // (the identity wiring, the registry, the Key Vault references, the port) are
 // written once here rather than ten times in main.bicep.
@@ -19,7 +19,7 @@ param registryServer string
 param image string
 
 @allowed(['none', 'internal', 'external'])
-@description('none: no HTTP at all (the costing worker). internal: reachable only inside the environment. external: the internet.')
+@description('none: no HTTP at all (the background worker). internal: reachable only inside the environment. external: the internet.')
 param ingress string
 
 param minReplicas int = 0
@@ -134,3 +134,4 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
 }
 
 output fqdn string = hasHttp ? app.properties.configuration.ingress.fqdn : ''
+
