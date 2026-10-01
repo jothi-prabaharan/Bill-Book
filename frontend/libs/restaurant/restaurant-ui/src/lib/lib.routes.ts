@@ -6,6 +6,7 @@ import { RestaurantOrderPage } from './restaurant-order/restaurant-order.page';
 import { KitchenDisplayPage } from './kitchen-display/kitchen-display.page';
 import { RestaurantBillingPage } from './restaurant-billing/restaurant-billing.page';
 import { RestaurantRecipesPage } from './restaurant-recipes/restaurant-recipes.page';
+import { RestaurantReportsPage } from './restaurant-reports/restaurant-reports.page';
 
 export const restaurantUiRoutes: Route[] = [
   { path: 'settings', component: RestaurantSettingsPage },
@@ -14,5 +15,6 @@ export const restaurantUiRoutes: Route[] = [
   { path: 'order', component: RestaurantOrderPage },
   { path: 'kds', component: KitchenDisplayPage },
   { path: 'billing', component: RestaurantBillingPage },
-  { path: 'recipes', component: RestaurantRecipesPage }
+  { path: 'recipes', component: RestaurantRecipesPage },
+  { path: 'reports', component: RestaurantReportsPage }
 ];
