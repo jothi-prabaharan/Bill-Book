@@ -308,6 +308,8 @@ The queue below is one list in card-number order. Each card names its group.
   One more branch type in the single web app. Billing is the base; Tables and Kitchen are branch switches kept in `mst.Configuration` (D-39). TK-151 waits for the owner.
 - **M · Customer kinds and demo customers**
   Our own organisation's real books (Service type) and one demo customer per business type, told apart from paying customers by a kind (D-44).
+- **N · Electron removal, barcode and QR**
+  Drop Electron and move the till into `apps/web`; barcode and QR on printed documents, labels at an exact size, and scanning on every transaction, with a small camera popup on phones.
 - **Z · Done — waiting on the owner's test run**
   Finished cards, in ID order. A card marked `tests written, not run` needs the owner to run its
   tests (section 0.5); the owner then adds `· tests passed (owner) — date`, or moves the card back
@@ -1773,7 +1775,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] A fixed-width layout for 58 mm (32 columns) and 80 mm (48 columns) paper: header from the branch, lines, GST split,
         tender and change. `receipt-layout.ts` is pure: rows of text, no printer commands.
   - [x] Print after a successful sale, and allow a reprint (F10, marked DUPLICATE).
-  - [x] Talk to the printer through Electron (USB or serial). A browser can't.
+  - ~~[x] Talk to the printer through Electron (USB or serial). A browser can't.~~ Superseded 2026-10-01: Electron is removed and receipts print through the browser (TK-155).
   - [x] Test: `receipt-layout.spec.ts`, `esc-pos.service.spec.ts`, `receipt-printer.service.spec.ts`, and
         `PosSaleTests.The_invoice_view_carries_the_tenders_a_receipt_prints`.
   - [ ] Owner: print one sale on a real printer or an emulator listening on port 9100 (the Done-when line).
@@ -4749,6 +4751,155 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** running it twice leaves six Demo customers, each branch has its business type and the right masters, and none has a transaction.
 
+### TK-155 · Remove Electron and move the POS till into `apps/web`
+- [ ] open
+- **Issue:** [#136](https://github.com/jothi-prabaharan/Bill-Book/issues/136)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-WEB, L-DSK, L-UI, L-DEPS, L-DOC, L-POS-UI (new lane: `frontend/libs/pos/**`) · **Depends on:** — · **Decision:** owner, 2026-10-01
+- **Where:** `frontend/apps/desktop/` (`main.js`, `preload.js`, `printer.js`, `project.json`, `src/app/pos-terminal/`), `frontend/package.json`, `.vscode/launch.json`, `.gitignore`, `deploy/local/web/Dockerfile`, `frontend/libs/reporting/reporting-ui/src/lib/report-host/report-host.page.ts`
+- **State:** checked 1 October 2026. `apps/desktop` is an Electron shell around the POS till; only it can reach a USB or serial receipt printer, so `receipt-printer.service.ts` refuses to print in any other window and `esc-pos.service.ts` builds ESC/POS bytes for it. `frontend/package.json` depends on `electron` `^43.4.0`; `project.json` carries the tag `platform:electron` and a `serve` target that runs `electron`. The owner decided on 2026-10-01 to drop Electron, move the till into `apps/web`, and print receipts and labels through the browser at an exact paper size.
+- **Sub-tasks:**
+  - [ ] New `libs/pos/{pos-core,pos-ui}` mirroring the other add-on libs; move `pos-cart`, `pos-tender`, `pos-keys`, `pos-lookup`, `pos-sale`, `receipt-layout` and the terminal component, with their specs. A lazy route in `apps/web`, shown only to branches with the `Pos` add-on (menu and route guard, like the other add-ons).
+  - [ ] Receipts print through the browser: `receipt-layout` rows become HTML at 58 or 80 mm with `@page { size: 80mm auto; margin: 0 }`. Delete `esc-pos.service.*`, `receipt-printer.service.*` and every "only the desktop app can print" refusal and message.
+  - [ ] Delete `apps/desktop`, the `electron` dependency (refresh `package-lock.json` with `npm install --package-lock-only`), the "Desktop (Electron)" entry in `.vscode/launch.json`, the two Electron blocks in `.gitignore` (including `apps/desktop/release` and `apps/desktop/out`), the Dockerfile comment and the comment in `report-host.page.ts`; remove desktop's cross-origin configuration.
+  - [ ] Remove Electron and `apps/desktop` from every markdown file: `CLAUDE.md` (apps list, the ESC/POS printing rule, the portal and desktop caveat, the POS roadmap notes), `AGENTS.md`, `README.md`, `docs/Architecture.md` (including the stale "Desktop Application Shell" sections), `docs/Modules.md`, and the docs pages `overview.md`, `development.md` and `invoices.md` with `docs.manifest.ts`; add the `release-notes.md` bullet. Where an old completed card names Electron, strike the line through and point it here; never delete a card.
+  - [ ] The "five apps" wording in `CLAUDE.md`, `README.md` and the CI comments becomes the two that remain, `web` and `docs`.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** `git grep -i electron` and `git grep apps/desktop` find nothing except struck-through history notes, `web` and `docs` build, and the till posts a sale from `apps/web` (owner's run).
+
+### TK-156 · Printing: barcode and QR rendering
+- [ ] open
+- **Issue:** [#137](https://github.com/jothi-prabaharan/Bill-Book/issues/137)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-PRT, L-KERNEL, L-DEPS · **Depends on:** — · **Decision:** D-46
+- **Where:** `Printing.Repository/Repositories/{QrImagesRepository,PrintSubstitutionRepository,PrintRendererRepository}.cs`, `Shared.Kernel/Printing/{PlaceholderCatalog,PrintEnums}.cs`, `Directory.Packages.props`
+- **State:** checked 1 October 2026. `PlaceholderCatalog` declares one image tag, `EInvoice.QrImage` of type `PlaceholderType.QrCode`; `PrintSubstitutionRepository` hands its text to `QrImagesRepository.Img`, which draws a PNG with QRCoder 1.8.0 and inlines it as a data URI. There is no barcode type and no generic document code.
+- **Sub-tasks:**
+  - [ ] `PlaceholderType.Barcode` and a `BarcodeImagesRepository` for Code128 and EAN-13, one MIT library pinned in `Directory.Packages.props` (D-46), output as an inline image.
+  - [ ] Generic placeholders `Doc.BarcodeImage` (the document number) and `Doc.QrImage`, in the template editor's palette; the sanitiser still refuses a template's own `data:` URIs.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a template with a barcode tag renders a Code128 image for the text it is given.
+
+### TK-157 · Document barcode and QR on every printable type
+- [ ] open
+- **Issue:** [#138](https://github.com/jothi-prabaharan/Bill-Book/issues/138)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-SAL, L-PUR, L-ACC, L-PRT · **Depends on:** TK-156
+- **Where:** `Sales.Repository/Repositories/Printing/InvoicePrintRepository.cs`, `Shared.Kernel/Printing/DocumentTypeCatalog.cs`, `Printing.Repository/Repositories/PrintTemplateSeederRepository.cs`
+- **State:** checked 1 October 2026. Only the invoice prints through Printing so far; the other eleven types in `DocumentTypeCatalog` have no print route.
+- **Sub-tasks:**
+  - [ ] Each document type that prints fills `Doc.BarcodeImage` and `Doc.QrImage` from its document number.
+  - [ ] The seeded templates carry the codes; existing branches pick them up through the idempotent seed.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a printed invoice carries a barcode and a QR of its document number.
+
+### TK-158 · UPI payment QR on invoices
+- [ ] open
+- **Issue:** [#139](https://github.com/jothi-prabaharan/Bill-Book/issues/139)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-SAL, L-MST, L-PRT, L-WEB · **Depends on:** TK-156
+- **Where:** `Sales.Repository/Repositories/Printing/InvoicePrintRepository.cs`, `Master.Repository/Repositories/ConfigurationRepository.cs`
+- **State:** checked 1 October 2026. An invoice prints the e-invoice QR only; no branch UPI id exists.
+- **Sub-tasks:**
+  - [ ] A branch UPI id setting, stored in `mst.Configuration` like the other settings, with a Settings field.
+  - [ ] `Payment.UpiQr` placeholder: the `upi://pay` string with the UPI id, the branch name, the amount still due and the invoice number; left empty when the invoice is paid or the branch has no UPI id.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** an unpaid invoice prints a QR carrying the branch UPI id, the amount due and the invoice number, and a paid one prints none.
+
+### TK-159 · Label printing at an exact size
+- [ ] open
+- **Issue:** [#140](https://github.com/jothi-prabaharan/Bill-Book/issues/140)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-PRT, L-INV, L-PUR, L-WEB · **Depends on:** TK-156
+- **Where:** `Printing.Repository/Repositories/`, `Inventory.Repository/Repositories/ItemRepository.cs`, `Shared.Kernel/Printing/DocumentTypeCatalog.cs`
+- **State:** checked 1 October 2026. No label printing exists. Items hold barcodes in `inv.ItemBarcodes`. A sticker or label printer has no A4 or A5 paper, so a label has to carry its own size; the browser prints it through the OS driver at that size (no raw ZPL or TSPL, no Electron).
+- **Sub-tasks:**
+  - [ ] Label templates with width, height, gap and columns per row in millimetres, for a price tag, a shelf label, a batch and expiry label and a jewellery tag (weight, purity, HUID).
+  - [ ] `LabelRepository` and `api/print/labels`: items and quantities in, labels out, each drawn with TK-156's barcode.
+  - [ ] Print from the Items page, from a goods-receipt or bill line (one label per unit received) and per batch or serial, with `@page` set to the template's exact size; an A4 sticker-sheet layout as a fallback.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** selecting items and a quantity prints that many labels at the template's exact size.
+
+### TK-160 · Shared scan input with a small camera popup
+- [ ] open
+- **Issue:** [#141](https://github.com/jothi-prabaharan/Bill-Book/issues/141)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-UI, L-DEPS, L-DOC · **Depends on:** TK-155 · **Decision:** D-46
+- **Where:** `frontend/libs/shared/ui-components`, the keystroke-burst detector in `pos-keys.ts` (moved by TK-155), `frontend/libs/sales/sales-ui/src/lib/sales-picker.ts`
+- **State:** checked 1 October 2026. A hardware scanner types into whatever field has focus; only the till detects a scan (keys under 40 ms apart ending in Enter). The item search matches an exact barcode first (TK-14). There is no camera scanning.
+- **Sub-tasks:**
+  - [ ] A `bb-scan` component for keyboard-wedge scanners, with the burst detector as a plain function that a `-core` lib can use.
+  - [ ] Camera scanning on a phone opens a **small popup in the top-right corner (about 160 by 120 px, with a close button), never full screen**, so the page and the line grid stay visible. `getUserMedia` on the rear camera plus the `BarcodeDetector` API, with a fallback library when the browser lacks it (D-46).
+  - [ ] Continuous mode with a short pause, a beep and a flash on each scan; it closes itself after a period idle, stops the camera on close or route change, and shows a one-line message with a typed fallback when permission is denied. The camera needs HTTPS.
+  - [ ] Only the `-ui` component touches `window` and the camera; `-core` stays free of them.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** on a 360 px phone the camera shows as a small top-right popup and a scan fills the field without leaving the page.
+
+### TK-161 · Scan on sales documents
+- [ ] open
+- **Issue:** [#142](https://github.com/jothi-prabaharan/Bill-Book/issues/142)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-SAL-UI · **Depends on:** TK-160
+- **Where:** `frontend/libs/sales/sales-ui/src/lib/` (the quote, order, challan, invoice and credit note forms), `sales-picker.ts`, `sales-lookup.service.ts`
+- **State:** checked 1 October 2026. The picker is a text box that says "scan a barcode" and matches through `GET /api/items`; there is no scan mode that adds the line and moves on.
+- **Sub-tasks:**
+  - [ ] `bb-scan` on line entry in all five forms: a scan adds the line, or adds 1 to the existing line for that item.
+  - [ ] An unknown code opens the item picker on that code.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** scanning the same barcode three times gives one line with quantity 3.
+
+### TK-162 · Scan on purchase documents and scan to open
+- [ ] open
+- **Issue:** [#143](https://github.com/jothi-prabaharan/Bill-Book/issues/143)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-PUR-UI, L-WEB · **Depends on:** TK-157, TK-160
+- **Where:** `frontend/libs/purchase/purchase-ui/`, `frontend/libs/app-shell`
+- **State:** checked 1 October 2026. The purchase libs have no barcode or scan code at all.
+- **Sub-tasks:**
+  - [ ] `bb-scan` on line entry for purchase order, bill and debit note, as in TK-161.
+  - [ ] Goods receipt: a scan increments the received quantity and captures a batch or serial where the item needs one.
+  - [ ] A global scan-to-open: reading a document code printed by TK-157 opens that document.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** scanning an item on a goods receipt raises its received quantity, and scanning a printed invoice code opens that invoice.
+
+### TK-163 · Scan on stock documents
+- [ ] open
+- **Issue:** [#144](https://github.com/jothi-prabaharan/Bill-Book/issues/144)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-INV-UI · **Depends on:** TK-160
+- **Where:** `frontend/libs/inventory/inventory-ui/`
+- **State:** checked 1 October 2026. Stock adjustment, transfer, stocktake and serial and batch pick have no scan entry.
+- **Sub-tasks:**
+  - [ ] `bb-scan` on line entry for stock adjustment and transfer.
+  - [ ] Stocktake: a scan counts one unit of the item.
+  - [ ] Pick a serial or batch by scan.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** counting a shelf by scanning produces a stocktake with the scanned quantities.
+
+### TK-164 · POS: finish scan and receipt codes
+- [ ] open
+- **Issue:** [#145](https://github.com/jothi-prabaharan/Bill-Book/issues/145)
+- **Group:** N · Electron removal, barcode and QR
+- **Lanes:** L-POS-UI, L-INV · **Depends on:** TK-155, TK-156, TK-158, TK-160
+- **Where:** `frontend/libs/pos/pos-ui` (moved by TK-155), `Inventory.Api/Controllers/ItemsController.cs`
+- **State:** checked 1 October 2026. The till adds an item on a scanner burst, but its item list carries no barcode field, so an exact match cannot be confirmed on the client (TK-95's note). The receipt is text only.
+- **Sub-tasks:**
+  - [ ] The item list carries each item's barcodes so the till can confirm an exact match.
+  - [ ] The till uses `bb-scan` instead of its own detector.
+  - [ ] The browser receipt carries the invoice barcode and, on an unpaid sale, the UPI QR.
+  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a scanned item is added once, and the printed receipt has a scannable invoice barcode.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -4803,6 +4954,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-43 | Does a Restaurant branch allow the paid `Pos` add-on? | TK-143 | *Open.* Billing is the base, so the default in `AddOnRules` is every add-on except `Pos`; the owner confirms. Raised 2026-10-01 by TK-143 |
 | D-44 | Which kinds of customer are there? | TK-152 to TK-154 | **Three kinds** (owner, 2026-10-01): Standard (paying, from signup or created by an operator), **Internal** (our own organisation, real books, business type Service) and **Demo** (one per business type for testing and demos, master data only, no transactions). The Internal customer is the existing bootstrap customer. TK-152 |
 | D-45 | Demo customers: who signs in, with what, and can they be reset? | TK-154 | *Open.* Default until answered: each Demo owner is created with no password, as the bootstrap does today, and signs in through forgot-password; no password is committed to source. Also open: a way to reset a demo back to empty masters, a plan and licence for them (default Elite, no expiry), and whether an HRMS-only and a Payroll-only demo customer are wanted. Raised 2026-10-01 by TK-154 |
+| D-46 | Which libraries draw barcodes and read them from a camera? | TK-156, TK-160 | *Open.* Default until answered: ZXing.Net (MIT) for Code128 and EAN-13 in Printing, the browser's `BarcodeDetector` for camera reading with one MIT fallback library where it is missing. Raised 2026-10-01 by TK-156 |
 
 ---
 
