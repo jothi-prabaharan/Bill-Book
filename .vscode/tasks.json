@@ -196,14 +196,15 @@
       }
     },
 
-    // ── Backend: build the entire solution in one pass (for compound launches) ──
+    // ── Backend: build all API services in one pass (for compound launches) ──
+    // Uses the .slnf filter to exclude test and worker projects.
     {
       "label": "build-backend-solution",
       "command": "dotnet",
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/backend/Bill-Book.sln",
+        "${workspaceFolder}/backend/Bill-Book.Debug.slnf",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign",
         "/p:UseSharedCompilation=false"

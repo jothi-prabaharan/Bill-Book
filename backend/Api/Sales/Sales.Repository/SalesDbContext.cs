@@ -100,6 +100,8 @@ public class SalesDbContext : TenantDbContext
 
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
+    public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
+    public DbSet<RestaurantOrderDetail> RestaurantOrderDetails => Set<RestaurantOrderDetail>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -446,3 +448,5 @@ public class SalesDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+
+

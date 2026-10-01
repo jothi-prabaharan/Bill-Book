@@ -38,6 +38,7 @@ public static class NumberingSeriesSeed
         // office both issue invoices, and a shop that cannot tell which came
         // from where cannot reconcile a till at close.
         Document(orgId, 340, "POS", "POS Sale Number", "POS"),
+        Document(orgId, 345, "RST", "Restaurant Order Number", "KOT"),
     ];
 
     private static NumberingSeries Document(
@@ -64,3 +65,4 @@ public static class NumberingSeriesSeed
             DisplayOrder = displayOrder,
         };
 }
+

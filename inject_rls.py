@@ -1,30 +1,32 @@
-import os
 import glob
+import os
 
-migration_files = glob.glob('backend/Api/Inventory/Inventory.Repository/Migrations/Tenant/*_AddRestaurantMenu.cs')
-if not migration_files:
-    print('No migration found')
+files = glob.glob('backend/Api/Sales/Sales.Repository/Migrations/Tenant/*_AddRestaurantOrder.cs')
+if not files:
+    print('No files found')
     exit(1)
-    
-fpath = migration_files[0]
-with open(fpath, 'r') as f:
-    content = f.read()
 
-tables = ['MenuCategories', 'MenuSchedules', 'MenuItems', 'ItemVariants', 'ModifierGroups', 'Modifiers', 'MenuItemPrices']
-rls_up = ''
-rls_down = ''
-for t in tables:
-    rls_up += f'            migrationBuilder.Sql("ALTER TABLE inv.\\\"{t}\\\" ENABLE ROW LEVEL SECURITY;");\n'
-    rls_up += f'            migrationBuilder.Sql("CREATE POLICY \\\"TenantIsolation\\\" ON inv.\\\"{t}\\\" FOR ALL USING (\\\"OrgId\\\" = current_setting(\'app.current_org_id\')::uuid);");\n'
-    rls_down += f'            migrationBuilder.Sql("DROP POLICY \\\"TenantIsolation\\\" ON inv.\\\"{t}\\\";");\n'
+f = files[0]
+with open(f, 'r') as file:
+    content = file.read()
 
 up_marker = 'protected override void Up(MigrationBuilder migrationBuilder)\n        {'
 down_marker = 'protected override void Down(MigrationBuilder migrationBuilder)\n        {'
 
-content = content.replace(up_marker, up_marker + '\n' + rls_up)
-content = content.replace(down_marker, down_marker + '\n' + rls_down)
+rls_up = '''
+            migrationBuilder.Sql("ALTER TABLE sal.\\"RestaurantOrders\\" ENABLE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("CREATE POLICY \\"TenantIsolation\\" ON sal.\\"RestaurantOrders\\" FOR ALL USING (\\"OrgId\\" = current_setting('app.current_org_id')::uuid);");
+            migrationBuilder.Sql("ALTER TABLE sal.\\"RestaurantOrderDetails\\" ENABLE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("CREATE POLICY \\"TenantIsolation\\" ON sal.\\"RestaurantOrderDetails\\" FOR ALL USING (\\"OrgId\\" = current_setting('app.current_org_id')::uuid);");
+'''
 
-with open(fpath, 'w') as f:
-    f.write(content)
+rls_down = '''
+            migrationBuilder.Sql("DROP POLICY \\"TenantIsolation\\" ON sal.\\"RestaurantOrders\\";");
+            migrationBuilder.Sql("DROP POLICY \\"TenantIsolation\\" ON sal.\\"RestaurantOrderDetails\\";");
+'''
 
-print('Done')
+content = content.replace(up_marker, up_marker + rls_up)
+content = content.replace(down_marker, down_marker + rls_down)
+
+with open(f, 'w') as file:
+    file.write(content)
