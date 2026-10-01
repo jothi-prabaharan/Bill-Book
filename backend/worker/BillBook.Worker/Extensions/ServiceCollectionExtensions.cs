@@ -9,6 +9,8 @@ using Shared.Kernel.Internal;
 using BillBook.Worker.Notification;
 using BillBook.Worker.RecurringBilling;
 using BillBook.Worker.ServiceReminders;
+using BillBook.Worker.SavingsScheme;
+using SavingsScheme.Repository;
 using Customer.Repository;
 using RecurringBilling.Repository;
 using BillBook.Worker.Notification.Consumers;
@@ -176,11 +178,21 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
         });
         services.AddHostedService<ServiceReminderWorker>();
+
+        services.AddDbContext<SavingsSchemeDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(tenantDatabase);
+            options.AddInterceptors(
+                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
+                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
+        });
+        services.AddHostedService<SavingsSchemeWorker>();
         services.AddHttpClient();
 
         return services;
     }
 }
+
 
 
 

@@ -4382,7 +4382,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Mount those route tables in `apps/web` gated by business type and add-on.
   - [ ] Remove `APP_ID`, `APP_URLS` and the app switcher.
   - [ ] Make `shell-screens.ts` and the topbar "New" menu follow the menu API.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a branch with only Hrms sees only HRMS pages.
 
 ### TK-131 � Merge `apps/admin` into `apps/web`: an Admin portal button
@@ -4465,7 +4465,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Service hides stock-only screens (warehouses, batches, serials, costing); its items are service lines with SAC codes and costing method None. Service allows every add-on except `Pos`.
   - [ ] Remove the leftover `App` enum and the 9 `RequireApp` uses in `backend/Api`.
   - [ ] Update the D-36 text to the new list of types.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** no code names `General` as a business type or the `App` enum, and the solution builds with `-warnaserror`.
 
 ### TK-137 · `Background.Worker`: one host, one `BackgroundService` class per job
@@ -4478,7 +4478,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Per-job on/off switches in configuration (`Workers:<Job>:Enabled`).
   - [x] A base class that walks the branches with `ITenantEnumerator`, one scope per branch with its tenant set (the `PaymentReminderWorker` pattern), plus a guarded-claim helper so two replicas never run the same item.
   - [x] Each job catches its own failures and audits them through `WorkerErrorAuditor`.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** the host runs with one job enabled and the others stay idle.
 
 ### TK-138 · Move the Notification, Costing and RateSync jobs into `Background.Worker`
@@ -4491,7 +4491,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Delete `Notification.Worker`, `CostingEngine.Worker` and `RateSync.Worker`; update `Bill-Book.sln`, Dockerfiles, `deploy/azure`, `deploy/local` and CI.
   - [x] Business rules stay in `*Repository` classes (hard rule 16); the host references Repository projects, never Api projects.
   - [x] The four jobs hosted inside services (`EInvoiceRetryWorker`, `ReportScheduleWorker`, `ProvisioningWorker`, `PreventiveGenerator`) stay where they are for now.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** the solution has one worker project and no reference to the three old ones.
 
 ### TK-139 · Recurring billing, a free add-on: sales invoices, purchase bills and retainers
@@ -4504,7 +4504,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Schedule tables and `RecurringBillingRepository` for sales invoices, purchase bills and retainer invoices.
   - [ ] Controllers under `[RequireAddOn(RecurringBilling)]`; a list and a form page.
   - [ ] `RecurringBillingWorker` creates each due document once (guarded claim, fixed document key).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a due schedule creates one invoice, and a rerun creates none.
 
 ### TK-140 · Service plans and customer reminders
@@ -4525,12 +4525,12 @@ The queue below is one list in card-number order. Each card names its group.
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-SAL, L-ACC, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38
 - **Sub-tasks:**
-  - [ ] Scheme definitions (months, instalment, bonus rule, maturity) and enrolments per customer.
-  - [ ] Instalment receipts post to a customer-advance account (the Advance from Customer sub-account).
-  - [ ] Redemption on a sales invoice; maturity and lapse; `SavingsSchemeWorker` for instalment reminders and overdue handling.
-  - [ ] Settle in this card: how the bonus is accounted for, what happens to a lapsed scheme, and the refund rules.
-  - [ ] Jewellery only and a paid add-on; controllers under `[RequireAddOn(SavingsScheme)]`.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Scheme definitions (months, instalment, bonus rule, maturity) and enrolments per customer.
+  - [x] Instalment receipts post to a customer-advance account (the Advance from Customer sub-account).
+  - [x] Redemption on a sales invoice; maturity and lapse; `SavingsSchemeWorker` for instalment reminders and overdue handling.
+  - [x] Settle in this card: how the bonus is accounted for, what happens to a lapsed scheme, and the refund rules.
+  - [x] Jewellery only and a paid add-on; controllers under `[RequireAddOn(SavingsScheme)]`.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a customer enrols, pays instalments and redeems against an invoice.
 
 ### TK-142 · Housekeeping: `TASKS.md` fixes, `CLAUDE.md`, docs and release notes
@@ -4542,7 +4542,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Fix the group lines on TK-131 to TK-135 and the broken character in the TK-131 heading.
   - [ ] Refresh `CLAUDE.md`: three frontend apps, one worker project, the business types and add-ons.
   - [ ] Docs pages, `docs.manifest.ts` and `release-notes.md` for TK-136 to TK-141.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
 
 ### TK-143 · Restaurant business type, setting keys and Settings › Restaurant
@@ -4564,7 +4564,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] `libs/restaurant/{restaurant-core,restaurant-ui}`, lazy-loaded in `apps/web` for Restaurant branches only, with Settings › Restaurant: the nine keys, and four presets that only set the two switches (billing only, counter plus kitchen, dine-in without kitchen printing, full service).
   - [ ] `CLAUDE.md` and the D-36 text name the new type (`L-DOC`).
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a Restaurant branch with every switch off sees billing only, turning `restaurant.tables.enabled` on makes the table endpoints answer, and `restaurant.table.required = Always` with tables off changes nothing.
 
 ### TK-144 · Menu: categories, timed menus, variants, modifiers, availability, price by order type
@@ -4581,7 +4581,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
   - [ ] Menu management pages and an availability toggle usable from a phone.
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a half portion lists at its own price and a sold-out item cannot be ordered.
 
 ### TK-145 · Tables: floors, table master, status, merge, split, move
@@ -4598,7 +4598,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Tables)]`; all logic is in `*Repository.cs` (rule 16).
   - [ ] A floor plan page that works at 360 px.
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** moving a table moves its open order, and a merged group bills as one.
 
 ### TK-146 · Order taking: dine-in, takeaway, delivery; waiter on mobile; optional table
@@ -4616,7 +4616,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; the table field is checked only when the tables switch is on; all logic is in `*Repository.cs` (rule 16).
   - [ ] Waiter pages, mobile first at 360 px; build them responsive so D-40 (tablet or phone) does not block.
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a takeaway order saves with no table, and a dine-in order is refused without one only when the effective setting requires it.
 
 ### TK-147 · KOT: stations, reprint, cancel with reason, item status, kitchen display
@@ -4635,7 +4635,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Kitchen)]`; all logic is in `*Repository.cs` (rule 16).
   - [ ] With `restaurant.kot.required` on, billing refuses an order whose lines were never sent.
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** sending an order prints one ticket per station, a cancel needs a reason, and an item moves from Sent to Ready to Served.
 
 ### TK-148 · Billing at the table through the sales invoice posting
@@ -4654,7 +4654,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Bill printing through the invoice's print template; alcohol items are not supported until D-41 is answered (write that in Notes).
   - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a split bill posts two invoices whose totals equal the order, and a missing required table is refused.
 
 ### TK-149 · Recipes, ingredient deduction on sale, wastage, food cost %
@@ -4672,7 +4672,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Food cost percentage per dish and per period from the costing engine's figures.
   - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Recipes)]`; all logic is in `*Repository.cs` (rule 16).
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** selling one portion reduces each ingredient by its recipe quantity, and a rerun does not deduct twice.
 
 ### TK-150 · Restaurant reports
@@ -4687,7 +4687,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Hide a report whose feature switch is off, using the effective settings.
   - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
   - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** the day-end report's totals equal the day's posted invoices.
 
 ### TK-151 · Later: reservations, waiting list, loyalty, aggregator intake
@@ -4699,7 +4699,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Reservations and a waiting list.
   - [ ] Loyalty points on a bill.
   - [ ] Zomato and Swiggy order intake; the scope is D-42.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** the owner releases it and each part has been split into its own card.
 
 ### TK-152 · Customer kinds: Standard, Internal and Demo
@@ -4715,7 +4715,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Internal and Demo licences never expire and never raise a licence or billing reminder; check every place that reads `ExpiryDate` or the licence status.
   - [ ] The admin customer list shows the kind and filters by it.
   - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a signup creates a Standard customer, an operator can create the other two, and neither of those is ever expired or billed.
 
 ### TK-153 · Internal customer: our own organisation, Service business type
@@ -4732,7 +4732,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] An install that already has a bootstrap customer converts it to Internal and sets the branch type once, and creates nothing a second time.
   - [ ] `first-branch.sh` and the seeders pass the branch's real business type instead of `General`.
   - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a fresh install has one Internal customer with a Service branch, a second start creates nothing, and an older install's first customer becomes Internal.
 
 ### TK-154 · Demo customers: one per business type, master data only
@@ -4748,7 +4748,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] An operator action on the admin customer screen, and an optional `Bootstrap:SeedDemoCustomers` switch (off by default), so a production install never gets them by accident.
   - [ ] Demo owner logins follow D-45; no password is committed to source.
   - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** running it twice leaves six Demo customers, each branch has its business type and the right masters, and none has a transaction.
 
 ### TK-155 · Remove Electron and move the POS till into `apps/web`
@@ -4765,7 +4765,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Remove Electron and `apps/desktop` from every markdown file: `CLAUDE.md` (apps list, the ESC/POS printing rule, the portal and desktop caveat, the POS roadmap notes), `AGENTS.md`, `README.md`, `docs/Architecture.md` (including the stale "Desktop Application Shell" sections), `docs/Modules.md`, and the docs pages `overview.md`, `development.md` and `invoices.md` with `docs.manifest.ts`; add the `release-notes.md` bullet. Where an old completed card names Electron, strike the line through and point it here; never delete a card.
   - [ ] The "five apps" wording in `CLAUDE.md`, `README.md` and the CI comments becomes the two that remain, `web` and `docs`.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** `git grep -i electron` and `git grep apps/desktop` find nothing except struck-through history notes, `web` and `docs` build, and the till posts a sale from `apps/web` (owner's run).
 
 ### TK-156 · Printing: barcode and QR rendering
@@ -4779,7 +4779,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] `PlaceholderType.Barcode` and a `BarcodeImagesRepository` for Code128 and EAN-13, one MIT library pinned in `Directory.Packages.props` (D-46), output as an inline image.
   - [ ] Generic placeholders `Doc.BarcodeImage` (the document number) and `Doc.QrImage`, in the template editor's palette; the sanitiser still refuses a template's own `data:` URIs.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a template with a barcode tag renders a Code128 image for the text it is given.
 
 ### TK-157 · Document barcode and QR on every printable type
@@ -4793,7 +4793,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Each document type that prints fills `Doc.BarcodeImage` and `Doc.QrImage` from its document number.
   - [ ] The seeded templates carry the codes; existing branches pick them up through the idempotent seed.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a printed invoice carries a barcode and a QR of its document number.
 
 ### TK-158 · UPI payment QR on invoices
@@ -4807,7 +4807,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] A branch UPI id setting, stored in `mst.Configuration` like the other settings, with a Settings field.
   - [ ] `Payment.UpiQr` placeholder: the `upi://pay` string with the UPI id, the branch name, the amount still due and the invoice number; left empty when the invoice is paid or the branch has no UPI id.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** an unpaid invoice prints a QR carrying the branch UPI id, the amount due and the invoice number, and a paid one prints none.
 
 ### TK-159 · Label printing at an exact size
@@ -4822,7 +4822,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] `LabelRepository` and `api/print/labels`: items and quantities in, labels out, each drawn with TK-156's barcode.
   - [ ] Print from the Items page, from a goods-receipt or bill line (one label per unit received) and per batch or serial, with `@page` set to the template's exact size; an A4 sticker-sheet layout as a fallback.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** selecting items and a quantity prints that many labels at the template's exact size.
 
 ### TK-160 · Shared scan input with a small camera popup
@@ -4838,7 +4838,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Continuous mode with a short pause, a beep and a flash on each scan; it closes itself after a period idle, stops the camera on close or route change, and shows a one-line message with a typed fallback when permission is denied. The camera needs HTTPS.
   - [ ] Only the `-ui` component touches `window` and the camera; `-core` stays free of them.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** on a 360 px phone the camera shows as a small top-right popup and a scan fills the field without leaving the page.
 
 ### TK-161 · Scan on sales documents
@@ -4852,7 +4852,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] `bb-scan` on line entry in all five forms: a scan adds the line, or adds 1 to the existing line for that item.
   - [ ] An unknown code opens the item picker on that code.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** scanning the same barcode three times gives one line with quantity 3.
 
 ### TK-162 · Scan on purchase documents and scan to open
@@ -4867,7 +4867,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Goods receipt: a scan increments the received quantity and captures a batch or serial where the item needs one.
   - [ ] A global scan-to-open: reading a document code printed by TK-157 opens that document.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** scanning an item on a goods receipt raises its received quantity, and scanning a printed invoice code opens that invoice.
 
 ### TK-163 · Scan on stock documents
@@ -4882,7 +4882,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Stocktake: a scan counts one unit of the item.
   - [ ] Pick a serial or batch by scan.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** counting a shelf by scanning produces a stocktake with the scanned quantities.
 
 ### TK-164 · POS: finish scan and receipt codes
@@ -4897,7 +4897,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] The till uses `bb-scan` instead of its own detector.
   - [ ] The browser receipt carries the invoice barcode and, on an unpaid sale, the UPI QR.
   - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a scanned item is added once, and the printed receipt has a scannable invoice barcode.
 
 ## 3. Decisions from the owner
@@ -5093,6 +5093,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 

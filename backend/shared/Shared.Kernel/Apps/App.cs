@@ -56,8 +56,11 @@ public enum AddOn
     /// <summary>Recurring billing: subscription schedules, automatic invoice generation.</summary>
     RecurringBilling = 1 << 8,
 
+    /// <summary>Savings Scheme: customer enrolments and bonus maturity (Jewellery only).</summary>
+    SavingsScheme = 1 << 9,
+
     /// <summary>All add-ons bitwise combined.</summary>
-    All = Hrms | Payroll | Crm | Pos | FixedAssets | ClientPortal | EInvoicing | Budget | RecurringBilling,
+    All = Hrms | Payroll | Crm | Pos | FixedAssets | ClientPortal | EInvoicing | Budget | RecurringBilling | SavingsScheme,
 }
 
 /// <summary>
@@ -80,7 +83,8 @@ public static class AddOnRules
         {
             null => AddOn.Hrms | AddOn.Payroll,
             BusinessType.School => AddOn.Hrms | AddOn.Payroll | AddOn.Crm | AddOn.FixedAssets | AddOn.ClientPortal | AddOn.Budget | AddOn.RecurringBilling,
-            BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery => AddOn.All,
+            BusinessType.General or BusinessType.Pharma => AddOn.All & ~AddOn.SavingsScheme,
+            BusinessType.Jewellery => AddOn.All,
             _ => AddOn.None,
         };
 
@@ -234,4 +238,5 @@ public static class AppRules
         return Enum.TryParse(value.Trim(), ignoreCase: true, out app) && IsSingle(app);
     }
 }
+
 

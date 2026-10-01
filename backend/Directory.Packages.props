@@ -7,8 +7,10 @@
        Expect to correct them on the first `dotnet restore`. -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageVersion Include="Moq" Version="4.21.0" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <!-- Must track Npgsql.EntityFrameworkCore.PostgreSQL above: that package
          requires Npgsql >= 10.0.0, and pinning this one to 9.0.2 made every
@@ -70,7 +72,7 @@
          PrintSubstitution calls its API directly, so it is declared rather than
          relied on as a transitive that a sanitiser upgrade could move. -->
     <PackageVersion Include="AngleSharp" Version="1.7.2" />
-      <!-- Logging & Telemetry -->
+    <!-- Logging & Telemetry -->
     <PackageVersion Include="Serilog.AspNetCore" Version="8.0.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.9.0" />
@@ -90,8 +92,3 @@
     <PackageVersion Include="Xunit.SkippableFact" Version="1.5.23" />
   </ItemGroup>
 </Project>
-
-
-
-
-
