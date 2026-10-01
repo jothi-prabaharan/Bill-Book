@@ -1,0 +1,55 @@
+<div class="p-4 bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border p-6">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">Billing</h1>
+
+    <div class="grid grid-cols-2 gap-6 mb-8">
+      <div>
+        <div class="text-sm font-medium text-gray-700 mb-1">Select Order to Bill</div>
+        <div class="flex gap-2">
+           <button *ngFor="let order of openOrders" class="border p-2 rounded" [class.bg-blue-100]="selectedOrderId === order.restaurantOrderId" (click)="selectOrder(order.restaurantOrderId)">
+             #{{order.orderNumber}} (Table {{order.restaurantTableId || 'N/A'}})
+           </button>
+        </div>
+      </div>
+      <div>
+        <div class="text-sm font-medium text-gray-700 mb-1">Customer</div>
+        <button class="w-full border rounded p-2 text-left bg-gray-50">Walk-in Customer</button>
+      </div>
+    </div>
+
+    <div class="mb-6 border rounded-lg overflow-hidden flex flex-col gap-2 p-2">
+       <div *ngFor="let line of orderLines" class="flex justify-between border-b pb-2 last:border-0">
+          <div>Item #{{line.menuItemId}}</div>
+          <div class="flex gap-4">
+             <div>{{line.quantity}} x {{line.unitPrice}}</div>
+             <div class="font-bold">{{line.quantity * line.unitPrice}}</div>
+          </div>
+       </div>
+       <div *ngIf="orderLines.length === 0" class="p-6 text-center text-gray-500">Select an order to view items.</div>
+    </div>
+
+    <div class="flex justify-between items-end bg-gray-50 p-4 rounded-lg border">
+      <div class="w-1/3">
+        <div class="text-sm font-medium text-gray-700 mb-1">Payment Mode</div>
+        <div class="flex gap-2">
+          <button class="border p-2 rounded flex-1" [class.bg-blue-100]="billingRequest.paymentMode==='Cash'" (click)="billingRequest.paymentMode='Cash'">Cash</button>
+          <button class="border p-2 rounded flex-1" [class.bg-blue-100]="billingRequest.paymentMode==='Card'" (click)="billingRequest.paymentMode='Card'">Card</button>
+          <button class="border p-2 rounded flex-1" [class.bg-blue-100]="billingRequest.paymentMode==='UPI'" (click)="billingRequest.paymentMode='UPI'">UPI</button>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="text-gray-500 mb-1">Subtotal: {{totalAmount}}</div>
+        <div class="text-sm text-gray-400 mb-2">Service Charge & Taxes computed on save</div>
+        <div class="text-2xl font-bold text-gray-900">Total: {{totalAmount}}</div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <button class="bg-green-600 text-white px-6 py-3 rounded font-bold text-lg hover:bg-green-700 disabled:opacity-50" 
+              [disabled]="!selectedOrderId" 
+              (click)="generateBill()">
+        Generate Bill
+      </button>
+    </div>
+  </div>
+</div>
