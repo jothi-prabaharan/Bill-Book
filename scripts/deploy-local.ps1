@@ -21,12 +21,27 @@ if (-Not (Test-Path (Join-Path $repoPath "Bill-Book.sln"))) {
 
 $backendApps = @(
     @{ Name = "accounting"; Path = "backend\Api\Accounting\Accounting.Api\Accounting.Api.csproj" },
+    @{ Name = "admission"; Path = "backend\Api\Admission\Admission.Api\Admission.Api.csproj" },
+    @{ Name = "attendance"; Path = "backend\Api\Attendance\Attendance.Api\Attendance.Api.csproj" },
+    @{ Name = "claims"; Path = "backend\Api\Claims\Claims.Api\Claims.Api.csproj" },
     @{ Name = "customer"; Path = "backend\Api\Customer\Customer.Api\Customer.Api.csproj" },
+    @{ Name = "employee"; Path = "backend\Api\Employee\Employee.Api\Employee.Api.csproj" },
+    @{ Name = "facility"; Path = "backend\Api\Facility\Facility.Api\Facility.Api.csproj" },
+    @{ Name = "fee"; Path = "backend\Api\Fee\Fee.Api\Fee.Api.csproj" },
     @{ Name = "inventory"; Path = "backend\Api\Inventory\Inventory.Api\Inventory.Api.csproj" },
+    @{ Name = "maintenancecontract"; Path = "backend\Api\MaintenanceContract\MaintenanceContract.Api\MaintenanceContract.Api.csproj" },
     @{ Name = "master"; Path = "backend\Api\Master\Master.Api\Master.Api.csproj" },
+    @{ Name = "payroll"; Path = "backend\Api\Payroll\Payroll.Api\Payroll.Api.csproj" },
+    @{ Name = "performance"; Path = "backend\Api\Performance\Performance.Api\Performance.Api.csproj" },
+    @{ Name = "preventive"; Path = "backend\Api\Preventive\Preventive.Api\Preventive.Api.csproj" },
+    @{ Name = "printing"; Path = "backend\Api\Printing\Printing.Api\Printing.Api.csproj" },
     @{ Name = "purchase"; Path = "backend\Api\Purchase\Purchase.Api\Purchase.Api.csproj" },
+    @{ Name = "recruitment"; Path = "backend\Api\Recruitment\Recruitment.Api\Recruitment.Api.csproj" },
     @{ Name = "reporting"; Path = "backend\Api\Reporting\Reporting.Api\Reporting.Api.csproj" },
-    @{ Name = "sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj" }
+    @{ Name = "sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj" },
+    @{ Name = "student"; Path = "backend\Api\Student\Student.Api\Student.Api.csproj" },
+    @{ Name = "timeleave"; Path = "backend\Api\TimeLeave\TimeLeave.Api\TimeLeave.Api.csproj" },
+    @{ Name = "workorder"; Path = "backend\Api\WorkOrder\WorkOrder.Api\WorkOrder.Api.csproj" }
 )
 $gatewayApp = @{ Name = "gateway"; Path = "backend\Gateway\Gateway.Api\Gateway.Api.csproj" }
 $frontendApps = @("web", "admin", "portal", "docs")

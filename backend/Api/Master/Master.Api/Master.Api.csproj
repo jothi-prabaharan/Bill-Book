@@ -34,6 +34,9 @@
     <ProjectReference Include="..\..\Attendance\Attendance.Repository\Attendance.Repository.csproj" />
     <ProjectReference Include="..\..\Admission\Admission.Repository\Admission.Repository.csproj" />
     <ProjectReference Include="..\..\Student\Student.Repository\Student.Repository.csproj" />
+    <ProjectReference Include="..\..\Claims\Claims.Repository\Claims.Repository.csproj" />
+    <ProjectReference Include="..\..\Recruitment\Recruitment.Repository\Recruitment.Repository.csproj" />
+    <ProjectReference Include="..\..\Performance\Performance.Repository\Performance.Repository.csproj" />
   </ItemGroup>
 
   <ItemGroup>

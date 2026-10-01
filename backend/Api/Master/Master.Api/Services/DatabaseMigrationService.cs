@@ -308,6 +308,9 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<WorkOrder.Repository.WorkOrderDbContext>(connectionString, tenant, "wrk", ct);
         await MigrateContextAsync<Preventive.Repository.PreventiveDbContext>(connectionString, tenant, "ppm", ct);
         await MigrateContextAsync<MaintenanceContract.Repository.MaintenanceContractDbContext>(connectionString, tenant, "amc", ct);
+        await MigrateContextAsync<Claims.Repository.ClaimsDbContext>(connectionString, tenant, "clm", ct);
+        await MigrateContextAsync<Recruitment.Repository.RecruitmentDbContext>(connectionString, tenant, "rec", ct);
+        await MigrateContextAsync<Performance.Repository.PerformanceDbContext>(connectionString, tenant, "prf", ct);
     }
 
     /// <summary>

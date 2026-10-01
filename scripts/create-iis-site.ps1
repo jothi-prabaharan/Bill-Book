@@ -24,7 +24,12 @@ $basePath = "C:\inetpub\wwwroot\BillBook\$Environment"
 $backendAppPool = "BillBook_Backend_Pool_$Environment"
 $frontendAppPool = "BillBook_Frontend_Pool_$Environment"
 
-$backendApps = @("master", "inventory", "accounting", "customer", "reporting", "sales", "purchase")
+$backendApps = @(
+    "accounting", "admission", "attendance", "claims", "customer", "employee", 
+    "facility", "fee", "inventory", "maintenancecontract", "master", "payroll", 
+    "performance", "preventive", "printing", "purchase", "recruitment", 
+    "reporting", "sales", "student", "timeleave", "workorder"
+)
 $frontendApps = @("web", "admin", "portal", "docs")
 
 # 1. CREATE DIRECTORIES FIRST

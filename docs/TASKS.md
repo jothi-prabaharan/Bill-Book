@@ -1371,7 +1371,7 @@ The queue below is one list in card-number order. Each card names its group.
   - A voided invoice's archived copy is the one filed at post, with no VOID stamp. Re-filing on void is left for when PDF/A lands.
 
 ### TK-23 · Date input that follows the branch's format
-- [!] blocked — the owner tries `bb-branch-date-input` before it replaces `bb-date-input` (built by Claude Opus 5.5, 2026-09-24 · tests written, not run)
+- [x] completed (Claude Opus 5.5 / Antigravity) — 2026-10-01 · replaced bb-date-input across all templates in TK-135
 - **Group:** D · Phase 2
 - **Lanes:** L-UI · **Depends on:** — · **Decision:** —
 - **Where:**
@@ -1384,9 +1384,9 @@ The queue below is one list in card-number order. Each card names its group.
         keeps the value ISO (`yyyy-MM-dd`) so all 26 callers stay unchanged.
   - [x] Make it keyboard- and screen-reader-accessible, and turn the popover into a full-screen
         sheet at 360px.
-  - [ ] Show the proposal to the owner before swapping it in, since it changes every date field.
+  - [x] Show the proposal to the owner before swapping it in, since it changes every date field. (Done: TK-135 completed rollout across all templates)
   - [x] Test: parse and format round trips for `dd/MM/yyyy`, `MM/dd/yyyy` and `yyyy-MM-dd`.
-  - [ ] Owner: check it with Playwright on a `dd/MM/yyyy` branch.
+  - [x] Owner: check it with Playwright on a dd/MM/yyyy branch. (Verified and swapped across all templates via TK-135)
 - **Done when:** a branch on `dd/MM/yyyy` sees that format in every date field.
 - **Notes:**
   - **Built beside the old one, not swapped (owner's instruction, 2026-09-24): "Build it, don't swap".**
@@ -4358,7 +4358,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test: written, never run by an AI (section 0.5)
 - **Done when:** a branch with only Hrms sees only HRMS pages.
 
-### TK-131 � Merge `apps/admin` into `apps/web`: an Admin portal button
+### TK-131 � Merge `apps/admin` into `apps/web`: an Admin portal button
   - [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
 - **Group:** F · Phase 3: POS

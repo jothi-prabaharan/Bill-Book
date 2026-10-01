@@ -593,7 +593,7 @@ namespace Payroll.Repository.Migrations
                 schema: "pay",
                 table: "SalaryStructures",
                 columns: new[] { "CustomerId", "OrgId" });
-            foreach (string table in Tables)
+            foreach (string table in TenantScopedTables)
             {
                 string policy = $"{table.ToLowerInvariant()}_tenant_isolation";
 
@@ -609,12 +609,51 @@ namespace Payroll.Repository.Migrations
                             AND "OrgId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid);
                     """);
             }
+
+            migrationBuilder.Sql("""
+                ALTER TABLE pay."SalaryStructureComponents" ENABLE ROW LEVEL SECURITY;
+                ALTER TABLE pay."SalaryStructureComponents" FORCE ROW LEVEL SECURITY;
+                DROP POLICY IF EXISTS salarystructurecomponents_tenant_isolation ON pay."SalaryStructureComponents";
+                CREATE POLICY salarystructurecomponents_tenant_isolation
+                    ON pay."SalaryStructureComponents"
+                    FOR ALL
+                    USING (EXISTS (
+                        SELECT 1 FROM pay."SalaryStructures" s
+                        WHERE s."SalaryStructureId" = pay."SalaryStructureComponents"."SalaryStructureId"
+                          AND s."CustomerId" = NULLIF(current_setting('app.current_customer_id', true), '')::uuid
+                          AND s."OrgId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid));
+
+                ALTER TABLE pay."Payslips" ENABLE ROW LEVEL SECURITY;
+                ALTER TABLE pay."Payslips" FORCE ROW LEVEL SECURITY;
+                DROP POLICY IF EXISTS payslips_tenant_isolation ON pay."Payslips";
+                CREATE POLICY payslips_tenant_isolation
+                    ON pay."Payslips"
+                    FOR ALL
+                    USING (EXISTS (
+                        SELECT 1 FROM pay."PayrollRuns" r
+                        WHERE r."PayrollRunId" = pay."Payslips"."PayrollRunId"
+                          AND r."CustomerId" = NULLIF(current_setting('app.current_customer_id', true), '')::uuid
+                          AND r."OrgId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid));
+
+                ALTER TABLE pay."PayslipLines" ENABLE ROW LEVEL SECURITY;
+                ALTER TABLE pay."PayslipLines" FORCE ROW LEVEL SECURITY;
+                DROP POLICY IF EXISTS paysliplines_tenant_isolation ON pay."PayslipLines";
+                CREATE POLICY paysliplines_tenant_isolation
+                    ON pay."PayslipLines"
+                    FOR ALL
+                    USING (EXISTS (
+                        SELECT 1 FROM pay."Payslips" p
+                        JOIN pay."PayrollRuns" r ON r."PayrollRunId" = p."PayrollRunId"
+                        WHERE p."PayslipId" = pay."PayslipLines"."PayslipId"
+                          AND r."CustomerId" = NULLIF(current_setting('app.current_customer_id', true), '')::uuid
+                          AND r."OrgId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid));
+                """);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            foreach (string table in Tables)
+            foreach (string table in TenantScopedTables.Concat(["SalaryStructureComponents", "Payslips", "PayslipLines"]))
             {
                 migrationBuilder.Sql($"""
                     DROP POLICY IF EXISTS {table.ToLowerInvariant()}_tenant_isolation ON pay."{table}";
@@ -684,7 +723,7 @@ namespace Payroll.Repository.Migrations
                 schema: "pay");
         }
 
-        private static readonly string[] Tables =
+        private static readonly string[] TenantScopedTables =
         [
             "EmployeeLoans",
             "ErrorLogs",
@@ -695,11 +734,8 @@ namespace Payroll.Repository.Migrations
             "SalaryHolds",
             "SalaryStructures",
             "LoanRepayments",
-            "Payslips",
             "OneTimePayments",
             "EmployeeSalaries",
-            "SalaryStructureComponents",
-            "PayslipLines",
             "SalaryRevisions"
         ];
     }
