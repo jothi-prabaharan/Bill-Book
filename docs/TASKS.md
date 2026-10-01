@@ -4385,10 +4385,10 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a branch with only Hrms sees only HRMS pages.
 
-### TK-131 � Merge `apps/admin` into `apps/web`: an Admin portal button
+### TK-131  Merge `apps/admin` into `apps/web`: an Admin portal button
   - [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
-- **Group:** F · Phase 3: POS
+  - **Group:** J  Business types, add-ons and one worker project
 - **Lanes:** L-WEB, L-ADM · **Depends on:** TK-130 · **Decision:** D-36
 - **Sub-tasks:**
   - [x] Mount the admin routes under `/admin/*`, each requiring `platform.*`.
@@ -4399,7 +4399,7 @@ The queue below is one list in card-number order. Each card names its group.
 ### TK-132 · Merge `apps/portal` into `apps/web`
 - [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#114](https://github.com/jothi-prabaharan/Bill-Book/issues/114)
-- **Group:** F · Phase 3: POS
+  - **Group:** J  Business types, add-ons and one worker project
 - **Lanes:** L-WEB, L-PTL · **Depends on:** TK-130 · **Decision:** D-36
 - **Sub-tasks:**
   - [x] Mount the portal pages under `/portal/*` for portal contacts (`[RequirePortalAccess]`), needing the ClientPortal add-on.
@@ -4410,7 +4410,7 @@ The queue below is one list in card-number order. Each card names its group.
 ### TK-133 · Settings: a branch's business type and add-ons
 - [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#115](https://github.com/jothi-prabaharan/Bill-Book/issues/115)
-- **Group:** F · Phase 3: POS
+  - **Group:** J  Business types, add-ons and one worker project
 - **Lanes:** L-MST, L-UI, the settings lib · **Depends on:** TK-127, TK-130 · **Decision:** D-36
 - **Sub-tasks:**
   - [ ] A screen to choose the business type and switch on the add-ons its type allows; disabling never deletes data.
@@ -4420,7 +4420,7 @@ The queue below is one list in card-number order. Each card names its group.
 ### TK-134 · Retire the five extra apps: docs, release notes and deploy
 - [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
-- **Group:** F · Phase 3: POS
+  - **Group:** J  Business types, add-ons and one worker project
 - **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
 - **Sub-tasks:**
   - [ ] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
@@ -4539,9 +4539,9 @@ The queue below is one list in card-number order. Each card names its group.
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-DOC · **Depends on:** TK-136 to TK-141 · **Decision:** D-36
 - **Sub-tasks:**
-  - [ ] Fix the group lines on TK-131 to TK-135 and the broken character in the TK-131 heading.
-  - [ ] Refresh `CLAUDE.md`: three frontend apps, one worker project, the business types and add-ons.
-  - [ ] Docs pages, `docs.manifest.ts` and `release-notes.md` for TK-136 to TK-141.
+  - [x] Fix the group lines on TK-131 to TK-135 and the broken character in the TK-131 heading.
+  - [x] Refresh `CLAUDE.md`: three frontend apps, one worker project, the business types and add-ons.
+  - [x] Docs pages, `docs.manifest.ts` and `release-notes.md` for TK-136 to TK-141.
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
 
@@ -5093,6 +5093,8 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
+
 
 
 

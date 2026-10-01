@@ -95,7 +95,17 @@ export const DOCS: DocSection[] = [
       { slug: 'deployment', title: 'Deployment', status: 'partial' },
     ],
   },
+  {
+    title: 'Add-ons',
+    pages: [
+      { slug: 'recurring-billing', title: 'Recurring Billing', status: 'built' },
+      { slug: 'service-plans', title: 'Service Plans', status: 'built' },
+      { slug: 'savings-scheme', title: 'Savings Scheme', status: 'built' }
+    ],
+  },
 ];
 
 export const ALL_PAGES: DocPage[] = DOCS.flatMap((s) => s.pages);
+
+
 

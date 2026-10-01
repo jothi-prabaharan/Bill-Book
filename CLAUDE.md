@@ -193,7 +193,7 @@ There were twelve. Three merges took them to seven, and the reason each time was
 
 **Master is the only service with two DbContexts, and that is the tenancy model rather than an accident.** `AdminDbContext` is the shared master database; `ContactsDbContext` is the customer's own. See Tenancy below.
 
-**Frontend** (Nx, Angular v20): `apps/{web, portal, admin, desktop, docs, hrms, payroll, school}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
+**Frontend** (Nx, Angular v20): `apps/{web, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
 
 ### Angular Component Structure
 - **Standalone Only**: Use `standalone: true`. No `NgModules` are allowed.
@@ -537,7 +537,7 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 **Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, multi-currency, RBAC, org settings, tenant provisioning
 **Phase 2** — **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients, **document print & PDF/A archive (T3.4)**, **report Excel/CSV export**, **POS ESC/POS receipt printing (T7.3)**
 **Phase 3** — **POS (till API, screen)**, Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
-**Designed, no phase, nothing built** (owner's decisions, 30 September 2026). The product is one application (pps/web) serving all features. Features are conditionally enabled per branch via BusinessType and AddOn flags (D-36). For instance, a customer can buy only HRMS or Payroll, or a School branch gets SIS but no POS. The frontend monolithic app uses lazy-loaded libraries for all these add-ons (HRMS, Payroll, CRM, POS, School/SIS).
+**Designed, no phase, nothing built** (owner's decisions, 30 September 2026). The product is one application (pps/web) serving all features. Features are conditionally enabled per branch via BusinessType (Retail, Pharma, Jewellery, School, Service, Restaurant) and AddOn flags (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling, SavingsScheme) (D-36). For instance, a customer can buy only HRMS or Payroll, or a School branch gets SIS but no POS. The frontend monolithic app uses lazy-loaded libraries for all these add-ons (HRMS, Payroll, CRM, POS, School/SIS).
   
 *Reports moved Phase 1 → Phase 2 on 24 August 2026, by decision.*
 
@@ -585,4 +585,6 @@ Written-down-value depreciation charged nothing until TK-11. The two pages under
 - **Approvals**: one engine. Its state machine is in `Shared.Kernel.Approvals`, workflow configuration and chain resolution are in Master (tenant schema `apr`), and `Employee` resolves only the employee approver kinds (D-26, TK-99, TK-49)
 
 A new question goes into `docs/TASKS.md` section 3 as the next D-number, and is asked rather than assumed.
+
+
 
