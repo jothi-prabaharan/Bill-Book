@@ -28,7 +28,7 @@ $backendApps = @(
     "accounting", "admission", "attendance", "claims", "customer", "employee", 
     "facility", "fee", "inventory", "maintenancecontract", "master", "payroll", 
     "performance", "preventive", "printing", "purchase", "recruitment", 
-    "reporting", "sales", "student", "timeleave", "workorder"
+    "reporting", "sales", "student", "timeleave", "workorder", "worker"
 )
 $frontendApps = @("web", "admin", "portal", "docs")
 
@@ -96,3 +96,4 @@ if (-Not (Get-NetFirewallRule -DisplayName $fwFrontend -ErrorAction SilentlyCont
 }
 
 Write-Host "`nIIS SETUP COMPLETE for $Environment!"
+

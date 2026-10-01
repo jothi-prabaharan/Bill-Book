@@ -41,7 +41,8 @@ $backendApps = @(
     @{ Name = "sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj" },
     @{ Name = "student"; Path = "backend\Api\Student\Student.Api\Student.Api.csproj" },
     @{ Name = "timeleave"; Path = "backend\Api\TimeLeave\TimeLeave.Api\TimeLeave.Api.csproj" },
-    @{ Name = "workorder"; Path = "backend\Api\WorkOrder\WorkOrder.Api\WorkOrder.Api.csproj" }
+    @{ Name = "workorder"; Path = "backend\Api\WorkOrder\WorkOrder.Api\WorkOrder.Api.csproj" },
+    @{ Name = "worker"; Path = "backend\Worker\BillBook.Worker\BillBook.Worker.csproj" }
 )
 $gatewayApp = @{ Name = "gateway"; Path = "backend\Gateway\Gateway.Api\Gateway.Api.csproj" }
 $frontendApps = @("web", "admin", "portal", "docs")
@@ -114,3 +115,4 @@ Start-WebAppPool -Name "BillBook_Backend_Pool_$Environment" -ErrorAction Silentl
 Start-WebAppPool -Name "BillBook_Frontend_Pool_$Environment" -ErrorAction SilentlyContinue
 
 Write-Host "`nDEPLOYMENT COMPLETE for $Environment Environment"
+

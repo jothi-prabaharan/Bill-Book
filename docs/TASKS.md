@@ -12,20 +12,36 @@ wrong, fix the card in your claim commit.
 
 ## 0. Rules
 
-### 0.1 Status markers
+### 0.1 Status markers & format
 
 Each card's first line is its status. Sub-task boxes use the same markers.
 
 | Marker | Meaning |
 |---|---|
 | `- [ ] open` | Nobody has it |
-| `- [x] completed (Antigravity) - 2026-10-01
+| `- [~] working (Agent/User) — since YYYY-MM-DD` | In progress by claimed worker |
 | `- [x] completed (AI name) — YYYY-MM-DD · tests written, not run` | An AI finished the work and wrote its tests, but did not run them (section 0.5) |
 | `- [x] completed (AI name) — YYYY-MM-DD · tests passed (owner) — YYYY-MM-DD` | The owner ran the tests and they passed. The card is now checked against its **Done when** line |
 | `- [!] blocked — D-xx` or `- [!] blocked — reason` | Can't start yet. Waiting on an owner decision (section 3), or on a problem written in the card's Notes |
 
+### 0.1.1 Status report format rule
+
+Whenever an assistant or user requests a task status report, it **must** strictly format the output as a Markdown table matching this structure:
+
+| Card | Title | Status | By / date |
+| :--- | :--- | :---: | :--- |
+| TK-xxx | Card title with `inline code` where appropriate | ✅ completed / 🔶 working / 🟪 open / 🚫 blocked | Agent/User, YYYY-MM-DD (or —) |
+
+- **Columns**:
+  - **Card**: `TK-xxx`
+  - **Title**: Exact card title preserving inline code formatting (e.g. `BusinessType`, `apps/web`)
+  - **Status**: Status indicator with colored emoji (`✅ completed`, `🔶 working`, `🟪 open`, `🚫 blocked`)
+  - **By / date**: Assigned agent/model or human, followed by date (`YYYY-MM-DD` or `since YYYY-MM-DD`), or `—` if open/unassigned
+- **Summary**: Always append a summary line at the bottom:
+  `**Summary:** X completed, Y working, Z open, and W blocked.`
+
 - **AI name** is the model that did the work, as `get_session` reports it (e.g. `Claude Opus 5.5`,
-  `Claude Sonnet 5`). A human uses their own name.
+  `Claude Sonnet 5`, `Antigravity`). A human uses their own name.
 - **Tick a card in the same commit as the work that finishes it.** Tick sub-tasks as you finish
   them.
 - **Never delete a card.** If a card is wrong or not needed, strike it through (`~~…~~`), give
@@ -35,6 +51,7 @@ Each card's first line is its status. Sub-task boxes use the same markers.
   24 September 2026, and section 4 maps each old number to its new one, for commit messages and
   older notes. A new card takes the next unused number and goes where its priority says; only the
   owner orders a renumber, and a renumber updates every reference in the repository in one commit.
+
 
 ### 0.2 Working in parallel
 
@@ -4428,7 +4445,7 @@ The queue below is one list in card-number order. Each card names its group.
   - If TK-134 has deleted `apps/admin` by the time this card is claimed, its `rates.page` is gone and needs no swap.
 
 ### TK-136 · `Service` business type; rename `General` to `Retail`
-- [ ] open
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#117](https://github.com/jothi-prabaharan/Bill-Book/issues/117)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-KERNEL, L-MST, L-WEB · **Depends on:** — · **Decision:** D-36
@@ -4703,6 +4720,7 @@ Copy these into any card that builds a feature, and tick them as you go:
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
+
 
 
 

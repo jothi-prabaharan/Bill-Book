@@ -70,6 +70,11 @@
          PrintSubstitution calls its API directly, so it is declared rather than
          relied on as a transitive that a sanitiser upgrade could move. -->
     <PackageVersion Include="AngleSharp" Version="1.7.2" />
+      <!-- Logging & Telemetry -->
+    <PackageVersion Include="Serilog.AspNetCore" Version="8.0.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.9.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
   </ItemGroup>
   <!-- Test-only. Same caveat as above, and more sharply: these have never been
        restored either, and xunit v3 changed its package layout, so expect the
@@ -85,4 +90,8 @@
     <PackageVersion Include="Xunit.SkippableFact" Version="1.5.23" />
   </ItemGroup>
 </Project>
+
+
+
+
 

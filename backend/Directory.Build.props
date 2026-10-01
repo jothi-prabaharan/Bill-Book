@@ -9,6 +9,8 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <InvariantGlobalization>true</InvariantGlobalization>
     <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
 
 </Project>
+
