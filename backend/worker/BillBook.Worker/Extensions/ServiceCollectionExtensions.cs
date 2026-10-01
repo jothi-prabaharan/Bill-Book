@@ -7,6 +7,8 @@ using Shared.Kernel.Internal;
 
 // Namespaces for Notification
 using BillBook.Worker.Notification;
+using BillBook.Worker.RecurringBilling;
+using RecurringBilling.Repository;
 using BillBook.Worker.Notification.Consumers;
 using BillBook.Worker.Notification.Email;
 using BillBook.Worker.Notification.Persistence;
@@ -144,8 +146,23 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IbjaMetalRateSync>();
         services.AddHostedService<RateSyncWorker>();
 
+                // --------------------------------------------------------
+        // 4. Recurring Billing Worker Jobs
+        // --------------------------------------------------------
+        services.AddDbContext<RecurringBillingDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(tenantDatabase);
+            options.AddInterceptors(
+                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
+                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
+        });
+        services.AddHostedService<RecurringBillingWorker>();
+        services.AddHttpClient();
+
         return services;
     }
 }
+
+
 
 

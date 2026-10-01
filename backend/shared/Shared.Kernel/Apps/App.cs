@@ -85,6 +85,15 @@ public static class AddOnRules
         };
 
     /// <summary>
+    /// Returns the combined flags of all add-ons that are free to enable (no separate purchase required) 
+    /// for the specified business type.
+    /// </summary>
+    public static AddOn Free(BusinessType? businessType)
+    {
+        return Allowed(businessType) & (AddOn.RecurringBilling);
+    }
+
+    /// <summary>
     /// Determines whether the requested add-on(s) are allowed for the given business type.
     /// Returns true if every flag in <paramref name="addOn"/> is permitted.
     /// </summary>
@@ -225,3 +234,4 @@ public static class AppRules
         return Enum.TryParse(value.Trim(), ignoreCase: true, out app) && IsSingle(app);
     }
 }
+

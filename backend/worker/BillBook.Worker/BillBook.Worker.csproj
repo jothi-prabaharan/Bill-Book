@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\Api\Sales\Sales.Repository\Sales.Repository.csproj" />
     <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
     <ProjectReference Include="..\..\Api\Inventory\Inventory.Repository\Inventory.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\RecurringBilling\RecurringBilling.Repository\RecurringBilling.Repository.csproj" />
   </ItemGroup>
 </Project>
 
