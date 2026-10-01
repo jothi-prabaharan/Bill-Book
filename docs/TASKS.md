@@ -4427,6 +4427,97 @@ The queue below is one list in card-number order. Each card names its group.
   - `bb-datetime-input` and `bb-month-input` extend the same base class as `bb-date-input`. They are not part of this card and keep their behaviour.
   - If TK-134 has deleted `apps/admin` by the time this card is claimed, its `rates.page` is gone and needs no swap.
 
+### TK-136 · `Service` business type; rename `General` to `Retail`
+- [ ] open
+- **Issue:** [#117](https://github.com/jothi-prabaharan/Bill-Book/issues/117)
+- **Group:** J · Business types, add-ons and one worker project
+- **Lanes:** L-KERNEL, L-MST, L-WEB · **Depends on:** — · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Add `Service` to `BusinessType` (`Shared.Kernel/Apps/App.cs`); rename `General` to `Retail` in the enum, seeds, menus, `TradeScopeRepository`, `AddOnRules` and its tests, the JWT claim and the docs.
+  - [ ] Migration: stored `General` values become `Retail`.
+  - [ ] Service hides stock-only screens (warehouses, batches, serials, costing); its items are service lines with SAC codes and costing method None. Service allows every add-on except `Pos`.
+  - [ ] Remove the leftover `App` enum and the 9 `RequireApp` uses in `backend/Api`.
+  - [ ] Update the D-36 text to the new list of types.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** no code names `General` as a business type or the `App` enum, and the solution builds with `-warnaserror`.
+
+### TK-137 · `Background.Worker`: one host, one `BackgroundService` class per job
+- [ ] open
+- **Issue:** [#118](https://github.com/jothi-prabaharan/Bill-Book/issues/118)
+- **Group:** J · Business types, add-ons and one worker project
+- **Lanes:** L-KERNEL, L-NTF · **Depends on:** — · **Decision:** D-38
+- **Sub-tasks:**
+  - [ ] New `backend/worker/Background.Worker`, registered in `Bill-Book.sln`, with `AddBackgroundJobs` and one folder per area.
+  - [ ] Per-job on/off switches in configuration (`Workers:<Job>:Enabled`).
+  - [ ] A base class that walks the branches with `ITenantEnumerator`, one scope per branch with its tenant set (the `PaymentReminderWorker` pattern), plus a guarded-claim helper so two replicas never run the same item.
+  - [ ] Each job catches its own failures and audits them through `WorkerErrorAuditor`.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the host runs with one job enabled and the others stay idle.
+
+### TK-138 · Move the Notification, Costing and RateSync jobs into `Background.Worker`
+- [ ] open
+- **Issue:** [#119](https://github.com/jothi-prabaharan/Bill-Book/issues/119)
+- **Group:** J · Business types, add-ons and one worker project
+- **Lanes:** L-NTF, L-INV, L-RATE, L-DEPS · **Depends on:** TK-137 · **Decision:** D-38
+- **Sub-tasks:**
+  - [ ] Move `PaymentReminderWorker` and the email consumer, `CostingWorker` and the ledger drain, and RateSync as separate `BackgroundService` classes.
+  - [ ] Delete `Notification.Worker`, `CostingEngine.Worker` and `RateSync.Worker`; update `Bill-Book.sln`, Dockerfiles, `deploy/azure`, `deploy/local` and CI.
+  - [ ] Business rules stay in `*Repository` classes (hard rule 16); the host references Repository projects, never Api projects.
+  - [ ] The four jobs hosted inside services (`EInvoiceRetryWorker`, `ReportScheduleWorker`, `ProvisioningWorker`, `PreventiveGenerator`) stay where they are for now.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** the solution has one worker project and no reference to the three old ones.
+
+### TK-139 · Recurring billing, a free add-on: sales invoices, purchase bills and retainers
+- [ ] open
+- **Issue:** [#120](https://github.com/jothi-prabaharan/Bill-Book/issues/120)
+- **Group:** J · Business types, add-ons and one worker project
+- **Lanes:** L-SAL, L-PUR, L-MST, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38
+- **Sub-tasks:**
+  - [ ] `RecurringBilling` is a free add-on: any branch whose business type allows it can turn it on with no separate purchase (`Free` flag beside `Allowed` in `AddOnRules`).
+  - [ ] Schedule tables and `RecurringBillingRepository` for sales invoices, purchase bills and retainer invoices.
+  - [ ] Controllers under `[RequireAddOn(RecurringBilling)]`; a list and a form page.
+  - [ ] `RecurringBillingWorker` creates each due document once (guarded claim, fixed document key).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a due schedule creates one invoice, and a rerun creates none.
+
+### TK-140 · Service plans and customer reminders
+- [ ] open
+- **Issue:** [#121](https://github.com/jothi-prabaharan/Bill-Book/issues/121)
+- **Group:** J · Business types, add-ons and one worker project
+- **Lanes:** L-CUS, L-SAL, L-WEB · **Depends on:** TK-139 · **Decision:** D-38
+- **Sub-tasks:**
+  - [ ] A plan per customer, optionally per item or asset: interval, start and end date, lead days, next due date, status (active, paused, ended). Completing a service moves the next due date.
+  - [ ] `ServiceReminderWorker` emails the customer through Notification's `EmailRequestHandler` once per plan and due date, and skips unsubscribed or address-less contacts.
+  - [ ] A "Services due" list on the dashboard, a per-branch reminder template, and a staff action to raise a work order. Email only; no SMS.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a plan due in N days emails the customer once, and a rerun sends nothing.
+
+### TK-141 · `SavingsScheme` add-on (Jewellery only, paid)
+- [ ] open
+- **Issue:** [#122](https://github.com/jothi-prabaharan/Bill-Book/issues/122)
+- **Group:** J · Business types, add-ons and one worker project
+- **Lanes:** L-SAL, L-ACC, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38
+- **Sub-tasks:**
+  - [ ] Scheme definitions (months, instalment, bonus rule, maturity) and enrolments per customer.
+  - [ ] Instalment receipts post to a customer-advance account (the Advance from Customer sub-account).
+  - [ ] Redemption on a sales invoice; maturity and lapse; `SavingsSchemeWorker` for instalment reminders and overdue handling.
+  - [ ] Settle in this card: how the bonus is accounted for, what happens to a lapsed scheme, and the refund rules.
+  - [ ] Jewellery only and a paid add-on; controllers under `[RequireAddOn(SavingsScheme)]`.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a customer enrols, pays instalments and redeems against an invoice.
+
+### TK-142 · Housekeeping: `TASKS.md` fixes, `CLAUDE.md`, docs and release notes
+- [ ] open
+- **Issue:** [#123](https://github.com/jothi-prabaharan/Bill-Book/issues/123)
+- **Group:** J · Business types, add-ons and one worker project
+- **Lanes:** L-DOC · **Depends on:** TK-136 to TK-141 · **Decision:** D-36
+- **Sub-tasks:**
+  - [ ] Fix the group lines on TK-131 to TK-135 and the broken character in the TK-131 heading.
+  - [ ] Refresh `CLAUDE.md`: three frontend apps, one worker project, the business types and add-ons.
+  - [ ] Docs pages, `docs.manifest.ts` and `release-notes.md` for TK-136 to TK-141.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -4473,6 +4564,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-35 | Where does the History tab appear in TK-118? | TK-118 | **Documents and the main masters** (owner, 2026-09-30): invoices, bills, contacts, items and manual journals. Other screens take the shared component in later cards; the audit-log report covers every audited table meanwhile. TK-118 |
 | D-36 | Replace the `App` flag with a branch business type and add-ons? | TK-126 to TK-134 | **Yes** (owner, 2026-09-30): `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) plus `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling), allowed per type by `AddOnRules`; a customer may buy only Hrms or Payroll. One licence per customer, roles span types. Support tickets stay in every branch (text on Basic, calls on Pro). `apps/admin` and `apps/portal` merge into `apps/web`. Reverses D-12 and the separate-app decisions. TK-126 |
 | D-37 | Add a Restaurant business type (tables, KOT, recipes)? | — | **Open.** Not in scope until answered. |
+| D-38 | Which background jobs live in `Background.Worker`? | TK-137, TK-138 | **All the jobs that were their own worker projects** (owner, 2026-10-01): Notification, Costing and RateSync move in, and the new recurring billing, service reminder and savings scheme jobs join them, each its own `BackgroundService` class. The four jobs hosted inside services stay where they are for now. `RecurringBilling` is a free add-on and `SavingsScheme` (Jewellery only) is a paid one. TK-137 |
 
 ---
 
