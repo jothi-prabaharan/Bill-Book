@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using Notification.Worker.Email;
-using Notification.Worker.Persistence;
+using BillBook.Worker.Notification.Email;
+using BillBook.Worker.Notification.Persistence;
 using Shared.Kernel.Email;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Messaging;

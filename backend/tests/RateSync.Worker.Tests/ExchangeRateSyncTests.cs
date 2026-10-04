@@ -1,9 +1,10 @@
+using BillBook.Worker.RateSync;
 using Master.Entity.Enums;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
-using RateSync.Worker.Consumers;
-using RateSync.Worker.Rbi;
+using BillBook.Worker.RateSync.Consumers;
+using BillBook.Worker.RateSync.Rbi;
 using Shared.Kernel.Errors;
 using Xunit;
 

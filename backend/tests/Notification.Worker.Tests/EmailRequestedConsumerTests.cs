@@ -1,5 +1,5 @@
 using Azure.Messaging.ServiceBus;
-using Notification.Worker.Consumers;
+using BillBook.Worker.Notification.Consumers;
 using Xunit;
 
 namespace Notification.Worker.Tests;

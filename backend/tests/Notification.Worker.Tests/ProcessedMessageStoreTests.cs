@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Notification.Worker.Persistence;
+using BillBook.Worker.Notification.Persistence;
 using Xunit;
 
 namespace Notification.Worker.Tests;

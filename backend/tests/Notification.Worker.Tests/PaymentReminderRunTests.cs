@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Notification.Worker.Email;
-using Notification.Worker.Persistence;
-using Notification.Worker.Reminders;
+using BillBook.Worker.Notification.Email;
+using BillBook.Worker.Notification.Persistence;
+using BillBook.Worker.Notification.Reminders;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;

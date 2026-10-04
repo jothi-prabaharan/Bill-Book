@@ -1,3 +1,4 @@
+using BillBook.Worker.RateSync;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Xunit;

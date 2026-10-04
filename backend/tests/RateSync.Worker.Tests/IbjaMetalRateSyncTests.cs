@@ -1,9 +1,10 @@
+using BillBook.Worker.RateSync;
 using Master.Entity.Enums;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using RateSync.Worker.Ibja;
+using BillBook.Worker.RateSync.Ibja;
 using Shared.Kernel.Errors;
 using Shared.Kernel.Interfaces;
 using Xunit;

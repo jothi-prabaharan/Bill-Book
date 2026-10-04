@@ -1,4 +1,5 @@
-using RateSync.Worker.Rbi;
+using BillBook.Worker.RateSync;
+using BillBook.Worker.RateSync.Rbi;
 using Xunit;
 
 namespace RateSync.Worker.Tests;

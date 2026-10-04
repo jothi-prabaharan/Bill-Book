@@ -245,7 +245,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Performance.Api", "Api\Perf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Performance.Api.Tests", "tests\Performance.Api.Tests\Performance.Api.Tests.csproj", "{058490D8-950D-4F1C-A4B4-1C6E824570C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillBook.Worker", "Worker\BillBook.Worker\BillBook.Worker.csproj", "{D534007A-6431-4B29-9712-921BE9C1CEC9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillBook.Worker", "worker\BillBook.Worker\BillBook.Worker.csproj", "{D534007A-6431-4B29-9712-921BE9C1CEC9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RecurringBilling", "RecurringBilling", "{65018403-DDED-F1B7-89E7-87D3259C4BCC}"
 EndProject
