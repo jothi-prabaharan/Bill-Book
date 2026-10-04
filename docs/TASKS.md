@@ -4540,7 +4540,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a plan due in N days emails the customer once, and a rerun sends nothing.
 
 ### TK-141 · `SavingsScheme` add-on (Jewellery only, paid)
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-04 · rebuilding inside Accounting; the `SavingsScheme` service from `e07848cf` is replaced (owner, 2026-10-04)
 - **Issue:** [#122](https://github.com/jothi-prabaharan/Bill-Book/issues/122)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-SAL, L-ACC, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38
