@@ -4495,7 +4495,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the solution has one worker project and no reference to the three old ones.
 
 ### TK-139 · Recurring billing, a free add-on: sales invoices, purchase bills and retainers
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-04 · rebuilding inside Sales and Purchase; the `RecurringBilling` service from `319de593` is replaced (owner, 2026-10-04)
 - **Issue:** [#120](https://github.com/jothi-prabaharan/Bill-Book/issues/120)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-SAL, L-PUR, L-MST, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38
