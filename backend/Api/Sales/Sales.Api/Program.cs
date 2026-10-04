@@ -93,6 +93,7 @@ builder.Services.AddScoped<InvoiceRepository>();
 builder.Services.AddScoped<PortalInvoiceRepository>();
 builder.Services.AddScoped<PortalQuoteRepository>();
 builder.Services.AddScoped<PosSaleRepository>();
+builder.Services.AddScoped<RecurringBillingRepository>();
 builder.Services.AddScoped<OutstandingRepository>();
 
 // Resolved from the concrete registration rather than registered separately, so

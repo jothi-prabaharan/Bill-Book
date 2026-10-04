@@ -89,6 +89,7 @@ builder.Services.AddHttpClient<Shared.Kernel.Tenancy.IOrgIdentityProvider, Share
 builder.Services.AddScoped<Gstr2bRepository>();
 builder.Services.AddScoped<GoodsReceiptRepository>();
 builder.Services.AddScoped<BillRepository>();
+builder.Services.AddScoped<RecurringBillingRepository>();
 builder.Services.AddScoped<BillBillingRepository>();
 builder.Services.AddScoped<BillBudgetCheckRepository>();
 builder.Services.AddScoped<DebitNoteRepository>();

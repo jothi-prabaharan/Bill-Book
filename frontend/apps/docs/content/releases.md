@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Recurring invoices and bills, a free add-on (TK-139).** Sales › Recurring invoices and Purchase › Recurring bills repeat an existing invoice or bill weekly, monthly, quarterly, half-yearly or yearly, each copy dated on its occurrence and taxed at that day's rates. The background worker raises each occurrence once, catches up missed ones on their own dates, and can post them as it goes. Pause, resume and end a schedule at any time. See [Recurring billing](recurring-billing).
+
 - **Restaurant Mode:** You can now configure branches as restaurant types with support for kitchen tickets (KOT) and tables. Head to Settings > Restaurant to configure modes (Billing Only, Counter + Kitchen, Dine-in, Full Service).
 ### Added
 - A branch can now be configured with a specific business type (General, Pharma, Jewellery, School) and modular add-ons (HRMS, Payroll, POS, CRM, etc.), governing which features are available to it.

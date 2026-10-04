@@ -36,7 +36,8 @@ public sealed class InternalCustomersController : ControllerBase
         var rows = await _db.Organizations
             .Where(o => o.Status == TenantStatus.Active)
             .OrderBy(o => o.CustomerId).ThenBy(o => o.OrgId)
-            .Select(o => new { o.CustomerId, o.OrgId })
+            // Numbers, not names: the worker reads them without this host's enum converter.
+            .Select(o => new { o.CustomerId, o.OrgId, AddOns = (int)o.AddOns, BusinessType = (int?)o.BusinessType })
             .ToListAsync(ct);
 
         return Ok(rows);

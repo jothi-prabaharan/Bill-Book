@@ -104,6 +104,8 @@ public class SalesDbContext : TenantDbContext
     public DbSet<RestaurantOrderDetail> RestaurantOrderDetails => Set<RestaurantOrderDetail>();
     public DbSet<Kot> Kots => Set<Kot>();
     public DbSet<KotLine> KotLines => Set<KotLine>();
+    public DbSet<RecurringInvoiceSchedule> RecurringInvoiceSchedules => Set<RecurringInvoiceSchedule>();
+    public DbSet<RecurringInvoiceRun> RecurringInvoiceRuns => Set<RecurringInvoiceRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -443,6 +445,28 @@ public class SalesDbContext : TenantDbContext
 
             b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(30);
             b.Property(e => e.StepStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        // ---- Recurring invoices (TK-139) ----------------------------------
+
+        modelBuilder.Entity<RecurringInvoiceSchedule>(b =>
+        {
+            b.HasKey(e => e.RecurringInvoiceScheduleId);
+            b.Property(e => e.Frequency).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(8);
+            b.HasIndex(e => new { e.OrgId, e.Status, e.NextRunDate });
+            b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.TemplateInvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<RecurringInvoiceRun>(b =>
+        {
+            b.HasKey(e => e.RecurringInvoiceRunId);
+
+            // The fixed document key: one invoice per schedule per occurrence.
+            b.HasIndex(e => new { e.OrgId, e.RecurringInvoiceScheduleId, e.OccurrenceDate }).IsUnique();
+            b.HasIndex(e => e.InvoiceId).IsUnique();
+            b.HasOne<RecurringInvoiceSchedule>().WithMany().HasForeignKey(e => e.RecurringInvoiceScheduleId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

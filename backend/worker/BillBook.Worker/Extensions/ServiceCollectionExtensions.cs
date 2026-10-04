@@ -12,7 +12,6 @@ using BillBook.Worker.ServiceReminders;
 using BillBook.Worker.SavingsScheme;
 using SavingsScheme.Repository;
 using Customer.Repository;
-using RecurringBilling.Repository;
 using BillBook.Worker.Notification.Consumers;
 using BillBook.Worker.Notification.Email;
 using BillBook.Worker.Notification.Persistence;
@@ -150,16 +149,24 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IbjaMetalRateSync>();
         services.AddHostedService<RateSyncWorker>();
 
-                // --------------------------------------------------------
-        // 4. Recurring Billing Worker Jobs
         // --------------------------------------------------------
-        services.AddDbContext<RecurringBillingDbContext>((sp, options) =>
+        // 4. Recurring billing (TK-139): Sales and Purchase raise the documents
+        // --------------------------------------------------------
+        services.AddHttpClient(RecurringBillingClients.SalesClient, client =>
         {
-            options.UseNpgsql(tenantDatabase);
-            options.AddInterceptors(
-                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
-                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
-        });
+            client.BaseAddress = new Uri(new Uri(config["Sales:BaseUrl"] ?? "http://localhost:4507/"), "internal/recurring-invoices/");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        })
+        .AddHttpMessageHandler<InternalKeyHandler>();
+
+        services.AddHttpClient(RecurringBillingClients.PurchaseClient, client =>
+        {
+            client.BaseAddress = new Uri(new Uri(config["Purchase:BaseUrl"] ?? "http://localhost:4505/"), "internal/recurring-bills/");
+            client.Timeout = TimeSpan.FromMinutes(5);
+        })
+        .AddHttpMessageHandler<InternalKeyHandler>();
+
+        services.AddScoped<RecurringBillingClients>();
         services.AddHostedService<RecurringBillingWorker>();
 
         services.AddDbContext<CustomerDbContext>((sp, options) =>

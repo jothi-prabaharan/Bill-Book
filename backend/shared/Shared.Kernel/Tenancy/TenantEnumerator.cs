@@ -3,8 +3,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Shared.Kernel.Tenancy;
 
-/// <summary>One branch to process.</summary>
-public sealed record ActiveOrganization(Guid CustomerId, Guid OrgId);
+/// <summary>
+/// One active branch, with what it has switched on. A worker reads
+/// <see cref="AddOns"/> to skip a branch whose add-on is off (TK-139), since it has
+/// no token to carry them.
+/// </summary>
+public sealed record ActiveOrganization(
+    Guid CustomerId,
+    Guid OrgId,
+    Apps.AddOn AddOns = Apps.AddOn.None,
+    Apps.BusinessType? BusinessType = null);
 
 /// <summary>
 /// The branches a background worker should walk. A worker has no request to

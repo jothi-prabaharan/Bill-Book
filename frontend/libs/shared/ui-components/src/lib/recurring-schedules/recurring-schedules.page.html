@@ -1,0 +1,103 @@
+<section class="recurring">
+  <header class="recurring__head">
+    <h1 class="recurring__title">{{ config.title }}</h1>
+    <button type="button" class="btn btn--primary" (click)="create()">New schedule</button>
+  </header>
+
+  <p class="recurring__muted">
+    Each schedule copies an existing {{ config.singular }} on every occurrence, dated that day and taxed at that day's rates.
+    @if (kind === 'bill') {
+      A new bill takes the prefix and the date as its vendor bill number until the real one is typed in.
+    }
+  </p>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  <bb-data-grid
+    [gridCode]="kind === 'invoice' ? 'RECURRING_INVOICES' : 'RECURRING_BILLS'"
+    [label]="config.title"
+    [columns]="columns"
+    [data]="rows()"
+    [loading]="loading()"
+    [paged]="false"
+    [showColumnFilters]="false"
+    stackOnPhone
+    emptyText="No schedules yet."
+    (rowClick)="open($event)"
+  >
+    <ng-template bbCellTemplate="frequency" let-r>{{ cadence(r.frequency, r.every) }}</ng-template>
+    <ng-template bbCellTemplate="nextRunDate" let-r>{{ date(r.nextRunDate) }}</ng-template>
+    <ng-template bbCellTemplate="status" let-r>
+      <span [class]="statusTag(r.status)">{{ r.status }}</span>
+      @if (r.lastError) {
+        <span class="recurring__warn" [title]="r.lastError">!</span>
+      }
+    </ng-template>
+  </bb-data-grid>
+
+  @if (editing()) {
+    <form class="recurring__form" (ngSubmit)="save()">
+      <h2 class="recurring__subtitle">{{ selected() ? selected()!.name : 'New schedule' }}</h2>
+
+      @if (selected()?.lastError; as error) {
+        <bb-message-box [messages]="[{ tone: 'warning', text: 'The last occurrence was not raised: ' + error }]" />
+      }
+
+      <div class="recurring__grid">
+        <bb-text-input label="Name" name="name" [maxlength]="100" [(ngModel)]="draft.name" />
+        <bb-select
+          [label]="config.documentLabel"
+          name="template"
+          [options]="templateChoices()"
+          [disabled]="locked()"
+          placeholder="Choose one"
+          [(ngModel)]="draft.templateId"
+        />
+        <bb-select label="Repeats" name="frequency" [clearable]="false" [options]="frequencyOptions" [disabled]="locked()" [(ngModel)]="draft.frequency" />
+        <bb-number-input label="Every" name="every" [min]="1" [max]="12" [disabled]="locked()" [(ngModel)]="draft.every" />
+        <bb-branch-date-input label="Starts" name="start" [disabled]="locked()" [(ngModel)]="draft.startDate" />
+        <bb-branch-date-input label="Ends (optional)" name="end" [(ngModel)]="draft.endDate" />
+        <bb-number-input label="Stop after (optional)" name="max" [min]="1" [max]="1000" [(ngModel)]="draft.maxOccurrences" />
+        <bb-text-input label="Place of supply (state code)" name="pos" [maxlength]="2" [(ngModel)]="draft.placeOfSupplyStateCode" />
+        @if (kind === 'bill') {
+          <bb-text-input label="Vendor bill number prefix" name="prefix" [maxlength]="30" [(ngModel)]="draft.vendorBillNoPrefix" />
+        }
+        <bb-checkbox name="autoPost" [text]="'Post each new ' + config.singular" [(ngModel)]="draft.autoPost" />
+      </div>
+
+      <div class="recurring__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="saving()">Save</button>
+        @if (selected(); as s) {
+          @if (s.status === 'Active') {
+            <button type="button" class="btn" (click)="act('pause')" [disabled]="saving()">Pause</button>
+          }
+          @if (s.status === 'Paused') {
+            <button type="button" class="btn" (click)="act('resume')" [disabled]="saving()">Resume</button>
+          }
+          @if (s.status !== 'Ended') {
+            <button type="button" class="btn" (click)="act('end')" [disabled]="saving()">End</button>
+          }
+        }
+        <button type="button" class="btn btn--ghost" (click)="close()">Close</button>
+      </div>
+
+      @if (selected()?.runs?.length) {
+        <h3 class="recurring__subtitle">Raised</h3>
+        <ul class="recurring__runs">
+          @for (run of selected()!.runs; track run.occurrenceDate) {
+            <li>
+              <span>{{ date(run.occurrenceDate) }}</span>
+              <a [routerLink]="[config.documentRoute, runDocumentId(run)]">{{ run.documentNo }}</a>
+              <span [class]="run.posted ? 'tag tag-accent' : 'tag tag-neutral'">{{ run.posted ? 'Posted' : 'Draft' }}</span>
+              @if (run.postError) {
+                <span class="recurring__muted">{{ run.postError }}</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </form>
+  }
+</section>

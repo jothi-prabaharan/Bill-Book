@@ -4495,17 +4495,37 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the solution has one worker project and no reference to the three old ones.
 
 ### TK-139 · Recurring billing, a free add-on: sales invoices, purchase bills and retainers
-- [ ] working (Claude Opus 5.5) — 2026-10-04 · rebuilding inside Sales and Purchase; the `RecurringBilling` service from `319de593` is replaced (owner, 2026-10-04)
+- [x] completed (Claude Opus 5.5) — 2026-10-04 · tests written, not run · retainers wait on D-47
 - **Issue:** [#120](https://github.com/jothi-prabaharan/Bill-Book/issues/120)
 - **Group:** J · Business types, add-ons and one worker project
-- **Lanes:** L-SAL, L-PUR, L-MST, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38
+- **Lanes:** L-SAL, L-PUR, L-MST, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38, D-47
 - **Sub-tasks:**
-  - [ ] `RecurringBilling` is a free add-on: any branch whose business type allows it can turn it on with no separate purchase (`Free` flag beside `Allowed` in `AddOnRules`).
-  - [ ] Schedule tables and `RecurringBillingRepository` for sales invoices, purchase bills and retainer invoices.
-  - [ ] Controllers under `[RequireAddOn(RecurringBilling)]`; a list and a form page.
-  - [ ] `RecurringBillingWorker` creates each due document once (guarded claim, fixed document key).
+  - [x] `RecurringBilling` is a free add-on: any branch whose business type allows it can turn it on with no separate purchase (`Free` flag beside `Allowed` in `AddOnRules`).
+  - [x] Schedule tables and `RecurringBillingRepository` for sales invoices and purchase bills. Retainer invoices do not exist yet (D-47).
+  - [x] Controllers under `[RequireAddOn(RecurringBilling)]`; a list and a form page.
+  - [x] `RecurringBillingWorker` creates each due document once (guarded claim, fixed document key).
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a due schedule creates one invoice, and a rerun creates none.
+- **As built:**
+  - **Replaced the first attempt.** `319de593` built a separate `RecurringBilling` service, the 23rd. It held one table, and its worker posted to an `api/salesinvoices/clone` route that no service had, with made-up tenant headers. The owner chose to rebuild it inside Sales and Purchase, as the lanes said (2026-10-04). The service, its three projects and its migration are deleted; nothing was deployed, so nothing needed moving.
+  - **Tables:** `sal.RecurringInvoiceSchedules` and `sal.RecurringInvoiceRuns`; `pur.RecurringBillSchedules` and `pur.RecurringBillRuns`. Each has RLS through the new `Shared.Kernel.Persistence.TenantRlsMigration`, TK-71's block in one place. A schedule names a template document by a real foreign key.
+  - **The calendar:** `Shared.Kernel.Recurring.RecurrenceCalendar` is pure and shared by both services:
+    - weekly, monthly, quarterly, half-yearly or yearly, every 1 to 12;
+    - an optional end date and occurrence limit;
+    - every occurrence counted from the start date, so month ends do not drift.
+  - **Raising:** `RecurringBillingRepository` in each service copies the template's party, addresses, lines, notes, terms and custom fields into an ordinary `CreateAsync`, dated on the occurrence. The due date keeps the template's term length. A bill's vendor bill number is the schedule's prefix and the date.
+    - **Once only.** The new document, the run row and the schedule's step forward commit together. The run row is unique on (schedule, date), and the schedule's `xmin` row version catches a second runner, which rolls its document and number back. *Done when* is `RecurringInvoiceTests.A_due_schedule_creates_one_invoice_and_a_rerun_creates_none`.
+    - **Posting** with `AutoPost` is a second transaction. A refused post leaves the document a draft, with the reason on its run.
+  - **Catch-up and pause:** a late run raises each missed occurrence on its own date, up to 12 per schedule per call. A pause skips what fell due while paused.
+  - **Locked fields:** the template, start and frequency cannot change once something has been raised.
+  - **Refused templates:** a voided document, a till sale, and a foreign-currency document, since an exchange rate is a snapshot and is never looked up later.
+  - **Routes:**
+    - `api/sales/recurring-invoices` and `api/purchase/recurring-bills`: list, get, create, update, plus `pause`, `resume` and `end`. Each module's own permission applies, under `[RequireAddOn(RecurringBilling)]`.
+    - `internal/recurring-invoices/run` and `internal/recurring-bills/run`: `[InternalOnly]` and `[NoTransaction]`, so each occurrence is its own transaction.
+  - **Worker:** `BillBook.Worker`'s `RecurringBillingWorker` (hourly) only calls the two internal routes for each branch, and skips a branch without the add-on. `ActiveOrganization` now carries the branch's add-ons and business type, read from Master's `internal/customers/active-organizations`.
+  - **Page:** one `bb-recurring-schedules` page in `ui-components`, mounted at `/sales/recurring-invoices` and `/purchase/recurring-bills`, route-gated by `addOns: ['RecurringBilling']`. Menu rows `1142` and `1143` carry `AddOn.RecurringBilling` and no business type, with menu permissions `485`–`490`.
+  - **Specs:** `Shared.Kernel.Tests.RecurrenceCalendarTests`, `Sales.Api.Tests.RecurringInvoiceTests`, `Purchase.Api.Tests.RecurringBillTests` and `recurring-schedules.model.spec.ts`.
+  - **Owner step:** run those suites, and switch the add-on on for a branch to see the menus.
 
 ### TK-140 · Service plans and customer reminders
 - [x] completed (Antigravity) - 2026-10-01
@@ -4955,6 +4975,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-44 | Which kinds of customer are there? | TK-152 to TK-154 | **Three kinds** (owner, 2026-10-01): Standard (paying, from signup or created by an operator), **Internal** (our own organisation, real books, business type Service) and **Demo** (one per business type for testing and demos, master data only, no transactions). The Internal customer is the existing bootstrap customer. TK-152 |
 | D-45 | Demo customers: who signs in, with what, and can they be reset? | TK-154 | *Open.* Default until answered: each Demo owner is created with no password, as the bootstrap does today, and signs in through forgot-password; no password is committed to source. Also open: a way to reset a demo back to empty masters, a plan and licence for them (default Elite, no expiry), and whether an HRMS-only and a Payroll-only demo customer are wanted. Raised 2026-10-01 by TK-154 |
 | D-46 | Which libraries draw barcodes and read them from a camera? | TK-156, TK-160 | *Open.* Default until answered: ZXing.Net (MIT) for Code128 and EAN-13 in Printing, the browser's `BarcodeDetector` for camera reading with one MIT fallback library where it is missing. Raised 2026-10-01 by TK-156 |
+| D-47 | Retainer invoices: build the document, and then repeat it? | TK-139 | *Open.* TK-139 names recurring retainer invoices, but no retainer document exists anywhere in the product, so there is nothing to repeat. Default until answered: recurring billing repeats sales invoices and purchase bills only. A retainer would be its own card: a request for an advance that posts nothing until paid, its payment landing on the customer's prepayment advance sub-account. Raised 2026-10-04 by TK-139 |
 
 ---
 

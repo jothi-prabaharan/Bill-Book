@@ -1,114 +1,80 @@
-using Microsoft.EntityFrameworkCore;
-using RecurringBilling.Entity.Enums;
-using RecurringBilling.Repository;
-using Shared.Kernel.Tenancy;
-using Shared.Kernel.Apps;
-using System.Text.Json;
-using System.Net.Http;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Tenancy;
 
 namespace BillBook.Worker.RecurringBilling;
 
-public class RecurringBillingWorker : BranchWorkerBase<RecurringBillingWorker>
+/// <summary>
+/// Raises due recurring invoices and bills (TK-139), once an hour by default.
+///
+/// The worker only says "run now" for a branch: Sales and Purchase raise the
+/// documents themselves, through their own invoice and bill repositories, so
+/// there is no second copy of numbering, tax or posting here. What makes each
+/// occurrence happen once lives with them — the schedule's row version and the
+/// unique (schedule, date) key — so a second worker replica or a rerun raises
+/// nothing twice.
+///
+/// A branch without the <see cref="AddOn.RecurringBilling"/> add-on is skipped:
+/// switching the add-on off stops its schedules without deleting them.
+/// </summary>
+public sealed class RecurringBillingWorker : BranchWorkerBase<RecurringBillingWorker>
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-
     public RecurringBillingWorker(
-        IServiceScopeFactory scopes,
-        ILogger<RecurringBillingWorker> logger,
-        IConfiguration config,
-        IHttpClientFactory httpClientFactory)
+        IServiceScopeFactory scopes, ILogger<RecurringBillingWorker> logger, IConfiguration config)
         : base(scopes, logger, config)
     {
-        _httpClientFactory = httpClientFactory;
     }
 
     protected override string JobName => "RecurringBilling";
+
     protected override TimeSpan DefaultInterval => TimeSpan.FromHours(1);
 
-    protected override async Task ProcessBranchAsync(ActiveOrganization branch, IServiceScope scope, CancellationToken stoppingToken)
+    protected override async Task ProcessBranchAsync(ActiveOrganization branch, IServiceScope scope, CancellationToken ct)
     {
-        var db = scope.ServiceProvider.GetRequiredService<RecurringBillingDbContext>();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-
-        // Find schedules that are active, not in-progress, and due.
-        var dueSchedules = await db.RecurringSchedules
-            .Where(s => s.Status == ScheduleStatus.Active &&
-                        s.RunStatus == ScheduleRunStatus.Pending &&
-                        s.NextDueDate <= today &&
-                        (s.EndDate == null || s.EndDate >= today))
-            .Select(s => s.RecurringScheduleId)
-            .ToListAsync(stoppingToken);
-
-        foreach (var id in dueSchedules)
+        if ((branch.AddOns & AddOn.RecurringBilling) == 0)
         {
-            // Guarded claim: use ExecuteUpdateAsync so only one worker replica claims it
-            int claimed = await db.RecurringSchedules
-                .Where(s => s.RecurringScheduleId == id && s.RunStatus == ScheduleRunStatus.Pending)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(p => p.RunStatus, ScheduleRunStatus.InProgress)
-                    .SetProperty(p => p.RunAttempts, p => p.RunAttempts + 1),
-                    stoppingToken);
+            return;
+        }
 
-            if (claimed == 0) continue; // Claimed by another replica
+        RecurringBillingClients clients = scope.ServiceProvider.GetRequiredService<RecurringBillingClients>();
+        RunRecurring body = new(branch.CustomerId, branch.OrgId, null);
 
-            try
+        // Both are attempted even if the first fails; a failure is rethrown so
+        // the base class audits it to the error log with the branch named.
+        HttpRequestException? failure = null;
+        foreach (HttpClient client in new[] { clients.Sales, clients.Purchase })
+        {
+            using HttpResponseMessage response = await client.PostAsJsonAsync("run", body, ct);
+            if (!response.IsSuccessStatusCode)
             {
-                var schedule = await db.RecurringSchedules.FindAsync(new object[] { id }, stoppingToken);
-                if (schedule == null) continue;
-
-                // Fixed Document Key for Idempotency: REC-{ScheduleId}-{NextDueDate:yyyyMMdd}
-                string idempotencyKey = $"REC-{schedule.RecurringScheduleId}-{schedule.NextDueDate:yyyyMMdd}";
-
-                var client = _httpClientFactory.CreateClient();
-                var baseUrl = _config["Sales:BaseUrl"] ?? "http://localhost:4503/";
-                if (schedule.DocumentType == ScheduleDocumentType.PurchaseBill)
-                {
-                    baseUrl = _config["Purchase:BaseUrl"] ?? "http://localhost:4502/";
-                }
-
-                client.BaseAddress = new Uri(baseUrl);
-                client.DefaultRequestHeaders.Add("X-Tenant-Customer", branch.CustomerId.ToString());
-                client.DefaultRequestHeaders.Add("X-Tenant-Org", branch.OrgId.ToString());
-                client.DefaultRequestHeaders.Add("X-Idempotency-Key", idempotencyKey);
-
-                // We call a clone endpoint or create endpoint depending on the service
-                var request = new { TemplateId = schedule.TemplateDocumentId, IdempotencyKey = idempotencyKey };
-                var response = await client.PostAsJsonAsync($"api/{schedule.DocumentType.ToString().ToLowerInvariant()}s/clone", request, stoppingToken);
-
-                response.EnsureSuccessStatusCode();
-
-                // Advance schedule
-                schedule.NextDueDate = schedule.Interval switch
-                {
-                    ScheduleInterval.Daily => schedule.NextDueDate.AddDays(1),
-                    ScheduleInterval.Weekly => schedule.NextDueDate.AddDays(7),
-                    ScheduleInterval.Monthly => schedule.NextDueDate.AddMonths(1),
-                    ScheduleInterval.Yearly => schedule.NextDueDate.AddYears(1),
-                    _ => schedule.NextDueDate.AddDays(1)
-                };
-                schedule.RunStatus = ScheduleRunStatus.Pending;
-                schedule.RunError = null;
-
-                if (schedule.EndDate.HasValue && schedule.NextDueDate > schedule.EndDate.Value)
-                {
-                    schedule.Status = ScheduleStatus.Ended;
-                }
-
-                await db.SaveChangesAsync(stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to run recurring schedule {Id}", id);
-                await db.RecurringSchedules
-                    .Where(s => s.RecurringScheduleId == id)
-                    .ExecuteUpdateAsync(s => s
-                        .SetProperty(p => p.RunStatus, ScheduleRunStatus.Pending)
-                        .SetProperty(p => p.RunError, ex.Message),
-                        stoppingToken);
+                failure ??= new HttpRequestException(
+                    $"{client.BaseAddress} answered {(int)response.StatusCode}.", null, response.StatusCode);
             }
         }
+
+        if (failure is not null)
+        {
+            throw failure;
+        }
     }
+
+    private sealed record RunRecurring(Guid CustomerId, Guid OrgId, DateOnly? AsOf);
 }
 
+/// <summary>Sales' and Purchase's <c>internal/recurring-*</c> routes, each carrying the internal key.</summary>
+public sealed class RecurringBillingClients
+{
+    public const string SalesClient = "recurring-sales";
+    public const string PurchaseClient = "recurring-purchase";
+
+    public RecurringBillingClients(IHttpClientFactory factory)
+    {
+        Sales = factory.CreateClient(SalesClient);
+        Purchase = factory.CreateClient(PurchaseClient);
+    }
+
+    public HttpClient Sales { get; }
+
+    public HttpClient Purchase { get; }
+}

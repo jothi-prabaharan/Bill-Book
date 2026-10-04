@@ -79,3 +79,5 @@ export * from './lib/edit-history/edit-history.model';
 export * from './lib/edit-history/edit-history.component';
 export * from './lib/edit-history/edit-log-report.component';
 
+export * from './lib/recurring-schedules/recurring-schedules.model';
+export * from './lib/recurring-schedules/recurring-schedules.page';

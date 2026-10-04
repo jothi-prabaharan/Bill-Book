@@ -81,6 +81,10 @@ public class PurchaseDbContext : TenantDbContext
     /// <summary>Approval chains of purchase orders, bills and debit notes (TK-100).</summary>
     public DbSet<PurchaseApprovalStep> ApprovalSteps => Set<PurchaseApprovalStep>();
 
+    public DbSet<RecurringBillSchedule> RecurringBillSchedules => Set<RecurringBillSchedule>();
+
+    public DbSet<RecurringBillRun> RecurringBillRuns => Set<RecurringBillRun>();
+
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 
@@ -414,6 +418,28 @@ public class PurchaseDbContext : TenantDbContext
 
             b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(30);
             b.Property(e => e.StepStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        // ---- Recurring bills (TK-139) -------------------------------------
+
+        modelBuilder.Entity<RecurringBillSchedule>(b =>
+        {
+            b.HasKey(e => e.RecurringBillScheduleId);
+            b.Property(e => e.Frequency).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(8);
+            b.HasIndex(e => new { e.OrgId, e.Status, e.NextRunDate });
+            b.HasOne<Bill>().WithMany().HasForeignKey(e => e.TemplateBillId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<RecurringBillRun>(b =>
+        {
+            b.HasKey(e => e.RecurringBillRunId);
+
+            // The fixed document key: one bill per schedule per occurrence.
+            b.HasIndex(e => new { e.OrgId, e.RecurringBillScheduleId, e.OccurrenceDate }).IsUnique();
+            b.HasIndex(e => e.BillId).IsUnique();
+            b.HasOne<RecurringBillSchedule>().WithMany().HasForeignKey(e => e.RecurringBillScheduleId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne<Bill>().WithMany().HasForeignKey(e => e.BillId).OnDelete(DeleteBehavior.Restrict);
         });
 
         base.OnModelCreating(modelBuilder);

@@ -2299,6 +2299,168 @@ namespace Sales.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.RecurringInvoiceRun", b =>
+                {
+                    b.Property<long>("RecurringInvoiceRunId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RecurringInvoiceRunId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("InvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("OccurrenceDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("OccurrenceIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PostError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("Posted")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("RecurringInvoiceScheduleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("RecurringInvoiceRunId");
+
+                    b.HasIndex("InvoiceId")
+                        .IsUnique();
+
+                    b.HasIndex("RecurringInvoiceScheduleId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "RecurringInvoiceScheduleId", "OccurrenceDate")
+                        .IsUnique();
+
+                    b.ToTable("RecurringInvoiceRuns", "sal");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RecurringInvoiceSchedule", b =>
+                {
+                    b.Property<long>("RecurringInvoiceScheduleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RecurringInvoiceScheduleId"));
+
+                    b.Property<bool>("AutoPost")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Every")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("MaxOccurrences")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("NextOccurrenceIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("NextRunDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("OccurrencesCreated")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PlaceOfSupplyStateCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<long>("TemplateInvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("RecurringInvoiceScheduleId");
+
+                    b.HasIndex("TemplateInvoiceId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "Status", "NextRunDate");
+
+                    b.ToTable("RecurringInvoiceSchedules", "sal");
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.ReminderLog", b =>
                 {
                     b.Property<long>("ReminderLogId")
@@ -3750,6 +3912,30 @@ namespace Sales.Repository.Migrations.Tenant
                         .WithMany("Taxes")
                         .HasForeignKey("QuoteDetailId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RecurringInvoiceRun", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sales.Entity.TableEntities.RecurringInvoiceSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("RecurringInvoiceScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RecurringInvoiceSchedule", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("TemplateInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

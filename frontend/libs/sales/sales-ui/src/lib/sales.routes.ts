@@ -54,6 +54,12 @@ export const salesRoutes: Routes = [
     path: 'invoices/:id',
     loadComponent: () => import('./invoice-form/invoice-form.component').then(m => m.InvoiceFormComponent)
   },
+  // Recurring invoices (TK-139): a free add-on, shared with Purchase's recurring bills.
+  {
+    path: 'recurring-invoices',
+    loadComponent: () => import('@bill-book/ui-components').then(m => m.RecurringSchedulesPage),
+    data: { recurringKind: 'invoice', access: { permission: 'sales.view', addOns: ['RecurringBilling'] } },
+  },
   {
     path: 'delivery-challans/new',
     loadComponent: () => import('./delivery-challan-form/delivery-challan-form.component').then(m => m.DeliveryChallanFormComponent)

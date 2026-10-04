@@ -82,6 +82,11 @@ public static class MenuSeed
                 row.BusinessType = null;
                 row.AddOns = AddOn.Budget;
             }
+            else if (row.MenuId is 1142 or 1143) // Recurring billing (TK-139): any branch with the add-on
+            {
+                row.BusinessType = null;
+                row.AddOns = AddOn.RecurringBilling;
+            }
             else if (row.MenuId is 2 or 101 || (row.MenuId >= 1001 && row.MenuId <= 1003)) // Contacts
             {
                 row.BusinessType = BusinessType.General;
@@ -124,6 +129,7 @@ public static class MenuSeed
         new Menu { MenuId = 1012, ParentId = 103, Type = MenuType.Item, Code = "por", Name = "Purchase orders", Icon = "clipboard-list", Module = "purchase", RoutePath = "/purchase/transactions?type=PurchaseOrder", IsSearchable = false, CanCreate = true, SingularName = "Purchase order", DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1013, ParentId = 103, Type = MenuType.Item, Code = "grn", Name = "Goods receipts", Icon = "package-check", Module = "purchase", RoutePath = "/purchase/transactions?type=GoodsReceipt", IsSearchable = false, CanCreate = true, SingularName = "Goods receipt", DisplayOrder = 2, IsActive = true },
         new Menu { MenuId = 1014, ParentId = 103, Type = MenuType.Item, Code = "bil", Name = "Bills", Icon = "receipt", Module = "purchase", RoutePath = "/purchase/transactions?type=Bill", IsSearchable = false, CanCreate = true, SingularName = "Bill", DisplayOrder = 3, IsActive = true },
+        new Menu { MenuId = 1143, ParentId = 103, Type = MenuType.Item, Code = "rbl", Name = "Recurring bills", Icon = "repeat", Module = "purchase", RoutePath = "/purchase/recurring-bills", IsSearchable = true, CanCreate = true, SingularName = "Recurring bill", DisplayOrder = 5, IsActive = true },
         new Menu { MenuId = 1015, ParentId = 103, Type = MenuType.Item, Code = "dbn", Name = "Debit notes", Icon = "file-minus", Module = "purchase", RoutePath = "/purchase/transactions?type=DebitNote", IsSearchable = false, CanCreate = true, SingularName = "Debit note", DisplayOrder = 4, IsActive = true },
         // ---- Sales ----
         new Menu { MenuId = 5, ParentId = null, Type = MenuType.Rail, Code = "sales", Name = "Sales", Icon = "shopping-cart", Module = "sales", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = true },
@@ -132,6 +138,7 @@ public static class MenuSeed
         new Menu { MenuId = 1017, ParentId = 104, Type = MenuType.Item, Code = "sor", Name = "Sales orders", Icon = "clipboard-list", Module = "sales", RoutePath = "/sales/sales-orders", IsSearchable = false, CanCreate = true, SingularName = "Sales order", DisplayOrder = 2, IsActive = true },
         new Menu { MenuId = 1018, ParentId = 104, Type = MenuType.Item, Code = "dlc", Name = "Delivery challans", Icon = "truck", Module = "sales", RoutePath = "/sales/transactions?type=DeliveryChallan", IsSearchable = false, CanCreate = true, SingularName = "Delivery challan", DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1019, ParentId = 104, Type = MenuType.Item, Code = "inv", Name = "Invoices", Icon = "receipt", Module = "sales", RoutePath = "/sales/invoices", IsSearchable = false, CanCreate = true, SingularName = "Invoice", DisplayOrder = 4, IsActive = true },
+        new Menu { MenuId = 1142, ParentId = 104, Type = MenuType.Item, Code = "rin", Name = "Recurring invoices", Icon = "repeat", Module = "sales", RoutePath = "/sales/recurring-invoices", IsSearchable = true, CanCreate = true, SingularName = "Recurring invoice", DisplayOrder = 6, IsActive = true },
         new Menu { MenuId = 1020, ParentId = 104, Type = MenuType.Item, Code = "crn", Name = "Credit notes", Icon = "file-minus", Module = "sales", RoutePath = "/sales/transactions?type=CreditNote", IsSearchable = false, CanCreate = true, SingularName = "Credit note", DisplayOrder = 5, IsActive = true },
         // ---- Banking ----
         new Menu { MenuId = 6, ParentId = null, Type = MenuType.Rail, Code = "banking", Name = "Banking", Icon = "landmark", Module = "banking", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
@@ -809,6 +816,14 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 482, MenuId = 1141, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
         new MenuPermission { MenuPermissionId = 483, MenuId = 1141, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
         new MenuPermission { MenuPermissionId = 484, MenuId = 1141, PermissionCode = "restaurant.void", Action = "void", Module = "restaurant" },
+
+        // Recurring billing (TK-139): a free add-on, under each module's own permissions.
+        new MenuPermission { MenuPermissionId = 485, MenuId = 1142, PermissionCode = "sales.view", Action = "view", Module = "sales" },
+        new MenuPermission { MenuPermissionId = 486, MenuId = 1142, PermissionCode = "sales.create", Action = "create", Module = "sales" },
+        new MenuPermission { MenuPermissionId = 487, MenuId = 1142, PermissionCode = "sales.edit", Action = "edit", Module = "sales" },
+        new MenuPermission { MenuPermissionId = 488, MenuId = 1143, PermissionCode = "purchase.view", Action = "view", Module = "purchase" },
+        new MenuPermission { MenuPermissionId = 489, MenuId = 1143, PermissionCode = "purchase.create", Action = "create", Module = "purchase" },
+        new MenuPermission { MenuPermissionId = 490, MenuId = 1143, PermissionCode = "purchase.edit", Action = "edit", Module = "purchase" },
     ];
 }
 

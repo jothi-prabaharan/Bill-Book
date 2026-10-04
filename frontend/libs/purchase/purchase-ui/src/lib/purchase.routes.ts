@@ -18,6 +18,12 @@ export const purchaseRoutes: Routes = [
     loadComponent: () => import('./gstr2b/gstr2b.page').then((m) => m.Gstr2bPage),
     data: { access: { permission: 'purchase.view' } },
   },
+  // Recurring bills (TK-139): a free add-on, the same page as Sales' recurring invoices.
+  {
+    path: 'recurring-bills',
+    loadComponent: () => import('@bill-book/ui-components').then((m) => m.RecurringSchedulesPage),
+    data: { recurringKind: 'bill', access: { permission: 'purchase.view', addOns: ['RecurringBilling'] } },
+  },
   {
     path: '',
     redirectTo: 'transactions',

@@ -7443,6 +7443,24 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1143,
+                            AddOns = 256,
+                            CanCreate = true,
+                            Code = "rbl",
+                            DisplayOrder = 5,
+                            Icon = "repeat",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "purchase",
+                            Name = "Recurring bills",
+                            ParentId = 103,
+                            RoutePath = "/purchase/recurring-bills",
+                            SingularName = "Recurring bill",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 1015,
                             AddOns = 0,
                             BusinessType = "General",
@@ -7563,6 +7581,24 @@ namespace Master.Repository.Migrations.Admin
                             ParentId = 104,
                             RoutePath = "/sales/invoices",
                             SingularName = "Invoice",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1142,
+                            AddOns = 256,
+                            CanCreate = true,
+                            Code = "rin",
+                            DisplayOrder = 6,
+                            Icon = "repeat",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "sales",
+                            Name = "Recurring invoices",
+                            ParentId = 104,
+                            RoutePath = "/sales/recurring-invoices",
+                            SingularName = "Recurring invoice",
                             Type = "Item",
                             Version = 0u
                         },
@@ -14622,6 +14658,60 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1141,
                             Module = "restaurant",
                             PermissionCode = "restaurant.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 485,
+                            Action = "view",
+                            MenuId = 1142,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 486,
+                            Action = "create",
+                            MenuId = 1142,
+                            Module = "sales",
+                            PermissionCode = "sales.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 487,
+                            Action = "edit",
+                            MenuId = 1142,
+                            Module = "sales",
+                            PermissionCode = "sales.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 488,
+                            Action = "view",
+                            MenuId = 1143,
+                            Module = "purchase",
+                            PermissionCode = "purchase.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 489,
+                            Action = "create",
+                            MenuId = 1143,
+                            Module = "purchase",
+                            PermissionCode = "purchase.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 490,
+                            Action = "edit",
+                            MenuId = 1143,
+                            Module = "purchase",
+                            PermissionCode = "purchase.edit",
                             Version = 0u
                         });
                 });
