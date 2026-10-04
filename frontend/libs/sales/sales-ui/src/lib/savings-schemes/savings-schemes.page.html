@@ -1,0 +1,193 @@
+<section class="schemes">
+  <header class="schemes__head">
+    <h1 class="schemes__title">Savings schemes</h1>
+    <div class="schemes__tabs" role="tablist">
+      <button type="button" role="tab" class="btn" [class.btn--primary]="tab() === 'enrolments'" [attr.aria-selected]="tab() === 'enrolments'" (click)="tab.set('enrolments')">Customers</button>
+      <button type="button" role="tab" class="btn" [class.btn--primary]="tab() === 'schemes'" [attr.aria-selected]="tab() === 'schemes'" (click)="tab.set('schemes')">Schemes</button>
+    </div>
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (tab() === 'enrolments') {
+    <div class="schemes__bar">
+      <bb-select label="Status" name="status" [clearable]="false" [options]="statusOptions" [(ngModel)]="statusFilter" (ngModelChange)="loadEnrolments()" />
+      <button type="button" class="btn btn--primary" (click)="startEnrol()">Enrol a customer</button>
+    </div>
+
+    @if (enrolling()) {
+      <form class="schemes__panel" (ngSubmit)="enrol()">
+        <h2 class="schemes__subtitle">Enrol a customer</h2>
+        <div class="schemes__grid">
+          <bb-select label="Scheme" name="scheme" placeholder="Choose a scheme" [options]="schemeChoices()" [(ngModel)]="enrolSchemeId" />
+          <div class="schemes__picker">
+            <span class="schemes__label">Customer</span>
+            <button type="button" class="btn" (click)="picker.openCustomer()">{{ enrolContactLabel() || 'Choose a customer' }}</button>
+          </div>
+          <bb-branch-date-input label="First instalment" name="start" [(ngModel)]="enrolStart" />
+        </div>
+        <div class="schemes__actions">
+          <button type="submit" class="btn btn--primary" [disabled]="busy()">Enrol</button>
+          <button type="button" class="btn btn--ghost" (click)="enrolling.set(false)">Cancel</button>
+        </div>
+      </form>
+    }
+
+    <bb-data-grid
+      gridCode="SAVINGS_ENROLMENTS"
+      label="Enrolments"
+      [columns]="enrolmentColumns"
+      [data]="enrolments()"
+      [paged]="false"
+      [showColumnFilters]="false"
+      stackOnPhone
+      emptyText="No customers enrolled yet."
+      (rowClick)="openEnrolment($event)"
+    >
+      <ng-template bbCellTemplate="instalmentsPaid" let-r>{{ r.instalmentsPaid }} / {{ r.months }}</ng-template>
+      <ng-template bbCellTemplate="nextDueDate" let-r>{{ date(r.nextDueDate) }}</ng-template>
+      <ng-template bbCellTemplate="status" let-r><span [class]="statusTag(r.status)">{{ statusLabel(r.status) }}</span></ng-template>
+    </bb-data-grid>
+
+    @if (selected(); as e) {
+      <section class="schemes__panel">
+        <div class="schemes__panel-head">
+          <h2 class="schemes__subtitle">{{ e.enrolmentNo }} · {{ e.schemeName }}</h2>
+          <span [class]="statusTag(e.status)">{{ statusLabel(e.status) }}</span>
+        </div>
+
+        <dl class="schemes__facts">
+          <div><dt>Customer</dt><dd>{{ e.contactId }}</dd></div>
+          <div><dt>Instalment</dt><dd>{{ formats.formatMoney(e.instalmentAmount) }} × {{ e.months }}</dd></div>
+          <div><dt>Paid in</dt><dd>{{ formats.formatMoney(e.paidPrincipal) }}</dd></div>
+          <div><dt>Bonus at maturity</dt><dd>{{ formats.formatMoney(e.bonusAmount) }}</dd></div>
+          <div><dt>Matures</dt><dd>{{ date(e.maturityDate) }}</dd></div>
+          @if (e.status === 'Matured' || e.status === 'Lapsed' || e.status === 'Active') {
+            <div><dt>Redeemable now</dt><dd>{{ formats.formatMoney(redeemableNow(e)) }}</dd></div>
+          }
+          @if (e.status === 'Redeemed') {
+            <div><dt>Redeemed</dt><dd>{{ formats.formatMoney((e.principalRedeemed ?? 0) + (e.bonusRedeemed ?? 0)) }}</dd></div>
+          }
+        </dl>
+
+        <div class="schemes__actions">
+          @if (actions().pay) {
+            <button type="button" class="btn btn--primary" (click)="begin('pay')">Take instalment</button>
+          }
+          @if (actions().redeem || actions().closeEarly) {
+            <button type="button" class="btn" (click)="begin('redeem')">Redeem on an invoice</button>
+          }
+          @if (actions().refund) {
+            <button type="button" class="btn" (click)="begin('refund')">Refund</button>
+          }
+          <button type="button" class="btn btn--ghost" (click)="selected.set(null)">Close</button>
+        </div>
+
+        @if (action(); as kind) {
+          <form class="schemes__subpanel" (ngSubmit)="confirm()">
+            <div class="schemes__grid">
+              @if (kind === 'redeem') {
+                <bb-select label="Invoice" name="invoice" placeholder="Choose an invoice" [options]="invoiceChoices()" [(ngModel)]="invoiceId" />
+                <bb-branch-date-input label="Date" name="redeemDate" [(ngModel)]="actionDate" />
+                @if (e.status === 'Active') {
+                  <bb-checkbox name="closeEarly" text="Close early and give up the bonus" [(ngModel)]="closeEarly" />
+                }
+              } @else {
+                <bb-select [label]="kind === 'pay' ? 'Paid into' : 'Paid from'" name="bank" [clearable]="false" [options]="bankChoices()" [(ngModel)]="bankAccountId" />
+                <bb-select label="How" name="method" [clearable]="false" [options]="paymentMethods" [(ngModel)]="paymentMethod" />
+                <bb-branch-date-input label="Date" name="actionDate" [(ngModel)]="actionDate" />
+                <bb-text-input label="Reference (optional)" name="reference" [maxlength]="50" [(ngModel)]="referenceNo" />
+              }
+            </div>
+            <p class="schemes__muted">
+              @switch (kind) {
+                @case ('pay') { Takes instalment {{ e.instalmentsPaid + 1 }} of {{ e.months }}, {{ formats.formatMoney(e.instalmentAmount) }}, as a receipt to the customer's advance. }
+                @case ('redeem') { The bonus goes on first, then what was paid, up to what the invoice owes. Paid money beyond it stays on the customer's advance; bonus beyond it is given up. }
+                @case ('refund') { Returns {{ formats.formatMoney(e.principalAvailable ?? e.paidPrincipal) }}, what was paid and not yet spent. The bonus is never refunded. }
+              }
+            </p>
+            <div class="schemes__actions">
+              <button type="submit" class="btn btn--primary" [disabled]="busy()">Confirm</button>
+              <button type="button" class="btn btn--ghost" (click)="action.set(null)">Cancel</button>
+            </div>
+          </form>
+        }
+
+        @if (e.instalments?.length) {
+          <h3 class="schemes__subtitle">Instalments</h3>
+          <ul class="schemes__instalments">
+            @for (i of e.instalments; track i.schemeInstalmentId) {
+              <li [class.schemes__paid]="i.paidOn">
+                <span>{{ i.instalmentNumber }}</span>
+                <span>{{ date(i.dueDate) }}</span>
+                <span>{{ formats.formatMoney(i.amount) }}</span>
+                <span>{{ i.paidOn ? 'Paid ' + date(i.paidOn) : 'Due' }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  } @else {
+    <div class="schemes__bar">
+      <span class="schemes__muted">A change to a scheme applies to customers who join afterwards. Everyone already enrolled keeps the terms they joined on.</span>
+      <button type="button" class="btn btn--primary" (click)="newScheme()">New scheme</button>
+    </div>
+
+    <bb-data-grid
+      gridCode="SAVINGS_SCHEMES"
+      label="Schemes"
+      [columns]="schemeColumns"
+      [data]="schemes()"
+      [paged]="false"
+      [showColumnFilters]="false"
+      stackOnPhone
+      emptyText="No schemes yet."
+      (rowClick)="openScheme($event)"
+    >
+      <ng-template bbCellTemplate="isActive" let-r>{{ r.isActive ? 'Yes' : 'No' }}</ng-template>
+    </bb-data-grid>
+
+    @if (editingScheme()) {
+      <form class="schemes__panel" (ngSubmit)="saveScheme()">
+        <h2 class="schemes__subtitle">{{ editingScheme() === 'new' ? 'New scheme' : schemeDraft.name }}</h2>
+        <div class="schemes__grid">
+          <bb-text-input label="Code" name="code" [maxlength]="20" [(ngModel)]="schemeDraft.code" />
+          <bb-text-input label="Name" name="name" [maxlength]="100" [(ngModel)]="schemeDraft.name" />
+          <bb-money-input label="Monthly instalment" name="instalment" [(ngModel)]="schemeDraft.instalmentAmount" />
+          <bb-number-input label="Months" name="months" [min]="1" [max]="60" [(ngModel)]="schemeDraft.months" />
+          <bb-select label="Bonus" name="bonusType" [clearable]="false" [options]="bonusOptions" [(ngModel)]="schemeDraft.bonusType" />
+          @if (schemeDraft.bonusType !== 'None') {
+            <bb-number-input
+              [label]="schemeDraft.bonusType === 'Instalments' ? 'Free instalments' : schemeDraft.bonusType === 'Percent' ? 'Bonus %' : 'Bonus amount'"
+              name="bonusValue"
+              [min]="0"
+              [(ngModel)]="schemeDraft.bonusValue"
+            />
+          }
+          <bb-number-input label="Grace days before it lapses" name="grace" [min]="0" [max]="365" [(ngModel)]="schemeDraft.graceDays" />
+          <bb-checkbox name="active" text="Open to new customers" [(ngModel)]="schemeDraft.isActive" />
+        </div>
+        <p class="schemes__muted">Bonus at maturity: {{ formats.formatMoney(draftBonus) }}</p>
+        <div class="schemes__actions">
+          <button type="submit" class="btn btn--primary" [disabled]="busy()">Save</button>
+          <button type="button" class="btn btn--ghost" (click)="editingScheme.set(null)">Cancel</button>
+        </div>
+      </form>
+    }
+  }
+</section>
+
+<bb-lookup-dialog
+  [open]="picker.open()"
+  [title]="picker.title()"
+  [placeholder]="picker.placeholder()"
+  [emptyText]="picker.emptyText()"
+  [rows]="picker.rows()"
+  [loading]="picker.loading()"
+  (searchChange)="picker.search($event)"
+  (choose)="picker.choose($event)"
+  (dismiss)="picker.close()"
+/>

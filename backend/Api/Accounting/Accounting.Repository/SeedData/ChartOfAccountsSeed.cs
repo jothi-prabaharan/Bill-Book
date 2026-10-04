@@ -96,6 +96,11 @@ public static class ChartOfAccountsSeed
         Account(orgId, "4300", SystemAccount.FeeIncome, Income, isSales: true),
         Account(orgId, "4250", SystemAccount.DiscountGiven, Income, isSales: true, isContra: true),
         Account(orgId, "2400", SystemAccount.RefundableDeposits, Liability),
+
+        // A savings scheme's bonus (TK-141): the jeweller's expense, debited at
+        // redemption. Seeded in every branch, since a branch may take up the
+        // add-on later; it simply stays at nil where no scheme runs.
+        Account(orgId, "5400", SystemAccount.SavingsSchemeBonus, Expense),
     ];
 
     // There are deliberately no separate advance control accounts. A contact's

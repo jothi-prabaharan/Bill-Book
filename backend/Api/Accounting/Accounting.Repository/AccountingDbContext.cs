@@ -107,6 +107,12 @@ public class AccountingDbContext : TenantDbContext
     /// <summary>Payments contacts make online through the client portal (TK-98).</summary>
     public DbSet<OnlinePayment> OnlinePayments => Set<OnlinePayment>();
 
+    public DbSet<SavingsScheme> SavingsSchemes => Set<SavingsScheme>();
+
+    public DbSet<SchemeEnrolment> SchemeEnrolments => Set<SchemeEnrolment>();
+
+    public DbSet<SchemeInstalment> SchemeInstalments => Set<SchemeInstalment>();
+
     public DbSet<ReceiveMoneyDetail> ReceiveMoneyDetails => Set<ReceiveMoneyDetail>();
 
     /// <summary>
@@ -1215,6 +1221,44 @@ public class AccountingDbContext : TenantDbContext
         {
             b.Property(e => e.TdsAmount).HasColumnType("decimal(18,2)");
             b.ToTable(t => t.HasCheckConstraint("chk_receivemoney_tds_nonnegative", "\"TdsAmount\" >= 0"));
+        });
+
+        // ---- Savings schemes (TK-141) --------------------------------------
+
+        modelBuilder.Entity<SavingsScheme>(b =>
+        {
+            b.HasKey(e => e.SavingsSchemeId);
+            b.HasIndex(e => new { e.OrgId, e.Code }).IsUnique();
+            b.Property(e => e.InstalmentAmount).HasPrecision(18, 2);
+            b.Property(e => e.BonusValue).HasPrecision(18, 2);
+            b.Property(e => e.BonusType).HasConversion<string>().HasMaxLength(12);
+        });
+
+        modelBuilder.Entity<SchemeEnrolment>(b =>
+        {
+            b.HasKey(e => e.SchemeEnrolmentId);
+            b.HasIndex(e => new { e.OrgId, e.Status });
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+            b.HasIndex(e => e.EnrolmentNo).IsUnique().HasFilter("\"EnrolmentNo\" IS NOT NULL");
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.InstalmentAmount).HasPrecision(18, 2);
+            b.Property(e => e.BonusAmount).HasPrecision(18, 2);
+            b.Property(e => e.PaidPrincipal).HasPrecision(18, 2);
+            b.Property(e => e.PrincipalRedeemed).HasPrecision(18, 2);
+            b.Property(e => e.BonusRedeemed).HasPrecision(18, 2);
+            b.HasOne<SavingsScheme>().WithMany().HasForeignKey(e => e.SavingsSchemeId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SchemeInstalment>(b =>
+        {
+            b.HasKey(e => e.SchemeInstalmentId);
+            b.HasIndex(e => new { e.OrgId, e.SchemeEnrolmentId, e.InstalmentNumber }).IsUnique();
+
+            // One receipt pays one instalment, once.
+            b.HasIndex(e => e.ReceiveMoneyId).IsUnique().HasFilter("\"ReceiveMoneyId\" IS NOT NULL");
+            b.Property(e => e.Amount).HasPrecision(18, 2);
+            b.HasOne<SchemeEnrolment>().WithMany().HasForeignKey(e => e.SchemeEnrolmentId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne<ReceiveMoney>().WithMany().HasForeignKey(e => e.ReceiveMoneyId).OnDelete(DeleteBehavior.Restrict);
         });
 
         base.OnModelCreating(modelBuilder);

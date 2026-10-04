@@ -4540,7 +4540,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a plan due in N days emails the customer once, and a rerun sends nothing.
 
 ### TK-141 · `SavingsScheme` add-on (Jewellery only, paid)
-- [ ] working (Claude Opus 5.5) — 2026-10-04 · rebuilding inside Accounting; the `SavingsScheme` service from `e07848cf` is replaced (owner, 2026-10-04)
+- [x] completed (Claude Opus 5.5) — 2026-10-04 · tests written, not run
 - **Issue:** [#122](https://github.com/jothi-prabaharan/Bill-Book/issues/122)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-SAL, L-ACC, L-WEB · **Depends on:** TK-136, TK-137 · **Decision:** D-38
@@ -4552,6 +4552,35 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Jewellery only and a paid add-on; controllers under `[RequireAddOn(SavingsScheme)]`.
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a customer enrols, pays instalments and redeems against an invoice.
+- **As built:**
+  - **Replaced the first attempt.** `e07848cf` built a separate `SavingsScheme` service, the 24th. Its logic sat in the controllers, nothing posted to the ledger, it had no permission guard, and its test called a method that did not exist, so the solution did not build. The owner chose to rebuild it inside Accounting, where the money already moves (2026-10-04). The service, its four projects and its migration are deleted.
+  - **Tables in `acc`, with RLS through `TenantRlsMigration`:**
+    - `SavingsSchemes`: code, instalment, 1–60 months, bonus type and value, grace days.
+    - `SchemeEnrolments`: the scheme's terms copied at enrolment, so a later change to the scheme reaches only new members.
+    - `SchemeInstalments`: one per month, counted from the start date. Each is paid by one receipt, enforced by a unique key.
+  - **Nothing posts on its own.** `SavingsSchemeRepository` drives documents Accounting already has:
+    - an **instalment** is a posted receipt under source 9, crediting the customer's prepayment advance under Accounts Payable;
+    - **redemption** allocates those receipts to the invoice, as the Allocate dialog does;
+    - the **bonus** is a system journal (Dr the new `Savings Scheme Bonus` expense account `5400`, Cr the customer's receivable) allocated to the invoice like a credit note;
+    - a **refund** is a posted spend under source 19, with the receipts allocated to it so they stop counting as unspent.
+  - **Settled here:**
+    - **The bonus is an expense recognised at redemption, applied before what was paid.** The invoice stays at full value, so GST is never charged on less than the customer takes home. Bonus beyond the invoice is forfeited; paid money beyond it stays on the customer's advance.
+    - **A lapsed enrolment** takes no more instalments and earns no bonus. What was paid stays the customer's, to redeem or refund. Closing early before maturity is allowed only with `CloseEarly`, and also forfeits the bonus.
+    - **A refund** returns what was paid and is unspent, never the bonus, with nothing deducted. Where spend money needs approval, the refund is refused with a pointer to Spend money, because an approval cannot be waited out in one request.
+  - **Concurrency:** two counters taking the same instalment are refused by the instalment's row version. Redemption and refund run serializable, as the allocations under them do.
+  - **Routes** (`api/savings-schemes`, under `sales`, `[RequireBusinessType(Jewellery)]` and `[RequireAddOn(SavingsScheme)]`):
+    - schemes: list, create, update;
+    - enrolments: list, get and enrol;
+    - `…/instalments`: `sales.create`;
+    - `…/redeem` and `…/refund`: `sales.approve`;
+    - the page's own `bank-accounts` and `enrolments/{id}/invoices` lookups, so counter staff need no banking or accounting rights.
+    - Gateway route `accounting-savings-schemes`.
+  - **Worker:**
+    - `internal/savings-schemes/run` lapses what is past its grace days and lists instalments due within three days or late.
+    - `BillBook.Worker`'s `SavingsSchemeWorker` (every 12 hours, Jewellery branches with the add-on only) emails those reminders through TK-19's `EmailRequestHandler`. The message id is fixed by branch, instalment and kind, so each reminder goes once.
+  - **Page:** `/sales/savings-schemes` in `sales-ui`, with Customers and Schemes tabs, route-gated by `businessTypes: ['Jewellery']` and `addOns: ['SavingsScheme']`. Menu row `1144`, permissions `491`–`493`.
+  - **Specs:** `Accounting.Api.Tests.SavingsSchemeTests` (rules, and *Done when*), and `savings-schemes.model.spec.ts`.
+  - **Owner step:** run them, then retry seeding for existing branches so they get account `5400`.
 
 ### TK-142 · Housekeeping: `TASKS.md` fixes, `CLAUDE.md`, docs and release notes
 - [ ] open

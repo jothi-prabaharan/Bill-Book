@@ -128,6 +128,7 @@ builder.Services.AddScoped<ReconciliationRepository>();
 builder.Services.AddScoped<BankRepository>();
 builder.Services.AddScoped<SpendMoneyRepository>();
 builder.Services.AddScoped<ReceiveMoneyRepository>();
+builder.Services.AddScoped<SavingsSchemeRepository>();
 
 // Online payment from the client portal (TK-98): the sandbox until D-25 names a gateway.
 builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);

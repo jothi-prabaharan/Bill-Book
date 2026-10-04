@@ -1,0 +1,126 @@
+.schemes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.schemes__head,
+.schemes__bar,
+.schemes__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+}
+
+.schemes__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.schemes__subtitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.schemes__tabs,
+.schemes__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+.schemes__muted {
+  margin: 0;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.875rem;
+}
+
+.schemes__panel,
+.schemes__subpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--color-surface, #fff);
+}
+
+.schemes__subpanel {
+  background: var(--color-surface-muted, #f9fafb);
+}
+
+.schemes__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3, 0.75rem);
+  align-items: end;
+}
+
+.schemes__picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.schemes__label {
+  font-size: 0.875rem;
+}
+
+.schemes__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-2, 0.5rem);
+  margin: 0;
+
+  dt {
+    color: var(--color-text-muted, #6b7280);
+    font-size: 0.75rem;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+  }
+}
+
+.schemes__instalments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+
+  li {
+    display: grid;
+    grid-template-columns: 2rem 1fr 1fr 1fr;
+    gap: var(--space-2, 0.5rem);
+    padding: var(--space-1, 0.25rem) 0;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+  }
+}
+
+.schemes__paid {
+  color: var(--color-text-muted, #6b7280);
+}
+
+@media (max-width: 480px) {
+  .schemes__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schemes__actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .schemes__instalments li {
+    grid-template-columns: 2rem 1fr 1fr;
+
+    span:last-child {
+      grid-column: 2 / -1;
+    }
+  }
+}

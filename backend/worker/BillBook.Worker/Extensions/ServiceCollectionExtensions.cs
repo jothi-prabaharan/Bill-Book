@@ -8,9 +8,8 @@ using Shared.Kernel.Internal;
 // Namespaces for Notification
 using BillBook.Worker.Notification;
 using BillBook.Worker.RecurringBilling;
-using BillBook.Worker.ServiceReminders;
 using BillBook.Worker.SavingsScheme;
-using SavingsScheme.Repository;
+using BillBook.Worker.ServiceReminders;
 using Customer.Repository;
 using BillBook.Worker.Notification.Consumers;
 using BillBook.Worker.Notification.Email;
@@ -186,14 +185,18 @@ public static class ServiceCollectionExtensions
         });
         services.AddHostedService<ServiceReminderWorker>();
 
-        services.AddDbContext<SavingsSchemeDbContext>((sp, options) =>
+        // --------------------------------------------------------
+        // 5. Savings schemes (TK-141): Accounting decides, this sends
+        // --------------------------------------------------------
+        services.AddHttpClient(SavingsSchemeRun.AccountingClient, client =>
         {
-            options.UseNpgsql(tenantDatabase);
-            options.AddInterceptors(
-                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
-                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
-        });
+            client.BaseAddress = new Uri(config["Accounting:BaseUrl"] ?? "http://localhost:4501/");
+        })
+        .AddHttpMessageHandler<InternalKeyHandler>();
+
+        services.AddScoped<SavingsSchemeRun>();
         services.AddHostedService<SavingsSchemeWorker>();
+
         services.AddHttpClient();
 
         return services;

@@ -161,6 +161,13 @@ public enum SystemAccount
     /// against the branch's own income tax once Form 26AS shows it.
     /// </summary>
     TdsReceivable = 28,
+
+    /// <summary>
+    /// The jeweller's contribution to a savings scheme (TK-141). An Expense,
+    /// debited at redemption when the bonus goes onto the customer's invoice;
+    /// off the manual picker, because a redemption is what moves it.
+    /// </summary>
+    SavingsSchemeBonus = 29,
 }
 
 /// <summary>
@@ -200,6 +207,7 @@ public static class SystemAccountNames
         SystemAccount.GstPayableReverseCharge => "GST Payable (Reverse Charge)",
         SystemAccount.TdsPayable => "TDS Payable",
         SystemAccount.TdsReceivable => "TDS Receivable",
+        SystemAccount.SavingsSchemeBonus => "Savings Scheme Bonus",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

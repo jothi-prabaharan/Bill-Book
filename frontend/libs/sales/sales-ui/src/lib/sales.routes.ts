@@ -60,6 +60,12 @@ export const salesRoutes: Routes = [
     loadComponent: () => import('@bill-book/ui-components').then(m => m.RecurringSchedulesPage),
     data: { recurringKind: 'invoice', access: { permission: 'sales.view', addOns: ['RecurringBilling'] } },
   },
+  // Jewellery savings schemes (TK-141): a paid add-on for Jewellery branches.
+  {
+    path: 'savings-schemes',
+    loadComponent: () => import('./savings-schemes/savings-schemes.page').then(m => m.SavingsSchemesPage),
+    data: { access: { permission: 'sales.view', businessTypes: ['Jewellery'], addOns: ['SavingsScheme'] } },
+  },
   {
     path: 'delivery-challans/new',
     loadComponent: () => import('./delivery-challan-form/delivery-challan-form.component').then(m => m.DeliveryChallanFormComponent)

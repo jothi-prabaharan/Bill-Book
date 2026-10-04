@@ -82,6 +82,11 @@ public static class MenuSeed
                 row.BusinessType = null;
                 row.AddOns = AddOn.Budget;
             }
+            else if (row.MenuId is 1144) // Savings schemes (TK-141): Jewellery's paid add-on
+            {
+                row.BusinessType = BusinessType.Jewellery;
+                row.AddOns = AddOn.SavingsScheme;
+            }
             else if (row.MenuId is 1142 or 1143) // Recurring billing (TK-139): any branch with the add-on
             {
                 row.BusinessType = null;
@@ -139,6 +144,7 @@ public static class MenuSeed
         new Menu { MenuId = 1018, ParentId = 104, Type = MenuType.Item, Code = "dlc", Name = "Delivery challans", Icon = "truck", Module = "sales", RoutePath = "/sales/transactions?type=DeliveryChallan", IsSearchable = false, CanCreate = true, SingularName = "Delivery challan", DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1019, ParentId = 104, Type = MenuType.Item, Code = "inv", Name = "Invoices", Icon = "receipt", Module = "sales", RoutePath = "/sales/invoices", IsSearchable = false, CanCreate = true, SingularName = "Invoice", DisplayOrder = 4, IsActive = true },
         new Menu { MenuId = 1142, ParentId = 104, Type = MenuType.Item, Code = "rin", Name = "Recurring invoices", Icon = "repeat", Module = "sales", RoutePath = "/sales/recurring-invoices", IsSearchable = true, CanCreate = true, SingularName = "Recurring invoice", DisplayOrder = 6, IsActive = true },
+        new Menu { MenuId = 1144, ParentId = 104, Type = MenuType.Item, Code = "ssc", Name = "Savings schemes", Icon = "piggy-bank", Module = "sales", RoutePath = "/sales/savings-schemes", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
         new Menu { MenuId = 1020, ParentId = 104, Type = MenuType.Item, Code = "crn", Name = "Credit notes", Icon = "file-minus", Module = "sales", RoutePath = "/sales/transactions?type=CreditNote", IsSearchable = false, CanCreate = true, SingularName = "Credit note", DisplayOrder = 5, IsActive = true },
         // ---- Banking ----
         new Menu { MenuId = 6, ParentId = null, Type = MenuType.Rail, Code = "banking", Name = "Banking", Icon = "landmark", Module = "banking", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
@@ -824,6 +830,11 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 488, MenuId = 1143, PermissionCode = "purchase.view", Action = "view", Module = "purchase" },
         new MenuPermission { MenuPermissionId = 489, MenuId = 1143, PermissionCode = "purchase.create", Action = "create", Module = "purchase" },
         new MenuPermission { MenuPermissionId = 490, MenuId = 1143, PermissionCode = "purchase.edit", Action = "edit", Module = "purchase" },
+
+        // Savings schemes (TK-141): Jewellery's paid add-on, under the sales module.
+        new MenuPermission { MenuPermissionId = 491, MenuId = 1144, PermissionCode = "sales.view", Action = "view", Module = "sales" },
+        new MenuPermission { MenuPermissionId = 492, MenuId = 1144, PermissionCode = "sales.create", Action = "create", Module = "sales" },
+        new MenuPermission { MenuPermissionId = 493, MenuId = 1144, PermissionCode = "sales.approve", Action = "approve", Module = "sales" },
     ];
 }
 

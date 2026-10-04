@@ -2557,6 +2557,264 @@ namespace Accounting.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.SavingsScheme", b =>
+                {
+                    b.Property<long>("SavingsSchemeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SavingsSchemeId"));
+
+                    b.Property<string>("BonusType")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<decimal>("BonusValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("GraceDays")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("InstalmentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Months")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("SavingsSchemeId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("SavingsSchemes", "acc");
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.SchemeEnrolment", b =>
+                {
+                    b.Property<long>("SchemeEnrolmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SchemeEnrolmentId"));
+
+                    b.Property<decimal>("BonusAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<long?>("BonusJournalId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("BonusRedeemed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EnrolmentNo")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("GraceDays")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("InstalmentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly?>("LapsedOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("MaturedOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("MaturityDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Months")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PaidPrincipal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("PrincipalRedeemed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<long?>("RedeemedInvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly?>("RedeemedOn")
+                        .HasColumnType("date");
+
+                    b.Property<long?>("RefundSpendMoneyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly?>("RefundedOn")
+                        .HasColumnType("date");
+
+                    b.Property<long>("SavingsSchemeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("SchemeEnrolmentId");
+
+                    b.HasIndex("EnrolmentNo")
+                        .IsUnique()
+                        .HasFilter("\"EnrolmentNo\" IS NOT NULL");
+
+                    b.HasIndex("SavingsSchemeId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ContactId");
+
+                    b.HasIndex("OrgId", "Status");
+
+                    b.ToTable("SchemeEnrolments", "acc");
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.SchemeInstalment", b =>
+                {
+                    b.Property<long>("SchemeInstalmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SchemeInstalmentId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("InstalmentNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("PaidOn")
+                        .HasColumnType("date");
+
+                    b.Property<long?>("ReceiveMoneyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SchemeEnrolmentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("SchemeInstalmentId");
+
+                    b.HasIndex("ReceiveMoneyId")
+                        .IsUnique()
+                        .HasFilter("\"ReceiveMoneyId\" IS NOT NULL");
+
+                    b.HasIndex("SchemeEnrolmentId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "SchemeEnrolmentId", "InstalmentNumber")
+                        .IsUnique();
+
+                    b.ToTable("SchemeInstalments", "acc");
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.SpendMoney", b =>
                 {
                     b.Property<long>("SpendMoneyId")
@@ -4283,6 +4541,29 @@ namespace Accounting.Repository.Migrations.Tenant
                     b.HasOne("Accounting.Entity.TableEntities.ReceiveMoney", null)
                         .WithMany()
                         .HasForeignKey("ReceiveMoneyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.SchemeEnrolment", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.SavingsScheme", null)
+                        .WithMany()
+                        .HasForeignKey("SavingsSchemeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.SchemeInstalment", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.ReceiveMoney", null)
+                        .WithMany()
+                        .HasForeignKey("ReceiveMoneyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Accounting.Entity.TableEntities.SchemeEnrolment", null)
+                        .WithMany()
+                        .HasForeignKey("SchemeEnrolmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

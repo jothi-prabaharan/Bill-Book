@@ -7604,6 +7604,24 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1144,
+                            AddOns = 512,
+                            BusinessType = "Jewellery",
+                            CanCreate = false,
+                            Code = "ssc",
+                            DisplayOrder = 7,
+                            Icon = "piggy-bank",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "sales",
+                            Name = "Savings schemes",
+                            ParentId = 104,
+                            RoutePath = "/sales/savings-schemes",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 1020,
                             AddOns = 0,
                             BusinessType = "General",
@@ -14712,6 +14730,33 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1143,
                             Module = "purchase",
                             PermissionCode = "purchase.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 491,
+                            Action = "view",
+                            MenuId = 1144,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 492,
+                            Action = "create",
+                            MenuId = 1144,
+                            Module = "sales",
+                            PermissionCode = "sales.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 493,
+                            Action = "approve",
+                            MenuId = 1144,
+                            Module = "sales",
+                            PermissionCode = "sales.approve",
                             Version = 0u
                         });
                 });
