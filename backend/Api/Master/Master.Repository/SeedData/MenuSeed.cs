@@ -82,6 +82,11 @@ public static class MenuSeed
                 row.BusinessType = null;
                 row.AddOns = AddOn.Budget;
             }
+            else if (row.MenuId is 1145) // Service plans (TK-140): every branch with a business type
+            {
+                row.BusinessType = null;
+                row.AddOns = AddOn.None;
+            }
             else if (row.MenuId is 1144) // Savings schemes (TK-141): Jewellery's paid add-on
             {
                 row.BusinessType = BusinessType.Jewellery;
@@ -117,6 +122,7 @@ public static class MenuSeed
         new Menu { MenuId = 1001, ParentId = 101, Type = MenuType.Item, Code = "both", Name = "Customer & vendor", Icon = "users-round", Module = "contacts", RoutePath = "/contacts", IsSearchable = false, CanCreate = true, SingularName = "Contact", DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1002, ParentId = 101, Type = MenuType.Item, Code = "cus", Name = "Customers", Icon = "user-round", Module = "contacts", RoutePath = null, IsSearchable = false, CanCreate = true, SingularName = "Customer", DisplayOrder = 2, IsActive = false },
         new Menu { MenuId = 1003, ParentId = 101, Type = MenuType.Item, Code = "ven", Name = "Vendors", Icon = "truck", Module = "contacts", RoutePath = null, IsSearchable = false, CanCreate = true, SingularName = "Vendor", DisplayOrder = 3, IsActive = false },
+        new Menu { MenuId = 1145, ParentId = 101, Type = MenuType.Item, Code = "svp", Name = "Service plans", Icon = "calendar-clock", Module = "support", RoutePath = "/customer/service-plans", IsSearchable = true, CanCreate = true, SingularName = "Service plan", DisplayOrder = 9, IsActive = true },
         // ---- Inventory ----
         new Menu { MenuId = 3, ParentId = null, Type = MenuType.Rail, Code = "inventory", Name = "Inventory", Icon = "boxes", Module = "inventory", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 102, ParentId = 3, Type = MenuType.Group, Code = "inventory-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -835,6 +841,11 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 491, MenuId = 1144, PermissionCode = "sales.view", Action = "view", Module = "sales" },
         new MenuPermission { MenuPermissionId = 492, MenuId = 1144, PermissionCode = "sales.create", Action = "create", Module = "sales" },
         new MenuPermission { MenuPermissionId = 493, MenuId = 1144, PermissionCode = "sales.approve", Action = "approve", Module = "sales" },
+
+        // Service plans (TK-140): after-sales care, under support like tickets.
+        new MenuPermission { MenuPermissionId = 494, MenuId = 1145, PermissionCode = "support.view", Action = "view", Module = "support" },
+        new MenuPermission { MenuPermissionId = 495, MenuId = 1145, PermissionCode = "support.create", Action = "create", Module = "support" },
+        new MenuPermission { MenuPermissionId = 496, MenuId = 1145, PermissionCode = "support.edit", Action = "edit", Module = "support" },
     ];
 }
 

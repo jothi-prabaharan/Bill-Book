@@ -109,6 +109,29 @@ public sealed class ContactsClient : IContactsClient
         return list ?? [];
     }
 
+    public async Task<IReadOnlyDictionary<long, ContactEmail>?> EmailsAsync(
+        Guid customerId, Guid orgId, IReadOnlyCollection<long> contactIds, CancellationToken ct)
+    {
+        try
+        {
+            using HttpResponseMessage response = await _http.PostAsJsonAsync(
+                "internal/contacts/emails", new { customerId, orgId, ids = contactIds }, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            List<ContactEmail>? rows = await response.Content.ReadFromJsonAsync<List<ContactEmail>>(ct);
+            return rows?.ToDictionary(r => r.ContactId);
+        }
+        catch (HttpRequestException ex)
+        {
+            _log.LogWarning(ex, "Master could not be asked for contact emails");
+            return null;
+        }
+    }
+
     /// <summary>The <c>{ message }</c> on a refusal, when there is one.</summary>
     private static async Task<string?> ReasonAsync(
         HttpResponseMessage response, CancellationToken ct)

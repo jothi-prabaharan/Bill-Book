@@ -12,6 +12,7 @@ import {
   signal,
 } from '@angular/core';
 import { ShellBoardService } from '@bill-book/app-shell';
+import { ServicesDueCard } from '@bill-book/customer-ui';
 import {
   DASHBOARD_WIDGETS,
   DashboardLayout,
@@ -38,7 +39,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-dashboard-page',
   standalone: true,
-  imports: [DataGridComponent, DataGridCellTemplateDirective],
+  imports: [DataGridComponent, DataGridCellTemplateDirective, ServicesDueCard],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })

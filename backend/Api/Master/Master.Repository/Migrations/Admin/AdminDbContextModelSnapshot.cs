@@ -7180,6 +7180,24 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1145,
+                            AddOns = 0,
+                            CanCreate = true,
+                            Code = "svp",
+                            DisplayOrder = 9,
+                            Icon = "calendar-clock",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "support",
+                            Name = "Service plans",
+                            ParentId = 101,
+                            RoutePath = "/customer/service-plans",
+                            SingularName = "Service plan",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 3,
                             AddOns = 0,
                             BusinessType = "General",
@@ -14757,6 +14775,33 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1144,
                             Module = "sales",
                             PermissionCode = "sales.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 494,
+                            Action = "view",
+                            MenuId = 1145,
+                            Module = "support",
+                            PermissionCode = "support.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 495,
+                            Action = "create",
+                            MenuId = 1145,
+                            Module = "support",
+                            PermissionCode = "support.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 496,
+                            Action = "edit",
+                            MenuId = 1145,
+                            Module = "support",
+                            PermissionCode = "support.edit",
                             Version = 0u
                         });
                 });

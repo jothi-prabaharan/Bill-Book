@@ -42,6 +42,7 @@ builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<SlaPolicyRepository>();
+builder.Services.AddScoped<ServicePlanRepository>();
 builder.Services.AddScoped<PortalTicketRepository>();
 builder.Services.AddSingleton<IUnsubscribeTokenSigner, UnsubscribeTokenSigner>();
 builder.Services.AddSingleton<ICampaignTrackingTokenSigner, CampaignTrackingTokenSigner>();

@@ -206,6 +206,11 @@ public sealed class CampaignDatabaseTests
 
     private sealed class FakeContactsClient : IContactsClient
     {
+        public Task<IReadOnlyDictionary<long, Shared.Kernel.Documents.ContactEmail>?> EmailsAsync(
+            Guid customerId, Guid orgId, IReadOnlyCollection<long> contactIds, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyDictionary<long, Shared.Kernel.Documents.ContactEmail>?>(
+                new Dictionary<long, Shared.Kernel.Documents.ContactEmail>());
+
         private readonly List<ContactItemDto> _contacts;
         public FakeContactsClient(List<ContactItemDto> contacts) => _contacts = contacts;
 

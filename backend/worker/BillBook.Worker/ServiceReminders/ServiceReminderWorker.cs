@@ -1,110 +1,90 @@
-using Customer.Entity.Enums;
-using Customer.Entity.TableEntities;
-using Customer.Repository;
-using Master.Repository;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Shared.Kernel.Tenancy;
-using Shared.Kernel.Messaging;
+using System.Net.Http.Json;
 using BillBook.Worker.Notification.Email;
+using Microsoft.Extensions.DependencyInjection;
+using Shared.Kernel.Messaging;
+using Shared.Kernel.Tenancy;
 
 namespace BillBook.Worker.ServiceReminders;
 
-public class ServiceReminderWorker : BranchWorkerBase<ServiceReminderWorker>
+/// <summary>
+/// Service plan reminders (TK-140), hourly by default.
+///
+/// Customer decides who is due, where they are written to, whether they
+/// unsubscribed and what the email says (<c>internal/service-plans/reminders</c>);
+/// this only sends, through TK-19's <see cref="EmailRequestHandler"/>. Each
+/// message id is fixed by branch, plan and due date, so the hourly repeat sends
+/// nothing twice. The worker reads no service's tables.
+/// </summary>
+public sealed class ServiceReminderWorker : BranchWorkerBase<ServiceReminderWorker>
 {
-    private readonly EmailRequestHandler _emailHandler;
+    public const string CustomerClient = "service-reminders-customer";
 
-    public ServiceReminderWorker(
-        IServiceScopeFactory scopes,
-        ILogger<ServiceReminderWorker> logger,
-        IConfiguration config,
-        EmailRequestHandler emailHandler)
+    public ServiceReminderWorker(IServiceScopeFactory scopes, ILogger<ServiceReminderWorker> logger, IConfiguration config)
         : base(scopes, logger, config)
     {
-        _emailHandler = emailHandler;
     }
 
     protected override string JobName => "ServiceReminders";
+
     protected override TimeSpan DefaultInterval => TimeSpan.FromHours(1);
 
-    protected override async Task ProcessBranchAsync(ActiveOrganization branch, IServiceScope scope, CancellationToken stoppingToken)
+    protected override async Task ProcessBranchAsync(ActiveOrganization branch, IServiceScope scope, CancellationToken ct)
     {
-        var db = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
-        var masterDb = scope.ServiceProvider.GetRequiredService<ContactsDbContext>();
-        
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-
-        // Find plans that are due (or overdue) for a reminder
-        var duePlans = await db.ServicePlans
-            .Where(p => p.Status == ServicePlanStatus.Active &&
-                        p.NextDueDate.AddDays(-p.LeadDays) <= today)
-            .ToListAsync(stoppingToken);
-
-        foreach (var plan in duePlans)
+        if (branch.BusinessType is null)
         {
-            // Idempotency: plan ID and NextDueDate
-            string messageId = $"SRV-{plan.ServicePlanId}-{plan.NextDueDate:yyyyMMdd}";
+            return;
+        }
 
-            // Contact Person lookup
-            var defaultPerson = await masterDb.ContactPersons
-                .Where(c => c.ContactId == plan.ContactId && c.IsDefault && c.IsActive)
-                .FirstOrDefaultAsync(stoppingToken);
+        HttpClient customer = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(CustomerClient);
+        EmailRequestHandler mail = scope.ServiceProvider.GetRequiredService<EmailRequestHandler>();
 
-            if (defaultPerson == null || string.IsNullOrWhiteSpace(defaultPerson.Email))
+        using HttpResponseMessage response = await customer.PostAsJsonAsync(
+            "internal/service-plans/reminders", new { customerId = branch.CustomerId, orgId = branch.OrgId }, ct);
+        response.EnsureSuccessStatusCode();
+
+        Reminders? due = await response.Content.ReadFromJsonAsync<Reminders>(ct);
+        if (due is null || due.Messages.Count == 0)
+        {
+            return;
+        }
+
+        int sent = 0;
+        foreach (Message m in due.Messages)
+        {
+            EmailHandleOutcome outcome = await mail.HandleAsync(new EmailRequested
             {
-                continue;
-            }
-
-            var email = defaultPerson.Email.Trim().ToLowerInvariant();
-
-            // Consent lookup
-            var consent = await db.EmailConsents
-                .Where(c => c.Email == email)
-                .FirstOrDefaultAsync(stoppingToken);
-
-            if (consent != null && consent.Status == ConsentStatus.Unsubscribed)
-            {
-                continue;
-            }
-
-            // A 'Services due' list on the dashboard, a per-branch reminder template, and a staff action to raise a work order. 
-            // Email only; no SMS.
-            // Wait, the template lookup:
-                        var template = await db.EmailTemplates
-                .Where(t => t.Name == "ServiceReminder" && t.IsActive)
-                .FirstOrDefaultAsync(stoppingToken);
-
-            string subject = template?.Subject ?? "Service Due Reminder";
-            string body = template?.HtmlBody ?? "<p>Dear {defaultPerson.FirstName},</p><p>This is a reminder that a service is due on {plan.NextDueDate:MMM dd, yyyy}.</p>";
-
-            // Replace tokens
-            subject = subject.Replace("{{FirstName}}", defaultPerson.FirstName);
-            body = body.Replace("{{FirstName}}", defaultPerson.FirstName)
-                       .Replace("{{NextDueDate}}", plan.NextDueDate.ToString("MMM dd, yyyy"));
-
-            var emailReq = new EmailRequested
-            {
-                MessageId = messageId,
+                MessageId = m.MessageId,
                 RequestedAt = DateTimeOffset.UtcNow,
                 CustomerId = branch.CustomerId,
-                ToEmail = email,
-                ToName = $"{defaultPerson.FirstName} {defaultPerson.LastName}".Trim(),
-                Subject = subject,
-                HtmlBody = body
-            };
+                ToEmail = m.ToEmail,
+                ToName = m.ToName,
+                Subject = m.Subject,
+                HtmlBody = m.HtmlBody,
+                TextBody = m.TextBody,
+            }, ct);
 
-            try
+            if (outcome == EmailHandleOutcome.NoMailbox)
             {
-                // Let the handler process it (handles deduping and sending)
-                await _emailHandler.HandleAsync(emailReq, stoppingToken);
+                _logger.LogWarning("No mailbox to send service reminders from for {OrgId}; stopping this run.", branch.OrgId);
+                break;
             }
-            catch (Exception ex)
+
+            if (outcome == EmailHandleOutcome.Sent)
             {
-                _logger.LogError(ex, "Failed to send service reminder {MessageId}", messageId);
+                sent++;
             }
         }
+
+        if (sent > 0)
+        {
+            _logger.LogInformation(
+                "Service reminders for {OrgId}: {Sent} sent, {NoEmail} without an email, {Unsubscribed} unsubscribed.",
+                branch.OrgId, sent, due.NoEmail, due.Unsubscribed);
+        }
     }
+
+    private sealed record Reminders(List<Message> Messages, int NoEmail, int Unsubscribed, bool Stopped);
+
+    private sealed record Message(
+        string MessageId, long ServicePlanId, string ToEmail, string? ToName, string Subject, string HtmlBody, string? TextBody);
 }
-
-

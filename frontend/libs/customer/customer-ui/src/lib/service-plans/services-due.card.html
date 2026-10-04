@@ -1,0 +1,22 @@
+<div class="card-kicker">Services due</div>
+@switch (state()) {
+  @case ('loading') {
+    <p class="due__muted">Loading…</p>
+  }
+  @case ('unavailable') {
+    <p class="due__muted">Service plans are not available to you here.</p>
+  }
+  @default {
+    <div class="card-title">{{ plans().length ? plans().length + ' in the next two weeks' : 'Nothing due in the next two weeks' }}</div>
+    <ul class="due__list">
+      @for (p of plans(); track p.servicePlanId) {
+        <li>
+          <a [routerLink]="['/customer/service-plans']" [queryParams]="{ open: p.servicePlanId }">{{ p.name }}</a>
+          <span class="due__muted">Customer {{ p.contactId }} · {{ formats.formatDate(p.nextDueDate) }}</span>
+          <span [class]="dueTone(p.daysToDue)">{{ dueLabel(p.daysToDue) }}</span>
+        </li>
+      }
+    </ul>
+    <div class="card-meta"><a routerLink="/customer/service-plans">All service plans</a></div>
+  }
+}

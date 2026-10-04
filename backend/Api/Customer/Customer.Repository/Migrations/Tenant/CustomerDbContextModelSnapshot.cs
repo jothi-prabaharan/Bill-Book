@@ -757,10 +757,19 @@ namespace Customer.Repository.Migrations.Tenant
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<int>("Every")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Interval")
                         .HasColumnType("integer");
 
                     b.Property<long?>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly?>("LastServicedOn")
+                        .HasColumnType("date");
+
+                    b.Property<long?>("LastTicketId")
                         .HasColumnType("bigint");
 
                     b.Property<int>("LeadDays")
@@ -772,8 +781,17 @@ namespace Customer.Repository.Migrations.Tenant
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateOnly>("NextDueDate")
                         .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
@@ -793,6 +811,10 @@ namespace Customer.Repository.Migrations.Tenant
                     b.HasKey("ServicePlanId");
 
                     b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ContactId");
+
+                    b.HasIndex("OrgId", "Status", "NextDueDate");
 
                     b.ToTable("ServicePlans", "cus");
                 });

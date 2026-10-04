@@ -46,12 +46,14 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.OrgId = request.OrgId;
 
         var sla = _services.GetRequiredService<SlaPolicyRepository>();
+        var plans = _services.GetRequiredService<ServicePlanRepository>();
 
         SeedOrganizationResponse response = new()
         {
             Seeded =
             {
                 ["slaPolicies"] = await sla.SeedAsync(request.OrgId, ct),
+                ["serviceReminderTemplate"] = await plans.SeedTemplateAsync(ct),
             },
         };
 

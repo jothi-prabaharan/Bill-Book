@@ -46,6 +46,11 @@ public sealed class CampaignSendingAndTrackingTests
 
     private sealed class StubContacts : IContactsClient
     {
+        public Task<IReadOnlyDictionary<long, Shared.Kernel.Documents.ContactEmail>?> EmailsAsync(
+            Guid customerId, Guid orgId, IReadOnlyCollection<long> contactIds, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyDictionary<long, Shared.Kernel.Documents.ContactEmail>?>(
+                new Dictionary<long, Shared.Kernel.Documents.ContactEmail>());
+
         public List<ContactItemDto> Contacts { get; set; } = [];
         public Task<bool> ExistsInCallerOrgAsync(long contactId, CancellationToken ct) => Task.FromResult(true);
         public Task<CreatedContact?> CreateAsync(NewContactRequest request, CancellationToken ct) => Task.FromResult<CreatedContact?>(null);

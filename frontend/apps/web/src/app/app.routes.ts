@@ -194,6 +194,12 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/customer-ui').then((m) => m.LeadList),
         data: { access: { permission: 'crm.view' } },
       },
+      // Service plans (TK-140): after-sales care, under support like tickets.
+      {
+        path: 'customer/service-plans',
+        loadComponent: () => import('@bill-book/customer-ui').then((m) => m.ServicePlansPage),
+        data: { access: { permission: 'support.view' } },
+      },
       {
         path: 'customer/tickets',
         loadComponent: () => import('@bill-book/customer-ui').then((m) => m.TicketList),

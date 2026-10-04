@@ -43,7 +43,14 @@ public class CustomerDbContext : TenantDbContext
     {
         modelBuilder.HasDefaultSchema("cus");
 
-        modelBuilder.Entity<ServicePlan>().HasKey(e => e.ServicePlanId);
+        modelBuilder.Entity<ServicePlan>(b =>
+        {
+            b.HasKey(e => e.ServicePlanId);
+
+            // The reminder run and the "Services due" list both read by status and date.
+            b.HasIndex(e => new { e.OrgId, e.Status, e.NextDueDate });
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+        });
 
         modelBuilder.Entity<Lead>(b =>
         {

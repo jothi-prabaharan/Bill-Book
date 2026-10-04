@@ -10,7 +10,6 @@ using BillBook.Worker.Notification;
 using BillBook.Worker.RecurringBilling;
 using BillBook.Worker.SavingsScheme;
 using BillBook.Worker.ServiceReminders;
-using Customer.Repository;
 using BillBook.Worker.Notification.Consumers;
 using BillBook.Worker.Notification.Email;
 using BillBook.Worker.Notification.Persistence;
@@ -168,21 +167,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<RecurringBillingClients>();
         services.AddHostedService<RecurringBillingWorker>();
 
-        services.AddDbContext<CustomerDbContext>((sp, options) =>
+        // --------------------------------------------------------
+        // Service plan reminders (TK-140): Customer decides, this sends
+        // --------------------------------------------------------
+        services.AddHttpClient(ServiceReminderWorker.CustomerClient, client =>
         {
-            options.UseNpgsql(tenantDatabase);
-            options.AddInterceptors(
-                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
-                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
-        });
+            client.BaseAddress = new Uri(config["Customer:BaseUrl"] ?? "http://localhost:4502/");
+        })
+        .AddHttpMessageHandler<InternalKeyHandler>();
 
-        services.AddDbContext<Master.Repository.ContactsDbContext>((sp, options) =>
-        {
-            options.UseNpgsql(tenantDatabase);
-            options.AddInterceptors(
-                sp.GetRequiredService<Shared.Kernel.Persistence.AuditSaveChangesInterceptor>(),
-                sp.GetRequiredService<Shared.Kernel.Tenancy.RlsConnectionInterceptor>());
-        });
         services.AddHostedService<ServiceReminderWorker>();
 
         // --------------------------------------------------------

@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Service plans you can use (TK-140).** Contacts › Service plans, with a **Services due** card on the dashboard. Record a service to schedule the next one, raise a visit as a support ticket, and pause or end a plan. Customers are emailed before each service from the branch's editable **Service reminder** template, once per service, skipping anyone who unsubscribed. The earlier version had no screen and its API could be reached without a permission.
+
 - **Added**: **Jewellery savings schemes (TK-141).** Sales › Savings schemes, a paid add-on for Jewellery branches. Define schemes by instalment, months, bonus and grace days; enrol customers; take each instalment as a receipt to the customer's advance; and redeem a matured scheme with its bonus on a posted invoice. An enrolment left unpaid past its grace days lapses without its bonus; what was paid can still be redeemed or refunded. Customers are emailed before each instalment and when one goes late. The bonus posts to a new **Savings Scheme Bonus** expense account. See [Savings schemes](savings-scheme).
 
 - **Added**: **Recurring invoices and bills, a free add-on (TK-139).** Sales › Recurring invoices and Purchase › Recurring bills repeat an existing invoice or bill weekly, monthly, quarterly, half-yearly or yearly, each copy dated on its occurrence and taxed at that day's rates. The background worker raises each occurrence once, catches up missed ones on their own dates, and can post them as it goes. Pause, resume and end a schedule at any time. See [Recurring billing](recurring-billing).

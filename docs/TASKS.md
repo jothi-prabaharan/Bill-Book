@@ -4538,6 +4538,24 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] A "Services due" list on the dashboard, a per-branch reminder template, and a staff action to raise a work order. Email only; no SMS.
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a plan due in N days emails the customer once, and a rerun sends nothing.
+- **Reworked (Claude Opus 5.5, 2026-10-04) · tests written, not run.** As first built (`33b7d797`):
+  - `ServicePlansController` had no permission guard and kept its logic in the controller.
+  - It bound request bodies straight to the entity, so a caller could set `OrgId`.
+  - Nothing moved the next due date, and there was no page, no Services due list, no template and no visit action.
+  - The worker read Master's `con` tables directly, and wrote its fallback body without interpolation, so customers would have been sent `{plan.NextDueDate}` as literal text.
+  - **Now:**
+    - **Repository and routes:** `ServicePlanRepository` in `Customer.Repository`. `api/service-plans` sits under `support` and `[RequireBusinessType]` and serves list (with `dueWithinDays` for Services due), get, create, update, `complete`, `visit`, `pause`, `resume` and `end`. Gateway route `customer-service-plans`.
+    - **Completing** moves the next due date one interval on from the day the service was done, and ends a plan past its end date.
+    - **Visit** opens a support ticket at the branch's medium SLA (D-48), one at a time.
+    - **Reminders:** `internal/service-plans/reminders` returns each reminder addressed and worded:
+      - addresses come from Master's `internal/contacts/emails`, through a new `IContactsClient.EmailsAsync`;
+      - unsubscribed and bounced addresses are dropped;
+      - the text comes from the branch's `Service reminder` email template, seeded per branch and editable, with `{{name}}`, `{{plan}}` and `{{due_date}}`;
+      - the message id is fixed by branch, plan and due date.
+    - **Worker:** `ServiceReminderWorker` only sends, through `EmailRequestHandler`, and no longer references Customer's or Master's repositories.
+    - **Entity:** gained `Name`, `Every`, `LastServicedOn`, `LastTicketId` and `Notes`, with an error message on every annotation; its enums moved to `Customer.Entity/Enums`.
+    - **Page:** `/customer/service-plans` (menu row `1145`, permissions `494`–`496`), and the dashboard's **Services due** card.
+    - **Specs:** `Customer.Api.Tests.ServicePlanTests` and `service-plans.model.spec.ts`.
 
 ### TK-141 · `SavingsScheme` add-on (Jewellery only, paid)
 - [x] completed (Claude Opus 5.5) — 2026-10-04 · tests written, not run
@@ -5005,6 +5023,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-45 | Demo customers: who signs in, with what, and can they be reset? | TK-154 | *Open.* Default until answered: each Demo owner is created with no password, as the bootstrap does today, and signs in through forgot-password; no password is committed to source. Also open: a way to reset a demo back to empty masters, a plan and licence for them (default Elite, no expiry), and whether an HRMS-only and a Payroll-only demo customer are wanted. Raised 2026-10-01 by TK-154 |
 | D-46 | Which libraries draw barcodes and read them from a camera? | TK-156, TK-160 | *Open.* Default until answered: ZXing.Net (MIT) for Code128 and EAN-13 in Printing, the browser's `BarcodeDetector` for camera reading with one MIT fallback library where it is missing. Raised 2026-10-01 by TK-156 |
 | D-47 | Retainer invoices: build the document, and then repeat it? | TK-139 | *Open.* TK-139 names recurring retainer invoices, but no retainer document exists anywhere in the product, so there is nothing to repeat. Default until answered: recurring billing repeats sales invoices and purchase bills only. A retainer would be its own card: a request for an advance that posts nothing until paid, its payment landing on the customer's prepayment advance sub-account. Raised 2026-10-04 by TK-139 |
+| D-48 | TK-140's "raise a work order": which document? | TK-140 | *Open.* The WorkOrder service is School's facility maintenance: it carries an asset or a space and no customer, and only School branches may use it. Default until answered: a service plan's **Raise a visit** opens a support ticket in Customer, which carries the customer, an assignee and the branch's SLA. Raised 2026-10-04 while reworking TK-140 |
 
 ---
 

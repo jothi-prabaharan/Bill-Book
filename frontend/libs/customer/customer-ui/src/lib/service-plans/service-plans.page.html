@@ -1,0 +1,99 @@
+<section class="plans">
+  <header class="plans__head">
+    <h1 class="plans__title">Service plans</h1>
+    <button type="button" class="btn btn--primary" (click)="create()">New plan</button>
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  <div class="plans__bar">
+    <bb-select label="Show" name="filter" [clearable]="false" [options]="filterOptions" [(ngModel)]="filter" (ngModelChange)="load()" />
+    <span class="plans__muted">Customers with an email address are reminded ahead of each service, from the branch's "Service reminder" email template.</span>
+  </div>
+
+  <bb-data-grid
+    gridCode="SERVICE_PLANS"
+    label="Service plans"
+    [columns]="columns"
+    [data]="plans()"
+    [loading]="loading()"
+    [paged]="false"
+    [showColumnFilters]="false"
+    stackOnPhone
+    emptyText="No plans here."
+    (rowClick)="open($event)"
+  >
+    <ng-template bbCellTemplate="interval" let-r>{{ cadence(r.interval, r.every) }}</ng-template>
+    <ng-template bbCellTemplate="nextDueDate" let-r>
+      {{ date(r.nextDueDate) }}
+      @if (r.status === 'Active') {
+        <span [class]="dueTone(r.daysToDue)">{{ dueLabel(r.daysToDue) }}</span>
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="lastServicedOn" let-r>{{ date(r.lastServicedOn) }}</ng-template>
+  </bb-data-grid>
+
+  @if (editing()) {
+    <form class="plans__panel" (ngSubmit)="save()">
+      <h2 class="plans__subtitle">{{ selected()?.name ?? 'New plan' }}</h2>
+
+      @if (selected(); as p) {
+        @if (p.status === 'Active') {
+          <div class="plans__done">
+            <bb-branch-date-input label="Service done on" name="completedOn" [(ngModel)]="completedOn" />
+            <button type="button" class="btn btn--primary" (click)="complete()" [disabled]="busy()">Record service</button>
+            <button type="button" class="btn" (click)="raiseVisit()" [disabled]="busy()">Raise a visit</button>
+          </div>
+        }
+        @if (p.lastTicketId) {
+          <p class="plans__muted">Last visit: ticket {{ p.lastTicketId }}{{ p.lastTicketStatus ? ' · ' + p.lastTicketStatus : '' }}</p>
+        }
+      }
+
+      <div class="plans__grid">
+        <bb-text-input label="Plan" name="name" [maxlength]="100" placeholder="AC service" [(ngModel)]="draft.name" />
+        <div class="plans__picker">
+          <span class="plans__label">Customer</span>
+          <button type="button" class="btn" (click)="openPicker()">{{ contactLabel() || 'Choose a customer' }}</button>
+        </div>
+        <bb-select label="Repeats" name="interval" [clearable]="false" [options]="intervalOptions" [(ngModel)]="draft.interval" />
+        <bb-number-input label="Every" name="every" [min]="1" [max]="24" [(ngModel)]="draft.every" />
+        <bb-branch-date-input label="Starts" name="start" [(ngModel)]="draft.startDate" />
+        <bb-branch-date-input label="Next service (optional)" name="next" [(ngModel)]="draft.nextDueDate" />
+        <bb-branch-date-input label="Ends (optional)" name="end" [(ngModel)]="draft.endDate" />
+        <bb-number-input label="Remind days ahead" name="lead" [min]="0" [max]="90" [(ngModel)]="draft.leadDays" />
+      </div>
+      <bb-textarea label="Notes" name="notes" [maxlength]="500" [(ngModel)]="draft.notes" />
+
+      <div class="plans__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="busy()">Save</button>
+        @if (selected(); as p) {
+          @if (p.status === 'Active') {
+            <button type="button" class="btn" (click)="act('pause')" [disabled]="busy()">Pause</button>
+          }
+          @if (p.status === 'Paused') {
+            <button type="button" class="btn" (click)="act('resume')" [disabled]="busy()">Resume</button>
+          }
+          @if (p.status !== 'Ended') {
+            <button type="button" class="btn" (click)="act('end')" [disabled]="busy()">End</button>
+          }
+        }
+        <button type="button" class="btn btn--ghost" (click)="editing.set(false)">Close</button>
+      </div>
+    </form>
+  }
+</section>
+
+<bb-lookup-dialog
+  [open]="pickerOpen()"
+  title="Choose a customer"
+  placeholder="Search customers by code, name or GSTIN"
+  emptyText="No customers match."
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="search($event)"
+  (choose)="choose($event)"
+  (dismiss)="pickerOpen.set(false)"
+/>

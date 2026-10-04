@@ -55,6 +55,14 @@ public interface IContactsClient
     /// Lists active contacts in the caller's branch for campaign audience resolution.
     /// </summary>
     Task<List<ContactItemDto>> ListContactsAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Where each contact is written to (Master's <c>internal/contacts/emails</c>),
+    /// for a caller with no user token — the service reminder run (TK-140). The
+    /// branch travels in the body. Null when Master could not be read.
+    /// </summary>
+    Task<IReadOnlyDictionary<long, ContactEmail>?> EmailsAsync(
+        Guid customerId, Guid orgId, IReadOnlyCollection<long> contactIds, CancellationToken ct);
 }
 
 /// <summary>What Master gives back when it has made a contact.</summary>
