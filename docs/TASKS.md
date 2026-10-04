@@ -4613,7 +4613,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
 
 ### TK-143 · Restaurant business type, setting keys and Settings › Restaurant
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-04 · completing what `a7e037b0` left: the switches changed nothing and saves were dropped
 - **Issue:** [#124](https://github.com/jothi-prabaharan/Bill-Book/issues/124)
 - **Group:** L · Restaurant
 - **Lanes:** L-KERNEL, L-MST, L-WEB, L-RST-UI (new lane: `frontend/libs/restaurant/**`), L-DOC · **Depends on:** TK-136 · **Decision:** D-37, D-39, D-43
