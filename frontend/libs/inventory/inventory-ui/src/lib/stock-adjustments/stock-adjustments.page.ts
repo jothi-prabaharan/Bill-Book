@@ -8,9 +8,12 @@ import {
   SelectComponent,
   TextInputComponent,
   ApprovalPanelComponent,
+  ScanComponent,
 } from '@bill-book/ui-components';
+import { gtinCandidates, matchScannedItem, parseGs1 } from '@bill-book/scan-core';
+import { scanOntoSheet } from './stock-scan';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface AdjustmentLine {
@@ -108,6 +111,7 @@ const REASONS: readonly { value: string; label: string }[] = [
     NumberInputComponent,
     SelectComponent,
     ApprovalPanelComponent,
+    ScanComponent,
   ],
   templateUrl: './stock-adjustments.page.html',
   styleUrl: './stock-adjustments.page.scss',
@@ -124,6 +128,7 @@ export class StockAdjustmentsPage implements OnInit {
   ];
 
   private readonly http = inject(HttpClient);
+  private readonly changes = inject(ChangeDetectorRef);
 
   protected readonly rows = signal<Adjustment[]>([]);
   protected readonly items = signal<Item[]>([]);
@@ -288,6 +293,53 @@ export class StockAdjustmentsPage implements OnInit {
     this.viewing.set(
       await this.get<Adjustment>(`/api/stock-adjustments/${row.stockAdjustmentId}`),
     );
+  }
+
+  /**
+   * A scanned code (TK-163): one more counted on a count, one more adjusted on
+   * a write-off. A pack's GS1 code also fills the batch and expiry; a code that
+   * names no single item is said, and nothing is added.
+   */
+  async onScan(code: string): Promise<void> {
+    const wanted = code.trim();
+    if (!wanted) {
+      return;
+    }
+
+    const gs1 = parseGs1(wanted);
+    let match: Item | null = null;
+    try {
+      for (const candidate of gs1 ? gtinCandidates(gs1.gtin) : [wanted]) {
+        match = matchScannedItem(candidate, await this.get<Item[]>(`/api/items?search=${encodeURIComponent(candidate)}`));
+        if (match) {
+          break;
+        }
+      }
+    } catch {
+      match = null;
+    }
+
+    if (!match) {
+      this.fail(`No single item matches ${wanted}. Choose it on a line instead.`);
+      this.changes.markForCheck();
+      return;
+    }
+
+    // A scanned item the picker's list did not load still needs a label.
+    const found = match;
+    if (!this.items().some((item) => item.itemId === found.itemId)) {
+      this.items.set([...this.items(), found]);
+    }
+
+    this.lines = scanOntoSheet(
+      this.lines,
+      found.itemId,
+      this.isCount,
+      gs1 ? { batch: gs1.batch, expiry: gs1.expiry } : null,
+      () => this.blankLine(),
+    );
+    this.message.set(null);
+    this.changes.markForCheck();
   }
 
   addLine(): void {

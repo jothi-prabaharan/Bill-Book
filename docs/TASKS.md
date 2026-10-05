@@ -5127,19 +5127,25 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: purchase page (order, **Counting it in by scanning**, bill, debit note), [Scanning](../frontend/apps/docs/content/inputs.md) (opening a document by its code), release note.
 
 ### TK-163 · Scan on stock documents
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · no transfer screen exists to scan on
 - **Issue:** [#144](https://github.com/jothi-prabaharan/Bill-Book/issues/144)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-INV-UI · **Depends on:** TK-160
 - **Where:** `frontend/libs/inventory/inventory-ui/`
 - **State:** checked 1 October 2026. Stock adjustment, transfer, stocktake and serial and batch pick have no scan entry.
 - **Sub-tasks:**
-  - [ ] `bb-scan` on line entry for stock adjustment and transfer.
-  - [ ] Stocktake: a scan counts one unit of the item.
-  - [ ] Pick a serial or batch by scan.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] `bb-scan` on line entry for stock adjustment and transfer.
+  - [x] Stocktake: a scan counts one unit of the item.
+  - [x] Pick a serial or batch by scan.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** counting a shelf by scanning produces a stocktake with the scanned quantities.
+- **As built (5 October 2026):**
+  - **Stock adjustment sheet** (write-off and physical count — the count is the stocktake): `bb-scan` above the lines with `global` on. `scanOntoSheet` (`stock-adjustments/stock-scan.ts`, pure) adds one to `countedQuantity` on a count or `quantity` on a write-off, on the item's line or the line for the scanned batch (one batch per line), else in the first line with no item, else a new line; a keyed figure is added to. The item is found by `matchScannedItem` over `GET /api/items?search=`, or by GTIN off a pack's GS1 code (`parseGs1`, `gtinCandidates`), whose batch and expiry fill the line. An item the picker's list did not load is added to it, so the line shows its label. The page's lines are a plain field under OnPush, so it marks for check.
+  - **Pick a serial or batch** — on Inventory › Stock › **Record a movement** for a batch- or serial-tracked item: `addSerial` puts each scanned serial on the one-per-line list once and the quantity follows the count; a batch-tracked item takes the batch (`batchFromScan`: the GS1 batch and expiry, else the scanned text) on the way in, and on the way out picks the exact lot from `/internal/item-batches?itemId=` with its expiry and MRP.
+  - **Transfer: not done** — there is no stock transfer screen in the frontend (Transfers are documented as a pair of movements; no page records one), so there was no line entry to put a scan on. Building a transfer screen is outside this card.
+  - Tests: `stock-scan.spec.ts` (the *Done when*: scanning a shelf gives a count with the scanned quantities).
+  - Docs: masters page **Counting by scanning** and **Scanning batches and serials**, release note.
 
 ### TK-164 · POS: finish scan and receipt codes
 - [ ] open

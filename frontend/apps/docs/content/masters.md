@@ -861,6 +861,14 @@ Jewellery pieces carry a **HUID** alongside the serial: the six-character BIS ha
 
 On the way out, the serials you name are the pieces that left — and on a specific-identification item, they are also what decides the cost.
 
+## Scanning batches and serials
+
+On **Record a movement** for a batch- or serial-tracked item, the **Scan** field picks by scan (TK-163):
+
+- **A serial-tracked item** takes each scanned serial number onto its list, once — a second read of the same piece is said rather than counted — and the quantity follows the number of serials.
+- **A batch-tracked item, on the way in**, takes the scanned batch label as the batch number; a pack's GS1 code brings its expiry too.
+- **A batch-tracked item, on the way out**, picks the scanned batch from the lots in stock, with its expiry and MRP. A batch that is not in stock is said.
+
 ## Cost layers
 
 Every receipt writes a **layer**: how much came in, what it cost, and how much of it is left. What differs by costing method is what draws them down.
@@ -949,6 +957,12 @@ The two differ in what you type, not in what is posted.
 On a count, **lines that agree are dropped rather than posted as zero**. On a real count sheet most lines agree; that is the good news, not twenty rows of nothing.
 
 A count also stores what the system believed **at the moment of counting**, beside what you counted. That is what lets the arithmetic be re-checked six months later — against the figure that was actually being disputed, rather than one that has moved since.
+
+### Counting by scanning
+
+**A count can be taken by scanning the shelf** (TK-163). Open a physical count and scan each item as you count it, with a barcode scanner or a phone's camera: **every scan counts one**, on that item's line, or adds a line for it. Scanning the same item again adds to its count, and a count already keyed is added to rather than replaced. On a write-off each scan adds one to the quantity written off.
+
+A medicine pack's **GS1 code** also fills the line's batch and expiry, and each batch is counted on a line of its own. A code that names no single item is said, and nothing is added; choose that item on a line instead.
 
 ## Draft, then post
 

@@ -124,6 +124,17 @@
       </div>
     </div>
 
+    <!-- Scan to count or to write off, one unit a scan (TK-163). -->
+    <div class="sheet__scan">
+      <bb-scan
+        label="Scan"
+        [placeholder]="isCount ? 'Scan each item as you count it' : 'Scan each item being written off'"
+        ariaLabel="Scan an item onto the sheet"
+        [global]="true"
+        (scanned)="onScan($event)"
+      />
+    </div>
+
     <bb-data-grid [gridCode]="'ADJUSTMENT_LINES'" [columns]="draftColumns" [data]="lines">
       <ng-template bbCellTemplate="item" let-row let-index="index">
         <bb-select

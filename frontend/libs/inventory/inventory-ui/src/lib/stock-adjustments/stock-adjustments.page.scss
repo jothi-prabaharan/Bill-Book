@@ -95,3 +95,9 @@ button:disabled { opacity: .6; cursor: default; }
 .grid.lines select { width: 100%; padding: .35rem .4rem; border: 1px solid #cdd1dc; border-radius: 5px; font: inherit; }
 .grid.lines .num input { text-align: right; }
 .head-actions button { padding: .45rem .8rem; }
+
+/* The scan field above the lines (TK-163): full width on a phone. */
+.sheet__scan {
+  max-width: 420px;
+  margin-bottom: var(--space-2, 8px);
+}

@@ -15,9 +15,11 @@ import {
   SelectComponent,
   TextInputComponent,
   TextareaComponent,
+  ScanComponent,
 } from '@bill-book/ui-components';
+import { addSerial, batchFromScan } from '../stock-adjustments/stock-scan';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface StockPosition {
@@ -170,12 +172,14 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
     SelectComponent,
     TextareaComponent,
     MessageBoxComponent,
+    ScanComponent,
   ],
   templateUrl: './stock.page.html',
   styleUrl: './stock.page.scss',
 })
 export class StockPage implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly changes = inject(ChangeDetectorRef);
 
   columns: ColumnDef[] = [
     { field: 'itemCode', header: 'Code' },
@@ -340,6 +344,66 @@ export class StockPage implements OnInit {
     }
     
     this.closeBatchPicker();
+  }
+
+  /**
+   * A scan on a movement (TK-163). A serial-tracked item takes the scanned
+   * serial onto its list, once, and the quantity follows the count; a
+   * batch-tracked item takes the batch — on the way in as a new lot (a pack's
+   * GS1 code brings its expiry), on the way out picked from the lots in stock.
+   */
+  async onMovementScan(code: string): Promise<void> {
+    const item = this.movementFor();
+    if (!item) {
+      return;
+    }
+
+    if (item.isSerialTracked) {
+      const result = addSerial(this.serialText, code);
+      this.serialText = result.text;
+      if (result.added) {
+        this.form.quantity = result.count;
+        this.message.set(null);
+      } else {
+        this.fail(`${code.trim()} is already in the list.`);
+      }
+    } else if (item.isBatchTracked) {
+      const scanned = batchFromScan(code);
+      if (this.form.direction === 'In') {
+        this.form.batchNumber = scanned.batch;
+        if (scanned.expiry) {
+          this.form.batchExpiryDate = scanned.expiry;
+        }
+      } else {
+        await this.pickScannedBatch(item.itemId, scanned.batch);
+      }
+    }
+
+    this.changes.markForCheck();
+  }
+
+  private async pickScannedBatch(itemId: number, batchNumber: string | null): Promise<void> {
+    try {
+      const batches = await this.get<{ itemBatchId: number; batchNumber: string; expiryDate?: string; mrp?: number }[]>(
+        `/internal/item-batches?itemId=${itemId}`,
+      );
+      const found = batches.find((b) => b.batchNumber === batchNumber);
+      if (!found) {
+        this.fail(`No batch ${batchNumber ?? ''} of this item is in stock.`);
+        return;
+      }
+      this.form.itemBatchId = found.itemBatchId;
+      this.form.batchNumber = found.batchNumber;
+      if (found.expiryDate) {
+        this.form.batchExpiryDate = found.expiryDate;
+      }
+      if (found.mrp) {
+        this.form.batchMrp = found.mrp;
+      }
+      this.message.set(null);
+    } catch {
+      this.fail('Could not read this item\'s batches.');
+    }
   }
 
   closeBatchPicker(): void {

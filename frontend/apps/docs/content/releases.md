@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Count stock by scanning (TK-163).** A physical count and a write-off have a **Scan** field above the lines: each scan counts one of the item, or adds one to the write-off, and a medicine pack's GS1 code fills the batch and expiry. On **Record a movement**, scanning adds a serial number to the list or picks a batch from the lots in stock. See [Counting by scanning](masters#counting-by-scanning) and [Scanning batches and serials](masters#scanning-batches-and-serials).
+
 - **Added**: **Scan on purchase documents, and scan to open (TK-162).** Purchase orders, bills without a receipt, goods receipts and debit notes have a **Scan** field above the lines. On a goods receipt each scan counts one more received, **Set received to zero** starts a count from nothing, and a medicine pack's GS1 code fills the line's batch and expiry. On a debit note each scan sends one more unit back. And a printed document's barcode or QR code, scanned anywhere in the app, opens that document; on a phone, use **Scan a document code** under **Search**. See [Recording a delivery](purchase#counting-it-in-by-scanning) and [Scanning](inputs#scanning).
 
 - **Added**: **Scan items onto sales documents (TK-161).** Quotes, sales orders, delivery challans and invoices have a **Scan** field above the lines: scan with a barcode scanner or a phone's camera, or type a code and press Enter. Each scan adds the item as a line of one, or one more on its existing line; a code that matches no single item opens the item picker on it. On a credit note, **Set all to zero** and then scan each returned item to count it back against the invoice. See [Scanning items](invoices#scanning-items).

@@ -164,6 +164,19 @@
         </div>
       }
 
+      @if (item.isBatchTracked || item.isSerialTracked) {
+        <!-- Pick a batch or add a serial by scanning (TK-163). -->
+        <div class="field wide">
+          <bb-scan
+            label="Scan"
+            [placeholder]="item.isSerialTracked ? 'Scan each piece’s serial number' : 'Scan the batch label or the pack’s GS1 code'"
+            ariaLabel="Scan a serial number or batch"
+            [global]="true"
+            (scanned)="onMovementScan($event)"
+          />
+        </div>
+      }
+
       @if (item.isBatchTracked) {
         @if (form.direction === 'In') {
           <div class="field">
