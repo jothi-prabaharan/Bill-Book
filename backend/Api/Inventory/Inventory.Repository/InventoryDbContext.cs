@@ -46,6 +46,13 @@ public class InventoryDbContext : TenantDbContext
 
     public DbSet<MenuItemPrice> MenuItemPrices => Set<MenuItemPrice>();
 
+    // Recipes and wastage (TK-149).
+    public DbSet<Recipe> Recipes => Set<Recipe>();
+
+    public DbSet<RecipeLine> RecipeLines => Set<RecipeLine>();
+
+    public DbSet<WastageEntry> WastageEntries => Set<WastageEntry>();
+
     public DbSet<ItemBarcode> ItemBarcodes => Set<ItemBarcode>();
 
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
@@ -305,6 +312,7 @@ public class InventoryDbContext : TenantDbContext
 
 
         ConfigureRestaurantMenu(modelBuilder);
+        ConfigureRecipes(modelBuilder);
 
         modelBuilder.Entity<ItemPharmaDetails>(b =>
         {
@@ -944,6 +952,40 @@ public class InventoryDbContext : TenantDbContext
                 .IsUnique()
                 .AreNullsDistinct(false);
             b.ToTable(t => t.HasCheckConstraint("chk_menu_item_price", "\"Price\" >= 0"));
+        });
+    }
+
+    /// <summary>Recipes and wastage (TK-149).</summary>
+    private static void ConfigureRecipes(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Recipe>(b =>
+        {
+            b.Property(e => e.Yield).HasColumnType("decimal(18,4)");
+            b.HasIndex(e => e.MenuItemId).IsUnique();
+            b.HasOne<MenuItem>().WithMany().HasForeignKey(e => e.MenuItemId).OnDelete(DeleteBehavior.Cascade);
+            b.ToTable(t => t.HasCheckConstraint("chk_recipe_yield", "\"Yield\" > 0"));
+        });
+
+        modelBuilder.Entity<RecipeLine>(b =>
+        {
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,4)");
+            b.HasIndex(e => new { e.RecipeId, e.IngredientItemId }).IsUnique();
+            b.HasOne<Recipe>().WithMany().HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne<Item>().WithMany().HasForeignKey(e => e.IngredientItemId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<UnitOfMeasure>().WithMany().HasForeignKey(e => e.UomId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t => t.HasCheckConstraint("chk_recipe_line_quantity", "\"Quantity\" > 0"));
+        });
+
+        modelBuilder.Entity<WastageEntry>(b =>
+        {
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,4)");
+            b.Property(e => e.Reason).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.OrgId, e.EntryDate });
+            b.HasIndex(e => e.StockAdjustmentId).IsUnique();
+            b.HasOne<Item>().WithMany().HasForeignKey(e => e.ItemId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<UnitOfMeasure>().WithMany().HasForeignKey(e => e.UomId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<StockAdjustment>().WithMany().HasForeignKey(e => e.StockAdjustmentId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t => t.HasCheckConstraint("chk_wastage_quantity", "\"Quantity\" > 0"));
         });
     }
 }

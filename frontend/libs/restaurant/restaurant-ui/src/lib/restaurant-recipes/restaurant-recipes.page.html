@@ -1,8 +1,94 @@
-<div class="p-4 bg-gray-50 min-h-screen">
-  <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border p-6">
-    <h1 class="text-2xl font-bold mb-6 text-gray-800">Recipes & Wastage</h1>
-    <div class="text-gray-600">
-      Recipe management and wastage reporting will be available here.
+<section class="rr">
+  <header class="rr__head">
+    <h1 class="rr__title">Recipes</h1>
+    @if (withoutRecipe()) {
+      <span class="rr__muted">{{ withoutRecipe() }} {{ withoutRecipe() === 1 ? 'dish has' : 'dishes have' }} no recipe and use no stock when billed.</span>
+    }
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  <bb-data-grid
+    gridCode="RESTAURANT_RECIPES"
+    label="Recipes"
+    [columns]="columns"
+    [data]="recipes()"
+    [loading]="loading()"
+    [paged]="false"
+    [showColumnFilters]="false"
+    stackOnPhone
+    emptyText="Put dishes on the menu first."
+    (rowClick)="open($event)"
+  >
+    <ng-template bbCellTemplate="portionCost" let-r>{{ r.hasRecipe ? money(r.portionCost) : 'No recipe' }}</ng-template>
+    <ng-template bbCellTemplate="foodCostPercent" let-r>
+      @if (r.foodCostPercent !== null) {
+        <span [class]="'rr__tone rr__tone--' + foodCostTone(r.foodCostPercent)">{{ r.foodCostPercent }}%</span>
+      }
+    </ng-template>
+  </bb-data-grid>
+
+  @if (editing(); as recipe) {
+    <div class="rr__sheet" role="dialog" aria-modal="true" [attr.aria-label]="recipe.dishName">
+      <div class="rr__panel">
+        <header class="rr__head">
+          <h2 class="rr__subtitle">{{ recipe.dishName }}</h2>
+          <button type="button" class="btn" (click)="editing.set(null)">Close</button>
+        </header>
+        <p class="rr__muted">
+          Sells for {{ recipe.price !== null ? money(recipe.price) : 'no set price' }}.
+          @if (recipe.hasRecipe) {
+            A portion costs {{ money(recipe.portionCost) }} to make at today's ingredient costs{{ recipe.foodCostPercent !== null ? ': ' + recipe.foodCostPercent + '% food cost' : '' }}.
+          }
+        </p>
+
+        <div class="rr__row">
+          <bb-number-input label="Makes (portions)" name="yield" hint="Enter a batch: a pot of ten is 10." [decimals]="2" [(ngModel)]="draft.yield" />
+          <bb-text-input label="Notes" name="notes" [(ngModel)]="draft.notes" />
+          <bb-checkbox name="isActive" text="In use" hint="Off: billing the dish uses no ingredients." [(ngModel)]="draft.isActive" />
+        </div>
+
+        <fieldset class="rr__group">
+          <legend class="rr__legend">Ingredients</legend>
+          @for (l of draft.lines; track $index; let i = $index) {
+            <div class="rr__row">
+              <div class="rr__field">
+                <span class="rr__label">Ingredient</span>
+                <button type="button" class="btn rr__pick" (click)="openPicker(l)">{{ l.ingredientName || 'Choose…' }}</button>
+              </div>
+              <bb-number-input label="Quantity" [name]="'qty' + i" [decimals]="4" [(ngModel)]="l.quantity" />
+              <bb-select label="Unit" [name]="'uom' + i" [clearable]="false" [options]="unitOptions(l)" [(ngModel)]="l.uomId" />
+              <button type="button" class="btn btn--link" (click)="removeLine(i)">Remove</button>
+            </div>
+          } @empty {
+            <p class="rr__muted">No ingredients yet.</p>
+          }
+          <div class="rr__actions-left">
+            <button type="button" class="btn" (click)="addLine()">Add an ingredient</button>
+          </div>
+        </fieldset>
+
+        <footer class="rr__actions">
+          @if (recipe.hasRecipe) {
+            <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="remove()">Delete recipe</button>
+          }
+          <button *bbIfCan="'restaurant.edit'" type="button" class="btn btn--primary" [disabled]="busy()" (click)="save()">Save</button>
+        </footer>
+      </div>
     </div>
-  </div>
-</div>
+  }
+</section>
+
+<bb-lookup-dialog
+  [open]="pickerOpen()"
+  title="Choose an ingredient"
+  placeholder="Search stocked items by code or name"
+  emptyText="No items match."
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="search($event)"
+  (choose)="pick($event)"
+  (dismiss)="pickerOpen.set(false)"
+/>

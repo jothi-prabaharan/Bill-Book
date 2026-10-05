@@ -93,7 +93,20 @@ public sealed class RestaurantBillingTests
     private sealed record Branch(
         SalesDbContext Db, RestaurantOrderRepository Orders, RestaurantBillingRepository Billing, StubRestaurantSettings Settings, RecordingLedger Ledger, long TableId);
 
-    private async Task<Branch> ArrangeAsync(RestaurantSettingsView settings, long? walkIn = 900)
+    private sealed class RecordingRecipes : IRecipeConsumptionClient
+    {
+        public List<(long BillId, IReadOnlyList<DishToConsume> Dishes)> Calls { get; } = [];
+
+        public string? Refuse { get; set; }
+
+        public Task<ConsumptionResult> ConsumeAsync(long billId, DateOnly date, IReadOnlyList<DishToConsume> dishes, CancellationToken ct)
+        {
+            Calls.Add((billId, dishes));
+            return Task.FromResult(Refuse is null ? new ConsumptionResult(true, null) : new ConsumptionResult(false, Refuse));
+        }
+    }
+
+    private async Task<Branch> ArrangeAsync(RestaurantSettingsView settings, long? walkIn = 900, IRecipeConsumptionClient? recipes = null)
     {
         Guid customer = Guid.NewGuid();
         Guid org = Guid.NewGuid();
@@ -119,7 +132,7 @@ public sealed class RestaurantBillingTests
 
         StubRestaurantSettings stubSettings = new(settings);
         RestaurantOrderRepository orders = new(db, numbering, stubSettings, new StubRestaurantMenu(), new StubUserNames(), names, TimeProvider.System);
-        RestaurantBillingRepository billing = new(db, invoices, stubSettings, new StubWalkIn(walkIn), new StubAccounts(), ledger, rates, branch, tenant, TimeProvider.System);
+        RestaurantBillingRepository billing = new(db, invoices, stubSettings, new StubWalkIn(walkIn), new StubAccounts(), ledger, rates, branch, tenant, TimeProvider.System, recipes);
         return new Branch(db, orders, billing, stubSettings, ledger, tableId);
     }
 
@@ -278,6 +291,32 @@ public sealed class RestaurantBillingTests
 
             Assert.Equal("Send every dish to the kitchen before billing.", (await b.Billing.BillAsync(new BillRestaurantOrdersRequest { OrderIds = [orderId] }, default)).Message);
             Assert.Equal("Send every dish to the kitchen before billing.", (await b.Billing.PreviewAsync(new BillRestaurantOrdersRequest { OrderIds = [orderId] }, default)).Value!.Problem);
+        }
+    }
+
+    [Fact]
+    public async Task With_recipes_on_a_bill_uses_its_ingredients_once_and_a_shortage_stops_it()
+    {
+        RecordingRecipes recipes = new();
+        Branch b = await ArrangeAsync(new RestaurantSettingsView { RecipesEnabled = true }, recipes: recipes);
+        await using (b.Db)
+        {
+            long orderId = (await b.Orders.OpenAsync(new OpenRestaurantOrderRequest { OrderType = OrderType.DineIn, ContactId = 42, Lines = [Dish(10, 2)] }, default)).Value;
+
+            recipes.Refuse = "Not enough Paneer in stock for this bill's dishes.";
+            OrderResult<RestaurantBillView> refused = await b.Billing.BillAsync(new BillRestaurantOrdersRequest { OrderIds = [orderId] }, default);
+            Assert.Equal(recipes.Refuse, refused.Message);
+
+            recipes.Refuse = null;
+            OrderResult<RestaurantBillView> billed = await b.Billing.BillAsync(new BillRestaurantOrdersRequest { OrderIds = [orderId] }, default);
+            Assert.Equal(OrderOutcome.Ok, billed.Outcome);
+
+            (long billId, IReadOnlyList<DishToConsume> dishes) = recipes.Calls[^1];
+            Assert.Equal(billed.Value!.RestaurantBillId, billId);
+            DishToConsume dish = Assert.Single(dishes);
+            Assert.Equal(10, dish.ItemId);
+            Assert.Equal(2m, dish.Quantity);
+            Assert.True(dish.UsesRecipe);   // the stub's dishes are made to order, not stocked
         }
     }
 }

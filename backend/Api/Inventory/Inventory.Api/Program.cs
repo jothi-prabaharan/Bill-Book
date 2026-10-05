@@ -94,6 +94,9 @@ builder.Services.AddScoped<CostingRepository>();
 builder.Services.AddScoped<StockRepository>();
 // The restaurant menu (TK-144).
 builder.Services.AddScoped<RestaurantMenuRepository>();
+// Recipes and wastage (TK-149).
+builder.Services.AddScoped<RecipeRepository>();
+builder.Services.AddScoped<WastageRepository>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so an item code is allocated inside the

@@ -469,6 +469,9 @@ public class AdminDbContext : DbContext
 
             // A tip taken on a restaurant bill (TK-148): Dr where the money went, Cr Tips Payable.
             ("TIP", "Restaurant Tip", true),
+
+            // A restaurant bill's ingredients leaving stock (TK-149): Dr Cost of Goods Sold, Cr Inventory.
+            ("RCN", "Recipe Consumption", true),
         };
 
         modelBuilder.Entity<TransactionType>().HasData(

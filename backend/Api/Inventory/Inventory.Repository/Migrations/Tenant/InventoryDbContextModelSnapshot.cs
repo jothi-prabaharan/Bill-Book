@@ -1635,6 +1635,128 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.ToTable("PriceListItems", "inv");
                 });
 
+            modelBuilder.Entity("Inventory.Entity.TableEntities.Recipe", b =>
+                {
+                    b.Property<long>("RecipeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RecipeId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("MenuItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<decimal>("Yield")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("RecipeId");
+
+                    b.HasIndex("MenuItemId")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("Recipes", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_recipe_yield", "\"Yield\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.RecipeLine", b =>
+                {
+                    b.Property<long>("RecipeLineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RecipeLineId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("IngredientItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("RecipeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UomId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("RecipeLineId");
+
+                    b.HasIndex("IngredientItemId");
+
+                    b.HasIndex("UomId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("RecipeId", "IngredientItemId")
+                        .IsUnique();
+
+                    b.ToTable("RecipeLines", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_recipe_line_quantity", "\"Quantity\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Inventory.Entity.TableEntities.RecostingAdjustment", b =>
                 {
                     b.Property<long>("RecostingAdjustmentId")
@@ -2387,6 +2509,81 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.ToTable("Warehouses", "inv");
                 });
 
+            modelBuilder.Entity("Inventory.Entity.TableEntities.WastageEntry", b =>
+                {
+                    b.Property<long>("WastageEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("WastageEntryId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("EntryDate")
+                        .HasColumnType("date");
+
+                    b.Property<long>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("StockAdjustmentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UomId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("WastageEntryId");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("StockAdjustmentId")
+                        .IsUnique();
+
+                    b.HasIndex("UomId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "EntryDate");
+
+                    b.ToTable("WastageEntries", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_wastage_quantity", "\"Quantity\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Shared.Kernel.Audit.EditLog", b =>
                 {
                     b.Property<long>("EditLogId")
@@ -2977,6 +3174,36 @@ namespace Inventory.Repository.Migrations.Tenant
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Inventory.Entity.TableEntities.Recipe", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.RecipeLine", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.Item", null)
+                        .WithMany()
+                        .HasForeignKey("IngredientItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.Entity.TableEntities.Recipe", null)
+                        .WithMany()
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.Entity.TableEntities.UnitOfMeasure", null)
+                        .WithMany()
+                        .HasForeignKey("UomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Inventory.Entity.TableEntities.RecostingAdjustment", b =>
                 {
                     b.HasOne("Inventory.Entity.TableEntities.Item", null)
@@ -3055,6 +3282,27 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.HasOne("Inventory.Entity.TableEntities.UomType", null)
                         .WithMany()
                         .HasForeignKey("UomTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventory.Entity.TableEntities.WastageEntry", b =>
+                {
+                    b.HasOne("Inventory.Entity.TableEntities.Item", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.Entity.TableEntities.StockAdjustment", null)
+                        .WithMany()
+                        .HasForeignKey("StockAdjustmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.Entity.TableEntities.UnitOfMeasure", null)
+                        .WithMany()
+                        .HasForeignKey("UomId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

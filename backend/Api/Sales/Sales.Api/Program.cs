@@ -325,6 +325,11 @@ builder.Services.AddScoped<RestaurantOrderRepository>();
 builder.Services.AddScoped<KotRepository>();
 // Restaurant bills (TK-148): the walk-in customer from Master, accounts from Accounting.
 builder.Services.AddScoped<RestaurantBillingRepository>();
+builder.Services.AddHttpClient<IRecipeConsumptionClient, RecipeConsumptionClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<Shared.Kernel.Contacts.IWalkInContact, Shared.Kernel.Contacts.HttpWalkInContact>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));

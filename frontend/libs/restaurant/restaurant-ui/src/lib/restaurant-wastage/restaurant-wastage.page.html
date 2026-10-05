@@ -1,0 +1,62 @@
+<section class="rw">
+  <header class="rw__head">
+    <h1 class="rw__title">Wastage</h1>
+    <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="startRecording()">Record wastage</button>
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (recording()) {
+    <div class="rw__panel">
+      <h2 class="rw__subtitle">Record wastage</h2>
+      <div class="rw__row">
+        <bb-branch-date-input label="Date" name="entryDate" [(ngModel)]="entryDate" />
+        <div class="rw__field">
+          <span class="rw__label">Item</span>
+          <button type="button" class="btn rw__pick" (click)="openPicker()">{{ itemLabel() || 'Choose an item…' }}</button>
+        </div>
+        <bb-number-input label="Quantity" name="quantity" [decimals]="4" [(ngModel)]="quantity" />
+        <bb-select label="Unit" name="uomId" [clearable]="false" [options]="unitOptions()" [(ngModel)]="uomId" />
+        <bb-select label="Why" name="reason" [clearable]="false" [options]="reasonOptions" [(ngModel)]="reason" />
+        <bb-text-input label="Note" name="note" [(ngModel)]="note" />
+      </div>
+      <div class="rw__actions">
+        <button type="button" class="btn" (click)="recording.set(false)">Cancel</button>
+        <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="record()">Record</button>
+      </div>
+    </div>
+  }
+
+  <p class="rw__muted">The last 500 entries: {{ money(totalCost()) }} at today's average costs.</p>
+
+  <bb-data-grid
+    gridCode="RESTAURANT_WASTAGE"
+    label="Wastage"
+    [columns]="columns"
+    [data]="entries()"
+    [loading]="loading()"
+    [paged]="false"
+    [showColumnFilters]="false"
+    stackOnPhone
+    emptyText="Nothing recorded."
+  >
+    <ng-template bbCellTemplate="entryDate" let-r>{{ date(r.entryDate) }}</ng-template>
+    <ng-template bbCellTemplate="quantity" let-r>{{ r.quantity }} {{ r.uomCode }}</ng-template>
+    <ng-template bbCellTemplate="reason" let-r>{{ wastageReasonLabel(r.reason) }}</ng-template>
+    <ng-template bbCellTemplate="cost" let-r>{{ money(r.cost) }}</ng-template>
+  </bb-data-grid>
+</section>
+
+<bb-lookup-dialog
+  [open]="pickerOpen()"
+  title="Choose an item"
+  placeholder="Search stocked items by code or name"
+  emptyText="No items match."
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="search($event)"
+  (choose)="pick($event)"
+  (dismiss)="pickerOpen.set(false)"
+/>

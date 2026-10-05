@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Recipes, ingredient use and wastage (TK-149).** Restaurant › Recipes gives each dish its ingredients and shows what a portion costs to make and its food cost %. Billing a dish takes its ingredients out of stock, once per bill, with halves and extra choices counted; a short ingredient stops the bill and is named. Restaurant › Wastage records food thrown away as a stock adjustment, with why, approved where the branch approves adjustments. See [Recipes and wastage](restaurant-recipes).
+
 - **Added**: **Restaurant billing (TK-148).** Restaurant › Billing turns orders into a sales invoice, posted and printed like any other. Untick dishes to split a bill or add orders to merge bills; each dish is billed once. The service charge is a taxed invoice line at the dishes' own GST rate; a tip is posted apart to a new **Tips Payable** account; payments by cash, card or UPI replace the receivable, with change from cash. The settings' requirements, including sending every dish to the kitchen, are checked before billing. See [Billing](restaurant-billing).
 
 - **Changed**: **An invoice that carries payments posts them, wherever it was made.** Until now only a till sale's payments replaced the customer's receivable; a restaurant bill paid at the table does too.

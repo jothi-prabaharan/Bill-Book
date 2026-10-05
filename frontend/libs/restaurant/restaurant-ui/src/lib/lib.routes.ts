@@ -45,6 +45,11 @@ export const restaurantUiRoutes: Route[] = [
     data: restaurant(),
   },
   {
+    path: 'wastage',
+    loadComponent: () => import('./restaurant-wastage/restaurant-wastage.page').then((m) => m.RestaurantWastagePage),
+    data: restaurant(),
+  },
+  {
     path: 'reports',
     loadComponent: () => import('./restaurant-reports/restaurant-reports.page').then((m) => m.RestaurantReportsPage),
     data: restaurant(),

@@ -45,6 +45,7 @@ public sealed class RestaurantBillingRepository
     private readonly IBranchSettingsProvider _branch;
     private readonly ITenantContext _tenant;
     private readonly TimeProvider _clock;
+    private readonly IRecipeConsumptionClient? _recipes;
 
     public RestaurantBillingRepository(
         SalesDbContext db,
@@ -56,8 +57,10 @@ public sealed class RestaurantBillingRepository
         ITaxRateProvider rates,
         IBranchSettingsProvider branch,
         ITenantContext tenant,
-        TimeProvider clock)
+        TimeProvider clock,
+        IRecipeConsumptionClient? recipes = null)
     {
+        _recipes = recipes;
         _db = db;
         _invoices = invoices;
         _settings = settings;
@@ -265,6 +268,14 @@ public sealed class RestaurantBillingRepository
             line.RestaurantBillId = bill.RestaurantBillId;
         }
 
+        // The ingredients leave stock last, once the bill is otherwise sure to
+        // stand: Inventory files each issue under the bill, so a retry of the
+        // same bill issues nothing twice (TK-149).
+        if (settings.RecipesEnabled && _recipes is not null && await ConsumeAsync(bill, today, lines, ct) is string consumeRefusal)
+        {
+            return OrderResult<RestaurantBillView>.Refuse(consumeRefusal);
+        }
+
         List<long> closed = [];
         foreach (RestaurantOrder order in orders)
         {
@@ -380,6 +391,28 @@ public sealed class RestaurantBillingRepository
     {
         List<long> ids = orders.Where(o => o.RestaurantTableId is not null).Select(o => o.RestaurantTableId!.Value).ToList();
         return ids.Count == 0 ? [] : await _db.RestaurantTables.Where(t => ids.Contains(t.RestaurantTableId)).Select(t => t.Code).ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Asks Inventory to take the billed dishes' ingredients out of stock: a
+    /// dish made to order by its recipe, a stocked dish only for its choices
+    /// (the invoice issued the dish itself). A refusal names what is short.
+    /// </summary>
+    private async Task<string?> ConsumeAsync(RestaurantBill bill, DateOnly date, List<RestaurantOrderLine> lines, CancellationToken ct)
+    {
+        List<DishToConsume> dishes = lines
+            .Select(l => new DishToConsume(
+                l.ItemId,
+                l.Quantity,
+                l.PortionFactor,
+                !l.IsStocked,
+                [.. l.Modifiers.Where(m => m.LinkedItemId is not null && m.LinkedQuantity is not null).Select(m => (m.LinkedItemId!.Value, m.LinkedQuantity!.Value))]))
+            .ToList();
+
+        ConsumptionResult result = await _recipes!.ConsumeAsync(bill.RestaurantBillId, date, dishes, ct);
+        return result.Done
+            ? null
+            : result.Refusal ?? "Inventory could not be reached to take the ingredients out of stock. Try again in a moment.";
     }
 
     /// <summary>The tip, posted apart from the invoice: Dr where it was paid in, Cr Tips Payable. A refusal names why.</summary>

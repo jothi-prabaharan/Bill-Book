@@ -4773,21 +4773,29 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a split bill posts two invoices whose totals equal the order, and a missing required table is refused.
 
 ### TK-149 · Recipes, ingredient deduction on sale, wastage, food cost %
-- [ ] working (Claude Opus 5.5) — 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#130](https://github.com/jothi-prabaharan/Bill-Book/issues/130)
 - **Group:** L · Restaurant
-- **Lanes:** L-INV, L-SAL, L-RST-UI · **Depends on:** TK-144, TK-148 · **Decision:** D-39
+- **Lanes:** L-INV, L-SAL, L-RST-UI · **Depends on:** TK-144, TK-148 · **Decision:** D-39, D-49
 - **Where:** `Inventory.Entity/TableEntities/ItemStock.cs`, `Inventory.Entity/Enums/StockAdjustmentReason.cs`, the guarded stock issue (`IssueStockRequest`), `Shared.Kernel/Approvals/ApprovalEnums.cs` (`StockAdjustment`)
 - **State:** checked 1 October 2026. There is no recipe or bill-of-materials code anywhere, and wastage exists only for jewellery. Quantity is one shared pool per branch; the guarded issue and the costing engine already exist.
 - **Tables:** `inv.Recipes`, `inv.RecipeLines` (ingredient item, quantity, unit), `inv.WastageEntries` (item, quantity, reason, date).
 - **Sub-tasks:**
-  - [ ] Entities and migration with RLS.
-  - [ ] `RecipeRepository`; when a dish's bill posts, issue its ingredients through the existing guarded stock issue, once per bill (a retry deducts nothing twice).
-  - [ ] `WastageRepository` with reasons as an enum, optionally approved through the existing `StockAdjustment` kind.
-  - [ ] Food cost percentage per dish and per period from the costing engine's figures.
-  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Recipes)]`; all logic is in `*Repository.cs` (rule 16).
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Entities and migration with RLS.
+  - [x] `RecipeRepository`; when a dish's bill posts, issue its ingredients through the existing guarded stock issue, once per bill (a retry deducts nothing twice).
+  - [x] `WastageRepository` with reasons as an enum, optionally approved through the existing `StockAdjustment` kind.
+  - [x] Food cost percentage per dish and per period from the costing engine's figures.
+  - [x] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Recipes)]`; all logic is in `*Repository.cs` (rule 16).
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (5 October 2026):**
+  - `inv.Recipes` (one per dish, a yield in portions), `inv.RecipeLines` (a stocked ingredient in any unit of its kind) and `inv.WastageEntries` (item, quantity, unit, `WastageReason`, the stock adjustment) with the RLS block. The `c384f272` versions, which had no tables, were removed in TK-144.
+  - `RecipeRulesRepository` (pure): ingredient needs per bill (recipe × quantity × portion factor ÷ yield, plus each choice's linked stock per dish, in each ingredient's inventory unit), unit conversion through the base, portion cost at the weighted average, food cost %. `RecipeRepository`: list with portion cost and food cost % per dish, save (stocked ingredients only, never the dish itself, a unit of the ingredient's kind), delete, and `ConsumeAsync`.
+  - **Once per bill:** Sales calls `internal/restaurant/recipes/consume` as the last step of a bill while recipes are on. Each ingredient is one guarded stock issue filed as `RCN` / bill id / ingredient id; the movement's own uniqueness on (source, line) makes a retry `DuplicateSource`, so nothing is deducted twice. The costing engine posts the issue Dr Cost of Goods Sold / Cr Inventory like any sale. A stocked dish (a bottled drink) is issued by the invoice; only its choices' stock goes through here. `mst.TransactionTypes` gains `RCN`.
+  - A shortage refuses the bill and names the ingredient; whether it should instead let ingredient stock go negative is **D-49**, raised for the owner.
+  - `WastageRepository`: each entry is a stock adjustment out (reason mapped: Expired → Expired, Other → Other, the rest → Damage), posted at once or left waiting where the branch approves adjustments; no second path out of stock.
+  - **Food cost per period** is not here: it needs the period's restaurant revenue from Sales beside the `RCN` issue costs, which is a read across services, so it is TK-150's food cost report. Per dish it is on the recipes page.
+  - Routes `api/restaurant/recipes` and `api/restaurant/wastage` behind `[RequireRestaurantFeature(Recipes)]`, gateway routes; recipes and wastage pages. The pages read units and items through `api/uom-types` and `api/items`, so a recipe editor also needs `inventory.view`.
 - **Done when:** selling one portion reduces each ingredient by its recipe quantity, and a rerun does not deduct twice.
 
 ### TK-150 · Restaurant reports
@@ -5072,6 +5080,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-46 | Which libraries draw barcodes and read them from a camera? | TK-156, TK-160 | *Open.* Default until answered: ZXing.Net (MIT) for Code128 and EAN-13 in Printing, the browser's `BarcodeDetector` for camera reading with one MIT fallback library where it is missing. Raised 2026-10-01 by TK-156 |
 | D-47 | Retainer invoices: build the document, and then repeat it? | TK-139 | *Open.* TK-139 names recurring retainer invoices, but no retainer document exists anywhere in the product, so there is nothing to repeat. Default until answered: recurring billing repeats sales invoices and purchase bills only. A retainer would be its own card: a request for an advance that posts nothing until paid, its payment landing on the customer's prepayment advance sub-account. Raised 2026-10-04 by TK-139 |
 | D-48 | TK-140's "raise a work order": which document? | TK-140 | *Open.* The WorkOrder service is School's facility maintenance: it carries an asset or a space and no customer, and only School branches may use it. Default until answered: a service plan's **Raise a visit** opens a support ticket in Customer, which carries the customer, an assignee and the branch's SLA. Raised 2026-10-04 while reworking TK-140 |
+| D-49 | TK-149: when a bill's ingredients are short in stock, refuse the bill or let stock go negative? | TK-149 | *Open.* Default until answered: the bill is refused and names the ingredient, because the guarded stock issue never takes stock below zero (the same rule that stops two tills selling the last unit). The cost: a kitchen whose ingredient counts lag its receipts cannot bill until the stock is received or corrected. Allowing negative ingredient stock would need a second, unguarded issue path for recipes only. Raised 2026-10-05 |
 
 ---
 

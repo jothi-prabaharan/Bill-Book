@@ -24790,6 +24790,14 @@ namespace Master.Repository.Migrations.Admin
                             IsLedgerPosting = true,
                             Name = "Restaurant Tip",
                             Version = 0u
+                        },
+                        new
+                        {
+                            Code = "RCN",
+                            IsActive = true,
+                            IsLedgerPosting = true,
+                            Name = "Recipe Consumption",
+                            Version = 0u
                         });
                 });
 
