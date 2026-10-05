@@ -4746,7 +4746,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** sending an order prints one ticket per station, a cancel needs a reason, and an item moves from Sent to Ready to Served.
 
 ### TK-148 · Billing at the table through the sales invoice posting
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05
 - **Issue:** [#129](https://github.com/jothi-prabaharan/Bill-Book/issues/129)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-ACC, L-PRT, L-RST-UI · **Depends on:** TK-146 · **Decision:** D-39, D-41
