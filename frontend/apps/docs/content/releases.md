@@ -31,6 +31,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Restaurant floors and tables (TK-145).** Restaurant › Tables shows every table on every floor with its status (free, occupied, billed, being cleaned), and moves each through its turn in a tap. Move a seated party to a free table, join tables for a large party under a head table, and separate them again. Floors and tables are set up on the same screen. Tables now live in Sales beside the orders they will carry. See [Tables](restaurant-tables).
+
+- **Fixed**: **Sales could not be set up on a new database.** The restaurant order and kitchen-ticket migrations switched on row-level security before creating their tables, so migrating `sal` failed at that step on any fresh install. They are removed; orders and kitchen tickets are rebuilt in TK-146 and TK-147.
+
 - **Added**: **The restaurant menu (TK-144).** Restaurant › Menu puts items from the item master into categories, with portions (half and full) at their own prices, choice groups such as spice level or extras, prices that differ for takeaway or delivery, a kitchen station, and timed menus such as breakfast. A dish is marked sold out in one tap and then cannot be ordered. A new Restaurant branch starts with seven menu categories. Before this the menu's tables were never created and its page was empty. See [Menu](restaurant-menu).
 
 - **Fixed**: **Restaurant branches can trade (TK-143).** A branch could be marked Restaurant, but items, stock, sales, purchases, accounts and reports all refused it, and a new Restaurant branch was set up with its accounts alone. A Restaurant branch now works like a retail one, plus its Restaurant menu. **Restaurant** is offered as a business type when creating or editing a branch, and **Savings Scheme** as an add-on for Jewellery branches.

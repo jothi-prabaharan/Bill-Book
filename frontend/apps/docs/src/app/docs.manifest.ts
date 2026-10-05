@@ -97,12 +97,12 @@ export const DOCS: DocSection[] = [
   },
   {
     title: 'Restaurant',
-    // Restaurant branches only (D-39). Settings (TK-143) and the menu (TK-144) are
-    // built; tables are still being completed (TK-145).
+    // Restaurant branches only (D-39). Settings (TK-143), the menu (TK-144) and
+    // tables (TK-145) are built.
     pages: [
       { slug: 'restaurant-settings', title: 'Restaurant settings', status: 'built' },
       { slug: 'restaurant-menu', title: 'Menu', status: 'built' },
-      { slug: 'restaurant-tables', title: 'Tables', status: 'partial' },
+      { slug: 'restaurant-tables', title: 'Tables', status: 'built' },
     ],
   },
   {

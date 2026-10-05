@@ -100,12 +100,13 @@ public class SalesDbContext : TenantDbContext
 
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
-    public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
-    public DbSet<RestaurantOrderDetail> RestaurantOrderDetails => Set<RestaurantOrderDetail>();
-    public DbSet<Kot> Kots => Set<Kot>();
-    public DbSet<KotLine> KotLines => Set<KotLine>();
     public DbSet<RecurringInvoiceSchedule> RecurringInvoiceSchedules => Set<RecurringInvoiceSchedule>();
     public DbSet<RecurringInvoiceRun> RecurringInvoiceRuns => Set<RecurringInvoiceRun>();
+
+    // Restaurant floors and tables (TK-145).
+    public DbSet<Floor> Floors => Set<Floor>();
+
+    public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -467,6 +468,31 @@ public class SalesDbContext : TenantDbContext
             b.HasIndex(e => e.InvoiceId).IsUnique();
             b.HasOne<RecurringInvoiceSchedule>().WithMany().HasForeignKey(e => e.RecurringInvoiceScheduleId).OnDelete(DeleteBehavior.Cascade);
             b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ---- Restaurant floors and tables (TK-145) -------------------------
+
+        modelBuilder.Entity<Floor>(b =>
+        {
+            b.HasKey(e => e.FloorId);
+            b.HasIndex(e => new { e.OrgId, e.Name }).IsUnique();
+        });
+
+        modelBuilder.Entity<RestaurantTable>(b =>
+        {
+            b.HasKey(e => e.RestaurantTableId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.OrgId, e.Code }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.FloorId, e.DisplayOrder });
+
+            // A floor with tables on it cannot be deleted; switch it off instead.
+            b.HasOne<Floor>().WithMany().HasForeignKey(e => e.FloorId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<RestaurantTable>().WithMany().HasForeignKey(e => e.MergedIntoTableId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("chk_restaurant_table_seats", "\"Seats\" BETWEEN 1 AND 100");
+                t.HasCheckConstraint("chk_restaurant_table_not_self", "\"MergedIntoTableId\" IS NULL OR \"MergedIntoTableId\" <> \"RestaurantTableId\"");
+            });
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

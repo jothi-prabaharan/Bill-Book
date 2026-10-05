@@ -48,12 +48,15 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.OrgId = request.OrgId;
 
         var seeder = _services.GetRequiredService<SalesSeederRepository>();
+        var tables = _services.GetRequiredService<RestaurantTableRepository>();
 
         var response = new SeedOrganizationResponse
         {
             Seeded =
             {
                 ["numberingSeries"] = await seeder.SeedNumberingSeriesAsync(request.OrgId, ct),
+                // A restaurant's first floor (TK-145); 0 for other trades.
+                ["floors"] = await tables.SeedFloorAsync(request.OrgId, request.Vertical, ct),
             },
         };
 

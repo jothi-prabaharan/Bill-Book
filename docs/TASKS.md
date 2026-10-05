@@ -4671,7 +4671,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a half portion lists at its own price and a sold-out item cannot be ordered.
 
 ### TK-145 · Tables: floors, table master, status, merge, split, move
-- [ ] working (Claude Opus 5.5) — 2026-10-05 · the Sales restaurant migrations enable RLS before creating their tables, so `sal` cannot migrate on a fresh database
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#126](https://github.com/jothi-prabaharan/Bill-Book/issues/126)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-143 · **Decision:** D-39
@@ -4679,12 +4679,19 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 1 October 2026. Nothing in Sales models a floor or a table.
 - **Tables:** `sal.Floors`, `sal.RestaurantTables` (code, seats, floor, status Free, Occupied, Billed or Cleaning, `MergedIntoTableId`).
 - **Sub-tasks:**
-  - [ ] Entities, enums and the migration with its RLS block.
-  - [ ] `RestaurantTableRepository`: floor and table CRUD, status changes, merge, split and move, each keeping the open order's lines.
-  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Tables)]`; all logic is in `*Repository.cs` (rule 16).
-  - [ ] A floor plan page that works at 360 px.
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Entities, enums and the migration with its RLS block.
+  - [x] `RestaurantTableRepository`: floor and table CRUD, status changes, merge, split and move, each keeping the open order's lines.
+  - [x] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Tables)]`; all logic is in `*Repository.cs` (rule 16).
+  - [x] A floor plan page that works at 360 px.
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (5 October 2026):**
+  - `AddRestaurantOrder` and `AddRestaurantKot` (Antigravity, 1 October) enabled RLS before creating their tables, so `sal` failed to migrate on every fresh database, which hid behind developer databases that predated them. Both are deleted with the order, KOT and billing code built on them (none of it had ever run); their entities are taken out of the snapshot and of `RecurringInvoices`' designer by hand, and `has-pending-model-changes` is clean. TK-146 to TK-148 rebuild them.
+  - `RestaurantTable` moved from Inventory (TK-144 removed it there) to Sales. `sal.Floors` and `sal.RestaurantTables` with the TK-71 RLS block; codes upper-cased and unique per branch; `MergedIntoTableId` self-references with `Restrict` and a not-self check. `TableStatus` gains `Cleaning`.
+  - `RestaurantTableRulesRepository` (pure): the turn Free → Occupied → Billed → Cleaning → Free, plus Billed → Occupied (reopen), Occupied → Free (left before ordering) and Billed → Free. `RestaurantTableRepository`: floor plan, floor and table CRUD, status (a member's is the head's; a group freed comes apart), move (the target takes the status and the group), merge (occupied if anyone is seated; no table in two groups) and split (leavers are free). Each multi-row change in one `BeginScopeAsync`.
+  - **The order half of move and merge is TK-146's.** There are no orders yet, so nothing re-points one; `RestaurantOrderRepository` will do it in the same transaction as the table change, and `RestaurantTableView.OpenOrderId` is already in the view for it. The *Done when* is met for tables and completed by TK-146 for orders.
+  - Routes `api/restaurant/floor-plan`, `floors`, `tables` with `[RequireRestaurantFeature(Tables)]`; gateway routes for each. One floor, *Main floor*, seeded for a Restaurant branch.
+  - Floor plan page: floors as tabs, tiles coloured by status, an action sheet per table that lists only the steps that follow, and a set-up mode for floors and tables.
 - **Done when:** moving a table moves its open order, and a merged group bills as one.
 
 ### TK-146 · Order taking: dine-in, takeaway, delivery; waiter on mobile; optional table

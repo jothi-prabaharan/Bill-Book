@@ -85,9 +85,6 @@ builder.Services.AddFileStorage(builder.Configuration);
 // T2.2 is schema only. The document services arrive with the screens that use
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.
 builder.Services.AddScoped<SalesSeederRepository>();
-builder.Services.AddScoped<RestaurantOrderRepository>();
-builder.Services.AddScoped<KotRepository>();
-builder.Services.AddScoped<RestaurantBillingRepository>();
 builder.Services.AddScoped<QuoteRepository>();
 builder.Services.AddScoped<SalesOrderRepository>();
 builder.Services.AddScoped<InvoiceRepository>();
@@ -319,6 +316,9 @@ builder.Services.AddScoped<Shared.Kernel.CustomFields.DocumentCustomFieldGate>()
 
 // A Restaurant branch's switches and billing rules, from Master (TK-143).
 builder.Services.AddRestaurantSettings(builder.Configuration);
+
+// Restaurant floors and tables (TK-145).
+builder.Services.AddScoped<RestaurantTableRepository>();
 
 WebApplication app = builder.Build();
 

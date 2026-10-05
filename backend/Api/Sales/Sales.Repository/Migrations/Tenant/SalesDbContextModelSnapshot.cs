@@ -1138,6 +1138,59 @@ namespace Sales.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.Floor", b =>
+                {
+                    b.Property<long>("FloorId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("FloorId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("FloorId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Floors", "sal");
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.Invoice", b =>
                 {
                     b.Property<long>("InvoiceId")
@@ -1760,112 +1813,6 @@ namespace Sales.Repository.Migrations.Tenant
                         {
                             t.HasCheckConstraint("chk_invoicetender_amount", "\"Amount\" > 0");
                         });
-                });
-
-            modelBuilder.Entity("Sales.Entity.TableEntities.Kot", b =>
-                {
-                    b.Property<long>("KotId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("KotId"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("KotNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("PrintedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("RestaurantOrderId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Station")
-                        .HasColumnType("integer");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("KotId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.ToTable("Kots", "sal");
-                });
-
-            modelBuilder.Entity("Sales.Entity.TableEntities.KotLine", b =>
-                {
-                    b.Property<long>("KotLineId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("KotLineId"));
-
-                    b.Property<string>("CancelReason")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("KotId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<long>("RestaurantOrderDetailId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("KotLineId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.ToTable("KotLines", "sal");
                 });
 
             modelBuilder.Entity("Sales.Entity.TableEntities.Quote", b =>
@@ -2564,77 +2511,18 @@ namespace Sales.Repository.Migrations.Tenant
                     b.ToTable("ReminderProfiles", "sal");
                 });
 
-            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrder", b =>
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantTable", b =>
                 {
-                    b.Property<long>("RestaurantOrderId")
+                    b.Property<long>("RestaurantTableId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantOrderId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantTableId"));
 
-                    b.Property<string>("CancelReason")
-                        .HasColumnType("text");
-
-                    b.Property<long?>("ContactId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("OrderNumber")
+                    b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("OrderType")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long?>("RestaurantTableId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.Property<Guid?>("WaiterUserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("RestaurantOrderId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.ToTable("RestaurantOrders", "sal");
-                });
-
-            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrderDetail", b =>
-                {
-                    b.Property<long>("RestaurantOrderDetailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantOrderDetailId"));
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -2645,7 +2533,16 @@ namespace Sales.Repository.Migrations.Tenant
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<long>("MenuItemId")
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("FloorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("MergedIntoTableId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
@@ -2654,29 +2551,16 @@ namespace Sales.Repository.Migrations.Tenant
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
-                    b.PrimitiveCollection<long[]>("ModifierIds")
-                        .HasColumnType("bigint[]");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric");
+                    b.Property<int>("Seats")
+                        .HasColumnType("integer");
 
-                    b.Property<long>("RestaurantOrderId")
-                        .HasColumnType("bigint");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<long?>("VariantId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -2684,11 +2568,25 @@ namespace Sales.Repository.Migrations.Tenant
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
-                    b.HasKey("RestaurantOrderDetailId");
+                    b.HasKey("RestaurantTableId");
+
+                    b.HasIndex("FloorId");
+
+                    b.HasIndex("MergedIntoTableId");
 
                     b.HasIndex("CustomerId", "OrgId");
 
-                    b.ToTable("RestaurantOrderDetails", "sal");
+                    b.HasIndex("OrgId", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("OrgId", "FloorId", "DisplayOrder");
+
+                    b.ToTable("RestaurantTables", "sal", t =>
+                        {
+                            t.HasCheckConstraint("chk_restaurant_table_not_self", "\"MergedIntoTableId\" IS NULL OR \"MergedIntoTableId\" <> \"RestaurantTableId\"");
+
+                            t.HasCheckConstraint("chk_restaurant_table_seats", "\"Seats\" BETWEEN 1 AND 100");
+                        });
                 });
 
             modelBuilder.Entity("Sales.Entity.TableEntities.SalesApprovalStep", b =>
@@ -3937,6 +3835,20 @@ namespace Sales.Repository.Migrations.Tenant
                         .HasForeignKey("TemplateInvoiceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantTable", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.Floor", null)
+                        .WithMany()
+                        .HasForeignKey("FloorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantTable", null)
+                        .WithMany()
+                        .HasForeignKey("MergedIntoTableId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Sales.Entity.TableEntities.SalesOrder", b =>
