@@ -1122,7 +1122,7 @@ public sealed class InvoiceRepository : IInvoiceRepository
                 : 0,
         };
 
-        if (invoice.TillId.HasValue)
+        // Tenders on any invoice that carries them: a till sale, or a restaurant bill (TK-148).
         {
             view.Tenders = await _db.InvoiceTenders
                 .AsNoTracking()
@@ -1498,10 +1498,9 @@ public sealed class InvoiceRepository : IInvoiceRepository
 
         // The same control side PostAsync writes: each tender's account for a
         // paid till sale, the customer's receivable otherwise.
-        List<InvoiceTender> tenders = invoice.TillId.HasValue
-            ? await _db.InvoiceTenders.AsNoTracking().Where(t => t.InvoiceId == invoice.InvoiceId)
-                .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct)
-            : [];
+        // A restaurant bill paid at the table carries tenders without a till (TK-148).
+        List<InvoiceTender> tenders = await _db.InvoiceTenders.AsNoTracking().Where(t => t.InvoiceId == invoice.InvoiceId)
+            .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct);
 
         if (tenders.Count > 0)
         {
@@ -1835,10 +1834,9 @@ public sealed class InvoiceRepository : IInvoiceRepository
         // with no tenders included, is owed and goes to the customer's
         // receivable. It used to debit an account named "Cash", which no chart
         // has, so every till sale was refused at posting.
-        List<InvoiceTender> tenders = invoice.TillId.HasValue
-            ? await _db.InvoiceTenders.Where(t => t.InvoiceId == invoice.InvoiceId)
-                .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct)
-            : [];
+        // A restaurant bill paid at the table carries tenders without a till (TK-148).
+        List<InvoiceTender> tenders = await _db.InvoiceTenders.Where(t => t.InvoiceId == invoice.InvoiceId)
+            .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct);
 
         if (tenders.Count > 0)
         {

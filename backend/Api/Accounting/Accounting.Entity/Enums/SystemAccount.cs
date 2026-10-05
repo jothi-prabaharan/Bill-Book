@@ -168,6 +168,13 @@ public enum SystemAccount
     /// off the manual picker, because a redemption is what moves it.
     /// </summary>
     SavingsSchemeBonus = 29,
+
+    /// <summary>
+    /// Tips a restaurant took for its staff (TK-148). A Liability, not income:
+    /// the money is the staff's, credited when a bill carries a tip and debited
+    /// when it is paid out.
+    /// </summary>
+    TipsPayable = 30,
 }
 
 /// <summary>
@@ -208,6 +215,7 @@ public static class SystemAccountNames
         SystemAccount.TdsPayable => "TDS Payable",
         SystemAccount.TdsReceivable => "TDS Receivable",
         SystemAccount.SavingsSchemeBonus => "Savings Scheme Bonus",
+        SystemAccount.TipsPayable => "Tips Payable",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

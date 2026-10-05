@@ -1,55 +1,145 @@
-<div class="p-4 bg-gray-50 min-h-screen">
-  <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border p-6">
-    <h1 class="text-2xl font-bold mb-6 text-gray-800">Billing</h1>
+<section class="rb">
+  <header class="rb__head">
+    <h1 class="rb__title">Billing</h1>
+    <button type="button" class="btn" (click)="done()">Back to orders</button>
+  </header>
 
-    <div class="grid grid-cols-2 gap-6 mb-8">
-      <div>
-        <div class="text-sm font-medium text-gray-700 mb-1">Select Order to Bill</div>
-        <div class="flex gap-2">
-           <button *ngFor="let order of openOrders" class="border p-2 rounded" [class.bg-blue-100]="selectedOrderId === order.restaurantOrderId" (click)="selectOrder(order.restaurantOrderId)">
-             #{{order.orderNumber}} (Table {{order.restaurantTableId || 'N/A'}})
-           </button>
-        </div>
-      </div>
-      <div>
-        <div class="text-sm font-medium text-gray-700 mb-1">Customer</div>
-        <button class="w-full border rounded p-2 text-left bg-gray-50">Walk-in Customer</button>
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (bill(); as b) {
+    <div class="rb__done">
+      <h2 class="rb__subtitle">Billed on {{ b.invoiceNo }}</h2>
+      <p>Total {{ money(b.total) }}{{ b.tipAmount ? ' · tip ' + money(b.tipAmount) : '' }}</p>
+      @if (b.change > 0) {
+        <p class="rb__change">Change to give: {{ money(b.change) }}</p>
+      }
+      <div class="rb__actions">
+        <button *bbIfCan="'restaurant.print'" type="button" class="btn" (click)="print(b)">Print again</button>
+        <button type="button" class="btn btn--primary" (click)="done()">Done</button>
       </div>
     </div>
+  } @else {
+    <div class="rb__bar">
+      <bb-select label="Bill another order with these" name="addOrderId" placeholder="Choose an open order" [options]="otherOrders()" [(ngModel)]="addOrderId" />
+      <button type="button" class="btn" [disabled]="!addOrderId" (click)="addOrder(addOrderId)">Add to the bill</button>
+    </div>
 
-    <div class="mb-6 border rounded-lg overflow-hidden flex flex-col gap-2 p-2">
-       <div *ngFor="let line of orderLines" class="flex justify-between border-b pb-2 last:border-0">
-          <div>Item #{{line.menuItemId}}</div>
-          <div class="flex gap-4">
-             <div>{{line.quantity}} x {{line.unitPrice}}</div>
-             <div class="font-bold">{{line.quantity * line.unitPrice}}</div>
+    @for (o of orders(); track o.restaurantOrderId) {
+      <fieldset class="rb__order">
+        <legend class="rb__legend">{{ orderPlace(o) }} · {{ o.orderNo }}{{ o.waiterName ? ' · ' + o.waiterName : '' }}</legend>
+        @for (l of o.lines; track l.restaurantOrderLineId) {
+          @if (l.kitchenStatus !== 'Cancelled' && !isBilled(l)) {
+            <div class="rb__line">
+              <bb-checkbox
+                [name]="'line' + l.restaurantOrderLineId"
+                [text]="l.quantity + ' × ' + lineLabel(l)"
+                [ngModel]="selected().has(l.restaurantOrderLineId)"
+                (ngModelChange)="toggleLine(l.restaurantOrderLineId, $event)"
+              />
+              <span class="rb__amount">{{ money(l.amount) }}</span>
+            </div>
+          } @else if (isBilled(l)) {
+            <div class="rb__line rb__line--done">
+              <span>{{ l.quantity }} × {{ lineLabel(l) }}</span>
+              <span class="rb__muted">Billed</span>
+            </div>
+          }
+        }
+        @if (orders().length > 1) {
+          <button type="button" class="btn btn--link" (click)="removeOrder(o)">Take off this bill</button>
+        }
+      </fieldset>
+    } @empty {
+      <p class="rb__muted">Open an order and choose Bill, or add an open order above.</p>
+    }
+
+    @if (orders().length) {
+      <div class="rb__grid">
+        <div class="rb__field">
+          <span class="rb__label">Customer</span>
+          <div class="rb__inline">
+            <button type="button" class="btn rb__pick" (click)="openPicker()">{{ contactLabel() || 'Walk-in customer' }}</button>
+            @if (contactId()) {
+              <button type="button" class="btn btn--link" (click)="clearContact()">Clear</button>
+            }
           </div>
-       </div>
-       <div *ngIf="orderLines.length === 0" class="p-6 text-center text-gray-500">Select an order to view items.</div>
-    </div>
-
-    <div class="flex justify-between items-end bg-gray-50 p-4 rounded-lg border">
-      <div class="w-1/3">
-        <div class="text-sm font-medium text-gray-700 mb-1">Payment Mode</div>
-        <div class="flex gap-2">
-          <button class="border p-2 rounded flex-1" [class.bg-blue-100]="billingRequest.paymentMode==='Cash'" (click)="billingRequest.paymentMode='Cash'">Cash</button>
-          <button class="border p-2 rounded flex-1" [class.bg-blue-100]="billingRequest.paymentMode==='Card'" (click)="billingRequest.paymentMode='Card'">Card</button>
-          <button class="border p-2 rounded flex-1" [class.bg-blue-100]="billingRequest.paymentMode==='UPI'" (click)="billingRequest.paymentMode='UPI'">UPI</button>
         </div>
+        @if (settings().serviceChargePercent > 0) {
+          <bb-checkbox name="applyServiceCharge" [text]="'Service charge ' + settings().serviceChargePercent + '%'" [(ngModel)]="applyServiceCharge" (ngModelChange)="refresh()" />
+        }
+        @if (settings().tipsEnabled) {
+          <bb-money-input label="Tip" name="tipAmount" [formats]="formats.settings()" [(ngModel)]="tipAmount" (ngModelChange)="refresh()" />
+          @if (tipAmount) {
+            <bb-select label="Tip paid into" name="tipBankAccountId" [clearable]="false" [options]="accountOptions()" [(ngModel)]="tipBankAccountId" />
+          }
+        }
       </div>
-      <div class="text-right">
-        <div class="text-gray-500 mb-1">Subtotal: {{totalAmount}}</div>
-        <div class="text-sm text-gray-400 mb-2">Service Charge & Taxes computed on save</div>
-        <div class="text-2xl font-bold text-gray-900">Total: {{totalAmount}}</div>
-      </div>
-    </div>
 
-    <div class="mt-6 flex justify-end">
-      <button class="bg-green-600 text-white px-6 py-3 rounded font-bold text-lg hover:bg-green-700 disabled:opacity-50" 
-              [disabled]="!selectedOrderId" 
-              (click)="generateBill()">
-        Generate Bill
-      </button>
-    </div>
-  </div>
-</div>
+      @if (preview(); as p) {
+        <div class="rb__totals">
+          <div><span>Dishes</span><span>{{ money(p.subTotal) }}</span></div>
+          @if (p.serviceChargeAmount) {
+            <div><span>Service charge {{ p.serviceChargePercent }}%</span><span>{{ money(p.serviceChargeAmount) }}</span></div>
+          }
+          <div><span>Tax</span><span>{{ money(p.taxAmount) }}</span></div>
+          @if (p.roundOff) {
+            <div><span>Round off</span><span>{{ money(p.roundOff) }}</span></div>
+          }
+          <div class="rb__total"><span>Bill total</span><span>{{ money(p.total) }}</span></div>
+          @if (p.tipAmount) {
+            <div><span>Tip</span><span>{{ money(p.tipAmount) }}</span></div>
+            <div class="rb__total"><span>To pay</span><span>{{ money(p.amountToPay) }}</span></div>
+          }
+          @if (p.problem) {
+            <p class="rb__problem">{{ p.problem }}</p>
+          }
+        </div>
+
+        <fieldset class="rb__order">
+          <legend class="rb__legend">Payment</legend>
+          @for (t of tenders(); track $index; let i = $index) {
+            <div class="rb__tender">
+              <bb-select label="How" [name]="'mode' + i" [clearable]="false" [options]="modeOptions" [ngModel]="t.mode" (ngModelChange)="setTender(i, { mode: $event })" />
+              <bb-money-input label="Amount" [name]="'amount' + i" [formats]="formats.settings()" [ngModel]="t.amount" (ngModelChange)="setTender(i, { amount: $event })" />
+              <bb-select label="Into" [name]="'account' + i" [clearable]="false" [options]="accountOptions()" [ngModel]="t.bankAccountId" (ngModelChange)="setTender(i, { bankAccountId: $event })" />
+              @if (t.mode !== 'Cash') {
+                <bb-text-input label="Reference" [name]="'ref' + i" [ngModel]="t.reference" (ngModelChange)="setTender(i, { reference: $event })" />
+              }
+              <button type="button" class="btn btn--link" (click)="removeTender(i)">Remove</button>
+            </div>
+          }
+          <div class="rb__inline">
+            <button type="button" class="btn" (click)="addTender('Cash')">Cash</button>
+            <button type="button" class="btn" (click)="addTender('Card')">Card</button>
+            <button type="button" class="btn" (click)="addTender('Upi')">UPI</button>
+          </div>
+          @if (!tenders().length) {
+            <p class="rb__muted">No payment: the bill goes on the customer's account. A walk-in bill must be paid.</p>
+          } @else if (change() !== null && change()! > 0) {
+            <p class="rb__change">Change: {{ money(change()!) }}</p>
+          }
+        </fieldset>
+
+        <div class="rb__actions">
+          <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" [disabled]="busy() || !!p.problem" (click)="billIt()">
+            Bill {{ money(p.amountToPay) }} and print
+          </button>
+        </div>
+      }
+    }
+  }
+</section>
+
+<bb-lookup-dialog
+  [open]="pickerOpen()"
+  title="Choose a customer"
+  placeholder="Search customers by code or name"
+  emptyText="No customers match."
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="searchContacts($event)"
+  (choose)="pickContact($event)"
+  (dismiss)="pickerOpen.set(false)"
+/>

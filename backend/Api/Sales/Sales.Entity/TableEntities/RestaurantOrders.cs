@@ -94,6 +94,22 @@ public class RestaurantOrderLine : OrgScopedEntity
 
     public int LineNo { get; set; }
 
+    // What the bill needs (TK-148), copied from the item master when the dish was added.
+
+    public long? TaxGroupId { get; set; }
+
+    public long UomId { get; set; }
+
+    public bool IsPriceInclusive { get; set; }
+
+    public Shared.Kernel.Documents.TaxTreatment TaxTreatment { get; set; }
+
+    /// <summary>Whether billing it issues stock: a bottled drink does, a dish made to order does not.</summary>
+    public bool IsStocked { get; set; }
+
+    /// <summary>The bill this dish went on; null until billed. A dish is billed once (TK-148).</summary>
+    public long? RestaurantBillId { get; set; }
+
     public List<RestaurantOrderLineModifier> Modifiers { get; set; } = [];
 }
 
@@ -115,4 +131,29 @@ public class RestaurantOrderLineModifier : OrgScopedEntity
     public long? LinkedItemId { get; set; }
 
     public decimal? LinkedQuantity { get; set; }
+}
+
+/// <summary>
+/// A restaurant bill (TK-148): the invoice one or more orders' dishes were
+/// billed on, with what the invoice cannot say itself — the service charge
+/// rate and the tip, which is not the branch's income and is posted apart.
+/// </summary>
+public class RestaurantBill : OrgScopedEntity
+{
+    public long RestaurantBillId { get; set; }
+
+    /// <summary>The invoice in Sales' own tables; a bill has exactly one.</summary>
+    public long InvoiceId { get; set; }
+
+    public decimal ServiceChargePercent { get; set; }
+
+    public decimal ServiceChargeAmount { get; set; }
+
+    public decimal TipAmount { get; set; }
+
+    /// <summary>The cash or bank account the tip was paid into; null with no tip.</summary>
+    public long? TipBankAccountId { get; set; }
+
+    /// <summary>When it was billed, in branch local time.</summary>
+    public DateTime BilledAt { get; set; }
 }

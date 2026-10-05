@@ -31,6 +31,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Restaurant billing (TK-148).** Restaurant › Billing turns orders into a sales invoice, posted and printed like any other. Untick dishes to split a bill or add orders to merge bills; each dish is billed once. The service charge is a taxed invoice line at the dishes' own GST rate; a tip is posted apart to a new **Tips Payable** account; payments by cash, card or UPI replace the receivable, with change from cash. The settings' requirements, including sending every dish to the kitchen, are checked before billing. See [Billing](restaurant-billing).
+
+- **Changed**: **An invoice that carries payments posts them, wherever it was made.** Until now only a till sale's payments replaced the customer's receivable; a restaurant bill paid at the table does too.
+
 - **Added**: **Kitchen tickets and the kitchen display (TK-147).** Send to the kitchen splits an order's new dishes into one ticket per station and prints each on an 80 mm roll through the browser; a reprint says REPRINT. Restaurant › Kitchen display shows tickets still being worked, oldest first, and cooks move each dish to preparing, ready and served. Cancelling a dish needs a reason, and once the kitchen has started it, someone who can approve. See [Kitchen tickets](restaurant-kitchen).
 
 - **Changed**: **Printed documents carry their exact paper size.** Every document Printing renders now tells the browser its page size, so an A4 invoice prints on A4 and a thermal roll at its width, rather than the browser fitting it to its own default sheet.

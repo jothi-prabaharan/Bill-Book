@@ -120,6 +120,9 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<KotLine> KotLines => Set<KotLine>();
 
+    // Restaurant bills (TK-148).
+    public DbSet<RestaurantBill> RestaurantBills => Set<RestaurantBill>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("sal");
@@ -536,6 +539,8 @@ public class SalesDbContext : TenantDbContext
             b.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
             b.Property(e => e.PortionFactor).HasColumnType("decimal(9,4)");
             b.HasIndex(e => new { e.OrgId, e.KitchenStatus, e.Station });
+            b.Property(e => e.TaxTreatment).HasConversion<string>().HasMaxLength(12);
+            b.HasOne<RestaurantBill>().WithMany().HasForeignKey(e => e.RestaurantBillId).OnDelete(DeleteBehavior.Restrict);
             b.HasMany(e => e.Modifiers).WithOne().HasForeignKey(m => m.RestaurantOrderLineId).OnDelete(DeleteBehavior.Cascade);
             b.ToTable(t => t.HasCheckConstraint("chk_restaurant_order_line_quantity", "\"Quantity\" > 0"));
         });
@@ -568,6 +573,20 @@ public class SalesDbContext : TenantDbContext
             // A dish is sent once: one ticket line per order line.
             b.HasIndex(e => e.RestaurantOrderLineId).IsUnique();
             b.HasOne<RestaurantOrderLine>().WithMany().HasForeignKey(e => e.RestaurantOrderLineId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ---- Restaurant bills (TK-148) -------------------------------------
+
+        modelBuilder.Entity<RestaurantBill>(b =>
+        {
+            b.HasKey(e => e.RestaurantBillId);
+            b.Property(e => e.ServiceChargePercent).HasColumnType("decimal(5,2)");
+            b.Property(e => e.ServiceChargeAmount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.TipAmount).HasColumnType("decimal(18,2)");
+            b.HasIndex(e => e.InvoiceId).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.BilledAt });
+            b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t => t.HasCheckConstraint("chk_restaurant_bill_tip", "\"TipAmount\" >= 0 AND (\"TipAmount\" = 0 OR \"TipBankAccountId\" IS NOT NULL)"));
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

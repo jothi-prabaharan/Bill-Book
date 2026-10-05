@@ -1,0 +1,143 @@
+.rb {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  max-width: 48rem;
+}
+
+.rb__head,
+.rb__bar,
+.rb__line,
+.rb__totals > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+.rb__bar {
+  align-items: flex-end;
+}
+
+.rb__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.rb__subtitle {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.rb__muted {
+  margin: 0;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.875rem;
+}
+
+.rb__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.rb__order {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  margin: 0;
+  padding: var(--space-3, 0.75rem);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+.rb__legend {
+  padding: 0 var(--space-1, 0.25rem);
+  font-weight: 600;
+}
+
+.rb__line--done {
+  opacity: 0.6;
+}
+
+.rb__amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.rb__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3, 0.75rem);
+  align-items: end;
+}
+
+.rb__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.rb__inline,
+.rb__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+.rb__actions {
+  justify-content: flex-end;
+}
+
+.rb__pick {
+  justify-content: flex-start;
+}
+
+.rb__totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-3, 0.75rem);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--color-surface-muted, #f9fafb);
+  font-variant-numeric: tabular-nums;
+}
+
+.rb__total {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.rb__problem {
+  margin: 0;
+  color: var(--color-danger, #b91c1c);
+}
+
+.rb__tender {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2, 0.5rem);
+
+  > * {
+    flex: 1 1 8rem;
+  }
+
+  > .btn {
+    flex: 0 0 auto;
+  }
+}
+
+.rb__change {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.rb__done {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--color-success, #16a34a);
+  border-radius: var(--radius-md, 0.5rem);
+}

@@ -123,3 +123,47 @@ public sealed class HttpContactDirectory : IContactDirectory
             ?? throw new HttpRequestException("Master answered without a contact.");
     }
 }
+
+/// <summary>The branch's walk-in customer, as Master's <c>internal/contacts/walk-in</c> answers.</summary>
+public sealed class WalkInContactResponse
+{
+    public long ContactId { get; set; }
+}
+
+/// <summary>
+/// The branch's walk-in customer (TK-148): who a counter or restaurant bill is
+/// made out to when the buyer gave no name. Null when the branch has none;
+/// throws when Master cannot be asked.
+/// </summary>
+public interface IWalkInContact
+{
+    Task<long?> GetAsync(CancellationToken ct);
+}
+
+public sealed class HttpWalkInContact : IWalkInContact
+{
+    private readonly HttpClient _http;
+    private readonly ITenantContext _tenant;
+
+    public HttpWalkInContact(HttpClient http, ITenantContext tenant)
+    {
+        _http = http;
+        _tenant = tenant;
+    }
+
+    public async Task<long?> GetAsync(CancellationToken ct)
+    {
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/contacts/walk-in", new ContactLookupRequest
+        {
+            CustomerId = _tenant.CustomerId ?? Guid.Empty,
+            OrgId = _tenant.OrgId ?? Guid.Empty,
+        }, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<WalkInContactResponse>(ct))?.ContactId;
+    }
+}

@@ -201,6 +201,9 @@
           @if (current()) {
             <button *bbIfCan="'restaurant.void'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="sheet.set('cancel'); cancelReason = ''">Cancel order</button>
           }
+          @if (current() && current()!.lineCount > 0 && !pending().length) {
+            <button *bbIfCan="'restaurant.create'" type="button" class="btn" [disabled]="busy()" (click)="toBilling()">Bill</button>
+          }
           <button type="button" class="btn btn--primary" [disabled]="busy() || (!!current() && !pending().length)" (click)="saveOrder()">
             {{ current() ? 'Add to order' : 'Save order' }}
           </button>

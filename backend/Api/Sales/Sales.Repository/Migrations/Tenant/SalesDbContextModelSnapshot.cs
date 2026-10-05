@@ -2644,6 +2644,71 @@ namespace Sales.Repository.Migrations.Tenant
                     b.ToTable("ReminderProfiles", "sal");
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantBill", b =>
+                {
+                    b.Property<long>("RestaurantBillId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantBillId"));
+
+                    b.Property<DateTime>("BilledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("InvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ServiceChargeAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ServiceChargePercent")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("TipAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("TipBankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("RestaurantBillId");
+
+                    b.HasIndex("InvoiceId")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "BilledAt");
+
+                    b.ToTable("RestaurantBills", "sal", t =>
+                        {
+                            t.HasCheckConstraint("chk_restaurant_bill_tip", "\"TipAmount\" >= 0 AND (\"TipAmount\" = 0 OR \"TipBankAccountId\" IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrder", b =>
                 {
                     b.Property<long>("RestaurantOrderId")
@@ -2764,6 +2829,12 @@ namespace Sales.Repository.Migrations.Tenant
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsPriceInclusive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsStocked")
+                        .HasColumnType("boolean");
+
                     b.Property<long>("ItemId")
                         .HasColumnType("bigint");
 
@@ -2802,6 +2873,9 @@ namespace Sales.Repository.Migrations.Tenant
                     b.Property<decimal>("Quantity")
                         .HasColumnType("decimal(18,3)");
 
+                    b.Property<long?>("RestaurantBillId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("RestaurantOrderId")
                         .HasColumnType("bigint");
 
@@ -2810,8 +2884,19 @@ namespace Sales.Repository.Migrations.Tenant
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
+                    b.Property<long?>("TaxGroupId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TaxTreatment")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("UomId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("VariantName")
                         .HasMaxLength(50)
@@ -2824,6 +2909,8 @@ namespace Sales.Repository.Migrations.Tenant
                         .HasColumnName("xmin");
 
                     b.HasKey("RestaurantOrderLineId");
+
+                    b.HasIndex("RestaurantBillId");
 
                     b.HasIndex("RestaurantOrderId");
 
@@ -4248,6 +4335,15 @@ namespace Sales.Repository.Migrations.Tenant
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantBill", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrder", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
@@ -4263,6 +4359,11 @@ namespace Sales.Repository.Migrations.Tenant
 
             modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrderLine", b =>
                 {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantBill", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantBillId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
                         .WithMany("Lines")
                         .HasForeignKey("RestaurantOrderId")

@@ -101,6 +101,10 @@ public static class ChartOfAccountsSeed
         // redemption. Seeded in every branch, since a branch may take up the
         // add-on later; it simply stays at nil where no scheme runs.
         Account(orgId, "5400", SystemAccount.SavingsSchemeBonus, Expense),
+
+        // Tips a restaurant bill took for the staff (TK-148). Seeded in every
+        // branch like the bonus above; it stays at nil where nobody tips.
+        Account(orgId, "2450", SystemAccount.TipsPayable, Liability),
     ];
 
     // There are deliberately no separate advance control accounts. A contact's

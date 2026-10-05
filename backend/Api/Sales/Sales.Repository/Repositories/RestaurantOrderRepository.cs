@@ -499,6 +499,11 @@ public sealed class RestaurantOrderRepository
                 UnitPrice = priced.UnitPrice,
                 Note = Trimmed(requested[i].Note),
                 KitchenStatus = KitchenStatus.NotSent,
+                TaxGroupId = priced.TaxGroupId,
+                UomId = priced.SalesUomId,
+                IsPriceInclusive = priced.IsPriceInclusive,
+                TaxTreatment = Enum.TryParse(priced.TaxPreference, out Shared.Kernel.Documents.TaxTreatment treatment) ? treatment : Shared.Kernel.Documents.TaxTreatment.Taxable,
+                IsStocked = priced.TrackInventory,
                 Modifiers = priced.Modifiers.Select(m => new RestaurantOrderLineModifier
                 {
                     ModifierId = m.ModifierId,
@@ -623,6 +628,7 @@ public sealed class RestaurantOrderRepository
                     Note = l.Note,
                     KitchenStatus = l.KitchenStatus,
                     CancelReason = l.CancelReason,
+                    RestaurantBillId = l.RestaurantBillId,
                     Modifiers = l.Modifiers.Select(m => new RestaurantOrderModifierView { ModifierId = m.ModifierId, Name = m.Name, PriceChange = m.PriceChange }).ToList(),
                 }).ToList()
                 : [],

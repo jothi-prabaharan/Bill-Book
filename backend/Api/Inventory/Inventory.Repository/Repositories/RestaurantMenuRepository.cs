@@ -453,7 +453,19 @@ public sealed class RestaurantMenuRepository
                 join i in _db.Items on m.MenuItemId equals i.ItemId
                 join c in _db.MenuCategories on m.MenuCategoryId equals c.MenuCategoryId
                 where ids.Contains(m.MenuItemId)
-                select new { Menu = m, Name = i.PrintName ?? i.ItemName, i.SalesPrice, ItemActive = i.IsActive && i.IsSales, CategoryActive = c.IsActive })
+                select new
+                {
+                    Menu = m,
+                    Name = i.PrintName ?? i.ItemName,
+                    i.SalesPrice,
+                    ItemActive = i.IsActive && i.IsSales,
+                    CategoryActive = c.IsActive,
+                    i.TaxGroupId,
+                    i.SalesUomId,
+                    i.IsPriceInclusiveOfTax,
+                    i.TaxPreference,
+                    i.TrackInventory,
+                })
             .ToDictionaryAsync(d => d.Menu.MenuItemId, ct);
 
         Dictionary<long, MenuSchedule> schedules = await _db.MenuSchedules.ToDictionaryAsync(s => s.MenuScheduleId, ct);
@@ -524,6 +536,11 @@ public sealed class RestaurantMenuRepository
                 PortionFactor = variant?.PortionFactor ?? 1m,
                 Station = dish.Menu.Station,
                 UnitPrice = unit,
+                TaxGroupId = dish.TaxGroupId,
+                SalesUomId = dish.SalesUomId,
+                IsPriceInclusive = dish.IsPriceInclusiveOfTax,
+                TaxPreference = dish.TaxPreference.ToString(),
+                TrackInventory = dish.TrackInventory,
                 Modifiers = chosen.Select(m => new PricedModifier
                 {
                     ModifierId = m.ModifierId,

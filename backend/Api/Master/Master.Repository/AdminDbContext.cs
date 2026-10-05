@@ -466,6 +466,9 @@ public class AdminDbContext : DbContext
 
             // A kitchen ticket (TK-147): a station's share of an order, posting nothing.
             ("KOT", "Kitchen Ticket", false),
+
+            // A tip taken on a restaurant bill (TK-148): Dr where the money went, Cr Tips Payable.
+            ("TIP", "Restaurant Tip", true),
         };
 
         modelBuilder.Entity<TransactionType>().HasData(

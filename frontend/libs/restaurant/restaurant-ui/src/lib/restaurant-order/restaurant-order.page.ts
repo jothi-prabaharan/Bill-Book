@@ -265,6 +265,12 @@ export class RestaurantOrderPage implements OnInit {
     this.pending.set([]);
   }
 
+  /** To the billing screen with this order. */
+  protected toBilling(): void {
+    const order = this.current();
+    if (order) void this.router.navigate(['/restaurant/billing'], { queryParams: { order: order.restaurantOrderId } });
+  }
+
   protected back(): void {
     this.editing.set(null);
     this.pending.set([]);

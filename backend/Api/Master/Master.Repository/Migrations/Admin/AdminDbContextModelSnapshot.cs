@@ -24782,6 +24782,14 @@ namespace Master.Repository.Migrations.Admin
                             IsLedgerPosting = false,
                             Name = "Kitchen Ticket",
                             Version = 0u
+                        },
+                        new
+                        {
+                            Code = "TIP",
+                            IsActive = true,
+                            IsLedgerPosting = true,
+                            Name = "Restaurant Tip",
+                            Version = 0u
                         });
                 });
 

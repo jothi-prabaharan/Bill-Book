@@ -575,6 +575,10 @@ public sealed class StubRestaurantMenu : Sales.Repository.Clients.IRestaurantMen
             PortionFactor = l.ItemVariantId is null ? 1m : 0.5m,
             Station = l.ItemId >= 50 ? Shared.Kernel.Restaurant.MenuStation.Bar : Shared.Kernel.Restaurant.MenuStation.Kitchen,
             UnitPrice = l.ItemId * 10m + extra + l.ModifierIds.Count * 5m,
+            TaxGroupId = 1,
+            SalesUomId = 1,
+            TaxPreference = "Taxable",
+            TrackInventory = false,
             Modifiers = [.. l.ModifierIds.Select(id => new Sales.Repository.Clients.MenuPricedModifier { ModifierId = id, Name = $"Choice {id}", PriceChange = 5m })],
         })];
         return Task.FromResult(new Sales.Repository.Clients.MenuPricing(priced, null, null));
@@ -588,4 +592,27 @@ public sealed class StubUserNames : IUserNameLookup
 
     public Task<IReadOnlyDictionary<Guid, UserRef>> ResolveAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyDictionary<Guid, UserRef>>(ids.Where(id => id != Stranger).ToDictionary(id => id, id => new UserRef(id, $"Waiter {id.ToString()[..4]}")));
+}
+
+/// <summary>The branch's walk-in customer (TK-148): contact 900, or none.</summary>
+public sealed class StubWalkIn(long? contactId = 900) : Shared.Kernel.Contacts.IWalkInContact
+{
+    public Task<long?> GetAsync(CancellationToken ct) => Task.FromResult(contactId);
+}
+
+/// <summary>Accounting's chart in miniature (TK-148): Sales Revenue is account 41, and one cash and one bank account.</summary>
+public sealed class StubAccounts : Shared.Kernel.Ledgers.IAccountDirectory
+{
+    public Task<IReadOnlyList<Shared.Kernel.Ledgers.AccountSummary>> AccountsAsync(IEnumerable<int> accountTypeIds, IEnumerable<long> accountIds, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Shared.Kernel.Ledgers.AccountSummary>>(
+        [
+            new() { AccountId = 41, AccountCode = "4100", AccountName = "Sales Revenue", AccountSystemName = "Sales Revenue", AccountTypeId = 4, IsActive = true },
+        ]);
+
+    public Task<IReadOnlyList<Shared.Kernel.Ledgers.BankAccountSummary>> BankAccountsAsync(CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Shared.Kernel.Ledgers.BankAccountSummary>>(
+        [
+            new() { BankAccountId = 1, AccountName = "Cash", MaskedNumber = "", IsCash = true },
+            new() { BankAccountId = 2, AccountName = "HDFC", MaskedNumber = "1234", IsCash = false },
+        ]);
 }

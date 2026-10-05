@@ -39,6 +39,16 @@ public sealed class MenuPricedLine
     public decimal UnitPrice { get; set; }
 
     public List<MenuPricedModifier> Modifiers { get; set; } = [];
+
+    public long? TaxGroupId { get; set; }
+
+    public long SalesUomId { get; set; }
+
+    public bool IsPriceInclusive { get; set; }
+
+    public string TaxPreference { get; set; } = "Taxable";
+
+    public bool TrackInventory { get; set; }
 }
 
 /// <summary>

@@ -334,6 +334,20 @@ public sealed class PricedMenuLine
     public decimal UnitPrice { get; set; }
 
     public List<PricedModifier> Modifiers { get; set; } = [];
+
+    // What the bill needs from the item master (TK-148), copied onto the order line.
+
+    public long? TaxGroupId { get; set; }
+
+    public long SalesUomId { get; set; }
+
+    public bool IsPriceInclusive { get; set; }
+
+    /// <summary>The item's tax preference by name: Taxable, Exempt, NilRated, NonGst or ZeroRated.</summary>
+    public string TaxPreference { get; set; } = "Taxable";
+
+    /// <summary>Whether selling it issues stock; a dish made to order does not, its recipe does (TK-149).</summary>
+    public bool TrackInventory { get; set; }
 }
 
 public sealed class PricedModifier

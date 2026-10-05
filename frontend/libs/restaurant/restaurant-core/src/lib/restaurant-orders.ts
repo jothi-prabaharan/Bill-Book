@@ -34,6 +34,7 @@ export interface RestaurantOrderLine {
   note: string | null;
   kitchenStatus: KitchenStatus;
   cancelReason: string | null;
+  restaurantBillId: number | null;
   modifiers: RestaurantOrderModifier[];
 }
 

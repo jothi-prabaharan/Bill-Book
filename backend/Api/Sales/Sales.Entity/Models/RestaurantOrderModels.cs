@@ -157,6 +157,9 @@ public sealed class RestaurantOrderLineView
 
     public string? CancelReason { get; set; }
 
+    /// <summary>The bill the dish went on; null until it is billed (TK-148).</summary>
+    public long? RestaurantBillId { get; set; }
+
     public List<RestaurantOrderModifierView> Modifiers { get; set; } = [];
 }
 
@@ -251,4 +254,80 @@ public sealed class KotLineView
     public string? CancelReason { get; set; }
 
     public DateTime StatusChangedAt { get; set; }
+}
+
+/// <summary>
+/// Billing restaurant orders (TK-148). One order billed whole is the common
+/// case; several orders make one bill (merging tables' bills), and naming some
+/// lines bills only those (splitting a bill) — each dish is billed once.
+/// </summary>
+public class BillRestaurantOrdersRequest
+{
+    [MinLength(1, ErrorMessage = "Choose at least one order to bill.")]
+    public List<long> OrderIds { get; set; } = [];
+
+    /// <summary>The dishes to bill; empty bills every dish not yet billed.</summary>
+    public List<long> LineIds { get; set; } = [];
+
+    /// <summary>The customer the invoice is made out to; empty takes the order's, then the walk-in customer.</summary>
+    public long? ContactId { get; set; }
+
+    /// <summary>Off waives the branch's service charge on this bill.</summary>
+    public bool ApplyServiceCharge { get; set; } = true;
+
+    [Range(typeof(decimal), "0", "9999999", ErrorMessage = "A tip cannot be negative.")]
+    public decimal TipAmount { get; set; }
+
+    /// <summary>The cash or bank account the tip was paid into.</summary>
+    public long? TipBankAccountId { get; set; }
+
+    public List<PosTenderRequest> Tenders { get; set; } = [];
+}
+
+/// <summary>What a bill will come to before it is made (TK-148): the same lines and tax the invoice will have.</summary>
+public sealed class BillPreview
+{
+    public decimal SubTotal { get; set; }
+
+    public decimal ServiceChargePercent { get; set; }
+
+    public decimal ServiceChargeAmount { get; set; }
+
+    public decimal TaxAmount { get; set; }
+
+    public decimal RoundOff { get; set; }
+
+    public decimal Total { get; set; }
+
+    public decimal TipAmount { get; set; }
+
+    /// <summary>The bill and the tip: what the guests pay.</summary>
+    public decimal AmountToPay { get; set; }
+
+    public List<long> LineIds { get; set; } = [];
+
+    /// <summary>What the settings still require of the bill, the first one only; null when it can be billed.</summary>
+    public string? Problem { get; set; }
+}
+
+public sealed class RestaurantBillView
+{
+    public long RestaurantBillId { get; set; }
+
+    public long InvoiceId { get; set; }
+
+    public string InvoiceNo { get; set; } = string.Empty;
+
+    public decimal Total { get; set; }
+
+    public decimal ServiceChargeAmount { get; set; }
+
+    public decimal TipAmount { get; set; }
+
+    public decimal Change { get; set; }
+
+    public DateTime BilledAt { get; set; }
+
+    /// <summary>The orders now fully billed; an order with dishes left stays open.</summary>
+    public List<long> ClosedOrderIds { get; set; } = [];
 }

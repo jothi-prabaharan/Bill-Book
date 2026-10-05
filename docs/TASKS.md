@@ -4746,22 +4746,30 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** sending an order prints one ticket per station, a cancel needs a reason, and an item moves from Sent to Ready to Served.
 
 ### TK-148 · Billing at the table through the sales invoice posting
-- [ ] working (Claude Opus 5.5) — 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#129](https://github.com/jothi-prabaharan/Bill-Book/issues/129)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-ACC, L-PRT, L-RST-UI · **Depends on:** TK-146 · **Decision:** D-39, D-41
 - **Where:** `Sales.Repository/Repositories/InvoiceRepository.cs` (`CreateAsync`, `PostAsync`), `Sales.Entity/TableEntities/InvoiceTender.cs`, `Shared.Kernel/Tax/GstCalculator`
 - **State:** checked 1 October 2026. The invoice already posts the double entry, issues stock, takes several tenders with change, and carries `RoundOffAmount`. A POS sale is an `Invoices` row with `TransactionTypeCode = 'POS'`.
 - **Sub-tasks:**
-  - [ ] `RestaurantBillingRepository`: turn an order into a `SaveInvoiceRequest` and call `InvoiceRepository`. There is no second posting path.
-  - [ ] Split a bill (several invoices from one order, each line billed once) and merge bills (one invoice from several orders or tables).
-  - [ ] A service charge line from `restaurant.serviceCharge.percent` (GST treatment checked against `GstCalculator`), optional tips posted to a tips-payable liability account seeded in the chart, and round-off through `RoundOffAmount`.
-  - [ ] Several payment modes through `InvoiceTender`.
-  - [ ] Refuse a bill missing a field the effective settings require (table, customer, waiter, KOT sent); the billing page marks those fields from the same view.
-  - [ ] Bill printing through the invoice's print template; alcohol items are not supported until D-41 is answered (write that in Notes).
-  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] `RestaurantBillingRepository`: turn an order into a `SaveInvoiceRequest` and call `InvoiceRepository`. There is no second posting path.
+  - [x] Split a bill (several invoices from one order, each line billed once) and merge bills (one invoice from several orders or tables).
+  - [x] A service charge line from `restaurant.serviceCharge.percent` (GST treatment checked against `GstCalculator`), optional tips posted to a tips-payable liability account seeded in the chart, and round-off through `RoundOffAmount`.
+  - [x] Several payment modes through `InvoiceTender`.
+  - [x] Refuse a bill missing a field the effective settings require (table, customer, waiter, KOT sent); the billing page marks those fields from the same view.
+  - [x] Bill printing through the invoice's print template; alcohol items are not supported until D-41 is answered (write that in Notes).
+  - [x] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (5 October 2026):**
+  - `RestaurantBillingRepository` builds a `SaveInvoiceRequest` from the chosen dishes and calls `IInvoiceRepository.CreateAsync` and `PostAsync`; there is no second posting path. `sal.RestaurantBills` records the invoice, the service charge rate and amount, and the tip; each order line gets `RestaurantBillId`, so a dish is billed once. An order with nothing left to bill becomes Billed and its table Billed.
+  - Order lines now copy the item's tax group, sales unit, price-inclusive flag, tax treatment and whether it is stocked when the dish is added (Inventory's menu pricing returns them). A stocked dish bills as a Stock line and issues stock; a dish made to order bills as an Expense line on its item and issues nothing (its recipe will, TK-149).
+  - Service charge: one free-text line per (tax group, inclusive, treatment) of the dishes, at the percentage of their amounts, so GST on it follows the food's rate through `GstCalculator`. Its account is the chart's Sales Revenue (looked up through `IAccountDirectory`), which is where the invoice credits revenue anyway.
+  - Tips: a new `SystemAccount.TipsPayable` (2450, Liability) and an `mst.TransactionTypes` row `TIP`; a tip posts through the ledger client as Dr the tender account / Cr Tips Payable, keyed on the bill. It is not on the invoice.
+  - Payments go through `InvoiceTender` with `PosSaleRepository.CheckTenders`. **`InvoiceRepository` now posts an invoice's tenders whenever it has any**, not only when it has a till: tenders were only ever written by the till, so nothing else changes. A walk-in bill must be paid; a named customer may be billed on account. The walk-in customer comes from Master's new `internal/contacts/walk-in`.
+  - Preview (`POST api/restaurant/bills/preview`) works the totals out with the same lines and `GstCalculator`, and names the first requirement missing; billing re-checks table, customer, waiter (`RestaurantOrderRulesRepository`) and kitchen tickets (`KotRulesRepository.BillingRefusal`). Printing goes through `InvoicePrintRepository` under `restaurant.print`.
+  - **Notes:** alcohol is not supported until D-41 is answered: liquor is outside GST and is billed under state excise, so a bar's drinks must not go through this path yet. A tip posted to Accounting is not undone if the request fails after it, the same exposure every invoice posting already has.
 - **Done when:** a split bill posts two invoices whose totals equal the order, and a missing required table is refused.
 
 ### TK-149 · Recipes, ingredient deduction on sale, wastage, food cost %

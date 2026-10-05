@@ -38,6 +38,31 @@ public sealed class InternalContactLookupController : ControllerBase
         _services = services;
     }
 
+    /// <summary>
+    /// The branch's walk-in customer (TK-148): who a restaurant bill is made
+    /// out to when the guests gave no name. 404 when the branch has none.
+    /// </summary>
+    [HttpPost("walk-in")]
+    public async Task<IActionResult> WalkIn([FromBody] ContactLookupRequest request, CancellationToken ct)
+    {
+        switch (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId))
+        {
+            case InternalTenantOutcome.Missing:
+                return BadRequest(new MessageResponse { Message = "A customer and an organization are required to find the walk-in customer." });
+            case InternalTenantOutcome.Mismatch:
+                return Forbid();
+        }
+
+        var db = _services.GetRequiredService<ContactsDbContext>();
+        long? contactId = await db.Contacts
+            .AsNoTracking()
+            .Where(c => c.ContactCode == ContactRepository.WalkInCode && c.IsActive)
+            .Select(c => (long?)c.ContactId)
+            .FirstOrDefaultAsync(ct);
+
+        return contactId is long id ? Ok(new WalkInContactResponse { ContactId = id }) : NotFound();
+    }
+
     [HttpPost("lookup")]
     public async Task<IActionResult> Lookup([FromBody] ContactLookupRequest request, CancellationToken ct)
     {
