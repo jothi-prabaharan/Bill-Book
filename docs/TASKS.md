@@ -4695,7 +4695,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** moving a table moves its open order, and a merged group bills as one.
 
 ### TK-146 · Order taking: dine-in, takeaway, delivery; waiter on mobile; optional table
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05
 - **Issue:** [#127](https://github.com/jothi-prabaharan/Bill-Book/issues/127)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-144, TK-145 · **Decision:** D-39, D-40
