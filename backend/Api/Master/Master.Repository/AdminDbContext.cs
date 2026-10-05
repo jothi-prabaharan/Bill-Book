@@ -878,7 +878,7 @@ public class AdminDbContext : DbContext
         // The manual e-invoice actions: retrying a registration, and generating
         // or cancelling an e-way bill (TK-92). Posting still needs
         // sales.approve and cancelling an IRN rides on sales.void.
-        (10_003, "sales", "einvoice", BusinessType.General, AddOn.EInvoicing),
+        (10_003, "sales", "einvoice", BusinessType.Retail, AddOn.EInvoicing),
     ];
 
     /// <summary>
@@ -909,11 +909,11 @@ public class AdminDbContext : DbContext
         "hrm" or "leave" or "claims" or "recruitment" or "performance" => (null, AddOn.Hrms),
         "attendance" => (BusinessType.School, AddOn.Hrms),
         "payroll" => (null, AddOn.Payroll),
-        "contacts" => (BusinessType.General, AddOn.Crm),
+        "contacts" => (BusinessType.Retail, AddOn.Crm),
         "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => (BusinessType.School, AddOn.None),
         "crm" => (null, AddOn.Crm),
         "restaurant" => (BusinessType.Restaurant, AddOn.None),
-        _ => (BusinessType.General, AddOn.None),
+        _ => (BusinessType.Retail, AddOn.None),
     };
 
     public static App AppsOfModule(string module) => module switch

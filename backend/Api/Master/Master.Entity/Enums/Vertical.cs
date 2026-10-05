@@ -10,7 +10,7 @@ namespace Master.Entity.Enums;
 public enum Vertical
 {
     /// <summary>Everything. The default for a branch that declares nothing.</summary>
-    General = 1,
+    Retail = 1,
 
     Pharma = 2,
 

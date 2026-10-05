@@ -19,7 +19,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("projects")]
 [Route("api/projects/time")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class TimeEntriesController : ControllerBase
 {
     private readonly TimeEntryRepository _time;

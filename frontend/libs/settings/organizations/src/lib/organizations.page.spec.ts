@@ -32,7 +32,7 @@ describe('OrganizationsPage (TK-133)', () => {
   });
 
   it('allows Pos for a General branch', () => {
-    component.form = { businessType: 'General', addOns: 'None' } as any;
+    component.form = { businessType: 'Retail', addOns: 'None' } as any;
     
     expect(component['isAddOnAllowed']('Pos')).toBe(true);
   });

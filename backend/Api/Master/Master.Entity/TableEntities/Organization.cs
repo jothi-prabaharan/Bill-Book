@@ -29,7 +29,7 @@ public class Organization : AuditableEntity
     /// The business vertical this branch is in (D-36, TK-126).
     /// Nullable: a branch can have no business type if the customer bought only standalone add-ons like HRMS or Payroll.
     /// </summary>
-    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.General;
+    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.Retail;
 
     /// <summary>
     /// Modular add-ons enabled for this branch (D-36, TK-126).
@@ -37,13 +37,13 @@ public class Organization : AuditableEntity
     public AddOn AddOns { get; set; } = AddOn.None;
 
     /// <summary>
-    /// The trade this branch is in — General, Pharma or Jewellery — which
+    /// The trade this branch is in — Retail, Pharma, Jewellery, School, Service or Restaurant — which
     /// narrows its seeding, the default item profile and the settings screens
     /// it is offered. One per branch, and changeable after the branch has
     /// traded: re-seeding adds what the new vertical adds, and the old
     /// vertical's rows stay as data. See master.md 5.14.
     /// </summary>
-    public Vertical Vertical { get; set; } = Vertical.General;
+    public Vertical Vertical { get; set; } = Vertical.Retail;
 
     /// <summary>
     /// Short code for the branch, unique within the head office. Copied onto a

@@ -114,7 +114,11 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             wanted.UnionWith(SchoolServices);
         }
 
-        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant)
+        // Every trading business, Service included (TK-136): a service business
+        // still keeps items (its services), invoices, bills and reports. It holds
+        // no stock, which the menus and its item rules see to, not the seed.
+        if (businessType is BusinessType.Retail or BusinessType.Pharma or BusinessType.Jewellery
+            or BusinessType.Restaurant or BusinessType.Service)
         {
             wanted.UnionWith(["Inventory", "Sales", "Purchase", "Reporting", "Customer"]);
         }
@@ -126,7 +130,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     public static IReadOnlyList<string> ServicesFor(App apps)
     {
         BusinessType? bt = apps.HasFlag(App.School) ? BusinessType.School
-            : apps.HasFlag(App.RetailErp) ? BusinessType.General
+            : apps.HasFlag(App.RetailErp) ? BusinessType.Retail
             : null;
         AddOn ao = AddOn.None;
         if (apps.HasFlag(App.Hrms)) ao |= AddOn.Hrms;
@@ -158,18 +162,18 @@ public sealed class HttpTenantSeeder : ITenantSeeder
 
             return org is not null
                 ? (org.BusinessType, org.AddOns)
-                : (BusinessType.General, AddOn.None);
+                : (BusinessType.Retail, AddOn.None);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _log.LogError(ex, "Reading branch scope for organization {OrgId} failed; seeding as General.", orgId);
-            return (BusinessType.General, AddOn.None);
+            _log.LogError(ex, "Reading branch scope for organization {OrgId} failed; seeding as Retail.", orgId);
+            return (BusinessType.Retail, AddOn.None);
         }
     }
 
     /// <summary>
-    /// The branch's current vertical, or General when the row cannot be read.
-    /// General is the everything default, so seeding under it is never the
+    /// The branch's current vertical, or Retail when the row cannot be read.
+    /// Retail is the everything default, so seeding under it is never the
     /// wrong shape — only possibly wider than the branch's own trade.
     /// </summary>
     private async Task<string> ReadVerticalAsync(
@@ -183,14 +187,14 @@ public sealed class HttpTenantSeeder : ITenantSeeder
                     .Where(o => o.CustomerId == customerId && o.OrgId == orgId)
                     .Select(o => (Entity.Enums.Vertical?)o.Vertical)
                     .FirstOrDefaultAsync(ct))
-                ?.ToString() ?? "General";
+                ?.ToString() ?? "Retail";
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _log.LogError(ex,
-                "Reading vertical for organization {OrgId} failed; seeding as General.",
+                "Reading vertical for organization {OrgId} failed; seeding as Retail.",
                 orgId);
-            return "General";
+            return "Retail";
         }
     }
 
@@ -217,7 +221,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         Guid customerId, Guid orgId, App apps, CancellationToken ct)
     {
         BusinessType? bt = apps.HasFlag(App.School) ? BusinessType.School
-            : apps.HasFlag(App.RetailErp) ? BusinessType.General
+            : apps.HasFlag(App.RetailErp) ? BusinessType.Retail
             : null;
         AddOn ao = AddOn.None;
         if (apps.HasFlag(App.Hrms)) ao |= AddOn.Hrms;
@@ -269,7 +273,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         App approvalApps = App.None;
         if (addOns.HasFlag(AddOn.Hrms)) approvalApps |= App.Hrms;
         if (addOns.HasFlag(AddOn.Payroll)) approvalApps |= App.Payroll;
-        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant) approvalApps |= App.RetailErp;
+        if (businessType is BusinessType.Retail or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant or BusinessType.Service) approvalApps |= App.RetailErp;
         if (businessType == BusinessType.School) approvalApps |= App.School;
 
         // The starting approval workflows (TK-49), in process: they are

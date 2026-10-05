@@ -85,15 +85,19 @@ No new database is created. Branches share the account's.
 
 ## The branch's trade
 
-Each branch declares its trade, its **business type**: **General**, **Pharma**, **Jewellery**, **School**, **Service** or **Restaurant**. The trade decides what the branch is set up with, which screens its menu offers and which add-ons it can switch on. It is chosen on **Settings › Branches** and on **Settings › Organization settings**.
+Each branch declares its trade, its **business type**: **Retail**, **Pharma**, **Jewellery**, **School**, **Service** or **Restaurant**. The trade decides what the branch is set up with, which screens its menu offers and which add-ons it can switch on. It is chosen on **Settings › Branches** and on **Settings › Organization settings**. Retail was called **General** until 5 October 2026; branches that were General are Retail now, with nothing else changed.
 
-| | General | Pharma | Jewellery | School | Service | Restaurant |
+| | Retail | Pharma | Jewellery | School | Service | Restaurant |
 |---|---|---|---|---|---|---|
+| Items, sales, purchases and the books | yes | yes | yes | no | yes | yes |
+| Stock: warehouses, stock adjustments, goods receipts, delivery challans, stock-tracking reports | yes | yes | yes | no | no | yes |
 | Metal purities and **Settings › Metal purity** | yes | no | yes | no | no | no |
 | The Restaurant menu and **Settings › Restaurant** | no | no | no | no | no | yes |
 | The school screens | no | no | no | yes | no | no |
 
-General is the branch that has everything a trading business needs: a shop selling a little of everything should not be missing the one screen it needs. Pharma, Jewellery and Restaurant are trading branches too, with items, sales, purchases and stock. A Service branch is set up like a General one for now; hiding the stock screens it does not need is still to be built.
+Retail is the branch that has everything a trading business needs: a shop selling a little of everything should not be missing the one screen it needs. Pharma, Jewellery and Restaurant are trading branches too.
+
+**A Service branch holds no stock.** It sells work and time: its items are services with a SAC code that track no inventory, so saving an item that tracks stock is refused there, and a new item starts as an untracked service. It keeps quotes, sales orders, invoices, credit notes, purchase orders, bills, debit notes, contacts and every accounting and reporting screen.
 
 **The trade can be changed at any time, and changing it deletes nothing.** Switching a Pharma branch to Jewellery adds the metal purities it did not have, once. Switching back only hides the Metal purity screen; the purities stay, because stock may still be priced in them.
 
@@ -105,8 +109,8 @@ A branch switches on the add-ons its trade allows. Turning one off hides its scr
 |---|---|
 | HRMS, Payroll | every trade, and a customer with no trade at all |
 | CRM, Fixed assets, Client portal, Budget, Recurring billing | every trade |
-| POS | General, Pharma and Jewellery |
-| E-invoicing | General, Pharma, Jewellery and Restaurant |
+| POS | Retail, Pharma and Jewellery |
+| E-invoicing | Retail, Pharma, Jewellery and Restaurant |
 | Savings scheme | Jewellery |
 
 Recurring billing is free. The trade and the add-ons are in the access token, so every service refuses a route that is not for the branch.

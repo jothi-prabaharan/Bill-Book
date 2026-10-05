@@ -79,6 +79,6 @@ public sealed class AccessTokenRequest
     /// <summary>Whether that date is the branch's own rather than the licence's.</summary>
     public bool ExpiryIsBranchLevel { get; init; }
 
-    /// <summary>The trade this branch is in — General, Pharma or Jewellery.</summary>
-    public string Vertical { get; init; } = "General";
+    /// <summary>The trade this branch is in — Retail, Pharma, Jewellery, School, Service or Restaurant.</summary>
+    public string Vertical { get; init; } = "Retail";
 }

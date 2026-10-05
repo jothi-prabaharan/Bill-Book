@@ -97,7 +97,7 @@ public sealed class BranchEInvoicingTests
         BaseCurrency = "INR",
         FinancialYearStartMonth = 4,
         DiscountLevel = "Line",
-        Vertical = Vertical.General,
+        Vertical = Vertical.Retail,
         CountryId = 1,
         Gstin = gstin,
         EInvoiceFrom = from,

@@ -13,7 +13,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/item-categories")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class ItemCategoriesController : ControllerBase
 {
     private readonly ItemCategoryRepository _categories;

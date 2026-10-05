@@ -223,11 +223,11 @@ public class OrgContextResponse
     public bool DiscountBeforeTax { get; set; }
 
     /// <summary>
-    /// The trade this branch is in — General, Pharma or Jewellery. Carried on
+    /// The trade this branch is in — Retail, Pharma, Jewellery, School, Service or Restaurant. Carried on
     /// every login so a per-customer service can default an item's profile and
     /// decide which screens to offer, without reading the master database.
     /// </summary>
-    public string Vertical { get; set; } = "General";
+    public string Vertical { get; set; } = "Retail";
 
     /// <summary>The business vertical of this branch (D-36, TK-127).</summary>
     public Shared.Kernel.Apps.BusinessType? BusinessType { get; set; }

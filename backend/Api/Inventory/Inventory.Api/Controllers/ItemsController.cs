@@ -19,7 +19,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/items")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class ItemsController : ControllerBase
 {
     private readonly ItemRepository _items;
@@ -63,7 +63,7 @@ public sealed class ItemsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SaveItemRequest request, CancellationToken ct)
     {
-        SaveItemResult result = await _items.CreateAsync(request, ct);
+        SaveItemResult result = await _items.CreateAsync(request, ct, ScopeClaims.BusinessTypeOf(User));
         if (result.Outcome == SaveItemOutcome.CustomFieldsRefused)
         {
             return UnprocessableEntity(new { message = result.Detail });
@@ -79,7 +79,7 @@ public sealed class ItemsController : ControllerBase
     public async Task<IActionResult> Update(
         long itemId, [FromBody] SaveItemRequest request, CancellationToken ct)
     {
-        SaveItemResult result = await _items.UpdateAsync(itemId, request, ct);
+        SaveItemResult result = await _items.UpdateAsync(itemId, request, ct, ScopeClaims.BusinessTypeOf(User));
         if (result.Outcome == SaveItemOutcome.CustomFieldsRefused)
         {
             return UnprocessableEntity(new { message = result.Detail });

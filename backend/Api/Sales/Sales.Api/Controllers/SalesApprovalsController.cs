@@ -24,7 +24,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class SalesApprovalsController : ControllerBase
 {
     private const string Overrides = "{kind:regex(^(credit-limit|discount)$)}";

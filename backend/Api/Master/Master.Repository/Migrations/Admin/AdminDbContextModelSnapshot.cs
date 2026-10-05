@@ -7205,7 +7205,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 2,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "contacts",
                             DisplayOrder = 2,
@@ -7221,7 +7221,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 101,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "contacts-g1",
                             DisplayOrder = 1,
@@ -7235,7 +7235,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1001,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "both",
                             DisplayOrder = 1,
@@ -7254,7 +7254,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1002,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "cus",
                             DisplayOrder = 2,
@@ -7272,7 +7272,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1003,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "ven",
                             DisplayOrder = 3,
@@ -7308,7 +7308,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 3,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "inventory",
                             DisplayOrder = 3,
@@ -7324,7 +7324,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 102,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "inventory-g1",
                             DisplayOrder = 1,
@@ -7338,7 +7338,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1004,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "itm",
                             DisplayOrder = 1,
@@ -7357,7 +7357,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1005,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "adj",
                             DisplayOrder = 2,
@@ -7376,7 +7376,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1006,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "cat",
                             DisplayOrder = 3,
@@ -7395,7 +7395,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1007,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "uom",
                             DisplayOrder = 4,
@@ -7412,7 +7412,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1008,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "uot",
                             DisplayOrder = 5,
@@ -7430,7 +7430,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1009,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "whs",
                             DisplayOrder = 6,
@@ -7448,7 +7448,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1010,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "hsn",
                             DisplayOrder = 7,
@@ -7466,7 +7466,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1011,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "mtp",
                             DisplayOrder = 8,
@@ -7484,7 +7484,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 4,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "purchase",
                             DisplayOrder = 4,
@@ -7500,7 +7500,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 103,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "purchase-g1",
                             DisplayOrder = 1,
@@ -7514,7 +7514,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1012,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "por",
                             DisplayOrder = 1,
@@ -7533,7 +7533,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1013,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "grn",
                             DisplayOrder = 2,
@@ -7552,7 +7552,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1014,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "bil",
                             DisplayOrder = 3,
@@ -7589,7 +7589,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1015,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "dbn",
                             DisplayOrder = 4,
@@ -7608,7 +7608,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 5,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "sales",
                             DisplayOrder = 5,
@@ -7624,7 +7624,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 104,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "sales-g1",
                             DisplayOrder = 1,
@@ -7638,7 +7638,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1016,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "qot",
                             DisplayOrder = 1,
@@ -7657,7 +7657,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1017,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "sor",
                             DisplayOrder = 2,
@@ -7676,7 +7676,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1018,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "dlc",
                             DisplayOrder = 3,
@@ -7695,7 +7695,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1019,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "inv",
                             DisplayOrder = 4,
@@ -7750,7 +7750,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1020,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "crn",
                             DisplayOrder = 5,
@@ -7769,7 +7769,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 6,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "banking",
                             DisplayOrder = 6,
@@ -7785,7 +7785,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 105,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "banking-g1",
                             DisplayOrder = 1,
@@ -7799,7 +7799,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1021,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "dash",
                             DisplayOrder = 1,
@@ -7817,7 +7817,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1022,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "tx",
                             DisplayOrder = 2,
@@ -7834,7 +7834,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1023,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "spd",
                             DisplayOrder = 3,
@@ -7853,7 +7853,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1024,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "rcv",
                             DisplayOrder = 4,
@@ -7872,7 +7872,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1025,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "trf",
                             DisplayOrder = 5,
@@ -7891,7 +7891,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1026,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "sta",
                             DisplayOrder = 6,
@@ -7909,7 +7909,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1027,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "rec",
                             DisplayOrder = 7,
@@ -7927,7 +7927,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 7,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "accounting",
                             DisplayOrder = 7,
@@ -7943,7 +7943,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 106,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "accounting-g1",
                             DisplayOrder = 1,
@@ -7957,7 +7957,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1028,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "coa",
                             DisplayOrder = 1,
@@ -7976,7 +7976,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1029,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "act",
                             DisplayOrder = 2,
@@ -7993,7 +7993,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1030,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "sub",
                             DisplayOrder = 3,
@@ -8011,7 +8011,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1031,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "jrn",
                             DisplayOrder = 4,
@@ -8030,7 +8030,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1032,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "opb",
                             DisplayOrder = 5,
@@ -8048,7 +8048,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 8,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports",
                             DisplayOrder = 8,
@@ -8064,7 +8064,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 107,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g1",
                             DisplayOrder = 1,
@@ -8080,7 +8080,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1033,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-balance-sheet",
                             DisplayOrder = 1,
@@ -8098,7 +8098,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1034,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-profit-loss",
                             DisplayOrder = 2,
@@ -8116,7 +8116,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1035,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-cash-flow-statement-direct",
                             DisplayOrder = 3,
@@ -8134,7 +8134,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1036,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-reconciliation-report",
                             DisplayOrder = 4,
@@ -8152,7 +8152,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 108,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g2",
                             DisplayOrder = 2,
@@ -8168,7 +8168,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1037,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-business-performance",
                             DisplayOrder = 1,
@@ -8186,7 +8186,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 109,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g3",
                             DisplayOrder = 3,
@@ -8202,7 +8202,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1038,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-trial-balance",
                             DisplayOrder = 1,
@@ -8220,7 +8220,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1039,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-general-ledger",
                             DisplayOrder = 2,
@@ -8238,7 +8238,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1040,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-journal-report",
                             DisplayOrder = 3,
@@ -8256,7 +8256,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1041,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-account-transaction",
                             DisplayOrder = 4,
@@ -8274,7 +8274,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1042,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-bank-summary",
                             DisplayOrder = 5,
@@ -8292,7 +8292,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1043,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-foreign-currency-gain-or-loss",
                             DisplayOrder = 6,
@@ -8310,7 +8310,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1044,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-foreign-currency-gain-or-loss-details",
                             DisplayOrder = 7,
@@ -8328,7 +8328,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 110,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g4",
                             DisplayOrder = 4,
@@ -8344,7 +8344,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1045,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-aged-receivables-summary",
                             DisplayOrder = 1,
@@ -8362,7 +8362,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1046,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-aged-receivables-detail",
                             DisplayOrder = 2,
@@ -8380,7 +8380,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1047,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-receivable-invoice-summary",
                             DisplayOrder = 3,
@@ -8398,7 +8398,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1048,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-receivable-invoice-detail",
                             DisplayOrder = 4,
@@ -8416,7 +8416,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1049,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-invoice-track-report",
                             DisplayOrder = 5,
@@ -8434,7 +8434,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1050,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-invoice-dn-payment-collection-report",
                             DisplayOrder = 6,
@@ -8452,7 +8452,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1051,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-sales-analysis",
                             DisplayOrder = 7,
@@ -8470,7 +8470,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1052,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-sales-analysis-detail-report",
                             DisplayOrder = 8,
@@ -8488,7 +8488,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1053,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-sales-order-track-report",
                             DisplayOrder = 9,
@@ -8506,7 +8506,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1054,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-quotation-track-report",
                             DisplayOrder = 10,
@@ -8524,7 +8524,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1055,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-delivery-order-track-report",
                             DisplayOrder = 11,
@@ -8542,7 +8542,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 111,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g5",
                             DisplayOrder = 5,
@@ -8558,7 +8558,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1056,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-aged-payables-summary",
                             DisplayOrder = 1,
@@ -8576,7 +8576,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1057,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-aged-payables-details",
                             DisplayOrder = 2,
@@ -8594,7 +8594,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1058,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-payable-invoice-summary",
                             DisplayOrder = 3,
@@ -8612,7 +8612,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1059,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-payable-invoice-detail",
                             DisplayOrder = 4,
@@ -8630,7 +8630,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1060,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-bills-track-report",
                             DisplayOrder = 5,
@@ -8648,7 +8648,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1061,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-bill-dn-payment-report",
                             DisplayOrder = 6,
@@ -8666,7 +8666,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1062,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-purchase-analysis",
                             DisplayOrder = 7,
@@ -8684,7 +8684,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1063,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-purchase-order-track-report",
                             DisplayOrder = 8,
@@ -8702,7 +8702,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1064,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-purchase-receive-order-details",
                             DisplayOrder = 9,
@@ -8720,7 +8720,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1065,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-receive-order-track-report",
                             DisplayOrder = 10,
@@ -8738,7 +8738,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 112,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g6",
                             DisplayOrder = 6,
@@ -8754,7 +8754,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1066,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-inventory-item-summary",
                             DisplayOrder = 1,
@@ -8772,7 +8772,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1067,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-inventory-item-detail",
                             DisplayOrder = 2,
@@ -8790,7 +8790,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1068,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-inventory-item-list",
                             DisplayOrder = 3,
@@ -8808,7 +8808,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1069,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-inventory-aging-report",
                             DisplayOrder = 4,
@@ -8826,7 +8826,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1070,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-batch-tracking-status-report",
                             DisplayOrder = 5,
@@ -8844,7 +8844,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1071,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-batch-tracking-detail-report",
                             DisplayOrder = 6,
@@ -8862,7 +8862,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1072,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-serial-tracking-status-report",
                             DisplayOrder = 7,
@@ -8880,7 +8880,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1073,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-serial-tracking-detail-report",
                             DisplayOrder = 8,
@@ -8898,7 +8898,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1074,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-warehouse-tracking-status-report",
                             DisplayOrder = 9,
@@ -8916,7 +8916,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 113,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g7",
                             DisplayOrder = 7,
@@ -8932,7 +8932,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1075,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-fixed-assets-schedule",
                             DisplayOrder = 1,
@@ -8950,7 +8950,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1076,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-depreciation-schedule",
                             DisplayOrder = 2,
@@ -8968,7 +8968,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1077,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-disposal-schedule-report",
                             DisplayOrder = 3,
@@ -8986,7 +8986,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1078,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-fixed-asset-reconciliation",
                             DisplayOrder = 4,
@@ -9318,7 +9318,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 116,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "settings-g3",
                             DisplayOrder = 3,
@@ -9334,7 +9334,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1091,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "tax",
                             DisplayOrder = 1,
@@ -9352,7 +9352,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1092,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "ptm",
                             DisplayOrder = 2,
@@ -9370,7 +9370,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1093,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "lck",
                             DisplayOrder = 3,
@@ -9388,7 +9388,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 117,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "settings-g4",
                             DisplayOrder = 4,
@@ -9404,7 +9404,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1094,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-qot",
                             DisplayOrder = 1,
@@ -9422,7 +9422,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1095,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-sor",
                             DisplayOrder = 2,
@@ -9440,7 +9440,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1096,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-dlc",
                             DisplayOrder = 3,
@@ -9458,7 +9458,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1097,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-inv",
                             DisplayOrder = 4,
@@ -9476,7 +9476,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1098,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-crn",
                             DisplayOrder = 5,
@@ -9494,7 +9494,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1099,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-por",
                             DisplayOrder = 6,
@@ -9512,7 +9512,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1100,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-grn",
                             DisplayOrder = 7,
@@ -9530,7 +9530,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1101,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-bil",
                             DisplayOrder = 8,
@@ -9548,7 +9548,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1102,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-dbn",
                             DisplayOrder = 9,
@@ -9566,7 +9566,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1103,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-rec",
                             DisplayOrder = 10,
@@ -9584,7 +9584,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1104,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-pay",
                             DisplayOrder = 11,
@@ -9602,7 +9602,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1105,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "pt-jrn",
                             DisplayOrder = 12,
@@ -10094,7 +10094,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1127,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = true,
                             Code = "prj",
                             DisplayOrder = 20,
@@ -10113,7 +10113,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1128,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "timesheet",
                             DisplayOrder = 21,
@@ -10149,7 +10149,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1138,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "tds",
                             DisplayOrder = 23,
@@ -10218,7 +10218,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 123,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "reports-g8",
                             DisplayOrder = 8,
@@ -10234,7 +10234,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1129,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-project-profitability",
                             DisplayOrder = 1,
@@ -10252,7 +10252,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1130,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-project-budget-vs-actual",
                             DisplayOrder = 2,
@@ -10270,7 +10270,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1131,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-project-unbilled-work",
                             DisplayOrder = 3,
@@ -10288,7 +10288,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1132,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             CanCreate = false,
                             Code = "r-project-time-by-user",
                             DisplayOrder = 4,
@@ -15717,7 +15717,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 1,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.view",
                             Module = "dashboard",
                             Version = 0u
@@ -15726,7 +15726,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 2,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.create",
                             Module = "dashboard",
                             Version = 0u
@@ -15735,7 +15735,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 3,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.edit",
                             Module = "dashboard",
                             Version = 0u
@@ -15744,7 +15744,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 4,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.approve",
                             Module = "dashboard",
                             Version = 0u
@@ -15753,7 +15753,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 5,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.void",
                             Module = "dashboard",
                             Version = 0u
@@ -15762,7 +15762,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 6,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.delete",
                             Module = "dashboard",
                             Version = 0u
@@ -15771,7 +15771,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 7,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.print",
                             Module = "dashboard",
                             Version = 0u
@@ -15780,7 +15780,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 8,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.export",
                             Module = "dashboard",
                             Version = 0u
@@ -15789,7 +15789,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 9,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.import",
                             Module = "dashboard",
                             Version = 0u
@@ -15798,7 +15798,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 10,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "dashboard.AllUserData",
                             Module = "dashboard",
                             Version = 0u
@@ -15807,7 +15807,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 11,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.view",
                             Module = "contacts",
                             Version = 0u
@@ -15816,7 +15816,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 12,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.create",
                             Module = "contacts",
                             Version = 0u
@@ -15825,7 +15825,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 13,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.edit",
                             Module = "contacts",
                             Version = 0u
@@ -15834,7 +15834,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 14,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.approve",
                             Module = "contacts",
                             Version = 0u
@@ -15843,7 +15843,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 15,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.void",
                             Module = "contacts",
                             Version = 0u
@@ -15852,7 +15852,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 16,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.delete",
                             Module = "contacts",
                             Version = 0u
@@ -15861,7 +15861,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 17,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.print",
                             Module = "contacts",
                             Version = 0u
@@ -15870,7 +15870,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 18,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.export",
                             Module = "contacts",
                             Version = 0u
@@ -15879,7 +15879,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 19,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.import",
                             Module = "contacts",
                             Version = 0u
@@ -15888,7 +15888,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 20,
                             AddOns = 4,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "contacts.AllUserData",
                             Module = "contacts",
                             Version = 0u
@@ -15977,7 +15977,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 31,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.view",
                             Module = "inventory",
                             Version = 0u
@@ -15986,7 +15986,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 32,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.create",
                             Module = "inventory",
                             Version = 0u
@@ -15995,7 +15995,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 33,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.edit",
                             Module = "inventory",
                             Version = 0u
@@ -16004,7 +16004,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 34,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.approve",
                             Module = "inventory",
                             Version = 0u
@@ -16013,7 +16013,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 35,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.void",
                             Module = "inventory",
                             Version = 0u
@@ -16022,7 +16022,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 36,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.delete",
                             Module = "inventory",
                             Version = 0u
@@ -16031,7 +16031,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 37,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.print",
                             Module = "inventory",
                             Version = 0u
@@ -16040,7 +16040,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 38,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.export",
                             Module = "inventory",
                             Version = 0u
@@ -16049,7 +16049,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 39,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.import",
                             Module = "inventory",
                             Version = 0u
@@ -16058,7 +16058,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 40,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "inventory.AllUserData",
                             Module = "inventory",
                             Version = 0u
@@ -16067,7 +16067,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 41,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.view",
                             Module = "sales",
                             Version = 0u
@@ -16076,7 +16076,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 42,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.create",
                             Module = "sales",
                             Version = 0u
@@ -16085,7 +16085,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 43,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.edit",
                             Module = "sales",
                             Version = 0u
@@ -16094,7 +16094,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 44,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.approve",
                             Module = "sales",
                             Version = 0u
@@ -16103,7 +16103,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 45,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.void",
                             Module = "sales",
                             Version = 0u
@@ -16112,7 +16112,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 46,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.delete",
                             Module = "sales",
                             Version = 0u
@@ -16121,7 +16121,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 47,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.print",
                             Module = "sales",
                             Version = 0u
@@ -16130,7 +16130,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 48,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.export",
                             Module = "sales",
                             Version = 0u
@@ -16139,7 +16139,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 49,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.import",
                             Module = "sales",
                             Version = 0u
@@ -16148,7 +16148,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 50,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.AllUserData",
                             Module = "sales",
                             Version = 0u
@@ -16157,7 +16157,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 51,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.view",
                             Module = "purchase",
                             Version = 0u
@@ -16166,7 +16166,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 52,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.create",
                             Module = "purchase",
                             Version = 0u
@@ -16175,7 +16175,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 53,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.edit",
                             Module = "purchase",
                             Version = 0u
@@ -16184,7 +16184,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 54,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.approve",
                             Module = "purchase",
                             Version = 0u
@@ -16193,7 +16193,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 55,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.void",
                             Module = "purchase",
                             Version = 0u
@@ -16202,7 +16202,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 56,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.delete",
                             Module = "purchase",
                             Version = 0u
@@ -16211,7 +16211,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 57,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.print",
                             Module = "purchase",
                             Version = 0u
@@ -16220,7 +16220,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 58,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.export",
                             Module = "purchase",
                             Version = 0u
@@ -16229,7 +16229,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 59,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.import",
                             Module = "purchase",
                             Version = 0u
@@ -16238,7 +16238,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 60,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "purchase.AllUserData",
                             Module = "purchase",
                             Version = 0u
@@ -16247,7 +16247,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 61,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.view",
                             Module = "accounting",
                             Version = 0u
@@ -16256,7 +16256,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 62,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.create",
                             Module = "accounting",
                             Version = 0u
@@ -16265,7 +16265,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 63,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.edit",
                             Module = "accounting",
                             Version = 0u
@@ -16274,7 +16274,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 64,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.approve",
                             Module = "accounting",
                             Version = 0u
@@ -16283,7 +16283,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 65,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.void",
                             Module = "accounting",
                             Version = 0u
@@ -16292,7 +16292,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 66,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.delete",
                             Module = "accounting",
                             Version = 0u
@@ -16301,7 +16301,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 67,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.print",
                             Module = "accounting",
                             Version = 0u
@@ -16310,7 +16310,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 68,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.export",
                             Module = "accounting",
                             Version = 0u
@@ -16319,7 +16319,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 69,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.import",
                             Module = "accounting",
                             Version = 0u
@@ -16328,7 +16328,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 70,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "accounting.AllUserData",
                             Module = "accounting",
                             Version = 0u
@@ -16337,7 +16337,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 71,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.view",
                             Module = "banking",
                             Version = 0u
@@ -16346,7 +16346,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 72,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.create",
                             Module = "banking",
                             Version = 0u
@@ -16355,7 +16355,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 73,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.edit",
                             Module = "banking",
                             Version = 0u
@@ -16364,7 +16364,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 74,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.approve",
                             Module = "banking",
                             Version = 0u
@@ -16373,7 +16373,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 75,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.void",
                             Module = "banking",
                             Version = 0u
@@ -16382,7 +16382,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 76,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.delete",
                             Module = "banking",
                             Version = 0u
@@ -16391,7 +16391,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 77,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.print",
                             Module = "banking",
                             Version = 0u
@@ -16400,7 +16400,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 78,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.export",
                             Module = "banking",
                             Version = 0u
@@ -16409,7 +16409,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 79,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.import",
                             Module = "banking",
                             Version = 0u
@@ -16418,7 +16418,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 80,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "banking.AllUserData",
                             Module = "banking",
                             Version = 0u
@@ -16427,7 +16427,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 81,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.view",
                             Module = "reports",
                             Version = 0u
@@ -16436,7 +16436,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 82,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.create",
                             Module = "reports",
                             Version = 0u
@@ -16445,7 +16445,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 83,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.edit",
                             Module = "reports",
                             Version = 0u
@@ -16454,7 +16454,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 84,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.approve",
                             Module = "reports",
                             Version = 0u
@@ -16463,7 +16463,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 85,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.void",
                             Module = "reports",
                             Version = 0u
@@ -16472,7 +16472,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 86,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.delete",
                             Module = "reports",
                             Version = 0u
@@ -16481,7 +16481,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 87,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.print",
                             Module = "reports",
                             Version = 0u
@@ -16490,7 +16490,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 88,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.export",
                             Module = "reports",
                             Version = 0u
@@ -16499,7 +16499,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 89,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.import",
                             Module = "reports",
                             Version = 0u
@@ -16508,7 +16508,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 90,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "reports.AllUserData",
                             Module = "reports",
                             Version = 0u
@@ -16597,7 +16597,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 101,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.view",
                             Module = "support",
                             Version = 0u
@@ -16606,7 +16606,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 102,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.create",
                             Module = "support",
                             Version = 0u
@@ -16615,7 +16615,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 103,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.edit",
                             Module = "support",
                             Version = 0u
@@ -16624,7 +16624,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 104,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.approve",
                             Module = "support",
                             Version = 0u
@@ -16633,7 +16633,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 105,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.void",
                             Module = "support",
                             Version = 0u
@@ -16642,7 +16642,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 106,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.delete",
                             Module = "support",
                             Version = 0u
@@ -16651,7 +16651,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 107,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.print",
                             Module = "support",
                             Version = 0u
@@ -16660,7 +16660,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 108,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.export",
                             Module = "support",
                             Version = 0u
@@ -16669,7 +16669,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 109,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.import",
                             Module = "support",
                             Version = 0u
@@ -16678,7 +16678,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 110,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "support.AllUserData",
                             Module = "support",
                             Version = 0u
@@ -18147,7 +18147,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 281,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.view",
                             Module = "projects",
                             Version = 0u
@@ -18156,7 +18156,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 282,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.create",
                             Module = "projects",
                             Version = 0u
@@ -18165,7 +18165,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 283,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.edit",
                             Module = "projects",
                             Version = 0u
@@ -18174,7 +18174,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 284,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.approve",
                             Module = "projects",
                             Version = 0u
@@ -18183,7 +18183,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 285,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.void",
                             Module = "projects",
                             Version = 0u
@@ -18192,7 +18192,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 286,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.delete",
                             Module = "projects",
                             Version = 0u
@@ -18201,7 +18201,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 287,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.print",
                             Module = "projects",
                             Version = 0u
@@ -18210,7 +18210,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 288,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.export",
                             Module = "projects",
                             Version = 0u
@@ -18219,7 +18219,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 289,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.import",
                             Module = "projects",
                             Version = 0u
@@ -18228,7 +18228,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 290,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "projects.AllUserData",
                             Module = "projects",
                             Version = 0u
@@ -18255,7 +18255,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             PermissionId = 10003,
                             AddOns = 64,
-                            BusinessType = "General",
+                            BusinessType = "Retail",
                             Code = "sales.einvoice",
                             Module = "sales",
                             Version = 0u

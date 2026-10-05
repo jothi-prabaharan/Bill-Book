@@ -16,7 +16,9 @@ public static class ScopeClaims
     public static BusinessType? BusinessTypeOf(ClaimsPrincipal user)
     {
         string? claim = user.FindFirst(BusinessTypeClaim)?.Value;
-        if (claim is not null && Enum.TryParse<BusinessType>(claim, ignoreCase: true, out var bt))
+        // AddOnRules reads a pre-TK-136 "General" as Retail, so a token minted
+        // before the rename keeps working until it expires.
+        if (claim is not null && AddOnRules.TryParseBusinessType(claim, out BusinessType? bt) && bt is not null)
         {
             return bt;
         }
@@ -38,11 +40,11 @@ public static class ScopeClaims
         if (appClaim is not null && Enum.TryParse<App>(appClaim, ignoreCase: true, out var app))
         {
             if (app == App.School) return BusinessType.School;
-            if (app == App.RetailErp) return BusinessType.General;
+            if (app == App.RetailErp) return BusinessType.Retail;
             return null;
         }
 
-        return BusinessType.General;
+        return BusinessType.Retail;
     }
 
     public static AddOn AddOnsOf(ClaimsPrincipal user)

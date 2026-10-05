@@ -7,8 +7,11 @@ namespace Shared.Kernel.Apps;
 /// </summary>
 public enum BusinessType
 {
-    /// <summary>General retail/trading branch. Seeded with and shown all general retail features.</summary>
-    General = 1,
+    /// <summary>
+    /// A retail or trading branch, shown every trading feature. Was <c>General</c>
+    /// until TK-136; a stored or claimed <c>General</c> still reads as this.
+    /// </summary>
+    Retail = 1,
 
     /// <summary>Pharmacy retail branch with batch, expiry, and drug schedule tracking.</summary>
     Pharma = 2,
@@ -75,13 +78,19 @@ public enum AddOn
 public static class AddOnRules
 {
     /// <summary>
+    /// What <see cref="BusinessType.Retail"/> was called before TK-136. A token
+    /// minted before the rename, or a request from an old page, still says it.
+    /// </summary>
+    public const string LegacyRetailName = "General";
+
+    /// <summary>
     /// Returns the combined flags of all add-ons allowed for the specified business type.
     /// <para>
     /// Rules:
     /// - <see cref="AddOn.Hrms"/> and <see cref="AddOn.Payroll"/> are allowed for every type and for none (null).
     /// - <see cref="AddOn.Crm"/>, <see cref="AddOn.FixedAssets"/>, <see cref="AddOn.ClientPortal"/>,
     ///   <see cref="AddOn.Budget"/>, and <see cref="AddOn.RecurringBilling"/> are allowed for all four types.
-    /// - <see cref="AddOn.Pos"/> and <see cref="AddOn.EInvoicing"/> are allowed for General, Pharma, and Jewellery (not School, not null).
+    /// - <see cref="AddOn.Pos"/> and <see cref="AddOn.EInvoicing"/> are allowed for Retail, Pharma and Jewellery; e-invoicing for Restaurant too (not School or Service, not null).
     /// </para>
     /// </summary>
     public static AddOn Allowed(BusinessType? businessType) =>
@@ -89,7 +98,7 @@ public static class AddOnRules
         {
             null => AddOn.Hrms | AddOn.Payroll,
             BusinessType.School or BusinessType.Service => AddOn.Hrms | AddOn.Payroll | AddOn.Crm | AddOn.FixedAssets | AddOn.ClientPortal | AddOn.Budget | AddOn.RecurringBilling,
-            BusinessType.General or BusinessType.Pharma => AddOn.All & ~AddOn.SavingsScheme,
+            BusinessType.Retail or BusinessType.Pharma => AddOn.All & ~AddOn.SavingsScheme,
             BusinessType.Restaurant => AddOn.All & ~AddOn.SavingsScheme & ~AddOn.Pos,
             BusinessType.Jewellery => AddOn.All,
             _ => AddOn.None,
@@ -118,7 +127,7 @@ public static class AddOnRules
     /// Returns true if <paramref name="businessType"/> is a defined <see cref="BusinessType"/> value.
     /// </summary>
     public static bool IsDefined(BusinessType businessType) =>
-        businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.School or BusinessType.Service or BusinessType.Restaurant;
+        businessType is BusinessType.Retail or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.School or BusinessType.Service or BusinessType.Restaurant;
 
     /// <summary>
     /// Parses a string into a <see cref="BusinessType"/>.
@@ -135,6 +144,12 @@ public static class AddOnRules
         if (int.TryParse(value, out _))
         {
             return false;
+        }
+
+        if (string.Equals(value.Trim(), LegacyRetailName, StringComparison.OrdinalIgnoreCase))
+        {
+            businessType = BusinessType.Retail;
+            return true;
         }
 
         if (Enum.TryParse<BusinessType>(value.Trim(), ignoreCase: true, out var parsed) && IsDefined(parsed))

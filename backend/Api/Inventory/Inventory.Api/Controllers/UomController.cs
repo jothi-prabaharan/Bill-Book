@@ -17,7 +17,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/uom-types")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class UomController : ControllerBase
 {
     private readonly UomRepository _uom;

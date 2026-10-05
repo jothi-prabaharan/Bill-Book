@@ -65,7 +65,7 @@ public sealed class PerAppSignupTests
         {
             App apps = App.None;
             if (businessType == BusinessType.School) apps |= App.School;
-            if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery) apps |= App.RetailErp;
+            if (businessType is BusinessType.Retail or BusinessType.Pharma or BusinessType.Jewellery) apps |= App.RetailErp;
             if (addOns.HasFlag(AddOn.Hrms)) apps |= App.Hrms;
             if (addOns.HasFlag(AddOn.Payroll)) apps |= App.Payroll;
             return SeedAsync(customerId, orgId, apps, ct);

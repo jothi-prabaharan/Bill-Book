@@ -322,7 +322,7 @@ public sealed class RestaurantReportTests
         RestaurantDayEndSource dayEnd = new();
 
         Assert.True(new ReportAudience(AddOn.None, BusinessType.Restaurant, Settings()).Allows(dayEnd));
-        Assert.False(new ReportAudience(AddOn.All, BusinessType.General, null).Allows(dayEnd));
+        Assert.False(new ReportAudience(AddOn.All, BusinessType.Retail, null).Allows(dayEnd));
         Assert.False(new ReportAudience(AddOn.All, null, null).Allows(dayEnd));
 
         // Every other report is still there for a Restaurant branch.

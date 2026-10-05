@@ -82,7 +82,7 @@ public sealed class RestaurantMenuTests
         await using InventoryDbContext db = _postgres.CreateContext(customer, org);
         RestaurantMenuRepository menu = new(db);
 
-        Assert.Equal(0, await menu.SeedCategoriesAsync(org, "General", default));
+        Assert.Equal(0, await menu.SeedCategoriesAsync(org, "Retail", default));
         Assert.Equal(RestaurantMenuRepository.SeedCategories.Length, await menu.SeedCategoriesAsync(org, "Restaurant", default));
         Assert.Equal(0, await menu.SeedCategoriesAsync(org, "Restaurant", default));
     }

@@ -20,7 +20,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/stock")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
 public sealed class StockController : ControllerBase
 {
     private readonly StockRepository _stock;

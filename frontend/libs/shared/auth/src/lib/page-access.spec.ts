@@ -9,7 +9,7 @@ describe('decideAccess', () => {
     email: 'priya@example.com',
     branchName: 'Chennai',
     branchCode: 'CHN',
-    businessType: 'General',
+    businessType: 'Retail',
     addOns: 'Payroll',
     licenseStatus: 'Active',
     licenseExpiry: null,

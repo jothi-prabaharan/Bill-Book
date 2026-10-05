@@ -13,7 +13,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/quotes")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class QuotesController : ControllerBase
 {
     private readonly QuoteRepository _Quotes;

@@ -173,6 +173,19 @@ public sealed class MetalPurityRepository
     }
 
     /// <summary>
+    /// The trades a branch is seeded with metal purities for: Retail, the
+    /// everything branch, and Jewellery (D-10, TK-30), plus <c>General</c>, which
+    /// is what Retail was called before TK-136. The same two trades see
+    /// Settings › Metal purity. A chemist, a school, a service business or a
+    /// restaurant prices nothing in karats, so the rows would only clutter.
+    /// </summary>
+    public static bool SeedsPurities(string? vertical) =>
+        vertical is not null
+        && (vertical.Equals("Retail", StringComparison.OrdinalIgnoreCase)
+            || vertical.Equals("General", StringComparison.OrdinalIgnoreCase)
+            || vertical.Equals("Jewellery", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
     /// Writes the standard purities for an organization, adding only what is
     /// missing. Safe to re-run: a purity added to the seed list later reaches
     /// organizations created before it existed.
@@ -182,8 +195,9 @@ public sealed class MetalPurityRepository
     /// "916 (22K)" as "22 Karat" must not be handed a second copy of it under
     /// the original label.
     ///
-    /// Skips entirely for the Pharma vertical (master.md 5.14): a chemist has no
-    /// ornaments to price, so the rows would be written and never looked at.
+    /// Skips every trade but Retail and Jewellery (<see cref="SeedsPurities"/>):
+    /// a chemist has no ornaments to price, so the rows would be written and
+    /// never looked at.
     /// When a branch switches to a vertical that needs them, re-seeding writes
     /// them — and when it switches away, the rows stay as data, because the
     /// branch may still be selling off stock priced in them.
@@ -191,7 +205,7 @@ public sealed class MetalPurityRepository
     public async Task<int> SeedForOrganizationAsync(
         Guid orgId, string vertical, CancellationToken ct)
     {
-        if (string.Equals(vertical, "Pharma", StringComparison.OrdinalIgnoreCase))
+        if (!SeedsPurities(vertical))
         {
             return 0;
         }

@@ -33,7 +33,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/delivery-challans")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
 public sealed class DeliveryChallansController : ControllerBase
 {
     private readonly DeliveryChallanRepository _service;

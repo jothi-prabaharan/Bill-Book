@@ -14,7 +14,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/banks")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School, BusinessType.Service)]
 public sealed class BanksController : ControllerBase
 {
     private readonly BankRepository _banks;

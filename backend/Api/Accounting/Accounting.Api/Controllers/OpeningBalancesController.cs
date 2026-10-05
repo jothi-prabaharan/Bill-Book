@@ -24,7 +24,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/opening-balance")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School, BusinessType.Service)]
 public sealed class OpeningBalancesController : ControllerBase
 {
     private readonly OpeningBalanceRepository _openings;

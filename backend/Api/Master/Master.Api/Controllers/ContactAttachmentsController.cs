@@ -20,7 +20,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("contacts")]
 [Route("api/contacts")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School, BusinessType.Service)]
 [RequireAddOn(AddOn.Crm)]
 public sealed class ContactAttachmentsController : ControllerBase
 {

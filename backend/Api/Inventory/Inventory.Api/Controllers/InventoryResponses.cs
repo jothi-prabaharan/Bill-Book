@@ -107,6 +107,8 @@ public static class InventoryResponses
                     + "specific identification needs serial numbers."),
             SaveItemOutcome.ServiceCannotBeStocked => Bad(
                 controller, "A service item cannot track inventory."),
+            SaveItemOutcome.StockedItemInServiceBranch => Bad(
+                controller, "A service business keeps service items only. Make it a service that does not track inventory."),
             SaveItemOutcome.InvalidValue => Bad(
                 controller, "One of the selected options is not a recognised value."),
             _ => controller.StatusCode(StatusCodes.Status500InternalServerError),

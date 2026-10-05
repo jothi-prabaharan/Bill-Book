@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using System.Linq.Expressions;
 using System.Text.Json;
 using Inventory.Entity.Enums;
@@ -208,11 +209,17 @@ public sealed class ItemRepository
         return detail;
     }
 
-    public async Task<SaveItemResult> CreateAsync(SaveItemRequest request, CancellationToken ct)
+    public async Task<SaveItemResult> CreateAsync(
+        SaveItemRequest request, CancellationToken ct, BusinessType? businessType = null)
     {
         if (!TryParse(request, out ParsedItem parsed))
         {
             return new SaveItemResult(SaveItemOutcome.InvalidValue, null, null);
+        }
+
+        if (TradeRefusal(businessType, parsed.Type, request.TrackInventory) is SaveItemOutcome tradeRefusal)
+        {
+            return new SaveItemResult(tradeRefusal, null, null);
         }
 
         SaveItemOutcome invalid = await ValidateAsync(request, parsed, null, ct);
@@ -250,7 +257,7 @@ public sealed class ItemRepository
     }
 
     public async Task<SaveItemResult> UpdateAsync(
-        long itemId, SaveItemRequest request, CancellationToken ct)
+        long itemId, SaveItemRequest request, CancellationToken ct, BusinessType? businessType = null)
     {
         Item? item = await _db.Items.FirstOrDefaultAsync(i => i.ItemId == itemId, ct);
         if (item is null)
@@ -261,6 +268,11 @@ public sealed class ItemRepository
         if (!TryParse(request, out ParsedItem parsed))
         {
             return new SaveItemResult(SaveItemOutcome.InvalidValue, null, null);
+        }
+
+        if (TradeRefusal(businessType, parsed.Type, request.TrackInventory) is SaveItemOutcome tradeRefused)
+        {
+            return new SaveItemResult(tradeRefused, null, null);
         }
 
         SaveItemOutcome invalid = await ValidateAsync(request, parsed, itemId, ct);
@@ -342,6 +354,18 @@ public sealed class ItemRepository
         await _db.SaveChangesAsync(ct);
         return SaveItemOutcome.Ok;
     }
+
+    /// <summary>
+    /// What the branch's trade refuses, or null (TK-136). A Service branch holds
+    /// no stock, so its items are services that track no inventory and so carry
+    /// costing method None; anything else would post stock movements that no
+    /// warehouse, adjustment or receipt screen of that branch can ever touch.
+    /// Pure.
+    /// </summary>
+    public static SaveItemOutcome? TradeRefusal(BusinessType? businessType, ItemType type, bool trackInventory) =>
+        businessType == BusinessType.Service && (type != ItemType.Service || trackInventory)
+            ? SaveItemOutcome.StockedItemInServiceBranch
+            : null;
 
     private async Task<SaveItemOutcome> ValidateAsync(
         SaveItemRequest request, ParsedItem parsed, long? itemId, CancellationToken ct)

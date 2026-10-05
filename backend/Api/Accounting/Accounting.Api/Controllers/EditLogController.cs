@@ -15,7 +15,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/edit-log/accounting")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School, BusinessType.Service)]
 public sealed class EditLogController : EditLogControllerBase<AccountingDbContext>
 {
     public EditLogController(AccountingDbContext db)

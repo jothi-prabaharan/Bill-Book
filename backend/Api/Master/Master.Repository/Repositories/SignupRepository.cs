@@ -108,7 +108,7 @@ public sealed class SignupRepository
         {
             Shared.Kernel.Apps.App.School => BusinessType.School,
             Shared.Kernel.Apps.App.Hrms or Shared.Kernel.Apps.App.Payroll => null,
-            _ => BusinessType.General,
+            _ => BusinessType.Retail,
         };
         AddOn initialAddOns = app switch
         {

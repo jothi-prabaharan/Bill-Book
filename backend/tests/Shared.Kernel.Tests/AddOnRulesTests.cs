@@ -58,9 +58,9 @@ public sealed class AddOnRulesTests
     }
 
     [Theory]
-    [InlineData(BusinessType.General)]
+    [InlineData(BusinessType.Retail)]
     [InlineData(BusinessType.Pharma)]
-    public void General_and_pharma_allow_every_addon_but_the_savings_scheme(BusinessType businessType)
+    public void Retail_and_pharma_allow_every_addon_but_the_savings_scheme(BusinessType businessType)
     {
         Assert.Equal(AddOn.All & ~AddOn.SavingsScheme, AddOnRules.Allowed(businessType));
         Assert.True(AddOnRules.IsAllowed(businessType, AddOn.Pos));
@@ -101,8 +101,8 @@ public sealed class AddOnRulesTests
     [InlineData(null, true, null)]
     [InlineData("", true, null)]
     [InlineData("   ", true, null)]
-    [InlineData("General", true, BusinessType.General)]
-    [InlineData("general", true, BusinessType.General)]
+    [InlineData("General", true, BusinessType.Retail)]
+    [InlineData("general", true, BusinessType.Retail)]
     [InlineData("Pharma", true, BusinessType.Pharma)]
     [InlineData("pharma", true, BusinessType.Pharma)]
     [InlineData("Jewellery", true, BusinessType.Jewellery)]
@@ -159,5 +159,24 @@ public sealed class AddOnRulesTests
         Assert.Equal(9, all.Count);
         Assert.DoesNotContain(AddOn.None, all);
         Assert.DoesNotContain(AddOn.All, all);
+    }
+
+    [Theory]
+    [InlineData("Retail")]
+    [InlineData("General")] // a token or page from before TK-136
+    [InlineData(" general ")]
+    public void Retail_and_its_old_name_both_parse_as_retail(string value)
+    {
+        Assert.True(AddOnRules.TryParseBusinessType(value, out BusinessType? parsed));
+        Assert.Equal(BusinessType.Retail, parsed);
+    }
+
+    [Fact]
+    public void A_token_minted_before_the_rename_still_names_a_retail_branch()
+    {
+        var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+            [new System.Security.Claims.Claim(Shared.Kernel.Internal.ScopeClaims.BusinessTypeClaim, "General")], "test"));
+
+        Assert.Equal(BusinessType.Retail, Shared.Kernel.Internal.ScopeClaims.BusinessTypeOf(user));
     }
 }

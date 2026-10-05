@@ -54,8 +54,8 @@ public sealed class RequireScopeGuardTests
     [Fact]
     public void RequireBusinessType_allows_matching_vertical()
     {
-        var attr = new RequireBusinessTypeAttribute(BusinessType.General, BusinessType.Pharma);
-        Assert.True(attr.Allows(BusinessType.General));
+        var attr = new RequireBusinessTypeAttribute(BusinessType.Retail, BusinessType.Pharma);
+        Assert.True(attr.Allows(BusinessType.Retail));
         Assert.True(attr.Allows(BusinessType.Pharma));
         Assert.False(attr.Allows(BusinessType.School));
         Assert.False(attr.Allows(null));
@@ -65,7 +65,7 @@ public sealed class RequireScopeGuardTests
     public void RequireBusinessType_parameterless_requires_any_business_type()
     {
         var attr = new RequireBusinessTypeAttribute();
-        Assert.True(attr.Allows(BusinessType.General));
+        Assert.True(attr.Allows(BusinessType.Retail));
         Assert.True(attr.Allows(BusinessType.School));
         Assert.False(attr.Allows(null));
     }
@@ -74,7 +74,7 @@ public sealed class RequireScopeGuardTests
     public void RequireBusinessType_with_allow_standalone_allows_null_business_type()
     {
         var attr = new RequireBusinessTypeAttribute { AllowStandalone = true };
-        Assert.True(attr.Allows(BusinessType.General));
+        Assert.True(attr.Allows(BusinessType.Retail));
         Assert.True(attr.Allows(null));
     }
 
@@ -103,7 +103,7 @@ public sealed class RequireScopeGuardTests
     public void Unauthenticated_request_is_not_blocked_by_scope_guard()
     {
         var controller = new SampleRetailController();
-        var guard = new RequireBusinessTypeAttribute(BusinessType.General);
+        var guard = new RequireBusinessTypeAttribute(BusinessType.Retail);
         ActionExecutingContext context = CreateContext(controller, "Index", businessType: null, addOns: AddOn.None, authenticated: false);
 
         guard.OnActionExecuting(context);
@@ -115,7 +115,7 @@ public sealed class RequireScopeGuardTests
     public void InternalOnly_controller_bypasses_scope_guard()
     {
         var controller = new SampleInternalController();
-        var guard = new RequireBusinessTypeAttribute(BusinessType.General);
+        var guard = new RequireBusinessTypeAttribute(BusinessType.Retail);
         ActionExecutingContext context = CreateContext(
             controller, "Index", businessType: BusinessType.School, addOns: AddOn.None, authenticated: true,
             new InternalOnlyAttribute());
@@ -143,7 +143,7 @@ public sealed class RequireScopeGuardTests
         Assert.Null(ctx2.Result);
 
         // Case 3: General retail branch without HRMS/Payroll -> Forbidden
-        ActionExecutingContext ctx3 = CreateContext(controller, "Index", BusinessType.General, AddOn.Pos);
+        ActionExecutingContext ctx3 = CreateContext(controller, "Index", BusinessType.Retail, AddOn.Pos);
         btGuard.OnActionExecuting(ctx3);
         Assert.IsType<ForbidResult>(ctx3.Result);
     }
@@ -152,16 +152,16 @@ public sealed class RequireScopeGuardTests
     public void Action_level_AND_semantics_restricts_even_when_controller_vertical_matches()
     {
         var controller = new SampleRetailController();
-        var btGuard = new RequireBusinessTypeAttribute(BusinessType.General);
+        var btGuard = new RequireBusinessTypeAttribute(BusinessType.Retail);
         var aoActionGuard = new RequireAddOnAttribute(AddOn.EInvoicing);
 
         // Retail branch without EInvoicing add-on -> Action guard refuses
-        ActionExecutingContext ctx1 = CreateContext(controller, "EwayBill", BusinessType.General, AddOn.None, true, aoActionGuard);
+        ActionExecutingContext ctx1 = CreateContext(controller, "EwayBill", BusinessType.Retail, AddOn.None, true, aoActionGuard);
         btGuard.OnActionExecuting(ctx1);
         Assert.IsType<ForbidResult>(ctx1.Result);
 
         // Retail branch WITH EInvoicing add-on -> Allowed
-        ActionExecutingContext ctx2 = CreateContext(controller, "EwayBill", BusinessType.General, AddOn.EInvoicing, true, aoActionGuard);
+        ActionExecutingContext ctx2 = CreateContext(controller, "EwayBill", BusinessType.Retail, AddOn.EInvoicing, true, aoActionGuard);
         btGuard.OnActionExecuting(ctx2);
         Assert.Null(ctx2.Result);
 
@@ -199,7 +199,7 @@ public sealed class RequireScopeGuardTests
         var user4 = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(RequireAppAttribute.ClaimType, "RetailErp"),
         ]));
-        Assert.Equal(BusinessType.General, ScopeClaims.BusinessTypeOf(user4));
+        Assert.Equal(BusinessType.Retail, ScopeClaims.BusinessTypeOf(user4));
         Assert.Equal(AddOn.All, ScopeClaims.AddOnsOf(user4));
     }
 
@@ -216,7 +216,7 @@ public sealed class RequireScopeGuardTests
     }
 
     // Dummy controllers for testing reflection-based attributes
-    [RequireBusinessType(BusinessType.General)]
+    [RequireBusinessType(BusinessType.Retail)]
     private sealed class SampleRetailController : ControllerBase { }
 
     [RequireBusinessType(BusinessType.School)]

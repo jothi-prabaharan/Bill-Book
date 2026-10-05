@@ -12,7 +12,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/outstanding")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public class OutstandingController : ControllerBase
 {
     private readonly OutstandingRepository _outstanding;

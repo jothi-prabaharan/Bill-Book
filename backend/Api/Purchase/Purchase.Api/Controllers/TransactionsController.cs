@@ -12,7 +12,7 @@ namespace Purchase.Api.Controllers;
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/purchase/transactions")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class TransactionsController : ControllerBase
 {
     private readonly BillRepository _bills;

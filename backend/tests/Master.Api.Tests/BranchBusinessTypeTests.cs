@@ -26,7 +26,7 @@ public sealed class BranchBusinessTypeTests
         Assert.True(IsValidBranch(null, AddOn.Payroll));
 
         // Business types without add-ons are valid
-        Assert.True(IsValidBranch(BusinessType.General, AddOn.None));
+        Assert.True(IsValidBranch(BusinessType.Retail, AddOn.None));
         Assert.True(IsValidBranch(BusinessType.Pharma, AddOn.None));
         Assert.True(IsValidBranch(BusinessType.Jewellery, AddOn.None));
         Assert.True(IsValidBranch(BusinessType.School, AddOn.None));
@@ -45,7 +45,7 @@ public sealed class BranchBusinessTypeTests
         Assert.True(AddOnRules.IsAllowed(BusinessType.School, AddOn.Crm));
 
         // Retail verticals allow POS and EInvoicing
-        Assert.True(AddOnRules.IsAllowed(BusinessType.General, AddOn.Pos));
+        Assert.True(AddOnRules.IsAllowed(BusinessType.Retail, AddOn.Pos));
         Assert.True(AddOnRules.IsAllowed(BusinessType.Pharma, AddOn.EInvoicing));
         Assert.True(AddOnRules.IsAllowed(BusinessType.Jewellery, AddOn.Pos | AddOn.EInvoicing));
     }
@@ -71,16 +71,16 @@ public sealed class BranchBusinessTypeTests
             OrgId = Guid.NewGuid(),
             DisplayName = "Test User",
             LicenseStatus = "Active",
-            Vertical = "General",
+            Vertical = "Retail",
             RoleId = 1,
-            BusinessType = BusinessType.General,
+            BusinessType = BusinessType.Retail,
             AddOns = AddOn.Hrms | AddOn.Payroll,
             Permissions = ["sales.view", "accounting.view"],
         });
 
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(tokenString);
 
-        Assert.Equal("General", jwt.Claims.FirstOrDefault(c => c.Type == "business_type")?.Value);
+        Assert.Equal("Retail", jwt.Claims.FirstOrDefault(c => c.Type == "business_type")?.Value);
         Assert.Equal(((int)(AddOn.Hrms | AddOn.Payroll)).ToString(), jwt.Claims.FirstOrDefault(c => c.Type == "add_ons")?.Value);
     }
 
@@ -105,7 +105,7 @@ public sealed class BranchBusinessTypeTests
             OrgId = Guid.NewGuid(),
             DisplayName = "HR Manager",
             LicenseStatus = "Active",
-            Vertical = "General",
+            Vertical = "Retail",
             RoleId = 1,
             BusinessType = null,
             AddOns = AddOn.Hrms,
@@ -131,10 +131,10 @@ public sealed class BranchBusinessTypeTests
     [Fact]
     public void Retail_branch_seeds_all_retail_services_and_contacts()
     {
-        IReadOnlyList<string> services = HttpTenantSeeder.ServicesFor(BusinessType.General, AddOn.None);
+        IReadOnlyList<string> services = HttpTenantSeeder.ServicesFor(BusinessType.Retail, AddOn.None);
 
         Assert.Equal(["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"], services);
-        Assert.True(HttpTenantSeeder.SeedsContacts(BusinessType.General, AddOn.None));
+        Assert.True(HttpTenantSeeder.SeedsContacts(BusinessType.Retail, AddOn.None));
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public sealed class BranchBusinessTypeTests
         // A restaurant keeps books, buys ingredients and bills like any trading
         // branch; before this it was seeded with Accounting and Printing alone.
         Assert.Equal(
-            HttpTenantSeeder.ServicesFor(BusinessType.General, AddOn.None),
+            HttpTenantSeeder.ServicesFor(BusinessType.Retail, AddOn.None),
             HttpTenantSeeder.ServicesFor(BusinessType.Restaurant, AddOn.None));
         Assert.True(HttpTenantSeeder.SeedsContacts(BusinessType.Restaurant, AddOn.None));
     }
@@ -173,32 +173,32 @@ public sealed class BranchBusinessTypeTests
         Assert.True(MenuRepository.MenuMatches(null, AddOn.Hrms, null, AddOn.Hrms));
 
         // Retail trading screens -> does NOT match
-        Assert.False(MenuRepository.MenuMatches(null, AddOn.Hrms, BusinessType.General, AddOn.None));
+        Assert.False(MenuRepository.MenuMatches(null, AddOn.Hrms, BusinessType.Retail, AddOn.None));
 
         // School screens -> does NOT match
         Assert.False(MenuRepository.MenuMatches(null, AddOn.Hrms, BusinessType.School, AddOn.None));
 
         // Contacts screen (needs business type or CRM add-on) -> does NOT match
-        Assert.False(MenuRepository.MenuMatches(null, AddOn.Hrms, BusinessType.General, AddOn.Crm));
+        Assert.False(MenuRepository.MenuMatches(null, AddOn.Hrms, BusinessType.Retail, AddOn.Crm));
     }
 
     [Fact]
     public void Retail_branch_menu_matches_retail_and_shared_screens_but_not_hrms()
     {
         // Shared home / settings -> matches
-        Assert.True(MenuRepository.MenuMatches(BusinessType.General, AddOn.None, null, AddOn.None));
+        Assert.True(MenuRepository.MenuMatches(BusinessType.Retail, AddOn.None, null, AddOn.None));
 
         // Retail screens -> matches
-        Assert.True(MenuRepository.MenuMatches(BusinessType.General, AddOn.None, BusinessType.General, AddOn.None));
+        Assert.True(MenuRepository.MenuMatches(BusinessType.Retail, AddOn.None, BusinessType.Retail, AddOn.None));
 
         // Contacts screen -> matches
-        Assert.True(MenuRepository.MenuMatches(BusinessType.General, AddOn.None, BusinessType.General, AddOn.Crm));
+        Assert.True(MenuRepository.MenuMatches(BusinessType.Retail, AddOn.None, BusinessType.Retail, AddOn.Crm));
 
         // HRMS screen -> does NOT match
-        Assert.False(MenuRepository.MenuMatches(BusinessType.General, AddOn.None, null, AddOn.Hrms));
+        Assert.False(MenuRepository.MenuMatches(BusinessType.Retail, AddOn.None, null, AddOn.Hrms));
 
         // School screen -> does NOT match
-        Assert.False(MenuRepository.MenuMatches(BusinessType.General, AddOn.None, BusinessType.School, AddOn.None));
+        Assert.False(MenuRepository.MenuMatches(BusinessType.Retail, AddOn.None, BusinessType.School, AddOn.None));
     }
 
     private static bool IsValidBranch(BusinessType? businessType, AddOn addOns) =>

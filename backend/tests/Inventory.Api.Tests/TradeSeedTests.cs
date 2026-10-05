@@ -11,9 +11,9 @@ namespace Inventory.Api.Tests;
 /// seeded with none, and switching it to Jewellery seeds them once — a second
 /// seed adds nothing, and switching back deletes nothing.
 ///
-/// <b>General is seeded with them</b>, as the owner decided for the everything
+/// <b>Retail is seeded with them</b>, as the owner decided for the everything
 /// branch (<c>Vertical</c>, master.md 5.14). The card's wording asked for the
-/// opposite on General; see TK-30's outcome.
+/// opposite on Retail; see TK-30's outcome.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class TradeSeedTests
@@ -45,13 +45,25 @@ public sealed class TradeSeedTests
     }
 
     [SkippableFact]
-    public async Task A_general_branch_is_seeded_with_purities()
+    public async Task A_retail_branch_is_seeded_with_purities()
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         Guid orgId = Guid.NewGuid();
         await using InventoryDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
 
-        Assert.True(await new MetalPurityRepository(db).SeedForOrganizationAsync(orgId, "General", default) > 0);
+        Assert.True(await new MetalPurityRepository(db).SeedForOrganizationAsync(orgId, "Retail", default) > 0);
     }
+
+    [Theory]
+    [InlineData("Retail", true)]
+    [InlineData("General", true)] // what Retail was called before TK-136
+    [InlineData("jewellery", true)]
+    [InlineData("Pharma", false)]
+    [InlineData("School", false)]
+    [InlineData("Service", false)]
+    [InlineData("Restaurant", false)]
+    [InlineData(null, false)]
+    public void Only_retail_and_jewellery_are_seeded_with_purities(string? vertical, bool seeds) =>
+        Assert.Equal(seeds, MetalPurityRepository.SeedsPurities(vertical));
 }

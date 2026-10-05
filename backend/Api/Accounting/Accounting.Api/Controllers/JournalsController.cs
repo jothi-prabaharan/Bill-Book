@@ -23,7 +23,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/journals")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School, BusinessType.Service)]
 public sealed class JournalsController : ControllerBase
 {
     private readonly JournalRepository _journals;

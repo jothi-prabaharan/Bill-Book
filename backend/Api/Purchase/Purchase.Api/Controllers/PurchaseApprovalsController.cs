@@ -20,7 +20,7 @@ namespace Purchase.Api.Controllers;
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/purchase")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class PurchaseApprovalsController : ControllerBase
 {
     private const string Documents = "{document:regex(^(purchase-orders|bills|debit-notes)$)}";

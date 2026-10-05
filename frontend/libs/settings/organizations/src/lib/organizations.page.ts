@@ -11,7 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CheckboxComponent } from '@bill-book/ui-components';
-import { AuthService, Currency } from '@bill-book/auth';
+import { AuthService, Currency, ADD_ONS, BUSINESS_TYPES, isAddOnAllowed } from '@bill-book/auth';
 
 interface Organization {
   orgId: string;
@@ -83,37 +83,12 @@ export class OrganizationsPage implements OnInit {
 
   
 
-    protected readonly businessTypeOptions: BbSelectOption<string>[] = [
-    { value: 'General', label: 'General Retail' },
-    { value: 'Pharma', label: 'Pharmacy' },
-    { value: 'Jewellery', label: 'Jewellery' },
-    { value: 'School', label: 'School' },
-    { value: 'Restaurant', label: 'Restaurant' }
-  ];
+    protected readonly businessTypeOptions: BbSelectOption<string>[] = BUSINESS_TYPES.map((b) => ({ value: b.value, label: b.label }));
 
-  protected readonly allAddOns = [
-    { value: 'Hrms', label: 'HRMS' },
-    { value: 'Payroll', label: 'Payroll' },
-    { value: 'Crm', label: 'CRM' },
-    { value: 'Pos', label: 'Point of Sale' },
-    { value: 'FixedAssets', label: 'Fixed Assets' },
-    { value: 'ClientPortal', label: 'Client Portal' },
-    { value: 'EInvoicing', label: 'E-Invoicing' },
-    { value: 'Budget', label: 'Budgeting' },
-    { value: 'RecurringBilling', label: 'Recurring Billing' },
-    { value: 'SavingsScheme', label: 'Savings Scheme' }
-  ];
+  protected readonly allAddOns = ADD_ONS;
 
   protected isAddOnAllowed(addOn: string): boolean {
-    const bt = this.form?.businessType;
-    if (addOn === 'Hrms' || addOn === 'Payroll') return true;
-    if (!bt) return false;
-    if (['Crm', 'FixedAssets', 'ClientPortal', 'Budget', 'RecurringBilling'].includes(addOn)) return true;
-    // Mirrors AddOnRules.Allowed: a restaurant bills through its own order screen, not the retail till (D-43).
-    if (addOn === 'Pos') return ['General', 'Pharma', 'Jewellery'].includes(bt);
-    if (addOn === 'EInvoicing') return ['General', 'Pharma', 'Jewellery', 'Restaurant'].includes(bt);
-    if (addOn === 'SavingsScheme') return bt === 'Jewellery';
-    return false;
+    return isAddOnAllowed(this.form?.businessType, addOn);
   }
 
   protected hasAddOn(addOn: string): boolean {
@@ -316,7 +291,7 @@ export class OrganizationsPage implements OnInit {
     return {
       orgCode: '',
       name: '',
-      businessType: 'General',
+      businessType: 'Retail',
       addOns: 'None',
       baseCurrency: 'INR',
       financialYearStartMonth: 4,

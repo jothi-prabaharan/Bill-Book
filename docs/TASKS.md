@@ -4329,7 +4329,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Lanes:** L-KERNEL, L-MST · **Depends on:** — · **Decision:** D-36
 - **Where:** `backend/shared/Shared.Kernel/Apps/App.cs`, `backend/Api/Master/Master.Entity/Enums/Vertical.cs`
 - **Sub-tasks:**
-  - [x] `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable) and `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling).
+  - [x] `BusinessType` (General, Pharma, Jewellery, School; one per branch, nullable; since TK-136 Retail — was General — Pharma, Jewellery, School, Service and Restaurant) and `[Flags] AddOn` (Hrms, Payroll, Crm, Pos, FixedAssets, ClientPortal, EInvoicing, Budget, RecurringBilling).
   - [x] `AddOnRules.Allowed(BusinessType?)`: Hrms and Payroll for every type and for none; Crm, FixedAssets, ClientPortal, Budget and RecurringBilling for all four types; Pos and EInvoicing for General, Pharma and Jewellery.
   - [x] Retain `App` and `AppRules` as transition bridge until TK-127/TK-128 replace them.
   - [x] Test: written, never run by an AI (section 0.5)

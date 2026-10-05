@@ -63,7 +63,7 @@ public sealed class ApplicationRepository
         BusinessType? newBusinessType = app switch
         {
             App.School => BusinessType.School,
-            App.RetailErp => BusinessType.General,
+            App.RetailErp => BusinessType.Retail,
             _ => null,
         };
 

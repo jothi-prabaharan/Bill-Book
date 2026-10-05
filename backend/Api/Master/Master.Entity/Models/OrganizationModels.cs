@@ -81,15 +81,16 @@ public class OrganizationListItem
     public string DiscountLevel { get; set; } = "Line";
 
     /// <summary>
-    /// General, Pharma or Jewellery — the trade this branch is in. The enum
+    /// Retail, Pharma, Jewellery, School, Service or Restaurant — the trade this branch is in. The enum
     /// (hard rule 7), written as its name so the wire format is unchanged (TK-30).
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter<Vertical>))]
-    public Vertical Vertical { get; set; } = Vertical.General;
+    [EnumDataType(typeof(Vertical), ErrorMessage = "Vertical must be Retail, Pharma, Jewellery, School, Service or Restaurant.")]
+    public Vertical Vertical { get; set; } = Vertical.Retail;
 
     /// <summary>The business vertical this branch is in (D-36, TK-127).</summary>
     [JsonConverter(typeof(JsonStringEnumConverter<BusinessType>))]
-    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.General;
+    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.Retail;
 
     /// <summary>Modular add-ons enabled for this branch (D-36, TK-127).</summary>
     [JsonConverter(typeof(JsonStringEnumConverter<AddOn>))]
@@ -228,10 +229,10 @@ public class SaveOrganizationRequest
     public string DiscountLevel { get; set; } = "Line";
 
     /// <summary>
-    /// General, Pharma, Jewellery or School (D-36, TK-127). Nullable for add-on-only setups.
+    /// Retail, Pharma, Jewellery, School, Service or Restaurant (D-36, TK-127, TK-136). Nullable for add-on-only setups.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter<BusinessType>))]
-    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.General;
+    public BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.Retail;
 
     /// <summary>
     /// Enabled modular add-ons (D-36, TK-127).
@@ -243,7 +244,7 @@ public class SaveOrganizationRequest
     /// Legacy trade vertical. Kept for backward compatibility with older clients.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter<Vertical>))]
-    public Vertical Vertical { get; set; } = Vertical.General;
+    public Vertical Vertical { get; set; } = Vertical.Retail;
 
     /// <summary>Frozen once the branch has traded.</summary>
     public bool DiscountBeforeTax { get; set; } = true;

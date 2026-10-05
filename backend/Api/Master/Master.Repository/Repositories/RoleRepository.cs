@@ -92,7 +92,7 @@ public sealed class RoleRepository
             }
             else if (app == App.RetailErp)
             {
-                query = query.Where(p => p.BusinessType == BusinessType.General || (p.BusinessType == null && p.AddOns == AddOn.None));
+                query = query.Where(p => p.BusinessType == BusinessType.Retail || (p.BusinessType == null && p.AddOns == AddOn.None));
             }
         }
 
@@ -200,7 +200,7 @@ public sealed class RoleRepository
         {
             if (roleApp == App.RetailErp)
             {
-                if (p.BusinessType != BusinessType.General && p.BusinessType != null) return false;
+                if (p.BusinessType != BusinessType.Retail && p.BusinessType != null) return false;
                 if ((p.AddOns & (AddOn.Hrms | AddOn.Payroll)) != 0 && p.AddOns != AddOn.None) return false;
             }
             else if (roleApp == App.Payroll)

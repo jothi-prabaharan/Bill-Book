@@ -6,6 +6,7 @@ using Master.Entity.Models;
 using Master.Repository.SeedData;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using Shared.Kernel.Apps;
 using Xunit;
 
 namespace Master.Api.Tests;
@@ -17,16 +18,18 @@ namespace Master.Api.Tests;
 public sealed class TradeScopeTests
 {
     [Theory]
-    [InlineData(Vertical.General, true)]
+    [InlineData(Vertical.Retail, true)]
     [InlineData(Vertical.Jewellery, true)]
     [InlineData(Vertical.Pharma, false)]
-    public void Metal_purity_is_shown_to_general_and_jewellery_branches_only(Vertical trade, bool shown)
+    [InlineData(Vertical.Service, false)]
+    [InlineData(Vertical.Restaurant, false)]
+    public void Metal_purity_is_shown_to_retail_and_jewellery_branches_only(Vertical trade, bool shown)
     {
         Assert.Equal(shown, TradeScopeRepository.ShowsMenu("mtp", trade));
     }
 
     [Theory]
-    [InlineData(Vertical.General)]
+    [InlineData(Vertical.Retail)]
     [InlineData(Vertical.Pharma)]
     [InlineData(Vertical.Jewellery)]
     public void A_screen_no_trade_claims_is_every_trades(Vertical trade)
@@ -34,6 +37,38 @@ public sealed class TradeScopeTests
         Assert.True(TradeScopeRepository.ShowsMenu("usr", trade));
         Assert.True(TradeScopeRepository.ShowsMenu("smtp", trade));
     }
+
+    [Fact]
+    public void A_service_branch_sees_no_stock_screen_but_keeps_its_items()
+    {
+        // TK-136: a service business holds no stock.
+        Assert.All(TradeScopeRepository.StockOnlyMenus, code =>
+            Assert.False(TradeScopeRepository.ShowsMenu(code, Vertical.Service), code));
+
+        foreach (string kept in new[] { "itm", "cat", "uom", "hsn", "inv", "bil", "por", "qot" })
+        {
+            Assert.True(TradeScopeRepository.ShowsMenu(kept, Vertical.Service), kept);
+        }
+    }
+
+    [Theory]
+    [InlineData(Vertical.Retail)]
+    [InlineData(Vertical.Pharma)]
+    [InlineData(Vertical.Jewellery)]
+    [InlineData(Vertical.Restaurant)]
+    public void Every_trade_that_holds_stock_sees_the_stock_screens(Vertical trade) =>
+        Assert.All(TradeScopeRepository.StockOnlyMenus, code =>
+            Assert.True(TradeScopeRepository.ShowsMenu(code, trade), code));
+
+    [Theory]
+    [InlineData(BusinessType.Retail, true)]
+    [InlineData(BusinessType.Pharma, true)]
+    [InlineData(BusinessType.Jewellery, true)]
+    [InlineData(BusinessType.Restaurant, true)]
+    [InlineData(BusinessType.Service, true)]
+    [InlineData(BusinessType.School, false)]
+    public void The_trading_menus_reach_every_trading_business(BusinessType branch, bool shown) =>
+        Assert.Equal(shown, MenuRepository.MenuMatches(branch, AddOn.None, BusinessType.Retail, AddOn.None));
 
     [Fact]
     public void Every_trade_scoped_code_is_a_real_menu_row()
@@ -66,6 +101,6 @@ public sealed class TradeScopeTests
 
         Validator.TryValidateProperty(request.Vertical, new ValidationContext(request) { MemberName = nameof(request.Vertical) }, results);
 
-        Assert.Contains(results, r => r.ErrorMessage == "Vertical must be General, Pharma or Jewellery.");
+        Assert.Contains(results, r => r.ErrorMessage == "Vertical must be Retail, Pharma, Jewellery, School, Service or Restaurant.");
     }
 }

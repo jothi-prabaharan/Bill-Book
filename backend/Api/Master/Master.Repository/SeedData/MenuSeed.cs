@@ -104,12 +104,12 @@ public static class MenuSeed
             }
             else if (row.MenuId is 2 or 101 || (row.MenuId >= 1001 && row.MenuId <= 1003)) // Contacts
             {
-                row.BusinessType = BusinessType.General;
+                row.BusinessType = BusinessType.Retail;
                 row.AddOns = AddOn.Crm;
             }
             else
             {
-                row.BusinessType = BusinessType.General;
+                row.BusinessType = BusinessType.Retail;
                 row.AddOns = AddOn.None;
             }
         }

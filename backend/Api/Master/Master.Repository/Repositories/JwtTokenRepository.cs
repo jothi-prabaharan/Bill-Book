@@ -51,7 +51,7 @@ public sealed class JwtTokenRepository : ITokenRepository
             new("display_name", request.DisplayName),
             new("license_status", request.LicenseStatus),
 
-            // The trade this branch is in. Defaults to General for every token
+            // The trade this branch is in. Defaults to Retail for every token
             // unless the request says otherwise, so nothing downstream has to
             // handle its absence.
             new("vertical", request.Vertical),

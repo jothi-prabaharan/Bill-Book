@@ -15,7 +15,7 @@ namespace Purchase.Api.Controllers;
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/edit-log/purchase")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public sealed class EditLogController : EditLogControllerBase<PurchaseDbContext>
 {
     public EditLogController(PurchaseDbContext db)

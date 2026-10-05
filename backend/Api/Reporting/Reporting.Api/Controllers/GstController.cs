@@ -28,7 +28,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports/gst")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.Service)]
 public class GstController : ControllerBase
 {
     private readonly ReportingDbContext _db;

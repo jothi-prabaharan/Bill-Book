@@ -1,3 +1,4 @@
+import { SessionContextService } from '@bill-book/auth';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
@@ -184,6 +185,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
 })
 export class ItemsPage implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly session = inject(SessionContextService);
 
   /**
    * Held as a property rather than written inline, so the apostrophe does not
@@ -861,16 +863,18 @@ export class ItemsPage implements OnInit {
     const firstType = this.types()[0];
     const base = firstType?.units.find((u) => u.isBaseUnit) ?? firstType?.units[0];
     const uomId = base?.uomId ?? 0;
+    // A Service branch holds no stock, so its items are untracked services (TK-136).
+    const service = this.session.context()?.businessType === 'Service';
 
     return {
       itemId: 0,
       itemCode: '',
       itemName: '',
       itemProfile: 'Standard',
-      itemType: 'Goods',
+      itemType: service ? 'Service' : 'Goods',
       categoryName: null,
-      costingType: 'WeightedAverage',
-      trackInventory: true,
+      costingType: service ? 'None' : 'WeightedAverage',
+      trackInventory: !service,
       inventoryUomCode: '',
       salesPrice: null,
       mrp: null,

@@ -21,7 +21,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/statements")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School, BusinessType.Service)]
 public sealed class BankStatementsController : ControllerBase
 {
     /// <summary>

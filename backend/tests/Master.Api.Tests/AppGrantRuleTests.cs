@@ -134,7 +134,7 @@ public sealed class AppGrantRuleTests
             "accounting", "banking", "reports", "settings", "support", "platform",
         ];
         Assert.All(Seed<Permission>(db).Where(p => original.Contains((string)p["Module"]!)),
-            p => Assert.True(p["BusinessType"] is null || (BusinessType)p["BusinessType"]! == BusinessType.General, $"Permission {p["Code"]}"));
+            p => Assert.True(p["BusinessType"] is null || (BusinessType)p["BusinessType"]! == BusinessType.Retail, $"Permission {p["Code"]}"));
     }
 
     /// <summary>The employee master is HRMS's, Payroll's and School's; lifecycle is HRMS's (TK-48).</summary>
@@ -164,11 +164,11 @@ public sealed class AppGrantRuleTests
         Assert.Null(menus.Single(m => m.Code == "rol").BusinessType);
         Assert.Null(menus.Single(m => m.Code == "brn").BusinessType);
         Assert.Null(menus.Single(m => m.Code == "settings" && m.ParentId is null).BusinessType);
-        Assert.Equal(BusinessType.General, menus.Single(m => m.Code == "inv").BusinessType);
-        Assert.Equal(BusinessType.General, menus.Single(m => m.Code == "tax").BusinessType);
+        Assert.Equal(BusinessType.Retail, menus.Single(m => m.Code == "inv").BusinessType);
+        Assert.Equal(BusinessType.Retail, menus.Single(m => m.Code == "tax").BusinessType);
 
         // Projects sit under Accounting, in RetailErp (TK-104).
-        Assert.Equal(BusinessType.General, menus.Single(m => m.Code == "prj").BusinessType);
+        Assert.Equal(BusinessType.Retail, menus.Single(m => m.Code == "prj").BusinessType);
 
         // Every app configures its chains on one page; the inbox is RetailErp's documents (TK-103).
         Assert.Null(menus.Single(m => m.Code == "apw").BusinessType);

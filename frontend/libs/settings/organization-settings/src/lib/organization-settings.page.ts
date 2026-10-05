@@ -1,3 +1,4 @@
+import { ADD_ONS, BUSINESS_TYPES, isAddOnAllowed } from '@bill-book/auth';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
@@ -181,37 +182,12 @@ export class OrganizationSettingsPage implements OnInit {
     })),
   );
 
-    protected businessTypeOptions: BbSelectOption[] = [
-    { value: 'General', label: 'General Retail' },
-    { value: 'Pharma', label: 'Pharmacy' },
-    { value: 'Jewellery', label: 'Jewellery' },
-    { value: 'School', label: 'School' },
-    { value: 'Restaurant', label: 'Restaurant' }
-  ];
+    protected businessTypeOptions: BbSelectOption[] = BUSINESS_TYPES.map((b) => ({ value: b.value, label: b.label }));
 
-  protected allAddOns = [
-    { value: 'Hrms', label: 'HRMS' },
-    { value: 'Payroll', label: 'Payroll' },
-    { value: 'Crm', label: 'CRM' },
-    { value: 'Pos', label: 'Point of Sale' },
-    { value: 'FixedAssets', label: 'Fixed Assets' },
-    { value: 'ClientPortal', label: 'Client Portal' },
-    { value: 'EInvoicing', label: 'E-Invoicing' },
-    { value: 'Budget', label: 'Budgeting' },
-    { value: 'RecurringBilling', label: 'Recurring Billing' },
-    { value: 'SavingsScheme', label: 'Savings Scheme' }
-  ];
+  protected allAddOns = ADD_ONS;
 
   protected isAddOnAllowed(addOn: string): boolean {
-    const bt = this.form?.businessType;
-    if (addOn === 'Hrms' || addOn === 'Payroll') return true;
-    if (!bt) return false;
-    if (['Crm', 'FixedAssets', 'ClientPortal', 'Budget', 'RecurringBilling'].includes(addOn)) return true;
-    // Mirrors AddOnRules.Allowed: a restaurant bills through its own order screen, not the retail till (D-43).
-    if (addOn === 'Pos') return ['General', 'Pharma', 'Jewellery'].includes(bt);
-    if (addOn === 'EInvoicing') return ['General', 'Pharma', 'Jewellery', 'Restaurant'].includes(bt);
-    if (addOn === 'SavingsScheme') return bt === 'Jewellery';
-    return false;
+    return isAddOnAllowed(this.form?.businessType, addOn);
   }
 
   protected hasAddOn(addOn: string): boolean {

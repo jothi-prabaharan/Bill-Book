@@ -77,7 +77,7 @@ public sealed class MenuRepository
             : new HashSet<string>();
 
         // The branch's trade narrows the menu (D-10, TK-30): a screen that
-        // belongs to another trade is not offered. General when unknown, which
+        // belongs to another trade is not offered. Retail when unknown, which
         // shows everything — the same default the branch itself has.
         Guid? orgId = _tenant.OrgId;
         var orgScope = orgId is null
@@ -86,14 +86,14 @@ public sealed class MenuRepository
                 .Where(o => o.OrgId == orgId.Value)
                 .Select(o => new
                 {
-                    Trade = (Vertical?)o.Vertical ?? Vertical.General,
+                    Trade = (Vertical?)o.Vertical ?? Vertical.Retail,
                     o.BusinessType,
                     o.AddOns
                 })
                 .FirstOrDefaultAsync(ct);
 
-        Vertical trade = orgScope?.Trade ?? Vertical.General;
-        BusinessType? businessType = orgScope != null ? orgScope.BusinessType : BusinessType.General;
+        Vertical trade = orgScope?.Trade ?? Vertical.Retail;
+        BusinessType? businessType = orgScope != null ? orgScope.BusinessType : BusinessType.Retail;
         AddOn addOns = orgScope?.AddOns ?? AddOn.None;
 
         if (orgId is null && app != App.RetailErp)
@@ -247,17 +247,20 @@ public sealed class MenuRepository
             return false;
         }
 
-        // 4. Contacts menu (carrying BusinessType.General and AddOn.Crm in seed):
+        // 4. Contacts menu (carrying BusinessType.Retail and AddOn.Crm in seed):
         // shown to any branch with a business type (retail or school) or with CRM add-on.
-        if (menuType == BusinessType.General && menuAddOns == AddOn.Crm)
+        if (menuType == BusinessType.Retail && menuAddOns == AddOn.Crm)
         {
             return true;
         }
 
-        // 5. Retail verticals (General, Pharma, Jewellery) match general retail menus.
-        if (menuType == BusinessType.General)
+        // 5. The trading businesses (Retail, Pharma, Jewellery, Restaurant and,
+        // since TK-136, Service) see the retail menus. A Service branch's
+        // stock-only screens are dropped by TradeScopeRepository afterwards.
+        if (menuType == BusinessType.Retail)
         {
-            return branchType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant;
+            return branchType is BusinessType.Retail or BusinessType.Pharma or BusinessType.Jewellery
+                or BusinessType.Restaurant or BusinessType.Service;
         }
 
         // 6. School vertical matches school menus.

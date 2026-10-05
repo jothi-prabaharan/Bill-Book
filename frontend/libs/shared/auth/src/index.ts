@@ -5,6 +5,7 @@ export * from './lib/license.guard';
 export * from './lib/app-id';
 export * from './lib/session-context.service';
 export * from './lib/page-access';
+export * from './lib/business-types';
 export * from './lib/if-can.directive';
 export * from './lib/pages/login/login.page';
 export * from './lib/pages/signup/signup.page';

@@ -322,6 +322,9 @@ public enum SaveItemOutcome
 
     /// <summary>A custom field value does not fit its definition (TK-111); the detail says which.</summary>
     CustomFieldsRefused = 13,
+
+    /// <summary>A Service branch holds no stock, so every item it keeps is a service (TK-136).</summary>
+    StockedItemInServiceBranch = 14,
 }
 
 public sealed record SaveItemResult(SaveItemOutcome Outcome, long? ItemId, string? ItemCode, string? Detail = null);

@@ -70,7 +70,7 @@ public sealed class RestaurantTableTests
         await using SalesDbContext db = _postgres.CreateContext(Guid.NewGuid(), org);
         RestaurantTableRepository tables = new(db);
 
-        Assert.Equal(0, await tables.SeedFloorAsync(org, "General", default));
+        Assert.Equal(0, await tables.SeedFloorAsync(org, "Retail", default));
         Assert.Equal(1, await tables.SeedFloorAsync(org, "Restaurant", default));
         Assert.Equal(0, await tables.SeedFloorAsync(org, "Restaurant", default));
     }

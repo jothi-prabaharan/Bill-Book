@@ -77,7 +77,7 @@ public sealed class MeController : ControllerBase
             Email = user.Email,
             BranchName = org.OrgName,
             BranchCode = code ?? string.Empty,
-            App = app != App.None ? app.ToString() : (org.BusinessType?.ToString() ?? "General"),
+            App = app != App.None ? app.ToString() : (org.BusinessType?.ToString() ?? nameof(BusinessType.Retail)),
             BusinessType = org.BusinessType,
             AddOns = org.AddOns,
             PlanTier = org.PlanTier.ToString(),

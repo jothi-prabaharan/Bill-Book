@@ -17,7 +17,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("projects")]
 [Route("api/projects")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
+[RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School, BusinessType.Service)]
 public sealed class ProjectsController : ControllerBase
 {
     private readonly ProjectRepository _projects;

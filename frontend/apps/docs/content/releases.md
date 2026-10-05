@@ -37,7 +37,9 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 - **Changed**: **The single-PC and Azure deployments serve two web apps, web and docs (TK-134).** The customer portal is `/portal` and the platform admin pages are `/admin` on the web app's address. On your own PCs, delete any `portal` or `admin` public hostname in the Cloudflare tunnel; nothing listens on ports 8082 and 8083 any more, and the web image builds again. On Azure, the old portal and admin Static Web Apps can be deleted. See [Deployment](deployment).
 
-- **Added**: **A Service business type (TK-136).** A branch can declare itself a Service business. It can switch on every add-on except POS and e-invoicing. For now it is set up like a General branch; hiding the stock screens it does not need, and renaming General to Retail, are still to come. See [The branch's trade](platform#the-branchs-trade).
+- **Added**: **A Service business type (TK-136).** A branch can declare itself a Service business, from both branch screens. It gets items, quotes, invoices, bills, contacts, the books and reports, and none of the stock screens: no warehouses, stock adjustments, goods receipts, delivery challans or stock-tracking reports. Its items are services that track no inventory. It can switch on every add-on except POS and e-invoicing. See [The branch's trade](platform#the-branchs-trade).
+
+- **Changed**: **General is now called Retail (TK-136).** Every branch that was General is Retail, with the same screens and add-ons. Sign-ins from before the change keep working until they expire.
 
 - **Changed**: **One background worker (TK-137, TK-138).** Costing, reminders, rate sync, recurring billing, savings schemes and email now run as separate jobs in one worker, `BillBook.Worker`, instead of three. A failing job no longer stops the others, and each job that walks the branches can be switched off on its own. See [Background worker](deployment#background-worker).
 
