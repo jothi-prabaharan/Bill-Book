@@ -86,6 +86,7 @@ builder.Services.AddFileStorage(builder.Configuration);
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.
 builder.Services.AddScoped<SalesSeederRepository>();
 builder.Services.AddScoped<QuoteRepository>();
+builder.Services.AddScoped<DocumentNumberRepository>();
 builder.Services.AddScoped<SalesOrderRepository>();
 builder.Services.AddScoped<InvoiceRepository>();
 builder.Services.AddScoped<PortalInvoiceRepository>();

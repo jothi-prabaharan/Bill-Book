@@ -22,6 +22,13 @@ export interface ItemOption {
   isActive: boolean;
 }
 
+/** Whether an item's receipts need a batch or serial numbers (TK-162). */
+export interface ItemTracking {
+  isBatchTracked: boolean;
+  isExpiryTracked: boolean;
+  isSerialTracked: boolean;
+}
+
 /** A purchase order, as the orders list serves it — enough to pick one. */
 export interface OrderOption {
   purchaseOrderId: number;
@@ -196,6 +203,19 @@ export class PurchaseLookupService {
     query.set('includeInactive', 'false');
 
     return firstValueFrom(this.http.get<ItemOption[]>(`/api/items?${query}`));
+  }
+
+  /**
+   * Whether an item is tracked by batch, expiry or serial — read from the
+   * item itself, because the items list does not carry it (TK-162).
+   */
+  async itemTracking(itemId: number): Promise<ItemTracking> {
+    const item = await firstValueFrom(this.http.get<Partial<ItemTracking>>(`/api/items/${itemId}`));
+    return {
+      isBatchTracked: item.isBatchTracked === true,
+      isExpiryTracked: item.isExpiryTracked === true,
+      isSerialTracked: item.isSerialTracked === true,
+    };
   }
 
   /**

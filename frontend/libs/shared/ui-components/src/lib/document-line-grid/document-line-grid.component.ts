@@ -16,6 +16,7 @@ import {
   TaxTreatment,
 } from './document-line.model';
 import { componentsFor, recalculate, totalsOf } from './line-math';
+import { blankDocumentLine } from './line-scan';
 
 /** Rates carry four decimals in a line's tax rows: 18% is stored as 180000. */
 const RATE_SCALE = 10_000;
@@ -128,40 +129,7 @@ export class DocumentLineGridComponent {
   }
 
   protected addLine(): void {
-    const next: DocumentLine = {
-      detailId: 0,
-      lineNumber: this.lines().length + 1,
-      itemId: null,
-      itemLabel: null,
-      hsnSacCode: null,
-      description: null,
-      warehouseId: null,
-      quantity: 1_000_000,
-      uomId: null,
-      uomLabel: null,
-      conversionFactor: 1_000_000,
-      baseQuantity: 1_000_000,
-      unitPrice: 0,
-      isPriceInclusive: false,
-      discountPercent: null,
-      discountAmount: 0,
-      grossAmount: 0,
-      taxableAmount: 0,
-      taxTreatment: 'Taxable',
-      taxMasterId: null,
-      taxGroupId: null,
-      taxAmount: 0,
-      taxes: [],
-      lineType: 'Stock',
-      accountId: null,
-      fixedAssetCategoryId: null,
-      projectId: null,
-      lineTotal: 0,
-      itemBatchId: null,
-      lineNotes: null,
-    };
-
-    this.emit([...this.lines(), next]);
+    this.emit([...this.lines(), blankDocumentLine(this.lines().length + 1)]);
   }
 
   /**

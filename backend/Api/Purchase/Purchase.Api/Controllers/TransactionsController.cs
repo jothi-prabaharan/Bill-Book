@@ -32,6 +32,20 @@ public sealed class TransactionsController : ControllerBase
         _goodsReceipts = goodsReceipts;
     }
 
+    /// <summary>
+    /// The document a printed number names (TK-162), for scan-to-open. A number
+    /// that is not in this branch is a 404, the same as no such number.
+    /// </summary>
+    [HttpGet("by-number")]
+    public async Task<IActionResult> FindByNumber(
+        [FromQuery] string? no,
+        [FromServices] DocumentNumberRepository numbers,
+        CancellationToken ct)
+    {
+        DocumentNumberMatch? match = await numbers.FindAsync(no, ct);
+        return match is null ? NotFound() : Ok(match);
+    }
+
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] string? type, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken ct)
     {

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   inject,
   signal,
@@ -18,6 +19,7 @@ import {
 import { ShellBoardService } from '../board-state.service';
 import { FavouritesService } from '../favourites.service';
 import { MenuService } from '../menu.service';
+import { ScanToOpenService } from '../scan-to-open.service';
 import { FALLBACK_RAIL, SHELL_SCREENS } from '../shell-screens';
 
 /**
@@ -111,6 +113,9 @@ export class ShellComponent {
     // resets it on an org switch because the switch reloads the window, which
     // rebuilds the service along with everything else.
     void this.formats.load();
+
+    // A printed document code scanned anywhere opens its document (TK-162).
+    inject(ScanToOpenService).listen(inject(DestroyRef));
 
     // The rail, the search index and every "may I create here" answer come from
     // this one call. Nothing waits on it: the shell paints from the fallback and

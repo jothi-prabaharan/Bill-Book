@@ -17,3 +17,14 @@ public class SalesTransactionListItem
     /// <summary>A quote's answer from the customer portal: Accepted or Rejected, null when none (TK-96).</summary>
     public string? CustomerResponse { get; set; }
 }
+
+/// <summary>
+/// The document a printed number names (TK-162): which kind it is and its id,
+/// so a scanned document code can open it.
+/// </summary>
+public sealed class DocumentNumberMatch
+{
+    public string TransactionType { get; set; } = string.Empty;
+
+    public long TransactionId { get; set; }
+}

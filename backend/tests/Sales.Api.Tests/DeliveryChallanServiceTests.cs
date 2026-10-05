@@ -563,6 +563,40 @@ public sealed class DeliveryChallanServiceTests
             await h.Db.DeliveryChallans.Where(c => c.DeliveryChallanId == id).Select(c => c.Status).SingleAsync());
     }
 
+    // ── Scan to open (TK-162) ───────────────────────────────────────────
+
+    [SkippableFact]
+    public async Task A_printed_document_number_opens_its_own_branchs_document()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        long id = await h.SaveOkAsync(Request("33AAAAA0000A1Z5", [Line(1m, 100m)]));
+        string no = await h.Db.DeliveryChallans
+            .Where(c => c.DeliveryChallanId == id)
+            .Select(c => c.DocumentNo)
+            .SingleAsync();
+
+        var numbers = new DocumentNumberRepository(h.Db);
+
+        DocumentNumberMatch? match = await numbers.FindAsync($"  {no} ", default);
+        Assert.NotNull(match);
+        Assert.Equal("DeliveryChallan", match.TransactionType);
+        Assert.Equal(id, match.TransactionId);
+
+        Assert.Null(await numbers.FindAsync("NO-SUCH-0001", default));
+        Assert.Null(await numbers.FindAsync("   ", default));
+        Assert.Null(await numbers.FindAsync(new string('X', DocumentNumberRepository.MaxLength + 1), default));
+
+        // Another branch's series starts at the same number; the query filter
+        // gives each branch its own document, never ours.
+        Harness other = await Harness.CreateAsync(_pg);
+        long theirs = await other.SaveOkAsync(Request("33AAAAA0000A1Z5", [Line(1m, 100m)]));
+        DocumentNumberMatch? theirMatch = await new DocumentNumberRepository(other.Db).FindAsync(no, default);
+        Assert.True(theirMatch is null || theirMatch.TransactionId == theirs);
+        Assert.NotEqual(id, theirMatch?.TransactionId);
+    }
+
     private static SaveDeliveryChallanRequest Request(
         string contactGstin, List<SaveDeliveryChallanLineRequest> lines) =>
         new()

@@ -126,6 +126,17 @@
                 [ngModel]="searchQuery()"
                 (ngModelChange)="setSearchQuery($event)"
               />
+          <!-- A printed document's barcode or QR code opens it (TK-162). -->
+          <div class="popover-scan">
+            <bb-scan
+              placeholder="Scan a document code"
+              ariaLabel="Scan a document code to open it"
+              (scanned)="openScanned($event)"
+            />
+            @if (scanMiss(); as miss) {
+              <div class="popover-scan__miss" role="status">{{ miss }}</div>
+            }
+          </div>
           <div class="popover-body popover-body--rows">
             @for (grp of searchGroups(); track grp.name) {
               <div>

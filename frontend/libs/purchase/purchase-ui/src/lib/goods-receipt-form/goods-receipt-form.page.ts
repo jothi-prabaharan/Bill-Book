@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import {
+  ScanComponent,
   ColumnDef,
   DataGridComponent,
   BranchDateInputComponent,
@@ -32,6 +33,8 @@ import {
 import { goodsReceiptLabelKind, goodsReceiptLabels } from './goods-receipt-labels';
 
 import {
+  ItemTracking,
+  ItemOption,
   GoodsReceiptService,
   GoodsReceiptView,
   PurchaseLookupService,
@@ -39,6 +42,8 @@ import {
   SaveGoodsReceiptLineRequest,
   SaveGoodsReceiptRequest,
 } from '@bill-book/purchase-core';
+import { gtinCandidates, matchScannedItem, parseGs1 } from '@bill-book/scan-core';
+import { ReceivingLine, ScannedBatch, receiveScanned, zeroReceived } from './goods-receipt-scan';
 
 const QTY_SCALE = 1_000_000;
 const PAISE = 100;
@@ -46,23 +51,8 @@ const RATE_SCALE = 10_000;
 
 type Picker = 'none' | 'vendor' | 'item' | 'order';
 
-/**
- * What arrived, line by line.
- *
- * **Kept beside the shared grid rather than inside it.** The grid edits the
- * commercial line — item, quantity, price, tax — which is identical on all nine
- * document types. Accepted against rejected, the reason, and the batch off the
- * carton are the goods receipt's own, and putting them in the shared component
- * would push a purchase concern into every sales screen.
- */
-interface ReceivingLine {
-  acceptedQuantity: number;
-  rejectedQuantity: number;
-  rejectionReason: string;
-  batchNumber: string;
-  batchExpiryDate: string;
-  purchaseOrderDetailId: number | null;
-}
+// What arrived, line by line, is `ReceivingLine` in goods-receipt-scan.ts, kept
+// beside the shared grid; the scan rule there shares it (TK-162).
 
 /**
  * Record a delivery.
@@ -77,6 +67,7 @@ interface ReceivingLine {
   selector: 'bb-goods-receipt-form',
   standalone: true,
   imports: [
+    ScanComponent,
     DocumentCustomFieldsComponent,
     DataGridComponent,
     CommonModule,
@@ -153,6 +144,18 @@ export class GoodsReceiptFormPage {
   protected readonly pickerLoading = signal(false);
 
   private pickingLine = -1;
+
+  /** The picker was opened by a scan that matched no single item (TK-162). */
+  private pickingFromScan = false;
+
+  /** The search the item picker opens on: the scanned code, or empty. */
+  protected readonly pickerTerm = signal('');
+
+  /** The batch a GS1 scan carried, kept while the picker finds its item. */
+  private scanBatch: ScannedBatch | null = null;
+
+  /** Batch and serial tracking per item, read once per item a scan adds. */
+  private readonly tracking = new Map<number, ItemTracking>();
   private searchToken = 0;
 
   private readonly allowFreeTextLines = signal(false);
@@ -415,12 +418,92 @@ export class GoodsReceiptFormPage {
     void this.runSearch('');
   }
 
+  /**
+   * A scanned code (TK-162): one more received of its item. A pack's GS1 code
+   * also carries the batch and expiry, which fill the line's; a code naming no
+   * single item opens the item picker on it.
+   */
+  protected async onScan(code: string): Promise<void> {
+    if (this.readonlyDoc()) {
+      return;
+    }
+    const wanted = code.trim();
+    if (!wanted) {
+      return;
+    }
+
+    const gs1 = parseGs1(wanted);
+    const batch: ScannedBatch | null = gs1 ? { batch: gs1.batch, expiry: gs1.expiry } : null;
+
+    let match: ItemOption | null = null;
+    try {
+      for (const candidate of gs1 ? gtinCandidates(gs1.gtin) : [wanted]) {
+        match = matchScannedItem(candidate, await this.lookups.items(candidate));
+        if (match) {
+          break;
+        }
+      }
+    } catch {
+      match = null;
+    }
+
+    if (match) {
+      this.addScanned({ id: match.itemId, code: match.itemCode, name: match.itemName, meta: match.inventoryUomCode }, batch);
+      return;
+    }
+
+    const term = gs1 ? gtinCandidates(gs1.gtin)[0] : wanted;
+    this.pickingFromScan = true;
+    this.pickingLine = -1;
+    this.scanBatch = batch;
+    this.pickerTerm.set(term);
+    this.picker.set('item');
+    void this.runSearch(term);
+  }
+
+  private addScanned(row: LookupRow, batch: ScannedBatch | null): void {
+    const result = receiveScanned(this.lines(), this.receiving(), row, batch, this.gridContext());
+    this.lines.set(result.lines);
+    this.receiving.set(result.receiving);
+    void this.sayWhatTrackingNeeds(row, result.index);
+  }
+
+  /**
+   * After a scan adds an item, says what it still needs: a batch the scan did
+   * not carry, or serial numbers, which a goods receipt does not record (D-51).
+   */
+  private async sayWhatTrackingNeeds(row: LookupRow, index: number): Promise<void> {
+    try {
+      let tracking = this.tracking.get(row.id);
+      if (!tracking) {
+        tracking = await this.lookups.itemTracking(row.id);
+        this.tracking.set(row.id, tracking);
+      }
+      if (tracking.isSerialTracked) {
+        this.notice.set(`${row.code} is tracked by serial number, and a goods receipt does not record serial numbers yet.`);
+      } else if (tracking.isBatchTracked && !this.receiving()[index]?.batchNumber) {
+        this.notice.set(`Enter the batch for ${row.code}, or scan the pack's GS1 code to fill it.`);
+      }
+    } catch {
+      // Not knowing the tracking costs only the reminder.
+    }
+  }
+
+  /** Every line at nothing received, to count the delivery in by scanning. */
+  protected zeroReceived(): void {
+    const result = zeroReceived(this.lines(), this.receiving(), this.gridContext());
+    this.lines.set(result.lines);
+    this.receiving.set(result.receiving);
+  }
+
   protected onPickItem(lineIndex: number): void {
     if (this.readonlyDoc()) {
       return;
     }
 
     this.pickingLine = lineIndex;
+    this.pickingFromScan = false;
+    this.pickerTerm.set('');
     this.picker.set('item');
     void this.runSearch('');
   }
@@ -495,7 +578,11 @@ export class GoodsReceiptFormPage {
       this.purchaseOrderNo.set(row.code);
       void this.pullOrderLines(row.id);
     } else {
-      this.applyItem(this.pickingLine, row);
+      if (this.pickingFromScan) {
+        this.addScanned(row, this.scanBatch);
+      } else {
+        this.applyItem(this.pickingLine, row);
+      }
     }
 
     this.closePicker();
@@ -598,6 +685,9 @@ export class GoodsReceiptFormPage {
     this.picker.set('none');
     this.pickerRows.set([]);
     this.pickingLine = -1;
+    this.pickingFromScan = false;
+    this.pickerTerm.set('');
+    this.scanBatch = null;
   }
 
   protected pickerTitle(): string {

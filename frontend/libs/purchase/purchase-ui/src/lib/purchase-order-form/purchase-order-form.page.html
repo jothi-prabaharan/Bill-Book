@@ -150,6 +150,17 @@
            the grid deliberately does not know how to fetch anything.
            showLineType is on: purchase is where Stock, Expense and Capital are
            all used. There is no reservation column — an order holds no stock. -->
+      @if (!readonlyDoc()) {
+        <div class="po-form__scan">
+          <bb-scan
+            label="Scan"
+            placeholder="Scan or type a barcode or item code"
+            ariaLabel="Scan an item"
+            [global]="true"
+            (scanned)="onScan($event)"
+          />
+        </div>
+      }
       <bb-document-line-grid
       [projects]="projectOptions()"
         [lines]="lines()"
@@ -285,6 +296,7 @@
     [emptyText]="pickerEmptyText()"
     [rows]="pickerRows()"
     [loading]="pickerLoading()"
+    [initialTerm]="pickerTerm()"
     (searchChange)="onPickerSearch($event)"
     (choose)="onPickerChoose($event)"
     (dismiss)="closePicker()"

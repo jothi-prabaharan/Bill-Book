@@ -246,3 +246,9 @@
     padding: var(--space-1, 4px) 0;
   }
 }
+
+/* The scan field above the lines (TK-162): full width on a phone. */
+.bill-form__scan {
+  max-width: 420px;
+  margin-bottom: var(--space-2, 8px);
+}

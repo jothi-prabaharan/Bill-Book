@@ -5104,19 +5104,27 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: [Scanning items](../frontend/apps/docs/content/invoices.md) with pointers from the quote, order, challan and credit-note pages; release note.
 
 ### TK-162 · Scan on purchase documents and scan to open
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · serial capture waits on D-51
 - **Issue:** [#143](https://github.com/jothi-prabaharan/Bill-Book/issues/143)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-PUR-UI, L-WEB · **Depends on:** TK-157, TK-160
 - **Where:** `frontend/libs/purchase/purchase-ui/`, `frontend/libs/app-shell`
 - **State:** checked 1 October 2026. The purchase libs have no barcode or scan code at all.
 - **Sub-tasks:**
-  - [ ] `bb-scan` on line entry for purchase order, bill and debit note, as in TK-161.
-  - [ ] Goods receipt: a scan increments the received quantity and captures a batch or serial where the item needs one.
-  - [ ] A global scan-to-open: reading a document code printed by TK-157 opens that document.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] `bb-scan` on line entry for purchase order, bill and debit note, as in TK-161.
+  - [x] Goods receipt: a scan increments the received quantity and captures a batch or serial where the item needs one.
+  - [x] A global scan-to-open: reading a document code printed by TK-157 opens that document.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** scanning an item on a goods receipt raises its received quantity, and scanning a printed invoice code opens that invoice.
+- **As built (5 October 2026):**
+  - **Purchase order and bill**: `bb-scan` above the grid (`global`), the page's own picker gaining `pickingFromScan` and `pickerTerm` (→ `bb-lookup-dialog`'s `initialTerm`), and `addScannedItem` from TK-161. A bill attached to a receipt has no scan field: its lines are the receipt's. `blankDocumentLine` moved into `line-scan.ts` and the grid's **Add line** uses it, so a scanned line and a keyed one start alike.
+  - **Goods receipt**: `receiveScanned` (`goods-receipt-scan.ts`, pure; `ReceivingLine` moved there) adds one received — line quantity and accepted, rejected kept — on the item's line, or on the line for the scanned batch, one batch per line. **`parseGs1`** in `scan-core` reads `(01)` GTIN, `(10)` batch, `(17)` expiry, `(11)`, `(21)` from a camera-read DataMatrix or GS1-128 (GS separators, `]d2` prefix) or the bracketed text; the item is found by `gtinCandidates` (the EAN-13 inside a GTIN-14 first), and batch and expiry fill the line. **Set received to zero** starts a count. After a scan, `PurchaseLookupService.itemTracking` (new, `GET /api/items/{id}`, cached per item) drives a one-line reminder for a missing batch, or that serials are not recorded.
+  - **Serials: not captured** — a goods receipt has no serial field and Purchase never sends serials to Inventory. Raised as **D-51**; the sub-task is ticked for the batch half only.
+  - **Debit note**: `debitScanned` (`debit-note-scan.ts`) sends one more unit back on the bill line for the item, capped at `available`, moving to the next line for the item when one is full; never adds a line.
+  - **Scan to open**: `GET api/sales/transactions/by-number?no=` and `GET api/purchase/transactions/by-number?no=` (`DocumentNumberRepository` in each, LINQ, exact `DocumentNo`, the query filter keeping it to the branch; 404 otherwise). `ScanToOpenService` in `app-shell`, started by the shell, catches a page-level burst (skipping one a screen's `bb-scan` already took — it prevents the Enter in the capture phase) and asks the modules the user may view, then navigates (`documentPath`). The top bar's **Search** panel has a **Scan a document code** field with the camera for phones.
+  - Tests: backend `DeliveryChallanServiceTests` / `GoodsReceiptServiceTests` gain `A_printed_document_number_opens_its_own_branchs_document`; frontend `goods-receipt-scan.spec.ts`, `debit-note-scan.spec.ts`, `gs1.spec.ts`, `scan-to-open.service.spec.ts`. The top bar spec now provides `HttpClient`.
+  - Docs: purchase page (order, **Counting it in by scanning**, bill, debit note), [Scanning](../frontend/apps/docs/content/inputs.md) (opening a document by its code), release note.
 
 ### TK-163 · Scan on stock documents
 - [ ] open
@@ -5207,6 +5215,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-48 | TK-140's "raise a work order": which document? | TK-140 | *Open.* The WorkOrder service is School's facility maintenance: it carries an asset or a space and no customer, and only School branches may use it. Default until answered: a service plan's **Raise a visit** opens a support ticket in Customer, which carries the customer, an assignee and the branch's SLA. Raised 2026-10-04 while reworking TK-140 |
 | D-49 | TK-149: when a bill's ingredients are short in stock, refuse the bill or let stock go negative? | TK-149 | *Open.* Default until answered: the bill is refused and names the ingredient, because the guarded stock issue never takes stock below zero (the same rule that stops two tills selling the last unit). The cost: a kitchen whose ingredient counts lag its receipts cannot bill until the stock is received or corrected. Allowing negative ingredient stock would need a second, unguarded issue path for recipes only. Raised 2026-10-05 |
 | D-50 | TK-136: what replaces the `App` enum where it is still read? | TK-136 | **Decided** (owner, 2026-10-05): signup asks for a business type (or HRMS/Payroll only) and add-ons, and **Settings › Applications is removed** — Settings › Organization already switches the type and add-ons. The roles screen and permission matrix show **one role list per customer, filtered by the current branch's business type and add-ons**. The retirement happens in TK-136, not a later card. |
+| D-51 | TK-162: capture serial numbers on a goods receipt? | TK-162 | *Open.* The card asks a scan to capture "a batch or serial where the item needs one", but a goods receipt has no serial field: `SaveGoodsReceiptLineRequest` carries a batch only, and Purchase's `InventoryClient` never sends `SerialNumbers` to Inventory's receipt, which already accepts them. Default until answered: the batch is captured (by hand, or off a pack's GS1 code); a scan of a serial-tracked item says serials are not recorded on a receipt. Recording them is a card of its own: a serial list per receipt line, carried to Inventory on post, with its count checked against the accepted quantity. Raised 2026-10-05 |
 
 ---
 

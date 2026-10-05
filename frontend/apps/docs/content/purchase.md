@@ -40,6 +40,8 @@ Lines use the same grid as every other sales and purchase document. On each line
 you choose an item — or type a description, if your branch allows lines without
 one — then the quantity, price, discount, tax treatment and the **GST rate**.
 
+**Scan items onto the lines** with the **Scan** field above them, from a barcode scanner or a phone's camera: each scan adds a line of one, or one more on the item's line, and a code that names no single item opens the item picker on it (TK-162). See [Scanning items](invoices#scanning-items).
+
 Totals and tax are computed by the server from the lines, at the rates in force
 on the order date. The figures on screen update as you type so you can see what
 you are agreeing to, but they are never what gets saved — the server recomputes
@@ -200,6 +202,14 @@ cartons is looking at. Receiving without an order is fine; nothing is advanced.
 Record the vendor's own delivery note number. It is theirs, not yours, and it is
 what a storekeeper reconciles against the docket in their hand.
 
+### Counting it in by scanning
+
+The **Scan** field above the lines counts a delivery in (TK-162). **Each scan adds one received** to that item's line, or adds a line for it. Against an order, the lines arrive at what is outstanding; choose **Set received to zero** first and then scan each carton or pack, so the receipt says what actually came.
+
+**A pharma pack's GS1 code fills the batch and expiry.** Scan the DataMatrix on the pack, or type the bracketed line printed under it — `(01)08901234567890(17)270331(10)B12` — and the item is found by its GTIN, with the batch and expiry going onto the line. One line holds one batch, so a second batch of the same item gets a line of its own. A plain barcode adds to the item's line whatever batch it holds.
+
+After a scan adds an item that needs a batch the scan did not carry, a note says to enter it. **Serial numbers are not recorded on a goods receipt yet**; a note says so when a serial-tracked item is scanned.
+
 ### Accepted and rejected
 
 **Only the accepted quantity becomes stock.** You key what was *refused*, and the
@@ -297,6 +307,8 @@ and locked, because a bill has to agree with its receipt to the paise.
 
 **With no receipt**, nothing has arrived in the books yet, so the bill does both
 jobs: it **moves the stock** and debits Inventory directly.
+
+A bill with no receipt has the **Scan** field above its lines, as an order does (TK-162). A bill attached to a receipt has none, because its lines are the receipt's.
 
 ## Three kinds of line
 
@@ -426,6 +438,8 @@ Purchase → **Debit notes → New debit note**.
 Pick the vendor, then the bill. The bill's lines are copied in, each showing how
 much is still returnable, and you key how much of each is going back. **Take
 everything outstanding** fills them all in for a full return.
+
+**Scanning counts goods going back** (TK-162). Each scan adds one to that item's line, up to what is still returnable, moving on to the next line for the same item when one is full. A scan never adds a line; an item the bill does not have, or one already fully on the note, is named instead.
 
 Prices come from the bill and cannot be changed — a credit has to match what was
 charged. Tax is worked out by the server and reversed against the same rates the

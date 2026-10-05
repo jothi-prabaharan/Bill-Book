@@ -389,6 +389,38 @@ public sealed class GoodsReceiptServiceTests
 
     private const long ItemId = 7;
 
+    // ── Scan to open (TK-162) ───────────────────────────────────────────
+
+    [SkippableFact]
+    public async Task A_printed_document_number_opens_its_own_branchs_document()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        GoodsReceiptResult created = await h.Receipts.CreateAsync(
+            Request([Line(quantity: 4m, accepted: 4m, rejected: 0m, unitPrice: 100m)]), default);
+        Assert.Equal(GoodsReceiptOutcome.Ok, created.Outcome);
+
+        string no = await h.Db.GoodsReceipts
+            .Where(g => g.GoodsReceiptId == created.GoodsReceiptId)
+            .Select(g => g.DocumentNo)
+            .SingleAsync();
+
+        var numbers = new DocumentNumberRepository(h.Db);
+
+        DocumentNumberMatch? match = await numbers.FindAsync(no, default);
+        Assert.NotNull(match);
+        Assert.Equal("GoodsReceipt", match.TransactionType);
+        Assert.Equal(created.GoodsReceiptId, match.TransactionId);
+
+        Assert.Null(await numbers.FindAsync("NO-SUCH-0001", default));
+        Assert.Null(await numbers.FindAsync(null, default));
+
+        Harness other = await Harness.CreateAsync(_pg);
+        DocumentNumberMatch? fromOther = await new DocumentNumberRepository(other.Db).FindAsync(no, default);
+        Assert.NotEqual(created.GoodsReceiptId, fromOther?.TransactionId);
+    }
+
     private static SaveGoodsReceiptRequest Request(List<SaveGoodsReceiptLineRequest> lines) =>
         new()
         {

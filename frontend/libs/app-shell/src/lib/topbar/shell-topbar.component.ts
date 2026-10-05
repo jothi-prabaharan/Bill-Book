@@ -1,5 +1,5 @@
 import { FormsModule } from '@angular/forms';
-import { SearchInputComponent } from '@bill-book/ui-components';
+import { ScanComponent, SearchInputComponent } from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -21,6 +21,7 @@ import {
 import { FavouritesService } from '../favourites.service';
 import { MenuService } from '../menu.service';
 import { ShellNotificationsService } from '../notifications.service';
+import { ScanToOpenService } from '../scan-to-open.service';
 import {
   SHELL_SCREENS,
   ShellScreen,
@@ -61,7 +62,7 @@ type Panel = 'org' | 'new' | 'search' | 'fav' | 'notif' | null;
   selector: 'bb-shell-topbar',
   standalone: true,
   imports: [
-    SearchInputComponent, FormsModule],
+    SearchInputComponent, ScanComponent, FormsModule],
   templateUrl: './shell-topbar.component.html',
   styleUrl: './shell-topbar.component.scss',
 })
@@ -73,6 +74,10 @@ export class ShellTopbarComponent {
   protected readonly notifications = inject(ShellNotificationsService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
+  private readonly scanToOpen = inject(ScanToOpenService);
+
+  /** The last scanned document code that opened nothing, said under the scan field. */
+  readonly scanMiss = signal<string | null>(null);
 
   readonly financialYear = input<string>('FY 2026-27');
   readonly userDisplayName = input<string>('Praba');
@@ -303,6 +308,17 @@ export class ShellTopbarComponent {
       }
     } catch {
       // Ignored in non-browser/test environments.
+    }
+  }
+
+  /** A document code scanned or typed in the search panel (TK-162). */
+  async openScanned(code: string): Promise<void> {
+    this.scanMiss.set(null);
+    const path = await this.scanToOpen.find(code);
+    if (path) {
+      this.goTo(path);
+    } else {
+      this.scanMiss.set(`No document in this branch has the number ${code}.`);
     }
   }
 

@@ -143,6 +143,20 @@
     <section class="card">
       <h2 class="card__title">What was delivered</h2>
 
+      @if (!readonlyDoc()) {
+        <div class="grn-form__scan">
+          <bb-scan
+            label="Scan"
+            placeholder="Scan a barcode or a pack's GS1 code"
+            ariaLabel="Scan an item"
+            [global]="true"
+            (scanned)="onScan($event)"
+          />
+          @if (lines().length > 0) {
+            <button type="button" class="btn btn--link" (click)="zeroReceived()">Set received to zero</button>
+          }
+        </div>
+      }
       <bb-document-line-grid
       [projects]="projectOptions()"
         [lines]="lines()"
@@ -288,6 +302,7 @@
     [emptyText]="pickerEmptyText()"
     [rows]="pickerRows()"
     [loading]="pickerLoading()"
+    [initialTerm]="pickerTerm()"
     (searchChange)="onPickerSearch($event)"
     (choose)="onPickerChoose($event)"
     (dismiss)="closePicker()"

@@ -214,6 +214,17 @@
     <section class="card">
       <h2 class="card__title">Lines</h2>
 
+      @if (!readonlyDoc() && !againstReceipt()) {
+        <div class="bill-form__scan">
+          <bb-scan
+            label="Scan"
+            placeholder="Scan or type a barcode or item code"
+            ariaLabel="Scan an item"
+            [global]="true"
+            (scanned)="onScan($event)"
+          />
+        </div>
+      }
       <bb-document-line-grid
       [projects]="projectOptions()"
       [showBilling]="true"
@@ -333,6 +344,7 @@
     [emptyText]="pickerEmptyText()"
     [rows]="pickerRows()"
     [loading]="pickerLoading()"
+    [initialTerm]="pickerTerm()"
     (searchChange)="onPickerSearch($event)"
     (choose)="onPickerChoose($event)"
     (dismiss)="closePicker()"

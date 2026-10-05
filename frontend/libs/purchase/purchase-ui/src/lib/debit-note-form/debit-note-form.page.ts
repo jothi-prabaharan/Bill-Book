@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import {
+  ScanComponent,
   BbSelectOption,
   ColumnDef,
   DataGridComponent,
@@ -24,6 +25,7 @@ import {
 } from '@bill-book/ui-components';
 
 import {
+  ItemOption,
   BillService,
   DEBIT_NOTE_REASONS,
   DebitNoteService,
@@ -32,6 +34,8 @@ import {
   SaveDebitNoteLineRequest,
   SaveDebitNoteRequest,
 } from '@bill-book/purchase-core';
+import { matchScannedItem } from '@bill-book/scan-core';
+import { debitScanned } from './debit-note-scan';
 
 type Picker = 'none' | 'vendor' | 'bill';
 
@@ -75,6 +79,7 @@ interface ReturnLine {
   selector: 'bb-debit-note-form',
   standalone: true,
   imports: [
+    ScanComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     DataGridComponent,
@@ -357,6 +362,42 @@ export class DebitNoteFormPage {
           : line,
       ),
     );
+  }
+
+  /**
+   * A scanned code (TK-162). A debit note's lines are its bill's, so a scan
+   * sends one more unit back on the bill line for that item, up to what it
+   * still has to return, and never adds a line.
+   */
+  protected async onScan(code: string): Promise<void> {
+    if (this.readonlyDoc() || this.lines().length === 0) {
+      return;
+    }
+    const wanted = code.trim();
+    if (!wanted) {
+      return;
+    }
+
+    let match: ItemOption | null = null;
+    try {
+      match = matchScannedItem(wanted, await this.lookups.items(wanted));
+    } catch {
+      match = null;
+    }
+
+    this.notice.set(null);
+    if (!match) {
+      this.notice.set(`No single item matches ${wanted}.`);
+      return;
+    }
+
+    const { lines, outcome } = debitScanned(this.lines(), match.itemId);
+    this.lines.set(lines);
+    if (outcome === 'notOnBill') {
+      this.notice.set(`${match.itemCode} is not on this bill.`);
+    } else if (outcome === 'full') {
+      this.notice.set(`All of ${match.itemCode} on this bill is already on the note.`);
+    }
   }
 
   /** Returning everything still outstanding, which is the common case. */

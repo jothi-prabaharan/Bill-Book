@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
+  addScannedItem,
+  ScanComponent,
   BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
@@ -23,12 +25,14 @@ import {
   compactValues,
 } from '@bill-book/ui-components';
 import {
+  ItemOption,
   PurchaseLookupService,
   PurchaseOrderService,
   PurchaseOrderView,
   SavePurchaseOrderLineRequest,
   SavePurchaseOrderRequest,
 } from '@bill-book/purchase-core';
+import { matchScannedItem } from '@bill-book/scan-core';
 
 /**
  * Quantity carries six decimals in the grid, prices and amounts whole paise.
@@ -60,6 +64,7 @@ type Picker = 'none' | 'vendor' | 'item';
   selector: 'bb-purchase-order-form',
   standalone: true,
   imports: [
+    ScanComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     CommonModule,
@@ -118,6 +123,12 @@ export class PurchaseOrderFormPage {
 
   /** Which line the item picker was opened for. */
   private pickingLine = -1;
+
+  /** The picker was opened by a scan that matched no single item (TK-162). */
+  private pickingFromScan = false;
+
+  /** The search the item picker opens on: the scanned code, or empty. */
+  protected readonly pickerTerm = signal('');
 
   /** Guards against an earlier search landing after a later one. */
   private searchToken = 0;
@@ -292,12 +303,48 @@ export class PurchaseOrderFormPage {
   // ---- Item picker ------------------------------------------------------
 
   /** The grid asks; this page answers. The grid does not know how to fetch. */
+  /** A scanned code (TK-162): its item goes on the lines, or the item picker opens on it. */
+  protected async onScan(code: string): Promise<void> {
+    if (this.readonlyDoc()) {
+      return;
+    }
+    const wanted = code.trim();
+    if (!wanted) {
+      return;
+    }
+
+    let match: ItemOption | null = null;
+    try {
+      match = matchScannedItem(wanted, await this.lookups.items(wanted));
+    } catch {
+      match = null;
+    }
+
+    if (match) {
+      this.addScanned({ id: match.itemId, code: match.itemCode, name: match.itemName, meta: match.inventoryUomCode });
+      return;
+    }
+
+    this.pickingFromScan = true;
+    this.pickingLine = -1;
+    this.pickerTerm.set(wanted);
+    this.picker.set('item');
+    void this.runSearch(wanted);
+  }
+
+  /** One more of a scanned item on its line, or a new line of one. */
+  private addScanned(row: LookupRow): void {
+    this.lines.set(addScannedItem(this.lines(), row, this.gridContext()));
+  }
+
   protected onPickItem(lineIndex: number): void {
     if (this.readonlyDoc()) {
       return;
     }
 
     this.pickingLine = lineIndex;
+    this.pickingFromScan = false;
+    this.pickerTerm.set('');
     this.picker.set('item');
     void this.runSearch('');
   }
@@ -353,7 +400,11 @@ export class PurchaseOrderFormPage {
         this.contactGstin.set(row.meta);
       }
     } else {
-      this.applyItem(this.pickingLine, row);
+      if (this.pickingFromScan) {
+        this.addScanned(row);
+      } else {
+        this.applyItem(this.pickingLine, row);
+      }
     }
 
     this.closePicker();
@@ -376,6 +427,8 @@ export class PurchaseOrderFormPage {
     this.picker.set('none');
     this.pickerRows.set([]);
     this.pickingLine = -1;
+    this.pickingFromScan = false;
+    this.pickerTerm.set('');
   }
 
   protected pickerTitle(): string {

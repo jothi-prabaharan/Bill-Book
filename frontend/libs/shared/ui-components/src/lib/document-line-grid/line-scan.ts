@@ -16,7 +16,7 @@ export function addScannedItem<T extends DocumentLine>(
   lines: readonly T[],
   row: LookupRow,
   context: DocumentLineContext,
-  blank: (lineNumber: number) => T,
+  blank: (lineNumber: number) => T = blankDocumentLine as (lineNumber: number) => T,
 ): T[] {
   const existing = lines.findIndex((line) => line.itemId === row.id);
   if (existing >= 0) {
@@ -38,4 +38,40 @@ export function addScannedItem<T extends DocumentLine>(
 /** A line nobody has started: no item, no description, no price. */
 export function isEmptyLine(line: DocumentLine): boolean {
   return line.itemId === null && !line.description?.trim() && line.unitPrice === 0;
+}
+
+/** A new line at one unit, as the grid's **Add line** makes it. */
+export function blankDocumentLine(lineNumber: number): DocumentLine {
+  return {
+    detailId: 0,
+    lineNumber,
+    itemId: null,
+    itemLabel: null,
+    hsnSacCode: null,
+    description: null,
+    warehouseId: null,
+    quantity: ONE_UNIT,
+    uomId: null,
+    uomLabel: null,
+    conversionFactor: ONE_UNIT,
+    baseQuantity: ONE_UNIT,
+    unitPrice: 0,
+    isPriceInclusive: false,
+    discountPercent: null,
+    discountAmount: 0,
+    grossAmount: 0,
+    taxableAmount: 0,
+    taxTreatment: 'Taxable',
+    taxMasterId: null,
+    taxGroupId: null,
+    taxAmount: 0,
+    taxes: [],
+    lineType: 'Stock',
+    accountId: null,
+    fixedAssetCategoryId: null,
+    projectId: null,
+    lineTotal: 0,
+    itemBatchId: null,
+    lineNotes: null,
+  };
 }
