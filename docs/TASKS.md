@@ -4901,7 +4901,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a signup creates a Standard customer, an operator can create the other two, and neither of those is ever expired or billed.
 
 ### TK-153 · Internal customer: our own organisation, Service business type
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#134](https://github.com/jothi-prabaharan/Bill-Book/issues/134)
 - **Group:** M · Customer kinds and demo customers
 - **Lanes:** L-MST, L-DOC · **Depends on:** TK-152, TK-136 · **Decision:** D-44
