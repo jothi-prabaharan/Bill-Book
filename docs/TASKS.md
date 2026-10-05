@@ -4799,7 +4799,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** selling one portion reduces each ingredient by its recipe quantity, and a rerun does not deduct twice.
 
 ### TK-150 · Restaurant reports
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05
 - **Issue:** [#131](https://github.com/jothi-prabaharan/Bill-Book/issues/131)
 - **Group:** L · Restaurant
 - **Lanes:** L-RPT, L-RST-UI · **Depends on:** TK-147, TK-148, TK-149 · **Decision:** D-39
