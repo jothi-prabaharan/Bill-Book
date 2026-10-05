@@ -2,7 +2,7 @@ import { Directive, input, output, signal } from '@angular/core';
 import { BbControlBase } from '../control-base';
 
 /**
- * What `bb-date-input` and `bb-datetime-input` share.
+ * What `bb-datetime-input` and `bb-month-input` share.
  *
  * **Nothing here ever constructs a `Date` from a string.**
  * `new Date('2026-09-07')` is parsed as midnight **UTC**, so west of Greenwich

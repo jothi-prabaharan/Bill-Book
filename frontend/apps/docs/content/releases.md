@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **Every date field shows and reads dates in your branch's format (TK-135).** A branch set to `dd/MM/yyyy` now sees and types `24/09/2026` in every date field, with any separator accepted and a calendar beside it, instead of the browser's own format. Text that is not a real date stays on screen with a message. See [Inputs](inputs).
+
 - **Fixed**: **Portal links open the portal again (TK-134).** Since the client portal moved into the web app, a portal link pointed at the old portal's address. It now opens `/portal/access/…` on the web app's address, the same address invitations use. Links made before this fix still carry the old address: make a new one from the contact.
 
 - **Changed**: **The single-PC and Azure deployments serve two web apps, web and docs (TK-134).** The customer portal is `/portal` and the platform admin pages are `/admin` on the web app's address. On your own PCs, delete any `portal` or `admin` public hostname in the Cloudflare tunnel; nothing listens on ports 8082 and 8083 any more, and the web image builds again. On Azure, the old portal and admin Static Web Apps can be deleted. See [Deployment](deployment).

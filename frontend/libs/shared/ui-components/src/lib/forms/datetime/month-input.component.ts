@@ -11,7 +11,7 @@ import { BbDateControlBase } from './date-control.base';
  * written into it is cut to its month, so a field bound to the first of the
  * month shows the right one.
  *
- * Like `bb-date-input` it is the browser's own control, so the on-screen format
+ * It is the browser's own control (unlike `bb-branch-date-input`), so the on-screen format
  * is the browser's; the value is unambiguous either way.
  */
 @Component({

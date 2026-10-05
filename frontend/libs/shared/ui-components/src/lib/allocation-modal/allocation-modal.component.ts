@@ -105,7 +105,7 @@ export class AllocationModalComponent {
 
   /**
    * Reactive rather than `ngModel`, because that is how every other screen
-   * drives these inputs — `bb-date-input` and `bb-text-input` are value
+   * drives these inputs — `bb-branch-date-input` and `bb-text-input` are value
    * accessors and each of their existing callers reaches them through
    * `formControlName`. A one-way `[ngModel]` would probably have worked; on a
    * screen that moves money, matching the mechanism the rest of the product

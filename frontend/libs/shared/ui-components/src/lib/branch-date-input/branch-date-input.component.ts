@@ -33,12 +33,12 @@ const MONTHS_LONG = [
 /**
  * A calendar date shown and typed in **the branch's own format** (TK-23).
  *
- * The proposed replacement for `bb-date-input`, built beside it and **not yet
- * swapped in**: it changes every date field in the product, so the owner tries
- * it first (TK-23, "Show the proposal to the owner before swapping it in").
+ * Every date field in the product uses it: it replaced the native
+ * `<input type="date">` component, which showed the browser's locale, on every
+ * page in TK-135.
  *
- * - **The value is ISO `yyyy-MM-dd`, in and out**, exactly as `bb-date-input`'s
- *   is, so swapping the selector is the whole migration for all 26 callers.
+ * - **The value is ISO `yyyy-MM-dd`, in and out**, so a form never sees the
+ *   display pattern.
  * - **The display is `FormatSettingsService.settings().datePattern`.** Typed
  *   text is read in that pattern by `parseDate`, with any separator accepted;
  *   what cannot be read is kept on screen with a message, and the form receives
