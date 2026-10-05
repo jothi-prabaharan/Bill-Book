@@ -156,4 +156,11 @@ public class RestaurantBill : OrgScopedEntity
 
     /// <summary>When it was billed, in branch local time.</summary>
     public DateTime BilledAt { get; set; }
+
+    /// <summary>
+    /// The loyalty points the bill earned its contact (TK-166), worked out at
+    /// billing from the branch's rate; 0 for none. Kept so a retry records
+    /// what was due then, not what today's rate would give.
+    /// </summary>
+    public int LoyaltyPoints { get; set; }
 }

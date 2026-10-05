@@ -8,3 +8,4 @@ export * from './lib/restaurant-billing';
 export * from './lib/restaurant-recipes';
 export * from './lib/restaurant-reports';
 export * from './lib/restaurant-reservations';
+export * from './lib/restaurant-loyalty';

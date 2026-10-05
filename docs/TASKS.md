@@ -5200,7 +5200,7 @@ The queue below is one list in card-number order. Each card names its group.
 
 
 ### TK-166 · Loyalty points on a bill
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · the earn half; redemption waits on D-52
 - **Issue:** [#149](https://github.com/jothi-prabaharan/Bill-Book/issues/149)
 - **Group:** L · Restaurant
 - **Lanes:** L-CUS, L-SAL, L-RST-UI · **Depends on:** TK-148 · **Decision:** D-39
@@ -5208,14 +5208,23 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** split from TK-151 on 5 October 2026. A bill can name a contact but earns it nothing, and nothing lets a contact spend anything against a bill.
 - **Tables:** `cus.LoyaltyAccounts` (contact id, points balance), `cus.LoyaltyTransactions` (earned, redeemed or adjusted, points, source document), and a per-branch earn and redeem rate in `mst.Configuration` as typed keys, defaulting off.
 - **Sub-tasks:**
-  - [ ] **Ask the owner before building the redemption half**: does a redeemed point reduce the bill as a discount, or settle part of it as a tender? It decides the posting. Record the answer as the next D-number in section 3 and leave the earn half buildable meanwhile.
-  - [ ] Entities, enums and the migration with its RLS block, and the settings keys.
-  - [ ] `LoyaltyRepository`: earn points when a bill posts, reverse them when it is voided, and show a contact's balance and history. Earning is idempotent on the invoice id, so a retry never earns twice.
-  - [ ] Sales reaches Customer over its API, never its `DbContext` (rule 8); a contact id has no foreign key (cross-service).
-  - [ ] The bill page shows the contact's balance and, once the question above is answered, takes a redemption.
-  - [ ] The standard delivery sub-tasks in section 5.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] **Ask the owner before building the redemption half**: does a redeemed point reduce the bill as a discount, or settle part of it as a tender? It decides the posting. Record the answer as the next D-number in section 3 and leave the earn half buildable meanwhile. **Asked as D-52; not answered**, so nothing redeems.
+  - [x] Entities, enums and the migration with its RLS block, and the settings keys.
+  - [x] `LoyaltyRepository`: earn points when a bill posts, reverse them when it is voided, and show a contact's balance and history. Earning is idempotent on the invoice id, so a retry never earns twice.
+  - [x] Sales reaches Customer over its API, never its `DbContext` (rule 8); a contact id has no foreign key (cross-service).
+  - [ ] The bill page shows the contact's balance and, once the question above is answered, takes a redemption. *The balance is shown; the redemption half waits on D-52.*
+  - [x] The standard delivery sub-tasks in section 5.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a posted bill earns its contact points once, a void takes them back, and the contact's balance and history show both.
+- **As built (5 October 2026):**
+  - **Customer (`cus`)**: `LoyaltyAccounts` (one per contact per branch, unique on `ContactId`, `PointsBalance`) and `LoyaltyTransactions` (signed `Points`, `LoyaltyTransactionKind` Earned/Reversed/Redeemed/Adjusted, `LoyaltySource` Invoice, `SourceId`, `DocumentNo`, `OccurredAt`). Migration `LoyaltyPoints` with RLS on both. A filtered unique index on (OrgId, Kind, Source, SourceId) is the backstop for once-only.
+  - **`LoyaltyRepository`**: `EarnAsync` (idempotent on the invoice: a repeat answers `AlreadyRecorded`), `ReverseAsync` (takes back what the invoice earned, once; nothing to take back is not an error), `GetAsync` (balance and the latest 50, newest first). The balance moves by one atomic `ExecuteUpdate`, so two bills for one contact at once both count. `internal/loyalty/earn` and `internal/loyalty/reverse` (`[InternalOnly]`, tenant from the body), and `GET api/loyalty/contacts/{id}` for staff (restaurant module, Restaurant branches); gateway route added.
+  - **The rate**: a new restaurant setting, `RestaurantSettingKey.LoyaltyEarnRate` (`restaurant.loyalty.earnRate`, type `Rate`, 0–100 points per ₹100, default 0), on `RestaurantSettingsView`, the save request and Settings › Restaurant; system row seeded by admin migration `LoyaltyEarnRateSetting`. Restaurant settings already carry every restaurant key as one typed set, so this is where the card's "typed keys in `mst.Configuration`" landed. **No redeem rate**: nothing redeems yet (D-52).
+  - **Sales**: `LoyaltyRules.PointsFor` (Shared.Kernel, pure: whole points, rounded down). `RestaurantBillingRepository.BillAsync` stores the bill's points on `sal.RestaurantBills.LoyaltyPoints` (migration `RestaurantBillLoyaltyPoints`; 0 for the walk-in customer) and, **after the commit**, earns them through `ILoyaltyClient` → Customer. Customer not answering leaves the bill posted with a `LoyaltyNote`; `POST api/restaurant/bills/{id}/loyalty` (`SyncLoyaltyAsync`) records the stored points later, or takes them back if the invoice has since been voided. `InvoiceRepository.VoidAsync` reverses a restaurant bill's points. Sales now needs `Customer:BaseUrl`, which both deployments already set on every service.
+  - **Frontend**: the bill page shows the chosen customer's balance and what the bill earns, says what was earned after billing, and offers **Record the points** when they were not recorded; `restaurant-loyalty.ts` in restaurant-core.
+  - Tests: `Customer.Api.Tests.LoyaltyTests` (the *Done when*: earned once, taken back once, balance and history), `Sales.Api.Tests.RestaurantLoyaltyTests` (earn after posting, void reverses, walk-in and no rate earn nothing, retry after Customer was away), `Shared.Kernel.Tests.LoyaltyRulesTests`, `restaurant-loyalty.spec.ts`, `restaurant-settings.spec.ts`.
+  - Docs: Restaurant billing **Loyalty points**, Restaurant settings, release note.
+
 
 ### TK-167 · Zomato and Swiggy order intake
 - [x] completed (Claude Sonnet 5.5) · tests written, not run — 2026-10-05 · intake only; D-42 is still open for menu sync, status and settlement
@@ -5305,6 +5314,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-49 | TK-149: when a bill's ingredients are short in stock, refuse the bill or let stock go negative? | TK-149 | *Open.* Default until answered: the bill is refused and names the ingredient, because the guarded stock issue never takes stock below zero (the same rule that stops two tills selling the last unit). The cost: a kitchen whose ingredient counts lag its receipts cannot bill until the stock is received or corrected. Allowing negative ingredient stock would need a second, unguarded issue path for recipes only. Raised 2026-10-05 |
 | D-50 | TK-136: what replaces the `App` enum where it is still read? | TK-136 | **Decided** (owner, 2026-10-05): signup asks for a business type (or HRMS/Payroll only) and add-ons, and **Settings › Applications is removed** — Settings › Organization already switches the type and add-ons. The roles screen and permission matrix show **one role list per customer, filtered by the current branch's business type and add-ons**. The retirement happens in TK-136, not a later card. |
 | D-51 | TK-162: capture serial numbers on a goods receipt? | TK-162 | *Open.* The card asks a scan to capture "a batch or serial where the item needs one", but a goods receipt has no serial field: `SaveGoodsReceiptLineRequest` carries a batch only, and Purchase's `InventoryClient` never sends `SerialNumbers` to Inventory's receipt, which already accepts them. Default until answered: the batch is captured (by hand, or off a pack's GS1 code); a scan of a serial-tracked item says serials are not recorded on a receipt. Recording them is a card of its own: a serial list per receipt line, carried to Inventory on post, with its count checked against the accepted quantity. Raised 2026-10-05 |
+| D-52 | TK-166: does a redeemed loyalty point reduce the bill as a discount, or settle part of it as a tender? | TK-166 | *Open.* It decides the posting. **As a discount**, the bill's taxable value falls, so GST is charged on less, and the points' cost sits in Discount Given; simple for the customer, but each point changes the tax on the bill. **As a tender**, the bill and its GST are unchanged and the points pay part of it, settled from a liability (Loyalty Points Payable) built up as points are earned; the books then need that liability booked at earning time, which nothing does yet. Default until answered: no redemption; points are earned, reversed and shown only. Raised 2026-10-05 |
 
 ---
 

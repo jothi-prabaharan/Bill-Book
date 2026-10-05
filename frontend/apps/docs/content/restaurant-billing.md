@@ -34,6 +34,17 @@ The totals are worked out with the invoice's own tax calculator before you bill.
 - An order whose every dish is billed or cancelled becomes **Billed**, and its table shows **Billed** on the floor plan until it is cleared.
 - What the branch requires is checked again: a table, a customer and a waiter where the settings ask for them, and, with **Send to the kitchen before billing** on, every dish sent to the kitchen. What is missing is shown above the button.
 
+## Loyalty points
+
+**A bill to a named customer earns loyalty points** (TK-166), once **Loyalty points per ₹100** is set in [Restaurant settings](restaurant-settings). Points are whole: a ₹250 bill at 1 point per ₹100 earns 2. A bill to the walk-in customer earns none, because it names nobody.
+
+- Choosing the customer shows their **balance**, and what this bill will earn.
+- After billing, the bill says what was earned and the customer's new balance. The points are recorded once: billing is never counted twice, whatever is retried.
+- **Voiding the bill's invoice takes its points back**, once, and the customer's history shows both the earning and the reversal.
+- If the points could not be recorded at the moment of billing, the bill still stands and says so. Choose **Record the points** to record them; it is safe to press again.
+
+**Spending points against a bill is not built yet.** Whether a redeemed point is a discount on the bill or a payment towards it changes how the bill posts, and that is for the owner to decide (D-52).
+
 ## Not supported yet
 
 - **Alcohol.** Liquor is outside GST and is billed under state excise, often on a separate bill. Until the owner decides how (D-41), keep alcohol off the restaurant menu.

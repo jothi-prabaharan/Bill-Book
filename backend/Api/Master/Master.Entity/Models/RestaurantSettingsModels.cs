@@ -18,6 +18,9 @@ public sealed class SaveRestaurantSettingsRequest
     public decimal ServiceChargePercent { get; set; }
 
     public bool TipsEnabled { get; set; }
+
+    [Range(typeof(decimal), "0", "100", ErrorMessage = "Loyalty points per ₹100 must be between 0 and 100.")]
+    public decimal LoyaltyEarnRate { get; set; }
 }
 
 /// <summary>A service-to-service call naming the branch it is for.</summary>

@@ -6,6 +6,11 @@ import { firstValueFrom } from 'rxjs';
 import { IfCanDirective } from '@bill-book/auth';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
+  BillLoyalty,
+  LOYALTY_API,
+  LoyaltyAccount,
+  pointsFor,
+  pointsLabel,
   BillPreview,
   PrintedDocument,
   RESTAURANT_BILLS_API,
@@ -83,6 +88,14 @@ export class RestaurantBillingPage implements OnInit {
   protected tipBankAccountId: number | null = null;
   protected readonly tenders = signal<TenderDraft[]>([]);
   protected readonly contactId = signal<number | null>(null);
+
+  /** The chosen customer's loyalty points (TK-166), while the branch earns any. */
+  protected readonly loyalty = signal<LoyaltyAccount | null>(null);
+  /** What this bill will earn at the branch's rate; 0 for the walk-in customer. */
+  protected readonly pointsDue = computed(() =>
+    this.contactId() ? pointsFor(this.preview()?.total ?? 0, this.settings().loyaltyEarnRate ?? 0) : 0,
+  );
+  protected readonly pointsLabel = pointsLabel;
   protected readonly contactLabel = signal('');
   protected addOrderId: number | null = null;
 
@@ -149,6 +162,7 @@ export class RestaurantBillingPage implements OnInit {
       if (!this.contactId() && order.contactId) {
         this.contactId.set(order.contactId);
         this.contactLabel.set(order.contactName ?? `Customer ${order.contactId}`);
+        void this.loadLoyalty();
       }
       this.addOrderId = null;
       await this.refresh();
@@ -235,7 +249,11 @@ export class RestaurantBillingPage implements OnInit {
     try {
       const bill = await firstValueFrom(this.http.post<RestaurantBill>(RESTAURANT_BILLS_API, this.body()));
       this.bill.set(bill);
-      this.messages.set([{ tone: 'success', text: `Billed on ${bill.invoiceNo}.` }]);
+      const earned = bill.loyaltyPoints > 0 && !bill.loyaltyNote ? ` ${this.contactLabel()} earned ${pointsLabel(bill.loyaltyPoints)}.` : '';
+      this.messages.set([
+        { tone: 'success', text: `Billed on ${bill.invoiceNo}.${earned}` },
+        ...(bill.loyaltyNote ? [{ tone: 'warning' as const, text: bill.loyaltyNote }] : []),
+      ]);
       await this.print(bill);
     } catch (error) {
       this.fail(error, 'The bill could not be made.');
@@ -250,6 +268,33 @@ export class RestaurantBillingPage implements OnInit {
       printHtml(printed.html);
     } catch (error) {
       this.fail(error, 'The bill was made but could not be printed. Print it again from the invoice.');
+    }
+  }
+
+  /** Records a bill's points that Customer could not take at the time (TK-166). Safe to repeat. */
+  protected async recordPoints(bill: RestaurantBill): Promise<void> {
+    this.busy.set(true);
+    try {
+      const result = await firstValueFrom(this.http.post<BillLoyalty>(`${RESTAURANT_BILLS_API}/${bill.restaurantBillId}/loyalty`, {}));
+      this.bill.set({ ...bill, loyaltyBalance: result.balance, loyaltyNote: null });
+      this.messages.set([{ tone: 'success', text: `${pointsLabel(result.points)} recorded. Balance ${pointsLabel(result.balance)}.` }]);
+    } catch (error) {
+      this.fail(error, 'The points could not be recorded yet.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** The chosen customer's balance; the bill works without it. */
+  private async loadLoyalty(): Promise<void> {
+    const contactId = this.contactId();
+    this.loyalty.set(null);
+    if (!contactId || !(this.settings().loyaltyEarnRate > 0)) return;
+    try {
+      const account = await firstValueFrom(this.http.get<LoyaltyAccount>(`${LOYALTY_API}/contacts/${contactId}`));
+      if (this.contactId() === contactId) this.loyalty.set(account);
+    } catch {
+      // No balance shown; billing goes on.
     }
   }
 
@@ -282,12 +327,14 @@ export class RestaurantBillingPage implements OnInit {
     this.contactId.set(row.id);
     this.contactLabel.set(row.name);
     this.pickerOpen.set(false);
+    void this.loadLoyalty();
     void this.refresh();
   }
 
   protected clearContact(): void {
     this.contactId.set(null);
     this.contactLabel.set('');
+    this.loyalty.set(null);
     void this.refresh();
   }
 

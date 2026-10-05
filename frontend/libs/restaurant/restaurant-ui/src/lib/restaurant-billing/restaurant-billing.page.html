@@ -15,6 +15,14 @@
       @if (b.change > 0) {
         <p class="rb__change">Change to give: {{ money(b.change) }}</p>
       }
+      @if (b.loyaltyPoints > 0) {
+        @if (b.loyaltyNote) {
+          <p class="rb__loyalty">{{ pointsLabel(b.loyaltyPoints) }} due, not recorded yet.</p>
+          <button type="button" class="btn" [disabled]="busy()" (click)="recordPoints(b)">Record the points</button>
+        } @else {
+          <p class="rb__loyalty">Earned {{ pointsLabel(b.loyaltyPoints) }}{{ b.loyaltyBalance !== null ? ' · balance ' + pointsLabel(b.loyaltyBalance) : '' }}</p>
+        }
+      }
       <div class="rb__actions">
         <button *bbIfCan="'restaurant.print'" type="button" class="btn" (click)="print(b)">Print again</button>
         <button type="button" class="btn btn--primary" (click)="done()">Done</button>
@@ -65,6 +73,9 @@
               <button type="button" class="btn btn--link" (click)="clearContact()">Clear</button>
             }
           </div>
+          @if (loyalty(); as l) {
+            <span class="rb__loyalty">Loyalty: {{ pointsLabel(l.pointsBalance) }}{{ pointsDue() > 0 ? ' · this bill earns ' + pointsLabel(pointsDue()) : '' }}</span>
+          }
         </div>
         @if (settings().serviceChargePercent > 0) {
           <bb-checkbox name="applyServiceCharge" [text]="'Service charge ' + settings().serviceChargePercent + '%'" [(ngModel)]="applyServiceCharge" (ngModelChange)="refresh()" />

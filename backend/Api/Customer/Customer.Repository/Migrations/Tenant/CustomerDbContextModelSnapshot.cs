@@ -731,6 +731,130 @@ namespace Customer.Repository.Migrations.Tenant
                     b.ToTable("Leads", "cus");
                 });
 
+            modelBuilder.Entity("Customer.Entity.TableEntities.LoyaltyAccount", b =>
+                {
+                    b.Property<long>("LoyaltyAccountId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("LoyaltyAccountId"));
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PointsBalance")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("LoyaltyAccountId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ContactId")
+                        .IsUnique();
+
+                    b.ToTable("LoyaltyAccounts", "cus");
+                });
+
+            modelBuilder.Entity("Customer.Entity.TableEntities.LoyaltyTransaction", b =>
+                {
+                    b.Property<long>("LoyaltyTransactionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("LoyaltyTransactionId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<long>("LoyaltyAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<long?>("SourceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("LoyaltyTransactionId");
+
+                    b.HasIndex("LoyaltyAccountId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "LoyaltyAccountId", "OccurredAt");
+
+                    b.HasIndex("OrgId", "Kind", "Source", "SourceId")
+                        .IsUnique()
+                        .HasFilter("\"SourceId\" IS NOT NULL");
+
+                    b.ToTable("LoyaltyTransactions", "cus");
+                });
+
             modelBuilder.Entity("Customer.Entity.TableEntities.ServicePlan", b =>
                 {
                     b.Property<long>("ServicePlanId")
@@ -1277,6 +1401,15 @@ namespace Customer.Repository.Migrations.Tenant
                         .WithMany("Steps")
                         .HasForeignKey("AutomationId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Customer.Entity.TableEntities.LoyaltyTransaction", b =>
+                {
+                    b.HasOne("Customer.Entity.TableEntities.LoyaltyAccount", null)
+                        .WithMany()
+                        .HasForeignKey("LoyaltyAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

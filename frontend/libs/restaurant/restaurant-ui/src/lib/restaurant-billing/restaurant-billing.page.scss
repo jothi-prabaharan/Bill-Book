@@ -141,3 +141,10 @@
   border: 1px solid var(--color-success, #16a34a);
   border-radius: var(--radius-md, 0.5rem);
 }
+
+/* Loyalty points (TK-166). */
+.rb__loyalty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}

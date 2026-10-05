@@ -29,6 +29,9 @@ public enum RestaurantSettingKey
     WaiterRequired = 7,
     ServiceChargePercent = 8,
     TipsEnabled = 9,
+
+    /// <summary>Loyalty points a bill earns per ₹100 (TK-166); 0, the default, earns nothing.</summary>
+    LoyaltyEarnRate = 10,
 }
 
 /// <summary>What kind of value a key holds.</summary>
@@ -37,6 +40,9 @@ public enum RestaurantSettingType
     Boolean = 1,
     Level = 2,
     Percent = 3,
+
+    /// <summary>Points per ₹100, from 0 to <see cref="RestaurantSettingKeys.MaxLoyaltyEarnRate"/>.</summary>
+    Rate = 4,
 }
 
 /// <summary>The fixed code, type, default and validation of each <see cref="RestaurantSettingKey"/>.</summary>
@@ -44,6 +50,9 @@ public static class RestaurantSettingKeys
 {
     /// <summary>A service charge above this is refused: no Indian restaurant levies more, and a typo should not reach a bill.</summary>
     public const decimal MaxServiceChargePercent = 25m;
+
+    /// <summary>The most points ₹100 can earn: a point per rupee. Above that a typo is likelier than a scheme.</summary>
+    public const decimal MaxLoyaltyEarnRate = 100m;
 
     public static IReadOnlyList<RestaurantSettingKey> All { get; } = Enum.GetValues<RestaurantSettingKey>();
 
@@ -59,6 +68,7 @@ public static class RestaurantSettingKeys
         RestaurantSettingKey.WaiterRequired => "restaurant.waiter.required",
         RestaurantSettingKey.ServiceChargePercent => "restaurant.serviceCharge.percent",
         RestaurantSettingKey.TipsEnabled => "restaurant.tips.enabled",
+        RestaurantSettingKey.LoyaltyEarnRate => "restaurant.loyalty.earnRate",
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Unknown restaurant setting."),
     };
 
@@ -66,6 +76,7 @@ public static class RestaurantSettingKeys
     {
         RestaurantSettingKey.TableRequired or RestaurantSettingKey.CustomerRequired => RestaurantSettingType.Level,
         RestaurantSettingKey.ServiceChargePercent => RestaurantSettingType.Percent,
+        RestaurantSettingKey.LoyaltyEarnRate => RestaurantSettingType.Rate,
         _ => RestaurantSettingType.Boolean,
     };
 
@@ -73,7 +84,7 @@ public static class RestaurantSettingKeys
     public static string DefaultValue(this RestaurantSettingKey key) => key.TypeOf() switch
     {
         RestaurantSettingType.Level => nameof(RequirementLevel.Off),
-        RestaurantSettingType.Percent => "0",
+        RestaurantSettingType.Percent or RestaurantSettingType.Rate => "0",
         _ => "false",
     };
 
@@ -107,6 +118,12 @@ public static class RestaurantSettingKeys
                 return Enum.TryParse(text, ignoreCase: true, out RequirementLevel level) && Enum.IsDefined(level) && !int.TryParse(text, out _)
                     ? (level.ToString(), null)
                     : (null, "Choose Off, Dine-in only or Always.");
+
+            case RestaurantSettingType.Rate:
+                return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal rate)
+                    && rate >= 0m && rate <= MaxLoyaltyEarnRate
+                    ? (Math.Round(rate, 2).ToString(CultureInfo.InvariantCulture), null)
+                    : (null, $"Loyalty points per ₹100 must be between 0 and {MaxLoyaltyEarnRate}.");
 
             default:
                 return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal percent)
@@ -143,6 +160,9 @@ public sealed class RestaurantSettingsView
     public decimal ServiceChargePercent { get; set; }
 
     public bool TipsEnabled { get; set; }
+
+    /// <summary>Points a bill earns its contact per ₹100 (TK-166); 0 earns nothing.</summary>
+    public decimal LoyaltyEarnRate { get; set; }
 
     public bool IsTableRequired(OrderType orderType) => Applies(TableRequired, orderType);
 
@@ -184,6 +204,27 @@ public static class RestaurantSettingsRules
             WaiterRequired = Flag(RestaurantSettingKey.WaiterRequired),
             ServiceChargePercent = decimal.Parse(Value(RestaurantSettingKey.ServiceChargePercent), CultureInfo.InvariantCulture),
             TipsEnabled = Flag(RestaurantSettingKey.TipsEnabled),
+            LoyaltyEarnRate = decimal.Parse(Value(RestaurantSettingKey.LoyaltyEarnRate), CultureInfo.InvariantCulture),
         };
+    }
+}
+
+/// <summary>What a bill earns in loyalty points (TK-166). Pure; Sales computes it, Customer records it.</summary>
+public static class LoyaltyRules
+{
+    /// <summary>
+    /// Whole points for a bill: the rate per ₹100 of the bill's total, rounded
+    /// down, so a ₹250 bill at 1 point per ₹100 earns 2. Nothing for no rate, a
+    /// zero or negative total, or a bill too large to be anything but a typo.
+    /// </summary>
+    public static int PointsFor(decimal billTotal, decimal ratePer100)
+    {
+        if (ratePer100 <= 0m || billTotal <= 0m)
+        {
+            return 0;
+        }
+
+        decimal points = Math.Floor(billTotal * ratePer100 / 100m);
+        return points > 10_000_000m ? 0 : (int)points;
     }
 }

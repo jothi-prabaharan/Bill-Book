@@ -46,6 +46,9 @@ public sealed class RestaurantBillingRepository
     private readonly ITenantContext _tenant;
     private readonly TimeProvider _clock;
     private readonly IRecipeConsumptionClient? _recipes;
+    private readonly ILoyaltyClient? _loyalty;
+
+    private const string LoyaltyNotRecorded = "The bill is posted, but its loyalty points could not be recorded yet. Try again from the bill.";
 
     public RestaurantBillingRepository(
         SalesDbContext db,
@@ -58,9 +61,11 @@ public sealed class RestaurantBillingRepository
         IBranchSettingsProvider branch,
         ITenantContext tenant,
         TimeProvider clock,
-        IRecipeConsumptionClient? recipes = null)
+        IRecipeConsumptionClient? recipes = null,
+        ILoyaltyClient? loyalty = null)
     {
         _recipes = recipes;
+        _loyalty = loyalty;
         _db = db;
         _invoices = invoices;
         _settings = settings;
@@ -254,6 +259,9 @@ public sealed class RestaurantBillingRepository
             TipAmount = request.TipAmount,
             TipBankAccountId = request.TipAmount > 0m ? request.TipBankAccountId : null,
             BilledAt = now,
+
+            // Points for a customer the bill names; the walk-in customer is everyone and no one (TK-166).
+            LoyaltyPoints = walkIn ? 0 : LoyaltyRules.PointsFor(invoice.TotalAmount, settings.LoyaltyEarnRate),
         };
         _db.RestaurantBills.Add(bill);
         await _db.SaveChangesAsync(ct);
@@ -298,8 +306,20 @@ public sealed class RestaurantBillingRepository
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 
+        // Only a bill that stands earns, so this runs after the commit. Customer
+        // not answering does not undo the bill; the bill's loyalty retry records
+        // the points later, once (TK-166).
+        LoyaltyPosting? earned = null;
+        if (bill.LoyaltyPoints > 0 && _loyalty is not null)
+        {
+            earned = await _loyalty.EarnAsync(contactId.Value, invoice.InvoiceId, invoice.DocumentNo, bill.LoyaltyPoints, ct);
+        }
+
         return OrderResult<RestaurantBillView>.Done(new RestaurantBillView
         {
+            LoyaltyPoints = bill.LoyaltyPoints,
+            LoyaltyBalance = earned?.Balance,
+            LoyaltyNote = bill.LoyaltyPoints > 0 && earned is null ? LoyaltyNotRecorded : null,
             RestaurantBillId = bill.RestaurantBillId,
             InvoiceId = invoice.InvoiceId,
             InvoiceNo = invoice.DocumentNo,
@@ -309,6 +329,47 @@ public sealed class RestaurantBillingRepository
             Change = change,
             BilledAt = bill.BilledAt,
             ClosedOrderIds = closed,
+        });
+    }
+
+    /// <summary>
+    /// Brings a bill's loyalty points into line with its invoice (TK-166): a
+    /// posted bill's points are recorded, a voided one's taken back. Safe to
+    /// repeat; it is the retry for a bill whose points Customer did not take
+    /// at the time, or whose void it did not hear about.
+    /// </summary>
+    public async Task<OrderResult<BillLoyaltyView>> SyncLoyaltyAsync(long billId, CancellationToken ct)
+    {
+        var bill = await (
+            from b in _db.RestaurantBills.AsNoTracking()
+            join i in _db.Invoices.AsNoTracking() on b.InvoiceId equals i.InvoiceId
+            where b.RestaurantBillId == billId
+            select new { b.InvoiceId, b.LoyaltyPoints, i.ContactId, i.DocumentNo, i.Status })
+            .FirstOrDefaultAsync(ct);
+        if (bill is null)
+        {
+            return OrderResult<BillLoyaltyView>.Missing();
+        }
+
+        if (bill.LoyaltyPoints <= 0 || _loyalty is null)
+        {
+            return OrderResult<BillLoyaltyView>.Refuse("This bill earned no loyalty points.");
+        }
+
+        LoyaltyPosting? posting = bill.Status == DocumentStatus.Void
+            ? await _loyalty.ReverseAsync(bill.InvoiceId, ct)
+            : await _loyalty.EarnAsync(bill.ContactId, bill.InvoiceId, bill.DocumentNo, bill.LoyaltyPoints, ct);
+        if (posting is null)
+        {
+            return OrderResult<BillLoyaltyView>.Down("Loyalty points could not be reached. Try again in a moment.");
+        }
+
+        return OrderResult<BillLoyaltyView>.Done(new BillLoyaltyView
+        {
+            RestaurantBillId = billId,
+            Points = posting.Points,
+            Balance = posting.Balance,
+            AlreadyRecorded = posting.AlreadyRecorded,
         });
     }
 

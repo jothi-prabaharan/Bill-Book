@@ -39,6 +39,11 @@ public class CustomerDbContext : TenantDbContext
 
     public DbSet<AutomationEnrolment> AutomationEnrolments => Set<AutomationEnrolment>();
 
+    // Loyalty points (TK-166).
+    public DbSet<LoyaltyAccount> LoyaltyAccounts => Set<LoyaltyAccount>();
+
+    public DbSet<LoyaltyTransaction> LoyaltyTransactions => Set<LoyaltyTransaction>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("cus");
@@ -169,6 +174,28 @@ public class CustomerDbContext : TenantDbContext
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.HasIndex(e => new { e.OrgId, e.AutomationId, e.Email, e.Status });
             b.HasIndex(e => new { e.OrgId, e.Status, e.NextRunAt });
+        });
+
+        // ---- Loyalty points (TK-166) ----
+
+        modelBuilder.Entity<LoyaltyAccount>(b =>
+        {
+            b.HasKey(e => e.LoyaltyAccountId);
+            b.HasIndex(e => new { e.OrgId, e.ContactId }).IsUnique();
+        });
+
+        modelBuilder.Entity<LoyaltyTransaction>(b =>
+        {
+            b.HasKey(e => e.LoyaltyTransactionId);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Source).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.OrgId, e.LoyaltyAccountId, e.OccurredAt });
+
+            // A document earns once and is reversed once, however often it is asked.
+            b.HasIndex(e => new { e.OrgId, e.Kind, e.Source, e.SourceId })
+                .IsUnique()
+                .HasFilter("\"SourceId\" IS NOT NULL");
+            b.HasOne<LoyaltyAccount>().WithMany().HasForeignKey(e => e.LoyaltyAccountId).OnDelete(DeleteBehavior.Restrict);
         });
 
         base.OnModelCreating(modelBuilder);

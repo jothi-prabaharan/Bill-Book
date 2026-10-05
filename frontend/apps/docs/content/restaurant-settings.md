@@ -35,6 +35,8 @@ A choice changes only those two switches and the requirements that depend on the
 - **Service charge:** a percentage added to every bill before tax, from 0 (none) to 25%.
 - **Accept tips:** a tip can be recorded on a bill. It is not taxed.
 
+- **Loyalty points per ₹100:** points a bill to a named customer earns per ₹100 of its total, rounded down, from 0 (none, the default) to 100. See [Loyalty points](restaurant-billing#loyalty-points).
+
 ## Who can change it
 
 Anyone with **Restaurant › View** can read the settings, because every restaurant screen follows them. Saving needs both **Restaurant › Edit** and **Settings › Edit**.

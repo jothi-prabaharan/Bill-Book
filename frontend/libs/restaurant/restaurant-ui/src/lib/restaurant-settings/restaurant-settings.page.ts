@@ -14,7 +14,7 @@ import {
   matchingPreset,
   settingsProblem,
 } from '@bill-book/restaurant-core';
-import { BbSelectOption, CheckboxComponent, MessageBoxComponent, PercentageInputComponent, SelectComponent, UiMessage } from '@bill-book/ui-components';
+import { BbSelectOption, CheckboxComponent, MessageBoxComponent, NumberInputComponent, PercentageInputComponent, SelectComponent, UiMessage } from '@bill-book/ui-components';
 
 /**
  * Settings › Restaurant (D-39, TK-143). Three switches decide which restaurant
@@ -26,7 +26,7 @@ import { BbSelectOption, CheckboxComponent, MessageBoxComponent, PercentageInput
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-restaurant-settings',
   standalone: true,
-  imports: [FormsModule, CheckboxComponent, MessageBoxComponent, PercentageInputComponent, SelectComponent],
+  imports: [FormsModule, CheckboxComponent, MessageBoxComponent, NumberInputComponent, PercentageInputComponent, SelectComponent],
   templateUrl: './restaurant-settings.page.html',
   styleUrl: './restaurant-settings.page.scss',
 })

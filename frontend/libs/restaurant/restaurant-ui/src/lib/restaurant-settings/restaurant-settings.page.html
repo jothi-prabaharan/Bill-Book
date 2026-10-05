@@ -76,6 +76,14 @@
           (ngModelChange)="set('serviceChargePercent', $event ?? 0)"
         />
         <bb-checkbox name="tipsEnabled" text="Accept tips" hint="A tip is recorded on the bill and is not taxed." [ngModel]="settings().tipsEnabled" (ngModelChange)="set('tipsEnabled', $event)" />
+        <bb-number-input
+          name="loyaltyEarnRate"
+          label="Loyalty points per ₹100"
+          hint="A bill to a named customer earns this many points per ₹100, rounded down. 0 earns none."
+          [decimals]="2"
+          [ngModel]="settings().loyaltyEarnRate"
+          (ngModelChange)="set('loyaltyEarnRate', $event ?? 0)"
+        />
       </fieldset>
 
       <div class="rs__actions">

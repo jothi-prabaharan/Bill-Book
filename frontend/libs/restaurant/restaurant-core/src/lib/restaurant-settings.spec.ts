@@ -61,4 +61,11 @@ describe('restaurant settings', () => {
     expect(settingsProblem({ ...defaultRestaurantSettings(), serviceChargePercent: 26 })).toContain('25%');
     expect(settingsProblem({ ...defaultRestaurantSettings(), serviceChargePercent: -1 })).not.toBeNull();
   });
+
+  it('takes a loyalty rate between 0 and 100 points per ₹100 (TK-166)', () => {
+    expect(defaultRestaurantSettings().loyaltyEarnRate).toBe(0);
+    expect(settingsProblem({ ...defaultRestaurantSettings(), loyaltyEarnRate: 100 })).toBeNull();
+    expect(settingsProblem({ ...defaultRestaurantSettings(), loyaltyEarnRate: 101 })).toContain('Loyalty points per ₹100');
+    expect(settingsProblem({ ...defaultRestaurantSettings(), loyaltyEarnRate: -1 })).not.toBeNull();
+  });
 });

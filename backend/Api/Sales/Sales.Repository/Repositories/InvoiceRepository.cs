@@ -101,6 +101,9 @@ public sealed class InvoiceRepository : IInvoiceRepository
     /// <summary>Custom field values on save (TK-112); absent in tests built without one.</summary>
     private readonly DocumentCustomFieldGate? _customFields;
 
+    /// <summary>Takes back a voided restaurant bill's loyalty points (TK-166); null where loyalty is not wired.</summary>
+    private readonly ILoyaltyClient? _loyalty;
+
     public InvoiceRepository(
         SalesDbContext db,
         ITenantContext tenant,
@@ -124,8 +127,10 @@ public sealed class InvoiceRepository : IInvoiceRepository
         InvoiceOverrideService? overrides = null,
         Shared.Kernel.Projects.IProjectDirectory? projects = null,
         Shared.Kernel.Projects.IProjectBillingClient? projectBilling = null,
-        DocumentCustomFieldGate? customFields = null)
+        DocumentCustomFieldGate? customFields = null,
+        ILoyaltyClient? loyalty = null)
     {
+        _loyalty = loyalty;
         _customFields = customFields;
         _projectBilling = projectBilling;
         _projects = projects;
@@ -2185,6 +2190,15 @@ public sealed class InvoiceRepository : IInvoiceRepository
         {
             (Guid customerId, Guid orgId) = _tenant.Require();
             await _projectBilling.ReleaseAsync(customerId, orgId, invoiceId, ct);
+        }
+
+        // A voided restaurant bill gives back the points it earned (TK-166).
+        // Customer not answering leaves them; the bill's loyalty retry takes
+        // them back later, and the void itself stands either way.
+        if (voided.Outcome == InvoiceOutcome.Ok && _loyalty is not null
+            && await _db.RestaurantBills.AnyAsync(b => b.InvoiceId == invoiceId, ct))
+        {
+            await _loyalty.ReverseAsync(invoiceId, ct);
         }
 
         return voided;

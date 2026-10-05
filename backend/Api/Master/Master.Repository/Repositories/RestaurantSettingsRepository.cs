@@ -63,6 +63,7 @@ public sealed class RestaurantSettingsRepository
             [RestaurantSettingKey.WaiterRequired] = Flag(request.WaiterRequired),
             [RestaurantSettingKey.ServiceChargePercent] = request.ServiceChargePercent.ToString(System.Globalization.CultureInfo.InvariantCulture),
             [RestaurantSettingKey.TipsEnabled] = Flag(request.TipsEnabled),
+            [RestaurantSettingKey.LoyaltyEarnRate] = request.LoyaltyEarnRate.ToString(System.Globalization.CultureInfo.InvariantCulture),
         };
 
         Dictionary<RestaurantSettingKey, string> normalised = [];

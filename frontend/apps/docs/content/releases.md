@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Loyalty points on restaurant bills (TK-166).** Set **Loyalty points per ₹100** in Settings › Restaurant and every bill to a named customer earns whole points, once; voiding the bill takes them back. The bill page shows the customer's balance and what the bill earns. Spending points is not built yet (D-52). See [Loyalty points](restaurant-billing#loyalty-points).
+
 - **Added**: **Table bookings and a waiting list for restaurants (TK-165).** **Restaurant › Bookings** books a table for a time, refuses a second booking that overlaps it, and seats the party when they arrive by opening an order on the table. Walk-ins go on a waiting list, and a table that comes free offers the party waiting longest that fits it. The floor plan shows today's bookings still to arrive. Shown while tables are switched on. See [Bookings](restaurant-bookings).
 
 - **Security**: Row-level security is now on for the aggregator order record (TK-167), whose migration had left it out. Nothing else changes.

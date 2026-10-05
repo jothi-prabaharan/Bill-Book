@@ -330,4 +330,26 @@ public sealed class RestaurantBillView
 
     /// <summary>The orders now fully billed; an order with dishes left stays open.</summary>
     public List<long> ClosedOrderIds { get; set; } = [];
+
+    /// <summary>Loyalty points the bill earned its contact (TK-166); 0 when the branch has no rate or the bill went to the walk-in customer.</summary>
+    public int LoyaltyPoints { get; set; }
+
+    /// <summary>The contact's balance after this bill, when Customer recorded it.</summary>
+    public int? LoyaltyBalance { get; set; }
+
+    /// <summary>Set when points were due but Customer could not record them; the bill stands, and its loyalty can be retried.</summary>
+    public string? LoyaltyNote { get; set; }
+}
+
+/// <summary>What a bill's loyalty retry did (TK-166).</summary>
+public sealed class BillLoyaltyView
+{
+    public long RestaurantBillId { get; set; }
+
+    /// <summary>Points moved: what the bill earned, or what its void took back (negative).</summary>
+    public int Points { get; set; }
+
+    public int Balance { get; set; }
+
+    public bool AlreadyRecorded { get; set; }
 }

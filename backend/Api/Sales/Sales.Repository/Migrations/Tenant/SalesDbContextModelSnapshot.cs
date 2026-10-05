@@ -2745,6 +2745,9 @@ namespace Sales.Repository.Migrations.Tenant
                     b.Property<long>("InvoiceId")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("LoyaltyPoints")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 

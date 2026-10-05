@@ -343,6 +343,12 @@ builder.Services.AddHttpClient<IRecipeConsumptionClient, RecipeConsumptionClient
     client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
+// Loyalty points live in Customer (TK-166): earned after a bill posts, taken back on a void.
+builder.Services.AddHttpClient<ILoyaltyClient, LoyaltyClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Customer:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<Shared.Kernel.Contacts.IWalkInContact, Shared.Kernel.Contacts.HttpWalkInContact>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));

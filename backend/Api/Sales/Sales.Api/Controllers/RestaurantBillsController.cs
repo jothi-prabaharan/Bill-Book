@@ -57,6 +57,14 @@ public sealed class RestaurantBillsController : ControllerBase
         return printed is null ? NotFound() : Ok(printed);
     }
 
+    /// <summary>
+    /// Records a bill's loyalty points, or takes back a voided bill's (TK-166):
+    /// the retry when Customer did not answer at the time. Safe to repeat.
+    /// </summary>
+    [HttpPost("{billId:long}/loyalty")]
+    public async Task<IActionResult> SyncLoyalty(long billId, CancellationToken ct) =>
+        Respond(await _billing.SyncLoyaltyAsync(billId, ct), Ok);
+
     private IActionResult Respond<T>(OrderResult<T> result, Func<T, IActionResult> onOk) => result.Outcome switch
     {
         OrderOutcome.Ok => onOk(result.Value!),

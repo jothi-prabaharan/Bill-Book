@@ -588,6 +588,18 @@ namespace Master.Repository.Migrations.Admin
                             Name = "UPI ID",
                             Value = "",
                             Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000012"),
+                            Category = "Restaurant",
+                            Code = "restaurant.loyalty.earnRate",
+                            DataType = "Number",
+                            Description = "Points a posted bill earns the customer it names, per ₹100 of its total, rounded down. 0 earns nothing.",
+                            IsSystem = true,
+                            Name = "Loyalty points per ₹100",
+                            Value = "0",
+                            Version = 0u
                         });
                 });
 

@@ -53,6 +53,12 @@ export interface RestaurantBill {
   change: number;
   billedAt: string;
   closedOrderIds: number[];
+  /** Points the bill earned its customer (TK-166); 0 for none. */
+  loyaltyPoints: number;
+  /** The customer's balance after it, when it was recorded. */
+  loyaltyBalance: number | null;
+  /** Set when points were due but could not be recorded yet. */
+  loyaltyNote: string | null;
 }
 
 export interface BillDraft {

@@ -822,6 +822,20 @@ public class AdminDbContext : DbContext
                 Value = "",
                 Category = "Payments",
                 IsSystem = true,
+            },
+
+            // Loyalty points a restaurant bill earns its contact (TK-166).
+            new Configuration
+            {
+                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000012"),
+                OrgId = null,
+                Code = "restaurant.loyalty.earnRate",
+                Name = "Loyalty points per ₹100",
+                Description = "Points a posted bill earns the customer it names, per ₹100 of its total, rounded down. 0 earns nothing.",
+                DataType = ConfigDataType.Number,
+                Value = "0",
+                Category = "Restaurant",
+                IsSystem = true,
             });
     }
 

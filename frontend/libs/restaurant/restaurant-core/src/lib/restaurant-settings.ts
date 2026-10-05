@@ -22,12 +22,17 @@ export interface RestaurantSettingsView {
   waiterRequired: boolean;
   serviceChargePercent: number;
   tipsEnabled: boolean;
+  /** Loyalty points a bill earns its customer per ₹100 (TK-166); 0 earns nothing. */
+  loyaltyEarnRate: number;
 }
 
 export const RESTAURANT_SETTINGS_API = '/api/restaurant/settings';
 
 /** The highest service charge the server accepts, as a percentage. */
 export const MAX_SERVICE_CHARGE_PERCENT = 25;
+
+/** The most loyalty points ₹100 can earn: a point per rupee (TK-166). */
+export const MAX_LOYALTY_EARN_RATE = 100;
 
 /** A fresh branch: billing only, nothing required. The same as the server's defaults. */
 export function defaultRestaurantSettings(): RestaurantSettingsView {
@@ -41,6 +46,7 @@ export function defaultRestaurantSettings(): RestaurantSettingsView {
     waiterRequired: false,
     serviceChargePercent: 0,
     tipsEnabled: false,
+    loyaltyEarnRate: 0,
   };
 }
 
@@ -113,6 +119,11 @@ export function settingsProblem(settings: RestaurantSettingsView): string | null
   const charge = Number(settings.serviceChargePercent);
   if (!Number.isFinite(charge) || charge < 0 || charge > MAX_SERVICE_CHARGE_PERCENT) {
     return `The service charge must be between 0 and ${MAX_SERVICE_CHARGE_PERCENT}%.`;
+  }
+
+  const rate = Number(settings.loyaltyEarnRate ?? 0);
+  if (!Number.isFinite(rate) || rate < 0 || rate > MAX_LOYALTY_EARN_RATE) {
+    return `Loyalty points per ₹100 must be between 0 and ${MAX_LOYALTY_EARN_RATE}.`;
   }
 
   return null;
