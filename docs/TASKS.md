@@ -5104,7 +5104,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: [Scanning items](../frontend/apps/docs/content/invoices.md) with pointers from the quote, order, challan and credit-note pages; release note.
 
 ### TK-162 · Scan on purchase documents and scan to open
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#143](https://github.com/jothi-prabaharan/Bill-Book/issues/143)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-PUR-UI, L-WEB · **Depends on:** TK-157, TK-160
