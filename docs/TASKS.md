@@ -5059,7 +5059,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: [Printing labels](../frontend/apps/docs/content/masters.md), purchase **Labels for what arrived**, release note.
 
 ### TK-160 · Shared scan input with a small camera popup
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#141](https://github.com/jothi-prabaharan/Bill-Book/issues/141)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-UI, L-DEPS, L-DOC · **Depends on:** TK-155 · **Decision:** D-46
