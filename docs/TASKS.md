@@ -5082,7 +5082,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: [Scanning](../frontend/apps/docs/content/inputs.md), release note.
 
 ### TK-161 · Scan on sales documents
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#142](https://github.com/jothi-prabaharan/Bill-Book/issues/142)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-SAL-UI · **Depends on:** TK-160
