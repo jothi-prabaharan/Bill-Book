@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { readPermissions } from './token-claims';
+import { readPermissions, readSubject } from './token-claims';
 import {
   AccessibleOrg,
   Country,
@@ -61,6 +61,9 @@ export class AuthService {
    * so the permissions follow without anything having to remember to clear them.
    */
   readonly permissions = computed(() => new Set(readPermissions(this.accessToken())));
+
+  /** The signed-in user's id, so a screen can default "who is doing this" to them (a waiter on an order). */
+  readonly userId = computed(() => readSubject(this.accessToken()));
 
   /** Whether the user holds a permission, by its full code. */
   has(permission: string): boolean {

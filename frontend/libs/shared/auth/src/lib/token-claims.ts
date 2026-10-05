@@ -25,6 +25,12 @@ export function readPermissions(token: string | null): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }
 
+/** The signed-in user's id, the token's `sub`; null when there is no readable token. */
+export function readSubject(token: string | null): string | null {
+  const value = readClaims(token)['sub'];
+  return typeof value === 'string' && value ? value : null;
+}
+
 function readClaims(token: string | null): Record<string, unknown> {
   const payload = token?.split('.')[1];
   if (!payload) {

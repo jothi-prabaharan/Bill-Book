@@ -320,6 +320,19 @@ builder.Services.AddRestaurantSettings(builder.Configuration);
 // Restaurant floors and tables (TK-145).
 builder.Services.AddScoped<RestaurantTableRepository>();
 
+// Restaurant orders (TK-146): priced on Inventory's menu, waiters named by Master.
+builder.Services.AddScoped<RestaurantOrderRepository>();
+builder.Services.AddHttpClient<IRestaurantMenuClient, RestaurantMenuClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHttpClient<Shared.Kernel.Documents.IUserNameLookup, Shared.Kernel.Documents.HttpUserNameLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())

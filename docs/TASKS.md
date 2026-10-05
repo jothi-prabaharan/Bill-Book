@@ -4695,7 +4695,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** moving a table moves its open order, and a merged group bills as one.
 
 ### TK-146 · Order taking: dine-in, takeaway, delivery; waiter on mobile; optional table
-- [ ] working (Claude Opus 5.5) — 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#127](https://github.com/jothi-prabaharan/Bill-Book/issues/127)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-144, TK-145 · **Decision:** D-39, D-40
@@ -4703,13 +4703,21 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 1 October 2026. Sales has quotes, orders, challans and invoices but no running restaurant order.
 - **Tables:** `sal.RestaurantOrders` (number, order type, optional `TableId`, waiter user id, contact id, status Open, Billed or Cancelled), `sal.RestaurantOrderLines` (item, variant, modifiers, quantity, price, note, KOT status).
 - **Sub-tasks:**
-  - [ ] Entities, migration with RLS, and a numbering series seeded per branch.
-  - [ ] `RestaurantOrderRepository`: open, add and remove lines, change order type, move to another table. It applies the effective required rules from TK-143: a table is demanded only when tables are on and the level says so, and so on.
-  - [ ] The waiter is a user id with no foreign key; names are resolved in C# in a batch (rule 8).
-  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; the table field is checked only when the tables switch is on; all logic is in `*Repository.cs` (rule 16).
-  - [ ] Waiter pages, mobile first at 360 px; build them responsive so D-40 (tablet or phone) does not block.
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Entities, migration with RLS, and a numbering series seeded per branch.
+  - [x] `RestaurantOrderRepository`: open, add and remove lines, change order type, move to another table. It applies the effective required rules from TK-143: a table is demanded only when tables are on and the level says so, and so on.
+  - [x] The waiter is a user id with no foreign key; names are resolved in C# in a batch (rule 8).
+  - [x] Every controller carries `[RequireBusinessType(Restaurant)]`; the table field is checked only when the tables switch is on; all logic is in `*Repository.cs` (rule 16).
+  - [x] Waiter pages, mobile first at 360 px; build them responsive so D-40 (tablet or phone) does not block.
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (5 October 2026):**
+  - `sal.RestaurantOrders`, `sal.RestaurantOrderLines` and `sal.RestaurantOrderLineModifiers` (a child table rather than a JSON column, so recipes can join the stock a choice uses, TK-149), with the RLS block. A partial unique index allows one open order per table. Lines copy the dish's name, portion, station, unit price and choices from the menu, so a menu change never alters an order taken. `KitchenStatus` (NotSent to Cancelled) lives on the line; TK-147's tickets move it.
+  - `RestaurantOrderRulesRepository` (pure): `EffectiveTable` (none while tables are off), `RequirementRefusal` (table by level and switch, customer by level, waiter by switch), `Total`, `LineLockedRefusal`. `RestaurantOrderRepository`: open, add lines, change or remove an unsent line, update details, change order type (repricing every line), move to a table, cancel with a reason (sent lines cancelled, table released).
+  - Prices come from Inventory's `internal/restaurant/menu/price` through `RestaurantMenuClient`; a client never sends a price. With the menu or Master's settings unreachable the order is not saved and the API answers 503.
+  - Waiters: `IUserNameLookup` in `Shared.Kernel` (batched, cached, Guid-keyed) over Master's new `internal/users/names`; Master's `api/restaurant/staff` lists the branch's staff for the picker. Customers resolve through the existing `IContactNameLookup`.
+  - TK-145's table moves and merges now carry orders: a move re-points the open order; a merge moves the joined tables' lines onto the head's order (or makes the first of them the head's) and marks the emptied orders `Merged`. A table cannot be freed or cleared under an open order, nor deleted once any order names it.
+  - Numbering: the `RST` series' prefix is `ORD` (it was `KOT`, the kitchen ticket's word); branches seeded before keep their prefix. `mst.TransactionTypes` gains `RST`, posting nothing. `AuthService.userId` reads the token's `sub` so the waiter defaults to the signed-in user.
+  - Order page: open orders as cards; the order view puts type, table, waiter, customer and guests above the menu (category chips, dish tiles, a choice sheet) and the dishes below, saved and unsaved apart. Gateway routes for `api/restaurant/orders` (Sales) and `api/restaurant/staff` (Master).
 - **Done when:** a takeaway order saves with no table, and a dine-in order is refused without one only when the effective setting requires it.
 
 ### TK-147 · KOT: stations, reprint, cancel with reason, item status, kitchen display

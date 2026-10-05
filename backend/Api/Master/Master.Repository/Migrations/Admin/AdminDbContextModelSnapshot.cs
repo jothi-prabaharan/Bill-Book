@@ -24712,6 +24712,14 @@ namespace Master.Repository.Migrations.Admin
                             IsLedgerPosting = true,
                             Name = "Work Order",
                             Version = 0u
+                        },
+                        new
+                        {
+                            Code = "RST",
+                            IsActive = true,
+                            IsLedgerPosting = false,
+                            Name = "Restaurant Order",
+                            Version = 0u
                         });
                 });
 

@@ -1,60 +1,285 @@
-<div class="p-4 flex h-screen bg-gray-50">
-  <div class="w-2/3 pr-4 border-r">
-    <h1 class="text-2xl font-bold mb-4">Menu Items</h1>
-    <div class="grid grid-cols-3 gap-4">
-      <div *ngFor="let item of menuItems" 
-           class="bg-white p-4 rounded shadow cursor-pointer hover:bg-gray-50 border"
-           tabindex="0"
-           (click)="addItemToOrder(item)"
-           (keyup.enter)="addItemToOrder(item)">
-        <div class="font-bold">{{item.menuItemId}}</div>
-        <div class="text-gray-500 text-sm">Add to cart</div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="w-1/3 pl-4 flex flex-col">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-bold">Current Order</h2>
-      <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded" *ngIf="currentOrder">
-        {{currentOrder.orderNumber || 'Draft'}}
-      </span>
+<section class="ro">
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (!editing()) {
+    <header class="ro__head">
+      <h1 class="ro__title">Orders</h1>
+      <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newOrder()">New order</button>
+    </header>
+
+    <div class="ro__chips" role="group" aria-label="Order type">
+      <button type="button" class="ro__chip" [class.ro__chip--on]="typeFilter() === ''" (click)="typeFilter.set('')">All</button>
+      @for (t of orderTypes; track t.value) {
+        <button type="button" class="ro__chip" [class.ro__chip--on]="typeFilter() === t.value" (click)="typeFilter.set(t.value)">{{ t.label }}</button>
+      }
     </div>
 
-    <div class="flex gap-2 mb-4" *ngIf="!currentOrder">
-      <button class="bg-blue-600 text-white px-4 py-2 rounded flex-1 font-medium hover:bg-blue-700" (click)="openNewOrder()">
-        Start New Order
-      </button>
+    <ul class="ro__cards" aria-label="Open orders">
+      @for (o of visibleOrders(); track o.restaurantOrderId) {
+        <li>
+          <button type="button" class="ro__card" (click)="openOrder(o.restaurantOrderId)">
+            <span class="ro__card-top">
+              <strong>{{ orderPlace(o) }}</strong>
+              <span class="ro__muted">{{ o.orderNo }}</span>
+            </span>
+            <span class="ro__muted">{{ o.waiterName ?? 'No waiter' }} · {{ o.lineCount }} {{ o.lineCount === 1 ? 'dish' : 'dishes' }}{{ o.unsentCount ? ' · ' + o.unsentCount + ' not sent' : '' }}</span>
+            <span class="ro__amount">{{ money(o.total) }}</span>
+          </button>
+        </li>
+      } @empty {
+        <li class="ro__muted">No open orders.</li>
+      }
+    </ul>
+  } @else {
+    <header class="ro__head">
+      <button type="button" class="btn" (click)="back()">Back</button>
+      <h1 class="ro__title">{{ current()?.orderNo ?? 'New order' }}</h1>
+      @if (current(); as o) {
+        <span class="ro__status">{{ o.status }}</span>
+      }
+    </header>
+
+    <div class="ro__types" role="radiogroup" aria-label="Order type">
+      @for (t of orderTypes; track t.value) {
+        <button
+          type="button"
+          role="radio"
+          class="ro__chip"
+          [class.ro__chip--on]="orderType() === t.value"
+          [attr.aria-checked]="orderType() === t.value"
+          [disabled]="busy() || !isOpen()"
+          (click)="setOrderType(t.value)"
+        >
+          {{ t.label }}
+        </button>
+      }
     </div>
 
-    <div *ngIf="currentOrder" class="flex-1 overflow-y-auto">
-      <div class="flex gap-2 mb-4">
-        <button class="border p-2 rounded flex-1 bg-white hover:bg-gray-50" (click)="updateOrderType(1)" [class.bg-blue-50]="currentOrder.orderType === 1">Dine In</button>
-        <button class="border p-2 rounded flex-1 bg-white hover:bg-gray-50" (click)="updateOrderType(2)" [class.bg-blue-50]="currentOrder.orderType === 2">Takeaway</button>
-      </div>
-
-      <div class="space-y-2 mb-4">
-        <div *ngFor="let line of orderLines" class="bg-white p-3 rounded shadow-sm border flex justify-between items-center">
-          <div>
-            <div class="font-medium">Item #{{line.menuItemId}}</div>
-            <div class="text-sm text-gray-500">{{line.quantity}} x {{line.unitPrice}}</div>
+    <div class="ro__details">
+      @if (settings().tablesEnabled) {
+        @if (current(); as o) {
+          <div class="ro__field">
+            <span class="ro__label">Table</span>
+            <span>{{ o.tableCode ?? 'None' }}</span>
+            @if (isOpen()) {
+              <button type="button" class="btn btn--link" (click)="sheet.set('move'); moveTo = null">{{ o.tableCode ? 'Move' : 'Seat at a table' }}</button>
+            }
           </div>
-          <button class="text-red-500 hover:bg-red-50 p-2 rounded" (click)="removeLine(line)">
-            Remove
+        } @else {
+          <bb-select
+            label="Table"
+            name="tableId"
+            [required]="required().table"
+            [placeholder]="required().table ? 'Choose a table' : 'No table'"
+            [options]="tableOptions()"
+            [ngModel]="tableId()"
+            (ngModelChange)="tableId.set($event)"
+          />
+        }
+      }
+      <bb-select
+        label="Waiter"
+        name="waiterId"
+        [required]="required().waiter"
+        placeholder="No waiter"
+        [disabled]="!isOpen()"
+        [options]="staffOptions()"
+        [ngModel]="waiterId()"
+        (ngModelChange)="waiterId.set($event)"
+      />
+      <div class="ro__field">
+        <span class="ro__label">Customer{{ required().customer ? ' *' : '' }}</span>
+        <div class="ro__inline">
+          <button type="button" class="btn ro__pick" [disabled]="!isOpen()" (click)="openPicker()">{{ contactLabel() || 'Choose a customer' }}</button>
+          @if (contactId() && isOpen()) {
+            <button type="button" class="btn btn--link" (click)="clearContact()">Clear</button>
+          }
+        </div>
+      </div>
+      <bb-number-input label="Guests" name="guests" [decimals]="0" [disabled]="!isOpen()" [(ngModel)]="guests" />
+      <bb-text-input label="Note for the order" name="notes" [disabled]="!isOpen()" [(ngModel)]="notes" />
+      @if (current() && isOpen()) {
+        <div class="ro__field ro__field--end">
+          <button type="button" class="btn" [disabled]="busy()" (click)="saveDetails()">Save details</button>
+        </div>
+      }
+    </div>
+
+    @if (isOpen()) {
+      <div class="ro__menu">
+        <bb-text-input label="Find a dish" name="search" placeholder="Name" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+        @if (!search()) {
+          <div class="ro__chips ro__chips--scroll" role="tablist" aria-label="Categories">
+            @for (c of categories(); track c.menuCategoryId) {
+              <button type="button" role="tab" class="ro__chip" [class.ro__chip--on]="categoryId() === c.menuCategoryId" [attr.aria-selected]="categoryId() === c.menuCategoryId" (click)="categoryId.set(c.menuCategoryId)">
+                {{ c.name }}
+              </button>
+            }
+          </div>
+        }
+        <ul class="ro__dishes" aria-label="Dishes">
+          @for (d of dishes(); track d.itemId) {
+            <li>
+              <button type="button" class="ro__dish" [class.ro__dish--out]="!d.isAvailable" [attr.aria-disabled]="!d.isAvailable" (click)="tapDish(d)">
+                <span class="ro__dish-name">{{ d.name }}</span>
+                <span class="ro__muted">{{ d.isAvailable ? (d.price !== null ? money(d.price) : d.variants.length + ' portions') : 'Sold out' }}</span>
+              </button>
+            </li>
+          } @empty {
+            <li class="ro__muted">Nothing on the menu matches.</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="ro__cart">
+      <h2 class="ro__subtitle">Dishes</h2>
+      @if (current(); as o) {
+        @for (l of o.lines; track l.restaurantOrderLineId) {
+          <div class="ro__line" [class.ro__line--cancelled]="l.kitchenStatus === 'Cancelled'">
+            <div class="ro__line-main">
+              <span>{{ l.quantity }} × {{ l.itemName }}{{ l.variantName ? ' (' + l.variantName + ')' : '' }}</span>
+              @if (l.modifiers.length) {
+                <span class="ro__muted">{{ modifierNames(l) }}</span>
+              }
+              @if (l.note) {
+                <span class="ro__muted">“{{ l.note }}”</span>
+              }
+              <span class="ro__muted">{{ kitchenStatusLabel(l.kitchenStatus) }}{{ l.cancelReason ? ': ' + l.cancelReason : '' }}</span>
+            </div>
+            <div class="ro__line-side">
+              <span>{{ money(l.amount) }}</span>
+              @if (l.kitchenStatus === 'NotSent' && isOpen()) {
+                <div class="ro__stepper">
+                  <button type="button" class="btn btn--small" [attr.aria-label]="'One less ' + l.itemName" [disabled]="busy()" (click)="changeSaved(l, l.quantity - 1)">−</button>
+                  <button type="button" class="btn btn--small" [attr.aria-label]="'One more ' + l.itemName" [disabled]="busy()" (click)="changeSaved(l, l.quantity + 1)">+</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @for (p of pending(); track p.key) {
+        <div class="ro__line ro__line--pending">
+          <div class="ro__line-main">
+            <span>{{ p.quantity }} × {{ p.name }}{{ p.variantName ? ' (' + p.variantName + ')' : '' }}</span>
+            @if (p.modifierNames.length) {
+              <span class="ro__muted">{{ p.modifierNames.join(', ') }}</span>
+            }
+            @if (p.note) {
+              <span class="ro__muted">“{{ p.note }}”</span>
+            }
+            <span class="ro__muted">Not saved</span>
+          </div>
+          <div class="ro__line-side">
+            <span>{{ money(p.quantity * p.unitPrice) }}</span>
+            <div class="ro__stepper">
+              <button type="button" class="btn btn--small" [attr.aria-label]="'One less ' + p.name" (click)="changePending(p.key, p.quantity - 1)">−</button>
+              <button type="button" class="btn btn--small" [attr.aria-label]="'One more ' + p.name" (click)="changePending(p.key, p.quantity + 1)">+</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (!current()?.lines?.length && !pending().length) {
+        <p class="ro__muted">Tap a dish to add it.</p>
+      }
+
+      <div class="ro__totals">
+        <span>Total before tax</span>
+        <strong>{{ money((current()?.total ?? 0) + pendingTotal()) }}</strong>
+      </div>
+
+      @if (isOpen()) {
+        <div class="ro__actions">
+          @if (current()) {
+            <button *bbIfCan="'restaurant.void'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="sheet.set('cancel'); cancelReason = ''">Cancel order</button>
+          }
+          <button type="button" class="btn btn--primary" [disabled]="busy() || (!!current() && !pending().length)" (click)="saveOrder()">
+            {{ current() ? 'Add to order' : 'Save order' }}
           </button>
         </div>
-        
-        <div *ngIf="orderLines.length === 0" class="text-center text-gray-500 py-8 border-2 border-dashed rounded">
-          Cart is empty
-        </div>
-      </div>
-      
-      <div class="mt-auto border-t pt-4">
-        <div class="flex justify-between font-bold text-lg mb-4">
-          <span>Total:</span>
-          <span>{{currentOrder.totalAmount}}</span>
+        @if (!current() && problem()) {
+          <p class="ro__muted">{{ problem() }}</p>
+        }
+      }
+    </div>
+  }
+
+  @if (choosing(); as item) {
+    <div class="ro__sheet" role="dialog" aria-modal="true" [attr.aria-label]="item.name">
+      <div class="ro__panel">
+        <h2 class="ro__subtitle">{{ item.name }}</h2>
+        @if (item.variants.length) {
+          <div class="ro__field">
+            <span class="ro__label">Portion</span>
+            <div class="ro__chips">
+              @for (v of item.variants; track v.itemVariantId) {
+                <button type="button" class="ro__chip" [class.ro__chip--on]="chosenVariant?.itemVariantId === v.itemVariantId" (click)="chosenVariant = v">
+                  {{ v.name }} · {{ money(v.price) }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+        @for (g of item.modifierGroups; track g.modifierGroupId) {
+          <fieldset class="ro__group">
+            <legend class="ro__label">{{ g.name }}{{ g.isRequired ? ' *' : '' }} <span class="ro__muted">({{ g.minChoices === g.maxChoices ? 'choose ' + g.maxChoices : 'up to ' + g.maxChoices }})</span></legend>
+            @for (m of g.modifiers; track m.modifierId) {
+              <bb-checkbox
+                [name]="'mod' + m.modifierId"
+                [text]="m.name + (m.priceChange ? ' · ' + (m.priceChange > 0 ? '+' : '') + money(m.priceChange) : '') + (m.isAvailable ? '' : ' · sold out')"
+                [disabled]="!m.isAvailable"
+                [ngModel]="chosenModifiers().includes(m.modifierId)"
+                (ngModelChange)="toggleModifier(m.modifierId, $event)"
+              />
+            }
+          </fieldset>
+        }
+        <bb-number-input label="Quantity" name="chosenQuantity" [decimals]="0" [(ngModel)]="chosenQuantity" />
+        <bb-textarea label="Note for the kitchen" name="chosenNote" placeholder="No onion" [(ngModel)]="chosenNote" />
+        <div class="ro__actions">
+          <button type="button" class="btn" (click)="choosing.set(null)">Cancel</button>
+          <button type="button" class="btn btn--primary" (click)="addChosen()">Add · {{ money(chosenPrice() * (chosenQuantity || 1)) }}</button>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  }
+
+  @if (sheet(); as s) {
+    <div class="ro__sheet" role="dialog" aria-modal="true" [attr.aria-label]="s === 'move' ? 'Move the order' : 'Cancel the order'">
+      <div class="ro__panel">
+        @if (s === 'move') {
+          <h2 class="ro__subtitle">Move to a table</h2>
+          <bb-select label="Table" name="moveTo" placeholder="Choose a free table" [options]="moveOptions()" [(ngModel)]="moveTo" />
+          <div class="ro__actions">
+            <button type="button" class="btn" (click)="sheet.set(null)">Close</button>
+            <button type="button" class="btn btn--primary" [disabled]="busy() || !moveTo" (click)="move()">Move</button>
+          </div>
+        } @else {
+          <h2 class="ro__subtitle">Cancel {{ current()?.orderNo }}</h2>
+          <bb-textarea label="Why" name="cancelReason" [required]="true" placeholder="Guests left before the food came" [(ngModel)]="cancelReason" />
+          <div class="ro__actions">
+            <button type="button" class="btn" (click)="sheet.set(null)">Keep the order</button>
+            <button type="button" class="btn btn--danger" [disabled]="busy()" (click)="cancel()">Cancel order</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>
+
+<bb-lookup-dialog
+  [open]="pickerOpen()"
+  title="Choose a customer"
+  placeholder="Search customers by code, name or phone"
+  emptyText="No customers match."
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="searchContacts($event)"
+  (choose)="pickContact($event)"
+  (dismiss)="pickerOpen.set(false)"
+/>

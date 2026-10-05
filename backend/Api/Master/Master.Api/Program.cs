@@ -121,6 +121,7 @@ builder.Services.AddScoped<ApplicationRepository>();
 builder.Services.AddScoped<OrgCurrencyRepository>();
 builder.Services.AddScoped<ConfigurationRepository>();
 builder.Services.AddScoped<RestaurantSettingsRepository>();
+builder.Services.AddScoped<BranchStaffRepository>();
 builder.Services.AddScoped<FormatSettingsRepository>();
 builder.Services.AddScoped<SmtpSettingsRepository>();
 builder.Services.AddScoped<OrganizationRepository>();

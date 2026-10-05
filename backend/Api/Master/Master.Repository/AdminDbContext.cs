@@ -460,6 +460,9 @@ public class AdminDbContext : DbContext
 
             // School work orders: parts issued post Dr COGS / Cr Inventory under it (TK-66).
             ("WRK", "Work Order", true),
+
+            // A restaurant order (TK-146): a running tab that posts nothing; its bill is an invoice.
+            ("RST", "Restaurant Order", false),
         };
 
         modelBuilder.Entity<TransactionType>().HasData(

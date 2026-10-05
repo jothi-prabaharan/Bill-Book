@@ -38,7 +38,10 @@ public static class NumberingSeriesSeed
         // office both issue invoices, and a shop that cannot tell which came
         // from where cannot reconcile a till at close.
         Document(orgId, 340, "POS", "POS Sale Number", "POS"),
-        Document(orgId, 345, "RST", "Restaurant Order Number", "KOT"),
+
+        // A restaurant order (TK-146). It posts nothing; its number is what the
+        // waiter and the kitchen call it by. The kitchen ticket has its own (TK-147).
+        Document(orgId, 345, "RST", "Restaurant Order Number", "ORD"),
     ];
 
     private static NumberingSeries Document(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readPermissions } from './token-claims';
+import { readPermissions, readSubject } from './token-claims';
 
 /**
  * The menu is drawn from what this returns, so every way it can fail is a user
@@ -67,5 +67,11 @@ describe('readPermissions', () => {
     expect(readPermissions('header..signature')).toEqual([]);
     expect(readPermissions('header.!!!not-base64!!!.signature')).toEqual([]);
     expect(readPermissions(`header.${btoa('[1,2,3]')}.signature`)).toEqual([]);
+  });
+
+  it('reads the user id from sub, and nothing from a token without one', () => {
+    expect(readSubject(tokenFor({ sub: '6f9619ff-8b86-d011-b42d-00cf4fc964ff' }))).toBe('6f9619ff-8b86-d011-b42d-00cf4fc964ff');
+    expect(readSubject(tokenFor({ permission: ['x.view'] }))).toBeNull();
+    expect(readSubject(null)).toBeNull();
   });
 });

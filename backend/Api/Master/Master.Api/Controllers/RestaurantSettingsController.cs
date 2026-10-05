@@ -72,3 +72,50 @@ public sealed class InternalRestaurantSettingsController : ControllerBase
         return Ok(await _services.GetRequiredService<RestaurantSettingsRepository>().GetSettingsAsync(ct));
     }
 }
+
+/// <summary>The branch's staff, for choosing a waiter on an order (TK-146).</summary>
+[ApiController]
+[Authorize]
+[RequireBusinessType(BusinessType.Restaurant)]
+[RequireModulePermission("restaurant")]
+[Route("api/restaurant/staff")]
+public sealed class RestaurantStaffController : ControllerBase
+{
+    private readonly BranchStaffRepository _staff;
+    private readonly ITenantContext _tenant;
+
+    public RestaurantStaffController(BranchStaffRepository staff, ITenantContext tenant)
+    {
+        _staff = staff;
+        _tenant = tenant;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> List(CancellationToken ct) => Ok(await _staff.StaffAsync(_tenant.Require().OrgId, ct));
+}
+
+/// <summary>
+/// User names for other services, batched (TK-146). Only users with a role in
+/// the branch named in the body come back.
+/// </summary>
+[ApiController]
+[AllowAnonymous]
+[InternalOnly]
+[Route("internal/users/names")]
+public sealed class InternalUserNamesController : ControllerBase
+{
+    private readonly BranchStaffRepository _staff;
+
+    public InternalUserNamesController(BranchStaffRepository staff) => _staff = staff;
+
+    [HttpPost]
+    public async Task<IActionResult> Names([FromBody] Shared.Kernel.Documents.UserNameLookupRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse { Message = "A customer and an organization are required to resolve names." });
+        }
+
+        return Ok(await _staff.NamesAsync(request.OrgId, request.Ids, ct));
+    }
+}

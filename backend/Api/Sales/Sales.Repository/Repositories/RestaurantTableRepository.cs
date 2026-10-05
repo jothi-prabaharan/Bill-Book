@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Shared.Kernel.Persistence;
@@ -33,6 +34,9 @@ public sealed class RestaurantTableRepository
             .ToListAsync(ct);
 
         Dictionary<long, string> codes = tables.ToDictionary(t => t.RestaurantTableId, t => t.Code);
+        Dictionary<long, long> openOrders = await _db.RestaurantOrders
+            .Where(o => o.Status == RestaurantOrderStatus.Open && o.RestaurantTableId != null)
+            .ToDictionaryAsync(o => o.RestaurantTableId!.Value, o => o.RestaurantOrderId, ct);
         ILookup<long, string> members = tables
             .Where(t => t.MergedIntoTableId is not null)
             .ToLookup(t => t.MergedIntoTableId!.Value, t => t.Code);
@@ -56,6 +60,7 @@ public sealed class RestaurantTableRepository
                     MergedIntoCode = t.MergedIntoTableId is long head ? codes.GetValueOrDefault(head) : null,
                     MergedCodes = [.. members[t.RestaurantTableId]],
                     IsActive = t.IsActive,
+                    OpenOrderId = openOrders.TryGetValue(t.MergedIntoTableId ?? t.RestaurantTableId, out long orderId) ? orderId : null,
                 }).ToList(),
             }).ToList(),
         };
@@ -188,6 +193,12 @@ public sealed class RestaurantTableRepository
             return TableResult<bool>.Refuse($"Table {table.Code} is in use. Free it, and split it from any group, first.");
         }
 
+        // Past orders name the table; deleting it would leave them pointing at nothing.
+        if (await _db.RestaurantOrders.AnyAsync(o => o.RestaurantTableId == tableId, ct))
+        {
+            return TableResult<bool>.Refuse($"Table {table.Code} has orders. Switch it off instead.");
+        }
+
         _db.RestaurantTables.Remove(table);
         await _db.SaveChangesAsync(ct);
         return TableResult<bool>.Done(true);
@@ -217,6 +228,11 @@ public sealed class RestaurantTableRepository
         {
             return TableResult<TableStatus>.Refuse(
                 $"Table {table.Code} is {RestaurantTableRulesRepository.StatusLabel(table.Status)} and cannot become {RestaurantTableRulesRepository.StatusLabel(status)}.");
+        }
+
+        if (status is TableStatus.Free or TableStatus.Cleaning && await OpenOrderNoAsync(table.RestaurantTableId, ct) is string open)
+        {
+            return TableResult<TableStatus>.Refuse($"Table {table.Code} has order {open} open. Bill or cancel it first.");
         }
 
         List<RestaurantTable> group = await GroupOfAsync(table.RestaurantTableId, ct);
@@ -280,6 +296,12 @@ public sealed class RestaurantTableRepository
         foreach (RestaurantTable member in await _db.RestaurantTables.Where(t => t.MergedIntoTableId == from.RestaurantTableId).ToListAsync(ct))
         {
             member.MergedIntoTableId = to.RestaurantTableId;
+        }
+
+        // The party's open order goes with them.
+        foreach (RestaurantOrder order in await _db.RestaurantOrders.Where(o => o.RestaurantTableId == from.RestaurantTableId && o.Status == RestaurantOrderStatus.Open).ToListAsync(ct))
+        {
+            order.RestaurantTableId = to.RestaurantTableId;
         }
 
         await _db.SaveChangesAsync(ct);
@@ -350,6 +372,8 @@ public sealed class RestaurantTableRepository
             t.MergedIntoTableId = head.RestaurantTableId;
         }
 
+        await CombineOrdersAsync(head.RestaurantTableId, joining, ct);
+
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return TableResult<long>.Done(head.RestaurantTableId);
@@ -389,6 +413,51 @@ public sealed class RestaurantTableRepository
     }
 
     // ---- Helpers ----
+
+    /// <summary>
+    /// A merged group is ordered and billed as its head table, so the joining
+    /// tables' open orders become one: their lines move onto the head's open
+    /// order, or the first of them becomes the head's when it has none. An
+    /// order emptied this way is marked Merged, naming where its lines went.
+    /// </summary>
+    private async Task CombineOrdersAsync(long headId, IReadOnlyCollection<long> joiningIds, CancellationToken ct)
+    {
+        List<RestaurantOrder> orders = await _db.RestaurantOrders
+            .Include(o => o.Lines)
+            .Where(o => o.Status == RestaurantOrderStatus.Open && o.RestaurantTableId != null
+                && (o.RestaurantTableId == headId || joiningIds.Contains(o.RestaurantTableId.Value)))
+            .OrderBy(o => o.RestaurantTableId == headId ? 0 : 1).ThenBy(o => o.OpenedAt)
+            .ToListAsync(ct);
+        if (orders.Count == 0)
+        {
+            return;
+        }
+
+        RestaurantOrder target = orders[0];
+        int next = target.Lines.Count == 0 ? 1 : target.Lines.Max(l => l.LineNo) + 1;
+        foreach (RestaurantOrder other in orders.Skip(1))
+        {
+            foreach (RestaurantOrderLine line in other.Lines.OrderBy(l => l.LineNo).ToList())
+            {
+                line.RestaurantOrderId = target.RestaurantOrderId;
+                line.LineNo = next++;
+            }
+
+            other.Status = RestaurantOrderStatus.Merged;
+            other.MergedIntoOrderId = target.RestaurantOrderId;
+            other.RestaurantTableId = null;
+        }
+
+        // Free the partial unique index on (table, open) before the head takes the order.
+        await _db.SaveChangesAsync(ct);
+        target.RestaurantTableId = headId;
+    }
+
+    private Task<string?> OpenOrderNoAsync(long headId, CancellationToken ct) =>
+        _db.RestaurantOrders
+            .Where(o => o.RestaurantTableId == headId && o.Status == RestaurantOrderStatus.Open)
+            .Select(o => o.OrderNo)
+            .FirstOrDefaultAsync(ct);
 
     private async Task<List<RestaurantTable>> GroupOfAsync(long headId, CancellationToken ct) =>
         await _db.RestaurantTables.Where(t => t.RestaurantTableId == headId || t.MergedIntoTableId == headId).ToListAsync(ct);

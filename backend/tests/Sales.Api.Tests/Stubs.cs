@@ -528,3 +528,63 @@ internal sealed class StubEInvoicing : Sales.Repository.Repositories.IEInvoicePo
         return Task.FromResult(VoidRefusal);
     }
 }
+
+/// <summary>Restaurant settings as a test sets them (TK-146); null stands for Master being unreachable.</summary>
+public sealed class StubRestaurantSettings(Shared.Kernel.Restaurant.RestaurantSettingsView? settings) : Shared.Kernel.Internal.IRestaurantSettingsProvider
+{
+    public Shared.Kernel.Restaurant.RestaurantSettingsView? Settings { get; set; } = settings;
+
+    public Task<Shared.Kernel.Restaurant.RestaurantSettingsView?> GetSettingsAsync(CancellationToken ct = default) => Task.FromResult(Settings);
+}
+
+/// <summary>
+/// Inventory's menu in miniature (TK-146): each dish id has a dine-in price,
+/// takeaway is ten more, and dish 99 is sold out.
+/// </summary>
+public sealed class StubRestaurantMenu : Sales.Repository.Clients.IRestaurantMenuClient
+{
+    public const long SoldOut = 99;
+
+    public bool Down { get; set; }
+
+    public List<Shared.Kernel.Restaurant.OrderType> PricedFor { get; } = [];
+
+    public Task<Sales.Repository.Clients.MenuPricing> PriceAsync(
+        Shared.Kernel.Restaurant.OrderType orderType, DateTime at, IReadOnlyList<Sales.Repository.Clients.MenuLineToPrice> lines, CancellationToken ct)
+    {
+        PricedFor.Add(orderType);
+        if (Down)
+        {
+            return Task.FromResult(new Sales.Repository.Clients.MenuPricing(null, null, null));
+        }
+
+        int sold = lines.ToList().FindIndex(l => l.ItemId == SoldOut);
+        if (sold >= 0)
+        {
+            return Task.FromResult(new Sales.Repository.Clients.MenuPricing(null, sold, "Biryani is sold out."));
+        }
+
+        decimal extra = orderType == Shared.Kernel.Restaurant.OrderType.Takeaway ? 10m : 0m;
+        List<Sales.Repository.Clients.MenuPricedLine> priced = [.. lines.Select(l => new Sales.Repository.Clients.MenuPricedLine
+        {
+            ItemId = l.ItemId,
+            ItemName = $"Dish {l.ItemId}",
+            ItemVariantId = l.ItemVariantId,
+            VariantName = l.ItemVariantId is null ? null : "Half",
+            PortionFactor = l.ItemVariantId is null ? 1m : 0.5m,
+            Station = Shared.Kernel.Restaurant.MenuStation.Kitchen,
+            UnitPrice = l.ItemId * 10m + extra + l.ModifierIds.Count * 5m,
+            Modifiers = [.. l.ModifierIds.Select(id => new Sales.Repository.Clients.MenuPricedModifier { ModifierId = id, Name = $"Choice {id}", PriceChange = 5m })],
+        })];
+        return Task.FromResult(new Sales.Repository.Clients.MenuPricing(priced, null, null));
+    }
+}
+
+/// <summary>The branch's staff: every id is a known waiter except <see cref="Stranger"/>.</summary>
+public sealed class StubUserNames : IUserNameLookup
+{
+    public static readonly Guid Stranger = Guid.Parse("00000000-0000-0000-0000-00000000dead");
+
+    public Task<IReadOnlyDictionary<Guid, UserRef>> ResolveAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, UserRef>>(ids.Where(id => id != Stranger).ToDictionary(id => id, id => new UserRef(id, $"Waiter {id.ToString()[..4]}")));
+}

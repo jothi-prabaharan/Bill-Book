@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { IfCanDirective } from '@bill-book/auth';
 import {
@@ -36,6 +37,7 @@ type Sheet = 'actions' | 'move' | 'merge' | 'edit-table' | 'edit-floor' | null;
 })
 export class RestaurantTablesPage implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
 
   protected readonly plan = signal<FloorPlan>({ floors: [] });
   protected readonly floorId = signal<number | null>(null);
@@ -105,6 +107,12 @@ export class RestaurantTablesPage implements OnInit {
     this.sheet.set(null);
     this.selected.set(null);
     this.chosen.set(new Set());
+  }
+
+  /** To the order screen: the table's open order, or a new one at this table. */
+  protected takeOrder(table: RestaurantTable): void {
+    const headId = table.mergedIntoTableId ?? table.restaurantTableId;
+    void this.router.navigate(['/restaurant/orders'], { queryParams: table.openOrderId ? { order: table.openOrderId } : { table: headId } });
   }
 
   protected async setStatus(table: RestaurantTable, status: TableStatus): Promise<void> {

@@ -48,6 +48,9 @@
             <span class="tp__code">{{ t.code }}</span>
             <span class="tp__seats">{{ t.seats }} seats</span>
             <span class="tp__status">{{ t.isActive ? statusLabel(t.status) : 'Off' }}</span>
+            @if (t.openOrderId) {
+              <span class="tp__group">Order open</span>
+            }
             @if (t.mergedIntoCode) {
               <span class="tp__group">With {{ t.mergedIntoCode }}</span>
             } @else if (t.mergedCodes.length) {
@@ -74,6 +77,11 @@
                 <p class="tp__muted">Part of table {{ t.mergedIntoCode }}'s group. Its orders and bill are on {{ t.mergedIntoCode }}.</p>
               }
               <div class="tp__actions">
+                @if (t.openOrderId) {
+                  <button type="button" class="btn btn--primary" (click)="takeOrder(t)">Open order</button>
+                } @else if (t.status === 'Free' || t.status === 'Occupied') {
+                  <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="takeOrder(t)">Take an order</button>
+                }
                 @for (to of nextStatuses(t); track to) {
                   <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="setStatus(t, to)">{{ statusAction(to, t.status) }}</button>
                 }

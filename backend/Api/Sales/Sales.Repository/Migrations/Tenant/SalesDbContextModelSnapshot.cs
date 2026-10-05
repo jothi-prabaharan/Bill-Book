@@ -2511,6 +2511,260 @@ namespace Sales.Repository.Migrations.Tenant
                     b.ToTable("ReminderProfiles", "sal");
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrder", b =>
+                {
+                    b.Property<long>("RestaurantOrderId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantOrderId"));
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<long?>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Guests")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("MergedIntoOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<long>("NumberingSeriesId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("OrderDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("OrderNo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("OrderType")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("RestaurantTableId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<Guid?>("WaiterUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RestaurantOrderId");
+
+                    b.HasIndex("MergedIntoOrderId");
+
+                    b.HasIndex("RestaurantTableId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "OrderNo")
+                        .IsUnique();
+
+                    b.HasIndex("OrgId", "RestaurantTableId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 'Open' AND \"RestaurantTableId\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "Status", "OpenedAt");
+
+                    b.ToTable("RestaurantOrders", "sal");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrderLine", b =>
+                {
+                    b.Property<long>("RestaurantOrderLineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantOrderLineId"));
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<long?>("ItemVariantId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("KitchenStatus")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<int>("LineNo")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PortionFactor")
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<long>("RestaurantOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Station")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("VariantName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("RestaurantOrderLineId");
+
+                    b.HasIndex("RestaurantOrderId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "KitchenStatus", "Station");
+
+                    b.ToTable("RestaurantOrderLines", "sal", t =>
+                        {
+                            t.HasCheckConstraint("chk_restaurant_order_line_quantity", "\"Quantity\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrderLineModifier", b =>
+                {
+                    b.Property<long>("RestaurantOrderLineModifierId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantOrderLineModifierId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("LinkedItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("LinkedQuantity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ModifierId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PriceChange")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("RestaurantOrderLineId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("RestaurantOrderLineModifierId");
+
+                    b.HasIndex("RestaurantOrderLineId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("RestaurantOrderLineModifiers", "sal");
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantTable", b =>
                 {
                     b.Property<long>("RestaurantTableId")
@@ -3837,6 +4091,37 @@ namespace Sales.Repository.Migrations.Tenant
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrder", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
+                        .WithMany()
+                        .HasForeignKey("MergedIntoOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantTable", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantTableId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrderLine", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("RestaurantOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrderLineModifier", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrderLine", null)
+                        .WithMany("Modifiers")
+                        .HasForeignKey("RestaurantOrderLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantTable", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.Floor", null)
@@ -3915,6 +4200,16 @@ namespace Sales.Repository.Migrations.Tenant
             modelBuilder.Entity("Sales.Entity.TableEntities.QuoteDetail", b =>
                 {
                     b.Navigation("Taxes");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrder", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.RestaurantOrderLine", b =>
+                {
+                    b.Navigation("Modifiers");
                 });
 
             modelBuilder.Entity("Sales.Entity.TableEntities.SalesOrder", b =>

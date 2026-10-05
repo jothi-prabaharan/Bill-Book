@@ -108,6 +108,13 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
 
+    // Restaurant orders (TK-146).
+    public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
+
+    public DbSet<RestaurantOrderLine> RestaurantOrderLines => Set<RestaurantOrderLine>();
+
+    public DbSet<RestaurantOrderLineModifier> RestaurantOrderLineModifiers => Set<RestaurantOrderLineModifier>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("sal");
@@ -493,6 +500,46 @@ public class SalesDbContext : TenantDbContext
                 t.HasCheckConstraint("chk_restaurant_table_seats", "\"Seats\" BETWEEN 1 AND 100");
                 t.HasCheckConstraint("chk_restaurant_table_not_self", "\"MergedIntoTableId\" IS NULL OR \"MergedIntoTableId\" <> \"RestaurantTableId\"");
             });
+        });
+
+        // ---- Restaurant orders (TK-146) ------------------------------------
+
+        modelBuilder.Entity<RestaurantOrder>(b =>
+        {
+            b.HasKey(e => e.RestaurantOrderId);
+            b.Property(e => e.OrderType).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.OrgId, e.OrderNo }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.Status, e.OpenedAt });
+
+            // One open order per table: the second waiter adds to the first's.
+            b.HasIndex(e => new { e.OrgId, e.RestaurantTableId })
+                .IsUnique()
+                .HasFilter("\"Status\" = 'Open' AND \"RestaurantTableId\" IS NOT NULL");
+
+            b.HasOne<RestaurantTable>().WithMany().HasForeignKey(e => e.RestaurantTableId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<RestaurantOrder>().WithMany().HasForeignKey(e => e.MergedIntoOrderId).OnDelete(DeleteBehavior.Restrict);
+            b.HasMany(e => e.Lines).WithOne().HasForeignKey(l => l.RestaurantOrderId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RestaurantOrderLine>(b =>
+        {
+            b.HasKey(e => e.RestaurantOrderLineId);
+            b.Property(e => e.Station).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.KitchenStatus).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,3)");
+            b.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+            b.Property(e => e.PortionFactor).HasColumnType("decimal(9,4)");
+            b.HasIndex(e => new { e.OrgId, e.KitchenStatus, e.Station });
+            b.HasMany(e => e.Modifiers).WithOne().HasForeignKey(m => m.RestaurantOrderLineId).OnDelete(DeleteBehavior.Cascade);
+            b.ToTable(t => t.HasCheckConstraint("chk_restaurant_order_line_quantity", "\"Quantity\" > 0"));
+        });
+
+        modelBuilder.Entity<RestaurantOrderLineModifier>(b =>
+        {
+            b.HasKey(e => e.RestaurantOrderLineModifierId);
+            b.Property(e => e.PriceChange).HasColumnType("decimal(18,2)");
+            b.Property(e => e.LinkedQuantity).HasColumnType("decimal(18,4)");
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it
