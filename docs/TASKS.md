@@ -5207,7 +5207,8 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a posted bill earns its contact points once, a void takes them back, and the contact's balance and history show both.
 
 ### TK-167 · Zomato and Swiggy order intake
-- [!] blocked — D-42 (the scope) is open
+- [~] working (Claude Sonnet 5.5) — since 2026-10-05 · the owner said continue; intake only, which every D-42 answer includes. D-42 stays open for menu sync, status and settlement
+- **Issue:** [#147](https://github.com/jothi-prabaharan/Bill-Book/issues/147)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-146, TK-147 · **Decision:** D-42
 - **Where:** `Sales.Repository/Repositories/RestaurantOrderRepository.cs` (TK-146) and the kitchen ticket repository (TK-147); `Shared.Kernel` for the event
