@@ -5015,7 +5015,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a printed invoice carries a barcode and a QR of its document number.
 
 ### TK-158 · UPI payment QR on invoices
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#139](https://github.com/jothi-prabaharan/Bill-Book/issues/139)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-SAL, L-MST, L-PRT, L-WEB · **Depends on:** TK-156
