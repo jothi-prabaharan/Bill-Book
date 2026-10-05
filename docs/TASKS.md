@@ -4721,7 +4721,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a takeaway order saves with no table, and a dine-in order is refused without one only when the effective setting requires it.
 
 ### TK-147 · KOT: stations, reprint, cancel with reason, item status, kitchen display
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05
 - **Issue:** [#128](https://github.com/jothi-prabaharan/Bill-Book/issues/128)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-PRT, L-RST-UI · **Depends on:** TK-146 · **Decision:** D-39
