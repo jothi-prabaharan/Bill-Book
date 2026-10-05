@@ -4876,7 +4876,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the owner releases it and each part has been split into its own card.
 
 ### TK-152 · Customer kinds: Standard, Internal and Demo
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#133](https://github.com/jothi-prabaharan/Bill-Book/issues/133)
 - **Group:** M · Customer kinds and demo customers
 - **Lanes:** L-MST, L-WEB, L-DOC · **Depends on:** — · **Decision:** D-44
