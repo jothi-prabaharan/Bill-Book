@@ -4975,7 +4975,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** `git grep -i electron` and `git grep apps/desktop` find nothing except struck-through history notes, `web` and `docs` build, and the till posts a sale from `apps/web` (owner's run).
 
 ### TK-156 · Printing: barcode and QR rendering
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#137](https://github.com/jothi-prabaharan/Bill-Book/issues/137)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-PRT, L-KERNEL, L-DEPS · **Depends on:** — · **Decision:** D-46
