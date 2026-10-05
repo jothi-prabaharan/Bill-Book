@@ -28,3 +28,20 @@ public enum OrderAggregator
     Zomato = 1,
     Swiggy = 2,
 }
+
+/// <summary>Where a table booking is (TK-165). Booked is the only state that can still change.</summary>
+public enum ReservationStatus
+{
+    Booked = 1,
+    Seated = 2,
+    NoShow = 3,
+    Cancelled = 4,
+}
+
+/// <summary>Where a party on the waiting list is (TK-165). Waiting is the only state that can still change.</summary>
+public enum WaitingStatus
+{
+    Waiting = 1,
+    Seated = 2,
+    Left = 3,
+}

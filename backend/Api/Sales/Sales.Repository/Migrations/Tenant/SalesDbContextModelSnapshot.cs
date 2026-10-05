@@ -3828,6 +3828,176 @@ namespace Sales.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.TableReservation", b =>
+                {
+                    b.Property<long>("TableReservationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TableReservationId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GuestName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PartySize")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("ReservedFor")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("RestaurantOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("RestaurantTableId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("SeatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("TableReservationId");
+
+                    b.HasIndex("RestaurantOrderId");
+
+                    b.HasIndex("RestaurantTableId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ReservedFor");
+
+                    b.HasIndex("OrgId", "RestaurantTableId", "Status", "ReservedFor");
+
+                    b.ToTable("TableReservations", "sal", t =>
+                        {
+                            t.HasCheckConstraint("chk_table_reservation_duration", "\"DurationMinutes\" BETWEEN 15 AND 720");
+
+                            t.HasCheckConstraint("chk_table_reservation_party", "\"PartySize\" BETWEEN 1 AND 500");
+                        });
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.WaitingListEntry", b =>
+                {
+                    b.Property<long>("WaitingListEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("WaitingListEntryId"));
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("GuestName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PartySize")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<long?>("RestaurantOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("RestaurantTableId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("WaitingListEntryId");
+
+                    b.HasIndex("RestaurantOrderId");
+
+                    b.HasIndex("RestaurantTableId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "Status", "JoinedAt");
+
+                    b.ToTable("WaitingListEntries", "sal", t =>
+                        {
+                            t.HasCheckConstraint("chk_waiting_list_party", "\"PartySize\" BETWEEN 1 AND 500");
+                        });
+                });
+
             modelBuilder.Entity("Shared.Kernel.Audit.EditLog", b =>
                 {
                     b.Property<long>("EditLogId")
@@ -4505,6 +4675,32 @@ namespace Sales.Repository.Migrations.Tenant
                         .HasForeignKey("SalesOrderDetailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.TableReservation", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantTable", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantTableId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.WaitingListEntry", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantTable", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantTableId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Sales.Entity.TableEntities.CreditNote", b =>

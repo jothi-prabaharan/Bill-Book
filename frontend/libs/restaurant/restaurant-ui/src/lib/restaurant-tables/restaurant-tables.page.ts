@@ -1,17 +1,24 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { IfCanDirective } from '@bill-book/auth';
 import {
   Floor,
   FloorPlan,
   RESTAURANT_API,
+  Reservation,
   RestaurantTable,
+  SeatedParty,
   TableStatus,
   floorSummary,
   mergeCandidates,
+  nextBookingFor,
+  stillToArrive,
+  timeOf,
+  wallClockNow,
+  WaitingParty,
   moveTargets,
   nextStatuses,
   statusAction,
@@ -31,7 +38,7 @@ type Sheet = 'actions' | 'move' | 'merge' | 'edit-table' | 'edit-floor' | null;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-restaurant-tables',
   standalone: true,
-  imports: [FormsModule, IfCanDirective, CheckboxComponent, MessageBoxComponent, NumberInputComponent, SelectComponent, TextInputComponent],
+  imports: [FormsModule, RouterLink, IfCanDirective, CheckboxComponent, MessageBoxComponent, NumberInputComponent, SelectComponent, TextInputComponent],
   templateUrl: './restaurant-tables.page.html',
   styleUrl: './restaurant-tables.page.scss',
 })
@@ -49,6 +56,12 @@ export class RestaurantTablesPage implements OnInit {
   protected readonly sheet = signal<Sheet>(null);
   protected readonly selected = signal<RestaurantTable | null>(null);
   protected readonly chosen = signal<Set<number>>(new Set());
+
+  /** Today's bookings (TK-165), for the strip and the tiles; empty if they could not be read. */
+  protected readonly bookings = signal<Reservation[]>([]);
+  protected readonly upcoming = computed(() => stillToArrive(this.bookings(), wallClockNow()));
+  /** The waiting party the selected free table should take, if any. */
+  protected readonly nextParty = signal<WaitingParty | null>(null);
 
   protected readonly floor = computed<Floor | null>(() => this.plan().floors.find((f) => f.floorId === this.floorId()) ?? this.plan().floors[0] ?? null);
   protected readonly floorOptions = computed<BbSelectOption<number>[]>(() => this.plan().floors.map((f) => ({ value: f.floorId, label: f.name })));
@@ -68,6 +81,7 @@ export class RestaurantTablesPage implements OnInit {
   protected readonly statusAction = statusAction;
   protected readonly statusLabel = statusLabel;
   protected readonly floorSummary = floorSummary;
+  protected readonly timeOf = timeOf;
 
   ngOnInit(): void {
     void this.load();
@@ -77,6 +91,7 @@ export class RestaurantTablesPage implements OnInit {
     try {
       const plan = await firstValueFrom(this.http.get<FloorPlan>(`${RESTAURANT_API}/floor-plan?includeInactive=${this.managing()}`));
       this.plan.set(plan);
+      void this.loadBookings();
       if (!plan.floors.some((f) => f.floorId === this.floorId())) {
         this.floorId.set(plan.floors[0]?.floorId ?? null);
       }
@@ -84,6 +99,52 @@ export class RestaurantTablesPage implements OnInit {
       this.fail(error, 'The floor plan could not be loaded.');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  /** Today's bookings still to come; the floor plan works without them. */
+  private async loadBookings(): Promise<void> {
+    try {
+      this.bookings.set(await firstValueFrom(this.http.get<Reservation[]>(`${RESTAURANT_API}/reservations?liveOnly=true`)));
+    } catch {
+      this.bookings.set([]);
+    }
+  }
+
+  /** The next booking held on a table today, for its tile. */
+  protected bookedAt(table: RestaurantTable): string | null {
+    const next = nextBookingFor(table.restaurantTableId, this.upcoming(), wallClockNow());
+    return next ? timeOf(next.reservedFor) : null;
+  }
+
+  /** Seats the waiting party a free table should take, and goes to their order (TK-165). */
+  protected async seatNextParty(table: RestaurantTable): Promise<void> {
+    const party = this.nextParty();
+    if (!party) return;
+    this.busy.set(true);
+    try {
+      const seated = await firstValueFrom(
+        this.http.post<SeatedParty>(`${RESTAURANT_API}/waiting-list/${party.waitingListEntryId}/seat`, { restaurantTableId: table.restaurantTableId }),
+      );
+      this.close();
+      await this.router.navigate(['/restaurant/orders'], { queryParams: { order: seated.restaurantOrderId } });
+    } catch (error) {
+      this.fail(error, 'They could not be seated.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  private async loadNextParty(table: RestaurantTable): Promise<void> {
+    this.nextParty.set(null);
+    if (table.status !== 'Free' || table.mergedIntoTableId != null) return;
+    try {
+      const party = await firstValueFrom(this.http.get<WaitingParty | null>(`${RESTAURANT_API}/waiting-list/next?tableId=${table.restaurantTableId}`));
+      if (this.selected()?.restaurantTableId === table.restaurantTableId) {
+        this.nextParty.set(party ?? null);
+      }
+    } catch {
+      // No suggestion is fine; the table can still be seated by hand.
     }
   }
 
@@ -100,12 +161,14 @@ export class RestaurantTablesPage implements OnInit {
       this.editTable(table);
     } else {
       this.sheet.set('actions');
+      void this.loadNextParty(table);
     }
   }
 
   protected close(): void {
     this.sheet.set(null);
     this.selected.set(null);
+    this.nextParty.set(null);
     this.chosen.set(new Set());
   }
 

@@ -26,6 +26,10 @@ Each tile shows the table's status:
 
 Tap a table to see what can happen next. A step that does not follow is refused: a free table cannot be billed.
 
+## Bookings and the waiting list
+
+The floor plan shows **Today's bookings** still to arrive across the top, and *Booked 20:00* on a table held later today. Tapping a free table offers to seat the party waiting longest that fits it. Booking tables and keeping the waiting list are on [Bookings](restaurant-bookings).
+
 ## Moving guests
 
 **Move to another table** moves a seated party to a free table. The new table takes over the status, and any tables joined to the old one, and the old table becomes free. Their open order moves with them once orders are taken on the order screen.

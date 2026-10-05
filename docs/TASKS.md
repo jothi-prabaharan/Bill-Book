@@ -5173,7 +5173,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: POS sales (scan, receipt codes), masters Barcodes (the list's `barcodeValues`), CLAUDE.md printing note, release note.
 
 ### TK-165 · Reservations and a waiting list
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#148](https://github.com/jothi-prabaharan/Bill-Book/issues/148)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-145, TK-146 · **Decision:** D-39
@@ -5181,14 +5181,23 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** split from TK-151 on 5 October 2026. A table has a status (Free, Occupied, Billed, Cleaning) and an order can open on it, but nothing holds a table for a later time or queues a party when none is free.
 - **Tables:** `sal.TableReservations` (name, phone, party size, date and time, optional `TableId`, status Booked, Seated, NoShow or Cancelled, note), `sal.WaitingListEntries` (name, phone, party size, joined at, status Waiting, Seated or Left).
 - **Sub-tasks:**
-  - [ ] Entities, enums and the migration with its RLS block; a phone number is stored per the phone convention (local without prefix, foreign with `+`).
-  - [ ] `TableReservationRepository`: book, change, cancel, mark no-show, and seat, which opens a `RestaurantOrder` on the table through `RestaurantOrderRepository`. A table cannot be booked twice for overlapping times; the repository refuses it.
-  - [ ] A waiting list: add a party, take the next party that fits a table that has become Free, and seat or remove it.
-  - [ ] Switched on by `restaurant.tables.enabled` (D-39), so every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Tables)]`; all logic is in `*Repository.cs` (rule 16).
-  - [ ] A reservations and waiting page that works at 360 px, and a "today's bookings" strip on the floor plan.
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [x] Entities, enums and the migration with its RLS block; a phone number is stored per the phone convention (local without prefix, foreign with `+`).
+  - [x] `TableReservationRepository`: book, change, cancel, mark no-show, and seat, which opens a `RestaurantOrder` on the table through `RestaurantOrderRepository`. A table cannot be booked twice for overlapping times; the repository refuses it.
+  - [x] A waiting list: add a party, take the next party that fits a table that has become Free, and seat or remove it.
+  - [x] Switched on by `restaurant.tables.enabled` (D-39), so every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Tables)]`; all logic is in `*Repository.cs` (rule 16).
+  - [x] A reservations and waiting page that works at 360 px, and a "today's bookings" strip on the floor plan.
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a table booked for 8 pm cannot be booked again at 8:30 pm, and seating that booking opens an order on the table.
+- **As built (5 October 2026):**
+  - **Tables**: `sal.TableReservations` (guest name, phone, party size, `ReservedFor`, `DurationMinutes` default 90 within 15–720, optional `RestaurantTableId`, `ReservationStatus` Booked/Seated/NoShow/Cancelled, `RestaurantOrderId`, `SeatedAt`, notes) and `sal.WaitingListEntries` (`WaitingStatus` Waiting/Seated/Left, `JoinedAt`, `ClosedAt`, the table and order once seated). Migration `TableReservations` enables RLS on both — **and on `sal.AggregatorOrders`, which TK-167's migration had left without a policy**. A booking needs a duration because "8 pm clashes with 8:30 pm" only means something once a booking covers a span.
+  - **`TableReservationRepository`**: book and change (a refused clash names the other booking's span), cancel, no-show, seat. **Overlap** is `[start, start + minutes)`, so a booking ending as another starts does not clash; Booked and Seated bookings hold their table. **Serialised per table without raw SQL**: the check first takes the table row's lock with a no-op `ExecuteUpdate` (`DisplayOrder = DisplayOrder`) inside the transaction, so a second booking for that table waits for the first to commit and then sees it. A party larger than the table's seats is refused. **Seat** opens a DineIn order through `RestaurantOrderRepository.OpenAsync` (guests = party size, note `Booking: name, n`) and marks the booking Seated, one transaction; the waiter requirement and the table's own checks are the order path's.
+  - **`WaitingListRepository`**: add, list (waiting first, longest first; today's closed too on request), `NextForTableAsync` (the party waiting longest that fits a free table; `TableReservationRulesRepository.NextThatFits`), seat (opens the order the same way), leave.
+  - **API** on `TableReservationsController` under `api/restaurant/reservations` and `api/restaurant/waiting-list`, guarded by `[RequireBusinessType(Restaurant)]`, `[RequireModulePermission("restaurant")]` and `[RequireRestaurantFeature(Tables)]`; gateway routes added. Master menu row 1154 **Bookings** (`rst-bookings`, restaurant view/create/edit), hidden with the tables switch; admin migration `BookingsMenu`.
+  - **Frontend**: `restaurant-reservations.ts` in restaurant-core (types, `overlaps`/`nextThatFits` mirrors, the strip's `stillToArrive`); **Restaurant › Bookings** page (day's bookings beside the waiting list, stacked at 360 px, sheets for booking, seating and adding a party; seating goes to the new order); the floor plan shows **Today's bookings**, *Booked HH:mm* on a tile, and on a free table offers to seat the next waiting party that fits.
+  - Tests: `Sales.Api.Tests.TableReservationRulesTests` and `TableReservationTests` (the *Done when*: 8 pm then 8:30 pm refused, seating opens the order), `Master.Api.Tests.RestaurantMenuTests` (bookings row and switch), `restaurant-reservations.spec.ts`.
+  - Docs: new page [Bookings](../frontend/apps/docs/content/restaurant-bookings.md) and its manifest entry, a section on the Tables page, release notes (the feature, and the RLS fix as Security).
+
 
 ### TK-166 · Loyalty points on a bill
 - [ ] open

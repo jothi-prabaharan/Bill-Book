@@ -334,6 +334,8 @@ builder.Services.AddScoped<RestaurantOrderRepository>();
 builder.Services.AddScoped<KotRepository>();
 // Zomato and Swiggy order intake (TK-167): an aggregator order is a Delivery order.
 builder.Services.AddScoped<AggregatorOrderRepository>();
+builder.Services.AddScoped<TableReservationRepository>();
+builder.Services.AddScoped<WaitingListRepository>();
 // Restaurant bills (TK-148): the walk-in customer from Master, accounts from Accounting.
 builder.Services.AddScoped<RestaurantBillingRepository>();
 builder.Services.AddHttpClient<IRecipeConsumptionClient, RecipeConsumptionClient>(client =>

@@ -126,6 +126,11 @@ public class SalesDbContext : TenantDbContext
     // Aggregator order intake (TK-167).
     public DbSet<AggregatorOrder> AggregatorOrders => Set<AggregatorOrder>();
 
+    // Table bookings and the waiting list (TK-165).
+    public DbSet<TableReservation> TableReservations => Set<TableReservation>();
+
+    public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("sal");
@@ -605,6 +610,33 @@ public class SalesDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.ReceivedAt });
             b.HasIndex(e => e.RestaurantOrderId).IsUnique();
             b.HasOne<RestaurantOrder>().WithMany().HasForeignKey(e => e.RestaurantOrderId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ---- Table bookings and the waiting list (TK-165) -------------------
+
+        modelBuilder.Entity<TableReservation>(b =>
+        {
+            b.HasKey(e => e.TableReservationId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.OrgId, e.ReservedFor });
+            b.HasIndex(e => new { e.OrgId, e.RestaurantTableId, e.Status, e.ReservedFor });
+            b.HasOne<RestaurantTable>().WithMany().HasForeignKey(e => e.RestaurantTableId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<RestaurantOrder>().WithMany().HasForeignKey(e => e.RestaurantOrderId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("chk_table_reservation_party", "\"PartySize\" BETWEEN 1 AND 500");
+                t.HasCheckConstraint("chk_table_reservation_duration", "\"DurationMinutes\" BETWEEN 15 AND 720");
+            });
+        });
+
+        modelBuilder.Entity<WaitingListEntry>(b =>
+        {
+            b.HasKey(e => e.WaitingListEntryId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.OrgId, e.Status, e.JoinedAt });
+            b.HasOne<RestaurantTable>().WithMany().HasForeignKey(e => e.RestaurantTableId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<RestaurantOrder>().WithMany().HasForeignKey(e => e.RestaurantOrderId).OnDelete(DeleteBehavior.Restrict);
+            b.ToTable(t => t.HasCheckConstraint("chk_waiting_list_party", "\"PartySize\" BETWEEN 1 AND 500"));
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

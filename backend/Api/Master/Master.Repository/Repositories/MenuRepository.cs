@@ -50,6 +50,7 @@ public sealed class MenuRepository
         if (!settings.TablesEnabled)
         {
             hidden.Add("rst-tables");
+            hidden.Add("rst-bookings"); // Bookings hold tables (TK-165).
         }
 
         if (!settings.KitchenEnabled)

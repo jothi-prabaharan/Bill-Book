@@ -83,7 +83,7 @@ public static class MenuSeed
                 row.BusinessType = null;
                 row.AddOns = AddOn.Budget;
             }
-            else if (row.MenuId is 15 or 124 or 1140 or 1141 or (>= 1146 and <= 1152)) // Restaurant (TK-143; 1152 the kitchen ticket's template, TK-147)
+            else if (row.MenuId is 15 or 124 or 1140 or 1141 or 1154 or (>= 1146 and <= 1152)) // Restaurant (TK-143; 1152 the kitchen ticket's template, TK-147; 1154 bookings, TK-165)
             {
                 row.BusinessType = BusinessType.Restaurant;
                 row.AddOns = AddOn.None;
@@ -334,6 +334,7 @@ public static class MenuSeed
         new Menu { MenuId = 1148, ParentId = 124, Type = MenuType.Item, Code = "rst-kitchen", Name = "Kitchen display", Icon = "chef-hat", Module = "restaurant", RoutePath = "/restaurant/kitchen", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1149, ParentId = 124, Type = MenuType.Item, Code = "rst-recipes", Name = "Recipes", Icon = "notebook-pen", Module = "restaurant", RoutePath = "/restaurant/recipes", IsSearchable = true, CanCreate = true, SingularName = "Recipe", DisplayOrder = 5, IsActive = true },
         new Menu { MenuId = 1150, ParentId = 124, Type = MenuType.Item, Code = "rst-wastage", Name = "Wastage", Icon = "trash-2", Module = "restaurant", RoutePath = "/restaurant/wastage", IsSearchable = true, CanCreate = true, SingularName = "Wastage entry", DisplayOrder = 6, IsActive = true },
+        new Menu { MenuId = 1154, ParentId = 124, Type = MenuType.Item, Code = "rst-bookings", Name = "Bookings", Icon = "calendar-clock", Module = "restaurant", RoutePath = "/restaurant/bookings", IsSearchable = true, CanCreate = true, SingularName = "Booking", DisplayOrder = 8, IsActive = true },
         new Menu { MenuId = 1151, ParentId = 124, Type = MenuType.Item, Code = "rst-reports", Name = "Reports", Icon = "bar-chart-3", Module = "restaurant", RoutePath = "/restaurant/reports", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
         new Menu { MenuId = 1140, ParentId = 114, Type = MenuType.Item, Code = "rst", Name = "Restaurant settings", Icon = "utensils", Module = "settings", RoutePath = "/restaurant/settings", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 20, IsActive = true },
         new Menu { MenuId = 122, ParentId = 14, Type = MenuType.Group, Code = "approvals-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -868,6 +869,10 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 515, MenuId = 1152, PermissionCode = "settings.delete", Action = "delete", Module = "settings" },
         // The till posts the sale, so it needs what posting an invoice needs (TK-155).
         new MenuPermission { MenuPermissionId = 516, MenuId = 1153, PermissionCode = "sales.approve", Action = "approve", Module = "sales" },
+        // Table bookings and the waiting list (TK-165): hosts book, change and seat all evening.
+        new MenuPermission { MenuPermissionId = 517, MenuId = 1154, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 518, MenuId = 1154, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 519, MenuId = 1154, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
 
         // Recurring billing (TK-139): a free add-on, under each module's own permissions.
         new MenuPermission { MenuPermissionId = 485, MenuId = 1142, PermissionCode = "sales.view", Action = "view", Module = "sales" },

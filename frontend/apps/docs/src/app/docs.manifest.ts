@@ -104,6 +104,7 @@ export const DOCS: DocSection[] = [
       { slug: 'restaurant-settings', title: 'Restaurant settings', status: 'built' },
       { slug: 'restaurant-menu', title: 'Menu', status: 'built' },
       { slug: 'restaurant-tables', title: 'Tables', status: 'built' },
+      { slug: 'restaurant-bookings', title: 'Bookings and waiting list', status: 'built' },
       { slug: 'restaurant-orders', title: 'Orders', status: 'built' },
       { slug: 'restaurant-kitchen', title: 'Kitchen tickets', status: 'built' },
       { slug: 'restaurant-billing', title: 'Billing', status: 'built' },

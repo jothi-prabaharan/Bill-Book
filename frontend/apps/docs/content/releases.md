@@ -31,6 +31,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Table bookings and a waiting list for restaurants (TK-165).** **Restaurant › Bookings** books a table for a time, refuses a second booking that overlaps it, and seats the party when they arrive by opening an order on the table. Walk-ins go on a waiting list, and a table that comes free offers the party waiting longest that fits it. The floor plan shows today's bookings still to arrive. Shown while tables are switched on. See [Bookings](restaurant-bookings).
+
+- **Security**: Row-level security is now on for the aggregator order record (TK-167), whose migration had left it out. Nothing else changes.
+
 - **Added**: **Orders from Zomato and Swiggy arrive as delivery orders (TK-167).** An aggregator order posted to `api/restaurant/aggregator-orders` opens a Delivery order priced by the branch's menu, with its source in the note and its kitchen tickets made when the kitchen is on. The same aggregator order id sent twice is one order. Intake only: menu sync, status updates and settlement wait on D-42.
 
 - **Changed**: **The till confirms every scan, and its receipt carries codes (TK-164).** The till's new **Scan** field takes a scanner, a typed code or a phone's camera, and adds an item only when the scan is exactly one of its barcodes or its code, so a name that happens to contain the digits is never added by mistake. Every scan field in the app now checks the same way. The receipt ends with the bill number as a barcode and, when something is still owed and the branch has a UPI ID, a UPI QR code for the amount. See [POS sales](invoices#pos-sales).

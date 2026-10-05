@@ -13,7 +13,7 @@ namespace Master.Api.Tests;
 /// </summary>
 public sealed class RestaurantMenuTests
 {
-    private static readonly string[] RailCodes = ["rst-orders", "rst-tables", "rst-kitchen", "pos-menu", "rst-recipes", "rst-wastage", "rst-reports"];
+    private static readonly string[] RailCodes = ["rst-orders", "rst-tables", "rst-kitchen", "pos-menu", "rst-recipes", "rst-wastage", "rst-reports", "rst-bookings"];
 
     [Fact]
     public void Every_restaurant_row_is_routed_and_restaurant_only()
@@ -52,7 +52,7 @@ public sealed class RestaurantMenuTests
     {
         IReadOnlySet<string> hidden = MenuRepository.HiddenRestaurantCodes(new RestaurantSettingsView());
 
-        Assert.Equal(["rst-kitchen", "rst-recipes", "rst-tables", "rst-wastage"], hidden.Order());
+        Assert.Equal(["rst-bookings", "rst-kitchen", "rst-recipes", "rst-tables", "rst-wastage"], hidden.Order());
     }
 
     [Fact]
@@ -61,5 +61,16 @@ public sealed class RestaurantMenuTests
         RestaurantSettingsView all = new() { TablesEnabled = true, KitchenEnabled = true, RecipesEnabled = true };
 
         Assert.Empty(MenuRepository.HiddenRestaurantCodes(all));
+    }
+
+    [Fact]
+    public void Bookings_follow_the_tables_switch_and_hosts_can_book_and_change_them()
+    {
+        IReadOnlySet<string> hidden = MenuRepository.HiddenRestaurantCodes(new RestaurantSettingsView { KitchenEnabled = true, RecipesEnabled = true });
+        Assert.Contains("rst-bookings", hidden);
+
+        int id = MenuSeed.Build().Single(m => m.Code == "rst-bookings").MenuId;
+        IEnumerable<string> codes = MenuSeed.BuildPermissions().Where(p => p.MenuId == id).Select(p => p.PermissionCode);
+        Assert.Equal(["restaurant.create", "restaurant.edit", "restaurant.view"], codes.Order());
     }
 }

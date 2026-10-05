@@ -16,6 +16,19 @@
     <bb-message-box [messages]="messages()" />
   }
 
+  @if (upcoming().length && !managing()) {
+    <!-- Today's bookings still to arrive (TK-165). -->
+    <div class="tp__bookings" aria-label="Today's bookings">
+      <span class="tp__bookings-label">Today's bookings</span>
+      <ul class="tp__bookings-list">
+        @for (b of upcoming(); track b.tableReservationId) {
+          <li>{{ timeOf(b.reservedFor) }} · {{ b.tableCode ?? 'no table' }} · {{ b.guestName }} ({{ b.partySize }})</li>
+        }
+      </ul>
+      <a class="btn btn--link" routerLink="/restaurant/bookings">All bookings</a>
+    </div>
+  }
+
   @if (plan().floors.length > 1 || managing()) {
     <nav class="tabs" role="tablist" aria-label="Floors">
       @for (f of plan().floors; track f.floorId) {
@@ -51,6 +64,9 @@
             @if (t.openOrderId) {
               <span class="tp__group">Order open</span>
             }
+            @if (bookedAt(t); as at) {
+              <span class="tp__group">Booked {{ at }}</span>
+            }
             @if (t.mergedIntoCode) {
               <span class="tp__group">With {{ t.mergedIntoCode }}</span>
             } @else if (t.mergedCodes.length) {
@@ -77,6 +93,11 @@
                 <p class="tp__muted">Part of table {{ t.mergedIntoCode }}'s group. Its orders and bill are on {{ t.mergedIntoCode }}.</p>
               }
               <div class="tp__actions">
+                @if (nextParty(); as party) {
+                  <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="seatNextParty(t)">
+                    Seat {{ party.guestName }} ({{ party.partySize }}) from the waiting list
+                  </button>
+                }
                 @if (t.openOrderId) {
                   <button type="button" class="btn btn--primary" (click)="takeOrder(t)">Open order</button>
                 } @else if (t.status === 'Free' || t.status === 'Occupied') {

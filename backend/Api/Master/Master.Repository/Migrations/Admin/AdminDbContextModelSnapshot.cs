@@ -10472,6 +10472,25 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1154,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = true,
+                            Code = "rst-bookings",
+                            DisplayOrder = 8,
+                            Icon = "calendar-clock",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Bookings",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/bookings",
+                            SingularName = "Booking",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 1151,
                             AddOns = 0,
                             BusinessType = "Restaurant",
@@ -15114,6 +15133,33 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1153,
                             Module = "sales",
                             PermissionCode = "sales.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 517,
+                            Action = "view",
+                            MenuId = 1154,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 518,
+                            Action = "create",
+                            MenuId = 1154,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 519,
+                            Action = "edit",
+                            MenuId = 1154,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.edit",
                             Version = 0u
                         },
                         new

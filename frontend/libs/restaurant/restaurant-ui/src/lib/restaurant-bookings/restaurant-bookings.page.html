@@ -1,0 +1,125 @@
+<section class="bk">
+  <header class="bk__head">
+    <h1 class="bk__title">Bookings</h1>
+    <div class="bk__head-actions">
+      <bb-branch-date-input label="Day" name="day" [ngModel]="day()" (ngModelChange)="changeDay($event)" />
+      <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newBooking()">New booking</button>
+    </div>
+  </header>
+
+  @if (messages().length && !sheet()) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  <div class="bk__columns">
+    <section class="bk__column" aria-label="Bookings">
+      <h2 class="bk__subtitle">Bookings</h2>
+      <ul class="bk__list">
+        @for (b of bookings(); track b.tableReservationId) {
+          <li class="bk__card" [class.bk__card--done]="b.status !== 'Booked'">
+            <div class="bk__card-main">
+              <span class="bk__time">{{ timeOf(b.reservedFor) }}–{{ endsAt(b) }}</span>
+              <span class="bk__name">{{ b.guestName }} · {{ b.partySize }}</span>
+              <span class="bk__muted">{{ b.tableCode ? 'Table ' + b.tableCode : 'No table yet' }} · {{ b.phone }}</span>
+              @if (b.notes) {
+                <span class="bk__muted">{{ b.notes }}</span>
+              }
+            </div>
+            <span class="bk__status">{{ statusLabel(b.status) }}</span>
+            @if (b.status === 'Booked') {
+              <div class="bk__actions">
+                <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="startSeatBooking(b)">Seat</button>
+                <button type="button" class="btn" [disabled]="busy()" (click)="editBooking(b)">Change</button>
+                <button type="button" class="btn" [disabled]="busy()" (click)="noShow(b)">No-show</button>
+                <button type="button" class="btn btn--link" [disabled]="busy()" (click)="cancel(b)">Cancel</button>
+              </div>
+            }
+          </li>
+        } @empty {
+          <li class="bk__muted">No bookings for this day.</li>
+        }
+      </ul>
+    </section>
+
+    <section class="bk__column" aria-label="Waiting list">
+      <div class="bk__column-head">
+        <h2 class="bk__subtitle">Waiting now</h2>
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn" (click)="newWaiting()">Add a party</button>
+      </div>
+      <ul class="bk__list">
+        @for (w of waiting(); track w.waitingListEntryId) {
+          <li class="bk__card">
+            <div class="bk__card-main">
+              <span class="bk__name">{{ w.guestName }} · {{ w.partySize }}</span>
+              <span class="bk__muted">Waiting {{ waited(w) }} min{{ w.phone ? ' · ' + w.phone : '' }}</span>
+              @if (w.notes) {
+                <span class="bk__muted">{{ w.notes }}</span>
+              }
+            </div>
+            <div class="bk__actions">
+              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="startSeatWaiting(w)">Seat</button>
+              <button type="button" class="btn btn--link" [disabled]="busy()" (click)="left(w)">Left</button>
+            </div>
+          </li>
+        } @empty {
+          <li class="bk__muted">Nobody is waiting.</li>
+        }
+      </ul>
+    </section>
+  </div>
+
+  @if (sheet(); as s) {
+    <div class="bk__sheet" role="dialog" aria-modal="true" aria-label="Booking">
+      <div class="bk__panel">
+        @if (messages().length) {
+          <bb-message-box [messages]="messages()" />
+        }
+        @switch (s) {
+          @case ('booking') {
+            <h2 class="bk__subtitle">{{ editingId === null ? 'New booking' : 'Change booking' }}</h2>
+            <bb-text-input label="Guest's name" name="guestName" [(ngModel)]="draft.guestName" />
+            <bb-text-input label="Phone" name="phone" hint="A local number without its country code; a foreign one with a leading +." [(ngModel)]="draft.phone" />
+            <bb-number-input label="Guests" name="partySize" [decimals]="0" [(ngModel)]="draft.partySize" />
+            <bb-datetime-input label="Coming at" name="reservedFor" [(ngModel)]="draft.reservedFor" />
+            <bb-number-input label="Hold the table for (minutes)" name="duration" [decimals]="0" [(ngModel)]="draft.durationMinutes" />
+            <bb-select label="Table" name="table" placeholder="Not chosen yet" [options]="tableOptions()" [(ngModel)]="draft.restaurantTableId" />
+            <bb-text-input label="Note" name="notes" placeholder="Birthday, window seat" [(ngModel)]="draft.notes" />
+            <div class="bk__actions">
+              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveBooking()">Save</button>
+            </div>
+          }
+          @case ('seat-booking') {
+            <h2 class="bk__subtitle">Seat {{ seatingBooking?.guestName }} · {{ seatingBooking?.partySize }}</h2>
+            <bb-select label="Table" name="seatTable" [clearable]="false" [options]="tableOptions()" [(ngModel)]="seatTableId" />
+            <p class="bk__muted">An order opens on the table, and you go to it.</p>
+            <div class="bk__actions">
+              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="seatBooking()">Seat</button>
+            </div>
+          }
+          @case ('waiting') {
+            <h2 class="bk__subtitle">Add a waiting party</h2>
+            <bb-text-input label="Guest's name" name="waitName" [(ngModel)]="waitingDraft.guestName" />
+            <bb-text-input label="Phone" name="waitPhone" hint="To call them when a table is ready." [(ngModel)]="waitingDraft.phone" />
+            <bb-number-input label="Guests" name="waitSize" [decimals]="0" [(ngModel)]="waitingDraft.partySize" />
+            <bb-text-input label="Note" name="waitNotes" [(ngModel)]="waitingDraft.notes" />
+            <div class="bk__actions">
+              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="addWaiting()">Add</button>
+            </div>
+          }
+          @case ('seat-waiting') {
+            <h2 class="bk__subtitle">Seat {{ seatingParty?.guestName }} · {{ seatingParty?.partySize }}</h2>
+            @if (seatingParty && seatOptions(seatingParty.partySize).length) {
+              <bb-select label="Free table" name="waitTable" [clearable]="false" [options]="seatOptions(seatingParty.partySize)" [(ngModel)]="seatTableId" />
+              <div class="bk__actions">
+                <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="seatWaiting()">Seat</button>
+              </div>
+            } @else {
+              <p class="bk__muted">No free table seats this party yet.</p>
+            }
+          }
+        }
+        <button type="button" class="btn bk__close" (click)="close()">Close</button>
+      </div>
+    </div>
+  }
+</section>
