@@ -4864,7 +4864,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the day-end report's totals equal the day's posted invoices.
 
 ### TK-151 · Later: reservations, waiting list, loyalty, aggregator intake
-- [!] blocked — not in the first release; claimed only when the owner releases it (D-42 for the aggregator part)
+- [~] working (Claude Sonnet 5.5) — since 2026-10-05 · released by the owner
 - **Issue:** [#132](https://github.com/jothi-prabaharan/Bill-Book/issues/132)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-CUS, L-RST-UI · **Depends on:** TK-146, TK-148 · **Decision:** D-42
