@@ -4864,16 +4864,19 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the day-end report's totals equal the day's posted invoices.
 
 ### TK-151 · Later: reservations, waiting list, loyalty, aggregator intake
-- [~] working (Claude Sonnet 5.5) — since 2026-10-05 · released by the owner
+- [x] completed (Claude Sonnet 5.5) — 2026-10-05 · released by the owner and split into TK-165 to TK-167; a planning card, so no code and no tests
 - **Issue:** [#132](https://github.com/jothi-prabaharan/Bill-Book/issues/132)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-CUS, L-RST-UI · **Depends on:** TK-146, TK-148 · **Decision:** D-42
 - **Sub-tasks:**
-  - [ ] Reservations and a waiting list.
-  - [ ] Loyalty points on a bill.
-  - [ ] Zomato and Swiggy order intake; the scope is D-42.
-  - [x] Test: written, never run by an AI (section 0.5)
+  - [x] Reservations and a waiting list → TK-165.
+  - [x] Loyalty points on a bill → TK-166.
+  - [x] Zomato and Swiggy order intake; the scope is D-42 → TK-167, blocked on D-42.
+  - [x] Test: written, never run by an AI (section 0.5). Nothing to test: this card only plans.
 - **Done when:** the owner releases it and each part has been split into its own card.
+- **Notes:**
+  - Released by the owner on 5 October 2026 ("continue 151"). The three parts are independent: build them in any order, each after TK-146 and TK-148, which are done.
+  - Opened no GitHub issues: each new card gets its issue at its claim (hard rule 15).
 
 ### TK-152 · Customer kinds: Standard, Internal and Demo
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
@@ -5168,6 +5171,55 @@ The queue below is one list in card-number order. Each card names its group.
   - **Receipt codes**: `GET api/sales/invoices/{id}/upi-link` (`sales.print`) returns TK-158's link for what is owed (`InvoicePrintRepository.PaymentLinkAsync`, same `AmountDue` rule), 404 outside the branch. `receiptCodes` (pos-ui) draws the bill number as Code128 and the link as a QR with `zxing-wasm/writer` (MIT; now a direct dependency at the version `barcode-detector` uses), its wasm copied to `assets/zxing/` and loaded on the first receipt; `receiptHtml(rows, paper, codes)` puts them under the text as SVG data-URI images. A code that cannot be drawn, or a link that cannot be read, leaves the receipt printing without it.
   - Tests: `ItemSearchTests.The_list_carries_each_items_barcodes_so_a_till_can_confirm_a_scan`, `scan-match.spec.ts` (barcode cases), `receipt-codes.spec.ts`, `receipt-layout.spec.ts` (codes), `receipt-printer.service.spec.ts` (barcode, UPI QR, unreadable link). `PaymentLinkAsync` has no database test: no harness builds `InvoicePrintRepository`; its amount rule is `UpiPrintTests`'.
   - Docs: POS sales (scan, receipt codes), masters Barcodes (the list's `barcodeValues`), CLAUDE.md printing note, release note.
+
+### TK-165 · Reservations and a waiting list
+- [ ] open
+- **Group:** L · Restaurant
+- **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-145, TK-146 · **Decision:** D-39
+- **Where:** `Sales.Repository/Repositories/RestaurantTableRepository.cs` and `RestaurantOrderRepository.cs` (TK-145, TK-146); `frontend/libs/restaurant/**`
+- **State:** split from TK-151 on 5 October 2026. A table has a status (Free, Occupied, Billed, Cleaning) and an order can open on it, but nothing holds a table for a later time or queues a party when none is free.
+- **Tables:** `sal.TableReservations` (name, phone, party size, date and time, optional `TableId`, status Booked, Seated, NoShow or Cancelled, note), `sal.WaitingListEntries` (name, phone, party size, joined at, status Waiting, Seated or Left).
+- **Sub-tasks:**
+  - [ ] Entities, enums and the migration with its RLS block; a phone number is stored per the phone convention (local without prefix, foreign with `+`).
+  - [ ] `TableReservationRepository`: book, change, cancel, mark no-show, and seat, which opens a `RestaurantOrder` on the table through `RestaurantOrderRepository`. A table cannot be booked twice for overlapping times; the repository refuses it.
+  - [ ] A waiting list: add a party, take the next party that fits a table that has become Free, and seat or remove it.
+  - [ ] Switched on by `restaurant.tables.enabled` (D-39), so every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Tables)]`; all logic is in `*Repository.cs` (rule 16).
+  - [ ] A reservations and waiting page that works at 360 px, and a "today's bookings" strip on the floor plan.
+  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a table booked for 8 pm cannot be booked again at 8:30 pm, and seating that booking opens an order on the table.
+
+### TK-166 · Loyalty points on a bill
+- [ ] open
+- **Group:** L · Restaurant
+- **Lanes:** L-CUS, L-SAL, L-RST-UI · **Depends on:** TK-148 · **Decision:** D-39
+- **Where:** `Customer.Repository/` (the contact's customer relationship), `Sales.Repository/Repositories/RestaurantBillingRepository.cs` and `InvoiceRepository.cs` (TK-148); `Accounting` for the liability account
+- **State:** split from TK-151 on 5 October 2026. A bill can name a contact but earns it nothing, and nothing lets a contact spend anything against a bill.
+- **Tables:** `cus.LoyaltyAccounts` (contact id, points balance), `cus.LoyaltyTransactions` (earned, redeemed or adjusted, points, source document), and a per-branch earn and redeem rate in `mst.Configuration` as typed keys, defaulting off.
+- **Sub-tasks:**
+  - [ ] **Ask the owner before building the redemption half**: does a redeemed point reduce the bill as a discount, or settle part of it as a tender? It decides the posting. Record the answer as the next D-number in section 3 and leave the earn half buildable meanwhile.
+  - [ ] Entities, enums and the migration with its RLS block, and the settings keys.
+  - [ ] `LoyaltyRepository`: earn points when a bill posts, reverse them when it is voided, and show a contact's balance and history. Earning is idempotent on the invoice id, so a retry never earns twice.
+  - [ ] Sales reaches Customer over its API, never its `DbContext` (rule 8); a contact id has no foreign key (cross-service).
+  - [ ] The bill page shows the contact's balance and, once the question above is answered, takes a redemption.
+  - [ ] The standard delivery sub-tasks in section 5.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** a posted bill earns its contact points once, a void takes them back, and the contact's balance and history show both.
+
+### TK-167 · Zomato and Swiggy order intake
+- [!] blocked — D-42 (the scope) is open
+- **Group:** L · Restaurant
+- **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-146, TK-147 · **Decision:** D-42
+- **Where:** `Sales.Repository/Repositories/RestaurantOrderRepository.cs` (TK-146) and the kitchen ticket repository (TK-147); `Shared.Kernel` for the event
+- **State:** split from TK-151 on 5 October 2026. The two aggregators have partner APIs, but nothing here talks to either, and no agreement or credentials exist to build against.
+- **Sub-tasks:**
+  - [ ] The owner answers D-42: order intake only, or also menu sync, status updates back and settlement. Do not build past what is answered.
+  - [ ] Receive an aggregator order as a `RestaurantOrder` of type Delivery, with the aggregator and its order id kept for reconciliation. Intake is idempotent on that id.
+  - [ ] Print the kitchen ticket through TK-147's path.
+  - [ ] Credentials per branch go in the secret store (`ISecretStore`), never in configuration files.
+  - [ ] The standard delivery sub-tasks in section 5, and split this card further if D-42 asks for menu sync or settlement.
+  - [ ] Test: written, never run by an AI (section 0.5)
+- **Done when:** an order placed on an aggregator appears once as a Delivery order with its kitchen ticket, and a repeat of the same order id changes nothing.
 
 ## 3. Decisions from the owner
 
