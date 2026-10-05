@@ -5173,7 +5173,8 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: POS sales (scan, receipt codes), masters Barcodes (the list's `barcodeValues`), CLAUDE.md printing note, release note.
 
 ### TK-165 · Reservations and a waiting list
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
+- **Issue:** [#148](https://github.com/jothi-prabaharan/Bill-Book/issues/148)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-145, TK-146 · **Decision:** D-39
 - **Where:** `Sales.Repository/Repositories/RestaurantTableRepository.cs` and `RestaurantOrderRepository.cs` (TK-145, TK-146); `frontend/libs/restaurant/**`
