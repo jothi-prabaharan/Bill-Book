@@ -26,7 +26,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/credit-notes")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
 public sealed class CreditNotesController : ControllerBase
 {
     private readonly CreditNoteRepository _service;

@@ -114,7 +114,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             wanted.UnionWith(SchoolServices);
         }
 
-        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery)
+        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant)
         {
             wanted.UnionWith(["Inventory", "Sales", "Purchase", "Reporting", "Customer"]);
         }
@@ -269,7 +269,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         App approvalApps = App.None;
         if (addOns.HasFlag(AddOn.Hrms)) approvalApps |= App.Hrms;
         if (addOns.HasFlag(AddOn.Payroll)) approvalApps |= App.Payroll;
-        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery) approvalApps |= App.RetailErp;
+        if (businessType is BusinessType.General or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant) approvalApps |= App.RetailErp;
         if (businessType == BusinessType.School) approvalApps |= App.School;
 
         // The starting approval workflows (TK-49), in process: they are

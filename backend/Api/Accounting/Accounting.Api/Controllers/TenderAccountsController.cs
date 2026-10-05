@@ -21,7 +21,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/bank-accounts/tender-options")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
 public sealed class TenderAccountsController : ControllerBase
 {
     private readonly BankRepository _banks;

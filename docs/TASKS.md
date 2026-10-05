@@ -4641,6 +4641,7 @@ The queue below is one list in card-number order. Each card names its group.
   - `libs/restaurant/*` trimmed to the workspace's library shape (the Jest scaffolding is gone; Vitest picks up specs). Settings › Restaurant is rewritten: four presets that set only the two switches, dependent requirements disabled while their switch is off, no `alert()`. Every restaurant route needs a Restaurant branch.
   - `first-branch.sh` takes `BOOTSTRAP_VERTICAL` (default `General`).
   - **Permission ids 271 onward were renumbered** when `restaurant` was inserted into the module list by `a7e037b0`, which is how a seed change rewrites every role grant. New modules go at the end of the list.
+  - **Follow-up, 5 October 2026:** every `[RequireBusinessType]` that named General, Pharma and Jewellery left Restaurant out (60-odd controllers across Inventory, Sales, Purchase, Accounting and Reporting), `HttpTenantSeeder.ServicesFor` seeded a Restaurant branch with Accounting and Printing only, and neither branch form offered Restaurant. All three now treat Restaurant as a trading branch. `Service` has the same gap and is TK-136's.
   - `AddOnRulesTests` asserted General and Pharma allow every add-on, which stopped being true when the savings scheme became Jewellery's alone (TK-141); corrected beside the Restaurant case.
 - **Done when:** a Restaurant branch with every switch off sees billing only, turning `restaurant.tables.enabled` on makes the table endpoints answer, and `restaurant.table.required = Always` with tables off changes nothing.
 

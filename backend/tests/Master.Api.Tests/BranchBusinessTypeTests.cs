@@ -138,6 +138,17 @@ public sealed class BranchBusinessTypeTests
     }
 
     [Fact]
+    public void Restaurant_branch_seeds_the_same_services_as_a_retail_one()
+    {
+        // A restaurant keeps books, buys ingredients and bills like any trading
+        // branch; before this it was seeded with Accounting and Printing alone.
+        Assert.Equal(
+            HttpTenantSeeder.ServicesFor(BusinessType.General, AddOn.None),
+            HttpTenantSeeder.ServicesFor(BusinessType.Restaurant, AddOn.None));
+        Assert.True(HttpTenantSeeder.SeedsContacts(BusinessType.Restaurant, AddOn.None));
+    }
+
+    [Fact]
     public void School_branch_seeds_school_services_and_contacts()
     {
         IReadOnlyList<string> services = HttpTenantSeeder.ServicesFor(BusinessType.School, AddOn.None);

@@ -14,7 +14,7 @@ namespace Accounting.Api.Controllers;
 [RequireModulePermission("accounting")]
 [Route("api/reconciliation")]
 [Route("api/accounting/reconciliation")]
-[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.School)]
+[RequireBusinessType(BusinessType.General, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant, BusinessType.School)]
 public class ReconciliationController : ControllerBase
 {
     private readonly ReconciliationRepository _reconciliation;

@@ -87,7 +87,8 @@ export class OrganizationsPage implements OnInit {
     { value: 'General', label: 'General Retail' },
     { value: 'Pharma', label: 'Pharmacy' },
     { value: 'Jewellery', label: 'Jewellery' },
-    { value: 'School', label: 'School' }
+    { value: 'School', label: 'School' },
+    { value: 'Restaurant', label: 'Restaurant' }
   ];
 
   protected readonly allAddOns = [
@@ -99,7 +100,8 @@ export class OrganizationsPage implements OnInit {
     { value: 'ClientPortal', label: 'Client Portal' },
     { value: 'EInvoicing', label: 'E-Invoicing' },
     { value: 'Budget', label: 'Budgeting' },
-    { value: 'RecurringBilling', label: 'Recurring Billing' }
+    { value: 'RecurringBilling', label: 'Recurring Billing' },
+    { value: 'SavingsScheme', label: 'Savings Scheme' }
   ];
 
   protected isAddOnAllowed(addOn: string): boolean {
@@ -107,7 +109,10 @@ export class OrganizationsPage implements OnInit {
     if (addOn === 'Hrms' || addOn === 'Payroll') return true;
     if (!bt) return false;
     if (['Crm', 'FixedAssets', 'ClientPortal', 'Budget', 'RecurringBilling'].includes(addOn)) return true;
-    if (['Pos', 'EInvoicing'].includes(addOn)) return ['General', 'Pharma', 'Jewellery'].includes(bt);
+    // Mirrors AddOnRules.Allowed: a restaurant bills through its own order screen, not the retail till (D-43).
+    if (addOn === 'Pos') return ['General', 'Pharma', 'Jewellery'].includes(bt);
+    if (addOn === 'EInvoicing') return ['General', 'Pharma', 'Jewellery', 'Restaurant'].includes(bt);
+    if (addOn === 'SavingsScheme') return bt === 'Jewellery';
     return false;
   }
 
