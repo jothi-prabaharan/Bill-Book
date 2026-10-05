@@ -220,6 +220,10 @@ Enter these for items that track them. Inventory refuses the receipt and names
 the line if a batch-tracked item arrives without one, so nothing is silently
 recorded against the wrong lot.
 
+## Labels for what arrived
+
+Once a receipt is saved, **Print labels** prints one sticker per whole unit accepted on each line, ready to put on the goods as they are shelved. A bill offers the same. Sizes and kinds are set as described in [Printing labels](masters#printing-labels).
+
 ## Getting it wrong
 
 **A posted receipt cannot be voided.** The stock is on the shelf and the ledger

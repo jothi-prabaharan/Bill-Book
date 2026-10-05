@@ -75,6 +75,7 @@ builder.Services.AddAuthorization(options =>
 // did in Master before templates moved here.
 builder.Services.AddScoped<PrintTemplateRepository>();
 builder.Services.AddScoped<PrintTemplateSeederRepository>();
+builder.Services.AddScoped<LabelRepository>();
 builder.Services.AddSingleton<PrintRendererRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();

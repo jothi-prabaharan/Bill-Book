@@ -25,7 +25,11 @@ import {
   CustomFieldValues,
   DocumentCustomFieldsComponent,
   compactValues,
+  LabelData,
+  LabelKind,
+  LabelPrintDialog,
 } from '@bill-book/ui-components';
+import { goodsReceiptLabelKind, goodsReceiptLabels } from './goods-receipt-labels';
 
 import {
   GoodsReceiptService,
@@ -85,11 +89,30 @@ interface ReceivingLine {
     QuantityInputComponent,
     TextareaComponent,
     MessageBoxComponent,
+    LabelPrintDialog,
   ],
   templateUrl: './goods-receipt-form.page.html',
   styleUrl: './goods-receipt-form.page.scss',
 })
 export class GoodsReceiptFormPage {
+  /** The labels dialog, open with one label per unit accepted (TK-159). */
+  protected readonly labelsOpen = signal<{ labels: LabelData[]; kind: LabelKind } | null>(null);
+
+  protected openLabels(): void {
+    const receiving = this.receiving();
+    const labels = goodsReceiptLabels(
+      this.lines().map((line, index) => ({
+        itemId: line.itemId,
+        itemLabel: line.itemLabel,
+        description: line.description,
+        acceptedQuantity: receiving[index]?.acceptedQuantity ?? line.quantity / QTY_SCALE,
+        batchNumber: receiving[index]?.batchNumber,
+        batchExpiryDate: receiving[index]?.batchExpiryDate,
+      })),
+    );
+    this.labelsOpen.set({ labels, kind: goodsReceiptLabelKind(labels) });
+  }
+
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
 

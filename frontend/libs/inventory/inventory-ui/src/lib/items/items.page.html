@@ -28,9 +28,9 @@
     (ngModelChange)="load()"
   />
 
-
-
-  
+  <button type="button" class="btn btn-secondary" (click)="openListLabels()" [disabled]="rows().length === 0">
+    Print labels{{ labelPicks().size > 0 ? ' (' + labelPicks().size + ')' : '' }}
+  </button>
 </div>
 
 
@@ -40,6 +40,16 @@
 
 <div class="card bg-surface">
   <bb-data-grid [gridCode]="'ITEMS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
+    <ng-template bbCellTemplate="pick" let-row>
+      <span (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
+        <bb-checkbox
+          name="labelPick"
+          [ariaLabel]="'Print a label for ' + row.itemName"
+          [ngModel]="labelPicks().has(row.itemId)"
+          (ngModelChange)="toggleLabel(row.itemId, $event)"
+        />
+      </span>
+    </ng-template>
     <ng-template bbCellTemplate="itemCode" let-row>
       {{ row.itemCode }}
     </ng-template>
@@ -589,7 +599,20 @@
 
     <div class="sheet-actions">
       <button type="button" (click)="save()" [disabled]="busy() || !form.itemName">Save item</button>
+      @if (form.itemId) {
+        <button type="button" class="link" (click)="openItemLabels()">Print labels</button>
+        @if (form.isBatchTracked) {
+          <button type="button" class="link" (click)="openTrackedLabels('batch')">Batch labels</button>
+        }
+        @if (form.isSerialTracked) {
+          <button type="button" class="link" (click)="openTrackedLabels('serial')">Serial labels</button>
+        }
+      }
       <button type="button" class="link" (click)="editorOpen.set(false)">Cancel</button>
     </div>
   </div>
+}
+
+@if (labelsOpen(); as job) {
+  <bb-label-print-dialog [labels]="job.labels" [kind]="job.kind" (closed)="labelsOpen.set(null)" />
 }

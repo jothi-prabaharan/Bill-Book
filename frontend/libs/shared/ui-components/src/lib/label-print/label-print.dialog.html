@@ -1,0 +1,90 @@
+<div class="label-backdrop" tabindex="-1" (click)="close()" (keydown.escape)="close()"></div>
+<section class="label-dialog" role="dialog" aria-modal="true" aria-labelledby="label-print-title">
+  <header class="label-head">
+    <h2 id="label-print-title">Print labels</h2>
+    <button type="button" class="link" (click)="close()">Close</button>
+  </header>
+
+  <bb-message-box [messages]="messages()" />
+
+  <div class="label-fields">
+    <bb-select
+      label="Kind"
+      name="labelKind"
+      [clearable]="false"
+      [options]="kindOptions"
+      [ngModel]="chosenKind()"
+      (ngModelChange)="chooseKind($event)"
+    />
+
+    <bb-select
+      label="Size"
+      name="labelTemplate"
+      [clearable]="false"
+      placeholder="Standard size"
+      [options]="templateOptions()"
+      [ngModel]="chosen()?.labelTemplateId ?? null"
+      (ngModelChange)="chosenTemplateId.set($event)"
+    />
+
+    <bb-checkbox
+      label="On A4 sticker sheets"
+      hint="For a printer without label rolls. Otherwise each label prints at its exact size."
+      name="labelSheet"
+      [ngModel]="sheet()"
+      (ngModelChange)="sheet.set($event)"
+    />
+  </div>
+
+  @if (chosen(); as template) {
+    @if (!editingSize()) {
+      <p class="hint">
+        Printing at {{ sizeLabel(template) }}. Choose your label printer in the print dialog the first time.
+        <button type="button" class="link" (click)="startEditSize()">Change size</button>
+      </p>
+    } @else if (draft(); as d) {
+      <fieldset class="label-size">
+        <legend>Size of {{ d.name }}, in millimetres</legend>
+        <bb-number-input label="Width" name="w" [min]="10" [max]="210" [decimals]="1" [ngModel]="d.widthMm" (ngModelChange)="setDraft('widthMm', $event)" />
+        <bb-number-input label="Height" name="h" [min]="8" [max]="297" [decimals]="1" [ngModel]="d.heightMm" (ngModelChange)="setDraft('heightMm', $event)" />
+        <bb-number-input label="Gap between rows" name="g" [min]="0" [max]="20" [decimals]="1" [ngModel]="d.gapMm" (ngModelChange)="setDraft('gapMm', $event)" />
+        <bb-number-input label="Labels across" name="c" [min]="1" [max]="10" [ngModel]="d.columns" (ngModelChange)="setDraft('columns', $event)" />
+        <bb-number-input label="Gap across" name="cg" [min]="0" [max]="20" [decimals]="1" [ngModel]="d.columnGapMm" (ngModelChange)="setDraft('columnGapMm', $event)" />
+        <div class="label-size-actions">
+          <button type="button" class="btn btn-secondary" (click)="saveSize()" [disabled]="busy()">Save size</button>
+          <button type="button" class="link" (click)="editingSize.set(false)">Cancel</button>
+        </div>
+      </fieldset>
+    }
+  }
+
+  <ul class="label-rows">
+    @for (row of rows(); track $index) {
+      <li>
+        <span class="label-name">
+          <strong>{{ row.name }}</strong>
+          @if (row.batchNo) { <small>Batch {{ row.batchNo }}</small> }
+          @if (row.serialNo) { <small>S/N {{ row.serialNo }}</small> }
+        </span>
+        <bb-number-input
+          label="Copies"
+          name="copies"
+          [min]="1"
+          [max]="1000"
+          [ngModel]="row.copies"
+          (ngModelChange)="setCopies($index, $event)"
+        />
+      </li>
+    }
+  </ul>
+
+  <footer class="label-actions">
+    <span class="label-count" [class.over]="tooMany()">
+      {{ count() }} label{{ count() === 1 ? '' : 's' }}
+      @if (tooMany()) { — at most {{ maxLabels }} at once }
+    </span>
+    <button type="button" class="btn btn-primary" (click)="print()" [disabled]="busy() || tooMany() || rows().length === 0">
+      Print
+    </button>
+  </footer>
+</section>

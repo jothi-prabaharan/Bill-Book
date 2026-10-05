@@ -51,6 +51,10 @@ public sealed class InternalSeedController : ControllerBase
             Seeded =
             {
                 ["printTemplates"] = await seeder.SeedForOrganizationAsync(request.OrgId, ct),
+
+                // One default label size per kind (TK-159).
+                ["labelTemplates"] = await _services.GetRequiredService<LabelRepository>()
+                    .SeedForOrganizationAsync(request.OrgId, ct),
             },
         };
 

@@ -654,6 +654,27 @@ An item can carry several: the manufacturer's EAN, a shop-printed label, a pack-
 
 **Searching finds an item by its barcode.** `GET /api/items?search=` matches a name or item code anywhere in it, and a barcode only when it is typed whole. An item whose barcode was scanned comes first, then an exact item code, then everything else. A scanner types the whole code, and part of one would find the wrong item as often as the right one. An inactive barcode finds nothing. Add `skip` and `take` to get one page (up to 200 rows) with the total that matched. Without them the list returns up to 500 items, as it always has.
 
+## Printing labels
+
+**Print labels** puts price tags and stickers on a label printer at the label's own size (TK-159). A label printer has no A4 paper, so each label carries its exact width and height, and the browser prints it through the printer's normal driver. Choose the label printer in the print dialog the first time; the browser remembers it.
+
+- **From the Items list**: tick the items, then **Print labels**. Each starts at one copy; change the copies per item in the dialog.
+- **From an item**: **Print labels** for the item itself, **Batch labels** for one label per batch with its batch number and expiry, and **Serial labels** for one per serial number.
+- **From a goods receipt or a bill**: **Print labels** gives one label per whole unit accepted on each line, so a delivery of 12 gets 12 stickers.
+
+There are four kinds, and each branch starts with one size for each:
+
+| Kind | Starts at | Shows |
+|---|---|---|
+| Price tag | 50 × 25 mm | name, price, MRP when it differs, barcode |
+| Shelf label | 70 × 30 mm | name, item code, price, barcode |
+| Batch and expiry | 50 × 25 mm | name, batch, expiry month, barcode |
+| Jewellery tag | 60 × 15 mm | code, gross and net weight, purity, HUID, serial, barcode |
+
+The dialog picks the kind from the items: jewellery items get the jewellery tag, pharma items and batch labels get the batch and expiry label, anything else the price tag. You can change it before printing. **Width, height, the gap between labels and how many sit across the roll** are in millimetres, and **Save size** keeps them for the branch, so they match the rolls you buy. A two-across roll prints a row of two per page.
+
+**On A4 sticker sheets** prints the same labels in a grid on A4 instead, as many across as fit, for an office printer with sticker paper. Every label carries a barcode of the item's own barcode, or of its item code when it has none. One print run takes up to 5,000 labels.
+
 
 
 # Stock

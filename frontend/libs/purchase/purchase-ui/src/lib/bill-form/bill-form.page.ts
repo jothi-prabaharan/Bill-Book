@@ -26,7 +26,11 @@ import {
   compactValues,
   recalculate,
   EditHistoryComponent,
+  LabelData,
+  LabelKind,
+  LabelPrintDialog,
 } from '@bill-book/ui-components';
+import { goodsReceiptLabelKind, goodsReceiptLabels } from '../goods-receipt-form/goods-receipt-labels';
 import {
   BillService,
   BillView,
@@ -70,11 +74,27 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
     CheckboxComponent,
     SelectComponent,
     MessageBoxComponent,
+    LabelPrintDialog,
   ],
   templateUrl: './bill-form.page.html',
   styleUrl: './bill-form.page.scss',
 })
 export class BillFormPage {
+  /** Labels for the bill's item lines, one per unit billed (TK-159). */
+  protected readonly labelsOpen = signal<{ labels: LabelData[]; kind: LabelKind } | null>(null);
+
+  protected openLabels(): void {
+    const labels = goodsReceiptLabels(
+      this.lines().map((line) => ({
+        itemId: line.itemId,
+        itemLabel: line.itemLabel,
+        description: line.description,
+        acceptedQuantity: line.quantity / QTY_SCALE,
+      })),
+    );
+    this.labelsOpen.set({ labels, kind: goodsReceiptLabelKind(labels) });
+  }
+
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
 

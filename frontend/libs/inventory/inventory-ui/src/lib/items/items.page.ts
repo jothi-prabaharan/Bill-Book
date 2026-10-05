@@ -20,7 +20,19 @@ import {
   defaultValues,
   withCustomColumns,
   EditHistoryComponent,
+  LabelData,
+  LabelKind,
+  LabelPrintDialog,
 } from '@bill-book/ui-components';
+import {
+  BatchLabelSource,
+  SerialLabelSource,
+  batchLabels,
+  itemDetailLabel,
+  itemListLabels,
+  labelKindFor,
+  serialLabels,
+} from './item-labels';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -179,6 +191,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
     SelectComponent,
     CheckboxComponent,
     CustomFieldsComponent,
+    LabelPrintDialog,
   ],
   templateUrl: './items.page.html',
   styleUrl: './items.page.scss',
@@ -223,6 +236,7 @@ export class ItemsPage implements OnInit {
   showInactive = false;
 
   columns: ColumnDef[] = [
+    { field: 'pick', header: 'Label' },
     { field: 'itemCode', header: 'Item code' },
     { field: 'itemName', header: 'Item name' },
     { field: 'hsnSac', header: 'HSN/SAC' },
@@ -233,6 +247,62 @@ export class ItemsPage implements OnInit {
 
   form: ItemDetail = this.blank();
   hsnSearch = '';
+
+  // ---- Labels (TK-159) -----------------------------------------------------
+
+  /** Items ticked for labels. None ticked prints every listed item. */
+  protected readonly labelPicks = signal<ReadonlySet<number>>(new Set());
+  protected readonly labelsOpen = signal<{ labels: LabelData[]; kind: LabelKind } | null>(null);
+
+  protected toggleLabel(itemId: number, on: boolean): void {
+    const next = new Set(this.labelPicks());
+    if (on) next.add(itemId);
+    else next.delete(itemId);
+    this.labelPicks.set(next);
+  }
+
+  /** Labels for the ticked items, or for every item the list shows. */
+  protected openListLabels(): void {
+    const picked = this.labelPicks();
+    const rows = this.rows();
+    const profiles = (picked.size > 0 ? rows.filter((r) => picked.has(r.itemId)) : rows).map((r) => r.itemProfile);
+    this.labelsOpen.set({ labels: itemListLabels(rows, picked), kind: labelKindFor(profiles) });
+  }
+
+  /** Labels for the item open in the form, with its own barcode. */
+  protected openItemLabels(): void {
+    const purityId = Number(this.form.jewellery?.['metalPurityId'] ?? 0);
+    const purity = this.purities().find((p) => p.metalPurityId === purityId)?.purityName ?? null;
+    this.labelsOpen.set({ labels: [itemDetailLabel(this.form, purity)], kind: labelKindFor([this.form.itemProfile]) });
+  }
+
+  /** One label per batch of the open item, or per serial still in stock. */
+  protected async openTrackedLabels(by: 'batch' | 'serial'): Promise<void> {
+    const purityId = Number(this.form.jewellery?.['metalPurityId'] ?? 0);
+    const purity = this.purities().find((p) => p.metalPurityId === purityId)?.purityName ?? null;
+    const item = itemDetailLabel(this.form, purity);
+    try {
+      if (by === 'batch') {
+        const batches = await this.get<BatchLabelSource[]>(`/internal/item-batches?itemId=${this.form.itemId}`);
+        const labels = batchLabels(item, batches);
+        if (labels.length === 0) {
+          this.fail('This item has no batches to label yet.');
+          return;
+        }
+        this.labelsOpen.set({ labels, kind: 'BatchExpiry' });
+      } else {
+        const serials = await this.get<SerialLabelSource[]>(`/internal/item-serials?itemId=${this.form.itemId}`);
+        const labels = serialLabels(item, serials);
+        if (labels.length === 0) {
+          this.fail('This item has no serials in stock to label.');
+          return;
+        }
+        this.labelsOpen.set({ labels, kind: this.form.itemProfile === 'Jewellery' ? 'JewelleryTag' : 'PriceTag' });
+      }
+    } catch {
+      this.fail(by === 'batch' ? 'The batches could not be loaded.' : 'The serials could not be loaded.');
+    }
+  }
 
   /** Units of the item's type — the only ones the four slots may point at. */
   protected readonly unitsOfType = computed(

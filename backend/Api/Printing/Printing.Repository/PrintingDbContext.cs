@@ -13,9 +13,9 @@ namespace Printing.Repository;
 /// the ErrorLogs table hard rule 14 writes to, so nothing here restates them.
 ///
 /// <para>
-/// One table. That is the whole service's persistence: printing reads a
-/// template and renders a payload the caller pushed, so it holds no document
-/// and reads nobody else's tables — which is the property the split in
+/// Two tables: document templates and, since TK-159, label sizes. That is the
+/// whole service's persistence: printing reads a template and renders a payload
+/// the caller pushed, so it holds no document and reads nobody else's tables — which is the property the split in
 /// <c>docs/Printing.md</c> was argued on.
 /// </para>
 /// </summary>
@@ -27,6 +27,9 @@ public class PrintingDbContext : TenantDbContext
     }
 
     public DbSet<PrintTemplate> PrintTemplates => Set<PrintTemplate>();
+
+    /// <summary>Label sizes, one default per kind per branch (TK-159).</summary>
+    public DbSet<LabelTemplate> LabelTemplates => Set<LabelTemplate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +67,23 @@ public class PrintingDbContext : TenantDbContext
             b.Property(e => e.Content)
                 .HasColumnType("jsonb")
                 .HasConversion(JsonConverter<PrintContent>(), JsonComparer<PrintContent>());
+        });
+
+        modelBuilder.Entity<LabelTemplate>(b =>
+        {
+            b.HasKey(e => e.LabelTemplateId);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Name).HasMaxLength(100);
+            b.Property(e => e.WidthMm).HasPrecision(6, 2);
+            b.Property(e => e.HeightMm).HasPrecision(6, 2);
+            b.Property(e => e.GapMm).HasPrecision(5, 2);
+            b.Property(e => e.ColumnGapMm).HasPrecision(5, 2);
+
+            // One default per kind per branch, held by Postgres rather than code.
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.Kind })
+                .IsUnique()
+                .HasFilter("\"IsDefault\" AND \"IsActive\"")
+                .HasDatabaseName("IX_LabelTemplates_Default");
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

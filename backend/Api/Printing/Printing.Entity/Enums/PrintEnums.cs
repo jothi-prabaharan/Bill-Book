@@ -58,3 +58,22 @@ public enum PaperSize
     Letter = 2,
     Legal = 3,
 }
+
+/// <summary>
+/// What a label is for (TK-159), which decides what is printed on it. The size
+/// is the branch's, on <c>prt.LabelTemplates</c>; the content is fixed per kind.
+/// </summary>
+public enum LabelKind
+{
+    /// <summary>Name, price and MRP, and the item's barcode. Stuck on the item.</summary>
+    PriceTag = 1,
+
+    /// <summary>Name, code and price large, and the barcode. Clipped to the shelf edge.</summary>
+    ShelfLabel = 2,
+
+    /// <summary>Name, batch, expiry and MRP, and the barcode. A pharmacy's carton label.</summary>
+    BatchExpiry = 3,
+
+    /// <summary>Code, weight, purity and HUID, and the barcode. The tag on a piece of jewellery.</summary>
+    JewelleryTag = 4,
+}

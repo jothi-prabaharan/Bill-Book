@@ -5037,19 +5037,26 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** an unpaid invoice prints a QR carrying the branch UPI id, the amount due and the invoice number, and a paid one prints none.
 
 ### TK-159 · Label printing at an exact size
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#140](https://github.com/jothi-prabaharan/Bill-Book/issues/140)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-PRT, L-INV, L-PUR, L-WEB · **Depends on:** TK-156
 - **Where:** `Printing.Repository/Repositories/`, `Inventory.Repository/Repositories/ItemRepository.cs`, `Shared.Kernel/Printing/DocumentTypeCatalog.cs`
 - **State:** checked 1 October 2026. No label printing exists. Items hold barcodes in `inv.ItemBarcodes`. A sticker or label printer has no A4 or A5 paper, so a label has to carry its own size; the browser prints it through the OS driver at that size (no raw ZPL or TSPL, no Electron).
 - **Sub-tasks:**
-  - [ ] Label templates with width, height, gap and columns per row in millimetres, for a price tag, a shelf label, a batch and expiry label and a jewellery tag (weight, purity, HUID).
-  - [ ] `LabelRepository` and `api/print/labels`: items and quantities in, labels out, each drawn with TK-156's barcode.
-  - [ ] Print from the Items page, from a goods-receipt or bill line (one label per unit received) and per batch or serial, with `@page` set to the template's exact size; an A4 sticker-sheet layout as a fallback.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] Label templates with width, height, gap and columns per row in millimetres, for a price tag, a shelf label, a batch and expiry label and a jewellery tag (weight, purity, HUID).
+  - [x] `LabelRepository` and `api/print/labels`: items and quantities in, labels out, each drawn with TK-156's barcode.
+  - [x] Print from the Items page, from a goods-receipt or bill line (one label per unit received) and per batch or serial, with `@page` set to the template's exact size; an A4 sticker-sheet layout as a fallback.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** selecting items and a quantity prints that many labels at the template's exact size.
+- **As built (5 October 2026):**
+  - `prt.LabelTemplates` (`LabelTemplate`, `LabelKind`: PriceTag, ShelfLabel, BatchExpiry, JewelleryTag) holds width, height, gap, columns and column gap in millimetres, one default per kind per branch (`IX_LabelTemplates_Default`, filtered unique). Migration `LabelTemplates` carries the tenant RLS policy, enabled and FORCEd. `LabelTemplateSeed` seeds 50×25, 70×30, 50×25 and 60×15 through Printing's `internal/seed/organization` (`labelTemplates`), idempotently.
+  - Printing never reads items: the caller sends each label's text (`LabelData`) and copies. `LabelRendererRepository` lays them out — on a roll the `@page` is one row of labels at its exact size (`columns × width + gaps` by `height`), on an A4 sheet a grid of as many across as fit — and every label carries TK-156's barcode of its barcode, or of its item code. One run is capped at 5,000 labels (`422`).
+  - `LabelsController` at `api/print/labels` under the `inventory` module: `GET templates`, `PUT templates/{id}` (edit), `POST` (`[PermissionAction("print")]`).
+  - Frontend: `bb-label-print-dialog` in `ui-components` (kind, size editor with **Save size**, copies per label, A4 sheet switch, full-screen sheet under 480 px) prints with `printHtml`. Items list (tick column + **Print labels**), the item form (**Print labels**, **Batch labels**, **Serial labels**), and the goods receipt and bill forms (one label per whole unit accepted) open it.
+  - Tests: `Printing.Api.Tests.LabelPrintTests`, `label-print.model.spec.ts`, `item-labels.spec.ts`, `goods-receipt-labels.spec.ts`.
+  - Docs: [Printing labels](../frontend/apps/docs/content/masters.md), purchase **Labels for what arrived**, release note.
 
 ### TK-160 · Shared scan input with a small camera popup
 - [ ] open

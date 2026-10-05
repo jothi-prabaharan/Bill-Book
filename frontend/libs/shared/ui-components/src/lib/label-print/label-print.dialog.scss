@@ -1,0 +1,111 @@
+.label-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 35%);
+  z-index: 40;
+}
+
+.label-dialog {
+  position: fixed;
+  z-index: 41;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(36rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.label-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}
+
+.label-fields,
+.label-size {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-3);
+}
+
+.label-size {
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.label-size-actions {
+  display: flex;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+.label-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  li {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-3);
+    border-bottom: 1px solid var(--color-divider);
+    padding-bottom: var(--space-2);
+  }
+
+  bb-number-input {
+    width: 7rem;
+  }
+}
+
+.label-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.label-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.label-count.over {
+  color: var(--color-danger, #b00020);
+}
+
+// A full-screen sheet on a phone.
+@media (max-width: 480px) {
+  .label-dialog {
+    inset: 0;
+    transform: none;
+    width: 100%;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}

@@ -297,6 +297,17 @@
         }
       </footer>
 
+      @if (!isNew()) {
+        <p class="actions">
+          <button type="button" class="btn" (click)="openLabels()">Print labels</button>
+          <span class="actions__hint">One label per unit on each item line.</span>
+        </p>
+      }
+
+      @if (labelsOpen(); as job) {
+        <bb-label-print-dialog [labels]="job.labels" [kind]="job.kind" (closed)="labelsOpen.set(null)" />
+      }
+
       @if (billId(); as id) {
         <!-- The document's approval chain, when a workflow covers it (TK-100). -->
         <bb-approval-panel
