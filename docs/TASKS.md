@@ -5127,7 +5127,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: purchase page (order, **Counting it in by scanning**, bill, debit note), [Scanning](../frontend/apps/docs/content/inputs.md) (opening a document by its code), release note.
 
 ### TK-163 · Scan on stock documents
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#144](https://github.com/jothi-prabaharan/Bill-Book/issues/144)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-INV-UI · **Depends on:** TK-160
