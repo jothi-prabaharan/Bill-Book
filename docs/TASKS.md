@@ -4645,7 +4645,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a Restaurant branch with every switch off sees billing only, turning `restaurant.tables.enabled` on makes the table endpoints answer, and `restaurant.table.required = Always` with tables off changes nothing.
 
 ### TK-144 · Menu: categories, timed menus, variants, modifiers, availability, price by order type
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05 · rebuilding what `2b058a22` left: its migration created no tables
 - **Issue:** [#125](https://github.com/jothi-prabaharan/Bill-Book/issues/125)
 - **Group:** L · Restaurant
 - **Lanes:** L-INV, L-RST-UI · **Depends on:** TK-143 · **Decision:** D-39
