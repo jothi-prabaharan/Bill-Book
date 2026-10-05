@@ -148,6 +148,19 @@ public static class PlaceholderCatalog
             : null;
     }
 
+    /// <summary>The document number as a barcode (TK-156).</summary>
+    public const string DocumentBarcodeTag = "Document.BarcodeImage";
+
+    /// <summary>The document number as a QR code (TK-156).</summary>
+    public const string DocumentQrTag = "Document.QrImage";
+
+    /// <summary>
+    /// The tag whose value a code placeholder draws when the payload carries
+    /// none of its own: the document number, for the two document codes.
+    /// </summary>
+    public static string? FallbackFor(string tag) =>
+        tag is DocumentBarcodeTag or DocumentQrTag ? "Document.No" : null;
+
     private static PlaceholderDefinition Single(
         string tag, string group, string description, PlaceholderType type, int sort, string? format = null) =>
         new()
@@ -187,6 +200,12 @@ public static class PlaceholderCatalog
         Single("Document.Currency", "Document", "Currency code", PlaceholderType.Text, 70),
         Single("Document.Notes", "Document", "Notes for the other party", PlaceholderType.RichText, 80),
         Single("Document.Terms", "Document", "Terms and conditions", PlaceholderType.RichText, 90),
+
+        // The document's own number as codes (TK-156), so a printed copy can be
+        // scanned to open it. When a payload carries no text for them the renderer
+        // uses Document.No, so every printable type has them without a change.
+        Single(DocumentBarcodeTag, "Document", "Barcode of the document number", PlaceholderType.Barcode, 100),
+        Single(DocumentQrTag, "Document", "QR code of the document number", PlaceholderType.QrCode, 110),
     ];
 
     private static readonly PlaceholderDefinition[] Party =

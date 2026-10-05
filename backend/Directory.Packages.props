@@ -68,6 +68,10 @@
     <!-- The e-invoice QR code on a printed invoice (TK-92). MIT, fully managed:
          PngByteQRCode writes the PNG itself, with no System.Drawing. -->
     <PackageVersion Include="QRCoder" Version="1.8.0" />
+    <!-- Barcodes on printed documents and labels, Code128 and EAN-13 (TK-156,
+         D-46's default). Apache-2.0, fully managed: BarcodeWriterSvg draws an
+         SVG with no imaging library, which prints crisp at any size. -->
+    <PackageVersion Include="ZXing.Net" Version="0.16.11" />
     <!-- The DOM the renderer walks. It arrives under HtmlSanitizer anyway, but
          PrintSubstitution calls its API directly, so it is declared rather than
          relied on as a transitive that a sanitiser upgrade could move. -->

@@ -1234,6 +1234,22 @@ with no repeat mark prints once wherever you put it.
 **A field that cannot be filled in prints as nothing** — never as its own name. The template
 list tells you if a template has any, so you can find them before a customer does.
 
+### Barcodes and QR codes
+
+Every document type offers two codes of its own number, under **Document** in the field panel
+(TK-156):
+
+- `{{Document.BarcodeImage}}` prints a **barcode** of the document number with the number in
+  small print beneath it. It is a Code128 barcode, or an EAN-13 when the text is a valid 13-digit
+  retail code. It is 12 mm tall and as wide as the number needs.
+- `{{Document.QrImage}}` prints a **QR code** of the document number, 32 mm square.
+
+Both are drawn when the document prints, so they are always the document's real number, and
+both print sharp on paper. A scanner reading either one reads the document number. Text a barcode
+cannot carry — anything outside the plain keyboard letters, digits and punctuation — prints
+nothing rather than a wrong code. A template's own pasted-in images still cannot be data
+images; only these generated codes are.
+
 ## The editor
 
 **Settings › Print templates**, or one entry per document type under the Print templates group of

@@ -19,6 +19,13 @@ public enum PlaceholderType
     /// crosses the wire and the template sanitiser's rule against them stands.
     /// </summary>
     QrCode = 6,
+
+    /// <summary>
+    /// Text the renderer draws as a barcode (TK-156): Code128, or EAN-13 for a
+    /// valid 13-digit retail code. As with <see cref="QrCode"/>, the payload
+    /// carries the text and the renderer draws the image.
+    /// </summary>
+    Barcode = 7,
 }
 
 /// <summary>

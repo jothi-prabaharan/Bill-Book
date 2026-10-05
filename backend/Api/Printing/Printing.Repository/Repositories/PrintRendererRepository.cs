@@ -521,6 +521,11 @@ public sealed class PrintRendererRepository
         + ".pt-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);"
         + "font-size:72pt;font-weight:bold;letter-spacing:0.1em;opacity:0.12;white-space:nowrap;pointer-events:none;z-index:1}"
         + ".pt-qr{width:32mm;height:32mm;image-rendering:pixelated}"
+        // A barcode under its readable text (TK-156): 12 mm of bars, as wide as
+        // the code needs, never wider than its cell.
+        + ".pt-barcode{display:inline-block;text-align:center;line-height:1}"
+        + ".pt-barcode img{display:block;height:12mm;max-width:100%;margin:0 auto}"
+        + ".pt-barcode-text{display:block;font:8pt monospace;margin-top:1mm}"
         + ".pt-einvoice{margin-bottom:3mm;font-size:8pt}"
         + ".pt-einvoice td{vertical-align:top;word-break:break-all}"
         + ".pt-einvoice-qr{width:34mm;text-align:right}"

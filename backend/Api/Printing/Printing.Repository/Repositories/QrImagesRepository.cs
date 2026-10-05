@@ -4,7 +4,7 @@ namespace Printing.Repository.Repositories;
 
 /// <summary>
 /// Draws a QR code as a PNG data URI (TK-92), for the e-invoice's signed QR
-/// payload on a printed invoice.
+/// payload on a printed invoice and, since TK-156, a document's own number.
 ///
 /// The renderer builds this markup itself from text it was given, so it does
 /// not pass through the template sanitiser, which refuses data URIs for a good
@@ -27,10 +27,14 @@ public static class QrImagesRepository
     }
 
     /// <summary>The element a QR placeholder becomes. Empty text draws nothing.</summary>
-    public static string Img(string? text) =>
+    public static string Img(string? text, string alt = "e-invoice QR code") =>
         string.IsNullOrWhiteSpace(text)
             ? string.Empty
-            : $"<img class=\"pt-qr\" src=\"{DataUri(text)}\" alt=\"e-invoice QR code\">";
+            : $"<img class=\"pt-qr\" src=\"{DataUri(text)}\" alt=\"{System.Net.WebUtility.HtmlEncode(alt)}\">";
+
+    /// <summary>What a QR placeholder's image says it is, for a screen reader.</summary>
+    public static string AltFor(string tag) =>
+        tag.StartsWith("EInvoice.", StringComparison.OrdinalIgnoreCase) ? "e-invoice QR code" : "QR code of the document number";
 }
 
 /// <summary>

@@ -4975,17 +4975,23 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** `git grep -i electron` and `git grep apps/desktop` find nothing except struck-through history notes, `web` and `docs` build, and the till posts a sale from `apps/web` (owner's run).
 
 ### TK-156 · Printing: barcode and QR rendering
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · D-46 still open; its default library is what was built
 - **Issue:** [#137](https://github.com/jothi-prabaharan/Bill-Book/issues/137)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-PRT, L-KERNEL, L-DEPS · **Depends on:** — · **Decision:** D-46
 - **Where:** `Printing.Repository/Repositories/{QrImagesRepository,PrintSubstitutionRepository,PrintRendererRepository}.cs`, `Shared.Kernel/Printing/{PlaceholderCatalog,PrintEnums}.cs`, `Directory.Packages.props`
 - **State:** checked 1 October 2026. `PlaceholderCatalog` declares one image tag, `EInvoice.QrImage` of type `PlaceholderType.QrCode`; `PrintSubstitutionRepository` hands its text to `QrImagesRepository.Img`, which draws a PNG with QRCoder 1.8.0 and inlines it as a data URI. There is no barcode type and no generic document code.
 - **Sub-tasks:**
-  - [ ] `PlaceholderType.Barcode` and a `BarcodeImagesRepository` for Code128 and EAN-13, one MIT library pinned in `Directory.Packages.props` (D-46), output as an inline image.
-  - [ ] Generic placeholders `Doc.BarcodeImage` (the document number) and `Doc.QrImage`, in the template editor's palette; the sanitiser still refuses a template's own `data:` URIs.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] `PlaceholderType.Barcode` and a `BarcodeImagesRepository` for Code128 and EAN-13, one MIT library pinned in `Directory.Packages.props` (D-46), output as an inline image.
+  - [x] Generic placeholders `Doc.BarcodeImage` (the document number) and `Doc.QrImage`, in the template editor's palette; the sanitiser still refuses a template's own `data:` URIs.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - **Library**: ZXing.Net 0.16.11, D-46's default. Its licence is **Apache-2.0, not MIT** as D-46's note says — equally permissive, but recorded here so the owner sees it. `BarcodeWriterSvg` draws SVG with no imaging library, so nothing native came with it. Pinned in `Directory.Packages.props`, referenced by `Printing.Repository` only.
+  - **`PlaceholderType.Barcode`** (7) and **`BarcodeImagesRepository`**: EAN-13 when the text is 13 digits with the right GS1 check digit, Code128 for any other printable ASCII, nothing for text Code128 cannot carry. The image is an SVG data URI built from the payload's text, never from payload markup, so — as with the QR — it bypasses the template sanitiser while a template's own `data:` images are still refused. The readable text prints beneath the bars, HTML-encoded; `.pt-barcode` sizes it to 12 mm.
+  - **Placeholders**: `Document.BarcodeImage` and `Document.QrImage` — named in the existing **Document** group, where `Document.No` lives, rather than a separate `Doc.` group. Both are in every document type's palette, which the editor already reads from the server. When a payload carries no text for them, the renderer draws `Document.No` (`PlaceholderCatalog.FallbackFor`), so every printable type has its codes without a change in its service; TK-157 puts them on the seeded templates. The QR's alt text now says what it carries.
+  - Tests: `BarcodePrintTests` (the EAN-13 check, the format choice, the SVG, encoding of the caption, unencodable text, a template tag rendering Code128, the fallback to the document number, every type offering both, a template's own data image still refused).
+  - Docs: **Barcodes and QR codes** in `masters.md`'s print template section, and a release note.
 - **Done when:** a template with a barcode tag renders a Code128 image for the text it is given.
 
 ### TK-157 · Document barcode and QR on every printable type

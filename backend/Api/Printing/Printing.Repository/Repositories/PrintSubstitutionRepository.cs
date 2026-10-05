@@ -226,6 +226,10 @@ public static class PrintSubstitutionRepository
             }
 
             object? value = Lookup(values, tag, fallbackToShortName);
+            if (value is null or "" && PlaceholderCatalog.FallbackFor(placeholder.Tag) is string fallback)
+            {
+                value = Lookup(values, fallback, fallbackToShortName);
+            }
 
             switch (placeholder.Type)
             {
@@ -242,9 +246,15 @@ public static class PrintSubstitutionRepository
                 case PlaceholderType.QrCode:
                     // Built here from the text, never taken from the payload as
                     // markup, so it needs no sanitising (see QrImagesRepository).
-                    string qr = QrImagesRepository.Img(value as string);
+                    string qr = QrImagesRepository.Img(value as string, QrImagesRepository.AltFor(placeholder.Tag));
                     anyMarkup |= qr.Length > 0;
                     return qr;
+
+                case PlaceholderType.Barcode:
+                    // Built here from the text, like the QR (see BarcodeImagesRepository).
+                    string barcode = BarcodeImagesRepository.Img(value as string);
+                    anyMarkup |= barcode.Length > 0;
+                    return barcode;
 
                 case PlaceholderType.RichText:
                     string markup = sanitizer.Sanitize(value as string ?? string.Empty);
