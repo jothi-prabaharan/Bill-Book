@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Approvals;
-using Shared.Kernel.Apps;
 using Shared.Kernel.Tenancy;
 
 namespace Master.Entity.TableEntities;
@@ -25,9 +24,6 @@ public class ApprovalWorkflow : OrgScopedEntity
     public string Name { get; set; } = null!;
 
     public ApprovalRequestKind RequestKind { get; set; }
-
-    /// <summary>The app whose requests this governs, for the settings screen's filter.</summary>
-    public App App { get; set; } = App.RetailErp;
 
     /// <summary>HRMS matching. Ignored for RetailErp kinds.</summary>
     public long? DepartmentId { get; set; }

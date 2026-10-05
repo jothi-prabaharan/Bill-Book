@@ -8,19 +8,19 @@
 export interface RequestKindOption {
   value: number;
   label: string;
-  group: 'RetailErp' | 'HRMS & Payroll';
+  group: 'Trading' | 'HRMS & Payroll';
 }
 
 export const REQUEST_KINDS: readonly RequestKindOption[] = [
-  { value: 101, label: 'Purchase order', group: 'RetailErp' },
-  { value: 102, label: 'Purchase bill', group: 'RetailErp' },
-  { value: 103, label: 'Debit note', group: 'RetailErp' },
-  { value: 104, label: 'Spend money', group: 'RetailErp' },
-  { value: 105, label: 'Manual journal', group: 'RetailErp' },
-  { value: 106, label: 'Credit note', group: 'RetailErp' },
-  { value: 107, label: 'Sales discount override', group: 'RetailErp' },
-  { value: 108, label: 'Credit limit override', group: 'RetailErp' },
-  { value: 109, label: 'Stock adjustment', group: 'RetailErp' },
+  { value: 101, label: 'Purchase order', group: 'Trading' },
+  { value: 102, label: 'Purchase bill', group: 'Trading' },
+  { value: 103, label: 'Debit note', group: 'Trading' },
+  { value: 104, label: 'Spend money', group: 'Trading' },
+  { value: 105, label: 'Manual journal', group: 'Trading' },
+  { value: 106, label: 'Credit note', group: 'Trading' },
+  { value: 107, label: 'Sales discount override', group: 'Trading' },
+  { value: 108, label: 'Credit limit override', group: 'Trading' },
+  { value: 109, label: 'Stock adjustment', group: 'Trading' },
   { value: 1, label: 'Leave', group: 'HRMS & Payroll' },
   { value: 2, label: 'Attendance regularisation', group: 'HRMS & Payroll' },
   { value: 3, label: 'Overtime', group: 'HRMS & Payroll' },
@@ -100,7 +100,6 @@ export interface SaveApprovalWorkflow {
 
 export interface ApprovalWorkflowView extends SaveApprovalWorkflow {
   approvalWorkflowId: number;
-  app: string;
 }
 
 export function blankLevel(requestKind: number): ApprovalLevel {

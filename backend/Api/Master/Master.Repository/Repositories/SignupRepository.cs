@@ -48,6 +48,29 @@ public sealed class SignupRepository
         _clock = clock;
     }
 
+    /// <summary>
+    /// Why a signup's business type and add-ons cannot go together, or null
+    /// (D-50, TK-136). A business type allows only the add-ons
+    /// <see cref="AddOnRules.Allowed"/> gives it, and a customer with no trade
+    /// is buying HRMS or Payroll, so needs one of them. Pure.
+    /// </summary>
+    public static string? ScopeRefusal(BusinessType? businessType, AddOn addOns)
+    {
+        if (businessType is BusinessType type && !AddOnRules.IsDefined(type))
+        {
+            return "Choose a business type: Retail, Pharma, Jewellery, School, Service or Restaurant.";
+        }
+
+        if (businessType is null && (addOns & (AddOn.Hrms | AddOn.Payroll)) == 0)
+        {
+            return "Without a business type, choose HRMS or Payroll.";
+        }
+
+        return AddOnRules.IsAllowed(businessType, addOns)
+            ? null
+            : "One of the chosen add-ons is not available for that business type.";
+    }
+
     public async Task<SignupResponse> SignupAsync(SignupRequest request, CancellationToken ct)
     {
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
@@ -102,20 +125,10 @@ public sealed class SignupRepository
             }
         }
 
-        // The app signed up for sets the initial branch's business type or add-ons (D-36, TK-127).
-        Shared.Kernel.Apps.App app = AuthRepository.AppOrDefault(request.App);
-        BusinessType? initialBusinessType = app switch
-        {
-            Shared.Kernel.Apps.App.School => BusinessType.School,
-            Shared.Kernel.Apps.App.Hrms or Shared.Kernel.Apps.App.Payroll => null,
-            _ => BusinessType.Retail,
-        };
-        AddOn initialAddOns = app switch
-        {
-            Shared.Kernel.Apps.App.Hrms => AddOn.Hrms,
-            Shared.Kernel.Apps.App.Payroll => AddOn.Payroll,
-            _ => AddOn.None,
-        };
+        // The first branch's business type and add-ons, as signed up for (D-50, TK-136).
+        // The controller has already refused a pair ScopeRefusal would refuse.
+        BusinessType? initialBusinessType = request.BusinessType;
+        AddOn initialAddOns = request.AddOns;
 
         var license = new License
         {
@@ -196,8 +209,7 @@ public sealed class SignupRepository
             request.Email,
             request.DisplayName,
             request.MobileNumber,
-            request.Password,
-            app), ct);
+            request.Password), ct);
 
         return new SignupResponse
         {

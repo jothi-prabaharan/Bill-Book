@@ -6,12 +6,15 @@ namespace Master.Entity.Models;
 public class SignupRequest
 {
     /// <summary>
-    /// The app being signed up for, by name (H0.4, TK-45): RetailErp, School,
-    /// Hrms or Payroll. Each app's public signup page sends its own. Omitted
-    /// means RetailErp.
+    /// The first branch's business type (D-50, TK-136). Omitted means Retail;
+    /// null means no trade at all, for a customer buying only HRMS or Payroll,
+    /// which then needs one of those add-ons.
     /// </summary>
-    [RegularExpression("(?i)^(RetailErp|School|Hrms|Payroll)$", ErrorMessage = "App must be RetailErp, School, Hrms or Payroll.")]
-    public string? App { get; set; }
+    [EnumDataType(typeof(Shared.Kernel.Apps.BusinessType), ErrorMessage = "Business type must be Retail, Pharma, Jewellery, School, Service or Restaurant.")]
+    public Shared.Kernel.Apps.BusinessType? BusinessType { get; set; } = Shared.Kernel.Apps.BusinessType.Retail;
+
+    /// <summary>The add-ons the first branch starts with; each must be one its business type allows.</summary>
+    public Shared.Kernel.Apps.AddOn AddOns { get; set; } = Shared.Kernel.Apps.AddOn.None;
 
     public Master.Entity.Enums.CustomerKind? Kind { get; set; }
 

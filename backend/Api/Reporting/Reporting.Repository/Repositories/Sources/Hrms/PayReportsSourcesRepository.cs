@@ -26,7 +26,7 @@ public sealed class SalaryRegisterSource : ReportSource<SalaryRegisterRow>
     public override string ReportKey => "salary-register";
     public override string Title => "Salary Register";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -82,7 +82,7 @@ public sealed class PayslipSummarySource : ReportSource<PayslipSummaryRow>
     public override string ReportKey => "payslip-summary";
     public override string Title => "Payslip Summary";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -139,7 +139,7 @@ public sealed class CtcReportSource : ReportSource<CtcReportRow>
     public override string ReportKey => "ctc-report";
     public override string Title => "CTC Report";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -196,7 +196,7 @@ public sealed class SalaryVarianceSource : ReportSource<SalaryVarianceRow>
     public override string ReportKey => "salary-variance";
     public override string Title => "Salary Variance";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -252,7 +252,7 @@ public sealed class BankAdviceSource : ReportSource<BankAdviceRow>
     public override string ReportKey => "bank-advice";
     public override string Title => "Bank Advice";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -309,7 +309,7 @@ public sealed class HeldSalariesSource : ReportSource<HeldSalariesRow>
     public override string ReportKey => "held-salaries";
     public override string Title => "Held Salaries";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -365,7 +365,7 @@ public sealed class SalaryArrearsSource : ReportSource<SalaryArrearsRow>
     public override string ReportKey => "salary-arrears";
     public override string Title => "Salary Arrears";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -423,7 +423,7 @@ public sealed class LoansOutstandingSource : ReportSource<LoansOutstandingRow>
     public override string ReportKey => "loans-outstanding";
     public override string Title => "Loans Outstanding";
     public override ReportModule Module => ReportModule.Pay;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>

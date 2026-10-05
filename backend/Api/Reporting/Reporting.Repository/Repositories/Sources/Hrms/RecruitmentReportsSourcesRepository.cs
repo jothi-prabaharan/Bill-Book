@@ -24,7 +24,7 @@ public sealed class RecruitmentPipelineSource : ReportSource<RecruitmentPipeline
     public override string ReportKey => "recruitment-pipeline";
     public override string Title => "Recruitment Pipeline by Stage";
     public override ReportModule Module => ReportModule.Recruitment;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "recruitment.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -77,7 +77,7 @@ public sealed class TimeToHireSource : ReportSource<TimeToHireRow>
     public override string ReportKey => "time-to-hire";
     public override string Title => "Time to Hire";
     public override ReportModule Module => ReportModule.Recruitment;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "recruitment.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -126,7 +126,7 @@ public sealed class SourceEffectivenessSource : ReportSource<SourceEffectiveness
     public override string ReportKey => "source-effectiveness";
     public override string Title => "Source Effectiveness";
     public override ReportModule Module => ReportModule.Recruitment;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "recruitment.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -167,7 +167,7 @@ public sealed class OfferAcceptanceSource : ReportSource<OfferAcceptanceRow>
     public override string ReportKey => "offer-acceptance";
     public override string Title => "Offer Acceptance";
     public override ReportModule Module => ReportModule.Recruitment;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "recruitment.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>

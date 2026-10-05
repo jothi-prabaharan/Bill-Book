@@ -9134,23 +9134,6 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
-                            MenuId = 1085,
-                            AddOns = 0,
-                            CanCreate = false,
-                            Code = "lic",
-                            DisplayOrder = 7,
-                            Icon = "badge-check",
-                            IsActive = true,
-                            IsSearchable = false,
-                            Module = "settings",
-                            Name = "Applications",
-                            ParentId = 114,
-                            RoutePath = "/settings/applications",
-                            Type = "Item",
-                            Version = 0u
-                        },
-                        new
-                        {
                             MenuId = 1125,
                             AddOns = 0,
                             CanCreate = false,
@@ -13275,15 +13258,6 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1084,
                             Module = "settings",
                             PermissionCode = "settings.delete",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            MenuPermissionId = 301,
-                            Action = "view",
-                            MenuId = 1085,
-                            Module = "settings",
-                            PermissionCode = "settings.view",
                             Version = 0u
                         },
                         new

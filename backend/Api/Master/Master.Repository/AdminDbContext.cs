@@ -846,7 +846,7 @@ public class AdminDbContext : DbContext
         // H10, H11 (TK-57, TK-58).
         "recruitment", "performance", "restaurant",
 
-        // Project accounting (TK-104). RetailErp's, but granted with fixed ids
+        // Project accounting (TK-104). A trading module, but granted with fixed ids
         // (see FixedGrantModules) so no existing grant is renumbered.
         "projects",
     };
@@ -894,13 +894,15 @@ public class AdminDbContext : DbContext
         (1_000_105, "Maintenance", ["facility", "contacts.view", "workorder.view", "workorder.create", "workorder.edit", "preventive", "amc.view", "employee.view"]),
     ];
 
-    public static readonly IReadOnlyList<(App App, int RoleId)> AppOwnerRoles =
-    [
-        (App.RetailErp, 1),
-    ];
+    /// <summary>
+    /// The id band School's role permissions are seeded in. It was the School
+    /// member of the retired App flag (2), and stays 2 so the seeded ids do not
+    /// move (TK-136).
+    /// </summary>
+    private const long SchoolRolePermissionBand = 2;
 
-    /// <summary>The seeded Owner role (D-36: roles span types, single Owner role 1).</summary>
-    public static int OwnerRoleOf(App app) => 1;
+    /// <summary>The seeded Owner role (D-36: roles span every trade and add-on, so there is one Owner, role 1).</summary>
+    public const int OwnerRoleId = 1;
 
     public static (BusinessType? BusinessType, AddOn AddOns) ScopeOfModule(string module) => module switch
     {
@@ -914,19 +916,6 @@ public class AdminDbContext : DbContext
         "crm" => (null, AddOn.Crm),
         "restaurant" => (BusinessType.Restaurant, AddOn.None),
         _ => (BusinessType.Retail, AddOn.None),
-    };
-
-    public static App AppsOfModule(string module) => module switch
-    {
-        "settings" or "platform" => App.All,
-        "employee" => App.Hrms | App.Payroll | App.School,
-        "hrm" or "leave" or "claims" or "recruitment" or "performance" => App.Hrms,
-        "attendance" => App.Hrms | App.School,
-        "contacts" => App.RetailErp | App.School,
-        "restaurant" => App.RetailErp,
-        "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => App.School,
-        "payroll" => App.Payroll,
-        _ => App.RetailErp,
     };
 
     private static void SeedRolesAndPermissions(ModelBuilder modelBuilder)
@@ -1037,8 +1026,9 @@ public class AdminDbContext : DbContext
         // platform.* is operator-only and never granted to a tenant role.
         List<Permission> nonPlatform = permissions.Where(p => p.Module != "platform").ToList();
 
-        // The five system roles are RetailErp's, so they hold RetailErp's
-        // permissions only (the grant rule, TK-42).
+        // The five system roles start with the trading permissions. Roles span
+        // every trade and add-on (D-36, D-50), so an owner grants the rest from
+        // the roles screen, which offers what the branch's scope allows.
         //
         // The extras (ids from 10,000) are left out of these sequential grants
         // and granted below with fixed ids: appended here they would renumber
@@ -1070,9 +1060,9 @@ public class AdminDbContext : DbContext
             salesAlsoReads.Contains(p.Module)
             && p.Code.EndsWith(".view", StringComparison.Ordinal)));
 
-        // RetailErp's extra permissions, to the roles that hold their module:
+        // The trading extra permissions, to the roles that hold their module:
         // 900,000,000 + 100,000 × the role + the permission id, clear of the
-        // sequential ids above and of the per-app ranges below.
+        // sequential ids above and of the School role band below.
         foreach (Permission extra in nonPlatform.Where(p => retailModules.Contains(p.Module) && p.PermissionId >= 10_000))
         {
             foreach (int roleId in new[] { owner, administrator, accountant, sales })
@@ -1148,7 +1138,7 @@ public class AdminDbContext : DbContext
             {
                 grants.Add(new RolePermission
                 {
-                    RolePermissionId = 1_000_000_000L * (int)App.School + 10_000_000L * (k + 1) + permission.PermissionId,
+                    RolePermissionId = 1_000_000_000L * SchoolRolePermissionBand + 10_000_000L * (k + 1) + permission.PermissionId,
                     RoleId = roleId,
                     PermissionId = permission.PermissionId,
                 });

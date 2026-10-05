@@ -21,7 +21,7 @@ public sealed class LicenseRepository
     }
 
     /// <summary>The customer's licence (D-36, TK-127), or null when it holds none.</summary>
-    public async Task<LicenseDto?> GetAsync(Guid customerId, CancellationToken ct, App app = App.RetailErp)
+    public async Task<LicenseDto?> GetAsync(Guid customerId, CancellationToken ct)
     {
         var license = await _db.Licenses
             .Where(l => l.CustomerId == customerId)
@@ -44,7 +44,6 @@ public sealed class LicenseRepository
     {
         return new LicenseDto
         {
-            App = "RetailErp",
             LicenseId = license.LicenseId,
             CustomerId = license.CustomerId,
             LicenseType = license.LicenseType.ToString(),
@@ -62,7 +61,7 @@ public sealed class LicenseRepository
     /// Also updates the ExpiryDate for any branches that were tracking the license's previous ExpiryDate.
     /// See Master.md section 5.16.
     /// </summary>
-    public async Task<bool> RenewAsync(Guid customerId, DateOnly newExpiryDate, CancellationToken ct, App app = App.RetailErp)
+    public async Task<bool> RenewAsync(Guid customerId, DateOnly newExpiryDate, CancellationToken ct)
     {
         var license = await _db.Licenses
             .FirstOrDefaultAsync(l => l.CustomerId == customerId, ct);
@@ -97,7 +96,7 @@ public sealed class LicenseRepository
     /// Clears the IsTrial flag on a specified trial branch and aligns its ExpiryDate with the license.
     /// See Master.md section 5.19.
     /// </summary>
-    public async Task<bool> ClearBranchTrialAsync(Guid customerId, Guid orgId, CancellationToken ct, App app = App.RetailErp)
+    public async Task<bool> ClearBranchTrialAsync(Guid customerId, Guid orgId, CancellationToken ct)
     {
         var license = await _db.Licenses
             .FirstOrDefaultAsync(l => l.CustomerId == customerId, ct);

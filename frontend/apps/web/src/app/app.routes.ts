@@ -51,8 +51,8 @@ export const appRoutes: Routes = [
         data: { access: { signedIn: true } },
       },
       // Users, roles, branches, organization settings, currencies,
-      // configuration, email, API keys, print templates, numbering and
-      // applications: the pages every app shares, from one lib (TK-47).
+      // configuration, email, API keys, print templates and numbering:
+      // the pages every branch shares, from one lib (TK-47).
       ...sharedSettingsRoutes,
       ...employeeRoutes,
       ...timeLeaveRoutes,

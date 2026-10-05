@@ -1,16 +1,16 @@
 # School
 
-**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks, admissions, student attendance, fees, and buildings, spaces and assets are built. Work orders, preventive maintenance and AMC contracts are added as each stage is built.
+**Status: partial.** The School business type, its roles, guardian contacts, students, academic setup, exams, marks, admissions, student attendance, fees, and buildings, spaces and assets are built. Work orders, preventive maintenance and AMC contracts are added as each stage is built.
 
-School is sold on its own, like RetailErp, HRMS and Payroll. One customer can hold any of them, with the same branches and users across all of them. A branch is one campus.
+School is a business type: a branch declared School is one campus, and gets the school screens instead of the trading ones. One customer can run School branches beside trading branches, with the same users and roles across all of them. HRMS and Payroll are add-ons a School branch can switch on.
 
 ## Signing up
 
-Signing up from the School app starts a 14-day School trial and makes you School's **Owner** in your first branch. A customer who already has another app starts School from **Settings › Applications › Start trial**.
+Choose **School** as the kind of business when signing up. That starts a 14-day trial with a School first branch and makes you its **Owner**. An existing customer adds a campus by creating a branch with the School business type on **Settings › Branches**.
 
 ## Roles
 
-School comes with these roles. As with every app, a role belongs to School alone.
+School comes with these roles. Like every role, they belong to the customer and work in any branch; the roles screen offers School's permissions in a School branch.
 
 | Role | What it can do |
 |---|---|
@@ -26,7 +26,7 @@ School comes with these roles. As with every app, a role belongs to School alone
 
 A student's parent or guardian is a **contact**, and can be given a link to the [parent portal](#parent-portal). It is the same contact master RetailErp uses, so a guardian can receive fee demands and pay them. Tick **Guardian** on the contact, and use the **Guardians** filter to list only guardians. Guardian contacts are numbered like customers.
 
-The Guardian checkbox and filter appear only in the School app. A student is not a contact; students are recorded under Students.
+The Guardian checkbox and filter appear only in a School branch. A student is not a contact; students are recorded under Students.
 
 ## Academic setup
 
@@ -148,7 +148,7 @@ A contract starts as a **draft**. List the assets it covers, then **Activate** i
 
 Guardians can see their children's school record on the parent portal, without a staff login.
 
-**Giving a guardian access.** Open the guardian's contact in the School app and press **Portal link**. Send the link to the guardian. It works for 90 days unless you revoke it, and **Revoke portal access** on the contact stops it at once (see [Portal access](masters#portal-access)). A link made in the School app opens the parent portal, and one made in RetailErp opens a customer's statement. On a student's record, a guardian sees the child only when **portal access** is ticked for them, so a second guardian can be kept off the portal.
+**Giving a guardian access.** Open the guardian's contact in a School branch and press **Portal link**. Send the link to the guardian. It works for 90 days unless you revoke it, and **Revoke portal access** on the contact stops it at once (see [Portal access](masters#portal-access)). A link made in a School branch opens the parent portal, and one made in a trading branch opens a customer's statement. On a student's record, a guardian sees the child only when **portal access** is ticked for them, so a second guardian can be kept off the portal.
 
 **What a guardian sees:**
 
@@ -172,6 +172,6 @@ Only posted demands and receipts appear. Drafts and voided documents do not. Fee
 
 Entering marks needs *Students: edit*, which teachers hold. Opening, publishing and locking an exam need *Students: approve*.
 
-## The School app
+## A School branch
 
-The School app has the shared settings screens, the employee master (**People**) and **Contacts**. Its **Students**, **Fees** and **Maintenance** sections are built, and more maintenance screens appear as each is built. HRMS-only screens, such as announcements and policies, are not shown in School.
+A School branch has the shared settings screens, the employee master (**People**) and **Contacts**. Its **Students**, **Fees** and **Maintenance** sections are built, and more maintenance screens appear as each is built. HRMS-only screens, such as announcements and policies, appear only when the branch switches on the HRMS add-on.

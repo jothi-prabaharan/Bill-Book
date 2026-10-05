@@ -205,7 +205,6 @@ export interface ReportCatalogItem {
   module: ReportModule;
   description: string | null;
   sortOrder: number;
-  app?: 'RetailErp' | 'School' | 'Hrms' | 'Payroll';
   /** Set on a saved custom report (TK-113); `reportKey` is then its dataset. */
   customReportId?: number | null;
   /** True on a dataset, the starting point of the report builder. */
@@ -272,7 +271,6 @@ export interface ReportMetadata {
   title: string;
   module: ReportModule;
   description: string | null;
-  app?: 'RetailErp' | 'School' | 'Hrms' | 'Payroll';
   parameters: ReportParameter[];
   columns: ReportColumn[];
   defaultColumns: string[];

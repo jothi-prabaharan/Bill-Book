@@ -70,7 +70,7 @@ public sealed class PortalAccessTests
     {
         Harness h = await Harness.CreateAsync(_postgres);
 
-        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
+        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
 
         Assert.True(PortalAccessRepository.TryReadCode(link.Code, out Guid customerId, out Guid orgId));
         Assert.Equal(h.Tenant.CustomerId, customerId);
@@ -88,7 +88,7 @@ public sealed class PortalAccessTests
     public async Task A_live_code_opens_a_one_hour_session_naming_its_contact_and_grant()
     {
         Harness h = await Harness.CreateAsync(_postgres);
-        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.School, default))!;
+        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.School, default))!;
 
         PortalSessionToken session = (await h.Portal.ExchangeAsync(link.Code, default, "0000000042"))!;
 
@@ -97,12 +97,12 @@ public sealed class PortalAccessTests
 
         Assert.Equal(h.ContactId.ToString(), token.Claims.Single(c => c.Type == RequirePortalAccessAttribute.ContactClaim).Value);
         Assert.Equal(grant.PortalGrantId.ToString(), token.Claims.Single(c => c.Type == RequirePortalAccessAttribute.GrantClaim).Value);
-        Assert.Equal("School", token.Claims.Single(c => c.Type == RequireAppAttribute.ClaimType).Value);
+        Assert.Equal("School", token.Claims.Single(c => c.Type == ScopeClaims.BusinessTypeClaim).Value);
         Assert.DoesNotContain(token.Claims, c => c.Type == "permission");
 
         // Stored files are foldered by it, so the portal can read the invoice PDF (TK-95).
         Assert.Equal("0000000042", token.Claims.Single(c => c.Type == "customer_code").Value);
-        Assert.Equal(App.School, session.App);
+        Assert.Equal(BusinessType.School, session.BusinessType);
         Assert.Equal(h.Clock.GetUtcNow().AddHours(1), session.ExpiresAt);
         Assert.Equal(h.Clock.GetUtcNow(), grant.LastUsedAt);
     }
@@ -111,8 +111,8 @@ public sealed class PortalAccessTests
     public async Task Revoking_stops_a_fresh_session_for_every_link_the_contact_has()
     {
         Harness h = await Harness.CreateAsync(_postgres);
-        PortalLink first = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
-        PortalLink second = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
+        PortalLink first = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
+        PortalLink second = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
 
         Assert.Equal(2, (await h.Portal.GetStateAsync(h.ContactId, default))!.LiveLinks);
         Assert.Equal(2, await h.Portal.RevokeAsync(h.ContactId, default));
@@ -122,7 +122,7 @@ public sealed class PortalAccessTests
         Assert.Equal(0, (await h.Portal.GetStateAsync(h.ContactId, default))!.LiveLinks);
 
         // A link made after the revoke works: revoking is not a ban.
-        PortalLink third = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
+        PortalLink third = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
         Assert.NotNull(await h.Portal.ExchangeAsync(third.Code, default));
     }
 
@@ -130,7 +130,7 @@ public sealed class PortalAccessTests
     public async Task An_expired_link_is_refused()
     {
         Harness h = await Harness.CreateAsync(_postgres);
-        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
+        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
 
         h.Clock.Advance(TimeSpan.FromDays(90));
 
@@ -141,7 +141,7 @@ public sealed class PortalAccessTests
     public async Task A_session_opened_in_a_links_last_minutes_ends_with_the_link()
     {
         Harness h = await Harness.CreateAsync(_postgres);
-        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
+        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
 
         h.Clock.Advance(TimeSpan.FromDays(90) - TimeSpan.FromMinutes(20));
 
@@ -152,7 +152,7 @@ public sealed class PortalAccessTests
     public async Task A_deactivated_contacts_link_is_refused()
     {
         Harness h = await Harness.CreateAsync(_postgres);
-        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
+        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
 
         await h.Db.Contacts.Where(c => c.ContactId == h.ContactId)
             .ExecuteUpdateAsync(c => c.SetProperty(x => x.IsActive, false));
@@ -164,7 +164,7 @@ public sealed class PortalAccessTests
     public async Task A_code_with_its_secret_or_its_branch_changed_matches_nothing()
     {
         Harness h = await Harness.CreateAsync(_postgres);
-        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default))!;
+        PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default))!;
         string[] parts = link.Code.Split('_', 4);
 
         string otherSecret = $"{parts[0]}_{parts[1]}_{parts[2]}_{new string('A', parts[3].Length)}";
@@ -184,7 +184,7 @@ public sealed class PortalAccessTests
         Harness h = await Harness.CreateAsync(_postgres);
         Harness other = await Harness.CreateAsync(_postgres, h.Tenant.CustomerId);
 
-        Assert.Null(await other.Portal.CreateLinkAsync(h.ContactId, App.RetailErp, default));
+        Assert.Null(await other.Portal.CreateLinkAsync(h.ContactId, BusinessType.Retail, default));
         Assert.Null(await other.Portal.RevokeAsync(h.ContactId, default));
         Assert.Null(await other.Portal.GetStateAsync(h.ContactId, default));
     }

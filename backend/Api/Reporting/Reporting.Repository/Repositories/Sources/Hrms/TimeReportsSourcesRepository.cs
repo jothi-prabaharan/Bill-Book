@@ -28,7 +28,7 @@ public sealed class DailyAttendanceSource : ReportSource<DailyAttendanceRow>
     public override string ReportKey => "daily-attendance";
     public override string Title => "Daily Attendance";
     public override ReportModule Module => ReportModule.Time;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "attendance.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -90,7 +90,7 @@ public sealed class MonthlyMusterRollSource : ReportSource<MonthlyMusterRollRow>
     public override string ReportKey => "monthly-muster-roll";
     public override string Title => "Monthly Muster Roll";
     public override ReportModule Module => ReportModule.Time;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "attendance.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -151,7 +151,7 @@ public sealed class LateEarlyOutSource : ReportSource<LateEarlyOutRow>
     public override string ReportKey => "late-early-out";
     public override string Title => "Late and Early-Out";
     public override ReportModule Module => ReportModule.Time;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "attendance.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -205,7 +205,7 @@ public sealed class OvertimeSummarySource : ReportSource<OvertimeSummaryRow>
     public override string ReportKey => "overtime-summary";
     public override string Title => "Overtime Summary";
     public override ReportModule Module => ReportModule.Time;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "attendance.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -260,7 +260,7 @@ public sealed class AttendanceRegularisationsSource : ReportSource<AttendanceReg
     public override string ReportKey => "attendance-regularisations";
     public override string Title => "Attendance Regularisations";
     public override ReportModule Module => ReportModule.Time;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "attendance.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>

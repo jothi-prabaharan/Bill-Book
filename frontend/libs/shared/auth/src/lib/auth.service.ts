@@ -45,8 +45,8 @@ export class AuthService {
 
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
   /**
-   * Whether the current app's licence closes it. Suspended and NotLicensed
-   * (no licence for this app, TK-43) close it as Expired does.
+   * Whether the customer's licence closes the product. Suspended and
+   * NotLicensed close it as Expired does.
    */
   readonly isLicenseExpired = computed(() => {
     const status = this.licenseStatus();

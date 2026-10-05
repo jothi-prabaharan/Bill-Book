@@ -19,15 +19,13 @@ public sealed class MenuController : ControllerBase
     public MenuController(MenuRepository menuService) => _menuService = menuService;
 
     /// <summary>
-    /// The caller's menu in the app their token is for (TK-44). The shell also
-    /// sends <c>?app=</c>, but the token decides: a menu for another app would
-    /// offer screens every service then refuses with 403.
+    /// The caller's menu: the branch's business type, add-ons and the caller's
+    /// permissions decide it (D-36, TK-136).
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetUserMenu(CancellationToken ct)
     {
-        App app = RequireAppAttribute.AppOf(User);
-        var menus = await _menuService.GetUserMenuAsync(ct, app == App.None ? App.RetailErp : app);
+        var menus = await _menuService.GetUserMenuAsync(ct);
         return Ok(menus);
     }
 }

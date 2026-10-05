@@ -72,6 +72,24 @@
               </div>
               <div class="field">
                 <bb-select
+                  id="su-business-type"
+                  label="Kind of business"
+                  placeholder=""
+                  hint="Decides the screens and add-ons the branch gets. Pick HRMS or Payroll only if you trade nothing here."
+                  [options]="businessTypeOptions"
+                  formControlName="businessType"
+                />
+              </div>
+              <fieldset class="field field--wide" formGroupName="addOns">
+                <legend>Add-ons</legend>
+                <div class="addon-grid">
+                  @for (addon of addOns; track addon.value) {
+                    <bb-checkbox [label]="addon.label" [formControlName]="addon.value" />
+                  }
+                </div>
+              </fieldset>
+              <div class="field">
+                <bb-select
                   id="su-fy"
                   label="Financial year starts"
                   placeholder=""

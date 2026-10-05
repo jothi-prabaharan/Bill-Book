@@ -17,11 +17,9 @@ public interface IIdentityAdminRepository
     Task CreateOwnerUserAsync(CreateOwnerUser request, CancellationToken ct = default);
 }
 
-/// <param name="App">The app signed up for; the owner gets that app's Owner role (TK-45).</param>
 public sealed record CreateOwnerUser(
     Guid OrgId,
     string Email,
     string DisplayName,
     string? MobileNumber,
-    string Password,
-    Shared.Kernel.Apps.App App = Shared.Kernel.Apps.App.RetailErp);
+    string Password);

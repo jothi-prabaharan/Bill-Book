@@ -36,7 +36,7 @@ public sealed class HttpBranchUsers : IBranchUsers
         try
         {
             return await _master.GetFromJsonAsync<List<BranchUserAccess>>(
-                $"internal/users/branch?orgId={orgId}&app={App.RetailErp}", ct);
+                $"internal/users/branch?orgId={orgId}", ct);
         }
         catch (Exception ex) when ((ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException) && !ct.IsCancellationRequested)
         {

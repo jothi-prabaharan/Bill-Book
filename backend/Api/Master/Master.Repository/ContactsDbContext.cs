@@ -253,6 +253,7 @@ public class ContactsDbContext : TenantDbContext
             b.HasIndex(e => e.CodeHash).IsUnique();
             b.HasIndex(e => new { e.OrgId, e.ContactId });
             b.Property(e => e.CodeHash).IsFixedLength().HasMaxLength(64);
+            b.Property(e => e.BusinessType).HasConversion<string>().HasMaxLength(20);
 
             b.HasOne<Contact>()
                 .WithMany()

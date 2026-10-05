@@ -14,7 +14,7 @@ namespace Master.Repository.Repositories;
 public sealed record PortalLink(string Code, DateTimeOffset ExpiresAt);
 
 /// <summary>A portal session: the one-hour token, when it runs out, and which portal it opens.</summary>
-public sealed record PortalSessionToken(string Token, DateTimeOffset ExpiresAt, App App);
+public sealed record PortalSessionToken(string Token, DateTimeOffset ExpiresAt, BusinessType? BusinessType);
 
 /// <summary>What the contact screen shows about a contact's portal access.</summary>
 public sealed record PortalAccessState(int LiveLinks, DateTimeOffset? LastUsedAt, DateTimeOffset? ExpiresAt);
@@ -80,9 +80,11 @@ public sealed class PortalAccessRepository
 
     /// <summary>
     /// A new link for a contact of the caller's branch, or null when there is
-    /// no such contact. Older links keep working; revoking ends them all.
+    /// no such contact. Older links keep working; revoking ends them all. The
+    /// branch's business type goes on the grant, so a School branch's link
+    /// opens the parent portal (TK-69, TK-136).
     /// </summary>
-    public async Task<PortalLink?> CreateLinkAsync(long contactId, App app, CancellationToken ct)
+    public async Task<PortalLink?> CreateLinkAsync(long contactId, BusinessType? businessType, CancellationToken ct)
     {
         (Guid customerId, Guid orgId) = _tenant.Require();
 
@@ -97,7 +99,7 @@ public sealed class PortalAccessRepository
         _db.PortalGrants.Add(new PortalGrant
         {
             ContactId = contactId,
-            App = app,
+            BusinessType = businessType,
             CodeHash = HashUtilRepository.Sha256(code),
             ExpiresAt = expires,
         });
@@ -205,10 +207,10 @@ public sealed class PortalAccessRepository
         await scope.CommitAsync(ct);
 
         (string token, DateTimeOffset expires) = _tokens.CreatePortalToken(
-            grant.CustomerId, grant.OrgId, grant.ContactId, grant.PortalGrantId, grant.App, customerCode);
+            grant.CustomerId, grant.OrgId, grant.ContactId, grant.PortalGrantId, grant.BusinessType, customerCode);
 
         // Never past the grant: a session opened in a link's last minutes ends with it.
-        return new PortalSessionToken(token, expires < grant.ExpiresAt ? expires : grant.ExpiresAt, grant.App);
+        return new PortalSessionToken(token, expires < grant.ExpiresAt ? expires : grant.ExpiresAt, grant.BusinessType);
     }
 
     private static string NewCode(Guid customerId, Guid orgId) =>

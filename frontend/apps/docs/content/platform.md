@@ -115,30 +115,27 @@ A branch switches on the add-ons its trade allows. Turning one off hides its scr
 
 Recurring billing is free. The trade and the add-ons are in the access token, so every service refuses a route that is not for the branch.
 
-## Apps
+## One product, scoped by branch
 
-A customer can buy four apps: **RetailErp**, **School**, **HRMS** and **Payroll**. Each is licensed on its own. The branches, users and settings are shared by every app.
+There are no apps any more (TK-136). A customer buys one product, and what each branch shows follows its **business type** and **add-ons**, above. HRMS, Payroll and School are no longer bought or signed into separately: School is a business type, HRMS and Payroll are add-ons. Settings › Applications, where another app's trial used to be started, is gone.
 
-- **A role belongs to one app.** Owner of RetailErp and Owner of Payroll are different roles. Every role that existed before apps were added is a RetailErp role.
-- **A permission can belong to several apps.** The settings permissions (users, roles, branches, organization settings, currencies, configuration, email, API keys and numbering) belong to every app. Every other permission belongs to RetailErp for now.
-- **A role can be given only permissions that belong to its app.** Saving a role with another app's permission is refused, and nothing is changed.
-- **The menu marks each screen with the apps that show it.** The Home and Settings screens are in every app. Everything else is RetailErp's.
+### Roles
 
-### Signing in is per app
+- **One role list per customer.** A role is not tied to a trade or an add-on, so the same Owner, Accountant or custom role works in every branch. The five system roles, and School's Principal, Office Admin, Teacher and Maintenance, are system roles every customer shares.
+- **The roles screen offers what the branch can use.** The permission grid shows the permissions the current branch's business type and add-ons allow, by the same rule the menu uses: a School branch is not offered sales permissions, and a branch without Payroll is not offered payroll ones. A role keeps permissions it already holds when it is edited from a branch that does not offer them.
+- **A permission does nothing where its screens are hidden.** Every service still checks the branch's business type and add-ons, so a sales permission held in a School branch opens nothing there.
 
-- **A sign-in is for one app.** The login and branch-selection requests name the app, and a request that names none is for RetailErp. Only branches where you hold a role in that app are offered.
-- **The token names its app** in an `app` claim. It carries only the permissions of your roles in that app, and the status and expiry of that app's licence.
-- **Each app has its own licence.** If the RetailErp trial lapses, Payroll keeps working, and the account is marked expired only when every app's licence has lapsed. Signing in to an app the customer has no licence for works, but the licence status is *NotLicensed*, so the app is closed, like an expired one.
-- **Switching app is switching branch.** `POST /api/auth/switch-organization` with an `app` mints a token for the same branch in the other app. Without an `app`, it stays in the current one. Each app's refresh tokens are a family of their own.
-- **Every service checks the app.** Each controller names the apps it serves, and a token from any other app gets **403**, even when it holds a permission with the same name. This matters because permissions are shared: `settings.view` is every app's. The settings, users, roles, branches, numbering and print-template services are open to every app. Contacts are open to RetailErp and School. Everything else is RetailErp's.
-- **`GET /api/me/context`** returns the signed-in session for pages that don't read the token: your name and email, the branch, the app, that app's licence, your permissions, and the apps you can switch to in this branch. It returns no internal ids.
-- **Inside an app, the roles screen shows only that app's roles**, and a role created there belongs to that app. Inviting a user counts against the user limit of the invited role's app.
+### Signing in
 
-### Signing up, and starting another app
+- **A sign-in is for a branch.** You are offered every branch where you hold a role, once, whatever roles you hold in it.
+- **The token carries the branch's scope**: its `business_type` and `add_ons` claims, the permissions of every role you hold in that branch, and the customer's licence. It carries no `app` claim. A token minted before 5 October 2026 that still names an app, or says `General`, reads as a Retail branch until it expires.
+- **`GET /api/me/context`** returns your name and email, the branch, its business type and add-ons, the licence and your permissions. It returns no internal ids.
 
-- **Each app has its own signup.** Signing up creates the customer, the first branch, the owner, and a 14-day trial of the app you signed up from. The owner gets that app's **Owner** role. Each app has a seeded Owner role, and it holds every permission the app allows.
-- **Start another app from Settings › Applications.** **Start trial** adds that app's 14-day trial and makes you its Owner in every branch. It also sets up what the app needs in every existing branch. Nothing is created twice: it is the same customer, branches and users. If a branch cannot be set up, nothing is started and you can try again.
-- **What a branch is set up with follows the apps you hold.** Accounting and print templates are set up for every app, because payroll and fees post to the books and every app prints. Items, sales, purchases, reports, support and contacts are set up for RetailErp. HRMS, Payroll and School add their own as they are built.
+### Signing up
+
+- **Signup asks what the business does.** Choose the first branch's kind of business and its add-ons. Pick **HRMS or Payroll only** for a customer that trades nothing, and then tick HRMS, Payroll or both. An add-on the business type does not allow cannot be ticked.
+- Signing up creates the customer, the first branch, the owner and a 14-day trial. The owner gets the **Owner** role.
+- **What a branch is set up with follows its scope.** Accounting and print templates are set up for every branch, because payroll and fees post to the books and every branch prints. Items, sales, purchases, reports, support and contacts are set up for a branch with a trade. School's services are set up for a School branch, and the employee master for a School branch or one with HRMS or Payroll.
 
 ### HRMS, Payroll and School pages
 
@@ -146,16 +143,15 @@ HRMS, Payroll and School are no longer web apps of their own (TK-134). Their pag
 
 ### Pages check what you may open
 
-- **Each app's menu shows only that app's screens**, and only those you hold a permission for.
-- **A page you cannot open says why.** A typed URL or an old bookmark to a page you lack the permission for opens a *No access* page, which names the permission to ask your administrator for. It no longer sends you silently to the dashboard. An expired, suspended or unlicensed app goes to the expired page, as before.
-- **Settings › Applications** lists the four apps and your licence for each: *Active*, *Trial*, *Expired*, *Suspended* or *Not started*. Someone who can edit settings can press **Start trial** on an app you don't have yet.
-- **Switching app** is under the branch switcher at the top: it lists the other apps you hold a role in, in this branch.
-- **Settings › Number series is now a settings screen for every app.** Opening or changing it takes the settings permissions instead of the accounting ones, matching the menu, which already listed it under settings. An accountant without settings permissions no longer reaches it by a typed URL.
-- For developers: every page under the shell must declare `data.access`, either `{ permission: 'x.view' }` or `{ signedIn: true }`. A page that declares nothing is refused, and each app's route spec (`auditShellRoutes`) fails the build. Apps mount the shell with `shellRoutes({ app, children })`, which attaches the guards. `*bbIfCan="'x.edit'"` hides a button the same way.
+- **The menu shows only the screens the branch's scope reaches**, and only those you hold a permission for.
+- **A page you cannot open says why.** A typed URL or an old bookmark to a page you lack the permission for opens a *No access* page, which names the permission to ask your administrator for. A page for another kind of business, or for an add-on the branch has not switched on, says that instead. An expired or suspended licence goes to the expired page.
+- **Settings › Audit log** offers the logs the branch's scope reaches: the trading services for a trading branch, School's for a School branch, and HRMS's and Payroll's for their add-ons.
+- **Settings › Number series is a settings screen.** Opening or changing it takes the settings permissions instead of the accounting ones, matching the menu, which lists it under settings.
+- For developers: every page under the shell must declare `data.access`, either `{ permission: 'x.view' }` or `{ signedIn: true }`, optionally with `businessTypes` or `addOns`. A page that declares nothing is refused, and the route spec (`auditShellRoutes`) fails the build. The web app mounts the shell with `shellRoutes({ children })`, which attaches the guards. `*bbIfCan="'x.edit'"` hides a button the same way.
 
 ## The licence
 
-One row per customer per app (`GET /api/customers/{id}/licenses/apps` lists them), created automatically at signup:
+One row per customer (`GET /api/customers/{id}/licenses`), created automatically at signup:
 
 | Field | Trial default |
 |---|---|

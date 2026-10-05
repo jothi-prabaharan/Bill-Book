@@ -141,9 +141,6 @@ namespace Master.Repository.Migrations.Tenant
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ApprovalWorkflowId"));
 
-                    b.Property<int>("App")
-                        .HasColumnType("integer");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1140,8 +1137,9 @@ namespace Master.Repository.Migrations.Tenant
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PortalGrantId"));
 
-                    b.Property<int>("App")
-                        .HasColumnType("integer");
+                    b.Property<string>("BusinessType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("CodeHash")
                         .IsRequired()

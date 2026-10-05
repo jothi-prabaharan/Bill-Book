@@ -5,8 +5,10 @@ import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { Country, StateRow, Currency } from '../../auth.models';
 import { AuthService } from '../../auth.service';
+import { ADD_ONS, AddOnCode, BUSINESS_TYPES, isAddOnAllowed } from '../../business-types';
 import {
   BbSelectOption,
+  CheckboxComponent,
   EmailInputComponent,
   MessageBoxComponent,
   PasswordInputComponent,
@@ -21,6 +23,10 @@ import {
  * organization's master data (chart of accounts, tax master, units...), so
  * this is eventually consistent even though there is no longer a database to
  * create first.
+ *
+ * The first branch's business type and add-ons are chosen here (D-50, TK-136):
+ * there are no apps to sign up for any more. "HRMS or Payroll only" sends no
+ * business type, and then one of those two add-ons is required.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +41,7 @@ import {
     PhoneInputComponent,
     PasswordInputComponent,
     SelectComponent,
+    CheckboxComponent,
     MessageBoxComponent,
   ],
   templateUrl: './signup.page.html',
@@ -67,6 +74,14 @@ export class SignupPage implements OnInit {
       label: `${currency.code} — ${currency.name}`,
     })),
   );
+  /** `''` is "HRMS or Payroll only": a customer with no trade. */
+  protected readonly businessTypeOptions: BbSelectOption<string>[] = [
+    ...BUSINESS_TYPES.map((t) => ({ value: t.value as string, label: t.label })),
+    { value: '', label: 'HRMS or Payroll only' },
+  ];
+
+  protected readonly addOns = ADD_ONS;
+
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -106,7 +121,37 @@ export class SignupPage implements OnInit {
     tin: new FormControl(''),
     cin: new FormControl(''),
     udyamNumber: new FormControl(''),
+
+    businessType: new FormControl('Retail', { nonNullable: true }),
+    addOns: new FormGroup(
+      Object.fromEntries(ADD_ONS.map((a) => [a.value, new FormControl(false, { nonNullable: true })])) as Record<
+        AddOnCode,
+        FormControl<boolean>
+      >,
+    ),
   });
+
+  /** The add-ons ticked and allowed for the chosen business type, as the server reads a flags enum. */
+  protected chosenAddOns(): string {
+    const type = this.signupForm.controls.businessType.value || null;
+    const ticked = ADD_ONS.map((a) => a.value).filter(
+      (code) => this.signupForm.controls.addOns.controls[code].value && isAddOnAllowed(type, code),
+    );
+    return ticked.length > 0 ? ticked.join(', ') : 'None';
+  }
+
+  /** Disables, and clears, each add-on the business type does not allow. */
+  private applyAddOnRules(type: string): void {
+    for (const { value: code } of ADD_ONS) {
+      const control = this.signupForm.controls.addOns.controls[code];
+      if (isAddOnAllowed(type || null, code)) {
+        control.enable({ emitEvent: false });
+      } else {
+        control.setValue(false, { emitEvent: false });
+        control.disable({ emitEvent: false });
+      }
+    }
+  }
 
   protected progress(): number {
     return Math.round((this.step() / this.stepCount) * 100);
@@ -142,6 +187,10 @@ export class SignupPage implements OnInit {
         this.error.set('Please fill out all required fields.');
         return;
       }
+      if (!this.signupForm.controls.businessType.value && this.chosenAddOns() === 'None') {
+        this.error.set('Choose HRMS or Payroll, or pick a business type.');
+        return;
+      }
     }
 
     this.error.set(null);
@@ -166,6 +215,8 @@ export class SignupPage implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    this.applyAddOnRules(this.signupForm.controls.businessType.value);
+    this.signupForm.controls.businessType.valueChanges.subscribe((type) => this.applyAddOnRules(type));
     this.signupForm.controls.countryId.valueChanges.subscribe((id) => {
       void this.loadStates(id);
     });
@@ -211,6 +262,8 @@ export class SignupPage implements OnInit {
     
     const val = this.signupForm.getRawValue();
     const payload = {
+      businessType: val.businessType || null,
+      addOns: this.chosenAddOns(),
       displayName: `${val.firstName} ${val.lastName}`.trim(),
       email: val.email,
       password: val.password,

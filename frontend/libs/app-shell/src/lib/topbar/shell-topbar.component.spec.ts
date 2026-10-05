@@ -18,7 +18,7 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
     email: 'priya@example.com',
     branchName: 'Chennai',
     branchCode: 'CHN',
-    businessType: 'RetailErp',
+    businessType: 'Retail',
     licenseStatus: 'Active',
     licenseExpiry: null,
     expiryIsBranchLevel: false,

@@ -28,7 +28,7 @@ public sealed class LeaveRegisterSource : ReportSource<LeaveRegisterRow>
     public override string ReportKey => "leave-register";
     public override string Title => "Leave Register";
     public override ReportModule Module => ReportModule.Leave;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "leave.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -93,7 +93,7 @@ public sealed class LeaveBalancesSource : ReportSource<LeaveBalancesRow>
     public override string ReportKey => "leave-balances";
     public override string Title => "Leave Balances";
     public override ReportModule Module => ReportModule.Leave;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "leave.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -156,7 +156,7 @@ public sealed class LeaveEncashmentSource : ReportSource<LeaveEncashmentRow>
     public override string ReportKey => "leave-encashment";
     public override string Title => "Leave Encashment";
     public override ReportModule Module => ReportModule.Leave;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "leave.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -215,7 +215,7 @@ public sealed class TeamAvailabilitySource : ReportSource<TeamAvailabilityRow>
     public override string ReportKey => "team-availability";
     public override string Title => "Team Availability";
     public override ReportModule Module => ReportModule.Leave;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "leave.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>

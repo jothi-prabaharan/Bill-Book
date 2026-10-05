@@ -20,15 +20,12 @@ public sealed class OrgContextRepository
     }
 
     /// <summary>
-    /// The branch, its customer and the customer's licence for one app.
-    ///
-    /// <b>The licence is the app's own</b> (H0.2, TK-43): a lapsed RetailErp
-    /// trial reports Expired here for RetailErp and leaves a Payroll sign-in
-    /// Active. A customer with no licence for the app resolves with
+    /// The branch, its customer and the customer's one licence (D-36). A
+    /// customer with no licence resolves with
     /// <see cref="LicenseStatus.NotLicensed"/>, never null, because the branch
     /// itself exists and services read its GSTIN and address from here.
     /// </summary>
-    public async Task<OrgContextResponse?> ResolveAsync(Guid orgId, CancellationToken ct, App app = App.RetailErp)
+    public async Task<OrgContextResponse?> ResolveAsync(Guid orgId, CancellationToken ct)
     {
         var row = await (
             from o in _db.Organizations
@@ -111,9 +108,7 @@ public sealed class OrgContextRepository
         // stamping the customer here would expire a head office because one
         // seasonal counter reached its end date.
         //
-        // With one licence per app (TK-43), the account is expired only when
-        // every one of its licences is: a lapsed RetailErp trial says nothing
-        // about a customer still paying for Payroll.
+        // The account is expired only when every licence it holds is.
         bool licenceItselfExpired = row.HasLicence && today > row.ExpiryDate.AddDays(row.GraceDays);
 
         if (licenceItselfExpired

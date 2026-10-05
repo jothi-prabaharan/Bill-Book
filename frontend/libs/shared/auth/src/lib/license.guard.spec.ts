@@ -139,7 +139,7 @@ function stubSession(overrides: Partial<SessionContext>): Pick<SessionContextSer
     email: 'priya@example.com',
     branchName: 'Chennai',
     branchCode: 'CHN',
-    businessType: 'RetailErp',
+    businessType: 'Retail',
     licenseStatus: 'Active',
     licenseExpiry: null,
     expiryIsBranchLevel: false,

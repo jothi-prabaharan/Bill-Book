@@ -25,8 +25,6 @@ public interface IReportSourceRepository
 
     ReportModule Module { get; }
 
-    App App => App.RetailErp;
-
     AddOn RequiredAddOn => AddOn.None;
 
     /// <summary>
@@ -93,8 +91,6 @@ public abstract class ReportSource<TRow> : IReportSourceRepository
     public abstract string Title { get; }
 
     public abstract ReportModule Module { get; }
-
-    public virtual App App => App.RetailErp;
 
     public virtual AddOn RequiredAddOn => AddOn.None;
 

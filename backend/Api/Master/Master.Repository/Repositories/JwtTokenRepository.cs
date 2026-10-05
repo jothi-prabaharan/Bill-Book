@@ -44,10 +44,6 @@ public sealed class JwtTokenRepository : ITokenRepository
             new("customer_code", request.CustomerCode),
             new("org_id", request.OrgId.ToString()),
 
-            // The one app this token is for (TK-43). Every service's
-            // [RequireApp] reads it; its permissions and licence claims are
-            // that app's only.
-            new(Shared.Kernel.Internal.RequireAppAttribute.ClaimType, EffectiveApp(request).ToString()),
             new("display_name", request.DisplayName),
             new("license_status", request.LicenseStatus),
 
@@ -89,36 +85,6 @@ public sealed class JwtTokenRepository : ITokenRepository
         }
 
         return Write(claims, _clock.GetUtcNow().AddMinutes(_options.AccessTokenMinutes));
-    }
-
-    private static App EffectiveApp(AccessTokenRequest request)
-    {
-        if (request.App != App.None)
-        {
-            return request.App;
-        }
-
-        if (request.BusinessType == BusinessType.School)
-        {
-            return App.School;
-        }
-
-        if (request.BusinessType != null)
-        {
-            return App.RetailErp;
-        }
-
-        if (request.AddOns.HasFlag(AddOn.Hrms))
-        {
-            return App.Hrms;
-        }
-
-        if (request.AddOns.HasFlag(AddOn.Payroll))
-        {
-            return App.Payroll;
-        }
-
-        return App.RetailErp;
     }
 
     public Guid? ValidatePreAuthToken(string token)
@@ -167,7 +133,7 @@ public sealed class JwtTokenRepository : ITokenRepository
     public static readonly TimeSpan PortalSessionLifetime = TimeSpan.FromHours(1);
 
     public (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
-        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp, string? customerCode = null)
+        Guid customerId, Guid orgId, long contactId, long grantId, BusinessType? businessType = null, string? customerCode = null)
     {
         var claims = new List<Claim>
         {
@@ -183,12 +149,12 @@ public sealed class JwtTokenRepository : ITokenRepository
             claims.Add(new Claim("customer_code", customerCode));
         }
 
-        // A RetailErp token keeps its old shape, with no app claim, which reads as
-        // RetailErp. Any other app is named, so its portal routes accept the token
-        // and RetailErp's statement route refuses it (TK-69).
-        if (app != App.RetailErp)
+        // The branch's business type, as on a staff token (TK-136): a School
+        // branch's token opens the parent portal routes, which ask for a School
+        // branch, and every service's business-type guard reads it the same way.
+        if (businessType is BusinessType type)
         {
-            claims.Add(new Claim(RequireAppAttribute.ClaimType, app.ToString()));
+            claims.Add(new Claim(ScopeClaims.BusinessTypeClaim, type.ToString()));
         }
 
         // An hour, not the thirty days a link used to carry: the link is now a

@@ -31,12 +31,6 @@
 export interface RuntimeConfig {
   /** Origin the API is served from, without a trailing slash. Empty = same origin. */
   readonly apiBaseUrl?: string;
-
-  /**
-   * Where each app lives, for the app switcher (TK-47): keys are
-   * `RetailErp`, `School`, `Hrms`, `Payroll`.
-   */
-  readonly appUrls?: Readonly<Record<string, string>>;
 }
 
 

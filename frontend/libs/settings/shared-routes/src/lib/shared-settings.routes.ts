@@ -93,9 +93,4 @@ export const sharedSettingsRoutes: Routes = [
     loadComponent: () => import('@bill-book/settings-audit-log').then((m) => m.AuditLogPage),
     data: { access: { permission: 'settings.view' } },
   },
-  {
-    path: 'settings/applications',
-    loadComponent: () => import('@bill-book/settings-applications').then((m) => m.ApplicationsPage),
-    data: { access: { permission: 'settings.view' } },
-  },
 ];

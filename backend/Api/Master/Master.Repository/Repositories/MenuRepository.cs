@@ -67,10 +67,11 @@ public sealed class MenuRepository
     }
 
     /// <summary>
-    /// The caller's menu in one app (H0.3, TK-44): only rows whose
-    /// <c>Menu.Apps</c> include it. A token that predates apps is RetailErp's.
+    /// The caller's menu in their current branch: only rows its business type
+    /// and add-ons reach (<see cref="MenuMatches"/>, D-36, TK-136). A caller
+    /// with no branch sees Retail's menu.
     /// </summary>
-    public async Task<IReadOnlyList<MenuView>> GetUserMenuAsync(CancellationToken ct, App app = App.RetailErp)
+    public async Task<IReadOnlyList<MenuView>> GetUserMenuAsync(CancellationToken ct)
     {
         var permissions = _tenant.Permissions is { Count: > 0 }
             ? _tenant.Permissions
@@ -95,24 +96,6 @@ public sealed class MenuRepository
         Vertical trade = orgScope?.Trade ?? Vertical.Retail;
         BusinessType? businessType = orgScope != null ? orgScope.BusinessType : BusinessType.Retail;
         AddOn addOns = orgScope?.AddOns ?? AddOn.None;
-
-        if (orgId is null && app != App.RetailErp)
-        {
-            if (app == App.School)
-            {
-                businessType = BusinessType.School;
-            }
-            else if (app == App.Hrms)
-            {
-                businessType = null;
-                addOns = AddOn.Hrms;
-            }
-            else if (app == App.Payroll)
-            {
-                businessType = null;
-                addOns = AddOn.Payroll;
-            }
-        }
 
         var rawRows = await _db.Menus
             .AsNoTracking()

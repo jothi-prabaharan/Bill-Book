@@ -19,8 +19,12 @@ public class PortalGrant : OrgScopedEntity
 
     public long ContactId { get; set; }
 
-    /// <summary>The app the link was made from: a School guardian's link opens the parent portal.</summary>
-    public App App { get; set; } = App.RetailErp;
+    /// <summary>
+    /// The business type of the branch the link was made in (TK-136): a School
+    /// branch's link opens the parent portal, any other the statement portal.
+    /// Null on a branch with no trade.
+    /// </summary>
+    public BusinessType? BusinessType { get; set; }
 
     /// <summary>SHA-256 of the link's code, upper-case hex. The code itself is shown once and never stored.</summary>
     [Required(ErrorMessage = "The code hash is required.")]

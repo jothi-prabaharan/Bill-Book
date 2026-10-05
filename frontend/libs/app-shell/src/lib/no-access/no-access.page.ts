@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { APP_ID, APP_LABELS } from '@bill-book/auth';
 import { map } from 'rxjs';
 
 /**
@@ -21,8 +20,6 @@ import { map } from 'rxjs';
 })
 export class NoAccessPage {
   private readonly route = inject(ActivatedRoute);
-  protected readonly appName = APP_LABELS[inject(APP_ID)];
-
   private readonly query = toSignal(this.route.queryParamMap.pipe(map((q) => ({ need: q.get('need'), reason: q.get('reason') }))), {
     initialValue: { need: null, reason: null },
   });
@@ -32,15 +29,19 @@ export class NoAccessPage {
   protected readonly message = computed(() => {
     const { need, reason } = this.query();
     if (need) {
-      return `You don't have access to this page in ${this.appName}. Ask your administrator for this permission:`;
+      return "You don't have access to this page. Ask your administrator for this permission:";
     }
     switch (reason) {
-      case 'app':
-        return `This page isn't part of ${this.appName}, or you have no role in ${this.appName} in this branch.`;
+      case 'businessType':
+        return "This page isn't part of this branch's kind of business.";
+      case 'addOn':
+        return "This page belongs to an add-on this branch hasn't switched on.";
+      case 'context':
+        return 'Your session for this branch could not be read. Sign in again, or ask your administrator whether you still have a role here.';
       case 'undeclared':
         return 'This page has not been set up with an access rule yet, so it is closed to everyone.';
       default:
-        return `You don't have access to this page in ${this.appName}.`;
+        return "You don't have access to this page.";
     }
   });
 }

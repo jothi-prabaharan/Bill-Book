@@ -4,7 +4,7 @@ namespace Shared.Kernel.Approvals;
 // is found, and where a step and a request stand. Shared by Master, which
 // configures and resolves chains, and by every service that stores steps.
 
-/// <summary>What kind of request a chain approves. RetailErp's documents and HRMS's requests alike.</summary>
+/// <summary>What kind of request a chain approves. Trading documents and HRMS requests alike.</summary>
 public enum ApprovalRequestKind
 {
     // HRMS and Payroll (the HRMS design).

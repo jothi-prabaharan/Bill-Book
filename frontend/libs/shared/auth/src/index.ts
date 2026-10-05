@@ -2,7 +2,6 @@ export * from './lib/auth.models';
 export * from './lib/auth.service';
 export * from './lib/auth.interceptor';
 export * from './lib/license.guard';
-export * from './lib/app-id';
 export * from './lib/session-context.service';
 export * from './lib/page-access';
 export * from './lib/business-types';

@@ -13,9 +13,6 @@ public class LoginRequest
 
     [Required(ErrorMessage = "Password is required.")]
     public string Password { get; set; } = null!;
-
-    /// <summary>Deprecated: No longer used under D-36 / TK-127. Kept optional for wire compatibility.</summary>
-    public string? App { get; set; }
 }
 
 public class AccessibleOrgDto
@@ -46,9 +43,6 @@ public class SelectOrganizationRequest
 {
     [Required(ErrorMessage = "Organization id is required.")]
     public Guid OrgId { get; set; }
-
-    /// <summary>Deprecated: No longer used under D-36 / TK-127. Kept optional for wire compatibility.</summary>
-    public string? App { get; set; }
 }
 
 /// <summary>

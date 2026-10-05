@@ -31,6 +31,16 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **Signup asks what your business does, not which app (TK-136).** Choose the first branch's kind of business (Retail, Pharma, Jewellery, School, Service or Restaurant) and its add-ons, or pick **HRMS or Payroll only** and tick one of them. There are no separate RetailErp, School, HRMS and Payroll signups any more. See [Signing up](platform#signing-up).
+
+- **Removed**: **Settings › Applications (TK-136).** There are no apps to start a trial of: School is a business type and HRMS and Payroll are add-ons, switched on per branch on **Settings › Branches**. One licence covers the customer.
+
+- **Changed**: **One role list for the whole customer (TK-136).** Roles no longer belong to an app, so the same role works in every branch. The roles screen's permission grid offers what the current branch's business type and add-ons allow. Sign-in offers every branch where you hold a role, and the token carries every role you hold there. See [Roles](platform#roles).
+
+- **Changed**: **HRMS and Payroll reports follow their add-on (TK-136).** The Reports catalog lists a payroll or HRMS report only in a branch with that add-on, and the audit log offers the logs the branch's business type and add-ons reach.
+
+- **Changed**: **A portal link knows its branch's kind of business (TK-136).** A link from a School branch opens the parent portal and any other opens the customer statement portal, as before; the token now names the business type instead of an app.
+
 - **Changed**: **Every date field shows and reads dates in your branch's format (TK-135).** A branch set to `dd/MM/yyyy` now sees and types `24/09/2026` in every date field, with any separator accepted and a calendar beside it, instead of the browser's own format. Text that is not a real date stays on screen with a message. See [Inputs](inputs).
 
 - **Fixed**: **Portal links open the portal again (TK-134).** Since the client portal moved into the web app, a portal link pointed at the old portal's address. It now opens `/portal/access/…` on the web app's address, the same address invitations use. Links made before this fix still carry the old address: make a new one from the contact.

@@ -141,9 +141,6 @@ public sealed class BranchEInvoicingTests
         public Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, CancellationToken ct) =>
             Task.FromResult<IReadOnlyList<string>>([]);
 
-        public Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, Shared.Kernel.Apps.App apps, CancellationToken ct) =>
-            Task.FromResult<IReadOnlyList<string>>([]);
-
         public Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, BusinessType? businessType, AddOn addOns, CancellationToken ct) =>
             Task.FromResult<IReadOnlyList<string>>([]);
     }

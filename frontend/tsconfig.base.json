@@ -139,9 +139,6 @@
       "@bill-book/settings-api-clients": [
         "libs/settings/api-clients/src/index.ts"
       ],
-      "@bill-book/settings-applications": [
-        "libs/settings/applications/src/index.ts"
-      ],
       "@bill-book/settings-approval-workflows": [
         "libs/settings/approval-workflows/src/index.ts"
       ],

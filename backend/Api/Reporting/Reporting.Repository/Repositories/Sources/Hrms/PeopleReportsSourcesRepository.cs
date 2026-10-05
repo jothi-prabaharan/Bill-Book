@@ -25,7 +25,7 @@ public sealed class HeadcountSummarySource : ReportSource<HeadcountSummaryRow>
     public override string ReportKey => "headcount-summary";
     public override string Title => "Headcount Summary";
     public override ReportModule Module => ReportModule.People;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "employee.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -92,7 +92,7 @@ public sealed class JoinersLeaversSource : ReportSource<JoinersLeaversRow>
     public override string ReportKey => "joiners-leavers";
     public override string Title => "Joiners and Leavers";
     public override ReportModule Module => ReportModule.People;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "employee.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -146,7 +146,7 @@ public sealed class AttritionRateSource : ReportSource<AttritionRateRow>
     public override string ReportKey => "attrition-rate";
     public override string Title => "Attrition Rate";
     public override ReportModule Module => ReportModule.People;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "employee.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -201,7 +201,7 @@ public sealed class ProbationDueSource : ReportSource<ProbationDueRow>
     public override string ReportKey => "probation-due";
     public override string Title => "Probation Due";
     public override ReportModule Module => ReportModule.People;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "employee.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -259,7 +259,7 @@ public sealed class BirthdaysAnniversariesSource : ReportSource<BirthdaysAnniver
     public override string ReportKey => "birthdays-anniversaries";
     public override string Title => "Birthdays and Work Anniversaries";
     public override ReportModule Module => ReportModule.People;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "employee.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -312,7 +312,7 @@ public sealed class DocumentExpirySource : ReportSource<DocumentExpiryRow>
     public override string ReportKey => "document-expiry";
     public override string Title => "Document Expiry";
     public override ReportModule Module => ReportModule.People;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "employee.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>

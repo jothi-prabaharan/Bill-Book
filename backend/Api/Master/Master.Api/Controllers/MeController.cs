@@ -44,13 +44,11 @@ public sealed class MeController : ControllerBase
             return Forbid();
         }
 
-        App app = RequireAppAttribute.AppOf(User);
-
         var user = await _db.Users
             .Where(u => u.UserId == userId && u.IsActive)
             .Select(u => new { u.DisplayName, u.Email })
             .FirstOrDefaultAsync(ct);
-        OrgContextResponse? org = await _orgs.ResolveAsync(orgId, ct, app);
+        OrgContextResponse? org = await _orgs.ResolveAsync(orgId, ct);
         string? code = await _db.Organizations
             .Where(o => o.OrgId == orgId)
             .Select(o => o.OrgCode)
@@ -61,23 +59,12 @@ public sealed class MeController : ControllerBase
             return Forbid();
         }
 
-        List<SessionAppResponse> apps = [];
-        if (app != App.None)
-        {
-            apps.Add(new SessionAppResponse
-            {
-                App = app.ToString(),
-                LicenseStatus = org.LicenseStatus,
-            });
-        }
-
         return Ok(new SessionContextResponse
         {
             DisplayName = user.DisplayName,
             Email = user.Email,
             BranchName = org.OrgName,
             BranchCode = code ?? string.Empty,
-            App = app != App.None ? app.ToString() : (org.BusinessType?.ToString() ?? nameof(BusinessType.Retail)),
             BusinessType = org.BusinessType,
             AddOns = org.AddOns,
             PlanTier = org.PlanTier.ToString(),
@@ -87,7 +74,6 @@ public sealed class MeController : ControllerBase
             // The token's own permissions, since they are what every service
             // enforces for this token; a fresh read could disagree until refresh.
             Permissions = User.FindAll("permission").Select(c => c.Value).Distinct().OrderBy(p => p).ToList(),
-            Apps = apps,
         });
     }
 }

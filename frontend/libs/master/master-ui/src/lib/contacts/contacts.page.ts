@@ -30,7 +30,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { APP_ID } from '@bill-book/auth';
+import { SessionContextService, normaliseBusinessType } from '@bill-book/auth';
 import {
   ContactPersonRole,
   ContactPersonRolesDialog,
@@ -383,8 +383,12 @@ export class ContactsPage implements OnInit {
 
   private readonly router = inject(Router);
 
-  /** Guardians are School's (TK-60): the filter and the checkbox show only there. */
-  protected readonly isSchool = inject(APP_ID) === 'School';
+  private readonly session = inject(SessionContextService);
+
+  /** Guardians are School's (TK-60): the filter and the checkbox show only in a School branch. */
+  protected isSchool(): boolean {
+    return normaliseBusinessType(this.session.context()?.businessType) === 'School';
+  }
   private readonly route = inject(ActivatedRoute);
 
   ngOnInit(): void {

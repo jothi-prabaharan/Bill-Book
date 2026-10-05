@@ -44,7 +44,7 @@ public sealed class EndpointGuardTests
     [Fact]
     public void Every_controller_names_its_apps()
     {
-        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.WithoutApp(Service)));
+        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.WithoutBusinessTypeOrAddOn(Service)));
     }
 
     [Fact]

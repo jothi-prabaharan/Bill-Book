@@ -29,7 +29,6 @@ public sealed class ApprovalWorkflowRepository
         return rows.Select(w => new ApprovalWorkflowView
         {
             ApprovalWorkflowId = w.ApprovalWorkflowId,
-            App = w.App.ToString(),
             Name = w.Name,
             RequestKind = w.RequestKind,
             DepartmentId = w.DepartmentId,
@@ -64,7 +63,6 @@ public sealed class ApprovalWorkflowRepository
 
         workflow.Name = request.Name.Trim();
         workflow.RequestKind = request.RequestKind;
-        workflow.App = AppOf(request.RequestKind);
         workflow.DepartmentId = request.DepartmentId;
         workflow.GradeId = request.GradeId;
         workflow.WorkLocationId = request.WorkLocationId;
@@ -108,14 +106,14 @@ public sealed class ApprovalWorkflowRepository
     }
 
     /// <summary>
-    /// A branch's starting workflows for the apps it holds (TK-49): for HRMS,
-    /// leave goes to the employee's manager. The level is optional, so the one
+    /// A branch's starting workflows (TK-49): with the HRMS add-on, leave goes
+    /// to the employee's manager. The level is optional, so the one
     /// person with no manager has their leave approved on submission rather than
     /// never. Idempotent: only a kind with no workflow at all gets one.
     /// </summary>
-    public async Task<int> SeedDefaultsAsync(Guid orgId, App apps, DateOnly effectiveFrom, CancellationToken ct)
+    public async Task<int> SeedDefaultsAsync(Guid orgId, AddOn addOns, DateOnly effectiveFrom, CancellationToken ct)
     {
-        if (!apps.HasFlag(App.Hrms))
+        if (!addOns.HasFlag(AddOn.Hrms))
         {
             return 0;
         }
@@ -133,7 +131,6 @@ public sealed class ApprovalWorkflowRepository
                 OrgId = orgId,
                 Name = kind == ApprovalRequestKind.Leave ? "Default leave" : "Default leave encashment",
                 RequestKind = kind,
-                App = App.Hrms,
                 EffectiveFrom = effectiveFrom,
                 Levels =
                 [
@@ -154,12 +151,6 @@ public sealed class ApprovalWorkflowRepository
         await _db.SaveChangesAsync(ct);
         return added;
     }
-
-    /// <summary>The app a request kind belongs to: HRMS's below 100, RetailErp's from 101.</summary>
-    public static App AppOf(ApprovalRequestKind kind) =>
-        (int)kind > 100 ? App.RetailErp
-        : kind is ApprovalRequestKind.SalaryRevision or ApprovalRequestKind.Loan or ApprovalRequestKind.FullAndFinal ? App.Payroll
-        : App.Hrms;
 
     /// <summary>The first level missing what its kind needs, as a sentence, or null. Public for tests.</summary>
     public static string? IncompleteLevel(IReadOnlyList<SaveApprovalLevel> levels)

@@ -43,7 +43,11 @@ public sealed class SchoolSeedTests
         List<IDictionary<string, object?>> rows = Seed<Permission>(db).Where(p => (string)p["Module"]! == module).ToList();
 
         Assert.NotEmpty(rows);
-        Assert.All(rows, p => Assert.Equal(App.School, (App)p["Apps"]!));
+        Assert.All(rows, p =>
+        {
+            Assert.Equal(BusinessType.School, (BusinessType?)p["BusinessType"]);
+            Assert.Equal(AddOn.None, (AddOn)p["AddOns"]!);
+        });
     }
 
     [Fact]
@@ -53,9 +57,16 @@ public sealed class SchoolSeedTests
         List<IDictionary<string, object?>> permissions = Seed<Permission>(db);
 
         Assert.All(permissions.Where(p => (string)p["Module"]! == "attendance" && (string)p["Code"]! != "attendance.unlock"),
-            p => Assert.Equal(App.Hrms | App.School, (App)p["Apps"]!));
-        Assert.Equal(App.School, (App)permissions.Single(p => (string)p["Code"]! == "attendance.unlock")["Apps"]!);
-        Assert.Equal(App.School, (App)permissions.Single(p => (string)p["Code"]! == "workorder.close")["Apps"]!);
+            p =>
+            {
+                // A School branch, or any branch with HRMS.
+                Assert.Equal(BusinessType.School, (BusinessType?)p["BusinessType"]);
+                Assert.Equal(AddOn.Hrms, (AddOn)p["AddOns"]!);
+            });
+        IDictionary<string, object?> unlock = permissions.Single(p => (string)p["Code"]! == "attendance.unlock");
+        IDictionary<string, object?> close = permissions.Single(p => (string)p["Code"]! == "workorder.close");
+        Assert.Equal((BusinessType.School, AddOn.None), ((BusinessType?)unlock["BusinessType"], (AddOn)unlock["AddOns"]!));
+        Assert.Equal((BusinessType.School, AddOn.None), ((BusinessType?)close["BusinessType"], (AddOn)close["AddOns"]!));
     }
 
     [Fact]
@@ -69,16 +80,20 @@ public sealed class SchoolSeedTests
     }
 
     [Fact]
-    public void School_has_its_six_roles_beside_its_owner()
+    public void School_has_its_four_roles_beside_the_shared_system_roles()
     {
+        // One role list per customer (D-50, TK-136): School's own four are
+        // seeded beside the five every branch shares, Owner among them.
         using AdminDbContext db = Model();
+        HashSet<int> schoolIds = AdminDbContext.SchoolRoles.Select(r => r.RoleId).ToHashSet();
         List<string> names = Seed<Role>(db)
-            .Where(r => (App)r["App"]! == App.School)
+            .Where(r => schoolIds.Contains((int)r["RoleId"]!))
             .Select(r => (string)r["SystemName"]!)
             .OrderBy(n => n)
             .ToList();
 
-        Assert.Equal(["Accountant", "Maintenance", "Office Admin", "Owner", "Principal", "Teacher", "Viewer"], names);
+        Assert.Equal(["Maintenance", "Office Admin", "Principal", "Teacher"], names);
+        Assert.Contains(Seed<Role>(db), r => (int)r["RoleId"]! == AdminDbContext.OwnerRoleId && (string)r["SystemName"]! == "Owner");
     }
 
     private static HashSet<string> CodesOf(string role)
@@ -126,11 +141,19 @@ public sealed class SchoolSeedTests
     public void No_school_role_holds_a_retail_or_platform_permission()
     {
         using AdminDbContext db = Model();
-        Dictionary<int, App> apps = Seed<Permission>(db).ToDictionary(p => (int)p["PermissionId"]!, p => (App)p["Apps"]!);
+        Dictionary<int, IDictionary<string, object?>> permissions = Seed<Permission>(db).ToDictionary(p => (int)p["PermissionId"]!);
         HashSet<int> schoolRoles = AdminDbContext.SchoolRoles.Select(r => r.RoleId).ToHashSet();
 
-        Assert.All(Seed<RolePermission>(db).Where(g => schoolRoles.Contains((int)g["RoleId"]!)),
-            g => Assert.True(apps[(int)g["PermissionId"]!].HasFlag(App.School)));
+        // Everything a School role holds is offered to a School branch with
+        // every add-on it may have, by the roles screen's own rule.
+        Assert.All(Seed<RolePermission>(db).Where(g => schoolRoles.Contains((int)g["RoleId"]!)), g =>
+        {
+            IDictionary<string, object?> p = permissions[(int)g["PermissionId"]!];
+            Assert.False(((string)p["Code"]!).StartsWith("platform.", StringComparison.Ordinal));
+            Assert.True(RoleRepository.InScope(
+                (BusinessType?)p["BusinessType"], (AddOn)p["AddOns"]!,
+                BusinessType.School, AddOnRules.Allowed(BusinessType.School)), (string)p["Code"]!);
+        });
     }
 
     [Fact]
@@ -145,7 +168,7 @@ public sealed class SchoolSeedTests
         Assert.All(menus.Where(m => codes.Contains(m.Code) && m.Type == MenuType.Item), m =>
         {
             Assert.NotNull(m.RoutePath);
-            Assert.Equal(App.School, AdminDbContext.AppsOfModule(m.Module!) & App.School);
+            Assert.Equal(BusinessType.School, AdminDbContext.ScopeOfModule(m.Module!).BusinessType);
         });
     }
 

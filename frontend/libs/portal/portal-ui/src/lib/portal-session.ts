@@ -43,7 +43,7 @@ export function isFresh(expiresAt: string | null, now: number): boolean {
 interface PortalSessionResponse {
   token: string;
   expiresAt: string;
-  app: string;
+  businessType: string | null;
 }
 
 /**
@@ -51,8 +51,9 @@ interface PortalSessionResponse {
  * token: `/access/:code` keeps the code for the tab's life and exchanges it at
  * Master for a one-hour token, then exchanges it again five minutes before the
  * hour is up. When the business revokes the link, the next exchange is refused
- * and the portal says the link has been withdrawn. The token names its app: a
- * School guardian's opens the parent portal, anyone else's the statement portal.
+ * and the portal says the link has been withdrawn. The token names its branch's
+ * business type: a School guardian's opens the parent portal, anyone else's
+ * the statement portal (TK-136).
  */
 @Injectable({ providedIn: 'root' })
 export class PortalSession {
@@ -63,7 +64,7 @@ export class PortalSession {
   readonly expiresAt = signal<string | null>(PortalSession.load(EXPIRES_KEY));
   private code = PortalSession.load(CODE_KEY);
 
-  readonly app = computed(() => (this.token() ? (readClaim(this.token(), 'app') ?? 'RetailErp') : null));
+  readonly businessType = computed(() => (this.token() ? (readClaim(this.token(), 'business_type') ?? 'Retail') : null));
 
   /** Starts a session from a link's code. False when the link is expired or withdrawn. */
   async start(code: string): Promise<boolean> {

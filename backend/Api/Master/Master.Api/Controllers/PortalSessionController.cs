@@ -78,7 +78,7 @@ public sealed class PortalSessionController : ControllerBase
         {
             Token = session.Token,
             ExpiresAt = session.ExpiresAt,
-            App = session.App.ToString(),
+            BusinessType = session.BusinessType?.ToString(),
         });
     }
 }
@@ -96,6 +96,6 @@ public sealed class PortalSessionResponse
 
     public DateTimeOffset ExpiresAt { get; set; }
 
-    /// <summary>Which portal the session opens: RetailErp or School.</summary>
-    public string App { get; set; } = string.Empty;
+    /// <summary>The branch's business type: School opens the parent portal, anything else the statement portal.</summary>
+    public string? BusinessType { get; set; }
 }

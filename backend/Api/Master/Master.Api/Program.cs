@@ -117,7 +117,6 @@ builder.Services.AddScoped<ITenantDatabaseAllocator>(sp => new TenantDatabaseAll
     sp.GetRequiredService<ITenantShardProvisioner>(),
     sp.GetRequiredService<IConfiguration>()));
 builder.Services.AddScoped<OrgContextRepository>();
-builder.Services.AddScoped<ApplicationRepository>();
 builder.Services.AddScoped<OrgCurrencyRepository>();
 builder.Services.AddScoped<ConfigurationRepository>();
 builder.Services.AddScoped<RestaurantSettingsRepository>();

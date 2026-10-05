@@ -10,9 +10,9 @@ using Xunit;
 namespace Master.Api.Tests;
 
 /// <summary>
-/// A portal link opens the portal of the app it was made from (S9, TK-69): a
-/// School guardian's token names School, so the parent portal accepts it and
-/// RetailErp's statement route refuses it; a RetailErp token is unchanged.
+/// A portal token names its branch's business type (TK-69, TK-136): a School
+/// guardian's token says School, so the parent portal routes accept it and a
+/// trading statement route refuses it; a trading branch's token reads as Retail.
 /// </summary>
 public sealed class PortalTokenTests
 {
@@ -27,31 +27,35 @@ public sealed class PortalTokenTests
     private static ClaimsPrincipal Read(string token) =>
         new(new ClaimsIdentity(new JwtSecurityTokenHandler().ReadJwtToken(token).Claims, "test"));
 
+    private static readonly RequireBusinessTypeAttribute SchoolOnly = new(BusinessType.School);
+    private static readonly RequireBusinessTypeAttribute Trading = new(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery);
+
     [Fact]
     public void A_school_portal_token_names_school_and_only_school_routes_accept_it()
     {
-        ClaimsPrincipal guardian = Read(Tokens().CreatePortalToken(Guid.NewGuid(), Guid.NewGuid(), 42, 7, App.School).Token);
+        ClaimsPrincipal guardian = Read(Tokens().CreatePortalToken(Guid.NewGuid(), Guid.NewGuid(), 42, 7, BusinessType.School).Token);
 
         Assert.Equal("42", guardian.FindFirst(RequirePortalAccessAttribute.ContactClaim)?.Value);
         Assert.Equal("true", guardian.FindFirst(RequirePortalAccessAttribute.AccessClaim)?.Value);
-        Assert.Equal(App.School, RequireAppAttribute.AppOf(guardian));
-        Assert.True(RequireAppAttribute.Allows(App.School, RequireAppAttribute.AppOf(guardian)));
-        Assert.False(RequireAppAttribute.Allows(App.RetailErp, RequireAppAttribute.AppOf(guardian)));
+        Assert.Equal(BusinessType.School, ScopeClaims.BusinessTypeOf(guardian));
+        Assert.True(SchoolOnly.Allows(ScopeClaims.BusinessTypeOf(guardian)));
+        Assert.False(Trading.Allows(ScopeClaims.BusinessTypeOf(guardian)));
     }
 
     [Fact]
-    public void A_retail_portal_token_keeps_its_shape_and_reads_as_retail()
+    public void A_portal_token_with_no_business_type_reads_as_retail()
     {
         ClaimsPrincipal customer = Read(Tokens().CreatePortalToken(Guid.NewGuid(), Guid.NewGuid(), 42, 7).Token);
 
-        Assert.Null(customer.FindFirst(RequireAppAttribute.ClaimType));
-        Assert.Equal(App.RetailErp, RequireAppAttribute.AppOf(customer));
-        Assert.False(RequireAppAttribute.Allows(App.School, RequireAppAttribute.AppOf(customer)));
+        Assert.Null(customer.FindFirst(ScopeClaims.BusinessTypeClaim));
+        Assert.Null(customer.FindFirst("app"));
+        Assert.Equal(BusinessType.Retail, ScopeClaims.BusinessTypeOf(customer));
+        Assert.False(SchoolOnly.Allows(ScopeClaims.BusinessTypeOf(customer)));
     }
 
     [Fact]
     public void A_portal_token_carries_no_staff_permissions() =>
-        Assert.Empty(Read(Tokens().CreatePortalToken(Guid.NewGuid(), Guid.NewGuid(), 42, 7, App.School).Token).FindAll("permission"));
+        Assert.Empty(Read(Tokens().CreatePortalToken(Guid.NewGuid(), Guid.NewGuid(), 42, 7, BusinessType.School).Token).FindAll("permission"));
 
     /// <summary>
     /// A session, not a link (TK-94): an hour long, naming the grant it was

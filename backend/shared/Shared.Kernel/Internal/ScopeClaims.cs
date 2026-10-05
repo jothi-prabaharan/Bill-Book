@@ -28,19 +28,10 @@ public static class ScopeClaims
             return null;
         }
 
-        // If add_ons claim is present without business_type claim, this is a token
-        // without a business type (standalone add-on like HRMS/Payroll).
+        // An add_ons claim with no business_type is a customer with no trade
+        // (HRMS or Payroll only).
         if (user.FindFirst(AddOnsClaim) is not null)
         {
-            return null;
-        }
-
-        // Backwards compatibility with legacy 'app' claim:
-        string? appClaim = user.FindFirst(RequireAppAttribute.ClaimType)?.Value;
-        if (appClaim is not null && Enum.TryParse<App>(appClaim, ignoreCase: true, out var app))
-        {
-            if (app == App.School) return BusinessType.School;
-            if (app == App.RetailErp) return BusinessType.Retail;
             return null;
         }
 
@@ -57,17 +48,6 @@ public static class ScopeClaims
         if (claim is not null && Enum.TryParse<AddOn>(claim, ignoreCase: true, out var parsed))
         {
             return parsed;
-        }
-
-        // Backwards compatibility with 'app' claim:
-        string? appClaim = user.FindFirst(RequireAppAttribute.ClaimType)?.Value;
-        if (appClaim is not null && Enum.TryParse<App>(appClaim, ignoreCase: true, out var app))
-        {
-            AddOn res = AddOn.None;
-            if (app.HasFlag(App.Hrms)) res |= AddOn.Hrms;
-            if (app.HasFlag(App.Payroll)) res |= AddOn.Payroll;
-            if (app.HasFlag(App.RetailErp)) res |= AddOn.All;
-            return res;
         }
 
         return AddOn.None;

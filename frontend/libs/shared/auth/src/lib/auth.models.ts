@@ -40,8 +40,13 @@ export interface TokenResponse {
 }
 
 export interface SignupRequest {
-  /** The app signed up for; defaults to this build's APP_ID (TK-45). */
-  app?: 'RetailErp' | 'School' | 'Hrms' | 'Payroll';
+  /**
+   * The first branch's business type (D-50, TK-136). Omitted means Retail;
+   * null means HRMS or Payroll only, which then needs one of those add-ons.
+   */
+  businessType?: string | null;
+  /** The first branch's add-ons, comma-separated as the server reads a flags enum, e.g. `Hrms, Payroll`. */
+  addOns?: string;
   displayName: string;
   email: string;
   password: string;

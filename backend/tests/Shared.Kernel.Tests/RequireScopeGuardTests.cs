@@ -189,18 +189,11 @@ public sealed class RequireScopeGuardTests
         Assert.Null(ScopeClaims.BusinessTypeOf(user2));
         Assert.Equal(AddOn.Hrms, ScopeClaims.AddOnsOf(user2));
 
-        // 3. Legacy token with 'app' claim = School
-        var user3 = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(RequireAppAttribute.ClaimType, "School"),
-        ]));
-        Assert.Equal(BusinessType.School, ScopeClaims.BusinessTypeOf(user3));
-
-        // 4. Legacy token with 'app' claim = RetailErp
-        var user4 = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(RequireAppAttribute.ClaimType, "RetailErp"),
-        ]));
-        Assert.Equal(BusinessType.Retail, ScopeClaims.BusinessTypeOf(user4));
-        Assert.Equal(AddOn.All, ScopeClaims.AddOnsOf(user4));
+        // 3. A token with no scope claims at all reads as a Retail branch with
+        //    no add-ons. The app claim it might once have carried is gone (TK-136).
+        var user3 = new ClaimsPrincipal(new ClaimsIdentity([new Claim("app", "School")]));
+        Assert.Equal(BusinessType.Retail, ScopeClaims.BusinessTypeOf(user3));
+        Assert.Equal(AddOn.None, ScopeClaims.AddOnsOf(user3));
     }
 
     [Fact]

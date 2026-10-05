@@ -30,11 +30,6 @@ public interface ITenantSeeder
     Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, CancellationToken ct);
 
     /// <summary>
-    /// Seeds the services <paramref name="apps"/> need. Backwards-compatibility bridge.
-    /// </summary>
-    Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, App apps, CancellationToken ct);
-
-    /// <summary>
     /// Seeds the services for the given business type and add-ons (D-36, TK-127).
     /// </summary>
     Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, BusinessType? businessType, AddOn addOns, CancellationToken ct);
@@ -126,24 +121,9 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         return Services.Where(wanted.Contains).ToList();
     }
 
-    /// <summary>Backwards-compatibility bridge for App-based callers.</summary>
-    public static IReadOnlyList<string> ServicesFor(App apps)
-    {
-        BusinessType? bt = apps.HasFlag(App.School) ? BusinessType.School
-            : apps.HasFlag(App.RetailErp) ? BusinessType.Retail
-            : null;
-        AddOn ao = AddOn.None;
-        if (apps.HasFlag(App.Hrms)) ao |= AddOn.Hrms;
-        if (apps.HasFlag(App.Payroll)) ao |= AddOn.Payroll;
-        return ServicesFor(bt, ao);
-    }
-
     /// <summary>Contacts are seeded for any vertical or when CRM add-on is enabled (D-36, TK-127).</summary>
     public static bool SeedsContacts(BusinessType? businessType, AddOn addOns) =>
         businessType != null || addOns.HasFlag(AddOn.Crm);
-
-    /// <summary>Backwards-compatibility bridge for App-based callers.</summary>
-    public static bool SeedsContacts(App apps) => (apps & (App.RetailErp | App.School)) != 0;
 
     /// <summary>
     /// Reads the branch's business type and add-ons from Organizations in a scope of its own.
@@ -218,18 +198,6 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     }
 
     public async Task<IReadOnlyList<string>> SeedAsync(
-        Guid customerId, Guid orgId, App apps, CancellationToken ct)
-    {
-        BusinessType? bt = apps.HasFlag(App.School) ? BusinessType.School
-            : apps.HasFlag(App.RetailErp) ? BusinessType.Retail
-            : null;
-        AddOn ao = AddOn.None;
-        if (apps.HasFlag(App.Hrms)) ao |= AddOn.Hrms;
-        if (apps.HasFlag(App.Payroll)) ao |= AddOn.Payroll;
-        return await SeedAsync(customerId, orgId, bt, ao, ct);
-    }
-
-    public async Task<IReadOnlyList<string>> SeedAsync(
         Guid customerId, Guid orgId, BusinessType? businessType, AddOn addOns, CancellationToken ct)
     {
         var failed = new List<string>();
@@ -270,15 +238,9 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             failed.Add("Contacts");
         }
 
-        App approvalApps = App.None;
-        if (addOns.HasFlag(AddOn.Hrms)) approvalApps |= App.Hrms;
-        if (addOns.HasFlag(AddOn.Payroll)) approvalApps |= App.Payroll;
-        if (businessType is BusinessType.Retail or BusinessType.Pharma or BusinessType.Jewellery or BusinessType.Restaurant or BusinessType.Service) approvalApps |= App.RetailErp;
-        if (businessType == BusinessType.School) approvalApps |= App.School;
-
         // The starting approval workflows (TK-49), in process: they are
         // Master's own apr tables, so an HTTP call would be to ourselves.
-        if (addOns.HasFlag(AddOn.Hrms) && !await SeedApprovalDefaultsAsync(customerId, orgId, approvalApps, ct))
+        if (addOns.HasFlag(AddOn.Hrms) && !await SeedApprovalDefaultsAsync(customerId, orgId, addOns, ct))
         {
             failed.Add("Approvals");
         }
@@ -328,8 +290,8 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         }
     }
 
-    /// <summary>Default approval workflows for the branch's apps, idempotent (TK-49).</summary>
-    private async Task<bool> SeedApprovalDefaultsAsync(Guid customerId, Guid orgId, App apps, CancellationToken ct)
+    /// <summary>Default approval workflows for the branch's add-ons, idempotent (TK-49).</summary>
+    private async Task<bool> SeedApprovalDefaultsAsync(Guid customerId, Guid orgId, AddOn addOns, CancellationToken ct)
     {
         try
         {
@@ -341,7 +303,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             tenant.OrgId = orgId;
 
             var workflows = scope.ServiceProvider.GetRequiredService<ApprovalWorkflowRepository>();
-            int added = await workflows.SeedDefaultsAsync(orgId, apps, DateOnly.FromDateTime(DateTime.UtcNow), ct);
+            int added = await workflows.SeedDefaultsAsync(orgId, addOns, DateOnly.FromDateTime(DateTime.UtcNow), ct);
             _log.LogInformation("Seeded {Count} approval workflow(s) for organization {OrgId}.", added, orgId);
             return true;
         }

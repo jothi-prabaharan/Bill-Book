@@ -18,8 +18,6 @@ public class ReportCatalogItemView
 
     public ReportModule Module { get; set; }
 
-    public App App { get; set; } = App.RetailErp;
-
     public string? Description { get; set; }
 
     public int SortOrder { get; set; }
@@ -42,8 +40,6 @@ public class ReportMetadataView
     public string Title { get; set; } = null!;
 
     public ReportModule Module { get; set; }
-
-    public App App { get; set; } = App.RetailErp;
 
     public string? Description { get; set; }
 

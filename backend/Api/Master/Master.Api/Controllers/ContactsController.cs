@@ -132,9 +132,9 @@ public sealed class ContactsController : ControllerBase
     public async Task<IActionResult> GeneratePortalLink(
         long contactId, [FromServices] PortalAccessRepository portal, CancellationToken ct)
     {
-        // The link opens the portal of the app it was made from: a School
-        // guardian's link opens the parent portal (TK-69).
-        PortalLink? link = await portal.CreateLinkAsync(contactId, RequireAppAttribute.AppOf(User), ct);
+        // The link carries the branch's business type: a School branch's link
+        // opens the parent portal (TK-69, TK-136).
+        PortalLink? link = await portal.CreateLinkAsync(contactId, ScopeClaims.BusinessTypeOf(User), ct);
         if (link is null)
         {
             return NotFound();

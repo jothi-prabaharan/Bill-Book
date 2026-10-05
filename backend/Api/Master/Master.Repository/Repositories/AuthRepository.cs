@@ -85,8 +85,7 @@ public sealed class AuthRepository
         });
         await _db.SaveChangesAsync(ct);
 
-        App app = AppOrDefault(request.App);
-        IReadOnlyList<AccessibleOrgDto> orgs = await AccessibleOrgsAsync(user.UserId, ct, app);
+        IReadOnlyList<AccessibleOrgDto> orgs = await AccessibleOrgsAsync(user.UserId, ct);
 
         if (orgs.Count == 0)
         {
@@ -97,7 +96,7 @@ public sealed class AuthRepository
             ? user.LastAccessedOrgId.Value
             : orgs[0].OrgId;
 
-        TokenResponse tokens = await SelectOrganizationAsync(user.UserId, targetOrgId, ip, userAgent, ct, app);
+        TokenResponse tokens = await SelectOrganizationAsync(user.UserId, targetOrgId, ip, userAgent, ct);
 
         return new LoginResponse
         {
@@ -115,15 +114,13 @@ public sealed class AuthRepository
     // ---- Step two: pick an org -> access + refresh token ------------------
 
     /// <summary>
-    /// The branches this user may work in, in one app. Read at login to offer a
-    /// choice, and again by the switcher — the same list either way, so the two
-    /// can never disagree about what someone has access to.
-    ///
-    /// <b>Only branches where the user holds a role in that app</b> (TK-43). A
-    /// branch where they hold roles in several apps is listed once.
+    /// The branches this user may work in. Read at login to offer a choice, and
+    /// again by the switcher — the same list either way, so the two can never
+    /// disagree about what someone has access to. A branch where they hold
+    /// several roles is listed once.
     /// </summary>
     public async Task<IReadOnlyList<AccessibleOrgDto>> AccessibleOrgsAsync(
-        Guid userId, CancellationToken ct, App app = App.RetailErp)
+        Guid userId, CancellationToken ct)
     {
         var assignments = (await (
             from uor in _db.UserOrganizationRoles
@@ -142,7 +139,7 @@ public sealed class AuthRepository
             // Names live in Platform, so a branch that cannot be resolved is
             // still listed rather than silently dropped — a missing branch is
             // something to see, not to hide.
-            OrgContextResponse? ctx = await _orgs.ResolveAsync(assignment.OrgId, ct, app);
+            OrgContextResponse? ctx = await _orgs.ResolveAsync(assignment.OrgId, ct);
 
             orgs.Add(new AccessibleOrgDto
             {
@@ -156,19 +153,13 @@ public sealed class AuthRepository
     }
 
     public async Task<TokenResponse> SelectOrganizationAsync(
-        Guid userId, Guid orgId, string? ip, string? userAgent, CancellationToken ct, App app = App.RetailErp)
+        Guid userId, Guid orgId, string? ip, string? userAgent, CancellationToken ct)
     {
         // A fresh sign-in into a branch starts a new family. Nothing links it to
         // whatever chain the previous session was on, which is what makes a
-        // reuse of an old chain detectable rather than merely confusing. The
-        // family is per app as well as per branch (TK-43): switching app is a
-        // new sign-in.
-        return await IssueAsync(userId, orgId, app, Guid.NewGuid(), ip, userAgent, ct);
+        // reuse of an old chain detectable rather than merely confusing.
+        return await IssueAsync(userId, orgId, Guid.NewGuid(), ip, userAgent, ct);
     }
-
-    /// <summary>An app named in a request, or RetailErp when none is named.</summary>
-    public static App AppOrDefault(string? name) =>
-        AppRules.TryParseSingle(name, out App app) ? app : App.RetailErp;
 
     // ---- Refresh: rotation, with reuse detection --------------------------
 
@@ -259,7 +250,7 @@ public sealed class AuthRepository
 
         try
         {
-            return await IssueAsync(token.UserId, token.OrgId, App.None, token.FamilyId, ip, userAgent, ct);
+            return await IssueAsync(token.UserId, token.OrgId, token.FamilyId, ip, userAgent, ct);
         }
         catch (NoOrganizationAccessException)
         {
@@ -316,7 +307,6 @@ public sealed class AuthRepository
     private async Task<TokenResponse> IssueAsync(
         Guid userId,
         Guid orgId,
-        App app,
         Guid familyId,
         string? ip,
         string? userAgent,
@@ -334,7 +324,7 @@ public sealed class AuthRepository
             throw new NoOrganizationAccessException();
         }
 
-        OrgContextResponse ctx = await _orgs.ResolveAsync(orgId, ct, app)
+        OrgContextResponse ctx = await _orgs.ResolveAsync(orgId, ct)
             ?? throw new NoOrganizationAccessException();
         if (!ctx.DatabaseReady)
         {
@@ -373,7 +363,6 @@ public sealed class AuthRepository
             CustomerId = ctx.CustomerId,
             CustomerCode = ctx.CustomerCode,
             OrgId = orgId,
-            App = app,
             BusinessType = ctx.BusinessType,
             AddOns = ctx.AddOns,
             PlanTier = ctx.PlanTier,

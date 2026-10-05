@@ -35,16 +35,17 @@ namespace Master.Repository.SeedData;
 public static class MenuSeed
 {
     /// <summary>
-    /// The rows every app's menu shows (TK-42): Home, the Settings rail, and its
-    /// Organisation and Users-and-access sections with their screens. Every other
-    /// row is RetailErp's. Print templates stay RetailErp's for now because each
-    /// row is a RetailErp document type.
+    /// The rows every branch's menu shows, whatever its business type and
+    /// add-ons (TK-42, TK-136): Home, the Settings rail, and its Organisation and
+    /// Users-and-access sections with their screens. Every other row is scoped
+    /// below or is a trading row. Print templates stay trading rows because each
+    /// is a trading document type.
     /// </summary>
     public static readonly IReadOnlySet<int> SharedMenuIds = new HashSet<int>
     {
         1,                                              // Home
         9,                                              // Settings rail
-        114, 1079, 1080, 1081, 1082, 1083, 1084, 1085,  // Organisation
+        114, 1079, 1080, 1081, 1082, 1083, 1084,        // Organisation (1085, Applications, retired by TK-136)
         1125,                                           // Approval workflows (TK-103)
         1137,                                           // Custom fields (TK-110)
         1139,                                           // Audit log (TK-118)
@@ -239,7 +240,6 @@ public static class MenuSeed
         new Menu { MenuId = 1082, ParentId = 114, Type = MenuType.Item, Code = "ser", Name = "Number series", Icon = "hash", Module = "settings", RoutePath = "/settings/numbering", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
         new Menu { MenuId = 1083, ParentId = 114, Type = MenuType.Item, Code = "ocu", Name = "Organisation currencies", Icon = "coins", Module = "settings", RoutePath = "/settings/currencies", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = true },
         new Menu { MenuId = 1084, ParentId = 114, Type = MenuType.Item, Code = "smtp", Name = "Email and SMTP", Icon = "mail", Module = "settings", RoutePath = "/settings/email", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
-        new Menu { MenuId = 1085, ParentId = 114, Type = MenuType.Item, Code = "lic", Name = "Applications", Icon = "badge-check", Module = "settings", RoutePath = "/settings/applications", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
         // Every app's approval chains, configured in one place (TK-103).
         new Menu { MenuId = 1125, ParentId = 114, Type = MenuType.Item, Code = "apw", Name = "Approval workflows", Icon = "list-checks", Module = "settings", RoutePath = "/settings/approval-workflows", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = true },
         new Menu { MenuId = 1137, ParentId = 114, Type = MenuType.Item, Code = "cfd", Name = "Custom fields", Icon = "list-plus", Module = "settings", RoutePath = "/settings/custom-fields", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 9, IsActive = true },
@@ -317,7 +317,7 @@ public static class MenuSeed
         new Menu { MenuId = 1130, ParentId = 123, Type = MenuType.Item, Code = "r-project-budget-vs-actual", Name = "Project Budget vs Actual", Icon = "target", Module = "reports", RoutePath = "/reports/project-budget-vs-actual", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
         new Menu { MenuId = 1131, ParentId = 123, Type = MenuType.Item, Code = "r-project-unbilled-work", Name = "Project Unbilled Work", Icon = "receipt", Module = "reports", RoutePath = "/reports/project-unbilled-work", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1132, ParentId = 123, Type = MenuType.Item, Code = "r-project-time-by-user", Name = "Project Time by User", Icon = "clock", Module = "reports", RoutePath = "/reports/project-time-by-user", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
-        // ---- Approvals (TK-103): what waits on the signed-in user, across RetailErp's services ----
+        // ---- Approvals (TK-103): what waits on the signed-in user, across the trading services ----
         new Menu { MenuId = 14, ParentId = null, Type = MenuType.Rail, Code = "approvals", Name = "Approvals", Icon = "check-circle", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 14, IsActive = true },
         // ---- Restaurant ----
         new Menu { MenuId = 15, ParentId = null, Type = MenuType.Rail, Code = "restaurant", Name = "Restaurant", Icon = "utensils", Module = "restaurant", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 15, IsActive = true },
@@ -642,7 +642,6 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 298, MenuId = 1084, PermissionCode = "settings.create", Action = "create", Module = "settings" },
         new MenuPermission { MenuPermissionId = 299, MenuId = 1084, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
         new MenuPermission { MenuPermissionId = 300, MenuId = 1084, PermissionCode = "settings.delete", Action = "delete", Module = "settings" },
-        new MenuPermission { MenuPermissionId = 301, MenuId = 1085, PermissionCode = "settings.view", Action = "view", Module = "settings" },
         new MenuPermission { MenuPermissionId = 302, MenuId = 1086, PermissionCode = "settings.view", Action = "view", Module = "settings" },
         new MenuPermission { MenuPermissionId = 303, MenuId = 1086, PermissionCode = "settings.create", Action = "create", Module = "settings" },
         new MenuPermission { MenuPermissionId = 304, MenuId = 1086, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },

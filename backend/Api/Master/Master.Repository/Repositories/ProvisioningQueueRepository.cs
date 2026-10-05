@@ -10,8 +10,7 @@ public sealed record ProvisioningJob(
     string OwnerEmail,
     string OwnerDisplayName,
     string? OwnerMobileNumber,
-    string OwnerPassword,
-    Shared.Kernel.Apps.App App = Shared.Kernel.Apps.App.RetailErp);
+    string OwnerPassword);
 
 public interface IProvisioningQueue
 {

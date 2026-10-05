@@ -14,7 +14,7 @@ export interface ShellRoutesOptions {
  * page validation.
  *
  * - `authGuard` on the shell: a signed-in user with a branch.
- * - `pageGuard` on every page: licence, app, declared access, permission, in
+ * - `pageGuard` on every page: licence, business type and add-ons, declared access, permission, in
  *   that order (`decideAccess`).
  * - `/no-access` is added, so every app has somewhere to explain a refusal.
  */

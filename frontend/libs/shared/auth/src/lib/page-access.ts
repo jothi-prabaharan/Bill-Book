@@ -88,9 +88,8 @@ export function accessOf(route: ActivatedRouteSnapshot): PageAccess | undefined 
 /**
  * The shell's page guard. `shellRoutes` attaches it; no app lists it by hand.
  *
- * A session minted for another app (a token left by the other app on the same
- * origin) is first switched to this app, on the same branch. A user with no
- * role in this app then lands on the no-access page rather than on /login.
+ * A session whose context cannot be read lands on the no-access page rather
+ * than on /login, so a server refusal is explained rather than looped.
  */
 export const pageGuard: CanActivateFn = async (route) => {
   const auth = inject(AuthService);
@@ -105,7 +104,7 @@ export const pageGuard: CanActivateFn = async (route) => {
   try {
     context = await session.ensure();
   } catch {
-    return router.createUrlTree(['/no-access'], { queryParams: { reason: 'app' } });
+    return router.createUrlTree(['/no-access'], { queryParams: { reason: 'context' } });
   }
 
   const refusal = decideAccess(true, context, accessOf(route));

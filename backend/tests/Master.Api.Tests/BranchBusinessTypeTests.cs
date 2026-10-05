@@ -116,7 +116,8 @@ public sealed class BranchBusinessTypeTests
 
         Assert.Null(jwt.Claims.FirstOrDefault(c => c.Type == "business_type"));
         Assert.Equal(((int)AddOn.Hrms).ToString(), jwt.Claims.FirstOrDefault(c => c.Type == "add_ons")?.Value);
-        Assert.Equal("Hrms", jwt.Claims.FirstOrDefault(c => c.Type == "app")?.Value);
+        // The app claim was retired with the App enum (TK-136).
+        Assert.Null(jwt.Claims.FirstOrDefault(c => c.Type == "app"));
     }
 
     [Fact]

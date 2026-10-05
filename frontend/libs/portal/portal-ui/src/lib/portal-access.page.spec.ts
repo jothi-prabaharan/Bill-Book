@@ -12,7 +12,7 @@ describe('PortalAccessPage (TK-132)', () => {
   beforeEach(async () => {
     mockSession = {
       start: jest.fn(),
-      app: jest.fn(),
+      businessType: jest.fn(),
     };
     mockRouter = {
       navigateByUrl: jest.fn(),
@@ -39,7 +39,7 @@ describe('PortalAccessPage (TK-132)', () => {
 
   it('exchanges the code and navigates to the portal dashboard', async () => {
     mockSession.start.mockResolvedValue(true);
-    mockSession.app.mockReturnValue('RetailErp');
+    mockSession.businessType.mockReturnValue('Retail');
 
     fixture.detectChanges();
     await fixture.whenStable();

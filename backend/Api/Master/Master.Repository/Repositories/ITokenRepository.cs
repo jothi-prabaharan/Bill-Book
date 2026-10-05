@@ -19,10 +19,10 @@ public interface ITokenRepository
 
     /// <summary>
     /// A one-hour token for a contact's portal session, issued for a live
-    /// <c>con.PortalGrants</c> row (TK-94): a RetailErp customer's portal, or a
-    /// School guardian's parent portal (TK-69). The token names
-    /// <paramref name="app"/> so the School routes accept it and RetailErp's
-    /// refuse it, and carries <c>portal_grant</c> so every service can tell it
+    /// <c>con.PortalGrants</c> row (TK-94): a trading customer's portal, or a
+    /// School guardian's parent portal (TK-69). The token names the branch's
+    /// <paramref name="businessType"/> so the School routes accept it and the
+    /// trading ones refuse it, and carries <c>portal_grant</c> so every service can tell it
     /// from the 30-day links that came before.
     /// </summary>
     /// <remarks>
@@ -31,7 +31,7 @@ public interface ITokenRepository
     /// PDF is read from the same archive folder staff read (TK-95).
     /// </remarks>
     (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
-        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp, string? customerCode = null);
+        Guid customerId, Guid orgId, long contactId, long grantId, BusinessType? businessType = null, string? customerCode = null);
 }
 
 public sealed class AccessTokenRequest
@@ -48,9 +48,6 @@ public sealed class AccessTokenRequest
     public required string CustomerCode { get; init; }
 
     public required Guid OrgId { get; init; }
-
-    /// <summary>The app the token is for; written as the <c>app</c> claim (TK-43).</summary>
-    public Shared.Kernel.Apps.App App { get; init; } = Shared.Kernel.Apps.App.None;
 
     /// <summary>The branch's business vertical (D-36, TK-127).</summary>
     public Shared.Kernel.Apps.BusinessType? BusinessType { get; init; }

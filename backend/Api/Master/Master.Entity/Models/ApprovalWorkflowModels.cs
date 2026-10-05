@@ -62,8 +62,6 @@ public class SaveApprovalLevel
 public class ApprovalWorkflowView : SaveApprovalWorkflowRequest
 {
     public long ApprovalWorkflowId { get; set; }
-
-    public string App { get; set; } = null!;
 }
 
 public enum ApprovalWorkflowOutcome

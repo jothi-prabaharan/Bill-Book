@@ -58,7 +58,6 @@ public sealed class ReportCatalogRepository
                     ReportKey = r.ReportKey,
                     Title = r.Title,
                     Module = r.Module,
-                    App = _sources[r.ReportKey].App,
                     Description = r.Description,
                     SortOrder = r.SortOrder,
                     IsDataset = _sources[r.ReportKey].IsDataset,
@@ -92,7 +91,6 @@ public sealed class ReportCatalogRepository
             ReportKey = source.ReportKey,
             Title = source.Title,
             Module = source.Module,
-            App = source.App,
             Parameters =
             [
                 .. source.Parameters.Select(p => new ReportParameterView

@@ -57,6 +57,11 @@ public sealed class AdminCustomersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SignupRequest request, CancellationToken ct)
     {
+        if (SignupRepository.ScopeRefusal(request.BusinessType, request.AddOns) is string scopeRefusal)
+        {
+            return BadRequest(new { message = scopeRefusal });
+        }
+
         if (await _signup.EmailExistsAsync(request.Email, ct))
         {
             return BadRequest(new MessageResponse

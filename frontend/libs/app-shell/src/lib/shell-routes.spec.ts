@@ -24,7 +24,6 @@ describe('shellRoutes', () => {
     const shell = shellRoutes({ children: pages });
 
     expect(shell.canActivateChild).toContain(pageGuard);
-    expect(shell.data?.['app']).toBe('Payroll');
     expect(shell.children?.some((r) => r.path === 'no-access')).toBe(true);
   });
 

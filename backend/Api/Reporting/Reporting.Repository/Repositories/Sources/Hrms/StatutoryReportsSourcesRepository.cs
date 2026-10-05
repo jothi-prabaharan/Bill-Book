@@ -26,7 +26,7 @@ public sealed class PfStatementSource : ReportSource<PfStatementRow>
     public override string ReportKey => "pf-statement";
     public override string Title => "PF Statement";
     public override ReportModule Module => ReportModule.Statutory;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -83,7 +83,7 @@ public sealed class EsiStatementSource : ReportSource<EsiStatementRow>
     public override string ReportKey => "esi-statement";
     public override string Title => "ESI Statement";
     public override ReportModule Module => ReportModule.Statutory;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -137,7 +137,7 @@ public sealed class PtStatementSource : ReportSource<PtStatementRow>
     public override string ReportKey => "pt-statement";
     public override string Title => "Professional Tax Statement";
     public override ReportModule Module => ReportModule.Statutory;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -191,7 +191,7 @@ public sealed class LwfStatementSource : ReportSource<LwfStatementRow>
     public override string ReportKey => "lwf-statement";
     public override string Title => "LWF Statement";
     public override ReportModule Module => ReportModule.Statutory;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -246,7 +246,7 @@ public sealed class GratuityProvisionSource : ReportSource<GratuityProvisionRow>
     public override string ReportKey => "gratuity-provision";
     public override string Title => "Gratuity Provision";
     public override ReportModule Module => ReportModule.Statutory;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -298,7 +298,7 @@ public sealed class BonusRegisterSource : ReportSource<BonusRegisterRow>
     public override string ReportKey => "bonus-register";
     public override string Title => "Bonus Register";
     public override ReportModule Module => ReportModule.Statutory;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -352,7 +352,7 @@ public sealed class TdsSummarySource : ReportSource<TdsSummaryRow>
     public override string ReportKey => "tds-summary";
     public override string Title => "TDS Summary and Projection";
     public override ReportModule Module => ReportModule.Statutory;
-    public override App App => App.Payroll;
+    public override AddOn RequiredAddOn => AddOn.Payroll;
     public override string RequiredPermission => "payroll.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>

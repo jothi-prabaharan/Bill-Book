@@ -1,12 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { APP_ID } from '@bill-book/auth';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { SessionContextService } from '@bill-book/auth';
 import { EditLogArea, EditLogReportComponent } from '@bill-book/ui-components';
 import { auditAreasFor } from './audit-areas';
 
 /**
  * Settings › Audit log (TK-118): every change the edit log holds, one
- * service at a time, filtered by date, user and table. One page for every app;
- * the areas follow the app it is mounted in.
+ * service at a time, filtered by date, user and table. The areas follow the
+ * branch's business type and add-ons (TK-136).
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,5 +17,9 @@ import { auditAreasFor } from './audit-areas';
   styleUrl: './audit-log.page.scss',
 })
 export class AuditLogPage {
-  protected readonly areas: EditLogArea[] = auditAreasFor(inject(APP_ID));
+  private readonly session = inject(SessionContextService);
+
+  protected readonly areas = computed<EditLogArea[]>(() =>
+    auditAreasFor(this.session.context()?.businessType, this.session.context()?.addOns),
+  );
 }

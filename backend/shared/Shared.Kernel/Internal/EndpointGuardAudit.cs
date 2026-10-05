@@ -141,10 +141,6 @@ public static class EndpointGuardAudit
         return open;
     }
 
-    /// <summary>Backwards-compatibility alias for <see cref="WithoutBusinessTypeOrAddOn"/>.</summary>
-    public static IReadOnlyList<string> WithoutApp(Assembly assembly, params string[] exempt) =>
-        WithoutBusinessTypeOrAddOn(assembly, exempt);
-
     /// <summary>
     /// Every module named by a <see cref="RequireModulePermissionAttribute"/> in
     /// the assembly.

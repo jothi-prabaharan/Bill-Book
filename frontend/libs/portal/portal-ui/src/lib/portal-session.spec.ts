@@ -4,7 +4,7 @@ const encode = (payload: object) => `h.${btoa(JSON.stringify(payload)).replace(/
 
 describe('readClaim (TK-69)', () => {
   it('reads a claim from the payload', () => {
-    expect(readClaim(encode({ app: 'School', contact_id: '42' }), 'app')).toBe('School');
+    expect(readClaim(encode({ business_type: 'School', contact_id: '42' }), 'business_type')).toBe('School');
     expect(readClaim(encode({ contact_id: '42' }), 'contact_id')).toBe('42');
   });
 

@@ -28,7 +28,7 @@ export class PortalAccessPage implements OnInit {
     const code = this.route.snapshot.paramMap.get('code');
     const opened = code ? await this.session.start(code) : false;
 
-    const target = !opened ? '/portal/expired' : this.session.app() === 'School' ? '/portal/school' : '/portal/dashboard';
+    const target = !opened ? '/portal/expired' : this.session.businessType() === 'School' ? '/portal/school' : '/portal/dashboard';
     await this.router.navigateByUrl(target, { replaceUrl: true });
   }
 }

@@ -11,10 +11,10 @@ describe('apps/web routes', () => {
     expect(auditShellRoutes(appRoutes)).toEqual([]);
   });
 
-  it('mount the shell once, for RetailErp', () => {
+  it('mount the shell once, naming no app (TK-136)', () => {
     const shells = appRoutes.filter((r) => r.data?.['shellRoot'] === true);
 
     expect(shells).toHaveLength(1);
-    expect(shells[0].data?.['app']).toBe('RetailErp');
+    expect(shells[0].data?.['app']).toBeUndefined();
   });
 });

@@ -110,8 +110,8 @@ public sealed class InProcessIdentityAdmin : IIdentityAdminRepository
             _db.Users.Add(user);
         }
 
-        // The Owner role of the app signed up for (TK-45).
-        int ownerRoleId = AdminDbContext.OwnerRoleOf(request.App);
+        // The one Owner role (D-36): roles span every trade and add-on.
+        int ownerRoleId = AdminDbContext.OwnerRoleId;
 
         bool assigned = await _db.UserOrganizationRoles.AnyAsync(
             a => a.UserId == user.UserId && a.OrgId == request.OrgId && a.RoleId == ownerRoleId, ct);

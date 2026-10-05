@@ -21,7 +21,7 @@ public sealed class ClaimsByCategorySource : ReportSource<ClaimsByCategoryRow>
     public override string ReportKey => "claims-by-category";
     public override string Title => "Claims by Category";
     public override ReportModule Module => ReportModule.Claims;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "claims.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -74,7 +74,7 @@ public sealed class ClaimsByEmployeeSource : ReportSource<ClaimsByEmployeeRow>
     public override string ReportKey => "claims-by-employee";
     public override string Title => "Claims by Employee";
     public override ReportModule Module => ReportModule.Claims;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "claims.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -134,7 +134,7 @@ public sealed class ClaimsPendingApprovalSource : ReportSource<ClaimsPendingAppr
     public override string ReportKey => "claims-pending-approval";
     public override string Title => "Claims Pending Approval";
     public override ReportModule Module => ReportModule.Claims;
-    public override App App => App.Hrms;
+    public override AddOn RequiredAddOn => AddOn.Hrms;
     public override string RequiredPermission => "claims.view";
 
     public override IReadOnlyList<ReportColumn> Columns =>

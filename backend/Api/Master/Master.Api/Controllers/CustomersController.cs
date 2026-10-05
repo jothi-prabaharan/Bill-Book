@@ -24,6 +24,11 @@ public sealed class CustomersController : ControllerBase
     public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken ct)
     {
         request.Kind = Master.Entity.Enums.CustomerKind.Standard;
+        if (SignupRepository.ScopeRefusal(request.BusinessType, request.AddOns) is string scopeRefusal)
+        {
+            return BadRequest(new { message = scopeRefusal });
+        }
+
         if (await _signup.EmailExistsAsync(request.Email, ct))
         {
             return BadRequest(new { message = "An account with this email already exists." });

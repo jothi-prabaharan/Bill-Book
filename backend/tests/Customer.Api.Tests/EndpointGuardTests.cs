@@ -48,7 +48,7 @@ public sealed class EndpointGuardTests
         // PublicUnsubscribeController and PublicTrackingController are anonymous and app-agnostic.
         Assert.Equal(
             string.Empty,
-            string.Join(", ", EndpointGuardAudit.WithoutApp(
+            string.Join(", ", EndpointGuardAudit.WithoutBusinessTypeOrAddOn(
                 Service,
                 nameof(Customer.Api.Controllers.PublicUnsubscribeController),
                 nameof(Customer.Api.Controllers.PublicTrackingController))));

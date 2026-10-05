@@ -14,7 +14,7 @@ public sealed class RoleRepository
     public RoleRepository(AdminDbContext db) => _db = db;
 
     /// <summary>System roles plus this customer's own (D-36, TK-127: roles span types).</summary>
-    public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, CancellationToken ct, App? app = null)
+    public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, CancellationToken ct)
     {
         IQueryable<Role> roles = _db.Roles.Where(r => r.CustomerId == null || r.CustomerId == customerId);
 
@@ -28,7 +28,6 @@ public sealed class RoleRepository
                 Description = r.Description,
                 IsSystemRole = r.IsSystemRole,
                 IsActive = r.IsActive,
-                App = string.Empty,
                 UserCount = _db.UserOrganizationRoles.Count(u => u.RoleId == r.RoleId && u.IsActive),
                 PermissionCount = _db.RolePermissions.Count(p => p.RoleId == r.RoleId),
             })
@@ -56,7 +55,6 @@ public sealed class RoleRepository
             Description = role.Description,
             IsSystemRole = role.IsSystemRole,
             IsActive = role.IsActive,
-            App = string.Empty,
             UserCount = await _db.UserOrganizationRoles.CountAsync(
                 u => u.RoleId == roleId && u.IsActive, ct),
             PermissionCount = permissionIds.Count,
@@ -65,10 +63,15 @@ public sealed class RoleRepository
     }
 
     /// <summary>
-    /// The permission matrix, grouped by module.
+    /// The permission matrix, grouped by module, narrowed to what a branch of
+    /// <paramref name="branchType"/> with <paramref name="branchAddOns"/> can
+    /// use (D-50, TK-136): one role list per customer, and its matrix shows the
+    /// permissions the current branch's trade and add-ons allow. The rule is
+    /// the menu's own (<see cref="InScope"/>), so a permission and the screen it
+    /// opens are offered together or not at all.
     /// </summary>
     public async Task<IReadOnlyList<PermissionGroup>> PermissionMatrixAsync(
-        bool includePlatform, CancellationToken ct, App? forApp = null)
+        bool includePlatform, BusinessType? branchType, AddOn branchAddOns, CancellationToken ct)
     {
         IQueryable<Permission> query = _db.Permissions;
         if (!includePlatform)
@@ -76,27 +79,8 @@ public sealed class RoleRepository
             query = query.Where(p => p.Module != "platform");
         }
 
-        if (forApp is App app)
-        {
-            if (app == App.Payroll)
-            {
-                query = query.Where(p => (p.AddOns & AddOn.Payroll) == AddOn.Payroll || (p.BusinessType == null && p.AddOns == AddOn.None));
-            }
-            else if (app == App.Hrms)
-            {
-                query = query.Where(p => (p.AddOns & AddOn.Hrms) == AddOn.Hrms || (p.BusinessType == null && p.AddOns == AddOn.None));
-            }
-            else if (app == App.School)
-            {
-                query = query.Where(p => p.BusinessType == BusinessType.School || p.Module == "contacts" || (p.BusinessType == null && p.AddOns == AddOn.None));
-            }
-            else if (app == App.RetailErp)
-            {
-                query = query.Where(p => p.BusinessType == BusinessType.Retail || (p.BusinessType == null && p.AddOns == AddOn.None));
-            }
-        }
-
-        List<Permission> all = await query.ToListAsync(ct);
+        List<Permission> all = [.. (await query.ToListAsync(ct))
+            .Where(p => InScope(p.BusinessType, p.AddOns, branchType, branchAddOns))];
 
         return all
             .GroupBy(p => p.Module)
@@ -119,24 +103,21 @@ public sealed class RoleRepository
     }
 
     /// <summary>
+    /// Whether a permission scoped to <paramref name="permissionType"/> and
+    /// <paramref name="permissionAddOns"/> is for a branch of
+    /// <paramref name="branchType"/> with <paramref name="branchAddOns"/>: the
+    /// menu's rule (<see cref="MenuRepository.MenuMatches"/>). Pure.
+    /// </summary>
+    public static bool InScope(
+        BusinessType? permissionType, AddOn permissionAddOns, BusinessType? branchType, AddOn branchAddOns) =>
+        MenuRepository.MenuMatches(branchType, branchAddOns, permissionType, permissionAddOns);
+
+    /// <summary>
     /// Creates a customer role (D-36, TK-127).
     /// </summary>
     public async Task<(SaveRoleResult Result, int RoleId)> CreateAsync(
         Guid customerId, SaveRoleRequest request, CancellationToken ct)
     {
-        if (request.App is not null)
-        {
-            if (!AppRules.TryParseSingle(request.App, out App app))
-            {
-                return (SaveRoleResult.InvalidApp, 0);
-            }
-
-            if (!await AllGrantableAsync(app, request.PermissionIds, ct))
-            {
-                return (SaveRoleResult.PermissionNotInApp, 0);
-            }
-        }
-
         var role = new Role
         {
             CustomerId = customerId,
@@ -163,14 +144,6 @@ public sealed class RoleRepository
             return SaveRoleResult.NotFound;
         }
 
-        if (request.App is not null && AppRules.TryParseSingle(request.App, out App app))
-        {
-            if (!await AllGrantableAsync(app, request.PermissionIds, ct))
-            {
-                return SaveRoleResult.PermissionNotInApp;
-            }
-        }
-
         // A system role may be relabelled but its permission set is fixed, and
         // SystemName never changes — code and reports key on it.
         role.DisplayName = request.DisplayName;
@@ -183,41 +156,6 @@ public sealed class RoleRepository
 
         await _db.SaveChangesAsync(ct);
         return SaveRoleResult.Ok;
-    }
-
-    private async Task<bool> AllGrantableAsync(App roleApp, IReadOnlyList<int> permissionIds, CancellationToken ct)
-    {
-        if (permissionIds.Count == 0)
-        {
-            return true;
-        }
-
-        List<Permission> perms = await _db.Permissions
-            .Where(p => permissionIds.Contains(p.PermissionId) && p.Module != "platform")
-            .ToListAsync(ct);
-
-        foreach (Permission p in perms)
-        {
-            if (roleApp == App.RetailErp)
-            {
-                if (p.BusinessType != BusinessType.Retail && p.BusinessType != null) return false;
-                if ((p.AddOns & (AddOn.Hrms | AddOn.Payroll)) != 0 && p.AddOns != AddOn.None) return false;
-            }
-            else if (roleApp == App.Payroll)
-            {
-                if ((p.AddOns & AddOn.Payroll) == 0 && (p.BusinessType != null || p.AddOns != AddOn.None)) return false;
-            }
-            else if (roleApp == App.Hrms)
-            {
-                if ((p.AddOns & AddOn.Hrms) == 0 && (p.BusinessType != null || p.AddOns != AddOn.None)) return false;
-            }
-            else if (roleApp == App.School)
-            {
-                if (p.BusinessType != BusinessType.School && p.Module != "contacts" && (p.BusinessType != null || p.AddOns != AddOn.None)) return false;
-            }
-        }
-
-        return true;
     }
 
     /// <summary>Soft delete. Blocked when the role is assigned to an active user.</summary>
@@ -275,12 +213,6 @@ public enum SaveRoleResult
 {
     Ok = 1,
     NotFound = 2,
-
-    /// <summary>A permission belongs to other apps only (the grant rule, TK-42).</summary>
-    PermissionNotInApp = 3,
-
-    /// <summary>The role's app is not one of the four apps.</summary>
-    InvalidApp = 4,
 }
 
 public enum DeleteRoleResult

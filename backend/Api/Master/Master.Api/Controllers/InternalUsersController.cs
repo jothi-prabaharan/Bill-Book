@@ -78,13 +78,13 @@ public sealed class InternalUsersController : ControllerBase
     /// no user is left out. At most 500 ids a call.
     /// </summary>
     /// <summary>
-    /// The branch's active users in an app, each with the permissions a token
-    /// for that branch would carry now (TK-114). Built the way sign-in builds
-    /// them: the user's active roles in the branch for the app, never
+    /// The branch's active users, each with the permissions a token for that
+    /// branch would carry now (TK-114). Built the way sign-in builds them: the
+    /// user's active roles in the branch, never
     /// <c>platform.*</c> from a role. A deactivated user is not listed.
     /// </summary>
     [HttpGet("branch")]
-    public async Task<IActionResult> Branch([FromQuery] Guid orgId, [FromQuery] App app = App.RetailErp, CancellationToken ct = default)
+    public async Task<IActionResult> Branch([FromQuery] Guid orgId, CancellationToken ct = default)
     {
         var grants = await (
             from u in _db.UserOrganizationRoles
