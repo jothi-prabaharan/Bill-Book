@@ -330,6 +330,7 @@ services:
     entrypoint: [sh, /seed/first-branch.sh]
     environment:
       BOOTSTRAP_OWNER_EMAIL: ${BOOTSTRAP_OWNER_EMAIL:-}
+      BOOTSTRAP_VERTICAL: ${BOOTSTRAP_VERTICAL:-General}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     volumes:
       - ./seed:/seed:ro

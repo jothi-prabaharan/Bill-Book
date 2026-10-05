@@ -19,7 +19,10 @@ if [ -z "${BOOTSTRAP_OWNER_EMAIL:-}" ]; then
 fi
 
 id=00000000-0000-0000-0000-000000000001
-body="{\"customerId\":\"$id\",\"orgId\":\"$id\",\"vertical\":\"General\"}"
+# The trade the first branch seeds for (TK-143): General, Pharma, Jewellery or
+# Restaurant. A Restaurant branch also gets its menu categories and numbering.
+vertical="${BOOTSTRAP_VERTICAL:-General}"
+body="{\"customerId\":\"$id\",\"orgId\":\"$id\",\"vertical\":\"$vertical\"}"
 
 # The order Master's own seeder uses. Each service is given two minutes to come
 # up and finish its start-up migration check.

@@ -96,19 +96,23 @@ export const DOCS: DocSection[] = [
     ],
   },
   {
+    title: 'Restaurant',
+    // Restaurant branches only (D-39). Settings is built (TK-143); the menu and
+    // tables pages describe screens still being completed (TK-144, TK-145).
+    pages: [
+      { slug: 'restaurant-settings', title: 'Restaurant settings', status: 'built' },
+      { slug: 'restaurant-menu', title: 'Menu', status: 'partial' },
+      { slug: 'restaurant-tables', title: 'Tables', status: 'partial' },
+    ],
+  },
+  {
     title: 'Add-ons',
     pages: [
       { slug: 'recurring-billing', title: 'Recurring Billing', status: 'built' },
       { slug: 'service-plans', title: 'Service Plans', status: 'built' },
-      { slug: 'savings-scheme', title: 'Savings Scheme', status: 'built' }
+      { slug: 'savings-scheme', title: 'Savings Scheme', status: 'built' },
     ],
   },
 ];
 
 export const ALL_PAGES: DocPage[] = DOCS.flatMap((s) => s.pages);
-
-
-
-
-
-

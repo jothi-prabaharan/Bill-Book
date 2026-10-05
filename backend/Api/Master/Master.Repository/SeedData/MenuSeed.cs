@@ -82,6 +82,11 @@ public static class MenuSeed
                 row.BusinessType = null;
                 row.AddOns = AddOn.Budget;
             }
+            else if (row.MenuId is 15 or 124 or 1140 or 1141 or (>= 1146 and <= 1151)) // Restaurant (TK-143)
+            {
+                row.BusinessType = BusinessType.Restaurant;
+                row.AddOns = AddOn.None;
+            }
             else if (row.MenuId is 1145) // Service plans (TK-140): every branch with a business type
             {
                 row.BusinessType = null;
@@ -316,7 +321,13 @@ public static class MenuSeed
         // ---- Restaurant ----
         new Menu { MenuId = 15, ParentId = null, Type = MenuType.Rail, Code = "restaurant", Name = "Restaurant", Icon = "utensils", Module = "restaurant", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 15, IsActive = true },
         new Menu { MenuId = 124, ParentId = 15, Type = MenuType.Group, Code = "restaurant-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
-        new Menu { MenuId = 1141, ParentId = 124, Type = MenuType.Item, Code = "pos-menu", Name = "Menu", Icon = "book-open", Module = "restaurant", RoutePath = "/restaurant/menu", IsSearchable = true, CanCreate = true, SingularName = "Menu Item", DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1141, ParentId = 124, Type = MenuType.Item, Code = "pos-menu", Name = "Menu", Icon = "book-open", Module = "restaurant", RoutePath = "/restaurant/menu", IsSearchable = true, CanCreate = true, SingularName = "Menu Item", DisplayOrder = 4, IsActive = true },
+        new Menu { MenuId = 1146, ParentId = 124, Type = MenuType.Item, Code = "rst-orders", Name = "Orders", Icon = "clipboard-list", Module = "restaurant", RoutePath = "/restaurant/orders", IsSearchable = true, CanCreate = true, SingularName = "Order", DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1147, ParentId = 124, Type = MenuType.Item, Code = "rst-tables", Name = "Tables", Icon = "layout-grid", Module = "restaurant", RoutePath = "/restaurant/tables", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
+        new Menu { MenuId = 1148, ParentId = 124, Type = MenuType.Item, Code = "rst-kitchen", Name = "Kitchen display", Icon = "chef-hat", Module = "restaurant", RoutePath = "/restaurant/kitchen", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
+        new Menu { MenuId = 1149, ParentId = 124, Type = MenuType.Item, Code = "rst-recipes", Name = "Recipes", Icon = "notebook-pen", Module = "restaurant", RoutePath = "/restaurant/recipes", IsSearchable = true, CanCreate = true, SingularName = "Recipe", DisplayOrder = 5, IsActive = true },
+        new Menu { MenuId = 1150, ParentId = 124, Type = MenuType.Item, Code = "rst-wastage", Name = "Wastage", Icon = "trash-2", Module = "restaurant", RoutePath = "/restaurant/wastage", IsSearchable = true, CanCreate = true, SingularName = "Wastage entry", DisplayOrder = 6, IsActive = true },
+        new Menu { MenuId = 1151, ParentId = 124, Type = MenuType.Item, Code = "rst-reports", Name = "Reports", Icon = "bar-chart-3", Module = "restaurant", RoutePath = "/restaurant/reports", IsSearchable = true, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
         new Menu { MenuId = 1140, ParentId = 114, Type = MenuType.Item, Code = "rst", Name = "Restaurant settings", Icon = "utensils", Module = "settings", RoutePath = "/restaurant/settings", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 20, IsActive = true },
         new Menu { MenuId = 122, ParentId = 14, Type = MenuType.Group, Code = "approvals-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1126, ParentId = 122, Type = MenuType.Item, Code = "inbox", Name = "Waiting for me", Icon = "inbox", Module = null, RoutePath = "/approvals", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -828,6 +839,23 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 482, MenuId = 1141, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
         new MenuPermission { MenuPermissionId = 483, MenuId = 1141, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
         new MenuPermission { MenuPermissionId = 484, MenuId = 1141, PermissionCode = "restaurant.void", Action = "void", Module = "restaurant" },
+
+        // The rest of the Restaurant rail (TK-143). Tables, the kitchen and recipes hide while their switch is off.
+        new MenuPermission { MenuPermissionId = 497, MenuId = 1146, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 498, MenuId = 1146, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 499, MenuId = 1146, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 500, MenuId = 1146, PermissionCode = "restaurant.void", Action = "void", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 501, MenuId = 1147, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 502, MenuId = 1147, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 503, MenuId = 1148, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 504, MenuId = 1148, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 505, MenuId = 1149, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 506, MenuId = 1149, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 507, MenuId = 1149, PermissionCode = "restaurant.edit", Action = "edit", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 508, MenuId = 1150, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 509, MenuId = 1150, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 510, MenuId = 1151, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 511, MenuId = 1151, PermissionCode = "restaurant.export", Action = "export", Module = "restaurant" },
 
         // Recurring billing (TK-139): a free add-on, under each module's own permissions.
         new MenuPermission { MenuPermissionId = 485, MenuId = 1142, PermissionCode = "sales.view", Action = "view", Module = "sales" },

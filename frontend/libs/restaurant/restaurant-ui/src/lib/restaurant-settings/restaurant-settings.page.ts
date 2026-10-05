@@ -1,86 +1,94 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RestaurantSettingsService, RestaurantSettingsView, RequirementLevel } from '@bill-book/restaurant-core';
-import { CheckboxComponent, SelectComponent, BbSelectOption, TextInputComponent, PercentageInputComponent } from '@bill-book/ui-components';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  MAX_SERVICE_CHARGE_PERCENT,
+  RESTAURANT_PRESETS,
+  RequirementLevel,
+  RestaurantPreset,
+  RestaurantSettingsService,
+  RestaurantSettingsView,
+  applyPreset,
+  defaultRestaurantSettings,
+  effectiveSettings,
+  matchingPreset,
+  settingsProblem,
+} from '@bill-book/restaurant-core';
+import { BbSelectOption, CheckboxComponent, MessageBoxComponent, PercentageInputComponent, SelectComponent, UiMessage } from '@bill-book/ui-components';
 
+/**
+ * Settings › Restaurant (D-39, TK-143). Three switches decide which restaurant
+ * screens the branch has — tables, the kitchen and recipes — and the rest are
+ * the rules an order is checked against. A requirement that depends on a
+ * switch is disabled while the switch is off, because the server ignores it.
+ */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-restaurant-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, CheckboxComponent, SelectComponent, PercentageInputComponent, TextInputComponent],
-  template: `
-    <div class="p-4 max-w-lg">
-      <h2 class="text-xl font-bold mb-4">Restaurant Settings</h2>
-      
-      <div *ngIf="settings() as s">
-        <div class="mb-6 p-4 border rounded bg-gray-50 flex gap-2 flex-wrap">
-          <h3 class="font-semibold mb-2 w-full">Mode Presets</h3>
-          <button class="px-3 py-1 bg-blue-500 text-white rounded" (click)="applyPreset(false, false)">Billing Only</button>
-          <button class="px-3 py-1 bg-blue-500 text-white rounded" (click)="applyPreset(false, true)">Counter + Kitchen</button>
-          <button class="px-3 py-1 bg-blue-500 text-white rounded" (click)="applyPreset(true, false)">Dine-in (No Kitchen)</button>
-          <button class="px-3 py-1 bg-blue-500 text-white rounded" (click)="applyPreset(true, true)">Full Service</button>
-        </div>
-
-        <div class="grid gap-4 mb-4">
-          <bb-checkbox label="Tables Enabled" [(ngModel)]="s.tablesEnabled" name="tablesEnabled"></bb-checkbox>
-          <bb-checkbox label="Kitchen (KOT) Enabled" [(ngModel)]="s.kitchenEnabled" name="kitchenEnabled"></bb-checkbox>
-          <bb-checkbox label="Recipes Enabled" [(ngModel)]="s.recipesEnabled" name="recipesEnabled"></bb-checkbox>
-
-          <bb-select label="Table Required" [(ngModel)]="s.tableRequired" [options]="requirementOptions" name="tableRequired"></bb-select>
-          
-          <bb-checkbox label="KOT Required" [(ngModel)]="s.kotRequired" name="kotRequired"></bb-checkbox>
-
-          <bb-select label="Customer Required" [(ngModel)]="s.customerRequired" [options]="requirementOptions" name="customerRequired"></bb-select>
-
-          <bb-checkbox label="Waiter Required" [(ngModel)]="s.waiterRequired" name="waiterRequired"></bb-checkbox>
-
-          <bb-percentage-input label="Service Charge (%)" [(ngModel)]="s.serviceChargePercent" name="serviceChargePercent"></bb-percentage-input>
-
-          <bb-checkbox label="Tips Enabled" [(ngModel)]="s.tipsEnabled" name="tipsEnabled"></bb-checkbox>
-        </div>
-
-        <button class="px-4 py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700" (click)="save()" [disabled]="saving()">Save Settings</button>
-      </div>
-    </div>
-  `
+  imports: [FormsModule, CheckboxComponent, MessageBoxComponent, PercentageInputComponent, SelectComponent],
+  templateUrl: './restaurant-settings.page.html',
+  styleUrl: './restaurant-settings.page.scss',
 })
 export class RestaurantSettingsPage implements OnInit {
   private readonly service = inject(RestaurantSettingsService);
 
-  readonly requirementOptions: BbSelectOption<RequirementLevel>[] = [
-    { value: RequirementLevel.Off, label: 'Off' },
-    { value: RequirementLevel.DineInOnly, label: 'Dine-in Only' },
-    { value: RequirementLevel.Always, label: 'Always' }
+  protected readonly presets = RESTAURANT_PRESETS;
+  protected readonly maxCharge = MAX_SERVICE_CHARGE_PERCENT;
+  protected readonly requirementOptions: BbSelectOption<RequirementLevel>[] = [
+    { value: RequirementLevel.Off, label: 'Never' },
+    { value: RequirementLevel.DineInOnly, label: 'For dine-in orders' },
+    { value: RequirementLevel.Always, label: 'For every order' },
   ];
 
-  settings = signal<RestaurantSettingsView | null>(null);
-  saving = signal(false);
+  protected readonly settings = signal<RestaurantSettingsView>(defaultRestaurantSettings());
+  protected readonly loading = signal(true);
+  protected readonly saving = signal(false);
+  protected readonly messages = signal<UiMessage[]>([]);
+  protected readonly preset = computed(() => matchingPreset(this.settings()));
 
-  ngOnInit() {
-    this.service.getSettings().subscribe(s => this.settings.set(s));
+  ngOnInit(): void {
+    void this.load();
   }
 
-  applyPreset(tables: boolean, kitchen: boolean) {
-    const s = this.settings();
-    if (s) {
-      s.tablesEnabled = tables;
-      s.kitchenEnabled = kitchen;
-      this.settings.set({ ...s });
+  private async load(): Promise<void> {
+    try {
+      this.settings.set(await this.service.load(true));
+    } catch (error) {
+      this.fail(error, 'The restaurant settings could not be loaded.');
+    } finally {
+      this.loading.set(false);
     }
   }
 
-  save() {
-    const s = this.settings();
-    if (s) {
-      this.saving.set(true);
-      this.service.updateSettings(s).subscribe({
-        next: (updated) => {
-          this.settings.set(updated);
-          this.saving.set(false);
-          alert('Settings saved');
-        },
-        error: () => this.saving.set(false)
-      });
+  protected choose(preset: RestaurantPreset): void {
+    this.settings.set(applyPreset(this.settings(), preset));
+  }
+
+  protected set<K extends keyof RestaurantSettingsView>(key: K, value: RestaurantSettingsView[K]): void {
+    this.settings.set(effectiveSettings({ ...this.settings(), [key]: value }));
+  }
+
+  protected async save(): Promise<void> {
+    const problem = settingsProblem(this.settings());
+    if (problem) {
+      this.messages.set([{ tone: 'error', text: problem }]);
+      return;
     }
+
+    this.saving.set(true);
+    try {
+      this.settings.set(await this.service.save(this.settings()));
+      this.messages.set([{ tone: 'success', text: 'Restaurant settings saved.' }]);
+    } catch (error) {
+      this.fail(error, 'The restaurant settings could not be saved.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private fail(error: unknown, fallback: string): void {
+    const message = error instanceof HttpErrorResponse ? (error.error?.message as string | undefined) : undefined;
+    this.messages.set([{ tone: 'error', text: message ?? fallback }]);
   }
 }

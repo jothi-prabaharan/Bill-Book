@@ -329,7 +329,7 @@ export const appRoutes: Routes = [
         path: 'restaurant',
         loadChildren: () =>
           import('@bill-book/restaurant-ui').then((m) => m.restaurantUiRoutes),
-        data: { access: { permission: 'restaurant.view' } },
+        data: { access: { permission: 'restaurant.view', businessTypes: ['Restaurant'] } },
       },
       { path: '**', component: DashboardPage, data: { access: { signedIn: true } } },
     ],

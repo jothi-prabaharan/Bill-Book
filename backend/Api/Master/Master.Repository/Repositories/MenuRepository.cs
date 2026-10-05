@@ -30,11 +30,40 @@ public sealed class MenuRepository
 {
     private readonly AdminDbContext _db;
     private readonly ITenantContext _tenant;
+    private readonly RestaurantSettingsRepository? _restaurant;
 
-    public MenuRepository(AdminDbContext db, ITenantContext tenant)
+    public MenuRepository(AdminDbContext db, ITenantContext tenant, RestaurantSettingsRepository? restaurant = null)
     {
         _db = db;
         _tenant = tenant;
+        _restaurant = restaurant;
+    }
+
+    /// <summary>
+    /// The Restaurant screens a branch's switches hide (D-39, TK-143): a branch
+    /// with every switch off sees billing — orders, the menu and the reports —
+    /// and nothing it has not turned on.
+    /// </summary>
+    public static IReadOnlySet<string> HiddenRestaurantCodes(Shared.Kernel.Restaurant.RestaurantSettingsView settings)
+    {
+        HashSet<string> hidden = [];
+        if (!settings.TablesEnabled)
+        {
+            hidden.Add("rst-tables");
+        }
+
+        if (!settings.KitchenEnabled)
+        {
+            hidden.Add("rst-kitchen");
+        }
+
+        if (!settings.RecipesEnabled)
+        {
+            hidden.Add("rst-recipes");
+            hidden.Add("rst-wastage");
+        }
+
+        return hidden;
     }
 
     /// <summary>
@@ -111,8 +140,13 @@ public sealed class MenuRepository
             })
             .ToListAsync(ct);
 
+        IReadOnlySet<string> hiddenByRestaurant = businessType == BusinessType.Restaurant && _restaurant is not null && orgId is not null
+            ? HiddenRestaurantCodes(await _restaurant.GetSettingsAsync(ct))
+            : new HashSet<string>();
+
         var rows = rawRows
             .Where(r => MenuMatches(businessType, addOns, r.BusinessType, r.AddOns))
+            .Where(r => !hiddenByRestaurant.Contains(r.Code))
             .ToList();
 
         var childrenOf = rows

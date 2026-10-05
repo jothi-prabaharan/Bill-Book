@@ -1,76 +1,94 @@
-using Master.Entity.TableEntities;
-using Master.Repository.Repositories;
-using Microsoft.EntityFrameworkCore;
+using Master.Entity.Models;
 using Shared.Kernel.Restaurant;
 using Shared.Kernel.Tenancy;
-using System.Text.Json.Serialization;
 
 namespace Master.Repository.Repositories;
 
-public class RestaurantSettingsRepository
+/// <summary>
+/// A Restaurant branch's settings (D-39, TK-143), kept as typed keys in
+/// <c>mst.Configuration</c>.
+///
+/// Reads go through <see cref="ConfigurationRepository.ListAsync"/>, the same
+/// branch-override-else-system-default fallback every other setting uses, and
+/// come back as one effective <see cref="RestaurantSettingsView"/> built by
+/// <see cref="RestaurantSettingsRules.Effective"/>. Writes check each value
+/// against its key's type before anything is stored.
+/// </summary>
+public sealed class RestaurantSettingsRepository
 {
-    private readonly ITenantContext _tenantContext;
-    private readonly ConfigurationRepository _configRepository;
+    private readonly ITenantContext _tenant;
+    private readonly ConfigurationRepository _config;
 
-    public RestaurantSettingsRepository(ITenantContext tenantContext, ConfigurationRepository configRepository)
+    public RestaurantSettingsRepository(ITenantContext tenant, ConfigurationRepository config)
     {
-        _tenantContext = tenantContext;
-        _configRepository = configRepository;
+        _tenant = tenant;
+        _config = config;
     }
 
     public async Task<RestaurantSettingsView> GetSettingsAsync(CancellationToken ct = default)
     {
-        if (_tenantContext.OrgId == null) throw new InvalidOperationException("No OrgId");
+        Guid orgId = _tenant.OrgId ?? throw new InvalidOperationException("No branch is set for the restaurant settings.");
 
-        var allConfigs = await _configRepository.ListAsync(_tenantContext.OrgId.Value, ct);
-        
-        string GetVal(string key) => allConfigs.FirstOrDefault(c => c.Code == key)?.Value ?? "false";
-
-        bool GetBool(string key) => bool.TryParse(GetVal(key), out var b) && b;
-        RequirementLevel GetLevel(string key) => Enum.TryParse<RequirementLevel>(GetVal(key), out var level) ? level : RequirementLevel.Off;
-        decimal GetDecimal(string key) => decimal.TryParse(GetVal(key), out var d) ? d : 0m;
-
-        var view = new RestaurantSettingsView
+        IReadOnlyList<ConfigurationDto> all = await _config.ListAsync(orgId, ct);
+        Dictionary<RestaurantSettingKey, string?> stored = [];
+        foreach (var row in all)
         {
-            TablesEnabled = GetBool(RestaurantSettingKey.TablesEnabled),
-            KitchenEnabled = GetBool(RestaurantSettingKey.KitchenEnabled),
-            RecipesEnabled = GetBool(RestaurantSettingKey.RecipesEnabled),
-            ServiceChargePercent = GetDecimal(RestaurantSettingKey.ServiceChargePercent),
-            TipsEnabled = GetBool(RestaurantSettingKey.TipsEnabled)
-        };
-
-        // Enforce dependencies (only apply required if the feature is on)
-        view.TableRequired = view.TablesEnabled ? GetLevel(RestaurantSettingKey.TableRequired) : RequirementLevel.Off;
-        view.KotRequired = view.KitchenEnabled && GetBool(RestaurantSettingKey.KotRequired);
-        
-        view.CustomerRequired = GetLevel(RestaurantSettingKey.CustomerRequired);
-        view.WaiterRequired = GetBool(RestaurantSettingKey.WaiterRequired);
-
-        return view;
-    }
-
-    public async Task UpdateSettingsAsync(RestaurantSettingsView settings, CancellationToken ct = default)
-    {
-        if (_tenantContext.OrgId == null) throw new InvalidOperationException("No OrgId");
-        var orgId = _tenantContext.OrgId.Value;
-
-        var updates = new Dictionary<string, string>
-        {
-            [RestaurantSettingKey.TablesEnabled] = settings.TablesEnabled.ToString().ToLowerInvariant(),
-            [RestaurantSettingKey.KitchenEnabled] = settings.KitchenEnabled.ToString().ToLowerInvariant(),
-            [RestaurantSettingKey.RecipesEnabled] = settings.RecipesEnabled.ToString().ToLowerInvariant(),
-            [RestaurantSettingKey.TableRequired] = ((int)settings.TableRequired).ToString(),
-            [RestaurantSettingKey.KotRequired] = settings.KotRequired.ToString().ToLowerInvariant(),
-            [RestaurantSettingKey.CustomerRequired] = ((int)settings.CustomerRequired).ToString(),
-            [RestaurantSettingKey.WaiterRequired] = settings.WaiterRequired.ToString().ToLowerInvariant(),
-            [RestaurantSettingKey.ServiceChargePercent] = settings.ServiceChargePercent.ToString(),
-            [RestaurantSettingKey.TipsEnabled] = settings.TipsEnabled.ToString().ToLowerInvariant()
-        };
-
-        foreach (var kvp in updates)
-        {
-            await _configRepository.SetAsync(orgId, kvp.Key, kvp.Value, ct);
+            if (RestaurantSettingKeys.TryParse(row.Code, out RestaurantSettingKey key))
+            {
+                stored[key] = row.Value;
+            }
         }
-    }
-}
 
+        return RestaurantSettingsRules.Effective(stored);
+    }
+
+    /// <summary>
+    /// Stores every key the request carries, after checking all of them: one bad
+    /// value refuses the lot, so a page never saves half a form. Returns the
+    /// refusal, or null and the new effective view.
+    /// </summary>
+    public async Task<(string? Refusal, RestaurantSettingsView? Settings)> UpdateSettingsAsync(
+        SaveRestaurantSettingsRequest request, CancellationToken ct = default)
+    {
+        Guid orgId = _tenant.OrgId ?? throw new InvalidOperationException("No branch is set for the restaurant settings.");
+
+        Dictionary<RestaurantSettingKey, string> values = new()
+        {
+            [RestaurantSettingKey.TablesEnabled] = Flag(request.TablesEnabled),
+            [RestaurantSettingKey.KitchenEnabled] = Flag(request.KitchenEnabled),
+            [RestaurantSettingKey.RecipesEnabled] = Flag(request.RecipesEnabled),
+            [RestaurantSettingKey.TableRequired] = request.TableRequired.ToString(),
+            [RestaurantSettingKey.KotRequired] = Flag(request.KotRequired),
+            [RestaurantSettingKey.CustomerRequired] = request.CustomerRequired.ToString(),
+            [RestaurantSettingKey.WaiterRequired] = Flag(request.WaiterRequired),
+            [RestaurantSettingKey.ServiceChargePercent] = request.ServiceChargePercent.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            [RestaurantSettingKey.TipsEnabled] = Flag(request.TipsEnabled),
+        };
+
+        Dictionary<RestaurantSettingKey, string> normalised = [];
+        foreach ((RestaurantSettingKey key, string value) in values)
+        {
+            (string? ok, string? refusal) = RestaurantSettingKeys.Normalise(key, value);
+            if (refusal is not null)
+            {
+                return (refusal, null);
+            }
+
+            normalised[key] = ok!;
+        }
+
+        foreach ((RestaurantSettingKey key, string value) in normalised)
+        {
+            if (!await _config.SetAsync(orgId, key.Code(), value, ct))
+            {
+                // The system default row is seeded by migration; its absence is a
+                // deployment fault, not something the person can fix.
+                throw new InvalidOperationException($"The system default for {key.Code()} is missing.");
+            }
+        }
+
+        return (null, await GetSettingsAsync(ct));
+    }
+
+    private static string Flag(bool value) => value ? "true" : "false";
+}

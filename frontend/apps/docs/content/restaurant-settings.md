@@ -1,21 +1,40 @@
-# Restaurant Settings
+# Restaurant settings
 
-**Restaurant Settings** allows you to configure operations for your restaurant branches. 
+**Settings › Restaurant** decides how a Restaurant branch runs: which restaurant screens it has, and what an order must carry before it can be saved or billed. Only branches whose business type is **Restaurant** have it.
 
-## Operating Modes
-A restaurant branch can operate in one of four modes:
-* **Billing Only:** Pure point-of-sale functionality without kitchen ticketing or table management.
-* **Counter + Kitchen:** Quick service operations where orders generate kitchen tickets (KOT) but tables are not managed.
-* **Dine-in (No Kitchen):** Table management is enabled, but kitchen tickets are not printed.
-* **Full Service:** Complete restaurant operations including table management, KOTs, and recipes.
+A new Restaurant branch starts as **billing only**: every switch off and nothing required.
 
-## Settings
-* **Tables Enabled:** Manage dine-in seating.
-* **Kitchen (KOT) Enabled:** Route orders to kitchen preparation areas.
-* **Recipes Enabled:** Track raw material consumption.
-* **Table Required:** Whether a table number must be specified for orders.
-* **KOT Required:** Whether orders must generate a kitchen ticket before billing.
-* **Customer Required:** Whether customer details are mandatory.
-* **Waiter Required:** Whether a waiter must be assigned to orders.
-* **Service Charge (%):** Default service charge percentage to apply.
-* **Tips Enabled:** Allow adding gratuity to bills.
+## How the restaurant runs
+
+The four choices at the top set the two main switches for you:
+
+| Choice | Tables | Kitchen tickets |
+|---|---|---|
+| **Billing only** | Off | Off |
+| **Counter and kitchen** | Off | On |
+| **Dine-in, no kitchen tickets** | On | Off |
+| **Full service** | On | On |
+
+A choice changes only those two switches and the requirements that depend on them. Recipes, the service charge and tips stay as they were. Turning tables on also requires a table for dine-in orders, unless you had already asked for one on every order.
+
+## Screens
+
+- **Tables and floors:** orders can be taken against a table. While it is off, the **Tables** screen is hidden and its API refuses with a message.
+- **Kitchen tickets:** orders go to the kitchen on a ticket (KOT) and show on the **Kitchen display**. While it is off, the kitchen screen is hidden.
+- **Recipes and wastage:** selling a dish uses up its ingredients. While it is off, **Recipes** and **Wastage** are hidden.
+
+## What an order needs
+
+- **A table:** never, for dine-in orders, or for every order. It can be set only while tables are on. With tables off nothing is demanded, whatever was saved earlier.
+- **A customer:** never, for dine-in orders, or for every order.
+- **Send to the kitchen before billing:** an order cannot be billed with items the kitchen has not been sent. It can be set only while kitchen tickets are on.
+- **A waiter:** every order must name the waiter who took it.
+
+## Billing
+
+- **Service charge:** a percentage added to every bill before tax, from 0 (none) to 25%.
+- **Accept tips:** a tip can be recorded on a bill. It is not taxed.
+
+## Who can change it
+
+Anyone with **Restaurant › View** can read the settings, because every restaurant screen follows them. Saving needs both **Restaurant › Edit** and **Settings › Edit**.

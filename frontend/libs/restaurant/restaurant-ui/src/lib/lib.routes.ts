@@ -1,20 +1,52 @@
 import { Route } from '@angular/router';
-import { RestaurantSettingsPage } from './restaurant-settings/restaurant-settings.page';
-import { RestaurantMenuPage } from './restaurant-menu/restaurant-menu.page';
-import { RestaurantTablesPage } from './restaurant-tables/restaurant-tables.page';
-import { RestaurantOrderPage } from './restaurant-order/restaurant-order.page';
-import { KitchenDisplayPage } from './kitchen-display/kitchen-display.page';
-import { RestaurantBillingPage } from './restaurant-billing/restaurant-billing.page';
-import { RestaurantRecipesPage } from './restaurant-recipes/restaurant-recipes.page';
-import { RestaurantReportsPage } from './restaurant-reports/restaurant-reports.page';
+
+/**
+ * The Restaurant rail (TK-143), one route per menu row in Master's seed. Every
+ * route needs a Restaurant branch; Master's menu also hides tables, the
+ * kitchen screen and recipes while their switch in Settings › Restaurant is off.
+ */
+const restaurant = (permission = 'restaurant.view') => ({ access: { permission, businessTypes: ['Restaurant'] } });
 
 export const restaurantUiRoutes: Route[] = [
-  { path: 'settings', component: RestaurantSettingsPage },
-  { path: 'menu', component: RestaurantMenuPage },
-  { path: 'tables', component: RestaurantTablesPage },
-  { path: 'order', component: RestaurantOrderPage },
-  { path: 'kds', component: KitchenDisplayPage },
-  { path: 'billing', component: RestaurantBillingPage },
-  { path: 'recipes', component: RestaurantRecipesPage },
-  { path: 'reports', component: RestaurantReportsPage }
+  { path: '', pathMatch: 'full', redirectTo: 'orders' },
+  {
+    path: 'settings',
+    loadComponent: () => import('./restaurant-settings/restaurant-settings.page').then((m) => m.RestaurantSettingsPage),
+    data: restaurant(),
+  },
+  {
+    path: 'orders',
+    loadComponent: () => import('./restaurant-order/restaurant-order.page').then((m) => m.RestaurantOrderPage),
+    data: restaurant(),
+  },
+  {
+    path: 'tables',
+    loadComponent: () => import('./restaurant-tables/restaurant-tables.page').then((m) => m.RestaurantTablesPage),
+    data: restaurant(),
+  },
+  {
+    path: 'kitchen',
+    loadComponent: () => import('./kitchen-display/kitchen-display.page').then((m) => m.KitchenDisplayPage),
+    data: restaurant(),
+  },
+  {
+    path: 'billing',
+    loadComponent: () => import('./restaurant-billing/restaurant-billing.page').then((m) => m.RestaurantBillingPage),
+    data: restaurant(),
+  },
+  {
+    path: 'menu',
+    loadComponent: () => import('./restaurant-menu/restaurant-menu.page').then((m) => m.RestaurantMenuPage),
+    data: restaurant(),
+  },
+  {
+    path: 'recipes',
+    loadComponent: () => import('./restaurant-recipes/restaurant-recipes.page').then((m) => m.RestaurantRecipesPage),
+    data: restaurant(),
+  },
+  {
+    path: 'reports',
+    loadComponent: () => import('./restaurant-reports/restaurant-reports.page').then((m) => m.RestaurantReportsPage),
+    data: restaurant(),
+  },
 ];

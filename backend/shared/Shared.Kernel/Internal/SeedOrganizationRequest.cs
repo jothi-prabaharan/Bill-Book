@@ -27,7 +27,7 @@ public sealed class SeedOrganizationRequest
     /// the branch uses (a chemist has no metal purities) and re-seed the added
     /// masters when the branch changes vertical.
     /// </summary>
-    [MaxLength(20, ErrorMessage = "Vertical must be General, Pharma or Jewellery.")]
+    [MaxLength(20, ErrorMessage = "Vertical must be General, Pharma, Jewellery or Restaurant.")]
     public string Vertical { get; set; } = "General";
 }
 

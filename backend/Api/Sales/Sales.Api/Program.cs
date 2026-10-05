@@ -1,3 +1,4 @@
+using Shared.Kernel.Restaurant;
 using Shared.Kernel.Security;
 using Shared.Kernel.Storage;
 using System.Text;
@@ -315,6 +316,9 @@ builder.Services.AddHttpClient<Shared.Kernel.CustomFields.ICustomFieldDefinition
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<Shared.Kernel.CustomFields.DocumentCustomFieldGate>();
+
+// A Restaurant branch's switches and billing rules, from Master (TK-143).
+builder.Services.AddRestaurantSettings(builder.Configuration);
 
 WebApplication app = builder.Build();
 

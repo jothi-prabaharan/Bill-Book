@@ -468,6 +468,114 @@ namespace Master.Repository.Migrations.Admin
                             Name = "Maximum Line Discount (%)",
                             Value = "100",
                             Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000008"),
+                            Category = "Restaurant",
+                            Code = "restaurant.tables.enabled",
+                            DataType = "Boolean",
+                            Description = "Floors and tables: seat a dine-in order at a table.",
+                            IsSystem = true,
+                            Name = "Tables",
+                            Value = "false",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000009"),
+                            Category = "Restaurant",
+                            Code = "restaurant.kitchen.enabled",
+                            DataType = "Boolean",
+                            Description = "Send orders to the kitchen as tickets, by station.",
+                            IsSystem = true,
+                            Name = "Kitchen (KOT)",
+                            Value = "false",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-00000000000a"),
+                            Category = "Restaurant",
+                            Code = "restaurant.recipes.enabled",
+                            DataType = "Boolean",
+                            Description = "Deduct each dish's ingredients from stock when its bill posts.",
+                            IsSystem = true,
+                            Name = "Recipes",
+                            Value = "false",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-00000000000b"),
+                            Category = "Restaurant",
+                            Code = "restaurant.table.required",
+                            DataType = "Text",
+                            Description = "When a bill must name a table: Off, DineInOnly or Always. Needs tables.",
+                            IsSystem = true,
+                            Name = "Table required",
+                            Value = "Off",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-00000000000c"),
+                            Category = "Restaurant",
+                            Code = "restaurant.kot.required",
+                            DataType = "Boolean",
+                            Description = "A bill is refused while any of its lines was never sent to the kitchen. Needs the kitchen.",
+                            IsSystem = true,
+                            Name = "KOT required",
+                            Value = "false",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-00000000000d"),
+                            Category = "Restaurant",
+                            Code = "restaurant.customer.required",
+                            DataType = "Text",
+                            Description = "When a bill must name a customer: Off, DineInOnly or Always.",
+                            IsSystem = true,
+                            Name = "Customer required",
+                            Value = "Off",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-00000000000e"),
+                            Category = "Restaurant",
+                            Code = "restaurant.waiter.required",
+                            DataType = "Boolean",
+                            Description = "A bill must name the waiter who served it.",
+                            IsSystem = true,
+                            Name = "Waiter required",
+                            Value = "false",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-00000000000f"),
+                            Category = "Restaurant",
+                            Code = "restaurant.serviceCharge.percent",
+                            DataType = "Number",
+                            Description = "Added to every bill as a line of its own. 0 for none.",
+                            IsSystem = true,
+                            Name = "Service charge %",
+                            Value = "0",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000010"),
+                            Category = "Restaurant",
+                            Code = "restaurant.tips.enabled",
+                            DataType = "Boolean",
+                            Description = "Take a tip on the bill, held for staff rather than earned.",
+                            IsSystem = true,
+                            Name = "Tips",
+                            Value = "false",
+                            Version = 0u
                         });
                 });
 
@@ -10194,7 +10302,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 15,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Restaurant",
                             CanCreate = false,
                             Code = "restaurant",
                             DisplayOrder = 15,
@@ -10210,7 +10318,7 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 124,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Restaurant",
                             CanCreate = false,
                             Code = "restaurant-g1",
                             DisplayOrder = 1,
@@ -10224,10 +10332,10 @@ namespace Master.Repository.Migrations.Admin
                         {
                             MenuId = 1141,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Restaurant",
                             CanCreate = true,
                             Code = "pos-menu",
-                            DisplayOrder = 1,
+                            DisplayOrder = 4,
                             Icon = "book-open",
                             IsActive = true,
                             IsSearchable = true,
@@ -10241,9 +10349,120 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1146,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = true,
+                            Code = "rst-orders",
+                            DisplayOrder = 1,
+                            Icon = "clipboard-list",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Orders",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/orders",
+                            SingularName = "Order",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1147,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = false,
+                            Code = "rst-tables",
+                            DisplayOrder = 2,
+                            Icon = "layout-grid",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Tables",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/tables",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1148,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = false,
+                            Code = "rst-kitchen",
+                            DisplayOrder = 3,
+                            Icon = "chef-hat",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Kitchen display",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/kitchen",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1149,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = true,
+                            Code = "rst-recipes",
+                            DisplayOrder = 5,
+                            Icon = "notebook-pen",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Recipes",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/recipes",
+                            SingularName = "Recipe",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1150,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = true,
+                            Code = "rst-wastage",
+                            DisplayOrder = 6,
+                            Icon = "trash-2",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Wastage",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/wastage",
+                            SingularName = "Wastage entry",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1151,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = false,
+                            Code = "rst-reports",
+                            DisplayOrder = 7,
+                            Icon = "bar-chart-3",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "restaurant",
+                            Name = "Reports",
+                            ParentId = 124,
+                            RoutePath = "/restaurant/reports",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 1140,
                             AddOns = 0,
-                            BusinessType = "General",
+                            BusinessType = "Restaurant",
                             CanCreate = false,
                             Code = "rst",
                             DisplayOrder = 20,
@@ -14694,6 +14913,141 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1141,
                             Module = "restaurant",
                             PermissionCode = "restaurant.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 497,
+                            Action = "view",
+                            MenuId = 1146,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 498,
+                            Action = "create",
+                            MenuId = 1146,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 499,
+                            Action = "edit",
+                            MenuId = 1146,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 500,
+                            Action = "void",
+                            MenuId = 1146,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 501,
+                            Action = "view",
+                            MenuId = 1147,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 502,
+                            Action = "edit",
+                            MenuId = 1147,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 503,
+                            Action = "view",
+                            MenuId = 1148,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 504,
+                            Action = "edit",
+                            MenuId = 1148,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 505,
+                            Action = "view",
+                            MenuId = 1149,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 506,
+                            Action = "create",
+                            MenuId = 1149,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 507,
+                            Action = "edit",
+                            MenuId = 1149,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 508,
+                            Action = "view",
+                            MenuId = 1150,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 509,
+                            Action = "create",
+                            MenuId = 1150,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 510,
+                            Action = "view",
+                            MenuId = 1151,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 511,
+                            Action = "export",
+                            MenuId = 1151,
+                            Module = "restaurant",
+                            PermissionCode = "restaurant.export",
                             Version = 0u
                         },
                         new

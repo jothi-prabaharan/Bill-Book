@@ -1,3 +1,4 @@
+using Shared.Kernel.Restaurant;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reporting.Api.Services;
 using Reporting.Repository.Repositories;
@@ -289,6 +290,9 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+
+// A Restaurant branch's switches and billing rules, from Master (TK-143).
+builder.Services.AddRestaurantSettings(builder.Configuration);
 
 WebApplication app = builder.Build();
 

@@ -1,0 +1,86 @@
+<section class="rs">
+  <header class="rs__head">
+    <h1 class="rs__title">Restaurant settings</h1>
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (!loading()) {
+    <form class="rs__form" (ngSubmit)="save()">
+      <fieldset class="rs__group">
+        <legend class="rs__legend">How the restaurant runs</legend>
+        <div class="rs__presets" role="radiogroup" aria-label="How the restaurant runs">
+          @for (p of presets; track p.code) {
+            <button
+              type="button"
+              role="radio"
+              class="rs__preset"
+              [class.rs__preset--on]="preset() === p.code"
+              [attr.aria-checked]="preset() === p.code"
+              (click)="choose(p)"
+            >
+              <span class="rs__preset-label">{{ p.label }}</span>
+              <span class="rs__muted">{{ p.description }}</span>
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="rs__group">
+        <legend class="rs__legend">Screens</legend>
+        <bb-checkbox name="tablesEnabled" text="Tables and floors" hint="Orders can be taken against a table." [ngModel]="settings().tablesEnabled" (ngModelChange)="set('tablesEnabled', $event)" />
+        <bb-checkbox name="kitchenEnabled" text="Kitchen tickets" hint="Orders are sent to the kitchen on a ticket (KOT) and shown on the kitchen screen." [ngModel]="settings().kitchenEnabled" (ngModelChange)="set('kitchenEnabled', $event)" />
+        <bb-checkbox name="recipesEnabled" text="Recipes and wastage" hint="Selling a dish uses up its ingredients." [ngModel]="settings().recipesEnabled" (ngModelChange)="set('recipesEnabled', $event)" />
+      </fieldset>
+
+      <fieldset class="rs__group">
+        <legend class="rs__legend">What an order needs</legend>
+        <bb-select
+          name="tableRequired"
+          label="A table"
+          [clearable]="false"
+          [options]="requirementOptions"
+          [disabled]="!settings().tablesEnabled"
+          [hint]="settings().tablesEnabled ? '' : 'Turn on tables and floors to require one.'"
+          [ngModel]="settings().tableRequired"
+          (ngModelChange)="set('tableRequired', $event)"
+        />
+        <bb-select
+          name="customerRequired"
+          label="A customer"
+          [clearable]="false"
+          [options]="requirementOptions"
+          [ngModel]="settings().customerRequired"
+          (ngModelChange)="set('customerRequired', $event)"
+        />
+        <bb-checkbox
+          name="kotRequired"
+          text="Send to the kitchen before billing"
+          [disabled]="!settings().kitchenEnabled"
+          [hint]="settings().kitchenEnabled ? 'An order cannot be billed with items the kitchen has not been sent.' : 'Turn on kitchen tickets to require one.'"
+          [ngModel]="settings().kotRequired"
+          (ngModelChange)="set('kotRequired', $event)"
+        />
+        <bb-checkbox name="waiterRequired" text="A waiter" [ngModel]="settings().waiterRequired" (ngModelChange)="set('waiterRequired', $event)" />
+      </fieldset>
+
+      <fieldset class="rs__group">
+        <legend class="rs__legend">Billing</legend>
+        <bb-percentage-input
+          name="serviceChargePercent"
+          label="Service charge"
+          [hint]="'Added to every bill before tax. 0 for none, at most ' + maxCharge + '%.'"
+          [ngModel]="settings().serviceChargePercent"
+          (ngModelChange)="set('serviceChargePercent', $event ?? 0)"
+        />
+        <bb-checkbox name="tipsEnabled" text="Accept tips" hint="A tip is recorded on the bill and is not taxed." [ngModel]="settings().tipsEnabled" (ngModelChange)="set('tipsEnabled', $event)" />
+      </fieldset>
+
+      <div class="rs__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="saving()">Save</button>
+      </div>
+    </form>
+  }
+</section>

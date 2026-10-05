@@ -1,3 +1,4 @@
+using Shared.Kernel.Restaurant;
 using Shared.Kernel.Security;
 using System.Text;
 using Inventory.Api.Services;
@@ -138,6 +139,9 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
+
+// A Restaurant branch's switches and billing rules, from Master (TK-143).
+builder.Services.AddRestaurantSettings(builder.Configuration);
 
 WebApplication app = builder.Build();
 

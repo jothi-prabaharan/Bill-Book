@@ -60,22 +60,32 @@ public sealed class AddOnRulesTests
     [Theory]
     [InlineData(BusinessType.General)]
     [InlineData(BusinessType.Pharma)]
-    [InlineData(BusinessType.Jewellery)]
-    public void General_pharma_and_jewellery_allow_all_addons(BusinessType businessType)
+    public void General_and_pharma_allow_every_addon_but_the_savings_scheme(BusinessType businessType)
     {
-        AddOn allowed = AddOnRules.Allowed(businessType);
-
-        Assert.Equal(AddOn.All, allowed);
-        Assert.True(AddOnRules.IsAllowed(businessType, AddOn.Hrms));
-        Assert.True(AddOnRules.IsAllowed(businessType, AddOn.Payroll));
-        Assert.True(AddOnRules.IsAllowed(businessType, AddOn.Crm));
+        Assert.Equal(AddOn.All & ~AddOn.SavingsScheme, AddOnRules.Allowed(businessType));
         Assert.True(AddOnRules.IsAllowed(businessType, AddOn.Pos));
-        Assert.True(AddOnRules.IsAllowed(businessType, AddOn.FixedAssets));
-        Assert.True(AddOnRules.IsAllowed(businessType, AddOn.ClientPortal));
         Assert.True(AddOnRules.IsAllowed(businessType, AddOn.EInvoicing));
-        Assert.True(AddOnRules.IsAllowed(businessType, AddOn.Budget));
         Assert.True(AddOnRules.IsAllowed(businessType, AddOn.RecurringBilling));
-        Assert.True(AddOnRules.IsAllowed(businessType, AddOn.All));
+        Assert.False(AddOnRules.IsAllowed(businessType, AddOn.SavingsScheme));
+    }
+
+    [Fact]
+    public void Jewellery_allows_every_addon()
+    {
+        Assert.Equal(AddOn.All, AddOnRules.Allowed(BusinessType.Jewellery));
+        Assert.True(AddOnRules.IsAllowed(BusinessType.Jewellery, AddOn.SavingsScheme));
+        Assert.True(AddOnRules.IsAllowed(BusinessType.Jewellery, AddOn.All));
+    }
+
+    [Fact]
+    public void Restaurant_allows_every_addon_but_pos_and_the_savings_scheme()
+    {
+        // D-43: a restaurant bills through its own order screen, so the retail till is not offered.
+        Assert.Equal(AddOn.All & ~AddOn.SavingsScheme & ~AddOn.Pos, AddOnRules.Allowed(BusinessType.Restaurant));
+        Assert.False(AddOnRules.IsAllowed(BusinessType.Restaurant, AddOn.Pos));
+        Assert.True(AddOnRules.IsAllowed(BusinessType.Restaurant, AddOn.Crm));
+        Assert.True(AddOnRules.IsAllowed(BusinessType.Restaurant, AddOn.RecurringBilling));
+        Assert.True(AddOnRules.IsDefined(BusinessType.Restaurant));
     }
 
     [Fact]
@@ -99,6 +109,8 @@ public sealed class AddOnRulesTests
     [InlineData("jewellery", true, BusinessType.Jewellery)]
     [InlineData("School", true, BusinessType.School)]
     [InlineData("school", true, BusinessType.School)]
+    [InlineData("Restaurant", true, BusinessType.Restaurant)]
+    [InlineData("restaurant", true, BusinessType.Restaurant)]
     [InlineData("Invalid", false, null)]
     [InlineData("1", false, null)]
     public void TryParseBusinessType_parses_expected_values(string? input, bool expectedSuccess, BusinessType? expectedType)

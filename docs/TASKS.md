@@ -4613,7 +4613,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
 
 ### TK-143 · Restaurant business type, setting keys and Settings › Restaurant
-- [ ] working (Claude Opus 5.5) — 2026-10-04 · completing what `a7e037b0` left: the switches changed nothing and saves were dropped
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#124](https://github.com/jothi-prabaharan/Bill-Book/issues/124)
 - **Group:** L · Restaurant
 - **Lanes:** L-KERNEL, L-MST, L-WEB, L-RST-UI (new lane: `frontend/libs/restaurant/**`), L-DOC · **Depends on:** TK-136 · **Decision:** D-37, D-39, D-43
@@ -4621,17 +4621,27 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 1 October 2026. `BusinessType` has General, Pharma, Jewellery and School; `origin/main` marks TK-136 completed but `App.cs` still has `General` and no `Service`, so check what TK-136 really left before starting. `mst.Configuration` is a key/value table: a system default row (`OrgId` null) and a per-branch override row, `Code` up to 50 characters, seven keys seeded. `FormatSettingsRepository.Effective` already reads one with its fallback. No Restaurant setting, no switch guard.
 - **Tables:** none. Settings reuse `mst.Configuration`; do not add a table.
 - **Sub-tasks:**
-  - [ ] Add `Restaurant` to `BusinessType`, `IsDefined`, `TryParseBusinessType` and `AddOnRules.Allowed` (D-43 default: every add-on except `Pos`); extend `AddOnRulesTests`.
-  - [ ] One `RestaurantSettingKey` enum in `Shared.Kernel` (rule 7), each member with a fixed string code, and a `RequirementLevel` enum (Off, DineInOnly, Always). The keys: `restaurant.tables.enabled`, `restaurant.kitchen.enabled`, `restaurant.recipes.enabled` (switches, off); `restaurant.table.required` (`RequirementLevel`, needs tables), `restaurant.kot.required` (bool, needs kitchen), `restaurant.customer.required` (`RequirementLevel`) and `restaurant.waiter.required` (bool), which belong to billing itself and need no switch; `restaurant.serviceCharge.percent` (number, 0) and `restaurant.tips.enabled` (bool, off). Everything off and nothing required by default.
-  - [ ] Seed the system default rows with `HasData` and run `dotnet ef migrations has-pending-model-changes` for the admin context (the TK-70 trap); keys are seed data, so no new table.
-  - [ ] `RestaurantSettingsRepository` in `Master.Repository/Repositories/`: reads the effective values through the same fallback as `FormatSettingsRepository` (reuse it, do not copy), validates a write against the key's type, and returns one typed view in which a required key counts only while its switch is on. The API and the page both read that view and nothing else.
-  - [ ] `GET` and `PUT api/restaurant/settings`, an `internal/restaurant/settings` route for Sales, Inventory and Reporting, and a client in `Shared.Kernel` cached per branch (the shape of `ITaxRateProvider`).
-  - [ ] `[RequireRestaurantFeature(Tables|Kitchen|Recipes)]` returns a curated refusal when the switch is off; teach `EndpointGuardAudit` to accept it as a guard.
-  - [ ] Seed a `restaurant` permission module (view, create, edit, void), granted to Owner and Administrator, and Restaurant-only menu entries through `MenuRepository` and `TradeScopeRepository`; teach `first-branch.sh` and the seeders the new vertical.
-  - [ ] `libs/restaurant/{restaurant-core,restaurant-ui}`, lazy-loaded in `apps/web` for Restaurant branches only, with Settings › Restaurant: the nine keys, and four presets that only set the two switches (billing only, counter plus kitchen, dine-in without kitchen printing, full service).
-  - [ ] `CLAUDE.md` and the D-36 text name the new type (`L-DOC`).
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Add `Restaurant` to `BusinessType`, `IsDefined`, `TryParseBusinessType` and `AddOnRules.Allowed` (D-43 default: every add-on except `Pos`); extend `AddOnRulesTests`.
+  - [x] One `RestaurantSettingKey` enum in `Shared.Kernel` (rule 7), each member with a fixed string code, and a `RequirementLevel` enum (Off, DineInOnly, Always). The keys: `restaurant.tables.enabled`, `restaurant.kitchen.enabled`, `restaurant.recipes.enabled` (switches, off); `restaurant.table.required` (`RequirementLevel`, needs tables), `restaurant.kot.required` (bool, needs kitchen), `restaurant.customer.required` (`RequirementLevel`) and `restaurant.waiter.required` (bool), which belong to billing itself and need no switch; `restaurant.serviceCharge.percent` (number, 0) and `restaurant.tips.enabled` (bool, off). Everything off and nothing required by default.
+  - [x] Seed the system default rows with `HasData` and run `dotnet ef migrations has-pending-model-changes` for the admin context (the TK-70 trap); keys are seed data, so no new table.
+  - [x] `RestaurantSettingsRepository` in `Master.Repository/Repositories/`: reads the effective values through the same fallback as `FormatSettingsRepository` (reuse it, do not copy), validates a write against the key's type, and returns one typed view in which a required key counts only while its switch is on. The API and the page both read that view and nothing else.
+  - [x] `GET` and `PUT api/restaurant/settings`, an `internal/restaurant/settings` route for Sales, Inventory and Reporting, and a client in `Shared.Kernel` cached per branch (the shape of `ITaxRateProvider`).
+  - [x] `[RequireRestaurantFeature(Tables|Kitchen|Recipes)]` returns a curated refusal when the switch is off; teach `EndpointGuardAudit` to accept it as a guard.
+  - [x] Seed a `restaurant` permission module (view, create, edit, void), granted to Owner and Administrator, and Restaurant-only menu entries through `MenuRepository` and `TradeScopeRepository`; teach `first-branch.sh` and the seeders the new vertical.
+  - [x] `libs/restaurant/{restaurant-core,restaurant-ui}`, lazy-loaded in `apps/web` for Restaurant branches only, with Settings › Restaurant: the nine keys, and four presets that only set the two switches (billing only, counter plus kitchen, dine-in without kitchen printing, full service).
+  - [x] `CLAUDE.md` and the D-36 text name the new type (`L-DOC`).
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (5 October 2026):**
+  - `Shared.Kernel.Restaurant`: `RestaurantSettingKey` with fixed codes, `RequirementLevel` (serialised as its name), `RestaurantSettingKeys.Normalise` (one stored spelling per value; service charge 0–25%, two decimals) and `RestaurantSettingsRules.Effective`, the only builder of `RestaurantSettingsView`. A required key counts only while its switch is on.
+  - Nine `mst.Configuration` system rows in `HasData` (category `Restaurant`); `RestaurantSettingsRepository` reads them through `ConfigurationRepository.ListAsync`, so a branch override falls back to the system row exactly as formats do. A save validates all nine before writing any.
+  - `GET`/`PUT api/restaurant/settings` (Master; `restaurant` module, `[RequireBusinessType(Restaurant)]`; the `PUT` also needs `settings.edit`), `POST internal/restaurant/settings`, and `HttpRestaurantSettingsProvider` cached a minute per branch, registered in Sales, Inventory and Reporting. Gateway route `master-restaurant-settings`.
+  - `[RequireRestaurantFeature]` answers 409 with a sentence while a switch is off, and 503 when Master cannot be read. It is **not** taught to `EndpointGuardAudit` as a guard: it never authorises anything, so every route carrying it still needs its module permission, and accepting it would let a route with no permission pass the audit.
+  - Menu: the Restaurant rail is Orders, Tables, Kitchen display, Menu, Recipes, Wastage, Reports (1141, 1146–1151) plus Settings › Restaurant (1140), all `BusinessType.Restaurant`. `MenuRepository.HiddenRestaurantCodes` drops tables, kitchen, recipes and wastage while their switch is off.
+  - `libs/restaurant/*` trimmed to the workspace's library shape (the Jest scaffolding is gone; Vitest picks up specs). Settings › Restaurant is rewritten: four presets that set only the two switches, dependent requirements disabled while their switch is off, no `alert()`. Every restaurant route needs a Restaurant branch.
+  - `first-branch.sh` takes `BOOTSTRAP_VERTICAL` (default `General`).
+  - **Permission ids 271 onward were renumbered** when `restaurant` was inserted into the module list by `a7e037b0`, which is how a seed change rewrites every role grant. New modules go at the end of the list.
+  - `AddOnRulesTests` asserted General and Pharma allow every add-on, which stopped being true when the savings scheme became Jewellery's alone (TK-141); corrected beside the Restaurant case.
 - **Done when:** a Restaurant branch with every switch off sees billing only, turning `restaurant.tables.enabled` on makes the table endpoints answer, and `restaurant.table.required = Always` with tables off changes nothing.
 
 ### TK-144 · Menu: categories, timed menus, variants, modifiers, availability, price by order type
