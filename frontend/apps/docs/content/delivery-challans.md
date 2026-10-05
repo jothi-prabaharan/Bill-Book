@@ -49,6 +49,10 @@ The checks run again when the challan is posted, not only when it is saved: anot
 
 **The customer is picked by name.** Choose the **Customer** field, search by code, name or GSTIN, and pick from the matches. Their GSTIN fills the GSTIN field if it is still empty; one you have already typed is kept, because the GSTIN decides CGST and SGST against IGST. **Items are picked the same way** from the item column of the line grid: search by code or name, or scan a barcode, and the line shows the item's code and name. A document opened for editing shows its customer by name. Once it is posted or voided, neither picker opens.
 
+## Scanning items
+
+**Items can be scanned onto the lines** too, with a barcode scanner or a phone's camera: each scan adds a line of one or one more on the item's line. See [Scanning items](invoices#scanning-items).
+
 ## The statuses
 
 | Status | What it means |

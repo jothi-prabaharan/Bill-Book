@@ -358,6 +358,17 @@
         }
       </div>
     }
+    @if (!context().readonly) {
+      <div class="inv-form__scan">
+        <bb-scan
+          label="Scan"
+          placeholder="Scan or type a barcode or item code"
+          ariaLabel="Scan an item onto the lines"
+          [global]="true"
+          (scanned)="onScan($event)"
+        />
+      </div>
+    }
     <bb-document-line-grid
       [projects]="projectOptions()"
       [lines]="lines()"
@@ -435,6 +446,7 @@
 
 <bb-lookup-dialog
   [open]="picker.open()"
+  [initialTerm]="picker.term()"
   [title]="picker.title()"
   [placeholder]="picker.placeholder()"
   [emptyText]="picker.emptyText()"

@@ -5082,18 +5082,26 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: [Scanning](../frontend/apps/docs/content/inputs.md), release note.
 
 ### TK-161 · Scan on sales documents
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#142](https://github.com/jothi-prabaharan/Bill-Book/issues/142)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-SAL-UI · **Depends on:** TK-160
 - **Where:** `frontend/libs/sales/sales-ui/src/lib/` (the quote, order, challan, invoice and credit note forms), `sales-picker.ts`, `sales-lookup.service.ts`
 - **State:** checked 1 October 2026. The picker is a text box that says "scan a barcode" and matches through `GET /api/items`; there is no scan mode that adds the line and moves on.
 - **Sub-tasks:**
-  - [ ] `bb-scan` on line entry in all five forms: a scan adds the line, or adds 1 to the existing line for that item.
-  - [ ] An unknown code opens the item picker on that code.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] `bb-scan` on line entry in all five forms: a scan adds the line, or adds 1 to the existing line for that item.
+  - [x] An unknown code opens the item picker on that code.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** scanning the same barcode three times gives one line with quantity 3.
+- **As built (5 October 2026):**
+  - **`addScannedItem`** (`ui-components`, `document-line-grid/line-scan.ts`, pure, for sales and purchase alike): one more unit on the line that has the item, else a line of one in the first untouched line (no item, description or price) or appended. **`matchScannedItem`** (`scan-core`): the exact item code, ignoring case, or the only match — the till's rule, which `pos-terminal` now calls too.
+  - **`SalesPicker.scanItem(code)`**: looks the code up through `GET /api/items?search=` (which matches a whole barcode, TK-14) and hands a match to the form's new optional `scanned` handler; otherwise opens the item picker on the code (`picker.term()` → `bb-lookup-dialog`'s new `initialTerm`), and the item chosen there goes through `scanned` too, not to a line. A failed lookup opens the picker as well.
+  - **Quote, sales order, delivery challan, invoice**: `bb-scan` above the grid with `global` on, hidden when the document is read-only. The quote's lines are a plain field under OnPush, so its handler marks for check.
+  - **Credit note**: lines are the invoice's and a hand-added line is refused, so a scan adds one unit to that item's invoice line up to what it can still return (`returnable`, recorded when the invoice is loaded; a saved note leaves the cap to the server), and never adds a line. **Set all to zero** starts a count from nothing. An unknown code, an item not on the invoice or a full line is a one-line message, not the picker. Pure in `credit-note-scan.ts`.
+  - Fixed in passing: NG8107 on TK-159's label dialog (`chosen` typed `LabelTemplate | null`).
+  - Tests: `line-scan.spec.ts` (the *Done when*: three scans → one line of 3), `scan-match.spec.ts`, `sales-picker-scan.spec.ts`, `credit-note-scan.spec.ts`.
+  - Docs: [Scanning items](../frontend/apps/docs/content/invoices.md) with pointers from the quote, order, challan and credit-note pages; release note.
 
 ### TK-162 · Scan on purchase documents and scan to open
 - [ ] open

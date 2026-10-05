@@ -32,6 +32,12 @@ export class LookupDialogComponent {
   readonly rows = input<readonly LookupRow[]>([]);
   readonly loading = input(false);
 
+  /**
+   * The search the dialog opens on — empty normally, a scanned code that
+   * matched nothing when a scan opened it (TK-161).
+   */
+  readonly initialTerm = input('');
+
   /** Shown when there is nothing to choose from and nothing is loading. */
   readonly emptyText = input('Nothing matches.');
 
@@ -50,10 +56,11 @@ export class LookupDialogComponent {
 
   constructor() {
     // Reopening starts clean: a dialog that reopens showing the last search is
-    // one the user has to clear before it is useful.
+    // one the user has to clear before it is useful. A scan that matched
+    // nothing opens it on that code instead.
     effect(() => {
       if (this.open()) {
-        this.term.set('');
+        this.term.set(this.initialTerm());
       }
     });
   }

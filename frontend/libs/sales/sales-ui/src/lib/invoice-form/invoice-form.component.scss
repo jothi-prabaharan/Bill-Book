@@ -230,3 +230,9 @@
     padding: var(--space-1, 4px) 0;
   }
 }
+
+/* The scan field above the lines (TK-161): full width on a phone, a sensible width beside the grid. */
+.inv-form__scan {
+  max-width: 420px;
+  margin-bottom: var(--space-2, 8px);
+}

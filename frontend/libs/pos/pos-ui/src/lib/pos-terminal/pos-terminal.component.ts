@@ -43,6 +43,7 @@ import {
   setUnitPrice,
   tenderSummary,
 } from '@bill-book/pos-core';
+import { matchScannedItem } from '@bill-book/scan-core';
 import { ReceiptPrinterService } from './receipt-printer.service';
 
 type Picker = 'none' | 'customer' | 'item';
@@ -323,8 +324,7 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   protected async scan(code: string): Promise<void> {
     try {
       const matches = await this.lookups.items(code);
-      const exact = matches.find((m) => m.itemCode.toUpperCase() === code.toUpperCase());
-      const item = exact ?? (matches.length === 1 ? matches[0] : null);
+      const item = matchScannedItem(code, matches);
 
       if (item === null) {
         this.picker.set('item');

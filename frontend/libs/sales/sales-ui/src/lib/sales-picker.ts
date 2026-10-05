@@ -1,5 +1,6 @@
 import { computed, signal } from '@angular/core';
 import { CustomerOption, SalesItemOption, SalesLookupService } from '@bill-book/sales-core';
+import { matchScannedItem } from '@bill-book/scan-core';
 import {
   DocumentLine,
   DocumentLineContext,
@@ -13,6 +14,11 @@ export type SalesPickerKind = 'none' | 'customer' | 'item';
 export interface SalesPickerHandlers {
   customer(row: LookupRow): void;
   item(lineIndex: number, row: LookupRow): void;
+  /**
+   * A scanned item, or the one chosen after a scan matched nothing (TK-161):
+   * the form adds it as a line, or one more on its existing line.
+   */
+  scanned?(row: LookupRow): void;
 }
 
 /**
@@ -35,6 +41,9 @@ export class SalesPicker {
 
   readonly open = computed(() => this.kind() !== 'none');
 
+  /** The search the dialog opens on: a scanned code that matched nothing, else empty. */
+  readonly term = signal('');
+
   readonly title = computed(() =>
     this.kind() === 'customer' ? 'Choose a customer' : 'Choose an item',
   );
@@ -50,6 +59,7 @@ export class SalesPicker {
   );
 
   private line = -1;
+  private fromScan = false;
   private token = 0;
 
   constructor(
@@ -58,14 +68,48 @@ export class SalesPicker {
   ) {}
 
   openCustomer(): Promise<void> {
+    this.fromScan = false;
+    this.term.set('');
     this.kind.set('customer');
     return this.search('');
   }
 
   openItem(lineIndex: number): Promise<void> {
     this.line = lineIndex;
+    this.fromScan = false;
+    this.term.set('');
     this.kind.set('item');
     return this.search('');
+  }
+
+  /**
+   * A scanned code (TK-161): the item it names goes straight to the form; a
+   * code that names no single item opens the item picker on it, and the item
+   * chosen there is added the same way a scan would have added it.
+   */
+  async scanItem(code: string): Promise<void> {
+    const wanted = code.trim();
+    if (!wanted || !this.handlers.scanned) {
+      return;
+    }
+
+    let match: SalesItemOption | null = null;
+    try {
+      match = matchScannedItem(wanted, await this.lookups.items(wanted));
+    } catch {
+      match = null;
+    }
+
+    if (match) {
+      this.handlers.scanned(SalesPicker.itemRow(match));
+      return;
+    }
+
+    this.fromScan = true;
+    this.line = -1;
+    this.term.set(wanted);
+    this.kind.set('item');
+    await this.search(wanted);
   }
 
   async search(term: string): Promise<void> {
@@ -96,6 +140,8 @@ export class SalesPicker {
   choose(row: LookupRow): void {
     if (this.kind() === 'customer') {
       this.handlers.customer(row);
+    } else if (this.kind() === 'item' && this.fromScan) {
+      this.handlers.scanned?.(row);
     } else if (this.kind() === 'item' && this.line >= 0) {
       this.handlers.item(this.line, row);
     }
@@ -110,6 +156,8 @@ export class SalesPicker {
     this.rows.set([]);
     this.loading.set(false);
     this.line = -1;
+    this.fromScan = false;
+    this.term.set('');
   }
 
   /** How a chosen row reads on the form: code, then name. */

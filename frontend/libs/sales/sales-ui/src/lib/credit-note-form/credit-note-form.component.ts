@@ -16,9 +16,12 @@ import {
   SaveCreditNoteRequest,
   toApiLine,
   toGridLine,
+  SalesItemOption,
   SalesLookupService,
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
+import { matchScannedItem } from '@bill-book/scan-core';
+import { ReturnLine, returnScanned, zeroReturnQuantities } from './credit-note-scan';
 import {
   AllocationGridComponent,
   AllocationRow,
@@ -30,6 +33,7 @@ import {
   ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
+  ScanComponent,
   LookupRow,
   MessageBoxComponent,
   NumberInputComponent,
@@ -48,7 +52,7 @@ import {
  * A grid line that remembers which invoice line it corrects. The grid spreads a
  * line into every copy it makes, so the field rides along through edits.
  */
-type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
+type CreditNoteGridLine = ReturnLine;
 
 /**
  * The credit note form — the correction of a posted invoice.
@@ -72,6 +76,7 @@ type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
     ApprovalPanelComponent,
     FormFieldComponent,
     LookupDialogComponent,
+    ScanComponent,
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
@@ -142,7 +147,9 @@ export class CreditNoteFormComponent implements OnInit {
   protected readonly contactLabel = signal('');
 
   /** The customer and item pickers (TK-15). */
-  protected readonly picker = new SalesPicker(inject(SalesLookupService), {
+  private readonly lookups = inject(SalesLookupService);
+
+  protected readonly picker = new SalesPicker(this.lookups, {
     customer: (row) => this.chooseCustomer(row),
     item: () => undefined,
   });
@@ -299,10 +306,11 @@ export class CreditNoteFormComponent implements OnInit {
       });
 
       this.lines.set(
-        available.map(({ line, quantity }, index) => ({
-          ...toGridLine({ ...line, itemName: line.itemLabel, quantity, discountAmount: 0 }, index + 1),
-          invoiceDetailId: line.invoiceDetailId,
-        })),
+        available.map(({ line, quantity }, index) => {
+          const grid = toGridLine({ ...line, itemName: line.itemLabel, quantity, discountAmount: 0 }, index + 1);
+          // What this invoice line can still take back, the most a scan may count to (TK-161).
+          return { ...grid, invoiceDetailId: line.invoiceDetailId, returnable: grid.quantity };
+        }),
       );
 
       await this.loadOutstanding();
@@ -364,6 +372,47 @@ export class CreditNoteFormComponent implements OnInit {
 
   protected onLinesChange(lines: readonly DocumentLine[]): void {
     this.lines.set([...lines]);
+  }
+
+  /**
+   * A scanned code (TK-161). A credit note's lines are its invoice's, so a scan
+   * counts one more unit back on the invoice line for that item, up to what the
+   * line can still return, and never adds a line.
+   */
+  protected async onScan(code: string): Promise<void> {
+    if (this.context().readonly) {
+      return;
+    }
+    if (this.lines().length === 0) {
+      this.messages.set([{ tone: 'warning', text: 'Load the invoice first, then scan the goods coming back.' }]);
+      return;
+    }
+
+    let item: SalesItemOption | null = null;
+    try {
+      item = matchScannedItem(code, await this.lookups.items(code));
+    } catch {
+      item = null;
+    }
+    if (!item) {
+      this.messages.set([{ tone: 'warning', text: `No single item matches ${code}.` }]);
+      return;
+    }
+
+    const { lines, outcome } = returnScanned(this.lines(), item.itemId, this.context());
+    this.lines.set(lines);
+    if (outcome === 'notOnInvoice') {
+      this.messages.set([{ tone: 'warning', text: `${item.itemCode} is not on this invoice.` }]);
+    } else if (outcome === 'full') {
+      this.messages.set([{ tone: 'warning', text: `All of ${item.itemCode} on this invoice is already on the note.` }]);
+    } else {
+      this.messages.set([]);
+    }
+  }
+
+  /** Every line at nothing returned, to count the goods back in by scanning. */
+  protected zeroQuantities(): void {
+    this.lines.set(zeroReturnQuantities(this.lines(), this.context()));
   }
 
   protected onPickItem(_index: number): void {

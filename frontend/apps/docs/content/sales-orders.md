@@ -96,6 +96,10 @@ An order is never deleted. Its number was spent when it was created, so abandoni
 
 **The customer is picked by name.** Choose the **Customer** field, search by code, name or GSTIN, and pick from the matches. Their GSTIN fills the GSTIN field if it is still empty; one you have already typed is kept, because the GSTIN decides CGST and SGST against IGST. **Items are picked the same way** from the item column of the line grid: search by code or name, or scan a barcode, and the line shows the item's code and name. A document opened for editing shows its customer by name. Once it is posted or voided, neither picker opens.
 
+## Scanning items
+
+**Items can be scanned onto the lines** too, with a barcode scanner or a phone's camera: each scan adds a line of one or one more on the item's line. See [Scanning items](invoices#scanning-items).
+
 ## Finding one
 
 The list pages on the server, so a branch with ten years of orders opens as fast as a branch with ten. It can be filtered by status and searched by order number.

@@ -207,6 +207,18 @@
   }
 
   <div class="crn-form__lines">
+    @if (!context().readonly || lines().length === 0) {
+      <div class="crn-form__scan">
+        <bb-scan
+          label="Scan"
+          placeholder="Scan or type a barcode or item code"
+          ariaLabel="Scan an item onto the lines"
+          [global]="true"
+          (scanned)="onScan($event)"
+        />
+        <button type="button" class="btn btn--link" (click)="zeroQuantities()">Set all to zero</button>
+      </div>
+    }
     <bb-document-line-grid
       [lines]="lines()"
       [context]="context()"

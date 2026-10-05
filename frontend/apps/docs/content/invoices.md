@@ -270,6 +270,17 @@ After each sale the till prints a receipt through the browser, as a page exactly
 
 **The customer is picked by name.** Choose the **Customer** field, search by code, name or GSTIN, and pick from the matches. Their GSTIN fills the GSTIN field if it is still empty; one you have already typed is kept, because the GSTIN decides CGST and SGST against IGST. **Items are picked the same way** from the item column of the line grid: search by code or name, or scan a barcode, and the line shows the item's code and name. A document opened for editing shows its customer by name. Once it is posted or voided, neither picker opens.
 
+## Scanning items
+
+**The Scan field above the lines adds an item by its barcode** (TK-161). Scan into it with a barcode scanner, type a barcode or item code and press Enter, or tap the camera button on a phone; the camera opens as a small window in the top-right corner, so the lines stay in view (see [Scanning](inputs#scanning)).
+
+- **A scan adds a line of one**, using the empty line a new document starts with before adding another.
+- **Scanning the same item again adds one to its line** rather than adding a second line, so three scans of a barcode give one line with quantity 3.
+- **A code that names no single item opens the item picker on that code**, and the item you choose is added the same way.
+- **A scanner works without clicking into the field first**: while no field has the cursor, a scanner's burst of keys is caught and added.
+
+The field shows on the quote, the sales order, the delivery challan and the invoice while they can be edited. The credit note has its own rule, below. A scanned line takes the item's code and name like an item picked by hand; key its price as you would for any line.
+
 ## Finding one
 
 The list pages on the server and can be filtered by status, searched by invoice number, and narrowed to overdue. At narrow widths the grid becomes one card per invoice and the filters stack.

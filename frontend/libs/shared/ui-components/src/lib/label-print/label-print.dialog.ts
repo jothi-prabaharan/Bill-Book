@@ -67,7 +67,7 @@ export class LabelPrintDialog implements OnInit {
     this.forKind().map((t) => ({ value: t.labelTemplateId, label: `${t.name} (${sizeLabel(t)})` })),
   );
 
-  protected readonly chosen = computed(
+  protected readonly chosen = computed<LabelTemplate | null>(
     () => this.forKind().find((t) => t.labelTemplateId === this.chosenTemplateId()) ?? this.forKind()[0] ?? null,
   );
 

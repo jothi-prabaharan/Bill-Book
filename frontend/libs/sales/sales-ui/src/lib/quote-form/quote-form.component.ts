@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { QuoteService, SalesLookupService, SaveQuoteRequest } from '@bill-book/sales-core';
+import { QuoteService, SalesLookupService, SaveQuoteRequest, blankGridLine } from '@bill-book/sales-core';
 import {
   BranchDateInputComponent,
   DocumentLine,
@@ -11,6 +11,8 @@ import {
   ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
+  ScanComponent,
+  addScannedItem,
   LookupRow,
   TextareaComponent,
   TextInputComponent,
@@ -39,6 +41,7 @@ import { SalesPicker } from '../sales-picker';
     BranchDateInputComponent,
     FormFieldComponent,
     LookupDialogComponent,
+    ScanComponent,
     ExchangeRateInputComponent,
   ],
   templateUrl: './quote-form.component.html',
@@ -70,6 +73,8 @@ export class QuoteFormComponent implements OnInit {
     termsAndConditions: ['']
   });
   
+  private readonly changes = inject(ChangeDetectorRef);
+
   lines: DocumentLine[] = [];
 
   /** The chosen customer as it reads on the form; the id itself is the `contactId` control. */
@@ -80,6 +85,11 @@ export class QuoteFormComponent implements OnInit {
     customer: (row) => this.chooseCustomer(row),
     item: (index, row) => {
       this.lines = SalesPicker.withItem(this.lines, index, row, this.context);
+    },
+    scanned: (row) => {
+      this.lines = addScannedItem(this.lines, row, this.context, blankGridLine);
+      // The answer arrives after a lookup, outside any template event.
+      this.changes.markForCheck();
     },
   });
   context: DocumentLineContext = {
@@ -144,6 +154,14 @@ export class QuoteFormComponent implements OnInit {
 
   onLinesChange(newLines: readonly DocumentLine[]) {
     this.lines = [...newLines];
+  }
+
+  /** A scanned code (TK-161): its item goes on the lines, or the picker opens on it. */
+  onScan(code: string) {
+    if (this.context.readonly) {
+      return;
+    }
+    void this.picker.scanItem(code);
   }
 
   onPickItem(index: number) {

@@ -57,6 +57,8 @@ There is no "posted", because a quote never reaches the books.
 
 **An item is picked the same way**, from the item column of the line grid: search by code or name, or scan its barcode. The line shows the item's code and name.
 
+**Items can be scanned onto the lines** too, with a barcode scanner or a phone's camera: each scan adds a line of one or one more on the item's line. See [Scanning items](invoices#scanning-items).
+
 The line grid is the same one every sales and purchase document uses, so it behaves identically here and on a bill.
 
 - **Choose an item** and its price, unit and tax treatment come across onto the line as a **snapshot**. Repricing the item later does not restate a quote already sent.

@@ -89,3 +89,9 @@
   text-align: left;
   cursor: pointer;
 }
+
+/* The scan field above the lines (TK-161): full width on a phone, a sensible width beside the grid. */
+.line-grid-scan {
+  max-width: 420px;
+  margin-bottom: var(--space-2, 8px);
+}

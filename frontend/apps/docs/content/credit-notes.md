@@ -34,6 +34,8 @@ Only a sales return moves stock.
 
 Lower a quantity or a price to credit part of a line; remove a line to leave it out. **Every line must be one of the invoice's lines, for the same item** — a line added by hand is refused.
 
+**Scanning counts goods back in** (TK-161). Once the invoice is loaded, choose **Set all to zero** and scan each item as it comes back: each scan adds one to that item's invoice line, up to what the line can still return. A scan never adds a line, because every line must be one of the invoice's. An item the invoice does not have, or one already fully on the note, is named in a message instead.
+
 ## What posting does
 
 | | |

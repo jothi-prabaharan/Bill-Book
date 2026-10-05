@@ -40,6 +40,8 @@ import {
   ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
+  ScanComponent,
+  addScannedItem,
   LookupRow,
   MessageBoxComponent,
   NumberInputComponent,
@@ -89,6 +91,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     EditHistoryComponent,
     FormFieldComponent,
     LookupDialogComponent,
+    ScanComponent,
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
@@ -187,6 +190,7 @@ export class InvoiceFormComponent implements OnInit {
     customer: (row) => this.chooseCustomer(row),
     item: (index, row) =>
       this.lines.set(SalesPicker.withItem(this.lines(), index, row, this.context())),
+    scanned: (row) => this.lines.set(addScannedItem(this.lines(), row, this.context(), blankGridLine)),
   });
 
   protected readonly context = computed<DocumentLineContext>(() => ({
@@ -333,7 +337,16 @@ export class InvoiceFormComponent implements OnInit {
     this.lines.set([...lines]);
   }
 
-  protected onPickItem(index: number): void {
+  /** A scanned code (TK-161): its item goes on the lines, or the picker opens on it. */
+  protected onScan(code: string): void {
+    if (this.context().readonly) {
+      return;
+    }
+
+    void this.picker.scanItem(code);
+  }
+
+    protected onPickItem(index: number): void {
     if (this.context().readonly) {
       return;
     }
