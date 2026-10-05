@@ -4441,8 +4441,8 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
 
 ### TK-135 · Use `bb-branch-date-input` on every page, delete `bb-date-input`, and delete unused shared UI components
-- [ ] open — reopened 5 October 2026 by TK-142's audit; was marked completed (Antigravity) on 1 October
-- **Issue:** none was opened; open one at the claim (hard rule 15)
+- [ ] working (Claude Opus 5.5) — 2026-10-05 · reopened by TK-142's audit; was marked completed (Antigravity) on 1 October
+- **Issue:** [#146](https://github.com/jothi-prabaharan/Bill-Book/issues/146)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-UI, every `L-{MODULE}-UI` whose template is edited, L-WEB, L-ADM (if `apps/admin` still exists), L-DOC (the `inputs.md` docs page) · **Depends on:** — · **Decision:** —
 - **Where:**
