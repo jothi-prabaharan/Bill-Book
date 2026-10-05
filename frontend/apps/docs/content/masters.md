@@ -1250,6 +1250,12 @@ cannot carry — anything outside the plain keyboard letters, digits and punctua
 nothing rather than a wrong code. A template's own pasted-in images still cannot be data
 images; only these generated codes are.
 
+**The standard templates carry both** (TK-157): the barcode under the document date, the QR
+code beside the signature line, on every document type but the kitchen ticket, which nothing
+scans. A branch's standard templates that nobody has changed get them on the next update by
+themselves. A template you have edited is left exactly as you wrote it; the editor offers
+**Reset to latest** if you want the new layout, or insert the two fields where you like.
+
 ## The editor
 
 **Settings › Print templates**, or one entry per document type under the Print templates group of

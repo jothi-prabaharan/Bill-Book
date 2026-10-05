@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **Printed documents carry their own barcode and QR code (TK-157).** The standard templates now print a barcode of the document number under its date and a QR code of it beside the signature line, on every document type except the kitchen ticket. Standard templates nobody has changed are updated on their own; an edited template is left as it is, and the editor offers **Reset to latest**. A printed invoice already shows them. See [Barcodes and QR codes](masters#barcodes-and-qr-codes).
+
 - **Added**: **Barcodes and QR codes on print templates (TK-156).** Two new fields under **Document** in Settings › Print templates: `{{Document.BarcodeImage}}` prints a barcode of the document number (Code128, or EAN-13 for a 13-digit retail code) with the number beneath it, and `{{Document.QrImage}}` prints a QR code of it. Every document type offers both. See [Barcodes and QR codes](masters#barcodes-and-qr-codes).
 
 - **Changed**: **The till is in the web app, and the desktop app is gone (TK-155).** **Sales › Point of sale** (`/pos`) opens the till in any browser, for a branch with the POS add-on and a user who may post invoices. Receipts print through the browser as a page exactly the roll's width (80 mm or 58 mm), so a receipt printer with its normal driver prints them; choose it in the print dialog the first time. The till's printer settings keep only the paper width and the footer. Uninstall the old desktop app; nothing replaces it. See [POS sales](invoices#pos-sales).

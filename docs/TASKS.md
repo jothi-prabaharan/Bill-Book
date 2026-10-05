@@ -4995,17 +4995,23 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a template with a barcode tag renders a Code128 image for the text it is given.
 
 ### TK-157 · Document barcode and QR on every printable type
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#138](https://github.com/jothi-prabaharan/Bill-Book/issues/138)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-SAL, L-PUR, L-ACC, L-PRT · **Depends on:** TK-156
 - **Where:** `Sales.Repository/Repositories/Printing/InvoicePrintRepository.cs`, `Shared.Kernel/Printing/DocumentTypeCatalog.cs`, `Printing.Repository/Repositories/PrintTemplateSeederRepository.cs`
 - **State:** checked 1 October 2026. Only the invoice prints through Printing so far; the other eleven types in `DocumentTypeCatalog` have no print route.
 - **Sub-tasks:**
-  - [ ] Each document type that prints fills `Doc.BarcodeImage` and `Doc.QrImage` from its document number.
-  - [ ] The seeded templates carry the codes; existing branches pick them up through the idempotent seed.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] Each document type that prints fills `Doc.BarcodeImage` and `Doc.QrImage` from its document number.
+  - [x] The seeded templates carry the codes; existing branches pick them up through the idempotent seed.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - **Filling the codes**: every printable type gets them from its document number through TK-156's renderer fallback (`Document.BarcodeImage` and `Document.QrImage` draw `Document.No` when the payload carries no text of its own), so no payload builder had to change — the invoice, today the only type with a print route, prints them now, and each other type will the day it gets one.
+  - **Seeded templates**: `DefaultLayoutGenerator` (seed version 3) puts the barcode under the date in the header and the QR in the signature row's empty cell, on every type but the kitchen ticket. `Build(profile, withCodes: false)` reproduces generation 2 exactly.
+  - **Existing branches**: the idempotent seed now also upgrades a template still at seed version 2 whose five bands equal generation 2 byte for byte (`PrintTemplateSeederRepository.Upgrade`). One changed by so much as a character is never touched, and keeps the editor's existing **Reset to latest** offer (`CanResetToLatest`, seed version below 3). The branch seed runs on the admin retry and on `first-branch`, so that is how existing branches pick them up.
+  - Tests: `DocumentCodesTemplateTests` (every seeded type but the KOT carries both; a printed invoice renders both; an untouched v2 template upgrades, an edited one does not, a current one is left; v3 minus the codes equals v2).
+  - Docs: `masters.md`, a release note.
 - **Done when:** a printed invoice carries a barcode and a QR of its document number.
 
 ### TK-158 · UPI payment QR on invoices

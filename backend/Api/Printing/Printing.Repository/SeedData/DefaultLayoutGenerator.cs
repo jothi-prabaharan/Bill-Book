@@ -26,8 +26,16 @@ public static class DefaultLayoutGenerator
     /// <b>2</b> — placeholders became <c>{{Tag}}</c> text rather than a chip
     /// element. A template still stamped 1 carries the old markup and will not
     /// merge; CanResetToLatest is what surfaces that.
+    ///
+    /// <b>3</b> — every document carries a barcode of its number under the date
+    /// and a QR code of it in the signature row (TK-157). A template still at 2
+    /// and exactly as generated is upgraded by the seeder; an edited one is
+    /// left alone and offered the reset.
     /// </summary>
-    public const int SeedVersion = 2;
+    public const int SeedVersion = 3;
+
+    /// <summary>The generation before <see cref="SeedVersion"/>: the same layout without the document codes.</summary>
+    public const int PreviousSeedVersion = 2;
 
     /// <summary>
     /// A placeholder, as it is stored: <c>{{Tag}}</c> and nothing else.
@@ -43,7 +51,18 @@ public static class DefaultLayoutGenerator
     /// <summary>The same, when the definition is already in hand.</summary>
     public static string Placeholder(PlaceholderDefinition placeholder) => Placeholder(placeholder.Tag);
 
-    public static PrintContent Build(DocumentTypeProfile profile)
+    /// <summary>The current layout for a document type.</summary>
+    public static PrintContent Build(DocumentTypeProfile profile) => Build(profile, withCodes: true);
+
+    /// <summary>
+    /// The layout, with or without the document codes (TK-157). Without them it
+    /// is exactly what generation <see cref="PreviousSeedVersion"/> wrote, which
+    /// is how the seeder recognises a template nobody has edited.
+    ///
+    /// A kitchen ticket carries no codes: it is read at the pass and thrown
+    /// away, and nothing scans it.
+    /// </summary>
+    public static PrintContent Build(DocumentTypeProfile profile, bool withCodes)
     {
         ArgumentNullException.ThrowIfNull(profile);
 
@@ -55,12 +74,15 @@ public static class DefaultLayoutGenerator
         return new PrintContent
         {
             FixedHeaderHtml = FixedHeader(),
-            HeaderHtml = Header(profile),
+            HeaderHtml = Header(profile, withCodes),
             DetailsHtml = Details(profile),
             FooterHtml = Footer(profile),
-            FixedFooterHtml = FixedFooter(),
+            FixedFooterHtml = FixedFooter(withCodes),
         };
     }
+
+    /// <summary>Whether a document type's generated layout carries the codes (all but the kitchen ticket).</summary>
+    public static bool CarriesCodes(DocumentTypeProfile profile) => !IsKitchenTicket(profile);
 
     public static PrintSettings BuildSettings() => new();
 
@@ -124,7 +146,7 @@ public static class DefaultLayoutGenerator
         + "</tr></tbody></table>";
 
     /// <summary>Title, document identity, and who it is addressed to.</summary>
-    private static string Header(DocumentTypeProfile profile)
+    private static string Header(DocumentTypeProfile profile, bool withCodes)
     {
         var html = new StringBuilder();
 
@@ -149,6 +171,12 @@ public static class DefaultLayoutGenerator
         if (profile.HasTax)
         {
             html.Append($"<div>Place of supply: {Placeholder("Document.PlaceOfSupply")}</div>");
+        }
+
+        // Scanned to open the document (TK-157, TK-162).
+        if (withCodes)
+        {
+            html.Append($"<div>{Placeholder(PlaceholderCatalog.DocumentBarcodeTag)}</div>");
         }
 
         html.Append("</td></tr></tbody></table>");
@@ -278,11 +306,14 @@ public static class DefaultLayoutGenerator
     private static string TotalRow(string label, string tag) =>
         $"<tr><td align=\"left\">{label}</td><td align=\"right\">{Placeholder(tag)}</td></tr>";
 
-    /// <summary>Terms and the signature block. Repeats on every page.</summary>
-    private static string FixedFooter() =>
+    /// <summary>
+    /// Terms and the signature block, with the document's QR code in the
+    /// otherwise empty cell beside the signature (TK-157). Repeats on every page.
+    /// </summary>
+    private static string FixedFooter(bool withCodes) =>
         $"<div>{Placeholder("Document.Terms")}</div>"
         + "<table width=\"100%\"><tbody><tr>"
-        + "<td align=\"left\">&nbsp;</td>"
+        + (withCodes ? $"<td align=\"left\">{Placeholder(PlaceholderCatalog.DocumentQrTag)}</td>" : "<td align=\"left\">&nbsp;</td>")
         + $"<td align=\"right\">For {Placeholder("Organization.Name")}</td>"
         + "</tr></tbody></table>";
 }

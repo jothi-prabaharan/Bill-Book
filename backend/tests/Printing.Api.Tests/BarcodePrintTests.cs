@@ -83,11 +83,11 @@ public sealed class BarcodePrintTests
     public void The_document_codes_fall_back_to_the_document_number()
     {
         var payload = new PrintPayload();
-        payload.Singles["Document.No"] = "QOT/2627/00007";
+        payload.Singles["Document.No"] = "QTE/2627/00007";
 
-        PrintRenderResult result = Render("<div>{{Document.BarcodeImage}} {{Document.QrImage}}</div>", payload, "QOT");
+        PrintRenderResult result = Render("<div>{{Document.BarcodeImage}} {{Document.QrImage}}</div>", payload, "QTE");
 
-        Assert.Contains("pt-barcode-text\">QOT/2627/00007</span>", result.Html);
+        Assert.Contains("pt-barcode-text\">QTE/2627/00007</span>", result.Html);
         Assert.Contains("<img class=\"pt-qr\" src=\"data:image/png;base64,", result.Html);
         Assert.Contains("alt=\"QR code of the document number\"", result.Html);
     }
