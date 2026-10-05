@@ -4951,7 +4951,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** running it twice leaves six Demo customers, each branch has its business type and the right masters, and none has a transaction.
 
 ### TK-155 · Remove Electron and move the POS till into `apps/web`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#136](https://github.com/jothi-prabaharan/Bill-Book/issues/136)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-WEB, L-DSK, L-UI, L-DEPS, L-DOC, L-POS-UI (new lane: `frontend/libs/pos/**`) · **Depends on:** — · **Decision:** owner, 2026-10-01
