@@ -30,14 +30,21 @@ public class InventoryDbContext : TenantDbContext
     public DbSet<ItemJewelleryDetails> ItemJewelleryDetails => Set<ItemJewelleryDetails>();
 
     public DbSet<ItemPharmaDetails> ItemPharmaDetails => Set<ItemPharmaDetails>();
+
+    // The restaurant menu (TK-144): a dish is an Item; these say how it is sold.
     public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
+
     public DbSet<MenuSchedule> MenuSchedules => Set<MenuSchedule>();
+
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+
     public DbSet<ItemVariant> ItemVariants => Set<ItemVariant>();
+
     public DbSet<ModifierGroup> ModifierGroups => Set<ModifierGroup>();
+
     public DbSet<Modifier> Modifiers => Set<Modifier>();
+
     public DbSet<MenuItemPrice> MenuItemPrices => Set<MenuItemPrice>();
-    public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
 
     public DbSet<ItemBarcode> ItemBarcodes => Set<ItemBarcode>();
 
@@ -46,9 +53,6 @@ public class InventoryDbContext : TenantDbContext
     public DbSet<PriceListItem> PriceListItems => Set<PriceListItem>();
 
     public DbSet<ItemStock> ItemStock => Set<ItemStock>();
-    public DbSet<Recipe> Recipes => Set<Recipe>();
-    public DbSet<RecipeLine> RecipeLines => Set<RecipeLine>();
-    public DbSet<WastageEntry> WastageEntries => Set<WastageEntry>();
 
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
 
@@ -300,63 +304,8 @@ public class InventoryDbContext : TenantDbContext
         });
 
 
-        modelBuilder.Entity<MenuItem>(b =>
-        {
-            b.HasKey(e => e.MenuItemId);
-            b.Property(e => e.MenuItemId).ValueGeneratedNever();
+        ConfigureRestaurantMenu(modelBuilder);
 
-            b.HasOne<Item>()
-                .WithOne()
-                .HasForeignKey<MenuItem>(e => e.MenuItemId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            b.HasOne<MenuCategory>()
-                .WithMany()
-                .HasForeignKey(e => e.MenuCategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            b.HasOne<MenuSchedule>()
-                .WithMany()
-                .HasForeignKey(e => e.MenuScheduleId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
-
-        modelBuilder.Entity<ItemVariant>(b =>
-        {
-            b.HasOne<MenuItem>()
-                .WithMany()
-                .HasForeignKey(e => e.MenuItemId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<ModifierGroup>(b =>
-        {
-            b.HasOne<MenuItem>()
-                .WithMany()
-                .HasForeignKey(e => e.MenuItemId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<Modifier>(b =>
-        {
-            b.HasOne<ModifierGroup>()
-                .WithMany()
-                .HasForeignKey(e => e.ModifierGroupId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            b.HasOne<Item>()
-                .WithMany()
-                .HasForeignKey(e => e.LinkedItemId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
-
-        modelBuilder.Entity<MenuItemPrice>(b =>
-        {
-            b.HasOne<MenuItem>()
-                .WithMany()
-                .HasForeignKey(e => e.MenuItemId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
         modelBuilder.Entity<ItemPharmaDetails>(b =>
         {
             b.HasKey(e => e.ItemId);
@@ -873,12 +822,128 @@ public class InventoryDbContext : TenantDbContext
         // sees every entity configured above.
         base.OnModelCreating(modelBuilder);
     }
+
+    /// <summary>
+    /// The restaurant menu (TK-144). Every child cascades from its dish, because a
+    /// portion or a choice means nothing without it; Sales copies names and prices
+    /// onto an order line, so removing one never changes an order already taken.
+    /// </summary>
+    private static void ConfigureRestaurantMenu(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<MenuCategory>(b =>
+        {
+            b.HasIndex(e => new { e.OrgId, e.Name }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.DisplayOrder });
+        });
+
+        modelBuilder.Entity<MenuSchedule>(b =>
+        {
+            b.HasIndex(e => new { e.OrgId, e.Name }).IsUnique();
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("chk_menu_schedule_days", "\"Days\" > 0 AND \"Days\" < 128");
+                t.HasCheckConstraint("chk_menu_schedule_times", "\"StartTime\" <> \"EndTime\"");
+            });
+        });
+
+        modelBuilder.Entity<MenuItem>(b =>
+        {
+            b.HasKey(e => e.MenuItemId);
+            b.Property(e => e.MenuItemId).ValueGeneratedNever();
+            b.Property(e => e.Station).HasConversion<string>().HasMaxLength(15);
+
+            b.HasOne<Item>()
+                .WithOne()
+                .HasForeignKey<MenuItem>(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // A category with dishes in it cannot be deleted; move them first.
+            b.HasOne<MenuCategory>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Deleting a timed menu puts its dishes on all day rather than off it.
+            b.HasOne<MenuSchedule>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuScheduleId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            b.HasIndex(e => new { e.OrgId, e.MenuCategoryId, e.DisplayOrder });
+        });
+
+        modelBuilder.Entity<ItemVariant>(b =>
+        {
+            b.Property(e => e.Price).HasColumnType("decimal(18,2)");
+            b.Property(e => e.PortionFactor).HasColumnType("decimal(9,4)");
+
+            b.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(e => new { e.MenuItemId, e.Name }).IsUnique();
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("chk_item_variant_price", "\"Price\" >= 0");
+                t.HasCheckConstraint("chk_item_variant_portion", "\"PortionFactor\" > 0");
+            });
+        });
+
+        modelBuilder.Entity<ModifierGroup>(b =>
+        {
+            b.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(e => new { e.MenuItemId, e.Name }).IsUnique();
+            b.ToTable(t => t.HasCheckConstraint(
+                "chk_modifier_group_choices",
+                "\"MinChoices\" >= 0 AND \"MaxChoices\" >= 1 AND \"MinChoices\" <= \"MaxChoices\""));
+        });
+
+        modelBuilder.Entity<Modifier>(b =>
+        {
+            b.Property(e => e.PriceChange).HasColumnType("decimal(18,2)");
+            b.Property(e => e.LinkedQuantity).HasColumnType("decimal(18,4)");
+
+            b.HasOne<ModifierGroup>()
+                .WithMany()
+                .HasForeignKey(e => e.ModifierGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.LinkedItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasIndex(e => new { e.ModifierGroupId, e.Name }).IsUnique();
+            b.ToTable(t => t.HasCheckConstraint(
+                "chk_modifier_linked_quantity",
+                "(\"LinkedItemId\" IS NULL) = (\"LinkedQuantity\" IS NULL)"));
+        });
+
+        modelBuilder.Entity<MenuItemPrice>(b =>
+        {
+            b.Property(e => e.Price).HasColumnType("decimal(18,2)");
+            b.Property(e => e.OrderType).HasConversion<string>().HasMaxLength(15);
+
+            b.HasOne<MenuItem>()
+                .WithMany()
+                .HasForeignKey(e => e.MenuItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne<ItemVariant>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemVariantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One price per dish, portion and order type; a dish-level row has no portion.
+            b.HasIndex(e => new { e.MenuItemId, e.ItemVariantId, e.OrderType })
+                .IsUnique()
+                .AreNullsDistinct(false);
+            b.ToTable(t => t.HasCheckConstraint("chk_menu_item_price", "\"Price\" >= 0"));
+        });
+    }
 }
-
-
-
-
-
-
-
-

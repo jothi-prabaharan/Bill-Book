@@ -1055,17 +1055,17 @@ namespace Inventory.Repository.Migrations.Tenant
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("PortionFactor")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(9,4)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -1075,11 +1075,17 @@ namespace Inventory.Repository.Migrations.Tenant
 
                     b.HasKey("ItemVariantId");
 
-                    b.HasIndex("MenuItemId");
-
                     b.HasIndex("CustomerId", "OrgId");
 
-                    b.ToTable("ItemVariants", "inv");
+                    b.HasIndex("MenuItemId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ItemVariants", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_item_variant_portion", "\"PortionFactor\" > 0");
+
+                            t.HasCheckConstraint("chk_item_variant_price", "\"Price\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.MenuCategory", b =>
@@ -1089,10 +1095,6 @@ namespace Inventory.Repository.Migrations.Tenant
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MenuCategoryId"));
-
-                    b.Property<string>("ColorCode")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1133,6 +1135,11 @@ namespace Inventory.Repository.Migrations.Tenant
 
                     b.HasIndex("CustomerId", "OrgId");
 
+                    b.HasIndex("OrgId", "DisplayOrder");
+
+                    b.HasIndex("OrgId", "Name")
+                        .IsUnique();
+
                     b.ToTable("MenuCategories", "inv");
                 });
 
@@ -1171,8 +1178,10 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Station")
-                        .HasColumnType("integer");
+                    b.Property<string>("Station")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -1187,6 +1196,8 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.HasIndex("MenuScheduleId");
 
                     b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "MenuCategoryId", "DisplayOrder");
 
                     b.ToTable("MenuItems", "inv");
                 });
@@ -1208,6 +1219,9 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<long?>("ItemVariantId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("MenuItemId")
                         .HasColumnType("bigint");
 
@@ -1217,14 +1231,16 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("OrderType")
-                        .HasColumnType("integer");
+                    b.Property<string>("OrderType")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -1234,11 +1250,19 @@ namespace Inventory.Repository.Migrations.Tenant
 
                     b.HasKey("MenuItemPriceId");
 
-                    b.HasIndex("MenuItemId");
+                    b.HasIndex("ItemVariantId");
 
                     b.HasIndex("CustomerId", "OrgId");
 
-                    b.ToTable("MenuItemPrices", "inv");
+                    b.HasIndex("MenuItemId", "ItemVariantId", "OrderType")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("MenuItemId", "ItemVariantId", "OrderType"), false);
+
+                    b.ToTable("MenuItemPrices", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_menu_item_price", "\"Price\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.MenuSchedule", b =>
@@ -1258,11 +1282,14 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("DaysOfWeek")
+                    b.Property<int>("Days")
                         .HasColumnType("integer");
 
-                    b.Property<TimeSpan>("EndTime")
-                        .HasColumnType("interval");
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1278,8 +1305,8 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
-                    b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("interval");
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -1291,7 +1318,15 @@ namespace Inventory.Repository.Migrations.Tenant
 
                     b.HasIndex("CustomerId", "OrgId");
 
-                    b.ToTable("MenuSchedules", "inv");
+                    b.HasIndex("OrgId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("MenuSchedules", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_menu_schedule_days", "\"Days\" > 0 AND \"Days\" < 128");
+
+                            t.HasCheckConstraint("chk_menu_schedule_times", "\"StartTime\" <> \"EndTime\"");
+                        });
                 });
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.MetalPurity", b =>
@@ -1393,8 +1428,14 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("boolean");
+
                     b.Property<long?>("LinkedItemId")
                         .HasColumnType("bigint");
+
+                    b.Property<decimal?>("LinkedQuantity")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1414,7 +1455,7 @@ namespace Inventory.Repository.Migrations.Tenant
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("PriceChange")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -1426,11 +1467,15 @@ namespace Inventory.Repository.Migrations.Tenant
 
                     b.HasIndex("LinkedItemId");
 
-                    b.HasIndex("ModifierGroupId");
-
                     b.HasIndex("CustomerId", "OrgId");
 
-                    b.ToTable("Modifiers", "inv");
+                    b.HasIndex("ModifierGroupId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Modifiers", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_modifier_linked_quantity", "(\"LinkedItemId\" IS NULL) = (\"LinkedQuantity\" IS NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.ModifierGroup", b =>
@@ -1484,11 +1529,15 @@ namespace Inventory.Repository.Migrations.Tenant
 
                     b.HasKey("ModifierGroupId");
 
-                    b.HasIndex("MenuItemId");
-
                     b.HasIndex("CustomerId", "OrgId");
 
-                    b.ToTable("ModifierGroups", "inv");
+                    b.HasIndex("MenuItemId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ModifierGroups", "inv", t =>
+                        {
+                            t.HasCheckConstraint("chk_modifier_group_choices", "\"MinChoices\" >= 0 AND \"MaxChoices\" >= 1 AND \"MinChoices\" <= \"MaxChoices\"");
+                        });
                 });
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.PriceList", b =>
@@ -1586,102 +1635,6 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.ToTable("PriceListItems", "inv");
                 });
 
-            modelBuilder.Entity("Inventory.Entity.TableEntities.Recipe", b =>
-                {
-                    b.Property<long>("RecipeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RecipeId"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("MenuItemId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("OutputQuantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("RecipeId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.ToTable("Recipes", "inv");
-                });
-
-            modelBuilder.Entity("Inventory.Entity.TableEntities.RecipeLine", b =>
-                {
-                    b.Property<long>("RecipeLineId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RecipeLineId"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("IngredientItemId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<long>("RecipeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UomId")
-                        .HasColumnType("bigint");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("RecipeLineId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.ToTable("RecipeLines", "inv");
-                });
-
             modelBuilder.Entity("Inventory.Entity.TableEntities.RecostingAdjustment", b =>
                 {
                     b.Property<long>("RecostingAdjustmentId")
@@ -1759,55 +1712,6 @@ namespace Inventory.Repository.Migrations.Tenant
                         {
                             t.HasCheckConstraint("chk_recosting_delta", "\"Delta\" = \"NewCost\" - \"PreviousCost\"");
                         });
-                });
-
-            modelBuilder.Entity("Inventory.Entity.TableEntities.RestaurantTable", b =>
-                {
-                    b.Property<long>("RestaurantTableId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RestaurantTableId"));
-
-                    b.Property<int>("Capacity")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Number")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("RestaurantTableId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.ToTable("RestaurantTables", "inv");
                 });
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.StockAdjustment", b =>
@@ -2483,58 +2387,6 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.ToTable("Warehouses", "inv");
                 });
 
-            modelBuilder.Entity("Inventory.Entity.TableEntities.WastageEntry", b =>
-                {
-                    b.Property<long>("WastageEntryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("WastageEntryId"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("EntryDate")
-                        .HasColumnType("date");
-
-                    b.Property<long>("ItemId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("WastageEntryId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.ToTable("WastageEntries", "inv");
-                });
-
             modelBuilder.Entity("Shared.Kernel.Audit.EditLog", b =>
                 {
                     b.Property<long>("EditLogId")
@@ -3073,13 +2925,13 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.HasOne("Inventory.Entity.TableEntities.MenuCategory", null)
                         .WithMany()
                         .HasForeignKey("MenuCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Inventory.Entity.TableEntities.Item", null)
                         .WithOne()
                         .HasForeignKey("Inventory.Entity.TableEntities.MenuItem", "MenuItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Inventory.Entity.TableEntities.MenuSchedule", null)
@@ -3090,6 +2942,11 @@ namespace Inventory.Repository.Migrations.Tenant
 
             modelBuilder.Entity("Inventory.Entity.TableEntities.MenuItemPrice", b =>
                 {
+                    b.HasOne("Inventory.Entity.TableEntities.ItemVariant", null)
+                        .WithMany()
+                        .HasForeignKey("ItemVariantId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Inventory.Entity.TableEntities.MenuItem", null)
                         .WithMany()
                         .HasForeignKey("MenuItemId")
@@ -3102,7 +2959,7 @@ namespace Inventory.Repository.Migrations.Tenant
                     b.HasOne("Inventory.Entity.TableEntities.Item", null)
                         .WithMany()
                         .HasForeignKey("LinkedItemId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Inventory.Entity.TableEntities.ModifierGroup", null)
                         .WithMany()

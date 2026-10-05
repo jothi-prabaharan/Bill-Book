@@ -47,6 +47,7 @@ public sealed class InternalSeedController : ControllerBase
         var uom = _services.GetRequiredService<UomRepository>();
         var purities = _services.GetRequiredService<MetalPurityRepository>();
         var seeder = _services.GetRequiredService<InventorySeederRepository>();
+        var menu = _services.GetRequiredService<RestaurantMenuRepository>();
 
         var response = new SeedOrganizationResponse
         {
@@ -59,6 +60,8 @@ public sealed class InternalSeedController : ControllerBase
                 ["metalPurities"] = await purities.SeedForOrganizationAsync(
                     request.OrgId, request.Vertical, ct),
                 ["numberingSeries"] = await seeder.SeedNumberingSeriesAsync(request.OrgId, ct),
+                // A restaurant's starting menu headings (TK-144); 0 for other trades.
+                ["menuCategories"] = await menu.SeedCategoriesAsync(request.OrgId, request.Vertical, ct),
             },
         };
 

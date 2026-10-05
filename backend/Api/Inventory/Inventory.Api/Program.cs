@@ -73,8 +73,6 @@ builder.Services.AddScoped<ItemCategoryRepository>();
 builder.Services.AddScoped<MetalPurityRepository>();
 builder.Services.AddScoped<InventorySeederRepository>();
 builder.Services.AddScoped<StockAdjustmentRepository>();
-builder.Services.AddScoped<RecipeRepository>();
-builder.Services.AddScoped<WastageRepository>();
 
 // Approval chains for stock adjustments (TK-102): Master resolves them, this
 // service stores the steps.
@@ -94,8 +92,8 @@ builder.Services.AddHttpClient<Shared.Kernel.CustomFields.ICustomFieldDefinition
 builder.Services.AddScoped<ItemRepository>();
 builder.Services.AddScoped<CostingRepository>();
 builder.Services.AddScoped<StockRepository>();
-builder.Services.AddScoped<MenuRepository>();
-builder.Services.AddScoped<TableRepository>();
+// The restaurant menu (TK-144).
+builder.Services.AddScoped<RestaurantMenuRepository>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so an item code is allocated inside the

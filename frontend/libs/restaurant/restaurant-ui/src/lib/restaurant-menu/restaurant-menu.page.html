@@ -1,4 +1,261 @@
-<div class="p-4">
-  <h1 class="text-xl font-bold">Restaurant Menu</h1>
-  <p>Menu management pages and availability toggle...</p>
-</div>
+<section class="menu">
+  <header class="menu__head">
+    <h1 class="menu__title">Menu</h1>
+    @switch (tab()) {
+      @case ('dishes') {
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newDish()" [disabled]="!categories().length">Add a dish</button>
+      }
+      @case ('categories') {
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newCategory()">Add a category</button>
+      }
+      @case ('schedules') {
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newSchedule()">Add a timed menu</button>
+      }
+    }
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Menu">
+    @for (t of tabs; track t.tab) {
+      <button type="button" role="tab" [attr.aria-selected]="t.tab === tab()" (click)="choose(t.tab)">{{ t.label }}</button>
+    }
+  </nav>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @switch (tab()) {
+    @case ('dishes') {
+      @if (!loading() && !categories().length) {
+        <p class="menu__muted">Add a category first: every dish is listed under one.</p>
+      }
+
+      <div class="menu__bar">
+        <bb-select label="Category" name="categoryFilter" placeholder="Every category" [options]="categoryOptions()" [(ngModel)]="categoryFilter" (ngModelChange)="loadItems()" />
+        <bb-text-input label="Search" name="search" placeholder="Dish name or code" [(ngModel)]="search" (keyup.enter)="loadItems()" />
+      </div>
+
+      <bb-data-grid
+        gridCode="RESTAURANT_MENU"
+        label="Dishes"
+        [columns]="columns"
+        [data]="items()"
+        [loading]="loading()"
+        [paged]="false"
+        [showColumnFilters]="false"
+        stackOnPhone
+        emptyText="No dishes here yet."
+        (rowClick)="openDish($event)"
+      >
+        <ng-template bbCellTemplate="price" let-r>{{ price(r) }}</ng-template>
+        <ng-template bbCellTemplate="isAvailable" let-r>
+          <button
+            type="button"
+            class="btn btn--small menu__toggle"
+            [class.menu__toggle--off]="!r.isAvailable"
+            [attr.aria-pressed]="!r.isAvailable"
+            [attr.aria-label]="r.isAvailable ? 'Mark ' + r.itemName + ' sold out' : 'Put ' + r.itemName + ' back on'"
+            [disabled]="busy()"
+            (click)="$event.stopPropagation(); toggleAvailable(r, !r.isAvailable)"
+          >
+            {{ r.isAvailable ? 'On' : 'Sold out' }}
+          </button>
+        </ng-template>
+      </bb-data-grid>
+
+      @if (editing(); as current) {
+        <div class="menu__sheet" role="dialog" aria-modal="true" [attr.aria-label]="current === 'new' ? 'New dish' : current.itemName">
+          <div class="menu__panel">
+            <header class="menu__panel-head">
+              <h2 class="menu__subtitle">{{ current === 'new' ? 'New dish' : current.itemName }}</h2>
+              <button type="button" class="btn" (click)="closeDish()">Close</button>
+            </header>
+
+            <div class="menu__grid">
+              @if (current === 'new') {
+                <div class="menu__field">
+                  <span class="menu__label">Item</span>
+                  <button type="button" class="btn menu__pick" (click)="openPicker()">{{ itemLabel() || 'Choose an item…' }}</button>
+                  <span class="menu__muted">The dish's name, tax and unit come from the item master.</span>
+                </div>
+              } @else {
+                <div class="menu__field">
+                  <span class="menu__label">Item</span>
+                  <span>{{ itemLabel() }}</span>
+                </div>
+              }
+              <bb-select label="Category" name="menuCategoryId" [clearable]="false" [options]="categoryOptions()" [(ngModel)]="draft.menuCategoryId" />
+              <bb-select label="Timed menu" name="menuScheduleId" placeholder="All day" [options]="scheduleOptions()" [(ngModel)]="draft.menuScheduleId" />
+              <bb-select label="Made at" name="station" [clearable]="false" [options]="stationOptions" [(ngModel)]="draft.station" />
+              <bb-checkbox name="isAvailable" text="Available to order" [(ngModel)]="draft.isAvailable" />
+            </div>
+
+            <fieldset class="menu__group">
+              <legend class="menu__legend">Portions</legend>
+              <p class="menu__muted">Leave empty to sell the dish at the item's price. With portions, each is ordered and priced on its own.</p>
+              @for (v of draft.variants; track $index) {
+                <div class="menu__row">
+                  <bb-text-input label="Portion" [name]="'vname' + $index" [(ngModel)]="v.name" />
+                  <bb-money-input label="Price" [name]="'vprice' + $index" [formats]="formats.settings()" [(ngModel)]="v.price" />
+                  <bb-number-input label="Portion factor" hint="0.5 for a half" [name]="'vfactor' + $index" [decimals]="4" [(ngModel)]="v.portionFactor" />
+                  <button type="button" class="btn btn--link" (click)="removeVariant($index)">Remove</button>
+                </div>
+              }
+              <div class="menu__actions-left">
+                <button type="button" class="btn" (click)="addVariant()">Add a portion</button>
+                @if (!draft.variants.length) {
+                  <button type="button" class="btn" (click)="addHalfAndFull()">Half and full</button>
+                }
+              </div>
+            </fieldset>
+
+            <fieldset class="menu__group">
+              <legend class="menu__legend">Prices by order type</legend>
+              <p class="menu__muted">Only where takeaway or delivery costs something different. Anything not listed sells at its own price.</p>
+              @for (p of draft.prices; track $index) {
+                <div class="menu__row">
+                  <bb-select label="Order type" [name]="'ptype' + $index" [clearable]="false" [options]="orderTypeOptions" [(ngModel)]="p.orderType" />
+                  @if (draft.variants.length) {
+                    <bb-select label="Portion" [name]="'pvariant' + $index" [clearable]="false" [options]="variantOptions()" [(ngModel)]="p.variantName" />
+                  }
+                  <bb-money-input label="Price" [name]="'pprice' + $index" [formats]="formats.settings()" [(ngModel)]="p.price" />
+                  <button type="button" class="btn btn--link" (click)="removePrice($index)">Remove</button>
+                </div>
+              }
+              <div class="menu__actions-left">
+                <button type="button" class="btn" (click)="addPrice()">Add a price</button>
+              </div>
+            </fieldset>
+
+            <fieldset class="menu__group">
+              <legend class="menu__legend">Choices</legend>
+              <p class="menu__muted">Groups such as "Spice level" (choose 1) or "Extras" (up to 3). A minimum above 0 makes the group required.</p>
+              @for (g of draft.groups; track $index; let gi = $index) {
+                <div class="menu__choice-group">
+                  <div class="menu__row">
+                    <bb-text-input label="Group" [name]="'gname' + gi" [(ngModel)]="g.name" />
+                    <bb-number-input label="Choose at least" [name]="'gmin' + gi" [decimals]="0" [(ngModel)]="g.minChoices" />
+                    <bb-number-input label="Choose at most" [name]="'gmax' + gi" [decimals]="0" [(ngModel)]="g.maxChoices" />
+                    <button type="button" class="btn btn--link" (click)="removeGroup(gi)">Remove group</button>
+                  </div>
+                  @for (m of g.modifiers; track $index; let mi = $index) {
+                    <div class="menu__row menu__row--inset">
+                      <bb-text-input label="Choice" [name]="'mname' + gi + '_' + mi" [(ngModel)]="m.name" />
+                      <bb-money-input label="Adds" [name]="'mprice' + gi + '_' + mi" allowNegative [formats]="formats.settings()" [(ngModel)]="m.priceChange" />
+                      <bb-checkbox [name]="'mavail' + gi + '_' + mi" text="Available" [(ngModel)]="m.isAvailable" />
+                      <button type="button" class="btn btn--link" (click)="removeModifier(g, mi)">Remove</button>
+                    </div>
+                  }
+                  <div class="menu__actions-left">
+                    <button type="button" class="btn" (click)="addModifier(g)">Add a choice</button>
+                  </div>
+                </div>
+              }
+              <div class="menu__actions-left">
+                <button type="button" class="btn" (click)="addGroup()">Add a choice group</button>
+              </div>
+            </fieldset>
+
+            <footer class="menu__actions">
+              @if (current !== 'new') {
+                <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="removeDish()">Take off the menu</button>
+              }
+              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveDish()">Save</button>
+            </footer>
+          </div>
+        </div>
+      }
+    }
+
+    @case ('categories') {
+      <ul class="menu__list">
+        @for (c of categories(); track c.menuCategoryId) {
+          <li class="menu__list-row">
+            <button type="button" class="menu__list-main" (click)="openCategory(c)">
+              <span>{{ c.name }}</span>
+              <span class="menu__muted">{{ c.itemCount }} {{ c.itemCount === 1 ? 'dish' : 'dishes' }}{{ c.isActive ? '' : ' · inactive' }}</span>
+            </button>
+          </li>
+        } @empty {
+          <li class="menu__muted">No categories yet.</li>
+        }
+      </ul>
+
+      @if (editingCategory(); as current) {
+        <div class="menu__panel menu__panel--inline">
+          <h2 class="menu__subtitle">{{ current === 'new' ? 'New category' : current.name }}</h2>
+          <bb-text-input label="Name" name="categoryName" [(ngModel)]="categoryName" />
+          <bb-checkbox name="categoryActive" text="Active" hint="An inactive category and its dishes are left off the order screen." [(ngModel)]="categoryActive" />
+          <footer class="menu__actions">
+            @if (current !== 'new') {
+              <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy() || current.itemCount > 0" (click)="deleteCategory(current)">Delete</button>
+            }
+            <button type="button" class="btn" (click)="editingCategory.set(null)">Cancel</button>
+            <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveCategory()">Save</button>
+          </footer>
+        </div>
+      }
+    }
+
+    @case ('schedules') {
+      <p class="menu__muted">A timed menu limits its dishes to certain days and hours, such as breakfast. Dishes on no timed menu are served all day.</p>
+      <ul class="menu__list">
+        @for (s of schedules(); track s.menuScheduleId) {
+          <li class="menu__list-row">
+            <button type="button" class="menu__list-main" (click)="openSchedule(s)">
+              <span>{{ s.name }}</span>
+              <span class="menu__muted">{{ daysLabel(s.days) }} · {{ hoursLabel(s.startTime, s.endTime) }}{{ s.isActive ? '' : ' · off' }}</span>
+            </button>
+          </li>
+        } @empty {
+          <li class="menu__muted">No timed menus. Every dish is served all day.</li>
+        }
+      </ul>
+
+      @if (editingSchedule(); as current) {
+        <div class="menu__panel menu__panel--inline">
+          <h2 class="menu__subtitle">{{ current === 'new' ? 'New timed menu' : current.name }}</h2>
+          <bb-text-input label="Name" name="scheduleName" placeholder="Breakfast" [(ngModel)]="scheduleDraft.name" />
+          <div class="menu__field">
+            <span class="menu__label">Days</span>
+            <div class="menu__days">
+              <button type="button" class="btn btn--small" (click)="setDays(everyDay)">Every day</button>
+              <button type="button" class="btn btn--small" (click)="setDays(weekdays)">Weekdays</button>
+              <button type="button" class="btn btn--small" (click)="setDays(weekend)">Weekend</button>
+            </div>
+            <div class="menu__days">
+              @for (d of days; track d.flag) {
+                <bb-checkbox [name]="'day' + d.flag" [text]="d.short" [ngModel]="hasDay(d.flag)" (ngModelChange)="toggleDay(d.flag, $event)" />
+              }
+            </div>
+          </div>
+          <div class="menu__row">
+            <bb-text-input label="From" name="startTime" placeholder="07:00" hint="24-hour clock" [(ngModel)]="scheduleDraft.startTime" />
+            <bb-text-input label="Until" name="endTime" placeholder="11:00" hint="24-hour clock" [(ngModel)]="scheduleDraft.endTime" />
+          </div>
+          <p class="menu__muted">An end before the start runs past midnight: 22:00 until 02:00 is a late menu.</p>
+          <bb-checkbox name="scheduleActive" text="On" hint="While off, its dishes are not served at all." [(ngModel)]="scheduleDraft.isActive" />
+          <footer class="menu__actions">
+            @if (current !== 'new') {
+              <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="deleteSchedule(current)">Delete</button>
+            }
+            <button type="button" class="btn" (click)="editingSchedule.set(null)">Cancel</button>
+            <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveSchedule()">Save</button>
+          </footer>
+        </div>
+      }
+    }
+  }
+</section>
+
+<bb-lookup-dialog
+  [open]="pickerOpen()"
+  title="Choose an item"
+  placeholder="Search items by code or name"
+  emptyText="No items match. Add the dish in Inventory › Items first."
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="searchItems($event)"
+  (choose)="pickItem($event)"
+  (dismiss)="pickerOpen.set(false)"
+/>

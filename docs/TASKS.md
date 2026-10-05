@@ -4646,7 +4646,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a Restaurant branch with every switch off sees billing only, turning `restaurant.tables.enabled` on makes the table endpoints answer, and `restaurant.table.required = Always` with tables off changes nothing.
 
 ### TK-144 · Menu: categories, timed menus, variants, modifiers, availability, price by order type
-- [ ] working (Claude Opus 5.5) — 2026-10-05 · rebuilding what `2b058a22` left: its migration created no tables
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#125](https://github.com/jothi-prabaharan/Bill-Book/issues/125)
 - **Group:** L · Restaurant
 - **Lanes:** L-INV, L-RST-UI · **Depends on:** TK-143 · **Decision:** D-39
@@ -4654,12 +4654,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 1 October 2026. A dish can be an `inv.Items` row; `ItemType` is Goods or Service and `ItemProfile` Standard, Pharma or Jewellery. Nothing models categories for a menu, timed menus, portions, modifiers or a sold-out flag. Price lists exist per branch.
 - **Tables:** `inv.MenuCategories`, `inv.MenuSchedules` (days of week, from and to time), `inv.MenuItems` (item, category, station Kitchen or Bar, `IsAvailable`), `inv.ItemVariants` (Half, Full: name, price, portion factor), `inv.ModifierGroups` (minimum, maximum, required), `inv.Modifiers` (price change, optional linked item), `inv.MenuItemPrices` (price by order type). Reuse `PriceList` where it already fits and say so in Notes.
 - **Sub-tasks:**
-  - [ ] Entities, enums (`MenuStation`, `OrderType` lives in Shared.Kernel so Sales can read it) and the migration; `ItemProfile` gains `Restaurant`.
-  - [ ] `MenuRepository` in `Inventory.Repository/Repositories/`: list the menu for an order type at a time of day, flip availability, price a line with its variant and modifiers.
-  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
-  - [ ] Menu management pages and an availability toggle usable from a phone.
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Entities, enums (`MenuStation`, `OrderType` lives in Shared.Kernel so Sales can read it) and the migration; `ItemProfile` gains `Restaurant`.
+  - [x] `MenuRepository` in `Inventory.Repository/Repositories/`: list the menu for an order type at a time of day, flip availability, price a line with its variant and modifiers.
+  - [x] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
+  - [x] Menu management pages and an availability toggle usable from a phone.
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (5 October 2026):**
+  - `2b058a22` and `c384f272` left three Inventory migrations that enabled RLS on tables none of them created, so every menu, table and recipe endpoint failed on its first query. All three are gone, with the entities, repositories and controllers for tables (moving to Sales, TK-145) and recipes (rebuilt in TK-149); the snapshot is back to `8e9ab875` and one migration, `RestaurantMenu`, creates the seven menu tables with the TK-71 RLS block.
+  - `MenuItem` is keyed on the item, so a dish is on the menu once; categories with dishes cannot be deleted (`Restrict`); deleting a timed menu puts its dishes on all day (`SetNull`). `MenuItemPrice` carries an optional `ItemVariantId`, so an order-type price is per dish or per portion, unique with nulls not distinct. `Modifier` gains `LinkedQuantity` and `IsAvailable`; enums are stored as strings, `MenuDays` as flags.
+  - `PriceList` was not reused: it prices an item per customer group, not per order type or portion, and stretching it would make every retail price list carry restaurant columns.
+  - `RestaurantMenuRulesRepository` (pure): `IsServedAt` (end exclusive; past-midnight hours count as the day it began), `PriceOf` (order-type price, else the portion's, else the item's), `ModifierRefusal`, `ScheduleRefusal`, `MenuItemRefusal`. `RestaurantMenuRepository`: categories, timed menus, dishes saved whole (children matched by id, prices replaced), availability for a dish or a choice, the ordering menu, and `PriceLinesAsync` for Sales behind `POST internal/restaurant/menu/price`.
+  - Routes under `api/restaurant/menu` (the old `api/menu` collided with Master's menu); gateway route `inventory-restaurant-menu`. Seven categories are seeded for the Restaurant vertical through `internal/seed/organization`.
+  - A branch's `Vertical` now follows its `BusinessType` when one is set (`OrganizationRepository.Apply`): the branch forms send the type only, so a Restaurant branch was seeded as General and got no categories.
+  - Menu page: Dishes, Categories and Timed menus tabs; the editor is a full-height sheet on a phone; sold out is a button in the list.
 - **Done when:** a half portion lists at its own price and a sold-out item cannot be ordered.
 
 ### TK-145 · Tables: floors, table master, status, merge, split, move

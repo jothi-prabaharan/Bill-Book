@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **The restaurant menu (TK-144).** Restaurant › Menu puts items from the item master into categories, with portions (half and full) at their own prices, choice groups such as spice level or extras, prices that differ for takeaway or delivery, a kitchen station, and timed menus such as breakfast. A dish is marked sold out in one tap and then cannot be ordered. A new Restaurant branch starts with seven menu categories. Before this the menu's tables were never created and its page was empty. See [Menu](restaurant-menu).
+
 - **Fixed**: **Restaurant branches can trade (TK-143).** A branch could be marked Restaurant, but items, stock, sales, purchases, accounts and reports all refused it, and a new Restaurant branch was set up with its accounts alone. A Restaurant branch now works like a retail one, plus its Restaurant menu. **Restaurant** is offered as a business type when creating or editing a branch, and **Savings Scheme** as an add-on for Jewellery branches.
 
 - **Added**: **Settings › Restaurant that changes something (TK-143).** A Restaurant branch chooses how it runs (billing only, counter and kitchen, dine-in without kitchen tickets, or full service), switches tables, kitchen tickets and recipes on or off, and sets what an order needs: a table, a customer, a kitchen ticket before billing, a waiter. A switch that is off hides its screens from the menu and makes their API refuse. The service charge (0 to 25%) and tips are set here too. Before this the page saved nothing and the switches changed nothing. See [Restaurant settings](restaurant-settings).

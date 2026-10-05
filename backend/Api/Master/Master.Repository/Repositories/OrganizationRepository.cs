@@ -440,7 +440,12 @@ public sealed class OrganizationRepository
         organization.FinancialYearStartMonth = request.FinancialYearStartMonth;
         organization.AllowFreeTextLines = request.AllowFreeTextLines;
         organization.DiscountLevel = Enum.Parse<DiscountLevel>(request.DiscountLevel, ignoreCase: true);
-        organization.Vertical = request.Vertical;
+        // The business type replaced the vertical (D-36); the vertical is still
+        // what seeding and trade scope read, so it follows the type when one is set.
+        organization.Vertical = request.BusinessType is { } businessType
+            && Enum.TryParse(businessType.ToString(), out Vertical fromType)
+                ? fromType
+                : request.Vertical;
         organization.BusinessType = request.BusinessType;
         organization.AddOns = request.AddOns;
         organization.DiscountBeforeTax = request.DiscountBeforeTax;
