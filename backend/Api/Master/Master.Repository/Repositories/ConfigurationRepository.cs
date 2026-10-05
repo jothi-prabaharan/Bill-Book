@@ -48,6 +48,18 @@ public sealed class ConfigurationRepository
     }
 
     /// <summary>
+    /// Why a value cannot be saved for a key, or null when it can. Pure. Only
+    /// the keys whose value the product reads in a fixed shape are checked:
+    /// a UPI id that is not one would print a QR no payments app can use (TK-158).
+    /// </summary>
+    public static string? ValueRefusal(string code, string? value) =>
+        code == OrgContextRepository.UpiIdConfigCode
+            && !string.IsNullOrWhiteSpace(value)
+            && !Shared.Kernel.Payments.UpiPayment.IsValidId(value)
+            ? "That is not a UPI id. It looks like name@bank, for example shop@okhdfcbank."
+            : null;
+
+    /// <summary>
     /// Sets an org's value for a key, creating the override row on first write.
     /// Unknown keys are rejected — a value nothing reads is dead data.
     /// </summary>

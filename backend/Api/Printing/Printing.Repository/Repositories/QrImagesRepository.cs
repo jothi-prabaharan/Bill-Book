@@ -34,7 +34,20 @@ public static class QrImagesRepository
 
     /// <summary>What a QR placeholder's image says it is, for a screen reader.</summary>
     public static string AltFor(string tag) =>
-        tag.StartsWith("EInvoice.", StringComparison.OrdinalIgnoreCase) ? "e-invoice QR code" : "QR code of the document number";
+        tag.StartsWith("EInvoice.", StringComparison.OrdinalIgnoreCase) ? "e-invoice QR code"
+        : string.Equals(tag, Shared.Kernel.Printing.PlaceholderCatalog.UpiQrTag, StringComparison.OrdinalIgnoreCase) ? "UPI QR code to pay this invoice"
+        : "QR code of the document number";
+
+    /// <summary>
+    /// The UPI payment QR with its caption (TK-158), so a template need not
+    /// write "Scan to pay" beside a code that may not print. Empty text draws
+    /// nothing, caption included.
+    /// </summary>
+    public static string PaymentImg(string? text) =>
+        string.IsNullOrWhiteSpace(text)
+            ? string.Empty
+            : $"<span class=\"pt-upi\">{Img(text, AltFor(Shared.Kernel.Printing.PlaceholderCatalog.UpiQrTag))}"
+                + "<span class=\"pt-upi-text\">Scan to pay with any UPI app</span></span>";
 }
 
 /// <summary>

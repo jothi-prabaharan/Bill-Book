@@ -33,6 +33,11 @@ public sealed class ConfigurationsController : ControllerBase
     public async Task<IActionResult> Set(
         Guid orgId, string code, [FromBody] Entity.Models.SetConfigurationRequest request, CancellationToken ct)
     {
+        if (ConfigurationRepository.ValueRefusal(code, request.Value) is string refusal)
+        {
+            return BadRequest(new MessageResponse { Message = refusal });
+        }
+
         bool ok = await _config.SetAsync(orgId, code, request.Value, ct);
         return ok
             ? NoContent()

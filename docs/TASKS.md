@@ -5015,17 +5015,25 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a printed invoice carries a barcode and a QR of its document number.
 
 ### TK-158 · UPI payment QR on invoices
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#139](https://github.com/jothi-prabaharan/Bill-Book/issues/139)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-SAL, L-MST, L-PRT, L-WEB · **Depends on:** TK-156
 - **Where:** `Sales.Repository/Repositories/Printing/InvoicePrintRepository.cs`, `Master.Repository/Repositories/ConfigurationRepository.cs`
 - **State:** checked 1 October 2026. An invoice prints the e-invoice QR only; no branch UPI id exists.
 - **Sub-tasks:**
-  - [ ] A branch UPI id setting, stored in `mst.Configuration` like the other settings, with a Settings field.
-  - [ ] `Payment.UpiQr` placeholder: the `upi://pay` string with the UPI id, the branch name, the amount still due and the invoice number; left empty when the invoice is paid or the branch has no UPI id.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] A branch UPI id setting, stored in `mst.Configuration` like the other settings, with a Settings field.
+  - [x] `Payment.UpiQr` placeholder: the `upi://pay` string with the UPI id, the branch name, the amount still due and the invoice number; left empty when the invoice is paid or the branch has no UPI id.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - **Setting**: `payment.upiId` in `mst.Configuration` (seeded empty, category Payments, admin migration `UpiIdSetting`). Settings › Configuration lists every key, so the field needed no new screen. `ConfigurationRepository.ValueRefusal` refuses anything that is not a UPI id (400 with the sentence). Master's org context carries it as `UpiId`.
+  - **Link**: `Shared.Kernel.Payments.UpiPayment.PayUri` — `upi://pay` with `pa`, `pn`, `am` (two places), `cu=INR`, `tn` and `tr`, each escaped; null without a valid id, with nothing due, or in a currency other than rupees. In Shared.Kernel so the till's receipt (TK-164) builds the same string.
+  - **Amount due**: `InvoicePrintRepository.AmountDue` — the whole total on a draft or ready-to-post invoice, Accounting's outstanding (`internal/ledger/settlements`, under the invoice's own transaction code, so a till sale asks the right question) on a posted one, nothing on a void one or when the settlement could not be read. The UPI id comes from `HttpUpiIdProvider`, cached one minute rather than the seller block's six hours, so a changed id is never printed for long.
+  - **Placeholder**: `Payment.UpiQr` (QR type, a new Payment group, invoices only). Printing draws it with the caption *Scan to pay with any UPI app*, and draws nothing — caption included — when the payload's text is empty.
+  - **Template**: seed generation 4 puts it under the invoice's amount in words. `DefaultLayoutGenerator.Build(profile, generation)` reproduces generations 2 to 4 exactly, and the seeder now upgrades an untouched template from any of them.
+  - Tests: `UpiPaymentTests` (ids, the link, rounding, the refusals), `UpiPrintTests` (amount due by status, the catalog tag), `UpiQrPrintTests` (caption and nothing, the standard invoice template only, upgrades from generations 2 and 3, generation 1 never matched), `UpiIdSettingTests`.
+  - Docs: `invoices.md` printing section, a release note.
 - **Done when:** an unpaid invoice prints a QR carrying the branch UPI id, the amount due and the invoice number, and a paid one prints none.
 
 ### TK-159 · Label printing at an exact size

@@ -146,6 +146,14 @@ builder.Services.AddHttpClient<IOrgIdentityProvider, HttpOrgIdentityProvider>(cl
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// The branch's UPI id for the payment QR on an unpaid invoice (TK-158), on its
+// own one-minute cache so a changed id is printed within the minute.
+builder.Services.AddHttpClient<IUpiIdProvider, HttpUpiIdProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // GST rates, read from Accounting and cached per organization and date. The
 // calculator that uses them is pure and lives in Shared.Kernel.Tax, shared with
 // Purchase — one component, because the same sale computed two ways is two

@@ -576,6 +576,18 @@ namespace Master.Repository.Migrations.Admin
                             Name = "Tips",
                             Value = "false",
                             Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000011"),
+                            Category = "Payments",
+                            Code = "payment.upiId",
+                            DataType = "Text",
+                            Description = "The UPI id customers pay this branch at, such as shop@okhdfcbank. An unpaid invoice prints a QR code for it; leave empty for none",
+                            IsSystem = true,
+                            Name = "UPI ID",
+                            Value = "",
+                            Version = 0u
                         });
                 });
 

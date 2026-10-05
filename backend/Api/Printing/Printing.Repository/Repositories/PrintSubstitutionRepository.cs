@@ -246,7 +246,9 @@ public static class PrintSubstitutionRepository
                 case PlaceholderType.QrCode:
                     // Built here from the text, never taken from the payload as
                     // markup, so it needs no sanitising (see QrImagesRepository).
-                    string qr = QrImagesRepository.Img(value as string, QrImagesRepository.AltFor(placeholder.Tag));
+                    string qr = string.Equals(placeholder.Tag, PlaceholderCatalog.UpiQrTag, StringComparison.OrdinalIgnoreCase)
+                        ? QrImagesRepository.PaymentImg(value as string)
+                        : QrImagesRepository.Img(value as string, QrImagesRepository.AltFor(placeholder.Tag));
                     anyMarkup |= qr.Length > 0;
                     return qr;
 

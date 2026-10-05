@@ -806,6 +806,22 @@ public class AdminDbContext : DbContext
                 Value = "false",
                 Category = "Restaurant",
                 IsSystem = true,
+            },
+
+            // The branch's UPI id (TK-158). An unpaid invoice prints a QR code
+            // that opens the customer's payments app with this id, the amount
+            // still due and the invoice number filled in. Empty prints none.
+            new Configuration
+            {
+                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000011"),
+                OrgId = null,
+                Code = "payment.upiId",
+                Name = "UPI ID",
+                Description = "The UPI id customers pay this branch at, such as shop@okhdfcbank. An unpaid invoice prints a QR code for it; leave empty for none",
+                DataType = ConfigDataType.Text,
+                Value = "",
+                Category = "Payments",
+                IsSystem = true,
             });
     }
 

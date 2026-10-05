@@ -194,3 +194,15 @@ public sealed class CustomerKindTests
         Assert.All(demos, c => Assert.Equal("Demo", c.Kind));
     }
 }
+
+/// <summary>A branch's UPI id must be one before it is saved (TK-158).</summary>
+public sealed class UpiIdSettingTests
+{
+    [Theory]
+    [InlineData("payment.upiId", "shop@okhdfcbank", false)]
+    [InlineData("payment.upiId", "", false)]
+    [InlineData("payment.upiId", "not a upi id", true)]
+    [InlineData("format.date", "not a upi id", false)]
+    public void Only_a_real_upi_id_is_saved(string code, string value, bool refused) =>
+        Assert.Equal(refused, Master.Repository.Repositories.ConfigurationRepository.ValueRefusal(code, value) is not null);
+}

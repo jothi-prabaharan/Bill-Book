@@ -25,6 +25,9 @@ public sealed class OrgContextRepository
     /// <see cref="LicenseStatus.NotLicensed"/>, never null, because the branch
     /// itself exists and services read its GSTIN and address from here.
     /// </summary>
+    /// <summary>The configuration key that holds a branch's UPI id (TK-158).</summary>
+    public const string UpiIdConfigCode = "payment.upiId";
+
     public async Task<OrgContextResponse?> ResolveAsync(Guid orgId, CancellationToken ct)
     {
         var row = await (
@@ -128,6 +131,13 @@ public sealed class OrgContextRepository
             await _db.SaveChangesAsync(ct);
         }
 
+        // The branch's UPI id (TK-158): its own value, else the shipped default, which is empty.
+        string? upiId = await _db.Configurations.AsNoTracking()
+            .Where(c => c.Code == UpiIdConfigCode && (c.OrgId == orgId || c.OrgId == null))
+            .OrderBy(c => c.OrgId == null)
+            .Select(c => c.Value)
+            .FirstOrDefaultAsync(ct);
+
         return new OrgContextResponse
         {
             OrgId = row.OrgId,
@@ -174,6 +184,7 @@ public sealed class OrgContextRepository
             BudgetWarningYearToDate = row.BudgetWarningYearToDate,
             PhoneNumber = row.PhoneNumber,
             Email = row.Email,
+            UpiId = string.IsNullOrWhiteSpace(upiId) ? null : upiId.Trim(),
         };
     }
 }

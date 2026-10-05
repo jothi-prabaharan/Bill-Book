@@ -101,6 +101,11 @@ public static class PlaceholderCatalog
             all.AddRange(EInvoice);
         }
 
+        if (string.Equals(profile.Code, "INV", StringComparison.OrdinalIgnoreCase))
+        {
+            all.AddRange(Payment);
+        }
+
         if (string.Equals(profile.Code, KitchenTicketType, StringComparison.OrdinalIgnoreCase))
         {
             all.AddRange(Kitchen);
@@ -304,6 +309,19 @@ public static class PlaceholderCatalog
         Single("EInvoice.EwbDate", "EInvoice", "E-way bill date", PlaceholderType.Date, 60, DateFormat),
         Single("EInvoice.EwbValidUntil", "EInvoice", "E-way bill valid until", PlaceholderType.Date, 70, DateFormat),
     ];
+
+    /// <summary>
+    /// Ways to pay the invoice (TK-158). The UPI QR is the <c>upi://pay</c> link
+    /// for what is still due, empty once it is paid or when the branch has no
+    /// UPI id, so a template may carry it always.
+    /// </summary>
+    private static readonly PlaceholderDefinition[] Payment =
+    [
+        Single(UpiQrTag, "Payment", "UPI QR code to pay what is still due", PlaceholderType.QrCode, 10),
+    ];
+
+    /// <summary>The UPI payment QR (TK-158).</summary>
+    public const string UpiQrTag = "Payment.UpiQr";
 
     private static readonly PlaceholderDefinition[] Totals =
     [

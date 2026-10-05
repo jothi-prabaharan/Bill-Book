@@ -94,6 +94,20 @@ sends that document alone to the browser's print dialog, where it can also be sa
 posted, but every page is stamped **PROFORMA**; a voided invoice is stamped **VOID**. The stamp is
 added whatever the template holds, so a template cannot leave it off.
 
+**An unpaid invoice prints a UPI QR code** (TK-158) under the amount in words, captioned *Scan to pay
+with any UPI app*. Scanning it opens the customer's payments app with the branch's UPI id, the
+branch's name, the amount still due and the invoice number already filled in.
+
+- Set the branch's UPI id once, as **UPI ID** under **Settings › Configuration** (for example
+  `shop@okhdfcbank`). Something that is not a UPI id is refused. With none set, no QR prints.
+- A posted invoice asks for what is still outstanding, so a part-paid invoice asks for the rest,
+  and a paid one prints no QR at all. A draft asks for its whole total. A voided invoice prints none.
+- If the amount still due cannot be read from the books at that moment, the invoice prints without
+  the QR rather than risk asking a customer who has paid to pay again. Print again a moment later.
+- UPI carries rupees only, so an invoice in another currency prints none.
+- The QR is the `{{Payment.UpiQr}}` field in Settings › Print templates, offered on invoices.
+  Untouched standard invoice templates carry it already; on an edited one, insert it where you like.
+
 Printing needs the permission to print sales documents, which Owner, Administrator and Sales
 have and Viewer does not.
 

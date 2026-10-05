@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **A UPI QR code on unpaid invoices (TK-158).** Set the branch's **UPI ID** under Settings › Configuration and every unpaid invoice prints a QR code that opens the customer's payments app with your UPI id, your name, the amount still due and the invoice number filled in. A part-paid invoice asks for the rest; a paid, voided or non-rupee invoice prints none. The standard invoice template carries it; on your own template, insert `{{Payment.UpiQr}}`. See [Printing](invoices#printing).
+
 - **Changed**: **Printed documents carry their own barcode and QR code (TK-157).** The standard templates now print a barcode of the document number under its date and a QR code of it beside the signature line, on every document type except the kitchen ticket. Standard templates nobody has changed are updated on their own; an edited template is left as it is, and the editor offers **Reset to latest**. A printed invoice already shows them. See [Barcodes and QR codes](masters#barcodes-and-qr-codes).
 
 - **Added**: **Barcodes and QR codes on print templates (TK-156).** Two new fields under **Document** in Settings › Print templates: `{{Document.BarcodeImage}}` prints a barcode of the document number (Code128, or EAN-13 for a 13-digit retail code) with the number beneath it, and `{{Document.QrImage}}` prints a QR code of it. Every document type offers both. See [Barcodes and QR codes](masters#barcodes-and-qr-codes).

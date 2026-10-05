@@ -54,8 +54,8 @@ public sealed class DocumentTypeProfile
 /// Left out on purpose: TRM (a transfer between the business's own bank
 /// accounts, which has no counterparty to hand it to), OPB (the migration
 /// screen, read-only after go-live), DEP and STA (produced by a job, never
-/// printed), and POS — a POS sale is an sal.Invoices row and prints as an
-/// ESC/POS receipt from the till, which is not a page layout at all.
+/// printed), and POS — a POS sale is an sal.Invoices row and prints as a
+/// till receipt laid out by the till itself (TK-155), not through a template.
 ///
 /// TRM and OPB still carry a PrintTemplateId column, so adding either here
 /// later needs code and no migration.

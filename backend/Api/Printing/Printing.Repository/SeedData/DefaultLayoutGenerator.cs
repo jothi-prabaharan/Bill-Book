@@ -31,11 +31,18 @@ public static class DefaultLayoutGenerator
     /// and a QR code of it in the signature row (TK-157). A template still at 2
     /// and exactly as generated is upgraded by the seeder; an edited one is
     /// left alone and offered the reset.
+    ///
+    /// <b>4</b> — an invoice carries the UPI payment QR under its amount in words
+    /// (TK-158).
     /// </summary>
-    public const int SeedVersion = 3;
+    public const int SeedVersion = 4;
 
-    /// <summary>The generation before <see cref="SeedVersion"/>: the same layout without the document codes.</summary>
-    public const int PreviousSeedVersion = 2;
+    /// <summary>
+    /// The oldest generation <see cref="Build(DocumentTypeProfile, int)"/> can
+    /// reproduce, and so the oldest an untouched template can be recognised at
+    /// and upgraded from. Generation 1 used a different placeholder markup.
+    /// </summary>
+    public const int OldestReproducibleSeedVersion = 2;
 
     /// <summary>
     /// A placeholder, as it is stored: <c>{{Tag}}</c> and nothing else.
@@ -52,31 +59,37 @@ public static class DefaultLayoutGenerator
     public static string Placeholder(PlaceholderDefinition placeholder) => Placeholder(placeholder.Tag);
 
     /// <summary>The current layout for a document type.</summary>
-    public static PrintContent Build(DocumentTypeProfile profile) => Build(profile, withCodes: true);
+    public static PrintContent Build(DocumentTypeProfile profile) => Build(profile, SeedVersion);
 
     /// <summary>
-    /// The layout, with or without the document codes (TK-157). Without them it
-    /// is exactly what generation <see cref="PreviousSeedVersion"/> wrote, which
-    /// is how the seeder recognises a template nobody has edited.
+    /// The layout exactly as a given generation wrote it, from
+    /// <see cref="OldestReproducibleSeedVersion"/> to <see cref="SeedVersion"/>,
+    /// which is how the seeder recognises a template nobody has edited: 3 added
+    /// the document codes (TK-157), 4 the UPI QR on an invoice (TK-158).
     ///
-    /// A kitchen ticket carries no codes: it is read at the pass and thrown
+    /// A kitchen ticket carries neither: it is read at the pass and thrown
     /// away, and nothing scans it.
     /// </summary>
-    public static PrintContent Build(DocumentTypeProfile profile, bool withCodes)
+    public static PrintContent Build(DocumentTypeProfile profile, int generation)
     {
         ArgumentNullException.ThrowIfNull(profile);
+        ArgumentOutOfRangeException.ThrowIfLessThan(generation, OldestReproducibleSeedVersion);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(generation, SeedVersion);
 
         if (IsKitchenTicket(profile))
         {
             return KitchenTicket();
         }
 
+        bool withCodes = generation >= 3;
+        bool withUpi = generation >= 4 && string.Equals(profile.Code, "INV", StringComparison.OrdinalIgnoreCase);
+
         return new PrintContent
         {
             FixedHeaderHtml = FixedHeader(),
             HeaderHtml = Header(profile, withCodes),
             DetailsHtml = Details(profile),
-            FooterHtml = Footer(profile),
+            FooterHtml = Footer(profile, withUpi),
             FixedFooterHtml = FixedFooter(withCodes),
         };
     }
@@ -253,7 +266,7 @@ public static class DefaultLayoutGenerator
     /// on purpose, so the common case exercises the rule rather than the corner
     /// case being the only thing that ever does.
     /// </summary>
-    private static string Footer(DocumentTypeProfile profile)
+    private static string Footer(DocumentTypeProfile profile, bool withUpi)
     {
         var html = new StringBuilder("<table width=\"100%\"><tbody><tr>");
 
@@ -298,6 +311,12 @@ public static class DefaultLayoutGenerator
         if (profile.HasTotals)
         {
             html.Append($"<div>Amount in words: {Placeholder("Totals.AmountInWords")}</div>");
+        }
+
+        // Prints nothing once the invoice is paid or when the branch has no UPI id (TK-158).
+        if (withUpi)
+        {
+            html.Append($"<div>{Placeholder(PlaceholderCatalog.UpiQrTag)}</div>");
         }
 
         return html.ToString();

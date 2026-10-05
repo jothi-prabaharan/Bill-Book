@@ -5,6 +5,7 @@ using Sales.Entity.Enums;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;
+using Shared.Kernel.Payments;
 using Shared.Kernel.Printing;
 using Shared.Kernel.Tenancy;
 
@@ -26,6 +27,9 @@ public sealed class InvoicePrintRepository
     private readonly IPrintingClient _printing;
 
     private readonly ICustomFieldDefinitions? _customFields;
+    private readonly IUpiIdProvider? _upi;
+    private readonly ILedgerClient? _ledger;
+    private readonly ITenantContext? _tenant;
 
     public InvoicePrintRepository(
         SalesDbContext db,
@@ -33,9 +37,15 @@ public sealed class InvoicePrintRepository
         IContactNameLookup contactNames,
         IItemNameLookup itemNames,
         IPrintingClient printing,
-        ICustomFieldDefinitions? customFields = null)
+        ICustomFieldDefinitions? customFields = null,
+        IUpiIdProvider? upi = null,
+        ILedgerClient? ledger = null,
+        ITenantContext? tenant = null)
     {
         _customFields = customFields;
+        _upi = upi;
+        _ledger = ledger;
+        _tenant = tenant;
         _db = db;
         _orgIdentity = orgIdentity;
         _contactNames = contactNames;
@@ -93,6 +103,9 @@ public sealed class InvoicePrintRepository
             .OrderByDescending(e => e.EwayBillId)
             .FirstOrDefaultAsync(ct));
 
+        // A UPI QR for what is still owed (TK-158), when the branch has a UPI id.
+        payload.Singles[UpiQrTag] = await UpiQrTextAsync(invoice, seller.Name, ct) ?? string.Empty;
+
         return await _printing.RenderAsync(
             invoice.TransactionTypeCode?.Trim() is { Length: 3 } code && DocumentTypeCatalog.IsPrintable(code)
                 ? code
@@ -101,6 +114,51 @@ public sealed class InvoicePrintRepository
             payload,
             Watermark(invoice.Status, eInvoice?.Status),
             ct);
+    }
+
+    /// <summary>The placeholder the payment QR fills (TK-158).</summary>
+    public const string UpiQrTag = PlaceholderCatalog.UpiQrTag;
+
+    /// <summary>
+    /// What a payment QR should ask for, or null for none. Pure. A draft or a
+    /// document ready to post asks for its whole total (it prints PROFORMA); a
+    /// posted invoice asks for what the ledger says is still outstanding, and
+    /// nothing when that could not be read, because asking a customer who has
+    /// paid to pay again is worse than printing no QR; a voided one asks for
+    /// nothing.
+    /// </summary>
+    public static decimal? AmountDue(DocumentStatus status, decimal totalAmount, Settlement? settlement) => status switch
+    {
+        DocumentStatus.Draft or DocumentStatus.ReadyToPost => totalAmount,
+        DocumentStatus.Posted => settlement?.OutstandingAmount,
+        _ => null,
+    };
+
+    private async Task<string?> UpiQrTextAsync(Invoice invoice, string payeeName, CancellationToken ct)
+    {
+        if (_upi is null || await _upi.GetUpiIdAsync(ct) is not string upiId)
+        {
+            return null;
+        }
+
+        Settlement? settlement = null;
+        if (invoice.Status == DocumentStatus.Posted
+            && _ledger is not null
+            && _tenant is { CustomerId: Guid customerId, OrgId: Guid orgId })
+        {
+            IReadOnlyDictionary<long, Settlement> answer = await _ledger.GetSettlementsAsync(new SettlementQueryRequest
+            {
+                CustomerId = customerId,
+                OrgId = orgId,
+                TransactionTypeCode = invoice.TransactionTypeCode?.Trim() is { Length: > 0 } code ? code : "INV",
+                TransactionIds = [invoice.InvoiceId],
+            }, ct);
+            answer.TryGetValue(invoice.InvoiceId, out settlement);
+        }
+
+        return AmountDue(invoice.Status, invoice.TotalAmount, settlement) is decimal due
+            ? UpiPayment.PayUri(upiId, payeeName, due, invoice.DocumentNo, invoice.CurrencyCode)
+            : null;
     }
 
     /// <summary>The IRN, acknowledgement and signed QR payload, on a registered e-invoice only.</summary>

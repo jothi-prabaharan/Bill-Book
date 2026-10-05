@@ -39,7 +39,7 @@ public sealed class PrintTemplateSeederRepository
         _db.PrintTemplates.AddRange(missing);
 
         int upgraded = 0;
-        foreach (PrintTemplate template in existing.Where(t => t.SeedVersion == DefaultLayoutGenerator.PreviousSeedVersion))
+        foreach (PrintTemplate template in existing)
         {
             if (Upgrade(template))
             {
@@ -56,15 +56,16 @@ public sealed class PrintTemplateSeederRepository
     }
 
     /// <summary>
-    /// Replaces a previous-generation template's content with the current one
-    /// when, and only when, it is still exactly what that generation wrote.
-    /// Pure apart from the row it is given.
+    /// Replaces an older generation's template with the current layout when,
+    /// and only when, it is still exactly what its own generation wrote. Pure
+    /// apart from the row it is given.
     /// </summary>
     public static bool Upgrade(PrintTemplate template)
     {
-        if (template.SeedVersion != DefaultLayoutGenerator.PreviousSeedVersion
+        if (template.SeedVersion < DefaultLayoutGenerator.OldestReproducibleSeedVersion
+            || template.SeedVersion >= DefaultLayoutGenerator.SeedVersion
             || DocumentTypeCatalog.Find(template.DocumentTypeCode) is not DocumentTypeProfile profile
-            || !SameContent(template.Content, DefaultLayoutGenerator.Build(profile, withCodes: false)))
+            || !SameContent(template.Content, DefaultLayoutGenerator.Build(profile, template.SeedVersion)))
         {
             return false;
         }

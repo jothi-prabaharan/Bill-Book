@@ -526,6 +526,9 @@ public sealed class PrintRendererRepository
         + ".pt-barcode{display:inline-block;text-align:center;line-height:1}"
         + ".pt-barcode img{display:block;height:12mm;max-width:100%;margin:0 auto}"
         + ".pt-barcode-text{display:block;font:8pt monospace;margin-top:1mm}"
+        // The UPI payment QR and its caption (TK-158).
+        + ".pt-upi{display:inline-block;text-align:center}"
+        + ".pt-upi-text{display:block;font-size:8pt;margin-top:1mm}"
         + ".pt-einvoice{margin-bottom:3mm;font-size:8pt}"
         + ".pt-einvoice td{vertical-align:top;word-break:break-all}"
         + ".pt-einvoice-qr{width:34mm;text-align:right}"

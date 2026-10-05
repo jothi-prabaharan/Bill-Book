@@ -285,6 +285,9 @@ public class OrgContextResponse
     public string? PhoneNumber { get; set; }
 
     public string? Email { get; set; }
+
+    /// <summary>The branch's UPI id from <c>payment.upiId</c>, or null when it has none (TK-158).</summary>
+    public string? UpiId { get; set; }
 }
 
 

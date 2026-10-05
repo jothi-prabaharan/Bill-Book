@@ -54,8 +54,8 @@ public sealed class DocumentCodesTemplateTests
         OrgId = Guid.NewGuid(),
         DocumentTypeCode = code,
         TemplateName = code,
-        Content = DefaultLayoutGenerator.Build(DocumentTypeCatalog.Find(code)!, withCodes: false),
-        SeedVersion = DefaultLayoutGenerator.PreviousSeedVersion,
+        Content = DefaultLayoutGenerator.Build(DocumentTypeCatalog.Find(code)!, 2),
+        SeedVersion = 2,
     };
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class DocumentCodesTemplateTests
         Assert.False(PrintTemplateSeederRepository.Upgrade(template));
         Assert.Contains("HDFC", template.Content.FooterHtml);
         Assert.DoesNotContain("{{Document.BarcodeImage}}", AllHtml(template.Content));
-        Assert.Equal(DefaultLayoutGenerator.PreviousSeedVersion, template.SeedVersion);
+        Assert.Equal(2, template.SeedVersion);
     }
 
     [Fact]
@@ -94,12 +94,12 @@ public sealed class DocumentCodesTemplateTests
     }
 
     [Fact]
-    public void Without_the_codes_the_layout_is_the_previous_generation()
+    public void Generation_three_is_generation_two_plus_the_codes()
     {
         DocumentTypeProfile quote = DocumentTypeCatalog.Find("QTE")!;
 
-        string with = AllHtml(DefaultLayoutGenerator.Build(quote));
-        string without = AllHtml(DefaultLayoutGenerator.Build(quote, withCodes: false));
+        string with = AllHtml(DefaultLayoutGenerator.Build(quote, 3));
+        string without = AllHtml(DefaultLayoutGenerator.Build(quote, 2));
 
         Assert.DoesNotContain("Document.BarcodeImage", without);
         Assert.DoesNotContain("Document.QrImage", without);
