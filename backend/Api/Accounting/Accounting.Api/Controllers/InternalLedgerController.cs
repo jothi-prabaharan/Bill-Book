@@ -100,8 +100,8 @@ public sealed class InternalLedgerController : ControllerBase
     ///
     /// A read rather than a write, but internal and on this controller because
     /// the caller is a service and not a user: Sales asks it once per page of
-    /// its invoice list, and the alternative â€” a round trip per contact, matched
-    /// up afterwards â€” is the N+1 that makes that screen slow.
+    /// its invoice list, and the alternative — a round trip per contact, matched
+    /// up afterwards — is the N+1 that makes that screen slow.
     /// </summary>
     [HttpPost("settlements")]
     public async Task<IActionResult> Settlements(

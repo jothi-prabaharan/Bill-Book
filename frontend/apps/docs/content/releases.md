@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Kinds of customer: Standard, Internal and Demo (TK-152).** Signup always makes a Standard customer. A platform operator can also create an Internal customer (our own organisation) or a Demo customer from **Customers** on the admin pages; both start on Elite and never lapse, are never billed, and have no user or branch limit. The customer list shows the kind and filters by it. See [Kinds of customer](platform#kinds-of-customer).
+
 - **Changed**: **Signup asks what your business does, not which app (TK-136).** Choose the first branch's kind of business (Retail, Pharma, Jewellery, School, Service or Restaurant) and its add-ons, or pick **HRMS or Payroll only** and tick one of them. There are no separate RetailErp, School, HRMS and Payroll signups any more. See [Signing up](platform#signing-up).
 
 - **Removed**: **Settings › Applications (TK-136).** There are no apps to start a trial of: School is a business type and HRMS and Payroll are add-ons, switched on per branch on **Settings › Branches**. One licence covers the customer.

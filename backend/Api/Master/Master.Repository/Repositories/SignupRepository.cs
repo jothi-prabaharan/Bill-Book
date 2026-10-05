@@ -91,6 +91,10 @@ public sealed class SignupRepository
         string databaseName = await _databases.AllocateAsync(PlanTier.Trial, ct)
             ?? throw new NoTenantCapacityException(PlanTier.Trial);
 
+        // Public signup is always Standard; the controllers decide (TK-152).
+        CustomerKind kind = request.Kind ?? CustomerKind.Standard;
+        (LicenseType licenceType, DateOnly licenceExpiry) = CustomerKindRepository.FirstLicence(kind, today, TrialDays);
+
         CustomerEntity customer = null!;
 
         // CustomerCode is read-max-then-increment; the unique index makes the
@@ -107,8 +111,8 @@ public sealed class SignupRepository
                 Name = request.CompanyName,
                 BillingEmail = request.Email,
                 Status = TenantStatus.Provisioning,
-                PlanTier = PlanTier.Trial,
-                Kind = request.Kind ?? Master.Entity.Enums.CustomerKind.Standard,
+                PlanTier = CustomerKindRepository.FirstPlanTier(kind),
+                Kind = kind,
                 DatabaseName = databaseName,
             };
             _db.Customers.Add(customer);
@@ -134,11 +138,11 @@ public sealed class SignupRepository
         {
             LicenseId = Guid.NewGuid(),
             CustomerId = customer.CustomerId,
-            LicenseType = LicenseType.Trial,
+            LicenseType = licenceType,
             StartDate = today,
-            ExpiryDate = (request.Kind == Master.Entity.Enums.CustomerKind.Internal || request.Kind == Master.Entity.Enums.CustomerKind.Demo) ? DateOnly.MaxValue.AddDays(-14) : today.AddDays(TrialDays),
-            MaxUsers = TrialMaxUsers,
-            MaxOrganizations = TrialMaxOrganizations,
+            ExpiryDate = licenceExpiry,
+            MaxUsers = CustomerKindRepository.NeverLapses(kind) ? CustomerKindRepository.UnbilledMaxUsers : TrialMaxUsers,
+            MaxOrganizations = CustomerKindRepository.NeverLapses(kind) ? CustomerKindRepository.UnbilledMaxOrganizations : TrialMaxOrganizations,
             IsActive = true,
         };
         _db.Licenses.Add(license);
@@ -250,8 +254,10 @@ public sealed class SignupRepository
     /// first — a freshly provisioned or stuck signup is what an operator opens
     /// this screen to look at.
     /// </summary>
-    public async Task<IReadOnlyList<CustomerListItem>> ListAsync(CancellationToken ct) =>
+    /// <summary>The platform admin's customer list, newest first, optionally of one kind (TK-152).</summary>
+    public async Task<IReadOnlyList<CustomerListItem>> ListAsync(CancellationToken ct, CustomerKind? kind = null) =>
         await _db.Customers
+            .Where(c => kind == null || c.Kind == kind)
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new CustomerListItem
             {
@@ -260,6 +266,7 @@ public sealed class SignupRepository
                 Name = c.Name,
                 BillingEmail = c.BillingEmail,
                 PlanTier = c.PlanTier.ToString(),
+                Kind = c.Kind.ToString(),
                 Status = c.Status.ToString(),
                 CreatedAt = c.CreatedAt,
             })

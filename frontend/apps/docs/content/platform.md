@@ -149,6 +149,18 @@ HRMS, Payroll and School are no longer web apps of their own (TK-134). Their pag
 - **Settings › Number series is a settings screen.** Opening or changing it takes the settings permissions instead of the accounting ones, matching the menu, which lists it under settings.
 - For developers: every page under the shell must declare `data.access`, either `{ permission: 'x.view' }` or `{ signedIn: true }`, optionally with `businessTypes` or `addOns`. A page that declares nothing is refused, and the route spec (`auditShellRoutes`) fails the build. The web app mounts the shell with `shellRoutes({ children })`, which attaches the guards. `*bbIfCan="'x.edit'"` hides a button the same way.
 
+## Kinds of customer
+
+Every customer is one of three kinds (TK-152):
+
+| Kind | What it is | How it is made | Licence |
+|---|---|---|---|
+| **Standard** | A paying customer | Public signup, or a platform operator | A 14-day trial, then a paid licence that can lapse |
+| **Internal** | Our own organisation, with real books | Only a platform operator, or the first start of an install | Elite, never lapses |
+| **Demo** | A customer for testing and showing the product | Only a platform operator | Elite, never lapses |
+
+Public signup always makes a Standard customer, whatever the request says. An Internal or Demo customer is never expired, never stamped *Expired*, never billed or reminded to pay, and is not held to a user or branch limit: its new branches carry no expiry and are never trial branches. The platform admin's **Customers** page shows each customer's kind, filters by it, and lets an operator choose the kind and the first branch's business type when adding one.
+
 ## The licence
 
 One row per customer (`GET /api/customers/{id}/licenses`), created automatically at signup:

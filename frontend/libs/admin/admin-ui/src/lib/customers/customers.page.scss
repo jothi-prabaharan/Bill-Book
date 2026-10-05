@@ -27,3 +27,11 @@ button:disabled { opacity: .6; cursor: default; }
   .fields { grid-template-columns: 1fr; }
   .sheet { border-radius: 0; margin-left: -1rem; margin-right: -1rem; }
 }
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  max-width: 20rem;
+}

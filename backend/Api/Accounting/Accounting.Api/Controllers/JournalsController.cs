@@ -10,7 +10,7 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Accounting â€º Journal entries. The manual journal â€” the one document a person
+/// Accounting › Journal entries. The manual journal — the one document a person
 /// writes by naming two accounts directly.
 ///
 /// <b>There is no update or delete past Draft.</b> Post and reverse are separate
@@ -78,7 +78,7 @@ public sealed class JournalsController : ControllerBase
 
     /// <summary>
     /// Creates the offsetting entry. Returns the reversal's id, not the
-    /// original's â€” the reversal is a document in its own right and the caller
+    /// original's — the reversal is a document in its own right and the caller
     /// will want to open it.
     /// </summary>
     [HttpPost("{journalId:long}/reverse")]
@@ -121,7 +121,7 @@ public sealed class JournalsController : ControllerBase
 
             SaveJournalOutcome.NotDraft => BadRequest(new MessageResponse
             {
-                Message = "A posted entry is never edited. Reverse it instead â€” the reversal "
+                Message = "A posted entry is never edited. Reverse it instead — the reversal "
                     + "stands beside it, and both stay in the ledger.",
             }),
 
@@ -137,7 +137,7 @@ public sealed class JournalsController : ControllerBase
 
             SaveJournalOutcome.NoLines => BadRequest(new MessageResponse
             {
-                Message = "There is nothing to post â€” the entry has no lines.",
+                Message = "There is nothing to post — the entry has no lines.",
             }),
 
             // 409, not 400: the entry itself may be perfectly good, and dating it

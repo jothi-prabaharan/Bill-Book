@@ -9,7 +9,7 @@ namespace Master.Api.Controllers;
 
 /// <summary>
 /// Internal send endpoint. Other services (Identity, for invites and OTPs) post
-/// here rather than reading SMTP credentials themselves â€” the decrypted password
+/// here rather than reading SMTP credentials themselves — the decrypted password
 /// stays inside Platform. Must not be routed through the public gateway.
 /// </summary>
 [ApiController]
@@ -63,7 +63,7 @@ public sealed class InternalNotificationsController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Log without the body â€” it carries invite links and OTP codes.
+            // Log without the body — it carries invite links and OTP codes.
             _logger.LogError(ex, "Failed to send '{Subject}' to {ToEmail}", request.Subject, request.ToEmail);
             return StatusCode(StatusCodes.Status502BadGateway, new MessageResponse
             {

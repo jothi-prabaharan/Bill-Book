@@ -15,6 +15,16 @@
   series, payment terms, units and purities — so it stays unusable until that finishes.
 </p>
 
+<div class="filters">
+  <bb-select
+    label="Kind"
+    placeholder=""
+    [options]="kindFilterOptions"
+    [ngModel]="kindFilter()"
+    (ngModelChange)="filterByKind($event)"
+  />
+</div>
+
 <bb-data-grid [gridCode]="'ADMIN_CUSTOMERS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="customerCode" let-row>
     <code>{{ row.customerCode }}</code>
@@ -24,6 +34,13 @@
   </ng-template>
   <ng-template bbCellTemplate="createdAt" let-row>
     {{ dateOnly(row.createdAt) }}
+  </ng-template>
+  <ng-template bbCellTemplate="kind" let-row>
+    @switch (row.kind) {
+      @case ('Internal') { <span class="badge">Internal</span> }
+      @case ('Demo') { <span class="badge trial">Demo</span> }
+      @default { Standard }
+    }
   </ng-template>
   <ng-template bbCellTemplate="status" let-row>
     @switch (row.status) {
@@ -58,6 +75,25 @@
     </p>
 
     <div class="fields">
+      <div class="field">
+        <bb-select
+          label="Kind"
+          placeholder=""
+          hint="Standard is a paying customer on a 14-day trial. Internal and Demo are never billed and never lapse."
+          [options]="kindOptions"
+          [(ngModel)]="form.kind"
+        />
+      </div>
+
+      <div class="field">
+        <bb-select
+          label="First branch's business type"
+          placeholder=""
+          [options]="businessTypeOptions"
+          [(ngModel)]="form.businessType"
+        />
+      </div>
+
       <div class="field">
         <bb-text-input label="Owner name" [(ngModel)]="form.displayName" maxlength="200" />
       </div>

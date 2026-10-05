@@ -45,7 +45,7 @@ public sealed class AuthController : ControllerBase
         }
         catch (InvalidCredentialsException)
         {
-            // Generic â€” never reveal which field was wrong.
+            // Generic — never reveal which field was wrong.
             return Unauthorized(new MessageResponse { Message = "Invalid email or password." });
         }
         catch (NoOrganizationAccessException)
@@ -140,8 +140,8 @@ public sealed class AuthController : ControllerBase
     ///
     /// Reuses the same path as step two of login: a branch is a separate set of
     /// books, so switching into one means a new token carrying that org and the
-    /// permissions the user holds *there*. Re-authenticating is not required â€”
-    /// the caller has already proved who they are â€” but access to the target
+    /// permissions the user holds *there*. Re-authenticating is not required —
+    /// the caller has already proved who they are — but access to the target
     /// branch is checked exactly as it is at login.
     /// </summary>
     [Authorize]
@@ -180,13 +180,13 @@ public sealed class AuthController : ControllerBase
     /// <summary>
     /// Exchanges a refresh token for a new access token and a new refresh token.
     ///
-    /// <b>Anonymous, because the access token it replaces has expired</b> â€” that
+    /// <b>Anonymous, because the access token it replaces has expired</b> — that
     /// is the whole point of the call. The refresh token in the body is the
     /// credential, and it is checked against the stored SHA-256 rather than
     /// trusted.
     ///
     /// <b>Every refusal is the same 401 with the same message.</b> Unknown,
-    /// expired, revoked, replayed, or lost a race â€” the client does the same
+    /// expired, revoked, replayed, or lost a race — the client does the same
     /// thing in all five cases, and answering differently would tell whoever is
     /// guessing which half of the guess was right. Reuse is distinguished in the
     /// log and in <c>mst.LoginHistory</c>, never in the response.

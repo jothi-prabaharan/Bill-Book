@@ -4876,19 +4876,28 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the owner releases it and each part has been split into its own card.
 
 ### TK-152 · Customer kinds: Standard, Internal and Demo
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#133](https://github.com/jothi-prabaharan/Bill-Book/issues/133)
 - **Group:** M · Customer kinds and demo customers
 - **Lanes:** L-MST, L-WEB, L-DOC · **Depends on:** — · **Decision:** D-44
 - **Where:** `Master.Entity/TableEntities/Customer.cs`, `Master.Entity/Enums/{TenantStatus,LicenseType}.cs`, `Master.Repository/Repositories/SignupRepository.cs`, `Master.Api/Controllers/{AdminCustomersController,CustomersController}.cs`
 - **State:** checked 1 October 2026. A customer has a status and a plan tier but no kind: a paying signup, an operator-created customer and the bootstrap customer look the same. Licences expire and the licence claims in the token refuse an expired customer.
 - **Sub-tasks:**
-  - [ ] `CustomerKind` enum (Standard, Internal, Demo) in `Master.Entity/Enums`, a `Kind` column defaulting to Standard, and the migration (admin context); existing rows stay Standard.
-  - [ ] Public signup and the retry flow always make Standard. Only a platform operator (`platform.edit`) can create Internal or Demo, through `SignupRepository`.
-  - [ ] Internal and Demo licences never expire and never raise a licence or billing reminder; check every place that reads `ExpiryDate` or the licence status.
-  - [ ] The admin customer list shows the kind and filters by it.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] `CustomerKind` enum (Standard, Internal, Demo) in `Master.Entity/Enums`, a `Kind` column defaulting to Standard, and the migration (admin context); existing rows stay Standard.
+  - [x] Public signup and the retry flow always make Standard. Only a platform operator (`platform.edit`) can create Internal or Demo, through `SignupRepository`.
+  - [x] Internal and Demo licences never expire and never raise a licence or billing reminder; check every place that reads `ExpiryDate` or the licence status.
+  - [x] The admin customer list shows the kind and filters by it.
+  - [x] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - The enum, the `Kind` column and its migration (`AddCustomerKind`, 1 October) were already on `main` from an earlier pass, with a half-wired `Kind` on `SignupRequest`. What was missing is below.
+  - **`CustomerKindRepository`** (pure) holds the rules: `KindToCreate` (public signup is Standard whatever it asks; an operator may pick any defined kind), `NeverLapses`, `FirstLicence` (Standard: a 14-day trial; Internal and Demo: Elite, expiring `NoExpiry` = 9999-01-01, short of `DateOnly.MaxValue` so grace days cannot overflow) and `FirstPlanTier` (Elite for the unbilled kinds, D-45's default). Unbilled licences carry 10,000 users and 1,000 branches rather than the trial's 3 and 1.
+  - `CustomersController` (public) and `AdminCustomersController.Create` (`platform.edit`) both pass the request through `KindToCreate`. The retry flow changes no kind.
+  - **Every reader of the licence dates was checked.** `OrgContextRepository` never reports an unbilled customer Expired, never stamps it, reports no expiry date and no branch-level expiry, and reports at least the unbilled user limit (so an older install's bootstrap licence does not cap it). `OrganizationRepository.CreateAsync` gives an unbilled customer no branch cap, no trial branches and no branch expiry. There is no licence or billing reminder job anywhere in the backend or the worker today, so there was nothing else to switch off.
+  - `GET api/admin/customers?kind=` filters, and each row carries `Kind`. The admin **Customers** page shows a Kind column and a kind filter, and the create sheet picks the kind and the first branch's business type.
+  - Housekeeping: 53 backend files had em dashes and other punctuation turned into mojibake by an earlier encoding slip (`â€”`); fixed by reversing the cp1252 round trip, comments only.
+  - Tests: `CustomerKindTests` (the rules; a Demo signup's licence and plan; an Internal customer on a lapsed licence still Active, with no date and no stamp; a Standard one still expiring; the list filter) and `customer-kinds.spec.ts`.
+  - Docs: **Kinds of customer** in `platform.md`, a release note, and `CLAUDE.md`'s Auth list.
 - **Done when:** a signup creates a Standard customer, an operator can create the other two, and neither of those is ever expired or billed.
 
 ### TK-153 · Internal customer: our own organisation, Service business type

@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Purchase.Api.Controllers;
 
 /// <summary>
-/// The vendor bill â€” <c>BIL</c>. What is owed, and what input tax credit is
+/// The vendor bill — <c>BIL</c>. What is owed, and what input tax credit is
 /// claimed on.
 /// </summary>
 [ApiController]
@@ -67,7 +67,7 @@ public sealed class BillsController : ControllerBase
             : Ok(new { message = result.Detail, warnings });
     }
 
-    /// <summary>Clears the clearing account, or brings the goods in â€” and always owes the vendor.</summary>
+    /// <summary>Clears the clearing account, or brings the goods in — and always owes the vendor.</summary>
     [HttpPost("{billId:long}/post")]
     [PermissionAction("approve")]
     public async Task<IActionResult> Post(long billId, CancellationToken ct)
@@ -129,7 +129,7 @@ public sealed class BillsController : ControllerBase
                     ?? "This vendor has already billed that number this financial year.",
             }),
 
-            // Not the caller's mistake and not transient â€” a decision has not
+            // Not the caller's mistake and not transient — a decision has not
             // been made. 409 says the state of the world refuses it.
             BillOutcome.PriceVarianceUndecided => Conflict(new MessageResponse
             {
@@ -165,7 +165,7 @@ public sealed class BillsController : ControllerBase
                 new MessageResponse
                 {
                     Message = result.Detail
-                        ?? "The ledger refused the posting. The bill is still a draft â€” post "
+                        ?? "The ledger refused the posting. The bill is still a draft — post "
                             + "it again.",
                 }),
 

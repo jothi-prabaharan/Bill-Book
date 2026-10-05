@@ -17,7 +17,7 @@ using Shared.Kernel.Apps;
 namespace Sales.Api.Controllers;
 
 /// <summary>
-/// Sales orders â€” <c>SOR</c>. The document that commits stock without selling it.
+/// Sales orders — <c>SOR</c>. The document that commits stock without selling it.
 /// </summary>
 [ApiController]
 [Authorize]
@@ -103,7 +103,7 @@ public sealed class SalesOrdersController : ControllerBase
     [PermissionAction("approve")]
     // Serializable, declared where the request-wide transaction filter can see
     // it: the posting checks what each line has left to bill and decides on
-    // that â€” two concurrent fulfilments at Read Committed would each read the
+    // that — two concurrent fulfilments at Read Committed would each read the
     // same figure, each find room, and each write. The filter opens and
     // commits the transaction; this action never does.
     [Transactional(IsolationLevel.Serializable)]

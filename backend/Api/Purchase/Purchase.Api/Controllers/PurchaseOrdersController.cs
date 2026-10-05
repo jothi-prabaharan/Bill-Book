@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Purchase.Api.Controllers;
 
 /// <summary>
-/// The purchase order â€” <c>POR</c>.
+/// The purchase order — <c>POR</c>.
 ///
 /// <b>Approve and confirm are both <c>purchase.approve</c>, and void is
 /// <c>purchase.void</c>.</b> The permissions were seeded from the beginning and

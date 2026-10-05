@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Purchase.Api.Controllers;
 
 /// <summary>
-/// The goods receipt â€” <c>GRN</c>. Where stock arrives on the purchase side.
+/// The goods receipt — <c>GRN</c>. Where stock arrives on the purchase side.
 ///
 /// Posting is <c>purchase.approve</c> rather than the <c>purchase.edit</c> a
 /// bare POST would derive: it moves stock and writes to the ledger, which is a
@@ -107,7 +107,7 @@ public sealed class GoodsReceiptsController : ControllerBase
                 Message = result.Detail ?? "That purchase order cannot be received against.",
             }),
 
-            // Transient rather than wrong â€” the same request may well succeed
+            // Transient rather than wrong — the same request may well succeed
             // next time, and the receipt is still a draft that can be posted again.
             GoodsReceiptOutcome.RatesUnavailable => StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
@@ -123,7 +123,7 @@ public sealed class GoodsReceiptsController : ControllerBase
                 {
                     Message = result.Detail
                         ?? "The ledger refused the posting. The stock is recorded and the "
-                            + "receipt is still a draft â€” post it again.",
+                            + "receipt is still a draft — post it again.",
                 }),
 
             GoodsReceiptOutcome.StockRefused => Conflict(new MessageResponse

@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
-/// <summary>Accounting â€º Banks. The institution, entered once and reused by its accounts.</summary>
+/// <summary>Accounting › Banks. The institution, entered once and reused by its accounts.</summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("banking")]

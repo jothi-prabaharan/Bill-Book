@@ -10,7 +10,7 @@ using Shared.Kernel.Internal;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Settings â€º Approval workflows (D-26, TK-99): every app's chains, configured
+/// Settings › Approval workflows (D-26, TK-99): every app's chains, configured
 /// in one place. Reading takes <c>settings.view</c> and saving <c>settings.edit</c>.
 /// </summary>
 [ApiController]

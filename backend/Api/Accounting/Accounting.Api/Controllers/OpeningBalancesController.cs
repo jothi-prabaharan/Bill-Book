@@ -9,11 +9,11 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Accounting â€º Opening balances. Where a branch's books begin.
+/// Accounting › Opening balances. Where a branch's books begin.
 ///
 /// <b>No id anywhere in these routes.</b> A branch has exactly one opening
-/// balance â€” one moment it started trading, that every balance since is measured
-/// from â€” so there is nothing to identify. A route taking an id would imply
+/// balance — one moment it started trading, that every balance since is measured
+/// from — so there is nothing to identify. A route taking an id would imply
 /// otherwise, and the first thing someone would do is create a second.
 ///
 /// <b>No delete after finalize, and no reverse at all.</b> Reversing an opening
@@ -40,7 +40,7 @@ public sealed class OpeningBalancesController : ControllerBase
 
     /// <summary>
     /// Whether it may be finalized, and what is stopping it. Read continuously by
-    /// the screen rather than only when Finalize is pressed â€” a migration is keyed
+    /// the screen rather than only when Finalize is pressed — a migration is keyed
     /// over weeks, and finding at the end that it is out by â‚¹4,300 means auditing
     /// all of it instead of the line just typed.
     /// </summary>
@@ -54,7 +54,7 @@ public sealed class OpeningBalancesController : ControllerBase
     /// <summary>
     /// Every control account against the subledger beneath it, as at go-live.
     /// Read after finalize: the blockers say the migration <i>may</i> open, this
-    /// says it landed. Double-entry cannot answer it â€” a receivable posted with
+    /// says it landed. Double-entry cannot answer it — a receivable posted with
     /// no sub-account balances perfectly while nobody owes the money.
     /// </summary>
     [HttpGet("tie")]

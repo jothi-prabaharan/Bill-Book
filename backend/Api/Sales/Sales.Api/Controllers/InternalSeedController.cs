@@ -12,7 +12,7 @@ namespace Sales.Api.Controllers;
 /// <summary>
 /// Writes Sales' master data for a newly created organization.
 ///
-/// Called by Platform's provisioning, which holds no user token â€” so the tenant
+/// Called by Platform's provisioning, which holds no user token — so the tenant
 /// comes from the request body and the endpoint is guarded by the shared
 /// internal key rather than a JWT. The same shape as Accounting's, Contacts', Inventory's and Banking's.
 ///

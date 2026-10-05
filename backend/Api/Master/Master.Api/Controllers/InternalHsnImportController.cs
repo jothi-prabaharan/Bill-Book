@@ -44,7 +44,7 @@ public sealed class InternalHsnImportController : ControllerBase
             result.Inserted,
             result.Updated,
             ErrorCount = result.Errors.Count,
-            // Cap the echo â€” a malformed file can produce thousands of lines.
+            // Cap the echo — a malformed file can produce thousands of lines.
             Errors = result.Errors.Take(50),
         });
     }

@@ -16,6 +16,11 @@ public class SignupRequest
     /// <summary>The add-ons the first branch starts with; each must be one its business type allows.</summary>
     public Shared.Kernel.Apps.AddOn AddOns { get; set; } = Shared.Kernel.Apps.AddOn.None;
 
+    /// <summary>
+    /// Standard, Internal or Demo (D-44, TK-152). Public signup always makes
+    /// Standard whatever this says; only a platform operator's create honours it.
+    /// </summary>
+    [EnumDataType(typeof(Master.Entity.Enums.CustomerKind), ErrorMessage = "Customer kind must be Standard, Internal or Demo.")]
     public Master.Entity.Enums.CustomerKind? Kind { get; set; }
 
     // ---- Account -----------------------------------------------------------
@@ -132,6 +137,9 @@ public class CustomerListItem
     public string BillingEmail { get; set; } = null!;
 
     public string PlanTier { get; set; } = null!;
+
+    /// <summary>Standard, Internal or Demo (TK-152).</summary>
+    public string Kind { get; set; } = null!;
 
     public string Status { get; set; } = null!;
 

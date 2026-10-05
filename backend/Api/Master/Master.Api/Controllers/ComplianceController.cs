@@ -295,8 +295,8 @@ public sealed class ComplianceController : ControllerBase
 
             case ComplianceFrequency.HalfYearly:
                 int hyYear = currentMonth <= 3 ? currentYear - 1 : currentYear;
-                periods.Add((hyYear, 9, $"Aprâ€“Sep {hyYear}", $"{hyYear:D4}-H1"));
-                periods.Add((hyYear + 1, 3, $"Octâ€“Mar {hyYear + 1}", $"{hyYear + 1:D4}-H2"));
+                periods.Add((hyYear, 9, $"Apr–Sep {hyYear}", $"{hyYear:D4}-H1"));
+                periods.Add((hyYear + 1, 3, $"Oct–Mar {hyYear + 1}", $"{hyYear + 1:D4}-H2"));
                 break;
 
             case ComplianceFrequency.Annual:
@@ -322,15 +322,15 @@ public sealed class ComplianceController : ControllerBase
                 break;
 
             case ComplianceFrequency.Quarterly:
-                periods.Add((year, 6, $"Q1 Aprâ€“Jun {year}", $"{year:D4}-Q1"));
-                periods.Add((year, 9, $"Q2 Julâ€“Sep {year}", $"{year:D4}-Q2"));
-                periods.Add((year, 12, $"Q3 Octâ€“Dec {year}", $"{year:D4}-Q3"));
-                periods.Add((year + 1, 3, $"Q4 Janâ€“Mar {year + 1}", $"{year + 1:D4}-Q4"));
+                periods.Add((year, 6, $"Q1 Apr–Jun {year}", $"{year:D4}-Q1"));
+                periods.Add((year, 9, $"Q2 Jul–Sep {year}", $"{year:D4}-Q2"));
+                periods.Add((year, 12, $"Q3 Oct–Dec {year}", $"{year:D4}-Q3"));
+                periods.Add((year + 1, 3, $"Q4 Jan–Mar {year + 1}", $"{year + 1:D4}-Q4"));
                 break;
 
             case ComplianceFrequency.HalfYearly:
-                periods.Add((year, 9, $"H1 Aprâ€“Sep {year}", $"{year:D4}-H1"));
-                periods.Add((year + 1, 3, $"H2 Octâ€“Mar {year + 1}", $"{year + 1:D4}-H2"));
+                periods.Add((year, 9, $"H1 Apr–Sep {year}", $"{year:D4}-H1"));
+                periods.Add((year + 1, 3, $"H2 Oct–Mar {year + 1}", $"{year + 1:D4}-H2"));
                 break;
 
             case ComplianceFrequency.Annual:

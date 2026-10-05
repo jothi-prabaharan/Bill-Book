@@ -22,7 +22,7 @@ namespace Master.Api.Controllers;
 /// <b>Anonymous but not open</b>: like every other <c>internal/</c> route it
 /// takes the shared key, because the caller is another service rather than a
 /// user. It shipped with <c>[AllowAnonymous]</c> and no <c>[InternalOnly]</c>
-/// beside it, which made key validation â€” and the key-guessing it enables â€”
+/// beside it, which made key validation — and the key-guessing it enables —
 /// callable by anything that could reach the port.
 /// </summary>
 [ApiController]
@@ -61,7 +61,7 @@ public class InternalApiKeysController : ControllerBase
         var context = _serviceProvider.GetRequiredService<ContactsDbContext>();
 
         // A BCrypt hash cannot be matched in SQL, so the candidates have to be
-        // verified in memory â€” but only this customer's. The filter is bypassed
+        // verified in memory — but only this customer's. The filter is bypassed
         // because the organization is not known until the key is matched, and
         // the filter needs both halves; the CustomerId taken from the key is
         // put back by hand so the bypass cannot widen past it. Without that
@@ -69,8 +69,8 @@ public class InternalApiKeysController : ControllerBase
         // and BCrypt-verified against whatever string the caller sent.
         //
         // Still linear in one customer's keys. If that becomes the cost, the
-        // fix is to carry the client id in the key's prefix â€” bb_{customer}_
-        // {client}_{secret} â€” so a single row is fetched and one hash verified.
+        // fix is to carry the client id in the key's prefix — bb_{customer}_
+        // {client}_{secret} — so a single row is fetched and one hash verified.
         var apiClients = await context.ApiClients
             .IgnoreQueryFilters()
             .Where(x => x.CustomerId == customerId && x.IsActive)

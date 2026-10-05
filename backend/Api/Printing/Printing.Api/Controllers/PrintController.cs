@@ -16,7 +16,7 @@ namespace Printing.Api.Controllers;
 /// already checked where it lives: Sales refused anyone without
 /// <c>sales.view</c> before it could build the payload. Printing is handed the
 /// document's data, not asked for it, so a module guard here would check a
-/// second time something it cannot see â€” and whichever module it named would
+/// second time something it cannot see — and whichever module it named would
 /// lock out every other document type, since one route prints twelve of them
 /// across three modules. What this route reads of its own is the branch's
 /// template, which is the letterhead printed on every document the branch hands

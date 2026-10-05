@@ -10,7 +10,7 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Banking â€º Bank accounts. Creating one creates its GL account in Accounting,
+/// Banking › Bank accounts. Creating one creates its GL account in Accounting,
 /// because only Accounting writes ledger rows and a bank account without one
 /// cannot be posted to.
 /// </summary>

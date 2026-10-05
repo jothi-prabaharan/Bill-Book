@@ -12,7 +12,7 @@ using Shared.Kernel.Tenancy;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Accounting â€º TDS (TK-117): the section master, the register, what is due
+/// Accounting › TDS (TK-117): the section master, the register, what is due
 /// to be deposited, the 26Q export and the Form 26AS reconciliation. Reading
 /// takes <c>accounting.view</c>, the section master <c>accounting.create</c>
 /// and <c>accounting.edit</c>, the export <c>accounting.export</c>.

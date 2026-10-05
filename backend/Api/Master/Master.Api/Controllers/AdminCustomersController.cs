@@ -6,14 +6,15 @@ using Master.Repository.Clients;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Apps;
+using Master.Entity.Enums;
 
 namespace Master.Api.Controllers;
 
 /// <summary>
 /// Platform admin: the customer list with provisioning status, and the
-/// actions the platform admin pages (/admin in the web app) need on it â€” create a customer without going through
+/// actions the platform admin pages (/admin in the web app) need on it — create a customer without going through
 /// public self-service signup, and retry one stuck at Provisioning or
-/// Failed. Operator only, via platform.view/platform.edit â€” not scoped to
+/// Failed. Operator only, via platform.view/platform.edit — not scoped to
 /// any one customer, since the whole point is seeing across all of them.
 /// </summary>
 [ApiController]
@@ -31,14 +32,15 @@ public sealed class AdminCustomersController : ControllerBase
         _organizations = organizations;
     }
 
+    /// <summary>Every customer, or only those of one kind with <c>?kind=</c> (TK-152).</summary>
     [RequirePermission("platform.view")]
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken ct) =>
-        Ok(await _signup.ListAsync(ct));
+    public async Task<IActionResult> List([FromQuery] CustomerKind? kind, CancellationToken ct) =>
+        Ok(await _signup.ListAsync(ct, kind));
 
     /// <summary>
     /// A customer's branches. OrganizationRepository.ListAsync already does
-    /// exactly this â€” it is what the customer's own Settings screen calls â€”
+    /// exactly this — it is what the customer's own Settings screen calls —
     /// scoped here to the route's customerId instead of the caller's own,
     /// since a platform operator is never signed in to any one customer.
     /// </summary>
@@ -48,15 +50,17 @@ public sealed class AdminCustomersController : ControllerBase
         Ok(await _organizations.ListAsync(customerId, ct));
 
     /// <summary>
-    /// Admin-initiated provisioning â€” the same SignupAsync the public trial
+    /// Admin-initiated provisioning — the same SignupAsync the public trial
     /// signup form calls, so the two can never seed a customer differently.
-    /// Still lands on Trial; picking a paid plan tier at creation is a
-    /// follow-up, not something this task needed.
+    /// A Standard customer lands on Trial. An operator may instead create an
+    /// Internal or Demo customer, which starts on Elite and never lapses
+    /// (D-44, TK-152); public signup can make neither.
     /// </summary>
     [RequirePermission("platform.edit")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SignupRequest request, CancellationToken ct)
     {
+        request.Kind = CustomerKindRepository.KindToCreate(request.Kind, byOperator: true);
         if (SignupRepository.ScopeRefusal(request.BusinessType, request.AddOns) is string scopeRefusal)
         {
             return BadRequest(new { message = scopeRefusal });

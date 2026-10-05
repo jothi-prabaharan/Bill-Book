@@ -12,8 +12,8 @@ namespace Accounting.Api.Controllers;
 /// buttons.
 ///
 /// <b>Guarded by <c>sales.view</c>, not <c>banking.view</c></b>: a cashier holds
-/// the first and not the second, and what this returns â€” a name and a kind per
-/// account, no number and no balance â€” is what a till needs and nothing a
+/// the first and not the second, and what this returns — a name and a kind per
+/// account, no number and no balance — is what a till needs and nothing a
 /// banking screen protects. Posting still checks each account, in Accounting,
 /// when the sale is posted.
 /// </summary>

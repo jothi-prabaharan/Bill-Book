@@ -33,7 +33,7 @@ public sealed class TaxMastersController : ControllerBase
         return rate is null ? NotFound() : Ok(rate);
     }
 
-    /// <summary>The rate a document dated onDate must use â€” never today's rate.</summary>
+    /// <summary>The rate a document dated onDate must use — never today's rate.</summary>
     [HttpGet("resolve/{taxGroupId:long}")]
     public async Task<IActionResult> Resolve(
         long taxGroupId, [FromQuery] DateOnly onDate, CancellationToken ct)
@@ -52,7 +52,7 @@ public sealed class TaxMastersController : ControllerBase
 
     /// <summary>
     /// Supersedes a rate: closes the current version and inserts a successor.
-    /// Rates are never edited in place â€” historical documents must keep
+    /// Rates are never edited in place — historical documents must keep
     /// resolving the rate that applied on their own date.
     /// </summary>
     [HttpPost("{taxMasterId:long}/revise")]
@@ -63,7 +63,7 @@ public sealed class TaxMastersController : ControllerBase
         return Respond(result, () => Ok(new { taxMasterId = result.TaxMasterId }));
     }
 
-    /// <summary>Display name only â€” allowed on seeded rates, whose split stays fixed.</summary>
+    /// <summary>Display name only — allowed on seeded rates, whose split stays fixed.</summary>
     [HttpPut("{taxMasterId:long}/name")]
     public async Task<IActionResult> Rename(
         long taxMasterId, [FromBody] RenameTaxRequest request, CancellationToken ct)

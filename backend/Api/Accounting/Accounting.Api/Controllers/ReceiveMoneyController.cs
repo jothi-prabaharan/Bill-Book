@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Banking â€º Receive money. An invoice settled, an advance taken from a
+/// Banking › Receive money. An invoice settled, an advance taken from a
 /// customer, a supplier refunding what was overpaid.
 ///
 /// <b>Post and void are their own routes</b>, not a status field on the save.
@@ -79,7 +79,7 @@ public sealed class ReceiveMoneyController : ControllerBase
 
             MoneyDocumentOutcome.NotDraft => BadRequest(new MessageResponse
             {
-                Message = "A posted document is never edited. Void it instead â€” the document "
+                Message = "A posted document is never edited. Void it instead — the document "
                     + "and its number stay, and its ledger rows are withdrawn.",
             }),
 
@@ -97,7 +97,7 @@ public sealed class ReceiveMoneyController : ControllerBase
             }),
 
             // Transient. The caller should come back rather than treat it as a
-            // refusal â€” a lock that could not be read is not a lock that passed.
+            // refusal — a lock that could not be read is not a lock that passed.
             MoneyDocumentOutcome.PeriodLockUnavailable
                 or MoneyDocumentOutcome.SettlementRateUnavailable
                 or MoneyDocumentOutcome.TdsUnavailable => StatusCode(

@@ -14,7 +14,7 @@ using Shared.Kernel.Validation;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Internal service-to-service API â€” called by the Platform provisioner.
+/// Internal service-to-service API — called by the Platform provisioner.
 /// Must not be routed through the public gateway.
 /// </summary>
 [ApiController]
@@ -38,7 +38,7 @@ public sealed class InternalUsersController : ControllerBase
     [HttpPost("owner")]
     public async Task<IActionResult> CreateOwner([FromBody] CreateOwnerUserRequest request, CancellationToken ct)
     {
-        // Idempotent on email â€” a provisioning retry must not fail or duplicate.
+        // Idempotent on email — a provisioning retry must not fail or duplicate.
         User? user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email, ct);
         if (user is null)
         {

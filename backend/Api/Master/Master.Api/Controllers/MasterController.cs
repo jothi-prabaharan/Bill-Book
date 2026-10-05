@@ -12,8 +12,8 @@ namespace Master.Api.Controllers;
 ///
 /// Authenticated by default, with two exceptions marked below. Countries and
 /// states are needed by the signup form, which by definition runs before any
-/// token exists. Everything else here â€” currencies, HSN/SAC, account and ledger
-/// types â€” is only ever read from inside the app, so there is no reason to serve
+/// token exists. Everything else here — currencies, HSN/SAC, account and ledger
+/// types — is only ever read from inside the app, so there is no reason to serve
 /// it to anyone who finds the port.
 /// </summary>
 [ApiController]
@@ -39,7 +39,7 @@ public sealed class MasterController : ControllerBase
         return Ok(countries);
     }
 
-    /// <summary>Anonymous for the same reason as countries â€” signup asks for a state.</summary>
+    /// <summary>Anonymous for the same reason as countries — signup asks for a state.</summary>
     [AllowAnonymous]
     [HttpGet("countries/{countryId:int}/states")]
     public async Task<IActionResult> GetStates(int countryId, CancellationToken ct)
@@ -54,7 +54,7 @@ public sealed class MasterController : ControllerBase
 
     /// <summary>
     /// One state by id. Per-customer services hold an unenforced StateId and
-    /// need its GST code to check a GSTIN's first two digits â€” a cross-database
+    /// need its GST code to check a GSTIN's first two digits — a cross-database
     /// FK is impossible, so the check happens in C# against this.
     /// </summary>
     [HttpGet("states/{stateId:int}")]
@@ -134,7 +134,7 @@ public sealed class MasterController : ControllerBase
 
     /// <summary>
     /// HSN and SAC codes, searchable. Chapter rows (2 digits) are grouping
-    /// headings and are excluded by default â€” an invoice line needs a real code.
+    /// headings and are excluded by default — an invoice line needs a real code.
     /// </summary>
     [HttpGet("hsn-sac")]
     public async Task<IActionResult> GetHsnSacCodes(
@@ -202,7 +202,7 @@ public sealed class MasterController : ControllerBase
     /// The page needs this to tell an empty search from an empty database. Only
     /// the 97 HS chapters and 32 SAC groups ship as seed data; the ~13,000
     /// detailed codes are imported from the CBIC file, and until that runs a
-    /// search for a real 8-digit code finds nothing â€” which reads as a broken
+    /// search for a real 8-digit code finds nothing — which reads as a broken
     /// screen rather than as data nobody has loaded yet.
     /// </summary>
     [HttpGet("hsn-sac/summary")]
@@ -235,7 +235,7 @@ public sealed class MasterController : ControllerBase
 
     /// <summary>
     /// One code by id. The item master stores only <c>HsnSacCodeId</c>, so a
-    /// saved item has nothing to display without this â€” search is by code
+    /// saved item has nothing to display without this — search is by code
     /// prefix and cannot resolve an id it already holds.
     /// </summary>
     [HttpGet("hsn-sac/{hsnSacCodeId:int}")]
@@ -270,7 +270,7 @@ public sealed class MasterController : ControllerBase
         return Ok(chapters);
     }
 
-    /// <summary>The five account types â€” the only level above the chart of accounts.</summary>
+    /// <summary>The five account types — the only level above the chart of accounts.</summary>
     [HttpGet("account-types")]
     public async Task<IActionResult> GetAccountTypes(CancellationToken ct)
     {

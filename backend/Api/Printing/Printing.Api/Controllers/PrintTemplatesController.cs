@@ -17,7 +17,7 @@ namespace Printing.Api.Controllers;
 /// <c>print_template.manage</c> permission, which cannot be declared here: both
 /// the module list and the action list are closed sets seeded in AdminDbContext,
 /// and a controller naming an unseeded module is a locked door for every role
-/// including Owner â€” that shipped once already. <c>RequireModulePermission</c>
+/// including Owner — that shipped once already. <c>RequireModulePermission</c>
 /// derives the action from the HTTP method, so reading takes
 /// <c>settings.view</c> and every mutation <c>settings.edit</c>, which is the
 /// split the specification asks for under the names this product has.
@@ -122,7 +122,7 @@ public sealed class PrintTemplatesController : ControllerBase
         {
             Code = "TEMPLATE_STALE",
             Message = "Somebody else saved this template while it was open. "
-                + "Reload it and apply the changes again â€” nothing has been overwritten.",
+                + "Reload it and apply the changes again — nothing has been overwritten.",
         }),
 
         PrintTemplateOutcome.LastTemplate => Conflict(new PrintTemplateError

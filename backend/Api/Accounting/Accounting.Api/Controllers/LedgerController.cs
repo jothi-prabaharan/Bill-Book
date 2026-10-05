@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Accounting â€º Ledger. The two reads that make every posting in the product
+/// Accounting › Ledger. The two reads that make every posting in the product
 /// checkable by a person rather than by a database client.
 ///
 /// Separate from <c>InternalLedgerController</c> on purpose: that one is the
@@ -48,7 +48,7 @@ public sealed class LedgerController : ControllerBase
         Ok(await _reports.GetTrialBalanceAsync(from, to, ct));
 
     /// <summary>
-    /// Every control account against the subledger beneath it â€” the check
+    /// Every control account against the subledger beneath it — the check
     /// double-entry cannot make, because a receivable posted with no sub-account
     /// balances perfectly while nobody owes the money.
     /// </summary>
@@ -64,7 +64,7 @@ public sealed class LedgerController : ControllerBase
     /// the contact.
     ///
     /// On the token rather than behind the internal key, because the caller is
-    /// always acting for a signed-in user settling a document â€” and the tenant
+    /// always acting for a signed-in user settling a document — and the tenant
     /// then comes from the same claims that decided which books they are in.
     /// </summary>
     [HttpGet("documents/{transactionTypeCode}/{transactionId:long}/rate")]

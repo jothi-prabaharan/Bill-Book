@@ -19,7 +19,7 @@ namespace Customer.Api.Controllers;
 [ApiController]
 [Authorize]
 // "crm", not "customer". The permission catalogue is seeded with crm.* and
-// support.* â€” the two halves this service was merged from â€” and never with
+// support.* — the two halves this service was merged from — and never with
 // customer.*, so every request here was refused for every role, whatever the
 // role held. The schema merged; the permissions did not.
 [RequireModulePermission("crm")]
@@ -153,8 +153,8 @@ public sealed class LeadsController : ControllerBase
     /// rule fell, half the callers would be surprised by it.
     ///
     /// <b>A supplied <c>ContactId</c> is checked against the caller's branch.</b>
-    /// The column is a plain id â€” <c>con.Contacts</c> is another service's
-    /// database â€” so nothing about the number itself says whose books it belongs
+    /// The column is a plain id — <c>con.Contacts</c> is another service's
+    /// database — so nothing about the number itself says whose books it belongs
     /// to. Contacts is asked, with the caller's own token forwarded, so the answer
     /// comes back through that service's query filter and RLS policy: a contact in
     /// another branch is simply not there. That is a <c>Forbid()</c>, per
@@ -164,7 +164,7 @@ public sealed class LeadsController : ControllerBase
     /// live in different databases and cannot share a transaction, so the order is
     /// the guarantee: create or verify first, write the lead second. A failure
     /// leaves an unconverted lead and, at worst, a contact with no lead pointing
-    /// at it â€” which is visible and fixable, where a lead marked converted against
+    /// at it — which is visible and fixable, where a lead marked converted against
     /// a contact that was never created is neither.
     /// </summary>
     [HttpPost("{id:long}/convert")]
@@ -185,7 +185,7 @@ public sealed class LeadsController : ControllerBase
             return BadRequest(new
             {
                 message = "Give a ContactId to link an existing contact, or ask for a new "
-                    + "one â€” not both.",
+                    + "one — not both.",
             });
         }
 
@@ -310,13 +310,13 @@ public class SaveLeadRequest
 ///
 /// <b>Exactly one of the two paths.</b> <see cref="ContactId"/> links an existing
 /// contact; <see cref="CreateContact"/> asks Contacts to make one from the lead.
-/// Neither, or both, is refused â€” see <c>LeadsController.Convert</c>.
+/// Neither, or both, is refused — see <c>LeadsController.Convert</c>.
 /// </summary>
 public class ConvertLeadRequest
 {
     /// <summary>
     /// The existing contact to link. Validated against the caller's branch before
-    /// anything is written â€” the foreign key proves the row exists, not whose it is.
+    /// anything is written — the foreign key proves the row exists, not whose it is.
     /// </summary>
     public long? ContactId { get; set; }
 

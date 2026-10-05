@@ -82,7 +82,7 @@ public sealed class InternalAccountsController : ControllerBase
         {
             BankAccountId = b.BankAccountId,
             AccountName = b.AccountName,
-            MaskedNumber = b.AccountNumber.Length <= 4 ? b.AccountNumber : $"â€¢â€¢â€¢â€¢{b.AccountNumber[^4..]}",
+            MaskedNumber = b.AccountNumber.Length <= 4 ? b.AccountNumber : $"••••{b.AccountNumber[^4..]}",
             IsCash = b.AccountType == BankAccountType.Cash,
         }));
     }

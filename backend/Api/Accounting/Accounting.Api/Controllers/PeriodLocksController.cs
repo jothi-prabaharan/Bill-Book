@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Settings â€º Closing dates. How far back the books are closed, per role.
+/// Settings › Closing dates. How far back the books are closed, per role.
 ///
 /// <b>A soft close.</b> One date per branch per role, so a month can be shut to
 /// everyone who keys documents while staying open to whoever has to make the

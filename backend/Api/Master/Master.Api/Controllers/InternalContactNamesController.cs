@@ -16,7 +16,7 @@ namespace Master.Api.Controllers;
 ///
 /// <b>This is the other half of a decision made in `SALES.md`.</b> A document
 /// stores `ContactId` and deliberately not the name, so that correcting a
-/// misspelling shows everywhere â€” including on documents already raised. That
+/// misspelling shows everywhere — including on documents already raised. That
 /// only works if reading a list of documents is cheap, and it is only cheap if
 /// the names come back in one call.
 ///
@@ -25,8 +25,8 @@ namespace Master.Api.Controllers;
 /// length limit well before the framework's, and the failure mode would be a
 /// silently truncated list rather than an error.
 ///
-/// It reads <see cref="ContactsDbContext"/> â€” the customer's own `con` schema,
-/// not the shared master database â€” so the query filter scopes it to the
+/// It reads <see cref="ContactsDbContext"/> — the customer's own `con` schema,
+/// not the shared master database — so the query filter scopes it to the
 /// caller's branch like everything else. A service asking about another branch's
 /// contact gets nothing back rather than a name it should not see.
 /// </summary>

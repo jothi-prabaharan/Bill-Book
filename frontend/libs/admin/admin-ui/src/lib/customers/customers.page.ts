@@ -11,7 +11,7 @@ import {
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
-import { Currency } from '@bill-book/auth';
+import { BUSINESS_TYPES, Currency } from '@bill-book/auth';
 
 interface CustomerListItem {
   customerId: string;
@@ -19,8 +19,22 @@ interface CustomerListItem {
   name: string;
   billingEmail: string;
   planTier: string;
+  /** Standard, Internal or Demo (TK-152). */
+  kind: string;
   status: string;
   createdAt: string | null;
+}
+
+/** The three kinds of customer (D-44). Internal and Demo are never billed and never lapse. */
+export const CUSTOMER_KINDS: readonly BbSelectOption<string>[] = [
+  { value: 'Standard', label: 'Standard' },
+  { value: 'Internal', label: 'Internal' },
+  { value: 'Demo', label: 'Demo' },
+];
+
+/** The list's kind filter query: none for every kind. */
+export function kindQuery(kind: string): string {
+  return kind ? `?kind=${encodeURIComponent(kind)}` : '';
 }
 
 interface CreateCustomerForm {
@@ -32,6 +46,8 @@ interface CreateCustomerForm {
   organizationName: string;
   financialYearStartMonth: number;
   baseCurrency: string;
+  kind: string;
+  businessType: string;
 }
 
 /**
@@ -40,6 +56,9 @@ interface CreateCustomerForm {
  * seed as public trial signup; a customer stuck at Provisioning or Failed
  * (a partial seed — some service unreachable, most often) can be retried
  * without asking them to sign up again.
+ *
+ * An operator can also create an Internal or a Demo customer here, which
+ * public signup cannot (TK-152): both start on Elite and never lapse.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +89,13 @@ export class CustomersPage implements OnInit {
       label: `${currency.code} - ${currency.name}`,
     })),
   );
+  protected readonly kindOptions = CUSTOMER_KINDS;
+  protected readonly kindFilterOptions: BbSelectOption<string>[] = [{ value: '', label: 'Every kind' }, ...CUSTOMER_KINDS];
+  protected readonly businessTypeOptions: BbSelectOption<string>[] = BUSINESS_TYPES.map((t) => ({ value: t.value, label: t.label }));
+
+  /** The list's kind filter; empty shows every kind. */
+  protected readonly kindFilter = signal('');
+
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
@@ -89,6 +115,7 @@ export class CustomersPage implements OnInit {
     { field: 'customerCode', header: 'Code' },
     { field: 'name', header: 'Customer' },
     { field: 'billingEmail', header: 'Billing email' },
+    { field: 'kind', header: 'Kind' },
     { field: 'planTier', header: 'Plan' },
     { field: 'status', header: 'Status' },
     { field: 'createdAt', header: 'Created' },
@@ -103,7 +130,7 @@ export class CustomersPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      this.rows.set(await this.get<CustomerListItem[]>('/api/admin/customers'));
+      this.rows.set(await this.get<CustomerListItem[]>(`/api/admin/customers${kindQuery(this.kindFilter())}`));
     } catch {
       this.fail('Could not load customers.');
     } finally {
@@ -117,6 +144,11 @@ export class CustomersPage implements OnInit {
     } catch {
       // The signup form defaults to INR regardless.
     }
+  }
+
+  protected filterByKind(kind: string | null): void {
+    this.kindFilter.set(kind ?? '');
+    void this.load();
   }
 
   open(row: CustomerListItem): void {
@@ -178,6 +210,8 @@ export class CustomersPage implements OnInit {
       organizationName: '',
       financialYearStartMonth: 4,
       baseCurrency: 'INR',
+      kind: 'Standard',
+      businessType: 'Retail',
     };
   }
 

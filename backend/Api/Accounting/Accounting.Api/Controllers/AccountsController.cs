@@ -46,7 +46,7 @@ public sealed class AccountsController : ControllerBase
         return Respond(result, NoContent);
     }
 
-    /// <summary>Deactivates. Accounts are never deleted â€” postings reference them.</summary>
+    /// <summary>Deactivates. Accounts are never deleted — postings reference them.</summary>
     [HttpDelete("{accountId:long}")]
     public async Task<IActionResult> Deactivate(long accountId, CancellationToken ct)
     {

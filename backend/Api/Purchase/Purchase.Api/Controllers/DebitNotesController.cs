@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Purchase.Api.Controllers;
 
 /// <summary>
-/// The debit note â€” <c>DBN</c>. The way back out of a purchase.
+/// The debit note — <c>DBN</c>. The way back out of a purchase.
 /// </summary>
 [ApiController]
 [Authorize]
@@ -122,7 +122,7 @@ public sealed class DebitNotesController : ControllerBase
                 new MessageResponse
                 {
                     Message = result.Detail
-                        ?? "The ledger refused the posting. The note is still a draft â€” post "
+                        ?? "The ledger refused the posting. The note is still a draft — post "
                             + "it again.",
                 }),
 

@@ -9,7 +9,7 @@ using Shared.Kernel.Apps;
 namespace Inventory.Api.Controllers;
 
 /// <summary>
-/// Stock adjustment sheets â€” a write-off or a physical count, posted as one
+/// Stock adjustment sheets — a write-off or a physical count, posted as one
 /// document.
 ///
 /// There is no void. A posted sheet has moved stock that physically moved, and

@@ -10,7 +10,7 @@ using Shared.Kernel.Internal;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Internal service-to-service API â€” consumed by Identity's PlatformDirectory.
+/// Internal service-to-service API — consumed by Identity's PlatformDirectory.
 /// Must not be routed through the public gateway.
 /// </summary>
 [ApiController]

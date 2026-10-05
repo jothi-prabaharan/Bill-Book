@@ -397,6 +397,7 @@ JWT claims: `sub`, `customer_id`, `customer_code`, `org_id`, `display_name`, `li
 - Permissions are `{module}.{action}`; `platform.*` is operator-only
 - System roles read-only; roles in use can't be deleted
 - Trial: 14 days, public self-service signup
+- Customer kinds (D-44, TK-152): **Standard** (paying; the only kind signup makes), **Internal** (our own organisation) and **Demo** — the last two only by a platform operator, Elite, never lapse, never billed, no user or branch cap (`CustomerKindRepository`)
 
 ---
 

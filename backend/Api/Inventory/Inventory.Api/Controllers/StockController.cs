@@ -42,7 +42,7 @@ public sealed class StockController : ControllerBase
         return position is null ? NotFound() : Ok(position);
     }
 
-    /// <summary>The stock ledger â€” what moved, when, in which unit, and why.</summary>
+    /// <summary>The stock ledger — what moved, when, in which unit, and why.</summary>
     [HttpGet("movements")]
     public async Task<IActionResult> Movements(
         [FromQuery] long? itemId,
@@ -91,7 +91,7 @@ public sealed class StockController : ControllerBase
     }
 
     /// <summary>
-    /// Warehouse to warehouse. Two movements, no net change â€” the pool is
+    /// Warehouse to warehouse. Two movements, no net change — the pool is
     /// shared, so this records where stock sits and nothing more.
     /// </summary>
     [HttpPost("transfers")]
@@ -156,7 +156,7 @@ public sealed class StockController : ControllerBase
             }),
             StockOutcome.SerialCountMismatch => BadRequest(new MessageResponse
             {
-                Message = "Enter one serial number for each unit â€” the count has to match the "
+                Message = "Enter one serial number for each unit — the count has to match the "
                     + "quantity exactly.",
             }),
             StockOutcome.SerialConflict => Conflict(new MessageResponse

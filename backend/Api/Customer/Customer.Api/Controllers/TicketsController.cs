@@ -17,7 +17,7 @@ namespace Customer.Api.Controllers;
 
 [ApiController]
 [Authorize]
-// "support", not "customer" â€” see LeadsController. A ticket is the support
+// "support", not "customer" — see LeadsController. A ticket is the support
 // half of this service, and support.* is what the catalogue actually seeds.
 [RequireModulePermission("support")]
 [Route("api/tickets")]
@@ -88,14 +88,14 @@ public sealed class TicketsController : ControllerBase
     ///
     /// <b><c>ContactId</c> is checked against the caller's branch first.</b> The
     /// column holds a plain id into another service's database, so the number
-    /// alone says nothing about whose books the contact belongs to â€” a ticket
+    /// alone says nothing about whose books the contact belongs to — a ticket
     /// created against another branch's contact would leak that contact's
     /// existence and put a support thread on the wrong customer's account.
     /// Contacts is asked with the caller's own token forwarded, so the answer
     /// comes back through that service's query filter and RLS policy.
     ///
     /// <c>Forbid()</c> rather than <c>NotFound()</c>, per CLAUDE.md, and the same
-    /// answer for "no such contact" as for "not yours" â€” distinguishing them is
+    /// answer for "no such contact" as for "not yours" — distinguishing them is
     /// the information id-probing is after.
     /// </summary>
     [HttpPost]
@@ -171,7 +171,7 @@ public sealed class TicketsController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>The ticket's whole thread, internal notes included â€” this is the staff side.</summary>
+    /// <summary>The ticket's whole thread, internal notes included — this is the staff side.</summary>
     [HttpGet("{id:long}/messages")]
     public async Task<IActionResult> Messages(long id, CancellationToken ct)
     {

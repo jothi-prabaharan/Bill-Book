@@ -12,9 +12,9 @@ using Shared.Kernel.Tenancy;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Where every other service records a document-to-document allocation â€” a
+/// Where every other service records a document-to-document allocation — a
 /// credit note against the invoice it settles, a debit note against the bill it
-/// corrects â€” and removes one when the document is voided.
+/// corrects — and removes one when the document is voided.
 ///
 /// Guarded by the shared internal key and carrying the tenant in the body, like
 /// the ledger door: the callers are other services rather than a signed-in user,
@@ -39,7 +39,7 @@ public sealed class InternalAllocationsController : ControllerBase
     [HttpPost]
     // Serializable, declared where the request-wide transaction filter can see
     // it. AllocationRepository reads what the target still owes and writes against
-    // that in one act, so it asks for Serializable â€” and without this the filter
+    // that in one act, so it asks for Serializable — and without this the filter
     // had already opened a Read Committed transaction, which cannot be raised,
     // so BeginScopeAsync refused every allocation made through the host (TK-08).
     [Transactional(IsolationLevel.Serializable)]
@@ -84,7 +84,7 @@ public sealed class InternalAllocationsController : ControllerBase
     }
 
     /// <summary>
-    /// Removes a source document's allocation rows â€” what a void does. A voided
+    /// Removes a source document's allocation rows — what a void does. A voided
     /// credit note takes its claims with it, or the invoices it named stay
     /// partially allocated to a document that no longer exists.
     ///

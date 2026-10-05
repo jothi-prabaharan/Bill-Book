@@ -68,7 +68,7 @@ public sealed class ContactAttachmentsController : ControllerBase
     /// <summary>
     /// Streams the file back. The storage key is read from the row rather than
     /// taken from the caller, and the row is org-scoped by the global query
-    /// filter â€” so an id belonging to another organization is simply not found.
+    /// filter — so an id belonging to another organization is simply not found.
     /// </summary>
     [HttpGet("attachments/{attachmentId:long}/download")]
     public async Task<IActionResult> Download(long attachmentId, CancellationToken ct)

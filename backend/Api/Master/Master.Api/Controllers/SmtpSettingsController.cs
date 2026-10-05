@@ -17,7 +17,7 @@ namespace Master.Api.Controllers;
 /// The outbound mail account. Platform admins edit the default row
 /// (no customerId); a customer edits its own override.
 ///
-/// The password is write-only in both directions â€” it is never returned.
+/// The password is write-only in both directions — it is never returned.
 /// </summary>
 [ApiController]
 [Authorize]
@@ -117,7 +117,7 @@ public sealed class SmtpSettingsController : ControllerBase
     /// Proves the platform's own credentials work, before anyone relies on them.
     ///
     /// <b>Two routes rather than one with a query parameter.</b> It was one, and
-    /// the authority was decided in the method body â€” <c>MaySendAs</c> read the
+    /// the authority was decided in the method body — <c>MaySendAs</c> read the
     /// customer id off the query string and compared it to the token. That check
     /// was correct and invisible: a controller guarded inside its method looks,
     /// to a reader of attributes and to a test reflecting over them, exactly like
@@ -167,7 +167,7 @@ public sealed class SmtpSettingsController : ControllerBase
         catch (Exception ex) when (ex is SmtpException or SmtpFailedRecipientException
             or SocketException or AuthenticationException)
         {
-            // The reason matters here â€” the admin is debugging their own
+            // The reason matters here — the admin is debugging their own
             // credentials, and this text comes from their mail server rather
             // than from anything of ours. Narrowed to the transport exceptions
             // for exactly that reason: the bare catch this replaces would have

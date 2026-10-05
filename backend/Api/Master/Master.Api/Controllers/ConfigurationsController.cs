@@ -10,7 +10,7 @@ using Shared.Kernel.Apps;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Configuration values per organization. Keys are seed data â€” this endpoint
+/// Configuration values per organization. Keys are seed data — this endpoint
 /// edits values and clears overrides, but never adds or deletes keys.
 /// </summary>
 [ApiController]

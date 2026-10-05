@@ -19,11 +19,12 @@ public sealed class CustomersController : ControllerBase
 
     public CustomersController(SignupRepository signup) => _signup = signup;
 
-    /// <summary>Public trial signup. Returns 202 â€” provisioning is asynchronous.</summary>
+    /// <summary>Public trial signup. Returns 202 — provisioning is asynchronous.</summary>
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken ct)
     {
-        request.Kind = Master.Entity.Enums.CustomerKind.Standard;
+        // Public signup is always Standard, whatever it asks for (TK-152).
+        request.Kind = CustomerKindRepository.KindToCreate(request.Kind, byOperator: false);
         if (SignupRepository.ScopeRefusal(request.BusinessType, request.AddOns) is string scopeRefusal)
         {
             return BadRequest(new { message = scopeRefusal });

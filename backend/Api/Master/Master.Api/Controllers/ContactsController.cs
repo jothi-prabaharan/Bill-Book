@@ -11,7 +11,7 @@ using Shared.Kernel.Apps;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Customers, vendors, job workers and prescribers â€” one master with role flags.
+/// Customers, vendors, job workers and prescribers — one master with role flags.
 /// The contact saves as a whole, addresses and people included, because the
 /// rules that matter are rules about the set.
 /// </summary>
@@ -77,14 +77,14 @@ public sealed class ContactsController : ControllerBase
     /// <summary>
     /// A contact from a name and one way to reach them.
     ///
-    /// <b>The same authority as any other create</b> â€” this controller's
+    /// <b>The same authority as any other create</b> — this controller's
     /// <c>contacts</c> module permission, and POST maps to <c>contacts.edit</c>.
     /// A CRM user converting a lead into a brand-new contact is creating master
     /// data, so they need the permission that creating master data needs; without
     /// it this answers 403 and the conversion tells them why.
     ///
-    /// Contacts composes the rest of the request â€” see
-    /// <c>ContactRepository.CreateQuickAsync</c> â€” so a caller never has to know
+    /// Contacts composes the rest of the request — see
+    /// <c>ContactRepository.CreateQuickAsync</c> — so a caller never has to know
     /// about person roles, categories or the branch's base currency.
     /// </summary>
     [HttpPost("quick")]
@@ -114,7 +114,7 @@ public sealed class ContactsController : ControllerBase
 
     /// <summary>
     /// Creates the sub-accounts for a contact whose call failed when it was
-    /// saved â€” the contact exists, it simply cannot be posted against yet.
+    /// saved — the contact exists, it simply cannot be posted against yet.
     /// </summary>
     [HttpPost("{contactId:long}/link-sub-ledger")]
     public async Task<IActionResult> LinkSubLedger(long contactId, CancellationToken ct)
@@ -177,7 +177,7 @@ public sealed class ContactsController : ControllerBase
             SaveContactOutcome.NotFound => NotFound(),
             SaveContactOutcome.NoRole => BadRequest(new MessageResponse
             {
-                Message = "Choose at least one of customer, vendor, job worker or prescriber â€” "
+                Message = "Choose at least one of customer, vendor, job worker or prescriber — "
                     + "a contact with no role cannot be found on any screen.",
             }),
             SaveContactOutcome.DuplicateCode => BadRequest(new MessageResponse
@@ -216,7 +216,7 @@ public sealed class ContactsController : ControllerBase
             }),
             SaveContactOutcome.DefaultPersonNeedsContactDetail => BadRequest(new MessageResponse
             {
-                Message = "The default contact person needs an email address or a mobile number â€” "
+                Message = "The default contact person needs an email address or a mobile number — "
                     + "invoices and reminders are sent to them.",
             }),
             SaveContactOutcome.MultipleDefaultAddresses => BadRequest(new MessageResponse

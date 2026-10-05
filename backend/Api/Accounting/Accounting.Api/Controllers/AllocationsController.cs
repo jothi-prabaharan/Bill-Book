@@ -37,7 +37,7 @@ public sealed class AllocationsController : ControllerBase
     [HttpPost]
     // Serializable, declared where the request-wide transaction filter can see
     // it. AllocationRepository reads what the target still owes and writes against
-    // that in one act, so it asks for Serializable â€” and without this the filter
+    // that in one act, so it asks for Serializable — and without this the filter
     // had already opened a Read Committed transaction, which cannot be raised,
     // so BeginScopeAsync refused every allocation made through the host (TK-08).
     [Transactional(IsolationLevel.Serializable)]
@@ -101,7 +101,7 @@ public sealed class AllocationsController : ControllerBase
 
     /// <summary>
     /// A page of allocations, newest first, optionally narrowed to one contact.
-    /// Voided rows are left out unless asked for â€” the list is what is claimed
+    /// Voided rows are left out unless asked for — the list is what is claimed
     /// now, not everything that ever was.
     /// </summary>
     [HttpGet]

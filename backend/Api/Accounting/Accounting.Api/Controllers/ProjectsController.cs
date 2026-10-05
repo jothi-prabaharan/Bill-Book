@@ -9,7 +9,7 @@ using Shared.Kernel.Internal;
 namespace Accounting.Api.Controllers;
 
 /// <summary>
-/// Accounting â€º Projects (TK-104): the project master, and the ledger rows
+/// Accounting › Projects (TK-104): the project master, and the ledger rows
 /// tagged with each project. Reading takes <c>projects.view</c>; creating and
 /// saving take <c>projects.create</c> and <c>projects.edit</c>.
 /// </summary>

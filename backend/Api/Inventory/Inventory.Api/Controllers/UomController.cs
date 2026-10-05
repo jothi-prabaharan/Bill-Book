@@ -10,7 +10,7 @@ using Shared.Kernel.Apps;
 namespace Inventory.Api.Controllers;
 
 /// <summary>
-/// Settings â€º Inventory â€º Unit types. Types and their units are served and saved
+/// Settings › Inventory › Unit types. Types and their units are served and saved
 /// through one controller because the screen edits them as one thing.
 /// </summary>
 [ApiController]

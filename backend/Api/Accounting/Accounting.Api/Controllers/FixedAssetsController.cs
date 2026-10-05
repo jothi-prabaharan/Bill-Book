@@ -52,7 +52,7 @@ public sealed class FixedAssetsController : ControllerBase
     }
 
     /// <summary>
-    /// Replaces an asset's depreciation schedules â€” how an asset a bill put on
+    /// Replaces an asset's depreciation schedules — how an asset a bill put on
     /// the register gets its life. Refused once depreciation has been charged.
     /// </summary>
     [HttpPut("{id:long}/schedules")]
@@ -63,7 +63,7 @@ public sealed class FixedAssetsController : ControllerBase
     /// <summary>
     /// Retires an asset. <c>approve</c>, not <c>create</c>: taking an asset off
     /// the books is a sign-off, the same separation a journal's post has.
-    /// Another branch's asset answers 404 â€” see
+    /// Another branch's asset answers 404 — see
     /// <see cref="FixedAssetRepository.DisposeAsync"/>.
     /// </summary>
     [HttpPost("{id:long}/dispose")]
@@ -124,7 +124,7 @@ public sealed class FixedAssetsController : ControllerBase
                     + "count their cost twice."),
             FixedAssetOutcome.ProceedsDestinationRequired => Bad(
                 "Say where the sale proceeds went: the bank or cash account they were paid into, "
-                    + "or the sales invoice raised to the buyer â€” one of the two."),
+                    + "or the sales invoice raised to the buyer — one of the two."),
             FixedAssetOutcome.ProceedsAccountMissing => Bad(
                 "Choose one of this branch's bank or cash accounts for the proceeds."),
             FixedAssetOutcome.InvoiceNotPosted => Bad(

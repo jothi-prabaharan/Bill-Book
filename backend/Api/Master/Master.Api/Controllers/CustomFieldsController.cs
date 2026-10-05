@@ -11,7 +11,7 @@ using Shared.Kernel.Internal;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Settings â€º Custom fields (TK-110): every kind's fields for the branch, in one
+/// Settings › Custom fields (TK-110): every kind's fields for the branch, in one
 /// list. Reading takes <c>settings.view</c>; creating and saving take
 /// <c>settings.create</c> and <c>settings.edit</c>. There is no delete: a field
 /// is deactivated, and keeps every value stored under it.

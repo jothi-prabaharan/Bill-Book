@@ -61,6 +61,7 @@ public sealed class OrgContextRepository
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
                 CustomerPlanTier = c.PlanTier,
+                CustomerKind = c.Kind,
                 HasLicence = l != null,
                 ExpiryDate = l != null ? l.ExpiryDate : DateOnly.MinValue,
                 GraceDays = l != null ? l.GraceDays : 0,
@@ -76,6 +77,10 @@ public sealed class OrgContextRepository
 
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
+        // Internal and Demo customers are never billed, so they never lapse,
+        // whatever dates their licence and branches carry (D-44, TK-152).
+        bool neverLapses = CustomerKindRepository.NeverLapses(row.CustomerKind);
+
         // The branch's own date can only bring access forward, never push it
         // out — otherwise a branch would be a way to outlive the licence paying
         // for it. So the effective date is whichever ends first.
@@ -87,7 +92,7 @@ public sealed class OrgContextRepository
         // Grace is applied once, to whichever date ended access. Applying it to
         // the licence alone would let a wound-down branch keep working past the
         // date it was wound down on.
-        bool expired = today > effectiveExpiry.AddDays(row.GraceDays);
+        bool expired = !neverLapses && today > effectiveExpiry.AddDays(row.GraceDays);
 
         // Expiry blocks the app, never the login — the caller gates on this.
         // That is deliberate for a branch too: a user whose Chennai branch has
@@ -109,7 +114,7 @@ public sealed class OrgContextRepository
         // seasonal counter reached its end date.
         //
         // The account is expired only when every licence it holds is.
-        bool licenceItselfExpired = row.HasLicence && today > row.ExpiryDate.AddDays(row.GraceDays);
+        bool licenceItselfExpired = !neverLapses && row.HasLicence && today > row.ExpiryDate.AddDays(row.GraceDays);
 
         if (licenceItselfExpired
             && row.CustomerStatus != TenantStatus.Expired
@@ -139,13 +144,14 @@ public sealed class OrgContextRepository
             // The date that actually governs, which is the one the user needs to
             // be shown. Reporting the licence date while refusing on the branch
             // date would put a future date on the screen that says access ended.
-            LicenseExpiry = row.HasLicence ? effectiveExpiry : null,
+            // An unbilled customer has no date to show.
+            LicenseExpiry = row.HasLicence && !neverLapses ? effectiveExpiry : null,
             // Which of the two dates it is. Without this the caller cannot tell
             // "your licence has lapsed, renew it" from "this branch was wound
             // down, talk to your head office" — and telling a paying customer
             // to renew a licence that is perfectly valid is the worse message.
-            ExpiryIsBranchLevel = row.HasLicence && row.OrgExpiryDate is DateOnly branchDate && branchDate < row.ExpiryDate,
-            MaxUsers = row.MaxUsers,
+            ExpiryIsBranchLevel = !neverLapses && row.HasLicence && row.OrgExpiryDate is DateOnly branchDate && branchDate < row.ExpiryDate,
+            MaxUsers = neverLapses ? Math.Max(row.MaxUsers, CustomerKindRepository.UnbilledMaxUsers) : row.MaxUsers,
             FinancialYearStartMonth = row.FinancialYearStartMonth,
             BaseCurrency = row.BaseCurrency,
             StateCode = row.StateCode,

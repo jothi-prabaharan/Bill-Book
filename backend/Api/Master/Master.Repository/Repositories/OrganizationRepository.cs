@@ -122,6 +122,13 @@ public sealed class OrganizationRepository
 
         int allowed = licence?.MaxOrganizations ?? 0;
 
+        // An Internal or Demo customer is not billed, so it has no branch cap
+        // and its branches carry no expiry of their own (D-44, TK-152).
+        bool unbilled = CustomerKindRepository.NeverLapses(await _db.Customers
+            .Where(c => c.CustomerId == customerId)
+            .Select(c => c.Kind)
+            .FirstOrDefaultAsync(ct));
+
         // Beyond the licence, a branch is not refused — it is created on its own
         // trial. A business opening a second counter should be able to set it up
         // and see it working before paying for it; refusing outright means the
@@ -130,7 +137,7 @@ public sealed class OrganizationRepository
         // The entitlement still means something: past it the branch carries its
         // own expiry instead of the licence's, so an unpaid branch stops on its
         // own without touching the account or the branches already paid for.
-        bool beyondLicence = allowed > 0 && existing >= allowed;
+        bool beyondLicence = !unbilled && allowed > 0 && existing >= allowed;
 
         // The trial itself is capped, though. Two trial branches are a business
         // trying the model; a third is a licence being evaded, and it is refused
@@ -166,7 +173,7 @@ public sealed class OrganizationRepository
             // rather than an extension: login enforces whichever of the two ends
             // first, so a trial branch under a licence expiring next week stops
             // next week.
-            ExpiryDate = beyondLicence ? today.AddDays(BranchTrialDays) : licence?.ExpiryDate,
+            ExpiryDate = unbilled ? null : beyondLicence ? today.AddDays(BranchTrialDays) : licence?.ExpiryDate,
             IsTrial = beyondLicence,
         };
 

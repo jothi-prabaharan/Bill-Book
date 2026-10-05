@@ -13,7 +13,7 @@ namespace Customer.Api.Controllers;
 /// Writes Customer's master data for a newly created organization: its SLA
 /// policies (TK-18).
 ///
-/// Called by provisioning, which holds no user token â€” so the tenant comes from
+/// Called by provisioning, which holds no user token — so the tenant comes from
 /// the request body and the endpoint is guarded by the shared internal key. The
 /// same shape as every other service's. <b>Re-runnable</b>: it adds only the
 /// priorities the branch is missing.
