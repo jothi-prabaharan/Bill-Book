@@ -5148,7 +5148,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: masters page **Counting by scanning** and **Scanning batches and serials**, release note.
 
 ### TK-164 · POS: finish scan and receipt codes
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#145](https://github.com/jothi-prabaharan/Bill-Book/issues/145)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-POS-UI, L-INV · **Depends on:** TK-155, TK-156, TK-158, TK-160
