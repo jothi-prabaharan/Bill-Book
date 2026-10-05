@@ -4479,7 +4479,7 @@ The queue below is one list in card-number order. Each card names its group.
   - If TK-134 has deleted `apps/admin` by the time this card is claimed, its `rates.page` is gone and needs no swap.
 
 ### TK-136 · `Service` business type; rename `General` to `Retail`
-- [ ] open — reopened 5 October 2026 by TK-142's audit; was marked completed (Antigravity) on 1 October
+- [ ] working (Claude Opus 5.5) — 2026-10-05 · reopened by TK-142's audit; was marked completed (Antigravity) on 1 October
 - **Issue:** [#117](https://github.com/jothi-prabaharan/Bill-Book/issues/117)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-KERNEL, L-MST, L-WEB · **Depends on:** — · **Decision:** D-36
