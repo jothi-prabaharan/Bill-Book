@@ -95,6 +95,7 @@ x-master-env: &master-env
   Bootstrap__OwnerPassword: ${BOOTSTRAP_OWNER_PASSWORD:-}
   Bootstrap__OwnerName: ${BOOTSTRAP_OWNER_NAME:-Owner}
   Bootstrap__CompanyName: ${BOOTSTRAP_COMPANY_NAME:-My Business}
+  Bootstrap__InternalAddOns: ${BOOTSTRAP_INTERNAL_ADDONS:-}
 
 # A service that runs after the migration has finished, and comes back after a
 # crash or a reboot. "required: false" because on the gateway's own PC there
@@ -330,7 +331,6 @@ services:
     entrypoint: [sh, /seed/first-branch.sh]
     environment:
       BOOTSTRAP_OWNER_EMAIL: ${BOOTSTRAP_OWNER_EMAIL:-}
-      BOOTSTRAP_VERTICAL: ${BOOTSTRAP_VERTICAL:-Retail}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     volumes:
       - ./seed:/seed:ro

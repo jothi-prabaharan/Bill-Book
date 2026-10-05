@@ -159,7 +159,9 @@ Every customer is one of three kinds (TK-152):
 | **Internal** | Our own organisation, with real books | Only a platform operator, or the first start of an install | Elite, never lapses |
 | **Demo** | A customer for testing and showing the product | Only a platform operator | Elite, never lapses |
 
-Public signup always makes a Standard customer, whatever the request says. An Internal or Demo customer is never expired, never stamped *Expired*, never billed or reminded to pay, and is not held to a user or branch limit: its new branches carry no expiry and are never trial branches. The platform admin's **Customers** page shows each customer's kind, filters by it, and lets an operator choose the kind and the first branch's business type when adding one.
+Public signup always makes a Standard customer, whatever the request says. An Internal or Demo customer is never expired, never stamped *Expired*, never billed or reminded to pay, and is not held to a user or branch limit: its new branches carry no expiry and are never trial branches.
+
+**The Internal customer is the one an install creates on its first start** (TK-153), from `Bootstrap:OwnerEmail`. Its head office, branch `HO`, is a **Service** business. Its add-ons at that first start come from `Bootstrap:InternalAddOns` (for example `Hrms, Payroll`; none by default); any a Service branch cannot have are left off and logged. An install from before 5 October 2026 already has that first customer as a Standard one: the next start makes it Internal, makes its head office a Service branch and removes every expiry, once. Later starts change nothing, so a business type or add-on changed afterwards on **Settings › Branches** stays as it was set. The platform admin's **Customers** page shows each customer's kind, filters by it, and lets an operator choose the kind and the first branch's business type when adding one.
 
 ## The licence
 

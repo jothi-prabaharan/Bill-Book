@@ -63,4 +63,29 @@ public sealed class InternalSeedController : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Seeds a whole branch: every service its business type and add-ons call
+    /// for, with the trade read from the branch row (TK-153). The same fan-out
+    /// a branch created from the app gets, for a branch made where no service
+    /// was up to seed it — the install's first branch, from
+    /// <c>deploy/local/seed/first-branch.sh</c>. Idempotent like every seed.
+    /// Answers 503 naming the services that could not be reached, so the
+    /// caller retries until they are all up.
+    /// </summary>
+    [HttpPost("branch")]
+    public async Task<IActionResult> SeedBranch(
+        [FromBody] SeedOrganizationRequest request, CancellationToken ct)
+    {
+        IReadOnlyList<string> failed = await _services.GetRequiredService<ITenantSeeder>()
+            .SeedAsync(request.CustomerId, request.OrgId, ct);
+
+        if (failed.Count > 0)
+        {
+            _log.LogWarning("Seeding branch {OrgId} left {Failed} unseeded.", request.OrgId, failed);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { unseeded = failed });
+        }
+
+        return NoContent();
+    }
 }

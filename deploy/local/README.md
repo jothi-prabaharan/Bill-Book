@@ -141,13 +141,17 @@ services PC (or the one PC), three jobs run once and then stop; they should say
 
 - `files-init` prepares the upload folder
 - `migrate` sets up the database
-- `first-branch` loads your first branch's chart of accounts, GST rates, units,
-  numbering series, reports and print templates
+- `first-branch` asks Master to load your first branch's chart of accounts, GST
+  rates, units, numbering series, reports and print templates — exactly the ones
+  its business type and add-ons call for
 
 **Open <http://localhost:8081> on the web PC (or the one PC) and sign in** with
-the email and password `setup.ps1` printed. You are the owner of your business,
-with a licence that runs for ten years. You can add more branches and users
-from **Settings**.
+the email and password `setup.ps1` printed. You are the owner of your business:
+the **Internal** customer, whose licence never lapses, with a head-office branch
+that is a **Service** business. To switch on add-ons for it at the first start,
+set `BOOTSTRAP_INTERNAL_ADDONS` in `.env` (for example `Hrms, Payroll`); after
+that, change them from **Settings › Branches**. You can add more branches and
+users from **Settings**.
 
 > The **Start a free trial** page on the sign-in screen does not work on a new
 > installation yet. It answers *Signups are temporarily unavailable while

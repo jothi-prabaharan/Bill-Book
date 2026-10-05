@@ -15,6 +15,7 @@ using Purchase.Repository;
 using Reporting.Repository;
 using Sales.Repository;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Services;
 
@@ -103,6 +104,20 @@ public class DatabaseMigrationService : IHostedService
         if (granted > 0)
         {
             _logger.LogInformation("Granted platform operator access to {Count} user(s) from Bootstrap:OperatorEmails.", granted);
+        }
+
+        // 5. The bootstrap customer is the Internal one (D-44, TK-153). An install
+        // that created it before then has it as Standard: convert it, once.
+        AddOn internalAddOns = InternalCustomerRepository.AddOnsFrom(_config["Bootstrap:InternalAddOns"], out string? addOnProblem);
+        if (addOnProblem is not null)
+        {
+            _logger.LogWarning("{Problem}", addOnProblem);
+        }
+
+        if (await new InternalCustomerRepository(adminDb).ConvertAsync(
+                InternalCustomerRepository.CustomerId, InternalCustomerRepository.OrgId, internalAddOns, cancellationToken))
+        {
+            _logger.LogInformation("Made the first customer the Internal one, with a Service head office.");
         }
 
         // Migrate-and-exit, for a deployment that runs migrations as a job ahead
@@ -475,19 +490,23 @@ public class DatabaseMigrationService : IHostedService
             return;
         }
 
-        var customerId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-        var orgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        // Our own organisation: the Internal customer, whose head office is a
+        // Service business (D-44, TK-153).
+        Guid customerId = InternalCustomerRepository.CustomerId;
+        Guid orgId = InternalCustomerRepository.OrgId;
         var userId = Guid.NewGuid();
+        AddOn addOns = InternalCustomerRepository.AddOnsFrom(_config["Bootstrap:InternalAddOns"], out _);
 
         adminDb.Customers.Add(new Master.Entity.TableEntities.Customer
         {
             CustomerId = customerId,
-            CustomerCode = "0000000001",
+            CustomerCode = InternalCustomerRepository.CustomerCode,
             CountryPrefix = _config["Bootstrap:CountryPrefix"] ?? "IN",
             Name = _config["Bootstrap:CompanyName"] ?? "First Customer",
             BillingEmail = email,
             DatabaseName = tenantDbName,
             PlanTier = PlanTier.Elite,
+            Kind = Master.Entity.Enums.CustomerKind.Internal,
             Status = Master.Entity.Enums.TenantStatus.Active,
         });
 
@@ -496,9 +515,10 @@ public class DatabaseMigrationService : IHostedService
             CustomerId = customerId,
             LicenseType = Master.Entity.Enums.LicenseType.Elite,
             StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            ExpiryDate = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(10),
-            MaxUsers = 100,
-            MaxOrganizations = 100,
+            // Never lapses (TK-152).
+            ExpiryDate = CustomerKindRepository.NoExpiry,
+            MaxUsers = CustomerKindRepository.UnbilledMaxUsers,
+            MaxOrganizations = CustomerKindRepository.UnbilledMaxOrganizations,
             IsActive = true,
             GraceDays = 14,
         });
@@ -507,7 +527,10 @@ public class DatabaseMigrationService : IHostedService
         {
             OrgId = orgId,
             CustomerId = customerId,
-            OrgCode = "HO",
+            OrgCode = InternalCustomerRepository.BranchCode,
+            BusinessType = InternalCustomerRepository.BranchBusinessType,
+            Vertical = Master.Entity.Enums.Vertical.Service,
+            AddOns = addOns,
             Name = _config["Bootstrap:CompanyName"] ?? "Head Office",
             BaseCurrency = _config["Bootstrap:BaseCurrency"] ?? "INR",
             Status = Master.Entity.Enums.TenantStatus.Active,

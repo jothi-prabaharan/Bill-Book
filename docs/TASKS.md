@@ -4901,20 +4901,27 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a signup creates a Standard customer, an operator can create the other two, and neither of those is ever expired or billed.
 
 ### TK-153 · Internal customer: our own organisation, Service business type
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#134](https://github.com/jothi-prabaharan/Bill-Book/issues/134)
 - **Group:** M · Customer kinds and demo customers
 - **Lanes:** L-MST, L-DOC · **Depends on:** TK-152, TK-136 · **Decision:** D-44
 - **Where:** `Master.Api/Services/DatabaseMigrationService.cs` (`BootstrapFirstOperatorAsync`), `deploy/local/seed/first-branch.sh`, `Master.Api/appsettings*.json`
 - **State:** checked 1 October 2026. The bootstrap creates one customer (id and branch `00000000-0000-0000-0000-000000000001`, code `0000000001`, branch `HO`, Elite, ten years) only while `mst.Users` is empty, named from `Bootstrap:CompanyName`; its branch has no business type chosen, and `first-branch.sh` seeds it as `General`. That customer is the owner's own company, so it becomes the Internal customer rather than a second one.
 - **Sub-tasks:**
-  - [ ] The bootstrap customer is created with kind Internal and its `HO` branch with business type `Service`.
-  - [ ] Its add-ons come from configuration (`Bootstrap:InternalAddOns`, none by default) and are checked against `AddOnRules` for `Service`.
-  - [ ] A real licence with no expiry, so the customer never lapses (TK-152).
-  - [ ] An install that already has a bootstrap customer converts it to Internal and sets the branch type once, and creates nothing a second time.
-  - [ ] `first-branch.sh` and the seeders pass the branch's real business type instead of `General`.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] The bootstrap customer is created with kind Internal and its `HO` branch with business type `Service`.
+  - [x] Its add-ons come from configuration (`Bootstrap:InternalAddOns`, none by default) and are checked against `AddOnRules` for `Service`.
+  - [x] A real licence with no expiry, so the customer never lapses (TK-152).
+  - [x] An install that already has a bootstrap customer converts it to Internal and sets the branch type once, and creates nothing a second time.
+  - [x] `first-branch.sh` and the seeders pass the branch's real business type instead of `General`.
+  - [x] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - **`InternalCustomerRepository`** holds the bootstrap's fixed ids, code and branch code, `AddOnsFrom` (parses `Bootstrap:InternalAddOns` with `AddOnRules.TryParseAddOn`, keeps what `Allowed(Service)` permits, and reports anything dropped or unreadable for the start-up log), and `ConvertAsync`.
+  - **Fresh install**: `DatabaseMigrationService.BootstrapFirstOperatorAsync` creates the customer as `Internal`, its licence Elite with `NoExpiry` and the unbilled limits, and `HO` as a Service branch (`Vertical.Service`) with the configured add-ons.
+  - **Older install**: every start calls `ConvertAsync`. It acts only while the bootstrap customer exists and is not yet Internal: kind Internal, plan Elite, an Expired status back to Active, every licence Elite with no expiry and the unbilled limits, every branch freed of its own expiry and trial flag, and the head office made Service with the configured add-ons. Once Internal it writes nothing, so a later change on Settings › Branches survives restarts. No migration: the kind column came with TK-152.
+  - **Seeding by the real business type**: `POST internal/seed/branch` on Master (internal key) runs `ITenantSeeder` for a branch, which reads the branch's business type and add-ons from its row and seeds exactly those services; 503 with the unseeded list until all are up. `deploy/local/seed/first-branch.sh` makes that one call instead of posting `vertical=General` to eight services itself; `BOOTSTRAP_VERTICAL` is gone from `docker-compose.yml`, and `BOOTSTRAP_INTERNAL_ADDONS` feeds `Bootstrap__InternalAddOns`. The admin retry already read the branch's scope (`HttpTenantSeeder.ReadBranchScopeAsync`), so it needed no change.
+  - Tests: `InternalCustomerTests` (add-ons from configuration, the fixed ids, a conversion, a second start changing nothing even after the owner changed the branch, nothing to convert).
+  - Docs: `platform.md` **Kinds of customer**, `deploy/local/README.md`, `appsettings.json`'s `Bootstrap` block, a release note.
 - **Done when:** a fresh install has one Internal customer with a Service branch, a second start creates nothing, and an older install's first customer becomes Internal.
 
 ### TK-154 · Demo customers: one per business type, master data only

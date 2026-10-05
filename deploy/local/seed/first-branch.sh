@@ -7,8 +7,13 @@
 # Why this exists. Master creates the first owner, customer and branch while
 # migrating (Bootstrap:OwnerEmail), but migration runs before any other service
 # is up, so nothing can seed the branch at that moment. A branch created from
-# the app is seeded at creation; this does the same for the first one, through
-# the same internal endpoint each service exposes for exactly that.
+# the app is seeded at creation; this asks Master to do the same for the first
+# one.
+#
+# Master does the fan-out itself (TK-153): it reads the branch's real business
+# type and add-ons — the first customer is the Internal one, a Service business
+# — and seeds exactly the services those call for. It answers 503 until every
+# one of them is up and seeded, so this retries for up to two minutes.
 #
 # The ids are the ones Master gives the bootstrap customer and its branch.
 set -eu
@@ -19,23 +24,13 @@ if [ -z "${BOOTSTRAP_OWNER_EMAIL:-}" ]; then
 fi
 
 id=00000000-0000-0000-0000-000000000001
-# The trade the first branch seeds for (TK-143, TK-136): Retail, Pharma, Jewellery or
-# Restaurant. A Restaurant branch also gets its menu categories and numbering.
-vertical="${BOOTSTRAP_VERTICAL:-Retail}"
-body="{\"customerId\":\"$id\",\"orgId\":\"$id\",\"vertical\":\"$vertical\"}"
+body="{\"customerId\":\"$id\",\"orgId\":\"$id\"}"
 
-# The order Master's own seeder uses. Each service is given two minutes to come
-# up and finish its start-up migration check.
-# Each service's own port, as docker-compose.yml assigns them.
-for target in accounting:7502 inventory:7503 sales:7504 purchase:7505 reporting:7507 printing:7508 customer:7506 master:7501; do
-  svc="${target%%:*}"
-  curl --fail --silent --show-error --output /dev/null \
-    --retry 60 --retry-delay 2 --retry-all-errors \
-    -X POST "http://$target/internal/seed/organization" \
-    -H "Content-Type: application/json" \
-    -H "X-Internal-Key: $INTERNAL_API_KEY" \
-    -d "$body"
-  echo "seeded $svc"
-done
+curl --fail --silent --show-error --output /dev/null \
+  --retry 60 --retry-delay 2 --retry-all-errors \
+  -X POST "http://master:7501/internal/seed/branch" \
+  -H "Content-Type: application/json" \
+  -H "X-Internal-Key: $INTERNAL_API_KEY" \
+  -d "$body"
 
 echo "The first branch is ready."

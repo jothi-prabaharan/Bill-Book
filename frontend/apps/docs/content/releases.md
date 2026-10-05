@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **The first customer of an install is the Internal one, a Service business (TK-153).** A new install creates it with a head-office branch of business type Service and a licence that never lapses; `Bootstrap:InternalAddOns` (in `deploy/local`, `BOOTSTRAP_INTERNAL_ADDONS`) switches on its add-ons. An existing install's first customer is converted on the next start, once: it becomes Internal, its head office becomes Service and nothing expires. The `first-branch` job now asks Master to seed the branch for its real business type; `BOOTSTRAP_VERTICAL` is gone. See [Kinds of customer](platform#kinds-of-customer).
+
 - **Added**: **Kinds of customer: Standard, Internal and Demo (TK-152).** Signup always makes a Standard customer. A platform operator can also create an Internal customer (our own organisation) or a Demo customer from **Customers** on the admin pages; both start on Elite and never lapse, are never billed, and have no user or branch limit. The customer list shows the kind and filters by it. See [Kinds of customer](platform#kinds-of-customer).
 
 - **Changed**: **Signup asks what your business does, not which app (TK-136).** Choose the first branch's kind of business (Retail, Pharma, Jewellery, School, Service or Restaurant) and its add-ons, or pick **HRMS or Payroll only** and tick one of them. There are no separate RetailErp, School, HRMS and Payroll signups any more. See [Signing up](platform#signing-up).
