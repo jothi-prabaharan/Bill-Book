@@ -4601,7 +4601,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Owner step:** run them, then retry seeding for existing branches so they get account `5400`.
 
 ### TK-142 · Housekeeping: `TASKS.md` fixes, `CLAUDE.md`, docs and release notes
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05
 - **Issue:** [#123](https://github.com/jothi-prabaharan/Bill-Book/issues/123)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-DOC · **Depends on:** TK-136 to TK-141 · **Decision:** D-36
