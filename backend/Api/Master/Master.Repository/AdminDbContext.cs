@@ -463,6 +463,9 @@ public class AdminDbContext : DbContext
 
             // A restaurant order (TK-146): a running tab that posts nothing; its bill is an invoice.
             ("RST", "Restaurant Order", false),
+
+            // A kitchen ticket (TK-147): a station's share of an order, posting nothing.
+            ("KOT", "Kitchen Ticket", false),
         };
 
         modelBuilder.Entity<TransactionType>().HasData(

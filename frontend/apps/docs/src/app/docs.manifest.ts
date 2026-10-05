@@ -98,12 +98,13 @@ export const DOCS: DocSection[] = [
   {
     title: 'Restaurant',
     // Restaurant branches only (D-39). Settings (TK-143), the menu (TK-144), tables
-    // (TK-145) and orders (TK-146) are built.
+    // (TK-145), orders (TK-146) and kitchen tickets (TK-147) are built.
     pages: [
       { slug: 'restaurant-settings', title: 'Restaurant settings', status: 'built' },
       { slug: 'restaurant-menu', title: 'Menu', status: 'built' },
       { slug: 'restaurant-tables', title: 'Tables', status: 'built' },
       { slug: 'restaurant-orders', title: 'Orders', status: 'built' },
+      { slug: 'restaurant-kitchen', title: 'Kitchen tickets', status: 'built' },
     ],
   },
   {

@@ -539,7 +539,8 @@ public sealed class StubRestaurantSettings(Shared.Kernel.Restaurant.RestaurantSe
 
 /// <summary>
 /// Inventory's menu in miniature (TK-146): each dish id has a dine-in price,
-/// takeaway is ten more, and dish 99 is sold out.
+/// takeaway is ten more, dishes 50 and up are made at the bar (TK-147), and
+/// dish 99 is sold out.
 /// </summary>
 public sealed class StubRestaurantMenu : Sales.Repository.Clients.IRestaurantMenuClient
 {
@@ -572,7 +573,7 @@ public sealed class StubRestaurantMenu : Sales.Repository.Clients.IRestaurantMen
             ItemVariantId = l.ItemVariantId,
             VariantName = l.ItemVariantId is null ? null : "Half",
             PortionFactor = l.ItemVariantId is null ? 1m : 0.5m,
-            Station = Shared.Kernel.Restaurant.MenuStation.Kitchen,
+            Station = l.ItemId >= 50 ? Shared.Kernel.Restaurant.MenuStation.Bar : Shared.Kernel.Restaurant.MenuStation.Kitchen,
             UnitPrice = l.ItemId * 10m + extra + l.ModifierIds.Count * 5m,
             Modifiers = [.. l.ModifierIds.Select(id => new Sales.Repository.Clients.MenuPricedModifier { ModifierId = id, Name = $"Choice {id}", PriceChange = 5m })],
         })];

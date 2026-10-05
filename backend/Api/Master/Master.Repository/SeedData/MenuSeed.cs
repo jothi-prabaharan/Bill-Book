@@ -82,7 +82,7 @@ public static class MenuSeed
                 row.BusinessType = null;
                 row.AddOns = AddOn.Budget;
             }
-            else if (row.MenuId is 15 or 124 or 1140 or 1141 or (>= 1146 and <= 1151)) // Restaurant (TK-143)
+            else if (row.MenuId is 15 or 124 or 1140 or 1141 or (>= 1146 and <= 1152)) // Restaurant (TK-143; 1152 the kitchen ticket's template, TK-147)
             {
                 row.BusinessType = BusinessType.Restaurant;
                 row.AddOns = AddOn.None;
@@ -270,6 +270,7 @@ public static class MenuSeed
         new Menu { MenuId = 1103, ParentId = 117, Type = MenuType.Item, Code = "pt-rec", Name = "Receipt voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/RCM", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 10, IsActive = true },
         new Menu { MenuId = 1104, ParentId = 117, Type = MenuType.Item, Code = "pt-pay", Name = "Payment voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/SPM", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 11, IsActive = true },
         new Menu { MenuId = 1105, ParentId = 117, Type = MenuType.Item, Code = "pt-jrn", Name = "Journal voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/JRN", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 12, IsActive = true },
+        new Menu { MenuId = 1152, ParentId = 117, Type = MenuType.Item, Code = "pt-kot", Name = "Kitchen ticket", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/KOT", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 13, IsActive = true },
         // ---- People (H1, TK-48): HRMS, Payroll and School ----
         new Menu { MenuId = 10, ParentId = null, Type = MenuType.Rail, Code = "people", Name = "People", Icon = "users", Module = "employee", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 10, IsActive = true },
         new Menu { MenuId = 118, ParentId = 10, Type = MenuType.Group, Code = "people-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -856,6 +857,10 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 509, MenuId = 1150, PermissionCode = "restaurant.create", Action = "create", Module = "restaurant" },
         new MenuPermission { MenuPermissionId = 510, MenuId = 1151, PermissionCode = "restaurant.view", Action = "view", Module = "restaurant" },
         new MenuPermission { MenuPermissionId = 511, MenuId = 1151, PermissionCode = "restaurant.export", Action = "export", Module = "restaurant" },
+        new MenuPermission { MenuPermissionId = 512, MenuId = 1152, PermissionCode = "settings.view", Action = "view", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 513, MenuId = 1152, PermissionCode = "settings.create", Action = "create", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 514, MenuId = 1152, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 515, MenuId = 1152, PermissionCode = "settings.delete", Action = "delete", Module = "settings" },
 
         // Recurring billing (TK-139): a free add-on, under each module's own permissions.
         new MenuPermission { MenuPermissionId = 485, MenuId = 1142, PermissionCode = "sales.view", Action = "view", Module = "sales" },

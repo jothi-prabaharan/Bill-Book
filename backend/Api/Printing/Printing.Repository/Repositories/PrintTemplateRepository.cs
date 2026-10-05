@@ -102,7 +102,7 @@ public sealed class PrintTemplateRepository
         }
         else
         {
-            settings = request.Settings ?? DefaultLayoutGenerator.BuildSettings();
+            settings = request.Settings ?? DefaultLayoutGenerator.BuildSettings(profile);
             content = request.Content ?? DefaultLayoutGenerator.Build(profile);
             seedVersion = request.Content is null ? DefaultLayoutGenerator.SeedVersion : 0;
         }
@@ -391,7 +391,7 @@ public sealed class PrintTemplateRepository
         {
             Source = PrintTemplateSource.PlatformSeed,
             DocumentTypeCode = code,
-            Settings = DefaultLayoutGenerator.BuildSettings(),
+            Settings = profile is null ? DefaultLayoutGenerator.BuildSettings() : DefaultLayoutGenerator.BuildSettings(profile),
             Content = profile is null ? new PrintContent() : DefaultLayoutGenerator.Build(profile),
         };
     }

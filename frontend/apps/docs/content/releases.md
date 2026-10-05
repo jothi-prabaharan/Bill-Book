@@ -31,6 +31,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Kitchen tickets and the kitchen display (TK-147).** Send to the kitchen splits an order's new dishes into one ticket per station and prints each on an 80 mm roll through the browser; a reprint says REPRINT. Restaurant › Kitchen display shows tickets still being worked, oldest first, and cooks move each dish to preparing, ready and served. Cancelling a dish needs a reason, and once the kitchen has started it, someone who can approve. See [Kitchen tickets](restaurant-kitchen).
+
+- **Changed**: **Printed documents carry their exact paper size.** Every document Printing renders now tells the browser its page size, so an A4 invoice prints on A4 and a thermal roll at its width, rather than the browser fitting it to its own default sheet.
+
 - **Added**: **Restaurant order taking (TK-146).** Restaurant › Orders lets a waiter take dine-in, takeaway and delivery orders from a phone: pick a table, waiter and customer, tap dishes (with portions, choices and a note for the kitchen), and save. Dishes are priced by the menu for the order type; sold-out dishes cannot be added. A table is asked for only when tables are on and the branch requires one, and the same goes for the customer and the waiter. Orders can be added to, moved to another table, switched between order types (repriced), and cancelled with a reason. Moving or joining tables on the floor plan carries their orders. See [Orders](restaurant-orders).
 
 - **Added**: **Restaurant floors and tables (TK-145).** Restaurant › Tables shows every table on every floor with its status (free, occupied, billed, being cleaned), and moves each through its turn in a tap. Move a seated party to a free table, join tables for a large party under a head table, and separate them again. Floors and tables are set up on the same screen. Tables now live in Sales beside the orders they will carry. See [Tables](restaurant-tables).

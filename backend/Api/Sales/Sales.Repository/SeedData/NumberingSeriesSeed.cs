@@ -42,6 +42,9 @@ public static class NumberingSeriesSeed
         // A restaurant order (TK-146). It posts nothing; its number is what the
         // waiter and the kitchen call it by. The kitchen ticket has its own (TK-147).
         Document(orgId, 345, "RST", "Restaurant Order Number", "ORD"),
+
+        // A kitchen ticket (TK-147), one per station each time an order is sent.
+        Document(orgId, 346, "KOT", "Kitchen Ticket Number", "KOT"),
     ];
 
     private static NumberingSeries Document(

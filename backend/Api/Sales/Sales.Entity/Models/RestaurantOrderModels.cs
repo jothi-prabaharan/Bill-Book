@@ -190,3 +190,65 @@ public sealed record OrderResult<T>(OrderOutcome Outcome, T? Value = default, st
 
     public static OrderResult<T> Down(string message) => new(OrderOutcome.Unavailable, default, message);
 }
+
+/// <summary>A dish's next step in the kitchen (TK-147).</summary>
+public sealed class SetKitchenStatusRequest
+{
+    public KitchenStatus Status { get; set; }
+}
+
+public sealed class CancelKotLineRequest
+{
+    [Required(ErrorMessage = "Say why the dish is cancelled.")]
+    [MaxLength(250, ErrorMessage = "A reason can be at most 250 characters.")]
+    public string Reason { get; set; } = string.Empty;
+}
+
+/// <summary>A kitchen ticket as the kitchen display and the order screen show it (TK-147).</summary>
+public sealed class KotView
+{
+    public long KotId { get; set; }
+
+    public string KotNo { get; set; } = string.Empty;
+
+    public long RestaurantOrderId { get; set; }
+
+    public string OrderNo { get; set; } = string.Empty;
+
+    public OrderType OrderType { get; set; }
+
+    public string? TableCode { get; set; }
+
+    public string? WaiterName { get; set; }
+
+    public MenuStation Station { get; set; }
+
+    public DateTime SentAt { get; set; }
+
+    public int PrintedCount { get; set; }
+
+    public List<KotLineView> Lines { get; set; } = [];
+}
+
+public sealed class KotLineView
+{
+    public long KotLineId { get; set; }
+
+    public long RestaurantOrderLineId { get; set; }
+
+    public string ItemName { get; set; } = string.Empty;
+
+    public string? VariantName { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public string? Note { get; set; }
+
+    public List<string> Modifiers { get; set; } = [];
+
+    public KitchenStatus Status { get; set; }
+
+    public string? CancelReason { get; set; }
+
+    public DateTime StatusChangedAt { get; set; }
+}

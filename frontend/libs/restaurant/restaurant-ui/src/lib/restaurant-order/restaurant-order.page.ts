@@ -7,7 +7,12 @@ import { AuthService, IfCanDirective } from '@bill-book/auth';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   FloorPlan,
+  Kot,
+  KotLine,
   ORDER_TYPES,
+  PrintedDocument,
+  canCancel,
+  cancelNeedsApproval,
   OrderType,
   OrderingCategory,
   OrderingItem,
@@ -46,6 +51,7 @@ import {
   TextareaComponent,
   UiMessage,
 } from '@bill-book/ui-components';
+import { printHtml } from '../print-html';
 
 interface ContactOption {
   contactId: number;
@@ -116,6 +122,13 @@ export class RestaurantOrderPage implements OnInit {
   protected readonly chosenModifiers = signal<number[]>([]);
   protected chosenQuantity: number | null = 1;
   protected chosenNote = '';
+
+  // Kitchen tickets (TK-147).
+  protected readonly kots = signal<Kot[]>([]);
+  protected readonly cancellingLine = signal<KotLine | null>(null);
+  protected lineCancelReason = '';
+  protected readonly canCancel = canCancel;
+  protected readonly cancelNeedsApproval = cancelNeedsApproval;
 
   // Moving and cancelling.
   protected readonly sheet = signal<'move' | 'cancel' | null>(null);
@@ -238,6 +251,9 @@ export class RestaurantOrderPage implements OnInit {
   }
 
   private show(order: RestaurantOrder): void {
+    if (this.current()?.restaurantOrderId !== order.restaurantOrderId) {
+      void this.loadKots(order.restaurantOrderId);
+    }
     this.editing.set(order);
     this.orderType.set(order.orderType);
     this.tableId.set(order.restaurantTableId);
@@ -488,7 +504,66 @@ export class RestaurantOrderPage implements OnInit {
 
   private async reload(orderId: number): Promise<void> {
     this.show(await firstValueFrom(this.http.get<RestaurantOrder>(`${RESTAURANT_ORDERS_API}/${orderId}`)));
-    await this.refreshPlan();
+    await Promise.all([this.refreshPlan(), this.loadKots(orderId)]);
+  }
+
+  // ---- Kitchen tickets (TK-147) ----
+
+  private async loadKots(orderId: number): Promise<void> {
+    if (!this.settings().kitchenEnabled) {
+      this.kots.set([]);
+      return;
+    }
+    try {
+      this.kots.set(await firstValueFrom(this.http.get<Kot[]>(`${RESTAURANT_ORDERS_API}/${orderId}/kots`)));
+    } catch {
+      this.kots.set([]);
+    }
+  }
+
+  /** Sends the new dishes, one ticket per station, and prints each ticket. */
+  protected async sendToKitchen(): Promise<void> {
+    const order = this.current();
+    if (!order) return;
+    await this.run(async () => {
+      const sent = await firstValueFrom(this.http.post<{ kotIds: number[] }>(`${RESTAURANT_ORDERS_API}/${order.restaurantOrderId}/send`, {}));
+      for (const kotId of sent.kotIds) {
+        await this.printKot(kotId);
+      }
+      await this.reload(order.restaurantOrderId);
+    }, 'Sent to the kitchen.');
+  }
+
+  protected async reprintKot(kot: Kot): Promise<void> {
+    await this.run(async () => {
+      await this.printKot(kot.kotId);
+      await this.loadKots(kot.restaurantOrderId);
+    }, `${kot.kotNo} reprinted.`);
+  }
+
+  private async printKot(kotId: number): Promise<void> {
+    const printed = await firstValueFrom(this.http.post<PrintedDocument>(`${RESTAURANT_API}/kots/${kotId}/print`, {}));
+    printHtml(printed.html);
+  }
+
+  protected startLineCancel(line: KotLine): void {
+    this.lineCancelReason = '';
+    this.cancellingLine.set(line);
+  }
+
+  protected async cancelLine(): Promise<void> {
+    const line = this.cancellingLine();
+    const order = this.current();
+    if (!line || !order) return;
+    if (!this.lineCancelReason.trim()) {
+      this.messages.set([{ tone: 'error', text: 'Say why the dish is cancelled.' }]);
+      return;
+    }
+    await this.run(async () => {
+      await firstValueFrom(this.http.post(`${RESTAURANT_API}/kot-lines/${line.kotLineId}/cancel`, { reason: this.lineCancelReason.trim() }));
+      this.cancellingLine.set(null);
+      await this.reload(order.restaurantOrderId);
+    }, `${line.itemName} cancelled.`);
   }
 
   private async run(work: () => Promise<void>, done: string): Promise<void> {

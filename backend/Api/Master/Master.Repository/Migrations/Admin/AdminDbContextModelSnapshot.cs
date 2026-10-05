@@ -9618,6 +9618,24 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1152,
+                            AddOns = 0,
+                            BusinessType = "Restaurant",
+                            CanCreate = false,
+                            Code = "pt-kot",
+                            DisplayOrder = 13,
+                            Icon = "printer",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Kitchen ticket",
+                            ParentId = 117,
+                            RoutePath = "/settings/print-templates/KOT",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 10,
                             AddOns = 3,
                             BusinessType = "School",
@@ -15048,6 +15066,42 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1151,
                             Module = "restaurant",
                             PermissionCode = "restaurant.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 512,
+                            Action = "view",
+                            MenuId = 1152,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 513,
+                            Action = "create",
+                            MenuId = 1152,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 514,
+                            Action = "edit",
+                            MenuId = 1152,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 515,
+                            Action = "delete",
+                            MenuId = 1152,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
                             Version = 0u
                         },
                         new
@@ -24719,6 +24773,14 @@ namespace Master.Repository.Migrations.Admin
                             IsActive = true,
                             IsLedgerPosting = false,
                             Name = "Restaurant Order",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            Code = "KOT",
+                            IsActive = true,
+                            IsLedgerPosting = false,
+                            Name = "Kitchen Ticket",
                             Version = 0u
                         });
                 });

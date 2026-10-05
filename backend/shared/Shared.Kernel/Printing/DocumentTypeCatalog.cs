@@ -87,6 +87,10 @@ public static class DocumentTypeCatalog
 
         // A journal has no counterparty and two money columns.
         Profile("JRN", "Journal Voucher", PartyKind.None, LineShape.Ledger, tax: false, totals: true, payments: false),
+
+        // A kitchen ticket (TK-147): dishes and quantities for one station, no
+        // prices, printed on an 80 mm roll. Only Restaurant branches print one.
+        Profile("KOT", "Kitchen Ticket", PartyKind.None, LineShape.Item, tax: false, totals: false, payments: false),
     ];
 
     public static DocumentTypeProfile? Find(string? code) =>

@@ -490,4 +490,16 @@ public class PrintRendererTests
         Assert.Equal("<b>VOID</b>", mark?.TextContent);
         Assert.Null(mark?.QuerySelector("b"));
     }
+
+    [Fact]
+    public void The_print_size_is_the_papers_exactly()
+    {
+        // TK-147: a browser prints at the page size the document names, so an
+        // A4 document says A4 and a thermal roll its width with no fixed length.
+        Assert.Equal(
+            "@page{size:210mm 297mm;margin:0}@media print{html,body{margin:0;padding:0}}",
+            PrintRendererRepository.PageRule(210, 297));
+        Assert.StartsWith("@page{size:80mm auto;", PrintRendererRepository.PageRule(80, null));
+        Assert.Contains("@page{size:", Renderer.Render(Request(3)).Html);
+    }
 }

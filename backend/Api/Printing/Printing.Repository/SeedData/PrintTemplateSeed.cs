@@ -36,7 +36,7 @@ public static class PrintTemplateSeed
                 TemplateName = profile.Name,
                 IsDefault = true,
                 IsActive = true,
-                Settings = DefaultLayoutGenerator.BuildSettings(),
+                Settings = DefaultLayoutGenerator.BuildSettings(profile),
                 Content = DefaultLayoutGenerator.Build(profile),
                 TemplateVersion = 1,
                 SeedVersion = DefaultLayoutGenerator.SeedVersion,

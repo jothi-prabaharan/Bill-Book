@@ -322,6 +322,7 @@ builder.Services.AddScoped<RestaurantTableRepository>();
 
 // Restaurant orders (TK-146): priced on Inventory's menu, waiters named by Master.
 builder.Services.AddScoped<RestaurantOrderRepository>();
+builder.Services.AddScoped<KotRepository>();
 builder.Services.AddHttpClient<IRestaurantMenuClient, RestaurantMenuClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));

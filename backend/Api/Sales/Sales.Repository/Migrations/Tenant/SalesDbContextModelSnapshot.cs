@@ -1815,6 +1815,139 @@ namespace Sales.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.Kot", b =>
+                {
+                    b.Property<long>("KotId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("KotId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("KotNo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("NumberingSeriesId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PrintedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("RestaurantOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Station")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("KotId");
+
+                    b.HasIndex("RestaurantOrderId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "KotNo")
+                        .IsUnique();
+
+                    b.HasIndex("OrgId", "Station", "SentAt");
+
+                    b.ToTable("Kots", "sal");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.KotLine", b =>
+                {
+                    b.Property<long>("KotLineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("KotLineId"));
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("KotId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<long>("RestaurantOrderLineId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("StatusChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("KotLineId");
+
+                    b.HasIndex("KotId");
+
+                    b.HasIndex("RestaurantOrderLineId")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("KotLines", "sal");
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.Quote", b =>
                 {
                     b.Property<long>("QuoteId")
@@ -4049,6 +4182,30 @@ namespace Sales.Repository.Migrations.Tenant
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.Kot", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.KotLine", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.Kot", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("KotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrderLine", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantOrderLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.QuoteDetail", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.Quote", null)
@@ -4190,6 +4347,11 @@ namespace Sales.Repository.Migrations.Tenant
             modelBuilder.Entity("Sales.Entity.TableEntities.InvoiceDetail", b =>
                 {
                     b.Navigation("Taxes");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.Kot", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Sales.Entity.TableEntities.Quote", b =>

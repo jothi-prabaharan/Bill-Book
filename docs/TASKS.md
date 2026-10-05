@@ -4721,7 +4721,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a takeaway order saves with no table, and a dine-in order is refused without one only when the effective setting requires it.
 
 ### TK-147 · KOT: stations, reprint, cancel with reason, item status, kitchen display
-- [ ] working (Claude Opus 5.5) — 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#128](https://github.com/jothi-prabaharan/Bill-Book/issues/128)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-PRT, L-RST-UI · **Depends on:** TK-146 · **Decision:** D-39
@@ -4729,14 +4729,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 1 October 2026. `DocumentTypeCatalog` has twelve types and no KOT. Receipts and labels print through the browser at an exact paper size; there is no Electron path (`apps/desktop` is being removed).
 - **Tables:** `sal.Kots` (order, station, number, printed count), `sal.KotLines` (order line, quantity, status Sent, Preparing, Ready, Served or Cancelled, cancel reason).
 - **Sub-tasks:**
-  - [ ] Entities and migration with RLS.
-  - [ ] `KotRepository`: send an order's new lines as one ticket per station, reprint, cancel with a mandatory reason, move an item's status. A cancel after Preparing may ask the approvals engine; reuse it, do not build a second one.
-  - [ ] A `KOT` entry in `DocumentTypeCatalog`, its placeholders and a seeded 80 mm template; print through the browser with `@page` at the paper's exact size.
-  - [ ] Kitchen display page per station, refreshed by polling (SignalR needs the backplane, so it is later).
-  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Kitchen)]`; all logic is in `*Repository.cs` (rule 16).
-  - [ ] With `restaurant.kot.required` on, billing refuses an order whose lines were never sent.
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Entities and migration with RLS.
+  - [x] `KotRepository`: send an order's new lines as one ticket per station, reprint, cancel with a mandatory reason, move an item's status. A cancel after Preparing may ask the approvals engine; reuse it, do not build a second one.
+  - [x] A `KOT` entry in `DocumentTypeCatalog`, its placeholders and a seeded 80 mm template; print through the browser with `@page` at the paper's exact size.
+  - [x] Kitchen display page per station, refreshed by polling (SignalR needs the backplane, so it is later).
+  - [x] Every controller carries `[RequireBusinessType(Restaurant)]` and `[RequireRestaurantFeature(Kitchen)]`; all logic is in `*Repository.cs` (rule 16).
+  - [x] With `restaurant.kot.required` on, billing refuses an order whose lines were never sent.
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (5 October 2026):**
+  - `sal.Kots` (order, station, number from the new `KOT` series, sent at, printed count) and `sal.KotLines` (order line, quantity, status, reason, status changed at) with the RLS block. A unique index on the order line means a dish is sent once. The order line's `KitchenStatus` (TK-146) moves with its ticket line; cancelling an order cancels its ticket lines too.
+  - `KotRulesRepository` (pure): forward-only moves (Sent → Preparing → Ready → Served, steps may be skipped), `CancelRefusal`, and `BillingRefusal` for `restaurant.kot.required`, which TK-148's billing calls. `KotRepository`: send (one ticket per station), print and reprint (`Kitchen.Copy` says REPRINT n), set status, cancel, the order's tickets, and the kitchen display.
+  - **The approvals engine is not used for a late cancel.** A cancel once the kitchen has started needs `restaurant.approve` on the person cancelling instead, checked in the request: a kitchen ticket cannot wait in an approvals inbox while the dish goes cold. The card says "may"; this is the call, and it is worth an owner's look.
+  - Printing: `KOT` in `DocumentTypeCatalog`, a `Kitchen` placeholder group offered only on it, a seeded 80 mm thermal layout with no letterhead or prices (`DefaultLayoutGenerator.BuildSettings(profile)`), and a `@page` rule at the paper's exact size on **every** rendered document (`PrintRendererRepository.PageRule`). Master gains the *Kitchen ticket* row under Print templates (Restaurant branches only) and a `KOT` transaction type.
+  - Routes `orders/{id}/send`, `orders/{id}/kots`, `kitchen`, `kots/{id}/print`, `kot-lines/{id}/status`, `kot-lines/{id}/cancel`, all behind `[RequireRestaurantFeature(Kitchen)]`; gateway routes. The kitchen display polls every ten seconds; the order screen sends and prints, lists its tickets, reprints and cancels.
 - **Done when:** sending an order prints one ticket per station, a cancel needs a reason, and an item moves from Sent to Ready to Served.
 
 ### TK-148 · Billing at the table through the sales invoice posting

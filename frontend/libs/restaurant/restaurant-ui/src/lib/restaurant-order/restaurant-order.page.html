@@ -195,6 +195,9 @@
 
       @if (isOpen()) {
         <div class="ro__actions">
+          @if (current() && settings().kitchenEnabled && current()!.unsentCount > 0 && !pending().length) {
+            <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="sendToKitchen()">Send {{ current()!.unsentCount }} to the kitchen</button>
+          }
           @if (current()) {
             <button *bbIfCan="'restaurant.void'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="sheet.set('cancel'); cancelReason = ''">Cancel order</button>
           }
@@ -206,6 +209,51 @@
           <p class="ro__muted">{{ problem() }}</p>
         }
       }
+    </div>
+  }
+
+  @if (editing() && kots().length) {
+    <div class="ro__cart">
+      <h2 class="ro__subtitle">Kitchen tickets</h2>
+      @for (k of kots(); track k.kotId) {
+        <div class="ro__kot">
+          <div class="ro__card-top">
+            <strong>{{ k.kotNo }} · {{ k.station }}</strong>
+            <button *bbIfCan="'restaurant.print'" type="button" class="btn btn--small" [disabled]="busy()" (click)="reprintKot(k)">Reprint</button>
+          </div>
+          @for (l of k.lines; track l.kotLineId) {
+            <div class="ro__line">
+              <div class="ro__line-main">
+                <span>{{ l.quantity }} × {{ l.itemName }}{{ l.variantName ? ' (' + l.variantName + ')' : '' }}</span>
+                <span class="ro__muted">{{ l.status }}{{ l.cancelReason ? ': ' + l.cancelReason : '' }}</span>
+              </div>
+              @if (canCancel(l.status) && isOpen()) {
+                <button
+                  *bbIfCan="cancelNeedsApproval(l.status) ? 'restaurant.approve' : 'restaurant.void'"
+                  type="button"
+                  class="btn btn--small btn--link"
+                  (click)="startLineCancel(l)"
+                >
+                  Cancel
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (cancellingLine(); as line) {
+    <div class="ro__sheet" role="dialog" aria-modal="true" aria-label="Cancel a dish">
+      <div class="ro__panel">
+        <h2 class="ro__subtitle">Cancel {{ line.quantity }} × {{ line.itemName }}</h2>
+        <bb-textarea label="Why" name="lineCancelReason" [required]="true" placeholder="Guest changed their mind" [(ngModel)]="lineCancelReason" />
+        <div class="ro__actions">
+          <button type="button" class="btn" (click)="cancellingLine.set(null)">Keep it</button>
+          <button type="button" class="btn btn--danger" [disabled]="busy()" (click)="cancelLine()">Cancel dish</button>
+        </div>
+      </div>
     </div>
   }
 

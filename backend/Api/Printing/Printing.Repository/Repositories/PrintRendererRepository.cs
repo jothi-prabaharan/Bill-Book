@@ -143,7 +143,7 @@ public sealed class PrintRendererRepository
         }
 
         var html = new StringBuilder();
-        html.Append(Styles());
+        html.Append(Styles(paperWidthMm, null));
         html.Append(CultureInfo.InvariantCulture, $"<div class=\"pt-doc pt-continuous\" style=\"width:{Px(paperWidthMm)}\">");
         html.Append(CultureInfo.InvariantCulture, $"<section class=\"pt-page\" style=\"width:{Px(paperWidthMm)};padding:{Padding(settings)}\">");
         html.Append(WatermarkDiv(watermark));
@@ -252,7 +252,7 @@ public sealed class PrintRendererRepository
         string? watermark)
     {
         var html = new StringBuilder();
-        html.Append(Styles());
+        html.Append(Styles(paperWidthMm, paperHeightMm));
         html.Append(CultureInfo.InvariantCulture, $"<div class=\"pt-doc\" style=\"width:{Px(paperWidthMm)}\">");
 
         for (int index = 0; index < pages.Count; index++)
@@ -508,8 +508,9 @@ public sealed class PrintRendererRepository
     /// The page frame. Everything positional lives here rather than on elements,
     /// so a template's own styles cannot fight it.
     /// </summary>
-    private static string Styles() =>
+    private static string Styles(double paperWidthMm, double? paperHeightMm) =>
         "<style>"
+        + PageRule(paperWidthMm, paperHeightMm)
         + ".pt-doc{margin:0 auto}"
         + ".pt-page{position:relative;box-sizing:border-box;overflow:hidden;background:#fff}"
         + ".pt-continuous .pt-page{height:auto}"
@@ -524,6 +525,16 @@ public sealed class PrintRendererRepository
         + ".pt-einvoice td{vertical-align:top;word-break:break-all}"
         + ".pt-einvoice-qr{width:34mm;text-align:right}"
         + "</style>";
+
+    /// <summary>
+    /// The browser's print size, set to the paper's exactly (TK-147), so a
+    /// thermal roll prints at its width and its length runs as long as the
+    /// content, rather than the browser fitting it to a sheet of A4.
+    /// </summary>
+    public static string PageRule(double paperWidthMm, double? paperHeightMm) =>
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"@page{{size:{paperWidthMm:0.##}mm {(paperHeightMm is double h ? $"{h:0.##}mm" : "auto")};margin:0}}@media print{{html,body{{margin:0;padding:0}}}}");
 
     /// <summary>One indivisible piece of the flow.</summary>
     private sealed class Chunk

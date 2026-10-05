@@ -47,6 +47,11 @@ public static class DefaultLayoutGenerator
     {
         ArgumentNullException.ThrowIfNull(profile);
 
+        if (IsKitchenTicket(profile))
+        {
+            return KitchenTicket();
+        }
+
         return new PrintContent
         {
             FixedHeaderHtml = FixedHeader(),
@@ -58,6 +63,50 @@ public static class DefaultLayoutGenerator
     }
 
     public static PrintSettings BuildSettings() => new();
+
+    /// <summary>A document type's starting page: an 80 mm thermal roll for a kitchen ticket, the A4 default for the rest.</summary>
+    public static PrintSettings BuildSettings(DocumentTypeProfile profile) =>
+        IsKitchenTicket(profile)
+            ? new PrintSettings
+            {
+                PrinterType = Printing.Entity.Enums.PrinterType.Thermal,
+                RollWidthMm = 80d,
+                MarginTopMm = 3d,
+                MarginBottomMm = 3d,
+                MarginLeftMm = 3d,
+                MarginRightMm = 3d,
+            }
+            : BuildSettings();
+
+    private static bool IsKitchenTicket(DocumentTypeProfile profile) =>
+        string.Equals(profile.Code, PlaceholderCatalog.KitchenTicketType, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A kitchen ticket (TK-147): the station and table large, then each dish
+    /// with its quantity, choices and note. No letterhead and no prices — the
+    /// kitchen needs neither, and a narrow roll has no room for them.
+    /// </summary>
+    private static PrintContent KitchenTicket() => new()
+    {
+        FixedHeaderHtml = string.Empty,
+        HeaderHtml =
+            $"<div align=\"center\" style=\"font-weight: bold\">{Placeholder("Kitchen.Copy")}</div>"
+            + $"<div align=\"center\" style=\"font-weight: bold; font-size: 16pt\">{Placeholder("Kitchen.Station")} · {Placeholder("Kitchen.Table")}</div>"
+            + "<table width=\"100%\"><tbody><tr>"
+            + $"<td align=\"left\">{Placeholder("Document.No")}</td>"
+            + $"<td align=\"right\">{Placeholder("Kitchen.Time")}</td>"
+            + "</tr><tr>"
+            + $"<td align=\"left\">{Placeholder("Kitchen.OrderType")} · {Placeholder("Kitchen.OrderNo")}</td>"
+            + $"<td align=\"right\">Guests {Placeholder("Kitchen.Guests")}</td>"
+            + "</tr></tbody></table>",
+        DetailsHtml =
+            "<table width=\"100%\"><thead><tr><th align=\"left\">Qty</th><th align=\"left\">Dish</th></tr></thead><tbody><tr>"
+            + $"<td align=\"left\" style=\"font-weight: bold; font-size: 12pt\">{Placeholder("Item.Quantity")}</td>"
+            + $"<td align=\"left\"><div style=\"font-weight: bold; font-size: 12pt\">{Placeholder("Item.ItemName")}</div><div>{Placeholder("Item.Description")}</div></td>"
+            + "</tr></tbody></table>",
+        FooterHtml = $"<div>Waiter: {Placeholder("Kitchen.Waiter")}</div>",
+        FixedFooterHtml = string.Empty,
+    };
 
     /// <summary>The letterhead. Repeats on every page, which is what makes page two recognisable.</summary>
     private static string FixedHeader() =>

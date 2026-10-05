@@ -115,6 +115,11 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<RestaurantOrderLineModifier> RestaurantOrderLineModifiers => Set<RestaurantOrderLineModifier>();
 
+    // Kitchen tickets (TK-147).
+    public DbSet<Kot> Kots => Set<Kot>();
+
+    public DbSet<KotLine> KotLines => Set<KotLine>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("sal");
@@ -540,6 +545,29 @@ public class SalesDbContext : TenantDbContext
             b.HasKey(e => e.RestaurantOrderLineModifierId);
             b.Property(e => e.PriceChange).HasColumnType("decimal(18,2)");
             b.Property(e => e.LinkedQuantity).HasColumnType("decimal(18,4)");
+        });
+
+        // ---- Kitchen tickets (TK-147) --------------------------------------
+
+        modelBuilder.Entity<Kot>(b =>
+        {
+            b.HasKey(e => e.KotId);
+            b.Property(e => e.Station).HasConversion<string>().HasMaxLength(15);
+            b.HasIndex(e => new { e.OrgId, e.KotNo }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.Station, e.SentAt });
+            b.HasOne<RestaurantOrder>().WithMany().HasForeignKey(e => e.RestaurantOrderId).OnDelete(DeleteBehavior.Restrict);
+            b.HasMany(e => e.Lines).WithOne().HasForeignKey(l => l.KotId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<KotLine>(b =>
+        {
+            b.HasKey(e => e.KotLineId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,3)");
+
+            // A dish is sent once: one ticket line per order line.
+            b.HasIndex(e => e.RestaurantOrderLineId).IsUnique();
+            b.HasOne<RestaurantOrderLine>().WithMany().HasForeignKey(e => e.RestaurantOrderLineId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

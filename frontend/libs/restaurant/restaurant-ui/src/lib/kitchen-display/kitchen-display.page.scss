@@ -1,0 +1,156 @@
+.kd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.kd__head,
+.kd__ticket-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+.kd__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.kd__subtitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.kd__muted {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.875rem;
+}
+
+.kd__note {
+  font-weight: 600;
+  color: var(--color-danger, #b91c1c);
+}
+
+.kd__chips,
+.kd__actions,
+.kd__line-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+.kd__actions {
+  justify-content: flex-end;
+}
+
+.kd__chip {
+  min-height: 2.5rem;
+  padding: 0 var(--space-3, 0.75rem);
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 999px;
+  background: var(--color-surface, #fff);
+  cursor: pointer;
+}
+
+.kd__chip--on {
+  border-color: var(--color-primary, #2563eb);
+  background: var(--color-primary-surface, #eff6ff);
+  font-weight: 600;
+}
+
+.kd__tickets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--space-3, 0.75rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kd__ticket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-3, 0.75rem);
+  border: 2px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--color-surface, #fff);
+}
+
+.kd__ticket--late {
+  border-color: var(--color-danger, #b91c1c);
+}
+
+.kd__place {
+  font-size: 1.25rem;
+}
+
+.kd__age {
+  font-weight: 600;
+}
+
+.kd__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kd__line {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  padding-top: var(--space-2, 0.5rem);
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.kd__line--ready {
+  background: var(--color-success-surface, #f0fdf4);
+}
+
+.kd__dish {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 10rem;
+}
+
+.kd__ticket-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.kd__sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(0 0 0 / 30%);
+}
+
+.kd__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  width: min(28rem, 100%);
+  padding: var(--space-4, 1rem);
+  background: var(--color-surface, #fff);
+  border-radius: var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0 0;
+}
+
+@media (min-width: 40rem) {
+  .kd__sheet {
+    align-items: center;
+  }
+
+  .kd__panel {
+    border-radius: var(--radius-md, 0.5rem);
+  }
+}

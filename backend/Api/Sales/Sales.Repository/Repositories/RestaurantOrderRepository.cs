@@ -396,10 +396,20 @@ public sealed class RestaurantOrderRepository
 
         order.Status = RestaurantOrderStatus.Cancelled;
         order.CancelReason = reason.Trim();
-        foreach (RestaurantOrderLine line in order.Lines.Where(l => l.KitchenStatus is not (KitchenStatus.NotSent or KitchenStatus.Cancelled)))
+        List<RestaurantOrderLine> inKitchen = order.Lines.Where(l => l.KitchenStatus is not (KitchenStatus.NotSent or KitchenStatus.Cancelled)).ToList();
+        foreach (RestaurantOrderLine line in inKitchen)
         {
             line.KitchenStatus = KitchenStatus.Cancelled;
             line.CancelReason = order.CancelReason;
+        }
+
+        // The kitchen's tickets say so too, so the kitchen display drops them (TK-147).
+        List<long> inKitchenIds = inKitchen.Select(l => l.RestaurantOrderLineId).ToList();
+        foreach (KotLine kotLine in await _db.KotLines.Where(k => inKitchenIds.Contains(k.RestaurantOrderLineId)).ToListAsync(ct))
+        {
+            kotLine.Status = KitchenStatus.Cancelled;
+            kotLine.CancelReason = order.CancelReason;
+            kotLine.StatusChangedAt = Now;
         }
 
         if (order.RestaurantTableId is long tableId)

@@ -1,42 +1,79 @@
-<div class="p-4 bg-gray-900 min-h-screen text-white">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-yellow-400">Kitchen Display System</h1>
-    <div class="flex gap-4 items-center">
-      <span class="text-gray-400">Station:</span>
-      <div class="flex gap-2">
-        <button class="bg-gray-800 rounded p-2 text-white border border-gray-700" [class.bg-blue-600]="currentStation===1" (click)="setStation(1)">Hot Kitchen</button>
-        <button class="bg-gray-800 rounded p-2 text-white border border-gray-700" [class.bg-blue-600]="currentStation===2" (click)="setStation(2)">Cold Kitchen</button>
-        <button class="bg-gray-800 rounded p-2 text-white border border-gray-700" [class.bg-blue-600]="currentStation===3" (click)="setStation(3)">Bar</button>
-        <button class="bg-gray-800 rounded p-2 text-white border border-gray-700" [class.bg-blue-600]="currentStation===4" (click)="setStation(4)">Dessert</button>
-      </div>
+<section class="kd">
+  <header class="kd__head">
+    <h1 class="kd__title">Kitchen display</h1>
+    <div class="kd__chips" role="tablist" aria-label="Station">
+      <button type="button" role="tab" class="kd__chip" [class.kd__chip--on]="station() === null" [attr.aria-selected]="station() === null" (click)="chooseStation(null)">All</button>
+      @for (s of stations; track s.value) {
+        <button type="button" role="tab" class="kd__chip" [class.kd__chip--on]="station() === s.value" [attr.aria-selected]="station() === s.value" (click)="chooseStation(s.value)">
+          {{ s.label }}
+        </button>
+      }
     </div>
-  </div>
+  </header>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div *ngFor="let ticket of tickets" class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 overflow-hidden">
-      <div class="bg-gray-700 px-4 py-2 border-b border-gray-600 flex justify-between items-center">
-        <span class="font-bold text-lg text-white">#{{ticket.kotNumber}}</span>
-        <span class="text-sm bg-blue-600 px-2 py-1 rounded">Table {{ticket.restaurantTableId || 'N/A'}}</span>
-      </div>
-      
-      <div class="p-4 space-y-3">
-        <div *ngFor="let line of ticket.lines" class="flex justify-between items-start border-b border-gray-700 pb-2 last:border-0">
-          <div>
-            <span class="font-bold text-lg mr-2">{{line.quantity}}x</span>
-            <span>Item #{{line.menuItemId}}</span>
-            <div *ngIf="line.notes" class="text-yellow-400 text-sm mt-1">Note: {{line.notes}}</div>
-          </div>
-          
-          <button *ngIf="line.status === 1" class="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 rounded text-sm font-medium" (click)="updateStatus(line, 2)">Start</button>
-          <button *ngIf="line.status === 2" class="px-3 py-1 bg-green-600 hover:bg-green-500 rounded text-sm font-medium" (click)="updateStatus(line, 3)">Done</button>
-          <span *ngIf="line.status === 3" class="text-green-400 text-sm italic">Ready</span>
-          <span *ngIf="line.status === 5" class="text-red-400 text-sm italic">Cancelled</span>
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  <ul class="kd__tickets" aria-label="Tickets">
+    @for (t of tickets(); track t.kotId) {
+      <li class="kd__ticket" [class.kd__ticket--late]="late(t)">
+        <header class="kd__ticket-head">
+          <strong class="kd__place">{{ orderPlace(t) }}</strong>
+          <span class="kd__age">{{ age(t) }}</span>
+        </header>
+        <div class="kd__muted">{{ t.station }} · {{ t.kotNo }} · {{ t.orderNo }}{{ t.waiterName ? ' · ' + t.waiterName : '' }}</div>
+        <ul class="kd__lines">
+          @for (l of t.lines; track l.kotLineId) {
+            <li class="kd__line" [class]="'kd__line kd__line--' + l.status.toLowerCase()">
+              <div class="kd__dish">
+                <span><strong>{{ l.quantity }} ×</strong> {{ l.itemName }}{{ l.variantName ? ' (' + l.variantName + ')' : '' }}</span>
+                @if (l.modifiers.length) {
+                  <span class="kd__muted">{{ l.modifiers.join(', ') }}</span>
+                }
+                @if (l.note) {
+                  <span class="kd__note">{{ l.note }}</span>
+                }
+                <span class="kd__muted">{{ l.status }}</span>
+              </div>
+              <div class="kd__line-actions">
+                @for (next of nextKitchenSteps(l.status); track next) {
+                  <button type="button" class="btn btn--small btn--primary" [disabled]="busy()" (click)="step(l, next)">{{ stepLabel(next) }}</button>
+                }
+                @if (canCancel(l.status)) {
+                  <button
+                    *bbIfCan="cancelNeedsApproval(l.status) ? 'restaurant.approve' : 'restaurant.void'"
+                    type="button"
+                    class="btn btn--small btn--link"
+                    [disabled]="busy()"
+                    (click)="startCancel(l)"
+                  >
+                    Cancel
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+        <footer class="kd__ticket-foot">
+          <button *bbIfCan="'restaurant.print'" type="button" class="btn btn--small" [disabled]="busy()" (click)="reprint(t)">Reprint</button>
+        </footer>
+      </li>
+    } @empty {
+      <li class="kd__muted">Nothing waiting. New tickets appear here as orders are sent.</li>
+    }
+  </ul>
+
+  @if (cancelling(); as line) {
+    <div class="kd__sheet" role="dialog" aria-modal="true" aria-label="Cancel a dish">
+      <div class="kd__panel">
+        <h2 class="kd__subtitle">Cancel {{ line.quantity }} × {{ line.itemName }}</h2>
+        <bb-textarea label="Why" name="cancelReason" [required]="true" placeholder="Out of paneer" [(ngModel)]="cancelReason" />
+        <div class="kd__actions">
+          <button type="button" class="btn" (click)="cancelling.set(null)">Keep it</button>
+          <button type="button" class="btn btn--danger" [disabled]="busy()" (click)="cancel()">Cancel dish</button>
         </div>
       </div>
     </div>
-    
-    <div *ngIf="tickets.length === 0" class="col-span-full py-12 text-center text-gray-500 text-xl">
-      No active orders for this station.
-    </div>
-  </div>
-</div>
+  }
+</section>

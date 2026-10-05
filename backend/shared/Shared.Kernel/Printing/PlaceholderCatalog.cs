@@ -101,6 +101,11 @@ public static class PlaceholderCatalog
             all.AddRange(EInvoice);
         }
 
+        if (string.Equals(profile.Code, KitchenTicketType, StringComparison.OrdinalIgnoreCase))
+        {
+            all.AddRange(Kitchen);
+        }
+
         return all;
     }
 
@@ -241,6 +246,26 @@ public static class PlaceholderCatalog
         List("Payment.Mode", "Payment", "Cash, bank or card", PlaceholderType.Text, 20),
         List("Payment.Reference", "Payment", "Cheque or transaction reference", PlaceholderType.Text, 30),
         List("Payment.Amount", "Payment", "Amount", PlaceholderType.Amount, 40, AmountFormat),
+    ];
+
+    /// <summary>The kitchen ticket's document type (TK-147).</summary>
+    public const string KitchenTicketType = "KOT";
+
+    /// <summary>
+    /// What a kitchen ticket says beyond its dishes (TK-147). A dish's portion
+    /// is in <c>Item.ItemName</c>, its choices and the waiter's note in
+    /// <c>Item.Description</c>.
+    /// </summary>
+    private static readonly PlaceholderDefinition[] Kitchen =
+    [
+        Single("Kitchen.Station", "Kitchen", "Kitchen, Bar or Counter", PlaceholderType.Text, 10),
+        Single("Kitchen.Table", "Kitchen", "Table, or Takeaway or Delivery", PlaceholderType.Text, 20),
+        Single("Kitchen.OrderNo", "Kitchen", "The order's number", PlaceholderType.Text, 30),
+        Single("Kitchen.OrderType", "Kitchen", "Dine-in, takeaway or delivery", PlaceholderType.Text, 40),
+        Single("Kitchen.Waiter", "Kitchen", "Who took the order", PlaceholderType.Text, 50),
+        Single("Kitchen.Guests", "Kitchen", "How many are eating", PlaceholderType.Number, 60),
+        Single("Kitchen.Time", "Kitchen", "When the ticket was sent", PlaceholderType.Text, 70),
+        Single("Kitchen.Copy", "Kitchen", "REPRINT and its count on a second print; empty on the first", PlaceholderType.Text, 80),
     ];
 
     /// <summary>The document types that can carry an IRN: invoices and credit notes (TK-92).</summary>

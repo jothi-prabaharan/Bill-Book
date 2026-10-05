@@ -27,9 +27,10 @@ public class DefaultLayoutTests
     }
 
     [Fact]
-    public void The_catalogue_holds_the_twelve_printable_document_types()
+    public void The_catalogue_holds_the_thirteen_printable_document_types()
     {
-        Assert.Equal(12, DocumentTypeCatalog.All.Count);
+        // Twelve documents, and the kitchen ticket (TK-147).
+        Assert.Equal(13, DocumentTypeCatalog.All.Count);
         Assert.Equal(
             DocumentTypeCatalog.All.Select(p => p.Code).Distinct().Count(),
             DocumentTypeCatalog.All.Count);
@@ -144,5 +145,38 @@ public class DefaultLayoutTests
     {
         Assert.DoesNotContain(PlaceholderCatalog.For("GRN"), p => p.Group == "Tax");
         Assert.Contains(PlaceholderCatalog.For("BIL"), p => p.Group == "Tax");
+    }
+
+    [Fact]
+    public void A_kitchen_ticket_starts_on_an_80_mm_thermal_roll_with_no_prices()
+    {
+        DocumentTypeProfile kot = DocumentTypeCatalog.Find("KOT")!;
+
+        PrintSettings settings = DefaultLayoutGenerator.BuildSettings(kot);
+        Assert.Equal(PrinterType.Thermal, settings.PrinterType);
+        Assert.Equal(80d, settings.RollWidthMm);
+
+        PrintContent content = DefaultLayoutGenerator.Build(kot);
+        string all = content.HeaderHtml + content.DetailsHtml + content.FooterHtml;
+        Assert.Contains("{{Kitchen.Station}}", all);
+        Assert.Contains("{{Kitchen.Table}}", all);
+        Assert.Contains("{{Item.Quantity}}", all);
+        Assert.DoesNotContain("{{Item.Rate}}", all);
+        Assert.DoesNotContain("{{Item.Amount}}", all);
+        Assert.DoesNotContain("Organization.Logo", content.FixedHeaderHtml);
+    }
+
+    [Fact]
+    public void Only_the_kitchen_ticket_offers_the_kitchen_fields()
+    {
+        Assert.Contains(PlaceholderCatalog.For("KOT"), p => p.Tag == "Kitchen.Copy");
+        Assert.DoesNotContain(PlaceholderCatalog.For("INV"), p => p.Group == "Kitchen");
+        Assert.DoesNotContain(PlaceholderCatalog.For("KOT"), p => p.Group is "Party" or "Tax" or "Totals");
+    }
+
+    [Fact]
+    public void Every_other_document_keeps_its_A4_page()
+    {
+        Assert.Equal(PrinterType.Laser, DefaultLayoutGenerator.BuildSettings(DocumentTypeCatalog.Find("INV")!).PrinterType);
     }
 }
