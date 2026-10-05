@@ -17,8 +17,7 @@ RUN npm ci --no-audit --no-fund
 
 COPY . .
 
-# The two the browser serves. desktop is an Electron shell and has no place
-# behind nginx. NX_DAEMON off because a build container has no use for a
+# The two apps there are (the till is a route in web since TK-155). NX_DAEMON off because a build container has no use for a
 # background process that outlives the command.
 ENV NX_DAEMON=false
 RUN npx nx run-many -t build --projects=web,docs

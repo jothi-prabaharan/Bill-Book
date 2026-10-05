@@ -287,9 +287,10 @@
     <section class="tender printer" role="dialog" aria-modal="true" aria-labelledby="printer-title">
       <h3 id="printer-title">Receipt printer</h3>
 
-      @if (!canPrint) {
-        <p class="tender-problem">This window is not the desktop app, so it cannot reach a printer. Settings saved here apply when the till runs in the desktop app.</p>
-      }
+      <p class="hint">
+        The receipt prints through the browser, as a page exactly the roll's width. Choose the receipt printer in the
+        browser's print dialog the first time; most browsers remember it.
+      </p>
 
       <div class="printer-form">
         <div class="pos-field">
@@ -302,38 +303,6 @@
                 (ngModelChange)="setPaper($event)"
               />
             </div>
-
-        <div class="pos-field">
-              <bb-select
-                label="Connection"
-                name="connection"
-                placeholder="None"
-                [options]="connectionOptions"
-                [ngModel]="printerDraft().target?.kind ?? null"
-                (ngModelChange)="setConnection($event ?? '')"
-              />
-            </div>
-
-        @if (printerDraft().target; as target) {
-          @if (target.kind === 'device') {
-            <div class="pos-field">
-                  <bb-text-input
-                    label="Device path"
-                    name="devicePath"
-                    placeholder="/dev/usb/lp0 or \\.\COM3"
-                    [ngModel]="target.path"
-                    (ngModelChange)="setDevicePath($event)"
-                  />
-                </div>
-          } @else {
-            <div class="pos-field">
-                  <bb-text-input label="Host" name="host" placeholder="192.168.1.50" [ngModel]="target.host" (ngModelChange)="setHost($event)" />
-                </div>
-            <div class="pos-field">
-                  <bb-number-input label="Port" name="port" [min]="1" [max]="65535" [decimals]="0" [ngModel]="target.port" (ngModelChange)="setPort($event)" />
-                </div>
-          }
-        }
 
         <div class="pos-field">
               <bb-text-input
@@ -349,7 +318,7 @@
 
       <div class="tender-actions">
         <button type="button" class="btn btn-ghost" (click)="printerOpen.set(false)">Cancel (Esc)</button>
-        <button type="button" class="btn btn-secondary" [disabled]="!canPrint || !printerDraft().target" (click)="testPrinter()">Test print</button>
+        <button type="button" class="btn btn-secondary" (click)="testPrinter()">Test print</button>
         <button type="button" class="btn btn-primary" (click)="savePrinter()">Save</button>
       </div>
     </section>

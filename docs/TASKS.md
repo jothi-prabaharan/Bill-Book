@@ -230,7 +230,7 @@ as #2 to #13.)
 | `L-KERNEL` | `backend/shared/Shared.Kernel`, `backend/tests/Shared.Kernel.Tests`, `backend/tests/Shared`, `shared-fixtures` |
 | `L-{MODULE}-UI` | `frontend/libs/{module}/**`, e.g. `L-SAL-UI` is `frontend/libs/sales` |
 | `L-UI` | `frontend/libs/shared/**`, `frontend/libs/app-shell` |
-| `L-WEB` / `L-DSK` / `L-PTL` / `L-ADM` | `frontend/apps/web`, `apps/desktop`, `apps/portal`, `apps/admin` |
+| `L-WEB` / `L-DSK` / `L-PTL` / `L-ADM` | `frontend/apps/web`; ~~`apps/desktop`, `apps/portal`, `apps/admin`~~ (removed by TK-132, TK-134 and TK-155; `L-DSK` is retired, the till is `L-POS-UI`) |
 | `L-DOC` | `CLAUDE.md`, `AGENTS.md`, `docs/Modules.md`, `docs/Architecture.md`, `docs/Transactions_And_Specs.md` |
 | New services | Each new service's first card adds a lane for it, e.g. `L-HRM`, `L-PAY`, `L-SIS` |
 
@@ -1076,7 +1076,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** every sales form picks its customer and items by name.
 - **Notes:** TK-14 later improves item search (barcode); this card doesn't wait for it.
   - TK-79 (2026-09-23) built the till's own `PosLookupService` in
-    `frontend/apps/desktop/src/app/pos-terminal/pos-lookup.service.ts`, because this card was open
+    ~~`frontend/apps/desktop/src/app/pos-terminal/pos-lookup.service.ts`~~, because this card was open *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
     when TK-79 ran. Once `SalesLookupService` exists, move the till's `customers()` and `items()`
     onto it and keep only the till's own lookups (walk-in, item detail, sales rates, branch).
   - Done (2026-09-24):
@@ -1095,7 +1095,7 @@ The queue below is one list in card-number order. Each card names its group.
     - **Quote:** `contactId` defaulted to `1`, so a quote saved untouched went to the branch's first
       contact. It is now `0`, with `min(1)`. `QOT-T1-01` was updated to match.
     - **Till:** `PosLookupService.customers()` and `.items()` now delegate to `SalesLookupService`
-      (`apps/desktop`, the card's note above).
+      (~~`apps/desktop`~~, the card's note above). *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
   - Checks: lint (0 errors), typecheck and `nx build web desktop` are clean.
   - Tests:
     - `sales-core/.../sales-lookup.service.spec.ts`
@@ -1746,7 +1746,7 @@ The queue below is one list in card-number order. Each card names its group.
         under Notes and in the docs page.
   - [x] Post through TK-39.
   - [x] Lint and build are clean.
-- **Done when:** a barcode-scanned sale posts from `apps/desktop`.
+- **Done when:** a barcode-scanned sale posts from ~~`apps/desktop`~~. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
 - **Notes:**
   - From TK-39 (2026-09-24): post through `POST api/sales/pos/sales` with `Tenders` (`Mode`, `Amount`, `BankAccountId`, `Reference`); list tender accounts with `GET api/bank-accounts/tender-options`. A 409 names the item that ran out; a 422 means the tenders do not pay the total.
   - From TK-79: the cart is `pos-cart.ts` (pure) plus signals in `pos-terminal.component.ts`.
@@ -1763,14 +1763,14 @@ The queue below is one list in card-number order. Each card names its group.
   - **Hold and recall** keep carts in memory only. The till id is a per-device setting in `localStorage` (`bb.pos.tillId`, default 1), because there is no till master yet.
   - **Found and fixed (L-SAL): no screen could save a sales document.** The forms send `lineType: "Stock"` and `taxTreatment: "Taxable"` as names, but no service registers `JsonStringEnumConverter`, so System.Text.Json refused the body and every save got a 400 from model binding. Sales now registers the converter (numbers are still accepted). **The other seven services have the same gap**, so it is queued as TK-124.
   - Checks: desktop lint and build, typecheck and backend build are clean. Specs: `pos-keys.spec.ts`, `pos-tender.spec.ts`, `pos-sale.service.spec.ts`.
-  - **Not verified end to end:** a barcode-scanned sale posting from `apps/desktop` needs a running stack, a scanner or its emulation, and the owner's run.
+  - **Not verified end to end:** a barcode-scanned sale posting from ~~`apps/desktop`~~ needs a running stack, a scanner or its emulation, and the owner's run. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
 
 ### TK-41 · POS receipt, ESC/POS (T7.3)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#52](https://github.com/jothi-prabaharan/Bill-Book/issues/52)
 - **Group:** F · Phase 3: POS
 - **Lanes:** L-DSK (+ L-SAL for the tenders on the invoice view) · **Depends on:** TK-40 · **Decision:** —
-- **Where:** `frontend/apps/desktop/src/app/pos-terminal/{receipt-layout.ts,esc-pos.service.ts,receipt-printer.service.ts}`, `frontend/apps/desktop/{main.js,preload.js,printer.js}`.
+- **Where:** ~~`frontend/apps/desktop/src/app/pos-terminal/{receipt-layout.ts,esc-pos.service.ts,receipt-printer.service.ts}`~~, ~~`frontend/apps/desktop/{main.js,preload.js,printer.js}`~~. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
 - **Sub-tasks:**
   - [x] A fixed-width layout for 58 mm (32 columns) and 80 mm (48 columns) paper: header from the branch, lines, GST split,
         tender and change. `receipt-layout.ts` is pure: rows of text, no printer commands.
@@ -1946,7 +1946,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **The shared settings routes are one list**, `@bill-book/settings-shared-routes` (`sharedSettingsRoutes`), mounted by `apps/web`, `apps/hrms` and `apps/payroll`. `apps/web` lost its own copies of those routes. The retail-only settings stay in `apps/web`.
   - **App switcher addresses:** `window.__BB_CONFIG__.appUrls` from the deployment's `config.js`. On `localhost` they default to the dev servers (`DEV_APP_URLS`). No deployment serves `apps/hrms` or `apps/payroll` yet. `deploy/azure` and `deploy/local` need a site each when HRMS or Payroll ships.
   - **Shortcuts to replace before either app is sold:**
-    - The two apps use `apps/web/src/styles.scss` (the auth pages' styles live there), as `apps/desktop` uses web's assets. Moving the auth styles into `libs/shared/theming` would end that.
+    - The two apps use `apps/web/src/styles.scss` (the auth pages' styles live there), as ~~`apps/desktop`~~ uses web's assets. Moving the auth styles into `libs/shared/theming` would end that. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
     - The topbar's **New** menu (`newGroups`) is a hard-coded RetailErp list (invoice, bill, …) and shows in every app.
     - `shell-screens.ts`, the rail drawn before the menu answers, is still the retail list.
     - Neither app has an icon or a manifest.
@@ -2779,7 +2779,7 @@ The queue below is one list in card-number order. Each card names its group.
         built (see TK-11 and TK-12).
   - [x] PDF/A: it says it is "blocked on the Syncfusion licence". In fact
         `Sales.Api/Services/Pdf/PdfSharpInvoiceRenderer.cs` already archives invoice PDFs (TK-22).
-  - [x] T7.3: it says "`apps/desktop` declares `targets: {}`". It has real build targets.
+  - [x] T7.3: it says "~~`apps/desktop`~~ declares `targets: {}`". It has real build targets. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
 - **Done when:** each statement above matches the code.
 - **Notes:**
   - Beyond the seven listed, the same commit fixes: the `ReportLayerCertificationTests` sentence
@@ -2987,22 +2987,22 @@ The queue below is one list in card-number order. Each card names its group.
     `frontend/libs/sales/sales-ui/src/lib/order-to-invoice/order-to-invoice.dialog.spec.ts` (new)
     and `SOR-T1-07` in `sales-forms.spec.ts`.
 
-### TK-79 · `apps/desktop`: a real cart
+### TK-79 · ~~`apps/desktop`~~: a real cart *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Issue:** [#76](https://github.com/jothi-prabaharan/Bill-Book/issues/76)
 - **Group:** Z · Done — waiting on the owner's test run
 - **Lanes:** L-DSK · **Depends on:** TK-15 · **Decision:** —
 - **Where:**
-  - `frontend/apps/desktop/src/app/pos-terminal/pos-terminal.component.{ts,html,scss}`: the till.
+  - ~~`frontend/apps/desktop/src/app/pos-terminal/pos-terminal.component.{ts,html,scss}`~~: the till. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
   - `pos-cart.ts`: the cart as pure functions over `DocumentLine`, all arithmetic through `line-math.ts`.
   - `pos-lookup.service.ts`: customers, the walk-in contact, items, item detail, sales rates, branch.
   - `esc-pos.service.ts`: receipt bytes, unchanged apart from a typed `generateReceipt`.
-  - `frontend/apps/desktop/src/app/app.config.ts`: now carries `authInterceptor`.
+  - ~~`frontend/apps/desktop/src/app/app.config.ts`~~: now carries `authInterceptor`. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
 - **Sub-tasks:**
   - [x] Add a cart held in signals: lines, quantity, price, line total, and a GST preview from
         `line-math.ts`.
   - [x] Add items by search. ~~Reusing TK-15's `SalesLookupService.items()`~~: that service doesn't
-        exist and its lane was held by TK-76, so `PosLookupService` in `apps/desktop` does it for now.
+        exist and its lane was held by TK-76, so `PosLookupService` in ~~`apps/desktop`~~ does it for now. *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
   - [x] Replace `contactId: 1` with the customer picker, defaulting to a walk-in contact looked up
         by code (`WALKIN`) rather than by id.
   - [x] Split the component into `.html` and `.scss` if it's still inline (house rule). It already was.
@@ -3017,7 +3017,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Nothing seeds a `WALKIN` contact.** The till falls back to a warning and a chosen customer
     until one exists. Seeding one per branch belongs in Master's contacts seed (L-CON). It needs a
     card, and it is a decision too: a walk-in contact is one customer for every counter sale.
-  - **The till never sent a bearer token.** `apps/desktop` registered only `apiBaseUrlInterceptor`,
+  - **The till never sent a bearer token.** ~~`apps/desktop`~~ registered only `apiBaseUrlInterceptor`, *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
     so every call after sign-in would have been a 401. `authInterceptor` now follows it, in the same
     order as `apps/web`.
   - **A tax-inclusive price can land a paisa off at the till.** Two units at ₹45 inclusive of 18%
@@ -3027,7 +3027,7 @@ The queue below is one list in card-number order. Each card names its group.
     A round-off line on POS invoices is the usual answer; TK-40 should decide.
   - Checkout still sends the scaffold's plain draft invoice (now with real lines and customer).
     Replacing it with TK-39's endpoint is TK-40's "Post through TK-39".
-  - Checked by screenshot, not tests: `dist/apps/desktop/browser` served with the API mocked in
+  - Checked by screenshot, not tests: ~~`dist/apps/desktop/browser`~~ served with the API mocked in *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
     Playwright, at 1280px and 360px. Lines stack into cards at 360px. Choosing a customer from
     another state switches the totals from CGST + SGST to IGST.
 
@@ -4767,7 +4767,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-PRT, L-RST-UI · **Depends on:** TK-146 · **Decision:** D-39
 - **Where:** `Shared.Kernel/Printing/{DocumentTypeCatalog,PlaceholderCatalog}.cs`, `Printing.Repository/Repositories/PrintTemplateSeederRepository.cs`, `Shared.Kernel/Approvals/ApprovalEnums.cs`
-- **State:** checked 1 October 2026. `DocumentTypeCatalog` has twelve types and no KOT. Receipts and labels print through the browser at an exact paper size; there is no Electron path (`apps/desktop` is being removed).
+- **State:** checked 1 October 2026. `DocumentTypeCatalog` has twelve types and no KOT. Receipts and labels print through the browser at an exact paper size; there is no Electron path (~~`apps/desktop`~~ is being removed). *(Superseded: `apps/desktop` was removed by TK-155; the till is `libs/pos` in `apps/web`.)*
 - **Tables:** `sal.Kots` (order, station, number, printed count), `sal.KotLines` (order line, quantity, status Sent, Preparing, Ready, Served or Cancelled, cancel reason).
 - **Sub-tasks:**
   - [x] Entities and migration with RLS.
@@ -4951,20 +4951,27 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** running it twice leaves six Demo customers, each branch has its business type and the right masters, and none has a transaction.
 
 ### TK-155 · Remove Electron and move the POS till into `apps/web`
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · the owner's run of a sale from `/pos` is still open
 - **Issue:** [#136](https://github.com/jothi-prabaharan/Bill-Book/issues/136)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-WEB, L-DSK, L-UI, L-DEPS, L-DOC, L-POS-UI (new lane: `frontend/libs/pos/**`) · **Depends on:** — · **Decision:** owner, 2026-10-01
 - **Where:** `frontend/apps/desktop/` (`main.js`, `preload.js`, `printer.js`, `project.json`, `src/app/pos-terminal/`), `frontend/package.json`, `.vscode/launch.json`, `.gitignore`, `deploy/local/web/Dockerfile`, `frontend/libs/reporting/reporting-ui/src/lib/report-host/report-host.page.ts`
 - **State:** checked 1 October 2026. `apps/desktop` is an Electron shell around the POS till; only it can reach a USB or serial receipt printer, so `receipt-printer.service.ts` refuses to print in any other window and `esc-pos.service.ts` builds ESC/POS bytes for it. `frontend/package.json` depends on `electron` `^43.4.0`; `project.json` carries the tag `platform:electron` and a `serve` target that runs `electron`. The owner decided on 2026-10-01 to drop Electron, move the till into `apps/web`, and print receipts and labels through the browser at an exact paper size.
 - **Sub-tasks:**
-  - [ ] New `libs/pos/{pos-core,pos-ui}` mirroring the other add-on libs; move `pos-cart`, `pos-tender`, `pos-keys`, `pos-lookup`, `pos-sale`, `receipt-layout` and the terminal component, with their specs. A lazy route in `apps/web`, shown only to branches with the `Pos` add-on (menu and route guard, like the other add-ons).
-  - [ ] Receipts print through the browser: `receipt-layout` rows become HTML at 58 or 80 mm with `@page { size: 80mm auto; margin: 0 }`. Delete `esc-pos.service.*`, `receipt-printer.service.*` and every "only the desktop app can print" refusal and message.
-  - [ ] Delete `apps/desktop`, the `electron` dependency (refresh `package-lock.json` with `npm install --package-lock-only`), the "Desktop (Electron)" entry in `.vscode/launch.json`, the two Electron blocks in `.gitignore` (including `apps/desktop/release` and `apps/desktop/out`), the Dockerfile comment and the comment in `report-host.page.ts`; remove desktop's cross-origin configuration.
-  - [ ] Remove Electron and `apps/desktop` from every markdown file: `CLAUDE.md` (apps list, the ESC/POS printing rule, the portal and desktop caveat, the POS roadmap notes), `AGENTS.md`, `README.md`, `docs/Architecture.md` (including the stale "Desktop Application Shell" sections), `docs/Modules.md`, and the docs pages `overview.md`, `development.md` and `invoices.md` with `docs.manifest.ts`; add the `release-notes.md` bullet. Where an old completed card names Electron, strike the line through and point it here; never delete a card.
-  - [ ] The "five apps" wording in `CLAUDE.md`, `README.md` and the CI comments becomes the two that remain, `web` and `docs`.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] New `libs/pos/{pos-core,pos-ui}` mirroring the other add-on libs; move `pos-cart`, `pos-tender`, `pos-keys`, `pos-lookup`, `pos-sale`, `receipt-layout` and the terminal component, with their specs. A lazy route in `apps/web`, shown only to branches with the `Pos` add-on (menu and route guard, like the other add-ons).
+  - [x] Receipts print through the browser: `receipt-layout` rows become HTML at 58 or 80 mm with `@page { size: 80mm auto; margin: 0 }`. Delete `esc-pos.service.*`, `receipt-printer.service.*` and every "only the desktop app can print" refusal and message.
+  - [x] Delete `apps/desktop`, the `electron` dependency (refresh `package-lock.json` with `npm install --package-lock-only`), the "Desktop (Electron)" entry in `.vscode/launch.json`, the two Electron blocks in `.gitignore` (including `apps/desktop/release` and `apps/desktop/out`), the Dockerfile comment and the comment in `report-host.page.ts`; remove desktop's cross-origin configuration.
+  - [x] Remove Electron and `apps/desktop` from every markdown file: `CLAUDE.md` (apps list, the ESC/POS printing rule, the portal and desktop caveat, the POS roadmap notes), `AGENTS.md`, `README.md`, `docs/Architecture.md` (including the stale "Desktop Application Shell" sections), `docs/Modules.md`, and the docs pages `overview.md`, `development.md` and `invoices.md` with `docs.manifest.ts`; add the `release-notes.md` bullet. Where an old completed card names Electron, strike the line through and point it here; never delete a card.
+  - [x] The "five apps" wording in `CLAUDE.md`, `README.md` and the CI comments becomes the two that remain, `web` and `docs`.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - **`libs/pos/pos-core`** (`platform:ionic-safe`): `pos-cart`, `pos-tender`, `pos-keys` (with `BarcodeBurst`), `receipt-layout`, the lookup and sale services, and the new `receipt-settings` — all moved with their specs. **`libs/pos/pos-ui`**: the terminal component and the browser receipt printer, routed by `posUiRoutes`. `apps/web` mounts it at `/pos` with `{ permission: 'sales.approve', addOns: ['Pos'] }`, the same as `PosSalesController`.
+  - **Menu**: Sales › **Point of sale** (`pos`, menu 1153, `sales.approve`), `BusinessType` null and `AddOns = Pos`, so only a branch with the add-on sees it; admin migration `PosTillMenu`.
+  - **Receipts through the browser**: `receiptHtml(rows, paper)` turns the same fixed-width rows into a page with `@page { size: 80mm auto; margin: 0 }` (or 58 mm), printed in a hidden frame by `printHtml`, which moved from `restaurant-ui` to `ui-components` so the KOT and the receipt share it. Printer settings are the paper and footer only; a till still holding the desktop app's settings keeps those two (`parsePrinterSettings`). `esc-pos.service.*`, the Electron bridge and every "only the desktop app can print" message are gone. Non-ASCII names still print as `?`, because the columns are counted in characters.
+  - **Deleted**: `apps/desktop` (its `main.js`, `preload.js`, `printer.js`, project and app shell), the `electron` dependency (`package-lock.json` refreshed with `npm install --package-lock-only`), the launch configuration, both `.gitignore` blocks, and the Dockerfile and `report-host` comments. There was no desktop CORS origin to remove. The theming spec's `CHAL-M1-03` asserted the deleted app's stylesheet and goes with it; `CHAL-M1-04` checks web alone.
+  - **Docs**: `invoices.md` (the till and its receipt), `overview.md`, `development.md`, `README.md`, `AGENTS.md`, `CLAUDE.md` (apps list, the printing rule, the apps caveat, the POS roadmap notes, struck through where they were history), `docs/Architecture.md` (apps lists, and the "Desktop Application Shell" heading, which was the web app's wide-screen layout), `docs/Modules.md`; old cards' `apps/desktop` mentions are struck through with a pointer here. `git grep -i electron` and `git grep apps/desktop` now find only struck-through notes and this card.
+  - Tests: the moved specs, `receipt-settings.spec.ts`, `receiptHtml` cases in `receipt-layout.spec.ts`, a rewritten `receipt-printer.service.spec.ts`, and `PosMenuTests` (the menu row and who sees it).
 - **Done when:** `git grep -i electron` and `git grep apps/desktop` find nothing except struck-through history notes, `web` and `docs` build, and the till posts a sale from `apps/web` (owner's run).
 
 ### TK-156 · Printing: barcode and QR rendering

@@ -7748,6 +7748,23 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1153,
+                            AddOns = 8,
+                            CanCreate = false,
+                            Code = "pos",
+                            DisplayOrder = 6,
+                            Icon = "monitor",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "Point of sale",
+                            ParentId = 104,
+                            RoutePath = "/pos",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 1020,
                             AddOns = 0,
                             BusinessType = "Retail",
@@ -15076,6 +15093,15 @@ namespace Master.Repository.Migrations.Admin
                             MenuId = 1152,
                             Module = "settings",
                             PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 516,
+                            Action = "approve",
+                            MenuId = 1153,
+                            Module = "sales",
+                            PermissionCode = "sales.approve",
                             Version = 0u
                         },
                         new

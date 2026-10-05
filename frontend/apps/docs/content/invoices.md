@@ -198,7 +198,7 @@ provider is configured".
 
 A till sale is an invoice with `POS` on it rather than `INV` — same table, same tax determination, same posting. It carries a till, a payment mode and the cash tendered, and it needs no due date.
 
-**The till screen lives in the desktop app**, because a receipt is printed with ESC/POS commands straight to a USB or serial printer and a browser cannot reach one. Nothing else waits on it: the counter sale it replaces is an invoice raised directly.
+**The till is a page in the web app**, **Sales › Point of sale** (`/pos`), shown to a branch with the **POS** add-on and to a user who may post invoices (TK-155). It needs no install: any computer or tablet with a browser can be a till, and its receipt prints through the browser.
 
 ### The cart
 
@@ -224,7 +224,7 @@ Until this change a till sale could not be posted at all. It debited an account 
 
 ### The till screen
 
-The desktop app's till is driven by the keyboard:
+The till is driven by the keyboard:
 
 | Key | Does |
 |---|---|
@@ -240,18 +240,17 @@ The desktop app's till is driven by the keyboard:
 
 - **A barcode scanner adds the item it reads.** A scanner types the code as a fast burst of keys ending in Enter, which the till tells apart from a person typing. The item whose code is exactly the scan is added, or the only item matching it. If several items match, the search opens on the scan rather than adding the wrong one.
 - **Tender** opens with the whole amount ready in cash. Choose cash, card or UPI and the account the money goes into, add as many tenders as the payment needs, and **Complete sale**. The total is rounded to the rupee, as the posted invoice is, and change is shown before the sale is sent.
-- **Held sales** stay on the till only until the app closes.
-- **The till number** is set at the top of the screen and remembered on this computer.
+- **Held sales** stay on the till only until the page is closed or reloaded.
+- **The till number** is set at the top of the screen and remembered in this browser.
 - **Offline, the till refuses to sell.** The status at the top says so, and nothing is queued to send later. A sale is either posted, with its stock taken, or not made at all.
 
 ### The receipt
 
-After each sale the till prints a receipt on a thermal receipt printer. It prints the branch's name, address, phone and GSTIN, the bill number and date, and each item with its quantity, rate and amount. It then prints the taxable value, GST split by component and rate, any round-off, the total, how the sale was paid, and the change. Every figure on it comes from the posted invoice.
+After each sale the till prints a receipt through the browser, as a page exactly the width of the receipt roll, so a thermal receipt printer installed on the computer prints it like any other page. It prints the branch's name, address, phone and GSTIN, the bill number and date, and each item with its quantity, rate and amount. It then prints the taxable value, GST split by component and rate, any round-off, the total, how the sale was paid, and the change. Every figure on it comes from the posted invoice.
 
-- **Set up the printer once per till** under **Printer** at the top of the screen. Choose the paper width (80 mm or 58 mm) and how the printer is connected. A USB or serial printer is given by its device path, such as `/dev/usb/lp0` on Linux or `\\.\COM3` on Windows. A network printer is given by its address and port, usually 9100. **Test print** checks the connection before you save. You can also set the line printed at the bottom.
+- **Set up the paper once per till** under **Printer** at the top of the screen: the roll width (80 mm or 58 mm) and the line printed at the bottom. **Test print** prints a sample at that width. The first time, choose the receipt printer in the browser's print dialog; most browsers remember it. Install the printer's own driver on the computer, as for any printer.
 - **The sale stands if the printer fails.** If the printer is out of paper or unplugged, the sale is still posted and the till says the receipt did not print. Fix the printer and press **F10** to reprint. A reprint is marked *DUPLICATE*.
-- **Receipts print only from the desktop app.** A browser cannot reach a receipt printer.
-- **Names in Tamil or other scripts print as question marks.** Receipt printers print text only in their built-in character set.
+- **Names in Tamil or other scripts print as question marks.** The receipt is laid out in fixed-width columns, and those scripts are wider than one column; printing them needs a layout that measures text rather than counting characters.
 
 ## Picking the customer and items
 

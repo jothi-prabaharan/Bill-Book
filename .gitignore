@@ -42,10 +42,6 @@ tmp/
 .angular-cli.json
 e2e/test-output/
 
-# ---------------------------------------------------------------- Electron
-apps/desktop/release/
-apps/desktop/out/
-
 # ---------------------------------------------------------------- Environment
 .env
 .env.*
@@ -112,10 +108,6 @@ tmp/
 .ng/
 .angular-cli.json
 e2e/test-output/
-
-# ---------------------------------------------------------------- Electron
-apps/desktop/release/
-apps/desktop/out/
 
 # ---------------------------------------------------------------- Environment
 .env

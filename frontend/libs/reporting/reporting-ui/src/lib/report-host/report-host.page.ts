@@ -294,7 +294,7 @@ export class ReportHostPage implements OnInit {
    * This is why the service returns a blob rather than saving it: the download
    * dance is the shell's business, and it lives here in the web app rather than
    * in `reporting-core`, which must stay free of browser globals to run under
-   * Ionic and Electron.
+   * Ionic.
    */
   private save(file: Blob, name: string): void {
     const url = URL.createObjectURL(file);

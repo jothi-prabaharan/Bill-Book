@@ -57,27 +57,17 @@ describe('Milestone 1 Empirical Challenger Stress Tests (Theming & Tokens)', () 
       expect(content).toMatch(/@use\s+['"][^'"]*theming\/src\/index\.scss['"]/);
     });
 
-    it('CHAL-M1-03: apps/desktop/src/styles.scss imports web master stylesheet via @use', () => {
-      const desktopStylesPath = resolve(frontendDir, 'apps/desktop/src/styles.scss');
-      expect(existsSync(desktopStylesPath)).toBe(true);
-      const content = readFileSync(desktopStylesPath, 'utf-8');
-      expect(content).toMatch(/@use\s+['"][^'"]*web\/src\/styles\.scss['"]/);
-    });
-
-    it.skip('CHAL-M1-04: compiled CSS bundles for web and desktop contain all design tokens', () => {
+    // CHAL-M1-03 asserted the desktop app's stylesheet; that app was removed in TK-155.
+    it.skip('CHAL-M1-04: the compiled web CSS bundle contains all design tokens', () => {
       const distWebDir = resolve(frontendDir, 'dist/apps/web/browser');
-      const distDesktopDir = resolve(frontendDir, 'dist/apps/desktop/browser');
 
       // Check if dist outputs exist
-      if (existsSync(distWebDir) && existsSync(distDesktopDir)) {
+      if (existsSync(distWebDir)) {
         const webCssFiles = readdirSync(distWebDir).filter((f) => f.endsWith('.css'));
-        const desktopCssFiles = readdirSync(distDesktopDir).filter((f) => f.endsWith('.css'));
 
         expect(webCssFiles.length).toBeGreaterThan(0);
-        expect(desktopCssFiles.length).toBeGreaterThan(0);
 
         const webCss = readFileSync(join(distWebDir, webCssFiles[0]), 'utf-8');
-        const desktopCss = readFileSync(join(distDesktopDir, desktopCssFiles[0]), 'utf-8');
 
         const criticalTokens = [
           '--color-bg',
@@ -95,7 +85,6 @@ describe('Milestone 1 Empirical Challenger Stress Tests (Theming & Tokens)', () 
 
         for (const token of criticalTokens) {
           expect(webCss).toContain(token);
-          expect(desktopCss).toContain(token);
         }
       }
     });

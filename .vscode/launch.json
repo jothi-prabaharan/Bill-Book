@@ -101,20 +101,6 @@
         "--disable-features=CalculateNativeWinOcclusion"
       ]
     },
-    {
-      "name": "Desktop (Electron)",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceFolder}/frontend",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "nx",
-        "run",
-        "desktop:serve"
-      ],
-      "sourceMaps": true,
-      "console": "integratedTerminal"
-    },
 
     // ── Backend microservice debug configurations (hidden from dropdown) ──
     // These are used by the compound configs below. To debug a single service,

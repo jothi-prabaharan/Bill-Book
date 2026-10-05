@@ -50,8 +50,8 @@ import {
   TextInputComponent,
   TextareaComponent,
   UiMessage,
+  printHtml,
 } from '@bill-book/ui-components';
-import { printHtml } from '../print-html';
 
 interface ContactOption {
   contactId: number;

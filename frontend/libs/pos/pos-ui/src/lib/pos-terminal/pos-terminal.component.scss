@@ -2,7 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  height: 100vh;
+  // Inside the web app's shell now (TK-155), under its top bar and breadcrumb
+  // strip, so it fills what is left of the window rather than all of it.
+  min-height: calc(100dvh - 7rem);
   padding: var(--space-4);
   background: var(--color-bg);
   color: var(--color-text);

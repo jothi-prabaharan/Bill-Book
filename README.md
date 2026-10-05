@@ -33,7 +33,7 @@ That creates all four databases, generates the EF Core migrations and applies th
 
 A multi-tenant retail ERP and accounting SaaS for Indian SMBs. Bill Books is the functional benchmark.
 
-Billing, inventory, double-entry accounting, GST compliance, CRM and a support helpdesk, delivered as web, client-portal, admin, desktop and documentation apps over a set of .NET services on Postg[...]
+Billing, inventory, double-entry accounting, GST compliance, CRM and a support helpdesk, delivered as a web app (with the till, the client portal and the platform admin pages inside it) and a documentation site over a set of .NET services on Postg[...]
 
 > **Status:** early but real. Master, Inventory and Accounting are built end to end — schema, API and screens. Sales has its schema only; Purchase, Customer and Reporting are scaffolds. The back[...]
 
@@ -118,7 +118,6 @@ frontend/
 │   ├── web/                          main application
 │   ├── portal/                       client portal (Phase 2)
 │   ├── admin/                        platform operator screens
-│   ├── desktop/                      Electron; only host for ESC/POS printing
 │   └── docs/                         static help site (markdown, no API)
 └── libs/
     ├── {module}/                     one folder per module, mirroring Api/
@@ -130,7 +129,7 @@ frontend/
 
 Each of the seven services gets its own folder under `backend/Api/`, holding exactly the three `{Module}.*` projects. Dependency direction is one-way: `Api` → `Repository` → `Entity` → `Sha[...]
 
-`-core` libraries must stay Ionic-compatible — no `window`/`document`, no Syncfusion, no Electron or Node APIs. Every page must work at ~360px wide.
+`-core` libraries must stay Ionic-compatible — no `window`/`document`, no Syncfusion, no Node APIs. Every page must work at ~360px wide.
 
 ---
 
@@ -220,7 +219,7 @@ To deploy the system locally to IIS with full environment support (Staging, UAT,
 
 ### Not built
 
-Sales beyond its schema. Purchase, Customer and Reporting services. The Notification and RateSync workers. The `portal`, `admin` and `desktop` apps are empty scaffolds.
+Sales beyond its schema. Purchase, Customer and Reporting services. The Notification and RateSync workers. The desktop app is gone (TK-155): the till is `/pos` in the web app.
 
 ---
 

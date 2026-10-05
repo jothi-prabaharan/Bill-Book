@@ -1,7 +1,8 @@
 /**
- * Prints a document Printing rendered (TK-147), through the browser. The HTML
- * carries its own `@page` rule at the paper's exact size — an 80 mm roll for a
- * kitchen ticket — so it goes into a hidden frame and that frame is printed.
+ * Prints a whole HTML page through the browser (TK-147, TK-155): a kitchen
+ * ticket Printing rendered, a till receipt. The page carries its own `@page`
+ * rule at the paper's exact size — an 80 mm roll — so it goes into a hidden
+ * frame and that frame is printed. Shared by the restaurant pages and the till.
  */
 export function printHtml(html: string): void {
   const frame = document.createElement('iframe');

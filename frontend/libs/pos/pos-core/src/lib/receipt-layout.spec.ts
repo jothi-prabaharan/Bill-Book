@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReceiptBranch, ReceiptSale, gstSummary, printable, receiptRows, twoColumns, wrap } from './receipt-layout';
+import { ReceiptBranch, ReceiptSale, gstSummary, printable, receiptHtml, receiptRows, twoColumns, wrap } from './receipt-layout';
 
 /** The till receipt's layout (TK-41): fixed-width rows from the posted invoice. */
 describe('receiptRows', () => {
@@ -150,5 +150,25 @@ describe('text helpers', () => {
   it('wraps at spaces and hard-cuts a word longer than the row', () => {
     expect(wrap('Sandal soap family pack', 12)).toEqual(['Sandal soap', 'family pack']);
     expect(wrap('ABCDEFGHIJKLMNOP', 6)).toEqual(['ABCDEF', 'GHIJKL', 'MNOP']);
+  });
+});
+
+describe('receiptHtml (TK-155)', () => {
+  const rows = [
+    { text: 'Shop <&> "One"', align: 'center' as const, style: 'title' as const },
+    { text: 'Item            10.00', align: 'left' as const, style: 'normal' as const },
+    { text: '', align: 'left' as const, style: 'normal' as const },
+  ];
+
+  it('sizes the page to the roll with no margin', () => {
+    expect(receiptHtml(rows, 80)).toContain('@page { size: 80mm auto; margin: 0; }');
+    expect(receiptHtml(rows, 58)).toContain('@page { size: 58mm auto; margin: 0; }');
+  });
+
+  it('escapes the text and keeps each row on its own line', () => {
+    const html = receiptHtml(rows, 80);
+    expect(html).toContain('<div class="c t">Shop &lt;&amp;&gt; &quot;One&quot;</div>');
+    expect(html).toContain('<div>Item            10.00</div>');
+    expect(html).toContain('<div>&nbsp;</div>');
   });
 });

@@ -19,8 +19,7 @@ import {
   nextKitchenSteps,
   orderPlace,
 } from '@bill-book/restaurant-core';
-import { MessageBoxComponent, TextareaComponent, UiMessage } from '@bill-book/ui-components';
-import { printHtml } from '../print-html';
+import { MessageBoxComponent, TextareaComponent, UiMessage, printHtml } from '@bill-book/ui-components';
 
 /**
  * Restaurant › Kitchen display (TK-147): every ticket still being worked, at

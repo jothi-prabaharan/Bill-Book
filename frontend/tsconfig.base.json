@@ -214,6 +214,12 @@
       "@bill-book/portal-ui": [
         "libs/portal/portal-ui/src/index.ts"
       ],
+      "@bill-book/pos-core": [
+        "libs/pos/pos-core/src/index.ts"
+      ],
+      "@bill-book/pos-ui": [
+        "libs/pos/pos-ui/src/index.ts"
+      ],
       "@bill-book/restaurant-core": [
         "libs/restaurant/restaurant-core/src/index.ts"
       ],

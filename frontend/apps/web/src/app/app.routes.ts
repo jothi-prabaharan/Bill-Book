@@ -325,6 +325,13 @@ export const appRoutes: Routes = [
           import('@bill-book/reporting-ui').then((m) => m.reportingRoutes),
         data: { access: { permission: 'reports.view' } },
       },
+      // The till (TK-155): a branch with the POS add-on, and the permission that
+      // posts an invoice, since that is what a sale does.
+      {
+        path: 'pos',
+        loadChildren: () => import('@bill-book/pos-ui').then((m) => m.posUiRoutes),
+        data: { access: { permission: 'sales.approve', addOns: ['Pos'] } },
+      },
       {
         path: 'restaurant',
         loadChildren: () =>

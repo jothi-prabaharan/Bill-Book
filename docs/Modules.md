@@ -557,7 +557,7 @@ The POS columns having no control is expected — POS is Phase 3 and has no scre
 ### Header fields the request never had
 
 `ContactGstin` and `PlaceOfSupplyStateCode` are on `SaveQuoteRequest` and `SaveSalesOrderRequest` and on **none** of the other three. `TermsAndConditions` likewise. So an invoice cannot state its own place of supply and can only fall back to the contact's registration — and an invoice is the document the GST return is filed from.
-| **Never compiled** | T7.2 POS screen, T7.3 ESC/POS — `apps/desktop` has no build target |
+| ~~**Never compiled**~~ | ~~T7.2 POS screen, T7.3 ESC/POS in the desktop app~~ — superseded by TK-155: the till is `/pos` in `apps/web` and prints through the browser |
 
 **One defect used to account for four of those boxes, and it is fixed.** `Sales.Api`'s `LedgerLegRequest` carried a single `Amount` where Accounting's carries `DebitAmount` and `CreditAmount` and rejects a leg that is neither, so Sales had never successfully posted to the general ledger. `LedgerClient` now matches the contract. Written up under T3.1.
 

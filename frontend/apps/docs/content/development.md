@@ -70,9 +70,8 @@ the render path. The stack covers macOS (`ui-monospace`, SF Mono, Menlo),
 Windows (Consolas) and Linux (Liberation Mono), landing on the generic
 `monospace` if none match.
 
-**Where the tokens reach.** `apps/web` imports the full theming entry point and
-`apps/desktop` inherits it by importing web's stylesheet; the portal and admin
-pages are routes inside web and get it from there. `apps/docs` imports only the tokens
+**Where the tokens reach.** `apps/web` imports the full theming entry point; the till, the portal and the
+admin pages are routes inside web and get it from there. `apps/docs` imports only the tokens
 partial — it keeps its own component styling and takes just the font roles.
 A new app gets the fonts by importing `libs/shared/theming/src/index.scss`.
 
@@ -450,7 +449,7 @@ Each launch configuration has a matching task — `serve-web`, `serve-web-stagin
 
 ## Apps without environment files
 
-There are three apps: `web`, `desktop` and `docs` (TK-134). `apps/desktop` builds but has no environment files or debug configuration yet; it gets them when it has something to run against. The client portal and the platform admin pages are routes inside `web` (`/portal`, `/admin`), so they need nothing of their own.
+There are two apps: `web` and `docs` (TK-134, TK-155). The till, the client portal and the platform admin pages are routes inside `web` (`/pos`, `/portal`, `/admin`), so they need nothing of their own. The desktop app is gone.
 
 The backend services that are not yet implemented — Customer, Purchase, Reporting — have only a placeholder `appsettings.json`. Per-environment files arrive with the service.
 
@@ -547,7 +546,7 @@ Never reference another service's `DbContext`. Read over its API through a named
 
 Three files per page or component, sharing a base name: `.ts`, `.html`, `.scss`. The decorator uses `templateUrl` and `styleUrl` — **no inline `template:` or `styles:` blocks**. A component with no styles of its own still gets a `.scss` file, so the trio is the same everywhere.
 
-`-core` libs stay Ionic-compatible: Signals and DI are fine, but no `window`, no `document`, no Syncfusion, no Electron or Node APIs. Every page works at ~360px.
+`-core` libs stay Ionic-compatible: Signals and DI are fine, but no `window`, no `document`, no Syncfusion, no Node APIs. Every page works at ~360px.
 
 ## Documentation
 

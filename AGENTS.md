@@ -152,7 +152,7 @@ What you do **not** have and must not reach for: any grid or chart library. (Exc
 - **`async`/`await` over promises** for REST calls, rather than heavily piped streams.
 - **Separate `templateUrl` and `styleUrl`.** No inline templates beyond trivial wrappers.
 - **File suffixes mean something**: `.page.ts`, `.dialog.ts`, `.list.ts`, `.component.ts`.
-- **`-core` libs stay Ionic-compatible**: no `window`, no `document`, no Electron or Node APIs.
+- **`-core` libs stay Ionic-compatible**: no `window`, no `document`, no Node APIs.
 - **Every page works at ~360px.** Grids become card lists, forms stack, modals become full-screen sheets.
 
 ---
@@ -164,7 +164,7 @@ cd frontend && npm run check          # lint, typecheck, tests, both builds
 cd backend  && dotnet build && dotnet test
 ```
 
-`dotnet build` must be clean — `TreatWarningsAsErrors` is on, so a warning is a failure. Database-backed tests skip with a reason when no PostgreSQL answers. **`npm run check` passes as of 2 September 2026** — lint across 23 projects, typecheck, 474 tests, all five app builds. The `allocation-form.component.html` lint failure noted here on 24 August is fixed, along with the Ionic imports that had kept `accounting-ui` from typechecking at all. The backend is green too: **756 tests, all passing, none skipped.**
+`dotnet build` must be clean — `TreatWarningsAsErrors` is on, so a warning is a failure. Database-backed tests skip with a reason when no PostgreSQL answers. **`npm run check` passes as of 2 September 2026** — lint across 23 projects, typecheck, 474 tests, all five app builds (two apps, `web` and `docs`, since TK-155). The `allocation-form.component.html` lint failure noted here on 24 August is fixed, along with the Ionic imports that had kept `accounting-ui` from typechecking at all. The backend is green too: **756 tests, all passing, none skipped.**
 
 **A commit that does not build blocks whoever is working in parallel with you.**
 

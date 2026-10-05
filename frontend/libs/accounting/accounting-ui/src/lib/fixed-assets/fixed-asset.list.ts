@@ -21,8 +21,8 @@ export interface FixedAsset {
  *
  * <b>Written twice.</b> The first version imported Ionic, which this workspace
  * has never had: `@ionic/angular/standalone` and `ionicons` are in no
- * package.json here, so the file could not compile and — because
- * `apps/desktop` was the only app anyone expected to be Ionic-shaped — nobody
+ * package.json here, so the file could not compile and — because no app
+ * here was ever Ionic-shaped — nobody
  * noticed until the whole workspace was typechecked. It also drove the report
  * grid, which wants a server-run report behind it, for what is a plain list of
  * rows. This is the same shape every other list in Accounts uses.

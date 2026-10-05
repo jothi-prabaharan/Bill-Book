@@ -1,0 +1,8 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "pos-core",
+  "projectType": "library",
+  "sourceRoot": "libs/pos/pos-core/src",
+  "tags": ["scope:pos", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

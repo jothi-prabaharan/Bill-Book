@@ -742,9 +742,9 @@ Guiding principle: apps orchestrate, -core contains behaviour and side-effects, 
 
 ### Apps vs libs
 - apps/
-  - `web`, `portal`, `admin`, `desktop`, `docs` — full applications that compose libs and provide routes.
+  - `web` and `docs` — the two applications, which compose libs and provide routes. The client portal is `/portal` and the platform admin `/admin` inside `web` (TK-132); the till is `/pos` inside `web` (TK-155).
 - libs/
-  - `libs/{module}/{module}-core` — models, services, state, HTTP clients, facades. Must be platform-agnostic (no `window`, `document`, Node, or Electron APIs).
+  - `libs/{module}/{module}-core` — models, services, state, HTTP clients, facades. Must be platform-agnostic (no `window`, `document` or Node APIs).
   - `libs/{module}/{module}-ui` — presentational components, pages and shared UI widgets.
   - `libs/shared/` — shared theme, tokens, utilities, and small wrappers for platform-specific features.
 
@@ -843,7 +843,9 @@ These are short, actionable responsibilities to keep work consistent and reviewa
 - Each service generally has three projects: `{Module}.Entity`, `{Module}.Repository`, `{Module}.Api`.
 - Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`.
 
-# Project: Bill-Book Desktop Application Shell & Module Screens
+# Project: Bill-Book Web Application Shell & Module Screens
+
+*The wide-screen layout of `apps/web` (not a separate desktop app; that was removed in TK-155).*
 
 ## Architecture
 - **Framework**: Angular 20.0.0 (Standalone Components, `inject()`, `signal()`, `computed()`), TypeScript 5.8.0, Nx 21.0.0.
@@ -987,7 +989,7 @@ A comprehensive, opaque-box, multi-tier test suite was designed and implemented 
 - **Total Test Files**: 24
 - **Total Tests Executed**: 301
 - **Pass Rate**: 100% (301 passed, 0 failed, 0 skipped)
-- **Pipeline Verification (`npm run check`)**: Clean exit code 0 (Lint, Typecheck, Unit/Integration Tests, Production Builds for `web`, `desktop`, `docs`).
+- **Pipeline Verification (`npm run check`)**: Clean exit code 0 (Lint, Typecheck, Unit/Integration Tests, Production Builds for the apps of the day; `web` and `docs` since TK-155).
 
 ---
 
@@ -1238,7 +1240,7 @@ Three projects per service, no more — all three under `backend/Api/{Module}/`:
 Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. Never backwards.
 
 ### Frontend (Nx, Angular v20)
-`apps/{web, portal, admin, desktop, docs}` 
+`apps/{web, docs}` 
 `libs/{module}/{module}-core` (view-models + models, no templates) 
 `libs/{module}/{module}-ui` (pages) 
 `libs/shared/{auth, api-client, ui-components, currency-format, theming}`

@@ -17,27 +17,33 @@ import {
   UiMessage,
   UnitPriceInputComponent,
 } from '@bill-book/ui-components';
-import { BarcodeBurst, POS_KEYS, PosCommand, commandFor } from './pos-keys';
-import { PosSaleService, TenderAccount } from './pos-sale.service';
-import { PrinterSettings, ReceiptPrinterService } from './receipt-printer.service';
-import { TenderLine, TenderMode, roundToRupee, tenderSummary } from './pos-tender';
 import {
+  BarcodeBurst,
+  CustomerOption,
+  POS_KEYS,
+  PosCommand,
+  PosLookupService,
+  PosSaleService,
+  PrinterSettings,
   QTY_SCALE,
+  TenderAccount,
+  TenderLine,
+  TenderMode,
+  TillBranch,
+  WALK_IN_CONTACT_CODE,
   addItem,
   cartContext,
   cartTotals,
+  commandFor,
   isInterStateSale,
   removeLine,
   reprice,
+  roundToRupee,
   setQuantity,
   setUnitPrice,
-} from './pos-cart';
-import {
-  CustomerOption,
-  PosLookupService,
-  TillBranch,
-  WALK_IN_CONTACT_CODE,
-} from './pos-lookup.service';
+  tenderSummary,
+} from '@bill-book/pos-core';
+import { ReceiptPrinterService } from './receipt-printer.service';
 
 type Picker = 'none' | 'customer' | 'item';
 
@@ -68,6 +74,9 @@ const TILL_KEY = 'bb.pos.tillId';
  *
  * **Offline, it refuses to sell** (owner's decision, 24 September 2026). There
  * is no local queue: a sale is either posted, with stock taken, or not made.
+ *
+ * **It runs in the web app** (TK-155), at `/pos` for a branch with the POS
+ * add-on, and prints its receipt through the browser at the roll's width.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -134,7 +143,6 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   protected readonly lastSale = signal<{ invoiceId: number; documentNo: string } | null>(null);
   protected readonly printerOpen = signal(false);
   protected readonly printerDraft = signal<PrinterSettings>(this.printer.settings());
-  protected readonly canPrint = this.printer.canPrint();
   private heldSeq = 0;
 
   // ---- Tender ---------------------------------------------------------------
@@ -151,11 +159,6 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   protected readonly paperOptions = [
     { value: '80', label: '80 mm (48 columns)' },
     { value: '58', label: '58 mm (32 columns)' },
-  ];
-
-  protected readonly connectionOptions = [
-    { value: 'device', label: 'USB or serial (device path)' },
-    { value: 'network', label: 'Network (TCP)' },
   ];
 
   /** What the customer pays: the cart total rounded to the rupee, in paise. */
@@ -719,7 +722,6 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   }
 
   private printFailure(error: unknown): string {
-    // Electron's and this service's own refusals are Errors; an HTTP failure is not.
     return error instanceof Error ? error.message : this.failure(error).text;
   }
 
@@ -734,35 +736,6 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     this.printerDraft.update((d) => ({ ...d, paper: value === '58' ? 58 : 80 }));
   }
 
-  protected setConnection(kind: string): void {
-    this.printerDraft.update((d) => ({
-      ...d,
-      target: kind === 'network'
-        ? { kind: 'network', host: '', port: 9100 }
-        : kind === 'device'
-          ? { kind: 'device', path: '' }
-          : null,
-    }));
-  }
-
-  protected setDevicePath(path: string | null): void {
-    this.printerDraft.update((d) => ({ ...d, target: { kind: 'device', path: path ?? '' } }));
-  }
-
-  protected setHost(host: string | null): void {
-    this.printerDraft.update((d) => ({
-      ...d,
-      target: { kind: 'network', host: host ?? '', port: d.target?.kind === 'network' ? d.target.port : 9100 },
-    }));
-  }
-
-  protected setPort(port: number | string | null): void {
-    this.printerDraft.update((d) => ({
-      ...d,
-      target: { kind: 'network', host: d.target?.kind === 'network' ? d.target.host : '', port: Number(port) || 9100 },
-    }));
-  }
-
   protected setFooter(footer: string | null): void {
     this.printerDraft.update((d) => ({ ...d, footer: (footer ?? '').trim() === '' ? undefined : footer ?? undefined }));
   }
@@ -773,13 +746,8 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     this.messages.set([{ tone: 'success', text: 'Printer settings saved for this till.' }]);
   }
 
-  protected async testPrinter(): Promise<void> {
-    try {
-      await this.printer.printTest(this.printerDraft());
-      this.messages.set([{ tone: 'success', text: 'Test page sent to the printer.' }]);
-    } catch (error) {
-      this.messages.set([{ tone: 'error', text: `The test page did not print: ${this.printFailure(error)}` }]);
-    }
+  protected testPrinter(): void {
+    this.printer.printTest(this.printerDraft());
   }
 
   private failure(error: unknown): UiMessage {

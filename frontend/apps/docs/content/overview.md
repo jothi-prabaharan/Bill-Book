@@ -82,13 +82,10 @@ A different seam is gone for a different reason: the tenant directory that resol
 
 | App | Audience |
 |---|---|
-| `web` | The customer's staff — the full ERP |
-| `portal` | Their customers and vendors — own invoices only *(Phase 2)* |
-| `admin` | Platform operators — tenants, provisioning |
-| `desktop` | Shop floor — POS with ESC/POS receipt printing |
+| `web` | The customer's staff — the full ERP, with the till at `/pos`, their customers' and vendors' portal at `/portal` and the platform operators' pages at `/admin` |
 | `docs` | This site |
 
-Libraries mirror the backend: `libs/{module}/{module}-core` holds view-models with no templates, `{module}-ui` holds pages. `-core` stays Ionic-compatible — no `window`, no Syncfusion, no Electron APIs — so the same view-models drive mobile.
+Libraries mirror the backend: `libs/{module}/{module}-core` holds view-models with no templates, `{module}-ui` holds pages. `-core` stays Ionic-compatible — no `window`, no Syncfusion, no Node APIs — so the same view-models drive mobile.
 
 ## Stack
 
@@ -119,13 +116,12 @@ The full solution builds, including the three services that are still empty shel
 | Purchase | Purchase Orders, Goods Receipts, Bills, and Debit Notes with full UI screens and API integration |
 | Sales | Quotes, Sales Orders, Delivery Challans, Invoices, and Credit Notes with full UI forms, lists, and API integration |
 | Worker | `BillBook.Worker` — costing and its ledger postings, reminders, rate sync, recurring billing, savings schemes and email, one job each |
-| Apps | `web` (with the client portal at `/portal` and platform admin at `/admin`), `desktop` and `docs` |
+| Apps | `web` (with the till at `/pos`, the client portal at `/portal` and platform admin at `/admin`) and `docs` |
 | Tooling | 31-project solution, 25 Nx projects, VS Code one-press debug, YARP gateway, a Postman collection generated from the controllers |
 
 ## Not built
 
 - **Customer, Reporting** — project folders and `.csproj` exist, nothing else. Customer is where CRM and the support helpdesk will both be built
-- **`apps/desktop`** — POS terminal module and ESC/POS thermal printing service built; full CRUD, inventory sync, and offline database support pending
 
 ## Known gaps
 

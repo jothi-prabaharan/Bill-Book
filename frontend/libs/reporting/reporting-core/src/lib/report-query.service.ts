@@ -16,7 +16,7 @@ import {
  * two pages showing the same report cannot disagree about which page they are on.
  *
  * No `window`, no `document` — this lib is Ionic-safe, and a browser global here
- * is what stops the same code running in the desktop and mobile shells.
+ * is what stops the same code running in the web app and a mobile shell.
  */
 @Injectable({ providedIn: 'root' })
 export class ReportQueryService {
@@ -46,7 +46,7 @@ export class ReportQueryService {
    * Exports the whole result — the same query without paging.
    *
    * Returns the blob rather than saving it: what to do with a file is the shell's
-   * business, and the desktop app does not do it the way a browser does.
+   * business, and a mobile shell does not do it the way a browser does.
    */
   async export(
     reportKey: string,

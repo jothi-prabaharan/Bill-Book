@@ -1,0 +1,8 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "pos-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/pos/pos-ui/src",
+  "tags": ["scope:pos", "type:ui"],
+  "targets": {}
+}

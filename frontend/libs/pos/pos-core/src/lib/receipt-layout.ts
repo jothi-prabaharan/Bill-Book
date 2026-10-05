@@ -1,7 +1,7 @@
 /**
- * The till receipt as fixed-width text (TK-41): what goes on the paper, with
- * no printer commands in it, so it can be tested as plain strings and
- * `EscPosService` only has to turn each row into bytes.
+ * The till receipt as fixed-width text (TK-41): what goes on the paper, as
+ * plain strings that can be tested, which `receiptHtml` turns into a page the
+ * browser prints at the roll's exact width (TK-155).
  *
  * **Every figure comes from the posted invoice** (`GET api/sales/invoices/{id}`),
  * never from the cart: the server recomputes GST and rounds the total, and the
@@ -201,10 +201,11 @@ export function gstSummary(lines: readonly ReceiptLine[]): { component: string; 
 }
 
 /**
- * Text a receipt printer can print: font A holds only its code page, so
- * anything outside printable ASCII becomes `?` (and the rupee sign `Rs`). A
- * Tamil or Chinese item name prints as question marks; printing it properly
- * needs the name rendered to a raster image, which is not done yet.
+ * Text that keeps the receipt's columns straight: anything outside printable
+ * ASCII becomes `?` (and the rupee sign `Rs`), because the columns are counted
+ * in characters of one width. The browser could draw a Tamil or Chinese name,
+ * but its glyphs are wider than a monospace cell and would push the amounts
+ * out of line; that waits for a layout that measures rather than counts.
  */
 export function printable(text: string): string {
   return text.replace(/₹/g, 'Rs').replace(/[^\x20-\x7E]/g, '?');
@@ -270,4 +271,45 @@ function rate(value: number): string {
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/**
+ * The receipt as a page the browser prints (TK-155): one monospace row per
+ * receipt row, the page exactly the roll's width (`@page { size: 80mm auto;
+ * margin: 0 }`) so the operating system's driver feeds a receipt printer the
+ * way it would any other page. No printer commands, no desktop app.
+ */
+export function receiptHtml(rows: readonly ReceiptRow[], paper: PaperWidth): string {
+  const body = rows
+    .map((row) => {
+      const classes = [row.align === 'center' ? 'c' : '', row.style === 'bold' ? 'b' : '', row.style === 'title' ? 't' : '']
+        .filter(Boolean)
+        .join(' ');
+      const text = escapeHtml(row.text) || '&nbsp;';
+      return classes ? `<div class="${classes}">${text}</div>` : `<div>${text}</div>`;
+    })
+    .join('\n');
+
+  // The text area is a little narrower than the roll: receipt printers leave
+  // a few millimetres unprinted at each edge.
+  const textWidth = paper === 58 ? 48 : 72;
+
+  return `<!doctype html>
+<html><head><meta charset="utf-8"><title>Receipt</title>
+<style>
+@page { size: ${paper}mm auto; margin: 0; }
+html, body { margin: 0; padding: 0; background: #fff; color: #000; }
+body { width: ${textWidth}mm; margin: 0 auto; padding: 2mm 0 6mm; font: 9pt/1.25 "Courier New", Courier, monospace; }
+div { white-space: pre; overflow: hidden; }
+.c { text-align: center; }
+.b { font-weight: bold; }
+.t { font-weight: bold; font-size: 11pt; }
+</style></head>
+<body>
+${body}
+</body></html>`;
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
