@@ -36,6 +36,17 @@
     </div>
   </header>
 
+  <!-- A scanner aimed at the till, a typed code, or the phone's camera (TK-164). -->
+  <div class="pos-scan">
+    <bb-scan
+      label="Scan"
+      placeholder="Scan an item, or type its code and press Enter"
+      ariaLabel="Scan an item into the sale"
+      [global]="scanArmed()"
+      (scanned)="scan($event)"
+    />
+  </div>
+
   <bb-message-box [messages]="messages()" />
 
   <nav class="pos-keys" aria-label="Keyboard shortcuts">

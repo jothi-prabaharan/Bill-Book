@@ -252,7 +252,7 @@ The till is driven by the keyboard:
 | **↑ ↓** | Move the selection |
 | **Esc** | Close the tender or the search |
 
-- **A barcode scanner adds the item it reads.** A scanner types the code as a fast burst of keys ending in Enter, which the till tells apart from a person typing. The item whose code is exactly the scan is added, or the only item matching it. If several items match, the search opens on the scan rather than adding the wrong one.
+- **A barcode scanner adds the item it reads** (TK-164). The **Scan** field at the top takes a scanner aimed anywhere at the till while no picker or tender is open, a code typed and entered, or a phone's camera. The item one of whose barcodes is exactly the scan is added, once; failing that, the item whose code is exactly the scan. If neither, the search opens on the scan rather than adding the wrong item — even when the search found just one item, because the till can see that item's barcodes and the scan is not among them.
 - **Tender** opens with the whole amount ready in cash. Choose cash, card or UPI and the account the money goes into, add as many tenders as the payment needs, and **Complete sale**. The total is rounded to the rupee, as the posted invoice is, and change is shown before the sale is sent.
 - **Held sales** stay on the till only until the page is closed or reloaded.
 - **The till number** is set at the top of the screen and remembered in this browser.
@@ -264,6 +264,7 @@ After each sale the till prints a receipt through the browser, as a page exactly
 
 - **Set up the paper once per till** under **Printer** at the top of the screen: the roll width (80 mm or 58 mm) and the line printed at the bottom. **Test print** prints a sample at that width. The first time, choose the receipt printer in the browser's print dialog; most browsers remember it. Install the printer's own driver on the computer, as for any printer.
 - **The sale stands if the printer fails.** If the printer is out of paper or unplugged, the sale is still posted and the till says the receipt did not print. Fix the printer and press **F10** to reprint. A reprint is marked *DUPLICATE*.
+- **The receipt ends with the bill number as a barcode** (TK-164), so a return or a reprint finds the sale by scanning it, and scanning it anywhere in the app opens the invoice. **When something is still owed** and the branch has a **UPI ID** under Settings › Configuration, a UPI QR code for that amount prints beneath it, captioned *Scan to pay with any UPI app* — the same rule as the printed invoice's (see [Printing](#printing)). A fully paid sale prints no QR. If the codes cannot be drawn, the receipt prints without them.
 - **Names in Tamil or other scripts print as question marks.** The receipt is laid out in fixed-width columns, and those scripts are wider than one column; printing them needs a layout that measures text rather than counting characters.
 
 ## Picking the customer and items

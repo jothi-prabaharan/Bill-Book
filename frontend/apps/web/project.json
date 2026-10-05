@@ -35,6 +35,11 @@
             "glob": "zxing_reader.wasm",
             "input": "node_modules/zxing-wasm/dist/reader",
             "output": "assets/zxing"
+          },
+          {
+            "glob": "zxing_writer.wasm",
+            "input": "node_modules/zxing-wasm/dist/writer",
+            "output": "assets/zxing"
           }
         ],
         "styles": [

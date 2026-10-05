@@ -35,6 +35,14 @@ public class ItemListItem
 
     /// <summary>The item's custom field values (TK-111), for the list's custom columns and the form.</summary>
     public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
+
+    /// <summary>
+    /// The item's active barcodes, primary first (TK-164), so a till or a scan
+    /// field can confirm that a scanned code is exactly this item's rather than
+    /// trusting the search's ranking. Named apart from the detail's
+    /// <c>Barcodes</c>, which carries the full rows for editing.
+    /// </summary>
+    public List<string> BarcodeValues { get; set; } = [];
 }
 
 public class ItemDetail : ItemListItem

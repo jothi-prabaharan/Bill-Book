@@ -409,7 +409,7 @@ JWT claims: `sub`, `customer_id`, `customer_code`, `org_id`, `display_name`, `li
 
 **Printing — two separate paths, don't conflate:**
 - Standard documents → **PDFsharp** (6.1.1, MIT), server-side, PDF/A for archiving. Syncfusion was the earlier plan and is dropped (D-11, 24 September 2026)
-- POS receipts → fixed-width text laid out by `receiptRows`, printed **through the browser** as an HTML page exactly the roll's width (`@page { size: 80mm auto; margin: 0 }`) — no ESC/POS, no desktop app (TK-155). Labels go the same way at their own exact size (TK-159)
+- POS receipts → fixed-width text laid out by `receiptRows`, printed **through the browser** as an HTML page exactly the roll's width (`@page { size: 80mm auto; margin: 0 }`) — no ESC/POS, no desktop app (TK-155). It ends with the bill number as a Code128 barcode and, when something is owed, a UPI QR, drawn in the browser by `zxing-wasm`'s writer (TK-164). Labels go the same way at their own exact size (TK-159)
 - Archive every generated document to blob storage, linked by `SourceType` + `SourceId`
 
 **What a standard document looks like is a template, not code** (6 September 2026).

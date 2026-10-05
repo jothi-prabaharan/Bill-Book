@@ -12,6 +12,7 @@ import {
 } from '@bill-book/pos-core';
 import { printHtml } from '@bill-book/ui-components';
 import { firstValueFrom } from 'rxjs';
+import { CodeWriter, receiptCodes } from './receipt-codes';
 
 const SETTINGS_KEY = 'bb.pos.printer';
 
@@ -48,15 +49,38 @@ export class ReceiptPrinterService {
     }
   }
 
-  /** Prints the receipt for a posted invoice. A reprint is marked DUPLICATE. */
+  /** Draws the receipt's codes; replaced in a test. */
+  codeWriter?: () => Promise<CodeWriter>;
+
+  /**
+   * Prints the receipt for a posted invoice. A reprint is marked DUPLICATE.
+   * Under the text: the invoice number as a barcode, and a UPI QR for what is
+   * still owed, when the branch has a UPI id and something is (TK-164).
+   */
   async printInvoice(invoiceId: number, reprint = false): Promise<void> {
     const settings = this.settings();
-    const [sale, branch] = await Promise.all([
+    const [sale, branch, link] = await Promise.all([
       firstValueFrom(this.http.get<ReceiptSale>(`/api/sales/invoices/${invoiceId}`)),
       firstValueFrom(this.http.get<ReceiptBranch>('/api/organizations/current')),
+      this.upiLink(invoiceId),
     ]);
 
-    this.print(receiptHtml(receiptRows(branch, sale, { paper: settings.paper, reprint, footer: settings.footer }), settings.paper));
+    const codes = await receiptCodes(sale.documentNo, link, this.codeWriter);
+    this.print(
+      receiptHtml(receiptRows(branch, sale, { paper: settings.paper, reprint, footer: settings.footer }), settings.paper, codes),
+    );
+  }
+
+  /** The UPI link for what is owed, or null — never a reason not to print. */
+  private async upiLink(invoiceId: number): Promise<string | null> {
+    try {
+      const answer = await firstValueFrom(
+        this.http.get<{ payUri?: string | null }>(`/api/sales/invoices/${invoiceId}/upi-link`),
+      );
+      return answer?.payUri ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /** A short test page, to check the paper width and the printer the browser picks. */

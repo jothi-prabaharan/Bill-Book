@@ -654,6 +654,8 @@ An item can carry several: the manufacturer's EAN, a shop-printed label, a pack-
 
 **Searching finds an item by its barcode.** `GET /api/items?search=` matches a name or item code anywhere in it, and a barcode only when it is typed whole. An item whose barcode was scanned comes first, then an exact item code, then everything else. A scanner types the whole code, and part of one would find the wrong item as often as the right one. An inactive barcode finds nothing. Add `skip` and `take` to get one page (up to 200 rows) with the total that matched. Without them the list returns up to 500 items, as it always has.
 
+**The list carries each item's active barcodes** (`barcodeValues`, primary first; TK-164), so a till or a scan field confirms that a scanned code is exactly an item's own rather than trusting the order the search returned.
+
 ## Printing labels
 
 **Print labels** puts price tags and stickers on a label printer at the label's own size (TK-159). A label printer has no A4 paper, so each label carries its exact width and height, and the browser prints it through the printer's normal driver. Choose the label printer in the print dialog the first time; the browser remembers it.

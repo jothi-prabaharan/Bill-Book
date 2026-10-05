@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReceiptBranch, ReceiptSale, gstSummary, printable, receiptHtml, receiptRows, twoColumns, wrap } from './receipt-layout';
+import { ReceiptBranch, ReceiptSale, gstSummary, printable, receiptHtml, receiptRows, svgDataUri, twoColumns, wrap } from './receipt-layout';
 
 /** The till receipt's layout (TK-41): fixed-width rows from the posted invoice. */
 describe('receiptRows', () => {
@@ -170,5 +170,21 @@ describe('receiptHtml (TK-155)', () => {
     expect(html).toContain('<div class="c t">Shop &lt;&amp;&gt; &quot;One&quot;</div>');
     expect(html).toContain('<div>Item            10.00</div>');
     expect(html).toContain('<div>&nbsp;</div>');
+  });
+
+  it('prints no code section without codes', () => {
+    expect(receiptHtml(rows, 80)).not.toContain('class="codes"');
+    expect(receiptHtml(rows, 80, {})).not.toContain('class="codes"');
+  });
+
+  it('puts the invoice barcode and the UPI QR under the text, as images (TK-164)', () => {
+    const html = receiptHtml(rows, 58, { barcodeSvg: '<svg>bar</svg>', upiQrSvg: '<svg>qr</svg>' });
+
+    expect(html).toContain(`<img class="bar" alt="Invoice barcode" src="${svgDataUri('<svg>bar</svg>')}">`);
+    expect(html).toContain(`<img class="qr" alt="UPI payment QR code" src="${svgDataUri('<svg>qr</svg>')}">`);
+    expect(html).toContain('Scan to pay with any UPI app');
+    expect(html).toContain('.qr { width: 28mm; height: 28mm; }');
+    // The SVG's markup never lands in the page as markup.
+    expect(html).not.toContain('<svg>');
   });
 });

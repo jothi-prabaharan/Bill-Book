@@ -274,12 +274,27 @@ function round2(value: number): number {
 }
 
 /**
+ * The codes printed under a receipt's text (TK-164), each an SVG drawn by the
+ * `-ui` lib: the invoice number as a barcode, so a return or a reprint finds
+ * the sale by scanning it, and on a sale with something still owed a UPI QR.
+ */
+export interface ReceiptCodes {
+  barcodeSvg?: string | null;
+  upiQrSvg?: string | null;
+}
+
+/** The SVG as an image source, so its markup never mixes with the receipt's. */
+export function svgDataUri(svg: string): string {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/**
  * The receipt as a page the browser prints (TK-155): one monospace row per
  * receipt row, the page exactly the roll's width (`@page { size: 80mm auto;
  * margin: 0 }`) so the operating system's driver feeds a receipt printer the
  * way it would any other page. No printer commands, no desktop app.
  */
-export function receiptHtml(rows: readonly ReceiptRow[], paper: PaperWidth): string {
+export function receiptHtml(rows: readonly ReceiptRow[], paper: PaperWidth, codes?: ReceiptCodes | null): string {
   const body = rows
     .map((row) => {
       const classes = [row.align === 'center' ? 'c' : '', row.style === 'bold' ? 'b' : '', row.style === 'title' ? 't' : '']
@@ -294,6 +309,16 @@ export function receiptHtml(rows: readonly ReceiptRow[], paper: PaperWidth): str
   // a few millimetres unprinted at each edge.
   const textWidth = paper === 58 ? 48 : 72;
 
+  const images: string[] = [];
+  if (codes?.barcodeSvg) {
+    images.push(`<img class="bar" alt="Invoice barcode" src="${svgDataUri(codes.barcodeSvg)}">`);
+  }
+  if (codes?.upiQrSvg) {
+    images.push(`<img class="qr" alt="UPI payment QR code" src="${svgDataUri(codes.upiQrSvg)}">`);
+    images.push('<div class="c">Scan to pay with any UPI app</div>');
+  }
+  const codeBlock = images.length > 0 ? `\n<section class="codes">\n${images.join('\n')}\n</section>` : '';
+
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>Receipt</title>
 <style>
@@ -304,9 +329,13 @@ div { white-space: pre; overflow: hidden; }
 .c { text-align: center; }
 .b { font-weight: bold; }
 .t { font-weight: bold; font-size: 11pt; }
+.codes { margin-top: 3mm; text-align: center; }
+.codes img { display: block; margin: 0 auto 2mm; }
+.bar { width: 100%; max-width: ${textWidth}mm; height: 12mm; }
+.qr { width: ${paper === 58 ? 28 : 34}mm; height: ${paper === 58 ? 28 : 34}mm; }
 </style></head>
 <body>
-${body}
+${body}${codeBlock}
 </body></html>`;
 }
 

@@ -2,6 +2,7 @@ using Sales.Repository.Clients;
 using Shared.Kernel.CustomFields;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Enums;
+using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;
@@ -114,6 +115,27 @@ public sealed class InvoicePrintRepository
             payload,
             Watermark(invoice.Status, eInvoice?.Status),
             ct);
+    }
+
+    /// <summary>
+    /// The UPI link a till receipt prints as a QR (TK-164): the same rule and
+    /// the same amount as the printed invoice's (TK-158). Not found when the
+    /// invoice is not in this branch; found with no link when nothing is owed,
+    /// the branch has no UPI id, or the branch cannot be identified.
+    /// </summary>
+    public async Task<InvoicePaymentLink?> PaymentLinkAsync(long invoiceId, CancellationToken ct)
+    {
+        Invoice? invoice = await _db.Invoices.AsNoTracking().FirstOrDefaultAsync(i => i.InvoiceId == invoiceId, ct);
+        if (invoice is null)
+        {
+            return null;
+        }
+
+        OrgIdentity? seller = await _orgIdentity.GetIdentityAsync(ct);
+        return new InvoicePaymentLink
+        {
+            PayUri = seller is null ? null : await UpiQrTextAsync(invoice, seller.Name, ct),
+        };
     }
 
     /// <summary>The placeholder the payment QR fills (TK-158).</summary>

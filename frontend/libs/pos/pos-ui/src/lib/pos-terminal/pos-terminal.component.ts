@@ -11,6 +11,7 @@ import {
   MoneyInputComponent,
   NumberInputComponent,
   QuantityInputComponent,
+  ScanComponent,
   SelectComponent,
   TaxGroupOption,
   TextInputComponent,
@@ -18,7 +19,6 @@ import {
   UnitPriceInputComponent,
 } from '@bill-book/ui-components';
 import {
-  BarcodeBurst,
   CustomerOption,
   POS_KEYS,
   PosCommand,
@@ -70,8 +70,9 @@ const TILL_KEY = 'bb.pos.tillId';
  * **Keyboard first.** F2 adds an item, F3 changes the customer, F4 edits the
  * selected line's quantity, F6 voids it, F8 holds the cart and F7 recalls a held
  * one, F9 opens the tender; the arrow keys move the selection and Escape closes
- * whatever is open. A barcode scanner's burst of keystrokes adds the item it
- * names (`BarcodeBurst`).
+ * whatever is open. A scan adds the item it names: the shared `bb-scan`
+ * (TK-164) catches a scanner's burst anywhere on the till while no picker or
+ * tender is open, and offers the camera on a phone.
  *
  * **Offline, it refuses to sell** (owner's decision, 24 September 2026). There
  * is no local queue: a sale is either posted, with stock taken, or not made.
@@ -85,6 +86,7 @@ const TILL_KEY = 'bb.pos.tillId';
   standalone: true,
   imports: [
     LookupDialogComponent,
+    ScanComponent,
     MessageBoxComponent,
     MoneyInputComponent,
     NumberInputComponent,
@@ -185,7 +187,8 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     () => this.canCheckout() && this.tenderState().problem === null,
   );
 
-  private readonly burst = new BarcodeBurst();
+  /** A scan is an item to add only while nothing else has the till's attention. */
+  protected readonly scanArmed = computed(() => this.picker() === 'none' && !this.tenderOpen());
   private readonly onOnline = () => this.online.set(true);
   private readonly onOffline = () => this.online.set(false);
 
@@ -243,14 +246,10 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement | null;
     const typing = !!target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
 
-    // A scan arrives as fast keystrokes wherever the focus is not a field.
-    if (!typing && this.picker() === 'none' && !this.tenderOpen()) {
-      const code = this.burst.push(event.key, event.timeStamp || Date.now());
-      if (code !== null) {
-        event.preventDefault();
-        void this.scan(code);
-        return;
-      }
+    // A scan is bb-scan's (TK-164): it takes the burst before this handler
+    // sees the Enter, so only the till's own keys are left here.
+    if (event.defaultPrevented) {
+      return;
     }
 
     const command = commandFor(event);

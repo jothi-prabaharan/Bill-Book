@@ -34,6 +34,8 @@ export interface ItemOption {
   salesPrice: number | null;
   mrp: number | null;
   isActive: boolean;
+  /** The item's active barcodes, primary first (TK-164), to confirm a scan. */
+  barcodeValues?: string[];
 }
 
 /** The item detail fields the till reads to sell one. */

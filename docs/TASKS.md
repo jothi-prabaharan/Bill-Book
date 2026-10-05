@@ -5148,19 +5148,26 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: masters page **Counting by scanning** and **Scanning batches and serials**, release note.
 
 ### TK-164 · POS: finish scan and receipt codes
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#145](https://github.com/jothi-prabaharan/Bill-Book/issues/145)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-POS-UI, L-INV · **Depends on:** TK-155, TK-156, TK-158, TK-160
 - **Where:** `frontend/libs/pos/pos-ui` (moved by TK-155), `Inventory.Api/Controllers/ItemsController.cs`
 - **State:** checked 1 October 2026. The till adds an item on a scanner burst, but its item list carries no barcode field, so an exact match cannot be confirmed on the client (TK-95's note). The receipt is text only.
 - **Sub-tasks:**
-  - [ ] The item list carries each item's barcodes so the till can confirm an exact match.
-  - [ ] The till uses `bb-scan` instead of its own detector.
-  - [ ] The browser receipt carries the invoice barcode and, on an unpaid sale, the UPI QR.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] The item list carries each item's barcodes so the till can confirm an exact match.
+  - [x] The till uses `bb-scan` instead of its own detector.
+  - [x] The browser receipt carries the invoice barcode and, on an unpaid sale, the UPI QR.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a scanned item is added once, and the printed receipt has a scannable invoice barcode.
+- **As built (5 October 2026):**
+  - **The item list carries barcodes**: `ItemListItem.BarcodeValues` (active, primary first), filled for a page in one query in `ItemRepository.MapSummariesAsync`. Named apart from `ItemDetail.Barcodes`, which carries the editable rows. `barcodeValues?` added to the sales, purchase, till and stock-sheet item types.
+  - **`matchScannedItem` confirms**: an exact barcode first, then an exact item code, and the lone-match fallback only when the list sent no barcodes — so a single result found by a name containing the digits is not added. Every scan field (sales, purchase, stock, till) gets this.
+  - **The till uses `bb-scan`**: a Scan field at the top, `global` while no picker or tender is open (`scanArmed`), with the camera on a phone. Its own `BarcodeBurst` handling in `onKey` is gone; a key `bb-scan` took (Enter prevented) is skipped, so a scan adds its item once and never reaches scan-to-open.
+  - **Receipt codes**: `GET api/sales/invoices/{id}/upi-link` (`sales.print`) returns TK-158's link for what is owed (`InvoicePrintRepository.PaymentLinkAsync`, same `AmountDue` rule), 404 outside the branch. `receiptCodes` (pos-ui) draws the bill number as Code128 and the link as a QR with `zxing-wasm/writer` (MIT; now a direct dependency at the version `barcode-detector` uses), its wasm copied to `assets/zxing/` and loaded on the first receipt; `receiptHtml(rows, paper, codes)` puts them under the text as SVG data-URI images. A code that cannot be drawn, or a link that cannot be read, leaves the receipt printing without it.
+  - Tests: `ItemSearchTests.The_list_carries_each_items_barcodes_so_a_till_can_confirm_a_scan`, `scan-match.spec.ts` (barcode cases), `receipt-codes.spec.ts`, `receipt-layout.spec.ts` (codes), `receipt-printer.service.spec.ts` (barcode, UPI QR, unreadable link). `PaymentLinkAsync` has no database test: no harness builds `InvoicePrintRepository`; its amount rule is `UpiPrintTests`'.
+  - Docs: POS sales (scan, receipt codes), masters Barcodes (the list's `barcodeValues`), CLAUDE.md printing note, release note.
 
 ## 3. Decisions from the owner
 

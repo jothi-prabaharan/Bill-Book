@@ -21,7 +21,8 @@ export interface SalesItemOption {
   inventoryUomCode: string;
   salesPrice?: number | null;
   mrp?: number | null;
-  isActive: boolean;
+  isActive: boolean;  /** The item's active barcodes, primary first (TK-164), to confirm a scan. */
+  barcodeValues?: string[];
 }
 
 /**

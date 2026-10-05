@@ -76,6 +76,21 @@ public sealed class InvoicesController : ControllerBase
     }
 
     /// <summary>
+    /// The UPI link for what is still owed (TK-164), which the till prints as a
+    /// QR on its receipt. Not found for an invoice outside this branch; a null
+    /// link when nothing is owed or the branch has no UPI id. <c>sales.print</c>,
+    /// as printing the invoice is.
+    /// </summary>
+    [HttpGet("{id:long}/upi-link")]
+    [PermissionAction("print")]
+    public async Task<IActionResult> UpiLink(
+        long id, [FromServices] InvoicePrintRepository printing, CancellationToken ct)
+    {
+        InvoicePaymentLink? link = await printing.PaymentLinkAsync(id, ct);
+        return link is null ? NotFound() : Ok(link);
+    }
+
+    /// <summary>
     /// The invoice laid out by its print template, as HTML for the browser to
     /// print. Sales builds the invoice's data and Printing lays it out under the
     /// caller's own token, so the branch's template is the one used.

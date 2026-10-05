@@ -612,3 +612,12 @@ public class GlEntryLegView
     public decimal CreditAmount { get; set; }
     public string? Description { get; set; }
 }
+
+/// <summary>
+/// The UPI link for what is still owed on an invoice (TK-164), for a till
+/// receipt's QR code. Null when there is nothing to ask for.
+/// </summary>
+public sealed class InvoicePaymentLink
+{
+    public string? PayUri { get; set; }
+}

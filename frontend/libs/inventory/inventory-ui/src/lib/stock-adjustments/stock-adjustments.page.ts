@@ -61,6 +61,8 @@ interface Item {
   itemCode: string;
   itemName: string;
   inventoryUomId: number;
+  /** Active barcodes (TK-164), so a scan is confirmed rather than guessed. */
+  barcodeValues?: string[];
 }
 
 interface Warehouse {

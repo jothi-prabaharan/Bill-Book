@@ -19,7 +19,8 @@ export interface ItemOption {
   itemCode: string;
   itemName: string;
   inventoryUomCode: string;
-  isActive: boolean;
+  isActive: boolean;  /** The item's active barcodes, primary first (TK-164), to confirm a scan. */
+  barcodeValues?: string[];
 }
 
 /** Whether an item's receipts need a batch or serial numbers (TK-162). */

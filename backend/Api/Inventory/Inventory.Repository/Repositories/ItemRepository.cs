@@ -156,7 +156,25 @@ public sealed class ItemRepository
         Dictionary<long, string> categoryNames = await _db.ItemCategories
             .ToDictionaryAsync(c => c.ItemCategoryId, c => c.CategoryName, ct);
 
-        return items.Select(i => MapSummary(i, unitCodes, categoryNames)).ToList();
+        // The page's barcodes in one query, primary first (TK-164).
+        List<long> ids = [.. items.Select(i => i.ItemId)];
+        var barcodes = await _db.ItemBarcodes
+            .AsNoTracking()
+            .Where(b => b.IsActive && ids.Contains(b.ItemId))
+            .OrderByDescending(b => b.IsPrimary)
+            .ThenBy(b => b.ItemBarcodeId)
+            .Select(b => new { b.ItemId, b.Barcode })
+            .ToListAsync(ct);
+        ILookup<long, string> byItem = barcodes.ToLookup(b => b.ItemId, b => b.Barcode);
+
+        return items
+            .Select(i =>
+            {
+                ItemListItem summary = MapSummary(i, unitCodes, categoryNames);
+                summary.BarcodeValues = [.. byItem[i.ItemId]];
+                return summary;
+            })
+            .ToList();
     }
 
     public async Task<ItemDetail?> GetAsync(long itemId, CancellationToken ct)

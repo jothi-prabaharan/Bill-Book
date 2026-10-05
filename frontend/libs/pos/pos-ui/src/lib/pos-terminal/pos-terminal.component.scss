@@ -350,3 +350,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* The scan field (TK-164): full width on a phone, beside nothing on a till. */
+.pos-scan {
+  max-width: 480px;
+  margin: 0 0 var(--space-2, 8px);
+}

@@ -98,6 +98,24 @@ public sealed class ItemSearchTests
     }
 
     [SkippableFact]
+    public async Task The_list_carries_each_items_barcodes_so_a_till_can_confirm_a_scan()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Guid orgId = Guid.NewGuid();
+        await using InventoryDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
+        var unit = await SeedUnitAsync(db, orgId);
+
+        long soap = await SeedItemAsync(db, orgId, unit, "SOAP-1", "Sandal soap", "8901030865278");
+        long plain = await SeedItemAsync(db, orgId, unit, "BULK-1", "Loose rice");
+
+        IReadOnlyList<ItemListItem> all = await Service(db).ListAsync(null, null, null, false, default);
+
+        Assert.Equal(["8901030865278"], all.Single(i => i.ItemId == soap).BarcodeValues);
+        Assert.Empty(all.Single(i => i.ItemId == plain).BarcodeValues);
+    }
+
+    [SkippableFact]
     public async Task A_barcode_matches_exactly_never_in_part()
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
