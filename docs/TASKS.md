@@ -4671,7 +4671,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a half portion lists at its own price and a sold-out item cannot be ordered.
 
 ### TK-145 · Tables: floors, table master, status, merge, split, move
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05 · the Sales restaurant migrations enable RLS before creating their tables, so `sal` cannot migrate on a fresh database
 - **Issue:** [#126](https://github.com/jothi-prabaharan/Bill-Book/issues/126)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-143 · **Decision:** D-39
