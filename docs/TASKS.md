@@ -5037,7 +5037,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** an unpaid invoice prints a QR carrying the branch UPI id, the amount due and the invoice number, and a paid one prints none.
 
 ### TK-159 · Label printing at an exact size
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#140](https://github.com/jothi-prabaharan/Bill-Book/issues/140)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-PRT, L-INV, L-PUR, L-WEB · **Depends on:** TK-156
