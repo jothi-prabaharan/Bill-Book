@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Demo customers, one per business type (TK-154).** **Create demo customers** on the admin **Customers** page makes six Demo customers — Retail, Pharma, Jewellery, School, Service and Restaurant — each with a branch of that type, every add-on it allows, and master data only. Running it again only finishes what is missing. `Bootstrap:SeedDemoCustomers` (in `deploy/local`, `BOOTSTRAP_SEED_DEMO_CUSTOMERS`) makes them on start; it is off by default. Owners sign in as plus-addresses of one mailbox, through **Forgot password**. See [Kinds of customer](platform#kinds-of-customer).
+
 - **Changed**: **The first customer of an install is the Internal one, a Service business (TK-153).** A new install creates it with a head-office branch of business type Service and a licence that never lapses; `Bootstrap:InternalAddOns` (in `deploy/local`, `BOOTSTRAP_INTERNAL_ADDONS`) switches on its add-ons. An existing install's first customer is converted on the next start, once: it becomes Internal, its head office becomes Service and nothing expires. The `first-branch` job now asks Master to seed the branch for its real business type; `BOOTSTRAP_VERTICAL` is gone. See [Kinds of customer](platform#kinds-of-customer).
 
 - **Added**: **Kinds of customer: Standard, Internal and Demo (TK-152).** Signup always makes a Standard customer. A platform operator can also create an Internal customer (our own organisation) or a Demo customer from **Customers** on the admin pages; both start on Elite and never lapse, are never billed, and have no user or branch limit. The customer list shows the kind and filters by it. See [Kinds of customer](platform#kinds-of-customer).

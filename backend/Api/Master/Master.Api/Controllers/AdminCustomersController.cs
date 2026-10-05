@@ -25,11 +25,41 @@ public sealed class AdminCustomersController : ControllerBase
 {
     private readonly SignupRepository _signup;
     private readonly OrganizationRepository _organizations;
+    private readonly DemoCustomerRepository _demos;
+    private readonly IConfiguration _config;
 
-    public AdminCustomersController(SignupRepository signup, OrganizationRepository organizations)
+    public AdminCustomersController(
+        SignupRepository signup, OrganizationRepository organizations, DemoCustomerRepository demos, IConfiguration config)
     {
         _signup = signup;
         _organizations = organizations;
+        _demos = demos;
+        _config = config;
+    }
+
+    /// <summary>
+    /// Creates the six demo customers, one per business type, or completes any
+    /// a previous run left unseeded (TK-154). Idempotent: a second run adds
+    /// only what is missing. Master data only, no transactions.
+    /// </summary>
+    [RequirePermission("platform.edit")]
+    [HttpPost("demo")]
+    public async Task<IActionResult> CreateDemos([FromBody] DemoCustomersRequest request, CancellationToken ct)
+    {
+        string? mailbox = DemoCustomerBootstrapWorker.Mailbox(request.OwnerMailbox, _config);
+        if (mailbox is null)
+        {
+            return BadRequest(new MessageResponse { Message = "Give a mailbox for the demo owners' sign-ins." });
+        }
+
+        IReadOnlyList<DemoCustomerResult> results = await _demos.EnsureAllAsync(mailbox, ct);
+        return Ok(results.Select(r => new DemoCustomerRow
+        {
+            BusinessType = r.BusinessType.ToString(),
+            CustomerCode = r.CustomerCode,
+            Created = r.Created,
+            Unseeded = r.Unseeded,
+        }));
     }
 
     /// <summary>Every customer, or only those of one kind with <c>?kind=</c> (TK-152).</summary>

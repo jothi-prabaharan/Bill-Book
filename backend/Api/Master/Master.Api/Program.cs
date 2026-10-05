@@ -106,6 +106,7 @@ builder.Services.AddScoped<RateRepository>();
 
 // ---- Tenant directory, signup and provisioning. ----
 builder.Services.AddScoped<SignupRepository>();
+builder.Services.AddScoped<DemoCustomerRepository>();
 // Picks the physical database a new customer's books go in, and claims the
 // capacity for it with a guarded update. The sharded-tenancy work built the
 // registry and the resolver and left this step out, which is why every signup
@@ -158,6 +159,8 @@ else
 }
 builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
+// Demo customers on start, only with Bootstrap:SeedDemoCustomers (TK-154).
+builder.Services.AddHostedService<DemoCustomerBootstrapWorker>();
 
 // Runs database setup and EF core migrations on startup
 builder.Services.AddHostedService<DatabaseMigrationService>();

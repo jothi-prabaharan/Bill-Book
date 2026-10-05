@@ -93,7 +93,7 @@ public sealed class ProvisioningWorker : BackgroundService
         CustomerEntity customer = await db.Customers.FirstAsync(c => c.CustomerId == job.CustomerId, ct);
         Organization org = await db.Organizations.FirstAsync(o => o.OrgId == job.OrgId, ct);
 
-        customer.Status = TenantStatus.Trial;
+        customer.Status = CustomerKindRepository.ReadyStatus(customer.Kind);
         org.Status = TenantStatus.Active;
         await db.SaveChangesAsync(ct);
 

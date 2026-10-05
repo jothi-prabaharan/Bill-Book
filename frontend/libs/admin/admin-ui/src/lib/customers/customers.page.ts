@@ -32,6 +32,24 @@ export const CUSTOMER_KINDS: readonly BbSelectOption<string>[] = [
   { value: 'Demo', label: 'Demo' },
 ];
 
+/** One demo customer after `POST api/admin/customers/demo` (TK-154). */
+export interface DemoCustomerRow {
+  businessType: string;
+  customerCode: string;
+  created: boolean;
+  unseeded: string[];
+}
+
+/** What a demo run did, in one line for the page. */
+export function demoSummary(rows: DemoCustomerRow[]): string {
+  const created = rows.filter((r) => r.created).length;
+  const unfinished = rows.filter((r) => r.unseeded.length > 0);
+  const made = created === 0 ? 'All six demo customers already existed.' : `${created} demo customer${created === 1 ? '' : 's'} created.`;
+  return unfinished.length === 0
+    ? `${made} Every one is set up.`
+    : `${made} Still to set up: ${unfinished.map((r) => `${r.customerCode} (${r.unseeded.join(', ')})`).join('; ')}. Run it again once those services are up.`;
+}
+
 /** The list's kind filter query: none for every kind. */
 export function kindQuery(kind: string): string {
   return kind ? `?kind=${encodeURIComponent(kind)}` : '';
@@ -190,6 +208,27 @@ export class CustomersPage implements OnInit {
       await this.send('POST', '/api/admin/customers', body);
       this.adding.set(false);
     }, 'Customer created and its books set up.');
+  }
+
+  /**
+   * Creates the six demo customers, one per business type, or finishes any a
+   * previous run left unseeded (TK-154). Their owners' sign-ins are made from
+   * the server's configured mailbox; each signs in through forgot-password.
+   */
+  async createDemos(): Promise<void> {
+    this.busy.set(true);
+    this.message.set(null);
+    try {
+      const rows = await this.send<DemoCustomerRow[]>('POST', '/api/admin/customers/demo', {});
+      this.message.set(demoSummary(rows));
+      this.messageIsError.set(rows.some((r) => r.unseeded.length > 0));
+      await this.load();
+    } catch (err: unknown) {
+      const anyErr = err as { error?: { message?: string } };
+      this.fail(anyErr?.error?.message ?? 'Could not create the demo customers.');
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   /** Re-runs the seed for a customer that never finished provisioning. */

@@ -153,6 +153,13 @@ set `BOOTSTRAP_INTERNAL_ADDONS` in `.env` (for example `Hrms, Payroll`); after
 that, change them from **Settings › Branches**. You can add more branches and
 users from **Settings**.
 
+To try every kind of business, set `BOOTSTRAP_SEED_DEMO_CUSTOMERS=true` (and,
+if you like, `BOOTSTRAP_DEMO_OWNER_EMAIL`) in `.env`. A minute after start,
+Master creates six Demo customers, one per business type, with master data
+only. Each owner signs in as a plus-address of that mailbox, such as
+`you+demo-pharma@example.com`, after setting a password with **Forgot
+password**.
+
 > The **Start a free trial** page on the sign-in screen does not work on a new
 > installation yet. It answers *Signups are temporarily unavailable while
 > capacity is added*, because nothing yet makes room for trial businesses in the

@@ -287,3 +287,27 @@ public class OrgContextResponse
     public string? Email { get; set; }
 }
 
+
+/// <summary>
+/// Creates or completes the six demo customers (TK-154). The owners' sign-ins
+/// are plus-addresses of one mailbox, so every reset lands in one inbox.
+/// </summary>
+public class DemoCustomersRequest
+{
+    /// <summary>The mailbox the demo owners' addresses are made from. Omitted means Bootstrap:DemoOwnerEmail, then Bootstrap:OwnerEmail.</summary>
+    [EmailAddress(ErrorMessage = "The demo owners' mailbox must be a valid email address.")]
+    [MaxLength(180, ErrorMessage = "The demo owners' mailbox cannot exceed 180 characters.")]
+    public string? OwnerMailbox { get; set; }
+}
+
+/// <summary>One demo customer after a run: created now or already there, and anything still unseeded.</summary>
+public class DemoCustomerRow
+{
+    public string BusinessType { get; set; } = null!;
+
+    public string CustomerCode { get; set; } = null!;
+
+    public bool Created { get; set; }
+
+    public IReadOnlyList<string> Unseeded { get; set; } = [];
+}

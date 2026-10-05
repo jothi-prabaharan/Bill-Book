@@ -4925,19 +4925,29 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a fresh install has one Internal customer with a Service branch, a second start creates nothing, and an older install's first customer becomes Internal.
 
 ### TK-154 · Demo customers: one per business type, master data only
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · D-45 still open; its defaults are what was built
 - **Issue:** [#135](https://github.com/jothi-prabaharan/Bill-Book/issues/135)
 - **Group:** M · Customer kinds and demo customers
 - **Lanes:** L-MST, L-WEB · **Depends on:** TK-152, TK-136, TK-143 · **Decision:** D-44, D-45
 - **Where:** `Master.Repository/Repositories/{SignupRepository,OrganizationRepository}.cs` (`ITenantSeeder`), `Master.Api/Services/DatabaseMigrationService.cs`, `AdminCustomersController`, `deploy/local/seed/first-branch.sh`
 - **State:** checked 1 October 2026. Nothing creates a demo or test customer. A branch is seeded by `ITenantSeeder` through each service's `internal/seed/organization`; the bootstrap customer is the only one made without signup.
 - **Sub-tasks:**
-  - [ ] `DemoCustomerRepository`: for each business type (Retail, Pharma, Jewellery, School, Service, Restaurant) create one Demo customer with fixed code and ids, one branch of that type with the add-ons the type allows switched on (`AddOnRules`), and an owner user. Idempotent: a second run adds only what is missing.
-  - [ ] Seed each branch through the existing seeders so it has the chart of accounts, tax rates, units, numbering series, reports and print templates. **Master data only: no items, contacts or documents** (owner, 2026-10-01).
-  - [ ] An operator action on the admin customer screen, and an optional `Bootstrap:SeedDemoCustomers` switch (off by default), so a production install never gets them by accident.
-  - [ ] Demo owner logins follow D-45; no password is committed to source.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] `DemoCustomerRepository`: for each business type (Retail, Pharma, Jewellery, School, Service, Restaurant) create one Demo customer with fixed code and ids, one branch of that type with the add-ons the type allows switched on (`AddOnRules`), and an owner user. Idempotent: a second run adds only what is missing.
+  - [x] Seed each branch through the existing seeders so it has the chart of accounts, tax rates, units, numbering series, reports and print templates. **Master data only: no items, contacts or documents** (owner, 2026-10-01).
+  - [x] An operator action on the admin customer screen, and an optional `Bootstrap:SeedDemoCustomers` switch (off by default), so a production install never gets them by accident.
+  - [x] Demo owner logins follow D-45; no password is committed to source.
+  - [x] The standard delivery sub-tasks in section 5 that apply (migration, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - **`DemoCustomerRepository`**: codes `DEMO-RTL`, `DEMO-PHA`, `DEMO-JWL`, `DEMO-SCH`, `DEMO-SVC`, `DEMO-RST` — not numbers, so `SignupRepository`'s next-code guess skips them and the next signup is not numbered after a demo, and safe as storage folder names. Fixed ids `00000000-0000-0000-0d00-00000000000N` (customer) and `…-0d01-…N` (branch), N the business type. Each customer is Demo, Elite, never lapsing (TK-152), with one `HO` branch of its type, `AddOnRules.Allowed(type)` switched on, INR as base currency, India, April year start.
+  - **Idempotent per customer**: an existing customer is not recreated; its owner role is ensured and its branch is seeded again through `ITenantSeeder` with its scope named, which writes only what is missing. A customer whose seed fails stays Provisioning and is reported; the others finish.
+  - **Shard**: a pooled Trial shard from the allocator, and on a fresh install with none, the Internal customer's database — both are ours, and isolation inside a shard is the filter and RLS either way.
+  - **Master data only**: what the seeders write — chart of accounts, tax rates, units, numbering series, reports, print templates, menu categories on Restaurant — plus the walk-in customer, the one contact every branch is seeded with for the till. No items, other contacts or documents.
+  - **Owners (D-45's default, the decision still open)**: `you@example.com` becomes `you+demo-retail@example.com` and so on, from the request's mailbox, else `Bootstrap:DemoOwnerEmail`, else `Bootstrap:OwnerEmail`; no password, Owner role. D-45's other open parts — resetting a demo to empty masters, HRMS-only and Payroll-only demos — are not built.
+  - **Operator action**: `POST api/admin/customers/demo` (`platform.edit`) and **Create demo customers** on the admin Customers page, which says what was created and what is still unseeded. **Start-up switch**: `DemoCustomerBootstrapWorker` runs only with `Bootstrap:SeedDemoCustomers`, a minute after start and each minute after until every service has answered, up to ten times. `deploy/local` passes `BOOTSTRAP_SEED_DEMO_CUSTOMERS` and `BOOTSTRAP_DEMO_OWNER_EMAIL`.
+  - Also: a customer whose seed finishes is now `Active` rather than `Trial` when it is Internal or Demo (`CustomerKindRepository.ReadyStatus`, used by the provisioning worker and the admin retry).
+  - Tests: `DemoCustomerTests` (one per type with unique codes and ids, plus-addresses, add-ons, the mailbox fallback, two runs leaving six seeded customers with one branch, one licence and one passwordless owner each, a demo never lapsing) and `customer-kinds.spec.ts` (the page's summary line).
+  - Docs: `platform.md`, `deploy/local/README.md`, `appsettings.json`, a release note.
 - **Done when:** running it twice leaves six Demo customers, each branch has its business type and the right masters, and none has a transaction.
 
 ### TK-155 · Remove Electron and move the POS till into `apps/web`

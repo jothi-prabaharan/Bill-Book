@@ -96,6 +96,8 @@ x-master-env: &master-env
   Bootstrap__OwnerName: ${BOOTSTRAP_OWNER_NAME:-Owner}
   Bootstrap__CompanyName: ${BOOTSTRAP_COMPANY_NAME:-My Business}
   Bootstrap__InternalAddOns: ${BOOTSTRAP_INTERNAL_ADDONS:-}
+  Bootstrap__SeedDemoCustomers: ${BOOTSTRAP_SEED_DEMO_CUSTOMERS:-false}
+  Bootstrap__DemoOwnerEmail: ${BOOTSTRAP_DEMO_OWNER_EMAIL:-}
 
 # A service that runs after the migration has finished, and comes back after a
 # crash or a reboot. "required: false" because on the gateway's own PC there

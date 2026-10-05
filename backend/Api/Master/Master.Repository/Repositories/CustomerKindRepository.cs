@@ -45,6 +45,13 @@ public static class CustomerKindRepository
     public static (LicenseType Type, DateOnly Expiry) FirstLicence(CustomerKind kind, DateOnly today, int trialDays) =>
         NeverLapses(kind) ? (LicenseType.Elite, NoExpiry) : (LicenseType.Trial, today.AddDays(trialDays));
 
+    /// <summary>
+    /// The status a customer reaches once seeded: a Standard one is on its
+    /// Trial, an unbilled one is simply Active.
+    /// </summary>
+    public static TenantStatus ReadyStatus(CustomerKind kind) =>
+        NeverLapses(kind) ? TenantStatus.Active : TenantStatus.Trial;
+
     /// <summary>The plan tier a new customer of this kind starts on.</summary>
     public static Shared.Kernel.Tenancy.PlanTier FirstPlanTier(CustomerKind kind) =>
         NeverLapses(kind) ? Shared.Kernel.Tenancy.PlanTier.Elite : Shared.Kernel.Tenancy.PlanTier.Trial;

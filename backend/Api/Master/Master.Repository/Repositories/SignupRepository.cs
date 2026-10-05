@@ -313,7 +313,7 @@ public sealed class SignupRepository
             return RetryProvisioningResult.Failed(unseeded);
         }
 
-        customer.Status = TenantStatus.Trial;
+        customer.Status = CustomerKindRepository.ReadyStatus(customer.Kind);
         org.Status = TenantStatus.Active;
         await _db.SaveChangesAsync(ct);
 
