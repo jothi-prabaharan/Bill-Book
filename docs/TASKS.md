@@ -4925,7 +4925,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a fresh install has one Internal customer with a Service branch, a second start creates nothing, and an older install's first customer becomes Internal.
 
 ### TK-154 · Demo customers: one per business type, master data only
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#135](https://github.com/jothi-prabaharan/Bill-Book/issues/135)
 - **Group:** M · Customer kinds and demo customers
 - **Lanes:** L-MST, L-WEB · **Depends on:** TK-152, TK-136, TK-143 · **Decision:** D-44, D-45
