@@ -4995,7 +4995,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a template with a barcode tag renders a Code128 image for the text it is given.
 
 ### TK-157 · Document barcode and QR on every printable type
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
 - **Issue:** [#138](https://github.com/jothi-prabaharan/Bill-Book/issues/138)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-SAL, L-PUR, L-ACC, L-PRT · **Depends on:** TK-156
