@@ -1,5 +1,5 @@
 # Deploys everything to Azure: infrastructure, images, migrations, apps and the
-# four web apps, in the one order that is safe.
+# two web apps (web and docs), in the one order that is safe.
 #
 # Manual, not on push. There is no released deployment yet and no staging
 # environment to prove a change in first, so a deploy is a decision somebody
@@ -17,7 +17,7 @@
 #   4. apps        Bicep with deployApps=true: every app rolls to this commit.
 #                  Every service also migrates its own schema on startup — step 3
 #                  is what stops eight of them racing to do it at once.
-#   5. web         Build the four SPAs once, point them at the gateway through
+#   5. web         Build the two SPAs once, point them at the gateway through
 #                  config.js, and upload each to its Static Web App.
 #
 # The same five steps run on the very first deploy and on every one after it.
@@ -272,12 +272,12 @@ jobs:
         run: |
           npm install --global @azure/static-web-apps-cli@2
 
-          for app in web portal admin docs; do
+          for app in web docs; do
             dir="frontend/dist/apps/$app/browser"
             site=$(echo "$SITES" | jq -r --arg a "$app" '.[] | select(.app == $a) | .name')
 
             # Routing fallback, cache headers and security headers, identical for
-            # all four.
+            # both.
             cp deploy/azure/staticwebapp.config.json "$dir/"
 
             # The one file that differs per environment. docs does not call the
@@ -286,7 +286,7 @@ jobs:
               printf "window.__BB_CONFIG__ = { apiBaseUrl: '%s' };\n" "$GATEWAY" > "$dir/config.js"
             fi
 
-            # Fetched at deploy time rather than stored as four repository
+            # Fetched at deploy time rather than stored as repository
             # secrets: the federated login already has the right to read it, and a
             # token that is never stored cannot go stale or leak from settings.
             token=$(az staticwebapp secrets list --name "$site" --resource-group "$RESOURCE_GROUP" \

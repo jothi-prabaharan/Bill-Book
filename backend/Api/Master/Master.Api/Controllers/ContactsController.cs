@@ -25,7 +25,7 @@ public sealed class ContactsController : ControllerBase
 {
     private readonly ContactRepository _contacts;
 
-    /// <summary>Read for <c>Portal:BaseUrl</c> only â€” see GeneratePortalLink.</summary>
+    /// <summary>Read for <c>App:BaseUrl</c> only — see GeneratePortalLink.</summary>
     private readonly IConfiguration _configuration;
 
     public ContactsController(ContactRepository contacts, IConfiguration configuration)
@@ -140,18 +140,14 @@ public sealed class ContactsController : ControllerBase
             return NotFound();
         }
 
-        // The code and, where the deployment says where the portal lives, the
-        // whole link. `Portal:BaseUrl` is optional: a screen that has just made
-        // the link knows its own portal's origin, and an email cannot ask.
-        string? baseUrl = _configuration["Portal:BaseUrl"]?.TrimEnd('/');
-
+        // The code and, where the deployment says where the web app lives, the
+        // whole link. Optional: a screen that has just made the link knows its
+        // own origin, and an email cannot ask.
         return Ok(new
         {
             code = link.Code,
             expiresAt = link.ExpiresAt,
-            url = string.IsNullOrWhiteSpace(baseUrl)
-                ? null
-                : $"{baseUrl}/access/{Uri.EscapeDataString(link.Code)}",
+            url = PortalAccessRepository.LinkUrl(_configuration["App:BaseUrl"], link.Code),
         });
     }
 

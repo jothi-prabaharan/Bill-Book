@@ -15,7 +15,6 @@ param blobEndpoint string
 param documentsContainer string
 param serviceBusNamespace string
 param webOrigin string
-param portalOrigin string
 param allowedOrigins array
 param bootstrapOwnerEmail string
 param bootstrapOperatorEmails string
@@ -46,7 +45,7 @@ var common = concat([
 ], baseUrlEnv)
 
 // Master's own: where it seeds a new branch, where invitation and portal links
-// point, and the first account.
+// point (the portal is web's /portal routes, TK-132), and the first account.
 var master = concat(common, [
   { name: 'Seeding__Accounting', value: serviceUrl.accounting }
   { name: 'Seeding__Inventory', value: serviceUrl.inventory }
@@ -56,7 +55,6 @@ var master = concat(common, [
   { name: 'Seeding__Printing', value: serviceUrl.printing }
   { name: 'Seeding__Customer', value: serviceUrl.customer }
   { name: 'App__BaseUrl', value: webOrigin }
-  { name: 'Portal__BaseUrl', value: portalOrigin }
   { name: 'Bootstrap__OwnerEmail', value: bootstrapOwnerEmail }
   { name: 'Bootstrap__OperatorEmails', value: bootstrapOperatorEmails }
 ])

@@ -138,12 +138,12 @@ $encryptionKey    = [Convert]::ToBase64String((New-RandomBytes 32))
 # kept in the services settings; change it in the app after the first sign-in.
 $ownerPassword    = New-Password 16
 
+# Portal links point at the web app's /portal routes (TK-132), so one address
+# serves invitations, password resets and portal links alike.
 if ($domain) {
-    $appUrl    = "https://app.$domain"
-    $portalUrl = "https://portal.$domain"
+    $appUrl = "https://app.$domain"
 } else {
-    $appUrl    = 'http://localhost:8081'
-    $portalUrl = 'http://localhost:8082'
+    $appUrl = 'http://localhost:8081'
 }
 
 $header = @(
@@ -177,7 +177,6 @@ $keys = @(
 $owner = @(
     '# Where links in emails point. The app itself works on any address.',
     "APP_URL=$appUrl",
-    "PORTAL_URL=$portalUrl",
     '',
     '# The owner account, your business and its first branch. Created on the',
     '# first start only, while the database has no users; changing these later',

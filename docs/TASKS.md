@@ -4419,18 +4419,25 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a School branch is offered Hrms but not Pos.
 
 ### TK-134 · Retire the five extra apps: docs, release notes and deploy
-- [ ] working (Claude Opus 5.5) — 2026-10-05 · reopened by TK-142's audit; was marked completed (Antigravity) on 1 October
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · reopened by TK-142's audit; first marked completed (Antigravity) on 1 October
 - **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
 - **Sub-tasks:**
   - [x] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
-  - [ ] Update `CLAUDE.md`, `docs/Modules.md`, the docs app pages and manifest, `release-notes.md` and `deploy/*`.
+  - [x] Update `CLAUDE.md`, `docs/Modules.md`, the docs app pages and manifest, `release-notes.md` and `deploy/*`.
   - [x] Test: written, never run by an AI (section 0.5)
 - **Audit (TK-142, 5 October 2026):** the five apps are deleted and `CLAUDE.md` is updated (TK-142); what is left:
   - **`deploy/local` cannot build its web image.** `web/Dockerfile` still runs `nx run-many -t build --projects=web,portal,admin,docs` and copies `dist/apps/portal` and `dist/apps/admin`; `web/nginx.conf` serves them and `docker-compose.yml` publishes 8082 (portal) and 8083 (admin). What those ports and their tunnel hostnames become (redirect to `web`'s `/portal` and `/admin`, or drop) is the owner's call.
   - `deploy/azure/main.bicep` describes `Bootstrap:OperatorEmails` as signing in to `apps/admin`.
   - `docs/Modules.md` (25 mentions) and the docs pages `platform.md`, `development.md` and `overview.md` still describe the deleted apps.
+- **As built (Claude Opus 5.5, 5 October 2026):**
+  - **Portal links were broken by the merge, and are fixed.** Master built them from `Portal:BaseUrl` + `/access/{code}`, the old portal app's address. They are `App:BaseUrl` + `/portal/access/{code}` now, the address invitations already use; `Portal:BaseUrl` is gone from `appsettings.json`, `deploy/local` and `deploy/azure`. The contact screen's no-address hint says `/portal/access/`.
+  - **`deploy/local`**: the web image builds `web` and `docs` only, nginx serves 8081 and 8084, `docker-compose.yml` publishes those two, and `setup.ps1` writes no `PORTAL_URL`. Ports 8082 and 8083 are retired rather than redirected (owner's go-ahead, 5 October): nothing is released, and a redirect would have needed the public address inside nginx. `README.md` says to delete the old tunnel hostnames, and protects `/admin` with a Cloudflare Access path policy instead of a hostname of its own.
+  - **`deploy/azure`**: two Static Web Apps (`web`, `docs`), CORS allows `web` only, no `Portal__BaseUrl`; the deploy workflow uploads two apps. Bicep's incremental mode leaves an older deployment's portal and admin sites in place, and the note in `main.bicep` and the release note say they can be deleted.
+  - **Docs**: `development.md`, `overview.md` and `platform.md` describe one web app; `docs/Modules.md` and `docs/Transactions_And_Specs.md` carry a note mapping the old app names to `apps/web`, with the two decisions that created the apps marked superseded, rather than having their design record rewritten. Comments naming the old apps in eleven route and repository files are updated. `CLAUDE.md` follows.
+  - `platform.md`'s **Apps** and **The licence** sections still describe per-app licences and sign-in; they change with the `App` enum in TK-136.
+  - The link's address is `PortalAccessRepository.LinkUrl` (pure, moved out of the controller), with `PortalAccessTests` covering a trailing slash, padding, escaping and no address.
 - **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
 
 ### TK-135 · Use `bb-branch-date-input` on every page, delete `bb-date-input`, and delete unused shared UI components

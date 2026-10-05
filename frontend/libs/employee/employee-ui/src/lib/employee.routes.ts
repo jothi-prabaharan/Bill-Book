@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 
 /**
- * The Employee pages (H1, TK-48), mounted under the shell by `apps/hrms` and
- * `apps/payroll`. The employee master and organisation setup are open to every
+ * The Employee pages (H1, TK-48), mounted under the shell in `apps/web` for a
+ * branch with the HRMS or Payroll add-on. The employee master and organisation setup are open to every
  * app that employs people; announcements and policies are HRMS's alone.
  */
 export const employeeRoutes: Routes = [

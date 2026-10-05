@@ -157,9 +157,7 @@ from **Settings**.
 
 | On the web PC | |
 |---|---|
-| <http://localhost:8081> | web app |
-| <http://localhost:8082> | customer portal |
-| <http://localhost:8083> | platform admin |
+| <http://localhost:8081> | web app, with the customer portal at `/portal` and platform admin at `/admin` |
 | <http://localhost:8084> | docs |
 
 ### Firewall, when split
@@ -280,17 +278,19 @@ called *Published application routes*), add:
 | Subdomain | Domain | Type | URL |
 |---|---|---|---|
 | `app` | yourname.in | HTTP | `web:8081` |
-| `portal` | yourname.in | HTTP | `web:8082` |
 | `docs` | yourname.in | HTTP | `web:8084` |
 
-Leave out `admin` unless you need it away from the office (see *Security* below).
+The customer portal is `https://app.yourname.in/portal` and portal links point
+there, so it needs no name of its own. An older installation with a `portal` or
+`admin` name mapped to `web:8082` or `web:8083` should delete them: nothing
+listens on those ports any more.
 
 **d. Give the token to the web PC** (or the one PC). Open its `.env` in Notepad
 (`notepad .env`), paste the token after `CLOUDFLARE_TUNNEL_TOKEN=`, and add
 `,tunnel` to the end of the `COMPOSE_PROFILES=` line. If you skipped the domain
-in step 2, also set `APP_URL=https://app.yourname.in` and
-`PORTAL_URL=https://portal.yourname.in` in the **services** PC's `.env` (or the
-one PC's). Then, on each PC you changed:
+in step 2, also set `APP_URL=https://app.yourname.in` in the **services** PC's
+`.env` (or the one PC's). A `PORTAL_URL=` line left from an older setup is
+ignored and can go. Then, on each PC you changed:
 
 ```powershell
 docker compose up -d
@@ -421,10 +421,11 @@ docker compose up migrate
   makes it work, anyone who finds `app.yourname.in` could start a trial there.
   Their data would be isolated from yours but on your disks. Putting Cloudflare
   Access in front of the site (next point) closes that off.
-- **Keep `admin` off the internet**, or put Cloudflare Access in front of it (Zero
-  Trust → Access → Applications, free for up to 50 users), which asks for an
-  email code before the page even loads. The same works for the whole site if
-  only your own staff should reach it.
+- **The platform admin pages (`/admin`) are open only to a platform operator**,
+  and the services refuse everyone else. To keep even the sign-in page off the
+  internet, put Cloudflare Access in front of the site (Zero Trust → Access →
+  Applications, free for up to 50 users), which asks for an email code before
+  the page even loads; a policy on the path `/admin` limits it to those pages.
 - **The web apps listen only on the web PC itself** (and the tunnel). Set
   `BIND_ADDRESS=0.0.0.0` in the web PC's `.env` to let other PCs in the shop open
   `http://<web-pc-address>:8081` directly. Windows asks once whether to allow it

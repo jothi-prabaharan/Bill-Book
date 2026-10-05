@@ -33,7 +33,7 @@ you.
 | Storage account | 1 | ZRS, shared-key access **off**, versioning and 14-day soft delete |
 | Service Bus namespace | 1 | Standard (topics need it), local auth **off**, one topic per event |
 | Container Registry | 1 | Basic, admin user off |
-| Static Web Apps | 4 | Free tier: web, docs |
+| Static Web Apps | 2 | Free tier: web (with the portal at `/portal` and platform admin at `/admin`), docs |
 | Managed identities | 11 | one per workload |
 | VNet, private DNS zone, Log Analytics | 1 each | |
 

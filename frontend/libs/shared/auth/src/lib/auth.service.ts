@@ -55,7 +55,7 @@ export class AuthService {
 
   /**
    * What this user may do in the branch they are signed in to, read off the
-   * token. **Only for pages outside the shell** (`apps/admin`): pages under the
+   * token. **Only for pages outside the shell** (the platform admin pages): pages under the
    * shell read `SessionContextService` instead (TK-44). Read off the token
    * rather than stored separately — switching branch replaces the token,
    * so the permissions follow without anything having to remember to clear them.

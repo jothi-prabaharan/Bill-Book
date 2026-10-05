@@ -3,6 +3,8 @@
 
 Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard rules; this file is the concrete what-to-build.
 
+> **One web app now (D-36, TK-130 to TK-134, 5 October 2026).** `apps/admin`, `apps/portal`, `apps/hrms`, `apps/payroll` and `apps/school` were merged into `apps/web` and deleted. Where this file names one of them, read the matching part of `apps/web`: `/admin` for the platform admin pages, `/portal` for the client and parent portal, and the HRMS, Payroll and School pages for a branch whose business type or add-ons allow them. Per-app licences and per-app sign-in gave way to business types and add-ons. The sections below are kept as the record of what was designed and why.
+
 **Status key**: ✅ built · 🔨 designed, not built · 📋 scoped only, needs design
 
 **Checklist marking rule**: any `- [ ]` box in this file (e.g. the Definition-of-Done lists) is

@@ -71,8 +71,8 @@ Windows (Consolas) and Linux (Liberation Mono), landing on the generic
 `monospace` if none match.
 
 **Where the tokens reach.** `apps/web` imports the full theming entry point and
-`apps/desktop` inherits it by importing web's stylesheet. `apps/admin` and
-`apps/portal` import the same entry point. `apps/docs` imports only the tokens
+`apps/desktop` inherits it by importing web's stylesheet; the portal and admin
+pages are routes inside web and get it from there. `apps/docs` imports only the tokens
 partial — it keeps its own component styling and takes just the font roles.
 A new app gets the fonts by importing `libs/shared/theming/src/index.scss`.
 
@@ -450,7 +450,7 @@ Each launch configuration has a matching task — `serve-web`, `serve-web-stagin
 
 ## Apps without environment files
 
-`apps/portal` and `apps/desktop` are empty shells with no build targets. They get environment files and debug configurations when they get something to build. `apps/admin` has both now — it builds, lints and serves like `web` and `docs` do.
+There are three apps: `web`, `desktop` and `docs` (TK-134). `apps/desktop` builds but has no environment files or debug configuration yet; it gets them when it has something to run against. The client portal and the platform admin pages are routes inside `web` (`/portal`, `/admin`), so they need nothing of their own.
 
 The backend services that are not yet implemented — Customer, Purchase, Reporting — have only a placeholder `appsettings.json`. Per-environment files arrive with the service.
 
@@ -553,6 +553,6 @@ Three files per page or component, sharing a base name: `.ts`, `.html`, `.scss`.
 
 **Update this site in the same commit as the feature.** See [Release notes](#/release-notes) for how that flows into a version entry.
 
-## The HRMS and Payroll apps
+## HRMS, Payroll and School pages
 
-`npx nx serve hrms` (port 4203) and `npx nx serve payroll` (port 4204) run beside `npx nx serve web` (4200). All three proxy `/api` to the Gateway. Each app's `app.config.ts` provides its `APP_ID`, and each app's `app.routes.spec.ts` runs `auditShellRoutes`, so a page without `data.access` fails the tests. The shared settings routes come from `@bill-book/settings-shared-routes`; never copy one into an app.
+HRMS, Payroll and School are not apps of their own any more: their pages are lazy-loaded libraries mounted under the shell in `apps/web`, shown to a branch whose business type or add-ons allow them (D-36). `npx nx serve web` (4200) serves all of them. `apps/web`'s `app.routes.spec.ts` runs `auditShellRoutes`, so a page without `data.access` fails the tests. The shared settings routes come from `@bill-book/settings-shared-routes`; never copy one into an app.

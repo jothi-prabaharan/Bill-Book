@@ -83,14 +83,14 @@ x-master-env: &master-env
   Seeding__Reporting: http://reporting:7507
   Seeding__Printing: http://printing:7508
   Seeding__Customer: http://customer:7506
-  # Where links in invitation and password-reset emails point.
+  # Where links in invitation and password-reset emails point, and portal
+  # links too: the client portal is the web app's /portal routes (TK-132).
   App__BaseUrl: ${APP_URL:-http://localhost:8081}
-  Portal__BaseUrl: ${PORTAL_URL:-http://localhost:8082}
   # The first owner, their business and its first branch, created once while
   # the database has no users at all. setup.ps1 fills these in.
   Bootstrap__OwnerEmail: ${BOOTSTRAP_OWNER_EMAIL:-}
-  # Who may sign in to apps/admin (D-01). On one PC the owner runs the platform
-  # too, so it defaults to the owner's address.
+  # Who may open the platform admin pages, /admin in the web app (D-01). On one
+  # PC the owner runs the platform too, so it defaults to the owner's address.
   Bootstrap__OperatorEmails: ${BOOTSTRAP_OPERATOR_EMAILS:-${BOOTSTRAP_OWNER_EMAIL:-}}
   Bootstrap__OwnerPassword: ${BOOTSTRAP_OWNER_PASSWORD:-}
   Bootstrap__OwnerName: ${BOOTSTRAP_OWNER_NAME:-Owner}
@@ -372,8 +372,6 @@ services:
     # other PCs on the local network as well.
     ports:
       - ${BIND_ADDRESS:-127.0.0.1}:8081:8081   # web
-      - ${BIND_ADDRESS:-127.0.0.1}:8082:8082   # portal
-      - ${BIND_ADDRESS:-127.0.0.1}:8083:8083   # admin
       - ${BIND_ADDRESS:-127.0.0.1}:8084:8084   # docs
 
   # -------------------------------------------------------------------------

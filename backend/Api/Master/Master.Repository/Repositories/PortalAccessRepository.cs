@@ -67,6 +67,18 @@ public sealed class PortalAccessRepository
     }
 
     /// <summary>
+    /// The whole link for <paramref name="code"/>, or null when the deployment
+    /// does not say where the web app lives. The portal is the web app's
+    /// <c>/portal</c> routes since TK-132, so the link is the web app's address
+    /// (<c>App:BaseUrl</c>, the one invitations use) plus
+    /// <c>/portal/access/{code}</c> (TK-134). Pure.
+    /// </summary>
+    public static string? LinkUrl(string? appBaseUrl, string code) =>
+        string.IsNullOrWhiteSpace(appBaseUrl)
+            ? null
+            : $"{appBaseUrl.Trim().TrimEnd('/')}/portal/access/{Uri.EscapeDataString(code)}";
+
+    /// <summary>
     /// A new link for a contact of the caller's branch, or null when there is
     /// no such contact. Older links keep working; revoking ends them all.
     /// </summary>

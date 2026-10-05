@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 /**
- * The Student pages (S1, TK-61), mounted under the shell by `apps/school`.
+ * The Student pages (S1, TK-61), mounted under the shell in `apps/web` for a School branch.
  * School's own, so each names its app and the shell refuses it elsewhere.
  */
 export const studentRoutes: Routes = [

@@ -31,6 +31,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **Portal links open the portal again (TK-134).** Since the client portal moved into the web app, a portal link pointed at the old portal's address. It now opens `/portal/access/…` on the web app's address, the same address invitations use. Links made before this fix still carry the old address: make a new one from the contact.
+
+- **Changed**: **The single-PC and Azure deployments serve two web apps, web and docs (TK-134).** The customer portal is `/portal` and the platform admin pages are `/admin` on the web app's address. On your own PCs, delete any `portal` or `admin` public hostname in the Cloudflare tunnel; nothing listens on ports 8082 and 8083 any more, and the web image builds again. On Azure, the old portal and admin Static Web Apps can be deleted. See [Deployment](deployment).
+
 - **Added**: **A Service business type (TK-136).** A branch can declare itself a Service business. It can switch on every add-on except POS and e-invoicing. For now it is set up like a General branch; hiding the stock screens it does not need, and renaming General to Retail, are still to come. See [The branch's trade](platform#the-branchs-trade).
 
 - **Changed**: **One background worker (TK-137, TK-138).** Costing, reminders, rate sync, recurring billing, savings schemes and email now run as separate jobs in one worker, `BillBook.Worker`, instead of three. A failing job no longer stops the others, and each job that walks the branches can be switched off on its own. See [Background worker](deployment#background-worker).

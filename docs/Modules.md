@@ -5,6 +5,8 @@ The order to build things in, and how to tell when each one is actually done.
 
 `CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds the tables and pages. This file holds **what to do next**, one item at a time. [`TRANSACTIONS.md`](./TRANSACTIONS.md) and [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) continue it for the sixteen document types — Stage 6 below, in their own files because together they are the larger half of the product.
 
+> **One web app now (D-36, TK-130 to TK-134, 5 October 2026).** `apps/admin`, `apps/portal`, `apps/hrms`, `apps/payroll` and `apps/school` were merged into `apps/web` and deleted. Where this file names one of them, read the matching part of `apps/web`: `/admin` for the platform admin pages, `/portal` for the client and parent portal, and the HRMS, Payroll and School pages for a branch whose business type or add-ons allow them. Per-app licences and per-app sign-in gave way to business types and add-ons. The sections below are kept as the record of what was designed and why.
+
 ## How to use this file
 
 1. Take the **first unticked box**. The order is deliberate — later stages assume earlier ones.
@@ -1527,7 +1529,8 @@ H0 fixes all three:
   licences and one set of employees, with HRMS's master data seeded into the existing branch.
 - [x] **H0.5 — Sharding.** Per the section above.
 - [x] **H0.6 — `apps/hrms` and `apps/payroll`.** Two empty apps that sign in, select a branch, draw
-  their own menus, and switch to each other and to `apps/web`.
+  their own menus, and switch to each other and to `apps/web`. *Superseded: both were merged into
+  `apps/web` and deleted (TK-130, TK-134).*
 
 # --- Hrms.md ---
 # HRMS & Payroll
@@ -2557,7 +2560,7 @@ for three things:
 | **Money, tax and quantity are `decimal(18,4)`** in Fluent config | The prompt's rule. Rounding for display comes from the branch's currency, not the column |
 | **Every `string` carries `[MaxLength]`; every boolean is `Is`/`Has`/`Can`** | The prompt's rule, already the house style |
 | **The existing frontend stack** — signals, async/await, shared `ui-components`, `--color-*` tokens | The prompt named RxJS, Bootstrap and FontAwesome. None of the three is the stack the other 28 pages use, and a second visual language on one shell is worse than either. No new UI library is added |
-| **`apps/school` is a separate app** on `libs/app-shell` and `libs/shared/*` | The owner's choice. The shell is already app-agnostic except for the menu, which the `App` flag fixes |
+| **`apps/school` is a separate app** on `libs/app-shell` and `libs/shared/*` | The owner's choice at the time. *Reversed by D-36: the School pages are part of `apps/web` for a School branch, and `apps/school` is deleted (TK-130, TK-134).* |
 | **New apps do not decode the JWT** | The prompt's rule. `libs/shared/auth/src/lib/token-claims.ts` does decode it today, for `apps/web`'s menu; the school libs instead read a backend "current context" endpoint returning names, roles and permissions without internal ids. Whether `apps/web` moves too is not part of this design |
 | **A campus is an `OrgId`** | A branch is already "one place the business trades from, and one complete set of books". A second campus is a second branch, seeded the same way. No `CampusId` column — for the same reason there is no `BranchId` |
 | **Students are not contacts; guardians are** | The guardian pays, receives the fee demand and signs in to the portal, so a guardian is a `con.Contact` with `IsGuardian`. A student is a `sis` row pointing at up to two guardian contacts |

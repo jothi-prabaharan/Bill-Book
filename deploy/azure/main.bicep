@@ -58,10 +58,10 @@ param encryptionKey string
 @description('Address the first account is created for, once, while mst.Users is empty. It gets no password; the only way in is the reset flow to that mailbox. Empty creates nothing.')
 param bootstrapOwnerEmail string = ''
 
-@description('Platform operators, comma-separated: every existing user with one of these addresses may sign in to apps/admin (D-01). Grant-only, applied at each Master start. Empty grants nobody.')
+@description('Platform operators, comma-separated: every existing user with one of these addresses may open the platform admin pages, /admin in the web app (D-01). Grant-only, applied at each Master start. Empty grants nobody.')
 param bootstrapOperatorEmails string = ''
 
-@description('Extra browser origins allowed to call the gateway, beyond the three Static Web Apps — custom domains, once they exist.')
+@description('Extra browser origins allowed to call the gateway, beyond the web Static Web App — custom domains, once they exist.')
 param extraAllowedOrigins array = []
 
 @description('Minimum replicas for the HTTP services. Zero bills nothing while idle at the cost of a cold start. The background worker ignores this and is always one.')
@@ -138,10 +138,12 @@ var secretNames = [
   'encryption-key'
 ]
 
+// The portal and the platform admin pages are routes inside web (/portal,
+// /admin) since TK-131 and TK-132. A deployment made before that still has
+// swa-<prefix>-portal and swa-<prefix>-admin: Bicep's incremental mode leaves
+// them in place, and they can be deleted by hand.
 var webApps = [
   'web'
-  'portal'
-  'admin'
   'docs'
 ]
 
@@ -518,10 +520,9 @@ resource sites 'Microsoft.Web/staticSites@2023-12-01' = [for w in webApps: {
   }
 }]
 
+// Only web calls the gateway; docs is static pages.
 var siteOrigin = {
   web: 'https://${sites[0].properties.defaultHostname}'
-  portal: 'https://${sites[1].properties.defaultHostname}'
-  admin: 'https://${sites[2].properties.defaultHostname}'
 }
 
 // ============================================================================
@@ -570,8 +571,7 @@ module settings 'modules/settings.bicep' = {
     documentsContainer: documents.name
     serviceBusNamespace: '${serviceBus.name}.servicebus.windows.net'
     webOrigin: siteOrigin.web
-    portalOrigin: siteOrigin.portal
-    allowedOrigins: concat([siteOrigin.web, siteOrigin.portal, siteOrigin.admin], extraAllowedOrigins)
+    allowedOrigins: concat([siteOrigin.web], extraAllowedOrigins)
     bootstrapOwnerEmail: bootstrapOwnerEmail
     bootstrapOperatorEmails: bootstrapOperatorEmails
   }
@@ -723,7 +723,7 @@ output registryLoginServer string = registry.properties.loginServer
 output registryName string = registry.name
 output migrateJobName string = migrate.name
 
-@description('Static Web App names and origins, in the order web, portal, admin, docs.')
+@description('Static Web App names and origins, in the order web, docs.')
 output sites array = [for (w, i) in webApps: {
   app: w
   name: sites[i].name

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-/** The Admission pages (S2, TK-62), mounted under the shell by `apps/school`. */
+/** The Admission pages (S2, TK-62), mounted under the shell in `apps/web` for a School branch. */
 export const admissionRoutes: Routes = [
   {
     path: 'admission/enquiries',

@@ -650,7 +650,7 @@
       <div class="portal-link">
         <bb-text-input
           readonly
-          [label]="link.url ? 'Portal link — send this to the contact. It is shown only now.' : 'Portal code (no portal address is configured, so add it to the portal\'s /access/ address). It is shown only now.'"
+          [label]="link.url ? 'Portal link — send this to the contact. It is shown only now.' : 'Portal code (no app address is configured, so add it to this app\'s /portal/access/ address). It is shown only now.'"
           [ngModel]="link.url ?? link.code"
           [ngModelOptions]="{ standalone: true }"
           (focus)="$any($event.target).select()"

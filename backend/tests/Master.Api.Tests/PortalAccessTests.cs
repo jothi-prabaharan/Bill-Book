@@ -25,6 +25,24 @@ public sealed class PortalAccessTests
 
     public PortalAccessTests(PostgresFixture postgres) => _postgres = postgres;
 
+    [Theory]
+    [InlineData("https://app.example.in", "https://app.example.in/portal/access/AB%2BC")]
+    [InlineData("https://app.example.in/", "https://app.example.in/portal/access/AB%2BC")]
+    [InlineData(" http://localhost:8081 ", "http://localhost:8081/portal/access/AB%2BC")]
+    public void A_portal_link_opens_the_web_apps_portal_routes(string appBaseUrl, string expected)
+    {
+        // The portal is the web app's /portal routes since TK-132; the old
+        // portal app's address is gone (TK-134).
+        Assert.Equal(expected, PortalAccessRepository.LinkUrl(appBaseUrl, "AB+C"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void With_no_web_app_address_there_is_only_the_code(string? appBaseUrl) =>
+        Assert.Null(PortalAccessRepository.LinkUrl(appBaseUrl, "ABC"));
+
     [Fact]
     public void A_code_that_is_not_a_portal_code_is_not_read()
     {

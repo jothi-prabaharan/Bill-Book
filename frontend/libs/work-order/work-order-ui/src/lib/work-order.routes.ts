@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-/** The work order page (S6, TK-66), mounted under the shell by `apps/school`. */
+/** The work order page (S6, TK-66), mounted under the shell in `apps/web` for a School branch. */
 export const workOrderRoutes: Routes = [
   {
     path: 'work-orders',

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-/** The AMC contracts page (S8, TK-68), mounted under the shell by `apps/school`. */
+/** The AMC contracts page (S8, TK-68), mounted under the shell in `apps/web` for a School branch. */
 export const maintenanceContractRoutes: Routes = [
   {
     path: 'amc/contracts',

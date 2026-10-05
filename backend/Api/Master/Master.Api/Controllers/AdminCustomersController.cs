@@ -11,7 +11,7 @@ namespace Master.Api.Controllers;
 
 /// <summary>
 /// Platform admin: the customer list with provisioning status, and the
-/// actions apps/admin needs on it â€” create a customer without going through
+/// actions the platform admin pages (/admin in the web app) need on it â€” create a customer without going through
 /// public self-service signup, and retry one stuck at Provisioning or
 /// Failed. Operator only, via platform.view/platform.edit â€” not scoped to
 /// any one customer, since the whole point is seeing across all of them.

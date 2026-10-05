@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-/** The preventive plans page (S7, TK-67), mounted under the shell by `apps/school`. */
+/** The preventive plans page (S7, TK-67), mounted under the shell in `apps/web` for a School branch. */
 export const preventiveRoutes: Routes = [
   {
     path: 'preventive/plans',

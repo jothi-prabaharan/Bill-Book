@@ -118,15 +118,13 @@ The full solution builds, including the three services that are still empty shel
 | Accounting · banking | Banks, bank accounts each provisioning their own ledger account, spend/receive/transfer money with allocation, settlement and FX, CSV and XLSX statement import with matching |
 | Purchase | Purchase Orders, Goods Receipts, Bills, and Debit Notes with full UI screens and API integration |
 | Sales | Quotes, Sales Orders, Delivery Challans, Invoices, and Credit Notes with full UI forms, lists, and API integration |
-| Workers | CostingEngine — claims movements from `inv.StockMovements`, costs them, then posts them to the ledger |
+| Worker | `BillBook.Worker` — costing and its ledger postings, reminders, rate sync, recurring billing, savings schemes and email, one job each |
+| Apps | `web` (with the client portal at `/portal` and platform admin at `/admin`), `desktop` and `docs` |
 | Tooling | 31-project solution, 25 Nx projects, VS Code one-press debug, YARP gateway, a Postman collection generated from the controllers |
 
 ## Not built
 
 - **Customer, Reporting** — project folders and `.csproj` exist, nothing else. Customer is where CRM and the support helpdesk will both be built
-- **Notification and RateSync workers** — a `.csproj` and an empty `Consumers/` folder. Mail currently sends from Master, queued in process
-- **`apps/portal`** — scaffolded, zero source files
-- **`apps/admin`** — a customer list with status and a retry action, an inline create-customer form, and a read-only branch list per customer. Nobody can sign in to it yet — see Known gaps
 - **`apps/desktop`** — POS terminal module and ESC/POS thermal printing service built; full CRUD, inventory sync, and offline database support pending
 
 ## Known gaps

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-/** The Fee pages (S4, TK-64), mounted under the shell by `apps/school`. */
+/** The Fee pages (S4, TK-64), mounted under the shell in `apps/web` for a School branch. */
 export const feeRoutes: Routes = [
   {
     path: 'fee/setup',
