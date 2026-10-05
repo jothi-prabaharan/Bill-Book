@@ -79,7 +79,13 @@ public sealed class RestaurantOrderRepository
 
     // ---- Opening ----
 
-    public async Task<OrderResult<long>> OpenAsync(OpenRestaurantOrderRequest request, CancellationToken ct)
+    /// <summary>
+    /// Opens an order. <paramref name="fromAggregator"/> is for an order that
+    /// arrived from Zomato or Swiggy (TK-167): the aggregator is the customer
+    /// and no waiter or table is involved, so the branch's required-field
+    /// rules, which are for a person at the till, do not apply to it.
+    /// </summary>
+    public async Task<OrderResult<long>> OpenAsync(OpenRestaurantOrderRequest request, CancellationToken ct, bool fromAggregator = false)
     {
         if (await _settings.GetSettingsAsync(ct) is not { } settings)
         {
@@ -87,7 +93,8 @@ public sealed class RestaurantOrderRepository
         }
 
         long? tableId = RestaurantOrderRulesRepository.EffectiveTable(settings, request.RestaurantTableId);
-        if (RestaurantOrderRulesRepository.RequirementRefusal(settings, request.OrderType, tableId, request.ContactId, request.WaiterUserId) is string missing)
+        if (!fromAggregator
+            && RestaurantOrderRulesRepository.RequirementRefusal(settings, request.OrderType, tableId, request.ContactId, request.WaiterUserId) is string missing)
         {
             return OrderResult<long>.Refuse(missing);
         }

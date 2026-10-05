@@ -24,6 +24,84 @@ namespace Sales.Repository.Migrations.Tenant
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.AggregatorOrder", b =>
+                {
+                    b.Property<long>("AggregatorOrderId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("AggregatorOrderId"));
+
+                    b.Property<string>("Aggregator")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal?>("AggregatorTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CustomerName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("DeliveryAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ExternalOrderId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("RestaurantOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("AggregatorOrderId");
+
+                    b.HasIndex("RestaurantOrderId")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "ReceivedAt");
+
+                    b.HasIndex("OrgId", "Aggregator", "ExternalOrderId")
+                        .IsUnique();
+
+                    b.ToTable("AggregatorOrders", "sal");
+                });
+
             modelBuilder.Entity("Sales.Entity.TableEntities.CreditNote", b =>
                 {
                     b.Property<long>("CreditNoteId")
@@ -4144,6 +4222,15 @@ namespace Sales.Repository.Migrations.Tenant
 
                             t.HasCheckConstraint("chk_numbering_manual_override", "\"SeriesFor\" = 'Master' OR \"AllowManualOverride\" = false");
                         });
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.AggregatorOrder", b =>
+                {
+                    b.HasOne("Sales.Entity.TableEntities.RestaurantOrder", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Sales.Entity.TableEntities.CreditNote", b =>

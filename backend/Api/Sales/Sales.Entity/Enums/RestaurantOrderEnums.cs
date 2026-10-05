@@ -21,3 +21,10 @@ public enum KitchenStatus
     Served = 4,
     Cancelled = 5,
 }
+
+/// <summary>The delivery aggregator an order arrived from (TK-167).</summary>
+public enum OrderAggregator
+{
+    Zomato = 1,
+    Swiggy = 2,
+}

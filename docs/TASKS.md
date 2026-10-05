@@ -5207,20 +5207,32 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a posted bill earns its contact points once, a void takes them back, and the contact's balance and history show both.
 
 ### TK-167 · Zomato and Swiggy order intake
-- [~] working (Claude Sonnet 5.5) — since 2026-10-05 · the owner said continue; intake only, which every D-42 answer includes. D-42 stays open for menu sync, status and settlement
+- [x] completed (Claude Sonnet 5.5) · tests written, not run — 2026-10-05 · intake only; D-42 is still open for menu sync, status and settlement
 - **Issue:** [#147](https://github.com/jothi-prabaharan/Bill-Book/issues/147)
 - **Group:** L · Restaurant
 - **Lanes:** L-SAL, L-RST-UI · **Depends on:** TK-146, TK-147 · **Decision:** D-42
-- **Where:** `Sales.Repository/Repositories/RestaurantOrderRepository.cs` (TK-146) and the kitchen ticket repository (TK-147); `Shared.Kernel` for the event
+- **Where:** `Sales.Repository/Repositories/{AggregatorOrderRepository,AggregatorOrderRulesRepository,RestaurantOrderRepository}.cs`, `Sales.Api/Controllers/AggregatorOrdersController.cs`, `Sales.Entity/TableEntities/AggregatorOrders.cs`, `Gateway.Api/appsettings.json`
 - **State:** split from TK-151 on 5 October 2026. The two aggregators have partner APIs, but nothing here talks to either, and no agreement or credentials exist to build against.
+- **Tables:** `sal.AggregatorOrders` (aggregator, their order id, the `RestaurantOrderId`, received at, customer name, phone and address, their total).
 - **Sub-tasks:**
-  - [ ] The owner answers D-42: order intake only, or also menu sync, status updates back and settlement. Do not build past what is answered.
-  - [ ] Receive an aggregator order as a `RestaurantOrder` of type Delivery, with the aggregator and its order id kept for reconciliation. Intake is idempotent on that id.
-  - [ ] Print the kitchen ticket through TK-147's path.
-  - [ ] Credentials per branch go in the secret store (`ISecretStore`), never in configuration files.
-  - [ ] The standard delivery sub-tasks in section 5, and split this card further if D-42 asks for menu sync or settlement.
-  - [ ] Test: written, never run by an AI (section 0.5)
+  - [ ] The owner answers D-42: order intake only, or also menu sync, status updates back and settlement. **Not answered.** The owner said "continue" and intake was built, because every answer to D-42 includes it. Nothing past intake is built.
+  - [x] Receive an aggregator order as a `RestaurantOrder` of type Delivery, with the aggregator and its order id kept for reconciliation. Intake is idempotent on that id.
+  - [x] Make the kitchen tickets through TK-147's path when the kitchen switch is on. Printing stays a person's action on the kitchen screen.
+  - [ ] Credentials per branch in the secret store (`ISecretStore`). **Not needed for intake**, which only receives; it is for pushing a menu or a status out, which is D-42's later parts.
+  - [x] The standard delivery sub-tasks in section 5 (entity, migration with its RLS block, DI, controller guards, tests, docs page, release note); the gateway route was added too.
+  - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** an order placed on an aggregator appears once as a Delivery order with its kitchen ticket, and a repeat of the same order id changes nothing.
+- **As built (Claude Sonnet 5.5, 5 October 2026):**
+  - **Intake is a plain authenticated endpoint**, `POST api/restaurant/aggregator-orders` (Restaurant › Create), not a webhook the aggregators call themselves. A person, or an API client (D-07) a connector runs as, posts a normalised order. Zomato's and Swiggy's own payloads were not available, so no adapter for either is written; each would be a small mapping onto this request.
+  - **Dishes are named by this branch's own item ids.** That is what a restaurant gives each aggregator as its partner item id, so no mapping table was added. If an aggregator cannot carry it, a mapping table is the follow-up.
+  - **`RestaurantOrderRepository.OpenAsync` takes `fromAggregator`**, which skips the branch's required customer, waiter and table rules (an aggregator order has none of them). Everything else, including the menu pricing for Delivery, is the ordinary path.
+  - **The order, its `AggregatorOrder` row and its tickets are one transaction.** A sold-out dish or an unreachable menu refuses the whole order and saves nothing, so the aggregator can send it again. A repeat id answers 200 with the first order and `alreadyReceived: true`; a new order answers 201. The unique index on (branch, aggregator, order id) is the backstop for two deliveries at the same instant.
+  - **The aggregator's total is kept, never used to price.** The dishes are priced by the menu; the total is for the settlement part, if D-42 asks for it.
+  - **The order's note carries the source** (*Zomato 4821 · Ravi · phone · address*), so the existing order screen shows it. There is no aggregator page yet: `GET api/restaurant/aggregator-orders` lists what came in, for one later.
+  - Tests: `AggregatorOrderRulesTests` (pure) and `AggregatorOrderTests` (the order and its record, a repeat id, the same id on the other aggregator, a branch that demands customer and waiter, the kitchen on and off, a sold-out dish, a menu that is down, a blank id, the list). `RlsAudit` and `EndpointGuardAudit` cover the new table and controller.
+  - Docs: **Orders from Zomato and Swiggy** in `restaurant-orders.md`, and a release note.
+  - Build: `dotnet build` of `Sales.Api` and `Sales.Api.Tests` is clean, and `dotnet ef migrations has-pending-model-changes` reports none. The tests were not run (section 0.5).
+- **Follow-ups, only if D-42 asks for them:** menu sync (push the menu and availability out), status updates back, settlement against the aggregators' payouts, and a page listing aggregator orders.
 
 ## 3. Decisions from the owner
 

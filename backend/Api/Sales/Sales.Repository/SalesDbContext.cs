@@ -123,6 +123,9 @@ public class SalesDbContext : TenantDbContext
     // Restaurant bills (TK-148).
     public DbSet<RestaurantBill> RestaurantBills => Set<RestaurantBill>();
 
+    // Aggregator order intake (TK-167).
+    public DbSet<AggregatorOrder> AggregatorOrders => Set<AggregatorOrder>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("sal");
@@ -587,6 +590,21 @@ public class SalesDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.BilledAt });
             b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId).OnDelete(DeleteBehavior.Restrict);
             b.ToTable(t => t.HasCheckConstraint("chk_restaurant_bill_tip", "\"TipAmount\" >= 0 AND (\"TipAmount\" = 0 OR \"TipBankAccountId\" IS NOT NULL)"));
+        });
+
+        // ---- Aggregator orders (TK-167) ------------------------------------
+
+        modelBuilder.Entity<AggregatorOrder>(b =>
+        {
+            b.HasKey(e => e.AggregatorOrderId);
+            b.Property(e => e.Aggregator).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.AggregatorTotal).HasColumnType("decimal(18,2)");
+
+            // The same aggregator order id is one order, however often it is delivered.
+            b.HasIndex(e => new { e.OrgId, e.Aggregator, e.ExternalOrderId }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.ReceivedAt });
+            b.HasIndex(e => e.RestaurantOrderId).IsUnique();
+            b.HasOne<RestaurantOrder>().WithMany().HasForeignKey(e => e.RestaurantOrderId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

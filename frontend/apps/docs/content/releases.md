@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Orders from Zomato and Swiggy arrive as delivery orders (TK-167).** An aggregator order posted to `api/restaurant/aggregator-orders` opens a Delivery order priced by the branch's menu, with its source in the note and its kitchen tickets made when the kitchen is on. The same aggregator order id sent twice is one order. Intake only: menu sync, status updates and settlement wait on D-42.
+
 - **Changed**: **The till confirms every scan, and its receipt carries codes (TK-164).** The till's new **Scan** field takes a scanner, a typed code or a phone's camera, and adds an item only when the scan is exactly one of its barcodes or its code, so a name that happens to contain the digits is never added by mistake. Every scan field in the app now checks the same way. The receipt ends with the bill number as a barcode and, when something is still owed and the branch has a UPI ID, a UPI QR code for the amount. See [POS sales](invoices#pos-sales).
 
 - **Added**: **Count stock by scanning (TK-163).** A physical count and a write-off have a **Scan** field above the lines: each scan counts one of the item, or adds one to the write-off, and a medicine pack's GS1 code fills the batch and expiry. On **Record a movement**, scanning adds a serial number to the list or picks a batch from the lots in stock. See [Counting by scanning](masters#counting-by-scanning) and [Scanning batches and serials](masters#scanning-batches-and-serials).

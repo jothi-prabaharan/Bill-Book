@@ -39,6 +39,29 @@ Open the order, tap more dishes and choose **Add to order**. A new round after t
 
 **Cancel order** (needs Restaurant › Void) asks why. Dishes already in the kitchen are cancelled with the same reason, and the table is free once it has no other open order.
 
+## Orders from Zomato and Swiggy
+
+An order placed on Zomato or Swiggy can be posted to the branch's API and arrives as an ordinary **Delivery** order, so it is priced, sent to the kitchen and billed like any other.
+
+`POST api/restaurant/aggregator-orders` (Restaurant › Create, usable by a person or by an API client) takes:
+
+- `aggregator`: `Zomato` or `Swiggy`;
+- `externalOrderId`: the aggregator's own order id;
+- `lines`: the dishes, by **this branch's own item ids**. Give each aggregator your item id as its partner item id when you list the menu there, and the ids line up with no mapping to maintain;
+- optionally the customer's `customerName`, `customerPhone` and `deliveryAddress`, the aggregator's `aggregatorTotal` and a `notes`.
+
+What happens:
+
+- **The order's note says where it came from**: *Zomato 4821 · Ravi · 98xxxxxx · 12 Lake Road*.
+- **Sending the same order id again changes nothing.** It answers with the order made the first time and says it was already received, so a retry from the aggregator's side is safe. The same id from the *other* aggregator is a different order.
+- **The branch's required-field rules do not apply.** Whether the branch asks for a customer or a waiter on a delivery, an aggregator order has neither.
+- **With the kitchen switched on, the kitchen ticket is made at once**, one per station; print it from the kitchen screen as usual.
+- **The dishes are priced by your menu, not by the aggregator.** The aggregator's total is kept only to compare later. A sold-out dish, or a menu that cannot be reached, refuses the whole order and saves nothing, so the aggregator can send it again.
+
+`GET api/restaurant/aggregator-orders` lists what has come in, newest first, and can be filtered by `aggregator` and `date`.
+
+This is order intake only. Sending your menu to the aggregators, passing status changes back and matching their payouts are not built.
+
 ## When something cannot be reached
 
 Orders are priced by the menu and checked against the restaurant settings. If either cannot be reached, nothing is saved and the screen says to try again, rather than saving an order at a wrong price or against rules it could not check.
