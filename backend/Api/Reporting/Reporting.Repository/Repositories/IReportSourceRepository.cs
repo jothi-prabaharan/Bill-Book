@@ -30,6 +30,21 @@ public interface IReportSourceRepository
     AddOn RequiredAddOn => AddOn.None;
 
     /// <summary>
+    /// The trade a branch must declare to see the report, or null for every
+    /// branch (TK-150). A report for another trade is absent from the catalog,
+    /// like one the caller lacks the permission for.
+    /// </summary>
+    BusinessType? RequiredBusinessType => null;
+
+    /// <summary>
+    /// The Restaurant switch the report reads, or null when it needs none
+    /// (TK-150). While the switch is off in Settings › Restaurant the report is
+    /// absent: a table turnover report on a branch with no tables is empty by
+    /// construction, and an empty report reads as a quiet day.
+    /// </summary>
+    Shared.Kernel.Internal.RestaurantFeature? RequiredRestaurantFeature => null;
+
+    /// <summary>
     /// The module permission a caller needs beyond <c>reports.view</c>. A report
     /// the caller lacks it for is absent from the catalog rather than refused, so
     /// the existence of a report is not itself a disclosure.
@@ -82,6 +97,10 @@ public abstract class ReportSource<TRow> : IReportSourceRepository
     public virtual App App => App.RetailErp;
 
     public virtual AddOn RequiredAddOn => AddOn.None;
+
+    public virtual BusinessType? RequiredBusinessType => null;
+
+    public virtual Shared.Kernel.Internal.RestaurantFeature? RequiredRestaurantFeature => null;
 
     public abstract string RequiredPermission { get; }
 

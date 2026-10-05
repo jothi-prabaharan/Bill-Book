@@ -4799,18 +4799,27 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** selling one portion reduces each ingredient by its recipe quantity, and a rerun does not deduct twice.
 
 ### TK-150 · Restaurant reports
-- [ ] working (Claude Opus 5.5) — 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#131](https://github.com/jothi-prabaharan/Bill-Book/issues/131)
 - **Group:** L · Restaurant
 - **Lanes:** L-RPT, L-RST-UI · **Depends on:** TK-147, TK-148, TK-149 · **Decision:** D-39
 - **Where:** `Reporting.Repository/ReportingDbContext.cs`, the report sources, `ExcelReportWriter`, `CsvReportWriter`
 - **State:** checked 1 October 2026. 48 report sources run on one grid with Excel and CSV export.
 - **Sub-tasks:**
-  - [ ] Read models and sources for day-end, item and category sales, waiter-wise, table turnover, food cost, wastage and KOT cancellations.
-  - [ ] Hide a report whose feature switch is off, using the effective settings.
-  - [ ] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
-  - [ ] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
+  - [x] Read models and sources for day-end, item and category sales, waiter-wise, table turnover, food cost, wastage and KOT cancellations.
+  - [x] Hide a report whose feature switch is off, using the effective settings.
+  - [x] Every controller carries `[RequireBusinessType(Restaurant)]`; all logic is in `*Repository.cs` (rule 16).
+  - [x] The standard delivery sub-tasks in section 5 (migration with its RLS block, seed, `-core` and `-ui` at 360 px, docs page, `docs.manifest.ts`, `release-notes.md`).
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built:**
+  - **Eight sources on the one report engine**, so the grid, filters, grouping, pivot and the Excel and CSV export are the same as every other report's: `restaurant-day-end`, `-item-sales`, `-category-sales`, `-waiter-sales`, `-table-turnover`, `-food-cost`, `-wastage`, `-kot-cancellations` (`Sources/RestaurantReportsSourcesRepository.cs`, `ReportModule.Restaurant`, `restaurant.view`). Their queries are the pure `RestaurantReports` functions; the catalog rows are in `ReportCatalogSeeder`, column for column.
+  - **Read models**, all `ExcludeFromMigrations`: `sal.Floors`, `RestaurantTables`, `RestaurantOrders`, `RestaurantOrderLines`, `RestaurantBills`, `Kots`, `KotLines`, `InvoiceTenders` and `inv.WastageEntries`. Enums are read as their stored names. No Reporting migration: the model has no pending change.
+  - **Sales come from posted invoices**, because a bill is one (TK-148). The day-end's `Total` is `Σ TotalAmountBase` of the day's posted invoices, so it equals them by construction; item sales, service charge (from `sal.RestaurantBills`), other lines, tax and round-off split it, cash/card/UPI come from `sal.InvoiceTenders`, and tips sit beside it. Item and category sales add up to the day-end's item sales. Waiter-wise and table turnover are at menu price off the order lines, which carry the modifiers.
+  - **Food cost** is per day: item sales against the `RCN` issues (TK-149) and the `STA` movements of wastage entries, at what the costing engine settled, with uncosted movements counted rather than shown as zero cost. This is the period food cost TK-149 left here.
+  - **Hidden when not for the branch**: `IReportSourceRepository` gains `RequiredBusinessType` and `RequiredRestaurantFeature`; `ReportAudience` decides, built by `ReportAudienceRepository` from the token's add-ons and business type plus Master's effective settings (read only on a Restaurant branch). Table turnover needs Tables, KOT cancellations Kitchen, food cost and wastage Recipes. Settings Master cannot supply hide the switched reports (fail closed). The catalog, metadata, query and export routes all apply it; a scheduled run stays unrestricted, as it was authorised when saved.
+  - `api/restaurant/reports` (`RestaurantReportsController`, `[RequireBusinessType(Restaurant)]`, `restaurant` module) lists them for **Restaurant › Reports**, which links each to `/reports/{key}` and says which switch hides a missing one. The Antigravity placeholder controller and repository are deleted. Gateway route `reporting-restaurant-reports`.
+  - No seed beyond the catalog rows, which the branch seed and the admin retry backfill.
+  - Tests: `RestaurantReportTests` (the day-end equals posted invoices; the splits; item = category = day-end item sales; waiters, tables, food cost, wastage, cancellations; who sees which report) and `restaurant-reports.spec.ts`; the source list and the assembly count (111) moved with them.
 - **Done when:** the day-end report's totals equal the day's posted invoices.
 
 ### TK-151 · Later: reservations, waiting list, loyalty, aggregator intake

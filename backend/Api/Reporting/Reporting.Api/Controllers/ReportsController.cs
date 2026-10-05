@@ -32,12 +32,18 @@ public sealed class ReportsController : ControllerBase
     private readonly ReportCatalogRepository _catalog;
     private readonly ReportRunnerRepository _runner;
     private readonly CustomReportRepository _custom;
+    private readonly ReportAudienceRepository _audience;
 
-    public ReportsController(ReportCatalogRepository catalog, ReportRunnerRepository runner, CustomReportRepository custom)
+    public ReportsController(
+        ReportCatalogRepository catalog,
+        ReportRunnerRepository runner,
+        CustomReportRepository custom,
+        ReportAudienceRepository audience)
     {
         _catalog = catalog;
         _runner = runner;
         _custom = custom;
+        _audience = audience;
     }
 
     /// <summary>
@@ -48,8 +54,7 @@ public sealed class ReportsController : ControllerBase
     public async Task<IActionResult> Catalog(CancellationToken ct)
     {
         IReadOnlySet<string> permissions = Permissions();
-        AddOn addOns = ScopeClaims.AddOnsOf(User);
-        List<ReportCatalogItemView> catalog = await _catalog.ListAsync(permissions, ct, addOns);
+        List<ReportCatalogItemView> catalog = await _catalog.ListAsync(permissions, ct, await AudienceAsync(ct));
         catalog.AddRange(await _custom.CatalogAsync(permissions, ct));
         return Ok(catalog);
     }
@@ -58,9 +63,8 @@ public sealed class ReportsController : ControllerBase
     [HttpGet("{reportKey}")]
     public async Task<IActionResult> Metadata(string reportKey, CancellationToken ct)
     {
-        AddOn addOns = ScopeClaims.AddOnsOf(User);
         ReportMetadataView? metadata = await _catalog.MetadataAsync(
-            reportKey, Permissions(), new ReportCurrencyView(), ct, addOns);
+            reportKey, Permissions(), new ReportCurrencyView(), ct, await AudienceAsync(ct));
 
         // NotFound for "no such report" and for "not yours" alike. Which one it is
         // is itself information, and Forbid() here would tell a caller exactly
@@ -86,9 +90,8 @@ public sealed class ReportsController : ControllerBase
     {
         try
         {
-            AddOn addOns = ScopeClaims.AddOnsOf(User);
             ReportResultView? result =
-                await _runner.RunAsync(reportKey, request, Permissions(), ct, addOns);
+                await _runner.RunAsync(reportKey, request, Permissions(), ct, await AudienceAsync(ct));
 
             return result is null ? NotFound() : Ok(result);
         }
@@ -148,9 +151,8 @@ public sealed class ReportsController : ControllerBase
                 IncludeCount = true,
             };
 
-            AddOn addOns = ScopeClaims.AddOnsOf(User);
             ReportResultView? result =
-                await _runner.RunAsync(reportKey, request, Permissions(), ct, addOns);
+                await _runner.RunAsync(reportKey, request, Permissions(), ct, await AudienceAsync(ct));
 
             if (result is null)
             {
@@ -222,4 +224,9 @@ public sealed class ReportsController : ControllerBase
     /// </summary>
     private IReadOnlySet<string> Permissions() =>
         User.FindAll("permission").Select(c => c.Value).ToHashSet(StringComparer.Ordinal);
+
+    // The branch's add-ons, trade and restaurant switches, which hide the
+    // reports that are not for it (TK-150).
+    private Task<ReportAudience> AudienceAsync(CancellationToken ct) =>
+        _audience.ForAsync(ScopeClaims.AddOnsOf(User), ScopeClaims.BusinessTypeOf(User), ct);
 }

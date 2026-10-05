@@ -36,8 +36,10 @@ public sealed class ReportCatalogRepository
     /// a screen they cannot use.
     /// </summary>
     public async Task<List<ReportCatalogItemView>> ListAsync(
-        IReadOnlySet<string> permissions, CancellationToken ct, Shared.Kernel.Apps.AddOn addOns = Shared.Kernel.Apps.AddOn.All)
+        IReadOnlySet<string> permissions, CancellationToken ct, ReportAudience? audience = null)
     {
+        audience ??= ReportAudience.Unrestricted();
+
         List<Report> rows = await _db.Reports
             .Where(r => r.IsActive)
             .OrderBy(r => r.Module)
@@ -50,8 +52,7 @@ public sealed class ReportCatalogRepository
             .. rows
                 .Where(r => _sources.ContainsKey(r.ReportKey))
                 .Where(r => permissions.Contains(r.RequiredPermission))
-                .Where(r => _sources[r.ReportKey].RequiredAddOn == Shared.Kernel.Apps.AddOn.None
-                    || (addOns & _sources[r.ReportKey].RequiredAddOn) != 0)
+                .Where(r => audience.Allows(_sources[r.ReportKey]))
                 .Select(r => new ReportCatalogItemView
                 {
                     ReportKey = r.ReportKey,
@@ -77,11 +78,9 @@ public sealed class ReportCatalogRepository
         IReadOnlySet<string> permissions,
         ReportCurrencyView currency,
         CancellationToken ct,
-        Shared.Kernel.Apps.AddOn addOns = Shared.Kernel.Apps.AddOn.All)
+        ReportAudience? audience = null)
     {
-        if (!_sources.TryGetValue(reportKey, out IReportSourceRepository? source)
-            || !permissions.Contains(source.RequiredPermission)
-            || (source.RequiredAddOn != Shared.Kernel.Apps.AddOn.None && (addOns & source.RequiredAddOn) == 0))
+        if (Source(reportKey, permissions, audience) is not IReportSourceRepository source)
         {
             return null;
         }
@@ -114,10 +113,10 @@ public sealed class ReportCatalogRepository
     public IReportSourceRepository? Source(
         string reportKey,
         IReadOnlySet<string> permissions,
-        Shared.Kernel.Apps.AddOn addOns = Shared.Kernel.Apps.AddOn.All) =>
+        ReportAudience? audience = null) =>
         _sources.TryGetValue(reportKey, out IReportSourceRepository? source)
         && permissions.Contains(source.RequiredPermission)
-        && (source.RequiredAddOn == Shared.Kernel.Apps.AddOn.None || (addOns & source.RequiredAddOn) != 0)
+        && (audience ?? ReportAudience.Unrestricted()).Allows(source)
             ? source
             : null;
 

@@ -172,6 +172,17 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<BudgetRead> Budgets => Set<BudgetRead>();
     public DbSet<BudgetLineRead> BudgetLines => Set<BudgetLineRead>();
 
+    // Restaurant (sal, inv), for the restaurant reports (TK-150).
+    public DbSet<FloorRead> Floors => Set<FloorRead>();
+    public DbSet<RestaurantTableRead> RestaurantTables => Set<RestaurantTableRead>();
+    public DbSet<RestaurantOrderRead> RestaurantOrders => Set<RestaurantOrderRead>();
+    public DbSet<RestaurantOrderLineRead> RestaurantOrderLines => Set<RestaurantOrderLineRead>();
+    public DbSet<RestaurantBillRead> RestaurantBills => Set<RestaurantBillRead>();
+    public DbSet<KotRead> Kots => Set<KotRead>();
+    public DbSet<KotLineRead> KotLines => Set<KotLineRead>();
+    public DbSet<InvoiceTenderRead> InvoiceTenders => Set<InvoiceTenderRead>();
+    public DbSet<WastageEntryRead> WastageEntries => Set<WastageEntryRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -433,6 +444,17 @@ public class ReportingDbContext : TenantDbContext
         // Budgets (acc, TK-109)
         MapRead<BudgetRead>(modelBuilder, "Budgets", "acc", e => e.BudgetId);
         MapRead<BudgetLineRead>(modelBuilder, "BudgetLines", "acc", e => e.BudgetLineId);
+
+        // Restaurant (sal, inv, TK-150)
+        MapRead<FloorRead>(modelBuilder, "Floors", "sal", e => e.FloorId);
+        MapRead<RestaurantTableRead>(modelBuilder, "RestaurantTables", "sal", e => e.RestaurantTableId);
+        MapRead<RestaurantOrderRead>(modelBuilder, "RestaurantOrders", "sal", e => e.RestaurantOrderId);
+        MapRead<RestaurantOrderLineRead>(modelBuilder, "RestaurantOrderLines", "sal", e => e.RestaurantOrderLineId);
+        MapRead<RestaurantBillRead>(modelBuilder, "RestaurantBills", "sal", e => e.RestaurantBillId);
+        MapRead<KotRead>(modelBuilder, "Kots", "sal", e => e.KotId);
+        MapRead<KotLineRead>(modelBuilder, "KotLines", "sal", e => e.KotLineId);
+        MapRead<InvoiceTenderRead>(modelBuilder, "InvoiceTenders", "sal", e => e.InvoiceTenderId);
+        MapRead<WastageEntryRead>(modelBuilder, "WastageEntries", "inv", e => e.WastageEntryId);
     }
 
     private static void MapRead<TEntity>(

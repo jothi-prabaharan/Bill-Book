@@ -36,9 +36,9 @@ public sealed class ReportRunnerRepository
         ReportQueryRequest request,
         IReadOnlySet<string> permissions,
         CancellationToken ct,
-        Shared.Kernel.Apps.AddOn addOns = Shared.Kernel.Apps.AddOn.All)
+        ReportAudience? audience = null)
     {
-        IReportSourceRepository? source = _catalog.Source(reportKey, permissions, addOns);
+        IReportSourceRepository? source = _catalog.Source(reportKey, permissions, audience);
 
         if (source is null)
         {

@@ -120,6 +120,10 @@ Four reports read project accounting, under **Projects** in the list. Running th
 
 A project's income and costs come from the ledger rows tagged with it. That covers manual journals, money documents, and sales and purchase lines. See [Projects](accounting#projects).
 
+## Restaurant reports
+
+A Restaurant branch has eight more: day-end, item sales, category sales, waiter-wise sales, table turnover, food cost, wastage and KOT cancellations. They are listed under **Restaurant** here and on **Restaurant › Reports**, and a report whose switch is off in Restaurant settings is not listed. See [Restaurant reports](restaurant-reports).
+
 ## Custom reports
 
 Build a report of your own from a **dataset**. The datasets are listed under **Custom** in the report list, each marked **Dataset**:

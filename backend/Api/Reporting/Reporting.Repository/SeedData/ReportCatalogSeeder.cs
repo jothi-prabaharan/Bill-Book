@@ -2354,6 +2354,185 @@ public sealed class ReportCatalogSeeder
             ],
         },
 
+        // ---- Restaurant (TK-150) ----
+        new()
+        {
+            ReportKey = "restaurant-day-end",
+            Title = "Restaurant Day-End",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "Each trading day's posted invoices: bills, covers, item sales, service charge, tax and the total, with the cash, card and UPI taken and the tips. The total is the day's posted invoices.",
+            SortOrder = 1601,
+            Columns =
+            [
+                new("date", "Date", ColumnDataType.Date, IsDefault: true, IsPrimary: true),
+                new("bills", "Bills", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("covers", "Covers", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("itemSales", "Item sales", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("serviceCharge", "Service charge", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("otherSales", "Other lines", ColumnDataType.Money, IsDefault: false, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("taxable", "Taxable", ColumnDataType.Money, IsDefault: false, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("tax", "Tax", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("roundOff", "Round off", ColumnDataType.Money, IsDefault: false, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("total", "Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("cash", "Cash", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("card", "Card", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("upi", "UPI", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("onAccount", "On account", ColumnDataType.Money, IsDefault: false, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("tips", "Tips", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("averageBill", "Average bill", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("averagePerCover", "Per cover", ColumnDataType.Money, IsDefault: false, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "restaurant-item-sales",
+            Title = "Restaurant Item Sales",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "Each dish and item sold on posted invoices in the period: quantity, net sales, tax and the average price it went for.",
+            SortOrder = 1602,
+            Columns =
+            [
+                new("itemCode", "Code", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("itemName", "Item", ColumnDataType.Text, IsDefault: true),
+                new("category", "Category", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("quantity", "Quantity", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("netSales", "Net sales", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("tax", "Tax", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("total", "Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("averagePrice", "Average price", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("itemId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "restaurant-category-sales",
+            Title = "Restaurant Category Sales",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "Item sales on posted invoices added up per menu category.",
+            SortOrder = 1603,
+            Columns =
+            [
+                new("category", "Category", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("quantity", "Quantity", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("netSales", "Net sales", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("tax", "Tax", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("total", "Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("categoryKey", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "restaurant-waiter-sales",
+            Title = "Restaurant Waiter-wise Sales",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "Orders, covers and dishes each waiter served that were billed in the period, at menu price, with the dishes cancelled on their orders.",
+            SortOrder = 1604,
+            Columns =
+            [
+                new("waiterName", "Waiter", ColumnDataType.Text, IsDefault: true, IsPrimary: true, IsFilterable: false),
+                new("orders", "Orders", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("covers", "Covers", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("dishes", "Dishes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("sales", "Sales", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("averagePerCover", "Per cover", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("cancelledDishes", "Cancelled", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "restaurant-table-turnover",
+            Title = "Restaurant Table Turnover",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "How many times each table was turned in the period, the covers it sat, how full it was and what it billed.",
+            SortOrder = 1605,
+            Columns =
+            [
+                new("floor", "Floor", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("table", "Table", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("seats", "Seats", ColumnDataType.Quantity, IsDefault: false, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("turns", "Turns", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("covers", "Covers", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("averageCovers", "Covers per turn", ColumnDataType.Number, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("seatUsePercent", "Seat use %", ColumnDataType.Percent, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("sales", "Sales", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("salesPerTurn", "Per turn", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("restaurantTableId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "restaurant-food-cost",
+            Title = "Restaurant Food Cost",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "Each day's item sales against the ingredients its bills used and the stock written off as wastage, and the food cost percentage they make.",
+            SortOrder = 1606,
+            Columns =
+            [
+                new("date", "Date", ColumnDataType.Date, IsDefault: true, IsPrimary: true),
+                new("foodSales", "Food sales", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("ingredientCost", "Ingredients", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("wastageCost", "Wastage", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("foodCost", "Food cost", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("grossMargin", "Gross margin", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("foodCostPercent", "Food cost %", ColumnDataType.Percent, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("uncosted", "Not yet costed", ColumnDataType.Number, IsDefault: false, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "restaurant-wastage",
+            Title = "Restaurant Wastage",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "Every wastage entry in the period, why it was thrown away and what it cost.",
+            SortOrder = 1607,
+            Columns =
+            [
+                new("date", "Date", ColumnDataType.Date, IsDefault: true, IsPrimary: true),
+                new("itemCode", "Code", ColumnDataType.Text, IsDefault: false),
+                new("itemName", "Item", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("category", "Category", ColumnDataType.Text, IsDefault: false, IsGroupable: true, IsPivotable: true),
+                new("quantity", "Quantity", ColumnDataType.Quantity, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("unit", "Unit", ColumnDataType.Text, IsDefault: true),
+                new("reason", "Reason", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("note", "Note", ColumnDataType.Text, IsDefault: false),
+                new("cost", "Cost", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("isCosted", "Costed", ColumnDataType.Boolean, IsDefault: false),
+                new("wastageEntryId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "restaurant-kot-cancellations",
+            Title = "Restaurant KOT Cancellations",
+            Module = ReportModule.Restaurant,
+            RequiredPermission = "restaurant.view",
+            Description = "Every dish taken back after its kitchen ticket was sent: when, what it was worth, why, and who cancelled it.",
+            SortOrder = 1608,
+            Columns =
+            [
+                new("date", "Date", ColumnDataType.Date, IsDefault: true),
+                new("cancelledAt", "Cancelled at", ColumnDataType.DateTime, IsDefault: false),
+                new("kotNo", "KOT", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("orderNo", "Order", ColumnDataType.Text, IsDefault: true),
+                new("table", "Table", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("station", "Station", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("dish", "Dish", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("quantity", "Quantity", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("value", "Value", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("reason", "Reason", ColumnDataType.Text, IsDefault: true),
+                new("waiterName", "Waiter", ColumnDataType.Text, IsDefault: true, IsFilterable: false),
+                new("cancelledBy", "Cancelled by", ColumnDataType.Text, IsDefault: true, IsFilterable: false),
+                new("kotLineId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+
         // The report builder's datasets (TK-113). Only their fixed columns are
         // seeded: each branch's custom fields are added as columns at run time
         // and are never rows here. Pivotable on every groupable column, since a

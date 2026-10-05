@@ -27,4 +27,7 @@ public enum ReportModule
 
     /// <summary>The report builder's datasets and the custom reports saved from them (TK-113).</summary>
     Custom = 15,
+
+    /// <summary>A Restaurant branch's day-end, sales, kitchen and food cost reports (TK-150).</summary>
+    Restaurant = 16,
 }

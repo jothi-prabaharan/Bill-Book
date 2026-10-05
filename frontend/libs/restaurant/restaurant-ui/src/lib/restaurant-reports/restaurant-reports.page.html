@@ -1,8 +1,32 @@
-<div class="p-4 bg-gray-50 min-h-screen">
-  <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border p-6">
-    <h1 class="text-2xl font-bold mb-6 text-gray-800">Restaurant Reports</h1>
-    <div class="text-gray-600">
-      Day-end, item sales, and waiter-wise reports will be available here.
-    </div>
-  </div>
-</div>
+<section class="rr">
+  <header class="rr__head">
+    <h1 class="rr__title">Restaurant reports</h1>
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (loading()) {
+    <p class="rr__muted">Loading…</p>
+  } @else if (!reports().length && !messages().length) {
+    <p class="rr__muted">There are no restaurant reports you can open. They need the Reports and Restaurant permissions.</p>
+  } @else {
+    <ul class="rr__list">
+      @for (report of reports(); track report.reportKey) {
+        <li>
+          <a class="rr__card" [routerLink]="reportLink(report.reportKey)">
+            <span class="rr__name">{{ report.title }}</span>
+            @if (report.description) {
+              <span class="rr__description">{{ report.description }}</span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
+  @for (note of notes(); track note) {
+    <p class="rr__muted">{{ note }}</p>
+  }
+</section>

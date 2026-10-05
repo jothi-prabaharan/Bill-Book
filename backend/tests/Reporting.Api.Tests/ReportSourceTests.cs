@@ -128,6 +128,16 @@ public class ReportSourceTests
     private static readonly BudgetAgainstActualByProjectSource BudgetAgainstActualByProject = new(new StubFinancialYear());
     private static readonly BudgetMonthlyTrendSource BudgetMonthlyTrend = new(new StubFinancialYear());
 
+    // The restaurant reports (TK-150).
+    private static readonly RestaurantDayEndSource RestaurantDayEnd = new();
+    private static readonly RestaurantItemSalesSource RestaurantItemSales = new();
+    private static readonly RestaurantCategorySalesSource RestaurantCategorySales = new();
+    private static readonly RestaurantWaiterSalesSource RestaurantWaiterSales = new(OfflineResolver());
+    private static readonly RestaurantTableTurnoverSource RestaurantTableTurnover = new();
+    private static readonly RestaurantFoodCostSource RestaurantFoodCost = new();
+    private static readonly RestaurantWastageSource RestaurantWastage = new();
+    private static readonly RestaurantKotCancellationsSource RestaurantKotCancellations = new(OfflineResolver());
+
     // The datasets (TK-113), with no custom field definitions: their seeded columns only.
     private static readonly SalesLinesDataset SalesLines = new();
     private static readonly PurchaseLinesDataset PurchaseLines = new();
@@ -247,6 +257,14 @@ public class ReportSourceTests
         BudgetAgainstActual,
         BudgetAgainstActualByProject,
         BudgetMonthlyTrend,
+        RestaurantDayEnd,
+        RestaurantItemSales,
+        RestaurantCategorySales,
+        RestaurantWaiterSales,
+        RestaurantTableTurnover,
+        RestaurantFoodCost,
+        RestaurantWastage,
+        RestaurantKotCancellations,
         SalesLines,
         PurchaseLines,
         LedgerRows,

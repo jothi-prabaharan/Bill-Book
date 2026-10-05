@@ -6,3 +6,4 @@ export * from './lib/restaurant-orders';
 export * from './lib/restaurant-kitchen';
 export * from './lib/restaurant-billing';
 export * from './lib/restaurant-recipes';
+export * from './lib/restaurant-reports';

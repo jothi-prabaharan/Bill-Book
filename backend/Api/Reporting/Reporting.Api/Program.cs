@@ -215,6 +215,18 @@ builder.Services.AddScoped<IReportSourceRepository, BudgetAgainstActualSource>()
 builder.Services.AddScoped<IReportSourceRepository, BudgetAgainstActualByProjectSource>();
 builder.Services.AddScoped<IReportSourceRepository, BudgetMonthlyTrendSource>();
 
+// Restaurant reports (TK-150). A Restaurant branch only, and hidden while the
+// switch a report reads is off in Settings › Restaurant.
+builder.Services.AddScoped<IReportSourceRepository, RestaurantDayEndSource>();
+builder.Services.AddScoped<IReportSourceRepository, RestaurantItemSalesSource>();
+builder.Services.AddScoped<IReportSourceRepository, RestaurantCategorySalesSource>();
+builder.Services.AddScoped<IReportSourceRepository, RestaurantWaiterSalesSource>();
+builder.Services.AddScoped<IReportSourceRepository, RestaurantTableTurnoverSource>();
+builder.Services.AddScoped<IReportSourceRepository, RestaurantFoodCostSource>();
+builder.Services.AddScoped<IReportSourceRepository, RestaurantWastageSource>();
+builder.Services.AddScoped<IReportSourceRepository, RestaurantKotCancellationsSource>();
+builder.Services.AddScoped<RestaurantReportRepository>();
+
 // The report builder's datasets (TK-113). Their custom field columns come
 // from Master's definitions, cached five minutes per branch and kind.
 builder.Services.AddHttpClient<ICustomFieldDefinitions, HttpCustomFieldDefinitions>(client =>
@@ -264,6 +276,7 @@ builder.Services.AddHttpClient<IOrgIdentityProvider, HttpOrgIdentityProvider>(cl
 builder.Services.AddHostedService<ReportScheduleWorker>();
 
 builder.Services.AddScoped<ReportCatalogRepository>();
+builder.Services.AddScoped<ReportAudienceRepository>();
 builder.Services.AddScoped<ReportRunnerRepository>();
 builder.Services.AddScoped<SavedViewRepository>();
 builder.Services.AddScoped<ReportCatalogSeeder>();
