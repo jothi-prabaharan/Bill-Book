@@ -4773,7 +4773,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a split bill posts two invoices whose totals equal the order, and a missing required table is refused.
 
 ### TK-149 · Recipes, ingredient deduction on sale, wastage, food cost %
-- [ ] open
+- [ ] working (Claude Opus 5.5) — 2026-10-05
 - **Issue:** [#130](https://github.com/jothi-prabaharan/Bill-Book/issues/130)
 - **Group:** L · Restaurant
 - **Lanes:** L-INV, L-SAL, L-RST-UI · **Depends on:** TK-144, TK-148 · **Decision:** D-39
