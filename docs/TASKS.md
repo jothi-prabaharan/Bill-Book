@@ -4419,7 +4419,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a School branch is offered Hrms but not Pos.
 
 ### TK-134 · Retire the five extra apps: docs, release notes and deploy
-- [ ] open — reopened 5 October 2026 by TK-142's audit; was marked completed (Antigravity) on 1 October
+- [ ] working (Claude Opus 5.5) — 2026-10-05 · reopened by TK-142's audit; was marked completed (Antigravity) on 1 October
 - **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
