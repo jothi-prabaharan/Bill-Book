@@ -145,22 +145,28 @@ every screen reads live books.
 - A staging environment separate from production
 - A web application firewall in front of the gateway
 
+## Background worker
+
+Everything that runs on a timer rather than on a request runs in one background worker, `BillBook.Worker`: stock costing and its ledger postings, payment, AMC, compliance and service reminders, recurring invoices and bills, savings scheme instalments, exchange and metal rates, and email when it is switched on (below). Each job is its own background task in that one host, so a job that fails records the failure and the others carry on. A job that works through every branch can be turned off with `Workers:<Job>:Enabled` set to `false`; jobs are on unless turned off.
+
+Run one copy. The jobs claim their work with a guarded update, so a second copy would not double anything, but it adds nothing either.
+
 ## Email delivery
 
-Invitations, one-time codes and password resets are sent by Master itself unless you switch on the notification worker. Master queues each email in memory and sends it on a background thread through the customer's mailbox from **Settings › Email**, or through the platform's default mailbox. A restart loses anything still queued. That is acceptable for these messages, because each can be requested again.
+Invitations, one-time codes and password resets are sent by Master itself unless you switch on email in the background worker. Master queues each email in memory and sends it on a background thread through the customer's mailbox from **Settings › Email**, or through the platform's default mailbox. A restart loses anything still queued. That is acceptable for these messages, because each can be requested again.
 
-To have `Notification.Worker` deliver email instead, so nothing queued is lost on a restart, all four of these must be in place:
+To have the background worker (`BillBook.Worker`) deliver email instead, so nothing queued is lost on a restart, all four of these must be in place:
 
 1. An Azure Service Bus namespace with an `EmailRequested` topic (duplicate detection on) and a subscription named `notification-worker`, or whatever `ServiceBus:EmailSubscription` says.
 2. **Master** has `ServiceBus:Namespace` set and `Notification:EmailWorker` set to `true`. Service Bus alone is not enough: that way a namespace with no worker behind it cannot swallow every email.
 3. **The worker** has the same `ServiceBus:Namespace`, and has `ConnectionStrings:TenantDatabase` and `Master:BaseUrl`. Its identity needs *Azure Service Bus Data Receiver* on the subscription, and the internal key that Master's `internal/smtp/resolved` route requires.
 4. The worker creates its `ntf` schema on start. It records each message it sends, so a message the broker delivers twice goes out once.
 
-Neither deployment in this repository runs the worker yet, so both keep the in-process path.
+Neither deployment in this repository sets these, so both keep the in-process path.
 
-## Rate sync worker
+## Rate sync
 
-`RateSync.Worker` fills the `rat` schema in the master database. For now that means only the RBI reference rates (TK-26). It needs:
+The background worker's rate sync job fills the `rat` schema in the master database. For now that means only the RBI reference rates (TK-26). It needs:
 
 | Setting | Meaning |
 |---|---|
@@ -169,5 +175,5 @@ Neither deployment in this repository runs the worker yet, so both keep the in-p
 | `RateSync:RbiAfter` | The time in India after which the day's rates are fetched. Defaults to `13:45` |
 | `RateSync:CheckIntervalMinutes` | How often it wakes to check. A failed day is retried at the next wake. Defaults to 60 |
 
-The worker needs outbound HTTPS to the RBI host. It is not in the Azure or single-PC deployment yet. Its parser is checked against an imitation of the page, and it will be deployed after it has been checked against a real one.
+The worker needs outbound HTTPS to the RBI host. Its parser is checked against an imitation of the page, and it will be deployed after it has been checked against a real one.
 

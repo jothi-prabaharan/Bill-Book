@@ -37,9 +37,10 @@ you.
 | Managed identities | 11 | one per workload |
 | VNet, private DNS zone, Log Analytics | 1 each | |
 
-`Notification.Worker` and `RateSync.Worker` are not deployed — each is a
-`.csproj` and an empty `Consumers/` folder, so a deployed one would run a host
-that does nothing.
+There is one background worker, `BillBook.Worker` (TK-137, TK-138), deployed as
+the `worker` container app with one replica. It hosts costing, payment and
+service reminders, recurring billing, savings schemes, rate sync and email,
+and each job that walks the branches has its own `Workers:<Job>:Enabled` switch.
 
 **Printing is behind the gateway** (TK-80): `api/print-templates` for the template editor,
 and `api/print/render` for a document's own service to push its payload under the user's

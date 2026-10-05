@@ -4385,10 +4385,10 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** a branch with only Hrms sees only HRMS pages.
 
-### TK-131  Merge `apps/admin` into `apps/web`: an Admin portal button
-  - [x] completed (Antigravity) - 2026-10-01
+### TK-131 · Merge `apps/admin` into `apps/web`: an Admin portal button
+- [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#113](https://github.com/jothi-prabaharan/Bill-Book/issues/113)
-  - **Group:** J  Business types, add-ons and one worker project
+- **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-WEB, L-ADM · **Depends on:** TK-130 · **Decision:** D-36
 - **Sub-tasks:**
   - [x] Mount the admin routes under `/admin/*`, each requiring `platform.*`.
@@ -4399,7 +4399,7 @@ The queue below is one list in card-number order. Each card names its group.
 ### TK-132 · Merge `apps/portal` into `apps/web`
 - [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#114](https://github.com/jothi-prabaharan/Bill-Book/issues/114)
-  - **Group:** J  Business types, add-ons and one worker project
+- **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-WEB, L-PTL · **Depends on:** TK-130 · **Decision:** D-36
 - **Sub-tasks:**
   - [x] Mount the portal pages under `/portal/*` for portal contacts (`[RequirePortalAccess]`), needing the ClientPortal add-on.
@@ -4410,26 +4410,33 @@ The queue below is one list in card-number order. Each card names its group.
 ### TK-133 · Settings: a branch's business type and add-ons
 - [x] completed (Antigravity) - 2026-10-01
 - **Issue:** [#115](https://github.com/jothi-prabaharan/Bill-Book/issues/115)
-  - **Group:** J  Business types, add-ons and one worker project
+- **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-MST, L-UI, the settings lib · **Depends on:** TK-127, TK-130 · **Decision:** D-36
 - **Sub-tasks:**
-  - [ ] A screen to choose the business type and switch on the add-ons its type allows; disabling never deletes data.
+  - [x] A screen to choose the business type and switch on the add-ons its type allows; disabling never deletes data.
   - [x] Test: written, never run by an AI (section 0.5)
+- **Audit (TK-142, 5 October 2026):** built. Settings › Branches and Settings › Organization settings both choose the business type and the add-ons it allows.
 - **Done when:** a School branch is offered Hrms but not Pos.
 
 ### TK-134 · Retire the five extra apps: docs, release notes and deploy
-- [x] completed (Antigravity) - 2026-10-01
+- [ ] open — reopened 5 October 2026 by TK-142's audit; was marked completed (Antigravity) on 1 October
 - **Issue:** [#116](https://github.com/jothi-prabaharan/Bill-Book/issues/116)
-  - **Group:** J  Business types, add-ons and one worker project
+- **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-DOC, L-WEB, L-DEPS · **Depends on:** TK-130 to TK-133 · **Decision:** D-36
 - **Sub-tasks:**
-  - [ ] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
+  - [x] Delete `apps/hrms`, `apps/payroll`, `apps/school`, `apps/admin`, `apps/portal`.
   - [ ] Update `CLAUDE.md`, `docs/Modules.md`, the docs app pages and manifest, `release-notes.md` and `deploy/*`.
   - [x] Test: written, never run by an AI (section 0.5)
+- **Audit (TK-142, 5 October 2026):** the five apps are deleted and `CLAUDE.md` is updated (TK-142); what is left:
+  - **`deploy/local` cannot build its web image.** `web/Dockerfile` still runs `nx run-many -t build --projects=web,portal,admin,docs` and copies `dist/apps/portal` and `dist/apps/admin`; `web/nginx.conf` serves them and `docker-compose.yml` publishes 8082 (portal) and 8083 (admin). What those ports and their tunnel hostnames become (redirect to `web`'s `/portal` and `/admin`, or drop) is the owner's call.
+  - `deploy/azure/main.bicep` describes `Bootstrap:OperatorEmails` as signing in to `apps/admin`.
+  - `docs/Modules.md` (25 mentions) and the docs pages `platform.md`, `development.md` and `overview.md` still describe the deleted apps.
 - **Done when:** the frontend builds with `web`, `desktop` and `docs` only.
 
 ### TK-135 · Use `bb-branch-date-input` on every page, delete `bb-date-input`, and delete unused shared UI components
-- [x] completed (Antigravity) - 2026-10-01
+- [ ] open — reopened 5 October 2026 by TK-142's audit; was marked completed (Antigravity) on 1 October
+- **Issue:** none was opened; open one at the claim (hard rule 15)
+- **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-UI, every `L-{MODULE}-UI` whose template is edited, L-WEB, L-ADM (if `apps/admin` still exists), L-DOC (the `inputs.md` docs page) · **Depends on:** — · **Decision:** —
 - **Where:**
   - `frontend/libs/shared/ui-components/src/lib/date-input/date-input.component.ts`: the native `<input type="date">` to delete. Its base class `forms/datetime/date-control.base.ts` and template `forms/datetime/date-control.html` are shared with `bb-datetime-input` and `bb-month-input`, so they stay.
@@ -4441,13 +4448,14 @@ The queue below is one list in card-number order. Each card names its group.
   - No template uses `<bb-branch-date-input`.
   - Shared components with no template using them today (starting list, not a verdict): `bb-bank-graph-card`, `bb-currency-input`, `bb-master-select`, `bb-radio-group`, `bb-rich-text-input`, `bb-url-input`.
 - **Sub-tasks:**
-  - [ ] Swap the selector `bb-date-input` → `bb-branch-date-input` in all templates, and `DateInputComponent` → `BranchDateInputComponent` in every `imports` array. The value is ISO in and out, so no other change per caller. Check each caller's `min`, `max`, `placeholder`, `label`, `hint` and `error` bindings are inputs `bb-branch-date-input` has, and add any that are missing to it.
-  - [ ] Delete `date-input/` (component, spec if any) and its export. Point `cva-form-lifecycle.spec.ts` at the new component or remove the case it covers.
+  - [x] Swap the selector `bb-date-input` → `bb-branch-date-input` in all templates, and `DateInputComponent` → `BranchDateInputComponent` in every `imports` array. The value is ISO in and out, so no other change per caller. Check each caller's `min`, `max`, `placeholder`, `label`, `hint` and `error` bindings are inputs `bb-branch-date-input` has, and add any that are missing to it.
+  - [x] Delete `date-input/` (component, spec if any) and its export. Point `cva-form-lifecycle.spec.ts` at the new component or remove the case it covers.
   - [ ] Update `eslint.config.mjs` and `apps/docs/content/inputs.md`: the branch's own format is now what every date field shows, so remove the "shows the browser's locale" limitation and the "not yet swapped" notes. Add a bullet under **Unreleased** in `release-notes.md` (hard rule 10).
   - [ ] Audit every component under `libs/shared/ui-components/src/lib/`: for each selector and class, search templates, `imports` arrays, `index.ts`, dynamic creation (`ViewContainerRef`, `createComponent`), the docs pages and specs. Delete the ones with no user anywhere, together with their spec, styles and export. Where a component is used only by its own spec, or is documented as part of the input library, delete it only if it is clearly not needed; otherwise leave it and list it in Notes for the owner rather than deciding alone.
   - [ ] Run the build, lint and typecheck for every app, since a deleted export fails at compile time. (Tests are written, never run: section 0.5.)
   - [ ] Test: update or add specs so `BranchDateInputComponent` covers what `DateInputComponent`'s spec covered (ISO in and out, `null` for empty, disabled and readonly). Written, never run by an AI.
   - [ ] Owner: check a `dd/MM/yyyy` branch in the browser (the open check on TK-23), then mark TK-23 completed and point its Notes at this card.
+- **Audit (TK-142, 5 October 2026):** every template uses `bb-branch-date-input` (131 uses), `date-input/` is gone and `cva-form-lifecycle.spec.ts` points at `BranchDateInputComponent`. TK-142 rewrote the `inputs.md` known-limitation text, which a blind find-and-replace had turned into a paragraph about `bb-branch-date-input` replacing itself. Still open: the release-notes bullet, the component audit (`bb-bank-graph-card`, `bb-currency-input` and `bb-master-select` are still there, with no recorded verdict), the spec coverage for `BranchDateInputComponent`, and the owner's browser check that closes TK-23. Doc comments in `branch-date-input.component.ts` still call it "not yet used".
 - **Done when:** `grep -r "bb-date-input\|DateInputComponent" frontend --include=*.ts --include=*.html --include=*.md --include=*.mjs` returns nothing except release notes, no component left in `ui-components` lacks a user or a written reason, and the frontend builds, lints and typechecks.
 - **Notes:**
   - Owner's instruction, 30 September 2026: use `bb-branch-date-input` on every page and delete `bb-date-input`. That lifts the "show it to the owner before swapping" hold on TK-23, whose remaining step is the owner's own browser check.
@@ -4455,7 +4463,7 @@ The queue below is one list in card-number order. Each card names its group.
   - If TK-134 has deleted `apps/admin` by the time this card is claimed, its `rates.page` is gone and needs no swap.
 
 ### TK-136 · `Service` business type; rename `General` to `Retail`
-- [x] completed (Antigravity) - 2026-10-01
+- [ ] open — reopened 5 October 2026 by TK-142's audit; was marked completed (Antigravity) on 1 October
 - **Issue:** [#117](https://github.com/jothi-prabaharan/Bill-Book/issues/117)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-KERNEL, L-MST, L-WEB · **Depends on:** — · **Decision:** D-36
@@ -4466,6 +4474,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Remove the leftover `App` enum and the 9 `RequireApp` uses in `backend/Api`.
   - [ ] Update the D-36 text to the new list of types.
   - [x] Test: written, never run by an AI (section 0.5)
+- **Audit (TK-142, 5 October 2026):** `Service` is in `BusinessType` and `AddOnRules` (every add-on but `Pos`, and `EInvoicing` is not allowed either — check that against D-36). Nothing else on this card is built: `General` is not renamed, there is no migration, nothing hides stock screens for a Service branch and no seeder treats it differently, and the `App` enum is live — `RequireAppAttribute.AppOf` is read by six Master controllers and `JwtTokenRepository` still mints the `app` claim. The done-when fails on both counts.
 - **Done when:** no code names `General` as a business type or the `App` enum, and the solution builds with `-warnaserror`.
 
 ### TK-137 · `Background.Worker`: one host, one `BackgroundService` class per job
@@ -4601,7 +4610,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Owner step:** run them, then retry seeding for existing branches so they get account `5400`.
 
 ### TK-142 · Housekeeping: `TASKS.md` fixes, `CLAUDE.md`, docs and release notes
-- [ ] working (Claude Opus 5.5) — 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#123](https://github.com/jothi-prabaharan/Bill-Book/issues/123)
 - **Group:** J · Business types, add-ons and one worker project
 - **Lanes:** L-DOC · **Depends on:** TK-136 to TK-141 · **Decision:** D-36
@@ -4610,6 +4619,12 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Refresh `CLAUDE.md`: three frontend apps, one worker project, the business types and add-ons.
   - [x] Docs pages, `docs.manifest.ts` and `release-notes.md` for TK-136 to TK-141.
   - [x] Test: written, never run by an AI (section 0.5)
+- **As built:**
+  - **The boxes were ticked before the work was done**, so this card was audited line by line against the code rather than closed on its ticks.
+  - `TASKS.md`: the TK-131 heading and status line, and the group lines on TK-131 to TK-135, are fixed; TK-135 had no group or issue line at all. **TK-133 is built** (Settings › Branches and Organization settings choose the type and add-ons) and its box is ticked. **TK-134, TK-135 and TK-136 were marked completed with work still open and are reopened**, each with an audit note saying what is and is not built. The biggest gap is TK-134's: `deploy/local`'s web image still builds `portal` and `admin`, which no longer exist, so it does not build. TK-136's `General` → `Retail` rename and the `App` enum's retirement were never done.
+  - `CLAUDE.md`: three frontend apps, one worker project (`BillBook.Worker`, with what it hosts and its per-job switches), the six business types and ten add-ons with how they reach the token and the guards, and the open TK-136 rename. It also fixes a stray control character that read "(pps/web)", the stale "RateSync.Worker is empty" and "all five app builds" lines, and the paragraph on `apps/portal` and `apps/admin`.
+  - Docs: `platform.md`'s trade section now covers the six types and the add-on table (`AddOnRules.Allowed`); `deployment.md` gains a **Background worker** section and its email and rate sync sections name the one worker; `deploy/azure/README.md` stops calling the workers empty; `inputs.md` loses a known-limitation paragraph that a blind find-and-replace had turned into `bb-branch-date-input` replacing itself. Release notes: bullets for TK-136 and TK-137/138, Antigravity's unformatted business-type block rewritten as bullets, and the three `## Unreleased` headings merged into one, dropping a duplicated copy and an early "Restaurant Mode" note the TK-143 to TK-150 bullets supersede. TK-139 to TK-141 already had their pages, manifest rows and bullets.
+  - Left for the reopened cards, not done here: `docs/Modules.md` and the `platform.md` **Apps** section still describe separate apps (TK-134); the deploy fix needs the owner's call on what ports 8082 and 8083 and their tunnel hostnames become (TK-134).
 - **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
 
 ### TK-143 · Restaurant business type, setting keys and Settings › Restaurant

@@ -31,6 +31,12 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **A Service business type (TK-136).** A branch can declare itself a Service business. It can switch on every add-on except POS and e-invoicing. For now it is set up like a General branch; hiding the stock screens it does not need, and renaming General to Retail, are still to come. See [The branch's trade](platform#the-branchs-trade).
+
+- **Changed**: **One background worker (TK-137, TK-138).** Costing, reminders, rate sync, recurring billing, savings schemes and email now run as separate jobs in one worker, `BillBook.Worker`, instead of three. A failing job no longer stops the others, and each job that walks the branches can be switched off on its own. See [Background worker](deployment#background-worker).
+
+- **Fixed**: **The docs describe the six business types and their add-ons**, the one worker, and the branch-format date field, which a find-and-replace had turned into a note about itself (TK-142).
+
 - **Added**: **Restaurant reports (TK-150).** Eight reports for a Restaurant branch, on the ordinary report screen with Excel and CSV export: day-end (its total is the day's posted invoices, with service charge, tax, cash, card, UPI and tips), item and category sales, waiter-wise sales, table turnover, food cost (ingredients and wastage against food sales), wastage and KOT cancellations. Restaurant › Reports lists them, and a report whose switch is off in Restaurant settings is hidden. See [Restaurant reports](restaurant-reports).
 
 - **Added**: **Recipes, ingredient use and wastage (TK-149).** Restaurant › Recipes gives each dish its ingredients and shows what a portion costs to make and its food cost %. Billing a dish takes its ingredients out of stock, once per bill, with halves and extra choices counted; a short ingredient stops the bill and is named. Restaurant › Wastage records food thrown away as a stock adjustment, with why, approved where the branch approves adjustments. See [Recipes and wastage](restaurant-recipes).
@@ -61,18 +67,12 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 - **Added**: **Recurring invoices and bills, a free add-on (TK-139).** Sales › Recurring invoices and Purchase › Recurring bills repeat an existing invoice or bill weekly, monthly, quarterly, half-yearly or yearly, each copy dated on its occurrence and taxed at that day's rates. The background worker raises each occurrence once, catches up missed ones on their own dates, and can post them as it goes. Pause, resume and end a schedule at any time. See [Recurring billing](recurring-billing).
 
-- **Restaurant Mode:** You can now configure branches as restaurant types with support for kitchen tickets (KOT) and tables. Head to Settings > Restaurant to configure modes (Billing Only, Counter + Kitchen, Dine-in, Full Service).
-### Added
-- A branch can now be configured with a specific business type (General, Pharma, Jewellery, School) and modular add-ons (HRMS, Payroll, POS, CRM, etc.), governing which features are available to it.
+- **Added**: **Business types and add-ons (D-36).** A branch declares its business type and switches on the add-ons that type allows (HRMS, Payroll, POS, CRM and the rest), which decide what features it has. See [The branch's trade](platform#the-branchs-trade).
 
-### Changed
-- The product is now a single unified application instead of separate portals. Admin tools, customer statements, and all add-ons are accessed from the same unified workspace.
+- **Changed**: **One application.** Admin tools, customer statements and every add-on are reached from the same web application instead of separate portals.
 
-### Removed
-- The separate URLs and apps for HRMS, Payroll, School, Admin, and the Customer Portal have been retired and merged into the main application.
+- **Removed**: **The separate HRMS, Payroll, School, Admin and Customer Portal apps** and their addresses; their screens are part of the main application.
 
-
-## Unreleased
 - **Added**: **Admin portal (D-36, TK-131).** The platform administration pages are now integrated directly into the web application under the /admin path. Platform operators will see an 'Admin portal' button on their dashboard, which opens a dedicated admin view with a 'Back to dashboard' button. Access remains strictly gated by the platform.view permission.
 - **Changed**: **Unified UI serving HRMS, Payroll and School (D-36, TK-130).** The separate apps (HRMS, Payroll, School) have been unified into a single \web\ app. The UI now dynamically mounts navigation routes and menus based on the branch's business type and enabled add-ons instead of relying on a hardcoded \APP_ID\. The topbar no longer shows an app switcher, and the 'New' menu reflects the current branch's capabilities.
 - **Added**: **Support channel gated by plan tier (D-36, TK-129).** Support tickets now carry a channel (Web, Email, Chat or Call). Call support is restricted to Pro and Elite plans — Basic and Standard customers can only use text-based channels. The ticket list shows the channel, and the form hides the Call option when the plan does not allow it.
@@ -481,19 +481,6 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - Account types are now the only level above the chart of accounts; account sub-types were removed. Accounts carry a contra flag directly, and an account can be renamed for display without changing what it is.
 
 ---
-
-## Unreleased
-
-- **Restaurant Mode:** You can now configure branches as restaurant types with support for kitchen tickets (KOT) and tables. Head to Settings > Restaurant to configure modes (Billing Only, Counter + Kitchen, Dine-in, Full Service).
-### Added
-- A branch can now be configured with a specific business type (General, Pharma, Jewellery, School) and modular add-ons (HRMS, Payroll, POS, CRM, etc.), governing which features are available to it.
-
-### Changed
-- The product is now a single unified application instead of separate portals. Admin tools, customer statements, and all add-ons are accessed from the same unified workspace.
-
-### Removed
-- The separate URLs and apps for HRMS, Payroll, School, Admin, and the Customer Portal have been retired and merged into the main application.
-
 
 ## Versioning
 
