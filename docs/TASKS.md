@@ -5200,7 +5200,8 @@ The queue below is one list in card-number order. Each card names its group.
 
 
 ### TK-166 · Loyalty points on a bill
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-05
+- **Issue:** [#149](https://github.com/jothi-prabaharan/Bill-Book/issues/149)
 - **Group:** L · Restaurant
 - **Lanes:** L-CUS, L-SAL, L-RST-UI · **Depends on:** TK-148 · **Decision:** D-39
 - **Where:** `Customer.Repository/` (the contact's customer relationship), `Sales.Repository/Repositories/RestaurantBillingRepository.cs` and `InvoiceRepository.cs` (TK-148); `Accounting` for the liability account
