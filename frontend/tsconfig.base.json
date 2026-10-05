@@ -214,6 +214,9 @@
       "@bill-book/portal-ui": [
         "libs/portal/portal-ui/src/index.ts"
       ],
+      "@bill-book/scan-core": [
+        "libs/shared/scan-core/src/index.ts"
+      ],
       "@bill-book/pos-core": [
         "libs/pos/pos-core/src/index.ts"
       ],

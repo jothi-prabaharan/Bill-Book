@@ -5059,20 +5059,27 @@ The queue below is one list in card-number order. Each card names its group.
   - Docs: [Printing labels](../frontend/apps/docs/content/masters.md), purchase **Labels for what arrived**, release note.
 
 ### TK-160 · Shared scan input with a small camera popup
-- [~] working (Claude Opus 5.5) — since 2026-10-05
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · D-46 still open; its default is what was built
 - **Issue:** [#141](https://github.com/jothi-prabaharan/Bill-Book/issues/141)
 - **Group:** N · Electron removal, barcode and QR
 - **Lanes:** L-UI, L-DEPS, L-DOC · **Depends on:** TK-155 · **Decision:** D-46
 - **Where:** `frontend/libs/shared/ui-components`, the keystroke-burst detector in `pos-keys.ts` (moved by TK-155), `frontend/libs/sales/sales-ui/src/lib/sales-picker.ts`
 - **State:** checked 1 October 2026. A hardware scanner types into whatever field has focus; only the till detects a scan (keys under 40 ms apart ending in Enter). The item search matches an exact barcode first (TK-14). There is no camera scanning.
 - **Sub-tasks:**
-  - [ ] A `bb-scan` component for keyboard-wedge scanners, with the burst detector as a plain function that a `-core` lib can use.
-  - [ ] Camera scanning on a phone opens a **small popup in the top-right corner (about 160 by 120 px, with a close button), never full screen**, so the page and the line grid stay visible. `getUserMedia` on the rear camera plus the `BarcodeDetector` API, with a fallback library when the browser lacks it (D-46).
-  - [ ] Continuous mode with a short pause, a beep and a flash on each scan; it closes itself after a period idle, stops the camera on close or route change, and shows a one-line message with a typed fallback when permission is denied. The camera needs HTTPS.
-  - [ ] Only the `-ui` component touches `window` and the camera; `-core` stays free of them.
-  - [ ] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
+  - [x] A `bb-scan` component for keyboard-wedge scanners, with the burst detector as a plain function that a `-core` lib can use.
+  - [x] Camera scanning on a phone opens a **small popup in the top-right corner (about 160 by 120 px, with a close button), never full screen**, so the page and the line grid stay visible. `getUserMedia` on the rear camera plus the `BarcodeDetector` API, with a fallback library when the browser lacks it (D-46).
+  - [x] Continuous mode with a short pause, a beep and a flash on each scan; it closes itself after a period idle, stops the camera on close or route change, and shows a one-line message with a typed fallback when permission is denied. The camera needs HTTPS.
+  - [x] Only the `-ui` component touches `window` and the camera; `-core` stays free of them.
+  - [x] The standard delivery sub-tasks in section 5 that apply (docs page, `docs.manifest.ts`, `release-notes.md`; migration and RLS where the card adds a table).
   - [x] Test: written, never run by an AI (section 0.5)
 - **Done when:** on a 360 px phone the camera shows as a small top-right popup and a scan fills the field without leaving the page.
+- **As built (5 October 2026):**
+  - **`@bill-book/scan-core`** (`libs/shared/scan-core`, tagged `platform:ionic-safe`) is new and pure: `BarcodeBurst` and `burstDetector()` (moved from `pos-keys.ts`, which re-exports it so the till is unchanged), and the camera session's rules — `ScanGate` (800 ms pause after a scan, 2.5 s before the same code counts again), `isScanIdle` (30 s), `SCAN_FORMATS`, `CAMERA_POPUP` (160 × 120), `cameraErrorMessage` (one line per error name, always offering the typed fallback).
+  - **`bb-scan`** in `ui-components`: a field where Enter emits `scanned` (`clearOnScan`, on by default), `global` to catch a burst aimed at the page while no field has focus, and a camera button. The camera popup is fixed top-right at 160 × 120 with a close button; `getUserMedia` on the rear camera, a frame every 150 ms, a beep (Web Audio) and a flash per scan. It closes on idle, on the close button, on `NavigationStart`, when the tab is hidden and on destroy, always stopping every track.
+  - **Library (D-46)**: the browser's `BarcodeDetector` when it reads our formats; otherwise **`barcode-detector` 3.2.2 (MIT)**, a polyfill of the same API over `zxing-wasm` (MIT), imported lazily on first camera use. Its wasm is copied into `assets/zxing/` by `apps/web`'s build and located there, so no CDN is contacted.
+  - Not yet on any screen: TK-161 to TK-163 put it on the sales, purchase and stock forms.
+  - Tests: `scan-burst.spec.ts`, `scan-session.spec.ts`, `scan.component.spec.ts`; `pos-keys.spec.ts` still covers the re-export.
+  - Docs: [Scanning](../frontend/apps/docs/content/inputs.md), release note.
 
 ### TK-161 · Scan on sales documents
 - [ ] open
@@ -5187,7 +5194,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-43 | Does a Restaurant branch allow the paid `Pos` add-on? | TK-143 | *Open.* Billing is the base, so the default in `AddOnRules` is every add-on except `Pos`; the owner confirms. Raised 2026-10-01 by TK-143 |
 | D-44 | Which kinds of customer are there? | TK-152 to TK-154 | **Three kinds** (owner, 2026-10-01): Standard (paying, from signup or created by an operator), **Internal** (our own organisation, real books, business type Service) and **Demo** (one per business type for testing and demos, master data only, no transactions). The Internal customer is the existing bootstrap customer. TK-152 |
 | D-45 | Demo customers: who signs in, with what, and can they be reset? | TK-154 | *Open.* Default until answered: each Demo owner is created with no password, as the bootstrap does today, and signs in through forgot-password; no password is committed to source. Also open: a way to reset a demo back to empty masters, a plan and licence for them (default Elite, no expiry), and whether an HRMS-only and a Payroll-only demo customer are wanted. Raised 2026-10-01 by TK-154 |
-| D-46 | Which libraries draw barcodes and read them from a camera? | TK-156, TK-160 | *Open.* Default until answered: ZXing.Net (MIT) for Code128 and EAN-13 in Printing, the browser's `BarcodeDetector` for camera reading with one MIT fallback library where it is missing. Raised 2026-10-01 by TK-156 |
+| D-46 | Which libraries draw barcodes and read them from a camera? | TK-156, TK-160 | *Open.* Default until answered: ZXing.Net (MIT) for Code128 and EAN-13 in Printing, the browser's `BarcodeDetector` for camera reading with one MIT fallback library where it is missing. Raised 2026-10-01 by TK-156. As built: ZXing.Net 0.16.11 (Apache-2.0) in Printing (TK-156); `barcode-detector` 3.2.2 (MIT) as the camera fallback (TK-160) |
 | D-47 | Retainer invoices: build the document, and then repeat it? | TK-139 | *Open.* TK-139 names recurring retainer invoices, but no retainer document exists anywhere in the product, so there is nothing to repeat. Default until answered: recurring billing repeats sales invoices and purchase bills only. A retainer would be its own card: a request for an advance that posts nothing until paid, its payment landing on the customer's prepayment advance sub-account. Raised 2026-10-04 by TK-139 |
 | D-48 | TK-140's "raise a work order": which document? | TK-140 | *Open.* The WorkOrder service is School's facility maintenance: it carries an asset or a space and no customer, and only School branches may use it. Default until answered: a service plan's **Raise a visit** opens a support ticket in Customer, which carries the customer, an assignee and the branch's SLA. Raised 2026-10-04 while reworking TK-140 |
 | D-49 | TK-149: when a bill's ingredients are short in stock, refuse the bill or let stock go negative? | TK-149 | *Open.* Default until answered: the bill is refused and names the ingredient, because the guarded stock issue never takes stock below zero (the same rule that stops two tills selling the last unit). The cost: a kitchen whose ingredient counts lag its receipts cannot bill until the stock is received or corrected. Allowing negative ingredient stock would need a second, unguarded issue path for recipes only. Raised 2026-10-05 |

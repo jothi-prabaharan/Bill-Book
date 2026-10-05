@@ -175,6 +175,7 @@ exists to prevent.
 | One of a small fixed set | `bb-radio-group` |
 | One of a list | `bb-select` |
 | Filtering a list | `bb-search-input` |
+| A barcode or document code, from a scanner or the camera | `bb-scan` |
 | An attachment, a statement to import | `bb-file-input` |
 
 ---
@@ -524,6 +525,19 @@ a search of the repository finds no `<select multiple>` anywhere, and the
 searchable-picker pattern already exists as `bb-search-input` beside
 `bb-lookup-dialog`, which six screens use. Building either speculatively would
 add a component with no caller to keep it honest.
+
+## Scanning
+
+`bb-scan` (TK-160) is where a code comes in. It emits `scanned` with the code, trimmed and never empty; what the code means — an item, a document, a batch — is the page's business, as with `bb-search-input`.
+
+- **A scanner in keyboard mode** types into the field and ends with Enter, and so does a person typing a code by hand; either one emits. `clearOnScan` (on by default) empties the field ready for the next code; off, the last code stays in it.
+- **`global`** also catches a scanner aimed at the page while no field has focus, by the same rule the till uses: keys under 40 ms apart, at least four of them, ending in Enter. Keys typed into another field are left to that field.
+- **The camera button** opens a **small popup in the top-right corner, 160 by 120 pixels with a close button**, never the whole screen, so the page and its line grid stay in view. It uses the rear camera and keeps reading: each code is taken once, with a short pause, a beep and a green flash, and the same code held in front of it is not taken again for two and a half seconds. It closes itself after 30 seconds with nothing read, and the camera is switched off when it closes, when you move to another page, and when the tab is hidden.
+- **The camera needs a secure (https) address**, and the browser asks for permission the first time. If it is refused, missing or busy, one line under the field says so and the field still takes a typed or scanned code.
+
+The browser's own barcode reader is used where it has one (Chrome on Android does). Elsewhere — Safari, Firefox — an open-source reader (`barcode-detector`, MIT) loads the first time the camera opens. Its engine is served from the app itself, so no other site is contacted. It reads EAN-13, EAN-8, UPC, Code128, Code39, ITF, QR and DataMatrix.
+
+The rule for telling a scanner from typing is a plain function in `@bill-book/scan-core` (`BarcodeBurst`, `burstDetector`), with the camera session's rules beside it, so a `-core` lib can use them; only `bb-scan` touches the camera and the page.
 
 ## Attendance register
 

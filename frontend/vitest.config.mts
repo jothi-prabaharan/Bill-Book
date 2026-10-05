@@ -47,6 +47,9 @@ export default defineConfig({
       '@bill-book/api-client': fileURLToPath(
         new URL('./libs/shared/api-client/src/index.ts', import.meta.url),
       ),
+      '@bill-book/scan-core': fileURLToPath(
+        new URL('./libs/shared/scan-core/src/index.ts', import.meta.url),
+      ),
       '@bill-book/ui-components': fileURLToPath(
         new URL('./libs/shared/ui-components/src/index.ts', import.meta.url),
       ),

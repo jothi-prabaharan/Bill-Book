@@ -1,0 +1,8 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "scan-core",
+  "projectType": "library",
+  "sourceRoot": "libs/shared/scan-core/src",
+  "tags": ["scope:shared", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

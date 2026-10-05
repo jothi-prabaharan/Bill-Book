@@ -30,6 +30,11 @@
           {
             "glob": "**/*",
             "input": "apps/web/public"
+          },
+          {
+            "glob": "zxing_reader.wasm",
+            "input": "node_modules/zxing-wasm/dist/reader",
+            "output": "assets/zxing"
           }
         ],
         "styles": [

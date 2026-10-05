@@ -1,0 +1,59 @@
+<bb-form-field [label]="label()" [controlId]="controlId">
+  <div class="bb-scan">
+    <svg class="bb-scan__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M4 6v12M8 6v12M11 6v12M15 6v12M18 6v12M20 6v12" />
+    </svg>
+    <input
+      #field
+      type="text"
+      class="bb-scan__field"
+      [id]="controlId"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [value]="text()"
+      [attr.aria-label]="ariaLabel()"
+      inputmode="text"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      (input)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+    />
+    @if (camera()) {
+      <button
+        type="button"
+        class="bb-scan__camera"
+        [class.bb-scan__camera--on]="cameraOpen()"
+        [disabled]="disabled() || starting()"
+        [attr.aria-pressed]="cameraOpen()"
+        [attr.aria-label]="cameraOpen() ? 'Stop the camera' : 'Scan with the camera'"
+        (click)="toggleCamera()"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <circle cx="12" cy="13" r="4" />
+        </svg>
+      </button>
+    }
+  </div>
+  @if (message(); as text) {
+    <p class="bb-scan__message" role="status">{{ text }}</p>
+  }
+</bb-form-field>
+
+@if (cameraOpen()) {
+  <div
+    class="bb-scan-popup"
+    [class.bb-scan-popup--flash]="flash()"
+    [style.width.px]="popup.width"
+    [style.height.px]="popup.height"
+    role="dialog"
+    aria-label="Camera scanner"
+  >
+    <video #video class="bb-scan-popup__video" muted playsinline autoplay></video>
+    <span class="bb-scan-popup__aim" aria-hidden="true"></span>
+    <button type="button" class="bb-scan-popup__close" aria-label="Close the camera" (click)="closeCamera()">×</button>
+  </div>
+}

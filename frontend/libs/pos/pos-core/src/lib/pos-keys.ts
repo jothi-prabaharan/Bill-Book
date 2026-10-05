@@ -54,41 +54,7 @@ export function commandFor(event: {
 }
 
 /**
- * Tells a scanner from a person. A USB barcode scanner "types" the code as
- * keystrokes a few milliseconds apart and ends with Enter; nobody types that
- * fast. Characters closer together than `maxGapMs` build a burst; a slower one
- * starts a new one. Enter after a burst of at least `minLength` characters is a
- * scan.
+ * Tells a scanner from a person. The detector is shared by every screen now
+ * (TK-160) and lives in `@bill-book/scan-core`; the till keeps its import here.
  */
-export class BarcodeBurst {
-  private buffer = '';
-  private last = Number.NEGATIVE_INFINITY;
-
-  constructor(
-    private readonly maxGapMs = 40,
-    private readonly minLength = 4,
-  ) {}
-
-  /**
-   * Feeds one key press at a time in milliseconds. Returns the scanned code
-   * when this key completes a scan, otherwise null.
-   */
-  push(key: string, at: number): string | null {
-    const gap = at - this.last;
-    this.last = at;
-
-    if (key === 'Enter') {
-      const code = gap <= this.maxGapMs && this.buffer.length >= this.minLength ? this.buffer : null;
-      this.buffer = '';
-      return code;
-    }
-
-    if (key.length !== 1) {
-      this.buffer = '';
-      return null;
-    }
-
-    this.buffer = gap <= this.maxGapMs ? this.buffer + key : key;
-    return null;
-  }
-}
+export { BarcodeBurst } from '@bill-book/scan-core';

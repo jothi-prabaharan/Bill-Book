@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Scanning with a phone's camera (TK-160).** A new scan field takes codes from a barcode scanner or from the camera. On a phone the camera opens as a small window in the top-right corner, not full screen, so the page stays in view; it beeps and flashes on each code, keeps reading until you close it, and switches itself off after 30 seconds idle or when you leave the page. The camera needs the app on an https address. The sales, purchase and stock screens take it up next. See [Scanning](inputs#scanning).
+
 - **Added**: **Label printing at the label's own size (TK-159).** **Print labels** on the Items list, on an item (with per-batch and per-serial labels), on a goods receipt and on a bill prints price tags, shelf labels, batch and expiry labels and jewellery tags on a label printer through the browser, each at its exact size in millimetres, with a barcode on every label. A goods receipt prints one label per unit accepted. Each branch keeps its own sizes, and an A4 sticker-sheet layout is there for an office printer. See [Printing labels](masters#printing-labels).
 
 - **Added**: **A UPI QR code on unpaid invoices (TK-158).** Set the branch's **UPI ID** under Settings › Configuration and every unpaid invoice prints a QR code that opens the customer's payments app with your UPI id, your name, the amount still due and the invoice number filled in. A part-paid invoice asks for the rest; a paid, voided or non-rupee invoice prints none. The standard invoice template carries it; on your own template, insert `{{Payment.UpiQr}}`. See [Printing](invoices#printing).

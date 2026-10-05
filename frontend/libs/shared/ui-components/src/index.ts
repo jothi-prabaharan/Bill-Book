@@ -82,3 +82,4 @@ export * from './lib/recurring-schedules/recurring-schedules.page';
 export * from './lib/print-html';
 export * from './lib/label-print/label-print.model';
 export * from './lib/label-print/label-print.dialog';
+export * from './lib/scan/scan.component';
