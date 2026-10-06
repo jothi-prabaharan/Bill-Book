@@ -84,6 +84,7 @@
 .text-accent-700 { color: var(--color-accent-700); }
 .text-accent-800 { color: var(--color-accent-800); }
 .bg-surface { background: var(--color-surface); }
+.bg-muted { background: var(--color-surface-muted); }
 .bg-neutral-200 { background: var(--color-neutral-200); }
 .bg-accent { background: var(--color-accent); }
 .border-divider { border: 1px solid var(--color-divider); }
@@ -138,9 +139,35 @@
   margin: 0;
 }
 
+/* A page's title row: the heading on the left, its actions on the right. One
+   rule, so a page that writes `<header class="page-head">` needs no stylesheet
+   of its own for it (about sixty of them had one each, and no two agreed). */
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+
+  h1,
+  h2 {
+    margin: 0;
+  }
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* List-page action bar controls */
-.actbar-search { min-width: 180px; max-width: 320px; min-height: 30px; padding: 2px 9px; }
-.actbar-select { min-height: 30px; padding: 2px 9px; }
+.actbar-search { min-width: 180px; max-width: 320px; min-height: 32px; padding: 2px 9px; }
+.actbar-select { min-height: 32px; padding: 2px 9px; }
+/* On a common component the class sits on the host, which only sizes it. */
+bb-search-input.actbar-search,
+bb-select.actbar-select { min-height: 0; padding: 0; }
 .tab-all { margin: 0 var(--space-2) 0 0; padding: 5px 9px; border-color: color-mix(in srgb, var(--color-accent) 45%, transparent); color: var(--color-accent-800); }
 
 /* Form editor shared classes */
@@ -159,7 +186,7 @@ fieldset.roles small { flex-basis: 100%; color: color-mix(in srgb, var(--color-t
 .matches button { display: block; width: 100%; text-align: left; padding: 0.4rem 0.5rem; font-size: 0.82rem; }
 .matches button:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 
-.preview-box { background: var(--color-surface); border-radius: 8px; padding: 0.75rem; display: grid; gap: 0.2rem; margin-bottom: 1rem; }
+.preview-box { background: var(--color-surface-muted); border-radius: 8px; padding: 0.75rem; display: grid; gap: 0.2rem; margin-bottom: 1rem; }
 .preview-label { font-size: 0.7rem; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
 
 .stack { display: grid; gap: 0.1rem; font-size: 0.85rem; }

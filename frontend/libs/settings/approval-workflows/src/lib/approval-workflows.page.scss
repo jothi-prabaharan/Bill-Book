@@ -1,7 +1,7 @@
-.hint { color: #6a6f80; font-size: .9rem; }
-.error { color: #c0392b; }
-.ok { color: #187a4b; }
-.empty { color: #6a6f80; }
+.hint { color: var(--color-text-muted); font-size: .9rem; }
+.error { color: var(--color-danger); }
+.ok { color: var(--color-success); }
+.empty { color: var(--color-text-muted); }
 h2 { font-size: 1rem; margin: 1rem 0 .25rem; }
 
 .editor { display: grid; gap: .9rem; max-width: 48rem; margin-top: 1rem; }
@@ -11,14 +11,11 @@ h2 { font-size: 1rem; margin: 1rem 0 .25rem; }
 .checks { gap: 1.25rem; }
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; }
 
-button { padding: .55rem 1rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
-button.secondary { background: #eceef3; color: #33384a; }
-button:disabled { opacity: .6; cursor: default; }
 
 .levels { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
-.level { border: 1px solid #dde1ea; border-radius: 8px; padding: .75rem; background: #fff; display: grid; gap: .6rem; }
+.level { border: 1px solid var(--color-divider); border-radius: 8px; padding: .75rem; background: var(--color-surface); display: grid; gap: .6rem; }
 .level__head { display: flex; align-items: center; gap: .5rem; }
-.level__handle { cursor: grab; color: #8a8f9e; user-select: none; }
+.level__handle { cursor: grab; color: var(--color-text-subtle); user-select: none; }
 .level__tools { margin-left: auto; display: flex; gap: .35rem; }
 .level__tools button { padding: .25rem .55rem; }
 
@@ -28,11 +25,11 @@ button:disabled { opacity: .6; cursor: default; }
 .cdk-drop-list-dragging .level:not(.cdk-drag-placeholder) { transition: transform 200ms ease; }
 
 .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; max-width: 48rem; }
-.card { border: 1px solid #dde1ea; border-radius: 8px; padding: .75rem 1rem; cursor: pointer; background: #fff; }
-.card:hover, .card:focus-visible { border-color: #3557d6; outline: none; }
+.card { border: 1px solid var(--color-divider); border-radius: 8px; padding: .75rem 1rem; cursor: pointer; background: var(--color-surface); }
+.card:hover, .card:focus-visible { border-color: var(--color-accent-600); outline: none; }
 .card__title { display: flex; align-items: center; gap: .5rem; }
-.card__meta { display: flex; flex-wrap: wrap; gap: .25rem 1rem; color: #6a6f80; font-size: .85rem; margin-top: .25rem; }
-.pill { background: #eceef3; border-radius: 999px; padding: .05rem .5rem; font-size: .75rem; color: #33384a; }
+.card__meta { display: flex; flex-wrap: wrap; gap: .25rem 1rem; color: var(--color-text-muted); font-size: .85rem; margin-top: .25rem; }
+.pill { background: var(--color-neutral-200); border-radius: 999px; padding: .05rem .5rem; font-size: .75rem; color: var(--color-text); }
 
 // A phone: each field takes the full width.
 @media (max-width: 600px) {

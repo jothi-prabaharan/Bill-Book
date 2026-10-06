@@ -67,7 +67,7 @@
   @if (approvalOffered()) {
     <!-- Past the credit or discount limit: an approver may let this one invoice through (TK-102). -->
     <div class="approval-offer">
-      <button type="button" class="btn btn--primary" (click)="save(true)" [disabled]="saving()">Request approval</button>
+      <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="saving()">Request approval</button>
       <span>Saves the invoice as a draft and sends it to the approver. It cannot be posted until they agree.</span>
     </div>
   }
@@ -351,10 +351,10 @@
     @if (editable()) {
       <!-- Hours, expenses and milestones a project has left to bill (TK-106). -->
       <div class="inv-form__project-items">
-        <button type="button" class="btn" (click)="showProjectItems.set(true)">Add project items</button>
+        <button type="button" class="btn btn-secondary" (click)="showProjectItems.set(true)">Add project items</button>
         @if (projectItems().length > 0) {
           <span>{{ projectItems().length }} project item(s) billed on this invoice, claimed when it posts.</span>
-          <button type="button" class="btn btn--link" (click)="clearProjectItems()">Stop billing them</button>
+          <button type="button" class="btn btn-link" (click)="clearProjectItems()">Stop billing them</button>
         }
       </div>
     }

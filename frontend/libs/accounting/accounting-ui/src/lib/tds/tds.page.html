@@ -63,7 +63,7 @@
         />
         <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
         <div class="editor-actions">
-          <button type="submit" [disabled]="busy() || !validSection()">Save</button>
+          <button class="btn btn-primary" type="submit" [disabled]="busy() || !validSection()">Save</button>
           <button type="button" class="link" (click)="editing.set(null)">Cancel</button>
         </div>
       </form>
@@ -72,7 +72,7 @@
         <p class="hint">
           Rates are in percent. Seeded with the 2025-26 figures; edit or re-date them when the law changes.
         </p>
-        <button type="button" (click)="startNew()" [disabled]="busy()">+ New section</button>
+        <button class="btn btn-primary" type="button" (click)="startNew()" [disabled]="busy()">+ New section</button>
       </div>
       <bb-data-grid
         gridCode="TDS_SECTIONS"
@@ -178,7 +178,7 @@
       <div class="pick">
         <bb-select label="Quarter" name="quarter" [clearable]="false" [options]="quarterOptions" [(ngModel)]="quarter" (ngModelChange)="loadCheck()" />
       </div>
-      <button type="button" (click)="download26q()" [disabled]="busy()">Download 26Q data</button>
+      <button class="btn btn-secondary" type="button" (click)="download26q()" [disabled]="busy()">Download 26Q data</button>
     </div>
     <p class="hint">
       A zip of two sheets, challans and deductees, in the column order of the return preparation utility's tables, to paste into it.

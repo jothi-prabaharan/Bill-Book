@@ -6,16 +6,16 @@
     </div>
     <div class="payroll-page__actions">
       @if (settlement && settlement.status === 'Draft') {
-        <button type="button" class="btn btn--outline" (click)="approve()" [disabled]="busy()">
+        <button type="button" class="btn btn--outline btn-secondary" (click)="approve()" [disabled]="busy()">
           Approve Settlement
         </button>
       }
       @if (settlement && settlement.status === 'Approved') {
-        <button type="button" class="btn btn--primary" (click)="post()" [disabled]="busy()">
+        <button type="button" class="btn btn-primary" (click)="post()" [disabled]="busy()">
           Post Settlement (F&F Run)
         </button>
       }
-      <button type="button" class="btn btn--primary" (click)="calculate()" [disabled]="busy()">
+      <button type="button" class="btn btn-primary" (click)="calculate()" [disabled]="busy()">
         Compute Settlement
       </button>
     </div>

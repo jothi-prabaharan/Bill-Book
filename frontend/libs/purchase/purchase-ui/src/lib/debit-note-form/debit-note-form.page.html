@@ -136,7 +136,7 @@
           }
         </h2>
         @if (lines().length > 0 && !readonlyDoc()) {
-          <button type="button" class="btn" (click)="returnAll()">
+          <button type="button" class="btn btn-secondary" (click)="returnAll()">
             Take everything outstanding
           </button>
         }
@@ -213,7 +213,7 @@
       <footer class="actions">
         <button
           type="button"
-          class="btn btn--primary"
+          class="btn btn-primary"
           [disabled]="saving()"
           (click)="save()"
         >
@@ -221,7 +221,7 @@
         </button>
 
         @if (!isNew()) {
-          <button type="button" class="btn" [disabled]="saving()" (click)="post()">
+          <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
             Post the debit note
           </button>
           <span class="actions__hint">

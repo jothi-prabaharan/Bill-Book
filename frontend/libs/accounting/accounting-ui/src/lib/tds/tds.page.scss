@@ -8,13 +8,12 @@
 .pick { min-width: 12rem; }
 .total { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
 .hint { color: var(--color-text-muted, #6a6f80); font-size: .82rem; margin: 0 0 .75rem; }
-.note { background: #fffaf0; border-left: 3px solid #f0b429; padding: .6rem .8rem; font-size: .85rem; margin: 0; }
+.note { background: var(--color-warning-bg); border-left: 3px solid var(--color-warning); padding: .6rem .8rem; font-size: .85rem; margin: 0; }
 .dates { font-size: .8rem; color: var(--color-text-muted, #6a6f80); white-space: nowrap; }
 .sub { display: block; font-size: .75rem; color: var(--color-text-muted, #6a6f80); }
-.tag { font-size: .72rem; color: #8a5a00; background: #ffe9c7; padding: .05rem .35rem; border-radius: 3px; margin-left: .3rem; }
+.tag { font-size: .72rem; color: var(--color-warning); background: var(--color-warning-bg); padding: .05rem .35rem; border-radius: 3px; margin-left: .3rem; }
 .link { background: none; border: 0; color: var(--color-primary, #3557d6); cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
 .bar > button, .editor-actions button[type='submit'] { padding: .5rem .9rem; border: 0; border-radius: 6px; background: var(--color-primary, #3557d6); color: #fff; font: inherit; cursor: pointer; }
-button:disabled { opacity: .6; cursor: default; }
 .editor { display: grid; gap: .9rem; max-width: 44rem; }
 .row { display: flex; gap: .75rem; flex-wrap: wrap; }
 .row .field { flex: 1; min-width: 9rem; }
@@ -29,10 +28,10 @@ button:disabled { opacity: .6; cursor: default; }
 .tile { border: 1px solid var(--color-border, #e2e4ea); border-radius: 8px; padding: .6rem .8rem; display: grid; gap: .2rem; }
 .tile span { font-size: .75rem; color: var(--color-text-muted, #6a6f80); }
 .tile strong { font-variant-numeric: tabular-nums; }
-.tile.risk { border-color: #f0b429; background: #fffaf0; }
-.state { font-size: .72rem; padding: .1rem .4rem; border-radius: 3px; background: #eceef3; white-space: nowrap; }
-.state[data-state='Matched'] { background: #e3f6ec; color: #187a4b; }
-.state[data-state='AmountDiffers'] { background: #ffe9c7; color: #8a5a00; }
+.tile.risk { border-color: var(--color-warning); background: var(--color-warning-bg); }
+.state { font-size: .72rem; padding: .1rem .4rem; border-radius: 3px; background: var(--color-neutral-200); white-space: nowrap; }
+.state[data-state='Matched'] { background: #e3f6ec; color: var(--color-success); }
+.state[data-state='AmountDiffers'] { background: var(--color-warning-bg); color: var(--color-warning); }
 .state[data-state='MissingIn26as'] { background: #fde2e2; color: #a52a2a; }
 
 @media (max-width: 700px) {

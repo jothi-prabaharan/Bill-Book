@@ -5,9 +5,10 @@
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: transparent;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
   border: 1px solid var(--color-divider);
+  box-shadow: var(--shadow-card);
   transition: box-shadow 200ms ease, border-color 200ms ease;
 }
 
@@ -88,6 +89,8 @@
   margin-top: 1.25rem;
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   padding: 1rem;
   max-width: 46rem;
 
@@ -113,6 +116,7 @@
 .child-card {
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
   padding: 0.85rem;
   margin-bottom: 0.75rem;
 }

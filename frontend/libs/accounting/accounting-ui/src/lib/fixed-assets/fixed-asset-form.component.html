@@ -38,8 +38,8 @@
     </div>
 
     <div class="sheet-actions">
-      <button type="button" (click)="close()" [disabled]="saving()">Cancel</button>
-      <button type="submit" [disabled]="saving()">
+      <button class="btn btn-secondary" type="button" (click)="close()" [disabled]="saving()">Cancel</button>
+      <button class="btn btn-primary" type="submit" [disabled]="saving()">
         {{ saving() ? 'Capitalizing…' : 'Capitalize' }}
       </button>
     </div>

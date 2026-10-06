@@ -7,6 +7,7 @@
   --space-2: var(--space-compact-2);
   --space-3: var(--space-compact-3);
   --space-4: var(--space-compact-4);
+  --space-5: var(--space-compact-5);
   --space-6: var(--space-compact-6);
   --space-8: var(--space-compact-8);
 }
@@ -110,14 +111,27 @@
 
 .auth-form {
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
+  /* The form sits on a card: white against the pane's grey is what makes the
+     one thing to do on this screen the thing the eye lands on. */
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 
-  &--wide { max-width: 620px; }
+  &--wide { max-width: 640px; }
   &--center { text-align: center; }
 
-  h2 { font-size: 34px; }
-  &--wide h2 { font-size: 25px; }
+  h2 { font-size: 28px; margin-bottom: var(--space-3); }
+  &--wide h2 { font-size: 22px; }
   .lede { font-size: 13px; margin: 0 0 var(--space-4); }
+
+  /* Each field group gets air above it; the labels were touching the control
+     above them. */
+  .field { margin-top: var(--space-3); }
+  .form-row { margin: var(--space-3) 0 var(--space-4); }
+  .btn-block { margin-top: var(--space-2); min-height: 38px; }
 }
 
 .org-list {
@@ -231,6 +245,27 @@
 
   .btn { margin: 0; font-size: 12px; padding: 5px 9px; display: inline-flex; align-items: center; gap: 8px; }
   .push { margin-left: auto; }
+
+  /* A common input's host is `display: block; width: 100%`, and a component's
+     host rule outranks a utility class like `w-auto` on the same element — so
+     in a toolbar every control took a row to itself. A selector with a
+     type in it outranks the host rule, which is what lets the bar stay a row. */
+  > bb-select,
+  > bb-branch-date-input,
+  > bb-month-input,
+  > bb-datetime-input,
+  > bb-master-select {
+    width: auto;
+    min-width: 150px;
+    flex: 0 1 auto;
+  }
+
+  > bb-search-input {
+    width: auto;
+    flex: 1 1 220px;
+    min-width: 180px;
+    max-width: 340px;
+  }
 }
 
 /* Rail Navigation Item Overrides */
@@ -245,9 +280,12 @@ nav[aria-label='Modules']::-webkit-scrollbar { width: 0; height: 0; }
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 10px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   &:hover { color: var(--color-accent-400); }
 

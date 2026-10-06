@@ -1,7 +1,7 @@
 <section class="recurring">
   <header class="recurring__head">
     <h1 class="recurring__title">{{ config.title }}</h1>
-    <button type="button" class="btn btn--primary" (click)="create()">New schedule</button>
+    <button type="button" class="btn btn-primary" (click)="create()">New schedule</button>
   </header>
 
   <p class="recurring__muted">
@@ -68,19 +68,19 @@
       </div>
 
       <div class="recurring__actions">
-        <button type="submit" class="btn btn--primary" [disabled]="saving()">Save</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">Save</button>
         @if (selected(); as s) {
           @if (s.status === 'Active') {
-            <button type="button" class="btn" (click)="act('pause')" [disabled]="saving()">Pause</button>
+            <button type="button" class="btn btn-secondary" (click)="act('pause')" [disabled]="saving()">Pause</button>
           }
           @if (s.status === 'Paused') {
-            <button type="button" class="btn" (click)="act('resume')" [disabled]="saving()">Resume</button>
+            <button type="button" class="btn btn-secondary" (click)="act('resume')" [disabled]="saving()">Resume</button>
           }
           @if (s.status !== 'Ended') {
-            <button type="button" class="btn" (click)="act('end')" [disabled]="saving()">End</button>
+            <button type="button" class="btn btn-secondary" (click)="act('end')" [disabled]="saving()">End</button>
           }
         }
-        <button type="button" class="btn btn--ghost" (click)="close()">Close</button>
+        <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
       </div>
 
       @if (selected()?.runs?.length) {

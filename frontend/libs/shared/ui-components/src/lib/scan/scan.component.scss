@@ -8,11 +8,12 @@
   align-items: center;
   gap: 6px;
   width: 100%;
-  min-height: 30px;
+  min-height: 32px;
   padding: 2px 2px 2px 8px;
   box-sizing: border-box;
-  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  border: 1px solid var(--color-border-strong, color-mix(in srgb, #201f1d 30%, transparent));
   border-radius: var(--radius-md, 4px);
+  background: var(--color-field, #fff);
 
   &:focus-within {
     border-color: var(--color-accent, #f06311);

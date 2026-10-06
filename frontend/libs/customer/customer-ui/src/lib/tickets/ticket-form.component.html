@@ -68,8 +68,8 @@
       </div>
 
       <div class="actions">
-        <button type="button" class="bb-btn bb-btn-secondary" (click)="cancelled.emit()" [disabled]="saving()">Cancel</button>
-        <button type="submit" class="bb-btn bb-btn-primary" [disabled]="form.invalid || saving()">
+        <button type="button" class="btn btn-secondary" (click)="cancelled.emit()" [disabled]="saving()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving()">
           {{ saving() ? 'Saving...' : 'Save' }}
         </button>
       </div>

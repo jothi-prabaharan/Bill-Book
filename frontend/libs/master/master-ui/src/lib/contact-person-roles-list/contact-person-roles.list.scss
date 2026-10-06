@@ -1,30 +1,28 @@
-.error { color: #c0392b; font-size: .85rem; }
-.hint { color: #6a6f80; font-size: .78rem; margin: .75rem 0 0; }
+.error { color: var(--color-danger); font-size: .85rem; }
+.hint { color: var(--color-text-muted); font-size: .78rem; margin: .75rem 0 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 .grid { width: 100%; border-collapse: collapse; margin-top: .75rem; }
-.grid th, .grid td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #e2e4ea; }
-.grid th { font-size: .75rem; color: #6a6f80; }
+.grid th, .grid td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--color-divider); }
+.grid th { font-size: .75rem; color: var(--color-text-muted); }
 .grid tr.inactive { opacity: .45; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .handle-col { width: 1.5rem; }
-.handle { cursor: grab; color: #9aa0b0; user-select: none; }
+.handle { cursor: grab; color: var(--color-text-subtle); user-select: none; }
 .actions-col { text-align: right; white-space: nowrap; }
 .actions-col .link + .link { margin-left: .5rem; }
 
-.badge { font-size: .62rem; background: #eceef3; color: #6a6f80; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
+.badge { font-size: .62rem; background: var(--color-neutral-200); color: var(--color-text-muted); padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
 
 .add-row { display: flex; gap: .5rem; margin-top: .9rem; }
-.add-row input { flex: 1; padding: .45rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; }
+.add-row input { flex: 1; padding: .45rem; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; }
 
-input[type='text'] { padding: .3rem; border: 1px solid #cdd1dc; border-radius: 5px; font: inherit; }
-.link { background: none; border: 0; color: #3557d6; cursor: pointer; font: inherit; font-size: .82rem; padding: 0; }
-.link.danger { color: #c0392b; }
-button:not(.link) { padding: .45rem .85rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
-button:disabled { opacity: .6; cursor: default; }
+input[type='text'] { padding: .3rem; border: 1px solid var(--color-border-strong); border-radius: 5px; font: inherit; }
+.link { background: none; border: 0; color: var(--color-accent-700); cursor: pointer; font: inherit; font-size: .82rem; padding: 0; }
+.link.danger { color: var(--color-danger); }
 
-.cdk-drag-preview { box-shadow: 0 3px 12px rgb(0 0 0 / 18%); background: #fff; border-radius: 6px; }
+.cdk-drag-preview { box-shadow: 0 3px 12px rgb(0 0 0 / 18%); background: var(--color-surface); border-radius: 6px; }
 .cdk-drag-placeholder { opacity: .3; }
 
 /* Full-screen sheet on a phone, per the 360px rule. */

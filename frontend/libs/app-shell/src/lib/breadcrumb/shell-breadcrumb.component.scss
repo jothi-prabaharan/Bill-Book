@@ -121,3 +121,32 @@
 .crumb-panel-toggle {
   margin-right: var(--space-1);
 }
+
+/* On a phone the trail is the screen's name and its actions. "Home › Sales ›
+   Invoices" plus Export and Import is wider than the screen, which pushed the
+   last button off the edge; the links are one tap away in the bottom bar, and
+   the secondary menu they sit beside does not exist at this width. */
+@media (max-width: 860px) {
+  .crumbs {
+    flex-wrap: nowrap;
+    padding-inline: var(--space-3);
+
+    /* A lone Home link stays: on the dashboard it is the screen's name. */
+    a:not(:only-of-type),
+    .sep,
+    .crumb-panel-toggle {
+      display: none;
+    }
+
+    [aria-current='page'] {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .acts {
+      flex: none;
+    }
+  }
+}

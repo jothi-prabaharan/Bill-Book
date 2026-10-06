@@ -86,13 +86,13 @@
           <bb-checkbox text="Billable" [name]="'billable' + i" [(ngModel)]="task.isBillable" (ngModelChange)="touch()" [disabled]="!canEdit()" />
           <bb-checkbox text="Active" [name]="'active' + i" [(ngModel)]="task.isActive" (ngModelChange)="touch()" [disabled]="!canEdit()" />
           @if (canEdit() && task.projectTaskId === null) {
-            <button type="button" class="secondary" (click)="removeTask(i)" aria-label="Remove task">✕</button>
+            <button type="button" class="btn btn-secondary" (click)="removeTask(i)" aria-label="Remove task">✕</button>
           }
         </li>
       }
     </ul>
     @if (canEdit()) {
-      <button type="button" class="secondary" (click)="addTask()">+ Add a task</button>
+      <button type="button" class="btn btn-secondary" (click)="addTask()">+ Add a task</button>
     }
 
     @if (form.billingMethod === 'FixedFee') {
@@ -112,21 +112,21 @@
             @if (milestone.invoiceId) {
               <span class="pill">Billed</span>
             } @else if (canEdit()) {
-              <button type="button" class="secondary" (click)="removeMilestone(i)" aria-label="Remove milestone">✕</button>
+              <button type="button" class="btn btn-secondary" (click)="removeMilestone(i)" aria-label="Remove milestone">✕</button>
             }
           </li>
         }
       </ul>
       @if (canEdit()) {
-        <button type="button" class="secondary" (click)="addMilestone()">+ Add a milestone</button>
+        <button type="button" class="btn btn-secondary" (click)="addMilestone()">+ Add a milestone</button>
       }
     }
 
     <div class="actions">
       @if (canEdit()) {
-        <button type="submit" [disabled]="busy()">Save project</button>
+        <button class="btn btn-primary" type="submit" [disabled]="busy()">Save project</button>
       }
-      <button type="button" class="secondary" (click)="close()">{{ canEdit() ? 'Cancel' : 'Close' }}</button>
+      <button type="button" class="btn btn-secondary" (click)="close()">{{ canEdit() ? 'Cancel' : 'Close' }}</button>
     </div>
 
     @if (editingId !== null) {
@@ -160,7 +160,7 @@
           <bb-select label="Status" placeholder="All" name="statusFilter" [options]="statusOptions" [(ngModel)]="statusFilter" (ngModelChange)="load()" />
         </div>
     @if (canEdit()) {
-      <button type="button" (click)="startNew()">+ New project</button>
+      <button class="btn btn-primary" type="button" (click)="startNew()">+ New project</button>
     }
   </div>
 

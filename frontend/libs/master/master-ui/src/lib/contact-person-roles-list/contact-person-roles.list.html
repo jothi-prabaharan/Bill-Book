@@ -56,7 +56,7 @@
 
 <div class="add-row">
   <bb-text-input  [(ngModel)]="newRoleName" maxlength="50" placeholder="New role name" />
-  <button type="button" (click)="add()" [disabled]="busy() || !newRoleName.trim()">Add</button>
+  <button class="btn btn-primary" type="button" (click)="add()" [disabled]="busy() || !newRoleName.trim()">Add</button>
 </div>
 
 <p class="hint">

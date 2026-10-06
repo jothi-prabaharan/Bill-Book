@@ -1,7 +1,7 @@
 <section class="plans">
   <header class="plans__head">
     <h1 class="plans__title">Service plans</h1>
-    <button type="button" class="btn btn--primary" (click)="create()">New plan</button>
+    <button type="button" class="btn btn-primary" (click)="create()">New plan</button>
   </header>
 
   @if (messages().length) {
@@ -43,8 +43,8 @@
         @if (p.status === 'Active') {
           <div class="plans__done">
             <bb-branch-date-input label="Service done on" name="completedOn" [(ngModel)]="completedOn" />
-            <button type="button" class="btn btn--primary" (click)="complete()" [disabled]="busy()">Record service</button>
-            <button type="button" class="btn" (click)="raiseVisit()" [disabled]="busy()">Raise a visit</button>
+            <button type="button" class="btn btn-primary" (click)="complete()" [disabled]="busy()">Record service</button>
+            <button type="button" class="btn btn-secondary" (click)="raiseVisit()" [disabled]="busy()">Raise a visit</button>
           </div>
         }
         @if (p.lastTicketId) {
@@ -56,7 +56,7 @@
         <bb-text-input label="Plan" name="name" [maxlength]="100" placeholder="AC service" [(ngModel)]="draft.name" />
         <div class="plans__picker">
           <span class="plans__label">Customer</span>
-          <button type="button" class="btn" (click)="openPicker()">{{ contactLabel() || 'Choose a customer' }}</button>
+          <button type="button" class="btn btn-secondary" (click)="openPicker()">{{ contactLabel() || 'Choose a customer' }}</button>
         </div>
         <bb-select label="Repeats" name="interval" [clearable]="false" [options]="intervalOptions" [(ngModel)]="draft.interval" />
         <bb-number-input label="Every" name="every" [min]="1" [max]="24" [(ngModel)]="draft.every" />
@@ -68,19 +68,19 @@
       <bb-textarea label="Notes" name="notes" [maxlength]="500" [(ngModel)]="draft.notes" />
 
       <div class="plans__actions">
-        <button type="submit" class="btn btn--primary" [disabled]="busy()">Save</button>
+        <button type="submit" class="btn btn-primary" [disabled]="busy()">Save</button>
         @if (selected(); as p) {
           @if (p.status === 'Active') {
-            <button type="button" class="btn" (click)="act('pause')" [disabled]="busy()">Pause</button>
+            <button type="button" class="btn btn-secondary" (click)="act('pause')" [disabled]="busy()">Pause</button>
           }
           @if (p.status === 'Paused') {
-            <button type="button" class="btn" (click)="act('resume')" [disabled]="busy()">Resume</button>
+            <button type="button" class="btn btn-secondary" (click)="act('resume')" [disabled]="busy()">Resume</button>
           }
           @if (p.status !== 'Ended') {
-            <button type="button" class="btn" (click)="act('end')" [disabled]="busy()">End</button>
+            <button type="button" class="btn btn-secondary" (click)="act('end')" [disabled]="busy()">End</button>
           }
         }
-        <button type="button" class="btn btn--ghost" (click)="editing.set(false)">Close</button>
+        <button type="button" class="btn btn-ghost" (click)="editing.set(false)">Close</button>
       </div>
     </form>
   }

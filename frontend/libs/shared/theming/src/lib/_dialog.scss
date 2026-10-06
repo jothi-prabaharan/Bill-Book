@@ -16,7 +16,8 @@
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
+  background: color-mix(in srgb, var(--color-neutral-900) 45%, transparent);
+  backdrop-filter: blur(1.5px);
   z-index: 100;
   animation: fadeIn 200ms ease;
 }
@@ -37,7 +38,7 @@
 .dialog-title {
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
-  font-size: 20px;
+  font-size: 17px;
   margin: 0;
 }
 

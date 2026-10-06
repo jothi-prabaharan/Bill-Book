@@ -5,7 +5,7 @@ describe('Design Tokens Contract (TypeScript Exports)', () => {
   describe('Color Palettes & Ramps', () => {
     it('should define core palette with stroke-over-fill accent', () => {
       expect(TOKENS.colors.bg).toBe('#f3f2f2');
-      expect(TOKENS.colors.surface).toBe('#eae9e9');
+      expect(TOKENS.colors.surface).toBe('#ffffff');
       expect(TOKENS.colors.text).toBe('#201f1d');
       expect(TOKENS.colors.ink).toBe('#2f353f');
       expect(TOKENS.colors.accent).toBe('#f06311');

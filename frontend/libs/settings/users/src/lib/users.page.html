@@ -1,6 +1,6 @@
 <header class="page-head">
   <h1>Users</h1>
-  <button type="button" (click)="inviting.set(!inviting())" [disabled]="busy()">
+  <button class="btn btn-primary" type="button" (click)="inviting.set(!inviting())" [disabled]="busy()">
     + Invite user
   </button>
 </header>
@@ -17,10 +17,9 @@
     <div class="field">
       <bb-text-input label="Name" name="displayName" [(ngModel)]="form.displayName" required />
     </div>
-    <label>
-      Mobile <span class="opt">(optional)</span>
-      <bb-text-input name="mobileNumber" [(ngModel)]="form.mobileNumber" />
-    </label>
+    <div class="field">
+      <bb-text-input label="Mobile (optional)" name="mobileNumber" [(ngModel)]="form.mobileNumber" />
+    </div>
     <div class="field">
       <bb-select
         label="Role"
@@ -32,7 +31,7 @@
       />
     </div>
     <div class="invite-actions">
-      <button type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
+      <button class="btn btn-primary" type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
       <button type="button" class="link" (click)="inviting.set(false)">Cancel</button>
     </div>
     <p class="hint">

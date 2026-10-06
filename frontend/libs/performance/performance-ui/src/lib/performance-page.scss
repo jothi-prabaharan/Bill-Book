@@ -50,12 +50,12 @@
   font-weight: 600;
   text-transform: uppercase;
 
-  &.badge-draft { background: #e2e8f0; color: #475569; }
+  &.badge-draft { background: var(--color-neutral-200); color: #475569; }
   &.badge-inreview, &.badge-inapproval { background: #e0f2fe; color: #0284c7; }
-  &.badge-calibration { background: #fef3c7; color: #d97706; }
-  &.badge-released { background: #dcfce7; color: #16a34a; }
-  &.badge-sentback { background: #fee2e2; color: #dc2626; }
-  &.badge-closed { background: #f1f5f9; color: #64748b; }
+  &.badge-calibration { background: var(--color-warning-bg); color: #d97706; }
+  &.badge-released { background: var(--color-success-bg); color: var(--color-success); }
+  &.badge-sentback { background: var(--color-danger-bg); color: var(--color-danger); }
+  &.badge-closed { background: #f1f5f9; color: var(--color-text-muted); }
 }
 
 .card-grid {

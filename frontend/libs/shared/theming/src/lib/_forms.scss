@@ -50,7 +50,7 @@
 }
 
 .input[readonly] {
-  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+  background: var(--color-surface-muted);
   cursor: default;
 }
 
@@ -85,36 +85,38 @@
 
 .input {
   width: 100%;
-  min-height: 30px;
-  padding: 4px 9px;
+  min-height: 32px;
+  padding: 5px 10px;
   font: inherit;
   font-size: 13px;
   color: var(--color-text);
   caret-color: var(--color-accent);
-  background: transparent;
-  border: 1px solid var(--color-divider);
+  background: var(--color-field);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 
+  /* Legible enough to read as a hint, quiet enough not to read as a value. */
   &::placeholder {
-    opacity: 0.26;
+    color: color-mix(in srgb, var(--color-text) 42%, transparent);
+    opacity: 1;
   }
 
   &:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+    border-color: color-mix(in srgb, var(--color-text) 50%, transparent);
   }
 
   &:focus-visible {
     border-color: var(--color-accent);
     outline: none;
     outline-offset: 0;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 12%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.7;
     cursor: not-allowed;
-    background: color-mix(in srgb, var(--color-text) 4%, transparent);
+    background: var(--color-surface-muted);
   }
 
   &[type='date'] {
@@ -150,8 +152,21 @@ textarea.input {
   resize: vertical;
 }
 
+/* The browser's own arrow is a different shape on every platform and cannot be
+   coloured; drawing one makes a select match the fields beside it. */
 select.input {
   cursor: pointer;
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23605d5d' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 12px;
+
+  &[multiple] {
+    background-image: none;
+    padding-right: 10px;
+  }
 }
 
 .input--code {
@@ -187,7 +202,8 @@ select.input {
     height: 16px;
     flex: none;
     border-radius: 50%;
-    border: 1.5px solid var(--color-divider);
+    border: 1.5px solid var(--color-border-strong);
+    background: var(--color-field);
     transition: border-color 150ms ease, background 150ms ease;
   }
 
@@ -198,7 +214,7 @@ select.input {
   input:checked + .dot {
     border-color: var(--color-accent);
     background: var(--color-accent);
-    box-shadow: inset 0 0 0 4px var(--color-bg);
+    box-shadow: inset 0 0 0 4px var(--color-field);
   }
 
   input:focus-visible + .dot {
@@ -245,6 +261,7 @@ select.input {
   overflow: hidden;
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
+  background: var(--color-field);
 }
 
 .seg-opt {
@@ -346,4 +363,22 @@ select.input {
   margin-top: var(--space-4);
 
   .btn-primary { flex: 1; }
+}
+
+/*
+ * A composite control — the search box, the date picker — draws its own frame
+ * on an inner element. When a page also puts the house `.input` class on its
+ * host (so `w-auto` / `actbar-search` sizing utilities read the same as on a
+ * native field), the frame was drawn twice: a box inside a box. The host is
+ * only a sizing hook here.
+ */
+bb-search-input.input,
+bb-branch-date-input.input,
+bb-select.input,
+bb-master-select.input {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }

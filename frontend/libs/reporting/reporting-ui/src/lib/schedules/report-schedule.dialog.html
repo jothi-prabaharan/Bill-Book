@@ -1,7 +1,7 @@
 <div class="schedules">
   <header>
     <h2>Email on a schedule</h2>
-    <button type="button" class="ghost" (click)="close()">Done</button>
+    <button type="button" class="btn btn-ghost" (click)="close()">Done</button>
   </header>
 
   @if (message(); as failure) {
@@ -18,7 +18,7 @@
             <span class="last" [class.bad]="schedule.lastStatus !== 'Sent'">Last run: {{ schedule.lastMessage }}</span>
           }
         </div>
-        <button type="button" class="ghost" (click)="setActive(schedule, !schedule.isActive)" [disabled]="busy()">
+        <button type="button" class="btn btn-ghost" (click)="setActive(schedule, !schedule.isActive)" [disabled]="busy()">
           {{ schedule.isActive ? 'Pause' : 'Resume' }}
         </button>
         <button
@@ -91,6 +91,6 @@
       }
     </fieldset>
 
-    <button type="submit" [disabled]="busy() || title.trim() === '' || chosen.size === 0">Schedule</button>
+    <button class="btn btn-primary" type="submit" [disabled]="busy() || title.trim() === '' || chosen.size === 0">Schedule</button>
   </form>
 </div>

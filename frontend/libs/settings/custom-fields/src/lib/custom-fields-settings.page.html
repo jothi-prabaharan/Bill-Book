@@ -14,7 +14,7 @@
   </div>
   <span class="muted">{{ activeCount() }} of {{ maxActive }} active</span>
   @if (canEdit() && !editing()) {
-    <button type="button" (click)="startNew()" [disabled]="activeCount() >= maxActive">New field</button>
+    <button class="btn btn-primary" type="button" (click)="startNew()" [disabled]="activeCount() >= maxActive">New field</button>
   }
 </div>
 
@@ -55,7 +55,7 @@
             }
           </div>
         }
-        <button type="button" class="secondary" (click)="addOption()">Add option</button>
+        <button type="button" class="btn btn-secondary" (click)="addOption()">Add option</button>
         <small class="muted">A saved option cannot be removed, because records may hold it. Deactivate it instead.</small>
       </fieldset>
     }
@@ -90,8 +90,8 @@
     </div>
 
     <div class="actions">
-      <button type="submit" [disabled]="busy() || !canEdit()">Save</button>
-      <button type="button" class="secondary" (click)="cancel()">Cancel</button>
+      <button class="btn btn-primary" type="submit" [disabled]="busy() || !canEdit()">Save</button>
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
     </div>
   </form>
 }

@@ -1,7 +1,7 @@
 <header class="page-head">
   <h1>Tiered Price Lists</h1>
   <div class="head-actions">
-    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add tier</button>
+    <button class="btn btn-primary" type="button" (click)="startAdd()" [disabled]="busy()">+ Add tier</button>
   </div>
 </header>
 
@@ -46,7 +46,7 @@
       />
     </div>
     <div class="sheet-actions">
-      <button type="button" (click)="save()" [disabled]="busy() || !form.name">
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.name">
         Save
       </button>
       <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>

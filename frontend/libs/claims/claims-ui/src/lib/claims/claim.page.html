@@ -15,17 +15,17 @@
       </span>
 
       @if (c.claimStatus === 'Draft') {
-        <button class="btn-primary" (click)="submitClaim()">Submit for Approval</button>
+        <button class="btn btn-primary" (click)="submitClaim()">Submit for Approval</button>
       }
 
       @if (c.claimStatus === 'Submitted') {
-        <button class="btn-primary" (click)="openApprovalModal('Approve')">Approve</button>
-        <button class="btn-secondary" style="color: #ea580c;" (click)="openApprovalModal('SendBack')">Send Back</button>
-        <button class="btn-secondary" style="color: #dc2626;" (click)="openApprovalModal('Reject')">Reject</button>
+        <button class="btn btn-primary" (click)="openApprovalModal('Approve')">Approve</button>
+        <button class="btn btn-secondary" style="color: #ea580c;" (click)="openApprovalModal('SendBack')">Send Back</button>
+        <button class="btn btn-secondary" style="color: #dc2626;" (click)="openApprovalModal('Reject')">Reject</button>
       }
 
       @if (c.claimStatus === 'Approved') {
-        <button class="btn-primary" (click)="openPayoutModal()">Process Payout</button>
+        <button class="btn btn-primary" (click)="openPayoutModal()">Process Payout</button>
       }
     </div>
   </div>
@@ -88,8 +88,8 @@
         <bb-textarea label="Comments / Reason" [rows]="3" placeholder="Optional notes" name="comments" [(ngModel)]="approvalForm.comments" />
       </div>
       <div class="sheet-actions">
-        <button class="btn-secondary" (click)="closeApprovalModal()">Cancel</button>
-        <button class="btn-primary" (click)="submitApproval()">Confirm {{ approvalForm.action }}</button>
+        <button class="btn btn-secondary" (click)="closeApprovalModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitApproval()">Confirm {{ approvalForm.action }}</button>
       </div>
     </div>
   }
@@ -116,8 +116,8 @@
         }
       </div>
       <div class="sheet-actions">
-        <button class="btn-secondary" (click)="closePayoutModal()">Cancel</button>
-        <button class="btn-primary" (click)="submitPayout()">Post Payout</button>
+        <button class="btn btn-secondary" (click)="closePayoutModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitPayout()">Post Payout</button>
       </div>
     </div>
   }

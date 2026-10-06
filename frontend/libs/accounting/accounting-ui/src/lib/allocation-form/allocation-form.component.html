@@ -38,7 +38,7 @@
   }
 
   <div class="actions">
-    <button type="button" (click)="save()" [disabled]="!isValid || busy()">Confirm Allocations</button>
+    <button class="btn btn-primary" type="button" (click)="save()" [disabled]="!isValid || busy()">Confirm Allocations</button>
     <button type="button" class="link" (click)="cancel()" [disabled]="busy()">Cancel</button>
   </div>
 </div>

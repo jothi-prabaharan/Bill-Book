@@ -30,6 +30,7 @@ export * from './lib/data-grid/data-grid.service';
 
 export * from './lib/data-grid/data-grid-cell-template.directive';
 export * from './lib/data-grid/data-grid-footer.directive';
+export * from './lib/data-grid/data-grid-status';
 
 /*
  * The common input system. One wrapper, four bases and nineteen controls —

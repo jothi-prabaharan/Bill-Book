@@ -50,9 +50,9 @@
   font-weight: 600;
 
   &.draft { background: var(--color-neutral-muted, #e2e8f0); color: var(--color-text, #334155); }
-  &.pending, &.applied, &.screening { background: #fef3c7; color: #92400e; }
-  &.approved, &.open, &.hired, &.pass { background: #dcfce7; color: #166534; }
-  &.rejected, &.declined, &.fail { background: #fee2e2; color: #991b1b; }
+  &.pending, &.applied, &.screening { background: var(--color-warning-bg); color: var(--color-warning); }
+  &.approved, &.open, &.hired, &.pass { background: var(--color-success-bg); color: var(--color-success); }
+  &.rejected, &.declined, &.fail { background: var(--color-danger-bg); color: var(--color-danger); }
   &.sent, &.interview { background: #e0e7ff; color: #3730a3; }
 }
 

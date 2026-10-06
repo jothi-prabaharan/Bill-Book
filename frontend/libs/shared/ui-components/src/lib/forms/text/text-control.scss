@@ -16,8 +16,8 @@
   font-size: 12px;
   white-space: nowrap;
   color: color-mix(in srgb, var(--color-text, #201f1d) 65%, transparent);
-  background: color-mix(in srgb, var(--color-text, #201f1d) 4%, transparent);
-  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  background: var(--color-surface-muted, #f7f6f6);
+  border: 1px solid var(--color-border-strong, color-mix(in srgb, #201f1d 30%, transparent));
   box-sizing: border-box;
   user-select: none;
 }

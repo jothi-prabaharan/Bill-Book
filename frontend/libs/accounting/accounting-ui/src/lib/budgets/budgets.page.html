@@ -10,7 +10,7 @@
 
 @if (canEdit() && !creating()) {
   <div class="toolbar">
-    <button type="button" (click)="startCreate()">New budget</button>
+    <button class="btn btn-primary" type="button" (click)="startCreate()">New budget</button>
   </div>
 }
 
@@ -54,8 +54,8 @@
     }
     <bb-checkbox text="Budget by project" name="byProject" [(ngModel)]="form.byProject" />
     <div class="actions">
-      <button type="submit" [disabled]="busy()">Create</button>
-      <button type="button" class="secondary" (click)="cancel()">Cancel</button>
+      <button class="btn btn-primary" type="submit" [disabled]="busy()">Create</button>
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
     </div>
   </form>
 }

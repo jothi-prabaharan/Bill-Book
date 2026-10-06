@@ -123,29 +123,9 @@
 
 /* ---- Buttons ------------------------------------------------------------- */
 
-button {
-  font: inherit;
-  font-size: 0.8rem;
-  padding: var(--space-compact-1, 3px) var(--space-compact-3, 10px);
-  border-radius: var(--radius-md, 4px);
-  border: 1px solid transparent;
-  cursor: pointer;
-}
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
-button.ghost {
-  background: var(--color-neutral-200, #eae7e7);
-  color: var(--color-neutral-800, #444141);
-}
 
-button.primary {
-  background: var(--color-accent, #f06311);
-  color: var(--color-neutral-100, #f8f4f4);
-}
 
 /* ---- Sticky summary ------------------------------------------------------ */
 

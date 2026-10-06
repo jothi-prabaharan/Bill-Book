@@ -3,7 +3,7 @@
     <h1 class="bk__title">Bookings</h1>
     <div class="bk__head-actions">
       <bb-branch-date-input label="Day" name="day" [ngModel]="day()" (ngModelChange)="changeDay($event)" />
-      <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newBooking()">New booking</button>
+      <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-primary" (click)="newBooking()">New booking</button>
     </div>
   </header>
 
@@ -28,10 +28,10 @@
             <span class="bk__status">{{ statusLabel(b.status) }}</span>
             @if (b.status === 'Booked') {
               <div class="bk__actions">
-                <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="startSeatBooking(b)">Seat</button>
-                <button type="button" class="btn" [disabled]="busy()" (click)="editBooking(b)">Change</button>
-                <button type="button" class="btn" [disabled]="busy()" (click)="noShow(b)">No-show</button>
-                <button type="button" class="btn btn--link" [disabled]="busy()" (click)="cancel(b)">Cancel</button>
+                <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="startSeatBooking(b)">Seat</button>
+                <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="editBooking(b)">Change</button>
+                <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="noShow(b)">No-show</button>
+                <button type="button" class="btn btn-link" [disabled]="busy()" (click)="cancel(b)">Cancel</button>
               </div>
             }
           </li>
@@ -44,7 +44,7 @@
     <section class="bk__column" aria-label="Waiting list">
       <div class="bk__column-head">
         <h2 class="bk__subtitle">Waiting now</h2>
-        <button *bbIfCan="'restaurant.create'" type="button" class="btn" (click)="newWaiting()">Add a party</button>
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-secondary" (click)="newWaiting()">Add a party</button>
       </div>
       <ul class="bk__list">
         @for (w of waiting(); track w.waitingListEntryId) {
@@ -57,8 +57,8 @@
               }
             </div>
             <div class="bk__actions">
-              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="startSeatWaiting(w)">Seat</button>
-              <button type="button" class="btn btn--link" [disabled]="busy()" (click)="left(w)">Left</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="startSeatWaiting(w)">Seat</button>
+              <button type="button" class="btn btn-link" [disabled]="busy()" (click)="left(w)">Left</button>
             </div>
           </li>
         } @empty {
@@ -85,7 +85,7 @@
             <bb-select label="Table" name="table" placeholder="Not chosen yet" [options]="tableOptions()" [(ngModel)]="draft.restaurantTableId" />
             <bb-text-input label="Note" name="notes" placeholder="Birthday, window seat" [(ngModel)]="draft.notes" />
             <div class="bk__actions">
-              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveBooking()">Save</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveBooking()">Save</button>
             </div>
           }
           @case ('seat-booking') {
@@ -93,7 +93,7 @@
             <bb-select label="Table" name="seatTable" [clearable]="false" [options]="tableOptions()" [(ngModel)]="seatTableId" />
             <p class="bk__muted">An order opens on the table, and you go to it.</p>
             <div class="bk__actions">
-              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="seatBooking()">Seat</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="seatBooking()">Seat</button>
             </div>
           }
           @case ('waiting') {
@@ -103,7 +103,7 @@
             <bb-number-input label="Guests" name="waitSize" [decimals]="0" [(ngModel)]="waitingDraft.partySize" />
             <bb-text-input label="Note" name="waitNotes" [(ngModel)]="waitingDraft.notes" />
             <div class="bk__actions">
-              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="addWaiting()">Add</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="addWaiting()">Add</button>
             </div>
           }
           @case ('seat-waiting') {
@@ -111,14 +111,14 @@
             @if (seatingParty && seatOptions(seatingParty.partySize).length) {
               <bb-select label="Free table" name="waitTable" [clearable]="false" [options]="seatOptions(seatingParty.partySize)" [(ngModel)]="seatTableId" />
               <div class="bk__actions">
-                <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="seatWaiting()">Seat</button>
+                <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="seatWaiting()">Seat</button>
               </div>
             } @else {
               <p class="bk__muted">No free table seats this party yet.</p>
             }
           }
         }
-        <button type="button" class="btn bk__close" (click)="close()">Close</button>
+        <button type="button" class="btn bk__close btn-secondary" (click)="close()">Close</button>
       </div>
     </div>
   }

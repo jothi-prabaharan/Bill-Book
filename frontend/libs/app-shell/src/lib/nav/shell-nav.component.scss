@@ -7,10 +7,10 @@
   position: relative;
   z-index: var(--z-rail);
   height: 100%;
-  width: 56px;
+  width: 68px;
   background: var(--color-ink);
   color: var(--color-neutral-100);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -50,10 +50,13 @@
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 10px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
   text-align: center;
   text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: color 120ms ease, background 120ms ease;
   cursor: pointer;
 

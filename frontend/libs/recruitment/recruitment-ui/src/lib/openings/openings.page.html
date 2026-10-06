@@ -47,9 +47,9 @@
     </ng-template>
     <ng-template bbCellTemplate="col5" let-op>
       <div style="display: flex; gap: 6px;">
-        <button *ngIf="op.openingStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="changeStatus(op.jobOpeningId, 'Open')">Publish</button>
-        <button *ngIf="op.openingStatus === 'Open'" type="button" class="btn btn-sm btn-outline-warning" (click)="changeStatus(op.jobOpeningId, 'OnHold')">Hold</button>
-        <button *ngIf="op.openingStatus === 'Open' || op.openingStatus === 'OnHold'" type="button" class="btn btn-sm btn-outline-danger" (click)="changeStatus(op.jobOpeningId, 'Closed')">Close</button>
+        <button *ngIf="op.openingStatus === 'Draft'" type="button" class="btn btn-sm btn-secondary" (click)="changeStatus(op.jobOpeningId, 'Open')">Publish</button>
+        <button *ngIf="op.openingStatus === 'Open'" type="button" class="btn btn-sm btn-outline-warning btn-secondary" (click)="changeStatus(op.jobOpeningId, 'OnHold')">Hold</button>
+        <button *ngIf="op.openingStatus === 'Open' || op.openingStatus === 'OnHold'" type="button" class="btn btn-sm btn-danger-outline" (click)="changeStatus(op.jobOpeningId, 'Closed')">Close</button>
       </div>
     </ng-template>
   </bb-data-grid>

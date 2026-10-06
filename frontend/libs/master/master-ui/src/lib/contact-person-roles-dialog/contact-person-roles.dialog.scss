@@ -9,7 +9,7 @@
   width: min(40rem, calc(100vw - 2rem));
   max-height: min(80vh, 40rem);
   overflow: auto;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 10px;
   padding: 1rem 1.25rem 1.25rem;
   box-shadow: 0 12px 40px rgb(0 0 0 / 22%);

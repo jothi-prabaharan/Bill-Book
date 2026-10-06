@@ -23,7 +23,7 @@
         </div>
       </div>
       <div class="sheet-actions">
-        <button class="btn" (click)="closeRegularise()">Cancel</button>
+        <button class="btn btn-secondary" (click)="closeRegularise()">Cancel</button>
         <button class="btn btn-primary" (click)="submitRegularisation()" [disabled]="!regForm.reason">Submit</button>
       </div>
     </div>
@@ -65,7 +65,7 @@
       </ng-template>
       <ng-template bbCellTemplate="isLocked" let-att>
         @if (!att.isLocked) {
-          <button class="btn btn-sm" (click)="openRegularise(att)">Regularise</button>
+          <button class="btn btn-sm btn-secondary" (click)="openRegularise(att)">Regularise</button>
         }
       </ng-template>
     </bb-data-grid>

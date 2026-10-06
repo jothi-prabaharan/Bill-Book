@@ -1,8 +1,8 @@
 <header class="page-head">
   <h1>Customers</h1>
   <div class="head-actions">
-    <button type="button" class="btn-secondary" (click)="createDemos()" [disabled]="busy()" title="One Demo customer per business type, with master data only">Create demo customers</button>
-    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add customer</button>
+    <button type="button" class="btn btn-secondary" (click)="createDemos()" [disabled]="busy()" title="One Demo customer per business type, with master data only">Create demo customers</button>
+    <button class="btn btn-primary" type="button" (click)="startAdd()" [disabled]="busy()">+ Add customer</button>
   </div>
 </header>
 
@@ -154,7 +154,7 @@
     </div>
 
     <div class="sheet-actions">
-      <button
+      <button class="btn btn-primary"
         type="button"
         (click)="create()"
         [disabled]="

@@ -4,7 +4,7 @@
     <p>Submit and track your expense reimbursement claims.</p>
   </div>
   <div>
-    <button class="btn-primary" (click)="openApply()">+ New Expense Claim</button>
+    <button class="btn btn-primary" (click)="openApply()">+ New Expense Claim</button>
   </div>
 </div>
 
@@ -64,7 +64,7 @@
     <div style="margin-top: 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h4>Expenses</h4>
-        <button class="btn-secondary" (click)="addLine()">+ Add Item</button>
+        <button class="btn btn-secondary" (click)="addLine()">+ Add Item</button>
       </div>
 
       @for (line of applyForm.lines; track $index) {
@@ -85,15 +85,15 @@
             <bb-text-input label="Receipt Attachment" placeholder="e.g. receipt123.jpg" name="receiptAttachmentKey" [(ngModel)]="line.receiptAttachmentKey" />
           </div>
           <div>
-            <button class="btn-secondary" style="color: #dc2626; padding: 4px 8px;" (click)="removeLine($index)">X</button>
+            <button class="btn btn-secondary" style="color: #dc2626; padding: 4px 8px;" (click)="removeLine($index)">X</button>
           </div>
         </div>
       }
     </div>
 
     <div class="sheet-actions">
-      <button class="btn-secondary" (click)="closeApply()">Cancel</button>
-      <button class="btn-primary" (click)="submitNewClaim()">Submit Claim</button>
+      <button class="btn btn-secondary" (click)="closeApply()">Cancel</button>
+      <button class="btn btn-primary" (click)="submitNewClaim()">Submit Claim</button>
     </div>
   </div>
 }

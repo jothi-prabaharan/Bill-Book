@@ -43,7 +43,7 @@
                 <input type="date" [id]="id" [value]="text(field.key)" [disabled]="locked" (change)="setText(field.key, $event)" />
               }
               @case ('Dropdown') {
-                <select [id]="id" [disabled]="locked" (change)="setText(field.key, $event)">
+                <select class="input" [id]="id" [disabled]="locked" (change)="setText(field.key, $event)">
                   <option value="" [selected]="!current(field.key)">—</option>
                   @for (option of options(field); track option.value) {
                     <option [value]="option.value" [selected]="current(field.key) === option.value">{{ option.label }}</option>

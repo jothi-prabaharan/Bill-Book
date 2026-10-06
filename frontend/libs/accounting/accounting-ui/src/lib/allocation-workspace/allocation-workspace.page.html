@@ -96,7 +96,7 @@
             </span>
           </ng-template>
           <ng-template bbCellTemplate="actions" let-row>
-            <button type="button" class="ghost" (click)="applyMax(row, 'source')">
+            <button type="button" class="btn btn-ghost" (click)="applyMax(row, 'source')">
               Apply max
             </button>
           </ng-template>
@@ -150,7 +150,7 @@
             </span>
           </ng-template>
           <ng-template bbCellTemplate="actions" let-row>
-            <button type="button" class="ghost" (click)="applyMax(row, 'target')">
+            <button type="button" class="btn btn-ghost" (click)="applyMax(row, 'target')">
               Apply max
             </button>
           </ng-template>
@@ -177,13 +177,13 @@
     </div>
 
     <div class="actions">
-      <button type="button" class="ghost" (click)="autoAllocate()" [disabled]="busy()">
+      <button type="button" class="btn btn-ghost" (click)="autoAllocate()" [disabled]="busy()">
         Auto-allocate all
       </button>
-      <button type="button" class="ghost" (click)="reset()" [disabled]="busy()">
+      <button type="button" class="btn btn-ghost" (click)="reset()" [disabled]="busy()">
         Reset all
       </button>
-      <button type="button" class="primary" (click)="settle()" [disabled]="!canSettle()">
+      <button type="button" class="btn btn-primary" (click)="settle()" [disabled]="!canSettle()">
         Confirm &amp; settle
       </button>
     </div>

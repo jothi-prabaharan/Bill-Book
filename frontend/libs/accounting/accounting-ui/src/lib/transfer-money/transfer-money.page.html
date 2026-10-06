@@ -1,6 +1,6 @@
 <header class="page-head">
   <h1>Transfer money</h1>
-  <button type="button" (click)="startCreate()" [disabled]="busy()">+ New transfer</button>
+  <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New transfer</button>
 </header>
 
 @if (message()) {
@@ -31,7 +31,7 @@
       <div class="swap-cell">
         <button
           type="button"
-          class="ghost"
+          class="btn btn-ghost"
           (click)="swap()"
           title="Swap the two accounts"
           aria-label="Swap the two accounts"
@@ -85,9 +85,9 @@
     }
 
     <div class="editor-actions">
-      <button type="button" class="ghost" (click)="close()">Cancel</button>
-      <button type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
-      <button type="button" class="primary" (click)="save(true)" [disabled]="busy() || !canPost">
+      <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
+      <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+      <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost">
         Post
       </button>
     </div>
@@ -117,9 +117,9 @@
     </dl>
 
     <div class="editor-actions">
-      <button type="button" class="ghost" (click)="close()">Close</button>
+      <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
       @if (d.status === 'Posted') {
-        <button type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
+        <button class="btn btn-secondary" type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
       }
     </div>
   </section>

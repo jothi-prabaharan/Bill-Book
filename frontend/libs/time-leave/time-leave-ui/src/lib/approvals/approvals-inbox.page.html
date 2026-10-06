@@ -76,7 +76,7 @@
         <ng-template bbCellTemplate="col5" let-item>
           <button
             type="button"
-            class="button is-primary"
+            class="btn button btn-primary"
             style="margin-right: 0.25rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;"
             (click)="openActionModal(item, 'Approve')"
           >
@@ -173,7 +173,7 @@
         </button>
         <button
           type="button"
-          class="button is-primary"
+          class="btn button btn-primary"
           [style.background]="actionType === 'Reject' ? '#b91c1c' : ''"
           (click)="submitAction()"
           [disabled]="actingStepId() !== null"

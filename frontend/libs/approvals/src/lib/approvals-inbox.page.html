@@ -48,9 +48,9 @@
         }
 
         <div class="actions">
-          <button type="button" class="primary" (click)="act(item, 'Approve')" [disabled]="busyKey() !== null">Approve</button>
-          <button type="button" (click)="act(item, 'SendBack')" [disabled]="busyKey() !== null">Send back</button>
-          <button type="button" class="danger" (click)="act(item, 'Reject')" [disabled]="busyKey() !== null">Reject</button>
+          <button type="button" class="btn btn-primary" (click)="act(item, 'Approve')" [disabled]="busyKey() !== null">Approve</button>
+          <button class="btn btn-primary" type="button" (click)="act(item, 'SendBack')" [disabled]="busyKey() !== null">Send back</button>
+          <button type="button" class="btn btn-danger" (click)="act(item, 'Reject')" [disabled]="busyKey() !== null">Reject</button>
         </div>
       </li>
     }

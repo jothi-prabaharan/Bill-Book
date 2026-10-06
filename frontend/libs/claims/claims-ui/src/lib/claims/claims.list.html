@@ -4,17 +4,17 @@
     <p>Manage and process employee expense reimbursement claims.</p>
   </div>
   <div style="display: flex; gap: 8px;">
-    <button class="btn-primary" (click)="openCreate()">+ New Claim</button>
+    <button class="btn btn-primary" (click)="openCreate()">+ New Claim</button>
   </div>
 </div>
 
 <div class="sheet" style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
   <span style="font-weight: 600;">Status:</span>
-  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === ''" (click)="onFilterStatus('')">All</button>
-  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Draft'" (click)="onFilterStatus('Draft')">Draft</button>
-  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Submitted'" (click)="onFilterStatus('Submitted')">Submitted</button>
-  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Approved'" (click)="onFilterStatus('Approved')">Approved</button>
-  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Paid'" (click)="onFilterStatus('Paid')">Paid</button>
+  <button class="btn btn-secondary" [class.btn-primary]="selectedStatus() === ''" (click)="onFilterStatus('')">All</button>
+  <button class="btn btn-secondary" [class.btn-primary]="selectedStatus() === 'Draft'" (click)="onFilterStatus('Draft')">Draft</button>
+  <button class="btn btn-secondary" [class.btn-primary]="selectedStatus() === 'Submitted'" (click)="onFilterStatus('Submitted')">Submitted</button>
+  <button class="btn btn-secondary" [class.btn-primary]="selectedStatus() === 'Approved'" (click)="onFilterStatus('Approved')">Approved</button>
+  <button class="btn btn-secondary" [class.btn-primary]="selectedStatus() === 'Paid'" (click)="onFilterStatus('Paid')">Paid</button>
 </div>
 
 @if (loading()) {
@@ -56,7 +56,7 @@
             View
           </a>
           @if (c.claimStatus === 'Draft') {
-            <button class="btn-primary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="submitClaim(c.expenseClaimId)">
+            <button class="btn btn-primary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="submitClaim(c.expenseClaimId)">
               Submit
             </button>
           }
@@ -85,7 +85,7 @@
     <div style="margin-top: 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h4>Expense Lines</h4>
-        <button class="btn-secondary" (click)="addLine()">+ Add Line</button>
+        <button class="btn btn-secondary" (click)="addLine()">+ Add Line</button>
       </div>
 
       @for (line of newClaim.lines; track $index) {
@@ -106,15 +106,15 @@
             <bb-text-input label="Receipt Key" placeholder="e.g. rec-123.jpg" name="receiptAttachmentKey" [(ngModel)]="line.receiptAttachmentKey" />
           </div>
           <div>
-            <button class="btn-secondary" style="color: #dc2626; padding: 4px 8px;" (click)="removeLine($index)">X</button>
+            <button class="btn btn-secondary" style="color: #dc2626; padding: 4px 8px;" (click)="removeLine($index)">X</button>
           </div>
         </div>
       }
     </div>
 
     <div class="sheet-actions">
-      <button class="btn-secondary" (click)="closeCreate()">Cancel</button>
-      <button class="btn-primary" (click)="saveClaim()">Save Draft</button>
+      <button class="btn btn-secondary" (click)="closeCreate()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveClaim()">Save Draft</button>
     </div>
   </div>
 }

@@ -38,13 +38,13 @@
               </div>
               <div class="kd__line-actions">
                 @for (next of nextKitchenSteps(l.status); track next) {
-                  <button type="button" class="btn btn--small btn--primary" [disabled]="busy()" (click)="step(l, next)">{{ stepLabel(next) }}</button>
+                  <button type="button" class="btn btn-sm btn-primary" [disabled]="busy()" (click)="step(l, next)">{{ stepLabel(next) }}</button>
                 }
                 @if (canCancel(l.status)) {
                   <button
                     *bbIfCan="cancelNeedsApproval(l.status) ? 'restaurant.approve' : 'restaurant.void'"
                     type="button"
-                    class="btn btn--small btn--link"
+                    class="btn btn-sm btn-link"
                     [disabled]="busy()"
                     (click)="startCancel(l)"
                   >
@@ -56,7 +56,7 @@
           }
         </ul>
         <footer class="kd__ticket-foot">
-          <button *bbIfCan="'restaurant.print'" type="button" class="btn btn--small" [disabled]="busy()" (click)="reprint(t)">Reprint</button>
+          <button *bbIfCan="'restaurant.print'" type="button" class="btn btn-sm btn-secondary" [disabled]="busy()" (click)="reprint(t)">Reprint</button>
         </footer>
       </li>
     } @empty {
@@ -70,8 +70,8 @@
         <h2 class="kd__subtitle">Cancel {{ line.quantity }} × {{ line.itemName }}</h2>
         <bb-textarea label="Why" name="cancelReason" [required]="true" placeholder="Out of paneer" [(ngModel)]="cancelReason" />
         <div class="kd__actions">
-          <button type="button" class="btn" (click)="cancelling.set(null)">Keep it</button>
-          <button type="button" class="btn btn--danger" [disabled]="busy()" (click)="cancel()">Cancel dish</button>
+          <button type="button" class="btn btn-secondary" (click)="cancelling.set(null)">Keep it</button>
+          <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="cancel()">Cancel dish</button>
         </div>
       </div>
     </div>

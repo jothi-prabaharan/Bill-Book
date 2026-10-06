@@ -202,7 +202,7 @@
 </bb-data-grid>
 
 @if (!finalized()) {
-  <button type="button" class="ghost" (click)="addLine()">+ Add line</button>
+  <button type="button" class="btn btn-ghost" (click)="addLine()">+ Add line</button>
 }
 
 <!-- The figure this screen exists for. Every line posts against Opening Balance
@@ -300,14 +300,14 @@
 @if (!finalized()) {
   <div class="editor-actions">
     @if (document()) {
-      <button type="button" class="ghost" (click)="discard()" [disabled]="busy()">
+      <button type="button" class="btn btn-ghost" (click)="discard()" [disabled]="busy()">
         Delete draft
       </button>
     }
-    <button type="button" (click)="save()" [disabled]="busy()">Save draft</button>
+    <button class="btn btn-secondary" type="button" (click)="save()" [disabled]="busy()">Save draft</button>
     <button
       type="button"
-      class="primary"
+      class="btn btn-primary"
       (click)="finalize()"
       [disabled]="busy() || !readiness()?.canFinalize"
     >

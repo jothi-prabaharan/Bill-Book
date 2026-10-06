@@ -6,14 +6,14 @@
 .bb-rich {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  border: 1px solid var(--color-border-strong, color-mix(in srgb, #201f1d 30%, transparent));
   border-radius: var(--radius-md, 4px);
-  background: transparent;
+  background: var(--color-field, #fff);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 
   &:focus-within {
     border-color: var(--color-accent, #f06311);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #f06311) 12%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #f06311) 20%, transparent);
   }
 
   &--disabled {

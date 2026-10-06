@@ -58,8 +58,8 @@
   <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
 
   <div class="actions">
-    <button type="submit" [disabled]="busy()">Save</button>
-    <button type="button" class="secondary" (click)="sendTest()" [disabled]="busy() || inherited()">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">Save</button>
+    <button type="button" class="btn btn-secondary" (click)="sendTest()" [disabled]="busy() || inherited()">
       Send test email
     </button>
   </div>

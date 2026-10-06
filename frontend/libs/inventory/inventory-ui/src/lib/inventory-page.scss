@@ -2,8 +2,8 @@
    Form-editor classes (.sheet, .fields, .tabs, .child-card, .hint, .link, etc.)
    are now in the global styles.scss, using design tokens. */
 
-.error { color: #c0392b; }
-.notice { color: #187a4b; }
+.error { color: var(--color-danger); }
+.notice { color: var(--color-success); }
 
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 

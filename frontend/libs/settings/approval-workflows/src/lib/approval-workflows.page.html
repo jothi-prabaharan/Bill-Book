@@ -50,9 +50,9 @@
             <strong>Level {{ i + 1 }}</strong>
             @if (canEdit()) {
               <span class="level__tools">
-                <button type="button" class="secondary" (click)="move(i, i - 1)" [disabled]="i === 0" aria-label="Move up">↑</button>
-                <button type="button" class="secondary" (click)="move(i, i + 1)" [disabled]="last" aria-label="Move down">↓</button>
-                <button type="button" class="secondary" (click)="removeLevel(i)" aria-label="Remove level">✕</button>
+                <button type="button" class="btn btn-secondary" (click)="move(i, i - 1)" [disabled]="i === 0" aria-label="Move up">↑</button>
+                <button type="button" class="btn btn-secondary" (click)="move(i, i + 1)" [disabled]="last" aria-label="Move down">↓</button>
+                <button type="button" class="btn btn-secondary" (click)="removeLevel(i)" aria-label="Remove level">✕</button>
               </span>
             }
           </div>
@@ -117,16 +117,16 @@
 
     <div class="actions">
       @if (canEdit()) {
-        <button type="button" class="secondary" (click)="addLevel()">+ Add a level</button>
-        <button type="submit" [disabled]="busy()">Save workflow</button>
+        <button type="button" class="btn btn-secondary" (click)="addLevel()">+ Add a level</button>
+        <button class="btn btn-primary" type="submit" [disabled]="busy()">Save workflow</button>
       }
-      <button type="button" class="secondary" (click)="close()">{{ canEdit() ? 'Cancel' : 'Close' }}</button>
+      <button type="button" class="btn btn-secondary" (click)="close()">{{ canEdit() ? 'Cancel' : 'Close' }}</button>
     </div>
   </form>
 } @else {
   @if (canEdit()) {
     <div class="actions">
-      <button type="button" (click)="openNew()">+ New workflow</button>
+      <button class="btn btn-primary" type="button" (click)="openNew()">+ New workflow</button>
     </div>
   }
 

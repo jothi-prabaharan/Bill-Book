@@ -1,6 +1,6 @@
 <header class="page-head">
   <h1>{{ title() }}</h1>
-  <button type="button" (click)="startCreate()" [disabled]="busy()">+ New</button>
+  <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New</button>
 </header>
 
 @if (message()) {
@@ -241,7 +241,7 @@
       </ng-template>
     </bb-data-grid>
 
-    <button type="button" class="ghost" (click)="addLine()">+ Add line</button>
+    <button type="button" class="btn btn-ghost" (click)="addLine()">+ Add line</button>
 
     <!-- What is left over is the point of this panel: an overpayment is a
          payment whose lines stopped short of the amount that moved, and finding
@@ -294,9 +294,9 @@
     }
 
     <div class="editor-actions">
-      <button type="button" class="ghost" (click)="close()">Cancel</button>
-      <button type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
-      <button type="button" class="primary" (click)="save(true)" [disabled]="busy() || !canPost">
+      <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
+      <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+      <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost">
         Post
       </button>
     </div>
@@ -368,12 +368,12 @@
     </div>
 
     <div class="editor-actions">
-      <button type="button" class="ghost" (click)="close()">Close</button>
+      <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
       @if (d.status === 'Posted') {
         @if (d.contactId !== null) {
-          <button type="button" (click)="startAllocation()" [disabled]="busy()">Allocate</button>
+          <button class="btn btn-primary" type="button" (click)="startAllocation()" [disabled]="busy()">Allocate</button>
         }
-        <button type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
+        <button class="btn btn-secondary" type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
       }
     </div>
 

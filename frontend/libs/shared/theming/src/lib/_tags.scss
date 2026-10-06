@@ -4,9 +4,11 @@
   display: inline-flex;
   align-items: center;
   font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 3px 10px;
-  border-radius: var(--radius-md);
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   transition: background 150ms ease;
@@ -32,6 +34,14 @@
   color: var(--color-accent);
   background: transparent;
 }
+
+/* Status colours. A status says one of four things — it went well, it needs a
+   look, it went wrong, it is only information — and says it the same way on
+   every screen, so a reader learns the colours once. */
+.tag-success { background: var(--color-success-bg); color: var(--color-success); }
+.tag-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.tag-danger  { background: var(--color-danger-bg);  color: var(--color-danger); }
+.tag-info    { background: var(--color-neutral-200); color: var(--color-neutral-800); }
 
 /* Chips & Status Badges */
 .chip {

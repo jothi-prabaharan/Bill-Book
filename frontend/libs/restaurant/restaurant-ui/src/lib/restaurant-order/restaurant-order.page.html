@@ -6,7 +6,7 @@
   @if (!editing()) {
     <header class="ro__head">
       <h1 class="ro__title">Orders</h1>
-      <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newOrder()">New order</button>
+      <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-primary" (click)="newOrder()">New order</button>
     </header>
 
     <div class="ro__chips" role="group" aria-label="Order type">
@@ -34,7 +34,7 @@
     </ul>
   } @else {
     <header class="ro__head">
-      <button type="button" class="btn" (click)="back()">Back</button>
+      <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
       <h1 class="ro__title">{{ current()?.orderNo ?? 'New order' }}</h1>
       @if (current(); as o) {
         <span class="ro__status">{{ o.status }}</span>
@@ -64,7 +64,7 @@
             <span class="ro__label">Table</span>
             <span>{{ o.tableCode ?? 'None' }}</span>
             @if (isOpen()) {
-              <button type="button" class="btn btn--link" (click)="sheet.set('move'); moveTo = null">{{ o.tableCode ? 'Move' : 'Seat at a table' }}</button>
+              <button type="button" class="btn btn-link" (click)="sheet.set('move'); moveTo = null">{{ o.tableCode ? 'Move' : 'Seat at a table' }}</button>
             }
           </div>
         } @else {
@@ -92,9 +92,9 @@
       <div class="ro__field">
         <span class="ro__label">Customer{{ required().customer ? ' *' : '' }}</span>
         <div class="ro__inline">
-          <button type="button" class="btn ro__pick" [disabled]="!isOpen()" (click)="openPicker()">{{ contactLabel() || 'Choose a customer' }}</button>
+          <button type="button" class="btn ro__pick btn-secondary" [disabled]="!isOpen()" (click)="openPicker()">{{ contactLabel() || 'Choose a customer' }}</button>
           @if (contactId() && isOpen()) {
-            <button type="button" class="btn btn--link" (click)="clearContact()">Clear</button>
+            <button type="button" class="btn btn-link" (click)="clearContact()">Clear</button>
           }
         </div>
       </div>
@@ -102,7 +102,7 @@
       <bb-text-input label="Note for the order" name="notes" [disabled]="!isOpen()" [(ngModel)]="notes" />
       @if (current() && isOpen()) {
         <div class="ro__field ro__field--end">
-          <button type="button" class="btn" [disabled]="busy()" (click)="saveDetails()">Save details</button>
+          <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="saveDetails()">Save details</button>
         </div>
       }
     </div>
@@ -153,8 +153,8 @@
               <span>{{ money(l.amount) }}</span>
               @if (l.kitchenStatus === 'NotSent' && isOpen()) {
                 <div class="ro__stepper">
-                  <button type="button" class="btn btn--small" [attr.aria-label]="'One less ' + l.itemName" [disabled]="busy()" (click)="changeSaved(l, l.quantity - 1)">−</button>
-                  <button type="button" class="btn btn--small" [attr.aria-label]="'One more ' + l.itemName" [disabled]="busy()" (click)="changeSaved(l, l.quantity + 1)">+</button>
+                  <button type="button" class="btn btn-sm btn-secondary" [attr.aria-label]="'One less ' + l.itemName" [disabled]="busy()" (click)="changeSaved(l, l.quantity - 1)">−</button>
+                  <button type="button" class="btn btn-sm btn-secondary" [attr.aria-label]="'One more ' + l.itemName" [disabled]="busy()" (click)="changeSaved(l, l.quantity + 1)">+</button>
                 </div>
               }
             </div>
@@ -177,8 +177,8 @@
           <div class="ro__line-side">
             <span>{{ money(p.quantity * p.unitPrice) }}</span>
             <div class="ro__stepper">
-              <button type="button" class="btn btn--small" [attr.aria-label]="'One less ' + p.name" (click)="changePending(p.key, p.quantity - 1)">−</button>
-              <button type="button" class="btn btn--small" [attr.aria-label]="'One more ' + p.name" (click)="changePending(p.key, p.quantity + 1)">+</button>
+              <button type="button" class="btn btn-sm btn-secondary" [attr.aria-label]="'One less ' + p.name" (click)="changePending(p.key, p.quantity - 1)">−</button>
+              <button type="button" class="btn btn-sm btn-secondary" [attr.aria-label]="'One more ' + p.name" (click)="changePending(p.key, p.quantity + 1)">+</button>
             </div>
           </div>
         </div>
@@ -196,15 +196,15 @@
       @if (isOpen()) {
         <div class="ro__actions">
           @if (current() && settings().kitchenEnabled && current()!.unsentCount > 0 && !pending().length) {
-            <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="sendToKitchen()">Send {{ current()!.unsentCount }} to the kitchen</button>
+            <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="sendToKitchen()">Send {{ current()!.unsentCount }} to the kitchen</button>
           }
           @if (current()) {
-            <button *bbIfCan="'restaurant.void'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="sheet.set('cancel'); cancelReason = ''">Cancel order</button>
+            <button *bbIfCan="'restaurant.void'" type="button" class="btn btn-danger" [disabled]="busy()" (click)="sheet.set('cancel'); cancelReason = ''">Cancel order</button>
           }
           @if (current() && current()!.lineCount > 0 && !pending().length) {
-            <button *bbIfCan="'restaurant.create'" type="button" class="btn" [disabled]="busy()" (click)="toBilling()">Bill</button>
+            <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-secondary" [disabled]="busy()" (click)="toBilling()">Bill</button>
           }
-          <button type="button" class="btn btn--primary" [disabled]="busy() || (!!current() && !pending().length)" (click)="saveOrder()">
+          <button type="button" class="btn btn-primary" [disabled]="busy() || (!!current() && !pending().length)" (click)="saveOrder()">
             {{ current() ? 'Add to order' : 'Save order' }}
           </button>
         </div>
@@ -222,7 +222,7 @@
         <div class="ro__kot">
           <div class="ro__card-top">
             <strong>{{ k.kotNo }} · {{ k.station }}</strong>
-            <button *bbIfCan="'restaurant.print'" type="button" class="btn btn--small" [disabled]="busy()" (click)="reprintKot(k)">Reprint</button>
+            <button *bbIfCan="'restaurant.print'" type="button" class="btn btn-sm btn-secondary" [disabled]="busy()" (click)="reprintKot(k)">Reprint</button>
           </div>
           @for (l of k.lines; track l.kotLineId) {
             <div class="ro__line">
@@ -234,7 +234,7 @@
                 <button
                   *bbIfCan="cancelNeedsApproval(l.status) ? 'restaurant.approve' : 'restaurant.void'"
                   type="button"
-                  class="btn btn--small btn--link"
+                  class="btn btn-sm btn-link"
                   (click)="startLineCancel(l)"
                 >
                   Cancel
@@ -253,8 +253,8 @@
         <h2 class="ro__subtitle">Cancel {{ line.quantity }} × {{ line.itemName }}</h2>
         <bb-textarea label="Why" name="lineCancelReason" [required]="true" placeholder="Guest changed their mind" [(ngModel)]="lineCancelReason" />
         <div class="ro__actions">
-          <button type="button" class="btn" (click)="cancellingLine.set(null)">Keep it</button>
-          <button type="button" class="btn btn--danger" [disabled]="busy()" (click)="cancelLine()">Cancel dish</button>
+          <button type="button" class="btn btn-secondary" (click)="cancellingLine.set(null)">Keep it</button>
+          <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="cancelLine()">Cancel dish</button>
         </div>
       </div>
     </div>
@@ -293,8 +293,8 @@
         <bb-number-input label="Quantity" name="chosenQuantity" [decimals]="0" [(ngModel)]="chosenQuantity" />
         <bb-textarea label="Note for the kitchen" name="chosenNote" placeholder="No onion" [(ngModel)]="chosenNote" />
         <div class="ro__actions">
-          <button type="button" class="btn" (click)="choosing.set(null)">Cancel</button>
-          <button type="button" class="btn btn--primary" (click)="addChosen()">Add · {{ money(chosenPrice() * (chosenQuantity || 1)) }}</button>
+          <button type="button" class="btn btn-secondary" (click)="choosing.set(null)">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="addChosen()">Add · {{ money(chosenPrice() * (chosenQuantity || 1)) }}</button>
         </div>
       </div>
     </div>
@@ -307,15 +307,15 @@
           <h2 class="ro__subtitle">Move to a table</h2>
           <bb-select label="Table" name="moveTo" placeholder="Choose a free table" [options]="moveOptions()" [(ngModel)]="moveTo" />
           <div class="ro__actions">
-            <button type="button" class="btn" (click)="sheet.set(null)">Close</button>
-            <button type="button" class="btn btn--primary" [disabled]="busy() || !moveTo" (click)="move()">Move</button>
+            <button type="button" class="btn btn-secondary" (click)="sheet.set(null)">Close</button>
+            <button type="button" class="btn btn-primary" [disabled]="busy() || !moveTo" (click)="move()">Move</button>
           </div>
         } @else {
           <h2 class="ro__subtitle">Cancel {{ current()?.orderNo }}</h2>
           <bb-textarea label="Why" name="cancelReason" [required]="true" placeholder="Guests left before the food came" [(ngModel)]="cancelReason" />
           <div class="ro__actions">
-            <button type="button" class="btn" (click)="sheet.set(null)">Keep the order</button>
-            <button type="button" class="btn btn--danger" [disabled]="busy()" (click)="cancel()">Cancel order</button>
+            <button type="button" class="btn btn-secondary" (click)="sheet.set(null)">Keep the order</button>
+            <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="cancel()">Cancel order</button>
           </div>
         }
       </div>

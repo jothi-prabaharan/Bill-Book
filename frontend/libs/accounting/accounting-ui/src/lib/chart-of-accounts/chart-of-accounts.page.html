@@ -6,7 +6,7 @@
       [(ngModel)]="showInactive"
       (ngModelChange)="load()"
     />
-    <button type="button" (click)="startCreate()" [disabled]="busy()">+ New account</button>
+    <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New account</button>
   </div>
 </header>
 
@@ -108,7 +108,7 @@
     </div>
 
     <div class="editor-actions">
-      <button type="submit" [disabled]="busy()">Save</button>
+      <button class="btn btn-primary" type="submit" [disabled]="busy()">Save</button>
       <button type="button" class="link" (click)="editing.set(false)">Cancel</button>
     </div>
   </form>

@@ -48,14 +48,14 @@
   font-weight: 600;
   text-transform: uppercase;
 
-  &.status-draft { background: #e2e8f0; color: #475569; }
+  &.status-draft { background: var(--color-neutral-200); color: #475569; }
   &.status-submitted { background: #dbeafe; color: #1e40af; }
-  &.status-approved { background: #dcfce7; color: #166534; }
-  &.status-rejected { background: #fee2e2; color: #991b1b; }
-  &.status-cancelled { background: #f1f5f9; color: #64748b; }
-  &.status-present { background: #dcfce7; color: #166534; }
-  &.status-absent { background: #fee2e2; color: #991b1b; }
-  &.status-halfday { background: #fef3c7; color: #92400e; }
+  &.status-approved { background: var(--color-success-bg); color: var(--color-success); }
+  &.status-rejected { background: var(--color-danger-bg); color: var(--color-danger); }
+  &.status-cancelled { background: #f1f5f9; color: var(--color-text-muted); }
+  &.status-present { background: var(--color-success-bg); color: var(--color-success); }
+  &.status-absent { background: var(--color-danger-bg); color: var(--color-danger); }
+  &.status-halfday { background: var(--color-warning-bg); color: var(--color-warning); }
   &.status-onleave { background: #e0e7ff; color: #3730a3; }
 }
 

@@ -1,7 +1,7 @@
 <div class="page-head">
   <h1>Performance Reviews & Approvals</h1>
   <div style="display: flex; gap: 8px;">
-    <button class="btn btn-outline" (click)="releaseDepartment()">Release Eligible Reviews</button>
+    <button class="btn btn-outline btn-secondary" (click)="releaseDepartment()">Release Eligible Reviews</button>
   </div>
 </div>
 
@@ -42,7 +42,7 @@
       {{ r.isPromotionRecommended ? 'Yes' : 'No' }}
     </ng-template>
     <ng-template bbCellTemplate="col7" let-r>
-      <button class="btn btn-sm" (click)="openReview(r)">View / Act</button>
+      <button class="btn btn-sm btn-secondary" (click)="openReview(r)">View / Act</button>
     </ng-template>
   </bb-data-grid>
 </div>
@@ -51,7 +51,7 @@
 <div *ngIf="activeReview()" class="sheet" style="border-top: 4px solid var(--color-primary, #0284c7);">
   <div style="display: flex; justify-content: space-between; align-items: center;">
     <h2>Review: {{ activeReview()?.employeeName }} ({{ activeReview()?.cycleName }})</h2>
-    <button class="btn btn-sm" (click)="closeDetail()">Close</button>
+    <button class="btn btn-sm btn-secondary" (click)="closeDetail()">Close</button>
   </div>
 
   <div style="margin: 12px 0; display: flex; gap: 16px;">
@@ -134,7 +134,7 @@
     </div>
   </div>
   <div class="sheet-actions">
-    <button class="btn" (click)="showActionModal.set(false)">Cancel</button>
+    <button class="btn btn-secondary" (click)="showActionModal.set(false)">Cancel</button>
     <button class="btn btn-primary" (click)="submitLevelAction()">Submit Action</button>
   </div>
 </div>

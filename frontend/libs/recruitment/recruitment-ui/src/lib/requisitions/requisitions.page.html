@@ -53,9 +53,9 @@
     </ng-template>
     <ng-template bbCellTemplate="col6" let-req>
       <div style="display: flex; gap: 6px;">
-        <button *ngIf="req.approvalStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-primary" (click)="submit(req.jobRequisitionId)">Submit</button>
-        <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(req.jobRequisitionId)">Approve</button>
-        <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-danger" (click)="reject(req.jobRequisitionId)">Reject</button>
+        <button *ngIf="req.approvalStatus === 'Draft'" type="button" class="btn btn-sm btn-secondary" (click)="submit(req.jobRequisitionId)">Submit</button>
+        <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-secondary" (click)="approve(req.jobRequisitionId)">Approve</button>
+        <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-danger-outline" (click)="reject(req.jobRequisitionId)">Reject</button>
       </div>
     </ng-template>
   </bb-data-grid>

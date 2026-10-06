@@ -1,7 +1,7 @@
 <section class="rb">
   <header class="rb__head">
     <h1 class="rb__title">Billing</h1>
-    <button type="button" class="btn" (click)="done()">Back to orders</button>
+    <button type="button" class="btn btn-secondary" (click)="done()">Back to orders</button>
   </header>
 
   @if (messages().length) {
@@ -18,20 +18,20 @@
       @if (b.loyaltyPoints > 0) {
         @if (b.loyaltyNote) {
           <p class="rb__loyalty">{{ pointsLabel(b.loyaltyPoints) }} due, not recorded yet.</p>
-          <button type="button" class="btn" [disabled]="busy()" (click)="recordPoints(b)">Record the points</button>
+          <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="recordPoints(b)">Record the points</button>
         } @else {
           <p class="rb__loyalty">Earned {{ pointsLabel(b.loyaltyPoints) }}{{ b.loyaltyBalance !== null ? ' · balance ' + pointsLabel(b.loyaltyBalance) : '' }}</p>
         }
       }
       <div class="rb__actions">
-        <button *bbIfCan="'restaurant.print'" type="button" class="btn" (click)="print(b)">Print again</button>
-        <button type="button" class="btn btn--primary" (click)="done()">Done</button>
+        <button *bbIfCan="'restaurant.print'" type="button" class="btn btn-secondary" (click)="print(b)">Print again</button>
+        <button type="button" class="btn btn-primary" (click)="done()">Done</button>
       </div>
     </div>
   } @else {
     <div class="rb__bar">
       <bb-select label="Bill another order with these" name="addOrderId" placeholder="Choose an open order" [options]="otherOrders()" [(ngModel)]="addOrderId" />
-      <button type="button" class="btn" [disabled]="!addOrderId" (click)="addOrder(addOrderId)">Add to the bill</button>
+      <button type="button" class="btn btn-secondary" [disabled]="!addOrderId" (click)="addOrder(addOrderId)">Add to the bill</button>
     </div>
 
     @for (o of orders(); track o.restaurantOrderId) {
@@ -56,7 +56,7 @@
           }
         }
         @if (orders().length > 1) {
-          <button type="button" class="btn btn--link" (click)="removeOrder(o)">Take off this bill</button>
+          <button type="button" class="btn btn-link" (click)="removeOrder(o)">Take off this bill</button>
         }
       </fieldset>
     } @empty {
@@ -68,9 +68,9 @@
         <div class="rb__field">
           <span class="rb__label">Customer</span>
           <div class="rb__inline">
-            <button type="button" class="btn rb__pick" (click)="openPicker()">{{ contactLabel() || 'Walk-in customer' }}</button>
+            <button type="button" class="btn rb__pick btn-secondary" (click)="openPicker()">{{ contactLabel() || 'Walk-in customer' }}</button>
             @if (contactId()) {
-              <button type="button" class="btn btn--link" (click)="clearContact()">Clear</button>
+              <button type="button" class="btn btn-link" (click)="clearContact()">Clear</button>
             }
           </div>
           @if (loyalty(); as l) {
@@ -118,13 +118,13 @@
               @if (t.mode !== 'Cash') {
                 <bb-text-input label="Reference" [name]="'ref' + i" [ngModel]="t.reference" (ngModelChange)="setTender(i, { reference: $event })" />
               }
-              <button type="button" class="btn btn--link" (click)="removeTender(i)">Remove</button>
+              <button type="button" class="btn btn-link" (click)="removeTender(i)">Remove</button>
             </div>
           }
           <div class="rb__inline">
-            <button type="button" class="btn" (click)="addTender('Cash')">Cash</button>
-            <button type="button" class="btn" (click)="addTender('Card')">Card</button>
-            <button type="button" class="btn" (click)="addTender('Upi')">UPI</button>
+            <button type="button" class="btn btn-secondary" (click)="addTender('Cash')">Cash</button>
+            <button type="button" class="btn btn-secondary" (click)="addTender('Card')">Card</button>
+            <button type="button" class="btn btn-secondary" (click)="addTender('Upi')">UPI</button>
           </div>
           @if (!tenders().length) {
             <p class="rb__muted">No payment: the bill goes on the customer's account. A walk-in bill must be paid.</p>
@@ -134,7 +134,7 @@
         </fieldset>
 
         <div class="rb__actions">
-          <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" [disabled]="busy() || !!p.problem" (click)="billIt()">
+          <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-primary" [disabled]="busy() || !!p.problem" (click)="billIt()">
             Bill {{ money(p.amountToPay) }} and print
           </button>
         </div>

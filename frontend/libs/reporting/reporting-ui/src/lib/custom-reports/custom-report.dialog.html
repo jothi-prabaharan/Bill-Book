@@ -1,7 +1,7 @@
 <div class="custom-report">
   <header>
     <h2>{{ existing()?.mayEdit ? 'Save custom report' : 'Save as custom report' }}</h2>
-    <button type="button" class="ghost" (click)="close()">Cancel</button>
+    <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
   </header>
 
   <p class="hint">
@@ -30,7 +30,7 @@
       <bb-checkbox text="Save as a new report" name="saveAsNew" [(ngModel)]="saveAsNew" />
     }
 
-    <button type="submit" [disabled]="busy() || title.trim() === ''">
+    <button class="btn btn-primary" type="submit" [disabled]="busy() || title.trim() === ''">
       {{ busy() ? 'Saving…' : 'Save' }}
     </button>
   </form>

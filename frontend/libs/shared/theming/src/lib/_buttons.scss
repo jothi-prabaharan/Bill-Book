@@ -1,4 +1,6 @@
-/* Classical — Buttons (Stroke-over-Fill) */
+/* Classical — Buttons. A primary action is filled, so the one thing a screen
+   wants done is the first thing the eye lands on; everything else is a white
+   button with a firm edge, or a quiet link. */
 
 .btn {
   display: inline-flex;
@@ -11,6 +13,7 @@
   font-weight: var(--font-heading-weight);
   font-size: 13px;
   line-height: 1.2;
+  min-height: 32px;
   color: var(--color-text);
   background: transparent;
   border: 1px solid transparent;
@@ -36,30 +39,51 @@
 }
 
 .btn-primary {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: #fff;
+  background: var(--color-accent-600);
+  border-color: var(--color-accent-600);
+  box-shadow: var(--shadow-card);
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-    color: var(--color-accent-800);
+    background: var(--color-accent-700);
+    border-color: var(--color-accent-700);
+    color: #fff;
   }
 
   &:active:not(:disabled) {
-    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+    background: var(--color-accent-800);
+    border-color: var(--color-accent-800);
   }
 }
 
 .btn-secondary {
-  border-color: var(--color-divider);
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
   color: var(--color-text);
+  box-shadow: var(--shadow-card);
 
   &:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-text) 7%, transparent);
-    border-color: color-mix(in srgb, var(--color-text) 30%, transparent);
+    background: var(--color-surface-hover);
+    border-color: color-mix(in srgb, var(--color-text) 48%, transparent);
   }
 
   &:active:not(:disabled) {
-    background: color-mix(in srgb, var(--color-text) 14%, transparent);
+    background: color-mix(in srgb, var(--color-text) 10%, var(--color-surface));
+  }
+}
+
+/* A destructive action: void, delete, reject. Filled, so it is never mistaken
+   for a neutral button, and never the first button in a row. */
+.btn-danger {
+  color: #fff;
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  box-shadow: var(--shadow-card);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-danger) 85%, #000);
+    border-color: color-mix(in srgb, var(--color-danger) 85%, #000);
+    color: #fff;
   }
 }
 
@@ -78,10 +102,44 @@
   }
 }
 
+/* Smaller, for a button that sits in a table row or a dense toolbar. */
+.btn-sm {
+  min-height: 26px;
+  padding: 3px var(--space-3);
+  font-size: 12px;
+}
+
+/* An action that reads as a link but must behave as a button. */
+.btn-link {
+  min-height: 0;
+  padding: 0 var(--space-1);
+  color: var(--color-accent-700);
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:hover:not(:disabled) {
+    color: var(--color-accent-800);
+  }
+}
+
+/* A destructive action that is one of several in a row, so it should not be
+   the loudest thing on the line. */
+.btn-danger-outline {
+  background: var(--color-surface);
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 55%, transparent);
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger-bg);
+    border-color: var(--color-danger);
+  }
+}
+
 .btn-icon {
-  width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
   padding: 0;
   flex: none;
   border-radius: var(--radius-md);
@@ -95,7 +153,7 @@
 .btn[aria-pressed='true'] {
   border-color: var(--color-accent);
   color: var(--color-accent-700);
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
 }
 
 /* Segmented Button Group */

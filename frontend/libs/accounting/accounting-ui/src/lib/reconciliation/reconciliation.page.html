@@ -1,7 +1,7 @@
 <header class="page-head">
   <h1>Reconciliation</h1>
   <div class="head-actions">
-    <button type="button" (click)="openUpload()" [disabled]="busy()">Import statement</button>
+    <button class="btn btn-primary" type="button" (click)="openUpload()" [disabled]="busy()">Import statement</button>
   </div>
 </header>
 
@@ -60,7 +60,7 @@
                       <span class="date">{{ match.ledgerDate | date: 'dd MMM yyyy' }}</span>
                       <span class="description">{{ match.description }}</span>
                     </div>
-                    <button type="button" (click)="reconcile(line, match)">Match</button>
+                    <button class="btn btn-secondary" type="button" (click)="reconcile(line, match)">Match</button>
                   </li>
                 }
               </ul>

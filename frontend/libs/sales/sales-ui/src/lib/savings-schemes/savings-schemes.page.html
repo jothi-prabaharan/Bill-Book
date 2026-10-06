@@ -2,8 +2,8 @@
   <header class="schemes__head">
     <h1 class="schemes__title">Savings schemes</h1>
     <div class="schemes__tabs" role="tablist">
-      <button type="button" role="tab" class="btn" [class.btn--primary]="tab() === 'enrolments'" [attr.aria-selected]="tab() === 'enrolments'" (click)="tab.set('enrolments')">Customers</button>
-      <button type="button" role="tab" class="btn" [class.btn--primary]="tab() === 'schemes'" [attr.aria-selected]="tab() === 'schemes'" (click)="tab.set('schemes')">Schemes</button>
+      <button type="button" role="tab" class="btn btn-secondary" [class.btn--primary]="tab() === 'enrolments'" [attr.aria-selected]="tab() === 'enrolments'" (click)="tab.set('enrolments')">Customers</button>
+      <button type="button" role="tab" class="btn btn-secondary" [class.btn--primary]="tab() === 'schemes'" [attr.aria-selected]="tab() === 'schemes'" (click)="tab.set('schemes')">Schemes</button>
     </div>
   </header>
 
@@ -14,7 +14,7 @@
   @if (tab() === 'enrolments') {
     <div class="schemes__bar">
       <bb-select label="Status" name="status" [clearable]="false" [options]="statusOptions" [(ngModel)]="statusFilter" (ngModelChange)="loadEnrolments()" />
-      <button type="button" class="btn btn--primary" (click)="startEnrol()">Enrol a customer</button>
+      <button type="button" class="btn btn-primary" (click)="startEnrol()">Enrol a customer</button>
     </div>
 
     @if (enrolling()) {
@@ -24,13 +24,13 @@
           <bb-select label="Scheme" name="scheme" placeholder="Choose a scheme" [options]="schemeChoices()" [(ngModel)]="enrolSchemeId" />
           <div class="schemes__picker">
             <span class="schemes__label">Customer</span>
-            <button type="button" class="btn" (click)="picker.openCustomer()">{{ enrolContactLabel() || 'Choose a customer' }}</button>
+            <button type="button" class="btn btn-secondary" (click)="picker.openCustomer()">{{ enrolContactLabel() || 'Choose a customer' }}</button>
           </div>
           <bb-branch-date-input label="First instalment" name="start" [(ngModel)]="enrolStart" />
         </div>
         <div class="schemes__actions">
-          <button type="submit" class="btn btn--primary" [disabled]="busy()">Enrol</button>
-          <button type="button" class="btn btn--ghost" (click)="enrolling.set(false)">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="busy()">Enrol</button>
+          <button type="button" class="btn btn-ghost" (click)="enrolling.set(false)">Cancel</button>
         </div>
       </form>
     }
@@ -74,15 +74,15 @@
 
         <div class="schemes__actions">
           @if (actions().pay) {
-            <button type="button" class="btn btn--primary" (click)="begin('pay')">Take instalment</button>
+            <button type="button" class="btn btn-primary" (click)="begin('pay')">Take instalment</button>
           }
           @if (actions().redeem || actions().closeEarly) {
-            <button type="button" class="btn" (click)="begin('redeem')">Redeem on an invoice</button>
+            <button type="button" class="btn btn-secondary" (click)="begin('redeem')">Redeem on an invoice</button>
           }
           @if (actions().refund) {
-            <button type="button" class="btn" (click)="begin('refund')">Refund</button>
+            <button type="button" class="btn btn-secondary" (click)="begin('refund')">Refund</button>
           }
-          <button type="button" class="btn btn--ghost" (click)="selected.set(null)">Close</button>
+          <button type="button" class="btn btn-ghost" (click)="selected.set(null)">Close</button>
         </div>
 
         @if (action(); as kind) {
@@ -109,8 +109,8 @@
               }
             </p>
             <div class="schemes__actions">
-              <button type="submit" class="btn btn--primary" [disabled]="busy()">Confirm</button>
-              <button type="button" class="btn btn--ghost" (click)="action.set(null)">Cancel</button>
+              <button type="submit" class="btn btn-primary" [disabled]="busy()">Confirm</button>
+              <button type="button" class="btn btn-ghost" (click)="action.set(null)">Cancel</button>
             </div>
           </form>
         }
@@ -133,7 +133,7 @@
   } @else {
     <div class="schemes__bar">
       <span class="schemes__muted">A change to a scheme applies to customers who join afterwards. Everyone already enrolled keeps the terms they joined on.</span>
-      <button type="button" class="btn btn--primary" (click)="newScheme()">New scheme</button>
+      <button type="button" class="btn btn-primary" (click)="newScheme()">New scheme</button>
     </div>
 
     <bb-data-grid
@@ -172,8 +172,8 @@
         </div>
         <p class="schemes__muted">Bonus at maturity: {{ formats.formatMoney(draftBonus) }}</p>
         <div class="schemes__actions">
-          <button type="submit" class="btn btn--primary" [disabled]="busy()">Save</button>
-          <button type="button" class="btn btn--ghost" (click)="editingScheme.set(null)">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="busy()">Save</button>
+          <button type="button" class="btn btn-ghost" (click)="editingScheme.set(null)">Cancel</button>
         </div>
       </form>
     }

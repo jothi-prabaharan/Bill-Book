@@ -1,7 +1,7 @@
 <div class="views">
   <header>
     <h2>Saved views</h2>
-    <button type="button" class="ghost" (click)="close()">Done</button>
+    <button type="button" class="btn btn-ghost" (click)="close()">Done</button>
   </header>
 
   @if (message(); as failure) {
@@ -63,6 +63,6 @@
       [(ngModel)]="makeDefault"
     />
 
-    <button type="submit" [disabled]="busy() || name.trim() === ''">Save</button>
+    <button class="btn btn-primary" type="submit" [disabled]="busy() || name.trim() === ''">Save</button>
   </form>
 </div>

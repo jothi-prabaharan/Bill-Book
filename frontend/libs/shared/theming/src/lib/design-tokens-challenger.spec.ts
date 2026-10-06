@@ -175,7 +175,7 @@ describe('Milestone 1 Empirical Challenger Stress Tests (Theming & Tokens)', () 
       expect(content).toContain('--shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent)');
     });
 
-    it('CHAL-M1-10: Button styles enforce stroke-over-fill, scaling active state, and themed focus-visible', () => {
+    it('CHAL-M1-10: Buttons start from a transparent base, scale on press, and themed focus-visible', () => {
       const btnScssPath = resolve(themingScssDir, '_buttons.scss');
       const tokensScssPath = resolve(themingScssDir, '_tokens.scss');
       const btnContent = readFileSync(btnScssPath, 'utf-8');

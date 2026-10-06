@@ -3,13 +3,13 @@
     <h1 class="menu__title">Menu</h1>
     @switch (tab()) {
       @case ('dishes') {
-        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newDish()" [disabled]="!categories().length">Add a dish</button>
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-primary" (click)="newDish()" [disabled]="!categories().length">Add a dish</button>
       }
       @case ('categories') {
-        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newCategory()">Add a category</button>
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-primary" (click)="newCategory()">Add a category</button>
       }
       @case ('schedules') {
-        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="newSchedule()">Add a timed menu</button>
+        <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-primary" (click)="newSchedule()">Add a timed menu</button>
       }
     }
   </header>
@@ -51,7 +51,7 @@
         <ng-template bbCellTemplate="isAvailable" let-r>
           <button
             type="button"
-            class="btn btn--small menu__toggle"
+            class="btn btn-sm menu__toggle btn-secondary"
             [class.menu__toggle--off]="!r.isAvailable"
             [attr.aria-pressed]="!r.isAvailable"
             [attr.aria-label]="r.isAvailable ? 'Mark ' + r.itemName + ' sold out' : 'Put ' + r.itemName + ' back on'"
@@ -68,14 +68,14 @@
           <div class="menu__panel">
             <header class="menu__panel-head">
               <h2 class="menu__subtitle">{{ current === 'new' ? 'New dish' : current.itemName }}</h2>
-              <button type="button" class="btn" (click)="closeDish()">Close</button>
+              <button type="button" class="btn btn-secondary" (click)="closeDish()">Close</button>
             </header>
 
             <div class="menu__grid">
               @if (current === 'new') {
                 <div class="menu__field">
                   <span class="menu__label">Item</span>
-                  <button type="button" class="btn menu__pick" (click)="openPicker()">{{ itemLabel() || 'Choose an item…' }}</button>
+                  <button type="button" class="btn menu__pick btn-secondary" (click)="openPicker()">{{ itemLabel() || 'Choose an item…' }}</button>
                   <span class="menu__muted">The dish's name, tax and unit come from the item master.</span>
                 </div>
               } @else {
@@ -98,13 +98,13 @@
                   <bb-text-input label="Portion" [name]="'vname' + $index" [(ngModel)]="v.name" />
                   <bb-money-input label="Price" [name]="'vprice' + $index" [formats]="formats.settings()" [(ngModel)]="v.price" />
                   <bb-number-input label="Portion factor" hint="0.5 for a half" [name]="'vfactor' + $index" [decimals]="4" [(ngModel)]="v.portionFactor" />
-                  <button type="button" class="btn btn--link" (click)="removeVariant($index)">Remove</button>
+                  <button type="button" class="btn btn-link" (click)="removeVariant($index)">Remove</button>
                 </div>
               }
               <div class="menu__actions-left">
-                <button type="button" class="btn" (click)="addVariant()">Add a portion</button>
+                <button type="button" class="btn btn-secondary" (click)="addVariant()">Add a portion</button>
                 @if (!draft.variants.length) {
-                  <button type="button" class="btn" (click)="addHalfAndFull()">Half and full</button>
+                  <button type="button" class="btn btn-secondary" (click)="addHalfAndFull()">Half and full</button>
                 }
               </div>
             </fieldset>
@@ -119,11 +119,11 @@
                     <bb-select label="Portion" [name]="'pvariant' + $index" [clearable]="false" [options]="variantOptions()" [(ngModel)]="p.variantName" />
                   }
                   <bb-money-input label="Price" [name]="'pprice' + $index" [formats]="formats.settings()" [(ngModel)]="p.price" />
-                  <button type="button" class="btn btn--link" (click)="removePrice($index)">Remove</button>
+                  <button type="button" class="btn btn-link" (click)="removePrice($index)">Remove</button>
                 </div>
               }
               <div class="menu__actions-left">
-                <button type="button" class="btn" (click)="addPrice()">Add a price</button>
+                <button type="button" class="btn btn-secondary" (click)="addPrice()">Add a price</button>
               </div>
             </fieldset>
 
@@ -136,31 +136,31 @@
                     <bb-text-input label="Group" [name]="'gname' + gi" [(ngModel)]="g.name" />
                     <bb-number-input label="Choose at least" [name]="'gmin' + gi" [decimals]="0" [(ngModel)]="g.minChoices" />
                     <bb-number-input label="Choose at most" [name]="'gmax' + gi" [decimals]="0" [(ngModel)]="g.maxChoices" />
-                    <button type="button" class="btn btn--link" (click)="removeGroup(gi)">Remove group</button>
+                    <button type="button" class="btn btn-link" (click)="removeGroup(gi)">Remove group</button>
                   </div>
                   @for (m of g.modifiers; track $index; let mi = $index) {
                     <div class="menu__row menu__row--inset">
                       <bb-text-input label="Choice" [name]="'mname' + gi + '_' + mi" [(ngModel)]="m.name" />
                       <bb-money-input label="Adds" [name]="'mprice' + gi + '_' + mi" allowNegative [formats]="formats.settings()" [(ngModel)]="m.priceChange" />
                       <bb-checkbox [name]="'mavail' + gi + '_' + mi" text="Available" [(ngModel)]="m.isAvailable" />
-                      <button type="button" class="btn btn--link" (click)="removeModifier(g, mi)">Remove</button>
+                      <button type="button" class="btn btn-link" (click)="removeModifier(g, mi)">Remove</button>
                     </div>
                   }
                   <div class="menu__actions-left">
-                    <button type="button" class="btn" (click)="addModifier(g)">Add a choice</button>
+                    <button type="button" class="btn btn-secondary" (click)="addModifier(g)">Add a choice</button>
                   </div>
                 </div>
               }
               <div class="menu__actions-left">
-                <button type="button" class="btn" (click)="addGroup()">Add a choice group</button>
+                <button type="button" class="btn btn-secondary" (click)="addGroup()">Add a choice group</button>
               </div>
             </fieldset>
 
             <footer class="menu__actions">
               @if (current !== 'new') {
-                <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="removeDish()">Take off the menu</button>
+                <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn-danger" [disabled]="busy()" (click)="removeDish()">Take off the menu</button>
               }
-              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveDish()">Save</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveDish()">Save</button>
             </footer>
           </div>
         </div>
@@ -188,10 +188,10 @@
           <bb-checkbox name="categoryActive" text="Active" hint="An inactive category and its dishes are left off the order screen." [(ngModel)]="categoryActive" />
           <footer class="menu__actions">
             @if (current !== 'new') {
-              <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy() || current.itemCount > 0" (click)="deleteCategory(current)">Delete</button>
+              <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn-danger" [disabled]="busy() || current.itemCount > 0" (click)="deleteCategory(current)">Delete</button>
             }
-            <button type="button" class="btn" (click)="editingCategory.set(null)">Cancel</button>
-            <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveCategory()">Save</button>
+            <button type="button" class="btn btn-secondary" (click)="editingCategory.set(null)">Cancel</button>
+            <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveCategory()">Save</button>
           </footer>
         </div>
       }
@@ -219,9 +219,9 @@
           <div class="menu__field">
             <span class="menu__label">Days</span>
             <div class="menu__days">
-              <button type="button" class="btn btn--small" (click)="setDays(everyDay)">Every day</button>
-              <button type="button" class="btn btn--small" (click)="setDays(weekdays)">Weekdays</button>
-              <button type="button" class="btn btn--small" (click)="setDays(weekend)">Weekend</button>
+              <button type="button" class="btn btn-sm btn-secondary" (click)="setDays(everyDay)">Every day</button>
+              <button type="button" class="btn btn-sm btn-secondary" (click)="setDays(weekdays)">Weekdays</button>
+              <button type="button" class="btn btn-sm btn-secondary" (click)="setDays(weekend)">Weekend</button>
             </div>
             <div class="menu__days">
               @for (d of days; track d.flag) {
@@ -237,10 +237,10 @@
           <bb-checkbox name="scheduleActive" text="On" hint="While off, its dishes are not served at all." [(ngModel)]="scheduleDraft.isActive" />
           <footer class="menu__actions">
             @if (current !== 'new') {
-              <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="deleteSchedule(current)">Delete</button>
+              <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn-danger" [disabled]="busy()" (click)="deleteSchedule(current)">Delete</button>
             }
-            <button type="button" class="btn" (click)="editingSchedule.set(null)">Cancel</button>
-            <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveSchedule()">Save</button>
+            <button type="button" class="btn btn-secondary" (click)="editingSchedule.set(null)">Cancel</button>
+            <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveSchedule()">Save</button>
           </footer>
         </div>
       }

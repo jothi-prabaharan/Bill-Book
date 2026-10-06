@@ -51,7 +51,7 @@
       {{ r.recommendedIncreasePercent ? (r.recommendedIncreasePercent + '%') : '—' }}
     </ng-template>
     <ng-template bbCellTemplate="performanceReviewId" let-r>
-      <button class="btn btn-sm btn-outline" (click)="openAdjust(r.performanceReviewId)">Calibrate / Adjust</button>
+      <button class="btn btn-sm btn-outline btn-secondary" (click)="openAdjust(r.performanceReviewId)">Calibrate / Adjust</button>
     </ng-template>
   </bb-data-grid>
 </div>
@@ -68,7 +68,7 @@
     </div>
   </div>
   <div class="sheet-actions">
-    <button class="btn" (click)="showAdjustModal.set(false)">Cancel</button>
+    <button class="btn btn-secondary" (click)="showAdjustModal.set(false)">Cancel</button>
     <button class="btn btn-primary" (click)="submitAdjust()">Save Adjustment</button>
   </div>
 </div>

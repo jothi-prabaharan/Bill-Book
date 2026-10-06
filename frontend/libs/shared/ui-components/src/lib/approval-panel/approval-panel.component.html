@@ -36,13 +36,13 @@
       <textarea [(ngModel)]="comments" rows="2" maxlength="2000"></textarea>
     </label>
     <div class="approval__actions">
-      <button type="button" class="btn btn--primary" (click)="act('Approve')" [disabled]="busy()">Approve</button>
-      <button type="button" class="btn" (click)="act('SendBack')" [disabled]="busy()">Send back</button>
-      <button type="button" class="btn btn--danger" (click)="act('Reject')" [disabled]="busy()">Reject</button>
+      <button type="button" class="btn btn-primary" (click)="act('Approve')" [disabled]="busy()">Approve</button>
+      <button type="button" class="btn btn-secondary" (click)="act('SendBack')" [disabled]="busy()">Send back</button>
+      <button type="button" class="btn btn-danger" (click)="act('Reject')" [disabled]="busy()">Reject</button>
     </div>
   } @else if (canSubmit()) {
     <div class="approval__actions">
-      <button type="button" class="btn" (click)="submit()" [disabled]="busy()">Submit for approval</button>
+      <button type="button" class="btn btn-secondary" (click)="submit()" [disabled]="busy()">Submit for approval</button>
     </div>
   }
 </section>

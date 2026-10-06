@@ -280,7 +280,7 @@
 
     @if (tab() === 'addresses') {
       <div class="child-actions">
-        <button type="button" (click)="addAddress()">+ Add address</button>
+        <button class="btn btn-primary" type="button" (click)="addAddress()">+ Add address</button>
         <button type="button" class="link" (click)="copyBillingToShipping()">
           Copy billing to shipping
         </button>
@@ -354,7 +354,7 @@
 
     @if (tab() === 'persons') {
       <div class="child-actions">
-        <button type="button" (click)="addPerson()">+ Add person</button>
+        <button class="btn btn-primary" type="button" (click)="addPerson()">+ Add person</button>
         <button type="button" class="link" (click)="rolesOpen.set(true)">Manage roles</button>
       </div>
 
@@ -435,7 +435,7 @@
 
     @if (tab() === 'banking') {
       <div class="child-actions">
-        <button type="button" (click)="addBankDetail()">+ Add account</button>
+        <button class="btn btn-primary" type="button" (click)="addBankDetail()">+ Add account</button>
       </div>
 
       @for (bank of form.bankDetails; track $index) {
@@ -510,7 +510,7 @@
 
     @if (tab() === 'licences') {
       <div class="child-actions">
-        <button type="button" (click)="addLicence()">+ Add licence</button>
+        <button class="btn btn-primary" type="button" (click)="addLicence()">+ Add licence</button>
       </div>
 
       @for (licence of form.licences; track $index) {
@@ -671,7 +671,7 @@
     }
 
     <div class="sheet-actions">
-      <button type="button" (click)="save()" [disabled]="busy() || !form.displayName">Save contact</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.displayName">Save contact</button>
       @if (editingId() !== null) {
         <button type="button" class="link" (click)="makePortalLink()" [disabled]="busy()">Portal link</button>
         @if ((portalAccess()?.liveLinks ?? 0) > 0) {

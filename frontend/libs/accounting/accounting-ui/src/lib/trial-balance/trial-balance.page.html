@@ -14,8 +14,8 @@
   <div class="field">
     <bb-branch-date-input label="To"  [(ngModel)]="to" name="to" />
   </div>
-  <button type="submit" [disabled]="busy()">Show</button>
-  <button type="button" class="ghost" (click)="clear()" [disabled]="busy()">All dates</button>
+  <button class="btn btn-primary" type="submit" [disabled]="busy()">Show</button>
+  <button type="button" class="btn btn-ghost" (click)="clear()" [disabled]="busy()">All dates</button>
 </form>
 
 @if (busy()) {

@@ -37,8 +37,8 @@
   />
 
   <div class="sheet-actions">
-    <button type="button" (click)="dismiss()" [disabled]="uploading()">Cancel</button>
-    <button type="button" (click)="upload()" [disabled]="!selectedFile() || uploading()">
+    <button class="btn btn-secondary" type="button" (click)="dismiss()" [disabled]="uploading()">Cancel</button>
+    <button class="btn btn-secondary" type="button" (click)="upload()" [disabled]="!selectedFile() || uploading()">
       {{ uploading() ? 'Importing…' : 'Import' }}
     </button>
   </div>

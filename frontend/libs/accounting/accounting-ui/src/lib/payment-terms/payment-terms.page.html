@@ -6,7 +6,7 @@
       [(ngModel)]="showInactive"
       (ngModelChange)="load()"
     />
-    <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add term</button>
+    <button class="btn btn-primary" type="button" (click)="openAdd()" [disabled]="busy()">+ Add term</button>
   </div>
 </header>
 
@@ -152,7 +152,7 @@
     </div>
 
     <div class="sheet-actions">
-      <button type="button" (click)="save()" [disabled]="busy() || !form.termName">Save</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.termName">Save</button>
       <button type="button" class="link" (click)="formOpen.set(false)">Cancel</button>
     </div>
   </div>

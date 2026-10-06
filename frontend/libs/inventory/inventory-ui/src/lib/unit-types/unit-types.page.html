@@ -7,7 +7,7 @@
       (ngModelChange)="load()"
     />
     <bb-text-input  [(ngModel)]="newTypeName" maxlength="50" placeholder="New type name" />
-    <button type="button" (click)="addType()" [disabled]="busy() || !newTypeName.trim()">
+    <button class="btn btn-primary" type="button" (click)="addType()" [disabled]="busy() || !newTypeName.trim()">
       + Add type
     </button>
   </div>
@@ -171,7 +171,7 @@
     </div>
 
     <div class="sheet-actions">
-      <button type="button" (click)="addUnit(type)" [disabled]="busy() || !newUnit.uomCode.trim() || !newUnit.uomName.trim()">+ Add unit</button>
+      <button class="btn btn-primary" type="button" (click)="addUnit(type)" [disabled]="busy() || !newUnit.uomCode.trim() || !newUnit.uomName.trim()">+ Add unit</button>
       <button type="button" class="link" (click)="expanded.set(null)">Close</button>
     </div>
   </div>

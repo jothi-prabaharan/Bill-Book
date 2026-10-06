@@ -35,7 +35,7 @@
       <div class="rr__panel">
         <header class="rr__head">
           <h2 class="rr__subtitle">{{ recipe.dishName }}</h2>
-          <button type="button" class="btn" (click)="editing.set(null)">Close</button>
+          <button type="button" class="btn btn-secondary" (click)="editing.set(null)">Close</button>
         </header>
         <p class="rr__muted">
           Sells for {{ recipe.price !== null ? money(recipe.price) : 'no set price' }}.
@@ -56,25 +56,25 @@
             <div class="rr__row">
               <div class="rr__field">
                 <span class="rr__label">Ingredient</span>
-                <button type="button" class="btn rr__pick" (click)="openPicker(l)">{{ l.ingredientName || 'Choose…' }}</button>
+                <button type="button" class="btn rr__pick btn-secondary" (click)="openPicker(l)">{{ l.ingredientName || 'Choose…' }}</button>
               </div>
               <bb-number-input label="Quantity" [name]="'qty' + i" [decimals]="4" [(ngModel)]="l.quantity" />
               <bb-select label="Unit" [name]="'uom' + i" [clearable]="false" [options]="unitOptions(l)" [(ngModel)]="l.uomId" />
-              <button type="button" class="btn btn--link" (click)="removeLine(i)">Remove</button>
+              <button type="button" class="btn btn-link" (click)="removeLine(i)">Remove</button>
             </div>
           } @empty {
             <p class="rr__muted">No ingredients yet.</p>
           }
           <div class="rr__actions-left">
-            <button type="button" class="btn" (click)="addLine()">Add an ingredient</button>
+            <button type="button" class="btn btn-secondary" (click)="addLine()">Add an ingredient</button>
           </div>
         </fieldset>
 
         <footer class="rr__actions">
           @if (recipe.hasRecipe) {
-            <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="remove()">Delete recipe</button>
+            <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn-danger" [disabled]="busy()" (click)="remove()">Delete recipe</button>
           }
-          <button *bbIfCan="'restaurant.edit'" type="button" class="btn btn--primary" [disabled]="busy()" (click)="save()">Save</button>
+          <button *bbIfCan="'restaurant.edit'" type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">Save</button>
         </footer>
       </div>
     </div>

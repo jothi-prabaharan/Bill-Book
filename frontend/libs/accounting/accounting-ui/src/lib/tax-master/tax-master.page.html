@@ -6,7 +6,7 @@
       [(ngModel)]="showHistory"
       (ngModelChange)="load()"
     />
-    <button type="button" (click)="startCreate()" [disabled]="busy()">+ New rate</button>
+    <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New rate</button>
   </div>
 </header>
 
@@ -81,7 +81,7 @@
     }
 
     <div class="editor-actions">
-      <button type="submit" [disabled]="busy() || !valid()">Save</button>
+      <button class="btn btn-primary" type="submit" [disabled]="busy() || !valid()">Save</button>
       <button type="button" class="link" (click)="mode.set(null)">Cancel</button>
     </div>
   </form>

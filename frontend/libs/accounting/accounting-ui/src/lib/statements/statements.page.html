@@ -137,8 +137,8 @@
     </fieldset>
 
     <div class="editor-actions">
-      <button type="button" class="ghost" (click)="editingProfile.set(false)">Cancel</button>
-      <button type="button" class="primary" (click)="saveProfile()" [disabled]="busy()">
+      <button type="button" class="btn btn-ghost" (click)="editingProfile.set(false)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="saveProfile()" [disabled]="busy()">
         Save mapping
       </button>
     </div>
@@ -153,7 +153,7 @@
           buttonText="Choose statement"
           (selectionChange)="onFileChosen($event)"
         />
-        <button type="button" class="primary" (click)="import()" [disabled]="busy() || !file">
+        <button type="button" class="btn btn-primary" (click)="import()" [disabled]="busy() || !file">
           Import
         </button>
         <button type="button" class="link" (click)="startProfile()">Edit column mapping</button>
@@ -190,7 +190,7 @@
       <span class="spacer"></span>
       <a class="link" [href]="exportUrl('csv')" download>Export CSV</a>
       <a class="link" [href]="exportUrl('xlsx')" download>Export Excel</a>
-      <button type="button" class="ghost" (click)="close()">Close</button>
+      <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
     </div>
 
     <bb-data-grid [gridCode]="'STATEMENT_LINES'" [columns]="lineColumns" [data]="visibleLines">

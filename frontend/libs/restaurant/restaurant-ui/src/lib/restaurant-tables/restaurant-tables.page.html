@@ -3,10 +3,10 @@
     <h1 class="tp__title">Tables</h1>
     <div class="tp__head-actions">
       @if (managing()) {
-        <button type="button" class="btn" (click)="newFloor()">Add a floor</button>
-        <button type="button" class="btn" [disabled]="!plan().floors.length" (click)="newTable()">Add a table</button>
+        <button type="button" class="btn btn-secondary" (click)="newFloor()">Add a floor</button>
+        <button type="button" class="btn btn-secondary" [disabled]="!plan().floors.length" (click)="newTable()">Add a table</button>
       }
-      <button *bbIfCan="'restaurant.create'" type="button" class="btn" [attr.aria-pressed]="managing()" (click)="toggleManaging()">
+      <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-secondary" [attr.aria-pressed]="managing()" (click)="toggleManaging()">
         {{ managing() ? 'Done' : 'Set up' }}
       </button>
     </div>
@@ -43,7 +43,7 @@
     <div class="tp__floor-bar">
       <span class="tp__muted">{{ floorSummary(f) }}</span>
       @if (managing()) {
-        <button type="button" class="btn btn--link" (click)="editFloor(f)">Edit floor</button>
+        <button type="button" class="btn btn-link" (click)="editFloor(f)">Edit floor</button>
       }
     </div>
 
@@ -94,26 +94,26 @@
               }
               <div class="tp__actions">
                 @if (nextParty(); as party) {
-                  <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="seatNextParty(t)">
+                  <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="seatNextParty(t)">
                     Seat {{ party.guestName }} ({{ party.partySize }}) from the waiting list
                   </button>
                 }
                 @if (t.openOrderId) {
-                  <button type="button" class="btn btn--primary" (click)="takeOrder(t)">Open order</button>
+                  <button type="button" class="btn btn-primary" (click)="takeOrder(t)">Open order</button>
                 } @else if (t.status === 'Free' || t.status === 'Occupied') {
-                  <button *bbIfCan="'restaurant.create'" type="button" class="btn btn--primary" (click)="takeOrder(t)">Take an order</button>
+                  <button *bbIfCan="'restaurant.create'" type="button" class="btn btn-primary" (click)="takeOrder(t)">Take an order</button>
                 }
                 @for (to of nextStatuses(t); track to) {
-                  <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="setStatus(t, to)">{{ statusAction(to, t.status) }}</button>
+                  <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="setStatus(t, to)">{{ statusAction(to, t.status) }}</button>
                 }
                 @if (!t.mergedIntoTableId && (t.status === 'Occupied' || t.status === 'Billed')) {
-                  <button type="button" class="btn" (click)="sheet.set('move')">Move to another table</button>
+                  <button type="button" class="btn btn-secondary" (click)="sheet.set('move')">Move to another table</button>
                 }
                 @if (!t.mergedIntoTableId && (t.status === 'Free' || t.status === 'Occupied')) {
-                  <button type="button" class="btn" (click)="sheet.set('merge')">Join tables</button>
+                  <button type="button" class="btn btn-secondary" (click)="sheet.set('merge')">Join tables</button>
                 }
                 @if (t.mergedIntoTableId || t.mergedCodes.length) {
-                  <button type="button" class="btn" [disabled]="busy()" (click)="split(t)">{{ t.mergedIntoTableId ? 'Leave the group' : 'Separate the group' }}</button>
+                  <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="split(t)">{{ t.mergedIntoTableId ? 'Leave the group' : 'Separate the group' }}</button>
                 }
               </div>
             }
@@ -122,7 +122,7 @@
             <h2 class="tp__subtitle">Move table {{ selected()?.code }} to</h2>
             <div class="tp__choices">
               @for (t of targets(); track t.restaurantTableId) {
-                <button type="button" class="btn" [disabled]="busy()" (click)="moveTo(t)">{{ t.code }} · {{ t.seats }} seats</button>
+                <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="moveTo(t)">{{ t.code }} · {{ t.seats }} seats</button>
               } @empty {
                 <p class="tp__muted">No free table to move to.</p>
               }
@@ -144,7 +144,7 @@
               }
             </div>
             <div class="tp__actions">
-              <button type="button" class="btn btn--primary" [disabled]="busy() || !chosen().size" (click)="merge()">Join</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy() || !chosen().size" (click)="merge()">Join</button>
             </div>
           }
           @case ('edit-table') {
@@ -155,9 +155,9 @@
             <bb-checkbox name="tableActive" text="In use" hint="A table switched off is left off the floor plan." [(ngModel)]="tableDraft.isActive" />
             <div class="tp__actions">
               @if (editingTableId !== null) {
-                <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="deleteTable()">Delete</button>
+                <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn-danger" [disabled]="busy()" (click)="deleteTable()">Delete</button>
               }
-              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveTable()">Save</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveTable()">Save</button>
             </div>
           }
           @case ('edit-floor') {
@@ -166,13 +166,13 @@
             <bb-checkbox name="floorActive" text="In use" [(ngModel)]="floorDraft.isActive" />
             <div class="tp__actions">
               @if (editingFloorId !== null) {
-                <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn--danger" [disabled]="busy()" (click)="deleteFloor()">Delete</button>
+                <button *bbIfCan="'restaurant.delete'" type="button" class="btn btn-danger" [disabled]="busy()" (click)="deleteFloor()">Delete</button>
               }
-              <button type="button" class="btn btn--primary" [disabled]="busy()" (click)="saveFloor()">Save</button>
+              <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveFloor()">Save</button>
             </div>
           }
         }
-        <button type="button" class="btn tp__close" (click)="close()">Close</button>
+        <button type="button" class="btn tp__close btn-secondary" (click)="close()">Close</button>
       </div>
     </div>
   }

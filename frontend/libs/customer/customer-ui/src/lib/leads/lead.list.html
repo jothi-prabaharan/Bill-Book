@@ -1,7 +1,7 @@
 <div class="leads-container">
   <div class="header-actions">
     <h2>Leads</h2>
-    <button class="bb-btn bb-btn-primary" (click)="showForm.set(true)">Add Lead</button>
+    <button class="btn btn-primary" (click)="showForm.set(true)">Add Lead</button>
   </div>
 
   @if (message(); as failure) {
@@ -18,7 +18,7 @@
     <ng-template bbCellTemplate="actions" let-row="row">
       @if (row.status !== 'Converted') {
         <button
-          class="bb-btn bb-btn-secondary"
+          class="btn btn-secondary"
           [disabled]="busy()"
           (click)="startConvert(row)"
         >
@@ -50,20 +50,20 @@
 
     <div class="convert-actions">
       <button
-        class="bb-btn bb-btn-primary"
+        class="btn btn-primary"
         [disabled]="busy()"
         (click)="convertToNewContact()"
       >
         Create a new contact
       </button>
       <button
-        class="bb-btn bb-btn-secondary"
+        class="btn btn-secondary"
         [disabled]="busy()"
         (click)="openContactPicker()"
       >
         Link an existing contact
       </button>
-      <button class="bb-btn" [disabled]="busy()" (click)="cancelConvert()">Cancel</button>
+      <button class="btn btn-secondary" [disabled]="busy()" (click)="cancelConvert()">Cancel</button>
     </div>
   </section>
 }

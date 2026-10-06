@@ -52,7 +52,7 @@
         <ul class="org-list">
           @for (org of auth.organizations(); track org.orgId) {
             <li>
-              <button type="button" (click)="pick(org.orgId)" [disabled]="busy()">
+              <button class="btn btn-secondary" type="button" (click)="pick(org.orgId)" [disabled]="busy()">
                 <strong>{{ org.orgName }}</strong>
                 <span>{{ org.roleName }}</span>
               </button>

@@ -9,13 +9,16 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-text);
 }
 
-h1 { font-size: 42px; }
-h2 { font-size: 32px; }
-h3 { font-size: 25px; }
-h4 { font-size: 20px; }
-h5 { font-size: 16px; }
+/* One scale for the whole product. A page title is an h1 and it is 22px
+   everywhere; the display sizes the old scale gave (42px for an h1) belong to
+   the sign-in screen, which sets its own. */
+h1 { font-size: 22px; }
+h2 { font-size: 18px; }
+h3 { font-size: 16px; }
+h4 { font-size: 14px; }
+h5 { font-size: 13px; }
 h6 {
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-accent-700);
@@ -35,6 +38,13 @@ a {
     color: var(--color-accent-800);
     text-decoration: underline;
   }
+}
+
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'],
+progress {
+  accent-color: var(--color-accent);
 }
 
 img {

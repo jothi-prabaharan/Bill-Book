@@ -6,7 +6,7 @@
       [(ngModel)]="showInactive"
       (ngModelChange)="load()"
     />
-    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add account</button>
+    <button class="btn btn-primary" type="button" (click)="startAdd()" [disabled]="busy()">+ Add account</button>
   </div>
 </header>
 
@@ -177,7 +177,7 @@
     </div>
 
     <div class="sheet-actions">
-      <button
+      <button class="btn btn-primary"
         type="button"
         (click)="save()"
         [disabled]="busy() || !form.accountName || !form.accountNumber || (needsBank && !form.bankId)"

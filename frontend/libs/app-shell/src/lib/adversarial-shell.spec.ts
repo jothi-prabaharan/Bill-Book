@@ -76,12 +76,12 @@ describe('Adversarial Stress Test Suite: Milestone 3 App Shell', () => {
   // CHALLENGE AREA 1: LAYOUT & VIEWPORT STRESS TESTING (360px, 768px, 1920px)
   // =========================================================================
   describe('Challenge Area 1: Layout & Viewport Stress-Testing', () => {
-    it('ADV-LAYOUT-01: Grid layout rules adhere to 56px rail, 46px topbar, and proper row/col spans on desktop', () => {
+    it('ADV-LAYOUT-01: Grid layout rules adhere to 68px rail, 46px topbar, and proper row/col spans on desktop', () => {
       const scssPath = resolve(__dirname, 'shell/shell.component.scss');
       const scss = readFileSync(scssPath, 'utf-8');
 
       // Verify desktop grid structure
-      expect(scss).toContain('grid-template-columns: 56px 1fr;');
+      expect(scss).toContain('grid-template-columns: 68px auto 1fr;');
       expect(scss).toContain('grid-template-rows: 46px auto 1fr;');
       expect(scss).toContain('height: 100dvh;');
       expect(scss).toContain('width: 100vw;');

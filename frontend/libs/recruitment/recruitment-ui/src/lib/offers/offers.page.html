@@ -57,11 +57,11 @@
     </ng-template>
     <ng-template bbCellTemplate="col7" let-o>
       <div style="display: flex; gap: 6px;">
-        <button *ngIf="o.offerStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(o.offerId)">Approve</button>
-        <button *ngIf="o.offerStatus === 'Approved'" type="button" class="btn btn-sm btn-outline-primary" (click)="send(o.offerId)">Send</button>
-        <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-success" (click)="accept(o.offerId)">Accept & Onboard</button>
-        <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-outline-danger" (click)="decline(o.offerId)">Decline</button>
-        <button *ngIf="o.offerStatus !== 'Accepted' && o.offerStatus !== 'Declined' && o.offerStatus !== 'Revoked'" type="button" class="btn btn-sm btn-outline-secondary" (click)="revoke(o.offerId)">Revoke</button>
+        <button *ngIf="o.offerStatus === 'Draft'" type="button" class="btn btn-sm btn-secondary" (click)="approve(o.offerId)">Approve</button>
+        <button *ngIf="o.offerStatus === 'Approved'" type="button" class="btn btn-sm btn-secondary" (click)="send(o.offerId)">Send</button>
+        <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-success btn-secondary" (click)="accept(o.offerId)">Accept & Onboard</button>
+        <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-danger-outline" (click)="decline(o.offerId)">Decline</button>
+        <button *ngIf="o.offerStatus !== 'Accepted' && o.offerStatus !== 'Declined' && o.offerStatus !== 'Revoked'" type="button" class="btn btn-sm btn-outline-secondary btn-secondary" (click)="revoke(o.offerId)">Revoke</button>
       </div>
     </ng-template>
   </bb-data-grid>

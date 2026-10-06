@@ -41,7 +41,7 @@
               (ngModelChange)="spreadMode.set($event)"
             />
           </div>
-      <button type="button" (click)="save()" [disabled]="busy() || !dirty()">Save</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !dirty()">Save</button>
       <bb-file-input
             accept=".csv,.xlsx"
             buttonText="Import CSV or XLSX"
@@ -50,8 +50,8 @@
             (valueChange)="importFile($event)"
           />
     }
-    <button type="button" class="secondary" (click)="exportAs('csv')" [disabled]="busy()">Export CSV</button>
-    <button type="button" class="secondary" (click)="exportAs('xlsx')" [disabled]="busy()">Export XLSX</button>
+    <button type="button" class="btn btn-secondary" (click)="exportAs('csv')" [disabled]="busy()">Export CSV</button>
+    <button type="button" class="btn btn-secondary" (click)="exportAs('xlsx')" [disabled]="busy()">Export XLSX</button>
   </div>
 
   <!-- Wide screens: accounts down, twelve months across. -->
@@ -181,14 +181,14 @@
           <bb-select label="Project" name="addProject" placeholder="No project" [options]="projectOptions()" [(ngModel)]="addProjectId" />
         </div>
       }
-      <button type="button" class="secondary" (click)="addLine()" [disabled]="!addAccountId">Add</button>
+      <button type="button" class="btn btn-secondary" (click)="addLine()" [disabled]="!addAccountId">Add</button>
     </div>
   }
 
   <div class="lifecycle">
     @if (b.status === 'Draft' && canApprove()) {
       <bb-checkbox text="Make it the branch's budget for the year" name="makeDefault" [(ngModel)]="makeDefault" />
-      <button type="button" (click)="approve()" [disabled]="busy() || dirty()">Approve and lock</button>
+      <button class="btn btn-primary" type="button" (click)="approve()" [disabled]="busy() || dirty()">Approve and lock</button>
       @if (dirty()) {
         <span class="muted">Save your changes first.</span>
       }
@@ -198,12 +198,12 @@
     }
     @if (b.status === 'Approved' && canApprove()) {
       @if (!b.isBranchDefault) {
-        <button type="button" class="secondary" (click)="setDefault()" [disabled]="busy()">Make it the branch's budget</button>
+        <button type="button" class="btn btn-secondary" (click)="setDefault()" [disabled]="busy()">Make it the branch's budget</button>
       }
       <div class="field grow">
         <bb-text-input label="Reason for revising" name="reviseReason" [(ngModel)]="reviseReason" maxlength="500" />
       </div>
-      <button type="button" (click)="revise()" [disabled]="busy()">Revise</button>
+      <button class="btn btn-secondary" type="button" (click)="revise()" [disabled]="busy()">Revise</button>
     }
   </div>
 }

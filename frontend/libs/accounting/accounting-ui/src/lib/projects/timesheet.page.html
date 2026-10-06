@@ -12,16 +12,16 @@
   <div class="timer" role="status">
     <span class="timer__clock">{{ timerLabel() }}</span>
     <span>{{ timerProject() }}</span>
-    <button type="button" (click)="stopTimer()">Stop and log</button>
+    <button class="btn btn-secondary" type="button" (click)="stopTimer()">Stop and log</button>
   </div>
 }
 
 <div class="toolbar">
-  <button type="button" class="secondary" (click)="shiftWeek(-1)" [disabled]="busy()" aria-label="Previous week">‹</button>
+  <button type="button" class="btn btn-secondary" (click)="shiftWeek(-1)" [disabled]="busy()" aria-label="Previous week">‹</button>
   <strong>{{ formats.formatDate(days()[0]) }} – {{ formats.formatDate(days()[6]) }}</strong>
-  <button type="button" class="secondary" (click)="shiftWeek(1)" [disabled]="busy()" aria-label="Next week">›</button>
-  <button type="button" class="secondary" (click)="thisWeek()" [disabled]="busy()">This week</button>
-  <button type="button" (click)="newEntry()" [disabled]="busy()">Log hours</button>
+  <button type="button" class="btn btn-secondary" (click)="shiftWeek(1)" [disabled]="busy()" aria-label="Next week">›</button>
+  <button type="button" class="btn btn-secondary" (click)="thisWeek()" [disabled]="busy()">This week</button>
+  <button class="btn btn-primary" type="button" (click)="newEntry()" [disabled]="busy()">Log hours</button>
 </div>
 
 @if (editing()) {
@@ -62,14 +62,14 @@
     </div>
     <bb-checkbox text="Billable to the client" name="isBillable" [(ngModel)]="form.isBillable" />
     <div class="actions">
-      <button type="submit" [disabled]="busy()">Save</button>
+      <button class="btn btn-primary" type="submit" [disabled]="busy()">Save</button>
       @if (editingId === null && !timer()) {
-        <button type="button" class="secondary" (click)="startTimer()" [disabled]="busy()">Start timer instead</button>
+        <button type="button" class="btn btn-secondary" (click)="startTimer()" [disabled]="busy()">Start timer instead</button>
       }
       @if (editingId !== null) {
         <button type="button" class="secondary danger" (click)="remove()" [disabled]="busy()">Delete</button>
       }
-      <button type="button" class="secondary" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
     </div>
   </form>
 }

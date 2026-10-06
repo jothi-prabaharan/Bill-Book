@@ -6,7 +6,7 @@
       [(ngModel)]="showInactive"
       (ngModelChange)="load()"
     />
-    <button type="button" (click)="startAdd(null)" [disabled]="busy()">+ Add category</button>
+    <button class="btn btn-primary" type="button" (click)="startAdd(null)" [disabled]="busy()">+ Add category</button>
   </div>
 </header>
 
@@ -109,7 +109,7 @@
       />
     </div>
     <div class="sheet-actions">
-      <button type="button" (click)="save()" [disabled]="busy() || !form.categoryName || !form.categoryCode">
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.categoryName || !form.categoryCode">
         Save
       </button>
       <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>

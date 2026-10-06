@@ -87,14 +87,55 @@ describe('Design Tokens & Classical Styling System (shared/theming)', () => {
   });
 
   describe('Tier 2: Boundary & Design Rule Enforcement', () => {
-    it('TOK-T2-01: Buttons use stroke-over-fill (transparent background by default)', () => {
+    it('TOK-T2-01: A primary button is filled; every other button is a white button with a firm edge', () => {
       expect(fileContent).toMatch(/\.btn\s*\{[^}]*background:\s*transparent;/s);
-      expect(fileContent).toMatch(/\.btn-primary\s*\{[^}]*color:\s*var\(--color-accent\);[^}]*border-color:\s*var\(--color-accent\);/s);
-      expect(fileContent).toMatch(/\.btn-secondary\s*\{[^}]*border-color:\s*var\(--color-divider\);/s);
+      expect(fileContent).toMatch(/\.btn-primary\s*\{[^}]*color:\s*#fff;[^}]*background:\s*var\(--color-accent-600\);[^}]*border-color:\s*var\(--color-accent-600\);/s);
+      expect(fileContent).toMatch(/\.btn-secondary\s*\{[^}]*background:\s*var\(--color-surface\);[^}]*border-color:\s*var\(--color-border-strong\);/s);
+      expect(fileContent).toMatch(/\.btn-danger\s*\{[^}]*background:\s*var\(--color-danger\);/s);
     });
 
-    it('TOK-T2-02: Cards use transparent background with divider border (stroke-over-fill)', () => {
-      expect(fileContent).toMatch(/\.card\s*\{[^}]*background:\s*transparent;[^}]*border:\s*1px solid var\(--color-divider\);/s);
+    it('TOK-T2-01b: The button vocabulary is one set: primary, secondary, ghost, danger, link, danger-outline, sm, icon', () => {
+      for (const name of ['btn-primary', 'btn-secondary', 'btn-ghost', 'btn-danger', 'btn-link', 'btn-danger-outline', 'btn-sm', 'btn-icon']) {
+        expect(fileContent).toMatch(new RegExp(`\\.${name}\\s*\\{`));
+      }
+    });
+
+    it('TOK-T2-02: Cards sit on the surface ground with a divider border and a card shadow', () => {
+      expect(fileContent).toMatch(/\.card\s*\{[^}]*background:\s*var\(--color-surface\);[^}]*border:\s*1px solid var\(--color-divider\);[^}]*box-shadow:\s*var\(--shadow-card\);/s);
+    });
+
+    it('TOK-T2-02b: The surface is white and the inset panel, field and border tokens exist', () => {
+      expect(fileContent).toContain('--color-surface: #ffffff;');
+      expect(fileContent).toContain('--color-surface-muted:');
+      expect(fileContent).toContain('--color-surface-hover:');
+      expect(fileContent).toContain('--color-field: var(--color-surface);');
+      expect(fileContent).toContain('--color-border-strong:');
+      expect(fileContent).toContain('--color-text-muted:');
+      expect(fileContent).toContain('--color-text-subtle:');
+    });
+
+    it('TOK-T2-02c: A field is white with a firm border and is at least 32px tall; a select draws its own arrow', () => {
+      expect(fileContent).toMatch(/\.input\s*\{[^}]*min-height:\s*32px;[^}]*background:\s*var\(--color-field\);[^}]*border:\s*1px solid var\(--color-border-strong\);/s);
+      expect(fileContent).toMatch(/select\.input\s*\{[^}]*appearance:\s*none;/s);
+    });
+
+    it('TOK-T2-02d: Status tags come in four tones — success, warning, danger, info', () => {
+      expect(fileContent).toMatch(/\.tag-success\s*\{[^}]*var\(--color-success-bg\)/s);
+      expect(fileContent).toMatch(/\.tag-warning\s*\{[^}]*var\(--color-warning-bg\)/s);
+      expect(fileContent).toMatch(/\.tag-danger\s*\{[^}]*var\(--color-danger-bg\)/s);
+      expect(fileContent).toMatch(/\.tag-info\s*\{/s);
+    });
+
+    it('TOK-T2-02e: A page title is one size everywhere, and the page header row is defined once', () => {
+      expect(fileContent).toContain('h1 { font-size: 22px; }');
+      expect(fileContent).toMatch(/\.page-head\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*space-between;/s);
+    });
+
+    it('TOK-T2-02f: Names pages used without the theme defining them now resolve to design tokens', () => {
+      expect(fileContent).toContain('--color-primary: var(--color-accent-600);');
+      expect(fileContent).toContain('--bb-primary: var(--color-accent-600);');
+      expect(fileContent).toContain('--bb-border: var(--color-border-strong);');
+      expect(fileContent).toContain('--bb-surface: var(--color-surface);');
     });
 
     it('TOK-T2-03: Tabular numerals are enforced for numbers, figures, and KPI cards', () => {

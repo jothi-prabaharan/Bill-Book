@@ -211,7 +211,7 @@
       <footer class="actions">
         <button
           type="button"
-          class="btn btn--primary"
+          class="btn btn-primary"
           [disabled]="saving()"
           (click)="save()"
         >
@@ -220,18 +220,18 @@
 
         @if (!isNew()) {
           @if (canApprove()) {
-            <button type="button" class="btn" [disabled]="saving()" (click)="approve()">
+            <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="approve()">
               Approve
             </button>
           }
           @if (canConfirm()) {
-            <button type="button" class="btn" [disabled]="saving()" (click)="confirm()">
+            <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="confirm()">
               Issue to vendor
             </button>
           }
           <button
             type="button"
-            class="btn btn--danger"
+            class="btn btn-danger"
             [disabled]="saving()"
             (click)="voidOpen.set(true)"
           >
@@ -274,13 +274,13 @@
           <div class="actions">
             <button
               type="button"
-              class="btn btn--danger"
+              class="btn btn-danger"
               [disabled]="saving()"
               (click)="voidOrder()"
             >
               Void the order
             </button>
-            <button type="button" class="btn" (click)="voidOpen.set(false)">
+            <button type="button" class="btn btn-secondary" (click)="voidOpen.set(false)">
               Cancel
             </button>
           </div>

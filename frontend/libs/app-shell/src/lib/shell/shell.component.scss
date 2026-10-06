@@ -8,7 +8,7 @@
   display: grid;
   /* Rail, secondary menu, content. The middle column is `auto` so it takes the
      panel's own width and collapses to nothing when there is no panel. */
-  grid-template-columns: 56px auto 1fr;
+  grid-template-columns: 68px auto 1fr;
   grid-template-rows: 46px auto 1fr;
   height: 100dvh;
   width: 100vw;

@@ -61,7 +61,7 @@
                  in practice and leaves it off. -->
             @if (showLineType()) {
               <select
-                class="line-type"
+                class="input line-type"
                 [(ngModel)]="line.lineType"
                 [disabled]="context().readonly"
                 (ngModelChange)="touch(i)"
@@ -142,7 +142,7 @@
           </td>
 
           <td>
-            <select
+            <select class="input"
               [(ngModel)]="line.taxTreatment"
               [disabled]="context().readonly"
               (ngModelChange)="touch(i)"
@@ -158,7 +158,7 @@
                  every existing caller exactly as it was. -->
             @if (taxGroups().length > 0) {
               <select
-                class="tax-group"
+                class="input tax-group"
                 [(ngModel)]="line.taxGroupId"
                 [disabled]="context().readonly || !chargesTaxRows(line)"
                 (ngModelChange)="onTaxGroupChange(i)"
@@ -229,7 +229,7 @@
             <td colspan="9">
               <label class="muted project">
                 Project
-                <select
+                <select class="input"
                   [name]="'project' + i"
                   [(ngModel)]="line.projectId"
                   [disabled]="context().readonly"

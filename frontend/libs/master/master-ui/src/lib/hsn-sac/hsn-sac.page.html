@@ -63,7 +63,7 @@
     (ngModelChange)="applyFilters()"
   />
 
-  <button type="button" (click)="applyFilters()" [disabled]="busy()">Search</button>
+  <button class="btn btn-secondary" type="button" (click)="applyFilters()" [disabled]="busy()">Search</button>
 </div>
 
 @if (error(); as message) {

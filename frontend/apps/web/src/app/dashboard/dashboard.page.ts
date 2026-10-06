@@ -69,11 +69,11 @@ export class DashboardPage {
   ];
 
   protected readonly outstanding = [
-    { party: 'Suriya Textiles', due: '12 Apr', amount: '₹3,42,000', overdue: '121 d', tone: 'accent' },
-    { party: 'Anand Hardware', due: '30 May', amount: '₹2,18,400', overdue: '73 d', tone: 'accent' },
-    { party: 'Meenakshi Agencies', due: '18 Jun', amount: '₹1,64,900', overdue: '54 d', tone: 'outline' },
-    { party: 'Kavitha Stores', due: '09 Jul', amount: '₹96,300', overdue: '33 d', tone: 'outline' },
-    { party: 'Raja Packaging', due: '28 Jul', amount: '₹48,900', overdue: '14 d', tone: 'neutral' },
+    { party: 'Suriya Textiles', due: '12 Apr', amount: '₹3,42,000', overdue: '121 d', tone: 'danger' },
+    { party: 'Anand Hardware', due: '30 May', amount: '₹2,18,400', overdue: '73 d', tone: 'danger' },
+    { party: 'Meenakshi Agencies', due: '18 Jun', amount: '₹1,64,900', overdue: '54 d', tone: 'warning' },
+    { party: 'Kavitha Stores', due: '09 Jul', amount: '₹96,300', overdue: '33 d', tone: 'warning' },
+    { party: 'Raja Packaging', due: '28 Jul', amount: '₹48,900', overdue: '14 d', tone: 'info' },
   ];
 
   protected readonly complianceColumns: ColumnDef[] = [
@@ -84,9 +84,9 @@ export class DashboardPage {
   ];
 
   protected readonly upcomingCompliance = [
-    { form: 'GSTR-1', period: 'Sep 2026', due: '11 Oct 2026', status: 'Ready', tone: 'accent' },
-    { form: 'GSTR-3B', period: 'Sep 2026', due: '20 Oct 2026', status: 'In progress', tone: 'outline' },
-    { form: 'TDS Deposit', period: 'Sep 2026', due: '07 Oct 2026', status: 'Due soon', tone: 'neutral' },
+    { form: 'GSTR-1', period: 'Sep 2026', due: '11 Oct 2026', status: 'Ready', tone: 'success' },
+    { form: 'GSTR-3B', period: 'Sep 2026', due: '20 Oct 2026', status: 'In progress', tone: 'warning' },
+    { form: 'TDS Deposit', period: 'Sep 2026', due: '07 Oct 2026', status: 'Due soon', tone: 'danger' },
   ];
 
   private readonly board = inject(ShellBoardService);

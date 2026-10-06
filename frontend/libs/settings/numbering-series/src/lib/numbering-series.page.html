@@ -13,7 +13,7 @@
       [(ngModel)]="showInactive"
       (ngModelChange)="load()"
     />
-    <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add series</button>
+    <button class="btn btn-primary" type="button" (click)="openAdd()" [disabled]="busy()">+ Add series</button>
   </div>
 </header>
 
@@ -192,7 +192,7 @@
     </div>
 
     <div class="sheet-actions">
-      <button type="button" (click)="save()" [disabled]="busy() || !form.seriesName || !form.seriesCode">
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.seriesName || !form.seriesCode">
         Save
       </button>
       <button type="button" class="link" (click)="formOpen.set(false)">Cancel</button>
@@ -211,7 +211,7 @@
       <bb-number-input label="Next number"  [(ngModel)]="counterValue" [min]="counter.startNumber" />
     </div>
     <div class="sheet-actions">
-      <button type="button" (click)="saveCounter()" [disabled]="busy()">Update counter</button>
+      <button class="btn btn-primary" type="button" (click)="saveCounter()" [disabled]="busy()">Update counter</button>
       <button type="button" class="link" (click)="counterFor.set(null)">Cancel</button>
     </div>
   </div>

@@ -6,11 +6,11 @@
     </div>
     <div class="payroll-page__actions">
       @if (declarationId) {
-        <button type="button" class="btn btn--outline" (click)="toggleLock()" [disabled]="busy()">
+        <button type="button" class="btn btn--outline btn-secondary" (click)="toggleLock()" [disabled]="busy()">
           {{ isLocked ? 'Unlock Declaration' : 'Lock Declaration' }}
         </button>
       }
-      <button type="button" class="btn btn--primary" (click)="save()" [disabled]="busy() || isLocked">
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy() || isLocked">
         Save Declaration
       </button>
     </div>

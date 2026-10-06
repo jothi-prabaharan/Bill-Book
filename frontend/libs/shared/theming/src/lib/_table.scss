@@ -3,16 +3,18 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
 .table th {
   text-align: left;
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  padding: 5px var(--space-2);
+  line-height: 1.4;
+  color: var(--color-neutral-700);
+  padding: 6px var(--space-2);
   border-bottom: 1px solid var(--color-divider);
 
   button {
@@ -27,7 +29,7 @@
 }
 
 .table td {
-  padding: 5px var(--space-2);
+  padding: 7px var(--space-2);
   border-bottom: 1px solid var(--color-divider);
   min-height: 32px;
 }
@@ -169,18 +171,19 @@
 }
 
 /* Sticky Header in Scrollable Table Wrapper.
-   The header ground is --color-surface, a step off the page, so a row scrolling
-   under it is hidden rather than showing through; the rule beneath it is an
-   inset shadow rather than a border, because a border can bleed during scroll. */
+   The header ground is --color-surface-muted, opaque and a step off the white
+   rows, so a row scrolling under it is hidden rather than showing through; the
+   rule beneath it is an inset shadow rather than a border, because a border
+   can bleed during scroll. */
 .listwrap .table thead th {
   position: sticky;
   top: 0;
   z-index: var(--z-table-head);
-  background: var(--color-surface);
+  background: var(--color-surface-muted);
   background-clip: padding-box;
   border-bottom: 0;
   box-shadow: var(--shadow-table-head);
-  color: var(--color-accent-800);
+  color: var(--color-neutral-800);
   white-space: nowrap;
   padding-top: var(--space-2);
   padding-bottom: var(--space-2);
@@ -197,4 +200,7 @@
   min-height: 24px;
   padding: 1px 7px;
   font-size: 11.5px;
+  font-weight: 400;
+  border-color: var(--color-divider);
+  background: var(--color-surface);
 }

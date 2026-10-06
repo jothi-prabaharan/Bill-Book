@@ -2,7 +2,7 @@
   <div class="thread-content bb-card">
     <div class="header">
       <h3>{{ _ticket()?.subject }} <span class="badge">{{ _ticket()?.status }}</span></h3>
-      <button class="bb-btn bb-btn-icon" (click)="closed.emit()">&times;</button>
+      <button class="btn bb-btn-icon btn-secondary" (click)="closed.emit()">&times;</button>
     </div>
     
     <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
@@ -34,7 +34,7 @@
         (ngModelChange)="replyBody.set($event)"
       />
       <bb-checkbox class="internal-toggle" text="Internal note (the customer never sees it)" name="internal" [ngModel]="internal()" (ngModelChange)="internal.set($event)" [disabled]="sending()" />
-      <button class="bb-btn bb-btn-primary" [disabled]="!replyBody().trim() || sending()" (click)="sendMessage()">
+      <button class="btn btn-primary" [disabled]="!replyBody().trim() || sending()" (click)="sendMessage()">
         {{ sending() ? 'Sending...' : internal() ? 'Add note' : 'Reply' }}
       </button>
     </div>

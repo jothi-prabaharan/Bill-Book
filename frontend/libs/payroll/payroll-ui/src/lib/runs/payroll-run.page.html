@@ -8,7 +8,7 @@
       <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="approve()">Approve Run</button>
     }
     @if (run()?.status === 'Approved') {
-      <button type="button" class="btn btn-success" [disabled]="busy()" (click)="post()">Post to Accounting</button>
+      <button type="button" class="btn btn-success btn-secondary" [disabled]="busy()" (click)="post()">Post to Accounting</button>
     }
     @if (run()?.status === 'Posted') {
       <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="markPaid()">Mark as Paid</button>

@@ -3,13 +3,28 @@
 :root {
   /* Core Color Palette */
   --color-bg: #f3f2f2;
-  --color-surface: #eae9e9;
+  /* The ground a card, panel, dialog, menu or field sits on. White against the
+     page's warm grey is what lifts it; the product already read the token this
+     way (dozens of stylesheets fall back to #fff for it). A grey panel inside a
+     card is --color-surface-muted. */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f6f6;
+  --color-surface-hover: #f0efee;
+  --color-field: var(--color-surface);
+
+  /* Secondary and tertiary text. Named, because the same two greys were being
+     typed as a dozen different hex values across the page stylesheets. */
+  --color-text-muted: color-mix(in srgb, var(--color-text) 62%, transparent);
+  --color-text-subtle: color-mix(in srgb, var(--color-text) 48%, transparent);
   --color-text: #201f1d;
   --color-ink: #2f353f;
   --color-accent: #f06311;
   --color-accent-2: #ac803e;
   --color-divider: color-mix(in srgb, #201f1d 16%, transparent);
   --color-border: color-mix(in srgb, #201f1d 16%, transparent);
+  /* The edge of a control (input, secondary button): firm enough to find, where
+     --color-divider is for rules between things. */
+  --color-border-strong: color-mix(in srgb, #201f1d 30%, transparent);
 
   /* OKLCH Neutral Ramp (Greys on warm ground) */
   --color-neutral-100: #f8f4f4;
@@ -52,6 +67,40 @@
   --color-success: #187a4b;
   --color-success-bg: #e2f3e9;
 
+  /* Names pages already use that the theme never defined. Each used to fall
+     through to whatever hex the page wrote beside it (a blue, a cool grey), so
+     a third of the product drew in a palette of its own. Defining them here
+     points every such page at the brand without editing the page. */
+  --color-primary: var(--color-accent-600);
+  --color-primary-surface: var(--color-accent-100);
+  --color-on-primary: #fff;
+  --color-on-accent: #fff;
+  --color-focus: var(--color-accent);
+  --color-surface-2: var(--color-surface-muted);
+  --color-muted-bg: var(--color-surface-muted);
+  --color-neutral-muted: var(--color-text-muted);
+  --color-warning-subtle: var(--color-warning-bg);
+  --color-warning-surface: var(--color-warning-bg);
+  --color-success-surface: var(--color-success-bg);
+  --color-danger-soft: var(--color-danger-bg);
+  --error-color: var(--color-danger);
+  --success-color: var(--color-success);
+  --primary-color-light: var(--color-accent-100);
+  --font-size-xl: 22px;
+
+  /* The reporting and purchase screens' own vocabulary. */
+  --bb-text-muted: var(--color-text-muted);
+  --bb-border: var(--color-border-strong);
+  --bb-line: var(--color-divider);
+  --bb-surface: var(--color-surface);
+  --bb-surface-2: var(--color-surface-muted);
+  --bb-disabled: var(--color-surface-muted);
+  --bb-hover: var(--color-surface-hover);
+  --bb-primary: var(--color-accent-600);
+  --bb-accent: var(--color-accent-600);
+  --bb-chip: var(--color-accent-100);
+  --bb-danger: var(--color-danger);
+
   /* Typography */
   /* One monospace stack for every role. Monospace fixes every glyph to a
      single advance width, so digits line up in a column without needing the
@@ -69,6 +118,7 @@
   --space-2: 9.2px;
   --space-3: 13.8px;
   --space-4: 18.4px;
+  --space-5: 23px;
   --space-6: 27.6px;
   --space-8: 36.8px;
 
@@ -77,6 +127,7 @@
   --space-compact-2: 7px;
   --space-compact-3: 10px;
   --space-compact-4: 13px;
+  --space-compact-5: 15.5px;
   --space-compact-6: 18px;
   --space-compact-8: 24px;
 
@@ -92,9 +143,11 @@
   --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
   --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
-  --shadow-header: 0 8px 20px -10px rgba(32, 31, 29, 0.45), var(--shadow-md);
+  /* The top bar: a hairline and a short soft edge, not a drop shadow. */
+  --shadow-header: 0 1px 0 var(--color-divider), 0 2px 8px -4px rgba(32, 31, 29, 0.18);
+  --shadow-card: 0 1px 2px color-mix(in srgb, #2d2b2b 7%, transparent);
   --shadow-rail-active: inset 4px 0 0 var(--color-accent), inset 13px 0 12px -10px rgba(32, 31, 29, 0.55);
-  --shadow-table-head: inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 55%, transparent);
+  --shadow-table-head: inset 0 -1px 0 var(--color-border-strong);
 
   /* Layout Stacking Z-Index Hierarchy */
   --z-topbar: 6;

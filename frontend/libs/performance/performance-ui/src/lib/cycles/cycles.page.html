@@ -37,7 +37,7 @@
     </div>
   </div>
   <div class="sheet-actions">
-    <button class="btn" (click)="cancelCreate()">Cancel</button>
+    <button class="btn btn-secondary" (click)="cancelCreate()">Cancel</button>
     <button class="btn btn-primary" (click)="saveCycle()">Create Cycle</button>
   </div>
 </div>
@@ -51,7 +51,7 @@
     </div>
   </div>
   <div class="sheet-actions">
-    <button class="btn" (click)="showEnroll.set(false)">Cancel</button>
+    <button class="btn btn-secondary" (click)="showEnroll.set(false)">Cancel</button>
     <button class="btn btn-primary" (click)="enroll()">Enroll Eligible</button>
   </div>
 </div>
@@ -78,10 +78,10 @@
     </ng-template>
     <ng-template bbCellTemplate="col6" let-c>
       <div style="display: flex; gap: 6px;">
-        <button class="btn btn-sm" *ngIf="c.cycleStatus === 'Draft'" (click)="setStatus(c.reviewCycleId, 'GoalSetting')">Open Goals</button>
-        <button class="btn btn-sm" *ngIf="c.cycleStatus === 'GoalSetting'" (click)="setStatus(c.reviewCycleId, 'SelfEvaluation')">Open Self-Eval</button>
-        <button class="btn btn-sm" *ngIf="c.cycleStatus === 'SelfEvaluation'" (click)="setStatus(c.reviewCycleId, 'InReview')">Start Reviews</button>
-        <button class="btn btn-sm btn-outline" (click)="openEnroll(c.reviewCycleId)">Enroll</button>
+        <button class="btn btn-sm btn-secondary" *ngIf="c.cycleStatus === 'Draft'" (click)="setStatus(c.reviewCycleId, 'GoalSetting')">Open Goals</button>
+        <button class="btn btn-sm btn-secondary" *ngIf="c.cycleStatus === 'GoalSetting'" (click)="setStatus(c.reviewCycleId, 'SelfEvaluation')">Open Self-Eval</button>
+        <button class="btn btn-sm btn-secondary" *ngIf="c.cycleStatus === 'SelfEvaluation'" (click)="setStatus(c.reviewCycleId, 'InReview')">Start Reviews</button>
+        <button class="btn btn-sm btn-outline btn-secondary" (click)="openEnroll(c.reviewCycleId)">Enroll</button>
         <button class="btn btn-sm btn-danger" *ngIf="c.cycleStatus !== 'Closed'" (click)="closeCycle(c.reviewCycleId)">Close Cycle</button>
       </div>
     </ng-template>

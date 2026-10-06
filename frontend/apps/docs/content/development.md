@@ -75,6 +75,57 @@ admin pages are routes inside web and get it from there. `apps/docs` imports onl
 partial — it keeps its own component styling and takes just the font roles.
 A new app gets the fonts by importing `libs/shared/theming/src/index.scss`.
 
+## Surfaces, buttons and fields — one look, from the tokens
+
+The typeface is monospace by decision (above); everything else about how a
+screen looks comes from the theme in `libs/shared/theming`, and a page
+stylesheet should not restate it.
+
+**Surfaces.** The page is `--color-bg`, a warm grey. A card, panel, dialog,
+menu, grid or field sits on `--color-surface`, which is white — that is what
+lifts it off the page. A grey panel *inside* a card (a preview, a table
+header, a read-only field) is `--color-surface-muted`. `--color-field` is the
+ground of an input; it follows the surface.
+
+**Edges and text.** `--color-divider` is a rule between things.
+`--color-border-strong` is the edge of a control, firm enough to find.
+`--color-text-muted` and `--color-text-subtle` are the two greys for
+secondary text — do not type a hex for them.
+
+**Buttons.** There is one vocabulary, written `btn` plus one variant:
+
+| Class | Use |
+|---|---|
+| `btn btn-primary` | The one thing this screen wants done. Filled. Normally one per screen or dialog. |
+| `btn btn-secondary` | Everything else. White, with a firm edge. |
+| `btn btn-ghost` | A quiet action beside a primary one, such as Cancel. |
+| `btn btn-danger` | A destructive action. Filled, never the first button in a row. |
+| `btn btn-danger-outline` | A destructive action that is one of several in a row. |
+| `btn btn-link` | An action that reads as a link but behaves as a button. |
+| `btn-sm`, `btn-icon`, `btn-block` | Size and shape, added to a variant. |
+
+Do not write `btn--primary`, `bb-btn`, `btn-outline-*` or a page-local
+`button.primary`: none of those has a style, so the button either looked like
+plain text or drew in a colour of the page's own. A page that needs a button
+to look different has a design question, not a stylesheet.
+
+**Fields.** `.input` is 32px tall, white, with a firm border and a visible
+placeholder; a `select.input` draws its own arrow. A composite control (the
+search box, the date picker) draws its frame on an inner element, so putting
+`.input` on its host adds nothing.
+
+**Status colours.** A status says one of four things and says it the same
+way everywhere: `tag-success` (it went well), `tag-warning` (it needs a
+look), `tag-danger` (it went wrong), `tag-info` (it is only information).
+A grid column with `dataType: 'status'` picks the tone from the word through
+`statusTone()`; a cell template that draws its own tag calls the same function.
+
+**Variable names pages invented.** `--color-primary`, `--bb-border`,
+`--bb-surface` and a dozen others were used by pages and never defined, so each
+fell through to the hex written beside it. They are defined in
+`_tokens.scss` now and point at the design tokens. Use the `--color-*` names
+in new code.
+
 ## By hand
 
 ```bash

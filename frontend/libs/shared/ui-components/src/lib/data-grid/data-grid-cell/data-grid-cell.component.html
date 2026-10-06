@@ -12,11 +12,7 @@
       <input type="checkbox" [checked]="!!value" disabled>
     </ng-container>
     <ng-container *ngSwitchCase="'status'">
-      <span class="tag" [ngClass]="{
-        'tag-neutral': value === 'Posted' || value === 'Closed',
-        'tag-accent': value === 'Open' || value === 'Sent',
-        'tag-outline': value === 'Draft' || value === 'Void'
-      }">{{ value }}</span>
+      <span class="tag" [ngClass]="statusTone">{{ value }}</span>
     </ng-container>
     <ng-container *ngSwitchDefault>{{ value }}</ng-container>
   </ng-container>

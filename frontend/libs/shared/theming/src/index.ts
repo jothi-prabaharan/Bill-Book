@@ -5,7 +5,7 @@
 export const TOKENS = {
   colors: {
     bg: '#f3f2f2',
-    surface: '#eae9e9',
+    surface: '#ffffff',
     text: '#201f1d',
     ink: '#2f353f',
     accent: '#f06311',
@@ -88,9 +88,9 @@ export const TOKENS = {
     sm: '0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent)',
     md: '0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent)',
     lg: '0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent)',
-    header: '0 8px 20px -10px rgba(32, 31, 29, 0.45), 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent)',
+    header: '0 1px 0 var(--color-divider), 0 2px 8px -4px rgba(32, 31, 29, 0.18)',
     railActive: 'inset 4px 0 0 var(--color-accent), inset 13px 0 12px -10px rgba(32, 31, 29, 0.55)',
-    tableHead: 'inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 55%, transparent)',
+    tableHead: 'inset 0 -1px 0 var(--color-border-strong)',
   },
   zIndex: {
     topbar: 6,
@@ -215,7 +215,7 @@ export const THEME_PALETTE = {
   accent2: '#ac803e',
   ink: '#2f353f',
   bg: '#f3f2f2',
-  surface: '#eae9e9',
+  surface: '#ffffff',
   neutral600: '#7d7979',
 } as const;
 

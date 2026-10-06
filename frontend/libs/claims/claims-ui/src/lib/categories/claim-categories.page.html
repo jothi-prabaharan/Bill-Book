@@ -4,8 +4,8 @@
     <p>Manage expense claim categories, receipt requirements, and amount limits.</p>
   </div>
   <div style="display: flex; gap: 8px;">
-    <button class="btn-primary" (click)="openCreateCategory()">+ Add Category</button>
-    <button class="btn-secondary" (click)="openCreateLimit()">+ Set Limit</button>
+    <button class="btn btn-primary" (click)="openCreateCategory()">+ Add Category</button>
+    <button class="btn btn-secondary" (click)="openCreateLimit()">+ Set Limit</button>
   </div>
 </div>
 
@@ -37,7 +37,7 @@
         </span>
       </ng-template>
       <ng-template bbCellTemplate="claimCategoryId" let-c>
-        <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="openCreateLimit(c.claimCategoryId)">
+        <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="openCreateLimit(c.claimCategoryId)">
           Add Limit
         </button>
       </ng-template>
@@ -64,7 +64,7 @@
         {{ l.amount | currency:'INR' }}
       </ng-template>
       <ng-template bbCellTemplate="claimLimitId" let-l>
-        <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; color: #dc2626;" (click)="deleteLimit(l.claimLimitId)">
+        <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; color: #dc2626;" (click)="deleteLimit(l.claimLimitId)">
           Delete
         </button>
       </ng-template>
@@ -91,8 +91,8 @@
       </div>
     </div>
     <div class="sheet-actions">
-      <button class="btn-secondary" (click)="closeCategoryForm()">Cancel</button>
-      <button class="btn-primary" (click)="saveCategory()">Save</button>
+      <button class="btn btn-secondary" (click)="closeCategoryForm()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveCategory()">Save</button>
     </div>
   </div>
 }
@@ -113,8 +113,8 @@
       </div>
     </div>
     <div class="sheet-actions">
-      <button class="btn-secondary" (click)="closeLimitForm()">Cancel</button>
-      <button class="btn-primary" (click)="saveLimit()">Save</button>
+      <button class="btn btn-secondary" (click)="closeLimitForm()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveLimit()">Save</button>
     </div>
   </div>
 }

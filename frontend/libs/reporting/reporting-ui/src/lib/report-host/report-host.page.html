@@ -9,30 +9,30 @@
 
   <div class="actions">
     @if (isDataset()) {
-      <button type="button" (click)="savingCustom.set(true)" [disabled]="busy()">
+      <button class="btn btn-secondary" type="button" (click)="savingCustom.set(true)" [disabled]="busy()">
         {{ custom()?.mayEdit ? 'Save report' : 'Save as custom report' }}
       </button>
       @if (custom()?.mayEdit) {
-        <button type="button" (click)="deleteCustom()" [disabled]="busy()">Delete report</button>
+        <button class="btn btn-secondary" type="button" (click)="deleteCustom()" [disabled]="busy()">Delete report</button>
       }
     }
-    <button type="button" (click)="choosingView.set(true)" [disabled]="busy()">
+    <button class="btn btn-secondary" type="button" (click)="choosingView.set(true)" [disabled]="busy()">
       Views
     </button>
-    <button type="button" (click)="scheduling.set(true)" [disabled]="busy()">
+    <button class="btn btn-primary" type="button" (click)="scheduling.set(true)" [disabled]="busy()">
       Schedule
     </button>
-    <button type="button" (click)="choosingColumns.set(true)" [disabled]="busy()">
+    <button class="btn btn-secondary" type="button" (click)="choosingColumns.set(true)" [disabled]="busy()">
       Columns
     </button>
-    <button
+    <button class="btn btn-secondary"
       type="button"
       (click)="exportAs('Xlsx')"
       [disabled]="busy() || exporting() !== null"
     >
       {{ exporting() === 'Xlsx' ? 'Exporting…' : 'Export to Excel' }}
     </button>
-    <button
+    <button class="btn btn-secondary"
       type="button"
       (click)="exportAs('Csv')"
       [disabled]="busy() || exporting() !== null"

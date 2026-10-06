@@ -1,7 +1,7 @@
 <div class="tickets-container">
   <div class="header-actions">
     <h2>Tickets</h2>
-    <button class="bb-btn bb-btn-primary" (click)="showForm.set(true)">New Ticket</button>
+    <button class="btn btn-primary" (click)="showForm.set(true)">New Ticket</button>
   </div>
   
   <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
@@ -23,7 +23,7 @@
     [totalCount]="tickets().length"
   >
     <ng-template bbCellTemplate="actions" let-row="row">
-      <button class="bb-btn bb-btn-secondary bb-btn-sm" (click)="viewThread(row)">View Thread</button>
+      <button class="btn btn-secondary btn-sm" (click)="viewThread(row)">View Thread</button>
     </ng-template>
   </bb-data-grid>
 </div>

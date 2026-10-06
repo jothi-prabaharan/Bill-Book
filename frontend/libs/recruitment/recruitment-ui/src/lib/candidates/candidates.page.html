@@ -86,7 +86,7 @@
       {{ c.noticePeriodDays ? (c.noticePeriodDays + ' days') : '—' }}
     </ng-template>
     <ng-template bbCellTemplate="candidateId" let-c>
-      <button type="button" class="btn btn-sm btn-outline-primary" (click)="openApply(c.candidateId)">Apply</button>
+      <button type="button" class="btn btn-sm btn-secondary" (click)="openApply(c.candidateId)">Apply</button>
     </ng-template>
   </bb-data-grid>
 </div>

@@ -1,6 +1,6 @@
 <header class="page-head">
   <h1>Roles</h1>
-  <button type="button" (click)="startCreate()" [disabled]="busy()">+ New role</button>
+  <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New role</button>
 </header>
 
 @if (error(); as failure) {
@@ -62,7 +62,7 @@
     }
 
     <div class="editor-actions">
-      <button type="submit" [disabled]="busy()">Save</button>
+      <button class="btn btn-primary" type="submit" [disabled]="busy()">Save</button>
       <button type="button" class="link" (click)="cancel()">Cancel</button>
     </div>
   </form>

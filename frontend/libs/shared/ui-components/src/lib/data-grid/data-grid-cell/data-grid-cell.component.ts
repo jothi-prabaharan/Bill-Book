@@ -1,6 +1,7 @@
 import { Component, Input, ChangeDetectionStrategy, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ColumnDef } from '../data-grid.models';
+import { statusTone } from '../data-grid-status';
 
 @Component({
   selector: 'bb-data-grid-cell',
@@ -19,5 +20,9 @@ export class DataGridCellComponent {
 
   get value(): any {
     return this.row[this.col.field];
+  }
+
+  get statusTone(): string {
+    return statusTone(this.value);
   }
 }

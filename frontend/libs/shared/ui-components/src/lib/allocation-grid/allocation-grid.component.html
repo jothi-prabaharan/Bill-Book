@@ -7,7 +7,7 @@
         <div>Remaining: <strong>{{ money(remainingToAllocate) }}</strong></div>
       </div>
     }
-    <button class="secondary" (click)="autoAllocate()" [disabled]="amountToAllocate <= 0 || rows.length === 0">Auto Allocate</button>
+    <button class="btn btn-secondary" (click)="autoAllocate()" [disabled]="amountToAllocate <= 0 || rows.length === 0">Auto Allocate</button>
   </div>
 
   <bb-data-grid

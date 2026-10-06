@@ -6,7 +6,7 @@
       [(ngModel)]="showInactive"
       (ngModelChange)="load()"
     />
-    <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add currency</button>
+    <button class="btn btn-primary" type="button" (click)="openAdd()" [disabled]="busy()">+ Add currency</button>
   </div>
 </header>
 
@@ -18,7 +18,7 @@
       [options]="availableOptions()"
       [(ngModel)]="selectedCurrencyId"
     />
-    <button type="button" (click)="save()" [disabled]="!selectedCurrencyId || busy()">Save</button>
+    <button class="btn btn-primary" type="button" (click)="save()" [disabled]="!selectedCurrencyId || busy()">Save</button>
     <button type="button" class="link" (click)="adding.set(false)">Cancel</button>
   </div>
 }

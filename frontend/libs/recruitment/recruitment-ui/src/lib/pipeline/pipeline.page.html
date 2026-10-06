@@ -41,10 +41,10 @@
         </div>
 
         <div class="card-actions">
-          <button *ngIf="stage === 'Applied'" type="button" class="btn btn-sm btn-outline-primary" (click)="advanceStage(app, 'Screening')">&rarr; Screen</button>
-          <button *ngIf="stage === 'Screening'" type="button" class="btn btn-sm btn-outline-primary" (click)="advanceStage(app, 'Interview')">&rarr; Interview</button>
-          <button *ngIf="stage === 'Interview'" type="button" class="btn btn-sm btn-outline-primary" (click)="advanceStage(app, 'Offer')">&rarr; Offer</button>
-          <button *ngIf="stage !== 'Rejected' && stage !== 'Hired'" type="button" class="btn btn-sm btn-outline-danger" (click)="rejectApplication(app)">&times;</button>
+          <button *ngIf="stage === 'Applied'" type="button" class="btn btn-sm btn-secondary" (click)="advanceStage(app, 'Screening')">&rarr; Screen</button>
+          <button *ngIf="stage === 'Screening'" type="button" class="btn btn-sm btn-secondary" (click)="advanceStage(app, 'Interview')">&rarr; Interview</button>
+          <button *ngIf="stage === 'Interview'" type="button" class="btn btn-sm btn-secondary" (click)="advanceStage(app, 'Offer')">&rarr; Offer</button>
+          <button *ngIf="stage !== 'Rejected' && stage !== 'Hired'" type="button" class="btn btn-sm btn-danger-outline" (click)="rejectApplication(app)">&times;</button>
         </div>
       </div>
 

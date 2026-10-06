@@ -598,7 +598,7 @@
     }
 
     <div class="sheet-actions">
-      <button type="button" (click)="save()" [disabled]="busy() || !form.itemName">Save item</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.itemName">Save item</button>
       @if (form.itemId) {
         <button type="button" class="link" (click)="openItemLabels()">Print labels</button>
         @if (form.isBatchTracked) {

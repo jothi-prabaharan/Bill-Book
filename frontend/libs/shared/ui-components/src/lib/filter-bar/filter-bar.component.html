@@ -15,7 +15,7 @@
 
     @if (filters().length > 1) {
       <li>
-        <button type="button" class="ghost" (click)="clearAll()">Clear all</button>
+        <button type="button" class="btn btn-ghost" (click)="clearAll()">Clear all</button>
       </li>
     }
 
@@ -81,7 +81,7 @@
       }
 
       <button type="submit" [disabled]="!canApply()">Apply</button>
-      <button type="button" class="ghost" (click)="adding.set(false)">Cancel</button>
+      <button type="button" class="btn btn-ghost" (click)="adding.set(false)">Cancel</button>
     </form>
   }
 </div>

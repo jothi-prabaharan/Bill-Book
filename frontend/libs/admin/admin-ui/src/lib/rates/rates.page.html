@@ -22,7 +22,7 @@
       <bb-branch-date-input label="Date" name="exchangeDate" [(ngModel)]="exchange.rateDate" />
       <bb-number-input label="Rate" name="rate" [decimals]="8" [min]="0" [(ngModel)]="exchange.rate" />
       <div class="actions">
-        <button type="submit" [disabled]="busy()">Save exchange rate</button>
+        <button class="btn btn-primary" type="submit" [disabled]="busy()">Save exchange rate</button>
       </div>
     </form>
   }
@@ -56,7 +56,7 @@
       <bb-branch-date-input label="Date" name="metalDate" [(ngModel)]="metal.rateDate" />
       <bb-number-input label="Rate per gram" name="ratePerGram" [decimals]="4" [min]="0" [(ngModel)]="metal.ratePerGram" />
       <div class="actions">
-        <button type="submit" [disabled]="busy()">Save metal rate</button>
+        <button class="btn btn-primary" type="submit" [disabled]="busy()">Save metal rate</button>
       </div>
     </form>
   }

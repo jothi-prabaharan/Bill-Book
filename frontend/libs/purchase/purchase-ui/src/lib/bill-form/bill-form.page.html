@@ -187,7 +187,7 @@
             {{ goodsReceiptNo() || 'None — this bill brings the goods in itself' }}
           </button>
           @if (againstReceipt() && !readonlyDoc()) {
-            <button type="button" class="btn btn--link" (click)="clearReceipt()">
+            <button type="button" class="btn btn-link" (click)="clearReceipt()">
               Detach
             </button>
           }
@@ -291,7 +291,7 @@
       <footer class="actions">
         <button
           type="button"
-          class="btn btn--primary"
+          class="btn btn-primary"
           [disabled]="saving()"
           (click)="save()"
         >
@@ -299,7 +299,7 @@
         </button>
 
         @if (!isNew()) {
-          <button type="button" class="btn" [disabled]="saving()" (click)="post()">
+          <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
             Post the bill
           </button>
           <span class="actions__hint">
@@ -310,7 +310,7 @@
 
       @if (!isNew()) {
         <p class="actions">
-          <button type="button" class="btn" (click)="openLabels()">Print labels</button>
+          <button type="button" class="btn btn-secondary" (click)="openLabels()">Print labels</button>
           <span class="actions__hint">One label per unit on each item line.</span>
         </p>
       }

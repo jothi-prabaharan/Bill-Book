@@ -6,7 +6,7 @@
     <bb-select label="User" name="auditUser" placeholder="Everyone" [options]="userOptions()" [(ngModel)]="userId" />
     <bb-select label="Table" name="auditTable" placeholder="Every table" [options]="entityOptions()" [(ngModel)]="entity" />
     <div class="audit__go">
-      <button type="button" class="btn btn--primary" (click)="search(1)" [disabled]="loading()">Show</button>
+      <button type="button" class="btn btn-primary" (click)="search(1)" [disabled]="loading()">Show</button>
     </div>
   </div>
 
@@ -36,8 +36,8 @@
 
   <div class="audit__pager">
     <span class="audit__muted">{{ total() }} change{{ total() === 1 ? '' : 's' }} · page {{ page }} of {{ pages }}</span>
-    <button type="button" class="btn" (click)="search(page - 1)" [disabled]="loading() || page <= 1">Previous</button>
-    <button type="button" class="btn" (click)="search(page + 1)" [disabled]="loading() || page >= pages">Next</button>
+    <button type="button" class="btn btn-secondary" (click)="search(page - 1)" [disabled]="loading() || page <= 1">Previous</button>
+    <button type="button" class="btn btn-secondary" (click)="search(page + 1)" [disabled]="loading() || page >= pages">Next</button>
   </div>
 
   @if (selected(); as entry) {
