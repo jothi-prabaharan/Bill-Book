@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Shared.Kernel.Approvals;
 
@@ -34,6 +35,7 @@ public sealed class ResolveChainRequest
     public DateOnly OnDate { get; set; }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResolveChainOutcome
 {
     /// <summary>A workflow matched and every required level resolved.</summary>

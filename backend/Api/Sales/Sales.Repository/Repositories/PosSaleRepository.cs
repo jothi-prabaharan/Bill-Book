@@ -50,6 +50,9 @@ public sealed class PosSaleRepository
         }
 
         DateOnly date = request.DocumentDate ?? DateOnly.FromDateTime(_clock.GetLocalNow().DateTime);
+        string paymentMode = request.Tenders.Select(t => t.Mode).Distinct().Count() == 1
+            ? request.Tenders[0].Mode.ToString()
+            : "Split";
 
         InvoiceResult created = await _invoices.CreateAsync(new SaveInvoiceRequest
         {
@@ -58,6 +61,7 @@ public sealed class PosSaleRepository
             ContactId = request.ContactId,
             TillId = request.TillId,
             CashierUserId = _user.UserId,
+            PaymentMode = paymentMode,
             ContactGstin = request.ContactGstin,
             PlaceOfSupplyStateCode = request.PlaceOfSupplyStateCode,
             Notes = request.Notes,
@@ -79,9 +83,7 @@ public sealed class PosSaleRepository
 
         invoice.TenderedAmount = request.Tenders.Sum(t => t.Amount);
         invoice.ChangeAmount = change;
-        invoice.PaymentMode = request.Tenders.Select(t => t.Mode).Distinct().Count() == 1
-            ? request.Tenders[0].Mode.ToString()
-            : "Split";
+        invoice.PaymentMode = paymentMode;
 
         _db.InvoiceTenders.AddRange(request.Tenders.Select(t => new InvoiceTender
         {

@@ -19,6 +19,11 @@ public interface IApprovalChainClient
 /// <summary>Master's <c>internal/approval-chains</c>, called with the shared internal key.</summary>
 public sealed class HttpApprovalChainClient : IApprovalChainClient
 {
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new(System.Text.Json.JsonSerializerDefaults.Web)
+    {
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+    };
+
     private readonly HttpClient _http;
 
     public HttpApprovalChainClient(HttpClient http) => _http = http;
@@ -27,9 +32,9 @@ public sealed class HttpApprovalChainClient : IApprovalChainClient
     {
         try
         {
-            HttpResponseMessage response = await _http.PostAsJsonAsync("internal/approval-chains/resolve", request, ct);
+            HttpResponseMessage response = await _http.PostAsJsonAsync("internal/approval-chains/resolve", request, JsonOptions, ct);
             return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<ResolveChainResponse>(cancellationToken: ct)
+                ? await response.Content.ReadFromJsonAsync<ResolveChainResponse>(JsonOptions, cancellationToken: ct)
                 : null;
         }
         catch (HttpRequestException)
@@ -42,9 +47,9 @@ public sealed class HttpApprovalChainClient : IApprovalChainClient
     {
         try
         {
-            HttpResponseMessage response = await _http.PostAsJsonAsync("internal/approval-chains/delegate-check", request, ct);
+            HttpResponseMessage response = await _http.PostAsJsonAsync("internal/approval-chains/delegate-check", request, JsonOptions, ct);
             return response.IsSuccessStatusCode
-                && (await response.Content.ReadFromJsonAsync<DelegateCheckResponse>(cancellationToken: ct))?.IsDelegate == true;
+                && (await response.Content.ReadFromJsonAsync<DelegateCheckResponse>(JsonOptions, cancellationToken: ct))?.IsDelegate == true;
         }
         catch (HttpRequestException)
         {

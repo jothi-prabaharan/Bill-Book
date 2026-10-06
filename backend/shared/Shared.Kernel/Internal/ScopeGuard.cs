@@ -39,12 +39,14 @@ public static class ScopeGuard
             .OfType<RequireAddOnAttribute>()
             .FirstOrDefault();
 
-        var actionBt = context.ActionDescriptor.EndpointMetadata
+        var actionBt = (context.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor)?.MethodInfo
+            .GetCustomAttributes(typeof(RequireBusinessTypeAttribute), true)
             .OfType<RequireBusinessTypeAttribute>()
-            .LastOrDefault(a => !ReferenceEquals(a, controllerBt));
-        var actionAo = context.ActionDescriptor.EndpointMetadata
+            .LastOrDefault();
+        var actionAo = (context.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor)?.MethodInfo
+            .GetCustomAttributes(typeof(RequireAddOnAttribute), true)
             .OfType<RequireAddOnAttribute>()
-            .LastOrDefault(a => !ReferenceEquals(a, controllerAo));
+            .LastOrDefault();
 
         ClaimsPrincipal user = context.HttpContext.User;
         BusinessType? tokenBt = ScopeClaims.BusinessTypeOf(user);
