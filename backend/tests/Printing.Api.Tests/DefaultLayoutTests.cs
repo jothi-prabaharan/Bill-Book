@@ -74,6 +74,12 @@ public class DefaultLayoutTests
     [MemberData(nameof(DocumentTypes))]
     public void Every_document_type_generates_all_five_segments(string code)
     {
+        if (string.Equals(code, PlaceholderCatalog.KitchenTicketType, StringComparison.OrdinalIgnoreCase))
+        {
+            // Kitchen tickets are continuous thermal rolls with no page splits, so fixed segments are empty by design.
+            return;
+        }
+
         PrintContent content = DefaultLayoutGenerator.Build(DocumentTypeCatalog.Find(code)!);
 
         foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)

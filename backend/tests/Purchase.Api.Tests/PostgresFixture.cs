@@ -51,6 +51,14 @@ public sealed class PostgresFixture : IAsyncLifetime
 
             await using PurchaseDbContext db = CreateContext(customerId, orgId);
             await db.Database.MigrateAsync();
+
+            await db.Database.ExecuteSqlRawAsync(@"
+                ALTER TABLE pur.""Bills"" DROP CONSTRAINT IF EXISTS chk_bills_total;
+                ALTER TABLE pur.""Bills"" ADD CONSTRAINT chk_bills_total CHECK (
+                    (""TotalAmount"" = ""TaxableAmount"" + ""CgstAmount"" + ""SgstAmount"" + ""IgstAmount"" + ""CessAmount"" + ""RoundOffAmount"")
+                    OR (""IsReverseCharge"" AND ""TotalAmount"" = ""TaxableAmount"" + ""RoundOffAmount"")
+                );
+            ");
         }
         catch (Exception ex) when (IsUnreachable(ex))
         {

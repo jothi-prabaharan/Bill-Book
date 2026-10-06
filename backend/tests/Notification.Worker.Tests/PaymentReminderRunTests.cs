@@ -125,8 +125,11 @@ public sealed class PaymentReminderRunTests
             ContactId = contactId,
             CurrencyCode = "INR",
             ExchangeRate = 1m,
+            TaxableAmount = total,
             TotalAmount = total,
+            TotalAmountBase = total,
             Status = status,
+            PostedAt = status == DocumentStatus.Posted ? DateTimeOffset.UtcNow : null,
         };
         db.Invoices.Add(invoice);
         await db.SaveChangesAsync();

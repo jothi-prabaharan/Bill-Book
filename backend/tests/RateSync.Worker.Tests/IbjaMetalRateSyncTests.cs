@@ -78,7 +78,7 @@ public sealed class IbjaMetalRateSyncTests
         MetalRate gold24 = written.Single(r => r.Metal == Metal.Gold && r.PurityCode == "24K");
         Assert.Equal(75000m, gold24.RatePerGram);
 
-        MetalRate gold22 = written.Single(r => r.Metal == Metal.Gold && r.PurityCode == "916");
+        MetalRate gold22 = written.Single(r => r.Metal == Metal.Gold && r.PurityCode == "22K");
         Assert.Equal(70000m, gold22.RatePerGram);
 
         MetalRate silver = written.Single(r => r.Metal == Metal.Silver && r.PurityCode == "999");

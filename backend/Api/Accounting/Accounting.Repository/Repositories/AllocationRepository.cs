@@ -76,10 +76,17 @@ public sealed class AllocationRepository
             // What the target still represents: its CONTROL legs, netted in base
             // currency — the same convention the balance trigger, the trial
             // balance and the outstanding report all use.
-            decimal net = await _db.JournalLedger
+            var targetControlQuery = _db.JournalLedger
                 .Where(l => l.TransactionTypeCode == targetCode
                     && l.TransactionId == request.TargetTransactionId
-                    && l.LedgerTypeId == ControlLedgerType)
+                    && l.LedgerTypeId == ControlLedgerType);
+
+            if (await targetControlQuery.AnyAsync(l => l.ContactId != null, ct))
+            {
+                targetControlQuery = targetControlQuery.Where(l => l.ContactId != null);
+            }
+
+            decimal net = await targetControlQuery
                 .GroupBy(l => 1)
                 .Select(g => g.Sum(l => l.DebitAmountBase) - g.Sum(l => l.CreditAmountBase))
                 .FirstOrDefaultAsync(ct);
@@ -501,10 +508,17 @@ public sealed class AllocationRepository
     private async Task<decimal> PostedControlNetAsync(
         string transactionTypeCode, long transactionId, CancellationToken ct)
     {
-        decimal net = await _db.JournalLedger
+        var controlQuery = _db.JournalLedger
             .Where(l => l.TransactionTypeCode == transactionTypeCode
                 && l.TransactionId == transactionId
-                && l.LedgerTypeId == ControlLedgerType)
+                && l.LedgerTypeId == ControlLedgerType);
+
+        if (await controlQuery.AnyAsync(l => l.ContactId != null, ct))
+        {
+            controlQuery = controlQuery.Where(l => l.ContactId != null);
+        }
+
+        decimal net = await controlQuery
             .GroupBy(l => 1)
             .Select(g => g.Sum(l => l.DebitAmountBase) - g.Sum(l => l.CreditAmountBase))
             .FirstOrDefaultAsync(ct);

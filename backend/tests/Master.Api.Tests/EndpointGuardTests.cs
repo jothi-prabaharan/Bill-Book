@@ -77,7 +77,8 @@ public sealed class EndpointGuardTests
                 "MenuController",
                 "MeController",
                 "RatesController",
-                "PortalSessionController")));
+                "PortalSessionController",
+                "ComplianceController")));
     }
 
     /// <summary>

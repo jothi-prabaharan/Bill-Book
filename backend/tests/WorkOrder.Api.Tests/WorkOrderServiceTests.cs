@@ -145,7 +145,7 @@ public sealed class WorkOrderServiceTests
         Assert.Equal(WorkOrderOutcome.StateRule, refused.Outcome);
         WorkOrderView view = (await service.GetAsync(id, default))!;
         Assert.Equal("Ceiling fan noisy", view.Title);
-        Assert.Equal("WRK-00001", view.WorkOrderNo);
+        Assert.Equal("WRK/2627/00001", view.WorkOrderNo);
         Assert.Equal(2, view.Tasks.Count);
     }
 

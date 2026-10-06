@@ -1,6 +1,8 @@
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Xunit;
 
 namespace Master.Api.Tests;
@@ -15,7 +17,7 @@ public sealed class SalesEInvoicePermissionTests
         new(new DbContextOptionsBuilder<AdminDbContext>().UseNpgsql("Host=unused").Options);
 
     private static List<IDictionary<string, object?>> Seed<T>(AdminDbContext db) =>
-        db.Model.FindEntityType(typeof(T))!.GetSeedData().ToList();
+        db.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(T))!.GetSeedData().ToList();
 
     [Fact]
     public void The_permission_is_seeded()

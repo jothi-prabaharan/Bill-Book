@@ -1,4 +1,6 @@
 using Accounting.Api.Services;
+using Accounting.Entity.TableEntities;
+using Accounting.Repository;
 using Accounting.Repository.Repositories;
 
 namespace Accounting.Api.Tests;
@@ -15,11 +17,13 @@ public sealed class RecordingLedger : IAccountingLedger
 {
     private readonly DateOnly? _lockedUpto;
     private readonly bool _lockUnavailable;
+    private readonly AccountingDbContext? _db;
 
-    public RecordingLedger(DateOnly? lockedUpto = null, bool lockUnavailable = false)
+    public RecordingLedger(DateOnly? lockedUpto = null, bool lockUnavailable = false, AccountingDbContext? db = null)
     {
         _lockedUpto = lockedUpto;
         _lockUnavailable = lockUnavailable;
+        _db = db;
     }
 
     /// <summary>Every posting handed over, newest last.</summary>
@@ -30,14 +34,53 @@ public sealed class RecordingLedger : IAccountingLedger
 
     public LedgerPosting Last => Postings[^1];
 
-    public Task<LedgerPostOutcome> PostAsync(LedgerPosting posting, CancellationToken ct)
+    public async Task<LedgerPostOutcome> PostAsync(LedgerPosting posting, CancellationToken ct)
     {
         if (Outcome == LedgerPostOutcome.Posted)
         {
             Postings.Add(posting);
+            if (_db != null)
+            {
+                foreach (var leg in posting.Legs)
+                {
+                    long accountId = leg.AccountId ?? 0;
+                    if (accountId == 0 && leg.AccountSystemName != null)
+                    {
+                        accountId = _db.Accounts
+                            .Where(a => a.AccountSystemName == leg.AccountSystemName)
+                            .Select(a => a.AccountId)
+                            .FirstOrDefault();
+                    }
+
+                    if (accountId != 0)
+                    {
+                        _db.JournalLedger.Add(new JournalLedger
+                        {
+                            OrgId = _db.CurrentOrgId,
+                            LedgerDate = posting.LedgerDate,
+                            AccountId = accountId,
+                            TransactionTypeCode = posting.TransactionTypeCode,
+                            TransactionId = posting.TransactionId,
+                            TransactionDetailId = leg.TransactionDetailId,
+                            DebitAmount = leg.DebitAmount,
+                            CreditAmount = leg.CreditAmount,
+                            DebitAmountBase = leg.DebitAmount,
+                            CreditAmountBase = leg.CreditAmount,
+                            CurrencyCode = posting.CurrencyCode,
+                            ExchangeRate = posting.ExchangeRate,
+                            ContactId = leg.SubAccountReferenceType == 1 ? (leg.SubAccountReferenceId ?? posting.ContactId) : null,
+                            LedgerTypeId = leg.LedgerTypeId,
+                            LedgerSourceId = leg.LedgerSourceId,
+                            DocumentNo = $"{posting.TransactionTypeCode}/{posting.TransactionId}",
+                        });
+                    }
+                }
+
+                await _db.SaveChangesAsync(ct);
+            }
         }
 
-        return Task.FromResult(Outcome);
+        return Outcome;
     }
 
     /// <summary>

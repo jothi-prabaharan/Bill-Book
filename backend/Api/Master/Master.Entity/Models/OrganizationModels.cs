@@ -243,6 +243,7 @@ public class SaveOrganizationRequest
     /// <summary>
     /// Legacy trade vertical. Kept for backward compatibility with older clients.
     /// </summary>
+    [EnumDataType(typeof(Vertical), ErrorMessage = "Vertical must be Retail, Pharma, Jewellery, School, Service or Restaurant.")]
     [JsonConverter(typeof(JsonStringEnumConverter<Vertical>))]
     public Vertical Vertical { get; set; } = Vertical.Retail;
 

@@ -156,7 +156,7 @@ public sealed class AddOnRulesTests
         Assert.Contains(AddOn.Budget, multiple);
 
         List<AddOn> all = AddOnRules.Split(AddOn.All).ToList();
-        Assert.Equal(9, all.Count);
+        Assert.Equal(10, all.Count);
         Assert.DoesNotContain(AddOn.None, all);
         Assert.DoesNotContain(AddOn.All, all);
     }

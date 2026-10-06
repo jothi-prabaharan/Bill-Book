@@ -59,6 +59,7 @@ public sealed class PortalAttendanceTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        await _postgres.ResetAsync();
         db.StudentAttendance.AddRange(
             Mark(1, 1, AttendanceStatus.Present), Mark(1, 2, AttendanceStatus.Absent), Mark(1, 3, AttendanceStatus.Late),
             new StudentAttendance { SectionId = 10, EnrolmentId = 1, AttendanceDate = new DateOnly(2026, 8, 1), AttendanceStatus = AttendanceStatus.Present },

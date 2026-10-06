@@ -48,7 +48,7 @@ public static class PayrollCalculationEngineRepository
         foreach (SalaryStructureComponent sc in salary.Structure.Components.OrderBy(c => c.Component.Kind))
         {
             decimal monthlyAmount = 0m;
-            if (sc.ValueType == SalaryValueType.FlatAmount && sc.FlatAmount.HasValue)
+            if (sc.FlatAmount.HasValue && (sc.ValueType == SalaryValueType.FlatAmount || sc.ValueType == 0))
             {
                 monthlyAmount = sc.FlatAmount.Value;
             }

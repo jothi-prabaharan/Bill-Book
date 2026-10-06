@@ -250,7 +250,7 @@ public sealed class PreventiveRepository
     private async Task RaiseScheduledAsync(DateOnly today, GenerationResult result, CancellationToken ct)
     {
         var pending = await (from o in _db.PreventiveOccurrences
-                             join p in _db.PreventivePlans.AsNoTracking() on o.PreventivePlanId equals p.PreventivePlanId
+                             join p in _db.PreventivePlans on o.PreventivePlanId equals p.PreventivePlanId
                              where o.OccurrenceStatus == OccurrenceStatus.Scheduled
                              orderby o.DueDate
                              select new { Occurrence = o, Plan = p })

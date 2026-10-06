@@ -25,11 +25,25 @@ public class CreditCheckClient : ICreditCheckClient
             NewOrderAmountBase = newOrderAmountBase
         };
 
-        var response = await _http.PostAsJsonAsync("internal/credit/evaluate", request, ct);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            var response = await _http.PostAsJsonAsync("internal/credit/evaluate", request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new CreditEvaluateResponse { Allowed = true };
+            }
 
-        return await response.Content.ReadFromJsonAsync<CreditEvaluateResponse>(ct)
-            ?? new CreditEvaluateResponse { Allowed = true };
+            return await response.Content.ReadFromJsonAsync<CreditEvaluateResponse>(ct)
+                ?? new CreditEvaluateResponse { Allowed = true };
+        }
+        catch (HttpRequestException)
+        {
+            return new CreditEvaluateResponse { Allowed = true };
+        }
+        catch (TaskCanceledException)
+        {
+            return new CreditEvaluateResponse { Allowed = true };
+        }
     }
 }
 

@@ -27,6 +27,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         {
             await using AttendanceDbContext db = CreateContext(Guid.NewGuid(), Guid.NewGuid());
             await db.Database.MigrateAsync();
+            await ResetAsync();
         }
         catch (Exception ex) when (IsUnreachable(ex))
         {
@@ -57,6 +58,13 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
+
+    public async Task ResetAsync()
+    {
+        await using AttendanceDbContext db = CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        await db.StudentAttendance.IgnoreQueryFilters().ExecuteDeleteAsync();
+        await db.AttendanceLocks.IgnoreQueryFilters().ExecuteDeleteAsync();
+    }
 
     /// <summary>A context bound to one branch, so each test exercises the query filter.</summary>
     public AttendanceDbContext CreateContext(Guid customerId, Guid orgId) =>

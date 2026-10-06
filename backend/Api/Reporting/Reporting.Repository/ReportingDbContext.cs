@@ -324,15 +324,15 @@ public class ReportingDbContext : TenantDbContext
         MapRead<ContactLicenceRead>(
             modelBuilder, "ContactLicences", "con", e => e.ContactLicenceId);
         MapRead<ItemRead>(modelBuilder, "Items", "inv", e => e.ItemId);
-        MapRead<ItemStockRead>(modelBuilder, "ItemStocks", "inv", e => e.ItemId);
+        MapRead<ItemStockRead>(modelBuilder, "ItemStock", "inv", e => e.ItemId);
         MapRead<ItemCategoryRead>(modelBuilder, "ItemCategories", "inv", e => e.ItemCategoryId);
         MapRead<StockMovementRead>(modelBuilder, "StockMovements", "inv", e => e.StockMovementId);
         MapRead<CostLayerRead>(modelBuilder, "CostLayers", "inv", e => e.CostLayerId);
         MapRead<ItemBatchRead>(modelBuilder, "ItemBatches", "inv", e => e.ItemBatchId);
         MapRead<ItemSerialRead>(modelBuilder, "ItemSerials", "inv", e => e.ItemSerialId);
         MapRead<WarehouseRead>(modelBuilder, "Warehouses", "inv", e => e.WarehouseId);
-        MapRead<UnitOfMeasureRead>(modelBuilder, "UnitsOfMeasure", "inv", e => e.UomId);
-        MapRead<SalesRegisterRead>(modelBuilder, "SalesRegisters", "sal", e => e.SalesRegisterId);
+        MapRead<UnitOfMeasureRead>(modelBuilder, "UnitOfMeasures", "inv", e => e.UomId);
+        MapRead<SalesRegisterRead>(modelBuilder, "SalesRegister", "sal", e => e.SalesRegisterId);
         MapRead<PurchaseRegisterRead>(modelBuilder, "PurchaseRegister", "pur", e => e.PurchaseRegisterId);
 
         MapRead<InvoiceRead>(modelBuilder, "Invoices", "sal", e => e.InvoiceId);

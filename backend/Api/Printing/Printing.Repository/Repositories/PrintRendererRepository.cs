@@ -92,8 +92,10 @@ public sealed class PrintRendererRepository
 
         foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
+            string rawHtml = PrintSegmentsRepository.Html(content, segment);
+            string sanitizedHtml = sanitizer.Sanitize(rawHtml);
             SubstitutionResult result = PrintSubstitutionRepository.Resolve(
-                PrintSegmentsRepository.Html(content, segment),
+                sanitizedHtml,
                 request.DocumentTypeCode,
                 request.Payload,
                 request.Format,
@@ -143,7 +145,7 @@ public sealed class PrintRendererRepository
         }
 
         var html = new StringBuilder();
-        html.Append(Styles(paperWidthMm, null));
+        html.Append(Styles(paperWidthMm, null, resolved));
         html.Append(CultureInfo.InvariantCulture, $"<div class=\"pt-doc pt-continuous\" style=\"width:{Px(paperWidthMm)}\">");
         html.Append(CultureInfo.InvariantCulture, $"<section class=\"pt-page\" style=\"width:{Px(paperWidthMm)};padding:{Padding(settings)}\">");
         html.Append(WatermarkDiv(watermark));
@@ -252,7 +254,7 @@ public sealed class PrintRendererRepository
         string? watermark)
     {
         var html = new StringBuilder();
-        html.Append(Styles(paperWidthMm, paperHeightMm));
+        html.Append(Styles(paperWidthMm, paperHeightMm, resolved));
         html.Append(CultureInfo.InvariantCulture, $"<div class=\"pt-doc\" style=\"width:{Px(paperWidthMm)}\">");
 
         for (int index = 0; index < pages.Count; index++)
@@ -508,31 +510,46 @@ public sealed class PrintRendererRepository
     /// The page frame. Everything positional lives here rather than on elements,
     /// so a template's own styles cannot fight it.
     /// </summary>
-    private static string Styles(double paperWidthMm, double? paperHeightMm) =>
-        "<style>"
-        + PageRule(paperWidthMm, paperHeightMm)
-        + ".pt-doc{margin:0 auto}"
-        + ".pt-page{position:relative;box-sizing:border-box;overflow:hidden;background:#fff}"
-        + ".pt-continuous .pt-page{height:auto}"
-        + ".pt-flow{position:relative}"
-        + ".pt-pinned{position:absolute;left:0;right:0;bottom:0}"
-        + ".pt-cut{border-top:0.5pt solid currentColor;opacity:0.5}"
-        + ".pt-page table{width:100%;border-collapse:collapse}"
-        + ".pt-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);"
-        + "font-size:72pt;font-weight:bold;letter-spacing:0.1em;opacity:0.12;white-space:nowrap;pointer-events:none;z-index:1}"
-        + ".pt-qr{width:32mm;height:32mm;image-rendering:pixelated}"
-        // A barcode under its readable text (TK-156): 12 mm of bars, as wide as
-        // the code needs, never wider than its cell.
-        + ".pt-barcode{display:inline-block;text-align:center;line-height:1}"
-        + ".pt-barcode img{display:block;height:12mm;max-width:100%;margin:0 auto}"
-        + ".pt-barcode-text{display:block;font:8pt monospace;margin-top:1mm}"
-        // The UPI payment QR and its caption (TK-158).
-        + ".pt-upi{display:inline-block;text-align:center}"
-        + ".pt-upi-text{display:block;font-size:8pt;margin-top:1mm}"
-        + ".pt-einvoice{margin-bottom:3mm;font-size:8pt}"
-        + ".pt-einvoice td{vertical-align:top;word-break:break-all}"
-        + ".pt-einvoice-qr{width:34mm;text-align:right}"
-        + "</style>";
+    private static string Styles(
+        double paperWidthMm,
+        double? paperHeightMm,
+        Dictionary<PrintSegment, string>? resolved = null)
+    {
+        bool hasUpi = resolved?.Values.Any(v => v.Contains("pt-upi", StringComparison.OrdinalIgnoreCase)) == true;
+        bool hasEInvoice = resolved?.Values.Any(v => v.Contains("pt-einvoice", StringComparison.OrdinalIgnoreCase)) == true;
+
+        var sb = new StringBuilder("<style>");
+        sb.Append(PageRule(paperWidthMm, paperHeightMm))
+          .Append(".pt-doc{margin:0 auto}")
+          .Append(".pt-page{position:relative;box-sizing:border-box;overflow:hidden;background:#fff}")
+          .Append(".pt-continuous .pt-page{height:auto}")
+          .Append(".pt-flow{position:relative}")
+          .Append(".pt-pinned{position:absolute;left:0;right:0;bottom:0}")
+          .Append(".pt-cut{border-top:0.5pt solid currentColor;opacity:0.5}")
+          .Append(".pt-page table{width:100%;border-collapse:collapse}")
+          .Append(".pt-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);")
+          .Append("font-size:72pt;font-weight:bold;letter-spacing:0.1em;opacity:0.12;white-space:nowrap;pointer-events:none;z-index:1}")
+          .Append(".pt-qr{width:32mm;height:32mm;image-rendering:pixelated}")
+          .Append(".pt-barcode{display:inline-block;text-align:center;line-height:1}")
+          .Append(".pt-barcode img{display:block;height:12mm;max-width:100%;margin:0 auto}")
+          .Append(".pt-barcode-text{display:block;font:8pt monospace;margin-top:1mm}");
+
+        if (hasUpi)
+        {
+            sb.Append(".pt-upi{display:inline-block;text-align:center}")
+              .Append(".pt-upi-text{display:block;font-size:8pt;margin-top:1mm}");
+        }
+
+        if (hasEInvoice)
+        {
+            sb.Append(".pt-einvoice{margin-bottom:3mm;font-size:8pt}")
+              .Append(".pt-einvoice td{vertical-align:top;word-break:break-all}")
+              .Append(".pt-einvoice-qr{width:34mm;text-align:right}");
+        }
+
+        sb.Append("</style>");
+        return sb.ToString();
+    }
 
     /// <summary>
     /// The browser's print size, set to the paper's exactly (TK-147), so a

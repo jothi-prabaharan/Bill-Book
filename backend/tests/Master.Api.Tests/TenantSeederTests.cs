@@ -111,11 +111,12 @@ public sealed class TenantSeederTests
         var handler = new RecordingHandler();
         Dictionary<string, string?> settings = AllConfigured();
         settings["Seeding:Employee"] = "http://hrm.test/";
+        settings["Seeding:Payroll"] = "http://payroll.test/";
 
         IReadOnlyList<string> failed = await Seeder(handler, settings).SeedAsync(
             Guid.NewGuid(), Guid.NewGuid(), null, Shared.Kernel.Apps.AddOn.Payroll, CancellationToken.None);
 
-        Assert.Equal(["accounting.test", "hrm.test", "printing.test"], handler.Requests.Select(r => r.RequestUri!.Host));
+        Assert.Equal(["accounting.test", "hrm.test", "payroll.test", "printing.test"], handler.Requests.Select(r => r.RequestUri!.Host));
         Assert.Empty(failed);
     }
 }

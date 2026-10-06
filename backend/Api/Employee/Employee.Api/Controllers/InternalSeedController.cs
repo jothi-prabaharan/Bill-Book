@@ -5,6 +5,7 @@ using Employee.Api.Services;
 using Employee.Repository.Repositories;
 using Employee.Repository.Clients;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 
 namespace Employee.Api.Controllers;
@@ -21,6 +22,7 @@ namespace Employee.Api.Controllers;
 [ApiController]
 [AllowAnonymous]
 [InternalOnly]
+[NoTransaction]
 [Route("internal/seed")]
 public sealed class InternalSeedController : ControllerBase
 {

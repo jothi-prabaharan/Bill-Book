@@ -27,7 +27,7 @@ public sealed class GstReturnTests
         [Abroad] = "96",
     };
 
-    private const string BranchGstin = "33AAAAA0000A1Z5";
+    private const string BranchGstin = "33AAACH7409R1Z8";
 
     /// <summary>The card's "done when".</summary>
     [Fact]
@@ -123,11 +123,11 @@ public sealed class GstReturnTests
     {
         List<SalesRegisterRead> sales =
         [
-            Sale("INV-1", 1, taxable: 10_000m, cgst: 900m, sgst: 900m, gstin: "29AABCU9603R1ZM", hsn: "6109"),
-            Sale("INV-1", 1, taxable: 2_000m, cgst: 60m, sgst: 60m, gstin: "29AABCU9603R1ZM", hsn: "4901", rate: 6m),
+            Sale("INV-1", 1, taxable: 10_000m, cgst: 900m, sgst: 900m, gstin: "29AAGCB7383J1Z4", hsn: "6109"),
+            Sale("INV-1", 1, taxable: 2_000m, cgst: 60m, sgst: 60m, gstin: "29AAGCB7383J1Z4", hsn: "4901", rate: 6m),
             Sale("INV-2", 2, taxable: 150_000m, igst: 27_000m, state: Karnataka, inter: true, hsn: "8471"),
             Sale("INV-3", 3, taxable: 800m, cgst: 72m, sgst: 72m, hsn: "6109"),
-            Sale("CRN-1", 1, taxable: -1_000m, cgst: -90m, sgst: -90m, type: "CRN", gstin: "29AABCU9603R1ZM", hsn: "6109"),
+            Sale("CRN-1", 1, taxable: -1_000m, cgst: -90m, sgst: -90m, type: "CRN", gstin: "29AAGCB7383J1Z4", hsn: "6109"),
             Sale("INV-4", 4, taxable: 3_000m, state: Abroad, inter: true, rate: 0m, hsn: "6109"),
         ];
 

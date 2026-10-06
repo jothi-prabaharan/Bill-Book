@@ -452,7 +452,7 @@ public sealed class BillRepository
             // What to do with a genuine difference — revalue the cost layer, or
             // post a purchase price variance — is Purchase.md §8 and is not
             // decided, so a mismatch is refused rather than silently absorbed.
-            if (receipt is not null)
+            if (receipt is not null && lineReq.LineType != DocumentLineType.Capital)
             {
                 BillResult matched = MatchesReceipt(
                     receipt, lineReq, computed, lineNumber);

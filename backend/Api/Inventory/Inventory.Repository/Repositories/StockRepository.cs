@@ -865,8 +865,10 @@ public sealed class StockRepository
             }
             catch (DbUpdateException)
             {
-                // Detached rather than clearing the whole tracker: the caller
-                // has its own pending work in this context.
+                // Concurrently inserted row: retry will update it.
+            }
+            finally
+            {
                 _db.Entry(seed).State = EntityState.Detached;
             }
         }

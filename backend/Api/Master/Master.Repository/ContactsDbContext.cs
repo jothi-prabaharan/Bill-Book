@@ -245,6 +245,11 @@ public class ContactsDbContext : TenantDbContext
                 "\"IssuedOn\" IS NULL OR \"ExpiresOn\" IS NULL OR \"ExpiresOn\" >= \"IssuedOn\""));
         });
 
+        modelBuilder.Entity<ApiClient>(b =>
+        {
+            b.Property(e => e.LastUsedAt).HasColumnType("timestamp with time zone");
+        });
+
         modelBuilder.Entity<PortalGrant>(b =>
         {
             b.HasKey(e => e.PortalGrantId);

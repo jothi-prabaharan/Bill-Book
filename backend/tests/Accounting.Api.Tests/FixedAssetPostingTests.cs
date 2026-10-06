@@ -621,6 +621,7 @@ public class FixedAssetPostingTests
                 LedgerAccountId = bankLedger,
                 AccountName = "Current Account",
                 AccountNumber = "000111222",
+                AccountType = BankAccountType.Cash,
             };
             db.BankAccounts.Add(bank);
             await db.SaveChangesAsync();

@@ -174,7 +174,7 @@ public sealed class SavingsSchemeTests
             BankAccountId = h.BankAccountId,
             RefundDate = new DateOnly(2026, 4, 1),
         }, default);
-        Assert.Equal(SavingsSchemeOutcome.Ok, refunded.Outcome);
+        Assert.True(refunded.Outcome == SavingsSchemeOutcome.Ok, refunded.Detail ?? "No detail");
 
         await using AccountingDbContext check = h.Check();
         SpendMoney refund = await check.SpendMoney.AsNoTracking().SingleAsync(s => s.SpendMoneyId == refunded.Id);
@@ -309,7 +309,7 @@ public sealed class SavingsSchemeTests
                 OrgId = orgId,
                 AccountName = "Counter cash",
                 AccountNumber = "CASH-1",
-                AccountType = BankAccountType.Current,
+                AccountType = BankAccountType.Cash,
                 CurrencyCode = "INR",
                 LedgerAccountId = cash,
                 IsActive = true,
@@ -320,7 +320,7 @@ public sealed class SavingsSchemeTests
             db.ChangeTracker.Clear();
 
             var numbers = new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear());
-            var ledger = new RecordingLedger();
+            var ledger = new RecordingLedger(db: db);
             var user = new StubCurrentUser();
 
             var journals = new JournalRepository(

@@ -48,6 +48,7 @@ public sealed class RestaurantMenuTests
             ItemProfile = ItemProfile.Restaurant,
             ItemType = ItemType.Goods,
             TrackInventory = false,
+            CostingType = CostingType.None,
             UomTypeId = uomType.UomTypeId,
             InventoryUomId = uom.UomId,
             SalesUomId = uom.UomId,

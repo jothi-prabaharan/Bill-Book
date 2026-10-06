@@ -81,7 +81,7 @@ public sealed class PortalServiceTests
 
         Assert.Equal(["Arun Raman", "Meera Raman"], children.Select(c => c.StudentName));
         PortalChildView meera = children.Single(c => c.StudentId == s.Meera);
-        Assert.Equal("VI", meera.ClassName);
+        Assert.Equal("Class VI", meera.ClassName);
         Assert.Equal("A", meera.SectionName);
         Assert.Equal("2026-27", meera.AcademicYearCode);
         Assert.Null(children.Single(c => c.StudentId == s.Arun).ClassName);

@@ -20,8 +20,8 @@ public sealed class BarcodePrintTests
         Renderer.Render(new PrintRenderRequest { Content = new PrintContent { HeaderHtml = html }, DocumentTypeCode = type, Payload = payload });
 
     [Theory]
-    [InlineData("8901234567892", true)] // a valid GS1 check digit
-    [InlineData("8901234567890", false)] // the wrong check digit
+    [InlineData("8901234567890", true)] // a valid GS1 check digit
+    [InlineData("8901234567892", false)] // the wrong check digit
     [InlineData("890123456789", false)] // twelve digits
     [InlineData("89012345678AB", false)]
     [InlineData(null, false)]
@@ -31,7 +31,7 @@ public sealed class BarcodePrintTests
     [Fact]
     public void A_retail_code_is_ean13_and_anything_else_code128()
     {
-        Assert.Equal(BarcodeFormat.EAN_13, BarcodeImagesRepository.FormatFor("8901234567892"));
+        Assert.Equal(BarcodeFormat.EAN_13, BarcodeImagesRepository.FormatFor("8901234567890"));
         Assert.Equal(BarcodeFormat.CODE_128, BarcodeImagesRepository.FormatFor("INV/2627/00042"));
     }
 

@@ -120,7 +120,19 @@ public sealed class SelfServiceAndApprovalsTests
 
         Assert.IsType<OkObjectResult>(actResult);
 
+        // 3b. Complete remaining workflow step (HR Approval)
+        var hrPendingResult = await approvalsController.GetPendingApprovals(default);
+        var hrPendingList = Assert.IsAssignableFrom<IEnumerable<PendingApprovalItemDto>>(Assert.IsType<OkObjectResult>(hrPendingResult).Value);
+        var hrItem = Assert.Single(hrPendingList, p => p.RequestId == appDto.LeaveApplicationId && p.RequestKind == "Leave");
+        var hrActResult = await approvalsController.Act(hrItem.ApprovalStepId, new ActApprovalRequest
+        {
+            Action = "Approve",
+            Comments = "HR approved"
+        }, default);
+        Assert.IsType<OkObjectResult>(hrActResult);
+
         // 4. Verify in DB: Leave status is approved and balance taken is deducted
+        db.ChangeTracker.Clear();
         var savedApp = await db.LeaveApplications.FirstAsync(a => a.LeaveApplicationId == appDto.LeaveApplicationId);
         Assert.Equal(LeaveStatus.Approved, savedApp.LeaveStatus);
         Assert.Equal(ApprovalStatus.Approved, savedApp.ApprovalStatus);

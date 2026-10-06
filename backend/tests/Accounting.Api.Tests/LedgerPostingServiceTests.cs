@@ -554,15 +554,16 @@ public class LedgerPostingServiceTests
 
     // ── A leg named by bank account (TK-39) ─────────────────────────────
 
-    private static async Task<long> BankAccountAsync(Harness harness, bool active = true)
+    private static async Task<long> BankAccountAsync(Harness harness, bool active = true, long? ledgerAccountId = null)
     {
+        string suffix = Guid.NewGuid().ToString("N")[..4];
         var bank = new BankAccount
         {
             OrgId = harness.Db.CurrentOrgId,
-            AccountName = active ? "Counter cash" : "Old drawer",
-            AccountNumber = "CASH-1",
+            AccountName = active ? $"Counter cash {suffix}" : $"Old drawer {suffix}",
+            AccountNumber = $"CASH-{suffix}",
             AccountType = Accounting.Entity.Enums.BankAccountType.Cash,
-            LedgerAccountId = harness.BankId,
+            LedgerAccountId = ledgerAccountId ?? harness.BankId,
             IsActive = active,
         };
         harness.Db.BankAccounts.Add(bank);
@@ -605,7 +606,17 @@ public class LedgerPostingServiceTests
     {
         await using Harness harness = await Harness.CreateAsync(_postgres);
         long retired = await BankAccountAsync(harness, active: false);
-        long drawer = await BankAccountAsync(harness);
+        var secondLedger = new Account
+        {
+            OrgId = harness.Db.CurrentOrgId,
+            AccountTypeId = 1,
+            AccountCode = "1025",
+            AccountName = "Second Bank",
+            IsActive = true,
+        };
+        harness.Db.Accounts.Add(secondLedger);
+        await harness.Db.SaveChangesAsync();
+        long drawer = await BankAccountAsync(harness, ledgerAccountId: secondLedger.AccountId);
 
         PostLedgerRequest Sale(LedgerLegRequest control) => new()
         {

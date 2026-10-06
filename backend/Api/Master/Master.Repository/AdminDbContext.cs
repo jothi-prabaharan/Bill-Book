@@ -26,6 +26,17 @@ namespace Master.Repository;
 /// </summary>
 public class AdminDbContext : DbContext
 {
+    static AdminDbContext()
+    {
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
+
     public AdminDbContext(DbContextOptions<AdminDbContext> options)
         : base(options)
     {

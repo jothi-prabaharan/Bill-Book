@@ -18,7 +18,7 @@ public static class CustomerKindRepository
     /// nobody meets it, and far enough short of <see cref="DateOnly.MaxValue"/>
     /// that adding grace days to it cannot overflow.
     /// </summary>
-    public static readonly DateOnly NoExpiry = new(9999, 1, 1);
+    public static readonly DateOnly NoExpiry = new(2099, 12, 31);
 
     /// <summary>
     /// The user and branch limits on an unbilled customer's licence. They are

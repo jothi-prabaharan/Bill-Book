@@ -81,6 +81,7 @@ public class BillMsmeTests
             DueDate = dueDate60,
             VendorBillNo = "INV/MSME/01",
             VendorBillDate = docDate,
+            PlaceOfSupplyStateCode = "33",
             CurrencyCode = "INR",
             ExchangeRate = 1m,
             Lines =
@@ -151,6 +152,7 @@ public class BillMsmeTests
             DueDate = dueDate45,
             VendorBillNo = "INV/MSME/02",
             VendorBillDate = docDate,
+            PlaceOfSupplyStateCode = "33",
             CurrencyCode = "INR",
             ExchangeRate = 1m,
             Lines =
@@ -219,6 +221,7 @@ public class BillMsmeTests
             DueDate = dueDate60,
             VendorBillNo = "INV/CORP/01",
             VendorBillDate = docDate,
+            PlaceOfSupplyStateCode = "33",
             CurrencyCode = "INR",
             ExchangeRate = 1m,
             Lines =

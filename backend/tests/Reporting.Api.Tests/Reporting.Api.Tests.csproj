@@ -18,6 +18,9 @@
          rather than a copy that would agree with itself forever. Same reference
          Customer.Api.Tests takes, for the same reason. -->
     <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Accounting\Accounting.Repository\Accounting.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Sales\Sales.Repository\Sales.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Purchase\Purchase.Repository\Purchase.Repository.csproj" />
   </ItemGroup>
 
 

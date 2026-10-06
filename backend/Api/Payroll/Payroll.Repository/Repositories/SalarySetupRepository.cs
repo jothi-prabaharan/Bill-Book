@@ -1,5 +1,6 @@
 using Payroll.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
+using Payroll.Entity.Enums;
 using Payroll.Entity.Models;
 using Payroll.Entity.TableEntities;
 using Payroll.Repository;
@@ -149,10 +150,18 @@ public sealed class SalarySetupRepository
 
         foreach (var c in request.Components)
         {
+            var valueType = c.ValueType != 0
+                ? c.ValueType
+                : c.FlatAmount.HasValue
+                    ? SalaryValueType.FlatAmount
+                    : c.Percentage.HasValue
+                        ? SalaryValueType.Percentage
+                        : SalaryValueType.FlatAmount;
+
             structure.Components.Add(new SalaryStructureComponent
             {
                 SalaryComponentId = c.SalaryComponentId,
-                ValueType = c.ValueType,
+                ValueType = valueType,
                 FlatAmount = c.FlatAmount,
                 Percentage = c.Percentage
             });

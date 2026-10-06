@@ -54,8 +54,8 @@ public sealed class WastageRepository
             .ToListAsync(ct);
 
         List<long> itemIds = rows.Select(r => r.Entry.ItemId).Distinct().ToList();
-        Dictionary<long, decimal> averages = await _db.ItemStock.Where(s => itemIds.Contains(s.ItemId)).ToDictionaryAsync(s => s.ItemId, s => s.WeightedAverageCost, ct);
-        Dictionary<long, decimal> inventoryToBase = await _db.UnitOfMeasures.ToDictionaryAsync(u => u.UomId, u => u.ConversionToBase, ct);
+        Dictionary<long, decimal> averages = await _db.ItemStock.AsNoTracking().Where(s => itemIds.Contains(s.ItemId)).ToDictionaryAsync(s => s.ItemId, s => s.WeightedAverageCost, ct);
+        Dictionary<long, decimal> inventoryToBase = await _db.UnitOfMeasures.AsNoTracking().ToDictionaryAsync(u => u.UomId, u => u.ConversionToBase, ct);
 
         return rows.Select(r => new WastageView
         {

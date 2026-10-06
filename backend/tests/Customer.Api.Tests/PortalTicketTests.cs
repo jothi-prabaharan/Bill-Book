@@ -98,6 +98,7 @@ public sealed class PortalTicketTests
             .ExecuteUpdateAsync(t => t.SetProperty(x => x.Status, TicketStatus.Resolved).SetProperty(x => x.ResolvedAt, Now));
         await h.Db.Tickets.Where(t => t.TicketId == closed)
             .ExecuteUpdateAsync(t => t.SetProperty(x => x.Status, TicketStatus.Closed));
+        h.Db.ChangeTracker.Clear();
 
         Assert.Equal(PortalTicketOutcome.Ok, await h.Portal.ReplyAsync(Contact, resolved, "Still broken", default));
         Assert.Equal(PortalTicketOutcome.Closed, await h.Portal.ReplyAsync(Contact, closed, "Hello?", default));

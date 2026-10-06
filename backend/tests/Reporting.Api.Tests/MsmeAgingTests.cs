@@ -34,8 +34,14 @@ public sealed class MsmeAgingTests
         await using ReportingDbContext db = _postgres.CreateContext(customerId, orgId);
 
         DateOnly asOf = new(2026, 9, 30);
-        long msmeVendorId = 201;
-        long nonMsmeVendorId = 202;
+        long idBase = (DateTime.UtcNow.Ticks % 10_000_000) * 10 + Random.Shared.Next(1, 9);
+        long msmeVendorId = idBase + 1;
+        long nonMsmeVendorId = idBase + 2;
+        long bill1Id = idBase + 3;
+        long bill2Id = idBase + 4;
+        long bill3Id = idBase + 5;
+        long bill4Id = idBase + 6;
+        long bill5Id = idBase + 7;
 
         db.Contacts.AddRange(
             new ContactRead
@@ -72,7 +78,7 @@ public sealed class MsmeAgingTests
             // Bill 1: 10 days old (<= 15 days bucket)
             new BillRead
             {
-                BillId = 1001,
+                BillId = bill1Id,
                 TransactionTypeCode = "BIL",
                 DocumentNo = "BIL-001",
                 VendorBillNo = "INV-MSME-1",
@@ -90,7 +96,7 @@ public sealed class MsmeAgingTests
             // Bill 2: 30 days old (16 - 45 days bucket)
             new BillRead
             {
-                BillId = 1002,
+                BillId = bill2Id,
                 TransactionTypeCode = "BIL",
                 DocumentNo = "BIL-002",
                 VendorBillNo = "INV-MSME-2",
@@ -108,7 +114,7 @@ public sealed class MsmeAgingTests
             // Bill 3: 55 days old (Overdue > 45 days bucket)
             new BillRead
             {
-                BillId = 1003,
+                BillId = bill3Id,
                 TransactionTypeCode = "BIL",
                 DocumentNo = "BIL-003",
                 VendorBillNo = "INV-MSME-3",
@@ -126,7 +132,7 @@ public sealed class MsmeAgingTests
             // Bill 4: Non-MSME vendor, 60 days old (should be excluded)
             new BillRead
             {
-                BillId = 1004,
+                BillId = bill4Id,
                 TransactionTypeCode = "BIL",
                 DocumentNo = "BIL-004",
                 VendorBillNo = "INV-CORP-4",
@@ -144,7 +150,7 @@ public sealed class MsmeAgingTests
             // Bill 5: MSME vendor, 50 days old, Draft status (should be excluded)
             new BillRead
             {
-                BillId = 1005,
+                BillId = bill5Id,
                 TransactionTypeCode = "BIL",
                 DocumentNo = "BIL-005",
                 VendorBillNo = "INV-MSME-5",
@@ -187,7 +193,7 @@ public sealed class MsmeAgingTests
         // Assert: Only Bill 3 is overdue past 45 days
         Assert.Single(mcaItems);
         var item = mcaItems[0];
-        Assert.Equal(1003, item.BillId);
+        Assert.Equal(bill3Id, item.BillId);
         Assert.Equal("INV-MSME-3", item.BillNo);
         Assert.Equal("Micro Precision Tools", item.VendorName);
         Assert.Equal(40000m, item.AmountDue);

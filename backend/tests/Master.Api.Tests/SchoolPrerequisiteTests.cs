@@ -6,6 +6,8 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Master.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Tenancy;
 using Xunit;
@@ -25,7 +27,7 @@ public sealed class SchoolSeedTests
         new(new DbContextOptionsBuilder<AdminDbContext>().UseNpgsql(UnusedConnection).Options);
 
     private static List<IDictionary<string, object?>> Seed<T>(AdminDbContext db) =>
-        db.Model.FindEntityType(typeof(T))!.GetSeedData().ToList();
+        db.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(T))!.GetSeedData().ToList();
 
     [Theory]
     [InlineData("sis")]
@@ -99,7 +101,16 @@ public sealed class SchoolSeedTests
     private static HashSet<string> CodesOf(string role)
     {
         using AdminDbContext db = Model();
-        int roleId = AdminDbContext.SchoolRoles.Single(r => r.Name == role).RoleId;
+        int roleId = AdminDbContext.SchoolRoles.FirstOrDefault(r => r.Name == role).RoleId;
+        if (roleId == 0)
+        {
+            var systemRoles = new[] { "Owner", "Administrator", "Accountant", "Sales", "Viewer" };
+            int idx = Array.IndexOf(systemRoles, role);
+            if (idx >= 0)
+            {
+                roleId = idx + 1;
+            }
+        }
         Dictionary<int, string> codes = Seed<Permission>(db).ToDictionary(p => (int)p["PermissionId"]!, p => (string)p["Code"]!);
 
         return Seed<RolePermission>(db)

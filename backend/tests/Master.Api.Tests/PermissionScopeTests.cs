@@ -4,6 +4,8 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Master.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Shared.Kernel.Apps;
 using Xunit;
 
@@ -24,7 +26,7 @@ public sealed class PermissionScopeTests
         new(new DbContextOptionsBuilder<AdminDbContext>().UseNpgsql(UnusedConnection).Options);
 
     private static List<IDictionary<string, object?>> Seed<T>(AdminDbContext db) =>
-        db.Model.FindEntityType(typeof(T))!.GetSeedData().ToList();
+        db.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(T))!.GetSeedData().ToList();
 
     [Theory]
     // Shared permissions (settings) reach every branch, and a customer with no trade.

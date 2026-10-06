@@ -128,7 +128,7 @@ public sealed class PrintingRowLevelSecurityTests
             }
         }
 
-        Assert.Equal(["ErrorLogs", "PrintTemplates"], quals.Keys.Order().ToArray());
+        Assert.Equal(["EditLog", "ErrorLogs", "LabelTemplates", "PrintTemplates"], quals.Keys.Order().ToArray());
         Assert.All(quals.Values, qual =>
         {
             Assert.Contains("NULLIF(current_setting('app.current_customer_id'", qual);

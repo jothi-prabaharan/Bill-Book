@@ -405,6 +405,16 @@ public sealed class ContactRepository
 
     public async Task<SaveContactResult> CreateAsync(SaveContactRequest request, CancellationToken ct)
     {
+        if (!string.IsNullOrWhiteSpace(request.ContactCode))
+        {
+            string trimmedCode = request.ContactCode.Trim();
+            if (string.Equals(trimmedCode, WalkInCode, StringComparison.OrdinalIgnoreCase)
+                || await _db.Contacts.AnyAsync(c => c.ContactCode == trimmedCode, ct))
+            {
+                return new SaveContactResult(SaveContactOutcome.DuplicateCode, null, null);
+            }
+        }
+
         if (!TryParse(request, out ContactCategory category, out GstRegistrationType registration))
         {
             return new SaveContactResult(SaveContactOutcome.InvalidValue, null, null);

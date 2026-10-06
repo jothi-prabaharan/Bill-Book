@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Api\Accounting\Accounting.Repository\Accounting.Repository.csproj" />
     <ProjectReference Include="..\..\Api\Claims\Claims.Api\Claims.Api.csproj" />
     <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
   </ItemGroup>

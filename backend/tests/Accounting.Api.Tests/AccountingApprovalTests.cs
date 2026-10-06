@@ -318,6 +318,7 @@ public sealed class AccountingApprovalTests
                 OrgId = orgId,
                 AccountName = "Current",
                 AccountNumber = "000111",
+                AccountType = BankAccountType.Cash,
                 CurrencyCode = "INR",
                 LedgerAccountId = bankLedger,
                 IsActive = true,

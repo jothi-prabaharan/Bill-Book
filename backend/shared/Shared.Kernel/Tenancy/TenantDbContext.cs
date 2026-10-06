@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,17 @@ namespace Shared.Kernel.Tenancy;
 /// </summary>
 public abstract class TenantDbContext : DbContext
 {
+    static TenantDbContext()
+    {
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
+
     protected TenantDbContext(DbContextOptions options, ITenantContext tenant)
         : base(options)
     {
@@ -195,7 +207,15 @@ public abstract class TenantDbContext : DbContext
         WriteEditLog(pending);
         await base.SaveChangesAsync(acceptAllChangesOnSuccess: true, cancellationToken);
 
-        await scope.CommitAsync(cancellationToken);
+        try
+        {
+            await scope.CommitAsync(cancellationToken);
+        }
+        catch (DbException ex)
+        {
+            throw new DbUpdateException("An error occurred while saving the entity changes.", ex);
+        }
+
         return saved;
     }
 

@@ -384,7 +384,7 @@ public class SalesDbContext : TenantDbContext
                         + "OR (NOT \"IsInterState\" AND \"IgstAmount\" = 0)");
             });
 
-            b.HasIndex(e => new { e.TransactionTypeCode, e.SourceId }).IsUnique();
+            b.HasIndex(e => new { e.TransactionTypeCode, e.SourceId });
         });
 
         // ---- Till tenders (TK-39) -------------------------------------------

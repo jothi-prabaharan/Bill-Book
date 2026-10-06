@@ -150,7 +150,7 @@ public sealed class MePayrollController : ControllerBase
 
         if (payslip is null) return NotFound(new { message = $"Payslip {id} not found." });
 
-        var components = await _db.SalaryComponents.AsNoTracking().ToDictionaryAsync(c => c.SalaryComponentId, c => c.Name, ct);
+        var components = await _db.SalaryComponents.AsNoTracking().ToDictionaryAsync(c => c.SalaryComponentId, c => c, ct);
 
         string empCode = "";
         string empName = "Employee";
@@ -162,8 +162,12 @@ public sealed class MePayrollController : ControllerBase
         }
 
         string monthName = payslip.Run.Month.ToString("MMMM yyyy");
-        var earnings = payslip.Lines.Where(l => l.Kind == ComponentKind.Earning).ToList();
-        var deductions = payslip.Lines.Where(l => l.Kind == ComponentKind.Deduction).ToList();
+        var earnings = payslip.Lines
+            .Where(l => l.Kind == ComponentKind.Earning || (l.Kind == 0 && components.TryGetValue(l.SalaryComponentId, out var c) && c.Kind == ComponentKind.Earning))
+            .ToList();
+        var deductions = payslip.Lines
+            .Where(l => l.Kind == ComponentKind.Deduction || l.Kind == ComponentKind.Statutory || (l.Kind == 0 && components.TryGetValue(l.SalaryComponentId, out var c) && (c.Kind == ComponentKind.Deduction || c.Kind == ComponentKind.Statutory)))
+            .ToList();
 
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html>");
@@ -207,7 +211,7 @@ public sealed class MePayrollController : ControllerBase
         sb.AppendLine("      <table><thead><tr><th>Earnings</th><th>Amount (â‚¹)</th></tr></thead><tbody>");
         foreach (var e in earnings)
         {
-            string name = components.TryGetValue(e.SalaryComponentId, out var n) ? n : e.Kind.ToString();
+            string name = components.TryGetValue(e.SalaryComponentId, out var c) ? c.Name : e.Kind.ToString();
             sb.AppendLine($"        <tr><td>{name}</td><td>{e.Amount:N2}</td></tr>");
         }
         sb.AppendLine($"        <tr class='total-row'><td>Total Earnings</td><td>{payslip.GrossEarnings:N2}</td></tr>");
@@ -217,7 +221,7 @@ public sealed class MePayrollController : ControllerBase
         sb.AppendLine("      <table><thead><tr><th>Deductions</th><th>Amount (â‚¹)</th></tr></thead><tbody>");
         foreach (var d in deductions)
         {
-            string name = components.TryGetValue(d.SalaryComponentId, out var n) ? n : d.Kind.ToString();
+            string name = components.TryGetValue(d.SalaryComponentId, out var c) ? c.Name : d.Kind.ToString();
             sb.AppendLine($"        <tr><td>{name}</td><td>{d.Amount:N2}</td></tr>");
         }
         sb.AppendLine($"        <tr class='total-row'><td>Total Deductions</td><td>{payslip.GrossDeductions:N2}</td></tr>");
@@ -233,8 +237,11 @@ public sealed class MePayrollController : ControllerBase
         sb.AppendLine("  </div>");
         sb.AppendLine("</div></body></html>");
 
-        Response.Headers["Content-Disposition"] = $"inline; filename=payslip_{payslip.Run.Month:yyyy_MM}.html";
-        return Content(sb.ToString(), "text/html", Encoding.UTF8);
+        if (Response is not null)
+        {
+            Response.Headers["Content-Disposition"] = $"inline; filename=payslip_{payslip.Run.Month:yyyy_MM}.html";
+        }
+        return Content(sb.ToString(), "text/html");
     }
 
     [HttpGet("form16")]

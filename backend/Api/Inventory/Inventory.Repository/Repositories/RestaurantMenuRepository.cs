@@ -359,6 +359,13 @@ public sealed class RestaurantMenuRepository
         int changed = await _db.MenuItems
             .Where(m => m.MenuItemId == itemId)
             .ExecuteUpdateAsync(s => s.SetProperty(m => m.IsAvailable, isAvailable), ct);
+
+        var tracked = _db.MenuItems.Local.FirstOrDefault(m => m.MenuItemId == itemId);
+        if (tracked != null)
+        {
+            tracked.IsAvailable = isAvailable;
+        }
+
         return changed == 0 ? MenuResult<bool>.Missing() : MenuResult<bool>.Done(isAvailable);
     }
 
@@ -368,6 +375,13 @@ public sealed class RestaurantMenuRepository
         int changed = await _db.Modifiers
             .Where(m => m.ModifierId == modifierId)
             .ExecuteUpdateAsync(s => s.SetProperty(m => m.IsAvailable, isAvailable), ct);
+
+        var tracked = _db.Modifiers.Local.FirstOrDefault(m => m.ModifierId == modifierId);
+        if (tracked != null)
+        {
+            tracked.IsAvailable = isAvailable;
+        }
+
         return changed == 0 ? MenuResult<bool>.Missing() : MenuResult<bool>.Done(isAvailable);
     }
 
@@ -383,9 +397,9 @@ public sealed class RestaurantMenuRepository
         Dictionary<long, MenuSchedule> schedules = await _db.MenuSchedules.ToDictionaryAsync(s => s.MenuScheduleId, ct);
 
         var rows = await (
-                from m in _db.MenuItems
-                join i in _db.Items on m.MenuItemId equals i.ItemId
-                join c in _db.MenuCategories on m.MenuCategoryId equals c.MenuCategoryId
+                from m in _db.MenuItems.AsNoTracking()
+                join i in _db.Items.AsNoTracking() on m.MenuItemId equals i.ItemId
+                join c in _db.MenuCategories.AsNoTracking() on m.MenuCategoryId equals c.MenuCategoryId
                 where c.IsActive && i.IsActive && i.IsSales
                 orderby c.DisplayOrder, m.DisplayOrder, i.ItemName
                 select new { Menu = m, Name = i.PrintName ?? i.ItemName, i.SalesPrice, c.MenuCategoryId, CategoryName = c.Name })
@@ -449,9 +463,9 @@ public sealed class RestaurantMenuRepository
         List<long> ids = lines.Select(l => l.ItemId).Distinct().ToList();
 
         var dishes = await (
-                from m in _db.MenuItems
-                join i in _db.Items on m.MenuItemId equals i.ItemId
-                join c in _db.MenuCategories on m.MenuCategoryId equals c.MenuCategoryId
+                from m in _db.MenuItems.AsNoTracking()
+                join i in _db.Items.AsNoTracking() on m.MenuItemId equals i.ItemId
+                join c in _db.MenuCategories.AsNoTracking() on m.MenuCategoryId equals c.MenuCategoryId
                 where ids.Contains(m.MenuItemId)
                 select new
                 {

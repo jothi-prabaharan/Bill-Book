@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Approvals;
 using Shared.Kernel.Employees;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 
 namespace Employee.Api.Controllers;
@@ -20,6 +21,7 @@ namespace Employee.Api.Controllers;
 [ApiController]
 [AllowAnonymous]
 [InternalOnly]
+[NoTransaction]
 [Route("internal")]
 public sealed class InternalEmployeesController : ControllerBase
 {

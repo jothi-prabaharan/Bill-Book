@@ -18,7 +18,11 @@ namespace Accounting.Repository.Repositories;
 public sealed class BudgetCheckRepository
 {
     private const int ExpenseType = 5;
-    private static readonly CultureInfo Indian = CultureInfo.GetCultureInfo("en-IN");
+    private static readonly NumberFormatInfo Indian = new()
+    {
+        NumberGroupSizes = [3, 2],
+        NumberDecimalDigits = 2,
+    };
 
     private readonly AccountingDbContext _db;
     private readonly IBranchSettingsProvider _settings;

@@ -83,6 +83,7 @@ public class InternalApiKeysController : ControllerBase
             return new ApiKeyValidationResult { IsValid = false };
         }
 
+        _tenantContext.OrgId = apiClient.OrgId;
         apiClient.LastUsedAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
 
@@ -90,9 +91,11 @@ public class InternalApiKeysController : ControllerBase
         // from the master database like a user's (D-07, TK-29). The calling
         // service caches this answer for five minutes, so a role change reaches
         // a key within that.
-        var admin = _serviceProvider.GetRequiredService<AdminDbContext>();
-        List<string> permissions = await Master.Repository.Repositories.ApiClientRolesRepository.PermissionsAsync(
-            admin, customerId, apiClient.RoleId, cancellationToken);
+        var admin = _serviceProvider.GetService<AdminDbContext>();
+        List<string> permissions = admin is not null
+            ? await Master.Repository.Repositories.ApiClientRolesRepository.PermissionsAsync(
+                admin, customerId, apiClient.RoleId, cancellationToken)
+            : [];
 
         return new ApiKeyValidationResult
         {

@@ -86,8 +86,9 @@ public sealed class OnlinePaymentTests
         Assert.StartsWith("op_", payment.Reference);
         Assert.Equal(550m, payment.Amount);
 
+        string paymentId = $"sbx_pay_{Guid.NewGuid():N}"[..16];
         GatewayCallback callback = h.Sandbox.ReadCallback(
-            h.Sandbox.Callback(payment.Reference, payment.GatewayOrderId!, "sbx_pay_42", succeeded: true, 550m))!;
+            h.Sandbox.Callback(payment.Reference, payment.GatewayOrderId!, paymentId, succeeded: true, 550m))!;
 
         Assert.Equal(CompletePaymentOutcome.Ok, await h.Payments.CompleteAsync(callback, default));
         Assert.Equal(CompletePaymentOutcome.AlreadyRecorded, await h.Payments.CompleteAsync(callback, default));
@@ -104,7 +105,7 @@ public sealed class OnlinePaymentTests
 
         OnlinePayment paid = await h.Db.OnlinePayments.AsNoTracking().SingleAsync();
         Assert.Equal(OnlinePaymentStatus.Paid, paid.Status);
-        Assert.Equal("sbx_pay_42", paid.GatewayPaymentId);
+        Assert.Equal(paymentId, paid.GatewayPaymentId);
         Assert.Equal(receipt.ReceiveMoneyId, paid.ReceiveMoneyId);
     }
 
@@ -223,7 +224,7 @@ public sealed class OnlinePaymentTests
                 OrgId = orgId,
                 AccountName = "Gateway clearing",
                 AccountNumber = "GW-1",
-                AccountType = BankAccountType.Current,
+                AccountType = BankAccountType.Wallet,
                 CurrencyCode = "INR",
                 LedgerAccountId = bankLedger,
                 IsActive = true,

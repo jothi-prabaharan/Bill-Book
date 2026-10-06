@@ -62,29 +62,39 @@ public sealed class PayrollRunRepository
         };
     }
 
-    public async Task<IReadOnlyList<PayslipView>> GetPayslipsAsync(long runId, CancellationToken ct) =>
-        await _db.Payslips.AsNoTracking()
+    public async Task<IReadOnlyList<PayslipView>> GetPayslipsAsync(long runId, CancellationToken ct)
+    {
+        var componentNames = await _db.SalaryComponents.AsNoTracking().ToDictionaryAsync(c => c.SalaryComponentId, c => c.Name, ct);
+        var payslips = await _db.Payslips.AsNoTracking()
             .Include(p => p.Lines)
             .Where(p => p.PayrollRunId == runId)
-            .Select(p => new PayslipView
-            {
-                PayslipId = p.PayslipId,
-                PayrollRunId = p.PayrollRunId,
-                EmployeeId = p.EmployeeId,
-                PaidDays = p.PaidDays,
-                GrossEarnings = p.GrossEarnings,
-                GrossDeductions = p.GrossDeductions,
-                NetPay = p.NetPay,
-                Lines = p.Lines.Select(l => new PayslipLineView
-                {
-                    PayslipLineId = l.PayslipLineId,
-                    SalaryComponentId = l.SalaryComponentId,
-                    ComponentName = l.Kind.ToString(),
-                    Kind = l.Kind,
-                    Amount = l.Amount
-                }).ToList()
-            })
             .ToListAsync(ct);
+
+        return payslips.Select(p => new PayslipView
+        {
+            PayslipId = p.PayslipId,
+            PayrollRunId = p.PayrollRunId,
+            EmployeeId = p.EmployeeId,
+            PaidDays = p.PaidDays,
+            GrossEarnings = p.GrossEarnings,
+            GrossDeductions = p.GrossDeductions,
+            NetPay = p.NetPay,
+            Lines = p.Lines.Select(l => new PayslipLineView
+            {
+                PayslipLineId = l.PayslipLineId,
+                SalaryComponentId = l.SalaryComponentId,
+                ComponentName = l.SalaryComponentId > 0 && componentNames.TryGetValue(l.SalaryComponentId, out var name)
+                    ? name
+                    : l.SalaryComponentId == 0 && l.Kind == ComponentKind.Earning
+                        ? "Salary Revision Arrears"
+                        : l.SalaryComponentId == 0 && l.Kind == ComponentKind.Deduction
+                            ? "Loan EMI Recovery"
+                            : l.Kind.ToString(),
+                Kind = l.Kind,
+                Amount = l.Amount
+            }).ToList()
+        }).ToList();
+    }
 
     public async Task<long> ProcessRunAsync(DateOnly month, CancellationToken ct)
     {

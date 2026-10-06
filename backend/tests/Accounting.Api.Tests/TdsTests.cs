@@ -237,7 +237,7 @@ public sealed class TdsTests
         Assert.Contains("0510308,00123,05-07-2026,200", challans);
 
         // The individual is code 02 against challan 1; no PAN is PANNOTAVBL, reason C, and the name is quoted.
-        Assert.Contains("1,1,194C,02,AAAPA1234A,Ravi Transport,15-06-2026,105000.00,1050.00", deductees);
+        Assert.Contains("2,1,194C,02,AAAPA1234A,Ravi Transport,15-06-2026,105000.00,1050.00", deductees);
         Assert.Contains("PANNOTAVBL,\"Acme, Consultants\"", deductees);
         Assert.Contains(",20,C,", deductees);
     }
@@ -509,6 +509,7 @@ public sealed class TdsTests
             OrgId = orgId,
             AccountName = "Current",
             AccountNumber = "0001",
+            AccountType = BankAccountType.Cash,
             CurrencyCode = "INR",
             IsActive = true,
         };

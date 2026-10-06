@@ -19,6 +19,11 @@ namespace Customer.Api.Tests;
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
+    static PostgresFixture()
+    {
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
     private const string DefaultConnection =
         "Host=localhost;Port=5432;Database=customer_tests;Username=postgres;Password=123";
 
@@ -40,7 +45,9 @@ public sealed class PostgresFixture : IAsyncLifetime
             // fail on the first number allocated rather than on anything real.
             await using var master = new Master.Repository.ContactsDbContext(
                 new DbContextOptionsBuilder<Master.Repository.ContactsDbContext>()
-                    .UseNpgsql(ConnectionString).Options,
+                    .UseNpgsql(ConnectionString, o => o.MigrationsAssembly("Master.Repository").MigrationsHistoryTable("__EFMigrationsHistory", "con"))
+                    .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
+                    .Options,
                 new TenantContext { CustomerId = customerId, OrgId = orgId });
 
             await master.Database.MigrateAsync();
@@ -110,6 +117,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         var options = new DbContextOptionsBuilder<CustomerDbContext>()
             .UseNpgsql(ConnectionString)
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
             .Options;
 
         return new CustomerDbContext(

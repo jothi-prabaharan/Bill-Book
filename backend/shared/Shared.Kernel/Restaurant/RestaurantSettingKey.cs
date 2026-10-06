@@ -122,13 +122,13 @@ public static class RestaurantSettingKeys
             case RestaurantSettingType.Rate:
                 return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal rate)
                     && rate >= 0m && rate <= MaxLoyaltyEarnRate
-                    ? (Math.Round(rate, 2).ToString(CultureInfo.InvariantCulture), null)
+                    ? (Math.Round(rate, 2, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture), null)
                     : (null, $"Loyalty points per ₹100 must be between 0 and {MaxLoyaltyEarnRate}.");
 
             default:
                 return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal percent)
                     && percent >= 0m && percent <= MaxServiceChargePercent
-                    ? (Math.Round(percent, 2).ToString(CultureInfo.InvariantCulture), null)
+                    ? (Math.Round(percent, 2, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture), null)
                     : (null, $"The service charge must be between 0 and {MaxServiceChargePercent}%.");
         }
     }

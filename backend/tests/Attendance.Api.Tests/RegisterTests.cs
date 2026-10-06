@@ -95,6 +95,7 @@ public sealed class RegisterTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        await _postgres.ResetAsync();
 
         RegisterRepository teacher = Service(db, mayUnlock: false);
         Assert.Equal(RegisterOutcome.Ok, (await teacher.SaveAsync(Register(), default)).Outcome);
@@ -118,6 +119,7 @@ public sealed class RegisterTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        await _postgres.ResetAsync();
         RegisterRepository service = Service(db, mayUnlock: false);
 
         await service.SaveAsync(Register(), default);
@@ -190,6 +192,7 @@ public sealed class RegisterTests
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using AttendanceDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        await _postgres.ResetAsync();
         RegisterRepository service = Service(db, false);
 
         await service.SaveAsync(Register(), default);

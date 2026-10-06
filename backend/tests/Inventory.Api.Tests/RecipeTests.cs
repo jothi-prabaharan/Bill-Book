@@ -127,6 +127,7 @@ public sealed class RecipeTests
             ItemName = name,
             ItemProfile = tracked ? ItemProfile.Standard : ItemProfile.Restaurant,
             TrackInventory = tracked,
+            CostingType = tracked ? CostingType.WeightedAverage : CostingType.None,
             UomTypeId = weight.UomTypeId,
             InventoryUomId = kg.UomId,
             SalesUomId = kg.UomId,

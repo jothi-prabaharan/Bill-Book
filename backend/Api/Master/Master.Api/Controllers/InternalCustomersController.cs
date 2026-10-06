@@ -33,12 +33,14 @@ public sealed class InternalCustomersController : ControllerBase
     [HttpGet("active-organizations")]
     public async Task<IActionResult> ActiveOrganizations(CancellationToken ct)
     {
-        var rows = await _db.Organizations
+        var items = await _db.Organizations
             .Where(o => o.Status == TenantStatus.Active)
             .OrderBy(o => o.CustomerId).ThenBy(o => o.OrgId)
-            // Numbers, not names: the worker reads them without this host's enum converter.
-            .Select(o => new { o.CustomerId, o.OrgId, AddOns = (int)o.AddOns, BusinessType = (int?)o.BusinessType })
+            .Select(o => new { o.CustomerId, o.OrgId, o.AddOns, o.BusinessType })
             .ToListAsync(ct);
+
+        // Numbers, not names: the worker reads them without this host's enum converter.
+        var rows = items.Select(o => new { o.CustomerId, o.OrgId, AddOns = (int)o.AddOns, BusinessType = (int?)o.BusinessType });
 
         return Ok(rows);
     }

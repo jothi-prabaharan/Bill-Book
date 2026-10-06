@@ -268,7 +268,7 @@ public class AttendanceRepository
                 _db.Punches.Add(punch);
                 imported++;
 
-                var date = DateOnly.FromDateTime(p.PunchedAt.LocalDateTime);
+                var date = DateOnly.FromDateTime(p.PunchedAt.UtcDateTime);
                 affectedEmployeeDates.Add((employeeId, date));
             }
         }
@@ -386,7 +386,7 @@ public class AttendanceRepository
             int workedMinutes = Math.Max(0, spanMinutes - shift.BreakMinutes);
             attendance.WorkedMinutes = workedMinutes;
 
-            var inTime = TimeOnly.FromTimeSpan(firstIn.LocalDateTime.TimeOfDay);
+            var inTime = TimeOnly.FromTimeSpan(firstIn.ToUniversalTime().TimeOfDay);
             int lateMinutes = 0;
             if (inTime > shift.StartTime)
             {
@@ -398,7 +398,7 @@ public class AttendanceRepository
             }
             attendance.LateMinutes = lateMinutes;
 
-            var outTime = TimeOnly.FromTimeSpan(lastOut.LocalDateTime.TimeOfDay);
+            var outTime = TimeOnly.FromTimeSpan(lastOut.ToUniversalTime().TimeOfDay);
             int earlyOutMinutes = 0;
             if (outTime < shift.EndTime)
             {

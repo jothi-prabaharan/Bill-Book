@@ -29,8 +29,65 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         try
         {
-            await using ReportingDbContext db = CreateContext(Guid.NewGuid(), Guid.NewGuid());
+            Guid customerId = Guid.NewGuid();
+            Guid orgId = Guid.NewGuid();
+
+            await using var accounting = new Accounting.Repository.AccountingDbContext(
+                new DbContextOptionsBuilder<Accounting.Repository.AccountingDbContext>()
+                    .UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", "acc")).Options,
+                new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
+            await accounting.Database.MigrateAsync();
+
+            await using var sales = new Sales.Repository.SalesDbContext(
+                new DbContextOptionsBuilder<Sales.Repository.SalesDbContext>()
+                    .UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", "sal")).Options,
+                new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
+            await sales.Database.MigrateAsync();
+
+            await using var purchase = new Purchase.Repository.PurchaseDbContext(
+                new DbContextOptionsBuilder<Purchase.Repository.PurchaseDbContext>()
+                    .UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", "pur")).Options,
+                new TenantContext { CustomerId = customerId, OrgId = orgId });
+            await purchase.Database.MigrateAsync();
+
+            await using var contacts = new Master.Repository.ContactsDbContext(
+                new DbContextOptionsBuilder<Master.Repository.ContactsDbContext>()
+                    .UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", "con")).Options,
+                new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
+            await contacts.Database.MigrateAsync();
+
+            await using ReportingDbContext db = CreateContext(customerId, orgId);
             await db.Database.MigrateAsync();
+
+            await db.Database.ExecuteSqlRawAsync(@"
+                DO $$
+                DECLARE
+                    r RECORD;
+                BEGIN
+                    FOR r IN (
+                        SELECT nspname, relname, conname
+                        FROM pg_constraint c
+                        JOIN pg_class cl ON c.conrelid = cl.oid
+                        JOIN pg_namespace n ON cl.relnamespace = n.oid
+                        WHERE nspname IN ('sal', 'pur', 'con')
+                          AND relname IN ('Invoices', 'Bills', 'Contacts')
+                          AND contype = 'c'
+                    ) LOOP
+                        EXECUTE format('ALTER TABLE %I.%I DROP CONSTRAINT IF EXISTS %I', r.nspname, r.relname, r.conname);
+                    END LOOP;
+
+                    FOR r IN (
+                        SELECT table_schema, table_name, column_name 
+                        FROM information_schema.columns 
+                        WHERE table_schema IN ('sal', 'pur', 'con') 
+                          AND table_name IN ('Invoices', 'Bills', 'Contacts') 
+                          AND is_nullable = 'NO' 
+                          AND column_name NOT IN ('InvoiceId', 'BillId', 'ContactId', 'OrgId', 'CustomerId')
+                    ) LOOP
+                        EXECUTE format('ALTER TABLE %I.%I ALTER COLUMN %I DROP NOT NULL', r.table_schema, r.table_name, r.column_name);
+                    END LOOP;
+                END $$;
+            ");
         }
         catch (Exception ex) when (IsUnreachable(ex))
         {

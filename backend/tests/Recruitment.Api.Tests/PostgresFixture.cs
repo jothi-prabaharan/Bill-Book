@@ -19,6 +19,16 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         try
         {
+            var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid() };
+            await using (var accounting = new Accounting.Repository.AccountingDbContext(
+                new DbContextOptionsBuilder<Accounting.Repository.AccountingDbContext>()
+                    .UseNpgsql(ConnectionString, o => o.MigrationsHistoryTable("__EFMigrationsHistory", "acc"))
+                    .Options,
+                tenant))
+            {
+                await accounting.Database.MigrateAsync();
+            }
+
             await using RecruitmentDbContext db = CreateContext(Guid.NewGuid(), Guid.NewGuid());
             await db.Database.MigrateAsync();
         }

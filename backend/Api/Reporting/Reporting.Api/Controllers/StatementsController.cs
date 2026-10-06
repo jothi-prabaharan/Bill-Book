@@ -26,7 +26,7 @@ public sealed class StatementsController : ControllerBase
     }
 
     [HttpGet("profit-and-loss")]
-    [PermissionAction("accounting.view")]
+    [RequirePermission("accounting.view")]
     public async Task<IActionResult> ProfitAndLoss(
         [FromQuery] DateOnly? fromDate,
         [FromQuery] DateOnly? toDate,
@@ -110,7 +110,7 @@ public sealed class StatementsController : ControllerBase
     }
 
     [HttpGet("balance-sheet")]
-    [PermissionAction("accounting.view")]
+    [RequirePermission("accounting.view")]
     public async Task<IActionResult> BalanceSheet(
         [FromQuery] DateOnly? asOfDate,
         CancellationToken ct)
@@ -195,7 +195,7 @@ public sealed class StatementsController : ControllerBase
     }
 
     [HttpGet("inventory-valuation")]
-    [PermissionAction("inventory.view")]
+    [RequirePermission("inventory.view")]
     public async Task<IActionResult> InventoryValuation(CancellationToken ct)
     {
         var query = from s in _db.ItemStocks

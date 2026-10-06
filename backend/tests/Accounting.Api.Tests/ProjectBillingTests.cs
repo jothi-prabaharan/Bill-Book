@@ -245,6 +245,7 @@ public sealed class ProjectBillingTests
                 OrgId = orgId,
                 AccountName = "Current",
                 AccountNumber = "000111",
+                AccountType = BankAccountType.Cash,
                 CurrencyCode = "INR",
                 LedgerAccountId = bankLedger.AccountId,
                 IsActive = true,

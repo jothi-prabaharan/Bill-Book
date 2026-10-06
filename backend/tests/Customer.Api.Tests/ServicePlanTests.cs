@@ -30,7 +30,7 @@ public sealed class ServicePlanTests
     public ServicePlanTests(PostgresFixture postgres) => _postgres = postgres;
 
     [Theory]
-    [InlineData(ServicePlanInterval.Monthly, 6, "2026-04-10")]
+    [InlineData(ServicePlanInterval.Monthly, 6, "2027-04-10")]
     [InlineData(ServicePlanInterval.Yearly, 1, "2027-10-10")]
     [InlineData(ServicePlanInterval.Weekly, 2, "2026-10-24")]
     public void The_next_service_is_one_interval_on(ServicePlanInterval interval, int every, string expected) =>

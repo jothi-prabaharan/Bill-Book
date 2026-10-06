@@ -84,6 +84,12 @@ builder.Services.AddHostedService<RequestLogPurger>();
 
 WebApplication app = builder.Build();
 
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    GatewayDbContext db = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 // First in the pipeline: the duration it records should cover everything the
 // gateway does, not just the proxying.
 app.UseBillBookErrorHandling();
