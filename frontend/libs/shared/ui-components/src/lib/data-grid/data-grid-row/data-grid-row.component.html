@@ -5,6 +5,6 @@
     [style.width]="col.width"
     [attr.data-label]="col.header ?? col.title ?? null"
     (click)="onRowClick()">
-  <bb-data-grid fillHeight-cell [col]="col" [row]="row" [index]="index" [template]="templates[col.field]"></bb-data-grid-cell>
+  <bb-data-grid-cell [col]="col" [row]="row" [index]="index" [template]="templates[col.field]"></bb-data-grid-cell>
 </td>
 

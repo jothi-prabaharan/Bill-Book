@@ -283,17 +283,18 @@ public sealed class RestaurantBillingRepository
             return OrderResult<RestaurantBillView>.Refuse(tipRefusal);
         }
 
-        foreach (RestaurantOrderLine line in lines)
-        {
-            line.RestaurantBillId = bill.RestaurantBillId;
-        }
-
         // The ingredients leave stock last, once the bill is otherwise sure to
         // stand: Inventory files each issue under the bill, so a retry of the
         // same bill issues nothing twice (TK-149).
         if (settings.RecipesEnabled && _recipes is not null && await ConsumeAsync(bill, today, lines, ct) is string consumeRefusal)
         {
+            _db.ChangeTracker.Clear();
             return OrderResult<RestaurantBillView>.Refuse(consumeRefusal);
+        }
+
+        foreach (RestaurantOrderLine line in lines)
+        {
+            line.RestaurantBillId = bill.RestaurantBillId;
         }
 
         List<long> closed = [];

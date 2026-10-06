@@ -62,8 +62,7 @@
                              [cdkConnectedOverlayOpen]="openFilterField() === col.field"
                              (overlayOutsideClick)="openFilterField.set(null)">
                   <div class="popover"
-                       style="width: 240px; font-weight: normal; text-transform: none; text-align: left; position: relative; top: 0; right: 0; left: 0; margin-top: 6px; box-shadow: var(--shadow-lg);" 
-                       (click)="$event.stopPropagation()">
+                       style="width: 240px; font-weight: normal; text-transform: none; text-align: left; position: relative; top: 0; right: 0; left: 0; margin-top: 6px; box-shadow: var(--shadow-lg);">
                     <div class="popover-head">
                       <div class="popover-title">Filter {{ headerOf(col) }}</div>
                     </div>
