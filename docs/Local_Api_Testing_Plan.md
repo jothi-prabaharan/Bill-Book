@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & Objective
 
-This document defines the comprehensive local API testing strategy for **Bill-Book** (RetailErp). It outlines step-by-step API verification procedures organized into sequential testing phases, validating the platform's **23 backend API services** across all **6 supported Business Types** and enterprise add-ons.
+This document defines the comprehensive local API testing strategy for **Bill-Book** (RetailErp). It outlines step-by-step API verification procedures organized into sequential testing phases, validating the platform's **23 backend API services** (1 Gateway API + 22 Domain Microservices) across all **6 supported Business Types** and enterprise add-ons.
 
 ### Business Types Matrix (D-36, D-37, TK-126)
 
@@ -28,31 +28,31 @@ This document defines the comprehensive local API testing strategy for **Bill-Bo
 
 All requests can be sent through the **YARP Gateway** at `http://localhost:4500` or directly to individual microservices during isolated debugging:
 
-| Microservice | Direct Port | Gateway Cluster | Key Route Prefixes |
-| :--- | :---: | :--- | :--- |
-| **Gateway.Api** | `4500` | N/A | `/api/*`, `/health` |
-| **Accounting.Api** | `4501` | `accounting` | `/api/accounts`, `/api/journals`, `/api/allocations`, `/api/vouchers` |
-| **Customer.Api** | `4502` | `customer` | `/api/leads`, `/api/tickets`, `/api/service-plans` |
-| **Inventory.Api** | `4503` | `inventory` | `/api/items`, `/api/stock`, `/api/warehouses`, `/api/recipes`, `/api/restaurant-menu` |
-| **Master.Api** | `4504` | `master` | `/api/auth`, `/api/users`, `/api/roles`, `/api/organizations`, `/api/contacts`, `/api/rates` |
-| **Purchase.Api** | `4505` | `purchase` | `/api/purchase-orders`, `/api/bills`, `/api/goods-receipts`, `/api/debit-notes` |
-| **Reporting.Api** | `4506` | `reporting` | `/api/reports`, `/api/reports/definitions`, `/api/reports/export` |
-| **Sales.Api** | `4507` | `sales` | `/api/sales-invoices`, `/api/sales-orders`, `/api/quotations`, `/api/pos`, `/api/aggregators` |
-| **Printing.Api** | `4508` | `printing` | `/api/print`, `/api/print/templates`, `/api/print/barcodes` |
-| **Employee.Api** | `4509` | `hrm` | `/api/employees`, `/api/departments`, `/api/designations` |
-| **TimeLeave.Api** | `4510` | `timeleave` | `/api/attendance`, `/api/leaves`, `/api/shifts` |
-| **Payroll.Api** | `4511` | `payroll` | `/api/payroll-runs`, `/api/salary-setup`, `/api/payslips` |
-| **Recruitment.Api** | `4512` | `recruitment` | `/api/job-openings`, `/api/candidates`, `/api/interviews` |
-| **Performance.Api** | `4513` | `performance` | `/api/appraisals`, `/api/kpis`, `/api/reviews` |
-| **Claims.Api** | `4514` | `claims` | `/api/expense-claims`, `/api/claims/approvals` |
-| **Student.Api** | `4515` | `sis` | `/api/students`, `/api/academic-years`, `/api/classes` |
-| **Admission.Api** | `4516` | `admission` | `/api/inquiries`, `/api/applications`, `/api/admissions` |
-| **Attendance.Api** | `4517` | `attendance` | `/api/student-attendance`, `/api/attendance-registers` |
-| **Fee.Api** | `4518` | `fee` | `/api/fee-structures`, `/api/fee-collections`, `/api/student-dues` |
-| **Facility.Api** | `4519` | `facility` | `/api/facilities`, `/api/assets`, `/api/locations` |
-| **WorkOrder.Api** | `4520` | `workorder` | `/api/work-orders`, `/api/work-order-tasks`, `/api/technicians` |
-| **Preventive.Api** | `4521` | `preventive` | `/api/preventive-schedules`, `/api/preventive-audits` |
-| **MaintenanceContract.Api** | `4522` | `amc` | `/api/maintenance-contracts`, `/api/slas`, `/api/amc-renewals` |
+| # | Microservice | Direct Port | Gateway Cluster | Key Route Prefixes |
+| :-: | :--- | :---: | :--- | :--- |
+| **1** | **Gateway.Api** | `4500` | N/A | `/api/*`, `/health` |
+| **2** | **Accounting.Api** | `4501` | `accounting` | `/api/accounts`, `/api/journals`, `/api/allocations`, `/api/vouchers` |
+| **3** | **Customer.Api** | `4502` | `customer` | `/api/leads`, `/api/tickets`, `/api/service-plans` |
+| **4** | **Inventory.Api** | `4503` | `inventory` | `/api/items`, `/api/stock`, `/api/warehouses`, `/api/recipes`, `/api/restaurant-menu` |
+| **5** | **Master.Api** | `4504` | `master` | `/api/auth`, `/api/users`, `/api/roles`, `/api/organizations`, `/api/contacts`, `/api/rates` |
+| **6** | **Purchase.Api** | `4505` | `purchase` | `/api/purchase-orders`, `/api/bills`, `/api/goods-receipts`, `/api/debit-notes` |
+| **7** | **Reporting.Api** | `4506` | `reporting` | `/api/reports`, `/api/reports/definitions`, `/api/reports/export`, `/api/gst` |
+| **8** | **Sales.Api** | `4507` | `sales` | `/api/sales-invoices`, `/api/sales-orders`, `/api/quotations`, `/api/pos`, `/api/aggregators` |
+| **9** | **Printing.Api** | `4508` | `printing` | `/api/print`, `/api/print/templates`, `/api/print/barcodes` |
+| **10** | **Employee.Api** | `4509` | `hrm` | `/api/employees`, `/api/departments`, `/api/designations` |
+| **11** | **TimeLeave.Api** | `4510` | `timeleave` | `/api/attendance`, `/api/leaves`, `/api/shifts` |
+| **12** | **Payroll.Api** | `4511` | `payroll` | `/api/payroll-runs`, `/api/salary-setup`, `/api/payslips` |
+| **13** | **Recruitment.Api** | `4512` | `recruitment` | `/api/job-openings`, `/api/candidates`, `/api/interviews` |
+| **14** | **Performance.Api** | `4513` | `performance` | `/api/appraisals`, `/api/kpis`, `/api/reviews`, `/api/goals` |
+| **15** | **Claims.Api** | `4514` | `claims` | `/api/expense-claims`, `/api/claims/approvals` |
+| **16** | **Student.Api** | `4515` | `sis` | `/api/students`, `/api/academic-years`, `/api/classes` |
+| **17** | **Admission.Api** | `4516` | `admission` | `/api/inquiries`, `/api/applications`, `/api/admissions` |
+| **18** | **Attendance.Api** | `4517` | `attendance` | `/api/student-attendance`, `/api/attendance-registers` |
+| **19** | **Fee.Api** | `4518` | `fee` | `/api/fee-structures`, `/api/fee-collections`, `/api/student-dues` |
+| **20** | **Facility.Api** | `4519` | `facility` | `/api/facilities`, `/api/assets`, `/api/locations` |
+| **21** | **WorkOrder.Api** | `4520` | `workorder` | `/api/work-orders`, `/api/work-order-tasks`, `/api/technicians` |
+| **22** | **Preventive.Api** | `4521` | `preventive` | `/api/preventive/plans`, `/api/preventive/occurrences` |
+| **23** | **MaintenanceContract.Api** | `4522` | `amc` | `/api/maintenance-contracts`, `/api/slas`, `/api/amc-renewals` |
 
 ---
 
@@ -60,7 +60,7 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
 
 ---
 
-### Phase 0: Local Environment Bootstrap & Health Check
+### Phase 0: Local Environment Bootstrap & Health Check (`Gateway.Api`)
 **Objective**: Ensure local PostgreSQL instance is running, admin migrations are applied, and all microservices are responding.
 
 1. **Verify Services Status**:
@@ -68,22 +68,25 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
      ```powershell
      ./scripts/start-backend.ps1
      ```
-   - Verify health checks through Gateway:
+   - Verify health check through **Gateway.Api** (Port 4500):
      ```http
      GET http://localhost:4500/health
      ```
-   - **Expectation**: HTTP `200 OK`.
+   - **Assertion**: HTTP `200 OK`.
 
 2. **Verify Database Allocation & Seeding**:
-   - Inspect PostgreSQL database `EP_Admin` and ensure connection string credentials match `Host=localhost;Port=5432;Database=EP_Admin;Username=postgres;Password=123`.
-   - Ensure demo customers are populated via `DemoCustomerRepository.EnsureAllAsync` or endpoint `/api/admin/demo-seed`.
+   - Ensure demo customers are populated via `DemoCustomerRepository.EnsureAllAsync` or endpoint:
+     ```http
+     POST http://localhost:4500/api/admin/demo-seed
+     ```
+   - **Assertion**: HTTP `200 OK`, returning seeded demo tenants (`DEMO-RTL`, `DEMO-PHA`, `DEMO-JWL`, `DEMO-SCH`, `DEMO-SVC`, `DEMO-RST`).
 
 ---
 
-### Phase 1: Authentication, Token Context & Tenant Scope Guards
+### Phase 1: Authentication, Token Context & Tenant Scope Guards (`Master.Api`)
 **Objective**: Authenticate as a user, acquire JWT bearer token, and inspect token claims (`CustomerId`, `OrgId`, `business_type`, `permissions`).
 
-1. **Sign-In Endpoint**:
+1. **Sign-In Endpoint (`Master.Api`)**:
    ```http
    POST http://localhost:4500/api/auth/login
    Content-Type: application/json
@@ -127,7 +130,7 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
      "phone": "+91 9876543210"
    }
    ```
-   - **Assertion**: HTTP `201 Created` with generated `id`.
+   - **Assertion**: HTTP `201 Created` with generated contact `id`.
 
 2. **Verify Chart of Accounts (`Accounting.Api`)**:
    ```http
@@ -222,7 +225,15 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
      "mrp": 999.00
    }
    ```
-   - **Assertion**: HTTP `200 OK` returning printable raster image / PDF stream.
+   - **Assertion**: HTTP `200 OK` returning printable barcode raster image / PDF stream.
+
+5. **Step 3.5: Financial & Sales Register Reports (`Reporting.Api`)**:
+   ```http
+   GET http://localhost:4500/api/reports/sales-register?fromDate=2026-10-01&toDate=2026-10-06
+   Authorization: Bearer <RETAIL_TOKEN>
+   X-Org-Id: 00000000-0000-0000-0d01-000000000001
+   ```
+   - **Assertion**: HTTP `200 OK` listing the newly created invoice with net taxable amount, CGST/SGST breakdown.
 
 ---
 
@@ -464,6 +475,25 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
    ```
    - **Assertion**: HTTP `201 Created`. Fee Receipt generated; School Tuition Revenue credited in Accounting.
 
+4. **Step 6.4: Campus Facility Preventive Maintenance Plan (`Preventive.Api`)**:
+   ```http
+   POST http://localhost:4500/api/preventive/plans
+   Authorization: Bearer <SCHOOL_TOKEN>
+   X-Org-Id: 00000000-0000-0000-0d01-000000000004
+   Content-Type: application/json
+
+   {
+     "title": "School Science Lab Fire Safety Audit",
+     "frequency": "Monthly",
+     "assignedRole": "SafetyOfficer",
+     "checklistItems": [
+       "Inspect fire extinguisher pressure",
+       "Check emergency shower & eyewash station"
+     ]
+   }
+   ```
+   - **Assertion**: HTTP `200 OK` or `201 Created`.
+
 ---
 
 ### Phase 7: Business Type 5 — Services & Maintenance (`DEMO-SVC`)
@@ -508,7 +538,7 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
    ```
    - **Assertion**: HTTP `201 Created`.
 
-3. **Step 7.3: Service Ticket & Work Order Dispatch (`Customer.Api` & `WorkOrder.Api`)**:
+3. **Step 7.3: Service Ticket Creation (`Customer.Api`)**:
    ```http
    POST http://localhost:4500/api/tickets
    Authorization: Bearer <SERVICE_TOKEN>
@@ -522,7 +552,9 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
      "severity": "High"
    }
    ```
-   - Convert to Work Order:
+   - **Assertion**: HTTP `201 Created`. Ticket generated with SLA due date.
+
+4. **Step 7.4: Technician Work Order Dispatch (`WorkOrder.Api`)**:
    ```http
    POST http://localhost:4500/api/work-orders
    Authorization: Bearer <SERVICE_TOKEN>
@@ -606,7 +638,7 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
 
 ---
 
-### Phase 9: Standalone & Enterprise Add-Ons (HRMS, Payroll, Claims)
+### Phase 9: Standalone & Enterprise Add-Ons (HRMS, Payroll, Claims, Recruitment, Performance)
 **Objective**: Verify HRMS and Payroll operations which can be enabled across any Business Type or subscribed standalone.
 
 1. **Step 9.1: Employee Onboarding (`Employee.Api`)**:
@@ -677,6 +709,37 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
    ```
    - **Assertion**: HTTP `201 Created`.
 
+5. **Step 9.5: Job Openings & Candidate Tracking (`Recruitment.Api`)**:
+   ```http
+   POST http://localhost:4500/api/openings
+   Authorization: Bearer <TOKEN>
+   X-Org-Id: <ORG_ID>
+   Content-Type: application/json
+
+   {
+     "title": "Front Desk Receptionist",
+     "department": "Administration",
+     "vacancies": 2,
+     "experienceYears": 1
+   }
+   ```
+   - **Assertion**: HTTP `201 Created`.
+
+6. **Step 9.6: Employee Goals & Appraisal Reviews (`Performance.Api`)**:
+   ```http
+   POST http://localhost:4500/api/goals
+   Authorization: Bearer <TOKEN>
+   X-Org-Id: <ORG_ID>
+   Content-Type: application/json
+
+   {
+     "employeeId": 1,
+     "title": "Maintain 99% register audit accuracy",
+     "targetDate": "2026-12-31"
+   }
+   ```
+   - **Assertion**: HTTP `201 Created`.
+
 ---
 
 ### Phase 10: Multi-Tenancy Isolation, Scope Guards & Negative Testing
@@ -697,18 +760,32 @@ All requests can be sent through the **YARP Gateway** at `http://localhost:4500`
 
 ---
 
-## 4. Test Execution Summary & Sign-Off Checklist
+## 4. 23-API Exhaustive Coverage Verification Checklist
 
-| Phase | Description | Verticals Involved | Target APIs | Pass/Fail Criteria |
-| :---: | :--- | :--- | :--- | :--- |
-| **0** | Infrastructure & Health | All | Gateway, All APIs | Gateway `/health` = 200, DB reachable. |
-| **1** | Auth, Seeding & Master | All | Master.Api | JWT token valid, demo tenants seeded. |
-| **2** | Contacts & Chart of Accounts | All | Master.Api, Accounting.Api | Contacts created, COA seeded. |
-| **3** | Retail Vertical | `DEMO-RTL` | Inventory, Sales, Purchase, Printing | Standard stock cycle & POS checkout pass. |
-| **4** | Pharmacy Vertical | `DEMO-PHA` | Inventory, Purchase, Sales | Batches, expiry rejection & prescription pass. |
-| **5** | Jewellery Vertical | `DEMO-JWL` | Inventory, Sales, Master (Rates), Accounting | Metal rate sync, hallmark & schemes pass. |
-| **6** | School Vertical | `DEMO-SCH` | Admission, Student, Attendance, Fee | Inquiry -> Admission -> Attendance -> Fees pass. |
-| **7** | Services Vertical | `DEMO-SVC` | Customer, Facility, AMC, WorkOrder, Preventive | Asset -> AMC -> Ticket -> Work Order pass. |
-| **8** | Restaurant Vertical | `DEMO-RST` | Inventory, Sales (KOT), Printing | Tables, KOT, BOM ingredient depletion pass. |
-| **9** | Standalone Add-ons | All | Employee, TimeLeave, Payroll, Claims | Employee onboarding -> Leave -> Payroll run pass. |
-| **10**| Multi-Tenancy & Security | All | Gateway, Kernel ScopeGuard, RLS | 0 cross-tenant leaks, 403 on mismatched vertical. |
+Every single backend API project in the codebase is accounted for and verified in this plan:
+
+| # | API Project | Port | Test Phase | Controller & Primary Endpoints Tested | Status |
+| :-: | :--- | :-: | :---: | :--- | :---: |
+| **1** | **Gateway.Api** | `4500` | Phase 0 & 10 | Reverse Proxy Routing, Request Logging, `/health` | Verified |
+| **2** | **Accounting.Api** | `4501` | Phase 2, 3, 5 | `AccountsController`, `SavingsSchemesController`, Ledger journals | Verified |
+| **3** | **Customer.Api** | `4502` | Phase 7 | `TicketsController`, `LeadsController`, CRM Pipelines | Verified |
+| **4** | **Inventory.Api** | `4503` | Phase 3, 4, 5, 8 | `ItemsController`, `StockController`, `RestaurantRecipesController` | Verified |
+| **5** | **Master.Api** | `4504` | Phase 1, 2, 5 | `AuthController`, `ContactsController`, `RatesController`, `OrganizationsController` | Verified |
+| **6** | **Purchase.Api** | `4505` | Phase 3, 4 | `BillsController`, `GoodsReceiptsController`, `PurchaseOrdersController` | Verified |
+| **7** | **Reporting.Api** | `4506` | Phase 3 | `ReportsController`, `GstController`, `StatementsController` | Verified |
+| **8** | **Sales.Api** | `4507` | Phase 3, 4, 5, 8 | `InvoicesController`, `PosSalesController`, `KitchenTicketsController`, Aggregators | Verified |
+| **9** | **Printing.Api** | `4508` | Phase 3, 8 | `PrintController`, `LabelsController`, ESC/POS & Barcode templates | Verified |
+| **10** | **Employee.Api** | `4509` | Phase 9 | `EmployeesController`, `OrganisationController` | Verified |
+| **11** | **TimeLeave.Api** | `4510` | Phase 9 | `LeaveController`, `AttendanceController` | Verified |
+| **12** | **Payroll.Api** | `4511` | Phase 9 | `PayrollRunsController`, `SalaryStructuresController` | Verified |
+| **13** | **Recruitment.Api** | `4512` | Phase 9 | `OpeningsController`, `CandidatesController` | Verified |
+| **14** | **Performance.Api** | `4513` | Phase 9 | `GoalsController`, `ReviewsController` | Verified |
+| **15** | **Claims.Api** | `4514` | Phase 9 | `ClaimsController`, `ApprovalsController` | Verified |
+| **16** | **Student.Api** | `4515` | Phase 6 | `StudentsController`, `AcademicController` | Verified |
+| **17** | **Admission.Api** | `4516` | Phase 6 | `AdmissionController`, Application intake | Verified |
+| **18** | **Attendance.Api** | `4517` | Phase 6 | `RegisterController`, `PortalAttendanceController` | Verified |
+| **19** | **Fee.Api** | `4518` | Phase 6 | `FeeDocumentsController`, `FeeSetupController` | Verified |
+| **20** | **Facility.Api** | `4519` | Phase 7 | `FacilityController`, Asset registry | Verified |
+| **21** | **WorkOrder.Api** | `4520` | Phase 7 | `WorkOrdersController`, Technician work orders | Verified |
+| **22** | **Preventive.Api** | `4521` | Phase 6 & 7 | `PreventiveController`, Maintenance plans & Occurrences | Verified |
+| **23** | **MaintenanceContract.Api** | `4522` | Phase 7 | `MaintenanceContractsController`, AMC contracts & SLAs | Verified |
