@@ -26,7 +26,7 @@
 }
 
 <div>
-  <bb-data-grid [gridCode]="'NUMBERING_SERIES'" [columns]="columns" [data]="rows()">
+  <bb-data-grid fillHeight [gridCode]="'NUMBERING_SERIES'" [columns]="columns" [data]="rows()">
     <ng-template bbCellTemplate="handle" let-row>
       <span
         class="handle"
@@ -216,3 +216,4 @@
     </div>
   </div>
 }
+

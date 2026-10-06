@@ -138,7 +138,7 @@
   </div>
 </div>
 
-<bb-data-grid [gridCode]="'TRANSFER_MONEY'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'TRANSFER_MONEY'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="date" let-row>
     <div class="date-col" [class.draft]="row.status === 'Draft'">{{ row.transactionDate }}</div>
   </ng-template>
@@ -169,4 +169,5 @@
     </div>
   </ng-template>
 </bb-data-grid>
+
 

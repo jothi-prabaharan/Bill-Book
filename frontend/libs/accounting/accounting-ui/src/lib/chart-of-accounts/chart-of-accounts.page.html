@@ -119,7 +119,7 @@
         {{ group.type.displayName }}
         <span class="meta">{{ group.type.normalBalance }} · {{ group.type.reportSection }}</span>
       </h2>
-      <bb-data-grid [gridCode]="'CHART_OF_ACCOUNTS_' + group.type.accountTypeId" [columns]="columns" [data]="group.accounts">
+      <bb-data-grid fillHeight [gridCode]="'CHART_OF_ACCOUNTS_' + group.type.accountTypeId" [columns]="columns" [data]="group.accounts">
         <ng-template bbCellTemplate="code" let-row>
           <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
             {{ row.accountCode }}
@@ -154,3 +154,4 @@
     </section>
   }
 }
+

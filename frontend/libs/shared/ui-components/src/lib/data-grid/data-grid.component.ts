@@ -15,6 +15,7 @@ import {
   booleanAttribute,
   HostListener,
 } from '@angular/core';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ColumnDef, FilterState, SortDirection, SortState } from './data-grid.models';
@@ -44,7 +45,7 @@ export type DataGridRowClass = (row: any) => string | string[] | Record<string, 
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-data-grid',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataGridRowComponent],
+  imports: [CommonModule, FormsModule, OverlayModule, DataGridRowComponent],
   templateUrl: './data-grid.component.html',
   styleUrl: './data-grid.component.scss'
 })
@@ -479,4 +480,5 @@ export class DataGridComponent implements OnInit {
     document.body.removeChild(link);
   }
 }
+
 

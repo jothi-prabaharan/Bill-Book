@@ -10,7 +10,7 @@
 
 <bb-message-box [messages]="messages()" />
 
-<bb-data-grid [gridCode]="'FAC_ASSETS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'FAC_ASSETS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="assetTag" let-row><code>{{ row.assetTag }}</code></ng-template>
   <ng-template bbCellTemplate="spaceName" let-row>{{ row.spaceName ? row.buildingName + ' · ' + row.spaceName : '—' }}</ng-template>
   <ng-template bbCellTemplate="warrantyUntil" let-row>{{ row.warrantyUntil ? (row.isUnderWarranty ? 'Until ' : 'Ended ') + row.warrantyUntil : '—' }}</ng-template>
@@ -42,4 +42,5 @@
     </div>
   </section>
 }
+
 

@@ -87,7 +87,7 @@
         @case ('stock') {
           <div class="card-kicker">Top products by profit</div>
           @if (topProducts().length) {
-            <bb-data-grid
+            <bb-data-grid fillHeight
               flush
               label="Top products by profit"
               [columns]="productColumns"
@@ -161,3 +161,4 @@
 @if (!visible().length) {
   <p class="board-empty">Every widget has been removed. Press Customize to put some back.</p>
 }
+

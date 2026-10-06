@@ -35,7 +35,7 @@
       @if (members().length === 0) {
         <p class="bb-empty-state">No reporting team members found.</p>
       } @else {
-        <bb-data-grid
+        <bb-data-grid fillHeight
           class="bb-table"
           style="width: 100%; margin-top: 1rem;"
           [columns]="membersColumns"
@@ -77,3 +77,4 @@
     </div>
   }
 </section>
+

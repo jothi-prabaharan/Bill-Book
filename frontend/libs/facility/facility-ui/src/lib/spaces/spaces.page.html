@@ -11,7 +11,7 @@
 <bb-message-box [messages]="messages()" />
 
 @if (tab() === 'buildings') {
-  <bb-data-grid [gridCode]="'FAC_BUILDINGS'" [columns]="buildingColumns" [data]="buildings()">
+  <bb-data-grid fillHeight [gridCode]="'FAC_BUILDINGS'" [columns]="buildingColumns" [data]="buildings()">
     <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
     <ng-template bbCellTemplate="actions" let-row>
       <button *bbIfCan="'facility.edit'" type="button" class="link" (click)="editBuilding(row)">Edit</button>
@@ -52,3 +52,4 @@
     </div>
   </section>
 }
+

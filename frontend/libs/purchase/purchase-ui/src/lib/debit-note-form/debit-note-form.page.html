@@ -156,7 +156,7 @@
             />
           </div>
         }
-                <bb-data-grid [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
+                <bb-data-grid fillHeight [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
           <ng-template bbCellTemplate="label" let-row="row">
             {{ row.label }}
           </ng-template>
@@ -254,5 +254,6 @@
     (dismiss)="closePicker()"
   />
 </div>
+
 
 

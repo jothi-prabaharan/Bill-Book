@@ -26,7 +26,7 @@
   />
 </div>
 
-<bb-data-grid [gridCode]="'ADMIN_CUSTOMERS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'ADMIN_CUSTOMERS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="customerCode" let-row>
     <code>{{ row.customerCode }}</code>
   </ng-template>
@@ -172,3 +172,4 @@
     </div>
   </div>
 }
+

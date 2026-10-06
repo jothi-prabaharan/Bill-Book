@@ -16,7 +16,7 @@
 <bb-message-box *ngIf="errorMessage() as message" [messages]="[{ tone: 'error', text: message }]" />
 
 <div class="table-container">
-  <bb-data-grid
+  <bb-data-grid fillHeight
     [columns]="reviewsColumns"
     [data]="reviews()"
     flush
@@ -138,3 +138,4 @@
     <button class="btn btn-primary" (click)="submitLevelAction()">Submit Action</button>
   </div>
 </div>
+

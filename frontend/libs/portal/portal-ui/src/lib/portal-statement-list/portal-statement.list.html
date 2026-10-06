@@ -14,7 +14,7 @@
     <ng-template #side let-side let-title="title" let-balanceLabel="balanceLabel">
       <section>
         <h2>{{ title }}</h2>
-        <bb-data-grid
+        <bb-data-grid fillHeight
           flush
           stackOnPhone
           [columns]="columnsFor[balanceLabel]"
@@ -55,4 +55,5 @@
     }
   }
 </main>
+
 

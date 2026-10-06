@@ -13,7 +13,7 @@
 
 @switch (tab()) {
   @case ('heads') {
-    <bb-data-grid [gridCode]="'FEE_HEADS'" [columns]="headColumns" [data]="heads()">
+    <bb-data-grid fillHeight [gridCode]="'FEE_HEADS'" [columns]="headColumns" [data]="heads()">
       <ng-template bbCellTemplate="incomeAccountId" let-row>{{ postsTo(row) }}</ng-template>
       <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
       <ng-template bbCellTemplate="actions" let-row>
@@ -103,4 +103,5 @@
     </div>
   </section>
 }
+
 

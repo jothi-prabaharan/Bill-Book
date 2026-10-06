@@ -55,7 +55,7 @@
   the valuation; available is what a new order may draw on.
 </p>
 
-<bb-data-grid [gridCode]="'STOCK_ROWS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'STOCK_ROWS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="itemCode" let-row>
     <code>{{ row.itemCode }}</code>
   </ng-template>
@@ -397,4 +397,5 @@
   (choose)="onBatchChoose($event)"
   (dismiss)="closeBatchPicker()"
 />
+
 

@@ -16,8 +16,8 @@ public sealed class UpiPrintTests
     [Theory]
     [InlineData(DocumentStatus.Draft, 118, null, 118)]
     [InlineData(DocumentStatus.ReadyToPost, 118, null, 118)]
-    [InlineData(DocumentStatus.Posted, 118, 50, 50)]
-    [InlineData(DocumentStatus.Posted, 118, 0, 0)]
+    [InlineData(DocumentStatus.Posted, 118, 50.0, 50)]
+    [InlineData(DocumentStatus.Posted, 118, 0.0, 0)]
     public void The_qr_asks_for_what_is_still_due(DocumentStatus status, double total, double? outstanding, double expected)
     {
         Settlement? settlement = outstanding is double o ? new Settlement((decimal)total, (decimal)total - (decimal)o, (decimal)o) : null;

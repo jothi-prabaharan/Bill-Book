@@ -10,7 +10,7 @@
     <bb-message-box [messages]="messages()" />
   }
 
-  <bb-data-grid
+  <bb-data-grid fillHeight
     gridCode="RESTAURANT_RECIPES"
     label="Recipes"
     [columns]="columns"
@@ -92,3 +92,4 @@
   (choose)="pick($event)"
   (dismiss)="pickerOpen.set(false)"
 />
+

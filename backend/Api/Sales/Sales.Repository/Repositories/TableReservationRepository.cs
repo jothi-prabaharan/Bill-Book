@@ -208,6 +208,13 @@ public sealed class TableReservationRepository
             return "That table does not exist or is switched off.";
         }
 
+        var trackedTable = _db.ChangeTracker.Entries<RestaurantTable>()
+            .FirstOrDefault(e => e.Entity.RestaurantTableId == tableId);
+        if (trackedTable is not null)
+        {
+            trackedTable.State = EntityState.Detached;
+        }
+
         var table = await _db.RestaurantTables
             .Where(t => t.RestaurantTableId == tableId)
             .Select(t => new { t.Code, t.Seats })

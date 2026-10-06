@@ -33,7 +33,7 @@
   }
 }
 
-<bb-data-grid [gridCode]="'CLOSING_DATES'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'CLOSING_DATES'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="role" let-row>
     {{ row.role.displayName }}
     @if (row.role.isSystemRole) {
@@ -82,4 +82,5 @@
     }
   </ng-template>
 </bb-data-grid>
+
 

@@ -166,7 +166,7 @@
         @if (documents().length === 0) {
           <p class="bb-empty-state">No documents uploaded.</p>
         } @else {
-          <bb-data-grid
+          <bb-data-grid fillHeight
             class="bb-table"
             style="width: 100%; margin-top: 1rem;"
             [columns]="documentsColumns"
@@ -212,3 +212,4 @@
     }
   }
 </section>
+

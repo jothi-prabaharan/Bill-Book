@@ -17,7 +17,7 @@
 
 <bb-message-box [messages]="messages()" />
 
-<bb-data-grid [gridCode]="'FEE_DEMANDS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'FEE_DEMANDS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="demandNo" let-row>{{ row.demandNo ?? 'Draft' }}</ng-template>
   <ng-template bbCellTemplate="actions" let-row>
     @if (row.documentStatus !== 'Void' && row.paidAmount === 0) {
@@ -38,4 +38,5 @@
     </div>
   </section>
 }
+
 

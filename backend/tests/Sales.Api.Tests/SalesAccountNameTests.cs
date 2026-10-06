@@ -36,7 +36,7 @@ public sealed class SalesAccountNameTests
         var data = new TheoryData<string, string>();
 
         foreach (Type type in typeof(Sales.Repository.Repositories.InvoiceRepository).Assembly.GetTypes()
-            .Where(t => t.Namespace == "Sales.Api.Services"))
+            .Where(t => t.Namespace == "Sales.Repository.Repositories"))
         {
             foreach (FieldInfo field in type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
                 .Where(f => f.IsLiteral && f.FieldType == typeof(string) && f.Name.EndsWith("Account", StringComparison.Ordinal)))

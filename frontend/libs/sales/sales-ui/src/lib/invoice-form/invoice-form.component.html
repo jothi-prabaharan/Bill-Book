@@ -100,7 +100,7 @@
     <div class="inv-form__gl">
       <h2 class="inv-form__gl-title">What posting will write to the ledger</h2>
 
-      <bb-data-grid
+      <bb-data-grid fillHeight
         class="inv-form__gl-table"
         [columns]="legsColumns"
         [data]="preview.legs"
@@ -456,4 +456,5 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
+
 

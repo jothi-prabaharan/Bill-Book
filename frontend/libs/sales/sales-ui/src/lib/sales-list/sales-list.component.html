@@ -30,7 +30,7 @@
 <bb-period-filter-bar [total]="periodTotal()" (rangeChange)="setRange($event)" />
 
 <div class="card bg-surface">
-  <bb-data-grid flush [gridCode]="'SALES_LIST'" [columns]="columns" [data]="visibleTransactions()" (rowClick)="navigateToTransaction($event)">
+  <bb-data-grid fillHeight flush [gridCode]="'SALES_LIST'" [columns]="columns" [data]="visibleTransactions()" (rowClick)="navigateToTransaction($event)">
     <ng-template bbCellTemplate="documentDate" let-row>
       <span class="tabular-nums">{{ row.documentDate | date }}</span>
     </ng-template>
@@ -81,4 +81,5 @@
   (save)="onAllocate($event)"
   (dismiss)="closeAllocate()"
 ></bb-allocation-modal>
+
 

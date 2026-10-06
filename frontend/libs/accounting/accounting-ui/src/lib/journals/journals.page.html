@@ -41,7 +41,7 @@
       </div>
     </div>
 
-    <bb-data-grid [gridCode]="'JOURNAL_EDIT_LINES'" [columns]="editLinesColumns" [data]="lines()">
+    <bb-data-grid fillHeight [gridCode]="'JOURNAL_EDIT_LINES'" [columns]="editLinesColumns" [data]="lines()">
       <ng-template bbCellTemplate="lineNumber" let-row let-index="index">
         {{ index + 1 }}
       </ng-template>
@@ -300,4 +300,5 @@
     }
   </ng-template>
 </bb-data-grid>
+
 

@@ -74,7 +74,7 @@
         </p>
         <button class="btn btn-primary" type="button" (click)="startNew()" [disabled]="busy()">+ New section</button>
       </div>
-      <bb-data-grid
+      <bb-data-grid fillHeight
         gridCode="TDS_SECTIONS"
         label="TDS sections"
         [columns]="sectionColumns"
@@ -259,4 +259,5 @@
     }
   }
 }
+
 

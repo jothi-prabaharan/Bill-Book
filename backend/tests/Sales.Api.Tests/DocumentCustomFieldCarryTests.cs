@@ -58,6 +58,7 @@ public sealed class DocumentCustomFieldCarryTests
             ContactId = 42,
             CurrencyCode = "INR",
             Status = DocumentStatus.Posted,
+            PostedAt = DateTimeOffset.UtcNow,
             CustomFields = JsonDocument.Parse("""{ "site_ref": "TOWER-B-17", "internal_note": "not for the customer" }"""),
         };
         db.Quotes.Add(quote);

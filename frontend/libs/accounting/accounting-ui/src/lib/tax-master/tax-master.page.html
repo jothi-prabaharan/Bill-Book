@@ -86,7 +86,7 @@
     </div>
   </form>
 } @else {
-  <bb-data-grid [gridCode]="'TAX_MASTER'" [columns]="columns" [data]="rates()">
+  <bb-data-grid fillHeight [gridCode]="'TAX_MASTER'" [columns]="columns" [data]="rates()">
     <ng-template bbCellTemplate="name" let-r>
       <div [class.superseded]="!r.isCurrent" [class.inactive]="!r.isActive">
         {{ r.taxName }}
@@ -127,4 +127,5 @@
     </ng-template>
   </bb-data-grid>
 }
+
 

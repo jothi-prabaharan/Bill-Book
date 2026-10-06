@@ -19,7 +19,7 @@
   belong to the item — changing a category never rewrites items already saved.
 </p>
 
-<bb-data-grid [gridCode]="'ITEM_CATEGORIES'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'ITEM_CATEGORIES'" [columns]="columns" [data]="rows()">
   <!-- Cdk drop list goes on a custom wrapper if bb-data-grid doesn't support it directly, but for now we put the drop list on the parent or handle it appropriately. If DataGridComponent doesn't support CdkDrag naturally, we might just put cdkDropList on the table if possible, or omit it if DataGrid abstracts it. For now, since bb-data-grid renders rows internally, drag-and-drop might need special handling. We'll map the cells. -->
   <ng-template bbCellTemplate="handle" let-row>
     <div class="handle-col"><span class="handle" aria-hidden="true">⠿</span></div>
@@ -116,3 +116,4 @@
     </div>
   </div>
 }
+

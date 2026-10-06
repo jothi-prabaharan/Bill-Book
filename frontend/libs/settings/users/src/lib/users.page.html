@@ -41,7 +41,7 @@
   </form>
 }
 
-<bb-data-grid [gridCode]="'USERS'" [columns]="columns" [data]="users()">
+<bb-data-grid fillHeight [gridCode]="'USERS'" [columns]="columns" [data]="users()">
   <ng-template bbCellTemplate="lastLoginAt" let-row>
     {{ row.lastLoginAt ? (row.lastLoginAt | date: 'medium') : '—' }}
   </ng-template>
@@ -65,3 +65,4 @@
     }
   </ng-template>
 </bb-data-grid>
+

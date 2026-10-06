@@ -178,7 +178,7 @@
       @if (lines().length === 0) {
         <p class="state">Add a line above first.</p>
       } @else {
-                <bb-data-grid [gridCode]="'GOODS_RECEIPT_LINES'" [columns]="columns" [data]="receiving()">
+                <bb-data-grid fillHeight [gridCode]="'GOODS_RECEIPT_LINES'" [columns]="columns" [data]="receiving()">
           <ng-template bbCellTemplate="item" let-row="row" let-index="index">
             {{ itemLabelOf(index) }}
           </ng-template>
@@ -308,5 +308,6 @@
     (dismiss)="closePicker()"
   />
 </div>
+
 
 

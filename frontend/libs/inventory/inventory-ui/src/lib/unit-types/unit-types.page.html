@@ -23,7 +23,7 @@
 </p>
 
 <div>
-  <bb-data-grid [gridCode]="'UNIT_TYPES'" [columns]="columns" [data]="types()">
+  <bb-data-grid fillHeight [gridCode]="'UNIT_TYPES'" [columns]="columns" [data]="types()">
     <ng-template bbCellTemplate="handle" let-row>
       <span class="handle" Handle [class.disabled]="!canReorder" aria-hidden="true">⠿</span>
     </ng-template>
@@ -176,3 +176,4 @@
     </div>
   </div>
 }
+

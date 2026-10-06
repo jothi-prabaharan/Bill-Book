@@ -58,7 +58,7 @@
     </dl>
   </section>
 
-  <bb-data-grid [gridCode]="'ACCOUNT_LEDGER'" [columns]="columns" [data]="l.rows">
+  <bb-data-grid fillHeight [gridCode]="'ACCOUNT_LEDGER'" [columns]="columns" [data]="l.rows">
     <ng-template bbCellTemplate="ledgerDate" let-row>
       {{ row.ledgerDate }}
     </ng-template>
@@ -92,4 +92,5 @@
     </ng-template>
   </bb-data-grid>
 }
+
 

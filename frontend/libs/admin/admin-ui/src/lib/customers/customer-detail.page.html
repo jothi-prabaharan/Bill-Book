@@ -9,7 +9,7 @@
   <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
-<bb-data-grid [gridCode]="'ADMIN_CUSTOMER_ORGANIZATIONS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'ADMIN_CUSTOMER_ORGANIZATIONS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="orgCode" let-row>
     <code>{{ row.orgCode }}</code>
   </ng-template>
@@ -33,3 +33,4 @@
     }
   </ng-template>
 </bb-data-grid>
+

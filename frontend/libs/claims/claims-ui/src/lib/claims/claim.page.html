@@ -54,7 +54,7 @@
   <div class="sheet">
     <h3>Expense Lines</h3>
     <div class="table-container">
-      <bb-data-grid
+      <bb-data-grid fillHeight
         [columns]="linesColumns"
         [data]="c.lines"
         flush
@@ -126,3 +126,4 @@
 } @else {
   <div style="padding: 16px;">Claim not found.</div>
 }
+

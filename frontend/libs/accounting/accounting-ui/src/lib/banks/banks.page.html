@@ -14,7 +14,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<bb-data-grid [gridCode]="'BANKS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'BANKS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="handle" let-row>
     <div [class.inactive]="!row.isActive">
       <span class="handle" Handle aria-hidden="true">⠿</span>
@@ -73,3 +73,4 @@
     </div>
   </div>
 }
+

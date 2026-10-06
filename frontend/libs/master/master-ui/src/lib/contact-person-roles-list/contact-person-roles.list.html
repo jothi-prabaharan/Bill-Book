@@ -2,7 +2,7 @@
   <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
-<bb-data-grid [gridCode]="'CONTACT_ROLES'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'CONTACT_ROLES'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="handle" let-row>
     <span class="handle" Handle aria-hidden="true">⠿</span>
   </ng-template>
@@ -63,3 +63,4 @@
   A role that people already hold cannot be deleted — make it inactive instead, so existing
   contacts keep it and their history still reads correctly.
 </p>
+

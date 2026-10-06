@@ -14,7 +14,7 @@
 <bb-message-box [messages]="messages()" />
 
 @if (tab() === 'plans') {
-  <bb-data-grid [gridCode]="'PPM_PLANS'" [columns]="planColumns" [data]="plans()">
+  <bb-data-grid fillHeight [gridCode]="'PPM_PLANS'" [columns]="planColumns" [data]="plans()">
     <ng-template bbCellTemplate="where" let-row>{{ where(row) }}</ng-template>
     <ng-template bbCellTemplate="frequency" let-row>{{ every(row) }}</ng-template>
     <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Paused' }}</ng-template>
@@ -60,4 +60,5 @@
     </div>
   </section>
 }
+
 

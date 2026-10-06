@@ -19,7 +19,7 @@
   nothing here stores one.
 </p>
 
-<bb-data-grid [gridCode]="'BANK_ACCOUNTS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'BANK_ACCOUNTS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="handle" let-row>
     <div [class.inactive]="!row.isActive">
       <span class="handle" Handle aria-hidden="true">⠿</span>
@@ -188,3 +188,4 @@
     </div>
   </div>
 }
+

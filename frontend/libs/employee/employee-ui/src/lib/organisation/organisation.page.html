@@ -13,7 +13,7 @@
 
 <bb-message-box [messages]="messages()" />
 
-<bb-data-grid [gridCode]="'HRM_ORG_' + kind()" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'HRM_ORG_' + kind()" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="code" let-row><code>{{ row.code }}</code></ng-template>
   <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
   <ng-template bbCellTemplate="actions" let-row>
@@ -44,3 +44,4 @@
     </div>
   </section>
 }
+

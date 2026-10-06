@@ -91,6 +91,8 @@ public sealed class EInvoiceRegistrationTests
 
         Invoice pos = await h.AddInvoiceAsync();
         pos.TransactionTypeCode = "POS";
+        pos.TillId = 1;
+        pos.PaymentMode = "Cash";
         Assert.Null(await h.Posting.OnPostedAsync(EInvoiceSource.Invoice, pos.InvoiceId, pos, default));
 
         h.Branch.From = null;

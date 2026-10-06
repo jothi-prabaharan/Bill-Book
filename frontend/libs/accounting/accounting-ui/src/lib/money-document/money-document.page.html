@@ -118,7 +118,7 @@
       </bb-message-box>
     }
 
-    <bb-data-grid [gridCode]="'MONEY_DOCUMENT_EDIT_LINES'" [columns]="editLinesColumns" [data]="lines()">
+    <bb-data-grid fillHeight [gridCode]="'MONEY_DOCUMENT_EDIT_LINES'" [columns]="editLinesColumns" [data]="lines()">
       <ng-template bbCellTemplate="lineNumber" let-row let-index="index">
         {{ index + 1 }}
       </ng-template>
@@ -453,4 +453,5 @@
   (save)="onAllocate($event)"
   (dismiss)="closeAllocate()"
 ></bb-allocation-modal>
+
 

@@ -205,7 +205,7 @@ public sealed class EwayBillTests
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
         await using Harness h = Harness.Start(_postgres);
         Invoice invoice = await h.AddInvoiceAsync();
-        h.Db.EInvoices.Add(new EInvoice { SourceType = EInvoiceSource.Invoice, SourceId = invoice.InvoiceId, Status = EInvoiceStatus.Registered, Irn = "x" });
+        h.Db.EInvoices.Add(new EInvoice { SourceType = EInvoiceSource.Invoice, SourceId = invoice.InvoiceId, Status = EInvoiceStatus.Registered, Irn = $"irn_{Guid.NewGuid():N}" });
         await h.Db.SaveChangesAsync();
 
         EwayBillResult result = await h.Service.GenerateAsync(EwayBillSource.Invoice, invoice.InvoiceId, Road(), default);

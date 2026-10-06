@@ -21,7 +21,7 @@
   has already moved: correct it by reversing, which writes the mirror of it.
 </p>
 
-<bb-data-grid [gridCode]="'ADJUSTMENTS'" [columns]="listColumns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'ADJUSTMENTS'" [columns]="listColumns" [data]="rows()">
   <ng-template bbCellTemplate="adjustmentNo" let-row>
     @if (row.adjustmentNo) {
       <code>{{ row.adjustmentNo }}</code>
@@ -277,4 +277,5 @@
     </div>
   </div>
 }
+
 

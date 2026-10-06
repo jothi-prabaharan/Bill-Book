@@ -13,7 +13,7 @@
 
 @switch (tab()) {
   @case ('years') {
-    <bb-data-grid [gridCode]="'SIS_YEARS'" [columns]="yearColumns" [data]="years()">
+    <bb-data-grid fillHeight [gridCode]="'SIS_YEARS'" [columns]="yearColumns" [data]="years()">
       <ng-template bbCellTemplate="isCurrent" let-row>{{ row.isCurrent ? 'Current' : row.isClosed ? 'Closed' : 'Open' }}</ng-template>
       <ng-template bbCellTemplate="actions" let-row>
         <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editYear(row)">Edit</button>
@@ -84,4 +84,5 @@
     </div>
   </section>
 }
+
 

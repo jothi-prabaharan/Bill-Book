@@ -10,7 +10,7 @@
     <button class="btn btn-secondary" (click)="autoAllocate()" [disabled]="amountToAllocate <= 0 || rows.length === 0">Auto Allocate</button>
   </div>
 
-  <bb-data-grid
+  <bb-data-grid fillHeight
     flush
     label="Documents to allocate against"
     [columns]="columns"
@@ -41,3 +41,4 @@
     </ng-template>
   </bb-data-grid>
 </div>
+

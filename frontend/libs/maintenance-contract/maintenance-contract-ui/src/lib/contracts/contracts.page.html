@@ -9,7 +9,7 @@
 
 <bb-message-box [messages]="messages()" />
 
-<bb-data-grid [gridCode]="'AMC_CONTRACTS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'AMC_CONTRACTS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="contractNo" let-row><code>{{ row.contractNo }}</code></ng-template>
   <ng-template bbCellTemplate="vendor" let-row>{{ vendor(row.vendorContactId) }}</ng-template>
   <ng-template bbCellTemplate="endDate" let-row>{{ ends(row) }}</ng-template>
@@ -111,4 +111,5 @@
     }
   </section>
 }
+
 

@@ -8,7 +8,7 @@
     <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
-  <bb-data-grid
+  <bb-data-grid fillHeight
     [data]="leads()"
     [columns]="columns"
     gridCode="leads-list"
@@ -83,3 +83,4 @@
 @if (showForm()) {
   <bb-lead-form (saved)="onSaved()" (cancelled)="showForm.set(false)"></bb-lead-form>
 }
+

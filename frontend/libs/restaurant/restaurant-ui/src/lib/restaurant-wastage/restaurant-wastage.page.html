@@ -31,7 +31,7 @@
 
   <p class="rw__muted">The last 500 entries: {{ money(totalCost()) }} at today's average costs.</p>
 
-  <bb-data-grid
+  <bb-data-grid fillHeight
     gridCode="RESTAURANT_WASTAGE"
     label="Wastage"
     [columns]="columns"
@@ -60,3 +60,4 @@
   (choose)="pick($event)"
   (dismiss)="pickerOpen.set(false)"
 />
+

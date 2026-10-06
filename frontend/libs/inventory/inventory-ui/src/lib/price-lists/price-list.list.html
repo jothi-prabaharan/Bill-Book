@@ -13,7 +13,7 @@
   Create multiple price tiers (e.g. Retail, Wholesale) and assign them to specific customers.
 </p>
 
-<bb-data-grid [gridCode]="'PRICE_LISTS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'PRICE_LISTS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="name" let-row>
     <div [class.inactive]="!row.isActive">{{ row.name }}</div>
   </ng-template>
@@ -53,3 +53,4 @@
     </div>
   </div>
 }
+

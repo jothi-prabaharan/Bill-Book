@@ -630,6 +630,21 @@ export class BillFormPage {
       return;
     }
 
+    if (!this.dueDate()) {
+      this.error.set('Choose a due date for the bill.');
+      return;
+    }
+
+    if (!this.contactGstin() && !this.placeOfSupplyStateCode()?.trim()) {
+      this.error.set('Enter a place of supply (2-digit state code) for the bill.');
+      return;
+    }
+
+    if (this.lines().length === 0) {
+      this.error.set('Add at least one line item to the bill.');
+      return;
+    }
+
     this.saving.set(true);
     this.error.set(null);
     this.notice.set(null);
@@ -727,8 +742,34 @@ export class BillFormPage {
   }
 
   private messageFrom(err: unknown): string {
-    const body = (err as { error?: { message?: string } } | null)?.error;
-    return body?.message ?? 'The bill could not be saved.';
+    const errObj = err as {
+      error?: {
+        message?: string;
+        title?: string;
+        detail?: string;
+        errors?: Record<string, string[]>;
+      };
+      statusText?: string;
+      message?: string;
+    } | null;
+
+    const body = errObj?.error;
+    if (body?.message) {
+      return body.message;
+    }
+    if (body?.detail) {
+      return body.detail;
+    }
+    if (body?.errors && typeof body.errors === 'object') {
+      const messages = Object.values(body.errors).flat().filter(Boolean);
+      if (messages.length > 0) {
+        return messages.join(' ');
+      }
+    }
+    if (body?.title) {
+      return body.title;
+    }
+    return errObj?.message ?? 'The bill could not be saved.';
   }
 
   private today(): string {

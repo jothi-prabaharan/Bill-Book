@@ -25,7 +25,7 @@
               class="relative">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
               <div style="display: flex; align-items: center; min-width: 0;">
-                <button *ngIf="sortable && col.sortable !== false; else plainHeader"
+                <button *ngIf="headerOf(col) && sortable && col.sortable !== false; else plainHeader"
                         type="button"
                         class="table-sort-btn"
                         (click)="onSort(col)"
@@ -42,8 +42,9 @@
                 </ng-template>
               </div>
 
-              <div *ngIf="showColumnFilters && col.filterable !== false" style="position: relative;">
+              <div *ngIf="headerOf(col) && showColumnFilters && col.filterable !== false" style="position: relative;">
                 <button type="button" 
+                        cdkOverlayOrigin #filterTrigger="cdkOverlayOrigin"
                         class="btn-icon" 
                         [style.color]="columnFilter(col.field) ? 'var(--color-accent-700)' : 'var(--color-neutral-400)'"
                         [style.background]="openFilterField() === col.field ? 'var(--color-neutral-100)' : 'transparent'"
@@ -56,29 +57,32 @@
                 </button>
 
                 <!-- Filter Popover -->
-                <div *ngIf="openFilterField() === col.field" 
-                     class="popover"
-                     [ngClass]="last ? 'popover--right' : 'popover--left'"
-                     style="width: 240px; font-weight: normal; text-transform: none; text-align: left;" 
-                     (click)="$event.stopPropagation()">
-                  <div class="popover-head">
-                    <div class="popover-title">Filter {{ headerOf(col) }}</div>
+                <ng-template cdkConnectedOverlay 
+                             [cdkConnectedOverlayOrigin]="filterTrigger" 
+                             [cdkConnectedOverlayOpen]="openFilterField() === col.field"
+                             (overlayOutsideClick)="openFilterField.set(null)">
+                  <div class="popover"
+                       style="width: 240px; font-weight: normal; text-transform: none; text-align: left; position: relative; top: 0; right: 0; left: 0; margin-top: 6px; box-shadow: var(--shadow-lg);" 
+                       (click)="$event.stopPropagation()">
+                    <div class="popover-head">
+                      <div class="popover-title">Filter {{ headerOf(col) }}</div>
+                    </div>
+                    <div class="popover-body">
+                      <select class="input" style="margin-bottom: var(--space-2);" [ngModel]="filterOp()" (ngModelChange)="filterOp.set($event)">
+                        <option value="contains">Contains</option>
+                        <option value="equals">Equals</option>
+                        <option value="starts">Starts with</option>
+                      </select>
+                      <input type="search" class="input" placeholder="Search value..." 
+                             [ngModel]="filterVal()" (ngModelChange)="filterVal.set($event)"
+                             (keyup.enter)="applyFilter(col.field, $event)" />
+                    </div>
+                    <div class="popover-foot" style="justify-content: flex-end;">
+                      <button type="button" class="btn btn-secondary" style="padding: 4px 12px; height: 32px;" (click)="clearFilter(col.field, $event)">Clear</button>
+                      <button type="button" class="btn btn-primary" style="padding: 4px 12px; height: 32px;" (click)="applyFilter(col.field, $event)">Apply</button>
+                    </div>
                   </div>
-                  <div class="popover-body">
-                    <select class="input" style="margin-bottom: var(--space-2);" [ngModel]="filterOp()" (ngModelChange)="filterOp.set($event)">
-                      <option value="contains">Contains</option>
-                      <option value="equals">Equals</option>
-                      <option value="starts">Starts with</option>
-                    </select>
-                    <input type="search" class="input" placeholder="Search value..." 
-                           [ngModel]="filterVal()" (ngModelChange)="filterVal.set($event)"
-                           (keyup.enter)="applyFilter(col.field, $event)" />
-                  </div>
-                  <div class="popover-foot" style="justify-content: flex-end;">
-                    <button type="button" class="btn btn-secondary" style="padding: 4px 12px; height: 32px;" (click)="clearFilter(col.field, $event)">Clear</button>
-                    <button type="button" class="btn btn-primary" style="padding: 4px 12px; height: 32px;" (click)="applyFilter(col.field, $event)">Apply</button>
-                  </div>
-                </div>
+                </ng-template>
               </div>
             </div>
           </th>

@@ -9,7 +9,7 @@
 
 <bb-message-box [messages]="messages()" />
 
-<bb-data-grid [gridCode]="'ADM_ENQUIRIES'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'ADM_ENQUIRIES'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="seekingClassId" let-row>{{ className(row.seekingClassId) }}</ng-template>
   <ng-template bbCellTemplate="followUpDate" let-row>{{ row.followUpDate ?? '—' }}</ng-template>
   <ng-template bbCellTemplate="actions" let-row>
@@ -42,4 +42,5 @@
     </div>
   </section>
 }
+
 

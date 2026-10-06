@@ -14,7 +14,7 @@
     <p>No tickets found.</p>
   </div>
 
-  <bb-data-grid
+  <bb-data-grid fillHeight
     *ngIf="!loading() && tickets().length > 0"
     [data]="tickets()"
     [columns]="columns"
@@ -39,3 +39,4 @@
   [ticket]="selectedTicket()!"
   (closed)="selectedTicket.set(null)"
 ></bb-ticket-thread>
+

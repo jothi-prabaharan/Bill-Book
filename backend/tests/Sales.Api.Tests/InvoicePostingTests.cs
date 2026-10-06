@@ -160,13 +160,23 @@ public sealed class InvoicePostingTests
         InvoiceResult created = await h.Invoices.CreateAsync(req, CancellationToken.None);
         Assert.Equal(InvoiceOutcome.Ok, created.Outcome);
 
+        h.Db.InvoiceTenders.Add(new InvoiceTender
+        {
+            InvoiceId = created.InvoiceId,
+            OrgId = h.Tenant.OrgId!.Value,
+            Mode = PosTenderMode.Cash,
+            Amount = 118m,
+            BankAccountId = 11,
+        });
+        await h.Db.SaveChangesAsync();
+
         InvoiceResult posted = await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
         Assert.Equal(InvoiceOutcome.Ok, posted.Outcome);
 
         PostLedgerRequest post = Assert.Single(h.Ledger.Posts);
 
-        // Cash debited 118 (100 goods + 18 tax)
-        LedgerLegRequest cashLeg = Assert.Single(post.Legs, l => l.AccountSystemName == CashAccount);
+        // Tender debited 118 (100 goods + 18 tax) to bank/cash account
+        LedgerLegRequest cashLeg = Assert.Single(post.Legs, l => l.BankAccountId == 11);
         Assert.Equal(118m, cashLeg.DebitAmount);
         Assert.Null(cashLeg.SubAccountReferenceType);
         Assert.Null(cashLeg.SubAccountReferenceId);
@@ -195,13 +205,32 @@ public sealed class InvoicePostingTests
             Status = DocumentStatus.Posted,
             PostedAt = DateTimeOffset.UtcNow,
             PostedBy = Guid.NewGuid(),
-            Lines = [],
+            Lines =
+            [
+                new SalesOrderDetail
+                {
+                    OrgId = orgId,
+                    LineNumber = 1,
+                    LineType = DocumentLineType.Stock,
+                    ItemId = ItemId,
+                    Quantity = 5m,
+                    ConversionFactor = 1m,
+                    BaseQuantity = 5m,
+                    UnitPrice = 100m,
+                    GrossAmount = 500m,
+                    TaxableAmount = 500m,
+                    TaxAmount = 90m,
+                    LineTotal = 590m,
+                    TaxTreatment = TaxTreatment.Taxable,
+                }
+            ],
         };
         h.Db.SalesOrders.Add(salesOrder);
         await h.Db.SaveChangesAsync();
 
         var req = Request(lines: [Line(quantity: 5m, unitPrice: 100m)]);
         req.SalesOrderId = salesOrder.SalesOrderId;
+        req.Lines[0].SalesOrderDetailId = salesOrder.Lines[0].SalesOrderDetailId;
 
         InvoiceResult created = await h.Invoices.CreateAsync(req, CancellationToken.None);
         Assert.Equal(InvoiceOutcome.Ok, created.Outcome);

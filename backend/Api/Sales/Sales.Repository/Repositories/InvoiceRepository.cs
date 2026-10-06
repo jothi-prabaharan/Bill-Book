@@ -202,9 +202,13 @@ public sealed class InvoiceRepository : IInvoiceRepository
         DateOnly documentDate = request.DocumentDate
             ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
+        BranchSettings? branch = await _branchSettings.GetSettingsAsync(ct);
+        string? placeOfSupply = request.PlaceOfSupplyStateCode
+            ?? (!order.IsInterState ? branch?.StateCode : null);
+
         return await CreateAsync(
             FromOrder(order, lines, documentDate, request.DueDate, request.PaymentTermId,
-                request.PlaceOfSupplyStateCode, request.Notes),
+                placeOfSupply, request.Notes),
             ct);
     }
 
@@ -305,9 +309,13 @@ public sealed class InvoiceRepository : IInvoiceRepository
         DateOnly documentDate = request.DocumentDate
             ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
+        BranchSettings? branch = await _branchSettings.GetSettingsAsync(ct);
+        string? placeOfSupply = request.PlaceOfSupplyStateCode
+            ?? (!order.IsInterState ? branch?.StateCode : null);
+
         InvoiceResult created = await CreateAsync(
             FromOrder(order, lines.Select(x => (x.Line, x.Quantity)), documentDate, request.DueDate,
-                request.PaymentTermId, request.PlaceOfSupplyStateCode, request.Notes),
+                request.PaymentTermId, placeOfSupply, request.Notes),
             ct);
         if (created.Outcome != InvoiceOutcome.Ok)
         {

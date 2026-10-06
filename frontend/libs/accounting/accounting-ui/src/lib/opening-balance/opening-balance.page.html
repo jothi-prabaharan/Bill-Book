@@ -40,7 +40,7 @@
   </div>
 </div>
 
-<bb-data-grid [gridCode]="'OPENING_BALANCE_LINES'" [columns]="linesColumns" [data]="lines()">
+<bb-data-grid fillHeight [gridCode]="'OPENING_BALANCE_LINES'" [columns]="linesColumns" [data]="lines()">
   <ng-template bbCellTemplate="lineNo" let-row>
     {{ lines().indexOf(row) + 1 }}
   </ng-template>
@@ -315,4 +315,5 @@
     </button>
   </div>
 }
+
 

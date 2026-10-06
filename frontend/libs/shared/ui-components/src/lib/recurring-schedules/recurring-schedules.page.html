@@ -15,7 +15,7 @@
     <bb-message-box [messages]="messages()" />
   }
 
-  <bb-data-grid
+  <bb-data-grid fillHeight
     [gridCode]="kind === 'invoice' ? 'RECURRING_INVOICES' : 'RECURRING_BILLS'"
     [label]="config.title"
     [columns]="columns"
@@ -101,3 +101,4 @@
     </form>
   }
 </section>
+

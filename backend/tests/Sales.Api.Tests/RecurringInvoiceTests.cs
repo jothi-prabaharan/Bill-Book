@@ -242,6 +242,8 @@ public sealed class RecurringInvoiceTests
         long templateId = await TemplateAsync(books);
         Invoice template = await books.Db.Invoices.SingleAsync(i => i.InvoiceId == templateId);
         template.Status = DocumentStatus.Void;
+        template.VoidedAt = DateTimeOffset.UtcNow;
+        template.VoidReason = "Test void";
         await books.Db.SaveChangesAsync();
 
         RecurringScheduleResult result = await books.Schedules.CreateAsync(Monthly(templateId, new DateOnly(2026, 3, 1)), default);

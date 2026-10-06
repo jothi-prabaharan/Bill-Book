@@ -42,7 +42,7 @@
   </section>
 }
 
-<bb-data-grid [gridCode]="'FEE_RECEIPTS'" [columns]="columns" [data]="receipts()">
+<bb-data-grid fillHeight [gridCode]="'FEE_RECEIPTS'" [columns]="columns" [data]="receipts()">
   <ng-template bbCellTemplate="contactId" let-row>{{ guardianName(row.contactId) }}</ng-template>
   <ng-template bbCellTemplate="actions" let-row>
     @if (row.documentStatus !== 'Void') {
@@ -64,4 +64,5 @@
     </div>
   </section>
 }
+
 

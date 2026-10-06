@@ -50,7 +50,7 @@
         {{ group.accountName }}
         <span class="meta">{{ group.rows.length }}</span>
       </h2>
-      <bb-data-grid [gridCode]="'SUB_ACCOUNTS_' + group.accountId" [columns]="columns" [data]="group.rows">
+      <bb-data-grid fillHeight [gridCode]="'SUB_ACCOUNTS_' + group.accountId" [columns]="columns" [data]="group.rows">
         <ng-template bbCellTemplate="subAccountName" let-row>
           <div [class.inactive]="!row.isActive">
             {{ row.subAccountName }}
@@ -81,3 +81,4 @@
     </p>
   }
 }
+

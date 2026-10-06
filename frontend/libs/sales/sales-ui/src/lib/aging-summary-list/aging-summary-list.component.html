@@ -14,7 +14,7 @@
         <p>No outstanding balances found.</p>
       </div>
     } @else {
-      <bb-data-grid
+      <bb-data-grid fillHeight
         [columns]="columns"
         [data]="rows()"
         [loading]="loading()"
@@ -24,3 +24,4 @@
     }
   </div>
 </div>
+

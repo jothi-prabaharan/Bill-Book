@@ -59,7 +59,7 @@
   }
 
   <div class="card">
-    <bb-data-grid
+    <bb-data-grid fillHeight
       class="lines"
       [columns]="linesColumns"
       [data]="lines()"
@@ -97,3 +97,4 @@
 } @else if (!busy()) {
   <p class="empty">No GSTR-2B imported yet.</p>
 }
+

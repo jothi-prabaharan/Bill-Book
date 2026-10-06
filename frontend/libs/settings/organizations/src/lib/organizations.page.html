@@ -15,7 +15,7 @@
   by organization, so adding one costs no new database.
 </p>
 
-<bb-data-grid [gridCode]="'ORGANIZATIONS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'ORGANIZATIONS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="orgCode" let-row>
     <code>{{ row.orgCode }}</code>
   </ng-template>
@@ -206,4 +206,5 @@
     </div>
   </div>
 }
+
 

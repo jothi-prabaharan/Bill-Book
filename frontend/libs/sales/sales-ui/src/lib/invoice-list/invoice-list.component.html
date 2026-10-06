@@ -56,7 +56,7 @@
   </form>
 
   <div class="card bg-surface inv-list__grid">
-    <bb-data-grid
+    <bb-data-grid fillHeight
       [gridCode]="'INVOICE_LIST'"
       [columns]="columns"
       [data]="rows()"
@@ -148,3 +148,4 @@
   (save)="onAllocate($event)"
   (dismiss)="closeAllocate()"
 ></bb-allocation-modal>
+

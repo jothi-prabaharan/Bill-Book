@@ -19,7 +19,7 @@
   reporting, not separate stock or separate costs.
 </p>
 
-<bb-data-grid [gridCode]="'WAREHOUSES'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'WAREHOUSES'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="handle" let-row>
     <span class="handle" Handle aria-hidden="true">⠿</span>
   </ng-template>
@@ -120,3 +120,4 @@
     </div>
   </div>
 }
+

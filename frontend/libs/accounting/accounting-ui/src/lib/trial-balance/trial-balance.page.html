@@ -32,7 +32,7 @@
   }
 
   <!-- Since Trial balance has groups, we might need a custom layout or just feed flattened rows. Wait, DataGrid might not support groups in the same way, but let's map the raw rows and let the group headers be lost or flattened if data grid doesn't support groups. Actually, let's feed the rows. -->
-  <bb-data-grid [gridCode]="'TRIAL_BALANCE'" [columns]="columns" [data]="tb.rows">
+  <bb-data-grid fillHeight [gridCode]="'TRIAL_BALANCE'" [columns]="columns" [data]="tb.rows">
     <ng-template bbCellTemplate="code" let-row>
       <div class="code-col">{{ row.accountCode }}</div>
     </ng-template>
@@ -58,4 +58,5 @@
     </p>
   }
 }
+
 

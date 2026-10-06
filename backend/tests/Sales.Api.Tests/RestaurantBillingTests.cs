@@ -309,7 +309,7 @@ public sealed class RestaurantBillingTests
 
             recipes.Refuse = null;
             OrderResult<RestaurantBillView> billed = await b.Billing.BillAsync(new BillRestaurantOrdersRequest { OrderIds = [orderId] }, default);
-            Assert.Equal(OrderOutcome.Ok, billed.Outcome);
+            Assert.True(billed.Outcome == OrderOutcome.Ok, $"Outcome: {billed.Outcome}, Message: {billed.Message}");
 
             (long billId, IReadOnlyList<DishToConsume> dishes) = recipes.Calls[^1];
             Assert.Equal(billed.Value!.RestaurantBillId, billId);

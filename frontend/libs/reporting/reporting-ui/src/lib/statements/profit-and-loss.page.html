@@ -7,7 +7,7 @@
   <div *ngIf="data() as d">
     <div *ngFor="let sec of d.sections" class="section">
       <h3>{{ sec.displayName }}</h3>
-      <bb-data-grid
+      <bb-data-grid fillHeight
         class="statement"
         flush
         [label]="sec.displayName"
@@ -45,3 +45,4 @@
     </div>
   </div>
 </div>
+

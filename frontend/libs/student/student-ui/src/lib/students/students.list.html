@@ -13,7 +13,7 @@
 
 <p class="muted">{{ rows().length }} {{ rows().length === 1 ? 'student' : 'students' }}</p>
 
-<bb-data-grid [gridCode]="'SIS_STUDENTS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'SIS_STUDENTS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="admissionNo" let-row>
     <button type="button" class="link" (click)="open(row)"><code>{{ row.admissionNo }}</code></button>
   </ng-template>
@@ -21,3 +21,4 @@
   <ng-template bbCellTemplate="sectionName" let-row>{{ row.sectionName ?? '—' }}</ng-template>
   <ng-template bbCellTemplate="rollNo" let-row>{{ row.rollNo ?? '—' }}</ng-template>
 </bb-data-grid>
+

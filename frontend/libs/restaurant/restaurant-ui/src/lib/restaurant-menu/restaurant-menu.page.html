@@ -35,7 +35,7 @@
         <bb-text-input label="Search" name="search" placeholder="Dish name or code" [(ngModel)]="search" (keyup.enter)="loadItems()" />
       </div>
 
-      <bb-data-grid
+      <bb-data-grid fillHeight
         gridCode="RESTAURANT_MENU"
         label="Dishes"
         [columns]="columns"
@@ -259,3 +259,4 @@
   (choose)="pickItem($event)"
   (dismiss)="pickerOpen.set(false)"
 />
+

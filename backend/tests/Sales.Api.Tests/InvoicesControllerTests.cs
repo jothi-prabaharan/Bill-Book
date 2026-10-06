@@ -366,7 +366,7 @@ public sealed class InvoicesControllerTests
         var result = await controller.Create(new SaveInvoiceRequest(), CancellationToken.None);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        var response = Assert.IsType<MessageResponse>(badRequest.Value);
+        var response = Assert.IsType<LimitRefusalResponse>(badRequest.Value);
         Assert.Equal("Credit limit exceeded by 5000.", response.Message);
     }
 

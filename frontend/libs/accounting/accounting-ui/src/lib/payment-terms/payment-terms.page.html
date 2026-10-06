@@ -19,7 +19,7 @@
 }
 
 <div>
-  <bb-data-grid [gridCode]="'PAYMENT_TERMS'" [columns]="columns" [data]="rows()">
+  <bb-data-grid fillHeight [gridCode]="'PAYMENT_TERMS'" [columns]="columns" [data]="rows()">
     <ng-template bbCellTemplate="handle" let-row>
       <div [class.inactive]="!row.isActive">
         <span class="handle" Handle [class.disabled]="!canReorder" aria-hidden="true">⠿</span>
@@ -157,3 +157,4 @@
     </div>
   </div>
 }
+

@@ -187,14 +187,15 @@ public sealed class RestaurantBillingRepository
 
         decimal percent = request.ApplyServiceCharge ? settings.ServiceChargePercent : 0m;
         IReadOnlyList<RestaurantBillingRulesRepository.ServiceChargePart> charge = RestaurantBillingRulesRepository.ServiceCharge(lines, percent);
-        long serviceChargeAccount = 0;
-        if (charge.Count > 0)
+        long revenueAccount = 0;
+        bool hasNonStockedDishes = lines.Any(l => !l.IsStocked);
+        if (charge.Count > 0 || hasNonStockedDishes)
         {
-            // A free-text invoice line names its account; the service charge is
-            // revenue, so it names the account the invoice credits revenue to.
-            serviceChargeAccount = (await _accounts.AccountsAsync([4], [], ct))
+            // Non-stocked dish lines (LineType Expense) and service charge lines require
+            // an account to satisfy the database check constraint chk_invoicedetails_line_type.
+            revenueAccount = (await _accounts.AccountsAsync([4], [], ct))
                 .FirstOrDefault(a => a.AccountSystemName == SalesRevenue)?.AccountId ?? 0;
-            if (serviceChargeAccount == 0)
+            if (charge.Count > 0 && revenueAccount == 0)
             {
                 return OrderResult<RestaurantBillView>.Refuse("The chart of accounts has no Sales Revenue account to charge the service charge to.");
             }
@@ -207,13 +208,24 @@ public sealed class RestaurantBillingRepository
         RestaurantOrder first = orders[0];
         string tables = string.Join(", ", (await TableCodesAsync(orders, ct)).Distinct());
 
+        BranchSettings? branch = await _branch.GetSettingsAsync(ct);
+
         InvoiceResult created = await _invoices.CreateAsync(new SaveInvoiceRequest
         {
             DocumentDate = today,
             DueDate = today,
             ContactId = contactId.Value,
+            PlaceOfSupplyStateCode = branch?.StateCode,
             Notes = $"Restaurant {string.Join(", ", orders.Select(o => o.OrderNo))}{(tables.Length > 0 ? $", table {tables}" : string.Empty)}",
-            Lines = [.. lines.Select(RestaurantBillingRulesRepository.InvoiceLine), .. charge.Select(c => ChargeLine(c, percent, serviceChargeAccount))],
+            Lines = [.. lines.Select(l =>
+            {
+                var lineReq = RestaurantBillingRulesRepository.InvoiceLine(l);
+                if (lineReq.LineType == DocumentLineType.Expense && lineReq.AccountId is null && revenueAccount != 0)
+                {
+                    lineReq.AccountId = revenueAccount;
+                }
+                return lineReq;
+            }), .. charge.Select(c => ChargeLine(c, percent, revenueAccount))],
         }, ct);
         if (created.Outcome != InvoiceOutcome.Ok)
         {

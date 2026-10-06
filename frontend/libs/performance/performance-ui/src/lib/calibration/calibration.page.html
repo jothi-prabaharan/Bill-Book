@@ -30,7 +30,7 @@
 <!-- Table of Department Reviews for Calibration -->
 <h2 style="margin-top: 2rem;">Reviews in this Cycle</h2>
 <div class="table-container">
-  <bb-data-grid
+  <bb-data-grid fillHeight
     [columns]="reviewsColumns"
     [data]="reviews()"
     flush
@@ -72,3 +72,4 @@
     <button class="btn btn-primary" (click)="submitAdjust()">Save Adjustment</button>
   </div>
 </div>
+

@@ -145,6 +145,7 @@ public sealed class PortalInvoiceTests
                     {
                         OrgId = Tenant.OrgId!.Value,
                         LineNumber = 1,
+                        ItemId = 1,
                         Description = "Widget",
                         Quantity = 10m,
                         BaseQuantity = 10m,

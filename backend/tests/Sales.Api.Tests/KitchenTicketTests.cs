@@ -99,10 +99,11 @@ public sealed class KitchenTicketTests
             OrderResult<List<long>> sent = await k.Kots.SendAsync(orderId, default);
             Assert.Equal(2, sent.Value!.Count);
 
-            List<Kot> tickets = await k.Db.Kots.Include(t => t.Lines).OrderBy(t => t.Station).ToListAsync();
-            Assert.Equal([MenuStation.Kitchen, MenuStation.Bar], tickets.Select(t => t.Station));
-            Assert.Equal(2, tickets[0].Lines.Count);
-            Assert.Single(tickets[1].Lines);
+            List<Kot> tickets = await k.Db.Kots.Include(t => t.Lines).ToListAsync();
+            Kot kitchenTicket = Assert.Single(tickets, t => t.Station == MenuStation.Kitchen);
+            Kot barTicket = Assert.Single(tickets, t => t.Station == MenuStation.Bar);
+            Assert.Equal(2, kitchenTicket.Lines.Count);
+            Assert.Single(barTicket.Lines);
             Assert.All(tickets, t => Assert.StartsWith("KOT/", t.KotNo));
             Assert.All(await k.Db.RestaurantOrderLines.ToListAsync(), l => Assert.Equal(KitchenStatus.Sent, l.KitchenStatus));
 

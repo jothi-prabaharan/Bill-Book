@@ -9,7 +9,7 @@
 
 <bb-message-box [messages]="messages()" />
 
-<bb-data-grid [gridCode]="'WRK_ORDERS'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'WRK_ORDERS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="workOrderNo" let-row><code>{{ row.workOrderNo }}</code></ng-template>
   <ng-template bbCellTemplate="where" let-row>{{ where(row) }}</ng-template>
   <ng-template bbCellTemplate="workOrderStatus" let-row>{{ label(row.workOrderStatus) }}</ng-template>
@@ -124,4 +124,5 @@
     }
   </section>
 }
+
 

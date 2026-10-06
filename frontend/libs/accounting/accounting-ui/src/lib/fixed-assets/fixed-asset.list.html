@@ -10,7 +10,7 @@
 }
 
 <div>
-  <bb-data-grid
+  <bb-data-grid fillHeight
     [gridCode]="'FIXED_ASSETS'"
     [columns]="columns"
     [data]="rows()"
@@ -21,3 +21,4 @@
 @if (adding()) {
   <bb-fixed-asset-form (closed)="onFormClosed($event)"></bb-fixed-asset-form>
 }
+

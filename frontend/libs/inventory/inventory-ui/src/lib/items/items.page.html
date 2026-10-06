@@ -39,7 +39,7 @@
 }
 
 <div class="card bg-surface">
-  <bb-data-grid flush [gridCode]="'ITEMS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
+  <bb-data-grid fillHeight flush [gridCode]="'ITEMS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
     <ng-template bbCellTemplate="pick" let-row>
       <span (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
         <bb-checkbox
@@ -616,3 +616,4 @@
 @if (labelsOpen(); as job) {
   <bb-label-print-dialog [labels]="job.labels" [kind]="job.kind" (closed)="labelsOpen.set(null)" />
 }
+

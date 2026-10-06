@@ -8,7 +8,7 @@
 }
 
 @if (!editing()) {
-  <bb-data-grid [gridCode]="'ROLES'" [columns]="columns" [data]="roles()">
+  <bb-data-grid fillHeight [gridCode]="'ROLES'" [columns]="columns" [data]="roles()">
     <ng-template bbCellTemplate="displayName" let-row>
       {{ row.displayName }}
       @if (row.isSystemRole) { <span class="badge">System</span> }
@@ -67,3 +67,4 @@
     </div>
   </form>
 }
+

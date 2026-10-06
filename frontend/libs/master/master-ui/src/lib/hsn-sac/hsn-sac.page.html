@@ -70,7 +70,7 @@
   <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
 }
 
-<bb-data-grid [gridCode]="'HSN_SAC'" [columns]="columns" [data]="rows()">
+<bb-data-grid fillHeight [gridCode]="'HSN_SAC'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="code" let-row>
     <strong>{{ row.code }}</strong>
     @if (row.digitLength <= 2) {
@@ -109,3 +109,4 @@
     </button>
   </nav>
 }
+

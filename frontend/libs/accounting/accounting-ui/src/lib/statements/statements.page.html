@@ -193,7 +193,7 @@
       <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
     </div>
 
-    <bb-data-grid [gridCode]="'STATEMENT_LINES'" [columns]="lineColumns" [data]="visibleLines">
+    <bb-data-grid fillHeight [gridCode]="'STATEMENT_LINES'" [columns]="lineColumns" [data]="visibleLines">
       <ng-template bbCellTemplate="date" let-row>
         <div class="date-col" [class.decided]="row.status !== 'Unmatched'">{{ row.transactionDate }}</div>
       </ng-template>
@@ -274,3 +274,4 @@
     </span>
   </ng-template>
 </bb-data-grid>
+

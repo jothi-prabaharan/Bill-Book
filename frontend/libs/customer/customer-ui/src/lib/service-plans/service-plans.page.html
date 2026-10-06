@@ -13,7 +13,7 @@
     <span class="plans__muted">Customers with an email address are reminded ahead of each service, from the branch's "Service reminder" email template.</span>
   </div>
 
-  <bb-data-grid
+  <bb-data-grid fillHeight
     gridCode="SERVICE_PLANS"
     label="Service plans"
     [columns]="columns"
@@ -97,3 +97,4 @@
   (choose)="choose($event)"
   (dismiss)="pickerOpen.set(false)"
 />
+
