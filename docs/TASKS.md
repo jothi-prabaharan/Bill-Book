@@ -310,6 +310,8 @@ The queue below is one list in card-number order. Each card names its group.
   Our own organisation's real books (Service type) and one demo customer per business type, told apart from paying customers by a kind (D-44).
 - **N · Electron removal, barcode and QR**
   Drop Electron and move the till into `apps/web`; barcode and QR on printed documents, labels at an exact size, and scanning on every transaction, with a small camera popup on phones.
+- **O · Business types: requirements**
+  One requirements card for each business type that does not exist yet (Wholesale, Textile, Manufacturing, Construction, Clinic) and one gap check for the five that do. A requirements card builds nothing: the owner reviews it, then its build cards are written (D-53).
 - **Z · Done — waiting on the owner's test run**
   Finished cards, in ID order. A card marked `tests written, not run` needs the owner to run its
   tests (section 0.5); the owner then adds `· tests passed (owner) — date`, or moves the card back
@@ -5254,6 +5256,117 @@ The queue below is one list in card-number order. Each card names its group.
   - Build: `dotnet build` of `Sales.Api` and `Sales.Api.Tests` is clean, and `dotnet ef migrations has-pending-model-changes` reports none. The tests were not run (section 0.5).
 - **Follow-ups, only if D-42 asks for them:** menu sync (push the menu and availability out), status updates back, settlement against the aggregators' payouts, and a page listing aggregator orders.
 
+### TK-168 · Requirements: Wholesale distribution business type
+- [ ] open
+- **Issue:** [#150](https://github.com/jothi-prabaharan/Bill-Book/issues/150)
+- **Group:** O · Business types: requirements
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-53
+- **Where:** `Shared.Kernel/Apps/App.cs`, `Inventory.Entity/TableEntities/{PriceList,PriceListItem,UnitOfMeasure}.cs`, `Master.Entity/TableEntities/Contact.cs` (`CreditLimit`), `Sales.Repository/Repositories/InvoiceRepository.cs`, `Master.Entity/TableEntities/Organization.cs` (e-way bill threshold)
+- **State:** checked 6 October 2026. There is no Wholesale type. Retail already has price lists, a credit limit on the contact, payment terms, delivery challans, batch and expiry and e-invoicing (TK-91 to TK-93). There is **no e-way bill generation**: `Organization` holds only a threshold setting.
+- **Sub-tasks:**
+  - [ ] Write the **trade requirements**: slab and group pricing by customer group and quantity; credit limit and credit days with overdue blocking; salesman and route on the order; scheme discounts (buy X get Y, turnover rebate); several units (case, dozen, piece) with conversion; batch and expiry for FMCG; challan then invoice; **e-way bill generation and cancellation**; trip sheets and delivery tracking; outstanding collection by salesman with ageing; retailer-wise and brand-wise sales reports; purchase planning from reorder levels.
+  - [ ] Expected gaps to confirm against the code: schemes, routes and salesmen, e-way bill, trip sheets, multi-unit pricing, a collection screen.
+  - [ ] Write the **reuse map**: for each need, the file or card that already serves it, and the gap that is left.
+  - [ ] Write the **masters, documents and reports** the type needs, and the `AddOn` flags `AddOnRules` should allow for it (and any new add-on, paid or free).
+  - [ ] Outline the **build cards** with their dependencies, lanes and order. Do not write them; the owner approves the outline first.
+  - [ ] Record each open question as the next D-number in section 3, and ask rather than assume.
+  - [ ] Describe the type's **demo customer** (master data only, TK-154) and the seed the branch needs.
+  - [ ] Owner: review and approve the requirements section and the build-card outline.
+- **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
+
+### TK-169 · Requirements: Textile / garments business type
+- [ ] open
+- **Issue:** [#151](https://github.com/jothi-prabaharan/Bill-Book/issues/151)
+- **Group:** O · Business types: requirements
+- **Lanes:** L-DOC · **Depends on:** TK-168 · **Decision:** D-53
+- **Where:** `Inventory.Entity/TableEntities/MenuEntities.cs` (`ItemVariant`), `Inventory.Entity/TableEntities/{Item,ItemBarcode}.cs`, `Shared.Kernel/Tax/GstCalculator`, the label printing from TK-159
+- **State:** checked 6 October 2026. There is no Textile type. `ItemVariant` exists for the restaurant menu (half and full portions) and has not been tried as a size and colour matrix. Barcodes per item exist, and labels print at an exact size (TK-159).
+- **Sub-tasks:**
+  - [ ] Write the **trade requirements**: variants by size and colour with a matrix entry grid; style, season and brand; a barcode per variant; **HSN with GST slabs set by the price per piece** (a rate change at a price threshold, which `GstCalculator` does not model); size-wise stock and size-curve purchasing; job work to tailors and dyers (shared with Manufacturing); returns and exchange; season clearance and markdown; wholesale and retail price lists; salesman commission.
+  - [ ] Decide whether `ItemVariant` generalises or a separate variant model is needed; say so in Notes.
+  - [ ] Expected gaps to confirm: the size and colour matrix, slab GST by unit price, a style master, a markdown tool.
+  - [ ] Write the **reuse map**: for each need, the file or card that already serves it, and the gap that is left.
+  - [ ] Write the **masters, documents and reports** the type needs, and the `AddOn` flags `AddOnRules` should allow for it (and any new add-on, paid or free).
+  - [ ] Outline the **build cards** with their dependencies, lanes and order. Do not write them; the owner approves the outline first.
+  - [ ] Record each open question as the next D-number in section 3, and ask rather than assume.
+  - [ ] Describe the type's **demo customer** (master data only, TK-154) and the seed the branch needs.
+  - [ ] Owner: review and approve the requirements section and the build-card outline.
+- **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
+
+### TK-170 · Requirements: Manufacturing business type
+- [ ] open
+- **Issue:** [#152](https://github.com/jothi-prabaharan/Bill-Book/issues/152)
+- **Group:** O · Business types: requirements
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-53, D-55
+- **Where:** `Inventory.Entity/TableEntities/Recipes.cs`, `Inventory.Repository/Repositories/` (guarded stock issue, costing), `BillBook.Worker` (the costing jobs), `Sales.Entity/TableEntities/DeliveryChallan.cs`
+- **State:** checked 6 October 2026. There is no Manufacturing type. Recipes with ingredient lines exist for the restaurant (TK-149), the guarded stock issue and the costing engine exist, and a delivery challan exists on the sales side. Nothing models a bill of materials, a production order, work in progress or job work.
+- **Sub-tasks:**
+  - [ ] Write the **trade requirements**: bill of materials with versions and scrap percentage; production orders with material issue and finished-goods receipt; work in progress; routing and work centres; **job work in and out** (GST section 143 challans, tracking goods held at the job worker); by-products and scrap; co-product costing; costing roll-up through the costing engine; reorder from BOM demand; production reports (planned against actual, yield, variance); batch and serial on finished goods; a quality check at receipt.
+  - [ ] Decide with the owner whether Restaurant recipes and Manufacturing BOMs share one design (D-55).
+  - [ ] Expected gaps: everything except the stock issue and costing.
+  - [ ] Write the **reuse map**: for each need, the file or card that already serves it, and the gap that is left.
+  - [ ] Write the **masters, documents and reports** the type needs, and the `AddOn` flags `AddOnRules` should allow for it (and any new add-on, paid or free).
+  - [ ] Outline the **build cards** with their dependencies, lanes and order. Do not write them; the owner approves the outline first.
+  - [ ] Record each open question as the next D-number in section 3, and ask rather than assume.
+  - [ ] Describe the type's **demo customer** (master data only, TK-154) and the seed the branch needs.
+  - [ ] Owner: review and approve the requirements section and the build-card outline.
+- **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
+
+### TK-171 · Requirements: Construction / contracting business type
+- [ ] open
+- **Issue:** [#153](https://github.com/jothi-prabaharan/Bill-Book/issues/153)
+- **Group:** O · Business types: requirements
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-53, D-56
+- **Where:** `Accounting.Entity/TableEntities/{Project,ProjectTask,ProjectMilestone,TimeEntry,Budget,TdsEntry}.cs`, `Sales.Entity/TableEntities/InvoiceProjectItem.cs`, `Inventory.Entity/TableEntities/Warehouse.cs`
+- **State:** checked 6 October 2026. There is no Construction type. Projects with members, tasks, milestones and timesheets exist (TK-104 to TK-107), so do budgets (TK-108, TK-109), TDS on bills (TK-117) and a warehouse per location. There is no BOQ, measurement book, running-account billing or retention.
+- **Sub-tasks:**
+  - [ ] Write the **trade requirements**: projects with a BOQ and phases; **running-account (RA) bills** against measured work; retention and its release; advances and their recovery; subcontractor work orders and bills with TDS; material requisition and site stores (a warehouse per site); plant and equipment hire; the labour muster sheet (HRMS and Payroll add-ons); GST on works contracts; cost to complete and profit by project; client and subcontractor ledgers.
+  - [ ] Settle GST works-contract treatment and the retention accounting with the owner (D-56).
+  - [ ] Expected gaps: BOQ, measurement book, RA billing with retention, subcontractor work orders, site stores.
+  - [ ] Write the **reuse map**: for each need, the file or card that already serves it, and the gap that is left.
+  - [ ] Write the **masters, documents and reports** the type needs, and the `AddOn` flags `AddOnRules` should allow for it (and any new add-on, paid or free).
+  - [ ] Outline the **build cards** with their dependencies, lanes and order. Do not write them; the owner approves the outline first.
+  - [ ] Record each open question as the next D-number in section 3, and ask rather than assume.
+  - [ ] Describe the type's **demo customer** (master data only, TK-154) and the seed the branch needs.
+  - [ ] Owner: review and approve the requirements section and the build-card outline.
+- **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
+
+### TK-172 · Requirements: Clinic / hospital business type
+- [ ] open
+- **Issue:** [#154](https://github.com/jothi-prabaharan/Bill-Book/issues/154)
+- **Group:** O · Business types: requirements
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-53, D-54
+- **Where:** `Master.Entity/TableEntities/Contact.cs` and the `con` schema, `Inventory.Entity/TableEntities/{ItemPharmaDetails,ItemBatch}.cs`, the audit trail (TK-118), `Customer.Api` appointments patterns if any
+- **State:** checked 6 October 2026. There is no Clinic type. Pharma stock with batch, expiry and drug schedule exists, and so does an audit trail. There is no patient, visit, appointment, prescription or clinical document.
+- **Sub-tasks:**
+  - [ ] Write the **trade requirements**: a patient master with a UHID; visits (OPD first, IPD later); appointments and a queue; doctors and fee schedules; consultation notes and prescriptions; investigation orders; billing of consultation, procedures and pharmacy; insurance and TPA claims (later); dispensing medicine from Pharma stock with batch and expiry; package and deposit billing; doctor-wise revenue and share; reports.
+  - [ ] Write the **privacy rules for health data**: consent, access logging through the audit trail, retention, and the DPDP Act; decide where patient data lives (D-54).
+  - [ ] Propose an **OPD-only first release** and leave inpatient work to later cards.
+  - [ ] Write the **reuse map**: for each need, the file or card that already serves it, and the gap that is left.
+  - [ ] Write the **masters, documents and reports** the type needs, and the `AddOn` flags `AddOnRules` should allow for it (and any new add-on, paid or free).
+  - [ ] Outline the **build cards** with their dependencies, lanes and order. Do not write them; the owner approves the outline first.
+  - [ ] Record each open question as the next D-number in section 3, and ask rather than assume.
+  - [ ] Describe the type's **demo customer** (master data only, TK-154) and the seed the branch needs.
+  - [ ] Owner: review and approve the requirements section and the build-card outline.
+- **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
+
+### TK-173 · Gap check: the existing business types against the trade list
+- [ ] open
+- **Issue:** [#155](https://github.com/jothi-prabaharan/Bill-Book/issues/155)
+- **Group:** O · Business types: requirements
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-53
+- **Where:** `Shared.Kernel/Apps/App.cs`, `Master.Repository/Repositories/{TradeScopeRepository,MenuRepository}.cs`, the libs under `frontend/libs/{pos,restaurant,sales,inventory}`, the cards TK-136 to TK-167
+- **State:** checked 6 October 2026. The business types are Retail, Pharma, Jewellery, School, Service and Restaurant. The owner's trade list is Retail / POS, Restaurant and café, Pharmacy, Jewellery, Textile, Manufacturing, Services, Clinic, Construction and Wholesale. The five that already exist have not been checked against what their trade needs.
+- **Sub-tasks:**
+  - [ ] **Retail / POS:** shifts and cash drawer, returns without an invoice, price override with approval, hold and recall, customer display, loyalty (TK-166), what the till does offline.
+  - [ ] **Pharma:** Schedule H and H1 register, batch recall, a near-expiry report, prescription capture, the drug licence on the invoice.
+  - [ ] **Jewellery:** old gold exchange, the savings scheme (TK-141), HUID, making-charge and wastage reports, karigar job work.
+  - [ ] **Service:** project billing, retainers, service plans (TK-140), time tracking.
+  - [ ] **Restaurant:** what TK-143 to TK-167 left undone.
+  - [ ] For each row write Built, Partly or Missing with the file or card that proves it, under "Business types" in `docs/Modules.md`. List the missing rows as proposed cards in this card's Notes; **do not write them without the owner's approval**.
+  - [ ] Owner: review the gap tables and choose which proposed cards to write.
+- **Done when:** the gap tables are written, the owner has reviewed them and chosen which proposed cards to write.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -5315,6 +5428,10 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-50 | TK-136: what replaces the `App` enum where it is still read? | TK-136 | **Decided** (owner, 2026-10-05): signup asks for a business type (or HRMS/Payroll only) and add-ons, and **Settings › Applications is removed** — Settings › Organization already switches the type and add-ons. The roles screen and permission matrix show **one role list per customer, filtered by the current branch's business type and add-ons**. The retirement happens in TK-136, not a later card. |
 | D-51 | TK-162: capture serial numbers on a goods receipt? | TK-162 | *Open.* The card asks a scan to capture "a batch or serial where the item needs one", but a goods receipt has no serial field: `SaveGoodsReceiptLineRequest` carries a batch only, and Purchase's `InventoryClient` never sends `SerialNumbers` to Inventory's receipt, which already accepts them. Default until answered: the batch is captured (by hand, or off a pack's GS1 code); a scan of a serial-tracked item says serials are not recorded on a receipt. Recording them is a card of its own: a serial list per receipt line, carried to Inventory on post, with its count checked against the accepted quantity. Raised 2026-10-05 |
 | D-52 | TK-166: does a redeemed loyalty point reduce the bill as a discount, or settle part of it as a tender? | TK-166 | *Open.* It decides the posting. **As a discount**, the bill's taxable value falls, so GST is charged on less, and the points' cost sits in Discount Given; simple for the customer, but each point changes the tax on the bill. **As a tender**, the bill and its GST are unchanged and the points pay part of it, settled from a liability (Loyalty Points Payable) built up as points are earned; the books then need that liability booked at earning time, which nothing does yet. Default until answered: no redemption; points are earned, reversed and shown only. Raised 2026-10-05 |
+| D-53 | Which business types come next, and in what order? | TK-168 to TK-173 | **Five more, one at a time** (owner, 2026-10-06): Wholesale distribution, Textile / garments, Manufacturing, Construction / contracting and Clinic / hospital, beside the six that exist. Each gets a requirements card first and its build cards after the owner reviews it. Enum names: `Wholesale`, `Textile`, `Manufacturing`, `Construction`, `Clinic`. The ten-item trade list is the owner's. TK-168 to TK-173 |
+| D-54 | Clinic: where does patient data live, and how are consent and retention handled under the DPDP Act? | TK-172 (the schema outline) | *Open.* Raised 2026-10-06 by TK-172 |
+| D-55 | Manufacturing: one shared recipe and bill-of-materials design for Restaurant and Manufacturing, or separate tables? | TK-170 (the outline) | *Open.* Raised 2026-10-06 by TK-170 |
+| D-56 | Construction: how are GST on works contracts and retention accounted for, payable on release or at billing? | TK-171 (the RA billing outline) | *Open.* Raised 2026-10-06 by TK-171 |
 
 ---
 
