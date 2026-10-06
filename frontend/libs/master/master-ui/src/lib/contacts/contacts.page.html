@@ -54,7 +54,7 @@
 }
 
 <div class="card bg-surface">
-  <bb-data-grid [gridCode]="'CONTACTS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
+  <bb-data-grid flush [gridCode]="'CONTACTS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
     <ng-template bbCellTemplate="contactCode" let-row>
       {{ row.contactCode }}
     </ng-template>

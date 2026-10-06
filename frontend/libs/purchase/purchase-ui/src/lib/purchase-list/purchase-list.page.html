@@ -27,7 +27,7 @@
 <bb-period-filter-bar [total]="periodTotal()" (rangeChange)="setRange($event)" />
 
 <div class="card bg-surface">
-    <bb-data-grid [gridCode]="'PURCHASE_LIST'" [columns]="columns" [data]="visibleTransactions()">
+    <bb-data-grid flush [gridCode]="'PURCHASE_LIST'" [columns]="columns" [data]="visibleTransactions()">
     <ng-template bbCellTemplate="documentDate" let-row="row">
       <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full tabular-nums">{{ row.documentDate | date }}</span>
     </ng-template>
@@ -79,4 +79,5 @@
   (save)="onAllocate($event)"
   (dismiss)="closeAllocate()"
 ></bb-allocation-modal>
+
 
