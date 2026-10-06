@@ -54,11 +54,11 @@ export class ShellNavComponent {
   });
 
   readonly primaryNav = computed(() =>
-    this.nav().filter((item) => item.path !== '/settings'),
+    this.nav().filter((item) => item.module !== 'settings'),
   );
 
   readonly settingsItem = computed(() =>
-    this.nav().find((item) => item.path === '/settings'),
+    this.nav().find((item) => item.module === 'settings'),
   );
 
   readonly mobileTopNav = computed(() =>

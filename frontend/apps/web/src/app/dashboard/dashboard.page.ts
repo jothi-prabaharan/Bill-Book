@@ -6,11 +6,15 @@ import {
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   effect,
   inject,
   signal,
 } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import { ShellBoardService } from '@bill-book/app-shell';
 import { ServicesDueCard } from '@bill-book/customer-ui';
 import {
@@ -24,6 +28,60 @@ import {
   writeLayout,
 } from './dashboard-layout';
 
+export interface DashboardMonthlyTrendPoint {
+  month: string;
+  sales: number;
+  outstanding: number;
+}
+
+export interface DashboardTopProduct {
+  item: string;
+  sold: string;
+  profit: number;
+  margin: string;
+}
+
+export interface DashboardOutstandingParty {
+  party: string;
+  due: string;
+  amount: number;
+  overdue: string;
+  tone: string;
+}
+
+export interface DashboardComplianceItem {
+  form: string;
+  period: string;
+  due: string;
+  status: string;
+  tone: string;
+}
+
+export interface DashboardSummary {
+  salesToday: number;
+  invoicesCountToday: number;
+  unpaidInvoicesCountToday: number;
+  totalReceivables: number;
+  overdueReceivables: number;
+  totalPayables: number;
+  overduePayables: number;
+  nextPayableDueDate: string | null;
+  cashAndBankTotal: number;
+  bankAccountsCount: number;
+  plPeriodLabel: string;
+  revenue: number;
+  costOfGoodsSold: number;
+  operatingExpenses: number;
+  netProfit: number;
+  marginPercent: number;
+  monthlyTrend: DashboardMonthlyTrendPoint[];
+  totalSalesTrend: number;
+  totalOutstandingTrend: number;
+  topProducts: DashboardTopProduct[];
+  outstanding: DashboardOutstandingParty[];
+  upcomingCompliance: DashboardComplianceItem[];
+}
+
 /**
  * The Home board.
  *
@@ -31,9 +89,9 @@ import {
  * its controls (basis toggle, Customize, Reset, Done) live in that strip too,
  * reaching this page through `ShellBoardService`.
  *
- * In customize mode each card grows a small bar: move left, move right, cycle
- * width, remove. Removed widgets collect in a tray above the board. The
- * arrangement is this browser's, stored under `billbook.dashboard.layout.v11`.
+ * All figures, tables, and trends are loaded in real-time from the database.
+ * If the organization has no transactions recorded yet, clean zero states are
+ * shown rather than static mock sample figures.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,22 +101,16 @@ import {
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })
-export class DashboardPage {
-  // Sample figures until the dashboard reads real ones; kept as data so the
-  // cards draw through the one shared table like every other list.
+export class DashboardPage implements OnInit {
+  private readonly http = inject(HttpClient);
+  protected readonly formats = inject(FormatSettingsService);
+  private readonly board = inject(ShellBoardService);
+
   protected readonly productColumns: ColumnDef[] = [
     { field: 'item', header: 'Item' },
     { field: 'sold', header: 'Sold', numeric: true },
     { field: 'profit', header: 'Profit', numeric: true },
     { field: 'margin', header: 'Margin', numeric: true },
-  ];
-
-  protected readonly topProducts = [
-    { item: 'Cotton shirting 2×2 — 44"', sold: '1,840 m', profit: '₹2,46,300', margin: '31.4%' },
-    { item: 'Linen blend — natural', sold: '960 m', profit: '₹1,72,800', margin: '28.1%' },
-    { item: 'Poly viscose suiting', sold: '2,410 m', profit: '₹1,38,400', margin: '19.6%' },
-    { item: 'Brass buttons 18L', sold: '312 gr', profit: '₹84,900', margin: '42.8%' },
-    { item: 'Corrugated cartons 5-ply', sold: '4,600 pc', profit: '₹61,200', margin: '14.2%' },
   ];
 
   protected readonly outstandingColumns: ColumnDef[] = [
@@ -68,14 +120,6 @@ export class DashboardPage {
     { field: 'overdue', header: 'Overdue', numeric: true },
   ];
 
-  protected readonly outstanding = [
-    { party: 'Suriya Textiles', due: '12 Apr', amount: '₹3,42,000', overdue: '121 d', tone: 'danger' },
-    { party: 'Anand Hardware', due: '30 May', amount: '₹2,18,400', overdue: '73 d', tone: 'danger' },
-    { party: 'Meenakshi Agencies', due: '18 Jun', amount: '₹1,64,900', overdue: '54 d', tone: 'warning' },
-    { party: 'Kavitha Stores', due: '09 Jul', amount: '₹96,300', overdue: '33 d', tone: 'warning' },
-    { party: 'Raja Packaging', due: '28 Jul', amount: '₹48,900', overdue: '14 d', tone: 'info' },
-  ];
-
   protected readonly complianceColumns: ColumnDef[] = [
     { field: 'form', header: 'Filing' },
     { field: 'period', header: 'Period' },
@@ -83,21 +127,154 @@ export class DashboardPage {
     { field: 'status', header: 'Status' },
   ];
 
-  protected readonly upcomingCompliance = [
-    { form: 'GSTR-1', period: 'Sep 2026', due: '11 Oct 2026', status: 'Ready', tone: 'success' },
-    { form: 'GSTR-3B', period: 'Sep 2026', due: '20 Oct 2026', status: 'In progress', tone: 'warning' },
-    { form: 'TDS Deposit', period: 'Sep 2026', due: '07 Oct 2026', status: 'Due soon', tone: 'danger' },
-  ];
+  protected readonly summary = signal<DashboardSummary | null>(null);
+  protected readonly loading = signal(true);
 
-  private readonly board = inject(ShellBoardService);
+  // Widget 1: Sales today
+  protected readonly salesTodayKpi = computed(() =>
+    this.formats.formatMoney(this.summary()?.salesToday ?? 0),
+  );
+  protected readonly salesTodayMeta = computed(() => {
+    const s = this.summary();
+    if (!s || s.invoicesCountToday === 0) return '0 invoices today';
+    return `${s.invoicesCountToday} invoice${s.invoicesCountToday === 1 ? '' : 's'} · ${s.unpaidInvoicesCountToday} unpaid`;
+  });
+
+  // Widget 2: Receivables
+  protected readonly receivablesKpi = computed(() =>
+    this.formats.formatMoney(this.summary()?.totalReceivables ?? 0),
+  );
+  protected readonly receivablesMeta = computed(() => {
+    const s = this.summary();
+    if (!s || s.overdueReceivables <= 0) return 'All accounts up to date';
+    return `${this.formats.formatMoney(s.overdueReceivables)} overdue`;
+  });
+  protected readonly overdueReceivablesKpi = computed(() =>
+    this.formats.formatMoney(this.summary()?.overdueReceivables ?? 0),
+  );
+
+  // Widget 3: Payables
+  protected readonly payablesKpi = computed(() =>
+    this.formats.formatMoney(this.summary()?.totalPayables ?? 0),
+  );
+  protected readonly payablesMeta = computed(() => {
+    const s = this.summary();
+    if (!s) return 'No outstanding payables';
+    if (s.overduePayables > 0) return `${this.formats.formatMoney(s.overduePayables)} overdue`;
+    if (s.nextPayableDueDate) return `Next due ${this.formats.formatDate(s.nextPayableDueDate)}`;
+    return 'No outstanding payables';
+  });
+
+  // Widget 4: Cash & bank
+  protected readonly cashKpi = computed(() =>
+    this.formats.formatMoney(this.summary()?.cashAndBankTotal ?? 0),
+  );
+  protected readonly cashMeta = computed(() => {
+    const count = this.summary()?.bankAccountsCount ?? 0;
+    return `${count} account${count === 1 ? '' : 's'}`;
+  });
+
+  // Widget 5: Profit & loss
+  protected readonly pl = computed(() => {
+    const s = this.summary();
+    const revenue = s?.revenue ?? 0;
+    const cogs = s?.costOfGoodsSold ?? 0;
+    const expenses = s?.operatingExpenses ?? 0;
+    const net = s?.netProfit ?? 0;
+    const margin = s?.marginPercent ?? 0;
+
+    return {
+      period: s?.plPeriodLabel || 'Fiscal Year',
+      revenue: this.formats.formatMoney(revenue),
+      cogs: this.formats.formatMoney(cogs),
+      cogsPercent: revenue > 0 ? Math.min(100, Math.round((cogs / revenue) * 100)) : 0,
+      expenses: this.formats.formatMoney(expenses),
+      expensesPercent: revenue > 0 ? Math.min(100, Math.round((expenses / revenue) * 100)) : 0,
+      netProfit: this.formats.formatMoney(net),
+      margin: `${margin.toFixed(1)}% margin`,
+    };
+  });
+
+  // Widget 6: Trend chart (Sales & outstanding)
+  protected readonly trendSalesPoints = computed(() => {
+    const trend = this.summary()?.monthlyTrend ?? [];
+    if (!trend.length) return '8,68 50,68 92,68 134,68 176,68 212,68';
+    const maxVal = Math.max(...trend.map((t) => Math.max(t.sales, t.outstanding)), 1);
+    const xs = [8, 50, 92, 134, 176, 212];
+    return trend
+      .map((t, i) => {
+        const x = xs[i] ?? 8;
+        const y = Math.round(68 - (t.sales / maxVal) * 56);
+        return `${x},${y}`;
+      })
+      .join(' ');
+  });
+
+  protected readonly trendOutstandingPoints = computed(() => {
+    const trend = this.summary()?.monthlyTrend ?? [];
+    if (!trend.length) return '8,68 50,68 92,68 134,68 176,68 212,68';
+    const maxVal = Math.max(...trend.map((t) => Math.max(t.sales, t.outstanding)), 1);
+    const xs = [8, 50, 92, 134, 176, 212];
+    return trend
+      .map((t, i) => {
+        const x = xs[i] ?? 8;
+        const y = Math.round(68 - (t.outstanding / maxVal) * 56);
+        return `${x},${y}`;
+      })
+      .join(' ');
+  });
+
+  protected readonly trendStartMonth = computed(
+    () => this.summary()?.monthlyTrend[0]?.month ?? '',
+  );
+  protected readonly trendEndMonth = computed(() => {
+    const trend = this.summary()?.monthlyTrend ?? [];
+    return trend.length ? trend[trend.length - 1].month : '';
+  });
+  protected readonly trendSalesLegend = computed(() =>
+    this.formats.formatMoney(this.summary()?.totalSalesTrend ?? 0),
+  );
+  protected readonly trendOutstandingLegend = computed(() =>
+    this.formats.formatMoney(this.summary()?.totalOutstandingTrend ?? 0),
+  );
+
+  // Widget 7: Top products
+  protected readonly topProducts = computed(() => {
+    const list = this.summary()?.topProducts ?? [];
+    return list.map((p) => ({
+      item: p.item,
+      sold: p.sold,
+      profit: this.formats.formatMoney(p.profit),
+      margin: p.margin,
+    }));
+  });
+
+  // Widget 8: Outstanding
+  protected readonly outstanding = computed(() => {
+    const list = this.summary()?.outstanding ?? [];
+    return list.map((o) => ({
+      party: o.party,
+      due: o.due,
+      amount: this.formats.formatMoney(o.amount),
+      overdue: o.overdue,
+      tone: o.tone,
+    }));
+  });
+
+  // Widget 9: Statutory compliance
+  protected readonly upcomingCompliance = computed(
+    () => this.summary()?.upcomingCompliance ?? [],
+  );
+  protected readonly nextComplianceTitle = computed(() => {
+    const items = this.upcomingCompliance();
+    if (!items.length) return 'Compliance calendar';
+    return `Next ${items[0].form}: ${items[0].due}`;
+  });
 
   readonly widgets = DASHBOARD_WIDGETS;
-
   readonly editing = computed(() => this.board.editing());
-
   private readonly layout = signal<DashboardLayout>(readLayout());
 
-  /** Shown widgets, in the person's own order. */
   readonly visible = computed<DashboardWidget[]>(() => {
     const { order, hidden } = this.layout();
     return order
@@ -106,7 +283,6 @@ export class DashboardPage {
       .filter((w): w is DashboardWidget => w !== undefined);
   });
 
-  /** Removed widgets, offered back in the tray. */
   readonly removed = computed<DashboardWidget[]>(() =>
     this.widgets.filter((w) => this.layout().hidden.includes(w.id)),
   );
@@ -116,8 +292,6 @@ export class DashboardPage {
   }
 
   constructor() {
-    // Reset arrives as a count rather than an event, so a press that lands
-    // before this page has rendered is not lost.
     let seen = this.board.resetCount();
     effect(() => {
       const count = this.board.resetCount();
@@ -125,6 +299,48 @@ export class DashboardPage {
       seen = count;
       this.commit(defaultLayout());
     });
+  }
+
+  ngOnInit(): void {
+    void this.load();
+  }
+
+  async load(): Promise<void> {
+    this.loading.set(true);
+    try {
+      const res = await firstValueFrom(
+        this.http.get<DashboardSummary>('/api/reporting/dashboard'),
+      );
+      this.summary.set(res);
+    } catch {
+      // Clean fallback if API is unreachable
+      this.summary.set({
+        salesToday: 0,
+        invoicesCountToday: 0,
+        unpaidInvoicesCountToday: 0,
+        totalReceivables: 0,
+        overdueReceivables: 0,
+        totalPayables: 0,
+        overduePayables: 0,
+        nextPayableDueDate: null,
+        cashAndBankTotal: 0,
+        bankAccountsCount: 0,
+        plPeriodLabel: '',
+        revenue: 0,
+        costOfGoodsSold: 0,
+        operatingExpenses: 0,
+        netProfit: 0,
+        marginPercent: 0,
+        monthlyTrend: [],
+        totalSalesTrend: 0,
+        totalOutstandingTrend: 0,
+        topProducts: [],
+        outstanding: [],
+        upcomingCompliance: [],
+      });
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   moveLeft(id: string): void {

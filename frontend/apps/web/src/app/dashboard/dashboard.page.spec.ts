@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { ShellBoardService } from '@bill-book/app-shell';
 import { DashboardPage } from './dashboard.page';
@@ -73,7 +75,9 @@ describe('Dashboard layout persistence', () => {
 describe('DashboardPage customize mode', () => {
   beforeEach(() => {
     localStorage.removeItem(DASHBOARD_LAYOUT_KEY);
-    TestBed.configureTestingModule({ providers: [] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
   });
 
   const createPage = (): DashboardPage =>
@@ -142,5 +146,85 @@ describe('DashboardPage customize mode', () => {
     const compliance = page.widgets.find((w) => w.id === 'compliance');
     expect(compliance).toBeDefined();
     expect(compliance?.defaultSpan).toBe(6);
+  });
+
+  it('DASH-07: Real-time dashboard fetches from API and populates signals', async () => {
+    const http = TestBed.inject(HttpTestingController);
+    const page = createPage();
+    page.ngOnInit();
+
+    const req = http.expectOne('/api/reporting/dashboard');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      salesToday: 25000,
+      invoicesCountToday: 3,
+      unpaidInvoicesCountToday: 1,
+      totalReceivables: 150000,
+      overdueReceivables: 20000,
+      totalPayables: 45000,
+      overduePayables: 0,
+      nextPayableDueDate: '2026-10-15',
+      cashAndBankTotal: 85000,
+      bankAccountsCount: 2,
+      plPeriodLabel: 'Apr – Oct 2026',
+      revenue: 500000,
+      costOfGoodsSold: 300000,
+      operatingExpenses: 50000,
+      netProfit: 150000,
+      marginPercent: 30,
+      monthlyTrend: [{ month: 'Oct', sales: 25000, outstanding: 150000 }],
+      totalSalesTrend: 25000,
+      totalOutstandingTrend: 150000,
+      topProducts: [{ item: 'Widget A', sold: '50 pc', profit: 10000, margin: '20%' }],
+      outstanding: [{ party: 'Acme Corp', due: '15 Oct', amount: 50000, overdue: 'Current', tone: 'info' }],
+      upcomingCompliance: [{ form: 'GSTR-1', period: 'Sep 2026', due: '11 Oct 2026', status: 'Upcoming', tone: 'info' }],
+    });
+
+    await Promise.resolve();
+
+    expect(page['salesTodayKpi']()).toContain('25,000');
+    expect(page['salesTodayMeta']()).toBe('3 invoices · 1 unpaid');
+    expect(page['receivablesKpi']()).toContain('1,50,000');
+    expect(page['topProducts']().length).toBe(1);
+    expect(page['topProducts']()[0].item).toBe('Widget A');
+  });
+
+  it('DASH-08: When empty or fresh, dashboard shows clean 0 metrics and empty lists', async () => {
+    const http = TestBed.inject(HttpTestingController);
+    const page = createPage();
+    page.ngOnInit();
+
+    const req = http.expectOne('/api/reporting/dashboard');
+    req.flush({
+      salesToday: 0,
+      invoicesCountToday: 0,
+      unpaidInvoicesCountToday: 0,
+      totalReceivables: 0,
+      overdueReceivables: 0,
+      totalPayables: 0,
+      overduePayables: 0,
+      nextPayableDueDate: null,
+      cashAndBankTotal: 0,
+      bankAccountsCount: 0,
+      plPeriodLabel: 'Apr – Oct 2026',
+      revenue: 0,
+      costOfGoodsSold: 0,
+      operatingExpenses: 0,
+      netProfit: 0,
+      marginPercent: 0,
+      monthlyTrend: [],
+      totalSalesTrend: 0,
+      totalOutstandingTrend: 0,
+      topProducts: [],
+      outstanding: [],
+      upcomingCompliance: [],
+    });
+
+    await Promise.resolve();
+
+    expect(page['salesTodayKpi']()).toContain('0');
+    expect(page['salesTodayMeta']()).toBe('0 invoices today');
+    expect(page['topProducts']()).toEqual([]);
+    expect(page['outstanding']()).toEqual([]);
   });
 });

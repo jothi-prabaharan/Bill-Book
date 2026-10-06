@@ -280,6 +280,7 @@ builder.Services.AddScoped<ReportAudienceRepository>();
 builder.Services.AddScoped<ReportRunnerRepository>();
 builder.Services.AddScoped<SavedViewRepository>();
 builder.Services.AddScoped<ReportCatalogSeeder>();
+builder.Services.AddScoped<DashboardRepository>();
 
 // Every write endpoint runs in a transaction and rolls back unless the action
 // succeeded, and every failure is translated through the SQLSTATE catalogue,

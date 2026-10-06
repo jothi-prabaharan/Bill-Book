@@ -22,119 +22,131 @@
       @switch (widget.id) {
         @case ('sales') {
           <div class="card-kicker">Sales today</div>
-          <div class="kpi">₹1,84,250</div>
-          <div class="card-meta">14 invoices · 2 unpaid</div>
+          <div class="kpi">{{ salesTodayKpi() }}</div>
+          <div class="card-meta">{{ salesTodayMeta() }}</div>
         }
 
         @case ('recv') {
           <div class="card-kicker">Receivables</div>
-          <div class="kpi">₹9,42,100</div>
-          <div class="card-meta">₹1,20,400 overdue</div>
+          <div class="kpi">{{ receivablesKpi() }}</div>
+          <div class="card-meta">{{ receivablesMeta() }}</div>
         }
 
         @case ('pay') {
           <div class="card-kicker">Payables</div>
-          <div class="kpi">₹3,16,880</div>
-          <div class="card-meta">Next due 14 Aug 2026</div>
+          <div class="kpi">{{ payablesKpi() }}</div>
+          <div class="card-meta">{{ payablesMeta() }}</div>
         }
 
         @case ('cash') {
           <div class="card-kicker">Cash &amp; bank</div>
-          <div class="kpi">₹6,08,320</div>
-          <div class="card-meta">9 accounts · 2 in foreign currency</div>
+          <div class="kpi">{{ cashKpi() }}</div>
+          <div class="card-meta">{{ cashMeta() }}</div>
         }
 
         @case ('docs') {
           <div class="card-kicker">Profit &amp; loss</div>
-          <div class="card-title">April – August 2026</div>
+          <div class="card-title">{{ pl().period }}</div>
           <div class="pl-lines">
             <div>
-              <div class="pl-line"><span>Revenue</span><span class="tabular-nums">₹58,40,200</span></div>
+              <div class="pl-line"><span>Revenue</span><span class="tabular-nums">{{ pl().revenue }}</span></div>
               <div class="pl-track"><div class="pl-fill pl-fill--accent" style="width:100%"></div></div>
             </div>
             <div>
-              <div class="pl-line"><span>Cost of goods sold</span><span class="tabular-nums">₹38,90,600</span></div>
-              <div class="pl-track"><div class="pl-fill" style="width:67%"></div></div>
+              <div class="pl-line"><span>Cost of goods sold</span><span class="tabular-nums">{{ pl().cogs }}</span></div>
+              <div class="pl-track"><div class="pl-fill" [style.width]="pl().cogsPercent + '%'"></div></div>
             </div>
             <div>
-              <div class="pl-line"><span>Operating expenses</span><span class="tabular-nums">₹11,26,400</span></div>
-              <div class="pl-track"><div class="pl-fill" style="width:19%"></div></div>
+              <div class="pl-line"><span>Operating expenses</span><span class="tabular-nums">{{ pl().expenses }}</span></div>
+              <div class="pl-track"><div class="pl-fill" [style.width]="pl().expensesPercent + '%'"></div></div>
             </div>
           </div>
           <div class="pl-total">
             <span class="pl-total-label">Net profit</span>
-            <span class="pl-total-value">₹8,23,200</span>
+            <span class="pl-total-value">{{ pl().netProfit }}</span>
           </div>
-          <div class="card-meta">14.1% margin · 2.4 pts above last year</div>
+          <div class="card-meta">{{ pl().margin }}</div>
         }
 
         @case ('gst') {
           <div class="card-kicker">Sales &amp; outstanding</div>
           <div class="card-title">Last six months</div>
-          <svg viewBox="0 0 220 76" role="img" aria-label="Sales and outstanding, March to August" class="trend">
+          <svg viewBox="0 0 220 76" role="img" aria-label="Sales and outstanding trend" class="trend">
             <line x1="0" y1="68" x2="220" y2="68" stroke="var(--color-divider)"></line>
             <line x1="0" y1="38" x2="220" y2="38" stroke="var(--color-divider)" stroke-dasharray="2 4"></line>
-            <polyline points="8,46 50,36 92,40 134,24 176,19 212,11" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
-            <polyline points="8,58 50,55 92,60 134,50 176,52 212,43" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+            <polyline [attr.points]="trendSalesPoints()" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+            <polyline [attr.points]="trendOutstandingPoints()" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"></polyline>
           </svg>
-          <div class="trend-axis"><span>Mar</span><span>Aug</span></div>
+          <div class="trend-axis"><span>{{ trendStartMonth() }}</span><span>{{ trendEndMonth() }}</span></div>
           <div class="trend-legend">
-            <span><span class="swatch swatch--accent"></span>Sales ₹18.4L</span>
-            <span><span class="swatch swatch--neutral"></span>Outstanding ₹9.4L</span>
+            <span><span class="swatch swatch--accent"></span>Sales {{ trendSalesLegend() }}</span>
+            <span><span class="swatch swatch--neutral"></span>Outstanding {{ trendOutstandingLegend() }}</span>
           </div>
         }
 
         @case ('stock') {
           <div class="card-kicker">Top products by profit</div>
-          <bb-data-grid
-            flush
-            label="Top products by profit"
-            [columns]="productColumns"
-            [data]="topProducts"
-            [sortable]="false"
-            [showColumnFilters]="false"
-            [showCount]="false"
-            [paged]="false"
-          />
-          <div class="card-meta">April – August 2026 · weighted average cost</div>
+          @if (topProducts().length) {
+            <bb-data-grid
+              flush
+              label="Top products by profit"
+              [columns]="productColumns"
+              [data]="topProducts()"
+              [sortable]="false"
+              [showColumnFilters]="false"
+              [showCount]="false"
+              [paged]="false"
+            />
+          } @else {
+            <div class="empty-hint">No product sales recorded yet</div>
+          }
+          <div class="card-meta">Fiscal year to date · weighted average cost</div>
         }
 
         @case ('aging') {
           <div class="card-kicker">Outstanding — largest and oldest first</div>
-          <bb-data-grid
-            flush
-            label="Outstanding — largest and oldest first"
-            [columns]="outstandingColumns"
-            [data]="outstanding"
-            [sortable]="false"
-            [showColumnFilters]="false"
-            [showCount]="false"
-            [paged]="false"
-          >
-            <ng-template bbCellTemplate="overdue" let-row>
-              <span class="tag" [class]="'tag tag-' + row.tone">{{ row.overdue }}</span>
-            </ng-template>
-          </bb-data-grid>
-          <div class="card-meta">₹9,42,100 total · ₹1,20,400 over 90 days</div>
+          @if (outstanding().length) {
+            <bb-data-grid
+              flush
+              label="Outstanding — largest and oldest first"
+              [columns]="outstandingColumns"
+              [data]="outstanding()"
+              [sortable]="false"
+              [showColumnFilters]="false"
+              [showCount]="false"
+              [paged]="false"
+            >
+              <ng-template bbCellTemplate="overdue" let-row>
+                <span class="tag" [class]="'tag tag-' + row.tone">{{ row.overdue }}</span>
+              </ng-template>
+            </bb-data-grid>
+          } @else {
+            <div class="empty-hint">No outstanding receivables</div>
+          }
+          <div class="card-meta">{{ receivablesKpi() }} total · {{ overdueReceivablesKpi() }} overdue</div>
         }
 
         @case ('compliance') {
           <div class="card-kicker">Compliance calendar</div>
-          <div class="card-title">Next GSTR-1: 11 Oct 2026</div>
-          <bb-data-grid
-            flush
-            label="Upcoming statutory filings"
-            [columns]="complianceColumns"
-            [data]="upcomingCompliance"
-            [sortable]="false"
-            [showColumnFilters]="false"
-            [showCount]="false"
-            [paged]="false"
-          >
-            <ng-template bbCellTemplate="status" let-row>
-              <span class="tag" [class]="'tag tag-' + row.tone">{{ row.status }}</span>
-            </ng-template>
-          </bb-data-grid>
+          <div class="card-title">{{ nextComplianceTitle() }}</div>
+          @if (upcomingCompliance().length) {
+            <bb-data-grid
+              flush
+              label="Upcoming statutory filings"
+              [columns]="complianceColumns"
+              [data]="upcomingCompliance()"
+              [sortable]="false"
+              [showColumnFilters]="false"
+              [showCount]="false"
+              [paged]="false"
+            >
+              <ng-template bbCellTemplate="status" let-row>
+                <span class="tag" [class]="'tag tag-' + row.tone">{{ row.status }}</span>
+              </ng-template>
+            </bb-data-grid>
+          } @else {
+            <div class="empty-hint">No upcoming statutory filings</div>
+          }
           <div class="card-meta">Statutory filing rules · Reminders sent to accounting users</div>
         }
 
