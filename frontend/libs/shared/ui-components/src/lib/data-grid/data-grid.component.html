@@ -1,4 +1,4 @@
-<div class="data-grid-card" [class.compact]="compact" [class.flush]="flush">
+<div class="data-grid-card" [class.compact]="compact" [class.flush]="flush" [class.fill-height]="fillHeight">
   <!-- Progress bar for loading state -->
   <div *ngIf="loading" class="data-grid-loading-bar" aria-hidden="true">
     <div class="loading-pulse"></div>
@@ -18,34 +18,69 @@
     <table class="table" [class.compact]="compact" [class.table--stacked]="stackOnPhone" [attr.aria-label]="label || null">
       <thead>
         <tr>
-          <th *ngFor="let col of visibleColumns()"
+          <th *ngFor="let col of visibleColumns(); let last = last"
               scope="col"
               [class.numeric]="isNumericCol(col)"
               [style.width]="col.width"
               class="relative">
-            <button *ngIf="sortable && col.sortable !== false; else plainHeader"
-                    type="button"
-                    class="table-sort-btn"
-                    (click)="onSort(col)"
-                    [attr.aria-sort]="sortField() === col.field ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'">
-              <span>{{ headerOf(col) }}</span>
-              <span class="sort-indicator" [class.active]="sortField() === col.field">
-                <span *ngIf="sortField() === col.field && sortDirection() === 'asc'" aria-label="sorted ascending">▲</span>
-                <span *ngIf="sortField() === col.field && sortDirection() === 'desc'" aria-label="sorted descending">▼</span>
-                <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
-              </span>
-            </button>
-            <ng-template #plainHeader>{{ headerOf(col) }}</ng-template>
-          </th>
-        </tr>
-        <tr *ngIf="showColumnFilters" class="fltrow">
-          <th *ngFor="let col of visibleColumns()" [class.numeric]="isNumericCol(col)">
-            <input *ngIf="col.filterable !== false"
-                   class="input"
-                   type="search"
-                   [attr.aria-label]="'Filter by ' + (headerOf(col) || col.field)"
-                   [value]="columnFilter(col.field)"
-                   (input)="setColumnFilter(col.field, $any($event.target).value)" />
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+              <div style="display: flex; align-items: center; min-width: 0;">
+                <button *ngIf="sortable && col.sortable !== false; else plainHeader"
+                        type="button"
+                        class="table-sort-btn"
+                        (click)="onSort(col)"
+                        [attr.aria-sort]="sortField() === col.field ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                  <span class="truncate">{{ headerOf(col) }}</span>
+                  <span class="sort-indicator" [class.active]="sortField() === col.field">
+                    <span *ngIf="sortField() === col.field && sortDirection() === 'asc'" aria-label="sorted ascending">▲</span>
+                    <span *ngIf="sortField() === col.field && sortDirection() === 'desc'" aria-label="sorted descending">▼</span>
+                    <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
+                  </span>
+                </button>
+                <ng-template #plainHeader>
+                  <span class="truncate">{{ headerOf(col) }}</span>
+                </ng-template>
+              </div>
+
+              <div *ngIf="showColumnFilters && col.filterable !== false" style="position: relative;">
+                <button type="button" 
+                        class="btn-icon" 
+                        [style.color]="columnFilter(col.field) ? 'var(--color-accent-700)' : 'var(--color-neutral-400)'"
+                        [style.background]="openFilterField() === col.field ? 'var(--color-neutral-100)' : 'transparent'"
+                        style="padding: 4px; border-radius: 4px; border: 0; cursor: pointer; display: flex;"
+                        title="Filter"
+                        (click)="toggleFilter(col.field, $event)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
+                </button>
+
+                <!-- Filter Popover -->
+                <div *ngIf="openFilterField() === col.field" 
+                     class="popover"
+                     [ngClass]="last ? 'popover--right' : 'popover--left'"
+                     style="width: 240px; font-weight: normal; text-transform: none; text-align: left;" 
+                     (click)="$event.stopPropagation()">
+                  <div class="popover-head">
+                    <div class="popover-title">Filter {{ headerOf(col) }}</div>
+                  </div>
+                  <div class="popover-body">
+                    <select class="input" style="margin-bottom: var(--space-2);" [ngModel]="filterOp()" (ngModelChange)="filterOp.set($event)">
+                      <option value="contains">Contains</option>
+                      <option value="equals">Equals</option>
+                      <option value="starts">Starts with</option>
+                    </select>
+                    <input type="search" class="input" placeholder="Search value..." 
+                           [ngModel]="filterVal()" (ngModelChange)="filterVal.set($event)"
+                           (keyup.enter)="applyFilter(col.field, $event)" />
+                  </div>
+                  <div class="popover-foot" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" style="padding: 4px 12px; height: 32px;" (click)="clearFilter(col.field, $event)">Clear</button>
+                    <button type="button" class="btn btn-primary" style="padding: 4px 12px; height: 32px;" (click)="applyFilter(col.field, $event)">Apply</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </th>
         </tr>
       </thead>

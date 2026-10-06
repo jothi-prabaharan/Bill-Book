@@ -21,6 +21,12 @@
   box-shadow: none;
 }
 
+/* Fills the height of its parent. */
+.data-grid-card.fill-height {
+  flex: 1;
+  height: 100%;
+}
+
 .data-grid-loading-bar {
   position: absolute;
   top: 0;

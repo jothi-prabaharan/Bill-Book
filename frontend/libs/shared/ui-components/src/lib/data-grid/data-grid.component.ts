@@ -13,6 +13,7 @@ import {
   QueryList,
   TemplateRef,
   booleanAttribute,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -48,6 +49,13 @@ export type DataGridRowClass = (row: any) => string | string[] | Record<string, 
   styleUrl: './data-grid.component.scss'
 })
 export class DataGridComponent implements OnInit {
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.openFilterField()) {
+      this.openFilterField.set(null);
+    }
+  }
+
   @ContentChildren(DataGridCellTemplateDirective) cellTemplates!: QueryList<DataGridCellTemplateDirective>;
   @ContentChild('emptyTemplate') contentEmptyTemplate?: TemplateRef<any>;
   @ContentChild(DataGridFooterDirective) footer?: DataGridFooterDirective;
@@ -145,6 +153,9 @@ export class DataGridComponent implements OnInit {
 
   /** No border or radius of its own, for a table already inside a card, panel or drawer. */
   @Input({ transform: booleanAttribute }) flush = false;
+
+  /** Forces the grid card to take up 100% of the parent height. */
+  @Input({ transform: booleanAttribute }) fillHeight = false;
 
   /** The table's accessible name, when no heading beside it gives one. */
   @Input() label = '';
