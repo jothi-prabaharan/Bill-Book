@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill-Book API Documentation</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f17;
+            --topbar-bg: #111827;
+            --border-color: #1f2937;
+            --text-main: #f1f5f9;
+            --accent: #38bdf8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #fafafa;
+        }
+        .gateway-topbar {
+            background-color: var(--topbar-bg);
+            color: var(--text-main);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+        .topbar-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+        }
+        .topbar-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .service-picker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .service-select {
+            background-color: #1f2937;
+            color: #f1f5f9;
+            border: 1px solid #374151;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+        }
+        .service-select:focus {
+            border-color: var(--accent);
+        }
+        .back-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.15s;
+        }
+        .back-link:hover {
+            color: #f1f5f9;
+        }
+        /* Style adjustments for Swagger UI inside container */
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    </style>
+</head>
+<body>
+    <header class="gateway-topbar">
+        <a href="/" class="topbar-left">
+            <img src="/favicon.png" alt="Bill-Book Logo" class="topbar-logo">
+            <span class="topbar-title">Bill-Book API Documentation</span>
+        </a>
+        <div class="topbar-right">
+            <div class="service-picker">
+                <label for="service-selector">Service:</label>
+                <select id="service-selector" class="service-select">
+                    <option value="master">Master (Port 4504)</option>
+                    <option value="accounting">Accounting (Port 4501)</option>
+                    <option value="inventory">Inventory (Port 4503)</option>
+                    <option value="sales">Sales (Port 4507)</option>
+                    <option value="purchase">Purchase (Port 4505)</option>
+                    <option value="customer">Customer (Port 4502)</option>
+                    <option value="reporting">Reporting (Port 4506)</option>
+                    <option value="printing">Printing (Port 4508)</option>
+                    <option value="hrm">Employee / HRM (Port 4509)</option>
+                    <option value="payroll">Payroll (Port 4511)</option>
+                    <option value="timeleave">Time & Leave (Port 4510)</option>
+                    <option value="claims">Claims (Port 4514)</option>
+                    <option value="recruitment">Recruitment (Port 4512)</option>
+                    <option value="performance">Performance (Port 4513)</option>
+                    <option value="sis">SIS (Port 4515)</option>
+                    <option value="admission">Admission (Port 4516)</option>
+                    <option value="attendance">Attendance (Port 4517)</option>
+                    <option value="fee">Fee (Port 4518)</option>
+                    <option value="facility">Facility (Port 4519)</option>
+                    <option value="workorder">Work Order (Port 4520)</option>
+                    <option value="preventive">Preventive Maintenance (Port 4521)</option>
+                    <option value="amc">Maintenance Contract / AMC (Port 4522)</option>
+                </select>
+            </div>
+            <a href="/" class="back-link">
+                &larr; Gateway Home
+            </a>
+        </div>
+    </header>
+
+    <div id="swagger-ui"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-standalone-preset.min.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let selectedService = urlParams.get('service') || 'master';
+        const selector = document.getElementById('service-selector');
+        if ([...selector.options].some(o => o.value === selectedService)) {
+            selector.value = selectedService;
+        } else {
+            selectedService = 'master';
+            selector.value = selectedService;
+        }
+
+        let ui;
+        function loadDocs(service) {
+            const specUrl = '/openapi/' + service + '/v1.json';
+            ui = SwaggerUIBundle({
+                url: specUrl,
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+            });
+        }
+
+        selector.addEventListener('change', (e) => {
+            const svc = e.target.value;
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('service', svc);
+            window.history.pushState({}, '', newUrl);
+            loadDocs(svc);
+        });
+
+        loadDocs(selectedService);
+    </script>
+</body>
+</html>

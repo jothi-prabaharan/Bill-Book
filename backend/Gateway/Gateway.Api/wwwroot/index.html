@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill-Book API Gateway</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <style>
+        :root {
+            --bg-color: #0b0f17;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --card-bg: #111827;
+            --card-border: #1f2937;
+            --accent-color: #38bdf8;
+            --accent-hover: #0284c7;
+            --success-color: #10b981;
+            --hover-bg: #1e293b;
+            --badge-bg: #1e293b;
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f8fafc;
+                --text-main: #0f172a;
+                --text-muted: #64748b;
+                --card-bg: #ffffff;
+                --card-border: #e2e8f0;
+                --accent-color: #0284c7;
+                --accent-hover: #0369a1;
+                --success-color: #10b981;
+                --hover-bg: #f1f5f9;
+                --badge-bg: #f1f5f9;
+            }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container { max-width: 1280px; width: 100%; display: flex; flex-direction: column; gap: 2rem; }
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 1.5rem; border-bottom: 1px solid var(--card-border);
+        }
+        .header-content { display: flex; align-items: center; gap: 1rem; }
+        .header-logo { width: 44px; height: 44px; border-radius: 10px; object-fit: contain; }
+        .header-text h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; }
+        .header-text p { color: var(--text-muted); font-size: 1rem; }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+            background-color: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 9999px; font-size: 0.875rem; font-weight: 500;
+        }
+        .status-dot { width: 8px; height: 8px; background-color: var(--success-color); border-radius: 50%; position: relative; }
+        .status-dot::after {
+            content: ''; position: absolute; width: 100%; height: 100%;
+            background-color: inherit; border-radius: inherit;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        .all-docs-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+            background-color: var(--accent-color); color: #ffffff; text-decoration: none;
+            border-radius: 9999px; font-size: 0.875rem; font-weight: 600;
+            transition: background-color 0.15s ease;
+        }
+        .all-docs-btn:hover { background-color: var(--accent-hover); }
+        .routes-section h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text-main); }
+        .routes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.25rem; }
+        .route-card {
+            background-color: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .route-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .route-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .service-name { font-weight: 600; font-size: 1.1rem; }
+        .port-badge {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.75rem; background-color: var(--badge-bg); padding: 0.25rem 0.5rem;
+            border-radius: 4px; color: var(--text-muted); border: 1px solid var(--card-border);
+        }
+        .path-list {
+            list-style: none; display: flex; flex-direction: column; gap: 0.35rem;
+            flex: 1; max-height: 180px; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.25rem;
+        }
+        .path-list::-webkit-scrollbar { width: 4px; }
+        .path-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+        .path-item {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.8rem; color: var(--accent-color); background-color: var(--hover-bg);
+            padding: 0.35rem 0.6rem; border-radius: 6px; word-break: break-all;
+        }
+        .swagger-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 0.5rem; width: 100%; padding: 0.55rem;
+            background-color: var(--accent-color); color: #ffffff;
+            text-decoration: none; border-radius: 8px; font-size: 0.875rem;
+            font-weight: 600; transition: background-color 0.15s, transform 0.1s;
+        }
+        .swagger-btn:hover { background-color: var(--accent-hover); transform: translateY(-1px); }
+        .swagger-btn svg { width: 16px; height: 16px; }
+        footer {
+            margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--card-border);
+            display: flex; justify-content: space-between; align-items: center;
+            color: var(--text-muted); font-size: 0.875rem;
+        }
+        .health-link {
+            color: var(--text-muted); text-decoration: none; display: inline-flex;
+            align-items: center; gap: 0.5rem; transition: color 0.2s;
+        }
+        .health-link:hover { color: var(--text-main); }
+        .health-link svg { width: 16px; height: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <img src="/favicon.png" alt="Bill-Book Logo" class="header-logo">
+                <div class="header-text">
+                    <h1>Bill-Book Gateway</h1>
+                    <p>Central API Routing Service &bull; 22 Services Proxied</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    YARP is Online
+                </div>
+                <a href="/swagger" class="all-docs-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Swagger Portal
+                </a>
+            </div>
+        </header>
+        <main class="routes-section">
+            <h2>Proxied Routes & Microservices</h2>
+            <div class="routes-grid">
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Master</span>
+                            <span class="port-badge">Port 4504</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/auth</li>
+                            <li class="path-item">/api/users</li>
+                            <li class="path-item">/api/roles</li>
+                            <li class="path-item">/api/approval-workflows</li>
+                            <li class="path-item">/api/custom-fields</li>
+                            <li class="path-item">/api/customers</li>
+                            <li class="path-item">/api/master</li>
+                            <li class="path-item">/api/smtp-settings</li>
+                            <li class="path-item">/api/organizations</li>
+                            <li class="path-item">/api/rates</li>
+                            <li class="path-item">/api/applications</li>
+                            <li class="path-item">/api/formats</li>
+                            <li class="path-item">/api/restaurant/staff</li>
+                            <li class="path-item">/api/restaurant/settings</li>
+                            <li class="path-item">/api/me/context</li>
+                            <li class="path-item">/api/contacts</li>
+                            <li class="path-item">/api/contact-person-roles</li>
+                            <li class="path-item">/api/portal/session</li>
+                            <li class="path-item">/api/menu</li>
+                            <li class="path-item">/api/admin</li>
+                            <li class="path-item">/api/edit-log/master</li>
+                        </ul>
+                        <a href="/swagger?service=master" class="swagger-btn" title="View Swagger Docs for Master">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Accounting</span>
+                            <span class="port-badge">Port 4501</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/accounts</li>
+                            <li class="path-item">/api/sub-accounts</li>
+                            <li class="path-item">/api/tax-masters</li>
+                            <li class="path-item">/api/payment-terms</li>
+                            <li class="path-item">/api/numbering-series</li>
+                            <li class="path-item">/api/journals</li>
+                            <li class="path-item">/api/projects</li>
+                            <li class="path-item">/api/budgets</li>
+                            <li class="path-item">/api/tds</li>
+                            <li class="path-item">/api/ledger</li>
+                            <li class="path-item">/api/opening-balance</li>
+                            <li class="path-item">/api/period-locks</li>
+                            <li class="path-item">/api/accounting</li>
+                            <li class="path-item">/api/allocations</li>
+                            <li class="path-item">/api/reconciliation</li>
+                            <li class="path-item">/api/savings-schemes</li>
+                            <li class="path-item">/api/banks</li>
+                            <li class="path-item">/api/bank-accounts</li>
+                            <li class="path-item">/api/spend-money</li>
+                            <li class="path-item">/api/receive-money</li>
+                            <li class="path-item">/api/transfer-money</li>
+                            <li class="path-item">/api/statements</li>
+                            <li class="path-item">/api/portal/payments</li>
+                            <li class="path-item">/api/payments</li>
+                            <li class="path-item">/api/edit-log/accounting</li>
+                        </ul>
+                        <a href="/swagger?service=accounting" class="swagger-btn" title="View Swagger Docs for Accounting">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Inventory</span>
+                            <span class="port-badge">Port 4503</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/restaurant/menu</li>
+                            <li class="path-item">/api/restaurant/recipes</li>
+                            <li class="path-item">/api/restaurant/wastage</li>
+                            <li class="path-item">/api/items</li>
+                            <li class="path-item">/api/item-categories</li>
+                            <li class="path-item">/api/uom-types</li>
+                            <li class="path-item">/api/metal-purities</li>
+                            <li class="path-item">/api/warehouses</li>
+                            <li class="path-item">/api/stock</li>
+                            <li class="path-item">/api/stock-adjustments</li>
+                            <li class="path-item">/api/inventory</li>
+                            <li class="path-item">/api/edit-log/inventory</li>
+                        </ul>
+                        <a href="/swagger?service=inventory" class="swagger-btn" title="View Swagger Docs for Inventory">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Sales</span>
+                            <span class="port-badge">Port 4507</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/restaurant/floor-plan</li>
+                            <li class="path-item">/api/restaurant/floors</li>
+                            <li class="path-item">/api/restaurant/tables</li>
+                            <li class="path-item">/api/restaurant/orders</li>
+                            <li class="path-item">/api/restaurant/aggregator-orders</li>
+                            <li class="path-item">/api/restaurant/reservations</li>
+                            <li class="path-item">/api/restaurant/waiting-list</li>
+                            <li class="path-item">/api/restaurant/kitchen</li>
+                            <li class="path-item">/api/restaurant/kots</li>
+                            <li class="path-item">/api/restaurant/kot-lines</li>
+                            <li class="path-item">/api/restaurant/bills</li>
+                            <li class="path-item">/api/sales</li>
+                            <li class="path-item">/api/portal/invoices</li>
+                            <li class="path-item">/api/portal/quotes</li>
+                            <li class="path-item">/api/edit-log/sales</li>
+                        </ul>
+                        <a href="/swagger?service=sales" class="swagger-btn" title="View Swagger Docs for Sales">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Purchase</span>
+                            <span class="port-badge">Port 4505</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/purchase</li>
+                            <li class="path-item">/api/edit-log/purchase</li>
+                        </ul>
+                        <a href="/swagger?service=purchase" class="swagger-btn" title="View Swagger Docs for Purchase">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Customer</span>
+                            <span class="port-badge">Port 4502</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/customer</li>
+                            <li class="path-item">/api/loyalty</li>
+                            <li class="path-item">/api/leads</li>
+                            <li class="path-item">/api/tickets</li>
+                            <li class="path-item">/api/service-plans</li>
+                            <li class="path-item">/api/campaigns</li>
+                            <li class="path-item">/api/audiences</li>
+                            <li class="path-item">/api/email-templates</li>
+                            <li class="path-item">/api/email-consents</li>
+                            <li class="path-item">/api/automations</li>
+                            <li class="path-item">/api/public</li>
+                            <li class="path-item">/api/portal/tickets</li>
+                            <li class="path-item">/api/edit-log/customer</li>
+                        </ul>
+                        <a href="/swagger?service=customer" class="swagger-btn" title="View Swagger Docs for Customer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Reporting</span>
+                            <span class="port-badge">Port 4506</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/restaurant/reports</li>
+                            <li class="path-item">/api/reporting</li>
+                            <li class="path-item">/api/dashboard</li>
+                            <li class="path-item">/api/reports</li>
+                            <li class="path-item">/api/statements/profit-and-loss</li>
+                            <li class="path-item">/api/statements/balance-sheet</li>
+                            <li class="path-item">/api/statements/inventory-valuation</li>
+                            <li class="path-item">/api/portal/summary</li>
+                            <li class="path-item">/api/portal/statements</li>
+                            <li class="path-item">/api/edit-log/reporting</li>
+                        </ul>
+                        <a href="/swagger?service=reporting" class="swagger-btn" title="View Swagger Docs for Reporting">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Printing</span>
+                            <span class="port-badge">Port 4508</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/print-templates</li>
+                            <li class="path-item">/api/print</li>
+                            <li class="path-item">/api/edit-log/printing</li>
+                        </ul>
+                        <a href="/swagger?service=printing" class="swagger-btn" title="View Swagger Docs for Printing">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Employee (HRM)</span>
+                            <span class="port-badge">Port 4509</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/hrm</li>
+                            <li class="path-item">/api/me/profile</li>
+                            <li class="path-item">/api/me/documents</li>
+                            <li class="path-item">/api/me/announcements</li>
+                            <li class="path-item">/api/team</li>
+                            <li class="path-item">/api/edit-log/hrm</li>
+                        </ul>
+                        <a href="/swagger?service=hrm" class="swagger-btn" title="View Swagger Docs for Employee (HRM)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Payroll</span>
+                            <span class="port-badge">Port 4511</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/payroll</li>
+                            <li class="path-item">/api/me/payslips</li>
+                            <li class="path-item">/api/me/form16</li>
+                            <li class="path-item">/api/me/tax-declarations</li>
+                            <li class="path-item">/api/edit-log/payroll</li>
+                        </ul>
+                        <a href="/swagger?service=payroll" class="swagger-btn" title="View Swagger Docs for Payroll">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Time and Leave</span>
+                            <span class="port-badge">Port 4510</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/tla</li>
+                            <li class="path-item">/api/me/leave</li>
+                            <li class="path-item">/api/me/attendance</li>
+                            <li class="path-item">/api/me/punches</li>
+                            <li class="path-item">/api/me/regularisation</li>
+                            <li class="path-item">/api/me/overtime</li>
+                            <li class="path-item">/api/approvals</li>
+                            <li class="path-item">/api/edit-log/timeleave</li>
+                        </ul>
+                        <a href="/swagger?service=timeleave" class="swagger-btn" title="View Swagger Docs for Time and Leave">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Claims</span>
+                            <span class="port-badge">Port 4514</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/clm</li>
+                            <li class="path-item">/api/me/claims</li>
+                            <li class="path-item">/api/edit-log/claims</li>
+                        </ul>
+                        <a href="/swagger?service=claims" class="swagger-btn" title="View Swagger Docs for Claims">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Recruitment</span>
+                            <span class="port-badge">Port 4512</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/rec</li>
+                            <li class="path-item">/api/edit-log/recruitment</li>
+                        </ul>
+                        <a href="/swagger?service=recruitment" class="swagger-btn" title="View Swagger Docs for Recruitment">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Performance</span>
+                            <span class="port-badge">Port 4513</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/prf</li>
+                            <li class="path-item">/api/me/appraisals</li>
+                            <li class="path-item">/api/edit-log/performance</li>
+                        </ul>
+                        <a href="/swagger?service=performance" class="swagger-btn" title="View Swagger Docs for Performance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">SIS</span>
+                            <span class="port-badge">Port 4515</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/portal/school/children</li>
+                            <li class="path-item">/api/sis</li>
+                            <li class="path-item">/api/edit-log/sis</li>
+                        </ul>
+                        <a href="/swagger?service=sis" class="swagger-btn" title="View Swagger Docs for SIS">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Admission</span>
+                            <span class="port-badge">Port 4516</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/admission</li>
+                            <li class="path-item">/api/edit-log/admission</li>
+                        </ul>
+                        <a href="/swagger?service=admission" class="swagger-btn" title="View Swagger Docs for Admission">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Attendance</span>
+                            <span class="port-badge">Port 4517</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/portal/school/attendance</li>
+                            <li class="path-item">/api/student-attendance</li>
+                            <li class="path-item">/api/edit-log/attendance</li>
+                        </ul>
+                        <a href="/swagger?service=attendance" class="swagger-btn" title="View Swagger Docs for Attendance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Fee</span>
+                            <span class="port-badge">Port 4518</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/portal/school/fees</li>
+                            <li class="path-item">/api/fee</li>
+                            <li class="path-item">/api/edit-log/fee</li>
+                        </ul>
+                        <a href="/swagger?service=fee" class="swagger-btn" title="View Swagger Docs for Fee">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Facility</span>
+                            <span class="port-badge">Port 4519</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/facility</li>
+                            <li class="path-item">/api/edit-log/facility</li>
+                        </ul>
+                        <a href="/swagger?service=facility" class="swagger-btn" title="View Swagger Docs for Facility">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Work Order</span>
+                            <span class="port-badge">Port 4520</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/work-orders</li>
+                            <li class="path-item">/api/edit-log/workorder</li>
+                        </ul>
+                        <a href="/swagger?service=workorder" class="swagger-btn" title="View Swagger Docs for Work Order">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Preventive Maintenance</span>
+                            <span class="port-badge">Port 4521</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/preventive</li>
+                            <li class="path-item">/api/edit-log/preventive</li>
+                        </ul>
+                        <a href="/swagger?service=preventive" class="swagger-btn" title="View Swagger Docs for Preventive Maintenance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+                    <div class="route-card">
+                        <div class="route-header">
+                            <span class="service-name">Maintenance Contract (AMC)</span>
+                            <span class="port-badge">Port 4522</span>
+                        </div>
+                        <ul class="path-list">
+                            <li class="path-item">/api/amc</li>
+                            <li class="path-item">/api/edit-log/amc</li>
+                        </ul>
+                        <a href="/swagger?service=amc" class="swagger-btn" title="View Swagger Docs for Maintenance Contract (AMC)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            Swagger Docs
+                        </a>
+                    </div>
+            </div>
+        </main>
+        <footer>
+            <span>&copy; Bill-Book Internal API &bull; 22 Microservices</span>
+            <a href="/health" class="health-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+                System Health
+            </a>
+        </footer>
+    </div>
+</body>
+</html>
