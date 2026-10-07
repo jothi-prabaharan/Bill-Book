@@ -1,0 +1,17 @@
+﻿main.tex {
+  background-color: var(--color-surface);
+  background-attachment: local;
+  background-image: url(/assets/textures/currency-tile.svg);
+  background-size: 240px 240px;
+}
+main.tex.tex-grid {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--color-text) 16%, transparent) .9px, transparent 1.4px);
+  background-size: 16px 16px;
+}
+main.tex.tex-none {
+  background-image: none;
+}
+main.tex .board > .card {
+  background: var(--color-neutral-100);
+}
+

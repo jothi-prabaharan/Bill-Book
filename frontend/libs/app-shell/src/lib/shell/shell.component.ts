@@ -1,4 +1,4 @@
-import {
+﻿import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -11,6 +11,8 @@ import { AuthService } from '@bill-book/auth';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { ShellNavComponent, NavItem } from '../nav/shell-nav.component';
 import { ShellTopbarComponent } from '../topbar/shell-topbar.component';
+import { TiltDirective, RouteMotionDirective } from '@bill-book/ui-components';
+import { filter } from 'rxjs/operators';
 import { ShellSubpanelComponent } from '../subpanel/shell-subpanel.component';
 import {
   ShellBreadcrumbComponent,
@@ -25,7 +27,7 @@ import { FALLBACK_RAIL, SHELL_SCREENS } from '../shell-screens';
 /**
  * Root CSS Grid layout orchestrator (`bb-shell`).
  *
- * Owns the frame — 56px rail, 46px top bar, breadcrumb strip, scrolling outlet —
+ * Owns the frame â€” 56px rail, 46px top bar, breadcrumb strip, scrolling outlet â€”
  * and the breadcrumb trail. Panels belong to the top bar; board state belongs to
  * `ShellBoardService`. Nothing about either is duplicated here.
  */
@@ -36,7 +38,7 @@ import { FALLBACK_RAIL, SHELL_SCREENS } from '../shell-screens';
   imports: [
     RouterOutlet,
     ShellNavComponent,
-    ShellTopbarComponent,
+    ShellTopbarComponent, TiltDirective, RouteMotionDirective,
     ShellSubpanelComponent,
     ShellBreadcrumbComponent,
   ],
@@ -44,6 +46,7 @@ import { FALLBACK_RAIL, SHELL_SCREENS } from '../shell-screens';
   styleUrl: './shell.component.scss',
 })
 export class ShellComponent {
+  readonly isDashboard = signal<boolean>(false);
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly formats = inject(FormatSettingsService);
@@ -51,7 +54,7 @@ export class ShellComponent {
   private readonly favourites = inject(FavouritesService);
   private readonly menuService = inject(MenuService);
 
-  /** The rail before `/api/menu` answers — see `shell-screens.ts`. */
+  /** The rail before `/api/menu` answers â€” see `shell-screens.ts`. */
   private readonly all: readonly NavItem[] = FALLBACK_RAIL;
 
   /**
@@ -79,7 +82,7 @@ export class ShellComponent {
   readonly editing = computed(() => this.board.editing());
 
   /**
-   * Only a screen the menu knows about can be starred — a document being edited
+   * Only a screen the menu knows about can be starred â€” a document being edited
    * is not one. The server's tree answers first; the static registry covers the
    * moment before it loads.
    */
@@ -88,7 +91,7 @@ export class ShellComponent {
     const fromServer = this.menuService.screens();
     const source = fromServer.length > 0 ? fromServer : SHELL_SCREENS;
 
-    // Exact first: a typed register — /sales/transactions?type=Invoice — is its
+    // Exact first: a typed register â€” /sales/transactions?type=Invoice â€” is its
     // own screen and stars separately from the mixed list it shares a path with.
     // Bare-path matching is for screens that carry no query; a typed register is
     // matched exactly or not at all, or starring one would star them all.
@@ -113,6 +116,9 @@ export class ShellComponent {
     // resets it on an org switch because the switch reloads the window, which
     // rebuilds the service along with everything else.
     void this.formats.load();
+    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe((e: any) => {
+      this.isDashboard.set(e.urlAfterRedirects.includes('/dashboard'));
+    });
 
     // A printed document code scanned anywhere opens its document (TK-162).
     inject(ScanToOpenService).listen(inject(DestroyRef));
@@ -191,7 +197,7 @@ export class ShellComponent {
   }
 
   /**
-   * Export is owned by the screen being exported, not the shell — the shell
+   * Export is owned by the screen being exported, not the shell â€” the shell
    * only carries the control. Until a register opts in, the chosen format goes
    * nowhere.
    */
@@ -208,3 +214,4 @@ export class ShellComponent {
     void this.router.navigateByUrl('/login');
   }
 }
+

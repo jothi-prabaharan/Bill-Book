@@ -1,4 +1,4 @@
-import { adminRoutes } from '@bill-book/admin-ui';
+﻿import { adminRoutes } from '@bill-book/admin-ui';
 import { Routes } from '@angular/router';
 import {
   AcceptInvitationPage,
@@ -41,7 +41,7 @@ export const appRoutes: Routes = [
     
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', component: DashboardPage, data: { access: { signedIn: true } } },
+      { path: 'dashboard', component: DashboardPage, data: { access: { signedIn: true }, motionIndex: 0, depth: 0 } },
       // Every document waiting on the signed-in user (TK-103). Signed-in only:
       // each service answers for its own module, and one the user cannot read
       // is left out rather than refused.
@@ -93,7 +93,7 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ProjectsPage),
         data: { access: { permission: 'projects.view' } },
       },
-      // The timesheet (TK-106) — before the :projectId route, which would otherwise take 'timesheet' as an id.
+      // The timesheet (TK-106) â€” before the :projectId route, which would otherwise take 'timesheet' as an id.
       {
         path: 'accounting/projects/timesheet',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TimesheetPage),
@@ -154,7 +154,7 @@ export const appRoutes: Routes = [
       },
       {
         // Settling is per contact, so the id is the route rather than a filter
-        // inside the screen — it makes the workspace linkable from a contact,
+        // inside the screen â€” it makes the workspace linkable from a contact,
         // a statement or an aging report.
         path: 'accounting/allocations/:contactId',
         loadComponent: () =>
@@ -338,10 +338,11 @@ export const appRoutes: Routes = [
           import('@bill-book/restaurant-ui').then((m) => m.restaurantUiRoutes),
         data: { access: { permission: 'restaurant.view', businessTypes: ['Restaurant'] } },
       },
-      { path: '**', component: DashboardPage, data: { access: { signedIn: true } } },
+      { path: '**', component: DashboardPage, data: { access: { signedIn: true }, motionIndex: 0, depth: 0 } },
     ],
   }),
 ];
+
 
 
 

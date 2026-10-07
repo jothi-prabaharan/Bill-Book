@@ -143,7 +143,7 @@
           </div>
         </ng-template>
         <ng-template bbCellTemplate="actions" let-row>
-          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
+          <div class="row-actions" [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
             <button type="button" class="link" (click)="startEdit(row)">Edit</button>
             @if (!row.isSystemDefault && row.isActive) {
               <button type="button" class="link danger" (click)="deactivate(row)">Deactivate</button>

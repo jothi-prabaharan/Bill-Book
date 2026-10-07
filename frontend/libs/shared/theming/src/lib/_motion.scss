@@ -1,0 +1,77 @@
+﻿// Motion tokens and keyframes
+
+:root {
+  --ease-settle: cubic-bezier(.2,.75,.25,1);
+  --ease-tilt:   cubic-bezier(.2,.8,.2,1);
+  --ease-wipe:   cubic-bezier(.45,0,.2,1);
+}
+
+// 1. Dashboard entrance
+@keyframes deal { 
+  from { opacity:0; transform-origin:50% 100%; transform:perspective(1200px) translate3d(0,22px,0) rotateX(32deg) }
+  to   { transform-origin:50% 100% } 
+}
+@keyframes wipe { 
+  from { clip-path:inset(0 100% 0 0) } 
+  to { clip-path:inset(0 0 0 0) } 
+}
+@keyframes grow { 
+  from { transform:scaleX(0) } 
+}
+@keyframes rowIn { 
+  from { opacity:0; transform:perspective(700px) rotateX(-72deg) } 
+}
+
+.board.deal > .card            { animation:deal 680ms var(--ease-settle) backwards; animation-delay:calc(var(--i,0) * 45ms + 40ms) }
+.board.deal svg[role='img']    { animation:wipe 1100ms var(--ease-wipe) backwards;  animation-delay:calc(var(--i,0) * 45ms + 360ms) }
+.board.deal .plbar             { transform-origin:0 50%; animation:grow 900ms var(--ease-settle) backwards;
+                                 animation-delay:calc(var(--i,0) * 45ms + 320ms + var(--j,0) * 70ms) }
+.board.deal tbody tr           { transform-origin:50% 0; animation:rowIn 560ms var(--ease-settle) backwards;
+                                 animation-delay:calc(var(--i,0) * 45ms + 380ms + var(--r,0) * 55ms) }
+
+// 2. Odometer
+@keyframes odoIn { from { transform:translateZ(-1.69em) rotateX(calc(var(--d,0) * 36deg - 360deg)) } }
+.odo-drum { transition:transform 900ms var(--ease-settle) calc(var(--k,0) * 40ms);
+            animation:odoIn 1000ms var(--ease-settle) backwards;
+            animation-delay:calc(var(--i,0) * 45ms + 300ms + var(--k,0) * 50ms) }
+.odo-still .odo-drum { animation:none; transition:none }
+
+// 3. Hover tilt + sheen
+main .card       { transition:transform 520ms var(--ease-tilt), box-shadow 520ms ease, border-color 520ms ease }
+main .card.tilt  { position:relative; z-index:3;
+                   transform:perspective(1000px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+                   box-shadow:var(--shadow-md);
+                   border-color:color-mix(in srgb, var(--color-accent) 42%, var(--color-divider));
+                   transition-duration:160ms, 520ms, 520ms }
+main .card.tilt::after { content:''; position:absolute; inset:-1px; border-radius:inherit; pointer-events:none;
+                   background:radial-gradient(280px circle at var(--gx,50%) var(--gy,50%),
+                              color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 70%);
+                   animation:fadeIn 260ms ease both }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// 6. Popovers, dialogs, sub-panel
+@keyframes popIn    { from { opacity:0; transform-origin:50% 0; transform:perspective(900px) translateY(-6px) rotateX(-24deg) }
+                      to   { opacity:1; transform-origin:50% 0; transform:translateY(0) } }
+@keyframes paneIn   { from { opacity:0; transform-origin:50% 0; transform:perspective(600px) rotateX(-55deg) }
+                      to   { opacity:1; transform-origin:50% 0; transform:translateY(0) } }
+@keyframes panelOpen{ from { opacity:0; transform-origin:0 50%; transform:perspective(1200px) rotateY(-28deg) }
+                      to   { opacity:1; transform-origin:0 50%; transform:translateX(0) } }
+@keyframes sheetIn  { from { transform-origin:50% 100%; transform:perspective(1200px) translateY(100%) rotateX(16deg) }
+                      to   { transform-origin:50% 100%; transform:translateY(0) } }
+
+[role='menu'], [role='dialog'], .dialog { animation:popIn 240ms var(--ease-settle) both }
+.subpanel { animation:panelOpen 320ms var(--ease-settle) both }
+.subsheet { animation:sheetIn 220ms cubic-bezier(.22,.61,.36,1) both }
+.subrow   { animation:paneIn 300ms var(--ease-settle) both;
+            animation-delay:calc(40ms + min(var(--r,0), 14) * 16ms) }
+
+// 8. Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .board.deal > .card, .board.deal svg[role='img'], .board.deal .plbar, .board.deal tbody tr,
+  .subpanel, .subsheet, .subrow, [role='menu'], [role='dialog'], .dialog, .odo-drum { animation:none; transition:none }
+  main .card.tilt { transform:none }
+}

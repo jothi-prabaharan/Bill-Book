@@ -3,6 +3,7 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   SelectComponent,
   TextInputComponent,
@@ -50,6 +51,7 @@ interface AccountType {
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
@@ -99,10 +101,10 @@ export class ChartOfAccountsPage implements OnInit {
   };
 
   columns: ColumnDef[] = [
-    { field: 'code', header: '', isTemplate: true },
-    { field: 'name', header: '', isTemplate: true },
-    { field: 'flags', header: '', isTemplate: true },
-    { field: 'actions', header: '', isTemplate: true },
+    { field: 'code', header: 'Code', width: '140px', isTemplate: true },
+    { field: 'name', header: 'Account Name', width: '38%', isTemplate: true },
+    { field: 'flags', header: 'Usage / Flags', width: '30%', isTemplate: true },
+    { field: 'actions', header: '', width: '120px', align: 'right', isTemplate: true },
   ];
 
   /** Accounts grouped under their type, parents before their children. */

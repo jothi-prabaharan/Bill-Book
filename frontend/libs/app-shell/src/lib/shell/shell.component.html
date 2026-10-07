@@ -1,4 +1,4 @@
-<div class="shell-grid-container">
+﻿<div class="shell-grid-container">
   <div class="shell-nav-cell">
     <bb-shell-nav (logout)="logout()" />
   </div>
@@ -29,7 +29,9 @@
     />
   </div>
 
-  <main class="shell-content-cell">
+  <main class="shell-content-cell" bbTilt bbRouteMotion [class.tex]="isDashboard()">
     <router-outlet />
   </main>
 </div>
+
+

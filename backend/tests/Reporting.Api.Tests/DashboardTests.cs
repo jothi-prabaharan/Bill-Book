@@ -71,11 +71,14 @@ public sealed class DashboardTests
         await using ReportingDbContext db = _postgres.CreateContext(customerId, orgId);
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
 
+        long inv1 = Random.Shared.NextInt64(100_000, 10_000_000);
+        long inv2 = inv1 + 1;
+
         db.Invoices.Add(new InvoiceRead
         {
-            InvoiceId = 1,
+            InvoiceId = inv1,
             OrgId = orgId,
-            DocumentNo = "INV-001",
+            DocumentNo = $"INV-{inv1}",
             TransactionTypeCode = "INV",
             DocumentDate = today,
             DueDate = today.AddDays(15),
@@ -86,9 +89,9 @@ public sealed class DashboardTests
         });
         db.Invoices.Add(new InvoiceRead
         {
-            InvoiceId = 2,
+            InvoiceId = inv2,
             OrgId = orgId,
-            DocumentNo = "INV-002",
+            DocumentNo = $"INV-{inv2}",
             TransactionTypeCode = "INV",
             DocumentDate = today,
             DueDate = today.AddDays(-5), // Overdue

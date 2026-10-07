@@ -1,0 +1,16 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240">
+  <g font-family="IBM Plex Mono, Consolas, Menlo, monospace" font-size="19" fill="#201f1d" fill-opacity=".075" text-anchor="middle">
+    <!-- Using CSS variable --color-text won't work in SVG as image, so the prompt says use the variable in fill or percent encode it in the CSS data URI. Wait, the prompt says: -->
+    <!-- "fill is --color-text; SVG-as-image can't read CSS variables." -->
+    <!-- "Keep it as an asset file. If you inline it as a data URI, percent-encode..." -->
+    <!-- So in the asset file, I can just use fill="#201f1d" since that's what the prompt says! -->
+    <text x="30" y="38">₹</text>
+    <text x="150" y="38">$</text>
+    <text x="90" y="98">€</text>
+    <text x="210" y="98">₹</text>
+    <text x="30" y="158">£</text>
+    <text x="150" y="158">₹</text>
+    <text x="90" y="218">¥</text>
+    <text x="210" y="218">$</text>
+  </g>
+</svg>

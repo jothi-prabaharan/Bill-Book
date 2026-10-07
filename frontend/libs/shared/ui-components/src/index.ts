@@ -85,3 +85,8 @@ export * from './lib/print-html';
 export * from './lib/label-print/label-print.model';
 export * from './lib/label-print/label-print.dialog';
 export * from './lib/scan/scan.component';
+export * from './lib/odometer/odometer.component';
+export * from './lib/motion/motion.config';
+export * from './lib/motion/motion.service';
+export * from './lib/motion/tilt.directive';
+export * from './lib/motion/route-motion.directive';

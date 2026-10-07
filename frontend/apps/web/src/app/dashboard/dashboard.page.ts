@@ -2,6 +2,8 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  OdometerComponent,
+  MotionService
 } from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
@@ -12,6 +14,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { AuthService } from '@bill-book/auth';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { FormatSettingsService } from '@bill-book/currency-format';
@@ -97,7 +100,7 @@ export interface DashboardSummary {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-dashboard-page',
   standalone: true,
-  imports: [DataGridComponent, DataGridCellTemplateDirective, ServicesDueCard],
+  imports: [DataGridComponent, DataGridCellTemplateDirective, ServicesDueCard, OdometerComponent],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })
@@ -105,6 +108,9 @@ export class DashboardPage implements OnInit {
   private readonly http = inject(HttpClient);
   protected readonly formats = inject(FormatSettingsService);
   private readonly board = inject(ShellBoardService);
+  private readonly auth = inject(AuthService);
+  protected readonly motion = inject(MotionService);
+  private lastOrgId: string | null = null;
 
   protected readonly productColumns: ColumnDef[] = [
     { field: 'item', header: 'Item' },
@@ -298,6 +304,54 @@ export class DashboardPage implements OnInit {
       if (count === seen) return;
       seen = count;
       this.commit(defaultLayout());
+    });
+
+    effect(() => {
+      const orgId = this.auth.activeOrgId();
+      if (this.lastOrgId !== null && orgId !== this.lastOrgId && this.motion.active()) {
+        setTimeout(() => this.triggerBranchFlip(), 100);
+      }
+      this.lastOrgId = orgId;
+    });
+  }
+
+  triggerBranchFlip() {
+    const board = document.querySelector('.board') as HTMLElement;
+    if (!board) return;
+    
+    const bRect = board.getBoundingClientRect();
+    const cards = Array.from(board.querySelectorAll('.card:not(.board .card .card)')) as HTMLElement[];
+    const easing = 'cubic-bezier(.2,.75,.25,1)';
+
+    cards.forEach((card) => {
+      const r = card.getBoundingClientRect();
+      const delay = ((r.left - bRect.left) / bRect.width) * 240 + Math.min(Math.max(0, r.top - bRect.top), 1400) * 0.22;
+      card.animate([
+        { opacity: 0, transform: 'perspective(1200px) rotateY(-90deg)' },
+        { opacity: 1, transform: 'perspective(1200px) rotateY(0deg)' }
+      ], { duration: 700, delay, easing, fill: 'backwards' });
+    });
+
+    const drums = Array.from(board.querySelectorAll('.odo-drum')) as HTMLElement[];
+    drums.forEach(drum => {
+      const dAttr = drum.getAttribute('data-d');
+      const kAttr = drum.getAttribute('data-k');
+      if (!dAttr || !kAttr) return;
+      const d = parseInt(dAttr, 10);
+      const k = parseInt(kAttr, 10);
+      
+      const card = drum.closest('.card') as HTMLElement;
+      let cardDelay = 0;
+      if (card) {
+        const r = card.getBoundingClientRect();
+        cardDelay = ((r.left - bRect.left) / bRect.width) * 240 + Math.min(Math.max(0, r.top - bRect.top), 1400) * 0.22;
+      }
+      
+      const delay = cardDelay + 240 + k * 50;
+      drum.animate([
+        { transform: `translateZ(-1.69em) rotateX(${d * 36 - 360}deg)` },
+        { transform: `translateZ(-1.69em) rotateX(${d * 36}deg)` }
+      ], { duration: 1000, delay, easing, fill: 'backwards' });
     });
   }
 
