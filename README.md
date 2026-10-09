@@ -21,13 +21,7 @@ Connection string:
 Host=localhost;Port=5432;Database=EP_Admin;Username=postgres;Password=123
 ```
 
-First run:
-
-```powershell
-./scripts/setup-dev-db.ps1
-```
-
-That creates all four databases, generates the EF Core migrations and applies them, then prints the seeded master row counts. Re-running it is safe. Then press <kbd>F5</kbd> in VS Code and pick **[...]
+First run: start the services (<kbd>F5</kbd> in VS Code, or `./scripts/start-backend.ps1`). There is no setup script: in Development, Master creates the databases, applies every migration and seeds the master data on startup.
 
 ---
 
