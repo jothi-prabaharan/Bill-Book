@@ -7,7 +7,7 @@
  * that throws on a malformed key is worse than one that falls back to defaults.
  */
 
-export const DASHBOARD_LAYOUT_KEY = 'billbook.dashboard.layout.v11';
+export const DASHBOARD_LAYOUT_KEY = 'billbook.dashboard.layout.v12';
 
 /** Widths a card may take, in 12-column units. `resize` cycles through these. */
 export const WIDGET_SPANS: readonly number[] = [3, 4, 6, 8, 12];
@@ -24,8 +24,8 @@ export const DASHBOARD_WIDGETS: readonly DashboardWidget[] = [
   { id: 'recv', label: 'Receivables', defaultSpan: 3 },
   { id: 'pay', label: 'Payables', defaultSpan: 3 },
   { id: 'cash', label: 'Cash & bank total', defaultSpan: 3 },
-  { id: 'docs', label: 'Profit & loss', defaultSpan: 6 },
-  { id: 'gst', label: 'Sales & outstanding', defaultSpan: 6 },
+  { id: 'docs', label: 'Profit & loss', defaultSpan: 3 },
+  { id: 'gst', label: 'Sales & outstanding', defaultSpan: 3 },
   { id: 'stock', label: 'Top products by profit', defaultSpan: 6 },
   { id: 'aging', label: 'Outstanding list', defaultSpan: 6 },
   { id: 'compliance', label: 'Compliance calendar', defaultSpan: 6 },
