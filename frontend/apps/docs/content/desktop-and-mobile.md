@@ -88,6 +88,12 @@ Updates come from any web server that serves a folder of files, for example
 The phone and tablet apps download from their stores; they only read
 `version.json`.
 
+**On IIS**, copy `frontend/apps/desktop/update-server/web.config` into the
+folder too. IIS refuses to serve a file type it has no MIME type for, so without
+it every desktop update stops at `latest.yml`. The file also stops
+`version.json` and the `latest*.yml` files from being cached. Other web servers
+serve these files as they are, and no CORS headers are needed on any of them.
+
 ### version.json
 
 A template is in `frontend/apps/desktop/update-server/version.json`:
