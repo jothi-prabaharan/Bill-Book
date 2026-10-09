@@ -7,5 +7,5 @@ import { AppEnvironment } from './environment.model';
 export const environment: AppEnvironment = {
   production: false,
   name: 'Development',
-  apiBaseUrl: '',
+  apiBaseUrl: 'http://localhost:4500',
 };

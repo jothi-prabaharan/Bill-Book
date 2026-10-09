@@ -46,6 +46,9 @@
           "apps/web/src/styles.scss"
         ],
         "stylePreprocessorOptions": {
+          "includePaths": [
+            "node_modules"
+          ],
           "sass": {
             "silenceDeprecations": ["import", "global-builtin", "color-functions", "mixed-decls"]
           }
@@ -112,7 +115,6 @@
     "serve": {
       "executor": "@angular/build:dev-server",
       "options": {
-        "proxyConfig": "apps/web/proxy.conf.json",
         "port": 4200
       },
       "configurations": {
