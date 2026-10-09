@@ -5429,12 +5429,12 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
 - **Tables:** read models only
 - **Sub-tasks:**
-  - [ ] Laborer days and OT by site, trade and laborer (approved and billed).
-  - [ ] Material reconciliation per site: dispatched, used, returned, on site, billed.
-  - [ ] Site profit: cost, margin and sell by site and bill, behind `site.cost.view`.
-  - [ ] On the existing grid, Excel and CSV paths.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] Laborer days and OT by site, trade and laborer (approved and billed).
+  - [x] Material reconciliation per site: dispatched, used, returned, on site, billed.
+  - [x] Site profit: cost, margin and sell by site and bill, behind `site.cost.view`.
+  - [x] On the existing grid, Excel and CSV paths.
+  - [x] Section 5's standard delivery sub-tasks.
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** the reconciliation ties to `sit.SiteStockBalances` and the profit report is hidden from a role without `site.cost.view`.
 
 ### TK-177 · Requirements: Wholesale distribution business type
