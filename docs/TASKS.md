@@ -5261,7 +5261,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Follow-ups, only if D-42 asks for them:** menu sync (push the menu and availability out), status updates back, settlement against the aggregators' payouts, and a page listing aggregator orders.
 
 ### TK-168 · Design: Site services module (tables, validations, flows)
-- [~] working (Antigravity) — since 2026-10-09
+- [x] completed (Antigravity) — 2026-10-09
 - **Issue:** [#156](https://github.com/jothi-prabaharan/Bill-Book/issues/156)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-57 to D-64 (all answered 2026-10-09)
@@ -5269,12 +5269,18 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins. The table design was given to the owner in chat on 9 October 2026 (step 1 of their five-step brief: tables, validations, API, UI, final agent prompt).
 - **Tables:** none (design only)
 - **Sub-tasks:**
-  - [ ] Write the design under "Site services" in `docs/Modules.md`: the reuse map, the twelve `sit` tables with their columns, the changes to existing tables (`WarehouseType.Site`, `inv.Warehouses.SiteId`, `ApprovalRequestKind.SiteClockOut`/`SiteMaterialUsage`, the `site` permission module, series `SIT` `SDP` `SRT` `SUS` `SBL`), and the five flows (dispatch, usage, return, clock-out approval, partial invoice).
-  - [ ] Write the **validations**: fixed values (enums, lengths, quantity > 0, OT hours 0–12, day fraction, one attendance row per assignment per day, photo type and size, margin percent 0–100) and values from masters (active site and assignment, laborer's own sites only, on-site quantity, unbilled quantity, effective margin rule, geofence radius, the trade's service item).
-  - [ ] Write the **privacy rule**: cost and margin live only in `sit`; Sales, Printing, the client portal and the e-invoice see only the selling price; `site.cost.view` is the only permission that shows cost.
-  - [ ] Record D-58 to D-64 in section 3 and ask the owner.
-  - [ ] Owner: review and approve the design, the validations and the answers to D-58 to D-64.
+  - [x] Write the design under "Site services" in `docs/Modules.md`: the reuse map, the twelve `sit` tables with their columns, the changes to existing tables (`WarehouseType.Site`, `inv.Warehouses.SiteId`, `ApprovalRequestKind.SiteClockOut`/`SiteMaterialUsage`, the `site` permission module, series `SIT` `SDP` `SRT` `SUS` `SBL`), and the five flows (dispatch, usage, return, clock-out approval, partial invoice).
+  - [x] Write the **validations**: fixed values (enums, lengths, quantity > 0, OT hours 0–12, day fraction, one attendance row per assignment per day, photo type and size, margin percent 0–100) and values from masters (active site and assignment, laborer's own sites only, on-site quantity, unbilled quantity, effective margin rule, geofence radius, the trade's service item).
+  - [x] Write the **privacy rule**: cost and margin live only in `sit`; Sales, Printing, the client portal and the e-invoice see only the selling price; `site.cost.view` is the only permission that shows cost.
+  - [x] Record D-58 to D-64 in section 3 and ask the owner. (All recorded and answered in section 3).
+  - [x] Owner: review and approve the design, the validations and the answers to D-58 to D-64.
 - **Done when:** the owner has approved the design section and the validations; TK-169 to TK-176 build from it.
+- **As built (9 October 2026):**
+  - Section "Site Services Module (`sit`) — TK-168 Design (Service Business Type)" written in `docs/Modules.md`.
+  - Reuse map detailed for `AddOn.SiteServices`, `inv.Warehouses.SiteId`, `WarehouseType.Site`, `TradeScopeRepository`, `ApprovalRequestKind`, and `InvoiceRepository`.
+  - Twelve `sit` tables fully specified with typed columns and relationship constraints.
+  - Five core flows documented with diagrams and transaction steps (dispatch, return, usage, attendance approval, partial invoicing).
+  - Validation rules, guardrails, and privacy field-redaction rules specified.
 - **Notes:** This is step 1 and step 2 of the owner's brief. Steps 3 and 4 (API, UI) are TK-169 to TK-176; step 5 (a summary and an agent prompt that commits to the default branch only) is written once these cards are done.
 
 ### TK-169 · Site service scaffold and the `SiteServices` add-on for Service branches

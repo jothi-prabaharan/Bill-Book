@@ -3871,3 +3871,317 @@ or the expense is disallowed for income tax until paid:
 
 Written under the Customer service section near the top of this file ("Customer service (`cus`) — CRM and support" → "Campaigns and marketing automation"), as the card asked.
 
+---
+
+# Site Services Module (`sit`) — TK-168 Design (Service Business Type)
+
+## Overview & Background
+`BusinessType.Service` exists in `RetailErp` (TK-136) and by default refuses inventory/goods movements: `TradeScopeRepository.StockOnlyMenus` hides stock screens and controllers enforce `[RequireBusinessType]`. However, many service businesses (maintenance contractors, electrical/HVAC installers, facility service contractors) manage customer job sites, assign laborers/technicians to those sites, dispatch materials to sites, record material usage, track on-site attendance with photo proof and overtime, and invoice clients based on agreed markups or billing rates.
+
+The **Site Services** module introduces schema `sit`, enabling the `SiteServices` add-on for `Service` business branches (D-57, D-58). It integrates cleanly with:
+- **Inventory (`inv`)**: for site warehouse creation (`WarehouseType.Site`), inter-warehouse stock transfer dispatch (`TransferOut` from central, `TransferIn` to site), and inventory issue upon invoice post (D-59).
+- **Master (`mst` / `con`)**: for client contact links, site geofencing, and user/laborer authentication.
+- **Approvals (`apr`)**: for clock-out approvals (`ApprovalRequestKind.SiteClockOut = 110`) and material usage approvals (`ApprovalRequestKind.SiteMaterialUsage = 111`).
+- **Sales (`sal`)**: for generating official GST partial billing invoices (`SBL`) containing only selling prices and client descriptions, never leaking internal labor costs or margins (D-60, D-64).
+
+---
+
+## 1. Reuse Map & Changes to Existing Modules
+
+| Target / Component | Existing File / Module | Modification / Extension |
+|---|---|---|
+| **Add-On Enum & Scope** | `backend/shared/Shared.Kernel/Apps/App.cs` | Add `[Flags] AddOn.SiteServices = 1 << 9`. Update `AddOnRules.Allowed(BusinessType.Service)` to include `SiteServices`. |
+| **Warehouse Type & Site Link** | `Inventory.Entity/Enums/WarehouseType.cs`<br>`Inventory.Entity/TableEntities/Warehouse.cs` | Add `WarehouseType.Site = 4`. Add optional `long? SiteId` on `inv.Warehouses`. Creating a site provisions a warehouse with `WarehouseType.Site`. |
+| **Stock Movement Type** | `Inventory.Entity/Enums/StockMovementType.cs` | Reuse existing `TransferOut` and `TransferIn` for dispatches (`SDP`) and returns (`SRT`). Material issue occurs when invoice posts (`StockMovementType.SalesIssue`). |
+| **Stock Guards for Service + AddOn** | `Master.Repository/Repositories/TradeScopeRepository.cs` | Update `StockOnlyMenus` to allow stock screens if branch has `BusinessType.Service` AND `AddOn.SiteServices`. Inventory controllers allow Service when `SiteServices` flag is present. |
+| **Approvals Engine** | `Shared.Kernel/Approvals/ApprovalEnums.cs` | Add `ApprovalRequestKind.SiteClockOut = 110` and `ApprovalRequestKind.SiteMaterialUsage = 111`. |
+| **Numbering Series** | `Shared.Kernel/Numbering/` | Add document types & series defaults: `SIT` (Sites), `SDP` (Dispatch), `SRT` (Return), `SUS` (Usage), `SBL` (Site Bill). |
+| **Sales Invoicing** | `Sales.Repository/Repositories/InvoiceRepository.cs` | Support billing lines pointing to `WarehouseId = site.WarehouseId`. Lines reflect client description, item HSN or labor SAC, selling price only. |
+| **Security & Privacy** | `Shared.Kernel/` & `Site.Api` | Cost and margin columns exist ONLY in `sit.*`. Never transferred to `sal.*`, printing DTOs, or portal. View of cost/margin guarded by `site.cost.view`. |
+
+---
+
+## 2. Schema: Twelve `sit` Tables
+
+Every table inherits `Shared.Kernel.Tenancy.OrgScopedEntity` carrying `OrgId`, tenant global query filter, and PostgreSQL RLS policies.
+
+### 1. `sit.Trades`
+Master trade catalog (e.g., Electrical, Plumbing, HVAC, Carpentry).
+- `TradeId` (long, PK)
+- `Name` (string 100, required)
+- `Code` (string 20, unique per org)
+- `DefaultServiceItemId` (long, FK to `inv.Items` for SAC billing representation)
+- `DefaultCostRatePerDay` (decimal 18,2)
+- `DefaultSellRatePerDay` (decimal 18,2)
+- `DefaultOtCostRatePerHour` (decimal 18,2)
+- `DefaultOtSellRatePerHour` (decimal 18,2)
+- `IsActive` (bool)
+
+### 2. `sit.Laborers`
+Laborer / technician profiles (light profile per D-62, with optional HRMS employee link).
+- `LaborerId` (long, PK)
+- `TradeId` (long, FK to `sit.Trades`)
+- `UserId` (long?, optional FK to `mst.Users` for portal login)
+- `EmployeeId` (long?, optional link to `hrm.Employees`)
+- `FullName` (string 150)
+- `Phone` (string 20)
+- `CostRatePerDay` (decimal 18,2?, overrides Trade)
+- `SellRatePerDay` (decimal 18,2?, overrides Trade)
+- `OtCostRatePerHour` (decimal 18,2?)
+- `OtSellRatePerHour` (decimal 18,2?)
+- `IsActive` (bool)
+
+### 3. `sit.Sites`
+Customer job sites / locations.
+- `SiteId` (long, PK)
+- `SiteCode` (string 30, unique per org, generated via `SIT` series)
+- `SiteName` (string 200)
+- `ContactId` (long, FK to `con.Contacts`, client)
+- `WarehouseId` (long, FK to `inv.Warehouses`, 1:1 site warehouse)
+- `Address` (string 500)
+- `Latitude` (decimal 10,7?)
+- `Longitude` (decimal 10,7?)
+- `GeofenceRadiusMeters` (int, default 200)
+- `Status` (enum: `Planning`, `Active`, `OnHold`, `Completed`, `Closed`)
+- `StartDate` (date?)
+- `EstimatedEndDate` (date?)
+
+### 4. `sit.SiteAssignments`
+Assignment of a laborer to a site over a date range.
+- `AssignmentId` (long, PK)
+- `SiteId` (long, FK to `sit.Sites`)
+- `LaborerId` (long, FK to `sit.Laborers`)
+- `TradeId` (long, FK to `sit.Trades`)
+- `StartDate` (date)
+- `EndDate` (date?)
+- `CostRatePerDay` (decimal 18,2?, overrides Laborer/Trade)
+- `SellRatePerDay` (decimal 18,2?, overrides Laborer/Trade)
+- `ApprovedDays` (decimal 8,2, running total of approved days)
+- `ApprovedOtHours` (decimal 8,2, running total of approved OT hours)
+- `BilledDays` (decimal 8,2)
+- `BilledOtHours` (decimal 8,2)
+- `Status` (enum: `Active`, `Ended`)
+
+### 5. `sit.MarginRules`
+Tiered margin / markup hierarchy (Assignment → Site → Trade/Item → Branch default).
+- `MarginRuleId` (long, PK)
+- `Scope` (enum: `Assignment`, `Site`, `Trade`, `Item`, `BranchDefault`)
+- `ScopeId` (long?, ID of target Assignment, Site, Trade, or Item)
+- `AppliesTo` (enum: `Labor`, `Overtime`, `Material`)
+- `MarginType` (enum: `Percent`, `FlatPerUnit`)
+- `MarginValue` (decimal 18,4)
+- `EffectiveFrom` (date)
+- `EffectiveTo` (date?)
+
+### 6. `sit.SiteAttendance`
+Laborer daily check-in and clock-out record.
+- `AttendanceId` (long, PK)
+- `AssignmentId` (long, FK to `sit.SiteAssignments`)
+- `SiteId` (long, FK to `sit.Sites`)
+- `LaborerId` (long, FK to `sit.Laborers`)
+- `WorkDate` (date)
+- `CheckInTime` (timestamptz)
+- `CheckInLat` (decimal 10,7?), `CheckInLng` (decimal 10,7?)
+- `IsGeofenceBreached` (bool, default false, D-63)
+- `ClockOutTime` (timestamptz?)
+- `DayFraction` (decimal 3,2: 0.5 or 1.0, D-61)
+- `OtHoursClaimed` (decimal 4,2, default 0)
+- `OtHoursApproved` (decimal 4,2, default 0)
+- `WorkSummary` (string 1000)
+- `Status` (enum: `CheckedIn`, `Submitted`, `Approved`, `Rejected`)
+- `ApprovalRequestId` (long?, FK to `apr.ApprovalRequests`)
+- `ApprovedAt` (timestamptz?), `ApprovedBy` (long?)
+- `RejectionReason` (string 500?)
+- **Snapshots frozen at approval:**
+  - `DayCostSnapshot` (decimal 18,2)
+  - `DayMarginSnapshot` (decimal 18,2)
+  - `DaySellSnapshot` (decimal 18,2)
+  - `OtCostSnapshot` (decimal 18,2)
+  - `OtMarginSnapshot` (decimal 18,2)
+  - `OtSellSnapshot` (decimal 18,2)
+- `SiteBillLineId` (long?, FK to `sit.SiteBillLines` when billed)
+
+### 7. `sit.SiteAttendancePhotos`
+Work-proof photos uploaded on clock-out.
+- `PhotoId` (long, PK)
+- `AttendanceId` (long, FK to `sit.SiteAttendance`)
+- `StorageKey` (string 255, immutable create-only key via `IFileStorage`)
+- `FileName` (string 200)
+- `ContentType` (string 100)
+- `FileSize` (long)
+- `UploadedAt` (timestamptz)
+
+### 8. `sit.SiteStockDocuments`
+Document header for Dispatch (`SDP`), Return (`SRT`), and Usage (`SUS`).
+- `DocumentId` (long, PK)
+- `DocumentType` (enum: `Dispatch`, `Return`, `Usage`)
+- `DocumentNo` (string 30, unique per org)
+- `SiteId` (long, FK to `sit.Sites`)
+- `DocumentDate` (date)
+- `Status` (enum: `Draft`, `Submitted`, `Approved`, `Posted`, `Void`)
+- `ApprovalRequestId` (long?, for `Usage`)
+- `Remarks` (string 500)
+
+### 9. `sit.SiteStockLines`
+Line items for stock documents.
+- `LineId` (long, PK)
+- `DocumentId` (long, FK to `sit.SiteStockDocuments`)
+- `ItemId` (long, FK to `inv.Items`)
+- `Quantity` (decimal 18,4)
+- `UnitCost` (decimal 18,2?, frozen cost)
+- `MarginValue` (decimal 18,4?, resolved margin rule)
+- `SellingPrice` (decimal 18,2?, computed sell rate)
+- `BilledQuantity` (decimal 18,4, default 0)
+
+### 10. `sit.SiteStockBalances`
+Live tracked balances per item at a job site.
+- `BalanceId` (long, PK)
+- `SiteId` (long, FK to `sit.Sites`)
+- `ItemId` (long, FK to `inv.Items`)
+- `DispatchedQty` (decimal 18,4, cumulative dispatched)
+- `ReturnedQty` (decimal 18,4, cumulative returned)
+- `UsedQty` (decimal 18,4, approved used)
+- `OnSiteQty` (decimal 18,4: `Dispatched - Returned - Used`, must be ≥ 0)
+- `UnbilledUsedQty` (decimal 18,4: `Used - Billed`, must be ≥ 0)
+- `BilledQty` (decimal 18,4, cumulative invoiced)
+- *Unique constraint:* `(OrgId, SiteId, ItemId)`
+
+### 11. `sit.SiteBills`
+Billing worksheet headers before posting to Sales Invoices.
+- `SiteBillId` (long, PK)
+- `BillNo` (string 30, series `SBL`)
+- `SiteId` (long, FK to `sit.Sites`)
+- `ContactId` (long, client)
+- `PeriodStart` (date)
+- `PeriodEnd` (date)
+- `TradeId` (long?, optional filter)
+- `InvoiceId` (long?, FK to `sal.Invoices` once posted)
+- `Status` (enum: `Draft`, `Posted`, `Void`)
+- `TotalCost` (decimal 18,2, internal only, guarded by `site.cost.view`)
+- `TotalMargin` (decimal 18,2, internal only)
+- `TotalSellingPrice` (decimal 18,2)
+
+### 12. `sit.SiteBillLines`
+Line details linking to claimed labor days and used materials.
+- `SiteBillLineId` (long, PK)
+- `SiteBillId` (long, FK to `sit.SiteBills`)
+- `LineType` (enum: `Labor`, `Overtime`, `Material`)
+- `SourceId` (long, FK to `SiteAttendance.AttendanceId` or `SiteStockLines.LineId`)
+- `ItemId` (long?, item for material, or trade default service item for labor)
+- `Description` (string 500, customer-facing invoice description)
+- `Quantity` (decimal 18,4)
+- `CostPrice` (decimal 18,2, internal)
+- `MarginValue` (decimal 18,4, internal)
+- `SellingPrice` (decimal 18,2, client rate)
+- `TaxMasterId` (long?, GST rate)
+- `TaxableAmount` (decimal 18,2)
+
+---
+
+## 3. The Five Core Business Flows
+
+```
+[ Central Warehouse ] 
+       │ 
+ (SDP) │ Dispatch Transfer
+       ▼
+ [ Site Warehouse / Site Stock ] ◄── (SRT) Return to Central
+       │
+ (SUS) │ Material Usage Reported by Laborer/Admin
+       ▼
+[ Approval (111) ] ──► UsedQty & UnbilledUsedQty increase
+       │
+       ├─────────────────────────────────────────────────┐
+       ▼                                                 ▼
+[ Labor Clock-Out (110) ]                         [ Material Usage ]
+Approved Days & OT                                Approved Quantities
+       │                                                 │
+       └────────────────────────┬────────────────────────┘
+                                ▼
+                   [ Site Billing Worksheet (SBL) ]
+                   Claims attendance & materials
+                                │
+                                ▼ POST
+                   [ Sales Invoice (sal.Invoices) ]
+                   - Selling Price only
+                   - Issues stock from Site Warehouse
+                   - Labor SAC / Material HSN lines
+```
+
+### Flow 1: Material Dispatch to Site (`SDP`)
+1. User selects Site, Source Warehouse (Central), and line items with quantities.
+2. Inventory service executes inter-warehouse stock transfer: `TransferOut` from central warehouse, `TransferIn` to site warehouse. Refused if central stock is insufficient.
+3. Guarded update on `sit.SiteStockBalances`:
+   - `DispatchedQty = DispatchedQty + q`
+   - `OnSiteQty = OnSiteQty + q`
+4. Document posted as `Posted`. Stock does not leave company inventory; no GL entry posted.
+
+### Flow 2: Material Return to Central (`SRT`)
+1. User selects Site, Central Warehouse, and return quantities.
+2. Guarded update verifies `OnSiteQty >= q`:
+   - `ReturnedQty = ReturnedQty + q`
+   - `OnSiteQty = OnSiteQty - q`
+3. Inventory transfer reverses: `TransferOut` from site warehouse, `TransferIn` to central warehouse.
+
+### Flow 3: Material Usage on Site (`SUS`)
+1. Laborer or site supervisor submits usage document (`SUS`) for items consumed on site.
+2. Document enters approval engine (`ApprovalRequestKind.SiteMaterialUsage = 111`).
+3. Upon approval:
+   - Guarded balance update verifies `OnSiteQty >= q`.
+   - `UsedQty = UsedQty + q`
+   - `UnbilledUsedQty = UnbilledUsedQty + q`
+   - `OnSiteQty = OnSiteQty - q`
+4. Stock issue is deferred until the invoice posts (D-59).
+
+### Flow 4: Daily Labor Attendance & Clock-Out Approval
+1. **Check-in**: Laborer opens portal on phone, taps Check-In. Captures time, latitude, longitude. If outside `GeofenceRadiusMeters`, check-in is saved and flagged `IsGeofenceBreached = true` (D-63). Enforces single check-in per laborer per assignment per date.
+2. **Clock-out**: Laborer enters work summary, selects DayFraction (0.5 or 1.0, D-61), enters claimed overtime hours, attaches at least one photo. Attendance moves to `Submitted`.
+3. **Approval (`ApprovalRequestKind.SiteClockOut = 110`)**:
+   - Admin reviews photos, geofence status, and OT claimed (may adjust approved OT).
+   - On approval: resolves effective margin rule, freezes cost/margin/sell rate snapshots on `sit.SiteAttendance`, and increments `sit.SiteAssignments`:
+     - `ApprovedDays = ApprovedDays + DayFraction`
+     - `ApprovedOtHours = ApprovedOtHours + OtHoursApproved`
+
+### Flow 5: Site Billing Worksheet & Sales Invoice (`SBL`)
+1. Admin opens Billing Worksheet: picks Site, date range, trade, and selectable billable lines (approved unbilled days, approved OT, unbilled used materials).
+2. Atomic claim locks attendance rows (`SiteBillLineId IS NULL`) and material usage lines (`BilledQuantity + q <= Quantity`).
+3. Selling price is computed:
+   - Labor: `ApprovedDays * SellRatePerDay` + `ApprovedOtHours * OtSellRatePerHour`.
+   - Material: `CostPrice + Margin` (or price list override if specified, D-60).
+4. On worksheet post, internal call to Sales (`InvoiceRepository.CreateAsync` & `PostAsync`):
+   - Labor lines map to Trade's service item (SAC code).
+   - Material lines map to item code (HSN code) with `WarehouseId = site.WarehouseId`.
+   - Invoicing issues material from site warehouse (`inv.StockMovement.SalesIssue`).
+   - Sales invoice holds only selling prices, tax, and customer description.
+
+---
+
+## 4. Validations & Constraints
+
+1. **Fixed Value Rules**:
+   - `DayFraction` must be either `0.5` or `1.0`.
+   - `OtHoursClaimed` and `OtHoursApproved` must be within `0.00` and `12.00`.
+   - Quantities must be `> 0`.
+   - Exactly one attendance row per `(LaborerId, AssignmentId, WorkDate)`.
+   - Photos must be image mime types (`image/jpeg`, `image/png`, `image/webp`), max 10MB per image.
+   - Margin percentage must be between `0` and `100`.
+2. **Master & Runtime Guardrails**:
+   - Site and Assignment must be `Active` to check in.
+   - Laborer can only view assignments assigned to their own `LaborerId`.
+   - Material dispatch rejected if central warehouse stock < dispatch quantity.
+   - Return and Usage rejected if `OnSiteQty < quantity`.
+   - Double billing prevention: attendance row cannot be added to a worksheet if `SiteBillLineId` is already set.
+
+---
+
+## 5. Security & Privacy Guarantees
+
+- **Separation of Concerns**: Internal laborer pay rates, overtime costs, purchase costs of materials, and profit margins reside strictly within `sit.*` tables.
+- **Strict Role-Based Field Redaction**: The UI and API hide all cost and margin fields unless the user possesses the `site.cost.view` permission.
+- **Client Document Protection**:
+  - `sal.Invoices` and `sal.InvoiceLines` receive only client selling price, description, and applicable GST.
+  - Printed invoices, PDF exports, e-way bills, e-invoices, and client portal screens never receive or display internal costs or margins.
+
+---
+
+
