@@ -5312,7 +5312,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Configured Gateway routes and clusters for Site service (port 4523).
 
 ### TK-170 · Site masters: trades, laborers, sites, assignments and margin rules
-- [ ] open
+- [~] working (Antigravity) — since 2026-10-09
 - **Issue:** [#158](https://github.com/jothi-prabaharan/Bill-Book/issues/158)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-169 · **Decision:** D-62
