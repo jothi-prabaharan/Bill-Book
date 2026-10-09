@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, computed, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -64,18 +64,11 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class OdometerComponent {
-  readonly valueText = signal<string>('');
-  @Input() set value(val: string) {
-    this.valueText.set(val || '');
-  }
-
-  readonly isAnimated = signal<boolean>(true);
-  @Input() set animate(val: boolean) {
-    this.isAnimated.set(val);
-  }
+  readonly value = input<string>('');
+  readonly animate = input<boolean>(true);
 
   readonly slots = computed(() => {
-    const val = this.valueText();
+    const val = this.value() || '';
     const targetLength = 16;
     let chars = val.split('');
     if (chars.length < targetLength) {
