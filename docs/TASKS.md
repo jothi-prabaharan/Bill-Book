@@ -5354,7 +5354,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a laborer checks in, clocks out with a photo and an OT claim and the row is `Submitted`; a second check-in on the same day and assignment is refused; a laborer cannot see another laborer's site.
 
 ### TK-172 · Admin approval of clock-outs; working days and OT counters
-- [~] working (Antigravity) — since 2026-10-09
+- [x] completed (Antigravity) — 2026-10-09 · tests written, not run
 - **Issue:** [#160](https://github.com/jothi-prabaharan/Bill-Book/issues/160)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-KERNEL, L-SITE-UI · **Depends on:** TK-171 · **Decision:** —
@@ -5362,11 +5362,11 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
 - **Tables:** none new (fills the snapshot columns on `sit.SiteAttendance` and the counters on `sit.SiteAssignments`)
 - **Sub-tasks:**
-  - [ ] `ApprovalRequestKind.SiteClockOut = 110` through the one approvals engine.
-  - [ ] Review page: work summary, photos, OT claimed; approve (OT approved may be less than claimed) or reject with a reason.
-  - [ ] On approval, in one transaction: freeze day and OT cost, margin and sell snapshots from `SiteMarginRepository`; add `DayFraction` to `ApprovedDays` and `OtHoursApproved` to `ApprovedOtHours`.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] `ApprovalRequestKind.SiteClockOut = 110` through the one approvals engine.
+  - [x] Review page: work summary, photos, OT claimed; approve (OT approved may be less than claimed) or reject with a reason.
+  - [x] On approval, in one transaction: freeze day and OT cost, margin and sell snapshots from `SiteMarginRepository`; add `DayFraction` to `ApprovedDays` and `OtHoursApproved` to `ApprovedOtHours`.
+  - [x] Section 5's standard delivery sub-tasks.
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** counters rise only on approval, a rejection changes nothing, and a margin change after approval does not reprice the approved day.
 
 ### TK-173 · Site stock: dispatch to site and return to central

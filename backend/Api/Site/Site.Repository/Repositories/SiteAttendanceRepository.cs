@@ -79,15 +79,18 @@ public class SiteAttendanceRepository
     private readonly SiteDbContext _db;
     private readonly IFileStorage _fileStorage;
     private readonly ITenantContext _tenantContext;
+    private readonly SiteMarginRepository _marginRepo;
 
     public SiteAttendanceRepository(
         SiteDbContext db,
         IFileStorage fileStorage,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        SiteMarginRepository marginRepo)
     {
         _db = db;
         _fileStorage = fileStorage;
         _tenantContext = tenantContext;
+        _marginRepo = marginRepo;
     }
 
     /// <summary>
@@ -436,5 +439,222 @@ public class SiteAttendanceRepository
                    Math.Sin(deltaLambda / 2.0) * Math.Sin(deltaLambda / 2.0);
         double c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
         return r * c;
+    }
+
+    /// <summary>
+    /// Lists all submitted attendance records awaiting admin approval (TK-172).
+    /// </summary>
+    public async Task<List<SiteAttendanceDetailDto>> ListPendingAttendanceAsync(
+        long? siteId,
+        DateOnly? fromDate,
+        DateOnly? toDate,
+        CancellationToken ct = default)
+    {
+        var query = from a in _db.SiteAttendances
+                    join s in _db.Sites on a.SiteId equals s.SiteId
+                    join l in _db.Laborers on a.LaborerId equals l.LaborerId
+                    where a.Status == AttendanceStatus.Submitted
+                    select new { Attendance = a, SiteName = s.SiteName, LaborerName = l.FullName };
+
+        if (siteId.HasValue)
+        {
+            query = query.Where(x => x.Attendance.SiteId == siteId.Value);
+        }
+
+        if (fromDate.HasValue)
+        {
+            query = query.Where(x => x.Attendance.WorkDate >= fromDate.Value);
+        }
+
+        if (toDate.HasValue)
+        {
+            query = query.Where(x => x.Attendance.WorkDate <= toDate.Value);
+        }
+
+        var list = await query.ToListAsync(ct);
+        var attIds = list.Select(x => x.Attendance.AttendanceId).ToList();
+
+        var photos = await _db.SiteAttendancePhotos
+            .Where(p => attIds.Contains(p.AttendanceId))
+            .Select(p => new SiteAttendancePhotoDto(
+                p.PhotoId,
+                p.AttendanceId,
+                p.FileName,
+                p.ContentType,
+                p.FileSize,
+                p.UploadedAt))
+            .ToListAsync(ct);
+
+        var photosByAtt = photos.GroupBy(p => p.AttendanceId).ToDictionary(g => g.Key, g => g.ToList());
+
+        return list.Select(x => new SiteAttendanceDetailDto(
+            x.Attendance.AttendanceId,
+            x.Attendance.AssignmentId,
+            x.Attendance.SiteId,
+            x.SiteName,
+            x.Attendance.LaborerId,
+            x.LaborerName,
+            x.Attendance.WorkDate,
+            x.Attendance.CheckInTime,
+            x.Attendance.CheckInLat,
+            x.Attendance.CheckInLng,
+            x.Attendance.IsGeofenceBreached,
+            x.Attendance.ClockOutTime,
+            x.Attendance.DayFraction,
+            x.Attendance.OtHoursClaimed,
+            x.Attendance.OtHoursApproved,
+            x.Attendance.WorkSummary,
+            x.Attendance.Status,
+            x.Attendance.RejectionReason,
+            photosByAtt.TryGetValue(x.Attendance.AttendanceId, out var ph) ? ph : new List<SiteAttendancePhotoDto>()
+        )).ToList();
+    }
+
+    /// <summary>
+    /// Admin approval of clock-out: freezes day and OT cost, margin and sell snapshots,
+    /// increments ApprovedDays and ApprovedOtHours on SiteAssignment in one transaction (TK-172).
+    /// </summary>
+    public async Task<SiteAttendance> ApproveClockOutAsync(
+        long attendanceId,
+        decimal? otHoursApproved,
+        long? approvedByUserId,
+        CancellationToken ct = default)
+    {
+        var attendance = await _db.SiteAttendances
+            .FirstOrDefaultAsync(a => a.AttendanceId == attendanceId, ct);
+
+        if (attendance == null)
+        {
+            throw new InvalidOperationException("Attendance record not found.");
+        }
+
+        if (attendance.Status != AttendanceStatus.Submitted)
+        {
+            throw new InvalidOperationException($"Cannot approve attendance in '{attendance.Status}' status. Only Submitted attendances can be approved.");
+        }
+
+        var assignment = await _db.SiteAssignments
+            .FirstOrDefaultAsync(a => a.SiteAssignmentId == attendance.AssignmentId, ct);
+        if (assignment == null)
+        {
+            throw new InvalidOperationException("Site assignment not found.");
+        }
+
+        var laborer = await _db.Laborers
+            .FirstOrDefaultAsync(l => l.LaborerId == attendance.LaborerId, ct);
+        var trade = await _db.Trades
+            .FirstOrDefaultAsync(t => t.TradeId == assignment.TradeId, ct);
+
+        decimal approvedOt = otHoursApproved ?? attendance.OtHoursClaimed;
+        if (approvedOt < 0 || approvedOt > attendance.OtHoursClaimed)
+        {
+            throw new ArgumentException("Approved OT hours must be between 0 and claimed OT hours.");
+        }
+
+        // Resolve rates
+        var rates = SiteMarginRepository.ResolveRates(assignment, laborer, trade);
+
+        // Resolve day margin
+        var laborRule = await _marginRepo.ResolveRuleAsync(
+            assignment.SiteAssignmentId,
+            attendance.SiteId,
+            trade?.TradeId,
+            null,
+            MarginAppliesTo.Labor,
+            attendance.WorkDate,
+            ct);
+
+        var laborCalc = SiteMarginRepository.Calculate(laborRule, rates.CostRatePerDay);
+        decimal dayMargin;
+        decimal daySell;
+        if (rates.SellRatePerDay > 0 && laborRule == null)
+        {
+            daySell = rates.SellRatePerDay;
+            dayMargin = daySell - rates.CostRatePerDay;
+        }
+        else
+        {
+            dayMargin = laborCalc.MarginAmount;
+            daySell = laborCalc.SellingPrice;
+        }
+
+        // Resolve OT margin
+        var otRule = await _marginRepo.ResolveRuleAsync(
+            assignment.SiteAssignmentId,
+            attendance.SiteId,
+            trade?.TradeId,
+            null,
+            MarginAppliesTo.Overtime,
+            attendance.WorkDate,
+            ct);
+
+        var otCalc = SiteMarginRepository.Calculate(otRule, rates.OtCostRatePerHour);
+        decimal otMargin;
+        decimal otSell;
+        if (rates.OtSellRatePerHour > 0 && otRule == null)
+        {
+            otSell = rates.OtSellRatePerHour;
+            otMargin = otSell - rates.OtCostRatePerHour;
+        }
+        else
+        {
+            otMargin = otCalc.MarginAmount;
+            otSell = otCalc.SellingPrice;
+        }
+
+        // Freeze snapshots on attendance
+        attendance.DayCostSnapshot = rates.CostRatePerDay;
+        attendance.DayMarginSnapshot = dayMargin;
+        attendance.DaySellSnapshot = daySell;
+        attendance.OtCostSnapshot = rates.OtCostRatePerHour;
+        attendance.OtMarginSnapshot = otMargin;
+        attendance.OtSellSnapshot = otSell;
+        attendance.OtHoursApproved = approvedOt;
+        attendance.ApprovedAt = DateTime.UtcNow;
+        attendance.ApprovedBy = approvedByUserId;
+        attendance.Status = AttendanceStatus.Approved;
+
+        // In one transaction: increment counters on assignment
+        assignment.ApprovedDays += attendance.DayFraction;
+        assignment.ApprovedOtHours += attendance.OtHoursApproved;
+
+        await _db.SaveChangesAsync(ct);
+        return attendance;
+    }
+
+    /// <summary>
+    /// Rejects clock-out with a reason. Counters on assignment are not incremented (TK-172).
+    /// </summary>
+    public async Task<SiteAttendance> RejectClockOutAsync(
+        long attendanceId,
+        string rejectionReason,
+        long? rejectedByUserId,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(rejectionReason))
+        {
+            throw new ArgumentException("Rejection reason is required.");
+        }
+
+        var attendance = await _db.SiteAttendances
+            .FirstOrDefaultAsync(a => a.AttendanceId == attendanceId, ct);
+
+        if (attendance == null)
+        {
+            throw new InvalidOperationException("Attendance record not found.");
+        }
+
+        if (attendance.Status != AttendanceStatus.Submitted)
+        {
+            throw new InvalidOperationException($"Cannot reject attendance in '{attendance.Status}' status. Only Submitted attendances can be rejected.");
+        }
+
+        attendance.Status = AttendanceStatus.Rejected;
+        attendance.RejectionReason = rejectionReason;
+        attendance.ApprovedBy = rejectedByUserId;
+        attendance.ApprovedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+        return attendance;
     }
 }

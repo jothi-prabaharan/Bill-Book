@@ -12,4 +12,9 @@ export const siteRoutes: Routes = [
     loadComponent: () => import('./portal/laborer-portal.page').then((m) => m.LaborerPortalPage),
     data: { access: { permission: 'site.view', businessTypes: ['Service'], addOns: ['SiteServices'] } },
   },
+  {
+    path: 'site/approvals',
+    loadComponent: () => import('./approvals/clockout-approvals.page').then((m) => m.ClockoutApprovalsPage),
+    data: { access: { permission: 'site.view', businessTypes: ['Service'], addOns: ['SiteServices'] } },
+  },
 ];

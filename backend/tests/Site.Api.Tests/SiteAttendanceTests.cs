@@ -98,7 +98,7 @@ public sealed class SiteAttendanceTests
         await using var db = _postgres.CreateContext(customerId, orgId);
         var fileStorage = new FakeFileStorage();
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "CUST001" };
-        var repo = new SiteAttendanceRepository(db, fileStorage, tenant);
+        var repo = new SiteAttendanceRepository(db, fileStorage, tenant, new SiteMarginRepository(db));
 
         var site = new SiteJob
         {
@@ -165,7 +165,7 @@ public sealed class SiteAttendanceTests
         await using var db = _postgres.CreateContext(customerId, orgId);
         var fileStorage = new FakeFileStorage();
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "CUST001" };
-        var repo = new SiteAttendanceRepository(db, fileStorage, tenant);
+        var repo = new SiteAttendanceRepository(db, fileStorage, tenant, new SiteMarginRepository(db));
 
         var trade = new Trade { TradeCode = $"TRD-{Guid.NewGuid():N}"[..10], TradeName = "Carpentry" };
         db.Trades.Add(trade);
@@ -227,7 +227,7 @@ public sealed class SiteAttendanceTests
         await using var db = _postgres.CreateContext(customerId, orgId);
         var fileStorage = new FakeFileStorage();
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "CUST001" };
-        var repo = new SiteAttendanceRepository(db, fileStorage, tenant);
+        var repo = new SiteAttendanceRepository(db, fileStorage, tenant, new SiteMarginRepository(db));
 
         var trade = new Trade { TradeCode = $"TRD-{Guid.NewGuid():N}"[..10], TradeName = "Plumbing" };
         db.Trades.Add(trade);
@@ -271,7 +271,7 @@ public sealed class SiteAttendanceTests
         await using var db = _postgres.CreateContext(customerId, orgId);
         var fileStorage = new FakeFileStorage();
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "CUST001" };
-        var repo = new SiteAttendanceRepository(db, fileStorage, tenant);
+        var repo = new SiteAttendanceRepository(db, fileStorage, tenant, new SiteMarginRepository(db));
 
         var trade = new Trade { TradeCode = $"TRD-{Guid.NewGuid():N}"[..10], TradeName = "Electrical" };
         db.Trades.Add(trade);
@@ -310,7 +310,7 @@ public sealed class SiteAttendanceTests
         await using var db = _postgres.CreateContext(customerId, orgId);
         var fileStorage = new FakeFileStorage();
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "CUST001" };
-        var repo = new SiteAttendanceRepository(db, fileStorage, tenant);
+        var repo = new SiteAttendanceRepository(db, fileStorage, tenant, new SiteMarginRepository(db));
 
         var trade = new Trade { TradeCode = $"TRD-{Guid.NewGuid():N}"[..10], TradeName = "Painting" };
         db.Trades.Add(trade);

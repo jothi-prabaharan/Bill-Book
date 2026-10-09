@@ -32,6 +32,8 @@ public enum ApprovalRequestKind
     SalesDiscountOverride = 107,
     CreditLimitOverride = 108,
     StockAdjustment = 109,
+    SiteClockOut = 110,
+    SiteMaterialUsage = 111,
 }
 
 /// <summary>How a level's approver is found.</summary>

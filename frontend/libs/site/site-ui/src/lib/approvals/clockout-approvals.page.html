@@ -1,0 +1,190 @@
+<div class="approvals-container">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Clock-Out Approvals</h1>
+      <p class="page-subtitle">Review submitted laborer work proofs, geofence status, and approve working days &amp; OT</p>
+    </div>
+
+    <div class="filter-actions">
+      <select
+        class="form-select"
+        [ngModel]="selectedSiteId()"
+        (ngModelChange)="onSiteFilterChange($event)"
+      >
+        <option [ngValue]="null">All Sites</option>
+        <option *ngFor="let s of sites()" [ngValue]="s.siteId">
+          {{ s.siteCode }} — {{ s.siteName }}
+        </option>
+      </select>
+
+      <button class="btn btn-secondary" (click)="loadPending()" [disabled]="loading()">
+        ↻ Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- Notification banners -->
+  <div *ngIf="errorMessage()" class="alert alert-error">
+    {{ errorMessage() }}
+  </div>
+  <div *ngIf="successMessage()" class="alert alert-success">
+    {{ successMessage() }}
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading() && pendingList().length === 0" class="empty-state">
+    <p>Loading pending clock-outs...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading() && pendingList().length === 0" class="empty-state">
+    <p>🎉 All caught up! No pending clock-out submissions awaiting approval.</p>
+  </div>
+
+  <!-- Cards Grid -->
+  <div class="cards-grid" *ngIf="pendingList().length > 0">
+    <div *ngFor="let item of pendingList()" class="approval-card">
+      <div class="card-top">
+        <div class="laborer-info">
+          <h2 class="laborer-name">{{ item.laborerName }}</h2>
+          <span class="site-tag">{{ item.siteName }}</span>
+        </div>
+        <span class="date-badge">{{ item.workDate }}</span>
+      </div>
+
+      <!-- Geofence alert -->
+      <div *ngIf="item.isGeofenceBreached" class="geofence-alert">
+        ⚠️ Check-in breached geofence boundary (outside site perimeter)
+      </div>
+      <div *ngIf="!item.isGeofenceBreached" class="geofence-ok">
+        ✓ Geofence verified (checked in within site perimeter)
+      </div>
+
+      <!-- Summary metrics -->
+      <div class="metrics-row">
+        <div class="metric-item">
+          <span class="metric-label">Check-In</span>
+          <span class="metric-value">{{ item.checkInTime | date:'shortTime' }}</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">Clock-Out</span>
+          <span class="metric-value">{{ item.clockOutTime | date:'shortTime' }}</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">Day Fraction</span>
+          <span class="metric-value">{{ item.dayFraction }} day</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">OT Claimed</span>
+          <span class="metric-value">{{ item.otHoursClaimed }} hrs</span>
+        </div>
+      </div>
+
+      <!-- Work Summary -->
+      <div class="work-summary-box">
+        <span class="summary-label">Work Summary:</span>
+        <p class="summary-text">{{ item.workSummary || '(No summary provided)' }}</p>
+      </div>
+
+      <!-- Photos proof gallery -->
+      <div class="photo-gallery" *ngIf="item.photos.length > 0">
+        <span class="gallery-label">Proof Photos ({{ item.photos.length }}):</span>
+        <div class="photo-thumbs">
+          <img
+            *ngFor="let ph of item.photos"
+            [src]="getPhotoUrl(ph.photoId)"
+            [alt]="ph.fileName"
+            class="photo-thumb"
+            (click)="openPhoto(ph.photoId)"
+          />
+        </div>
+      </div>
+
+      <!-- Card action buttons -->
+      <div class="card-footer-actions">
+        <button class="btn btn-danger" (click)="openRejectModal(item)">
+          ✕ Reject
+        </button>
+        <button class="btn btn-success" (click)="openApproveModal(item)">
+          ✓ Approve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approve Modal -->
+  <div class="modal-backdrop" *ngIf="approvingItem()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Approve Attendance — {{ approvingItem()?.laborerName }}</h2>
+        <button class="btn-close" (click)="closeApproveModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Approving will freeze cost and sell margin rates and increment
+          <strong>{{ approvingItem()?.dayFraction }} working days</strong> on the assignment.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="approvedOt">Approved Overtime Hours:</label>
+          <input
+            id="approvedOt"
+            type="number"
+            class="form-control"
+            min="0"
+            [max]="approvingItem()?.otHoursClaimed || 0"
+            step="0.5"
+            [ngModel]="approvedOtHours()"
+            (ngModelChange)="approvedOtHours.set($event)"
+          />
+          <small class="form-hint">
+            Claimed: {{ approvingItem()?.otHoursClaimed }} hrs. You may approve fewer hours than claimed.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeApproveModal()">Cancel</button>
+        <button class="btn btn-success" [disabled]="processingAction()" (click)="confirmApprove()">
+          {{ processingAction() ? 'Approving...' : 'Confirm Approval' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Modal -->
+  <div class="modal-backdrop" *ngIf="rejectingItem()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Reject Attendance — {{ rejectingItem()?.laborerName }}</h2>
+        <button class="btn-close" (click)="closeRejectModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="rejectionReason">Rejection Reason: *</label>
+          <textarea
+            id="rejectionReason"
+            class="form-control"
+            rows="3"
+            placeholder="Explain why this attendance submission was rejected..."
+            [ngModel]="rejectionReason()"
+            (ngModelChange)="rejectionReason.set($event)"
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeRejectModal()">Cancel</button>
+        <button class="btn btn-danger" [disabled]="processingAction()" (click)="confirmReject()">
+          {{ processingAction() ? 'Rejecting...' : 'Confirm Rejection' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Fullscreen Preview Modal -->
+  <div class="modal-backdrop photo-viewer-backdrop" *ngIf="viewingPhotoUrl()" (click)="closePhoto()">
+    <div class="photo-viewer-box" (click)="$event.stopPropagation()">
+      <button class="btn-close-floating" (click)="closePhoto()">✕</button>
+      <img [src]="viewingPhotoUrl()" alt="Full Proof Photo" class="full-photo" />
+    </div>
+  </div>
+</div>

@@ -134,5 +134,23 @@ export class SiteApiService {
   getPhotoUrl(photoId: number): string {
     return `/api/site/portal/photos/${photoId}`;
   }
+
+  // --- Admin Approvals (TK-172) ---
+  listPendingAttendance(siteId?: number | null, fromDate?: string | null, toDate?: string | null): Promise<SiteAttendanceDetailDto[]> {
+    const params: Record<string, string | number> = {};
+    if (siteId) params['siteId'] = siteId;
+    if (fromDate) params['fromDate'] = fromDate;
+    if (toDate) params['toDate'] = toDate;
+    return firstValueFrom(this.http.get<SiteAttendanceDetailDto[]>('/api/site/attendance/pending', { params }));
+  }
+
+  approveAttendance(id: number, otHoursApproved?: number | null): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/site/attendance/${id}/approve`, { otHoursApproved }));
+  }
+
+  rejectAttendance(id: number, reason: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/site/attendance/${id}/reject`, { reason }));
+  }
 }
+
 
