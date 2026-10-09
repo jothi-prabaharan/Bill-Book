@@ -89,6 +89,17 @@ public static class DbExceptionTranslator
                 null);
         }
 
+        if (Find<OperationCanceledException>(exception) is not null)
+        {
+            return new TranslatedError(
+                new SqlErrorRule(
+                    ApiErrorCode.RequestCancelled,
+                    499, // Client Closed Request
+                    "The operation was cancelled.",
+                    IsTransient: true),
+                null);
+        }
+
         return new TranslatedError(SqlErrorCatalog.Unexpected, null);
     }
 
