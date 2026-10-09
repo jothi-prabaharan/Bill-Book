@@ -5261,7 +5261,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Follow-ups, only if D-42 asks for them:** menu sync (push the menu and availability out), status updates back, settlement against the aggregators' payouts, and a page listing aggregator orders.
 
 ### TK-168 · Design: Site services module (tables, validations, flows)
-- [ ] open
+- [~] working (Antigravity) — since 2026-10-09
 - **Issue:** [#156](https://github.com/jothi-prabaharan/Bill-Book/issues/156)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-57 to D-64 (all answered 2026-10-09)
