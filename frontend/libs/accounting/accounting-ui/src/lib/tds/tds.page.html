@@ -69,9 +69,7 @@
       </form>
     } @else {
       <div class="bar">
-        <p class="hint">
-          Rates are in percent. Seeded with the 2025-26 figures; edit or re-date them when the law changes.
-        </p>
+        <bb-info-tooltip text="Rates are in percent. Seeded with the 2025-26 figures; edit or re-date them when the law changes."></bb-info-tooltip>
         <button class="btn btn-primary" type="button" (click)="startNew()" [disabled]="busy()">+ New section</button>
       </div>
       <bb-data-grid fillHeight
@@ -147,10 +145,7 @@
   }
 
   @case ('due') {
-    <p class="hint">
-      Deducted TDS is paid to the government by the 7th of the following month (30 April for March). Record each payment
-      under <a routerLink="/banking/spend-money">Spend money</a> as a TDS challan for its section and month, for exactly the amount shown.
-    </p>
+    <div><bb-info-tooltip text="Deducted TDS is paid to the government by the 7th of the following month (30 April for March). Record each payment under Spend money as a TDS challan for its section and month, for exactly the amount shown."></bb-info-tooltip> <a routerLink="/banking/spend-money">Spend money</a></div>
     <bb-data-grid
       gridCode="TDS_OUTSTANDING"
       label="TDS waiting to be deposited"
@@ -180,10 +175,7 @@
       </div>
       <button class="btn btn-secondary" type="button" (click)="download26q()" [disabled]="busy()">Download 26Q data</button>
     </div>
-    <p class="hint">
-      A zip of two sheets, challans and deductees, in the column order of the return preparation utility's tables, to paste into it.
-      File the return and issue Form 16A on the government's tools.
-    </p>
+    <bb-info-tooltip text="A zip of two sheets, challans and deductees, in the column order of the return preparation utility's tables, to paste into it. File the return and issue Form 16A on the government's tools."></bb-info-tooltip>
     @if (check(); as c) {
       <p>{{ c.challans }} challans and {{ c.deductions }} deductions in {{ yearLabel(year) }} Q{{ quarter }}.</p>
       @if (c.warnings.length > 0) {
@@ -199,10 +191,7 @@
 
   @case ('statement') {
     <div class="bar">
-      <p class="hint">
-        On TRACES, view Form 26AS, download it as <strong>Text</strong>, and import the .txt here. Each deduction is matched to your
-        receipts by the customer's TAN and the TDS amount.
-      </p>
+      <bb-info-tooltip text="On TRACES, view Form 26AS, download it as Text, and import the .txt here. Each deduction is matched to your receipts by the customer's TAN and the TDS amount."></bb-info-tooltip>
       <bb-file-input
         accept=".txt,text/plain"
         ariaLabel="Form 26AS text file"
@@ -259,5 +248,7 @@
     }
   }
 }
+
+
 
 

@@ -10,11 +10,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  Every customer shares this one database, separated by customer and organization id. Creating
-  one here runs the same seed as public trial signup — chart of accounts, GST rates, numbering
-  series, payment terms, units and purities — so it stays unusable until that finishes.
-</p>
+<bb-info-tooltip text="Every customer shares this one database, separated by customer and organization id. Creating one here runs the same seed as public trial signup — chart of accounts, GST rates, numbering series, payment terms, units and purities — so it stays unusable until that finishes."></bb-info-tooltip>
 
 <div class="filters">
   <bb-select
@@ -69,11 +65,7 @@
   <div class="sheet">
     <h2>New customer</h2>
 
-    <p class="hint">
-      Creates the head office and its first branch, then seeds both immediately. Statutory
-      details (GSTIN, PAN, address) and further branches are the customer's own to fill in once
-      they can sign in.
-    </p>
+    <bb-info-tooltip text="Creates the head office and its first branch, then seeds both immediately. Statutory details (GSTIN, PAN, address) and further branches are the customer's own to fill in once they can sign in."></bb-info-tooltip>
 
     <div class="fields">
       <div class="field">
@@ -172,4 +164,5 @@
     </div>
   </div>
 }
+
 

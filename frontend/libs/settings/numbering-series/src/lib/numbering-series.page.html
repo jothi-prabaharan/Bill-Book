@@ -22,7 +22,7 @@
 }
 
 @if (!canReorder) {
-  <p class="hint">Drag to reorder is available while inactive series are hidden.</p>
+  <bb-info-tooltip text="Drag to reorder is available while inactive series are hidden."></bb-info-tooltip>
 }
 
 <div>
@@ -203,10 +203,7 @@
 @if (counterFor(); as counter) {
   <div class="sheet narrow">
     <h2>Counter — {{ counter.seriesName }}</h2>
-    <p class="hint">
-      The next record saved from this series takes this number. Moving it backwards over numbers
-      already issued will be refused at save time by the uniqueness check on the record itself.
-    </p>
+    <bb-info-tooltip text="The next record saved from this series takes this number. Moving it backwards over numbers already issued will be refused at save time by the uniqueness check on the record itself."></bb-info-tooltip>
     <div class="field">
       <bb-number-input label="Next number"  [(ngModel)]="counterValue" [min]="counter.startNumber" />
     </div>
@@ -216,4 +213,5 @@
     </div>
   </div>
 }
+
 

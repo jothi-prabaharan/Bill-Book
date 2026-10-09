@@ -2,11 +2,7 @@
   <h1>HSN &amp; SAC codes</h1>
 </div>
 
-<p class="hint">
-  The goods and services codes notified by the CBIC. They are the same for every
-  business in the country, so they are maintained centrally and shown here to
-  look up — what appears on an invoice is the item's own tax rate.
-</p>
+<bb-info-tooltip text="The goods and services codes notified by the CBIC. They are the same for every business in the country, so they are maintained centrally and shown here to look up — what appears on an invoice is the item's own tax rate."></bb-info-tooltip>
 
 @if (coverage(); as c) {
   @if (awaitingImport()) {
@@ -18,12 +14,7 @@
       will not find one. Ask your administrator to load it.
     </p>
   } @else {
-    <p class="hint">
-      {{ c.hsnCodes }} HSN codes across {{ c.hsnChapters }} chapters ·
-      {{ c.sacCodes }} SAC codes across {{ c.sacGroups }} groups@if (c.inactive > 0) {
-        · {{ c.inactive }} retired
-      }
-    </p>
+    <bb-info-tooltip text="{{ c.hsnCodes }} HSN codes across {{ c.hsnChapters }} chapters · {{ c.sacCodes }} SAC codes across {{ c.sacGroups }} groups@if (c.inactive > 0) { · {{ c.inactive }} retired }"></bb-info-tooltip>
   }
 }
 
@@ -109,4 +100,5 @@
     </button>
   </nav>
 }
+
 

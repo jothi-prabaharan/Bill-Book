@@ -45,6 +45,7 @@ import {
 } from '@bill-book/pos-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 import { ReceiptPrinterService } from './receipt-printer.service';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 type Picker = 'none' | 'customer' | 'item';
 
@@ -84,7 +85,7 @@ const TILL_KEY = 'bb.pos.tillId';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-pos-terminal',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     LookupDialogComponent,
     ScanComponent,
     MessageBoxComponent,

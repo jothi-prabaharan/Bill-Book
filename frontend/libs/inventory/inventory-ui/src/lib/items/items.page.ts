@@ -36,6 +36,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 type Profile = 'Standard' | 'Pharma' | 'Jewellery';
 type Costing =
@@ -178,7 +179,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-items-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     EditHistoryComponent,
     FormsModule,
     TextInputComponent,

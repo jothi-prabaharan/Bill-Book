@@ -16,10 +16,11 @@ interface PriceList {
   isActive: boolean;
 }
 
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   selector: 'bb-price-list-list',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     CommonModule,
     FormsModule,
     DataGridComponent,

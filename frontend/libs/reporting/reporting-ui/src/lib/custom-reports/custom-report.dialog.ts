@@ -12,11 +12,12 @@ import {
  * dataset, or changes to one already open. Sharing with the branch needs
  * `reports.edit`, which the server enforces and explains.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-custom-report-dialog',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     TextInputComponent,
     CheckboxComponent,

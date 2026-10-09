@@ -46,11 +46,7 @@
             <h3>{{ line.amount | number: '1.2-2' }} — {{ line.description }}</h3>
 
             @if (line.suggestedMatches.length === 0) {
-              <p class="hint">
-                Nothing matches confidently. A business paying the same supplier weekly
-                has several identical documents, and guessing between them would be a
-                coin toss recorded as a decision.
-              </p>
+              <bb-info-tooltip text="Nothing matches confidently. A business paying the same supplier weekly has several identical documents, and guessing between them would be a coin toss recorded as a decision."></bb-info-tooltip>
             } @else {
               <ul class="matches">
                 @for (match of line.suggestedMatches; track match.journalLedgerId) {
@@ -75,3 +71,4 @@
 @if (uploading()) {
   <bb-statement-upload-form (closed)="onUploadClosed($event)"></bb-statement-upload-form>
 }
+

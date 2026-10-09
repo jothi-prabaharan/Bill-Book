@@ -6,6 +6,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { Component, computed, input, output } from '@angular/core';
 import { ReportColumn } from '@bill-book/reporting-core';
+import { InfoTooltipComponent } from '../info-tooltip/info-tooltip.component';
 
 /** Three levels, and no more. Past that the footers outnumber the rows. */
 const MAX_LEVELS = 3;
@@ -24,7 +25,7 @@ const MAX_LEVELS = 3;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-group-panel',
   standalone: true,
-  imports: [DragDropModule],
+  imports: [InfoTooltipComponent, DragDropModule],
   templateUrl: './group-panel.component.html',
   styleUrl: './group-panel.component.scss',
 })

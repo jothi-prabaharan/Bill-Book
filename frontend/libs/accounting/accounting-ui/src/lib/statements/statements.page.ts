@@ -1,3 +1,4 @@
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbFileSelection,
@@ -104,7 +105,7 @@ interface StatementLine {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-statements-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     DecimalPipe,
     FormsModule,
@@ -455,4 +456,6 @@ export class StatementsPage implements OnInit {
     );
   }
 }
+
+
 

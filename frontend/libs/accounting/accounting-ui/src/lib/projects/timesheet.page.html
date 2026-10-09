@@ -1,8 +1,5 @@
 <h1>Timesheet</h1>
-<p class="hint">
-  Your hours for the week, one row per project task. Billable hours wait on the project until an invoice
-  bills them; a billed entry is locked until that invoice is voided.
-</p>
+<bb-info-tooltip text="Your hours for the week, one row per project task. Billable hours wait on the project until an invoice bills them; a billed entry is locked until that invoice is voided."></bb-info-tooltip>
 
 @if (message(); as text) {
   <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
@@ -145,5 +142,6 @@
     </li>
   }
 </ul>
+
 
 

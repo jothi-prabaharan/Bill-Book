@@ -15,6 +15,7 @@ import { scanOntoSheet } from './stock-scan';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface AdjustmentLine {
   stockAdjustmentLineId: number;
@@ -105,7 +106,7 @@ const REASONS: readonly { value: string; label: string }[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-adjustments-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     BranchDateInputComponent,

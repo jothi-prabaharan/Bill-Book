@@ -1,9 +1,6 @@
 <div class="api-clients">
   <h2>API keys</h2>
-  <p class="hint">
-    An API key lets another system work with this branch. Each key acts as a role and can do exactly
-    what that role's permissions allow. A change of role reaches a key within five minutes.
-  </p>
+  <bb-info-tooltip text="An API key lets another system work with this branch. Each key acts as a role and can do exactly what that role's permissions allow. A change of role reaches a key within five minutes."></bb-info-tooltip>
 
   @if (error(); as failure) {
     <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
@@ -76,4 +73,5 @@
     </ng-template>
   </bb-data-grid>
 </div>
+
 

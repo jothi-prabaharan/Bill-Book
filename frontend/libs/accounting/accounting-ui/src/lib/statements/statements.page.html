@@ -28,10 +28,7 @@
   <section class="editor">
     <h2>How to read this bank's file</h2>
 
-    <p class="hint">
-      Name the columns as they appear in the file's header row, or give their positions counting
-      from 0 if there is no header.
-    </p>
+    <bb-info-tooltip text="Name the columns as they appear in the file's header row, or give their positions counting from 0 if there is no header."></bb-info-tooltip>
 
     <div class="head-fields">
       <label>
@@ -158,10 +155,7 @@
         </button>
         <button type="button" class="link" (click)="startProfile()">Edit column mapping</button>
       </div>
-      <p class="hint">
-        Importing the same period again is fine — anything already here is recognised and not
-        added twice.
-      </p>
+      <bb-info-tooltip text="Importing the same period again is fine — anything already here is recognised and not added twice."></bb-info-tooltip>
     } @else {
       <bb-message-box tone="warning">
         This account has no column mapping yet. Every bank lays its export out differently, so tell
@@ -274,4 +268,5 @@
     </span>
   </ng-template>
 </bb-data-grid>
+
 

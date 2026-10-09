@@ -1,8 +1,5 @@
 <h1>Custom fields</h1>
-<p class="hint">
-  Fields of your own on contacts, items, documents and more. A field's key, kind and type are fixed once it is saved.
-  A field is never deleted: deactivate it and every value stored under it is kept.
-</p>
+<bb-info-tooltip text="Fields of your own on contacts, items, documents and more. A field's key, kind and type are fixed once it is saved. A field is never deleted: deactivate it and every value stored under it is kept."></bb-info-tooltip>
 
 @if (message(); as text) {
   <p [class]="messageIsError() ? 'error' : 'ok'" role="status">{{ text }}</p>
@@ -129,3 +126,4 @@
     <bb-custom-fields [definitions]="fields()" [(value)]="preview" />
   </section>
 }
+

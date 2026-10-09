@@ -10,12 +10,13 @@ import {
 } from '@bill-book/ui-components';
 import { CustomerService, Lead } from '@bill-book/customer-core';
 import { LeadFormComponent } from './lead-form.component';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-lead-list',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     CommonModule,
     DataGridComponent,
     DataGridCellTemplateDirective,

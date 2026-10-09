@@ -17,10 +17,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  Every conversion in the system comes from a unit's factor to its type's base unit. Pack sizes are
-  units of their type — a 50 kg bag is a Weight unit with a factor of 50.
-</p>
+<bb-info-tooltip text="Every conversion in the system comes from a unit's factor to its type's base unit. Pack sizes are units of their type — a 50 kg bag is a Weight unit with a factor of 50."></bb-info-tooltip>
 
 <div>
   <bb-data-grid fillHeight [gridCode]="'UNIT_TYPES'" [columns]="columns" [data]="types()">
@@ -176,4 +173,5 @@
     </div>
   </div>
 }
+
 

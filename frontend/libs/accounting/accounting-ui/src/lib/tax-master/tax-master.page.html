@@ -55,9 +55,7 @@
         <div><span>CGST</span><strong>{{ half() }}</strong></div>
         <div><span>SGST</span><strong>{{ half() }}</strong></div>
         <div><span>IGST</span><strong>{{ form.totalRate || 0 }}</strong></div>
-        <p class="hint">
-          Derived automatically: intra-state splits in half, inter-state carries the full rate.
-        </p>
+        <bb-info-tooltip text="Derived automatically: intra-state splits in half, inter-state carries the full rate."></bb-info-tooltip>
       </div>
 
       <div class="field">
@@ -73,10 +71,7 @@
           name="isPurchase"
           [(ngModel)]="form.isPurchase"
         />
-        <p class="hint">
-          At least one is required. Each direction gets its own CGST, SGST and IGST
-          sub-accounts.
-        </p>
+        <bb-info-tooltip text="At least one is required. Each direction gets its own CGST, SGST and IGST sub-accounts."></bb-info-tooltip>
       </fieldset>
     }
 
@@ -127,5 +122,6 @@
     </ng-template>
   </bb-data-grid>
 }
+
 
 

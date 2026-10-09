@@ -43,10 +43,7 @@
   </ul>
 
   <form (ngSubmit)="save()">
-    <p class="hint">
-      Sends the report as laid out now — its columns, filters and grouping — as an Excel
-      workbook, with your permissions at the time it runs.
-    </p>
+    <bb-info-tooltip text="Sends the report as laid out now — its columns, filters and grouping — as an Excel workbook, with your permissions at the time it runs."></bb-info-tooltip>
 
     <label>
       Subject
@@ -94,3 +91,4 @@
     <button class="btn btn-primary" type="submit" [disabled]="busy() || title.trim() === '' || chosen.size === 0">Schedule</button>
   </form>
 </div>
+

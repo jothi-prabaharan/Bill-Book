@@ -1,8 +1,5 @@
 <h1>Projects</h1>
-<p class="hint">
-  Jobs the branch does, for a client or for itself. Tag a journal or payment line with a project and
-  its ledger row counts towards what the job earned and cost.
-</p>
+<bb-info-tooltip text="Jobs the branch does, for a client or for itself. Tag a journal or payment line with a project and its ledger row counts towards what the job earned and cost."></bb-info-tooltip>
 
 @if (message(); as text) {
   <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
@@ -67,7 +64,7 @@
 
     <h3>Tasks</h3>
     @if (tasks().length === 0) {
-      <p class="hint">No tasks yet. Time will be logged against tasks.</p>
+      <bb-info-tooltip text="No tasks yet. Time will be logged against tasks."></bb-info-tooltip>
     }
     <ul class="sublist">
       @for (task of tasks(); track $index; let i = $index) {
@@ -132,7 +129,7 @@
     @if (editingId !== null) {
       <h3>Ledger</h3>
       @if (ledger().length === 0) {
-        <p class="hint">Nothing has been posted to this project yet.</p>
+        <bb-info-tooltip text="Nothing has been posted to this project yet."></bb-info-tooltip>
       } @else {
         <ul class="ledger">
           @for (row of ledger(); track row.ledgerId) {
@@ -189,4 +186,5 @@
     </ul>
   }
 }
+
 

@@ -348,7 +348,7 @@
           </div>
         </div>
       } @empty {
-        <p class="hint">No addresses yet. Place of supply falls back to the contact's own state.</p>
+        <bb-info-tooltip text="No addresses yet. Place of supply falls back to the contact's own state."></bb-info-tooltip>
       }
     }
 
@@ -427,10 +427,7 @@
         </div>
       }
 
-      <p class="hint">
-        Every contact needs at least one person, and exactly one of them is the default — invoices
-        and reminders go to that person's email or mobile, so one of the two is required.
-      </p>
+      <bb-info-tooltip text="Every contact needs at least one person, and exactly one of them is the default — invoices and reminders go to that person's email or mobile, so one of the two is required."></bb-info-tooltip>
     }
 
     @if (tab() === 'banking') {
@@ -501,10 +498,7 @@
           </div>
         </div>
       } @empty {
-        <p class="hint">
-          No payout accounts. These are the vendor's accounts — money we send out — not the
-          organization's own bank accounts, which live under Banking.
-        </p>
+        <bb-info-tooltip text="No payout accounts. These are the vendor's accounts — money we send out — not the organization's own bank accounts, which live under Banking."></bb-info-tooltip>
       }
     }
 
@@ -577,16 +571,13 @@
           </div>
         </div>
       } @empty {
-        <p class="hint">
-          No licences. A pharma distributor's drug licence belongs here — selling Schedule H stock
-          against a lapsed one is an offence, and nobody checks a date they cannot see.
-        </p>
+        <bb-info-tooltip text="No licences. A pharma distributor's drug licence belongs here — selling Schedule H stock against a lapsed one is an offence, and nobody checks a date they cannot see."></bb-info-tooltip>
       }
     }
 
     @if (tab() === 'documents') {
       @if (editingId() === null) {
-        <p class="hint">Save the contact first — a file has to be attached to something.</p>
+        <bb-info-tooltip text="Save the contact first — a file has to be attached to something."></bb-info-tooltip>
       } @else {
         <div class="fields">
           <div class="field">
@@ -694,6 +685,7 @@
 @if (rolesOpen()) {
   <bb-contact-person-roles-dialog (closed)="onRolesClosed()" />
 }
+
 
 
 

@@ -6,23 +6,11 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  How far back the books are closed, <strong>per role</strong>. The date is inclusive: closing
-  to 31 March means nothing posts on or before that day.
-</p>
+<bb-info-tooltip text="How far back the books are closed, per role. The date is inclusive: closing to 31 March means nothing posts on or before that day."></bb-info-tooltip>
 
-<p class="hint">
-  It is a soft close, and per role for a reason — a month is usually shut to everyone who keys
-  documents while staying open to whoever has to make the adjusting entries the close itself
-  produced. One date for the whole branch would close the books on the person doing the
-  closing.
-</p>
+<bb-info-tooltip text="It is a soft close, and per role for a reason — a month is usually shut to everyone who keys documents while staying open to whoever has to make the adjusting entries the close itself produced. One date for the whole branch would close the books on the person doing the closing."></bb-info-tooltip>
 
-<p class="hint">
-  <strong>A role with no date is not closed at all.</strong> What is refused is anything that
-  reaches or leaves the ledger — posting, reversing, voiding — never the keying. Somebody
-  catching up on last month's paperwork can still type it, and finds out when they post.
-</p>
+<bb-info-tooltip text="A role with no date is not closed at all. What is refused is anything that reaches or leaves the ledger � posting, reversing, voiding � never the keying."></bb-info-tooltip>
 
 @if (mine(); as my) {
   @if (my.lockedUpto) {
@@ -82,5 +70,7 @@
     }
   </ng-template>
 </bb-data-grid>
+
+
 
 

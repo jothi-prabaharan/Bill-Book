@@ -35,6 +35,7 @@ import {
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 /** The kind of custom field each printable document type carries (TK-112), as the server maps it. */
 const CUSTOM_FIELD_KINDS: Record<string, string> = {
@@ -72,7 +73,7 @@ const CUSTOM_FIELD_KINDS: Record<string, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-print-templates-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     MessageBoxComponent,
     SelectComponent,
     TextInputComponent, FormsModule],

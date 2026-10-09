@@ -9,11 +9,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  Each branch is a complete set of books — its own items, contacts, stock, chart of accounts and
-  numbering. Nothing crosses between them. They share this account's database and are separated
-  by organization, so adding one costs no new database.
-</p>
+<bb-info-tooltip text="Each branch is a complete set of books — its own items, contacts, stock, chart of accounts and numbering. Nothing crosses between them. They share this account's database and are separated by organization, so adding one costs no new database."></bb-info-tooltip>
 
 <bb-data-grid fillHeight [gridCode]="'ORGANIZATIONS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="orgCode" let-row>
@@ -80,11 +76,7 @@
     <h2>{{ editingId() === '' ? 'New branch' : 'Edit branch' }}</h2>
 
     @if (editingId() === '') {
-      <p class="hint">
-        A new branch starts empty and is set up as it is created — chart of accounts, GST rates,
-        numbering series, payment terms, units and purities. It stays unusable until that
-        finishes, rather than opening with no books behind it.
-      </p>
+      <bb-info-tooltip text="A new branch starts empty and is set up as it is created — chart of accounts, GST rates, numbering series, payment terms, units and purities. It stays unusable until that finishes, rather than opening with no books behind it."></bb-info-tooltip>
     }
 
     <div class="fields">
@@ -206,5 +198,6 @@
     </div>
   </div>
 }
+
 
 

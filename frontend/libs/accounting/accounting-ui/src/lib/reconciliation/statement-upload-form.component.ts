@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MessageBoxComponent } from '@bill-book/ui-components';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 /**
  * Import a bank statement file against an account.
@@ -13,7 +14,7 @@ import { MessageBoxComponent } from '@bill-book/ui-components';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-statement-upload-form',
   standalone: true,
-  imports: [MessageBoxComponent],
+  imports: [InfoTooltipComponent, MessageBoxComponent],
   templateUrl: './statement-upload-form.component.html',
   styleUrl: './statement-upload-form.component.scss',
 })

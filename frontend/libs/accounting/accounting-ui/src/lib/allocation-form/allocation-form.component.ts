@@ -7,6 +7,7 @@ import {
   NumberInputComponent,
 } from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 export interface OutstandingBalanceView {
   contactId: number;
@@ -24,7 +25,7 @@ export interface OutstandingBalanceView {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-allocation-form',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     CommonModule,
     FormsModule,
     NumberInputComponent,

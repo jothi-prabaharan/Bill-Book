@@ -13,6 +13,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface Purity {
   metalPurityId: number;
@@ -34,7 +35,7 @@ interface Purity {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-metal-purities-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     DataGridCellTemplateDirective,
     FormsModule,

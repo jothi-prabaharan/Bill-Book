@@ -1,3 +1,4 @@
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import {
   ColumnDef,
@@ -26,7 +27,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-gstr2b-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     CommonModule,
     RouterModule,
     FileInputComponent,
@@ -150,3 +151,5 @@ export class Gstr2bPage implements OnInit {
     return `${view.returnPeriod.slice(0, 2)}/${view.returnPeriod.slice(2)}`;
   }
 }
+
+

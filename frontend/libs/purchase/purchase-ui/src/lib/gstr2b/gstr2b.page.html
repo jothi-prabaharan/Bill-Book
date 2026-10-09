@@ -13,11 +13,7 @@
       />
 </header>
 
-<p class="hint">
-  Download GSTR-2B for a month from the GST portal as JSON and import it. Each supplier invoice is
-  matched to a posted bill by the supplier's GSTIN and invoice number, ignoring case, separators
-  and leading zeros where needed.
-</p>
+<bb-info-tooltip text="Download GSTR-2B for a month from the GST portal as JSON and import it. Each supplier invoice is matched to a posted bill by the supplier's GSTIN and invoice number, ignoring case, separators and leading zeros where needed."></bb-info-tooltip>
 
 @if (message(); as failure) {
   <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
@@ -54,7 +50,7 @@
 
   @for (g of groups; track g.state) {
     @if (group() === g.state) {
-      <p class="hint">{{ g.hint }}</p>
+      <bb-info-tooltip text="{{ g.hint }}"></bb-info-tooltip>
     }
   }
 
@@ -97,4 +93,5 @@
 } @else if (!busy()) {
   <p class="empty">No GSTR-2B imported yet.</p>
 }
+
 

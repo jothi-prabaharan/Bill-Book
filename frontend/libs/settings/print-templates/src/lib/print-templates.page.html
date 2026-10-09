@@ -24,10 +24,7 @@
       <h2 class="pt-section">{{ documentTypeName() }}</h2>
 
       @if (templates().length === 0) {
-        <p class="hint">
-          This branch has no template for this document type yet, so it prints with the standard
-          layout.
-        </p>
+        <bb-info-tooltip text="This branch has no template for this document type yet, so it prints with the standard layout."></bb-info-tooltip>
       }
 
       <ul class="pt-templates">
@@ -74,7 +71,7 @@
       @if (canEdit() && detail()) {
         <section class="pt-fields" aria-label="Insert field">
           <h2 class="pt-section mt-3">Insert field</h2>
-          <p class="hint">Goes into the band you last clicked in, at the cursor.</p>
+          <bb-info-tooltip text="Goes into the band you last clicked in, at the cursor."></bb-info-tooltip>
 
           @for (group of placeholders(); track group.group) {
             <details class="pt-group" [open]="$first">
@@ -205,3 +202,4 @@
     }
   </div>
 </div>
+

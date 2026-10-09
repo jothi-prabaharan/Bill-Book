@@ -12,6 +12,7 @@ import {
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { ExchangeRateRow, MetalRateRow, RatesService } from './rates.service';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 function today(): string {
   const now = new Date();
@@ -31,7 +32,7 @@ function today(): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-rates-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     SelectComponent,
     TextInputComponent,

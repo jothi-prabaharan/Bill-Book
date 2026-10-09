@@ -60,11 +60,12 @@ const TIMER_KEY = 'bb.timesheet.timer';
  * An entry that has been billed is locked: the invoice that billed it has to
  * be voided first.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-timesheet-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     SelectComponent,
     NumberInputComponent,

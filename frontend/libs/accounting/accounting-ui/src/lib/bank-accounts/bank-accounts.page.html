@@ -14,10 +14,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  Each account has its own ledger account, created automatically. Balances come from the ledger —
-  nothing here stores one.
-</p>
+<bb-info-tooltip text="Each account has its own ledger account, created automatically. Balances come from the ledger — nothing here stores one."></bb-info-tooltip>
 
 <bb-data-grid fillHeight [gridCode]="'BANK_ACCOUNTS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="handle" let-row>
@@ -106,7 +103,7 @@
 @if (editingId() !== null) {
   <div class="sheet">
     <h2>{{ editingId() === 0 ? 'New bank account' : 'Edit bank account' }}</h2>
-    <p class="hint">{{ ledgerNote }}</p>
+    <bb-info-tooltip text="{{ ledgerNote }}"></bb-info-tooltip>
 
     <div class="fields">
       <div class="field">
@@ -188,4 +185,5 @@
     </div>
   </div>
 }
+
 

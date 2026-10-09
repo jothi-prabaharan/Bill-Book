@@ -79,8 +79,8 @@ export const SHELL_SCREENS: readonly ShellScreen[] = [
   { label: 'Reconciliation', path: '/accounting/reconciliation', group: 'Accounts', module: 'accounting' },
 
   { label: 'Reports', path: '/reports', group: 'Reports', module: null },
-  { label: 'Profit and loss', path: '/reports/statements/profit-and-loss', group: 'Reports', module: null },
-  { label: 'Balance sheet', path: '/reports/statements/balance-sheet', group: 'Reports', module: null },
+  { label: 'Profit and loss', path: '/reports/profit-and-loss', group: 'Reports', module: null },
+  { label: 'Balance sheet', path: '/reports/balance-sheet', group: 'Reports', module: null },
 
   { label: 'Organization', path: '/settings/organization', group: 'Settings', module: 'settings' },
   { label: 'Branches', path: '/settings/branches', group: 'Settings', module: 'settings' },

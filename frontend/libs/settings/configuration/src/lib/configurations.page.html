@@ -1,8 +1,5 @@
 <h1>Configuration</h1>
-<p class="hint">
-  Values apply to this organization. A changed value shows as overridden; resetting returns
-  it to the shipped default.
-</p>
+<bb-info-tooltip text="Values apply to this organization. A changed value shows as overridden; resetting returns it to the shipped default."></bb-info-tooltip>
 
 @if (error(); as failure) {
   <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
@@ -60,4 +57,5 @@
 } @empty {
   <p>No configuration keys.</p>
 }
+
 

@@ -9,6 +9,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface SmtpSettings {
   smtpSettingsId: string | null;
@@ -33,7 +34,7 @@ interface SmtpSettings {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-smtp-settings-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     TextInputComponent,
     NumberInputComponent,

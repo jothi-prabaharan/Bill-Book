@@ -43,10 +43,7 @@
   ></button>
   <section class="convert-sheet" role="dialog" aria-label="Convert lead">
     <h3>Convert {{ lead.name }}</h3>
-    <p class="hint">
-      A lead becomes a contact either by creating a new one from its own details,
-      or by linking one that already exists.
-    </p>
+    <bb-info-tooltip text="A lead becomes a contact either by creating a new one from its own details, or by linking one that already exists."></bb-info-tooltip>
 
     <div class="convert-actions">
       <button
@@ -83,4 +80,5 @@
 @if (showForm()) {
   <bb-lead-form (saved)="onSaved()" (cancelled)="showForm.set(false)"></bb-lead-form>
 }
+
 

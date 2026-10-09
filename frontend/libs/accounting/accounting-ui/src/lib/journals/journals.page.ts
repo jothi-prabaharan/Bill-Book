@@ -93,11 +93,12 @@ interface LineForm {
  * with a save button — an entry is wrong until it is zero, and finding that out
  * at save time means finding it out after the typing is done.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-journals-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     EditHistoryComponent,
     DataGridComponent,
     DecimalPipe,

@@ -59,8 +59,6 @@
   <button class="btn btn-primary" type="button" (click)="add()" [disabled]="busy() || !newRoleName.trim()">Add</button>
 </div>
 
-<p class="hint">
-  A role that people already hold cannot be deleted — make it inactive instead, so existing
-  contacts keep it and their history still reads correctly.
-</p>
+<bb-info-tooltip text="A role that people already hold cannot be deleted — make it inactive instead, so existing contacts keep it and their history still reads correctly."></bb-info-tooltip>
+
 

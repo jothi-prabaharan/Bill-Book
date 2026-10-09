@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { SessionContextService } from '@bill-book/auth';
 import { EditLogArea, EditLogReportComponent } from '@bill-book/ui-components';
 import { auditAreasFor } from './audit-areas';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 /**
  * Settings › Audit log (TK-118): every change the edit log holds, one
@@ -12,7 +13,7 @@ import { auditAreasFor } from './audit-areas';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-audit-log-page',
   standalone: true,
-  imports: [EditLogReportComponent],
+  imports: [InfoTooltipComponent, EditLogReportComponent],
   templateUrl: './audit-log.page.html',
   styleUrl: './audit-log.page.scss',
 })

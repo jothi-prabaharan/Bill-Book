@@ -31,11 +31,12 @@ import {
  * The size can be changed here to match the branch's own roll, and saved for
  * the next time.
  */
+import { InfoTooltipComponent } from '../info-tooltip/info-tooltip.component';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-label-print-dialog',
   standalone: true,
-  imports: [FormsModule, SelectComponent, CheckboxComponent, NumberInputComponent, MessageBoxComponent],
+  imports: [InfoTooltipComponent, FormsModule, SelectComponent, CheckboxComponent, NumberInputComponent, MessageBoxComponent],
   templateUrl: './label-print.dialog.html',
   styleUrl: './label-print.dialog.scss',
 })

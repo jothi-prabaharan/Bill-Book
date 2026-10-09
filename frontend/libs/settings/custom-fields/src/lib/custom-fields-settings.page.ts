@@ -39,11 +39,12 @@ import {
  * Reading needs `settings.view`; saving needs `settings.edit`, which the API
  * checks regardless.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-custom-fields-settings-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, CheckboxComponent, CustomFieldsComponent],
+  imports: [InfoTooltipComponent, FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, CheckboxComponent, CustomFieldsComponent],
   templateUrl: './custom-fields-settings.page.html',
   styleUrl: './custom-fields-settings.page.scss',
 })

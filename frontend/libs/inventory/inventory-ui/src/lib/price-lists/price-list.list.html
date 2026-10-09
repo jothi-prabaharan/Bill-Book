@@ -9,9 +9,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  Create multiple price tiers (e.g. Retail, Wholesale) and assign them to specific customers.
-</p>
+<bb-info-tooltip text="Create multiple price tiers (e.g. Retail, Wholesale) and assign them to specific customers."></bb-info-tooltip>
 
 <bb-data-grid fillHeight [gridCode]="'PRICE_LISTS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="name" let-row>
@@ -53,4 +51,5 @@
     </div>
   </div>
 }
+
 

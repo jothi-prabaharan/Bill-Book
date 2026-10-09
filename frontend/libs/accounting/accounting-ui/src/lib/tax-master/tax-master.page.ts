@@ -38,11 +38,12 @@ type Mode = 'create' | 'revise' | 'rename';
  * that applied then. Renaming is separate, because it is display-only and
  * therefore allowed on seeded rates.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-tax-master-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     BranchDateInputComponent,

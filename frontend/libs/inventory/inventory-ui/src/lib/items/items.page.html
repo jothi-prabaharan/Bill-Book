@@ -269,11 +269,7 @@
     }
 
     @if (tab() === 'units') {
-      <p class="hint">
-        All four must belong to the same unit type — that is what makes them convertible. Stock and
-        cost are held in the inventory unit, and it sets quantity precision
-        ({{ inventoryDecimals() }} decimals).
-      </p>
+      <bb-info-tooltip text="All four must belong to the same unit type — that is what makes them convertible. Stock and cost are held in the inventory unit, and it sets quantity precision ({{ inventoryDecimals() }} decimals)."></bb-info-tooltip>
 
       <div class="fields">
         <div class="field">
@@ -399,10 +395,7 @@
     }
 
     @if (tab() === 'profile' && form.itemProfile === 'Jewellery' && form.jewellery) {
-      <p class="hint">
-        These are the nominal design values. Each physical piece records its own weights and its
-        HUID against its serial number.
-      </p>
+      <bb-info-tooltip text="These are the nominal design values. Each physical piece records its own weights and its HUID against its serial number."></bb-info-tooltip>
 
       <div class="fields">
         <div class="field">
@@ -593,7 +586,7 @@
           </div>
         </div>
       } @empty {
-        <p class="hint">No barcodes. One scan must resolve to one item, so each code is unique.</p>
+        <bb-info-tooltip text="No barcodes. One scan must resolve to one item, so each code is unique."></bb-info-tooltip>
       }
     }
 
@@ -616,4 +609,5 @@
 @if (labelsOpen(); as job) {
   <bb-label-print-dialog [labels]="job.labels" [kind]="job.kind" (closed)="labelsOpen.set(null)" />
 }
+
 

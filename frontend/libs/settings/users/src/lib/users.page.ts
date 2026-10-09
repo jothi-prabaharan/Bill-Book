@@ -11,6 +11,7 @@ import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface UserRow {
   userId: string;
@@ -38,7 +39,7 @@ interface RoleOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-users-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     DatePipe,

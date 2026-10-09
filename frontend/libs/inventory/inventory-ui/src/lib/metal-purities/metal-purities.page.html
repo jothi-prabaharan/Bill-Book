@@ -21,10 +21,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  The factor is the fraction of pure metal — 22K is 0.9160. It multiplies the pure-metal rate to
-  price a piece, so it is fixed once an item uses it.
-</p>
+<bb-info-tooltip text="The factor is the fraction of pure metal — 22K is 0.9160. It multiplies the pure-metal rate to price a piece, so it is fixed once an item uses it."></bb-info-tooltip>
 
 <bb-data-grid fillHeight [gridCode]="'METAL_PURITIES'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="handle" let-row>
@@ -94,4 +91,5 @@
     </div>
   </div>
 }
+
 

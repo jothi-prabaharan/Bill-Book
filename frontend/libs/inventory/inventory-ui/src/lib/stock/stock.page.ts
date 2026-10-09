@@ -21,6 +21,7 @@ import { addSerial, batchFromScan } from '../stock-adjustments/stock-scan';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface StockPosition {
   itemId: number;
@@ -158,7 +159,7 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     DataGridCellTemplateDirective,
     FormsModule,

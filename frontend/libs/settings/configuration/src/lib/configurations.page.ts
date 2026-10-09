@@ -10,6 +10,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface ConfigurationRow {
   code: string;
@@ -31,7 +32,7 @@ interface ConfigurationRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-configurations-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     BranchDateInputComponent,
     TextInputComponent,

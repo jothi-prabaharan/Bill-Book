@@ -1,8 +1,5 @@
 <h1>Budgets</h1>
-<p class="hint">
-  A budget is a year of monthly amounts per account. Enter income and expenses as positive figures. Once a budget is
-  approved it is locked, and changing it means revising it, which makes a new draft.
-</p>
+<bb-info-tooltip text="A budget is a year of monthly amounts per account. Enter income and expenses as positive figures. Once a budget is approved it is locked, and changing it means revising it, which makes a new draft."></bb-info-tooltip>
 
 @if (message(); as text) {
   <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
@@ -47,10 +44,7 @@
           <bb-number-input label="Expenses by %" name="expensePercent" [(ngModel)]="form.expensePercent" />
         </div>
       </div>
-      <p class="hint">
-        +10 plans ten percent more than the source. An income or expense figure overrides the general one for that
-        type.
-      </p>
+      <bb-info-tooltip text="+10 plans ten percent more than the source. An income or expense figure overrides the general one for that type."></bb-info-tooltip>
     }
     <bb-checkbox text="Budget by project" name="byProject" [(ngModel)]="form.byProject" />
     <div class="actions">
@@ -86,3 +80,4 @@
     }
   </ul>
 }
+

@@ -14,10 +14,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<p class="hint">
-  Stock is one shared pool across every warehouse — these are locations for movements and
-  reporting, not separate stock or separate costs.
-</p>
+<bb-info-tooltip text="Stock is one shared pool across every warehouse — these are locations for movements and reporting, not separate stock or separate costs."></bb-info-tooltip>
 
 <bb-data-grid fillHeight [gridCode]="'WAREHOUSES'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="handle" let-row>
@@ -120,4 +117,5 @@
     </div>
   </div>
 }
+
 

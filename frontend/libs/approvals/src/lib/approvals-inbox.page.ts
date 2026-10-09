@@ -30,11 +30,12 @@ type Move = 'Approve' | 'Reject' | 'SendBack';
  * A source the user cannot read is left out without a word; one that fails
  * for another reason is named, so a missing document is never a silent one.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-approvals-inbox-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     RouterLink,
     MessageBoxComponent,

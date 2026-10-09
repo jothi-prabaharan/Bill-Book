@@ -62,11 +62,12 @@ type FormModel = Omit<
  * than as a field on the form, since it is the one edit that can collide with
  * codes already issued.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-numbering-series-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,

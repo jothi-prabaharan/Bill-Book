@@ -19,10 +19,12 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
  * Error beats hint, rather than both showing: two lines of small print under a
  * field is where people stop reading the one that matters.
  */
+import { InfoTooltipComponent } from '../../info-tooltip/info-tooltip.component';
+
 @Component({
   selector: 'bb-form-field',
   standalone: true,
-  imports: [],
+  imports: [InfoTooltipComponent],
   templateUrl: './form-field.component.html',
   styleUrl: './form-field.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

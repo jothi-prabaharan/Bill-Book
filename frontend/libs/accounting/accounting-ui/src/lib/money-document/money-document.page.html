@@ -262,20 +262,9 @@
     </div>
 
     @if (unallocated > 0) {
-      <p class="hint">
-        {{ unallocated | number: '1.2-2' }} is not yet accounted for. An excess over what was owed
-        is an overpayment: recorded as one it sits in this contact's overpayment balance, where it
-        can be seen and refunded. Left on the settled line it turns their balance the other way up
-        instead, and every aging report reads it as trade.
-        <button type="button" class="link" (click)="addOverpayment()">
-          Add {{ unallocated | number: '1.2-2' }} as {{ overpaymentLabel.toLowerCase() }}
-        </button>
-      </p>
+      <div style="margin-top: 4px;"><button type="button" class="link" (click)="addOverpayment()">Add {{ unallocated | number: '1.2-2' }} as {{ overpaymentLabel.toLowerCase() }}</button> <bb-info-tooltip text="{{ unallocated | number: '1.2-2' }} is not yet accounted for. An excess over what was owed is an overpayment: recorded as one it sits in this contact's overpayment balance, where it can be seen and refunded. Left on the settled line it turns their balance the other way up instead, and every aging report reads it as trade."></bb-info-tooltip></div>
     } @else if (unallocated < 0) {
-      <p class="hint">
-        The lines add up to {{ allocated | number: '1.2-2' }}, more than the
-        {{ amount || 0 | number: '1.2-2' }} that moved.
-      </p>
+      <bb-info-tooltip text="The lines add up to {{ allocated | number: '1.2-2' }}, more than the {{ amount || 0 | number: '1.2-2' }} that moved."></bb-info-tooltip>
     }
 
     @if (direction() === 'spend' && advanceTotal > 0) {
@@ -453,5 +442,7 @@
   (save)="onAllocate($event)"
   (dismiss)="closeAllocate()"
 ></bb-allocation-modal>
+
+
 
 

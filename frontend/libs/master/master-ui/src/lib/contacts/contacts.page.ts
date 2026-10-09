@@ -220,11 +220,12 @@ interface PortalAccessState {
   expiresAt: string | null;
 }
 
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     EditHistoryComponent,
     DatePipe,
     DataGridComponent,

@@ -4,10 +4,7 @@
     <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
   </header>
 
-  <p class="hint">
-    Saves the columns, filters, grouping and sorting on screen. The report reads this
-    dataset, so anyone who opens it needs the same permission the dataset does.
-  </p>
+  <bb-info-tooltip text="Saves the columns, filters, grouping and sorting on screen. The report reads this dataset, so anyone who opens it needs the same permission the dataset does."></bb-info-tooltip>
 
   @if (message(); as failure) {
     <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
@@ -35,3 +32,4 @@
     </button>
   </form>
 </div>
+

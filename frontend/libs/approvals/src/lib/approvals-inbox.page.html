@@ -1,8 +1,5 @@
 <h1>Waiting for me</h1>
-<p class="hint">
-  Documents waiting on your approval, from every part of the product, oldest first. Open one to read
-  it in full before you decide.
-</p>
+<bb-info-tooltip text="Documents waiting on your approval, from every part of the product, oldest first. Open one to read it in full before you decide."></bb-info-tooltip>
 
 @if (message(); as text) {
   <p class="ok">{{ text }}</p>
@@ -16,7 +13,7 @@
 }
 
 @if (loading()) {
-  <p class="hint">Loading…</p>
+  <bb-info-tooltip text="Loading…"></bb-info-tooltip>
 } @else if (items().length === 0) {
   <p class="empty">Nothing is waiting for you.</p>
 } @else {
@@ -56,3 +53,4 @@
     }
   </ul>
 }
+

@@ -228,11 +228,7 @@
 </div>
 
 @if (equityPlug !== 0) {
-  <p class="hint">
-    Opening Balance Equity would be left holding {{ equityPlug | number: '1.2-2' }}. It has to reach
-    nothing: that figure is the part of the position not yet keyed, and it is usually capital or
-    retained earnings. The books cannot open until it does.
-  </p>
+  <bb-info-tooltip text="Opening Balance Equity would be left holding {{ equityPlug | number: '1.2-2' }}. It has to reach nothing: that figure is the part of the position not yet keyed, and it is usually capital or retained earnings. The books cannot open until it does."></bb-info-tooltip>
 }
 
 @if (readiness(); as r) {
@@ -267,11 +263,7 @@
       </span>
     </h2>
 
-    <p class="hint">
-      Each control account against the sum of the balances beneath it. They have to
-      agree: a balance on a control account with nobody underneath it is money owed
-      by no one, and the trial balance would never notice.
-    </p>
+    <bb-info-tooltip text="Each control account against the sum of the balances beneath it. They have to agree: a balance on a control account with nobody underneath it is money owed by no one, and the trial balance would never notice."></bb-info-tooltip>
 
     <bb-data-grid [gridCode]="'OPENING_BALANCE_TIE'" [columns]="tieColumns" [data]="t.rows">
       <ng-template bbCellTemplate="controlAccount" let-row>
@@ -315,5 +307,6 @@
     </button>
   </div>
 }
+
 
 

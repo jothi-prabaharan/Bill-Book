@@ -15,6 +15,7 @@ import {
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { ProjectListItem } from './project-options';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface ProjectTask {
   projectTaskId: number | null;
@@ -85,7 +86,7 @@ interface ContactOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-projects-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, BranchDateInputComponent, CheckboxComponent],
+  imports: [InfoTooltipComponent, FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, BranchDateInputComponent, CheckboxComponent],
   templateUrl: './projects.page.html',
   styleUrl: './projects.page.scss',
 })

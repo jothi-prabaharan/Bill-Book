@@ -39,11 +39,12 @@ interface UomType {
  * independent. Changing a category's default never rewrites existing items:
  * that would restate costing on stock already held.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-item-categories-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,

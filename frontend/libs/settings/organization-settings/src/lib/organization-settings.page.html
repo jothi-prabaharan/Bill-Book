@@ -2,10 +2,7 @@
   <h1>Organization</h1>
 </div>
 
-<p class="hint">
-  The branch you are signed in to. Switch branches from Settings › Branches to
-  edit a different one.
-</p>
+<bb-info-tooltip text="The branch you are signed in to. Switch branches from Settings › Branches to edit a different one."></bb-info-tooltip>
 
 @if (error(); as message) {
   <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
@@ -216,11 +213,7 @@
     </div>
 
     <h3>Documents</h3>
-    <p class="hint">
-      These three decide how every invoice and bill is built. Like the base currency
-      they are <strong>set once</strong> — they stay editable until this branch posts
-      its first sales or purchase document, and are fixed after that.
-    </p>
+    <bb-info-tooltip text="These three decide how every invoice and bill is built. Like the base currency they are set once � they stay editable until this branch posts its first sales or purchase document, and are fixed after that."></bb-info-tooltip>
 
     <div class="grid">
       <div class="field">
@@ -270,10 +263,7 @@
       </div>
     </div>
 
-    <p class="hint">
-      Which currencies this branch trades in is set on Settings › Currencies;
-      number formats and default terms on Settings › Configuration.
-    </p>
+    <bb-info-tooltip text="Which currencies this branch trades in is set on Settings › Currencies; number formats and default terms on Settings › Configuration."></bb-info-tooltip>
   }
 
   <div class="sheet-actions">
@@ -283,7 +273,10 @@
     }
   </div>
 } @else if (!loaded() && !busy()) {
-  <p class="hint">Nothing to show.</p>
+  <bb-info-tooltip text="Nothing to show."></bb-info-tooltip>
 }
+
+
+
 
 

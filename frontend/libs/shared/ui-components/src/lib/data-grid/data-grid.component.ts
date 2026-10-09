@@ -1,4 +1,4 @@
-﻿import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import {
   Component,
   Input,
@@ -412,7 +412,7 @@ export class DataGridComponent implements OnInit {
     if (total === 0) return '0 records';
     const start = (page - 1) * size + 1;
     const end = Math.min(page * size, total);
-    return `${start}â€“${end} of ${total} records`;
+    return `${start}–${end} of ${total} records`;
   });
 
   prevPage() {

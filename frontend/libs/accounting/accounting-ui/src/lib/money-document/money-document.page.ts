@@ -168,11 +168,12 @@ interface LineForm {
  * one there is no sub-ledger to point at, and a payment against the bare control
  * account is exactly the posting that makes a contact statement stop tying.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-money-document-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     DecimalPipe,
     FormsModule,

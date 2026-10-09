@@ -90,3 +90,4 @@ export * from './lib/motion/motion.config';
 export * from './lib/motion/motion.service';
 export * from './lib/motion/tilt.directive';
 export * from './lib/motion/route-motion.directive';
+export * from './lib/info-tooltip/info-tooltip.component';

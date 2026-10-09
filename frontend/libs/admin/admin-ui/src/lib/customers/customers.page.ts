@@ -12,6 +12,7 @@ import {
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { BUSINESS_TYPES, Currency } from '@bill-book/auth';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface CustomerListItem {
   customerId: string;
@@ -82,7 +83,7 @@ interface CreateCustomerForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-customers-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,

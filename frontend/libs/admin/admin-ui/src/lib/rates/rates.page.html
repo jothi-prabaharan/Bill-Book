@@ -6,11 +6,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()" role="status">{{ message() }}</p>
 }
 
-<p class="hint">
-  Every customer's documents read these rates, so only an operator enters them. A rate entered for
-  a date is used for that date and every later one until a newer rate is entered. A rate entered
-  here outranks a fetched one on the same date.
-</p>
+<bb-info-tooltip text="Every customer's documents read these rates, so only an operator enters them. A rate entered for a date is used for that date and every later one until a newer rate is entered. A rate entered here outranks a fetched one on the same date."></bb-info-tooltip>
 
 <section class="panel" aria-labelledby="exchange-heading">
   <h2 id="exchange-heading">Exchange rates</h2>
@@ -76,5 +72,6 @@
     </ng-template>
   </bb-data-grid>
 </section>
+
 
 

@@ -36,10 +36,11 @@ export interface ApiClientRole {
  * key is shown once, when it is made; afterwards only its name, role and last
  * use are.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   selector: 'bb-api-clients-list',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     TextInputComponent,
     SelectComponent,

@@ -12,6 +12,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 type TermType = 'DueOnReceipt' | 'Net' | 'EndOfMonth' | 'DayOfNextMonth';
 
@@ -58,7 +59,7 @@ type FormModel = Pick<
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-payment-terms-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,

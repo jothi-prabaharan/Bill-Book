@@ -1,8 +1,5 @@
 <h1>Approval workflows</h1>
-<p class="hint">
-  Which documents and requests need approval, and who approves them, level by level. A request no
-  workflow covers is approved or posted as usual.
-</p>
+<bb-info-tooltip text="Which documents and requests need approval, and who approves them, level by level. A request no workflow covers is approved or posted as usual."></bb-info-tooltip>
 
 @if (message(); as text) {
   <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
@@ -37,10 +34,7 @@
     </div>
 
     <h2>Levels</h2>
-    <p class="hint">
-      Levels run top to bottom. Drag one by its handle, or use its arrows, to reorder. A level with an
-      amount applies only to requests above it.
-    </p>
+    <bb-info-tooltip text="Levels run top to bottom. Drag one by its handle, or use its arrows, to reorder. A level with an amount applies only to requests above it."></bb-info-tooltip>
 
     <ol class="levels" cdkDropList [cdkDropListDisabled]="!canEdit()" (cdkDropListDropped)="dropped($event)">
       @for (level of levels(); track $index; let i = $index; let last = $last) {
@@ -152,4 +146,5 @@
     </ul>
   }
 }
+
 

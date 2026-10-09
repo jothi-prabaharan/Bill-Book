@@ -15,6 +15,7 @@ import {
 } from '@bill-book/ui-components';
 import { BudgetListItem } from './budget.models';
 import { yearLabel } from './budget-math';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface CreateForm {
   name: string;
@@ -36,7 +37,7 @@ interface CreateForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-budgets-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, CheckboxComponent],
+  imports: [InfoTooltipComponent, FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, CheckboxComponent],
   templateUrl: './budgets.page.html',
   styleUrl: './budgets.page.scss',
 })

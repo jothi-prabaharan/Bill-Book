@@ -21,10 +21,10 @@
   >
     @if (selectedFile(); as file) {
       <p class="chosen">{{ file.name }}</p>
-      <p class="hint">Click to choose a different file.</p>
+      <bb-info-tooltip text="Click to choose a different file."></bb-info-tooltip>
     } @else {
       <p>Drop a CSV or Excel statement here, or click to choose one.</p>
-      <p class="hint">The layout is remembered per account after the first import.</p>
+      <bb-info-tooltip text="The layout is remembered per account after the first import."></bb-info-tooltip>
     }
   </button>
 
@@ -43,3 +43,4 @@
     </button>
   </div>
 </section>
+

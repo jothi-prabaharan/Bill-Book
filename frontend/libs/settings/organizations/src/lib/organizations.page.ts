@@ -12,6 +12,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CheckboxComponent } from '@bill-book/ui-components';
 import { AuthService, Currency, ADD_ONS, BUSINESS_TYPES, isAddOnAllowed } from '@bill-book/auth';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface Organization {
   orgId: string;
@@ -63,7 +64,7 @@ type OrganizationForm = Omit<
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organizations-page',
   standalone: true,
-  imports: [CheckboxComponent, 
+  imports: [InfoTooltipComponent, CheckboxComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,

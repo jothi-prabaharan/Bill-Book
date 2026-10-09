@@ -11,6 +11,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface HsnSacCode {
   hsnSacCodeId: number;
@@ -60,7 +61,7 @@ const PAGE_SIZE = 50;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-hsn-sac-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     SearchInputComponent,

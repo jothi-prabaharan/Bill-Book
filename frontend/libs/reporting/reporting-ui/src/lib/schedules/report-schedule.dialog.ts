@@ -25,11 +25,12 @@ import {
  * Each run uses the owner's permissions as they are then, so a schedule whose
  * owner loses access sends nothing and says so under **Last run**.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-schedule-dialog',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     TextInputComponent,
     CheckboxComponent,

@@ -52,11 +52,12 @@ import {
  *
  * At ~360px it becomes a full-screen sheet, per the house rule for modals.
  */
+import { InfoTooltipComponent } from '../info-tooltip/info-tooltip.component';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-allocation-modal',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     ReactiveFormsModule,
     AllocationGridComponent,
     MessageBoxComponent,

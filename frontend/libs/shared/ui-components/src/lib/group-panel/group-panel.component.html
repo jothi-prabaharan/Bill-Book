@@ -2,7 +2,7 @@
   <span class="label">Grouped by</span>
 
   @if (levels().length === 0) {
-    <span class="hint">nothing</span>
+    <bb-info-tooltip text="nothing"></bb-info-tooltip>
   } @else {
     <ol cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="reorder($event)">
       @for (column of levels(); track column.key) {
@@ -32,10 +32,11 @@
       </select>
     </label>
   } @else if (isFull()) {
-    <span class="hint">Three levels is the limit.</span>
+    <bb-info-tooltip text="Three levels is the limit."></bb-info-tooltip>
   }
 
   @if (levels().length > 0) {
     <button type="button" class="btn btn-ghost" (click)="clear()">Clear</button>
   }
 </div>
+

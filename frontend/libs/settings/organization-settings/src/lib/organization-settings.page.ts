@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CheckboxComponent } from '@bill-book/ui-components';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface StateRow {
   stateId: number;
@@ -91,7 +92,7 @@ const MONTHS = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organization-settings-page',
   standalone: true,
-  imports: [CheckboxComponent, 
+  imports: [InfoTooltipComponent, CheckboxComponent, 
     FormsModule,
     TextInputComponent,
     SelectComponent,

@@ -11,6 +11,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface Warehouse {
   warehouseId: number;
@@ -42,7 +43,7 @@ interface Warehouse {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-warehouses-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,

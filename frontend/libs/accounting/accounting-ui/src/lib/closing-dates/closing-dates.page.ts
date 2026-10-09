@@ -49,11 +49,12 @@ interface Row {
  * everyone who keys documents while staying open to whoever has to make the
  * adjusting entries the close itself produced.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-closing-dates-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     BranchDateInputComponent,

@@ -5,6 +5,7 @@ import {
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { StatementUploadFormComponent } from './statement-upload-form.component';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface LedgerMatch {
   journalLedgerId: number;
@@ -41,7 +42,7 @@ interface StatementLine {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-reconciliation-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DatePipe,
     DecimalPipe,
     StatementUploadFormComponent,

@@ -10,6 +10,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface Unit {
   uomId: number;
@@ -49,7 +50,7 @@ interface UomType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-unit-types-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     DataGridComponent,
     FormsModule,
     TextInputComponent,

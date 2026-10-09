@@ -34,10 +34,7 @@
       <button class="btn btn-primary" type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
       <button type="button" class="link" (click)="inviting.set(false)">Cancel</button>
     </div>
-    <p class="hint">
-      They will receive an email with a link to set their own password. No temporary
-      password is created.
-    </p>
+    <bb-info-tooltip text="They will receive an email with a link to set their own password. No temporary password is created."></bb-info-tooltip>
   </form>
 }
 
@@ -65,4 +62,5 @@
     }
   </ng-template>
 </bb-data-grid>
+
 

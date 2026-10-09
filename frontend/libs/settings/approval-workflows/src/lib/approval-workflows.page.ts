@@ -45,11 +45,12 @@ interface UserRow {
  * Anyone with `settings.view` can read the page; saving needs `settings.edit`,
  * which the API checks regardless.
  */
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-approval-workflows-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     CdkDropList,
     CdkDrag,

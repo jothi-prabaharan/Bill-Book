@@ -1,3 +1,4 @@
+import { InfoTooltipComponent } from '@bill-book/ui-components';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -122,7 +123,7 @@ const MATCH_LABELS: Record<Form26asLineRow['matchState'], string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-tds-page',
   standalone: true,
-  imports: [
+  imports: [InfoTooltipComponent, 
     FormsModule,
     RouterLink,
     CheckboxComponent,
@@ -468,4 +469,6 @@ export class TdsPage implements OnInit {
     return new Promise((resolve, reject) => this.http.request<T>(method, url, { body }).subscribe({ next: resolve, error: reject }));
   }
 }
+
+
 

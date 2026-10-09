@@ -38,10 +38,7 @@
 
   @if (chosen(); as template) {
     @if (!editingSize()) {
-      <p class="hint">
-        Printing at {{ sizeLabel(template) }}. Choose your label printer in the print dialog the first time.
-        <button type="button" class="link" (click)="startEditSize()">Change size</button>
-      </p>
+      <div style="margin-top: 4px;"><button type="button" class="link" (click)="startEditSize()">Change size</button> <bb-info-tooltip text="Printing at {{ sizeLabel(template) }}. Choose your label printer in the print dialog the first time."></bb-info-tooltip></div>
     } @else if (draft(); as d) {
       <fieldset class="label-size">
         <legend>Size of {{ d.name }}, in millimetres</legend>
@@ -88,3 +85,6 @@
     </button>
   </footer>
 </section>
+
+
+
