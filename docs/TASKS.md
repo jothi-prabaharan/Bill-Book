@@ -5337,7 +5337,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Wrote `SiteMarginRepositoryTests` covering the ₹1000 flat / 10% site margin resolution and rate fallbacks.
 
 ### TK-171 · Laborer portal: check-in, clock-out form, photo proof and OT claim
-- [ ] open
+- [~] working (Antigravity) — since 2026-10-09
 - **Issue:** [#159](https://github.com/jothi-prabaharan/Bill-Book/issues/159)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-SITE-UI · **Depends on:** TK-170 · **Decision:** D-61, D-62, D-63
