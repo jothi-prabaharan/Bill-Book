@@ -42,6 +42,10 @@ tmp/
 .angular-cli.json
 e2e/test-output/
 
+# ---------------------------------------------------------------- Desktop and mobile (TK-184)
+# The web build Capacitor copies in; android/ and ios/ ignore their own outputs.
+frontend/apps/mobile/www/
+
 # ---------------------------------------------------------------- Environment
 .env
 .env.*

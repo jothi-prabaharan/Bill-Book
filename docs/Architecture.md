@@ -845,7 +845,7 @@ These are short, actionable responsibilities to keep work consistent and reviewa
 
 # Project: Bill-Book Web Application Shell & Module Screens
 
-*The wide-screen layout of `apps/web` (not a separate desktop app; that was removed in TK-155).*
+*The wide-screen layout of `apps/web`. The installed desktop app (`apps/desktop`, TK-184) is a shell around this same build, not a second layout.*
 
 ## Architecture
 - **Framework**: Angular 20.0.0 (Standalone Components, `inject()`, `signal()`, `computed()`), TypeScript 5.8.0, Nx 21.0.0.

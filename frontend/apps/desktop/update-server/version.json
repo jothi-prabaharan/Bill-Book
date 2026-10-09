@@ -1,0 +1,20 @@
+{
+  "electron": {
+    "latestVersion": "1.0.0",
+    "minSupportedVersion": "1.0.0",
+    "forceUpdate": false,
+    "releaseNotes": "First release."
+  },
+  "android": {
+    "latestVersion": "1.0.0",
+    "minSupportedVersion": "1.0.0",
+    "forceUpdate": false,
+    "storeUrl": "market://details?id=com.billbook.app"
+  },
+  "ios": {
+    "latestVersion": "1.0.0",
+    "minSupportedVersion": "1.0.0",
+    "forceUpdate": false,
+    "storeUrl": "itms-apps://itunes.apple.com/app/idYOUR_APP_ID"
+  }
+}

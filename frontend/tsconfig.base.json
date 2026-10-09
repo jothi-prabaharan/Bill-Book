@@ -34,6 +34,9 @@
       "@bill-book/api-client": [
         "libs/shared/api-client/src/index.ts"
       ],
+      "@bill-book/app-update": [
+        "libs/shared/app-update/src/index.ts"
+      ],
       "@bill-book/app-shell": [
         "libs/app-shell/src/index.ts"
       ],

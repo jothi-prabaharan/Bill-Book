@@ -1,0 +1,12 @@
+{
+  "name": "bill-book-desktop",
+  "productName": "Bill Book",
+  "desktopName": "bill-book.desktop",
+  "version": "1.0.0",
+  "description": "Bill Book for Windows, macOS and Linux",
+  "author": "Bill Book",
+  "homepage": "https://github.com/jothi-prabaharan/Bill-Book",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js"
+}

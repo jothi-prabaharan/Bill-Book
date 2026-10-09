@@ -1,1 +1,5 @@
-// Styles for this component.
+// Takes no box of its own, so the pages lay out exactly as before; it exists to
+// carry `inert` while a forced update blocks the app (TK-184).
+.app-root {
+  display: contents;
+}

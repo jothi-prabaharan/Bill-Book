@@ -44,7 +44,12 @@
         ],
         "styles": [
           "apps/web/src/styles.scss"
-        ]
+        ],
+        "stylePreprocessorOptions": {
+          "sass": {
+            "silenceDeprecations": ["import", "global-builtin", "color-functions", "mixed-decls"]
+          }
+        }
       },
       "configurations": {
         "production": {

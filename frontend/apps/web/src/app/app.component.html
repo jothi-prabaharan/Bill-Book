@@ -1,1 +1,7 @@
-<router-outlet />
+<div class="app-root" [attr.inert]="updateForced() ? '' : null">
+  <router-outlet />
+</div>
+
+@defer (when updatePrompt()) {
+  <bb-update-modal />
+}

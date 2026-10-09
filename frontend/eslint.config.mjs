@@ -86,7 +86,16 @@ function commonComponentRule(overrides = {}) {
 export default tseslint.config(
   {
     // Build output, caches and dependencies. Everything else is linted.
-    ignores: ['**/dist/**', '**/node_modules/**', '**/.angular/**', '**/.nx/**'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/.angular/**',
+      '**/.nx/**',
+      // The web build copied into the mobile shell and its native projects (TK-184).
+      'apps/mobile/www/**',
+      'apps/mobile/android/**',
+      'apps/mobile/ios/**',
+    ],
   },
   {
     files: ['**/*.ts'],

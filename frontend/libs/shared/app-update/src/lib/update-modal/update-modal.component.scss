@@ -1,0 +1,133 @@
+// Bootstrap's modal, buttons, close and progress bar, compiled into this
+// component's stylesheet. Angular's view encapsulation scopes every selector to
+// this component, so none of it reaches the app's own `.btn` classes. `_root`
+// is left out deliberately: it sets `scroll-behavior` on the document.
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/transitions';
+@import 'bootstrap/scss/buttons';
+@import 'bootstrap/scss/close';
+@import 'bootstrap/scss/modal';
+@import 'bootstrap/scss/progress';
+
+// The custom properties Bootstrap's rules read, taken from the app's tokens so
+// the modal looks like the rest of the product.
+:host {
+  --bs-body-bg: var(--color-surface);
+  --bs-body-color: var(--color-text);
+  --bs-emphasis-color: var(--color-text);
+  --bs-border-width: 1px;
+  --bs-border-color: var(--color-divider);
+  --bs-border-color-translucent: var(--color-border);
+  --bs-border-radius: var(--radius-md);
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
+  --bs-box-shadow-sm: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 8%));
+  --bs-secondary-bg: var(--color-neutral-200);
+  --bs-secondary-color: var(--color-text-muted);
+  --bs-link-color: var(--color-accent);
+  --bs-progress-bar-bg: var(--color-accent);
+}
+
+.modal {
+  display: block;
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+
+.modal-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 1.05rem;
+  flex: 1;
+}
+
+.modal-header {
+  gap: 0.6rem;
+}
+
+.update-icon {
+  color: var(--color-accent);
+  font-size: 1.25rem;
+}
+
+.update-icon--required {
+  color: var(--color-danger);
+}
+
+.release-notes {
+  white-space: pre-line;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  font-size: 0.9rem;
+}
+
+.update-status {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.update-failure {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--color-accent);
+  --bs-btn-border-color: var(--color-accent);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--color-accent-600);
+  --bs-btn-hover-border-color: var(--color-accent-600);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--color-accent-700);
+  --bs-btn-active-border-color: var(--color-accent-700);
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: var(--color-accent);
+  --bs-btn-disabled-border-color: var(--color-accent);
+  --bs-btn-focus-shadow-rgb: 240, 99, 17;
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--color-text);
+  --bs-btn-border-color: var(--color-border-strong);
+  --bs-btn-hover-color: var(--color-text);
+  --bs-btn-hover-bg: var(--color-surface-hover);
+  --bs-btn-hover-border-color: var(--color-border-strong);
+  --bs-btn-active-color: var(--color-text);
+  --bs-btn-active-bg: var(--color-neutral-200);
+  --bs-btn-active-border-color: var(--color-border-strong);
+}
+
+.btn-close {
+  --bs-btn-close-focus-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+// Phones and narrow split-screen panes: a full-width sheet.
+@media (max-width: 575.98px) {
+  .modal-dialog {
+    margin: 0;
+    min-height: 100%;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

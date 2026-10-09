@@ -1,5 +1,6 @@
 import { adminRoutes } from '@bill-book/admin-ui';
 import { Routes } from '@angular/router';
+import { withUpdateGate } from '@bill-book/app-update';
 import {
   AcceptInvitationPage,
   ForgotPasswordPage,
@@ -27,7 +28,8 @@ import { maintenanceContractRoutes } from '@bill-book/maintenance-contract-ui';
 import { siteRoutes } from '@bill-book/site-ui';
 import { DashboardPage } from './dashboard/dashboard.page';
 
-export const appRoutes: Routes = [
+// Every route waits behind a forced update on the desktop and mobile builds (TK-184).
+export const appRoutes: Routes = withUpdateGate([
   { path: 'login', component: LoginPage },
   { path: 'signup', component: SignupPage },
   { path: 'forgot-password', component: ForgotPasswordPage },
@@ -343,11 +345,4 @@ export const appRoutes: Routes = [
       { path: '**', component: DashboardPage, data: { access: { signedIn: true }, motionIndex: 0, depth: 0 } },
     ],
   }),
-];
-
-
-
-
-
-
-
+]);

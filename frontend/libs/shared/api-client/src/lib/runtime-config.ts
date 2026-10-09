@@ -31,9 +31,13 @@
 export interface RuntimeConfig {
   /** Origin the API is served from, without a trailing slash. Empty = same origin. */
   readonly apiBaseUrl?: string;
+
+  /**
+   * Where an installed app reads `version.json` (TK-184). The mobile build
+   * writes it; a browser has nothing to update and leaves it unset.
+   */
+  readonly updateManifestUrl?: string;
 }
-
-
 
 declare global {
   interface Window {
@@ -59,5 +63,20 @@ export function resolveApiBaseUrl(fallback: string): string {
     return typeof configured === 'string' ? configured : fallback;
   } catch {
     return fallback;
+  }
+}
+
+/** The deployment's `version.json` address, or null when it set none (TK-184). */
+export function resolveUpdateManifestUrl(): string | null {
+  try {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const configured = window.__BB_CONFIG__?.updateManifestUrl;
+
+    return typeof configured === 'string' && configured.trim() !== '' ? configured.trim() : null;
+  } catch {
+    return null;
   }
 }

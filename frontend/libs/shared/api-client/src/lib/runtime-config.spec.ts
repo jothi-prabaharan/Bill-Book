@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { resolveApiBaseUrl } from './runtime-config';
+import { resolveApiBaseUrl, resolveUpdateManifestUrl } from './runtime-config';
 
 /**
  * The override has to be safe in every shape a deployment can leave it: absent,
@@ -40,5 +40,29 @@ describe('resolveApiBaseUrl', () => {
     (window as { __BB_CONFIG__?: unknown }).__BB_CONFIG__ = { apiBaseUrl: 42 };
 
     expect(resolveApiBaseUrl('https://built-in')).toBe('https://built-in');
+  });
+});
+
+describe('resolveUpdateManifestUrl', () => {
+  afterEach(() => {
+    delete window.__BB_CONFIG__;
+  });
+
+  it('is null in a browser deployment that set nothing', () => {
+    expect(resolveUpdateManifestUrl()).toBeNull();
+  });
+
+  it('reads the address the mobile build wrote', () => {
+    window.__BB_CONFIG__ = { updateManifestUrl: ' https://updates.example/version.json ' };
+
+    expect(resolveUpdateManifestUrl()).toBe('https://updates.example/version.json');
+  });
+
+  it('treats blank and non-string values as unset', () => {
+    window.__BB_CONFIG__ = { updateManifestUrl: '  ' };
+    expect(resolveUpdateManifestUrl()).toBeNull();
+
+    (window as { __BB_CONFIG__?: unknown }).__BB_CONFIG__ = { updateManifestUrl: 7 };
+    expect(resolveUpdateManifestUrl()).toBeNull();
   });
 });

@@ -1,0 +1,94 @@
+@let s = state();
+@if (s.visible) {
+  <div class="modal-backdrop show"></div>
+  <div
+    class="modal show"
+    [class.modal-static]="nudge()"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="bb-update-title"
+    aria-describedby="bb-update-body"
+    tabindex="-1"
+    (click)="outside($event)"
+    (keydown.escape)="escape($event)"
+  >
+    <div class="modal-dialog modal-dialog-centered" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <fa-icon class="update-icon" [class.update-icon--required]="forced()" [icon]="forced() ? icons.required : icons.update" />
+          <h2 class="modal-title" id="bb-update-title">
+            {{ forced() ? 'Update required' : 'Update available' }}
+          </h2>
+          @if (!forced()) {
+            <button type="button" class="btn-close" aria-label="Later" (click)="later()"></button>
+          }
+        </div>
+
+        <div class="modal-body" id="bb-update-body">
+          @if (forced()) {
+            <p>
+              Install version <strong>{{ s.decision.latestVersion }}</strong> to keep using Bill Book.
+              @if (s.decision.installedVersion) {
+                This copy is {{ s.decision.installedVersion }}.
+              }
+            </p>
+          } @else {
+            <p>
+              Version <strong>{{ s.decision.latestVersion }}</strong> is ready.
+              @if (s.decision.installedVersion) {
+                You have {{ s.decision.installedVersion }}.
+              }
+            </p>
+          }
+
+          @if (s.decision.releaseNotes) {
+            <p class="release-notes">{{ s.decision.releaseNotes }}</p>
+          }
+
+          @if (s.phase === 'downloading' || s.phase === 'ready') {
+            <div
+              class="progress"
+              role="progressbar"
+              aria-label="Download progress"
+              [attr.aria-valuenow]="s.progress ?? 0"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <div class="progress-bar" [style.width.%]="s.progress ?? 0">{{ s.progress ?? 0 }}%</div>
+            </div>
+            <p class="update-status">
+              {{ s.phase === 'ready' ? 'Downloaded. Bill Book will restart to finish installing.' : 'Downloading…' }}
+            </p>
+          }
+
+          @if (s.phase === 'error' && s.error) {
+            <p class="update-failure" role="alert">{{ s.error }}</p>
+          }
+
+          @if (mobile()) {
+            <p class="update-status">The store opens on the app's page. Come back once it has updated.</p>
+          }
+        </div>
+
+        <div class="modal-footer">
+          @if (!forced()) {
+            <button type="button" class="btn btn-outline-secondary" [disabled]="s.phase === 'downloading'" (click)="later()">
+              Later
+            </button>
+          }
+          <button type="button" class="btn btn-primary" [disabled]="s.phase === 'downloading'" (click)="act()">
+            @if (s.phase === 'ready') {
+              <fa-icon [icon]="icons.retry" /> Restart and install
+            } @else if (s.phase === 'error') {
+              <fa-icon [icon]="icons.retry" /> Try again
+            } @else if (mobile()) {
+              <fa-icon [icon]="icons.store" /> Update now
+            } @else {
+              <fa-icon [icon]="icons.download" /> Update now
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

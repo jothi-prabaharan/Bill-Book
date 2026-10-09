@@ -21,7 +21,13 @@ export const DOCS: DocSection[] = [
   },
   {
     title: 'Platform',
-    pages: [{ slug: 'platform', title: 'Platform', status: 'built' }],
+    pages: [
+      { slug: 'platform', title: 'Platform', status: 'built' },
+      // 'partial': the Linux installers and a desktop update were built and run
+      // end to end; the Windows, macOS, Android and iOS builds need their own
+      // machines and signing, and are the owner's run (TK-184).
+      { slug: 'desktop-and-mobile', title: 'Desktop and mobile apps', status: 'partial' },
+    ],
   },
   {
     title: 'Masters',

@@ -1,0 +1,48 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "desktop",
+  "projectType": "application",
+  "sourceRoot": "apps/desktop/src",
+  "tags": ["type:app", "platform:electron"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["web"], "target": "build" }],
+      "outputs": ["{workspaceRoot}/dist/apps/desktop/app"],
+      "options": {
+        "command": "node apps/desktop/scripts/build.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run web:serve",
+          "node apps/desktop/scripts/build.mjs --main-only && electron dist/apps/desktop/app"
+        ],
+        "parallel": true,
+        "env": { "BILLBOOK_DEV_URL": "http://localhost:4200" }
+      }
+    },
+    "package": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "electron-builder --projectDir apps/desktop --config electron-builder.config.cjs --publish never",
+        "cwd": "{workspaceRoot}"
+      },
+      "configurations": {
+        "windows": {
+          "command": "electron-builder --projectDir apps/desktop --config electron-builder.config.cjs --publish never --win"
+        },
+        "linux": {
+          "command": "electron-builder --projectDir apps/desktop --config electron-builder.config.cjs --publish never --linux"
+        },
+        "mac": {
+          "command": "electron-builder --projectDir apps/desktop --config electron-builder.config.cjs --publish never --mac"
+        }
+      }
+    }
+  }
+}

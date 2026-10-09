@@ -213,7 +213,7 @@ To deploy the system locally to IIS with full environment support (Staging, UAT,
 
 ### Not built
 
-Sales beyond its schema. Purchase, Customer and Reporting services. The Notification and RateSync workers. The desktop app is gone (TK-155): the till is `/pos` in the web app.
+Sales beyond its schema. Purchase, Customer and Reporting services. The Notification and RateSync workers. The till is `/pos` in the web app (TK-155); the desktop and mobile apps are shells around the web build (TK-184).
 
 ---
 

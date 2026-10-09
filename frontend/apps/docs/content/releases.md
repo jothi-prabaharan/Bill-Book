@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Bill Book as an installed app on computers, phones and tablets (TK-184).** Install it on Windows, Ubuntu or macOS, or on an Android or iOS phone or tablet. On a computer, receipts, kitchen tickets and labels print straight to the printers chosen under **Printing**, with no print dialog, and the window reopens where you left it, on the same monitor. On a tablet, the app turns with the device and works in split screen. Every installed app checks for a new version when it starts and when you come back to it. **Update available** can be put off with **Later**; **Update required** blocks the app until it is updated. A computer downloads and installs the update itself; a phone opens its app store. See [Desktop and mobile apps](desktop-and-mobile).
+
 - **Added**: **Site Masters & Margin Engine (TK-170).** Configured master records for Trades, Laborers, Sites, Assignments, and tiered Margin Rules with automatic site warehouse creation in Inventory and cost/margin redaction without `site.cost.view`.
 
 - **Added**: **Site Services module & add-on for Service businesses (TK-169).** Service branches with the SiteServices add-on now have access to site project management and inventory stock control for site jobs. Site projects can be managed via Sites & Projects.

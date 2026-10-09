@@ -84,6 +84,8 @@ A different seam is gone for a different reason: the tenant directory that resol
 |---|---|
 | `web` | The customer's staff — the full ERP, with the till at `/pos`, their customers' and vendors' portal at `/portal` and the platform operators' pages at `/admin` |
 | `docs` | This site |
+| `desktop` | The `web` build as an installed Windows, macOS and Linux app, with silent printing and self-updating (TK-184) |
+| `mobile` | The `web` build as an Android and iOS app for phones and tablets (TK-184) |
 
 Libraries mirror the backend: `libs/{module}/{module}-core` holds view-models with no templates, `{module}-ui` holds pages. `-core` stays Ionic-compatible — no `window`, no Syncfusion, no Node APIs — so the same view-models drive mobile.
 

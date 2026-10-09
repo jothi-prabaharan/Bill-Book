@@ -157,7 +157,8 @@ export class LabelPrintDialog implements OnInit {
     this.messages.set([]);
     try {
       const page = await firstValueFrom(this.http.post<PrintLabelsResponse>('/api/print/labels', request));
-      printHtml(page.html);
+      // A label printer for labels; an A4 sticker sheet goes to an office printer with its dialog.
+      printHtml(page.html, this.sheet() ? 'document' : 'label');
       this.messages.set([{ tone: 'success', text: `${page.count} label${page.count === 1 ? '' : 's'} sent to the printer.` }]);
     } catch (error) {
       this.fail(error, 'The labels could not be printed.');

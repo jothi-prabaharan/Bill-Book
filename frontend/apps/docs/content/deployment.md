@@ -138,6 +138,16 @@ icon, and is the same site underneath: nothing is stored on the PC, and every
 deployment reaches it on its next start. It has no offline mode, by design —
 every screen reads live books.
 
+## Desktop and mobile apps
+
+The installed apps for Windows, macOS, Linux, Android and iOS get their updates
+from a plain file server you run, for example `http://YOUR_SERVER_IP:PORT/updates`,
+which holds `version.json` and the desktop installers. A `version.json` can make
+an update optional or required. The phone and tablet apps call the gateway
+directly, so `Cors:AllowedOrigins` needs `https://localhost` and
+`capacitor://localhost`; the desktop app needs nothing. The build and release
+steps are in [Desktop and mobile apps](desktop-and-mobile#for-administrators).
+
 ## What is not set up yet
 
 - Monitoring and alerts

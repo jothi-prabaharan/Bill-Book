@@ -1,0 +1,41 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "mobile",
+  "projectType": "application",
+  "sourceRoot": "apps/mobile",
+  "tags": ["type:app", "platform:capacitor"],
+  "targets": {
+    "prepare": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["web"], "target": "build" }],
+      "options": {
+        "command": "node apps/mobile/scripts/prepare-web.mjs",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "sync": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["prepare"],
+      "options": {
+        "command": "cap sync",
+        "cwd": "apps/mobile"
+      }
+    },
+    "open-android": {
+      "executor": "nx:run-commands",
+      "options": { "command": "cap open android", "cwd": "apps/mobile" }
+    },
+    "open-ios": {
+      "executor": "nx:run-commands",
+      "options": { "command": "cap open ios", "cwd": "apps/mobile" }
+    },
+    "build-android": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["sync"],
+      "options": {
+        "command": "./gradlew assembleRelease bundleRelease",
+        "cwd": "apps/mobile/android"
+      }
+    }
+  }
+}
