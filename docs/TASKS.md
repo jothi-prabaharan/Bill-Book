@@ -5370,7 +5370,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** counters rise only on approval, a rejection changes nothing, and a margin change after approval does not reprice the approved day.
 
 ### TK-173 · Site stock: dispatch to site and return to central
-- [ ] open
+- [~] working (Antigravity) — since 2026-10-09
 - **Issue:** [#161](https://github.com/jothi-prabaharan/Bill-Book/issues/161)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-170 · **Decision:** —
