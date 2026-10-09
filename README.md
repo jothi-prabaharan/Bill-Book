@@ -175,19 +175,15 @@ cd backend && dotnet run --project Gateway          # then each Api/{Module}/{Mo
 cd frontend && npx nx serve web
 ```
 
-### Local IIS Deployment
+### Deployment
 
-To deploy the system locally to IIS with full environment support (Staging, UAT, Production):
+Each environment deploys from a checkout of its own branch (`staging`, `uat`, `production`) and nothing is committed to those branches (see `CLAUDE.md`). Staging has a one-click script:
 
-1. **Create the IIS Sites and Pools** (Run once per environment as Administrator):
-   ```powershell
-   .\scripts\create-iis-site.ps1 -Environment Staging
-   ```
+```bash
+./deploy/Staging/deploy.sh
+```
 
-2. **Build and Deploy the Code** (Run every time you want to deploy as Administrator):
-   ```powershell
-   .\scripts\deploy-local.ps1 -Environment Staging
-   ```
+It pulls the branch, prepares the databases, builds the services and the web app, and starts everything. UAT and Production have no script yet.
 
 ---
 

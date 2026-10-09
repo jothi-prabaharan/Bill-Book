@@ -5,7 +5,7 @@ branch=$(git symbolic-ref --short -q HEAD)
 case "$branch" in
   Staging|staging|uat|UAT|production|Production)
     echo "REFUSED: '$branch' is an environment branch. Never commit to it directly." >&2
-    echo "Commit to main, then promote: main -> Staging -> uat -> production, by merge." >&2
+    echo "Commit to main, then promote: main -> staging -> uat -> production, by merge." >&2
     exit 1 ;;
 esac
 exit 0
