@@ -1,3 +1,4 @@
+import { ExportImportComponent } from '@bill-book/ui-components';
 import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   BbFileSelection,
@@ -225,7 +226,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [ExportImportComponent, InfoTooltipComponent, 
     EditHistoryComponent,
     DatePipe,
     DataGridComponent,

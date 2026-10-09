@@ -10,18 +10,25 @@
   <bb-message-box [messages]="messages()" />
 
   <form class="inv-list__filters" (ngSubmit)="onFilterChange()">
-    <div class="field inv-list__filter">
-      <label for="inv-status">Status</label>
-      <bb-select
-        id="inv-status"
-        name="status"
-        ariaLabel="Filter by status"
-        placeholder=""
-        [options]="statuses"
-        [(ngModel)]="status"
-        (ngModelChange)="onFilterChange()"
-      />
-    </div>
+    <nav aria-label="Status filters" class="flex flex-wrap gap-6px mr-4">
+      <button type="button" (click)="status = ''; onFilterChange()" [attr.aria-pressed]="status === ''" class="btn btn-secondary text-sm tab-all">All statuses</button>
+      
+      <span class="tabgrp">
+        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Draft'; onFilterChange()" [attr.aria-pressed]="status === 'Draft'">Draft</button>
+      </span>
+
+      <span class="tabgrp">
+        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'ReadyToPost'; onFilterChange()" [attr.aria-pressed]="status === 'ReadyToPost'">Ready to post</button>
+      </span>
+
+      <span class="tabgrp">
+        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Posted'; onFilterChange()" [attr.aria-pressed]="status === 'Posted'">Posted</button>
+      </span>
+
+      <span class="tabgrp">
+        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Void'; onFilterChange()" [attr.aria-pressed]="status === 'Void'">Void</button>
+      </span>
+    </nav>
 
     <div class="field inv-list__filter inv-list__filter--grow">
       <bb-search-input

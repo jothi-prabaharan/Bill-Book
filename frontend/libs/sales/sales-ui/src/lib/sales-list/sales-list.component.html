@@ -1,29 +1,32 @@
-<nav aria-label="Document types" class="flex flex-wrap mb-3 gap-6px">
-  <button type="button" (click)="setType('')" [attr.aria-pressed]="selectedType === ''" class="btn btn-secondary text-sm tab-all">All transactions</button>
+<header class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-medium m-0">{{ pageTitle() || 'Sales' }}</h1>
+
+  @if (newRoute()) {
+    <button type="button" class="btn btn-primary" [routerLink]="newRoute()">{{ newTitle() }}</button>
+  }
+</header>
+
+<nav aria-label="Status filters" class="flex flex-wrap mb-3 gap-6px">
+  <button type="button" (click)="setStatus('')" [attr.aria-pressed]="selectedStatus() === ''" class="btn btn-secondary text-sm tab-all">All statuses</button>
   
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('Invoice')" [attr.aria-pressed]="selectedType === 'Invoice'">Invoices</button>
-    <button class="btn btn-secondary" type="button" routerLink="/sales/invoices/new" title="New Invoice" aria-label="New Invoice"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Draft')" [attr.aria-pressed]="selectedStatus() === 'Draft'">Draft</button>
   </span>
 
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('SalesOrder')" [attr.aria-pressed]="selectedType === 'SalesOrder'">Sales orders</button>
-    <button class="btn btn-secondary" type="button" routerLink="/sales/sales-orders/new" title="New Sales order" aria-label="New Sales order"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Open')" [attr.aria-pressed]="selectedStatus() === 'Open'">Open</button>
   </span>
 
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('Quote')" [attr.aria-pressed]="selectedType === 'Quote'">Quotes</button>
-    <button class="btn btn-secondary" type="button" routerLink="/sales/quotes/new" title="New Quote" aria-label="New Quote"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Sent')" [attr.aria-pressed]="selectedStatus() === 'Sent'">Sent</button>
   </span>
 
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('DeliveryChallan')" [attr.aria-pressed]="selectedType === 'DeliveryChallan'">Delivery challans</button>
-    <button class="btn btn-secondary" type="button" routerLink="/sales/delivery-challans/new" title="New Delivery challan" aria-label="New Delivery challan"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Closed')" [attr.aria-pressed]="selectedStatus() === 'Closed'">Closed</button>
   </span>
 
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('CreditNote')" [attr.aria-pressed]="selectedType === 'CreditNote'">Credit notes</button>
-    <button class="btn btn-secondary" type="button" routerLink="/sales/credit-notes/new" title="New Credit note" aria-label="New Credit note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Void')" [attr.aria-pressed]="selectedStatus() === 'Void'">Void</button>
   </span>
 </nav>
 

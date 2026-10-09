@@ -28,6 +28,8 @@
     (ngModelChange)="load()"
   />
 
+  <bb-export-import />
+
   <button type="button" class="btn btn-secondary" (click)="openListLabels()" [disabled]="rows().length === 0">
     Print labels{{ labelPicks().size > 0 ? ' (' + labelPicks().size + ')' : '' }}
   </button>
@@ -609,5 +611,6 @@
 @if (labelsOpen(); as job) {
   <bb-label-print-dialog [labels]="job.labels" [kind]="job.kind" (closed)="labelsOpen.set(null)" />
 }
+
 
 

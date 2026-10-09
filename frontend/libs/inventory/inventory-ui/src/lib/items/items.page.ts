@@ -1,3 +1,4 @@
+import { ExportImportComponent } from '@bill-book/ui-components';
 import { SessionContextService } from '@bill-book/auth';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
@@ -179,7 +180,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-items-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [ExportImportComponent, InfoTooltipComponent, 
     EditHistoryComponent,
     FormsModule,
     TextInputComponent,

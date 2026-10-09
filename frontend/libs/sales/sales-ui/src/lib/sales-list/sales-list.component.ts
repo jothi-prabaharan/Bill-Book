@@ -68,6 +68,10 @@ export class SalesListComponent implements OnInit {
 
   readonly transactions = signal<SalesTransactionListItem[]>([]);
   selectedType: string = '';
+  selectedStatus = signal<string>('');
+  pageTitle = signal<string>('');
+  newRoute = signal<string>('');
+  newTitle = signal<string>('');
 
   /**
    * Sales is a dated register, so the period bar — not a search box — is what
@@ -75,9 +79,14 @@ export class SalesListComponent implements OnInit {
    */
   readonly range = signal<PeriodRange>(rangeForPreset('this-month'));
 
-  readonly visibleTransactions = computed(() =>
-    this.transactions().filter((t) => isWithin(this.range(), String(t.documentDate ?? ''))),
-  );
+  readonly visibleTransactions = computed(() => {
+    const status = this.selectedStatus();
+    return this.transactions().filter((t) => {
+      const withinDate = isWithin(this.range(), String(t.documentDate ?? ''));
+      const matchesStatus = !status || t.status === status;
+      return withinDate && matchesStatus;
+    });
+  });
 
   /** What the bar's "Total in INR" figure sums: the rows on screen, nothing else. */
   readonly periodTotal = computed(() =>
@@ -86,7 +95,6 @@ export class SalesListComponent implements OnInit {
 
   columns: ColumnDef[] = [
     { field: 'documentDate', header: 'Date' },
-    { field: 'transactionType', header: 'Type' },
     { field: 'documentNo', header: 'Number' },
     { field: 'contactName', header: 'Customer' },
     { field: 'totalAmount', header: 'Amount', align: 'right' },
@@ -103,8 +111,11 @@ export class SalesListComponent implements OnInit {
     // read once: moving between two document types is the same route with a
     // different parameter, and Angular reuses the component.
     if (this.route) {
-      this.route.queryParamMap.subscribe((params) => {
-        const type = params.get('type') ?? '';
+      this.route.data.subscribe((data) => {
+        const type = data['type'] ?? '';
+        this.pageTitle.set(data['title'] ?? '');
+        this.newRoute.set(data['newRoute'] ?? '');
+        this.newTitle.set(data['newTitle'] ?? '');
         if (type === this.selectedType) return;
         this.selectedType = type;
         this.loadTransactions();
@@ -117,6 +128,10 @@ export class SalesListComponent implements OnInit {
 
   loadTransactions() {
     this.transactionService.list(this.selectedType).subscribe((t) => this.transactions.set(t));
+  }
+
+  setStatus(status: string) {
+    this.selectedStatus.set(status);
   }
 
   setRange(range: PeriodRange) {
@@ -272,4 +287,9 @@ export class SalesListComponent implements OnInit {
     }
   }
 }
+
+
+
+
+
 

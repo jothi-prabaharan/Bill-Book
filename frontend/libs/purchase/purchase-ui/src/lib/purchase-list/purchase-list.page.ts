@@ -66,6 +66,10 @@ export class PurchaseListPage implements OnInit {
 
   readonly transactions = signal<PurchaseTransactionListItem[]>([]);
   selectedType: string = '';
+  selectedStatus = signal<string>('');
+  pageTitle = signal<string>('');
+  newRoute = signal<string>('');
+  newTitle = signal<string>('');
 
   /**
    * Purchase is a dated register: the period bar narrows it, and the grid's own
@@ -73,9 +77,14 @@ export class PurchaseListPage implements OnInit {
    */
   readonly range = signal<PeriodRange>(rangeForPreset('this-month'));
 
-  readonly visibleTransactions = computed(() =>
-    this.transactions().filter((t) => isWithin(this.range(), String(t.documentDate ?? ''))),
-  );
+  readonly visibleTransactions = computed(() => {
+    const status = this.selectedStatus();
+    return this.transactions().filter((t) => {
+      const withinDate = isWithin(this.range(), String(t.documentDate ?? ''));
+      const matchesStatus = !status || t.status === status;
+      return withinDate && matchesStatus;
+    });
+  });
 
   /** The bar's total sums the rows on screen, nothing else. */
   readonly periodTotal = computed(() =>
@@ -96,8 +105,11 @@ export class PurchaseListPage implements OnInit {
     // read once: moving between two document types is the same route with a
     // different parameter, and Angular reuses the page.
     if (this.route) {
-      this.route.queryParamMap.subscribe((params) => {
-        const type = params.get('type') ?? '';
+      this.route.data.subscribe((data) => {
+        const type = data['type'] ?? '';
+        this.pageTitle.set(data['title'] ?? '');
+        this.newRoute.set(data['newRoute'] ?? '');
+        this.newTitle.set(data['newTitle'] ?? '');
         if (type === this.selectedType) return;
         this.selectedType = type;
         this.loadTransactions();
@@ -110,6 +122,10 @@ export class PurchaseListPage implements OnInit {
 
   loadTransactions() {
     this.transactionService.list(this.selectedType).subscribe((t) => this.transactions.set(t));
+  }
+
+  setStatus(status: string) {
+    this.selectedStatus.set(status);
   }
 
   setType(type: string) {
@@ -147,7 +163,6 @@ export class PurchaseListPage implements OnInit {
 
   columns: ColumnDef[] = [
     { field: 'documentDate', header: 'Date' },
-    { field: 'transactionType', header: 'Type' },
     { field: 'documentNo', header: 'Number' },
     { field: 'contactName', header: 'Vendor' },
     { field: 'totalAmount', header: 'Amount' },
@@ -280,6 +295,10 @@ export class PurchaseListPage implements OnInit {
     }
   }
 }
+
+
+
+
 
 
 

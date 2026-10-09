@@ -1,27 +1,29 @@
-<nav aria-label="Document types" class="flex flex-wrap mb-3 gap-6px">
-  <button type="button" (click)="setType('')" [attr.aria-pressed]="selectedType === ''" class="btn btn-secondary text-sm tab-all">All transactions</button>
+<header class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-medium m-0">{{ pageTitle() || 'Purchase' }}</h1>
+
+  @if (newRoute()) {
+    <button type="button" class="btn btn-primary" [routerLink]="newRoute()">{{ newTitle() }}</button>
+  }
+</header>
+
+<nav aria-label="Status filters" class="flex flex-wrap mb-3 gap-6px">
+  <button type="button" (click)="setStatus('')" [attr.aria-pressed]="selectedStatus() === ''" class="btn btn-secondary text-sm tab-all">All statuses</button>
   
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('Bill')" [attr.aria-pressed]="selectedType === 'Bill'">Bills</button>
-    <button class="btn btn-secondary" type="button" routerLink="/purchase/bills/new" title="New Bill" aria-label="New Bill"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Draft')" [attr.aria-pressed]="selectedStatus() === 'Draft'">Draft</button>
   </span>
 
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('PurchaseOrder')" [attr.aria-pressed]="selectedType === 'PurchaseOrder'">Purchase orders</button>
-    <button class="btn btn-secondary" type="button" routerLink="/purchase/purchase-orders/new" title="New Purchase order" aria-label="New Purchase order"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Open')" [attr.aria-pressed]="selectedStatus() === 'Open'">Open</button>
   </span>
 
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('GoodsReceipt')" [attr.aria-pressed]="selectedType === 'GoodsReceipt'">Goods receipts</button>
-    <button class="btn btn-secondary" type="button" routerLink="/purchase/goods-receipts/new" title="New Goods receipt" aria-label="New Goods receipt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Posted')" [attr.aria-pressed]="selectedStatus() === 'Posted'">Posted</button>
   </span>
 
   <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" (click)="setType('DebitNote')" [attr.aria-pressed]="selectedType === 'DebitNote'">Debit notes</button>
-    <button class="btn btn-secondary" type="button" routerLink="/purchase/debit-notes/new" title="New Debit note" aria-label="New Debit note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Void')" [attr.aria-pressed]="selectedStatus() === 'Void'">Void</button>
   </span>
-
-  <a class="btn btn-secondary text-sm" routerLink="/purchase/gstr2b">GSTR-2B reconciliation</a>
 </nav>
 
 <bb-period-filter-bar [total]="periodTotal()" (rangeChange)="setRange($event)" />
@@ -30,9 +32,6 @@
     <bb-data-grid fillHeight flush [gridCode]="'PURCHASE_LIST'" [columns]="columns" [data]="visibleTransactions()">
     <ng-template bbCellTemplate="documentDate" let-row="row">
       <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full tabular-nums">{{ row.documentDate | date }}</span>
-    </ng-template>
-    <ng-template bbCellTemplate="transactionType" let-row="row">
-      <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full">{{ row.transactionType }}</span>
     </ng-template>
     <ng-template bbCellTemplate="documentNo" let-row="row">
       <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full">{{ row.documentNo }}</span>

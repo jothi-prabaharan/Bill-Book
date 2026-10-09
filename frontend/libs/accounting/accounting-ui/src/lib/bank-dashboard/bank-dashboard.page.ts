@@ -1,3 +1,4 @@
+import { ExportImportComponent } from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -203,7 +204,7 @@ const DEFAULT_ACCOUNTS: BankCardAccount[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bank-dashboard-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [ExportImportComponent, CommonModule, RouterLink],
   templateUrl: './bank-dashboard.page.html',
   styleUrl: './bank-dashboard.page.scss',
 })

@@ -331,6 +331,14 @@ select.input {
 }
 
 /* Form Layout Grids */
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+
+  .field { margin-bottom: 0; }
+  .field.wide { grid-column: 1 / -1; }
+}
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -382,3 +390,4 @@ bb-master-select.input {
   background: transparent;
   box-shadow: none;
 }
+

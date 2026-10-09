@@ -1,13 +1,29 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
 export const salesRoutes: Routes = [
   {
     path: 'transactions',
-    loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent), data: { motionIndex: 4, depth: 0 }
+    redirectTo: 'quotes',
+    pathMatch: 'full'
+  },
+  {
+    path: 'quotes',
+    loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent),
+    data: { motionIndex: 4, depth: 0, type: 'Quote', title: 'Quotes', newRoute: '/sales/quotes/new', newTitle: 'New Quote', access: { permission: 'sales.view' } }
+  },
+  {
+    path: 'delivery-challans',
+    loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent),
+    data: { motionIndex: 4, depth: 0, type: 'DeliveryChallan', title: 'Delivery challans', newRoute: '/sales/delivery-challans/new', newTitle: 'New Delivery challan', access: { permission: 'sales.view' } }
+  },
+  {
+    path: 'credit-notes',
+    loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent),
+    data: { motionIndex: 4, depth: 0, type: 'CreditNote', title: 'Credit notes', newRoute: '/sales/credit-notes/new', newTitle: 'New Credit note', access: { permission: 'sales.view' } }
   },
   {
     path: '',
-    redirectTo: 'transactions',
+    redirectTo: 'quotes',
     pathMatch: 'full'
   },
   // Keep form routes intact for navigating to them from the transaction list

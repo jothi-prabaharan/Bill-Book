@@ -1,3 +1,4 @@
+import { ExportImportComponent } from '@bill-book/ui-components';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
@@ -49,7 +50,7 @@ interface AccountType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-chart-of-accounts-page',
   standalone: true,
-  imports: [
+  imports: [ExportImportComponent, 
     DataGridComponent,
     DataGridCellTemplateDirective,
     FormsModule,
