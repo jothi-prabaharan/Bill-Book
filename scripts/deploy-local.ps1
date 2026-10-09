@@ -75,7 +75,7 @@ foreach ($app in $frontendApps) {
     $envFile = "$repoPath\frontend\apps\$app\src\environments\environment.$envName.ts"
     if (Test-Path $envFile) {
         $envContent = Get-Content $envFile -Raw
-        $envContent = $envContent -replace "apiBaseUrl: '.*'", "apiBaseUrl: 'http://localhost:$BackendPort'"
+        $envContent = $envContent -replace "apiBaseUrl: '.*'", "apiBaseUrl: 'http://111.247.103.65:$BackendPort'"
         Set-Content -Path $envFile -Value $envContent
         Write-Host "Patched $envName API URL to Port $BackendPort for $app"
     }
