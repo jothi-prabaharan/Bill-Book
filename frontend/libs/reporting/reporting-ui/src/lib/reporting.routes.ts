@@ -10,6 +10,7 @@ import { Routes } from '@angular/router';
 export const reportingRoutes: Routes = [
   {
     path: '',
+    pathMatch: 'full',
     loadComponent: () =>
       import('./report-list/report-list.page').then((m) => m.ReportListPage),
     data: { access: { permission: 'reports.view' } },

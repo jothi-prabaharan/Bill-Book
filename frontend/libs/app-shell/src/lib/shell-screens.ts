@@ -47,13 +47,13 @@ export const SHELL_SCREENS: readonly ShellScreen[] = [
   { label: 'Price lists', path: '/inventory/price-lists', group: 'Inventory', module: 'inventory' },
   { label: 'Warehouses', path: '/inventory/warehouses', group: 'Inventory', module: 'inventory' },
 
-  { label: 'Purchase register', path: '/purchase', group: 'Purchase', module: 'accounting' },
+  { label: 'Purchase register', path: '/purchase/bills', group: 'Purchase', module: 'accounting' },
   { label: 'New purchase order', path: '/purchase/purchase-orders/new', group: 'Purchase', module: 'accounting' },
   { label: 'New goods receipt', path: '/purchase/goods-receipts/new', group: 'Purchase', module: 'accounting' },
   { label: 'New bill', path: '/purchase/bills/new', group: 'Purchase', module: 'accounting' },
   { label: 'New debit note', path: '/purchase/debit-notes/new', group: 'Purchase', module: 'accounting' },
 
-  { label: 'Sales register', path: '/sales', group: 'Sales', module: 'accounting' },
+  { label: 'Sales register', path: '/sales/quotes', group: 'Sales', module: 'accounting' },
   { label: 'Invoices', path: '/sales/invoices', group: 'Sales', module: 'accounting' },
   { label: 'Sales orders', path: '/sales/sales-orders', group: 'Sales', module: 'accounting' },
   { label: 'New invoice', path: '/sales/invoices/new', group: 'Sales', module: 'accounting' },
@@ -78,9 +78,9 @@ export const SHELL_SCREENS: readonly ShellScreen[] = [
   { label: 'Account ledger', path: '/accounting/ledger', group: 'Accounts', module: 'accounting' },
   { label: 'Reconciliation', path: '/accounting/reconciliation', group: 'Accounts', module: 'accounting' },
 
-  { label: 'Reports', path: '/reports', group: 'Reports', module: null },
-  { label: 'Profit and loss', path: '/reports/profit-and-loss', group: 'Reports', module: null },
-  { label: 'Balance sheet', path: '/reports/balance-sheet', group: 'Reports', module: null },
+  { label: 'Reports', path: '/reports', group: 'Reports', module: 'reports' },
+  { label: 'Profit and loss', path: '/reports/profit-and-loss', group: 'Reports', module: 'reports' },
+  { label: 'Balance sheet', path: '/reports/balance-sheet', group: 'Reports', module: 'reports' },
 
   { label: 'Organization', path: '/settings/organization', group: 'Settings', module: 'settings' },
   { label: 'Branches', path: '/settings/branches', group: 'Settings', module: 'settings' },
@@ -141,8 +141,13 @@ export const SHELL_REGISTERS: readonly string[] = [
   '/inventory/stock-adjustments',
   '/inventory/price-lists',
   '/inventory/warehouses',
-  '/purchase',
-  '/sales',
+  '/purchase/bills',
+    '/purchase/purchase-orders',
+    '/purchase/goods-receipts',
+    '/purchase/debit-notes',
+  '/sales/quotes',
+    '/sales/delivery-challans',
+    '/sales/credit-notes',
   '/sales/invoices',
   '/sales/sales-orders',
   '/accounting/chart-of-accounts',
@@ -174,10 +179,11 @@ export const FALLBACK_RAIL: readonly ShellRailItem[] = [
   { path: '/dashboard', label: 'Home', icon: 'house', module: null },
   { path: '/contacts', label: 'Contacts', icon: 'users-round', module: 'contacts' },
   { path: '/inventory', label: 'Inventory', icon: 'boxes', module: 'inventory' },
-  { path: '/purchase', label: 'Purchase', icon: 'package', module: 'purchase' },
-  { path: '/sales', label: 'Sales', icon: 'shopping-cart', module: 'sales' },
+  { path: '/purchase/bills', label: 'Purchase', icon: 'package', module: 'purchase' },
+  { path: '/sales/quotes', label: 'Sales', icon: 'shopping-cart', module: 'sales' },
   { path: '/banking', label: 'Banking', icon: 'landmark', module: 'banking' },
   { path: '/accounting', label: 'Accounts', icon: 'book-open', module: 'accounting' }, // STRICT UI RULE: Accounts
   { path: '/reports', label: 'Reports', icon: 'chart-no-axes-combined', module: 'reports' },
   { path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
 ];
+
