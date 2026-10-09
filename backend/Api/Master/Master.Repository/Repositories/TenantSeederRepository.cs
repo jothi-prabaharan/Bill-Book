@@ -74,9 +74,8 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// too reads nothing the others write (TK-18).
     /// </summary>
     private static readonly string[] Services =
-        ["Accounting", "Employee", "TimeLeave", "Payroll", .. SchoolServices, "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
+        ["Accounting", "Employee", "TimeLeave", "Payroll", .. SchoolServices, "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer", "Site"];
 
-    /// <summary>
     /// <summary>
     /// Which services a branch needs, in seeding order (D-36, TK-127).
     ///
@@ -116,6 +115,11 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             or BusinessType.Restaurant or BusinessType.Service)
         {
             wanted.UnionWith(["Inventory", "Sales", "Purchase", "Reporting", "Customer"]);
+        }
+
+        if (businessType == BusinessType.Service && addOns.HasFlag(AddOn.SiteServices))
+        {
+            wanted.Add("Site");
         }
 
         return Services.Where(wanted.Contains).ToList();

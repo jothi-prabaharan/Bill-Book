@@ -158,8 +158,7 @@
         "build",
         "${workspaceFolder}/backend/Bill-Book.Debug.slnf",
         "/property:GenerateFullPaths=true",
-        "/consoleloggerparameters:NoSummary;ForceNoAlign",
-        "/p:UseSharedCompilation=false"
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
       "problemMatcher": "$msCompile",
       "group": "build"

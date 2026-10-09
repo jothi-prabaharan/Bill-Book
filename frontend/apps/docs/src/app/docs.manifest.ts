@@ -118,6 +118,7 @@ export const DOCS: DocSection[] = [
       { slug: 'recurring-billing', title: 'Recurring Billing', status: 'built' },
       { slug: 'service-plans', title: 'Service Plans', status: 'built' },
       { slug: 'savings-scheme', title: 'Savings Scheme', status: 'built' },
+      { slug: 'site-services', title: 'Site Services', status: 'partial' },
     ],
   },
 ];

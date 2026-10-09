@@ -232,7 +232,9 @@ as #2 to #13.)
 | `L-UI` | `frontend/libs/shared/**`, `frontend/libs/app-shell` |
 | `L-WEB` / `L-DSK` / `L-PTL` / `L-ADM` | `frontend/apps/web`; ~~`apps/desktop`, `apps/portal`, `apps/admin`~~ (removed by TK-132, TK-134 and TK-155; `L-DSK` is retired, the till is `L-POS-UI`) |
 | `L-DOC` | `CLAUDE.md`, `AGENTS.md`, `docs/Modules.md`, `docs/Architecture.md`, `docs/Transactions_And_Specs.md` |
-| New services | Each new service's first card adds a lane for it, e.g. `L-HRM`, `L-PAY`, `L-SIS` |
+| `L-SIT` | `backend/Api/Site/**`, `backend/tests/Site.Api.Tests` |
+| `L-SITE-UI` | `frontend/libs/site/**` |
+| New services | Each new service's first card adds a lane for it, e.g. `L-HRM`, `L-PAY`, `L-SIS`, `L-SIT` |
 
 ### 1.1 Shared files (no lane owns them)
 
@@ -5284,23 +5286,30 @@ The queue below is one list in card-number order. Each card names its group.
 - **Notes:** This is step 1 and step 2 of the owner's brief. Steps 3 and 4 (API, UI) are TK-169 to TK-176; step 5 (a summary and an agent prompt that commits to the default branch only) is written once these cards are done.
 
 ### TK-169 · Site service scaffold and the `SiteServices` add-on for Service branches
-- [~] working (Antigravity) — since 2026-10-09
+- [x] completed (Antigravity) — 2026-10-09 · tests written, not run
 - **Issue:** [#157](https://github.com/jothi-prabaharan/Bill-Book/issues/157)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-KERNEL, L-MST, L-INV, L-SIT (new), L-WEB, L-SITE-UI (new), L-DEPS · **Depends on:** TK-168 · **Decision:** D-57, D-58
 - **Where:** `backend/shared/Shared.Kernel/Apps/App.cs` (`AddOn`, `AddOnRules`), `Master.Repository/Repositories/{TradeScopeRepository,MenuRepository}.cs`, `AdminDbContext` (menus, permissions), the Inventory stock controllers' `[RequireBusinessType]`, `backend/Api/Printing` (newest scaffold), `Gateway.Api/appsettings*.json`, `Master.Api/Services/{DatabaseMigrationService,TenantSeeder}.cs`, `deploy/local/docker-compose.yml`
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** none yet (the `sit` schema and its migration history)
+- **State:** completed 9 October 2026.
+- **Tables:** none yet (the `sit` schema and its initial migration with RLS)
 - **Sub-tasks:**
-  - [ ] `AddOn.SiteServices`; `AddOnRules.Allowed(Service)` includes it (paid or free per D-58); update `AddOnRulesTests`.
-  - [ ] A Service branch **with** `SiteServices` reaches the stock it needs (items as goods, warehouses, stock movements, transfers); a Service branch without it stays stock-less. Change `TradeScopeRepository.StockOnlyMenus` and the Inventory guards to read the add-on, not just the type.
-  - [ ] New service **Site**: `backend/Api/Site/Site.{Entity,Repository,Api}`, schema `sit`, dev port **4523**, Docker port **7509**; `.sln`, gateway route `/api/site/**`, `MigrateContextAsync` in `DatabaseMigrationService`, `TenantSeeder.Services`, `backend/tests/Site.Api.Tests`; add lane `L-SIT` to section 1.
-  - [ ] Permission module `site`: `site.view`, `site.edit`, `site.approve`, `site.bill`, `site.cost.view`; Site menus shown for Service + `SiteServices` only; a `SiteLaborer` system role with only the portal permissions.
-  - [ ] `frontend/libs/site/{site-core,site-ui}` with a lazy route `/site` in `apps/web`; add lane `L-SITE-UI`.
-  - [ ] Numbering series `SIT`, `SDP`, `SRT`, `SUS`, `SBL` seeded per branch.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] `AddOn.SiteServices`; `AddOnRules.Allowed(Service)` includes it (paid per D-58); updated `AddOnRulesTests`.
+  - [x] A Service branch **with** `SiteServices` reaches the stock it needs; `TradeScopeRepository.StockOnlyMenus` and Inventory stock controllers permit it via `[RequireAddOn(AddOn.SiteServices)]`.
+  - [x] New service **Site**: `backend/Api/Site/Site.{Entity,Repository,Api}`, schema `sit`, dev port **4523**, Docker port **7509**; `.sln`, gateway routes `/api/site/**` and `/openapi/site/**`, `MigrateContextAsync` in `DatabaseMigrationService`, `TenantSeeder.Services`, `backend/tests/Site.Api.Tests`; lanes `L-SIT` and `L-SITE-UI` added to section 1.
+  - [x] Permission module `site`: `site.view`, `site.edit`, `site.approve`, `site.bill`, `site.cost.view`; Site menus shown for Service + `SiteServices` only; a `SiteLaborer` system role with only the portal permissions.
+  - [x] `frontend/libs/site/{site-core,site-ui}` with a lazy route `/site` in `apps/web`.
+  - [x] Numbering series `SIT`, `SDP`, `SRT`, `SUS`, `SBL` seeded per branch.
+  - [x] Section 5's standard delivery sub-tasks (docs, release notes, gateway swagger/index).
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** a Service branch with `SiteServices` sees the Site menu and can hold stock; one without it sees neither; `EndpointGuardAudit` and `RlsAudit` cover the new service.
+- **As built (9 October 2026):**
+  - Added `AddOn.SiteServices = 1 << 10` for `BusinessType.Service`.
+  - Decorated inventory stock controllers with `[RequireAddOn(AddOn.SiteServices)]`.
+  - Added Site permission module and `SiteLaborer` role to `AdminDbContext`.
+  - Built `Site.Entity`, `Site.Repository` (initial migration with RLS), `Site.Api` (port 4523), `Site.Api.Tests`.
+  - Built frontend `site-core` and `site-ui` with lazy `/site` route and `SitesPage`.
+  - Configured Gateway routes and clusters for Site service (port 4523).
 
 ### TK-170 · Site masters: trades, laborers, sites, assignments and margin rules
 - [ ] open

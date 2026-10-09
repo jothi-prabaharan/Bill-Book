@@ -890,6 +890,9 @@ public class AdminDbContext : DbContext
         // Project accounting (TK-104). A trading module, but granted with fixed ids
         // (see FixedGrantModules) so no existing grant is renumbered.
         "projects",
+
+        // Site services for Service business type (TK-169).
+        "site",
     };
 
     /// <summary>
@@ -920,6 +923,10 @@ public class AdminDbContext : DbContext
         // or cancelling an e-way bill (TK-92). Posting still needs
         // sales.approve and cancelling an IRN rides on sales.void.
         (10_003, "sales", "einvoice", BusinessType.Retail, AddOn.EInvoicing),
+
+        // Site services actions (TK-169).
+        (10_004, "site", "bill", BusinessType.Service, AddOn.SiteServices),
+        (10_005, "site", "cost.view", BusinessType.Service, AddOn.SiteServices),
     ];
 
     /// <summary>
@@ -933,6 +940,14 @@ public class AdminDbContext : DbContext
         (1_000_102, "Office Admin", ["contacts", "sis", "admission", "attendance", "fee.view", "fee.create", "fee.print", "employee.view", "attendance.unlock"]),
         (1_000_104, "Teacher", ["sis.view", "sis.edit", "attendance.view", "attendance.create", "attendance.edit"]),
         (1_000_105, "Maintenance", ["facility", "contacts.view", "workorder.view", "workorder.create", "workorder.edit", "preventive", "amc.view", "employee.view"]),
+    ];
+
+    /// <summary>
+    /// Site service system role (TK-169) for field laborers.
+    /// </summary>
+    public static readonly IReadOnlyList<(int RoleId, string Name, string[] Grants)> SiteRoles =
+    [
+        (1_000_201, "SiteLaborer", ["site.view"]),
     ];
 
     /// <summary>
@@ -956,6 +971,7 @@ public class AdminDbContext : DbContext
         "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => (BusinessType.School, AddOn.None),
         "crm" => (null, AddOn.Crm),
         "restaurant" => (BusinessType.Restaurant, AddOn.None),
+        "site" => (BusinessType.Service, AddOn.SiteServices),
         _ => (BusinessType.Retail, AddOn.None),
     };
 
@@ -977,6 +993,19 @@ public class AdminDbContext : DbContext
         }
 
         foreach ((int roleId, string name, _) in SchoolRoles)
+        {
+            roles.Add(new Role
+            {
+                RoleId = roleId,
+                CustomerId = null,
+                SystemName = name,
+                DisplayName = name,
+                IsSystemRole = true,
+                IsActive = true,
+            });
+        }
+
+        foreach ((int roleId, string name, _) in SiteRoles)
         {
             roles.Add(new Role
             {
@@ -1180,6 +1209,21 @@ public class AdminDbContext : DbContext
                 grants.Add(new RolePermission
                 {
                     RolePermissionId = 1_000_000_000L * SchoolRolePermissionBand + 10_000_000L * (k + 1) + permission.PermissionId,
+                    RoleId = roleId,
+                    PermissionId = permission.PermissionId,
+                });
+            }
+        }
+
+        // Site laborer role (TK-169): portal check-in/view permissions
+        for (int k = 0; k < SiteRoles.Count; k++)
+        {
+            (int roleId, _, string[] granted) = SiteRoles[k];
+            foreach (Permission permission in permissions.Where(p => p.Module == "site" && granted.Contains(p.Code)))
+            {
+                grants.Add(new RolePermission
+                {
+                    RolePermissionId = 1_000_000_000L * 5 + 10_000_000L * (k + 1) + permission.PermissionId,
                     RoleId = roleId,
                     PermissionId = permission.PermissionId,
                 });

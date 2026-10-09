@@ -86,15 +86,23 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        bool isDev = _environment.IsDevelopment();
+        string exactMessage = isDev
+            ? DbExceptionTranslator.GetExactMessage(exception)
+            : translated.Message;
+
         var body = new ApiErrorResponse
         {
             Code = translated.Code.ToString(),
-            Message = translated.Message,
+            Message = exactMessage,
             Status = translated.StatusCode,
             ErrorReference = reference,
             TraceId = traceId,
             IsTransient = translated.IsTransient,
-            Diagnostics = _environment.IsDevelopment() ? diagnostics : null,
+            ExceptionType = isDev ? diagnostics.ExceptionType : null,
+            Detail = isDev ? diagnostics.Detail : null,
+            StackTrace = isDev ? diagnostics.StackTrace : null,
+            Diagnostics = isDev ? diagnostics : null,
         };
 
         httpContext.Response.StatusCode = translated.StatusCode;

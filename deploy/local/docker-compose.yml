@@ -72,6 +72,7 @@ x-backend-env: &backend-env
   Customer__BaseUrl: http://${SERVICES_HOST:-customer}:7506
   Reporting__BaseUrl: http://${SERVICES_HOST:-reporting}:7507
   Printing__BaseUrl: http://${SERVICES_HOST:-printing}:7508
+  Site__BaseUrl: http://${SERVICES_HOST:-site}:7509
 
 x-master-env: &master-env
   <<: *backend-env
@@ -83,6 +84,7 @@ x-master-env: &master-env
   Seeding__Reporting: http://reporting:7507
   Seeding__Printing: http://printing:7508
   Seeding__Customer: http://customer:7506
+  Seeding__Site: http://site:7509
   # Where links in invitation and password-reset emails point, and portal
   # links too: the client portal is the web app's /portal routes (TK-132).
   App__BaseUrl: ${APP_URL:-http://localhost:8081}
@@ -288,6 +290,18 @@ services:
     ports:
       - ${BIND_ADDRESS:-127.0.0.1}:7508:7508
 
+  site:
+    <<: *service
+    image: billbook/site:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Site/Site.Api, ASSEMBLY: Site.Api }
+    environment:
+      <<: *backend-env
+      ASPNETCORE_HTTP_PORTS: "7509"
+    ports:
+      - ${BIND_ADDRESS:-127.0.0.1}:7509:7509
+
   # Needs the database and, by SERVICES_HOST, Master and Accounting. Nothing
   # calls it, so it publishes no port.
   worker:
@@ -316,6 +330,7 @@ services:
       ReverseProxy__Clusters__customer__Destinations__d1__Address: http://${SERVICES_HOST:-customer}:7506/
       ReverseProxy__Clusters__reporting__Destinations__d1__Address: http://${SERVICES_HOST:-reporting}:7507/
       ReverseProxy__Clusters__printing__Destinations__d1__Address: http://${SERVICES_HOST:-printing}:7508/
+      ReverseProxy__Clusters__site__Destinations__d1__Address: http://${SERVICES_HOST:-site}:7509/
     # Published for the web PC when split; loopback unless BIND_ADDRESS opens
     # it. The browser never calls it directly — nginx forwards /api to it — so
     # the browser only ever talks to one origin per app and CORS never comes

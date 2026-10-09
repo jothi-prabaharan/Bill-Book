@@ -36,6 +36,15 @@ public sealed class ApiErrorResponse
     /// <summary>Whether retrying the identical request could succeed.</summary>
     public bool IsTransient { get; set; }
 
+    /// <summary>The exact exception type name, Development only.</summary>
+    public string? ExceptionType { get; set; }
+
+    /// <summary>Postgres DETAIL or specific failure detail, Development only.</summary>
+    public string? Detail { get; set; }
+
+    /// <summary>The stack trace, Development only.</summary>
+    public string? StackTrace { get; set; }
+
     /// <summary>
     /// The exact error, Development only. Null in every other environment —
     /// and null is what the property is, not an empty object, so a client

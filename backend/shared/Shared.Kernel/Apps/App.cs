@@ -68,8 +68,11 @@ public enum AddOn
     /// <summary>Savings Scheme: customer enrolments and bonus maturity (Jewellery only).</summary>
     SavingsScheme = 1 << 9,
 
+    /// <summary>Site Services: field site jobs, trades, laborers, dispatch, usage, and billing (Service only, D-58).</summary>
+    SiteServices = 1 << 10,
+
     /// <summary>All add-ons bitwise combined.</summary>
-    All = Hrms | Payroll | Crm | Pos | FixedAssets | ClientPortal | EInvoicing | Budget | RecurringBilling | SavingsScheme,
+    All = Hrms | Payroll | Crm | Pos | FixedAssets | ClientPortal | EInvoicing | Budget | RecurringBilling | SavingsScheme | SiteServices,
 }
 
 /// <summary>
@@ -91,16 +94,18 @@ public static class AddOnRules
     /// - <see cref="AddOn.Crm"/>, <see cref="AddOn.FixedAssets"/>, <see cref="AddOn.ClientPortal"/>,
     ///   <see cref="AddOn.Budget"/>, and <see cref="AddOn.RecurringBilling"/> are allowed for all four types.
     /// - <see cref="AddOn.Pos"/> and <see cref="AddOn.EInvoicing"/> are allowed for Retail, Pharma and Jewellery; e-invoicing for Restaurant too (not School or Service, not null).
+    /// - <see cref="AddOn.SiteServices"/> is allowed for Service branches only (D-58, TK-169).
     /// </para>
     /// </summary>
     public static AddOn Allowed(BusinessType? businessType) =>
         businessType switch
         {
             null => AddOn.Hrms | AddOn.Payroll,
-            BusinessType.School or BusinessType.Service => AddOn.Hrms | AddOn.Payroll | AddOn.Crm | AddOn.FixedAssets | AddOn.ClientPortal | AddOn.Budget | AddOn.RecurringBilling,
-            BusinessType.Retail or BusinessType.Pharma => AddOn.All & ~AddOn.SavingsScheme,
-            BusinessType.Restaurant => AddOn.All & ~AddOn.SavingsScheme & ~AddOn.Pos,
-            BusinessType.Jewellery => AddOn.All,
+            BusinessType.School => AddOn.Hrms | AddOn.Payroll | AddOn.Crm | AddOn.FixedAssets | AddOn.ClientPortal | AddOn.Budget | AddOn.RecurringBilling,
+            BusinessType.Service => AddOn.Hrms | AddOn.Payroll | AddOn.Crm | AddOn.FixedAssets | AddOn.ClientPortal | AddOn.Budget | AddOn.RecurringBilling | AddOn.SiteServices,
+            BusinessType.Retail or BusinessType.Pharma => AddOn.All & ~AddOn.SavingsScheme & ~AddOn.SiteServices,
+            BusinessType.Restaurant => AddOn.All & ~AddOn.SavingsScheme & ~AddOn.Pos & ~AddOn.SiteServices,
+            BusinessType.Jewellery => AddOn.All & ~AddOn.SiteServices,
             _ => AddOn.None,
         };
 

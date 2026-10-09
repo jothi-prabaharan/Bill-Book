@@ -165,6 +165,16 @@ public sealed class BranchBusinessTypeTests
     }
 
     [Fact]
+    public void Service_branch_with_SiteServices_seeds_Site_service()
+    {
+        IReadOnlyList<string> withoutAddOn = HttpTenantSeeder.ServicesFor(BusinessType.Service, AddOn.None);
+        Assert.DoesNotContain("Site", withoutAddOn);
+
+        IReadOnlyList<string> withAddOn = HttpTenantSeeder.ServicesFor(BusinessType.Service, AddOn.SiteServices);
+        Assert.Contains("Site", withAddOn);
+    }
+
+    [Fact]
     public void Standalone_hrms_menu_matches_only_hrms_and_shared_screens()
     {
         // Shared home / settings (null business type, null/none add-on) -> matches

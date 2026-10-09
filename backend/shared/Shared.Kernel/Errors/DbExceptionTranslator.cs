@@ -113,7 +113,7 @@ public static class DbExceptionTranslator
             // nothing — the useful sentence is one level down, and a developer
             // reading a Development response should not have to go looking for
             // it in the chain. The wrapper is still there, in InnerExceptions.
-            Message = postgres is not null ? postgres.MessageText : exception.Message,
+            Message = postgres is not null ? postgres.MessageText : GetExactMessage(exception),
             SqlState = postgres?.SqlState,
             ConstraintName = postgres?.ConstraintName,
             TableName = postgres?.TableName,
@@ -167,5 +167,30 @@ public static class DbExceptionTranslator
         {
             yield return $"{current.GetType().Name}: {current.Message}";
         }
+    }
+
+    /// <summary>
+    /// Returns the exact, unabridged error message for Development responses.
+    /// Unwraps database exceptions down to the Postgres message and drills down
+    /// past generic EF Core wrapper messages.
+    /// </summary>
+    public static string GetExactMessage(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        if (Find<PostgresException>(exception) is PostgresException postgres)
+        {
+            return postgres.MessageText;
+        }
+
+        Exception current = exception;
+        while (current.InnerException is not null &&
+               (current is DbUpdateException or AggregateException
+                || current.Message.StartsWith("An error occurred", StringComparison.OrdinalIgnoreCase)))
+        {
+            current = current.InnerException;
+        }
+
+        return current.Message;
     }
 }

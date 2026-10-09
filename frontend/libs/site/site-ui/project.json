@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "site-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/site/site-ui/src",
+  "tags": [
+    "scope:site",
+    "type:ui"
+  ],
+  "targets": {}
+}

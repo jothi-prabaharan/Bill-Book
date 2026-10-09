@@ -97,6 +97,7 @@ public static class ReliabilityRegistration
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddScoped<ApiExceptionFilter>();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
         // Without this, UseExceptionHandler() with no arguments has no fallback

@@ -14,6 +14,7 @@ namespace Inventory.Api.Controllers;
 [RequireModulePermission("inventory")]
 [Route("api/warehouses")]
 [RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireAddOn(AddOn.SiteServices)]
 public sealed class WarehousesController : ControllerBase
 {
     private readonly WarehouseRepository _warehouses;

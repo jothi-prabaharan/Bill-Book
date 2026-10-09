@@ -271,6 +271,13 @@ public class DatabaseMigrationService : IHostedService
                 accDb2.NumberingSeries.AddRange(Purchase.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
                 await accDb2.SaveChangesAsync(ct);
             }
+
+            bool hasSitSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == targetOrgId && n.SeriesCode == "SIT", ct);
+            if (!hasSitSeries)
+            {
+                accDb2.NumberingSeries.AddRange(Site.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
+                await accDb2.SaveChangesAsync(ct);
+            }
         }
 
         // Seed Printing: one default template per printable document type.
@@ -326,6 +333,7 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<Claims.Repository.ClaimsDbContext>(connectionString, tenant, "clm", ct);
         await MigrateContextAsync<Recruitment.Repository.RecruitmentDbContext>(connectionString, tenant, "rec", ct);
         await MigrateContextAsync<Performance.Repository.PerformanceDbContext>(connectionString, tenant, "prf", ct);
+        await MigrateContextAsync<Site.Repository.SiteDbContext>(connectionString, tenant, "sit", ct);
     }
 
     /// <summary>

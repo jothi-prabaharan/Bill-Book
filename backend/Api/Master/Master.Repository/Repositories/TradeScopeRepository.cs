@@ -1,5 +1,6 @@
 using Master.Repository.Clients;
 using Master.Entity.Enums;
+using Shared.Kernel.Apps;
 
 namespace Master.Repository.Repositories;
 
@@ -60,7 +61,14 @@ public static class TradeScopeRepository
         return trades;
     }
 
-    public static bool ShowsMenu(string code, Vertical trade) =>
-        !MenuTrades.TryGetValue(code, out Vertical[]? trades) || trades.Contains(trade);
+    public static bool ShowsMenu(string code, Vertical trade, AddOn addOns = AddOn.None)
+    {
+        if (trade == Vertical.Service && (addOns & AddOn.SiteServices) == AddOn.SiteServices && StockOnlyMenus.Contains(code))
+        {
+            return true;
+        }
+
+        return !MenuTrades.TryGetValue(code, out Vertical[]? trades) || trades.Contains(trade);
+    }
 }
 

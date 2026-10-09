@@ -208,6 +208,12 @@
       "@bill-book/work-order-ui": [
         "libs/work-order/work-order-ui/src/index.ts"
       ],
+      "@bill-book/site-core": [
+        "libs/site/site-core/src/index.ts"
+      ],
+      "@bill-book/site-ui": [
+        "libs/site/site-ui/src/index.ts"
+      ],
       "@bill-book/admin-ui": [
         "libs/admin/admin-ui/src/index.ts"
       ],

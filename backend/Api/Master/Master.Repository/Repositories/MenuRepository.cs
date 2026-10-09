@@ -148,7 +148,7 @@ public sealed class MenuRepository
             {
                 var items = Children(childrenOf, group.MenuId)
                     .Where(r => r.Type == MenuType.Item && r.AllowedActions.Count > 0
-                        && TradeScopeRepository.ShowsMenu(r.Code, trade))
+                        && TradeScopeRepository.ShowsMenu(r.Code, trade, addOns))
                     .Select(r => new SubMenuView
                     {
                         SubMenuId = r.MenuId,

@@ -157,12 +157,14 @@ public sealed class RequireScopeGuardTests
 
         // Retail branch without EInvoicing add-on -> Action guard refuses
         ActionExecutingContext ctx1 = CreateContext(controller, "EwayBill", BusinessType.Retail, AddOn.None, true, aoActionGuard);
-        btGuard.OnActionExecuting(ctx1);
+        aoActionGuard.OnActionExecuting(ctx1);
         Assert.IsType<ForbidResult>(ctx1.Result);
 
         // Retail branch WITH EInvoicing add-on -> Allowed
         ActionExecutingContext ctx2 = CreateContext(controller, "EwayBill", BusinessType.Retail, AddOn.EInvoicing, true, aoActionGuard);
         btGuard.OnActionExecuting(ctx2);
+        Assert.Null(ctx2.Result);
+        aoActionGuard.OnActionExecuting(ctx2);
         Assert.Null(ctx2.Result);
 
         // Non-retail branch WITH EInvoicing add-on -> Forbidden (controller-level vertical check fails)

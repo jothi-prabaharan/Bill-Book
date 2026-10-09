@@ -2,46 +2,6 @@
   "version": "0.2.0",
   "compounds": [
     {
-      "name": "Core Retail APIs + Web App (Edge)",
-      "configurations": [
-        "Gateway (:4500)",
-        "Accounting.Api (:4501)",
-        "Customer.Api (:4505)",
-        "Inventory.Api (:4509)",
-        "Master.Api (:4511)",
-        "Printing.Api (:4515)",
-        "Purchase.Api (:4516)",
-        "Reporting.Api (:4518)",
-        "Sales.Api (:4519)",
-        "Web · Development (Edge, 4200)"
-      ],
-      "stopAll": true,
-      "presentation": {
-        "group": "full-stack",
-        "order": 1
-      }
-    },
-    {
-      "name": "Core Retail APIs + Web App (Server Only)",
-      "configurations": [
-        "Gateway (:4500)",
-        "Accounting.Api (:4501)",
-        "Customer.Api (:4505)",
-        "Inventory.Api (:4509)",
-        "Master.Api (:4511)",
-        "Printing.Api (:4515)",
-        "Purchase.Api (:4516)",
-        "Reporting.Api (:4518)",
-        "Sales.Api (:4519)",
-        "Web App (Dev Server · :4200)"
-      ],
-      "stopAll": true,
-      "presentation": {
-        "group": "full-stack",
-        "order": 2
-      }
-    },
-    {
       "name": "All APIs + Web App (Edge)",
       "configurations": [
         "Gateway (:4500)",
@@ -72,7 +32,27 @@
       "stopAll": true,
       "presentation": {
         "group": "full-stack",
-        "order": 3
+        "order": 1
+      }
+    },
+    {
+      "name": "Core Retail APIs + Web App (Edge)",
+      "configurations": [
+        "Gateway (:4500)",
+        "Accounting.Api (:4501)",
+        "Customer.Api (:4505)",
+        "Inventory.Api (:4509)",
+        "Master.Api (:4511)",
+        "Printing.Api (:4515)",
+        "Purchase.Api (:4516)",
+        "Reporting.Api (:4518)",
+        "Sales.Api (:4519)",
+        "Web · Development (Edge, 4200)"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "group": "full-stack",
+        "order": 2
       }
     },
     {
@@ -101,6 +81,26 @@
         "Student.Api (:4520)",
         "TimeLeave.Api (:4521)",
         "WorkOrder.Api (:4522)",
+        "Web App (Dev Server · :4200)"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "group": "full-stack",
+        "order": 3
+      }
+    },
+    {
+      "name": "Core Retail APIs + Web App (Server Only)",
+      "configurations": [
+        "Gateway (:4500)",
+        "Accounting.Api (:4501)",
+        "Customer.Api (:4505)",
+        "Inventory.Api (:4509)",
+        "Master.Api (:4511)",
+        "Printing.Api (:4515)",
+        "Purchase.Api (:4516)",
+        "Reporting.Api (:4518)",
+        "Sales.Api (:4519)",
         "Web App (Dev Server · :4200)"
       ],
       "stopAll": true,
@@ -257,7 +257,10 @@
       "userDataDir": "${workspaceFolder}/.vscode/.edge-debug-profile/web",
       "runtimeArgs": [
         "--disable-features=CalculateNativeWinOcclusion"
-      ]
+      ],
+      "presentation": {
+        "hidden": true
+      }
     },
     {
       "name": "Web App (Dev Server · :4200)",
@@ -272,6 +275,7 @@
       "cwd": "${workspaceFolder}/frontend",
       "console": "integratedTerminal",
       "presentation": {
+        "hidden": true,
         "group": "frontend",
         "order": 2
       }
@@ -299,7 +303,10 @@
       "userDataDir": "${workspaceFolder}/.vscode/.edge-debug-profile/web",
       "runtimeArgs": [
         "--disable-features=CalculateNativeWinOcclusion"
-      ]
+      ],
+      "presentation": {
+        "hidden": true
+      }
     },
     {
       "name": "Docs · Development (Edge, 4300)",

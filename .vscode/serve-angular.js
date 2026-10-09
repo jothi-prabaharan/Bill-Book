@@ -48,11 +48,25 @@ async function isPortServing() {
   return results.some(Boolean);
 }
 
-isPortServing().then((serving) => {
+function isGatewayServing() {
+  return Promise.all(HOSTS.map((host) => new Promise((resolve) => {
+    const s = net.connect({ port: 4500, host });
+    s.once('connect', () => { s.destroy(); resolve(true); });
+    s.once('error', () => resolve(false));
+    s.setTimeout(500, () => resolve(false));
+  }))).then((res) => res.some(Boolean));
+}
+
+isPortServing().then(async (serving) => {
   if (serving) {
-    // Note: this reuses whatever is already on the port. If you switched
-    // configuration (development <-> staging) you must stop the old server
-    // first, otherwise you attach to a bundle built the previous way.
+    // If the dev server is already running, wait briefly for the API Gateway
+    // to bind so Edge does not open before Gateway and hit ECONNREFUSED.
+    if (project === 'web') {
+      for (let i = 0; i < 10; i++) {
+        if (await isGatewayServing()) break;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
     console.log(`Reusing the dev server already listening on port ${PORT}.`);
     console.log(`  ->  Local:   http://localhost:${PORT}/`);
     return;

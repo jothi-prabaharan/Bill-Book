@@ -1,4 +1,4 @@
-﻿import { adminRoutes } from '@bill-book/admin-ui';
+import { adminRoutes } from '@bill-book/admin-ui';
 import { Routes } from '@angular/router';
 import {
   AcceptInvitationPage,
@@ -24,6 +24,7 @@ import { facilityRoutes } from '@bill-book/facility-ui';
 import { workOrderRoutes } from '@bill-book/work-order-ui';
 import { preventiveRoutes } from '@bill-book/preventive-ui';
 import { maintenanceContractRoutes } from '@bill-book/maintenance-contract-ui';
+import { siteRoutes } from '@bill-book/site-ui';
 import { DashboardPage } from './dashboard/dashboard.page';
 
 export const appRoutes: Routes = [
@@ -68,6 +69,7 @@ export const appRoutes: Routes = [
       ...workOrderRoutes,
       ...preventiveRoutes,
       ...maintenanceContractRoutes,
+      ...siteRoutes,
       { path: 'accounting', pathMatch: 'full', redirectTo: 'accounting/trial-balance' },
       {
         path: 'accounting/chart-of-accounts',

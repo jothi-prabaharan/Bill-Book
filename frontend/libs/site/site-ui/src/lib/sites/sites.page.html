@@ -1,0 +1,24 @@
+<div class="site-page">
+  <div class="page-header">
+    <h1 class="page-title">Sites & Projects</h1>
+  </div>
+
+  @if (loading()) {
+    <p>Loading sites...</p>
+  } @else if (sites().length === 0) {
+    <p>No site projects found.</p>
+  } @else {
+    <div class="site-card-grid">
+      @for (site of sites(); track site.siteId) {
+        <div class="site-card">
+          <div class="site-code">{{ site.siteCode }}</div>
+          <div class="site-name">{{ site.siteName }}</div>
+          <div [class]="'site-status status-' + site.status.toLowerCase()">{{ site.status }}</div>
+          @if (site.city || site.state) {
+            <div>{{ site.city }} {{ site.state }}</div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

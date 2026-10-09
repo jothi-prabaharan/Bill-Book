@@ -37,6 +37,7 @@
     <ProjectReference Include="..\..\Claims\Claims.Repository\Claims.Repository.csproj" />
     <ProjectReference Include="..\..\Recruitment\Recruitment.Repository\Recruitment.Repository.csproj" />
     <ProjectReference Include="..\..\Performance\Performance.Repository\Performance.Repository.csproj" />
+    <ProjectReference Include="..\..\Site\Site.Repository\Site.Repository.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -51,6 +51,14 @@ public sealed class TradeScopeTests
         }
     }
 
+    [Fact]
+    public void A_service_branch_with_SiteServices_sees_stock_screens()
+    {
+        // TK-169: a service business with SiteServices holds stock and manages warehouses/adjustments.
+        Assert.All(TradeScopeRepository.StockOnlyMenus, code =>
+            Assert.True(TradeScopeRepository.ShowsMenu(code, Vertical.Service, AddOn.SiteServices), code));
+    }
+
     [Theory]
     [InlineData(Vertical.Retail)]
     [InlineData(Vertical.Pharma)]

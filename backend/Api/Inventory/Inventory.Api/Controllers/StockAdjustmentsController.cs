@@ -21,6 +21,7 @@ namespace Inventory.Api.Controllers;
 [RequireModulePermission("inventory")]
 [Route("api/stock-adjustments")]
 [RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
+[RequireAddOn(AddOn.SiteServices)]
 public sealed class StockAdjustmentsController : ControllerBase
 {
     private readonly StockAdjustmentRepository _adjustments;

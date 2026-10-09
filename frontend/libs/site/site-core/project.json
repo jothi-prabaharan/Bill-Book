@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "site-core",
+  "projectType": "library",
+  "sourceRoot": "libs/site/site-core/src",
+  "tags": [
+    "scope:site",
+    "type:core"
+  ],
+  "targets": {}
+}
