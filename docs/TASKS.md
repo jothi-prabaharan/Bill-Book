@@ -230,7 +230,8 @@ as #2 to #13.)
 | `L-KERNEL` | `backend/shared/Shared.Kernel`, `backend/tests/Shared.Kernel.Tests`, `backend/tests/Shared`, `shared-fixtures` |
 | `L-{MODULE}-UI` | `frontend/libs/{module}/**`, e.g. `L-SAL-UI` is `frontend/libs/sales` |
 | `L-UI` | `frontend/libs/shared/**`, `frontend/libs/app-shell` |
-| `L-WEB` / `L-DSK` / `L-PTL` / `L-ADM` | `frontend/apps/web`; ~~`apps/desktop`, `apps/portal`, `apps/admin`~~ (removed by TK-132, TK-134 and TK-155; `L-DSK` is retired, the till is `L-POS-UI`) |
+| `L-WEB` / `L-DSK` / `L-PTL` / `L-ADM` | `frontend/apps/web`; `frontend/apps/desktop` (`L-DSK`, revived by TK-184 as the Electron shell around the web build); ~~`apps/portal`, `apps/admin`~~ (removed by TK-132 and TK-134; the till is `L-POS-UI`) |
+| `L-MOB` | `frontend/apps/mobile` (Capacitor shell, Android and iOS projects; TK-184) |
 | `L-DOC` | `CLAUDE.md`, `AGENTS.md`, `docs/Modules.md`, `docs/Architecture.md`, `docs/Transactions_And_Specs.md` |
 | `L-SIT` | `backend/Api/Site/**`, `backend/tests/Site.Api.Tests` |
 | `L-SITE-UI` | `frontend/libs/site/**` |
@@ -5571,6 +5572,25 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a fresh Development start ends with the first branch seeded exactly like a branch created from the app, and `DatabaseMigrationService` names no other service's DbContext or seed class.
 - **Notes:** the owner asked on 9 October 2026 that every service keep and apply its own seed data. The numbering series that Inventory, Sales and Purchase write into Accounting's table is the settled shared-table exception in CLAUDE.md, and stays.
 
+### TK-184 · Desktop and mobile apps with forced updates
+- [~] working (Claude Opus 5.5) - since 2026-10-09
+- **Issue:** [#168](https://github.com/jothi-prabaharan/Bill-Book/issues/168)
+- **Group:** N · Electron removal, barcode and QR (reversed in part by D-60)
+- **Lanes:** L-WEB, L-DSK (revived: `frontend/apps/desktop/**`), L-MOB (new: `frontend/apps/mobile/**`), L-UI, L-DEPS, L-DOC · **Depends on:** — · **Decision:** D-60
+- **Where:** `frontend/apps/web` (`app.component.*`, `app.config.ts`, `app.routes.ts`, `index.html`, `public/config.js`), `frontend/libs/shared/ui-components/src/lib/print-html.ts`, `frontend/libs/shared/api-client/src/lib/runtime-config.ts`, a new `frontend/libs/shared/app-update`, new `frontend/apps/desktop` and `frontend/apps/mobile`, `frontend/package.json`, `.gitignore`.
+- **State:** checked 9 October 2026. `apps/web` runs only in a browser. TK-155 deleted `apps/desktop` (Electron) on 2026-10-01, and nothing checks a running copy's version. Receipts, kitchen tickets, bills and labels all print through `printHtml` in a hidden frame, so the browser's print dialog appears every time. The API origin comes from `window.__BB_CONFIG__.apiBaseUrl`, which `config.js` sets, falling back to the build's value.
+- **Sub-tasks:**
+  - [ ] `libs/shared/app-update`: platform detection (web, Electron, Android, iOS), version comparison against `latestVersion` and `minSupportedVersion`, and an RxJS `AppUpdateService` exposing `updateAvailable$`, `isForced$` and `downloadProgress$`. It checks at startup and on resume.
+  - [ ] `UpdateModalComponent` styled with Bootstrap (scoped to the component, so the app's own `.btn` classes are untouched) and FontAwesome icons. Optional mode offers Update now and Later. Forced mode blocks: no outside click, no Escape, no Android back button, and a route guard refuses navigation.
+  - [ ] `apps/desktop`: Electron main and preload with context isolation, a sandbox and no Node in the page. The web build is served on a custom `app://` scheme that also forwards `/api` to the configured server. `electron-updater` (generic provider) reports download progress over IPC and installs. Silent printing over IPC sits behind `printHtml`, with a printer chosen from the menu. The window position is remembered per display and brought back when a monitor is unplugged. `electron-builder` targets NSIS, deb, AppImage and dmg.
+  - [ ] `apps/mobile`: Capacitor config and the Android and iOS projects. Every orientation is allowed and split screen and iPad multitasking are on. The back button is handled, with `config.js` written for the device build.
+  - [ ] A sample `version.json` and the operator's release steps.
+  - [ ] Docs: `development.md` and `deployment.md` (desktop and mobile builds, publishing an update), `docs.manifest.ts` status, a `releases.md` bullet; `CLAUDE.md`, `README.md` and `docs/Architecture.md` where they say there is no desktop app.
+  - [ ] Test: written, never run by an AI (section 0.5): version comparison and the update decision, the service's streams for each platform, the forced gate, the window-bounds rescue, the print page-size parsing, and the `app://` path mapping.
+  - [ ] Owner: build an installer on each OS, publish 1.0.1 over 1.0.0 and see the optional modal and the download; set `forceUpdate` and see the blocking modal; build the Android and iOS apps with Android Studio and Xcode.
+- **Done when:** a desktop build older than `minSupportedVersion` (or with `forceUpdate` true) opens behind a blocking update modal, downloads and installs the new version; a mobile build in the same state opens the store; `web`, `docs` and the desktop main process build and lint clean.
+- **Notes:** the owner asked for this on 9 October 2026, reversing the part of TK-155 that removed Electron (D-60). The till stays in `apps/web`, and the desktop app is a shell around the web build, not a second app.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -5639,6 +5659,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-57 | How does the site maintenance and material sales module fit the business types, and where does it sit in the queue? | TK-168 to TK-176 | **A Service-branch module, first in the queue** (owner, 2026-10-09): it serves the `Service` business type through a new `SiteServices` add-on that also lets that branch hold stock; its cards (group P) are claimed before every other open card. TK-168 to TK-176 |
 | D-58 | Is `SiteServices` a paid add-on or free like `RecurringBilling`, and should Retail branches be allowed it too? | TK-169 (`AddOnRules` only) | **Paid, Service branches only** (owner, 2026-10-09). TK-169 |
 | D-59 | When does used material leave inventory: when the usage is approved, or when the invoice posts? | TK-174, TK-175 (the stock issue) | **When the invoice posts** (owner, 2026-10-09): the existing invoice posting issues the used material from the site warehouse. TK-174, TK-175 |
+| D-60 | Should the product ship as installable desktop and mobile apps, reversing TK-155's removal of Electron? | TK-184 | **Yes** (owner, 2026-10-09): Electron for Windows, Ubuntu and macOS with `electron-updater` from a private server, and Capacitor for Android and iOS phones and tablets. Every platform checks a `version.json` and can be forced to update. The desktop and mobile apps are shells around the `apps/web` build, and the till stays in `apps/web`. TK-184 |
 | D-60 | How is a material's selling price set: cost plus the margin rule, or the item's price list? | TK-175 (material pricing) | **Cost plus the margin rule, with the price list as an override** (owner, 2026-10-09). TK-175 |
 | D-61 | Can a laborer work a half day (0.5), or whole days only? | TK-171 (the day fraction) | **1 or 0.5 days** (owner, 2026-10-09), entered by the laborer and confirmed by the admin. TK-171 |
 | D-62 | Is a laborer an HRMS employee, or a light profile in the Site service with only a login? | TK-170, TK-171 | **A light profile in the Site service with a login, and an optional `EmployeeId` link** (owner, 2026-10-09); no HRMS purchase needed. TK-170, TK-171 |
