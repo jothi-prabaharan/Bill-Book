@@ -204,7 +204,7 @@ const DEFAULT_ACCOUNTS: BankCardAccount[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bank-dashboard-page',
   standalone: true,
-  imports: [ExportImportComponent, CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './bank-dashboard.page.html',
   styleUrl: './bank-dashboard.page.scss',
 })

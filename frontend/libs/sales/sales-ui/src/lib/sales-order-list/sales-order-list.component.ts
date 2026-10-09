@@ -11,7 +11,7 @@ import {
   DataGridComponent,
   MessageBoxComponent,
   SearchInputComponent,
-  SelectComponent,
+  
   UiMessage,
 } from '@bill-book/ui-components';
 
@@ -41,7 +41,7 @@ const PAGE_SIZE = 25;
     DataGridComponent,
     DataGridCellTemplateDirective,
     MessageBoxComponent,
-    SelectComponent,
+    
     SearchInputComponent,
   ],
   templateUrl: './sales-order-list.component.html',

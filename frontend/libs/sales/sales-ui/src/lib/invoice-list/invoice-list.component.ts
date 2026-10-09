@@ -29,7 +29,7 @@ import {
   DataGridComponent,
   MessageBoxComponent,
   SearchInputComponent,
-  SelectComponent,
+  
   UiMessage,
 } from '@bill-book/ui-components';
 
@@ -62,7 +62,7 @@ const PAGE_SIZE = 25;
     MessageBoxComponent,
     AllocationModalComponent,
     CheckboxComponent,
-    SelectComponent,
+    
     SearchInputComponent,
   ],
   templateUrl: './invoice-list.component.html',

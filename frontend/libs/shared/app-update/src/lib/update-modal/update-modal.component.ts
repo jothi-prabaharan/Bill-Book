@@ -1,7 +1,7 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   faCircleArrowUp,
   faDownload,
@@ -24,7 +24,7 @@ import { AppUpdateService } from '../app-update.service';
 @Component({
   selector: 'bb-update-modal',
   standalone: true,
-  imports: [CdkTrapFocus, FaIconComponent],
+  imports: [CdkTrapFocus, FontAwesomeModule],
   templateUrl: './update-modal.component.html',
   styleUrl: './update-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
