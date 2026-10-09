@@ -23,25 +23,65 @@ const EXPIRY_KEY = 'bb.licenseExpiry';
 const EXPIRY_SCOPE_KEY = 'bb.expiryScope';
 const ORG_KEY = 'bb.orgId';
 
+/** `'1'` when the user ticked "Keep me signed in", `'0'` when not. Absent for a sign-in from before the box worked, which is kept. */
+const REMEMBER_KEY = 'bb.remember';
+
+/**
+ * A browser-session cookie marking a sign-in that was not to be kept. It has no
+ * expiry, so the browser drops it when it closes, and every tab shares it,
+ * which `sessionStorage` would not: a link opened in a new tab stays signed in.
+ * It is a marker, not a credential; the tokens stay where they always were.
+ */
+const SESSION_COOKIE = 'bb.session';
+
+const SESSION_KEYS = [ACCESS_KEY, REFRESH_KEY, LICENSE_KEY, EXPIRY_KEY, EXPIRY_SCOPE_KEY, REMEMBER_KEY];
+
+function hasSessionCookie(): boolean {
+  return document.cookie.split(';').some((part) => part.trim().startsWith(`${SESSION_COOKIE}=`));
+}
+
+function setSessionCookie(): void {
+  document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Strict`;
+}
+
+function removeSessionCookie(): void {
+  document.cookie = `${SESSION_COOKIE}=; path=/; SameSite=Strict; max-age=0`;
+}
+
+/**
+ * Reads a stored session value, first ending a session that was not to be
+ * kept if the browser has been closed since it began.
+ *
+ * Without "Keep me signed in" the tokens are still stored, so a reload or a
+ * second tab stays signed in; what ends the session is the browser closing,
+ * which takes the session cookie with it. Finding no cookie beside a session
+ * marked not-kept means exactly that, so its tokens are dropped before any
+ * signal reads them.
+ */
+function stored(key: string): string | null {
+  if (localStorage.getItem(REMEMBER_KEY) === '0' && !hasSessionCookie()) {
+    SESSION_KEYS.forEach((k) => localStorage.removeItem(k));
+  }
+  return localStorage.getItem(key);
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
 
   readonly organizations = signal<AccessibleOrg[]>([]);
 
-  readonly accessToken = signal<string | null>(localStorage.getItem(ACCESS_KEY));
-  readonly licenseStatus = signal<string | null>(localStorage.getItem(LICENSE_KEY));
+  readonly accessToken = signal<string | null>(stored(ACCESS_KEY));
+  readonly licenseStatus = signal<string | null>(stored(LICENSE_KEY));
 
   /** The date access to the current branch ends, as an ISO date or null. */
-  readonly licenseExpiry = signal<string | null>(localStorage.getItem(EXPIRY_KEY));
+  readonly licenseExpiry = signal<string | null>(stored(EXPIRY_KEY));
 
   /**
    * Whether that date is the branch's own rather than the account's licence.
    * Only ever narrows what the expired page says; nothing is gated on it.
    */
-  readonly expiryIsBranchLevel = signal<boolean>(
-    localStorage.getItem(EXPIRY_SCOPE_KEY) === 'branch',
-  );
+  readonly expiryIsBranchLevel = signal<boolean>(stored(EXPIRY_SCOPE_KEY) === 'branch');
 
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
   /**
@@ -78,20 +118,36 @@ export class AuthService {
     return this.has(`${module}.view`);
   }
 
-  async login(email: string, password: string): Promise<LoginResponse> {
+  /**
+   * Signs in. `keepSignedIn` is the login form's "Keep me signed in": ticked,
+   * the session survives closing the browser and lasts as long as the refresh
+   * token keeps being renewed; unticked, it ends when the browser closes.
+   */
+  async login(email: string, password: string, keepSignedIn = false): Promise<LoginResponse> {
     const response = await firstValueFrom(
       this.http.post<LoginResponse>('/api/auth/login', { email, password }),
     );
-    
+
     // Auto-routed token processing
     localStorage.setItem(ACCESS_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
     localStorage.setItem(ORG_KEY, response.currentOrgId);
     this.storeLicense(response as unknown as TokenResponse);
+    this.storeKeepSignedIn(keepSignedIn);
     this.accessToken.set(response.accessToken);
-    
+
     this.organizations.set(response.organizations);
     return response;
+  }
+
+  private storeKeepSignedIn(keepSignedIn: boolean): void {
+    localStorage.setItem(REMEMBER_KEY, keepSignedIn ? '1' : '0');
+
+    if (keepSignedIn) {
+      removeSessionCookie();
+    } else {
+      setSessionCookie();
+    }
   }
 
   async fetchSessionState(): Promise<SessionState> {
@@ -214,6 +270,8 @@ export class AuthService {
     localStorage.removeItem(LICENSE_KEY);
     localStorage.removeItem(EXPIRY_KEY);
     localStorage.removeItem(EXPIRY_SCOPE_KEY);
+    localStorage.removeItem(REMEMBER_KEY);
+    removeSessionCookie();
     this.accessToken.set(null);
     this.licenseStatus.set(null);
     this.licenseExpiry.set(null);

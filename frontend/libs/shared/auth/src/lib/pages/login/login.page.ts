@@ -66,7 +66,8 @@ export class LoginPage {
     this.busy.set(true);
     this.error.set(null);
     try {
-      const tokens = await this.auth.login(this.loginForm.value.email!, this.loginForm.value.password!);
+      const { email, password, remember } = this.loginForm.getRawValue();
+      const tokens = await this.auth.login(email, password, remember);
       await this.router.navigateByUrl(tokens.licenseStatus === 'Expired' ? '/expired' : '/');
     } catch (err: unknown) {
       this.error.set(messageOf(err, 'Invalid email or password.'));

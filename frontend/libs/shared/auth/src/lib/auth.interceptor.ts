@@ -87,9 +87,29 @@ function withBearer(request: HttpRequest<unknown>, token: string): HttpRequest<u
 }
 
 /**
- * The auth endpoints refuse for reasons a refresh cannot fix — wrong password,
- * spent refresh token — so a 401 from one of them is final.
+ * The auth endpoints that refuse for reasons a refresh cannot fix — wrong
+ * password, spent refresh token, a pre-auth token — so a 401 from one of them
+ * is final.
+ *
+ * **Not every `/api/auth/` route.** `session`, `organizations` and
+ * `switch-organization` take the ordinary access token like any other call.
+ * Treating them as final is what made "Keep me signed in" look broken: on
+ * opening the app after the fifteen-minute access token had lapsed, the guard's
+ * `GET /api/auth/session` answered 401 and the user was signed out, though the
+ * refresh token beside it was good for days.
  */
+const FINAL_AUTH_ROUTES = [
+  '/api/auth/login',
+  '/api/auth/select-organization',
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/auth/forgot-password',
+  '/api/auth/verify-otp',
+  '/api/auth/reset-password',
+  '/api/auth/accept-invitation',
+];
+
 function isAuthRoute(url: string): boolean {
-  return url.includes('/api/auth/');
+  const path = url.split('?')[0];
+  return FINAL_AUTH_ROUTES.some((route) => path.endsWith(route));
 }

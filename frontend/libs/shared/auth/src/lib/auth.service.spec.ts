@@ -26,9 +26,78 @@ describe('AuthService', () => {
     httpMock = TestBed.inject(HttpTestingController);
   };
 
+  /** Stands in for closing the browser: a cookie with no expiry goes with it. */
+  const closeBrowser = (): void => {
+    document.cookie = 'bb.session=; path=/; max-age=0';
+  };
+
   beforeEach(() => {
     localStorage.clear();
+    closeBrowser();
     configure();
+  });
+
+  describe('keep me signed in', () => {
+    const signIn = async (keepSignedIn: boolean): Promise<void> => {
+      const login = auth.login('someone@example.com', 'a-password', keepSignedIn);
+      httpMock.expectOne('/api/auth/login').flush({
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        currentOrgId: 'org-1',
+        organizations: [],
+        licenseStatus: 'Active',
+      });
+      await login;
+    };
+
+    it('keeps a ticked sign-in after the browser is closed', async () => {
+      await signIn(true);
+
+      closeBrowser();
+      configure();
+
+      expect(auth.isAuthenticated()).toBe(true);
+      expect(localStorage.getItem('bb.refresh')).toBe('refresh');
+    });
+
+    it('keeps an unticked sign-in across a reload', async () => {
+      // The browser is still open, so the session cookie is still there.
+      await signIn(false);
+
+      configure();
+
+      expect(auth.isAuthenticated()).toBe(true);
+    });
+
+    it('ends an unticked sign-in once the browser has been closed', async () => {
+      await signIn(false);
+
+      closeBrowser();
+      configure();
+
+      expect(auth.isAuthenticated()).toBe(false);
+      expect(localStorage.getItem('bb.access')).toBeNull();
+      expect(localStorage.getItem('bb.refresh')).toBeNull();
+    });
+
+    it('keeps a session signed in before the box worked', () => {
+      // No bb.remember at all: an older sign-in, which was always kept.
+      localStorage.setItem('bb.access', 'stored-token');
+      localStorage.setItem('bb.refresh', 'stored-refresh');
+
+      configure();
+
+      expect(auth.isAuthenticated()).toBe(true);
+    });
+
+    it('forgets the choice on sign-out', async () => {
+      await signIn(false);
+
+      auth.logout();
+
+      expect(localStorage.getItem('bb.remember')).toBeNull();
+      expect(document.cookie).not.toContain('bb.session=1');
+    });
   });
 
   describe('login auto-routing', () => {

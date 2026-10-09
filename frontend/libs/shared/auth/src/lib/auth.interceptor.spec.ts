@@ -156,6 +156,84 @@ describe('authInterceptor', () => {
     httpMock.verify();
   });
 
+  it('refreshes a 401 from the session check rather than signing the user out', async () => {
+    // Opening the app after the access token lapsed: the guard asks
+    // /api/auth/session first. Treating that 401 as final signed out a user
+    // whose refresh token was good for days, which is what made
+    // "Keep me signed in" look broken.
+    auth.accessToken.set('stale-token');
+    localStorage.setItem('bb.refresh', 'a-refresh-token');
+
+    const done = new Promise((resolve) => {
+      http.get('/api/auth/session').subscribe({ next: resolve, error: resolve });
+    });
+
+    httpMock.expectOne('/api/auth/session').flush(null, { status: 401, statusText: 'Unauthorized' });
+    await tick();
+
+    httpMock.expectOne('/api/auth/refresh').flush({
+      accessToken: 'fresh-token',
+      refreshToken: 'a-new-refresh-token',
+      accessExpiresInSeconds: 900,
+      licenseStatus: 'Active',
+      licenseExpiry: null,
+      expiryIsBranchLevel: false,
+    });
+    await tick();
+
+    const replay = httpMock.expectOne('/api/auth/session');
+    expect(replay.request.headers.get('Authorization')).toBe('Bearer fresh-token');
+    replay.flush({ organizations: [] });
+
+    await done;
+
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('refreshes a 401 from the branch list the same way', async () => {
+    auth.accessToken.set('stale-token');
+    localStorage.setItem('bb.refresh', 'a-refresh-token');
+
+    const done = new Promise((resolve) => {
+      http.get('/api/auth/organizations').subscribe({ next: resolve, error: resolve });
+    });
+
+    httpMock
+      .expectOne('/api/auth/organizations')
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+    await tick();
+
+    httpMock.expectOne('/api/auth/refresh').flush({
+      accessToken: 'fresh-token',
+      refreshToken: 'a-new-refresh-token',
+      accessExpiresInSeconds: 900,
+      licenseStatus: 'Active',
+      licenseExpiry: null,
+      expiryIsBranchLevel: false,
+    });
+    await tick();
+
+    httpMock.expectOne('/api/auth/organizations').flush([]);
+    await done;
+
+    expect(auth.isAuthenticated()).toBe(true);
+  });
+
+  it('does not try to refresh a 401 from the login call', async () => {
+    auth.accessToken.set('a-token');
+    localStorage.setItem('bb.refresh', 'a-refresh-token');
+
+    const done = new Promise((resolve) => {
+      http.post('/api/auth/login', {}).subscribe({ next: resolve, error: resolve });
+    });
+
+    httpMock.expectOne('/api/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
+    await done;
+
+    httpMock.expectNone('/api/auth/refresh');
+  });
+
   it('sends one refresh for a burst of 401s, not one each', async () => {
     // Two refreshes with the same token is precisely what the server reads as
     // reuse — it would end the session this is trying to save.

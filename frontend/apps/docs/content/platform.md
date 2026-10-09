@@ -130,6 +130,7 @@ There are no apps any more (TK-136). A customer buys one product, and what each 
 - **A sign-in is for a branch.** You are offered every branch where you hold a role, once, whatever roles you hold in it.
 - **The token carries the branch's scope**: its `business_type` and `add_ons` claims, the permissions of every role you hold in that branch, and the customer's licence. It carries no `app` claim. A token minted before 5 October 2026 that still names an app, or says `General`, reads as a Retail branch until it expires.
 - **`GET /api/me/context`** returns your name and email, the branch, its business type and add-ons, the licence and your permissions. It returns no internal ids.
+- **Keep me signed in.** Ticked, you stay signed in after closing the browser, for as long as you come back within the refresh token's seven days; each visit renews it. Unticked, a reload or a new tab keeps you signed in, but closing the browser signs you out. Either way the access token lasts fifteen minutes and is renewed quietly, including when the app is reopened after a break.
 
 ### Signing up
 
