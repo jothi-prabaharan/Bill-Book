@@ -62,14 +62,25 @@ There is one branch, and it is `main`. Every commit goes there as the work is do
 
 The same applies to a follow-up: commit it to `main` alongside the work it follows, rather than opening a branch beside it.
 
-### Deployment branches: `staging`, `uat`, `production` (10 October 2026)
+### Deployment branches: `Staging`, `uat`, `production` (strict rule, 10 October 2026)
 
-**Created by the owner's instruction on 10 October 2026.** They hold what is deployed to each environment, nothing else.
+**Recreated from `main` by the owner's instruction on 10 October 2026. The owner deleted the first copies, and this rule is why.** These three branches hold exactly what is deployed to each environment, and nothing is ever written to them by hand.
 
-- **Work still goes only to `main`.** Never commit to `staging`, `uat` or `production`, and never branch from them. Everything in this section above still holds for every feature, fix and follow-up.
-- **Code moves forward by merge, in one direction:** `main` → `staging` → `uat` → `production`. Each step is a fast-forward or merge of the branch before it, done by the owner or on the owner's explicit say-so, never by an agent on its own initiative.
-- **A fix found in staging, UAT or production is made on `main`** and promoted like anything else. A branch that has been committed to directly no longer matches the one before it, and the next promotion either loses the fix or conflicts.
-- Each branch deploys to its own environment with `scripts/deploy-local.ps1 -Environment Staging|UAT|Production`, run from a checkout of that branch.
+**ABSOLUTELY NO DIRECT COMMITS to `Staging`, `uat` or `production`.** Not a feature, not a fix, not a one-line config change, not a deploy script, not a revert, not "just this once", and not by the owner's agent on the owner's behalf unless the owner has said so in that very request.
+
+1. **No commit is made while one of them is checked out.** Never `git checkout` them to work, never rebase or cherry-pick onto them, never `commit --amend` on them. Everything is written on `main` first (the rest of this section above still holds), including environment-specific files such as `deploy/Staging/deploy.sh` and every `appsettings.<Environment>.json`.
+2. **They move forward in one way only: by merging the branch before it**, in this order: `main` → `Staging` → `uat` → `production`. `uat` receives only what `Staging` already holds, and `production` only what `uat` already holds; nothing skips a stage.
+3. **Only the owner promotes, or an agent on the owner's explicit say-so in that request.** An earlier "yes" does not carry over to the next promotion. An agent never promotes on its own initiative, not even to "keep the branches level".
+4. **Promotion is a fast-forward or a plain merge with no conflict edits.** If a merge conflicts, stop and tell the owner; do not resolve it on the environment branch. A merge that needs a hand edit means the branches have diverged, and the fix is made on `main`.
+5. **Never force-push, never reset, never rewrite history, never delete or recreate one of these branches** without the owner asking for exactly that.
+6. **A defect found in an environment is fixed on `main`** and promoted through the stages like anything else. There is no hotfix path onto `production`.
+7. **No pull request unless the owner asks for one**; a promotion PR counts only when asked.
+8. **Push only the fast-forward or the merge.** `git push origin <sha>:refs/heads/<branch>` of the branch before it, nothing else.
+
+**How it is enforced, and what is not:**
+- `.githooks/pre-commit` refuses a commit on any of the three, and `.githooks/pre-push` refuses a push that carries a new commit not already on `origin/main`, a non-fast-forward push, and a deletion. The session-start hook sets `core.hooksPath` to `.githooks`; on any other clone run `git config core.hooksPath .githooks` once. A hook can be skipped with `--no-verify`, so **never use `--no-verify`**.
+- **GitHub branch protection is the enforcement that cannot be skipped, and it must be switched on by the owner** in Settings › Branches (the agent session cannot write that API): require a pull request before merging, include administrators, block force pushes, block deletions. If protection is on, a promotion is done with a pull request from the branch before it, opened on the owner's request.
+- Each environment deploys from a checkout of its own branch; the deploy scripts only read it.
 
 ### There is no exception any more. Reporting merged.
 

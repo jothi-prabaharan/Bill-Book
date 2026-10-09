@@ -1,0 +1,30 @@
+#!/bin/sh
+# A push to an environment branch may carry only commits already on origin/main,
+# plus the merge commit that brings them in. Any other new commit is refused,
+# and so is deleting the branch.
+zero=0000000000000000000000000000000000000000
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/Staging|refs/heads/staging|refs/heads/uat|refs/heads/UAT|refs/heads/production|refs/heads/Production) ;;
+    *) continue ;;
+  esac
+  if [ "$local_sha" = "$zero" ]; then
+    echo "REFUSED: deleting $remote_ref is not allowed." >&2; status=1; continue
+  fi
+  if [ "$remote_sha" = "$zero" ]; then
+    new=$(git rev-list --no-merges "$local_sha" ^origin/main)
+  else
+    if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+      echo "REFUSED: $remote_ref would not be a fast-forward. No force-push, no rewriting." >&2; status=1; continue
+    fi
+    new=$(git rev-list --no-merges "$local_sha" ^origin/main ^"$remote_sha")
+  fi
+  if [ -n "$new" ]; then
+    echo "REFUSED: $remote_ref would get commits that are not on main:" >&2
+    echo "$new" | sed 's/^/  /' >&2
+    echo "Commit them to main first, then merge main into the environment branch." >&2
+    status=1
+  fi
+done
+exit $status

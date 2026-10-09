@@ -9,6 +9,9 @@
 # stopping the session from starting.
 set -uo pipefail
 
+# The guard hooks for the Staging, uat and production branches (no direct commits).
+git -C "${CLAUDE_PROJECT_DIR:-.}" config core.hooksPath .githooks 2>/dev/null || true
+
 # Local machines already have their own toolchain; this is for the remote one.
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
