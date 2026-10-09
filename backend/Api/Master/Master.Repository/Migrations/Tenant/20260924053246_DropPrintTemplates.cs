@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,7 +10,7 @@ namespace Master.Repository.Migrations.Tenant
     /// Print templates moved to Printing's own <c>prt.PrintTemplates</c> (TK-81).
     ///
     /// <b>Dropped, not copied.</b> Nothing was deployed (D-13), and the copy
-    /// could only have been a raw INSERT … SELECT across two services' schemas,
+    /// could only have been a raw INSERT � SELECT across two services' schemas,
     /// outside hard rule 1's exceptions. Branches are re-seeded in <c>prt</c>
     /// instead (owner, 2026-09-24). A document's old <c>PrintTemplateId</c> that
     /// no longer resolves falls back to the branch default, then to the

@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -142,8 +142,8 @@ namespace Printing.Repository.Migrations
             // Row-level security, written by hand because EF Core generates
             // none of it. The EF query filter on TenantDbContext and this policy
             // say the same thing in two places on purpose: neither is trusted
-            // alone, and a query that escapes the filter â€” IgnoreQueryFilters, a
-            // raw command, a mapping that was forgotten â€” still meets this.
+            // alone, and a query that escapes the filter — IgnoreQueryFilters, a
+            // raw command, a mapping that was forgotten — still meets this.
             //
             // FORCE is the clause that makes it real. Without it RLS does not
             // apply to the table's owner, and the application connects as the
@@ -154,7 +154,7 @@ namespace Printing.Repository.Migrations
             // reuses the USING expression as the check for INSERT and UPDATE, so
             // a row cannot be written into another branch either.
             //
-            // The ids come from set_config(..., true) â€” transaction-local, set
+            // The ids come from set_config(..., true) — transaction-local, set
             // per request by RlsConnectionInterceptor. Connection-level would
             // leak tenant context across pooled connections.
             foreach (string table in new[] { "PrintTemplates", "ErrorLogs" })

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Shared.Kernel.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;

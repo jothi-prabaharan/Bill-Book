@@ -215,7 +215,7 @@ WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
 // First in the pipeline. A failure in authentication or in the tenant

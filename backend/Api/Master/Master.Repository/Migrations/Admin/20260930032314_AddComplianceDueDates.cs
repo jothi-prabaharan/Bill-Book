@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -79,7 +79,7 @@ namespace Master.Repository.Migrations.Admin
                     { 4, "TAN", "TDS", null, null, "Quarterly TDS return for payments other than salary", 31, 1, null, null, "Form 26Q", 2, true, null, null, "31st of the month following quarter (31st May for Q4)", null },
                     { 5, "TAN", "TDS", null, null, "Quarterly TDS return for payments to non-residents", 31, 1, null, null, "Form 27Q", 2, true, null, null, "31st of the month following quarter (31st May for Q4)", null },
                     { 6, "All", "IncomeTax", null, null, "Quarterly advance income tax installment", 15, 0, null, null, "Advance Tax", 2, true, null, null, "15th of June, September, December, and March", null },
-                    { 7, "CIN", "MSME", null, null, "Half-yearly return to MCA for outstanding payments to MSME vendors", 31, 1, null, null, "MSME Form 1", 3, true, null, null, "31st October (for Aprâ€“Sep) and 30th April (for Octâ€“Mar)", null }
+                    { 7, "CIN", "MSME", null, null, "Half-yearly return to MCA for outstanding payments to MSME vendors", 31, 1, null, null, "MSME Form 1", 3, true, null, null, "31st October (for Apr–Sep) and 30th April (for Oct–Mar)", null }
                 });
 
             migrationBuilder.CreateIndex(
