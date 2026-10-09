@@ -500,105 +500,6 @@ namespace Site.Repository.Migrations
                     b.ToTable("Laborers", "sit");
                 });
 
-            modelBuilder.Entity("Site.Entity.TableEntities.LaborerClockEntry", b =>
-                {
-                    b.Property<long>("LaborerClockEntryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("LaborerClockEntryId"));
-
-                    b.Property<int>("ApprovalStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ApprovedAtUtc")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<Guid?>("ApprovedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal?>("ClockInLatitude")
-                        .HasColumnType("decimal(9,6)");
-
-                    b.Property<decimal?>("ClockInLongitude")
-                        .HasColumnType("decimal(9,6)");
-
-                    b.Property<DateTime>("ClockInUtc")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<decimal?>("ClockOutLatitude")
-                        .HasColumnType("decimal(9,6)");
-
-                    b.Property<decimal?>("ClockOutLongitude")
-                        .HasColumnType("decimal(9,6)");
-
-                    b.Property<DateTime?>("ClockOutUtc")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsOtClaimed")
-                        .HasColumnType("boolean");
-
-                    b.Property<long>("LaborerId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("OtReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<decimal>("OvertimeHours")
-                        .HasColumnType("decimal(6,2)");
-
-                    b.Property<decimal>("RegularHours")
-                        .HasColumnType("decimal(6,2)");
-
-                    b.Property<string>("RejectionReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("SelfiePhotoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<long>("SiteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("SitePhotoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("LaborerClockEntryId");
-
-                    b.HasIndex("CustomerId", "OrgId");
-
-                    b.HasIndex("CustomerId", "OrgId", "SiteId", "LaborerId", "ClockInUtc");
-
-                    b.ToTable("LaborerClockEntries", "sit");
-                });
-
             modelBuilder.Entity("Site.Entity.TableEntities.MarginRule", b =>
                 {
                     b.Property<long>("MarginRuleId")
@@ -745,6 +646,204 @@ namespace Site.Repository.Migrations
                     b.HasIndex("CustomerId", "OrgId", "SiteId", "LaborerId");
 
                     b.ToTable("SiteAssignments", "sit");
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteAttendance", b =>
+                {
+                    b.Property<long>("AttendanceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("AttendanceId"));
+
+                    b.Property<long?>("ApprovalRequestId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<long?>("ApprovedBy")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AssignmentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("CheckInLat")
+                        .HasColumnType("decimal(10,7)");
+
+                    b.Property<decimal?>("CheckInLng")
+                        .HasColumnType("decimal(10,7)");
+
+                    b.Property<DateTime>("CheckInTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("ClockOutTime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("DayCostSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DayFraction")
+                        .HasColumnType("decimal(3,2)");
+
+                    b.Property<decimal>("DayMarginSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DaySellSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsGeofenceBreached")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("LaborerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("OtCostSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OtHoursApproved")
+                        .HasColumnType("decimal(4,2)");
+
+                    b.Property<decimal>("OtHoursClaimed")
+                        .HasColumnType("decimal(4,2)");
+
+                    b.Property<decimal>("OtMarginSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OtSellSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long?>("SiteBillLineId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("WorkSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("AttendanceId");
+
+                    b.HasIndex("AssignmentId");
+
+                    b.HasIndex("LaborerId");
+
+                    b.HasIndex("SiteId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("CustomerId", "OrgId", "Status");
+
+                    b.HasIndex("CustomerId", "OrgId", "AssignmentId", "WorkDate")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId", "OrgId", "LaborerId", "WorkDate");
+
+                    b.HasIndex("CustomerId", "OrgId", "SiteId", "WorkDate");
+
+                    b.ToTable("SiteAttendance", "sit");
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteAttendancePhoto", b =>
+                {
+                    b.Property<long>("PhotoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PhotoId"));
+
+                    b.Property<long>("AttendanceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("PhotoId");
+
+                    b.HasIndex("AttendanceId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("CustomerId", "OrgId", "AttendanceId");
+
+                    b.ToTable("SiteAttendancePhotos", "sit");
                 });
 
             modelBuilder.Entity("Site.Entity.TableEntities.SiteBillingInvoice", b =>
@@ -1446,6 +1545,36 @@ namespace Site.Repository.Migrations
                         .WithMany()
                         .HasForeignKey("TradeId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteAttendance", b =>
+                {
+                    b.HasOne("Site.Entity.TableEntities.SiteAssignment", null)
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Site.Entity.TableEntities.Laborer", null)
+                        .WithMany()
+                        .HasForeignKey("LaborerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Site.Entity.TableEntities.SiteJob", null)
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteAttendancePhoto", b =>
+                {
+                    b.HasOne("Site.Entity.TableEntities.SiteAttendance", null)
+                        .WithMany()
+                        .HasForeignKey("AttendanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

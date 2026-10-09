@@ -8,6 +8,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
+using Shared.Kernel.Storage;
 using Shared.Kernel.Tenancy;
 using Site.Api.Services;
 using Site.Repository;
@@ -84,9 +85,12 @@ builder.Services.AddHttpClient<Site.Repository.Clients.IInventoryWarehouseClient
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+builder.Services.AddFileStorage(builder.Configuration);
+
 builder.Services.AddScoped<SiteSeederRepository>();
 builder.Services.AddScoped<SiteRepository>();
 builder.Services.AddScoped<SiteMarginRepository>();
+builder.Services.AddScoped<SiteAttendanceRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

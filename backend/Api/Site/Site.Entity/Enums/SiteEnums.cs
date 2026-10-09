@@ -44,6 +44,14 @@ public enum MarginType
     FlatPerUnit = 2,
 }
 
+public enum AttendanceStatus
+{
+    CheckedIn = 1,
+    Submitted = 2,
+    Approved = 3,
+    Rejected = 4,
+}
+
 public enum ClockApprovalStatus
 {
     Pending = 1,

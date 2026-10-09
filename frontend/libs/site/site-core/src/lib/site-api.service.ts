@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
   LaborerDto,
+  LaborerPortalAssignmentDto,
   MarginRuleDto,
   ResolveMarginRequest,
   ResolveMarginResponse,
@@ -12,6 +13,9 @@ import {
   SaveSiteDto,
   SaveTradeDto,
   SiteAssignmentDto,
+  CheckInPortalRequest,
+  SiteAttendanceDetailDto,
+  SiteAttendanceSummaryDto,
   SiteDto,
   TradeDto,
 } from './site.models';
@@ -107,4 +111,28 @@ export class SiteApiService {
   resolveMargin(body: ResolveMarginRequest): Promise<ResolveMarginResponse> {
     return firstValueFrom(this.http.post<ResolveMarginResponse>('/api/site/margin-rules/resolve', body));
   }
+
+  // --- Laborer Portal ---
+  getPortalAssignments(laborerId?: number | null): Promise<LaborerPortalAssignmentDto[]> {
+    const params: Record<string, number> = {};
+    if (laborerId) params['laborerId'] = laborerId;
+    return firstValueFrom(this.http.get<LaborerPortalAssignmentDto[]>('/api/site/portal/assignments', { params }));
+  }
+
+  checkIn(body: CheckInPortalRequest): Promise<SiteAttendanceSummaryDto> {
+    return firstValueFrom(this.http.post<SiteAttendanceSummaryDto>('/api/site/portal/check-in', body));
+  }
+
+  clockOut(formData: FormData): Promise<SiteAttendanceSummaryDto> {
+    return firstValueFrom(this.http.post<SiteAttendanceSummaryDto>('/api/site/portal/clock-out', formData));
+  }
+
+  getAttendance(id: number): Promise<SiteAttendanceDetailDto> {
+    return firstValueFrom(this.http.get<SiteAttendanceDetailDto>(`/api/site/portal/attendance/${id}`));
+  }
+
+  getPhotoUrl(photoId: number): string {
+    return `/api/site/portal/photos/${photoId}`;
+  }
 }
+

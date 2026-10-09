@@ -22,7 +22,8 @@ public class SiteDbContext : TenantDbContext
     public DbSet<SiteJob> Sites => Set<SiteJob>();
     public DbSet<SiteAssignment> SiteAssignments => Set<SiteAssignment>();
     public DbSet<MarginRule> MarginRules => Set<MarginRule>();
-    public DbSet<LaborerClockEntry> LaborerClockEntries => Set<LaborerClockEntry>();
+    public DbSet<SiteAttendance> SiteAttendances => Set<SiteAttendance>();
+    public DbSet<SiteAttendancePhoto> SiteAttendancePhotos => Set<SiteAttendancePhoto>();
     public DbSet<SiteDispatch> SiteDispatches => Set<SiteDispatch>();
     public DbSet<SiteDispatchLine> SiteDispatchLines => Set<SiteDispatchLine>();
     public DbSet<SiteReturn> SiteReturns => Set<SiteReturn>();
@@ -108,17 +109,47 @@ public class SiteDbContext : TenantDbContext
             b.Property(e => e.MarginValue).HasColumnType("decimal(18,4)");
         });
 
-        modelBuilder.Entity<LaborerClockEntry>(b =>
+        modelBuilder.Entity<SiteAttendance>(b =>
         {
-            b.HasKey(e => e.LaborerClockEntryId);
-            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.SiteId, e.LaborerId, e.ClockInUtc });
-            b.Property(e => e.ClockInLatitude).HasColumnType("decimal(9,6)");
-            b.Property(e => e.ClockInLongitude).HasColumnType("decimal(9,6)");
-            b.Property(e => e.ClockOutLatitude).HasColumnType("decimal(9,6)");
-            b.Property(e => e.ClockOutLongitude).HasColumnType("decimal(9,6)");
-            b.Property(e => e.RegularHours).HasColumnType("decimal(6,2)");
-            b.Property(e => e.OvertimeHours).HasColumnType("decimal(6,2)");
-            b.Property(e => e.ApprovalStatus).HasConversion<int>();
+            b.HasKey(e => e.AttendanceId);
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.AssignmentId, e.WorkDate }).IsUnique();
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.LaborerId, e.WorkDate });
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.SiteId, e.WorkDate });
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.Status });
+            b.Property(e => e.CheckInLat).HasColumnType("decimal(10,7)");
+            b.Property(e => e.CheckInLng).HasColumnType("decimal(10,7)");
+            b.Property(e => e.DayFraction).HasColumnType("decimal(3,2)");
+            b.Property(e => e.OtHoursClaimed).HasColumnType("decimal(4,2)");
+            b.Property(e => e.OtHoursApproved).HasColumnType("decimal(4,2)");
+            b.Property(e => e.Status).HasConversion<int>();
+            b.Property(e => e.DayCostSnapshot).HasColumnType("decimal(18,2)");
+            b.Property(e => e.DayMarginSnapshot).HasColumnType("decimal(18,2)");
+            b.Property(e => e.DaySellSnapshot).HasColumnType("decimal(18,2)");
+            b.Property(e => e.OtCostSnapshot).HasColumnType("decimal(18,2)");
+            b.Property(e => e.OtMarginSnapshot).HasColumnType("decimal(18,2)");
+            b.Property(e => e.OtSellSnapshot).HasColumnType("decimal(18,2)");
+            b.HasOne<SiteAssignment>()
+                .WithMany()
+                .HasForeignKey(e => e.AssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<SiteJob>()
+                .WithMany()
+                .HasForeignKey(e => e.SiteId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<Laborer>()
+                .WithMany()
+                .HasForeignKey(e => e.LaborerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SiteAttendancePhoto>(b =>
+        {
+            b.HasKey(e => e.PhotoId);
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.AttendanceId });
+            b.HasOne<SiteAttendance>()
+                .WithMany()
+                .HasForeignKey(e => e.AttendanceId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SiteDispatch>(b =>

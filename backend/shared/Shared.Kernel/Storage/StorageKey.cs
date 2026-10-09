@@ -32,6 +32,7 @@ public enum StorageModule
     Customer = 7,
     Reporting = 8,
     Printing = 9,
+    Site = 10,
 }
 
 /// <summary>
@@ -147,6 +148,7 @@ public static class StorageKey
         StorageModule.Customer => "customer",
         StorageModule.Reporting => "reporting",
         StorageModule.Printing => "printing",
+        StorageModule.Site => "site",
         _ => throw new ArgumentOutOfRangeException(nameof(module), module, "No folder is defined for this module."),
     };
 

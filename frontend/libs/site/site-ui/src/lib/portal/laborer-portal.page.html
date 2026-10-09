@@ -1,0 +1,217 @@
+<div class="portal-container">
+  <header class="portal-header">
+    <div class="portal-title-area">
+      <h1 class="portal-title">Field Laborer Portal</h1>
+      <p class="portal-subtitle">Daily site attendance, check-in, photo proof &amp; OT</p>
+    </div>
+    <button class="btn-refresh" (click)="loadAssignments()" [disabled]="loading()">
+      <span *ngIf="loading()">↻ Loading...</span>
+      <span *ngIf="!loading()">↻ Refresh</span>
+    </button>
+  </header>
+
+  <!-- Notification banners -->
+  <div *ngIf="errorMessage()" class="alert alert-error">
+    {{ errorMessage() }}
+  </div>
+  <div *ngIf="successMessage()" class="alert alert-success">
+    {{ successMessage() }}
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading() && assignments().length === 0" class="empty-state">
+    <p>Loading assignments...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading() && assignments().length === 0" class="empty-state">
+    <p>No active assignments found for your profile today.</p>
+  </div>
+
+  <!-- Assignments list -->
+  <div class="assignments-list" *ngIf="!activeClockOut()">
+    <div *ngFor="let item of assignments()" class="assignment-card">
+      <div class="card-header">
+        <div>
+          <span class="badge badge-site">{{ item.siteCode }}</span>
+          <h2 class="site-name">{{ item.siteName }}</h2>
+        </div>
+        <span class="trade-tag">{{ item.tradeName }}</span>
+      </div>
+
+      <div class="card-body">
+        <p class="site-address">📍 {{ item.address }}</p>
+        <p class="site-geofence" *ngIf="item.radiusMeters">
+          Geofence Perimeter: {{ item.radiusMeters }}m radius
+        </p>
+
+        <!-- Attendance status box -->
+        <div class="attendance-status-box" *ngIf="item.todayAttendance">
+          <div class="status-row">
+            <span class="status-label">Today's Status:</span>
+            <span class="badge" [ngClass]="{
+              'badge-checked-in': item.todayAttendance.status === 'CheckedIn',
+              'badge-submitted': item.todayAttendance.status === 'Submitted',
+              'badge-approved': item.todayAttendance.status === 'Approved',
+              'badge-rejected': item.todayAttendance.status === 'Rejected'
+            }">
+              {{ item.todayAttendance.status }}
+            </span>
+          </div>
+
+          <div class="status-details">
+            <div>Check-in: {{ item.todayAttendance.checkInTime | date:'shortTime' }}</div>
+            <div *ngIf="item.todayAttendance.clockOutTime">
+              Clock-out: {{ item.todayAttendance.clockOutTime | date:'shortTime' }}
+            </div>
+            <div *ngIf="item.todayAttendance.isGeofenceBreached" class="text-warning">
+              ⚠️ Checked in outside geofence radius (flagged)
+            </div>
+            <div *ngIf="item.todayAttendance.status === 'Submitted' || item.todayAttendance.status === 'Approved'">
+              Day Fraction: {{ item.todayAttendance.dayFraction }} day
+              <span *ngIf="item.todayAttendance.otHoursClaimed > 0">
+                · OT: {{ item.todayAttendance.otHoursClaimed }} hrs
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card actions -->
+      <div class="card-actions">
+        <!-- Not checked in yet -->
+        <button
+          *ngIf="!item.todayAttendance"
+          class="btn btn-primary btn-block"
+          [disabled]="checkingIn()"
+          (click)="checkIn(item)"
+        >
+          {{ checkingIn() ? 'Checking In...' : '📍 Check In Now' }}
+        </button>
+
+        <!-- Checked in, ready to clock out -->
+        <button
+          *ngIf="item.todayAttendance?.status === 'CheckedIn'"
+          class="btn btn-warning btn-block"
+          (click)="openClockOutForm(item)"
+        >
+          📷 Clock Out &amp; Submit Proof
+        </button>
+
+        <!-- Submitted or Approved -->
+        <div *ngIf="item.todayAttendance?.status === 'Submitted'" class="submitted-notice">
+          ✓ Work proof submitted, pending supervisor approval.
+        </div>
+        <div *ngIf="item.todayAttendance?.status === 'Approved'" class="approved-notice">
+          ✓ Work verified and approved.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clock Out Modal / Form -->
+  <div class="clockout-modal-backdrop" *ngIf="activeClockOut()">
+    <div class="clockout-modal">
+      <div class="modal-header">
+        <h2>Clock Out — {{ activeClockOut()?.assignment?.siteName }}</h2>
+        <button class="btn-close" (click)="cancelClockOut()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Day fraction (D-61) -->
+        <div class="form-group">
+          <label class="form-label">Day Worked (Policy D-61):</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="dayFraction"
+                [value]="1.0"
+                [ngModel]="dayFraction()"
+                (ngModelChange)="dayFraction.set($event)"
+              />
+              Full Day (1.0)
+            </label>
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="dayFraction"
+                [value]="0.5"
+                [ngModel]="dayFraction()"
+                (ngModelChange)="dayFraction.set($event)"
+              />
+              Half Day (0.5)
+            </label>
+          </div>
+        </div>
+
+        <!-- Overtime Hours Claim -->
+        <div class="form-group">
+          <label class="form-label" for="otHours">Overtime Hours Claimed (optional):</label>
+          <input
+            id="otHours"
+            type="number"
+            class="form-control"
+            min="0"
+            max="24"
+            step="0.5"
+            [ngModel]="otHours()"
+            (ngModelChange)="otHours.set($event)"
+          />
+        </div>
+
+        <!-- Work Summary -->
+        <div class="form-group">
+          <label class="form-label" for="workSummary">Work Summary / Tasks Completed: *</label>
+          <textarea
+            id="workSummary"
+            class="form-control"
+            rows="3"
+            placeholder="Brief summary of work completed today..."
+            [ngModel]="workSummary()"
+            (ngModelChange)="workSummary.set($event)"
+          ></textarea>
+        </div>
+
+        <!-- Photo Proof Upload with Camera support -->
+        <div class="form-group">
+          <label class="form-label">Work Proof Photos (at least 1 required): *</label>
+          <div class="file-input-wrapper">
+            <input
+              #photoInput
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              (change)="onFilesSelected($event)"
+              class="hidden-file-input"
+            />
+            <button type="button" class="btn btn-secondary btn-camera" (click)="photoInput.click()">
+              📸 Take Photo / Select Images
+            </button>
+          </div>
+
+          <!-- Photo previews -->
+          <div class="photo-previews" *ngIf="photoPreviews().length > 0">
+            <div *ngFor="let preview of photoPreviews(); let i = index" class="preview-item">
+              <img [src]="preview" alt="Proof Photo" class="preview-img" />
+              <button type="button" class="btn-remove-photo" (click)="removeFile(i)">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelClockOut()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="submittingClockOut()"
+          (click)="submitClockOut()"
+        >
+          {{ submittingClockOut() ? 'Submitting...' : 'Submit Clock-Out' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

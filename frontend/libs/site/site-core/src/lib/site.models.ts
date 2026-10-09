@@ -153,3 +153,72 @@ export interface ResolveMarginResponse {
   marginAmount?: number | null;
   sellingPrice: number;
 }
+
+export type AttendanceStatus = 'CheckedIn' | 'Submitted' | 'Approved' | 'Rejected';
+
+export interface SiteAttendanceSummaryDto {
+  attendanceId: number;
+  workDate: string;
+  checkInTime: string;
+  clockOutTime?: string | null;
+  status: AttendanceStatus;
+  isGeofenceBreached: boolean;
+  dayFraction: number;
+  otHoursClaimed: number;
+}
+
+export interface LaborerPortalAssignmentDto {
+  assignmentId: number;
+  siteId: number;
+  siteCode: string;
+  siteName: string;
+  address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  radiusMeters: number;
+  laborerId: number;
+  laborerName: string;
+  tradeId: number;
+  tradeName: string;
+  startDate: string;
+  endDate?: string | null;
+  todayAttendance?: SiteAttendanceSummaryDto | null;
+}
+
+export interface CheckInPortalRequest {
+  assignmentId: number;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface SiteAttendancePhotoDto {
+  photoId: number;
+  attendanceId: number;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
+export interface SiteAttendanceDetailDto {
+  attendanceId: number;
+  assignmentId: number;
+  siteId: number;
+  siteName: string;
+  laborerId: number;
+  laborerName: string;
+  workDate: string;
+  checkInTime: string;
+  checkInLat?: number | null;
+  checkInLng?: number | null;
+  isGeofenceBreached: boolean;
+  clockOutTime?: string | null;
+  dayFraction: number;
+  otHoursClaimed: number;
+  otHoursApproved: number;
+  workSummary?: string | null;
+  status: AttendanceStatus;
+  rejectionReason?: string | null;
+  photos: SiteAttendancePhotoDto[];
+}
+

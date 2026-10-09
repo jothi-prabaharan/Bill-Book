@@ -5337,7 +5337,7 @@ The queue below is one list in card-number order. Each card names its group.
   - Wrote `SiteMarginRepositoryTests` covering the ₹1000 flat / 10% site margin resolution and rate fallbacks.
 
 ### TK-171 · Laborer portal: check-in, clock-out form, photo proof and OT claim
-- [~] working (Antigravity) — since 2026-10-09
+- [x] completed (Antigravity) — 2026-10-09 · tests written, not run
 - **Issue:** [#159](https://github.com/jothi-prabaharan/Bill-Book/issues/159)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-SITE-UI · **Depends on:** TK-170 · **Decision:** D-61, D-62, D-63
@@ -5345,12 +5345,12 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
 - **Tables:** `sit.SiteAttendance`, `sit.SiteAttendancePhotos`
 - **Sub-tasks:**
-  - [ ] Laborer login: a `mst.Users` account linked through `sit.Laborers.UserId`, holding the `SiteLaborer` role; the portal lists only the laborer's active assignments.
-  - [ ] Check-in with time and location (geofence per D-63); one row per assignment per day.
-  - [ ] Clock-out form: work summary, day fraction (D-61), optional OT hours claimed, at least one work-proof photo; photos saved create-only under `StorageKey`; status `Submitted`.
-  - [ ] Mobile-first pages at 360px with the camera.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] Laborer login: a `mst.Users` account linked through `sit.Laborers.UserId`, holding the `SiteLaborer` role; the portal lists only the laborer's active assignments.
+  - [x] Check-in with time and location (geofence per D-63); one row per assignment per day.
+  - [x] Clock-out form: work summary, day fraction (D-61), optional OT hours claimed, at least one work-proof photo; photos saved create-only under `StorageKey`; status `Submitted`.
+  - [x] Mobile-first pages at 360px with the camera.
+  - [x] Section 5's standard delivery sub-tasks.
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** a laborer checks in, clocks out with a photo and an OT claim and the row is `Submitted`; a second check-in on the same day and assignment is refused; a laborer cannot see another laborer's site.
 
 ### TK-172 · Admin approval of clock-outs; working days and OT counters
