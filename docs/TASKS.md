@@ -5284,7 +5284,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Notes:** This is step 1 and step 2 of the owner's brief. Steps 3 and 4 (API, UI) are TK-169 to TK-176; step 5 (a summary and an agent prompt that commits to the default branch only) is written once these cards are done.
 
 ### TK-169 · Site service scaffold and the `SiteServices` add-on for Service branches
-- [ ] open
+- [~] working (Antigravity) — since 2026-10-09
 - **Issue:** [#157](https://github.com/jothi-prabaharan/Bill-Book/issues/157)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-KERNEL, L-MST, L-INV, L-SIT (new), L-WEB, L-SITE-UI (new), L-DEPS · **Depends on:** TK-168 · **Decision:** D-57, D-58
