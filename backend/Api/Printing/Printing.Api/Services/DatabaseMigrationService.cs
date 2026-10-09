@@ -37,15 +37,22 @@ public class DatabaseMigrationService : IHostedService
                 _logger.LogInformation("Printing database migration complete.");
                 break;
             }
-            catch (PostgresException ex) when (ex.SqlState == "3D000") // invalid_catalog_name
+            catch (Exception ex) when (ex is PostgresException { SqlState: "3D000" } || ex is NpgsqlException || ex is TimeoutException || ex.InnerException is TimeoutException)
             {
                 retries--;
                 if (retries == 0) throw;
-                _logger.LogWarning("Database does not exist yet. Waiting 2s for Master.Api to create it...");
-                await Task.Delay(2000, cancellationToken);
+
+                if (ex is PostgresException { SqlState: "3D000" })
+                    _logger.LogWarning("Database does not exist yet. Waiting 2s for Master.Api to create it...");
+                else
+                    _logger.LogWarning("Transient error ({Message}) during migration. Retrying in 2s...", ex.Message);
+
+                // Add jitter to avoid thundering herd when 20 services start at once
+                await Task.Delay(2000 + Random.Shared.Next(0, 1000), cancellationToken);
             }
         }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

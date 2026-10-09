@@ -50,3 +50,4 @@ public class DatabaseMigrationService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+
