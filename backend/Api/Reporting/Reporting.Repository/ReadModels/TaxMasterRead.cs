@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -8,7 +8,7 @@ namespace Reporting.Repository.ReadModels;
 ///
 /// <b>Reached through a sub-account, not through the ledger leg.</b> A GST leg
 /// carries a <c>SubAccountId</c> whose <c>ReferenceType</c> is Tax and whose
-/// <c>ReferenceId</c> is the row below â€” that indirection is the only link a
+/// <c>ReferenceId</c> is the row below — that indirection is the only link a
 /// posting has to the rate it was taxed at, because the leg stores the amount
 /// rather than the rate.
 ///
@@ -26,7 +26,7 @@ public class TaxMasterRead : OrgScopedEntity
 
     public string TaxName { get; set; }
 
-    /// <summary>CGST + SGST, or IGST â€” the figure a report shows as the rate.</summary>
+    /// <summary>CGST + SGST, or IGST — the figure a report shows as the rate.</summary>
     public decimal TotalRate { get; set; }
 
     public decimal CgstRate { get; set; }
@@ -41,7 +41,7 @@ public class TaxMasterRead : OrgScopedEntity
 
     public DateOnly? EffectiveTo { get; set; }
 
-    /// <summary>A rate can apply to one direction, both, or â€” rarely â€” neither yet.</summary>
+    /// <summary>A rate can apply to one direction, both, or — rarely — neither yet.</summary>
     public bool IsSales { get; set; }
 
     public bool IsPurchase { get; set; }

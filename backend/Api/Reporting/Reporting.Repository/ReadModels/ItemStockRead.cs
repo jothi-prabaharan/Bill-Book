@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -8,14 +8,14 @@ namespace Reporting.Repository.ReadModels;
 /// The live stock position for an item: how much is on hand and what it cost.
 ///
 /// <b>One row per item, not per warehouse.</b> Stock is a single shared pool
-/// across every location in the branch â€” a warehouse is where a movement
+/// across every location in the branch — a warehouse is where a movement
 /// happened, not a separate balance. Splitting this row per location is what
 /// makes one SKU carry two weighted average costs and the totals stop
 /// reconciling. Another branch is another OrgId, so its stock is a different
 /// row that the query filter never returns here.
 ///
 /// This is the target of the synchronous point-of-sale decrement: a conditional
-/// <c>UPDATE â€¦ WHERE QuantityOnHand &gt;= @qty</c> that either moves the row or
+/// <c>UPDATE … WHERE QuantityOnHand &gt;= @qty</c> that either moves the row or
 /// affects nothing. Never read-then-write, or two tills sell the last unit.
 ///
 /// <see cref="ItemId"/> is the key and the foreign key both, so a second row for
@@ -32,18 +32,18 @@ public class ItemStockRead : OrgScopedEntity
 
     /// <summary>
     /// Cost of one inventory unit, company-wide. Moved only by a receipt:
-    /// <c>(oldQty Ã— oldWac + recvQty Ã— recvCost) Ã· (oldQty + recvQty)</c>.
+    /// <c>(oldQty × oldWac + recvQty × recvCost) ÷ (oldQty + recvQty)</c>.
     /// An issue moves quantity and leaves this alone.
     ///
     /// Six decimal places rather than the usual four because it is a derived
-    /// average that then multiplies a quantity â€” rounding it at the money scale
+    /// average that then multiplies a quantity — rounding it at the money scale
     /// puts the error into every COGS posting that follows.
     /// </summary>
 
     public decimal WeightedAverageCost { get; set; }
 
     /// <summary>
-    /// Promised but not yet issued â€” a confirmed order that has not shipped.
+    /// Promised but not yet issued — a confirmed order that has not shipped.
     ///
     /// <b>Never subtracted from <see cref="QuantityOnHand"/>.</b> The stock is
     /// still physically there and still worth what it cost; only its

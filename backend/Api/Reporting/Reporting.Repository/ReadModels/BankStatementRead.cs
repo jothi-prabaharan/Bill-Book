@@ -1,10 +1,10 @@
-﻿#pragma warning disable CS8618
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
 /// <summary>
-/// <c>acc.BankStatements</c>, read-only. One imported statement — the header the
+/// <c>acc.BankStatements</c>, read-only. One imported statement � the header the
 /// Reconciliation report groups its lines under.
 /// </summary>
 [System.ComponentModel.DataAnnotations.Schema.Table("BankStatement", Schema = "acc")]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;

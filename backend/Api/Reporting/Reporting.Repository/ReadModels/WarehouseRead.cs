@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Validation;
@@ -6,7 +6,7 @@ using Shared.Kernel.Validation;
 namespace Reporting.Repository.ReadModels;
 
 /// <summary>
-/// A stock location. A reporting and movement dimension only — stock is one
+/// A stock location. A reporting and movement dimension only � stock is one
 /// shared pool across every warehouse in the branch, and weighted average cost is
 /// company-wide. Per-warehouse quantities come from aggregating movements, never
 /// from a separate cost pool.

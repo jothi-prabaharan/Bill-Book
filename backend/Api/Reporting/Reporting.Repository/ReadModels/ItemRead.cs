@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -36,11 +36,11 @@ public class ItemRead : OrgScopedEntity
     public int ItemType { get; set; }
     public long? ItemCategoryId { get; set; }
 
-    /// <summary>Unenforced reference to mst.HsnSacCodes â€” cross-database, validated in C#.</summary>
+    /// <summary>Unenforced reference to mst.HsnSacCodes — cross-database, validated in C#.</summary>
     public int? HsnSacCodeId { get; set; }
 
     /// <summary>
-    /// Unenforced reference to acc.TaxMasters.TaxGroupId â€” the group, not the
+    /// Unenforced reference to acc.TaxMasters.TaxGroupId — the group, not the
     /// row, so a rate revision does not orphan the item.
     /// </summary>
     public long? TaxGroupId { get; set; }
@@ -56,7 +56,7 @@ public class ItemRead : OrgScopedEntity
 
     /// <summary>
     /// What stock and weighted average cost are held in, and what sets quantity
-    /// precision. Immutable once any movement exists â€” every recorded quantity
+    /// precision. Immutable once any movement exists — every recorded quantity
     /// is in this unit, so changing it would reinterpret the whole history.
     /// </summary>
     public long InventoryUomId { get; set; }
@@ -73,14 +73,14 @@ public class ItemRead : OrgScopedEntity
     public int CostingType { get; set; }
     public bool IsBatchTracked { get; set; }
 
-    /// <summary>Requires batch tracking â€” an expiry with nothing to attach it to means nothing.</summary>
+    /// <summary>Requires batch tracking — an expiry with nothing to attach it to means nothing.</summary>
     public bool IsExpiryTracked { get; set; }
 
     public bool IsSerialTracked { get; set; }
 
     // --- Prices, all per InventoryUomId. Canonical rather than per sales unit,
-    // so switching the sales unit from kilos to grams cannot turn â‚¹46 per kilo
-    // into â‚¹46 per gram with nothing on screen saying so.
+    // so switching the sales unit from kilos to grams cannot turn ?46 per kilo
+    // into ?46 per gram with nothing on screen saying so.
 
     public decimal? SalesPrice { get; set; }
 
@@ -94,7 +94,7 @@ public class ItemRead : OrgScopedEntity
 
     public decimal? MinSalePrice { get; set; }
 
-    /// <summary>Informational only â€” weighted average cost is the real one.</summary>
+    /// <summary>Informational only — weighted average cost is the real one.</summary>
 
     public decimal? StandardCost { get; set; }
 
@@ -120,7 +120,7 @@ public class ItemRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 
-    // CreatedAt is inherited from OrgScopedEntity â†’ AuditableEntity â€” already available.
+    // CreatedAt is inherited from OrgScopedEntity ? AuditableEntity — already available.
 
     /// <summary>The record's custom field values (TK-111/TK-112), read by the custom report datasets (TK-113).</summary>
     public System.Text.Json.JsonDocument? CustomFields { get; set; }

@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -7,14 +7,14 @@ namespace Reporting.Repository.ReadModels;
 /// <c>acc.SubAccounts</c>, read-only. The per-contact, per-item and per-tax
 /// detail beneath a control account.
 ///
-/// <b><c>ReferenceType</c> and <c>ReferenceId</c> are what a report joins on</b> â€”
+/// <b><c>ReferenceType</c> and <c>ReferenceId</c> are what a report joins on</b> —
 /// a contact sub-account carries the contact's id, an item's carries the item's.
 /// Both are stored as their underlying integers here rather than as the enums
 /// Accounting declares them with, because this context deliberately does not
 /// reference that project.
 ///
 /// <c>Purpose</c> separates the three sub-accounts a contact has beneath each
-/// control account â€” trade, prepayment advance, overpayment advance. Aged
+/// control account — trade, prepayment advance, overpayment advance. Aged
 /// receivables must report advances apart from trade balances, and this column is
 /// what splits them.
 /// </summary>

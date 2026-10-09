@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS8618
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -10,7 +10,7 @@ namespace Reporting.Repository.ReadModels;
 /// <b><c>Status</c> is the whole point of the Reconciliation report</b>: which
 /// lines matched a transaction, which are still unmatched, and which were matched
 /// by a person rather than by the importer. Withdrawal and deposit are separate
-/// non-negative columns, the same convention the ledger uses — one signed column
+/// non-negative columns, the same convention the ledger uses � one signed column
 /// cannot be summed without knowing which way its writer meant it.
 /// </summary>
 [System.ComponentModel.DataAnnotations.Schema.Table("BankStatementLine", Schema = "acc")]

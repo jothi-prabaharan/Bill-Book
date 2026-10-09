@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -11,7 +11,7 @@ namespace Reporting.Repository.Migrations.Tenant
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Nothing to apply: every change is to read models Reporting maps
-            // with ExcludeFromMigrations (TK-107) — acc's project tables, the
+            // with ExcludeFromMigrations (TK-107) � acc's project tables, the
             // ledger's ProjectId, and the billing columns on spend-money and
             // bill lines. The snapshot records them.
         }

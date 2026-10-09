@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -8,8 +8,8 @@ namespace Reporting.Repository.ReadModels;
 /// One receipt, at the cost it came in at, with however much of it is left.
 ///
 /// This is what makes FIFO, LIFO, FEFO and specific identification mean
-/// anything. Weighted average needs none of it â€” it blends every receipt into a
-/// single number and forgets which was which â€” so an item on weighted average
+/// anything. Weighted average needs none of it — it blends every receipt into a
+/// single number and forgets which was which — so an item on weighted average
 /// creates layers but never consumes them, and they stand as the receipt history
 /// rather than as an allocation pool.
 ///

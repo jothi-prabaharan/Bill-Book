@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -7,7 +7,7 @@ namespace Reporting.Repository.ReadModels;
 /// <summary>
 /// A unit, carrying its factor to the type's base unit. That factor is the only
 /// conversion mechanism in the system: any-to-any within a type is
-/// <c>qty Ã— Factor(from) Ã· Factor(to)</c>, so there is no pairwise table and no
+/// <c>qty × Factor(from) ÷ Factor(to)</c>, so there is no pairwise table and no
 /// way to record an inconsistent set of conversions.
 ///
 /// Pack sizes are units of their type, not per-item facts: a 50 kg bag is a
@@ -18,7 +18,7 @@ public class UnitOfMeasureRead : OrgScopedEntity
 {
     public long UomId { get; set; }
 
-    /// <summary>Immutable once an item uses the unit â€” its factor is relative to this type.</summary>
+    /// <summary>Immutable once an item uses the unit — its factor is relative to this type.</summary>
     public long UomTypeId { get; set; }
 
     /// <summary>Seeded rows only: the immutable canonical name that seed logic keys on.</summary>
@@ -31,7 +31,7 @@ public class UnitOfMeasureRead : OrgScopedEntity
     public string UomCode { get; set; }
     /// <summary>
     /// The notified GST unit code this reports as on GSTR-1 and the e-invoice.
-    /// Separate from UomCode because carat and tola are not notified units â€” a
+    /// Separate from UomCode because carat and tola are not notified units — a
     /// jeweller needs their own code and a legal one to report under.
     /// </summary>
 

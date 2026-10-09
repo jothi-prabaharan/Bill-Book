@@ -1,11 +1,11 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
 /// <summary>
-/// A lot of one item received together â€” same manufacture run, same expiry, and
+/// A lot of one item received together — same manufacture run, same expiry, and
 /// usually the same printed MRP.
 ///
 /// The expiry is what earns this a table. A chemist does not hold "500 strips of
@@ -20,14 +20,14 @@ public class ItemBatchRead : OrgScopedEntity
 
     public long ItemId { get; set; }
 
-    /// <summary>As printed on the pack. Unique per item â€” the same number on two lots is unresolvable.</summary>
+    /// <summary>As printed on the pack. Unique per item — the same number on two lots is unresolvable.</summary>
 
 
     public string BatchNumber { get; set; }
     public DateOnly? ManufactureDate { get; set; }
 
     /// <summary>
-    /// Required in practice for anything expiry-tracked â€” checked in C#, because
+    /// Required in practice for anything expiry-tracked — checked in C#, because
     /// the rule lives on the item and a constraint cannot see across the join.
     /// </summary>
     public DateOnly? ExpiryDate { get; set; }
@@ -39,7 +39,7 @@ public class ItemBatchRead : OrgScopedEntity
 
     public decimal? Mrp { get; set; }
 
-    /// <summary>Free text â€” the manufacturer's own lot reference, when it differs.</summary>
+    /// <summary>Free text — the manufacturer's own lot reference, when it differs.</summary>
 
     public string? SupplierBatchNumber { get; set; }
 

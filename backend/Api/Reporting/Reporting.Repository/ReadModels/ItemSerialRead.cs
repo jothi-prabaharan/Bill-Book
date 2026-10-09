@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -8,12 +8,12 @@ namespace Reporting.Repository.ReadModels;
 /// One physical piece, tracked individually.
 ///
 /// This is what specific identification costs against: the ring that was bought
-/// for â‚¹48,200 is sold at â‚¹48,200, not at an average of every ring in the case.
+/// for ?48,200 is sold at ?48,200, not at an average of every ring in the case.
 /// For a jeweller that is the only honest answer, because two pieces of the same
 /// SKU differ in weight and in what the metal cost the day each was made.
 ///
 /// The HUID lives here rather than on the item, because a hallmark identifies a
-/// piece, not a design â€” two rings of the same SKU carry two different HUIDs.
+/// piece, not a design — two rings of the same SKU carry two different HUIDs.
 /// </summary>
 [System.ComponentModel.DataAnnotations.Schema.Table("ItemSerial", Schema = "acc")]
 public class ItemSerialRead : OrgScopedEntity
@@ -24,11 +24,11 @@ public class ItemSerialRead : OrgScopedEntity
 
 
     public string SerialNumber { get; set; }
-    /// <summary>Set when the item is batch-tracked as well â€” a serial inside a lot.</summary>
+    /// <summary>Set when the item is batch-tracked as well — a serial inside a lot.</summary>
     public long? ItemBatchId { get; set; }
 
     /// <summary>
-    /// The BIS hallmark unique id â€” six alphanumerics, one per physical piece.
+    /// The BIS hallmark unique id — six alphanumerics, one per physical piece.
     /// Selling unhallmarked jewellery in a notified category is an offence, so
     /// this is held against the piece and never against the SKU.
     /// </summary>
@@ -46,7 +46,7 @@ public class ItemSerialRead : OrgScopedEntity
     /// <summary>Where the piece physically is. A location fact; the pool is still shared.</summary>
     public long? WarehouseId { get; set; }
 
-    /// <summary>The movement that brought it in â€” provenance for a disputed piece.</summary>
+    /// <summary>The movement that brought it in — provenance for a disputed piece.</summary>
     public long? ReceivedMovementId { get; set; }
 
     /// <summary>The movement that took it out. Null while it is still in stock.</summary>

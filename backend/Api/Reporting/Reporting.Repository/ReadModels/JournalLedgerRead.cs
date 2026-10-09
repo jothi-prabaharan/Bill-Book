@@ -1,11 +1,11 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
 /// <summary>
-/// <c>acc.JournalLedger</c>, read-only. The single posting target â€” every
-/// financial document in the system writes its double-entry legs there â€” so most
+/// <c>acc.JournalLedger</c>, read-only. The single posting target — every
+/// financial document in the system writes its double-entry legs there — so most
 /// accounting reports start here.
 ///
 /// One row is one leg: a debit <b>xor</b> a credit, never both, never negative.
@@ -17,7 +17,7 @@ namespace Reporting.Repository.ReadModels;
 /// document said in its own currency; <c>DebitAmountBase</c> is the same leg in
 /// the branch's base currency at the rate the document was booked at. Reports
 /// offering a <c>(Source)</c> column mean the first and a <c>%CurCode%</c> column
-/// the second â€” see Reporting.md Â§7.
+/// the second — see Reporting.md §7.
 /// </summary>
 [System.ComponentModel.DataAnnotations.Schema.Table("JournalLedger", Schema = "acc")]
 public class JournalLedgerRead : OrgScopedEntity
@@ -28,7 +28,7 @@ public class JournalLedgerRead : OrgScopedEntity
 
     public long AccountId { get; set; }
 
-    /// <summary>Null on legs with no sub-dimension â€” bank and equity.</summary>
+    /// <summary>Null on legs with no sub-dimension — bank and equity.</summary>
     public long? SubAccountId { get; set; }
 
     public string TransactionTypeCode { get; set; }

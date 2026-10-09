@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -18,7 +18,7 @@ namespace Reporting.Repository.Migrations.Tenant
             // rows to anyone: a branch could not list its own reports. It went
             // unseen because every developer and CI connection is a superuser.
             //
-            // The replacement is TK-71's template, verbatim — see
+            // The replacement is TK-71's template, verbatim � see
             // Accounting.Repository/Migrations/Tenant/20260923173706_EnableRowLevelSecurity.cs
             // for the reasoning behind FORCE, USING without WITH CHECK, and NULLIF.
             //

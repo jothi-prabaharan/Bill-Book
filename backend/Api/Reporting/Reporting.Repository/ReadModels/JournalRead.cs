@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -7,13 +7,13 @@ namespace Reporting.Repository.ReadModels;
 /// <c>acc.Journals</c>, read-only. The manual journal header.
 ///
 /// The Journal Report reads this rather than <c>JournalLedger</c> because it
-/// reports on the <b>document</b> â€” including drafts, which have no ledger rows
+/// reports on the <b>document</b> — including drafts, which have no ledger rows
 /// at all. A journal reaches the ledger only when it is posted.
 ///
 /// The audit columns come from <c>AuditableEntity</c> on the base class:
 /// <c>CreatedBy</c>, <c>CreatedAt</c>, <c>ModifiedBy</c>, <c>ModifiedAt</c>. The
 /// user ids resolve against <c>mst.Users</c> in another database, so they are
-/// resolved in C# and <b>batched</b> â€” a 200-row page must not be 200 lookups.
+/// resolved in C# and <b>batched</b> — a 200-row page must not be 200 lookups.
 /// </summary>
 [System.ComponentModel.DataAnnotations.Schema.Table("Journal", Schema = "acc")]
 public class JournalRead : OrgScopedEntity

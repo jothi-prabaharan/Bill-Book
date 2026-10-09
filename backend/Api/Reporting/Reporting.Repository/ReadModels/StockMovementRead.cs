@@ -1,4 +1,4 @@
-ï»¿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -13,7 +13,7 @@ namespace Reporting.Repository.ReadModels;
 /// unit they entered it in, and again converted into the item's inventory unit.
 /// The conversion factor is snapshotted alongside. Without that, a receipt of
 /// two 50 kg bags and an issue of 300 grams are two numbers nobody can add; with
-/// it they are 100 kg in and 0.3 kg out of one figure â€” and re-deriving the
+/// it they are 100 kg in and 0.3 kg out of one figure — and re-deriving the
 /// factor later from the unit master would silently restate history if a factor
 /// were ever corrected.
 ///
@@ -28,7 +28,7 @@ public class StockMovementRead : OrgScopedEntity
 
     public long ItemId { get; set; }
 
-    /// <summary>Where it happened. A location dimension â€” it never partitions the pool.</summary>
+    /// <summary>Where it happened. A location dimension — it never partitions the pool.</summary>
     public long? WarehouseId { get; set; }
 
     /// <summary>
@@ -55,14 +55,14 @@ public class StockMovementRead : OrgScopedEntity
     public long EnteredUomId { get; set; }
 
     /// <summary>
-    /// <c>EnteredQuantity Ã— ConversionFactor</c>, in the item's inventory unit.
+    /// <c>EnteredQuantity × ConversionFactor</c>, in the item's inventory unit.
     /// This is the only column stock arithmetic ever touches.
     /// </summary>
 
     public decimal Quantity { get; set; }
 
     /// <summary>
-    /// Snapshot of <c>enteredUom.ConversionToBase Ã· inventoryUom.ConversionToBase</c>
+    /// Snapshot of <c>enteredUom.ConversionToBase ÷ inventoryUom.ConversionToBase</c>
     /// at the moment of the movement. Stored, not recomputed, so a later
     /// correction to a unit factor cannot restate quantities already recorded.
     /// </summary>
@@ -74,11 +74,11 @@ public class StockMovementRead : OrgScopedEntity
 
     public decimal? UnitCost { get; set; }
 
-    /// <summary><c>Quantity Ã— UnitCost</c>, held so a valuation report does not re-multiply.</summary>
+    /// <summary><c>Quantity × UnitCost</c>, held so a valuation report does not re-multiply.</summary>
 
     public decimal? TotalCost { get; set; }
 
-    /// <summary>The weighted average cost immediately after this movement â€” the audit trail for a WAC dispute.</summary>
+    /// <summary>The weighted average cost immediately after this movement — the audit trail for a WAC dispute.</summary>
 
     public decimal? ResultingWeightedAverageCost { get; set; }
 
@@ -127,7 +127,7 @@ public class StockMovementRead : OrgScopedEntity
     /// <summary>
     /// The issue this movement returns, when it is a return. Without it a
     /// return has no way to find the layers the stock originally left on, and
-    /// falls back to the running average â€” which is what makes buy-sell-return
+    /// falls back to the running average — which is what makes buy-sell-return
     /// fail to land stock value back where it started.
     /// </summary>
     public long? ReturnsStockMovementId { get; set; }

@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS8618
+#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -7,7 +7,7 @@ namespace Reporting.Repository.ReadModels;
 /// <summary>
 /// Groups items for reporting, and defaults the three fields nobody wants to set
 /// item by item. The defaults are copied onto an item at creation and then
-/// independent — changing a category's default never rewrites existing items,
+/// independent � changing a category's default never rewrites existing items,
 /// because that would restate costing on live stock.
 /// </summary>
 [System.ComponentModel.DataAnnotations.Schema.Table("ItemCategory", Schema = "acc")]
