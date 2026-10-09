@@ -1,0 +1,11 @@
+#!/bin/sh
+# Nothing is committed on an environment branch. Work goes to main and reaches
+# Staging, uat and production only by merging the branch before it.
+branch=$(git symbolic-ref --short -q HEAD)
+case "$branch" in
+  Staging|staging|uat|UAT|production|Production)
+    echo "REFUSED: '$branch' is an environment branch. Never commit to it directly." >&2
+    echo "Commit to main, then promote: main -> Staging -> uat -> production, by merge." >&2
+    exit 1 ;;
+esac
+exit 0

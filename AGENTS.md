@@ -120,6 +120,8 @@ Because more than one agent shares this branch, **pull before you start and pull
 git pull --rebase origin main
 ```
 
+**`Staging`, `uat` and `production` are deployment branches, and nothing is ever committed to them directly (10 October 2026, the owner's strict rule).** Work goes only to `main`. These three move forward only by merging the branch before it (`main` → `Staging` → `uat` → `production`), only when the owner asks for that promotion in that request, with no conflict edits, no force-push, no history rewrite, no deletion, and no `--no-verify`. A fix for an environment is made on `main` and promoted. The full rule and how it is enforced are in `CLAUDE.md`, section "Deployment branches".
+
 **Do not open a pull request unless you are asked for one.** There is no second branch for one to merge from.
 
 ---
