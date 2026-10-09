@@ -5354,7 +5354,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a laborer checks in, clocks out with a photo and an OT claim and the row is `Submitted`; a second check-in on the same day and assignment is refused; a laborer cannot see another laborer's site.
 
 ### TK-172 · Admin approval of clock-outs; working days and OT counters
-- [ ] open
+- [~] working (Antigravity) — since 2026-10-09
 - **Issue:** [#160](https://github.com/jothi-prabaharan/Bill-Book/issues/160)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-KERNEL, L-SITE-UI · **Depends on:** TK-171 · **Decision:** —
