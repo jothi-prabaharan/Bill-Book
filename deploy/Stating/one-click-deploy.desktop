@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=bash -c "cd '/home/prabha/Source/Bill-Book/deploy/Stating' && ./deploy.sh; echo ''; echo 'Press Enter to exit...'; read"
+Name=Deploy Staging (Bill-Book)
+Comment=One-click build and deploy for Bill-Book Staging Environment
+Icon=system-software-update
+Categories=Development;

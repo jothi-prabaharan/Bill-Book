@@ -56,15 +56,7 @@ try
                 client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4511/");
             }).AddHttpMessageHandler<InternalKeyHandler>();
 
-            services.AddDbContext<TenantDbContext>((sp, options) =>
-            {
-                options.UseNpgsql(connectionString);
-                options.AddInterceptors(
-                    sp.GetRequiredService<AuditSaveChangesInterceptor>(),
-                    sp.GetRequiredService<RlsConnectionInterceptor>());
-            });
-
-            services.AddBillBookWorkerErrorAudit<TenantDbContext>();
+            services.AddBillBookWorkerErrorAudit<BillBook.Worker.Notification.Persistence.NotificationDbContext>();
 
             // The master database for RateSync
             var adminConnectionString = config.GetConnectionString("AdminDatabase") ?? "Host=localhost;Database=billbook_master;Username=postgres;Password=postgres";

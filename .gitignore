@@ -35,6 +35,9 @@ out-tsc/
 coverage/
 tmp/
 *.tsbuildinfo
+deploy/**/dist/
+deploy/**/logs/
+deploy/**/run/
 
 # ---------------------------------------------------------------- Angular
 .angular/
