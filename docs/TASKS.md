@@ -263,7 +263,7 @@ CLAUDE.md says; each card names its group below. A card sits after the cards it 
 numbers were given in that order. Finished cards are marked completed in place and stay until the
 owner has run their tests. If a test fails, the owner reopens the card.
 
-**Owner priority (9 October 2026): group P comes first.** The owner asked for the Service business type's site-services cards, TK-174 to TK-182, to be done before every other open card. Claim them in their own number order; the rest of the queue keeps its order after them.
+**Owner priority (9 October 2026): group P comes first.** The owner asked for the Service business type's site-services cards, TK-168 to TK-176, to be done before every other open card. Claim them in their own number order; the rest of the queue keeps its order after them.
 
 ### Groups
 
@@ -312,10 +312,10 @@ The queue below is one list in card-number order. Each card names its group.
   Our own organisation's real books (Service type) and one demo customer per business type, told apart from paying customers by a kind (D-44).
 - **N · Electron removal, barcode and QR**
   Drop Electron and move the till into `apps/web`; barcode and QR on printed documents, labels at an exact size, and scanning on every transaction, with a small camera popup on phones.
+- **P · Site services (Service business type) — owner priority: first**
+  Site maintenance and material sales for a Service branch with the `SiteServices` add-on: sites, laborers and their portal, approved attendance with photo proof, flexible margins, central-to-site stock with usage and returns, and partial invoices that show the client only the selling price (D-57). **The owner put this group first (9 October 2026): claim TK-168 to TK-176 before any other open card.**
 - **O · Business types: requirements**
   One requirements card for each business type that does not exist yet (Wholesale, Textile, Manufacturing, Construction, Clinic) and one gap check for the five that do. A requirements card builds nothing: the owner reviews it, then its build cards are written (D-53).
-- **P · Site services (Service business type) — owner priority: first**
-  Site maintenance and material sales for a Service branch with the `SiteServices` add-on: sites, laborers and their portal, approved attendance with photo proof, flexible margins, central-to-site stock with usage and returns, and partial invoices that show the client only the selling price (D-57). **The owner put this group first (9 October 2026): claim TK-174 to TK-182 before any other open card.**
 - **Z · Done — waiting on the owner's test run**
   Finished cards, in ID order. A card marked `tests written, not run` needs the owner to run its
   tests (section 0.5); the owner then adds `· tests passed (owner) — date`, or moves the card back
@@ -5260,7 +5260,162 @@ The queue below is one list in card-number order. Each card names its group.
   - Build: `dotnet build` of `Sales.Api` and `Sales.Api.Tests` is clean, and `dotnet ef migrations has-pending-model-changes` reports none. The tests were not run (section 0.5).
 - **Follow-ups, only if D-42 asks for them:** menu sync (push the menu and availability out), status updates back, settlement against the aggregators' payouts, and a page listing aggregator orders.
 
-### TK-168 · Requirements: Wholesale distribution business type
+### TK-168 · Design: Site services module (tables, validations, flows)
+- [ ] open
+- **Issue:** [#156](https://github.com/jothi-prabaharan/Bill-Book/issues/156)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-57 to D-64 (all answered 2026-10-09)
+- **Where:** `docs/Modules.md` (new section "Site services"); reuse: `Inventory.Entity/TableEntities/{Warehouse,StockMovement}.cs`, `Inventory.Entity/Enums/{WarehouseType,StockMovementType}.cs`, `Shared.Kernel/Approvals/ApprovalEnums.cs`, `Sales.Entity/Models/InvoiceModels.cs` (line `WarehouseId`), `Sales.Repository/Repositories/InvoiceRepository.cs`
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins. The table design was given to the owner in chat on 9 October 2026 (step 1 of their five-step brief: tables, validations, API, UI, final agent prompt).
+- **Tables:** none (design only)
+- **Sub-tasks:**
+  - [ ] Write the design under "Site services" in `docs/Modules.md`: the reuse map, the twelve `sit` tables with their columns, the changes to existing tables (`WarehouseType.Site`, `inv.Warehouses.SiteId`, `ApprovalRequestKind.SiteClockOut`/`SiteMaterialUsage`, the `site` permission module, series `SIT` `SDP` `SRT` `SUS` `SBL`), and the five flows (dispatch, usage, return, clock-out approval, partial invoice).
+  - [ ] Write the **validations**: fixed values (enums, lengths, quantity > 0, OT hours 0–12, day fraction, one attendance row per assignment per day, photo type and size, margin percent 0–100) and values from masters (active site and assignment, laborer's own sites only, on-site quantity, unbilled quantity, effective margin rule, geofence radius, the trade's service item).
+  - [ ] Write the **privacy rule**: cost and margin live only in `sit`; Sales, Printing, the client portal and the e-invoice see only the selling price; `site.cost.view` is the only permission that shows cost.
+  - [ ] Record D-58 to D-64 in section 3 and ask the owner.
+  - [ ] Owner: review and approve the design, the validations and the answers to D-58 to D-64.
+- **Done when:** the owner has approved the design section and the validations; TK-169 to TK-176 build from it.
+- **Notes:** This is step 1 and step 2 of the owner's brief. Steps 3 and 4 (API, UI) are TK-169 to TK-176; step 5 (a summary and an agent prompt that commits to the default branch only) is written once these cards are done.
+
+### TK-169 · Site service scaffold and the `SiteServices` add-on for Service branches
+- [ ] open
+- **Issue:** [#157](https://github.com/jothi-prabaharan/Bill-Book/issues/157)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-KERNEL, L-MST, L-INV, L-SIT (new), L-WEB, L-SITE-UI (new), L-DEPS · **Depends on:** TK-168 · **Decision:** D-57, D-58
+- **Where:** `backend/shared/Shared.Kernel/Apps/App.cs` (`AddOn`, `AddOnRules`), `Master.Repository/Repositories/{TradeScopeRepository,MenuRepository}.cs`, `AdminDbContext` (menus, permissions), the Inventory stock controllers' `[RequireBusinessType]`, `backend/Api/Printing` (newest scaffold), `Gateway.Api/appsettings*.json`, `Master.Api/Services/{DatabaseMigrationService,TenantSeeder}.cs`, `deploy/local/docker-compose.yml`
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **Tables:** none yet (the `sit` schema and its migration history)
+- **Sub-tasks:**
+  - [ ] `AddOn.SiteServices`; `AddOnRules.Allowed(Service)` includes it (paid or free per D-58); update `AddOnRulesTests`.
+  - [ ] A Service branch **with** `SiteServices` reaches the stock it needs (items as goods, warehouses, stock movements, transfers); a Service branch without it stays stock-less. Change `TradeScopeRepository.StockOnlyMenus` and the Inventory guards to read the add-on, not just the type.
+  - [ ] New service **Site**: `backend/Api/Site/Site.{Entity,Repository,Api}`, schema `sit`, dev port **4523**, Docker port **7509**; `.sln`, gateway route `/api/site/**`, `MigrateContextAsync` in `DatabaseMigrationService`, `TenantSeeder.Services`, `backend/tests/Site.Api.Tests`; add lane `L-SIT` to section 1.
+  - [ ] Permission module `site`: `site.view`, `site.edit`, `site.approve`, `site.bill`, `site.cost.view`; Site menus shown for Service + `SiteServices` only; a `SiteLaborer` system role with only the portal permissions.
+  - [ ] `frontend/libs/site/{site-core,site-ui}` with a lazy route `/site` in `apps/web`; add lane `L-SITE-UI`.
+  - [ ] Numbering series `SIT`, `SDP`, `SRT`, `SUS`, `SBL` seeded per branch.
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** a Service branch with `SiteServices` sees the Site menu and can hold stock; one without it sees neither; `EndpointGuardAudit` and `RlsAudit` cover the new service.
+
+### TK-170 · Site masters: trades, laborers, sites, assignments and margin rules
+- [ ] open
+- **Issue:** [#158](https://github.com/jothi-prabaharan/Bill-Book/issues/158)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-169 · **Decision:** D-62
+- **Where:** the TK-168 design; `Inventory.Entity/TableEntities/Warehouse.cs`, `Inventory.Entity/Enums/WarehouseType.cs`; `con.Contacts` for the site owner
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **Tables:** `sit.Trades`, `sit.Laborers`, `sit.Sites`, `sit.SiteAssignments`, `sit.MarginRules`
+- **Sub-tasks:**
+  - [ ] Entities, enums (`SiteStatus`, `AssignmentStatus`, `MarginScope`, `MarginAppliesTo`, `MarginType`) and the migration with RLS.
+  - [ ] `WarehouseType.Site = 4` and `inv.Warehouses.SiteId`; creating a site creates its warehouse through a new Inventory internal endpoint, in the site's request.
+  - [ ] `SiteMarginRepository.Resolve(scope chain, appliesTo, date)`: Assignment → Site → Trade or Item → Branch, effective-dated; `FlatPerUnit` adds the value, `Percent` adds cost × value / 100.
+  - [ ] Cost-rate fallback: assignment → laborer → trade default.
+  - [ ] List and form pages for each master at 360px; margin values and cost rates shown only with `site.cost.view`.
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** a ₹1000 flat day margin on Electrical and a 10% margin on one site resolve to the site's 10% for a laborer there and to ₹1000 elsewhere; a site gets its own warehouse.
+
+### TK-171 · Laborer portal: check-in, clock-out form, photo proof and OT claim
+- [ ] open
+- **Issue:** [#159](https://github.com/jothi-prabaharan/Bill-Book/issues/159)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-SIT, L-SITE-UI · **Depends on:** TK-170 · **Decision:** D-61, D-62, D-63
+- **Where:** the TK-168 design; `Shared.Kernel` `IFileStorage` and `StorageKey`; `libs/shared/ui-components` (`bb-scan` camera popup pattern from TK-160)
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **Tables:** `sit.SiteAttendance`, `sit.SiteAttendancePhotos`
+- **Sub-tasks:**
+  - [ ] Laborer login: a `mst.Users` account linked through `sit.Laborers.UserId`, holding the `SiteLaborer` role; the portal lists only the laborer's active assignments.
+  - [ ] Check-in with time and location (geofence per D-63); one row per assignment per day.
+  - [ ] Clock-out form: work summary, day fraction (D-61), optional OT hours claimed, at least one work-proof photo; photos saved create-only under `StorageKey`; status `Submitted`.
+  - [ ] Mobile-first pages at 360px with the camera.
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** a laborer checks in, clocks out with a photo and an OT claim and the row is `Submitted`; a second check-in on the same day and assignment is refused; a laborer cannot see another laborer's site.
+
+### TK-172 · Admin approval of clock-outs; working days and OT counters
+- [ ] open
+- **Issue:** [#160](https://github.com/jothi-prabaharan/Bill-Book/issues/160)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-SIT, L-KERNEL, L-SITE-UI · **Depends on:** TK-171 · **Decision:** —
+- **Where:** `backend/shared/Shared.Kernel/Approvals/{ApprovalEnums,DocumentApprovalService}.cs`; the TK-168 design
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **Tables:** none new (fills the snapshot columns on `sit.SiteAttendance` and the counters on `sit.SiteAssignments`)
+- **Sub-tasks:**
+  - [ ] `ApprovalRequestKind.SiteClockOut = 110` through the one approvals engine.
+  - [ ] Review page: work summary, photos, OT claimed; approve (OT approved may be less than claimed) or reject with a reason.
+  - [ ] On approval, in one transaction: freeze day and OT cost, margin and sell snapshots from `SiteMarginRepository`; add `DayFraction` to `ApprovedDays` and `OtHoursApproved` to `ApprovedOtHours`.
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** counters rise only on approval, a rejection changes nothing, and a margin change after approval does not reprice the approved day.
+
+### TK-173 · Site stock: dispatch to site and return to central
+- [ ] open
+- **Issue:** [#161](https://github.com/jothi-prabaharan/Bill-Book/issues/161)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-170 · **Decision:** —
+- **Where:** `Inventory.Entity/Enums/StockMovementType.cs` (`TransferOut`/`TransferIn`), the Inventory transfer code, the TK-168 design
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins. Stock is one pool per branch and `WarehouseId` is a location only, so a dispatch is a transfer pair and posts nothing to the ledger.
+- **Tables:** `sit.SiteStockDocuments`, `sit.SiteStockLines`, `sit.SiteStockBalances`
+- **Sub-tasks:**
+  - [ ] Dispatch (`SDP`): Inventory internal endpoint posts `TransferOut` from central and `TransferIn` to the site warehouse, refused above central stock; `DispatchedQty` and `OnSiteQty` rise. Dispatching is not billing.
+  - [ ] Return (`SRT`): the reverse transfer, refused above `OnSiteQty`; `ReturnedQty` rises.
+  - [ ] `SiteStockBalances` changed only by a guarded conditional update (the stock-decrement pattern), with a check that `OnSiteQty` ≥ 0.
+  - [ ] Dispatch, return and site-stock pages.
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** 20 coils central, dispatch 3 and return 1 leaves 18 central and 2 on site, and a return of 3 is refused.
+
+### TK-174 · Material usage reports from the site and their approval
+- [ ] open
+- **Issue:** [#162](https://github.com/jothi-prabaharan/Bill-Book/issues/162)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-SIT, L-KERNEL, L-SITE-UI · **Depends on:** TK-173 · **Decision:** D-59
+- **Where:** the TK-168 design; `Shared.Kernel/Approvals`
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **Tables:** none new (`Usage` documents in `sit.SiteStockDocuments`)
+- **Sub-tasks:**
+  - [ ] Usage document (`SUS`) entered by the laborer on the portal or by the admin.
+  - [ ] `ApprovalRequestKind.SiteMaterialUsage = 111`; on approval `UsedQty` and `UnbilledUsedQty` rise and `OnSiteQty` falls by the guarded update; refused above `OnSiteQty`.
+  - [ ] Where the inventory issue happens follows D-59 (proposed: at invoice).
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** 3 dispatched and 2 used leaves 1 on site and 2 unbilled; using more than is on site is refused.
+
+### TK-175 · Site billing: partial invoices with selling price only
+- [ ] open
+- **Issue:** [#163](https://github.com/jothi-prabaharan/Bill-Book/issues/163)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-SIT, L-SAL, L-SITE-UI · **Depends on:** TK-172, TK-174 · **Decision:** D-59, D-60, D-64
+- **Where:** `Sales.Repository/Repositories/InvoiceRepository.cs` (`CreateAsync`, `PostAsync`), `Sales.Entity/Models/InvoiceModels.cs` (line `WarehouseId`), `Shared.Kernel/Printing/PlaceholderCatalog.cs`
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **Tables:** `sit.SiteBills`, `sit.SiteBillLines`
+- **Sub-tasks:**
+  - [ ] Billing worksheet (`SBL`): pick site, period, trade and any of labor, OT and material; it lists approved unbilled days and unbilled used material.
+  - [ ] Claim each attendance row and usage quantity with a guarded update (`SiteBillLineId IS NULL`, `BilledQuantity + q ≤ Quantity`), so two bills never take the same day or unit.
+  - [ ] Create and post the invoice through a Sales internal endpoint that calls `CreateAsync`/`PostAsync`: labor on the trade's service item (SAC), material on its item (HSN) with `WarehouseId` = the site warehouse, each line carrying only the selling price and the client description.
+  - [ ] **Privacy:** no cost or margin field crosses into `sal`, the print payload, the client portal or the e-invoice; the worksheet shows cost and margin only with `site.cost.view`.
+  - [ ] Cancelling a draft worksheet releases its claims; a posted invoice is corrected by a credit note, not by editing.
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** two partial bills on one site (Electrical labor, then material) post two invoices, no day or unit is on both, 2 used of 3 dispatched bills 2, and the printed invoice holds no cost or margin.
+
+### TK-176 · Site reports: labor days, material reconciliation and site profit
+- [ ] open
+- **Issue:** [#164](https://github.com/jothi-prabaharan/Bill-Book/issues/164)
+- **Group:** P · Site services (Service business type) — owner priority: first
+- **Lanes:** L-RPT, L-SIT, L-SITE-UI · **Depends on:** TK-175 · **Decision:** —
+- **Where:** `ReportingDbContext`, the report sources and `ExcelReportWriter`/`CsvReportWriter`
+- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **Tables:** read models only
+- **Sub-tasks:**
+  - [ ] Laborer days and OT by site, trade and laborer (approved and billed).
+  - [ ] Material reconciliation per site: dispatched, used, returned, on site, billed.
+  - [ ] Site profit: cost, margin and sell by site and bill, behind `site.cost.view`.
+  - [ ] On the existing grid, Excel and CSV paths.
+  - [ ] Section 5's standard delivery sub-tasks.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** the reconciliation ties to `sit.SiteStockBalances` and the profit report is hidden from a role without `site.cost.view`.
+
+### TK-177 · Requirements: Wholesale distribution business type
 - [ ] open
 - **Issue:** [#150](https://github.com/jothi-prabaharan/Bill-Book/issues/150)
 - **Group:** O · Business types: requirements
@@ -5278,11 +5433,11 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Owner: review and approve the requirements section and the build-card outline.
 - **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
 
-### TK-169 · Requirements: Textile / garments business type
+### TK-178 · Requirements: Textile / garments business type
 - [ ] open
 - **Issue:** [#151](https://github.com/jothi-prabaharan/Bill-Book/issues/151)
 - **Group:** O · Business types: requirements
-- **Lanes:** L-DOC · **Depends on:** TK-168 · **Decision:** D-53
+- **Lanes:** L-DOC · **Depends on:** TK-177 · **Decision:** D-53
 - **Where:** `Inventory.Entity/TableEntities/MenuEntities.cs` (`ItemVariant`), `Inventory.Entity/TableEntities/{Item,ItemBarcode}.cs`, `Shared.Kernel/Tax/GstCalculator`, the label printing from TK-159
 - **State:** checked 6 October 2026. There is no Textile type. `ItemVariant` exists for the restaurant menu (half and full portions) and has not been tried as a size and colour matrix. Barcodes per item exist, and labels print at an exact size (TK-159).
 - **Sub-tasks:**
@@ -5297,7 +5452,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Owner: review and approve the requirements section and the build-card outline.
 - **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
 
-### TK-170 · Requirements: Manufacturing business type
+### TK-179 · Requirements: Manufacturing business type
 - [ ] open
 - **Issue:** [#152](https://github.com/jothi-prabaharan/Bill-Book/issues/152)
 - **Group:** O · Business types: requirements
@@ -5316,7 +5471,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Owner: review and approve the requirements section and the build-card outline.
 - **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
 
-### TK-171 · Requirements: Construction / contracting business type
+### TK-180 · Requirements: Construction / contracting business type
 - [ ] open
 - **Issue:** [#153](https://github.com/jothi-prabaharan/Bill-Book/issues/153)
 - **Group:** O · Business types: requirements
@@ -5335,7 +5490,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Owner: review and approve the requirements section and the build-card outline.
 - **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
 
-### TK-172 · Requirements: Clinic / hospital business type
+### TK-181 · Requirements: Clinic / hospital business type
 - [ ] open
 - **Issue:** [#154](https://github.com/jothi-prabaharan/Bill-Book/issues/154)
 - **Group:** O · Business types: requirements
@@ -5354,7 +5509,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Owner: review and approve the requirements section and the build-card outline.
 - **Done when:** the requirements are written under "Business types" in `docs/Modules.md`, the owner has reviewed them, and the approved build cards are added to this queue by a follow-up card.
 
-### TK-173 · Gap check: the existing business types against the trade list
+### TK-182 · Gap check: the existing business types against the trade list
 - [ ] open
 - **Issue:** [#155](https://github.com/jothi-prabaharan/Bill-Book/issues/155)
 - **Group:** O · Business types: requirements
@@ -5370,161 +5525,6 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] For each row write Built, Partly or Missing with the file or card that proves it, under "Business types" in `docs/Modules.md`. List the missing rows as proposed cards in this card's Notes; **do not write them without the owner's approval**.
   - [ ] Owner: review the gap tables and choose which proposed cards to write.
 - **Done when:** the gap tables are written, the owner has reviewed them and chosen which proposed cards to write.
-
-### TK-174 · Design: Site services module (tables, validations, flows)
-- [ ] open
-- **Issue:** [#156](https://github.com/jothi-prabaharan/Bill-Book/issues/156)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-57; asks D-58 to D-64
-- **Where:** `docs/Modules.md` (new section "Site services"); reuse: `Inventory.Entity/TableEntities/{Warehouse,StockMovement}.cs`, `Inventory.Entity/Enums/{WarehouseType,StockMovementType}.cs`, `Shared.Kernel/Approvals/ApprovalEnums.cs`, `Sales.Entity/Models/InvoiceModels.cs` (line `WarehouseId`), `Sales.Repository/Repositories/InvoiceRepository.cs`
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins. The table design was given to the owner in chat on 9 October 2026 (step 1 of their five-step brief: tables, validations, API, UI, final agent prompt).
-- **Tables:** none (design only)
-- **Sub-tasks:**
-  - [ ] Write the design under "Site services" in `docs/Modules.md`: the reuse map, the twelve `sit` tables with their columns, the changes to existing tables (`WarehouseType.Site`, `inv.Warehouses.SiteId`, `ApprovalRequestKind.SiteClockOut`/`SiteMaterialUsage`, the `site` permission module, series `SIT` `SDP` `SRT` `SUS` `SBL`), and the five flows (dispatch, usage, return, clock-out approval, partial invoice).
-  - [ ] Write the **validations**: fixed values (enums, lengths, quantity > 0, OT hours 0–12, day fraction, one attendance row per assignment per day, photo type and size, margin percent 0–100) and values from masters (active site and assignment, laborer's own sites only, on-site quantity, unbilled quantity, effective margin rule, geofence radius, the trade's service item).
-  - [ ] Write the **privacy rule**: cost and margin live only in `sit`; Sales, Printing, the client portal and the e-invoice see only the selling price; `site.cost.view` is the only permission that shows cost.
-  - [ ] Record D-58 to D-64 in section 3 and ask the owner.
-  - [ ] Owner: review and approve the design, the validations and the answers to D-58 to D-64.
-- **Done when:** the owner has approved the design section and the validations; TK-175 to TK-182 build from it.
-- **Notes:** This is step 1 and step 2 of the owner's brief. Steps 3 and 4 (API, UI) are TK-175 to TK-182; step 5 (a summary and an agent prompt that commits to the default branch only) is written once these cards are done.
-
-### TK-175 · Site service scaffold and the `SiteServices` add-on for Service branches
-- [ ] open
-- **Issue:** [#157](https://github.com/jothi-prabaharan/Bill-Book/issues/157)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-KERNEL, L-MST, L-INV, L-SIT (new), L-WEB, L-SITE-UI (new), L-DEPS · **Depends on:** TK-174 · **Decision:** D-57, D-58
-- **Where:** `backend/shared/Shared.Kernel/Apps/App.cs` (`AddOn`, `AddOnRules`), `Master.Repository/Repositories/{TradeScopeRepository,MenuRepository}.cs`, `AdminDbContext` (menus, permissions), the Inventory stock controllers' `[RequireBusinessType]`, `backend/Api/Printing` (newest scaffold), `Gateway.Api/appsettings*.json`, `Master.Api/Services/{DatabaseMigrationService,TenantSeeder}.cs`, `deploy/local/docker-compose.yml`
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** none yet (the `sit` schema and its migration history)
-- **Sub-tasks:**
-  - [ ] `AddOn.SiteServices`; `AddOnRules.Allowed(Service)` includes it (paid or free per D-58); update `AddOnRulesTests`.
-  - [ ] A Service branch **with** `SiteServices` reaches the stock it needs (items as goods, warehouses, stock movements, transfers); a Service branch without it stays stock-less. Change `TradeScopeRepository.StockOnlyMenus` and the Inventory guards to read the add-on, not just the type.
-  - [ ] New service **Site**: `backend/Api/Site/Site.{Entity,Repository,Api}`, schema `sit`, dev port **4523**, Docker port **7509**; `.sln`, gateway route `/api/site/**`, `MigrateContextAsync` in `DatabaseMigrationService`, `TenantSeeder.Services`, `backend/tests/Site.Api.Tests`; add lane `L-SIT` to section 1.
-  - [ ] Permission module `site`: `site.view`, `site.edit`, `site.approve`, `site.bill`, `site.cost.view`; Site menus shown for Service + `SiteServices` only; a `SiteLaborer` system role with only the portal permissions.
-  - [ ] `frontend/libs/site/{site-core,site-ui}` with a lazy route `/site` in `apps/web`; add lane `L-SITE-UI`.
-  - [ ] Numbering series `SIT`, `SDP`, `SRT`, `SUS`, `SBL` seeded per branch.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** a Service branch with `SiteServices` sees the Site menu and can hold stock; one without it sees neither; `EndpointGuardAudit` and `RlsAudit` cover the new service.
-
-### TK-176 · Site masters: trades, laborers, sites, assignments and margin rules
-- [ ] open
-- **Issue:** [#158](https://github.com/jothi-prabaharan/Bill-Book/issues/158)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-175 · **Decision:** D-62
-- **Where:** the TK-174 design; `Inventory.Entity/TableEntities/Warehouse.cs`, `Inventory.Entity/Enums/WarehouseType.cs`; `con.Contacts` for the site owner
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** `sit.Trades`, `sit.Laborers`, `sit.Sites`, `sit.SiteAssignments`, `sit.MarginRules`
-- **Sub-tasks:**
-  - [ ] Entities, enums (`SiteStatus`, `AssignmentStatus`, `MarginScope`, `MarginAppliesTo`, `MarginType`) and the migration with RLS.
-  - [ ] `WarehouseType.Site = 4` and `inv.Warehouses.SiteId`; creating a site creates its warehouse through a new Inventory internal endpoint, in the site's request.
-  - [ ] `SiteMarginRepository.Resolve(scope chain, appliesTo, date)`: Assignment → Site → Trade or Item → Branch, effective-dated; `FlatPerUnit` adds the value, `Percent` adds cost × value / 100.
-  - [ ] Cost-rate fallback: assignment → laborer → trade default.
-  - [ ] List and form pages for each master at 360px; margin values and cost rates shown only with `site.cost.view`.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** a ₹1000 flat day margin on Electrical and a 10% margin on one site resolve to the site's 10% for a laborer there and to ₹1000 elsewhere; a site gets its own warehouse.
-
-### TK-177 · Laborer portal: check-in, clock-out form, photo proof and OT claim
-- [ ] open
-- **Issue:** [#159](https://github.com/jothi-prabaharan/Bill-Book/issues/159)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-SIT, L-SITE-UI · **Depends on:** TK-176 · **Decision:** D-61, D-62, D-63
-- **Where:** the TK-174 design; `Shared.Kernel` `IFileStorage` and `StorageKey`; `libs/shared/ui-components` (`bb-scan` camera popup pattern from TK-160)
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** `sit.SiteAttendance`, `sit.SiteAttendancePhotos`
-- **Sub-tasks:**
-  - [ ] Laborer login: a `mst.Users` account linked through `sit.Laborers.UserId`, holding the `SiteLaborer` role; the portal lists only the laborer's active assignments.
-  - [ ] Check-in with time and location (geofence per D-63); one row per assignment per day.
-  - [ ] Clock-out form: work summary, day fraction (D-61), optional OT hours claimed, at least one work-proof photo; photos saved create-only under `StorageKey`; status `Submitted`.
-  - [ ] Mobile-first pages at 360px with the camera.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** a laborer checks in, clocks out with a photo and an OT claim and the row is `Submitted`; a second check-in on the same day and assignment is refused; a laborer cannot see another laborer's site.
-
-### TK-178 · Admin approval of clock-outs; working days and OT counters
-- [ ] open
-- **Issue:** [#160](https://github.com/jothi-prabaharan/Bill-Book/issues/160)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-SIT, L-KERNEL, L-SITE-UI · **Depends on:** TK-177 · **Decision:** —
-- **Where:** `backend/shared/Shared.Kernel/Approvals/{ApprovalEnums,DocumentApprovalService}.cs`; the TK-174 design
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** none new (fills the snapshot columns on `sit.SiteAttendance` and the counters on `sit.SiteAssignments`)
-- **Sub-tasks:**
-  - [ ] `ApprovalRequestKind.SiteClockOut = 110` through the one approvals engine.
-  - [ ] Review page: work summary, photos, OT claimed; approve (OT approved may be less than claimed) or reject with a reason.
-  - [ ] On approval, in one transaction: freeze day and OT cost, margin and sell snapshots from `SiteMarginRepository`; add `DayFraction` to `ApprovedDays` and `OtHoursApproved` to `ApprovedOtHours`.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** counters rise only on approval, a rejection changes nothing, and a margin change after approval does not reprice the approved day.
-
-### TK-179 · Site stock: dispatch to site and return to central
-- [ ] open
-- **Issue:** [#161](https://github.com/jothi-prabaharan/Bill-Book/issues/161)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-176 · **Decision:** —
-- **Where:** `Inventory.Entity/Enums/StockMovementType.cs` (`TransferOut`/`TransferIn`), the Inventory transfer code, the TK-174 design
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins. Stock is one pool per branch and `WarehouseId` is a location only, so a dispatch is a transfer pair and posts nothing to the ledger.
-- **Tables:** `sit.SiteStockDocuments`, `sit.SiteStockLines`, `sit.SiteStockBalances`
-- **Sub-tasks:**
-  - [ ] Dispatch (`SDP`): Inventory internal endpoint posts `TransferOut` from central and `TransferIn` to the site warehouse, refused above central stock; `DispatchedQty` and `OnSiteQty` rise. Dispatching is not billing.
-  - [ ] Return (`SRT`): the reverse transfer, refused above `OnSiteQty`; `ReturnedQty` rises.
-  - [ ] `SiteStockBalances` changed only by a guarded conditional update (the stock-decrement pattern), with a check that `OnSiteQty` ≥ 0.
-  - [ ] Dispatch, return and site-stock pages.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** 20 coils central, dispatch 3 and return 1 leaves 18 central and 2 on site, and a return of 3 is refused.
-
-### TK-180 · Material usage reports from the site and their approval
-- [ ] open
-- **Issue:** [#162](https://github.com/jothi-prabaharan/Bill-Book/issues/162)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-SIT, L-KERNEL, L-SITE-UI · **Depends on:** TK-179 · **Decision:** D-59
-- **Where:** the TK-174 design; `Shared.Kernel/Approvals`
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** none new (`Usage` documents in `sit.SiteStockDocuments`)
-- **Sub-tasks:**
-  - [ ] Usage document (`SUS`) entered by the laborer on the portal or by the admin.
-  - [ ] `ApprovalRequestKind.SiteMaterialUsage = 111`; on approval `UsedQty` and `UnbilledUsedQty` rise and `OnSiteQty` falls by the guarded update; refused above `OnSiteQty`.
-  - [ ] Where the inventory issue happens follows D-59 (proposed: at invoice).
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** 3 dispatched and 2 used leaves 1 on site and 2 unbilled; using more than is on site is refused.
-
-### TK-181 · Site billing: partial invoices with selling price only
-- [ ] open
-- **Issue:** [#163](https://github.com/jothi-prabaharan/Bill-Book/issues/163)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-SIT, L-SAL, L-SITE-UI · **Depends on:** TK-178, TK-180 · **Decision:** D-59, D-60, D-64
-- **Where:** `Sales.Repository/Repositories/InvoiceRepository.cs` (`CreateAsync`, `PostAsync`), `Sales.Entity/Models/InvoiceModels.cs` (line `WarehouseId`), `Shared.Kernel/Printing/PlaceholderCatalog.cs`
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** `sit.SiteBills`, `sit.SiteBillLines`
-- **Sub-tasks:**
-  - [ ] Billing worksheet (`SBL`): pick site, period, trade and any of labor, OT and material; it lists approved unbilled days and unbilled used material.
-  - [ ] Claim each attendance row and usage quantity with a guarded update (`SiteBillLineId IS NULL`, `BilledQuantity + q ≤ Quantity`), so two bills never take the same day or unit.
-  - [ ] Create and post the invoice through a Sales internal endpoint that calls `CreateAsync`/`PostAsync`: labor on the trade's service item (SAC), material on its item (HSN) with `WarehouseId` = the site warehouse, each line carrying only the selling price and the client description.
-  - [ ] **Privacy:** no cost or margin field crosses into `sal`, the print payload, the client portal or the e-invoice; the worksheet shows cost and margin only with `site.cost.view`.
-  - [ ] Cancelling a draft worksheet releases its claims; a posted invoice is corrected by a credit note, not by editing.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** two partial bills on one site (Electrical labor, then material) post two invoices, no day or unit is on both, 2 used of 3 dispatched bills 2, and the printed invoice holds no cost or margin.
-
-### TK-182 · Site reports: labor days, material reconciliation and site profit
-- [ ] open
-- **Issue:** [#164](https://github.com/jothi-prabaharan/Bill-Book/issues/164)
-- **Group:** P · Site services (Service business type) — owner priority: first
-- **Lanes:** L-RPT, L-SIT, L-SITE-UI · **Depends on:** TK-181 · **Decision:** —
-- **Where:** `ReportingDbContext`, the report sources and `ExcelReportWriter`/`CsvReportWriter`
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
-- **Tables:** read models only
-- **Sub-tasks:**
-  - [ ] Laborer days and OT by site, trade and laborer (approved and billed).
-  - [ ] Material reconciliation per site: dispatched, used, returned, on site, billed.
-  - [ ] Site profit: cost, margin and sell by site and bill, behind `site.cost.view`.
-  - [ ] On the existing grid, Excel and CSV paths.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
-- **Done when:** the reconciliation ties to `sit.SiteStockBalances` and the profit report is hidden from a role without `site.cost.view`.
 
 ## 3. Decisions from the owner
 
@@ -5587,22 +5587,46 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-50 | TK-136: what replaces the `App` enum where it is still read? | TK-136 | **Decided** (owner, 2026-10-05): signup asks for a business type (or HRMS/Payroll only) and add-ons, and **Settings › Applications is removed** — Settings › Organization already switches the type and add-ons. The roles screen and permission matrix show **one role list per customer, filtered by the current branch's business type and add-ons**. The retirement happens in TK-136, not a later card. |
 | D-51 | TK-162: capture serial numbers on a goods receipt? | TK-162 | **Yes, as its own card** (owner, 2026-10-09): a serial list per goods-receipt line, its count checked against the accepted quantity, sent to Inventory on post. Needs a card |
 | D-52 | TK-166: does a redeemed loyalty point reduce the bill as a discount, or settle part of it as a tender? | TK-166 | **As a discount** (owner, 2026-10-09): redeemed points reduce the bill's taxable value and post to Discount Given. Needs a card |
-| D-53 | Which business types come next, and in what order? | TK-168 to TK-173 | **Five more, one at a time** (owner, 2026-10-06): Wholesale distribution, Textile / garments, Manufacturing, Construction / contracting and Clinic / hospital, beside the six that exist. Each gets a requirements card first and its build cards after the owner reviews it. Enum names: `Wholesale`, `Textile`, `Manufacturing`, `Construction`, `Clinic`. The ten-item trade list is the owner's. TK-168 to TK-173 |
-| D-54 | Clinic: where does patient data live, and how are consent and retention handled under the DPDP Act? | TK-172 (the schema outline) | **In contacts (`con`)** (owner, 2026-10-09): a patient is a contact with a clinical profile; consent per patient, an access log and a retention rule are added there. TK-172 |
-| D-55 | Manufacturing: one shared recipe and bill-of-materials design for Restaurant and Manufacturing, or separate tables? | TK-170 (the outline) | **One shared design** (owner, 2026-10-09): restaurant recipes are generalised into a bill of materials with versions and scrap percentage; Restaurant uses the simple form. TK-170 |
-| D-56 | Construction: how are GST on works contracts and retention accounted for, payable on release or at billing? | TK-171 (the RA billing outline) | **GST at billing on the full RA bill; retention held as a separate receivable until released** (owner, 2026-10-09). TK-171 |
-| D-57 | How does the site maintenance and material sales module fit the business types, and where does it sit in the queue? | TK-174 to TK-182 | **A Service-branch module, first in the queue** (owner, 2026-10-09): it serves the `Service` business type through a new `SiteServices` add-on that also lets that branch hold stock; its cards (group P) are claimed before every other open card. TK-174 to TK-182 |
-| D-58 | Is `SiteServices` a paid add-on or free like `RecurringBilling`, and should Retail branches be allowed it too? | TK-175 (`AddOnRules` only) | **Paid, Service branches only** (owner, 2026-10-09). TK-175 |
-| D-59 | When does used material leave inventory: when the usage is approved, or when the invoice posts? | TK-180, TK-181 (the stock issue) | **When the invoice posts** (owner, 2026-10-09): the existing invoice posting issues the used material from the site warehouse. TK-180, TK-181 |
-| D-60 | How is a material's selling price set: cost plus the margin rule, or the item's price list? | TK-181 (material pricing) | **Cost plus the margin rule, with the price list as an override** (owner, 2026-10-09). TK-181 |
-| D-61 | Can a laborer work a half day (0.5), or whole days only? | TK-177 (the day fraction) | **1 or 0.5 days** (owner, 2026-10-09), entered by the laborer and confirmed by the admin. TK-177 |
-| D-62 | Is a laborer an HRMS employee, or a light profile in the Site service with only a login? | TK-176, TK-177 | **A light profile in the Site service with a login, and an optional `EmployeeId` link** (owner, 2026-10-09); no HRMS purchase needed. TK-176, TK-177 |
-| D-63 | A check-in outside the site's radius: refuse it, or accept and flag it for the admin? | TK-177 (check-in) | **Accept and flag** (owner, 2026-10-09): the check-in is saved and flagged for the admin at approval. TK-177 |
-| D-64 | GST on a site bill: separate supplies (labor on SAC, material on HSN) or one composite supply? | TK-181 (the invoice lines) | **Separate lines** (owner, 2026-10-09): labour on SAC, material on HSN, each at its own GST rate. TK-181 |
+| D-53 | Which business types come next, and in what order? | TK-177 to TK-182 | **Five more, one at a time** (owner, 2026-10-06): Wholesale distribution, Textile / garments, Manufacturing, Construction / contracting and Clinic / hospital, beside the six that exist. Each gets a requirements card first and its build cards after the owner reviews it. Enum names: `Wholesale`, `Textile`, `Manufacturing`, `Construction`, `Clinic`. The ten-item trade list is the owner's. TK-177 to TK-182 |
+| D-54 | Clinic: where does patient data live, and how are consent and retention handled under the DPDP Act? | TK-181 (the schema outline) | **In contacts (`con`)** (owner, 2026-10-09): a patient is a contact with a clinical profile; consent per patient, an access log and a retention rule are added there. TK-181 |
+| D-55 | Manufacturing: one shared recipe and bill-of-materials design for Restaurant and Manufacturing, or separate tables? | TK-179 (the outline) | **One shared design** (owner, 2026-10-09): restaurant recipes are generalised into a bill of materials with versions and scrap percentage; Restaurant uses the simple form. TK-179 |
+| D-56 | Construction: how are GST on works contracts and retention accounted for, payable on release or at billing? | TK-180 (the RA billing outline) | **GST at billing on the full RA bill; retention held as a separate receivable until released** (owner, 2026-10-09). TK-180 |
+| D-57 | How does the site maintenance and material sales module fit the business types, and where does it sit in the queue? | TK-168 to TK-176 | **A Service-branch module, first in the queue** (owner, 2026-10-09): it serves the `Service` business type through a new `SiteServices` add-on that also lets that branch hold stock; its cards (group P) are claimed before every other open card. TK-168 to TK-176 |
+| D-58 | Is `SiteServices` a paid add-on or free like `RecurringBilling`, and should Retail branches be allowed it too? | TK-169 (`AddOnRules` only) | **Paid, Service branches only** (owner, 2026-10-09). TK-169 |
+| D-59 | When does used material leave inventory: when the usage is approved, or when the invoice posts? | TK-174, TK-175 (the stock issue) | **When the invoice posts** (owner, 2026-10-09): the existing invoice posting issues the used material from the site warehouse. TK-174, TK-175 |
+| D-60 | How is a material's selling price set: cost plus the margin rule, or the item's price list? | TK-175 (material pricing) | **Cost plus the margin rule, with the price list as an override** (owner, 2026-10-09). TK-175 |
+| D-61 | Can a laborer work a half day (0.5), or whole days only? | TK-171 (the day fraction) | **1 or 0.5 days** (owner, 2026-10-09), entered by the laborer and confirmed by the admin. TK-171 |
+| D-62 | Is a laborer an HRMS employee, or a light profile in the Site service with only a login? | TK-170, TK-171 | **A light profile in the Site service with a login, and an optional `EmployeeId` link** (owner, 2026-10-09); no HRMS purchase needed. TK-170, TK-171 |
+| D-63 | A check-in outside the site's radius: refuse it, or accept and flag it for the admin? | TK-171 (check-in) | **Accept and flag** (owner, 2026-10-09): the check-in is saved and flagged for the admin at approval. TK-171 |
+| D-64 | GST on a site bill: separate supplies (labor on SAC, material on HSN) or one composite supply? | TK-175 (the invoice lines) | **Separate lines** (owner, 2026-10-09): labour on SAC, material on HSN, each at its own GST rate. TK-175 |
 
 ---
 
 ## 4. Retired
+
+**Renumbered again on 9 October 2026, by the owner's instruction.** The Service business type's site-services cards (group P) moved to the front of the open list, which now starts at TK-168; the business-type requirement cards (group O) follow them. Issues keep their numbers; their titles were renamed. Commits made before this date use the old numbers:
+
+<details><summary>9 October 2026: old number → new number</summary>
+
+| Old | New |
+|---|---|
+| TK-168 | TK-177 |
+| TK-169 | TK-178 |
+| TK-170 | TK-179 |
+| TK-171 | TK-180 |
+| TK-172 | TK-181 |
+| TK-173 | TK-182 |
+| TK-174 | TK-168 |
+| TK-175 | TK-169 |
+| TK-176 | TK-170 |
+| TK-177 | TK-171 |
+| TK-178 | TK-172 |
+| TK-179 | TK-173 |
+| TK-180 | TK-174 |
+| TK-181 | TK-175 |
+| TK-182 | TK-176 |
+
+</details>
 
 **Renumbered on 24 September 2026.** Card numbers before that date (in commit messages and
 older notes) map to the current ones like this. Old TK-16, TK-18 and TK-22 were retired before the
