@@ -5548,6 +5548,29 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Owner: review the gap tables and choose which proposed cards to write.
 - **Done when:** the gap tables are written, the owner has reviewed them and chosen which proposed cards to write.
 
+### TK-183 · Seed and migrate each service only through its own API
+- [ ] open
+- **Issue:** [#167](https://github.com/jothi-prabaharan/Bill-Book/issues/167)
+- **Group:** A · Blockers: security, seeding and data integrity
+- **Lanes:** L-MST, L-RPT, L-DEPS (the `Master.Api.csproj` references), L-DOC · **Depends on:** — · **Decision:** —
+- **Where:**
+  - `backend/Api/Master/Master.Api/Services/DatabaseMigrationService.cs`: `MigrateTenantSchemasAsync` (around line 300) migrates `con`, `acc`, `cus`, `hrm`, `inv`, `pur`, `prt`, `rpt`, `sal`, `pay`, `tla` and more; `EnsureTenantDatabaseSetupAsync` (from line 148, the seeding block around lines 225–290) writes the bootstrap branch's seed rows straight into Accounting, Inventory and Printing.
+  - `backend/Api/Master/Master.Api/Master.Api.csproj`: references 22 other services' `Repository` projects.
+  - `backend/Api/Master/Master.Repository/Repositories/TenantSeederRepository.cs` (`ServicesFor`, the fan-out to each service's `internal/seed/organization`) and Master's `internal/seed/branch`.
+  - `deploy/local/seed/first-branch.sh`: already seeds the first branch through `internal/seed/branch`, with retries.
+  - Each service's own `Services/DatabaseMigrationService.cs` (Sales and Inventory are examples); Reporting has none.
+- **State:** checked 9 October 2026. Every service keeps its seed data in its own `{Service}.Repository/SeedData/` and serves `internal/seed/organization`, and every branch made from the app is seeded through those endpoints. The one exception is Master's startup job: for the bootstrap branch `…0001` it opens other services' DbContexts and writes their chart of accounts, tax master, payment terms, units of measure, metal purities, numbering series and print templates itself. So there are two seeding paths that can drift, and the startup one seeds only part of the data (no report catalog, SLA policies, employee or School seeds), which is why `first-branch.sh` has to finish the job. Every service except Reporting already migrates its own schema at startup, so Master's migration of theirs is a second path too.
+- **Sub-tasks:**
+  - [ ] Reporting migrates `rpt` at startup like every other service (`Reporting.Api/Services/DatabaseMigrationService.cs`).
+  - [ ] Master migrates only its own contexts (`AdminDbContext` for `mst`, `ContactsDbContext` for `con`). It still creates the tenant database `IN000001` in Development and registers it in `mst.TenantDatabases`. Check that no other service can start migrating before that database exists; if one can, it waits and retries rather than failing.
+  - [ ] Remove the direct seed writes for `…0001`. Seed the bootstrap branch through `TenantSeederRepository` instead, the same way as a branch made from the app: a hosted job in Master that waits for the services the branch's scope calls for and retries with back-off until each has answered, so `first-branch.sh` stops being required (keep it as a manual re-run). Seeding stays idempotent, so a retry adds only what is missing.
+  - [ ] Remove the `Master.Api.csproj` references to other services' `Repository` projects that only this code needed, and keep any that a remaining caller still uses (say which, in Notes).
+  - [ ] Update CLAUDE.md (Provisioning, the startup notes) and `deploy/local/README.md` where they describe the startup seeding.
+  - [ ] Test: written, never run by an AI (section 0.5). `DatabaseMigrationService` names no other service's DbContext or seed class (an assembly-level check); the bootstrap branch is seeded through `TenantSeederRepository` with retries when a service is down at first.
+  - [ ] Owner: from dropped databases, start everything and compare the first branch's seed rows with a branch created from the app.
+- **Done when:** a fresh Development start ends with the first branch seeded exactly like a branch created from the app, and `DatabaseMigrationService` names no other service's DbContext or seed class.
+- **Notes:** the owner asked on 9 October 2026 that every service keep and apply its own seed data. The numbering series that Inventory, Sales and Purchase write into Accounting's table is the settled shared-table exception in CLAUDE.md, and stays.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
