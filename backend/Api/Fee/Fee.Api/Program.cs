@@ -16,7 +16,7 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
-// Fee (S4, TK-64): fee heads, structures, concessions, demands, receipts and their allocation, posted to the ledger. Schema fee, port 4518. The scaffold is Employee's.
+// Fee (S4, TK-64): fee heads, structures, concessions, demands, receipts and their allocation, posted to the ledger. Schema fee, port 4508. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -85,7 +85,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
 string accountingUrl = builder.Configuration["Accounting:BaseUrl"] is { Length: > 0 } acc ? acc : "http://localhost:4501";
 builder.Services.AddHttpClient<IStudentClient, HttpStudentClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Student:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4515");
+    client.BaseAddress = new Uri(builder.Configuration["Student:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4520");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IContactDirectory, HttpContactDirectory>(client => client.BaseAddress = new Uri(MasterUrl(builder.Configuration)))
@@ -126,4 +126,4 @@ app.MapControllers();
 app.Run();
 
 static string MasterUrl(IConfiguration configuration) =>
-    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504";
+    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511";

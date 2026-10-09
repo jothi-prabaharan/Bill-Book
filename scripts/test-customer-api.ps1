@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Automated test suite for API 7: Customer.Api (Port 4502 & Gateway Port 4500).
+    Automated test suite for API 7: Customer.Api (Port 4505 & Gateway Port 4500).
 #>
 
 [CmdletBinding()]
 param(
-    [string]$BaseUrl = "http://localhost:4502",
+    [string]$BaseUrl = "http://localhost:4505",
     [string]$GatewayUrl = "http://localhost:4500",
     [string]$InternalKey = "dev-only-internal-key-change-me",
     [string]$SigningKey = "dev-only-signing-key-updated-secure-32-bytes-min-value-2026-xyz"
@@ -124,7 +124,7 @@ function Invoke-Api {
 }
 
 Write-Host "`n========================================================" -ForegroundColor Cyan
-Write-Host " RUNNING BATCH 2 TESTS: API 7 - Customer.Api (Port 4502)" -ForegroundColor Cyan
+Write-Host " RUNNING BATCH 2 TESTS: API 7 - Customer.Api (Port 4505)" -ForegroundColor Cyan
 Write-Host "========================================================`n" -ForegroundColor Cyan
 
 $defaultToken = New-TestJwt

@@ -15,7 +15,7 @@ using Shared.Kernel.Contacts;
 using Shared.Kernel.School;
 using Shared.Kernel.Tenancy;
 
-// MaintenanceContract (S8, TK-68): AMC contracts, their covered assets and visits. Schema amc, port 4522. The scaffold is Employee's.
+// MaintenanceContract (S8, TK-68): AMC contracts, their covered assets and visits. Schema amc, port 4510. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -79,12 +79,12 @@ builder.Services.AddHttpClient<IContactDirectory, HttpContactDirectory>(client =
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Facility:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4519");
+    client.BaseAddress = new Uri(builder.Configuration["Facility:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4507");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IWorkOrderClient, HttpWorkOrderClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["WorkOrder:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4520");
+    client.BaseAddress = new Uri(builder.Configuration["WorkOrder:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4522");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -109,4 +109,4 @@ app.MapControllers();
 app.Run();
 
 static string MasterUrl(IConfiguration configuration) =>
-    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504";
+    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511";

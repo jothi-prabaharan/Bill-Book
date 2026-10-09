@@ -45,7 +45,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpClient<ISmtpDirectory, MasterSmtpDirectory>(client =>
         {
-            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4511/");
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -61,7 +61,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpClient<IContactEmails, HttpContactEmails>(client =>
         {
-            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4511/");
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -76,7 +76,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpClient<IAmcRenewals, HttpAmcRenewals>(client =>
         {
-            client.BaseAddress = new Uri(config["MaintenanceContract:BaseUrl"] ?? "http://localhost:4522/");
+            client.BaseAddress = new Uri(config["MaintenanceContract:BaseUrl"] ?? "http://localhost:4510/");
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
         
@@ -85,7 +85,7 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpClient<IComplianceReminders, HttpComplianceReminders>(client =>
         {
-            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4511/");
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
         
@@ -152,14 +152,14 @@ public static class ServiceCollectionExtensions
         // --------------------------------------------------------
         services.AddHttpClient(RecurringBillingClients.SalesClient, client =>
         {
-            client.BaseAddress = new Uri(new Uri(config["Sales:BaseUrl"] ?? "http://localhost:4507/"), "internal/recurring-invoices/");
+            client.BaseAddress = new Uri(new Uri(config["Sales:BaseUrl"] ?? "http://localhost:4519/"), "internal/recurring-invoices/");
             client.Timeout = TimeSpan.FromMinutes(5);
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
 
         services.AddHttpClient(RecurringBillingClients.PurchaseClient, client =>
         {
-            client.BaseAddress = new Uri(new Uri(config["Purchase:BaseUrl"] ?? "http://localhost:4505/"), "internal/recurring-bills/");
+            client.BaseAddress = new Uri(new Uri(config["Purchase:BaseUrl"] ?? "http://localhost:4516/"), "internal/recurring-bills/");
             client.Timeout = TimeSpan.FromMinutes(5);
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
@@ -172,7 +172,7 @@ public static class ServiceCollectionExtensions
         // --------------------------------------------------------
         services.AddHttpClient(ServiceReminderWorker.CustomerClient, client =>
         {
-            client.BaseAddress = new Uri(config["Customer:BaseUrl"] ?? "http://localhost:4502/");
+            client.BaseAddress = new Uri(config["Customer:BaseUrl"] ?? "http://localhost:4505/");
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
 

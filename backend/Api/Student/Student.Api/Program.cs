@@ -14,7 +14,7 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
-// Student (S1, TK-61): academic years, classes, sections, subjects, students with guardians, enrolments and exams. Schema sis, port 4515. The scaffold is Employee's.
+// Student (S1, TK-61): academic years, classes, sections, subjects, students with guardians, enrolments and exams. Schema sis, port 4520. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -113,4 +113,4 @@ app.MapControllers();
 app.Run();
 
 static string MasterUrl(IConfiguration configuration) =>
-    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504";
+    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511";

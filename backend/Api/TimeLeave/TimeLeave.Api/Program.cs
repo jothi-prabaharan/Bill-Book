@@ -62,7 +62,7 @@ builder.Services.AddTransient<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<IEmployeeClient, EmployeeClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4506");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddScoped<LeaveCalculationEngineRepository>();

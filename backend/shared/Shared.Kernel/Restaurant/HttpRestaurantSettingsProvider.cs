@@ -80,7 +80,7 @@ public static class RestaurantSettingsRegistration
         services.AddTransient<InternalKeyHandler>();
         services.AddHttpClient<IRestaurantSettingsProvider, HttpRestaurantSettingsProvider>(client =>
         {
-            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4511/");
         })
         .AddHttpMessageHandler<InternalKeyHandler>();
 

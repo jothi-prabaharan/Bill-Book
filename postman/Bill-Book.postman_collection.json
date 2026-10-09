@@ -2,7 +2,7 @@
  "info": {
   "name": "Bill-Book API",
   "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-  "description": "RetailErp / Bill-Book \u2014 generated from the controllers by `postman/generate.py`. Do not hand-edit; re-run it.\n\n**Run \u2460 Login then \u2461 Select organization first.** Sign-in is two-step because one account can hold roles in several branches, and the access token has to name one.\n\n### Hosts\nEverything goes through `{{gatewayUrl}}`. It is the only address a deployment exposes, so a request that reached past it would test a path no user can take. The one exception is the internal folder: service-to-service endpoints are key-guarded and deliberately not published at the edge.\n\n### Bodies\nGenerated from the C# request models. Placeholders read `<FieldName>` \u2014 they are shapes, not fixtures."
+  "description": "RetailErp / Bill-Book — generated from the controllers by `postman/generate.py`. Do not hand-edit; re-run it.\n\n**Run ① Login then ② Select organization first.** Sign-in is two-step because one account can hold roles in several branches, and the access token has to name one.\n\n### Hosts\nEverything goes through `{{gatewayUrl}}`. It is the only address a deployment exposes, so a request that reached past it would test a path no user can take. The one exception is the internal folder: service-to-service endpoints are key-guarded and deliberately not published at the edge.\n\n### Bodies\nGenerated from the C# request models. Placeholders read `<FieldName>` — they are shapes, not fixtures."
  },
  "auth": {
   "type": "bearer",
@@ -18,7 +18,7 @@
   {
    "key": "gatewayUrl",
    "value": "http://localhost:5000",
-   "description": "YARP gateway \u2014 what the browser talks to."
+   "description": "YARP gateway — what the browser talks to."
   },
   {
    "key": "accountingUrl",
@@ -26,32 +26,32 @@
   },
   {
    "key": "customerUrl",
-   "value": "http://localhost:4502"
-  },
-  {
-   "key": "inventoryUrl",
-   "value": "http://localhost:4503"
-  },
-  {
-   "key": "masterUrl",
-   "value": "http://localhost:4504"
-  },
-  {
-   "key": "purchaseUrl",
    "value": "http://localhost:4505"
   },
   {
+   "key": "inventoryUrl",
+   "value": "http://localhost:4509"
+  },
+  {
+   "key": "masterUrl",
+   "value": "http://localhost:4511"
+  },
+  {
+   "key": "purchaseUrl",
+   "value": "http://localhost:4516"
+  },
+  {
    "key": "reportingUrl",
-   "value": "http://localhost:4506"
+   "value": "http://localhost:4518"
   },
   {
    "key": "salesUrl",
-   "value": "http://localhost:4507"
+   "value": "http://localhost:4519"
   },
   {
    "key": "email",
    "value": "",
-   "description": "Owner email for \u2460 Login."
+   "description": "Owner email for ① Login."
   },
   {
    "key": "password",
@@ -61,22 +61,22 @@
   {
    "key": "preAuthToken",
    "value": "",
-   "description": "Captured by \u2460 Login."
+   "description": "Captured by ① Login."
   },
   {
    "key": "accessToken",
    "value": "",
-   "description": "Captured by \u2461 Select organization."
+   "description": "Captured by ② Select organization."
   },
   {
    "key": "refreshToken",
    "value": "",
-   "description": "Captured by \u2461 Select organization."
+   "description": "Captured by ② Select organization."
   },
   {
    "key": "orgId",
    "value": "",
-   "description": "Captured by \u2460 Login."
+   "description": "Captured by ① Login."
   },
   {
    "key": "customerId",
@@ -91,7 +91,7 @@
  ],
  "item": [
   {
-   "name": "\u2460 Login  (run me first)",
+   "name": "① Login  (run me first)",
    "description": "Two-step by design: one account can hold roles in several branches, so credentials alone cannot say which set of books you are in.\n\nCaptures `preAuthToken` and the first `orgId`.",
    "request": {
     "method": "POST",
@@ -137,7 +137,7 @@
    ]
   },
   {
-   "name": "\u2461 Select organization  (run me second)",
+   "name": "② Select organization  (run me second)",
    "description": "Exchanges the pre-auth token for a 15-minute access token scoped to one branch. Captures `accessToken` and `refreshToken`; everything else in this collection inherits the bearer token.",
    "request": {
     "method": "POST",
@@ -180,15 +180,15 @@
    ]
   },
   {
-   "name": "1 \u00b7 Master",
+   "name": "1 · Master",
    "description": "71 endpoints across 13 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "AuthController",
      "item": [
       {
-       "name": "Accept invitation \u2014 POST /api/auth/accept-invitation",
-       "description": "`Master.AuthController.AcceptInvitation` \u2014 anonymous",
+       "name": "Accept invitation — POST /api/auth/accept-invitation",
+       "description": "`Master.AuthController.AcceptInvitation` — anonymous",
        "request": {
         "method": "POST",
         "url": {
@@ -215,8 +215,8 @@
        }
       },
       {
-       "name": "Forgot password \u2014 POST /api/auth/forgot-password",
-       "description": "`Master.AuthController.ForgotPassword` \u2014 anonymous",
+       "name": "Forgot password — POST /api/auth/forgot-password",
+       "description": "`Master.AuthController.ForgotPassword` — anonymous",
        "request": {
         "method": "POST",
         "url": {
@@ -243,7 +243,7 @@
        }
       },
       {
-       "name": "Organizations \u2014 GET /api/auth/organizations",
+       "name": "Organizations — GET /api/auth/organizations",
        "description": "`Master.AuthController.Organizations`",
        "request": {
         "method": "GET",
@@ -253,8 +253,8 @@
        }
       },
       {
-       "name": "Reset password \u2014 POST /api/auth/reset-password",
-       "description": "`Master.AuthController.ResetPassword` \u2014 anonymous",
+       "name": "Reset password — POST /api/auth/reset-password",
+       "description": "`Master.AuthController.ResetPassword` — anonymous",
        "request": {
         "method": "POST",
         "url": {
@@ -281,7 +281,7 @@
        }
       },
       {
-       "name": "Switch organization \u2014 POST /api/auth/switch-organization",
+       "name": "Switch organization — POST /api/auth/switch-organization",
        "description": "`Master.AuthController.SwitchOrganization`",
        "request": {
         "method": "POST",
@@ -306,8 +306,8 @@
        }
       },
       {
-       "name": "Verify otp \u2014 POST /api/auth/verify-otp",
-       "description": "`Master.AuthController.VerifyOtp` \u2014 anonymous",
+       "name": "Verify otp — POST /api/auth/verify-otp",
+       "description": "`Master.AuthController.VerifyOtp` — anonymous",
        "request": {
         "method": "POST",
         "url": {
@@ -339,7 +339,7 @@
      "name": "ConfigurationsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/organizations/:orgId/configurations",
+       "name": "List — GET /api/organizations/:orgId/configurations",
        "description": "`Master.ConfigurationsController.List`",
        "request": {
         "method": "GET",
@@ -349,7 +349,7 @@
        }
       },
       {
-       "name": "Reset \u2014 DELETE /api/organizations/:orgId/configurations/:code",
+       "name": "Reset — DELETE /api/organizations/:orgId/configurations/:code",
        "description": "`Master.ConfigurationsController.Reset`",
        "request": {
         "method": "DELETE",
@@ -359,7 +359,7 @@
        }
       },
       {
-       "name": "Set \u2014 PUT /api/organizations/:orgId/configurations/:code",
+       "name": "Set — PUT /api/organizations/:orgId/configurations/:code",
        "description": "`Master.ConfigurationsController.Set`",
        "request": {
         "method": "PUT",
@@ -389,7 +389,7 @@
      "name": "ContactAttachmentsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/contacts/:contactId/attachments",
+       "name": "List — GET /api/contacts/:contactId/attachments",
        "description": "`Master.ContactAttachmentsController.List`",
        "request": {
         "method": "GET",
@@ -399,7 +399,7 @@
        }
       },
       {
-       "name": "Upload \u2014 POST /api/contacts/:contactId/attachments",
+       "name": "Upload — POST /api/contacts/:contactId/attachments",
        "description": "`Master.ContactAttachmentsController.Upload`",
        "request": {
         "method": "POST",
@@ -409,7 +409,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/contacts/attachments/:attachmentId",
+       "name": "Delete — DELETE /api/contacts/attachments/:attachmentId",
        "description": "`Master.ContactAttachmentsController.Delete`",
        "request": {
         "method": "DELETE",
@@ -419,7 +419,7 @@
        }
       },
       {
-       "name": "Download \u2014 GET /api/contacts/attachments/:attachmentId/download",
+       "name": "Download — GET /api/contacts/attachments/:attachmentId/download",
        "description": "`Master.ContactAttachmentsController.Download`",
        "request": {
         "method": "GET",
@@ -429,7 +429,7 @@
        }
       },
       {
-       "name": "Expiring licences \u2014 GET /api/contacts/licences/expiring",
+       "name": "Expiring licences — GET /api/contacts/licences/expiring",
        "description": "`Master.ContactAttachmentsController.ExpiringLicences`",
        "request": {
         "method": "GET",
@@ -444,7 +444,7 @@
      "name": "ContactPersonRolesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/contact-person-roles",
+       "name": "List — GET /api/contact-person-roles",
        "description": "`Master.ContactPersonRolesController.List`",
        "request": {
         "method": "GET",
@@ -454,7 +454,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/contact-person-roles",
+       "name": "Create — POST /api/contact-person-roles",
        "description": "`Master.ContactPersonRolesController.Create`",
        "request": {
         "method": "POST",
@@ -479,7 +479,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/contact-person-roles/:roleId",
+       "name": "Delete — DELETE /api/contact-person-roles/:roleId",
        "description": "`Master.ContactPersonRolesController.Delete`",
        "request": {
         "method": "DELETE",
@@ -489,7 +489,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/contact-person-roles/:roleId",
+       "name": "Update — PUT /api/contact-person-roles/:roleId",
        "description": "`Master.ContactPersonRolesController.Update`",
        "request": {
         "method": "PUT",
@@ -514,7 +514,7 @@
        }
       },
       {
-       "name": "Set default \u2014 PUT /api/contact-person-roles/:roleId/default",
+       "name": "Set default — PUT /api/contact-person-roles/:roleId/default",
        "description": "`Master.ContactPersonRolesController.SetDefault`",
        "request": {
         "method": "PUT",
@@ -524,7 +524,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/contact-person-roles/reorder",
+       "name": "Reorder — PATCH /api/contact-person-roles/reorder",
        "description": "`Master.ContactPersonRolesController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -554,7 +554,7 @@
      "name": "ContactsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/contacts",
+       "name": "List — GET /api/contacts",
        "description": "`Master.ContactsController.List`",
        "request": {
         "method": "GET",
@@ -564,7 +564,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/contacts",
+       "name": "Create — POST /api/contacts",
        "description": "`Master.ContactsController.Create`",
        "request": {
         "method": "POST",
@@ -589,7 +589,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/contacts/:contactId",
+       "name": "Deactivate — DELETE /api/contacts/:contactId",
        "description": "`Master.ContactsController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -599,7 +599,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/contacts/:contactId",
+       "name": "Get — GET /api/contacts/:contactId",
        "description": "`Master.ContactsController.Get`",
        "request": {
         "method": "GET",
@@ -609,7 +609,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/contacts/:contactId",
+       "name": "Update — PUT /api/contacts/:contactId",
        "description": "`Master.ContactsController.Update`",
        "request": {
         "method": "PUT",
@@ -634,7 +634,7 @@
        }
       },
       {
-       "name": "Link sub ledger \u2014 POST /api/contacts/:contactId/link-sub-ledger",
+       "name": "Link sub ledger — POST /api/contacts/:contactId/link-sub-ledger",
        "description": "`Master.ContactsController.LinkSubLedger`",
        "request": {
         "method": "POST",
@@ -644,7 +644,7 @@
        }
       },
       {
-       "name": "Generate portal link \u2014 POST /api/contacts/:contactId/portal-link",
+       "name": "Generate portal link — POST /api/contacts/:contactId/portal-link",
        "description": "`Master.ContactsController.GeneratePortalLink`",
        "request": {
         "method": "POST",
@@ -659,8 +659,8 @@
      "name": "CustomersController",
      "item": [
       {
-       "name": "Get status \u2014 GET /api/customers/:customerId/status",
-       "description": "`Master.CustomersController.GetStatus` \u2014 anonymous",
+       "name": "Get status — GET /api/customers/:customerId/status",
+       "description": "`Master.CustomersController.GetStatus` — anonymous",
        "request": {
         "method": "GET",
         "url": {
@@ -672,8 +672,8 @@
        }
       },
       {
-       "name": "Signup \u2014 POST /api/customers/signup",
-       "description": "`Master.CustomersController.Signup` \u2014 anonymous",
+       "name": "Signup — POST /api/customers/signup",
+       "description": "`Master.CustomersController.Signup` — anonymous",
        "request": {
         "method": "POST",
         "url": {
@@ -705,7 +705,7 @@
      "name": "MasterController",
      "item": [
       {
-       "name": "Get account types \u2014 GET /api/master/account-types",
+       "name": "Get account types — GET /api/master/account-types",
        "description": "`Master.MasterController.GetAccountTypes`",
        "request": {
         "method": "GET",
@@ -715,8 +715,8 @@
        }
       },
       {
-       "name": "Get countries \u2014 GET /api/master/countries",
-       "description": "`Master.MasterController.GetCountries` \u2014 anonymous",
+       "name": "Get countries — GET /api/master/countries",
+       "description": "`Master.MasterController.GetCountries` — anonymous",
        "request": {
         "method": "GET",
         "url": {
@@ -728,8 +728,8 @@
        }
       },
       {
-       "name": "Get states \u2014 GET /api/master/countries/:countryId/states",
-       "description": "`Master.MasterController.GetStates` \u2014 anonymous",
+       "name": "Get states — GET /api/master/countries/:countryId/states",
+       "description": "`Master.MasterController.GetStates` — anonymous",
        "request": {
         "method": "GET",
         "url": {
@@ -741,8 +741,8 @@
        }
       },
       {
-       "name": "Get currencies \u2014 GET /api/master/currencies",
-       "description": "`Master.MasterController.GetCurrencies` \u2014 anonymous",
+       "name": "Get currencies — GET /api/master/currencies",
+       "description": "`Master.MasterController.GetCurrencies` — anonymous",
        "request": {
         "method": "GET",
         "url": {
@@ -754,7 +754,7 @@
        }
       },
       {
-       "name": "Get hsn sac codes \u2014 GET /api/master/hsn-sac",
+       "name": "Get hsn sac codes — GET /api/master/hsn-sac",
        "description": "`Master.MasterController.GetHsnSacCodes`",
        "request": {
         "method": "GET",
@@ -764,7 +764,7 @@
        }
       },
       {
-       "name": "Get hsn sac code \u2014 GET /api/master/hsn-sac/:hsnSacCodeId",
+       "name": "Get hsn sac code — GET /api/master/hsn-sac/:hsnSacCodeId",
        "description": "`Master.MasterController.GetHsnSacCode`",
        "request": {
         "method": "GET",
@@ -774,7 +774,7 @@
        }
       },
       {
-       "name": "Get hsn chapters \u2014 GET /api/master/hsn-sac/chapters",
+       "name": "Get hsn chapters — GET /api/master/hsn-sac/chapters",
        "description": "`Master.MasterController.GetHsnChapters`",
        "request": {
         "method": "GET",
@@ -784,7 +784,7 @@
        }
       },
       {
-       "name": "Get hsn sac summary \u2014 GET /api/master/hsn-sac/summary",
+       "name": "Get hsn sac summary — GET /api/master/hsn-sac/summary",
        "description": "`Master.MasterController.GetHsnSacSummary`",
        "request": {
         "method": "GET",
@@ -794,7 +794,7 @@
        }
       },
       {
-       "name": "Get ledger sources \u2014 GET /api/master/ledger-sources",
+       "name": "Get ledger sources — GET /api/master/ledger-sources",
        "description": "`Master.MasterController.GetLedgerSources`",
        "request": {
         "method": "GET",
@@ -804,7 +804,7 @@
        }
       },
       {
-       "name": "Get ledger types \u2014 GET /api/master/ledger-types",
+       "name": "Get ledger types — GET /api/master/ledger-types",
        "description": "`Master.MasterController.GetLedgerTypes`",
        "request": {
         "method": "GET",
@@ -814,7 +814,7 @@
        }
       },
       {
-       "name": "Get state \u2014 GET /api/master/states/:stateId",
+       "name": "Get state — GET /api/master/states/:stateId",
        "description": "`Master.MasterController.GetState`",
        "request": {
         "method": "GET",
@@ -824,7 +824,7 @@
        }
       },
       {
-       "name": "Get transaction types \u2014 GET /api/master/transaction-types",
+       "name": "Get transaction types — GET /api/master/transaction-types",
        "description": "`Master.MasterController.GetTransactionTypes`",
        "request": {
         "method": "GET",
@@ -834,7 +834,7 @@
        }
       },
       {
-       "name": "Get transaction type \u2014 GET /api/master/transaction-types/:code",
+       "name": "Get transaction type — GET /api/master/transaction-types/:code",
        "description": "`Master.MasterController.GetTransactionType`",
        "request": {
         "method": "GET",
@@ -849,7 +849,7 @@
      "name": "MenuController",
      "item": [
       {
-       "name": "Get user menu \u2014 GET /api/menu",
+       "name": "Get user menu — GET /api/menu",
        "description": "`Master.MenuController.GetUserMenu`",
        "request": {
         "method": "GET",
@@ -864,7 +864,7 @@
      "name": "OrgCurrenciesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/organizations/:orgId/currencies",
+       "name": "List — GET /api/organizations/:orgId/currencies",
        "description": "`Master.OrgCurrenciesController.List`",
        "request": {
         "method": "GET",
@@ -874,7 +874,7 @@
        }
       },
       {
-       "name": "Add \u2014 POST /api/organizations/:orgId/currencies",
+       "name": "Add — POST /api/organizations/:orgId/currencies",
        "description": "`Master.OrgCurrenciesController.Add`",
        "request": {
         "method": "POST",
@@ -899,7 +899,7 @@
        }
       },
       {
-       "name": "Set active \u2014 PUT /api/organizations/:orgId/currencies/:orgCurrencyId/active",
+       "name": "Set active — PUT /api/organizations/:orgId/currencies/:orgCurrencyId/active",
        "description": "`Master.OrgCurrenciesController.SetActive`",
        "request": {
         "method": "PUT",
@@ -924,7 +924,7 @@
        }
       },
       {
-       "name": "Available \u2014 GET /api/organizations/:orgId/currencies/available",
+       "name": "Available — GET /api/organizations/:orgId/currencies/available",
        "description": "`Master.OrgCurrenciesController.Available`",
        "request": {
         "method": "GET",
@@ -939,7 +939,7 @@
      "name": "OrganizationsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/organizations",
+       "name": "List — GET /api/organizations",
        "description": "`Master.OrganizationsController.List`",
        "request": {
         "method": "GET",
@@ -949,7 +949,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/organizations",
+       "name": "Create — POST /api/organizations",
        "description": "`Master.OrganizationsController.Create`",
        "request": {
         "method": "POST",
@@ -974,7 +974,7 @@
        }
       },
       {
-       "name": "Suspend \u2014 DELETE /api/organizations/:orgId",
+       "name": "Suspend — DELETE /api/organizations/:orgId",
        "description": "`Master.OrganizationsController.Suspend`",
        "request": {
         "method": "DELETE",
@@ -984,7 +984,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/organizations/:orgId",
+       "name": "Get — GET /api/organizations/:orgId",
        "description": "`Master.OrganizationsController.Get`",
        "request": {
         "method": "GET",
@@ -994,7 +994,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/organizations/:orgId",
+       "name": "Update — PUT /api/organizations/:orgId",
        "description": "`Master.OrganizationsController.Update`",
        "request": {
         "method": "PUT",
@@ -1019,7 +1019,7 @@
        }
       },
       {
-       "name": "Retry seeding \u2014 POST /api/organizations/:orgId/retry-seeding",
+       "name": "Retry seeding — POST /api/organizations/:orgId/retry-seeding",
        "description": "`Master.OrganizationsController.RetrySeeding`",
        "request": {
         "method": "POST",
@@ -1029,7 +1029,7 @@
        }
       },
       {
-       "name": "Current \u2014 GET /api/organizations/current",
+       "name": "Current — GET /api/organizations/current",
        "description": "`Master.OrganizationsController.Current`",
        "request": {
         "method": "GET",
@@ -1039,7 +1039,7 @@
        }
       },
       {
-       "name": "Update current \u2014 PUT /api/organizations/current",
+       "name": "Update current — PUT /api/organizations/current",
        "description": "`Master.OrganizationsController.UpdateCurrent`",
        "request": {
         "method": "PUT",
@@ -1069,7 +1069,7 @@
      "name": "RolesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/roles",
+       "name": "List — GET /api/roles",
        "description": "`Master.RolesController.List`",
        "request": {
         "method": "GET",
@@ -1079,7 +1079,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/roles",
+       "name": "Create — POST /api/roles",
        "description": "`Master.RolesController.Create`",
        "request": {
         "method": "POST",
@@ -1104,7 +1104,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/roles/:roleId",
+       "name": "Delete — DELETE /api/roles/:roleId",
        "description": "`Master.RolesController.Delete`",
        "request": {
         "method": "DELETE",
@@ -1114,7 +1114,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/roles/:roleId",
+       "name": "Get — GET /api/roles/:roleId",
        "description": "`Master.RolesController.Get`",
        "request": {
         "method": "GET",
@@ -1124,7 +1124,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/roles/:roleId",
+       "name": "Update — PUT /api/roles/:roleId",
        "description": "`Master.RolesController.Update`",
        "request": {
         "method": "PUT",
@@ -1149,7 +1149,7 @@
        }
       },
       {
-       "name": "Permissions \u2014 GET /api/roles/permissions",
+       "name": "Permissions — GET /api/roles/permissions",
        "description": "`Master.RolesController.Permissions`",
        "request": {
         "method": "GET",
@@ -1164,7 +1164,7 @@
      "name": "SmtpSettingsController",
      "item": [
       {
-       "name": "Delete override \u2014 DELETE /api/smtp-settings/customers/:customerId",
+       "name": "Delete override — DELETE /api/smtp-settings/customers/:customerId",
        "description": "`Master.SmtpSettingsController.DeleteOverride`",
        "request": {
         "method": "DELETE",
@@ -1174,7 +1174,7 @@
        }
       },
       {
-       "name": "Get for customer \u2014 GET /api/smtp-settings/customers/:customerId",
+       "name": "Get for customer — GET /api/smtp-settings/customers/:customerId",
        "description": "`Master.SmtpSettingsController.GetForCustomer`",
        "request": {
         "method": "GET",
@@ -1184,7 +1184,7 @@
        }
       },
       {
-       "name": "Save for customer \u2014 PUT /api/smtp-settings/customers/:customerId",
+       "name": "Save for customer — PUT /api/smtp-settings/customers/:customerId",
        "description": "`Master.SmtpSettingsController.SaveForCustomer`",
        "request": {
         "method": "PUT",
@@ -1209,7 +1209,7 @@
        }
       },
       {
-       "name": "Get default \u2014 GET /api/smtp-settings/default",
+       "name": "Get default — GET /api/smtp-settings/default",
        "description": "`Master.SmtpSettingsController.GetDefault`",
        "request": {
         "method": "GET",
@@ -1219,7 +1219,7 @@
        }
       },
       {
-       "name": "Save default \u2014 PUT /api/smtp-settings/default",
+       "name": "Save default — PUT /api/smtp-settings/default",
        "description": "`Master.SmtpSettingsController.SaveDefault`",
        "request": {
         "method": "PUT",
@@ -1244,7 +1244,7 @@
        }
       },
       {
-       "name": "Send test \u2014 POST /api/smtp-settings/test",
+       "name": "Send test — POST /api/smtp-settings/test",
        "description": "`Master.SmtpSettingsController.SendTest`",
        "request": {
         "method": "POST",
@@ -1274,7 +1274,7 @@
      "name": "UsersController",
      "item": [
       {
-       "name": "List \u2014 GET /api/users",
+       "name": "List — GET /api/users",
        "description": "`Master.UsersController.List`",
        "request": {
         "method": "GET",
@@ -1284,7 +1284,7 @@
        }
       },
       {
-       "name": "Invite \u2014 POST /api/users",
+       "name": "Invite — POST /api/users",
        "description": "`Master.UsersController.Invite`",
        "request": {
         "method": "POST",
@@ -1309,7 +1309,7 @@
        }
       },
       {
-       "name": "Revoke \u2014 DELETE /api/users/:userId",
+       "name": "Revoke — DELETE /api/users/:userId",
        "description": "`Master.UsersController.Revoke`",
        "request": {
         "method": "DELETE",
@@ -1319,7 +1319,7 @@
        }
       },
       {
-       "name": "Resend invite \u2014 POST /api/users/:userId/resend-invite",
+       "name": "Resend invite — POST /api/users/:userId/resend-invite",
        "description": "`Master.UsersController.ResendInvite`",
        "request": {
         "method": "POST",
@@ -1333,14 +1333,14 @@
    ]
   },
   {
-   "name": "2 \u00b7 Inventory",
+   "name": "2 · Inventory",
    "description": "47 endpoints across 7 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "ItemCategoriesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/item-categories",
+       "name": "List — GET /api/item-categories",
        "description": "`Inventory.ItemCategoriesController.List`",
        "request": {
         "method": "GET",
@@ -1350,7 +1350,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/item-categories",
+       "name": "Create — POST /api/item-categories",
        "description": "`Inventory.ItemCategoriesController.Create`",
        "request": {
         "method": "POST",
@@ -1375,7 +1375,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/item-categories/:categoryId",
+       "name": "Delete — DELETE /api/item-categories/:categoryId",
        "description": "`Inventory.ItemCategoriesController.Delete`",
        "request": {
         "method": "DELETE",
@@ -1385,7 +1385,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/item-categories/:categoryId",
+       "name": "Update — PUT /api/item-categories/:categoryId",
        "description": "`Inventory.ItemCategoriesController.Update`",
        "request": {
         "method": "PUT",
@@ -1410,7 +1410,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/item-categories/reorder",
+       "name": "Reorder — PATCH /api/item-categories/reorder",
        "description": "`Inventory.ItemCategoriesController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -1440,7 +1440,7 @@
      "name": "ItemsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/items",
+       "name": "List — GET /api/items",
        "description": "`Inventory.ItemsController.List`",
        "request": {
         "method": "GET",
@@ -1450,7 +1450,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/items",
+       "name": "Create — POST /api/items",
        "description": "`Inventory.ItemsController.Create`",
        "request": {
         "method": "POST",
@@ -1475,7 +1475,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/items/:itemId",
+       "name": "Deactivate — DELETE /api/items/:itemId",
        "description": "`Inventory.ItemsController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -1485,7 +1485,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/items/:itemId",
+       "name": "Get — GET /api/items/:itemId",
        "description": "`Inventory.ItemsController.Get`",
        "request": {
         "method": "GET",
@@ -1495,7 +1495,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/items/:itemId",
+       "name": "Update — PUT /api/items/:itemId",
        "description": "`Inventory.ItemsController.Update`",
        "request": {
         "method": "PUT",
@@ -1520,7 +1520,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/items/reorder",
+       "name": "Reorder — PATCH /api/items/reorder",
        "description": "`Inventory.ItemsController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -1550,7 +1550,7 @@
      "name": "MetalPuritiesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/metal-purities",
+       "name": "List — GET /api/metal-purities",
        "description": "`Inventory.MetalPuritiesController.List`",
        "request": {
         "method": "GET",
@@ -1560,7 +1560,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/metal-purities",
+       "name": "Create — POST /api/metal-purities",
        "description": "`Inventory.MetalPuritiesController.Create`",
        "request": {
         "method": "POST",
@@ -1585,7 +1585,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/metal-purities/:purityId",
+       "name": "Delete — DELETE /api/metal-purities/:purityId",
        "description": "`Inventory.MetalPuritiesController.Delete`",
        "request": {
         "method": "DELETE",
@@ -1595,7 +1595,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/metal-purities/:purityId",
+       "name": "Update — PUT /api/metal-purities/:purityId",
        "description": "`Inventory.MetalPuritiesController.Update`",
        "request": {
         "method": "PUT",
@@ -1620,7 +1620,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/metal-purities/reorder",
+       "name": "Reorder — PATCH /api/metal-purities/reorder",
        "description": "`Inventory.MetalPuritiesController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -1650,7 +1650,7 @@
      "name": "StockAdjustmentsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/stock-adjustments",
+       "name": "List — GET /api/stock-adjustments",
        "description": "`Inventory.StockAdjustmentsController.List`",
        "request": {
         "method": "GET",
@@ -1660,7 +1660,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/stock-adjustments",
+       "name": "Create — POST /api/stock-adjustments",
        "description": "`Inventory.StockAdjustmentsController.Create`",
        "request": {
         "method": "POST",
@@ -1685,7 +1685,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/stock-adjustments/:stockAdjustmentId",
+       "name": "Delete — DELETE /api/stock-adjustments/:stockAdjustmentId",
        "description": "`Inventory.StockAdjustmentsController.Delete`",
        "request": {
         "method": "DELETE",
@@ -1695,7 +1695,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/stock-adjustments/:stockAdjustmentId",
+       "name": "Get — GET /api/stock-adjustments/:stockAdjustmentId",
        "description": "`Inventory.StockAdjustmentsController.Get`",
        "request": {
         "method": "GET",
@@ -1705,7 +1705,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/stock-adjustments/:stockAdjustmentId",
+       "name": "Update — PUT /api/stock-adjustments/:stockAdjustmentId",
        "description": "`Inventory.StockAdjustmentsController.Update`",
        "request": {
         "method": "PUT",
@@ -1730,7 +1730,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/stock-adjustments/:stockAdjustmentId/post",
+       "name": "Post — POST /api/stock-adjustments/:stockAdjustmentId/post",
        "description": "`Inventory.StockAdjustmentsController.Post`",
        "request": {
         "method": "POST",
@@ -1740,7 +1740,7 @@
        }
       },
       {
-       "name": "Reverse \u2014 POST /api/stock-adjustments/:stockAdjustmentId/reverse",
+       "name": "Reverse — POST /api/stock-adjustments/:stockAdjustmentId/reverse",
        "description": "`Inventory.StockAdjustmentsController.Reverse`",
        "request": {
         "method": "POST",
@@ -1770,7 +1770,7 @@
      "name": "StockController",
      "item": [
       {
-       "name": "List \u2014 GET /api/stock",
+       "name": "List — GET /api/stock",
        "description": "`Inventory.StockController.List`",
        "request": {
         "method": "GET",
@@ -1780,7 +1780,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/stock/:itemId",
+       "name": "Get — GET /api/stock/:itemId",
        "description": "`Inventory.StockController.Get`",
        "request": {
         "method": "GET",
@@ -1790,7 +1790,7 @@
        }
       },
       {
-       "name": "Costing queue \u2014 GET /api/stock/costing-queue",
+       "name": "Costing queue — GET /api/stock/costing-queue",
        "description": "`Inventory.StockController.CostingQueue`",
        "request": {
         "method": "GET",
@@ -1800,7 +1800,7 @@
        }
       },
       {
-       "name": "Movements \u2014 GET /api/stock/movements",
+       "name": "Movements — GET /api/stock/movements",
        "description": "`Inventory.StockController.Movements`",
        "request": {
         "method": "GET",
@@ -1810,7 +1810,7 @@
        }
       },
       {
-       "name": "Record \u2014 POST /api/stock/movements",
+       "name": "Record — POST /api/stock/movements",
        "description": "`Inventory.StockController.Record`",
        "request": {
         "method": "POST",
@@ -1835,7 +1835,7 @@
        }
       },
       {
-       "name": "Allocations \u2014 GET /api/stock/movements/:stockMovementId/allocations",
+       "name": "Allocations — GET /api/stock/movements/:stockMovementId/allocations",
        "description": "`Inventory.StockController.Allocations`",
        "request": {
         "method": "GET",
@@ -1845,7 +1845,7 @@
        }
       },
       {
-       "name": "Recostings \u2014 GET /api/stock/recostings",
+       "name": "Recostings — GET /api/stock/recostings",
        "description": "`Inventory.StockController.Recostings`",
        "request": {
         "method": "GET",
@@ -1855,7 +1855,7 @@
        }
       },
       {
-       "name": "Transfer \u2014 POST /api/stock/transfers",
+       "name": "Transfer — POST /api/stock/transfers",
        "description": "`Inventory.StockController.Transfer`",
        "request": {
         "method": "POST",
@@ -1885,7 +1885,7 @@
      "name": "UomController",
      "item": [
       {
-       "name": "List \u2014 GET /api/uom-types",
+       "name": "List — GET /api/uom-types",
        "description": "`Inventory.UomController.List`",
        "request": {
         "method": "GET",
@@ -1895,7 +1895,7 @@
        }
       },
       {
-       "name": "Create type \u2014 POST /api/uom-types",
+       "name": "Create type — POST /api/uom-types",
        "description": "`Inventory.UomController.CreateType`",
        "request": {
         "method": "POST",
@@ -1920,7 +1920,7 @@
        }
       },
       {
-       "name": "Delete type \u2014 DELETE /api/uom-types/:uomTypeId",
+       "name": "Delete type — DELETE /api/uom-types/:uomTypeId",
        "description": "`Inventory.UomController.DeleteType`",
        "request": {
         "method": "DELETE",
@@ -1930,7 +1930,7 @@
        }
       },
       {
-       "name": "Update type \u2014 PUT /api/uom-types/:uomTypeId",
+       "name": "Update type — PUT /api/uom-types/:uomTypeId",
        "description": "`Inventory.UomController.UpdateType`",
        "request": {
         "method": "PUT",
@@ -1955,7 +1955,7 @@
        }
       },
       {
-       "name": "Reorder types \u2014 PATCH /api/uom-types/reorder",
+       "name": "Reorder types — PATCH /api/uom-types/reorder",
        "description": "`Inventory.UomController.ReorderTypes`",
        "request": {
         "method": "PATCH",
@@ -1980,7 +1980,7 @@
        }
       },
       {
-       "name": "Create unit \u2014 POST /api/uom-types/units",
+       "name": "Create unit — POST /api/uom-types/units",
        "description": "`Inventory.UomController.CreateUnit`",
        "request": {
         "method": "POST",
@@ -2005,7 +2005,7 @@
        }
       },
       {
-       "name": "Delete unit \u2014 DELETE /api/uom-types/units/:uomId",
+       "name": "Delete unit — DELETE /api/uom-types/units/:uomId",
        "description": "`Inventory.UomController.DeleteUnit`",
        "request": {
         "method": "DELETE",
@@ -2015,7 +2015,7 @@
        }
       },
       {
-       "name": "Update unit \u2014 PUT /api/uom-types/units/:uomId",
+       "name": "Update unit — PUT /api/uom-types/units/:uomId",
        "description": "`Inventory.UomController.UpdateUnit`",
        "request": {
         "method": "PUT",
@@ -2040,7 +2040,7 @@
        }
       },
       {
-       "name": "Set base unit \u2014 PUT /api/uom-types/units/:uomId/base",
+       "name": "Set base unit — PUT /api/uom-types/units/:uomId/base",
        "description": "`Inventory.UomController.SetBaseUnit`",
        "request": {
         "method": "PUT",
@@ -2055,7 +2055,7 @@
      "name": "WarehousesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/warehouses",
+       "name": "List — GET /api/warehouses",
        "description": "`Inventory.WarehousesController.List`",
        "request": {
         "method": "GET",
@@ -2065,7 +2065,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/warehouses",
+       "name": "Create — POST /api/warehouses",
        "description": "`Inventory.WarehousesController.Create`",
        "request": {
         "method": "POST",
@@ -2090,7 +2090,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/warehouses/:warehouseId",
+       "name": "Deactivate — DELETE /api/warehouses/:warehouseId",
        "description": "`Inventory.WarehousesController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -2100,7 +2100,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/warehouses/:warehouseId",
+       "name": "Get — GET /api/warehouses/:warehouseId",
        "description": "`Inventory.WarehousesController.Get`",
        "request": {
         "method": "GET",
@@ -2110,7 +2110,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/warehouses/:warehouseId",
+       "name": "Update — PUT /api/warehouses/:warehouseId",
        "description": "`Inventory.WarehousesController.Update`",
        "request": {
         "method": "PUT",
@@ -2135,7 +2135,7 @@
        }
       },
       {
-       "name": "Set default \u2014 PUT /api/warehouses/:warehouseId/default",
+       "name": "Set default — PUT /api/warehouses/:warehouseId/default",
        "description": "`Inventory.WarehousesController.SetDefault`",
        "request": {
         "method": "PUT",
@@ -2145,7 +2145,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/warehouses/reorder",
+       "name": "Reorder — PATCH /api/warehouses/reorder",
        "description": "`Inventory.WarehousesController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -2174,14 +2174,14 @@
    ]
   },
   {
-   "name": "3 \u00b7 Accounting",
+   "name": "3 · Accounting",
    "description": "93 endpoints across 15 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "AccountsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/accounts",
+       "name": "List — GET /api/accounts",
        "description": "`Accounting.AccountsController.List`",
        "request": {
         "method": "GET",
@@ -2191,7 +2191,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/accounts",
+       "name": "Create — POST /api/accounts",
        "description": "`Accounting.AccountsController.Create`",
        "request": {
         "method": "POST",
@@ -2216,7 +2216,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/accounts/:accountId",
+       "name": "Deactivate — DELETE /api/accounts/:accountId",
        "description": "`Accounting.AccountsController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -2226,7 +2226,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/accounts/:accountId",
+       "name": "Get — GET /api/accounts/:accountId",
        "description": "`Accounting.AccountsController.Get`",
        "request": {
         "method": "GET",
@@ -2236,7 +2236,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/accounts/:accountId",
+       "name": "Update — PUT /api/accounts/:accountId",
        "description": "`Accounting.AccountsController.Update`",
        "request": {
         "method": "PUT",
@@ -2266,7 +2266,7 @@
      "name": "BankAccountsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/bank-accounts",
+       "name": "List — GET /api/bank-accounts",
        "description": "`Accounting.BankAccountsController.List`",
        "request": {
         "method": "GET",
@@ -2276,7 +2276,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/bank-accounts",
+       "name": "Create — POST /api/bank-accounts",
        "description": "`Accounting.BankAccountsController.Create`",
        "request": {
         "method": "POST",
@@ -2301,7 +2301,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/bank-accounts/:bankAccountId",
+       "name": "Deactivate — DELETE /api/bank-accounts/:bankAccountId",
        "description": "`Accounting.BankAccountsController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -2311,7 +2311,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/bank-accounts/:bankAccountId",
+       "name": "Update — PUT /api/bank-accounts/:bankAccountId",
        "description": "`Accounting.BankAccountsController.Update`",
        "request": {
         "method": "PUT",
@@ -2336,7 +2336,7 @@
        }
       },
       {
-       "name": "Set default \u2014 PUT /api/bank-accounts/:bankAccountId/default",
+       "name": "Set default — PUT /api/bank-accounts/:bankAccountId/default",
        "description": "`Accounting.BankAccountsController.SetDefault`",
        "request": {
         "method": "PUT",
@@ -2346,7 +2346,7 @@
        }
       },
       {
-       "name": "Link ledger \u2014 POST /api/bank-accounts/:bankAccountId/link-ledger",
+       "name": "Link ledger — POST /api/bank-accounts/:bankAccountId/link-ledger",
        "description": "`Accounting.BankAccountsController.LinkLedger`",
        "request": {
         "method": "POST",
@@ -2356,7 +2356,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/bank-accounts/reorder",
+       "name": "Reorder — PATCH /api/bank-accounts/reorder",
        "description": "`Accounting.BankAccountsController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -2386,7 +2386,7 @@
      "name": "BankStatementsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/statements",
+       "name": "List — GET /api/statements",
        "description": "`Accounting.BankStatementsController.List`",
        "request": {
         "method": "GET",
@@ -2396,7 +2396,7 @@
        }
       },
       {
-       "name": "Export \u2014 GET /api/statements/:bankStatementId/export",
+       "name": "Export — GET /api/statements/:bankStatementId/export",
        "description": "`Accounting.BankStatementsController.Export`",
        "request": {
         "method": "GET",
@@ -2406,7 +2406,7 @@
        }
       },
       {
-       "name": "Lines \u2014 GET /api/statements/:bankStatementId/lines",
+       "name": "Lines — GET /api/statements/:bankStatementId/lines",
        "description": "`Accounting.BankStatementsController.Lines`",
        "request": {
         "method": "GET",
@@ -2416,7 +2416,7 @@
        }
       },
       {
-       "name": "Import \u2014 POST /api/statements/import",
+       "name": "Import — POST /api/statements/import",
        "description": "`Accounting.BankStatementsController.Import`",
        "request": {
         "method": "POST",
@@ -2426,7 +2426,7 @@
        }
       },
       {
-       "name": "Ignore \u2014 POST /api/statements/lines/:bankStatementLineId/ignore",
+       "name": "Ignore — POST /api/statements/lines/:bankStatementLineId/ignore",
        "description": "`Accounting.BankStatementsController.Ignore`",
        "request": {
         "method": "POST",
@@ -2451,7 +2451,7 @@
        }
       },
       {
-       "name": "Match \u2014 POST /api/statements/lines/:bankStatementLineId/match",
+       "name": "Match — POST /api/statements/lines/:bankStatementLineId/match",
        "description": "`Accounting.BankStatementsController.Match`",
        "request": {
         "method": "POST",
@@ -2476,7 +2476,7 @@
        }
       },
       {
-       "name": "Unmatch \u2014 POST /api/statements/lines/:bankStatementLineId/unmatch",
+       "name": "Unmatch — POST /api/statements/lines/:bankStatementLineId/unmatch",
        "description": "`Accounting.BankStatementsController.Unmatch`",
        "request": {
         "method": "POST",
@@ -2486,7 +2486,7 @@
        }
       },
       {
-       "name": "Save profile \u2014 PUT /api/statements/profiles",
+       "name": "Save profile — PUT /api/statements/profiles",
        "description": "`Accounting.BankStatementsController.SaveProfile`",
        "request": {
         "method": "PUT",
@@ -2511,7 +2511,7 @@
        }
       },
       {
-       "name": "Profile \u2014 GET /api/statements/profiles/:bankAccountId",
+       "name": "Profile — GET /api/statements/profiles/:bankAccountId",
        "description": "`Accounting.BankStatementsController.Profile`",
        "request": {
         "method": "GET",
@@ -2526,7 +2526,7 @@
      "name": "BanksController",
      "item": [
       {
-       "name": "List \u2014 GET /api/banks",
+       "name": "List — GET /api/banks",
        "description": "`Accounting.BanksController.List`",
        "request": {
         "method": "GET",
@@ -2536,7 +2536,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/banks",
+       "name": "Create — POST /api/banks",
        "description": "`Accounting.BanksController.Create`",
        "request": {
         "method": "POST",
@@ -2561,7 +2561,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/banks/:bankId",
+       "name": "Delete — DELETE /api/banks/:bankId",
        "description": "`Accounting.BanksController.Delete`",
        "request": {
         "method": "DELETE",
@@ -2571,7 +2571,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/banks/:bankId",
+       "name": "Update — PUT /api/banks/:bankId",
        "description": "`Accounting.BanksController.Update`",
        "request": {
         "method": "PUT",
@@ -2596,7 +2596,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/banks/reorder",
+       "name": "Reorder — PATCH /api/banks/reorder",
        "description": "`Accounting.BanksController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -2626,7 +2626,7 @@
      "name": "JournalsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/journals",
+       "name": "List — GET /api/journals",
        "description": "`Accounting.JournalsController.List`",
        "request": {
         "method": "GET",
@@ -2636,7 +2636,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/journals",
+       "name": "Create — POST /api/journals",
        "description": "`Accounting.JournalsController.Create`",
        "request": {
         "method": "POST",
@@ -2661,7 +2661,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/journals/:journalId",
+       "name": "Delete — DELETE /api/journals/:journalId",
        "description": "`Accounting.JournalsController.Delete`",
        "request": {
         "method": "DELETE",
@@ -2671,7 +2671,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/journals/:journalId",
+       "name": "Get — GET /api/journals/:journalId",
        "description": "`Accounting.JournalsController.Get`",
        "request": {
         "method": "GET",
@@ -2681,7 +2681,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/journals/:journalId",
+       "name": "Update — PUT /api/journals/:journalId",
        "description": "`Accounting.JournalsController.Update`",
        "request": {
         "method": "PUT",
@@ -2706,7 +2706,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/journals/:journalId/post",
+       "name": "Post — POST /api/journals/:journalId/post",
        "description": "`Accounting.JournalsController.Post`",
        "request": {
         "method": "POST",
@@ -2716,7 +2716,7 @@
        }
       },
       {
-       "name": "Reverse \u2014 POST /api/journals/:journalId/reverse",
+       "name": "Reverse — POST /api/journals/:journalId/reverse",
        "description": "`Accounting.JournalsController.Reverse`",
        "request": {
         "method": "POST",
@@ -2746,7 +2746,7 @@
      "name": "LedgerController",
      "item": [
       {
-       "name": "Account ledger \u2014 GET /api/ledger/accounts/:accountId",
+       "name": "Account ledger — GET /api/ledger/accounts/:accountId",
        "description": "`Accounting.LedgerController.AccountLedger`",
        "request": {
         "method": "GET",
@@ -2756,7 +2756,7 @@
        }
       },
       {
-       "name": "Outstanding balances \u2014 GET /api/ledger/contacts/:contactId/outstanding-balances/:ledgerTypeId",
+       "name": "Outstanding balances — GET /api/ledger/contacts/:contactId/outstanding-balances/:ledgerTypeId",
        "description": "`Accounting.LedgerController.OutstandingBalances`",
        "request": {
         "method": "GET",
@@ -2766,7 +2766,7 @@
        }
       },
       {
-       "name": "Settlement rate \u2014 GET /api/ledger/documents/:transactionTypeCode/:transactionId/rate",
+       "name": "Settlement rate — GET /api/ledger/documents/:transactionTypeCode/:transactionId/rate",
        "description": "`Accounting.LedgerController.SettlementRate`",
        "request": {
         "method": "GET",
@@ -2776,7 +2776,7 @@
        }
       },
       {
-       "name": "Sub ledger tie \u2014 GET /api/ledger/sub-ledger-tie",
+       "name": "Sub ledger tie — GET /api/ledger/sub-ledger-tie",
        "description": "`Accounting.LedgerController.SubLedgerTie`",
        "request": {
         "method": "GET",
@@ -2786,7 +2786,7 @@
        }
       },
       {
-       "name": "Trial balance \u2014 GET /api/ledger/trial-balance",
+       "name": "Trial balance — GET /api/ledger/trial-balance",
        "description": "`Accounting.LedgerController.TrialBalance`",
        "request": {
         "method": "GET",
@@ -2801,7 +2801,7 @@
      "name": "NumberingSeriesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/numbering-series",
+       "name": "List — GET /api/numbering-series",
        "description": "`Accounting.NumberingSeriesController.List`",
        "request": {
         "method": "GET",
@@ -2811,7 +2811,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/numbering-series",
+       "name": "Create — POST /api/numbering-series",
        "description": "`Accounting.NumberingSeriesController.Create`",
        "request": {
         "method": "POST",
@@ -2836,7 +2836,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/numbering-series/:numberingSeriesId",
+       "name": "Deactivate — DELETE /api/numbering-series/:numberingSeriesId",
        "description": "`Accounting.NumberingSeriesController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -2846,7 +2846,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/numbering-series/:numberingSeriesId",
+       "name": "Get — GET /api/numbering-series/:numberingSeriesId",
        "description": "`Accounting.NumberingSeriesController.Get`",
        "request": {
         "method": "GET",
@@ -2856,7 +2856,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/numbering-series/:numberingSeriesId",
+       "name": "Update — PUT /api/numbering-series/:numberingSeriesId",
        "description": "`Accounting.NumberingSeriesController.Update`",
        "request": {
         "method": "PUT",
@@ -2881,7 +2881,7 @@
        }
       },
       {
-       "name": "Set default \u2014 PUT /api/numbering-series/:numberingSeriesId/default",
+       "name": "Set default — PUT /api/numbering-series/:numberingSeriesId/default",
        "description": "`Accounting.NumberingSeriesController.SetDefault`",
        "request": {
         "method": "PUT",
@@ -2891,7 +2891,7 @@
        }
       },
       {
-       "name": "Set next number \u2014 PUT /api/numbering-series/:numberingSeriesId/next-number",
+       "name": "Set next number — PUT /api/numbering-series/:numberingSeriesId/next-number",
        "description": "`Accounting.NumberingSeriesController.SetNextNumber`",
        "request": {
         "method": "PUT",
@@ -2916,7 +2916,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/numbering-series/reorder",
+       "name": "Reorder — PATCH /api/numbering-series/reorder",
        "description": "`Accounting.NumberingSeriesController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -2946,7 +2946,7 @@
      "name": "OpeningBalancesController",
      "item": [
       {
-       "name": "Delete \u2014 DELETE /api/opening-balance",
+       "name": "Delete — DELETE /api/opening-balance",
        "description": "`Accounting.OpeningBalancesController.Delete`",
        "request": {
         "method": "DELETE",
@@ -2956,7 +2956,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/opening-balance",
+       "name": "Get — GET /api/opening-balance",
        "description": "`Accounting.OpeningBalancesController.Get`",
        "request": {
         "method": "GET",
@@ -2966,7 +2966,7 @@
        }
       },
       {
-       "name": "Save \u2014 PUT /api/opening-balance",
+       "name": "Save — PUT /api/opening-balance",
        "description": "`Accounting.OpeningBalancesController.Save`",
        "request": {
         "method": "PUT",
@@ -2991,7 +2991,7 @@
        }
       },
       {
-       "name": "Finalize \u2014 POST /api/opening-balance/finalize",
+       "name": "Finalize — POST /api/opening-balance/finalize",
        "description": "`Accounting.OpeningBalancesController.Finalize`",
        "request": {
         "method": "POST",
@@ -3001,7 +3001,7 @@
        }
       },
       {
-       "name": "Readiness \u2014 GET /api/opening-balance/readiness",
+       "name": "Readiness — GET /api/opening-balance/readiness",
        "description": "`Accounting.OpeningBalancesController.Readiness`",
        "request": {
         "method": "GET",
@@ -3011,7 +3011,7 @@
        }
       },
       {
-       "name": "Tie \u2014 GET /api/opening-balance/tie",
+       "name": "Tie — GET /api/opening-balance/tie",
        "description": "`Accounting.OpeningBalancesController.Tie`",
        "request": {
         "method": "GET",
@@ -3026,7 +3026,7 @@
      "name": "PaymentTermsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/payment-terms",
+       "name": "List — GET /api/payment-terms",
        "description": "`Accounting.PaymentTermsController.List`",
        "request": {
         "method": "GET",
@@ -3036,7 +3036,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/payment-terms",
+       "name": "Create — POST /api/payment-terms",
        "description": "`Accounting.PaymentTermsController.Create`",
        "request": {
         "method": "POST",
@@ -3061,7 +3061,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/payment-terms/:paymentTermId",
+       "name": "Deactivate — DELETE /api/payment-terms/:paymentTermId",
        "description": "`Accounting.PaymentTermsController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -3071,7 +3071,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/payment-terms/:paymentTermId",
+       "name": "Get — GET /api/payment-terms/:paymentTermId",
        "description": "`Accounting.PaymentTermsController.Get`",
        "request": {
         "method": "GET",
@@ -3081,7 +3081,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/payment-terms/:paymentTermId",
+       "name": "Update — PUT /api/payment-terms/:paymentTermId",
        "description": "`Accounting.PaymentTermsController.Update`",
        "request": {
         "method": "PUT",
@@ -3106,7 +3106,7 @@
        }
       },
       {
-       "name": "Set default \u2014 PUT /api/payment-terms/:paymentTermId/default",
+       "name": "Set default — PUT /api/payment-terms/:paymentTermId/default",
        "description": "`Accounting.PaymentTermsController.SetDefault`",
        "request": {
         "method": "PUT",
@@ -3116,7 +3116,7 @@
        }
       },
       {
-       "name": "Due date \u2014 GET /api/payment-terms/:paymentTermId/due-date",
+       "name": "Due date — GET /api/payment-terms/:paymentTermId/due-date",
        "description": "`Accounting.PaymentTermsController.DueDate`",
        "request": {
         "method": "GET",
@@ -3126,7 +3126,7 @@
        }
       },
       {
-       "name": "Reorder \u2014 PATCH /api/payment-terms/reorder",
+       "name": "Reorder — PATCH /api/payment-terms/reorder",
        "description": "`Accounting.PaymentTermsController.Reorder`",
        "request": {
         "method": "PATCH",
@@ -3156,7 +3156,7 @@
      "name": "PeriodLocksController",
      "item": [
       {
-       "name": "List \u2014 GET /api/period-locks",
+       "name": "List — GET /api/period-locks",
        "description": "`Accounting.PeriodLocksController.List`",
        "request": {
         "method": "GET",
@@ -3166,7 +3166,7 @@
        }
       },
       {
-       "name": "Set \u2014 PUT /api/period-locks",
+       "name": "Set — PUT /api/period-locks",
        "description": "`Accounting.PeriodLocksController.Set`",
        "request": {
         "method": "PUT",
@@ -3191,7 +3191,7 @@
        }
       },
       {
-       "name": "Clear \u2014 DELETE /api/period-locks/:roleId",
+       "name": "Clear — DELETE /api/period-locks/:roleId",
        "description": "`Accounting.PeriodLocksController.Clear`",
        "request": {
         "method": "DELETE",
@@ -3201,7 +3201,7 @@
        }
       },
       {
-       "name": "Mine \u2014 GET /api/period-locks/mine",
+       "name": "Mine — GET /api/period-locks/mine",
        "description": "`Accounting.PeriodLocksController.Mine`",
        "request": {
         "method": "GET",
@@ -3216,7 +3216,7 @@
      "name": "ReceiveMoneyController",
      "item": [
       {
-       "name": "List \u2014 GET /api/receive-money",
+       "name": "List — GET /api/receive-money",
        "description": "`Accounting.ReceiveMoneyController.List`",
        "request": {
         "method": "GET",
@@ -3226,7 +3226,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/receive-money",
+       "name": "Create — POST /api/receive-money",
        "description": "`Accounting.ReceiveMoneyController.Create`",
        "request": {
         "method": "POST",
@@ -3251,7 +3251,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/receive-money/:id",
+       "name": "Delete — DELETE /api/receive-money/:id",
        "description": "`Accounting.ReceiveMoneyController.Delete`",
        "request": {
         "method": "DELETE",
@@ -3261,7 +3261,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/receive-money/:id",
+       "name": "Get — GET /api/receive-money/:id",
        "description": "`Accounting.ReceiveMoneyController.Get`",
        "request": {
         "method": "GET",
@@ -3271,7 +3271,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/receive-money/:id",
+       "name": "Update — PUT /api/receive-money/:id",
        "description": "`Accounting.ReceiveMoneyController.Update`",
        "request": {
         "method": "PUT",
@@ -3296,7 +3296,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/receive-money/:id/post",
+       "name": "Post — POST /api/receive-money/:id/post",
        "description": "`Accounting.ReceiveMoneyController.Post`",
        "request": {
         "method": "POST",
@@ -3306,7 +3306,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/receive-money/:id/void",
+       "name": "Void — POST /api/receive-money/:id/void",
        "description": "`Accounting.ReceiveMoneyController.Void`",
        "request": {
         "method": "POST",
@@ -3336,7 +3336,7 @@
      "name": "SpendMoneyController",
      "item": [
       {
-       "name": "List \u2014 GET /api/spend-money",
+       "name": "List — GET /api/spend-money",
        "description": "`Accounting.SpendMoneyController.List`",
        "request": {
         "method": "GET",
@@ -3346,7 +3346,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/spend-money",
+       "name": "Create — POST /api/spend-money",
        "description": "`Accounting.SpendMoneyController.Create`",
        "request": {
         "method": "POST",
@@ -3371,7 +3371,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/spend-money/:id",
+       "name": "Delete — DELETE /api/spend-money/:id",
        "description": "`Accounting.SpendMoneyController.Delete`",
        "request": {
         "method": "DELETE",
@@ -3381,7 +3381,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/spend-money/:id",
+       "name": "Get — GET /api/spend-money/:id",
        "description": "`Accounting.SpendMoneyController.Get`",
        "request": {
         "method": "GET",
@@ -3391,7 +3391,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/spend-money/:id",
+       "name": "Update — PUT /api/spend-money/:id",
        "description": "`Accounting.SpendMoneyController.Update`",
        "request": {
         "method": "PUT",
@@ -3416,7 +3416,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/spend-money/:id/post",
+       "name": "Post — POST /api/spend-money/:id/post",
        "description": "`Accounting.SpendMoneyController.Post`",
        "request": {
         "method": "POST",
@@ -3426,7 +3426,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/spend-money/:id/void",
+       "name": "Void — POST /api/spend-money/:id/void",
        "description": "`Accounting.SpendMoneyController.Void`",
        "request": {
         "method": "POST",
@@ -3456,7 +3456,7 @@
      "name": "SubAccountsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/sub-accounts",
+       "name": "List — GET /api/sub-accounts",
        "description": "`Accounting.SubAccountsController.List`",
        "request": {
         "method": "GET",
@@ -3471,7 +3471,7 @@
      "name": "TaxMastersController",
      "item": [
       {
-       "name": "List \u2014 GET /api/tax-masters",
+       "name": "List — GET /api/tax-masters",
        "description": "`Accounting.TaxMastersController.List`",
        "request": {
         "method": "GET",
@@ -3481,7 +3481,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/tax-masters",
+       "name": "Create — POST /api/tax-masters",
        "description": "`Accounting.TaxMastersController.Create`",
        "request": {
         "method": "POST",
@@ -3506,7 +3506,7 @@
        }
       },
       {
-       "name": "Deactivate \u2014 DELETE /api/tax-masters/:taxMasterId",
+       "name": "Deactivate — DELETE /api/tax-masters/:taxMasterId",
        "description": "`Accounting.TaxMastersController.Deactivate`",
        "request": {
         "method": "DELETE",
@@ -3516,7 +3516,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/tax-masters/:taxMasterId",
+       "name": "Get — GET /api/tax-masters/:taxMasterId",
        "description": "`Accounting.TaxMastersController.Get`",
        "request": {
         "method": "GET",
@@ -3526,7 +3526,7 @@
        }
       },
       {
-       "name": "Rename \u2014 PUT /api/tax-masters/:taxMasterId/name",
+       "name": "Rename — PUT /api/tax-masters/:taxMasterId/name",
        "description": "`Accounting.TaxMastersController.Rename`",
        "request": {
         "method": "PUT",
@@ -3551,7 +3551,7 @@
        }
       },
       {
-       "name": "Revise \u2014 POST /api/tax-masters/:taxMasterId/revise",
+       "name": "Revise — POST /api/tax-masters/:taxMasterId/revise",
        "description": "`Accounting.TaxMastersController.Revise`",
        "request": {
         "method": "POST",
@@ -3576,7 +3576,7 @@
        }
       },
       {
-       "name": "Resolve \u2014 GET /api/tax-masters/resolve/:taxGroupId",
+       "name": "Resolve — GET /api/tax-masters/resolve/:taxGroupId",
        "description": "`Accounting.TaxMastersController.Resolve`",
        "request": {
         "method": "GET",
@@ -3591,7 +3591,7 @@
      "name": "TransferMoneyController",
      "item": [
       {
-       "name": "List \u2014 GET /api/transfer-money",
+       "name": "List — GET /api/transfer-money",
        "description": "`Accounting.TransferMoneyController.List`",
        "request": {
         "method": "GET",
@@ -3601,7 +3601,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/transfer-money",
+       "name": "Create — POST /api/transfer-money",
        "description": "`Accounting.TransferMoneyController.Create`",
        "request": {
         "method": "POST",
@@ -3626,7 +3626,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/transfer-money/:id",
+       "name": "Delete — DELETE /api/transfer-money/:id",
        "description": "`Accounting.TransferMoneyController.Delete`",
        "request": {
         "method": "DELETE",
@@ -3636,7 +3636,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/transfer-money/:id",
+       "name": "Get — GET /api/transfer-money/:id",
        "description": "`Accounting.TransferMoneyController.Get`",
        "request": {
         "method": "GET",
@@ -3646,7 +3646,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/transfer-money/:id",
+       "name": "Update — PUT /api/transfer-money/:id",
        "description": "`Accounting.TransferMoneyController.Update`",
        "request": {
         "method": "PUT",
@@ -3671,7 +3671,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/transfer-money/:id/post",
+       "name": "Post — POST /api/transfer-money/:id/post",
        "description": "`Accounting.TransferMoneyController.Post`",
        "request": {
         "method": "POST",
@@ -3681,7 +3681,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/transfer-money/:id/void",
+       "name": "Void — POST /api/transfer-money/:id/void",
        "description": "`Accounting.TransferMoneyController.Void`",
        "request": {
         "method": "POST",
@@ -3710,14 +3710,14 @@
    ]
   },
   {
-   "name": "4 \u00b7 Sales",
+   "name": "4 · Sales",
    "description": "36 endpoints across 6 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "CreditNotesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/sales/credit-notes",
+       "name": "List — GET /api/sales/credit-notes",
        "description": "`Sales.CreditNotesController.List`",
        "request": {
         "method": "GET",
@@ -3727,7 +3727,7 @@
        }
       },
       {
-       "name": "Save \u2014 POST /api/sales/credit-notes",
+       "name": "Save — POST /api/sales/credit-notes",
        "description": "`Sales.CreditNotesController.Save`",
        "request": {
         "method": "POST",
@@ -3752,7 +3752,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/sales/credit-notes/:id",
+       "name": "Get — GET /api/sales/credit-notes/:id",
        "description": "`Sales.CreditNotesController.Get`",
        "request": {
         "method": "GET",
@@ -3762,7 +3762,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/sales/credit-notes/:id",
+       "name": "Update — PUT /api/sales/credit-notes/:id",
        "description": "`Sales.CreditNotesController.Update`",
        "request": {
         "method": "PUT",
@@ -3787,7 +3787,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/sales/credit-notes/:id/post",
+       "name": "Post — POST /api/sales/credit-notes/:id/post",
        "description": "`Sales.CreditNotesController.Post`",
        "request": {
         "method": "POST",
@@ -3797,7 +3797,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/sales/credit-notes/:id/void",
+       "name": "Void — POST /api/sales/credit-notes/:id/void",
        "description": "`Sales.CreditNotesController.Void`",
        "request": {
         "method": "POST",
@@ -3812,7 +3812,7 @@
      "name": "DeliveryChallansController",
      "item": [
       {
-       "name": "List \u2014 GET /api/sales/delivery-challans",
+       "name": "List — GET /api/sales/delivery-challans",
        "description": "`Sales.DeliveryChallansController.List`",
        "request": {
         "method": "GET",
@@ -3822,7 +3822,7 @@
        }
       },
       {
-       "name": "Save \u2014 POST /api/sales/delivery-challans",
+       "name": "Save — POST /api/sales/delivery-challans",
        "description": "`Sales.DeliveryChallansController.Save`",
        "request": {
         "method": "POST",
@@ -3847,7 +3847,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/sales/delivery-challans/:id",
+       "name": "Get — GET /api/sales/delivery-challans/:id",
        "description": "`Sales.DeliveryChallansController.Get`",
        "request": {
         "method": "GET",
@@ -3857,7 +3857,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/sales/delivery-challans/:id",
+       "name": "Update — PUT /api/sales/delivery-challans/:id",
        "description": "`Sales.DeliveryChallansController.Update`",
        "request": {
         "method": "PUT",
@@ -3882,7 +3882,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/sales/delivery-challans/:id/post",
+       "name": "Post — POST /api/sales/delivery-challans/:id/post",
        "description": "`Sales.DeliveryChallansController.Post`",
        "request": {
         "method": "POST",
@@ -3892,7 +3892,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/sales/delivery-challans/:id/void",
+       "name": "Void — POST /api/sales/delivery-challans/:id/void",
        "description": "`Sales.DeliveryChallansController.Void`",
        "request": {
         "method": "POST",
@@ -3922,7 +3922,7 @@
      "name": "InvoicesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/sales/invoices",
+       "name": "List — GET /api/sales/invoices",
        "description": "`Sales.InvoicesController.List`",
        "request": {
         "method": "GET",
@@ -3932,7 +3932,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/sales/invoices",
+       "name": "Create — POST /api/sales/invoices",
        "description": "`Sales.InvoicesController.Create`",
        "request": {
         "method": "POST",
@@ -3957,7 +3957,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/sales/invoices/:id",
+       "name": "Get — GET /api/sales/invoices/:id",
        "description": "`Sales.InvoicesController.Get`",
        "request": {
         "method": "GET",
@@ -3967,7 +3967,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/sales/invoices/:id",
+       "name": "Update — PUT /api/sales/invoices/:id",
        "description": "`Sales.InvoicesController.Update`",
        "request": {
         "method": "PUT",
@@ -3992,7 +3992,7 @@
        }
       },
       {
-       "name": "Preview gl \u2014 GET /api/sales/invoices/:id/gl-preview",
+       "name": "Preview gl — GET /api/sales/invoices/:id/gl-preview",
        "description": "`Sales.InvoicesController.PreviewGl`",
        "request": {
         "method": "GET",
@@ -4002,7 +4002,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/sales/invoices/:id/post",
+       "name": "Post — POST /api/sales/invoices/:id/post",
        "description": "`Sales.InvoicesController.Post`",
        "request": {
         "method": "POST",
@@ -4012,7 +4012,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/sales/invoices/:id/void",
+       "name": "Void — POST /api/sales/invoices/:id/void",
        "description": "`Sales.InvoicesController.Void`",
        "request": {
         "method": "POST",
@@ -4037,7 +4037,7 @@
        }
       },
       {
-       "name": "Create from sales order \u2014 POST /api/sales/invoices/from-sales-order/:salesOrderId",
+       "name": "Create from sales order — POST /api/sales/invoices/from-sales-order/:salesOrderId",
        "description": "`Sales.InvoicesController.CreateFromSalesOrder`",
        "request": {
         "method": "POST",
@@ -4067,7 +4067,7 @@
      "name": "QuotesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/sales/quotes",
+       "name": "List — GET /api/sales/quotes",
        "description": "`Sales.QuotesController.List`",
        "request": {
         "method": "GET",
@@ -4077,7 +4077,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/sales/quotes",
+       "name": "Create — POST /api/sales/quotes",
        "description": "`Sales.QuotesController.Create`",
        "request": {
         "method": "POST",
@@ -4102,7 +4102,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/sales/quotes/:QuoteId",
+       "name": "Get — GET /api/sales/quotes/:QuoteId",
        "description": "`Sales.QuotesController.Get`",
        "request": {
         "method": "GET",
@@ -4112,7 +4112,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/sales/quotes/:QuoteId",
+       "name": "Update — PUT /api/sales/quotes/:QuoteId",
        "description": "`Sales.QuotesController.Update`",
        "request": {
         "method": "PUT",
@@ -4137,7 +4137,7 @@
        }
       },
       {
-       "name": "Approve \u2014 POST /api/sales/quotes/:QuoteId/approve",
+       "name": "Approve — POST /api/sales/quotes/:QuoteId/approve",
        "description": "`Sales.QuotesController.Approve`",
        "request": {
         "method": "POST",
@@ -4147,7 +4147,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/sales/quotes/:QuoteId/void",
+       "name": "Void — POST /api/sales/quotes/:QuoteId/void",
        "description": "`Sales.QuotesController.Void`",
        "request": {
         "method": "POST",
@@ -4177,7 +4177,7 @@
      "name": "SalesOrdersController",
      "item": [
       {
-       "name": "Get all \u2014 GET /api/sales/sales-orders",
+       "name": "Get all — GET /api/sales/sales-orders",
        "description": "`Sales.SalesOrdersController.GetAll`",
        "request": {
         "method": "GET",
@@ -4187,7 +4187,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/sales/sales-orders",
+       "name": "Create — POST /api/sales/sales-orders",
        "description": "`Sales.SalesOrdersController.Create`",
        "request": {
         "method": "POST",
@@ -4212,7 +4212,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/sales/sales-orders/:SalesOrderId",
+       "name": "Get — GET /api/sales/sales-orders/:SalesOrderId",
        "description": "`Sales.SalesOrdersController.Get`",
        "request": {
         "method": "GET",
@@ -4222,7 +4222,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/sales/sales-orders/:SalesOrderId",
+       "name": "Update — PUT /api/sales/sales-orders/:SalesOrderId",
        "description": "`Sales.SalesOrdersController.Update`",
        "request": {
         "method": "PUT",
@@ -4247,7 +4247,7 @@
        }
       },
       {
-       "name": "Confirm \u2014 POST /api/sales/sales-orders/:SalesOrderId/confirm",
+       "name": "Confirm — POST /api/sales/sales-orders/:SalesOrderId/confirm",
        "description": "`Sales.SalesOrdersController.Confirm`",
        "request": {
         "method": "POST",
@@ -4257,7 +4257,7 @@
        }
       },
       {
-       "name": "Short close \u2014 POST /api/sales/sales-orders/:SalesOrderId/short-close",
+       "name": "Short close — POST /api/sales/sales-orders/:SalesOrderId/short-close",
        "description": "`Sales.SalesOrdersController.ShortClose`",
        "request": {
         "method": "POST",
@@ -4282,7 +4282,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/sales/sales-orders/:SalesOrderId/void",
+       "name": "Void — POST /api/sales/sales-orders/:SalesOrderId/void",
        "description": "`Sales.SalesOrdersController.Void`",
        "request": {
         "method": "POST",
@@ -4307,7 +4307,7 @@
        }
       },
       {
-       "name": "Availability \u2014 POST /api/sales/sales-orders/availability",
+       "name": "Availability — POST /api/sales/sales-orders/availability",
        "description": "`Sales.SalesOrdersController.Availability`",
        "request": {
         "method": "POST",
@@ -4332,7 +4332,7 @@
        }
       },
       {
-       "name": "Create from quote \u2014 POST /api/sales/sales-orders/from-quote/:QuoteId",
+       "name": "Create from quote — POST /api/sales/sales-orders/from-quote/:QuoteId",
        "description": "`Sales.SalesOrdersController.CreateFromQuote`",
        "request": {
         "method": "POST",
@@ -4362,7 +4362,7 @@
      "name": "TransactionsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/sales/transactions",
+       "name": "List — GET /api/sales/transactions",
        "description": "`Sales.TransactionsController.List`",
        "request": {
         "method": "GET",
@@ -4376,14 +4376,14 @@
    ]
   },
   {
-   "name": "5 \u00b7 Purchase",
+   "name": "5 · Purchase",
    "description": "26 endpoints across 5 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "BillsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/purchase/bills",
+       "name": "List — GET /api/purchase/bills",
        "description": "`Purchase.BillsController.List`",
        "request": {
         "method": "GET",
@@ -4393,7 +4393,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/purchase/bills",
+       "name": "Create — POST /api/purchase/bills",
        "description": "`Purchase.BillsController.Create`",
        "request": {
         "method": "POST",
@@ -4418,7 +4418,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/purchase/bills/:billId",
+       "name": "Get — GET /api/purchase/bills/:billId",
        "description": "`Purchase.BillsController.Get`",
        "request": {
         "method": "GET",
@@ -4428,7 +4428,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/purchase/bills/:billId",
+       "name": "Update — PUT /api/purchase/bills/:billId",
        "description": "`Purchase.BillsController.Update`",
        "request": {
         "method": "PUT",
@@ -4453,7 +4453,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/purchase/bills/:billId/post",
+       "name": "Post — POST /api/purchase/bills/:billId/post",
        "description": "`Purchase.BillsController.Post`",
        "request": {
         "method": "POST",
@@ -4463,7 +4463,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/purchase/bills/:billId/void",
+       "name": "Void — POST /api/purchase/bills/:billId/void",
        "description": "`Purchase.BillsController.Void`",
        "request": {
         "method": "POST",
@@ -4493,7 +4493,7 @@
      "name": "DebitNotesController",
      "item": [
       {
-       "name": "List \u2014 GET /api/purchase/debit-notes",
+       "name": "List — GET /api/purchase/debit-notes",
        "description": "`Purchase.DebitNotesController.List`",
        "request": {
         "method": "GET",
@@ -4503,7 +4503,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/purchase/debit-notes",
+       "name": "Create — POST /api/purchase/debit-notes",
        "description": "`Purchase.DebitNotesController.Create`",
        "request": {
         "method": "POST",
@@ -4528,7 +4528,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/purchase/debit-notes/:debitNoteId",
+       "name": "Get — GET /api/purchase/debit-notes/:debitNoteId",
        "description": "`Purchase.DebitNotesController.Get`",
        "request": {
         "method": "GET",
@@ -4538,7 +4538,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/purchase/debit-notes/:debitNoteId",
+       "name": "Update — PUT /api/purchase/debit-notes/:debitNoteId",
        "description": "`Purchase.DebitNotesController.Update`",
        "request": {
         "method": "PUT",
@@ -4563,7 +4563,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/purchase/debit-notes/:debitNoteId/post",
+       "name": "Post — POST /api/purchase/debit-notes/:debitNoteId/post",
        "description": "`Purchase.DebitNotesController.Post`",
        "request": {
         "method": "POST",
@@ -4573,7 +4573,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/purchase/debit-notes/:debitNoteId/void",
+       "name": "Void — POST /api/purchase/debit-notes/:debitNoteId/void",
        "description": "`Purchase.DebitNotesController.Void`",
        "request": {
         "method": "POST",
@@ -4603,7 +4603,7 @@
      "name": "GoodsReceiptsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/purchase/goods-receipts",
+       "name": "List — GET /api/purchase/goods-receipts",
        "description": "`Purchase.GoodsReceiptsController.List`",
        "request": {
         "method": "GET",
@@ -4613,7 +4613,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/purchase/goods-receipts",
+       "name": "Create — POST /api/purchase/goods-receipts",
        "description": "`Purchase.GoodsReceiptsController.Create`",
        "request": {
         "method": "POST",
@@ -4638,7 +4638,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/purchase/goods-receipts/:goodsReceiptId",
+       "name": "Get — GET /api/purchase/goods-receipts/:goodsReceiptId",
        "description": "`Purchase.GoodsReceiptsController.Get`",
        "request": {
         "method": "GET",
@@ -4648,7 +4648,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/purchase/goods-receipts/:goodsReceiptId",
+       "name": "Update — PUT /api/purchase/goods-receipts/:goodsReceiptId",
        "description": "`Purchase.GoodsReceiptsController.Update`",
        "request": {
         "method": "PUT",
@@ -4673,7 +4673,7 @@
        }
       },
       {
-       "name": "Post \u2014 POST /api/purchase/goods-receipts/:goodsReceiptId/post",
+       "name": "Post — POST /api/purchase/goods-receipts/:goodsReceiptId/post",
        "description": "`Purchase.GoodsReceiptsController.Post`",
        "request": {
         "method": "POST",
@@ -4683,7 +4683,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/purchase/goods-receipts/:goodsReceiptId/void",
+       "name": "Void — POST /api/purchase/goods-receipts/:goodsReceiptId/void",
        "description": "`Purchase.GoodsReceiptsController.Void`",
        "request": {
         "method": "POST",
@@ -4713,7 +4713,7 @@
      "name": "PurchaseOrdersController",
      "item": [
       {
-       "name": "List \u2014 GET /api/purchase/purchase-orders",
+       "name": "List — GET /api/purchase/purchase-orders",
        "description": "`Purchase.PurchaseOrdersController.List`",
        "request": {
         "method": "GET",
@@ -4723,7 +4723,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/purchase/purchase-orders",
+       "name": "Create — POST /api/purchase/purchase-orders",
        "description": "`Purchase.PurchaseOrdersController.Create`",
        "request": {
         "method": "POST",
@@ -4748,7 +4748,7 @@
        }
       },
       {
-       "name": "Get \u2014 GET /api/purchase/purchase-orders/:purchaseOrderId",
+       "name": "Get — GET /api/purchase/purchase-orders/:purchaseOrderId",
        "description": "`Purchase.PurchaseOrdersController.Get`",
        "request": {
         "method": "GET",
@@ -4758,7 +4758,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/purchase/purchase-orders/:purchaseOrderId",
+       "name": "Update — PUT /api/purchase/purchase-orders/:purchaseOrderId",
        "description": "`Purchase.PurchaseOrdersController.Update`",
        "request": {
         "method": "PUT",
@@ -4783,7 +4783,7 @@
        }
       },
       {
-       "name": "Approve \u2014 POST /api/purchase/purchase-orders/:purchaseOrderId/approve",
+       "name": "Approve — POST /api/purchase/purchase-orders/:purchaseOrderId/approve",
        "description": "`Purchase.PurchaseOrdersController.Approve`",
        "request": {
         "method": "POST",
@@ -4793,7 +4793,7 @@
        }
       },
       {
-       "name": "Confirm \u2014 POST /api/purchase/purchase-orders/:purchaseOrderId/confirm",
+       "name": "Confirm — POST /api/purchase/purchase-orders/:purchaseOrderId/confirm",
        "description": "`Purchase.PurchaseOrdersController.Confirm`",
        "request": {
         "method": "POST",
@@ -4803,7 +4803,7 @@
        }
       },
       {
-       "name": "Void \u2014 POST /api/purchase/purchase-orders/:purchaseOrderId/void",
+       "name": "Void — POST /api/purchase/purchase-orders/:purchaseOrderId/void",
        "description": "`Purchase.PurchaseOrdersController.Void`",
        "request": {
         "method": "POST",
@@ -4833,7 +4833,7 @@
      "name": "TransactionsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/purchase/transactions",
+       "name": "List — GET /api/purchase/transactions",
        "description": "`Purchase.TransactionsController.List`",
        "request": {
         "method": "GET",
@@ -4847,14 +4847,14 @@
    ]
   },
   {
-   "name": "6 \u00b7 Reporting",
+   "name": "6 · Reporting",
    "description": "11 endpoints across 4 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "PortalStatementsController",
      "item": [
       {
-       "name": "Get contact statement \u2014 GET /api/portal/statements",
+       "name": "Get contact statement — GET /api/portal/statements",
        "description": "`Reporting.PortalStatementsController.GetContactStatement`",
        "request": {
         "method": "GET",
@@ -4869,7 +4869,7 @@
      "name": "ReportViewsController",
      "item": [
       {
-       "name": "List \u2014 GET /api/reports/:reportKey/views",
+       "name": "List — GET /api/reports/:reportKey/views",
        "description": "`Reporting.ReportViewsController.List`",
        "request": {
         "method": "GET",
@@ -4879,7 +4879,7 @@
        }
       },
       {
-       "name": "Create \u2014 POST /api/reports/:reportKey/views",
+       "name": "Create — POST /api/reports/:reportKey/views",
        "description": "`Reporting.ReportViewsController.Create`",
        "request": {
         "method": "POST",
@@ -4904,7 +4904,7 @@
        }
       },
       {
-       "name": "Delete \u2014 DELETE /api/reports/:reportKey/views/:viewId",
+       "name": "Delete — DELETE /api/reports/:reportKey/views/:viewId",
        "description": "`Reporting.ReportViewsController.Delete`",
        "request": {
         "method": "DELETE",
@@ -4914,7 +4914,7 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /api/reports/:reportKey/views/:viewId",
+       "name": "Update — PUT /api/reports/:reportKey/views/:viewId",
        "description": "`Reporting.ReportViewsController.Update`",
        "request": {
         "method": "PUT",
@@ -4944,7 +4944,7 @@
      "name": "ReportsController",
      "item": [
       {
-       "name": "Catalog \u2014 GET /api/reports",
+       "name": "Catalog — GET /api/reports",
        "description": "`Reporting.ReportsController.Catalog`",
        "request": {
         "method": "GET",
@@ -4954,7 +4954,7 @@
        }
       },
       {
-       "name": "Metadata \u2014 GET /api/reports/:reportKey",
+       "name": "Metadata — GET /api/reports/:reportKey",
        "description": "`Reporting.ReportsController.Metadata`",
        "request": {
         "method": "GET",
@@ -4964,7 +4964,7 @@
        }
       },
       {
-       "name": "Export \u2014 POST /api/reports/:reportKey/export",
+       "name": "Export — POST /api/reports/:reportKey/export",
        "description": "`Reporting.ReportsController.Export`",
        "request": {
         "method": "POST",
@@ -4994,7 +4994,7 @@
      "name": "StatementsController",
      "item": [
       {
-       "name": "Balance sheet \u2014 GET /api/statements/balance-sheet",
+       "name": "Balance sheet — GET /api/statements/balance-sheet",
        "description": "`Reporting.StatementsController.BalanceSheet`",
        "request": {
         "method": "GET",
@@ -5004,7 +5004,7 @@
        }
       },
       {
-       "name": "Inventory valuation \u2014 GET /api/statements/inventory-valuation",
+       "name": "Inventory valuation — GET /api/statements/inventory-valuation",
        "description": "`Reporting.StatementsController.InventoryValuation`",
        "request": {
         "method": "GET",
@@ -5014,7 +5014,7 @@
        }
       },
       {
-       "name": "Profit and loss \u2014 GET /api/statements/profit-and-loss",
+       "name": "Profit and loss — GET /api/statements/profit-and-loss",
        "description": "`Reporting.StatementsController.ProfitAndLoss`",
        "request": {
         "method": "GET",
@@ -5028,15 +5028,15 @@
    ]
   },
   {
-   "name": "8 \u00b7 Internal (service-to-service)",
+   "name": "8 · Internal (service-to-service)",
    "description": "Never routed through the gateway, and guarded by a shared key rather than a token. Several take the tenant in the body because the caller is a background worker holding no user token.",
    "item": [
     {
      "name": "Accounting",
      "item": [
       {
-       "name": "Provision \u2014 POST /internal/accounts/bank-account",
-       "description": "`Accounting.InternalBankAccountsController.Provision` \u2014 shared key, no user token",
+       "name": "Provision — POST /internal/accounts/bank-account",
+       "description": "`Accounting.InternalBankAccountsController.Provision` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5068,8 +5068,8 @@
        }
       },
       {
-       "name": "Update \u2014 PUT /internal/accounts/bank-account/:bankAccountId",
-       "description": "`Accounting.InternalBankAccountsController.Update` \u2014 shared key, no user token",
+       "name": "Update — PUT /internal/accounts/bank-account/:bankAccountId",
+       "description": "`Accounting.InternalBankAccountsController.Update` — shared key, no user token",
        "request": {
         "method": "PUT",
         "url": {
@@ -5101,8 +5101,8 @@
        }
       },
       {
-       "name": "Allocate \u2014 POST /internal/allocations",
-       "description": "`Accounting.InternalAllocationsController.Allocate` \u2014 shared key, no user token",
+       "name": "Allocate — POST /internal/allocations",
+       "description": "`Accounting.InternalAllocationsController.Allocate` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5134,8 +5134,8 @@
        }
       },
       {
-       "name": "Remove \u2014 POST /internal/allocations/remove",
-       "description": "`Accounting.InternalAllocationsController.Remove` \u2014 shared key, no user token",
+       "name": "Remove — POST /internal/allocations/remove",
+       "description": "`Accounting.InternalAllocationsController.Remove` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5167,8 +5167,8 @@
        }
       },
       {
-       "name": "Post \u2014 POST /internal/ledger/postings",
-       "description": "`Accounting.InternalLedgerController.Post` \u2014 shared key, no user token",
+       "name": "Post — POST /internal/ledger/postings",
+       "description": "`Accounting.InternalLedgerController.Post` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5200,8 +5200,8 @@
        }
       },
       {
-       "name": "Settlements \u2014 POST /internal/ledger/settlements",
-       "description": "`Accounting.InternalLedgerController.Settlements` \u2014 shared key, no user token",
+       "name": "Settlements — POST /internal/ledger/settlements",
+       "description": "`Accounting.InternalLedgerController.Settlements` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5233,8 +5233,8 @@
        }
       },
       {
-       "name": "Due date \u2014 GET /internal/payment-terms/:paymentTermId/due-date",
-       "description": "`Accounting.InternalPaymentTermsController.DueDate` \u2014 shared key, no user token",
+       "name": "Due date — GET /internal/payment-terms/:paymentTermId/due-date",
+       "description": "`Accounting.InternalPaymentTermsController.DueDate` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5253,8 +5253,8 @@
        }
       },
       {
-       "name": "Seed organization \u2014 POST /internal/seed/organization",
-       "description": "`Accounting.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+       "name": "Seed organization — POST /internal/seed/organization",
+       "description": "`Accounting.InternalSeedController.SeedOrganization` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5286,8 +5286,8 @@
        }
       },
       {
-       "name": "Deactivate \u2014 POST /internal/sub-accounts/deactivate",
-       "description": "`Accounting.InternalSubAccountsController.Deactivate` \u2014 shared key, no user token",
+       "name": "Deactivate — POST /internal/sub-accounts/deactivate",
+       "description": "`Accounting.InternalSubAccountsController.Deactivate` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5306,8 +5306,8 @@
        }
       },
       {
-       "name": "Provision \u2014 POST /internal/sub-accounts/provision",
-       "description": "`Accounting.InternalSubAccountsController.Provision` \u2014 shared key, no user token",
+       "name": "Provision — POST /internal/sub-accounts/provision",
+       "description": "`Accounting.InternalSubAccountsController.Provision` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5339,8 +5339,8 @@
        }
       },
       {
-       "name": "Rates \u2014 GET /internal/tax/rates",
-       "description": "`Accounting.InternalTaxController.Rates` \u2014 shared key, no user token",
+       "name": "Rates — GET /internal/tax/rates",
+       "description": "`Accounting.InternalTaxController.Rates` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5364,8 +5364,8 @@
      "name": "Inventory",
      "item": [
       {
-       "name": "Names \u2014 POST /internal/items/names",
-       "description": "`Inventory.InternalItemNamesController.Names` \u2014 shared key, no user token",
+       "name": "Names — POST /internal/items/names",
+       "description": "`Inventory.InternalItemNamesController.Names` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5397,8 +5397,8 @@
        }
       },
       {
-       "name": "Seed organization \u2014 POST /internal/seed/organization",
-       "description": "`Inventory.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+       "name": "Seed organization — POST /internal/seed/organization",
+       "description": "`Inventory.InternalSeedController.SeedOrganization` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5430,8 +5430,8 @@
        }
       },
       {
-       "name": "Availability \u2014 POST /internal/stock/availability",
-       "description": "`Inventory.InternalStockController.Availability` \u2014 shared key, no user token",
+       "name": "Availability — POST /internal/stock/availability",
+       "description": "`Inventory.InternalStockController.Availability` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5463,8 +5463,8 @@
        }
       },
       {
-       "name": "Issue \u2014 POST /internal/stock/issue",
-       "description": "`Inventory.InternalStockController.Issue` \u2014 shared key, no user token",
+       "name": "Issue — POST /internal/stock/issue",
+       "description": "`Inventory.InternalStockController.Issue` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5496,8 +5496,8 @@
        }
       },
       {
-       "name": "Opening \u2014 POST /internal/stock/opening",
-       "description": "`Inventory.InternalStockController.Opening` \u2014 shared key, no user token",
+       "name": "Opening — POST /internal/stock/opening",
+       "description": "`Inventory.InternalStockController.Opening` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5529,8 +5529,8 @@
        }
       },
       {
-       "name": "Receipt \u2014 POST /internal/stock/receipt",
-       "description": "`Inventory.InternalStockController.Receipt` \u2014 shared key, no user token",
+       "name": "Receipt — POST /internal/stock/receipt",
+       "description": "`Inventory.InternalStockController.Receipt` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5562,8 +5562,8 @@
        }
       },
       {
-       "name": "Release \u2014 POST /internal/stock/release",
-       "description": "`Inventory.InternalStockController.Release` \u2014 shared key, no user token",
+       "name": "Release — POST /internal/stock/release",
+       "description": "`Inventory.InternalStockController.Release` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5595,8 +5595,8 @@
        }
       },
       {
-       "name": "Reserve \u2014 POST /internal/stock/reserve",
-       "description": "`Inventory.InternalStockController.Reserve` \u2014 shared key, no user token",
+       "name": "Reserve — POST /internal/stock/reserve",
+       "description": "`Inventory.InternalStockController.Reserve` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5628,8 +5628,8 @@
        }
       },
       {
-       "name": "Return \u2014 POST /internal/stock/return",
-       "description": "`Inventory.InternalStockController.Return` \u2014 shared key, no user token",
+       "name": "Return — POST /internal/stock/return",
+       "description": "`Inventory.InternalStockController.Return` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5666,8 +5666,8 @@
      "name": "Master",
      "item": [
       {
-       "name": "Names \u2014 POST /internal/contacts/names",
-       "description": "`Master.InternalContactNamesController.Names` \u2014 shared key, no user token",
+       "name": "Names — POST /internal/contacts/names",
+       "description": "`Master.InternalContactNamesController.Names` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5699,8 +5699,8 @@
        }
       },
       {
-       "name": "Get database \u2014 GET /internal/customers/:customerId/database",
-       "description": "`Master.InternalCustomersController.GetDatabase` \u2014 shared key, no user token",
+       "name": "Get database — GET /internal/customers/:customerId/database",
+       "description": "`Master.InternalCustomersController.GetDatabase` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5719,8 +5719,8 @@
        }
       },
       {
-       "name": "Active organizations \u2014 GET /internal/customers/active-organizations",
-       "description": "`Master.InternalCustomersController.ActiveOrganizations` \u2014 shared key, no user token",
+       "name": "Active organizations — GET /internal/customers/active-organizations",
+       "description": "`Master.InternalCustomersController.ActiveOrganizations` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5739,8 +5739,8 @@
        }
       },
       {
-       "name": "Import \u2014 POST /internal/hsn-sac/import",
-       "description": "`Master.InternalHsnImportController.Import` \u2014 shared key, no user token",
+       "name": "Import — POST /internal/hsn-sac/import",
+       "description": "`Master.InternalHsnImportController.Import` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5759,8 +5759,8 @@
        }
       },
       {
-       "name": "Get account types \u2014 GET /internal/master/account-types",
-       "description": "`Master.InternalMasterController.GetAccountTypes` \u2014 shared key, no user token",
+       "name": "Get account types — GET /internal/master/account-types",
+       "description": "`Master.InternalMasterController.GetAccountTypes` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5779,8 +5779,8 @@
        }
       },
       {
-       "name": "Get currencies \u2014 GET /internal/master/currencies",
-       "description": "`Master.InternalMasterController.GetCurrencies` \u2014 shared key, no user token",
+       "name": "Get currencies — GET /internal/master/currencies",
+       "description": "`Master.InternalMasterController.GetCurrencies` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5799,8 +5799,8 @@
        }
       },
       {
-       "name": "Get state \u2014 GET /internal/master/states/:stateId",
-       "description": "`Master.InternalMasterController.GetState` \u2014 shared key, no user token",
+       "name": "Get state — GET /internal/master/states/:stateId",
+       "description": "`Master.InternalMasterController.GetState` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5819,8 +5819,8 @@
        }
       },
       {
-       "name": "Send email \u2014 POST /internal/notifications/email",
-       "description": "`Master.InternalNotificationsController.SendEmail` \u2014 shared key, no user token",
+       "name": "Send email — POST /internal/notifications/email",
+       "description": "`Master.InternalNotificationsController.SendEmail` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5852,8 +5852,8 @@
        }
       },
       {
-       "name": "Get context \u2014 GET /internal/orgs/:orgId/context",
-       "description": "`Master.InternalOrgsController.GetContext` \u2014 shared key, no user token",
+       "name": "Get context — GET /internal/orgs/:orgId/context",
+       "description": "`Master.InternalOrgsController.GetContext` — shared key, no user token",
        "request": {
         "method": "GET",
         "url": {
@@ -5872,8 +5872,8 @@
        }
       },
       {
-       "name": "Seed organization \u2014 POST /internal/seed/organization",
-       "description": "`Master.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+       "name": "Seed organization — POST /internal/seed/organization",
+       "description": "`Master.InternalSeedController.SeedOrganization` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5905,8 +5905,8 @@
        }
       },
       {
-       "name": "Create owner \u2014 POST /internal/users/owner",
-       "description": "`Master.InternalUsersController.CreateOwner` \u2014 shared key, no user token",
+       "name": "Create owner — POST /internal/users/owner",
+       "description": "`Master.InternalUsersController.CreateOwner` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5943,8 +5943,8 @@
      "name": "Purchase",
      "item": [
       {
-       "name": "Seed organization \u2014 POST /internal/seed/organization",
-       "description": "`Purchase.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+       "name": "Seed organization — POST /internal/seed/organization",
+       "description": "`Purchase.InternalSeedController.SeedOrganization` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -5981,8 +5981,8 @@
      "name": "Reporting",
      "item": [
       {
-       "name": "Seed organization \u2014 POST /internal/seed/organization",
-       "description": "`Reporting.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+       "name": "Seed organization — POST /internal/seed/organization",
+       "description": "`Reporting.InternalSeedController.SeedOrganization` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {
@@ -6019,8 +6019,8 @@
      "name": "Sales",
      "item": [
       {
-       "name": "Seed organization \u2014 POST /internal/seed/organization",
-       "description": "`Sales.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+       "name": "Seed organization — POST /internal/seed/organization",
+       "description": "`Sales.InternalSeedController.SeedOrganization` — shared key, no user token",
        "request": {
         "method": "POST",
         "url": {

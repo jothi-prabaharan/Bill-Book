@@ -209,20 +209,32 @@ Re-run the script after changing a controller, and commit the result with it.
 
 | Port | Service |
 |---|---|
-| 4500 | Gateway (YARP) — has a status home page at `/` |
-| 4503 | Master — reference data, tenancy, auth, contacts |
-| 4504 | Accounting — the ledger and the money documents |
-| 4506 | Inventory |
-| 5008 | Customer *(scaffold)* |
-| 5009 | Purchase *(scaffold)* |
-| 5010 | Reporting *(scaffold)* |
-| 4507 | Sales *(schema only)* |
-| 4200 | Web app |
-| 4300 | Docs (this site) |
-
-Each surviving service kept the port it already had, so 5001, 5002, 5005, 5007
-and 5012 are now free — they belonged to Identity, Platform, Contacts, Banking
-and Support.
+| 4200 | Web app (Angular dev server) |
+| 4300 | Docs app |
+| 4500 | Gateway (YARP reverse proxy entry point) |
+| 4501 | Accounting.Api |
+| 4502 | Admission.Api |
+| 4503 | Attendance.Api |
+| 4504 | Claims.Api |
+| 4505 | Customer.Api |
+| 4506 | Employee.Api |
+| 4507 | Facility.Api |
+| 4508 | Fee.Api |
+| 4509 | Inventory.Api |
+| 4510 | MaintenanceContract.Api |
+| 4511 | Master.Api |
+| 4512 | Payroll.Api |
+| 4513 | Performance.Api |
+| 4514 | Preventive.Api |
+| 4515 | Printing.Api |
+| 4516 | Purchase.Api |
+| 4517 | Recruitment.Api |
+| 4518 | Reporting.Api |
+| 4519 | Sales.Api |
+| 4520 | Student.Api |
+| 4521 | TimeLeave.Api |
+| 4522 | WorkOrder.Api |
+| 5432 | PostgreSQL |
 
 ## First run caveats
 

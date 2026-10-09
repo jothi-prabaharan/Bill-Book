@@ -15,7 +15,7 @@ using Shared.Kernel.Employees;
 using Shared.Kernel.School;
 using Shared.Kernel.Tenancy;
 
-// Preventive (S7, TK-67): preventive maintenance plans and the occurrences that raise work orders. Schema ppm, port 4521. The scaffold is Employee's.
+// Preventive (S7, TK-67): preventive maintenance plans and the occurrences that raise work orders. Schema ppm, port 4514. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -74,17 +74,17 @@ builder.Services.AddScoped<PreventiveRepository>();
 // it raises (WorkOrder), and the branches the generator walks (Master).
 builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Facility:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4519");
+    client.BaseAddress = new Uri(builder.Configuration["Facility:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4507");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IEmployeeDirectory, HttpEmployeeDirectory>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4506");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IWorkOrderClient, HttpWorkOrderClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["WorkOrder:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4520");
+    client.BaseAddress = new Uri(builder.Configuration["WorkOrder:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4522");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
@@ -115,4 +115,4 @@ app.MapControllers();
 app.Run();
 
 static string MasterUrl(IConfiguration configuration) =>
-    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504";
+    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511";

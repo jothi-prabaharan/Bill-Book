@@ -15,7 +15,7 @@ using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
 // Employee (H1, TK-48): organisation setup and the shared employee master, schema
-// hrm, port 4509. The scaffold is Printing's, the newest service.
+// hrm, port 4506. The scaffold is Printing's, the newest service.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -72,7 +72,7 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 builder.Services.AddTransient<InternalKeyHandler>();
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504");
+    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
@@ -82,7 +82,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
 
 builder.Services.AddHttpClient<IMasterUserClient, MasterUserClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504");
+    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 

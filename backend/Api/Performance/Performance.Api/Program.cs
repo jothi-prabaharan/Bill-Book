@@ -65,17 +65,17 @@ builder.Services.AddTransient<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<IEmployeeClient, EmployeeClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4506");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<IMasterClient, MasterClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504");
+    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<IPayrollClient, PayrollClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Payroll:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
+    client.BaseAddress = new Uri(builder.Configuration["Payroll:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4512");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddScoped<PerformanceRepository>();

@@ -66,7 +66,7 @@ builder.Services.AddTransient<InternalKeyHandler>();
 builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("Numbering"));
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504");
+    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
@@ -76,7 +76,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
 
 builder.Services.AddHttpClient<IEmployeeClient, EmployeeClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4506");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<IAccountingClient, AccountingClient>(client =>
@@ -86,7 +86,7 @@ builder.Services.AddHttpClient<IAccountingClient, AccountingClient>(client =>
 
 builder.Services.AddHttpClient<IPayrollClient, PayrollClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Payroll:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511");
+    client.BaseAddress = new Uri(builder.Configuration["Payroll:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4512");
 }).AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddScoped<ClaimRepository>();

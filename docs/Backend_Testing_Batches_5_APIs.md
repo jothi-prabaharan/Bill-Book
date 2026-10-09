@@ -33,10 +33,10 @@ Running all 23 API services simultaneously during local development can strain l
 
 > **Services Active**:
 > 1. `Gateway.Api` (Port `4500`)
-> 2. `Master.Api` (Port `4504`)
+> 2. `Master.Api` (Port `4511`)
 > 3. `Accounting.Api` (Port `4501`)
-> 4. `Inventory.Api` (Port `4503`)
-> 5. `Sales.Api` (Port `4507`)
+> 4. `Inventory.Api` (Port `4509`)
+> 5. `Sales.Api` (Port `4519`)
 
 *This batch forms the minimum viable commercial ERP engine. It is the exact set launched by `./scripts/start-backend.ps1`.*
 
@@ -122,11 +122,11 @@ Running all 23 API services simultaneously during local development can strain l
 
 > **Services Active**:
 > *(Keeps Batch 1 dependencies running or stubbed)*  
-> 6. `Purchase.Api` (Port `4505`)  
-> 7. `Customer.Api` (Port `4502`)  
-> 8. `Printing.Api` (Port `4508`)  
-> 9. `Reporting.Api` (Port `4506`)  
-> 10. `Employee.Api` (Port `4509`)  
+> 6. `Purchase.Api` (Port `4516`)  
+> 7. `Customer.Api` (Port `4505`)  
+> 8. `Printing.Api` (Port `4515`)  
+> 9. `Reporting.Api` (Port `4518`)  
+> 10. `Employee.Api` (Port `4506`)  
 
 #### Step-by-Step API Execution:
 
@@ -218,10 +218,10 @@ Running all 23 API services simultaneously during local development can strain l
 ### Batch 3: HRMS Lifecycle & Workforce Automation (APIs 11–15)
 
 > **Services Active**:
-> 11. `TimeLeave.Api` (Port `4510`)  
-> 12. `Payroll.Api` (Port `4511`)  
-> 13. `Claims.Api` (Port `4514`)  
-> 14. `Recruitment.Api` (Port `4512`)  
+> 11. `TimeLeave.Api` (Port `4521`)  
+> 12. `Payroll.Api` (Port `4512`)  
+> 13. `Claims.Api` (Port `4504`)  
+> 14. `Recruitment.Api` (Port `4517`)  
 > 15. `Performance.Api` (Port `4513`)  
 
 #### Step-by-Step API Execution:
@@ -330,11 +330,11 @@ Running all 23 API services simultaneously during local development can strain l
 ### Batch 4: School SIS & Campus Facilities (APIs 16–20)
 
 > **Services Active**:
-> 16. `Student.Api` (Port `4515`)  
-> 17. `Admission.Api` (Port `4516`)  
-> 18. `Attendance.Api` (Port `4517`)  
-> 19. `Fee.Api` (Port `4518`)  
-> 20. `Facility.Api` (Port `4519`)  
+> 16. `Student.Api` (Port `4520`)  
+> 17. `Admission.Api` (Port `4502`)  
+> 18. `Attendance.Api` (Port `4503`)  
+> 19. `Fee.Api` (Port `4508`)  
+> 20. `Facility.Api` (Port `4507`)  
 
 *Tenant Context: `DEMO-SCH` (OrgId: `00000000-0000-0000-0d01-000000000004`, `business_type`: `School`)*
 
@@ -436,9 +436,9 @@ Running all 23 API services simultaneously during local development can strain l
 ### Batch 5: Facility Maintenance & Operations (APIs 21–23 + Worker)
 
 > **Services Active**:
-> 21. `WorkOrder.Api` (Port `4520`)  
-> 22. `Preventive.Api` (Port `4521`)  
-> 23. `MaintenanceContract.Api` (Port `4522`)  
+> 21. `WorkOrder.Api` (Port `4522`)  
+> 22. `Preventive.Api` (Port `4514`)  
+> 23. `MaintenanceContract.Api` (Port `4510`)  
 > *(+ `BillBook.Worker` Background Service & Security Scope Engine)*
 
 *Tenant Context: `DEMO-SVC` (OrgId: `00000000-0000-0000-0d01-000000000005`, `business_type`: `Service`)*
@@ -520,8 +520,8 @@ Running all 23 API services simultaneously during local development can strain l
 
 | Batch | Batch Name | APIs Included | Ports | Target Business Vertical |
 | :---: | :--- | :--- | :---: | :--- |
-| **Batch 1** | **Core Commerce Backbone** | Gateway, Master, Accounting, Inventory, Sales | 4500, 4504, 4501, 4503, 4507 | Retail (`DEMO-RTL`) / All |
-| **Batch 2** | **Procurement & Operations** | Purchase, Customer, Printing, Reporting, Employee | 4505, 4502, 4508, 4506, 4509 | Retail, Pharmacy, All |
-| **Batch 3** | **HRMS & Payroll** | TimeLeave, Payroll, Claims, Recruitment, Performance | 4510, 4511, 4514, 4512, 4513 | Enterprise / All Add-Ons |
-| **Batch 4** | **School SIS & Education** | Student, Admission, Attendance, Fee, Facility | 4515, 4516, 4517, 4518, 4519 | School (`DEMO-SCH`) |
-| **Batch 5** | **Maintenance & Operations** | WorkOrder, Preventive, MaintenanceContract (+ Worker) | 4520, 4521, 4522 | Service (`DEMO-SVC`) / Infrastructure |
+| **Batch 1** | **Core Commerce Backbone** | Gateway, Master, Accounting, Inventory, Sales | 4500, 4511, 4501, 4509, 4519 | Retail (`DEMO-RTL`) / All |
+| **Batch 2** | **Procurement & Operations** | Purchase, Customer, Printing, Reporting, Employee | 4516, 4505, 4515, 4518, 4506 | Retail, Pharmacy, All |
+| **Batch 3** | **HRMS & Payroll** | TimeLeave, Payroll, Claims, Recruitment, Performance | 4521, 4512, 4504, 4517, 4513 | Enterprise / All Add-Ons |
+| **Batch 4** | **School SIS & Education** | Student, Admission, Attendance, Fee, Facility | 4520, 4502, 4503, 4508, 4507 | School (`DEMO-SCH`) |
+| **Batch 5** | **Maintenance & Operations** | WorkOrder, Preventive, MaintenanceContract (+ Worker) | 4522, 4514, 4510 | Service (`DEMO-SVC`) / Infrastructure |

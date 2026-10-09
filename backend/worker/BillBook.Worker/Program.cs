@@ -53,7 +53,7 @@ try
 
             services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
             {
-                client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+                client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4511/");
             }).AddHttpMessageHandler<InternalKeyHandler>();
 
             services.AddDbContext<TenantDbContext>((sp, options) =>

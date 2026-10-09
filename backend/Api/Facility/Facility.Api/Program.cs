@@ -13,7 +13,7 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
-// Facility (S5, TK-65): buildings, spaces and facility assets. Schema fac, port 4519. The scaffold is Employee's.
+// Facility (S5, TK-65): buildings, spaces and facility assets. Schema fac, port 4507. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>

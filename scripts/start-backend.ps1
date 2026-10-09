@@ -27,6 +27,7 @@
 [CmdletBinding()]
 param(
     [switch] $Stop,
+    [switch] $All,
     [int]    $TimeoutSeconds = 120
 )
 
@@ -40,15 +41,41 @@ function Ok   ([string] $m) { Write-Host "    $m" -ForegroundColor Green }
 function Warn ([string] $m) { Write-Host "    $m" -ForegroundColor Yellow }
 function Bad  ([string] $m) { Write-Host "    $m" -ForegroundColor Red }
 
-# Gateway first so it is up before anything proxies through it; Master last
-# because it is the one that calls the others.
-$services = @(
-    @{ Name = 'Gateway';        Port = 4500; Project = 'backend/Gateway/Gateway.Api' }
-    @{ Name = 'Accounting.Api'; Port = 4501; Project = 'backend/Api/Accounting/Accounting.Api' }
-    @{ Name = 'Inventory.Api';  Port = 4503; Project = 'backend/Api/Inventory/Inventory.Api' }
-    @{ Name = 'Sales.Api';      Port = 4507; Project = 'backend/Api/Sales/Sales.Api' }
-    @{ Name = 'Master.Api';     Port = 4504; Project = 'backend/Api/Master/Master.Api' }
-)
+$services = if ($All) {
+    @(
+        @{ Name = 'Gateway';                 Port = 4500; Project = 'backend/Gateway/Gateway.Api' }
+        @{ Name = 'Accounting.Api';          Port = 4501; Project = 'backend/Api/Accounting/Accounting.Api' }
+        @{ Name = 'Admission.Api';           Port = 4502; Project = 'backend/Api/Admission/Admission.Api' }
+        @{ Name = 'Attendance.Api';          Port = 4503; Project = 'backend/Api/Attendance/Attendance.Api' }
+        @{ Name = 'Claims.Api';              Port = 4504; Project = 'backend/Api/Claims/Claims.Api' }
+        @{ Name = 'Customer.Api';            Port = 4505; Project = 'backend/Api/Customer/Customer.Api' }
+        @{ Name = 'Employee.Api';            Port = 4506; Project = 'backend/Api/Employee/Employee.Api' }
+        @{ Name = 'Facility.Api';            Port = 4507; Project = 'backend/Api/Facility/Facility.Api' }
+        @{ Name = 'Fee.Api';                 Port = 4508; Project = 'backend/Api/Fee/Fee.Api' }
+        @{ Name = 'Inventory.Api';           Port = 4509; Project = 'backend/Api/Inventory/Inventory.Api' }
+        @{ Name = 'MaintenanceContract.Api'; Port = 4510; Project = 'backend/Api/MaintenanceContract/MaintenanceContract.Api' }
+        @{ Name = 'Master.Api';              Port = 4511; Project = 'backend/Api/Master/Master.Api' }
+        @{ Name = 'Payroll.Api';             Port = 4512; Project = 'backend/Api/Payroll/Payroll.Api' }
+        @{ Name = 'Performance.Api';         Port = 4513; Project = 'backend/Api/Performance/Performance.Api' }
+        @{ Name = 'Preventive.Api';          Port = 4514; Project = 'backend/Api/Preventive/Preventive.Api' }
+        @{ Name = 'Printing.Api';            Port = 4515; Project = 'backend/Api/Printing/Printing.Api' }
+        @{ Name = 'Purchase.Api';            Port = 4516; Project = 'backend/Api/Purchase/Purchase.Api' }
+        @{ Name = 'Recruitment.Api';         Port = 4517; Project = 'backend/Api/Recruitment/Recruitment.Api' }
+        @{ Name = 'Reporting.Api';           Port = 4518; Project = 'backend/Api/Reporting/Reporting.Api' }
+        @{ Name = 'Sales.Api';               Port = 4519; Project = 'backend/Api/Sales/Sales.Api' }
+        @{ Name = 'Student.Api';             Port = 4520; Project = 'backend/Api/Student/Student.Api' }
+        @{ Name = 'TimeLeave.Api';           Port = 4521; Project = 'backend/Api/TimeLeave/TimeLeave.Api' }
+        @{ Name = 'WorkOrder.Api';           Port = 4522; Project = 'backend/Api/WorkOrder/WorkOrder.Api' }
+    )
+} else {
+    @(
+        @{ Name = 'Gateway';        Port = 4500; Project = 'backend/Gateway/Gateway.Api' }
+        @{ Name = 'Accounting.Api'; Port = 4501; Project = 'backend/Api/Accounting/Accounting.Api' }
+        @{ Name = 'Inventory.Api';  Port = 4509; Project = 'backend/Api/Inventory/Inventory.Api' }
+        @{ Name = 'Master.Api';     Port = 4511; Project = 'backend/Api/Master/Master.Api' }
+        @{ Name = 'Sales.Api';      Port = 4519; Project = 'backend/Api/Sales/Sales.Api' }
+    )
+}
 
 function Test-Port ([int] $Port) {
     Test-NetConnection -ComputerName localhost -Port $Port `

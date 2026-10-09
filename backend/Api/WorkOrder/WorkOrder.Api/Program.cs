@@ -16,7 +16,7 @@ using Shared.Kernel.School;
 using Shared.Kernel.Stock;
 using Shared.Kernel.Tenancy;
 
-// WorkOrder (S6, TK-66): work orders, their tasks and the parts issued from Inventory. Schema wrk, port 4520. The scaffold is Employee's.
+// WorkOrder (S6, TK-66): work orders, their tasks and the parts issued from Inventory. Schema wrk, port 4522. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -87,17 +87,17 @@ builder.Services.AddScoped<WorkOrderRepository>();
 // Where the work is (Facility), who does it (Employee), and the parts it uses (Inventory).
 builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Facility:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4519");
+    client.BaseAddress = new Uri(builder.Configuration["Facility:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4507");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IEmployeeDirectory, HttpEmployeeDirectory>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4506");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IStockClient, HttpStockClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Inventory:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4503");
+    client.BaseAddress = new Uri(builder.Configuration["Inventory:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -122,4 +122,4 @@ app.MapControllers();
 app.Run();
 
 static string MasterUrl(IConfiguration configuration) =>
-    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504";
+    configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4511";

@@ -14,7 +14,7 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
-// Attendance (S3, TK-63): student attendance: the daily register per section, and locking a day. Schema att, port 4517. The scaffold is Employee's.
+// Attendance (S3, TK-63): student attendance: the daily register per section, and locking a day. Schema att, port 4503. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -68,7 +68,7 @@ builder.Services.AddTransient<InternalKeyHandler>();
 // The roll is Student's, read at the moment of use.
 builder.Services.AddHttpClient<IStudentClient, HttpStudentClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Student:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4515");
+    client.BaseAddress = new Uri(builder.Configuration["Student:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4520");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
