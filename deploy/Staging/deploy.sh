@@ -101,11 +101,12 @@ start_daemon() {
 
   (
     cd "$bin_dir"
+    export ASPNETCORE_ENVIRONMENT="Staging"
+    export DOTNET_ENVIRONMENT="Staging"
     if [ -n "$port" ]; then
-      ASPNETCORE_URLS="http://0.0.0.0:$port" nohup dotnet "$bin_file" </dev/null > "$log_file" 2>&1 &
-    else
-      nohup dotnet "$bin_file" </dev/null > "$log_file" 2>&1 &
+      export ASPNETCORE_URLS="http://0.0.0.0:$port"
     fi
+    nohup dotnet "$bin_file" </dev/null > "$log_file" 2>&1 &
     echo $! > "$pid_file"
   )
   echo "  [STARTED] $name (PID $(cat "$pid_file"), Port ${port:--})"
