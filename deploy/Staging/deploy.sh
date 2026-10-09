@@ -8,10 +8,10 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BRANCH="Stating"
+BRANCH="Staging"
 
 # External deployment directories outside source code
-DEPLOY_BASE="/home/prabha/deploy/Stating"
+DEPLOY_BASE="/home/prabha/deploy/Staging"
 DIST_DIR="$DEPLOY_BASE/dist"
 LOG_DIR="$DEPLOY_BASE/logs"
 RUN_DIR="$DEPLOY_BASE/run"
@@ -258,7 +258,7 @@ check_status() {
 
 run_deployment() {
   echo "=========================================================="
-  echo " Starting One-Click Deployment for Stating Branch"
+  echo " Starting One-Click Deployment for Staging Branch"
   echo " Time: $(date)"
   echo " Repo: $REPO_ROOT"
   echo " Branch: $BRANCH"
@@ -293,7 +293,7 @@ run_deployment() {
     fi
   fi
 
-  # 3. BUILD BACKEND SERVICES DIRECTLY TO /home/prabha/deploy/Stating/dist/backend
+  # 3. BUILD BACKEND SERVICES DIRECTLY TO /home/prabha/deploy/Staging/dist/backend
   echo -e "\n[3/5] Publishing Backend Microservices and Gateway (.NET 10)..."
   PROJECTS=(
     "gateway:backend/Gateway/Gateway.Api/Gateway.Api.csproj"
@@ -328,7 +328,7 @@ run_deployment() {
     dotnet publish "$rel" -c Release -p:EnvironmentName=Staging -o "$DIST_DIR/backend/$name" --nologo -v q
   done
 
-  # 4. BUILD FRONTEND APPLICATION DIRECTLY TO /home/prabha/deploy/Stating/dist/frontend/web
+  # 4. BUILD FRONTEND APPLICATION DIRECTLY TO /home/prabha/deploy/Staging/dist/frontend/web
   echo -e "\n[4/5] Building Angular Web Application for Staging..."
   cd "$REPO_ROOT/frontend"
   if [ ! -d "node_modules" ]; then
