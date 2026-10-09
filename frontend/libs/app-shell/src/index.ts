@@ -24,4 +24,4 @@ export * from './lib/shell-screens';
 // Models / Types
 export type { NavItem } from './lib/nav/shell-nav.component';
 export type { DocGroup, DocGroupItem } from './lib/topbar/shell-topbar.component';
-export type { BreadcrumbItem, ExportFormat } from './lib/breadcrumb/shell-breadcrumb.component';
+export type { BreadcrumbItem } from './lib/breadcrumb/shell-breadcrumb.component';

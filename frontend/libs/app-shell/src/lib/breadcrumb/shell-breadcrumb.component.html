@@ -59,25 +59,8 @@
       }
     }
 
-    @if (isRegister()) {
-      <span class="crumb-export">
-        <button class="btn btn-secondary" type="button" (click)="toggleExportMenu()" [attr.aria-expanded]="exportMenuOpen()">
-          Export
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="crumb-export-chevron"><path d="m6 9 6 6 6-6"/></svg>
-        </button>
-        @if (exportMenuOpen()) {
-          <div class="popover crumb-export-menu" role="menu" aria-label="Export format">
-            @for (format of exportFormats; track format.ext) {
-              <button class="menuitem menuitem--split" type="button" role="menuitem" (click)="pickExport(format)">
-                <span>{{ format.label }}</span>
-                <span class="menuitem-ext">{{ format.ext }}</span>
-              </button>
-            }
-          </div>
-        }
-      </span>
-      <button class="btn btn-secondary" type="button" (click)="onOpenImport()">Import</button>
-    }
+    
   </div>
 </nav>
+
 

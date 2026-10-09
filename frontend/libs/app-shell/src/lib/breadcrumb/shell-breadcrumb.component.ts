@@ -21,11 +21,7 @@ export interface BreadcrumbItem {
   path?: string;
 }
 
-/** One entry in the Export format menu. */
-export interface ExportFormat {
-  readonly label: string;
-  readonly ext: string;
-}
+
 
 /**
  * The breadcrumb strip (`z-index: 4`). It replaces page titles outright — no
@@ -96,17 +92,11 @@ export class ShellBreadcrumbComponent {
   readonly resetLayout = output<void>();
   readonly stopEdit = output<void>();
 
-  /** Emits the chosen format's extension — `pdf`, `xlsx`, `csv`. */
-  readonly openExport = output<string>();
-  readonly openImport = output<void>();
 
-  readonly exportFormats: readonly ExportFormat[] = [
-    { label: 'Portable document', ext: 'pdf' },
-    { label: 'Excel workbook', ext: 'xlsx' },
-    { label: 'Comma separated', ext: 'csv' },
-  ];
 
-  readonly exportMenuOpen = signal(false);
+
+
+
 
   constructor() {
     this.router.events
@@ -114,7 +104,7 @@ export class ShellBreadcrumbComponent {
       .subscribe((event) => {
         this.url.set(event.urlAfterRedirects);
         this.updateCrumbs(event.urlAfterRedirects);
-        this.exportMenuOpen.set(false);
+
       });
 
     this.url.set(this.router.url);
@@ -185,17 +175,7 @@ export class ShellBreadcrumbComponent {
     this.stopEdit.emit();
   }
 
-  toggleExportMenu(): void {
-    this.exportMenuOpen.update((v) => !v);
-  }
 
-  pickExport(format: ExportFormat): void {
-    this.exportMenuOpen.set(false);
-    this.openExport.emit(format.ext);
-  }
-
-  onOpenImport(): void {
-    this.openImport.emit();
-  }
 }
+
 
