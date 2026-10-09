@@ -22,4 +22,9 @@ export const siteRoutes: Routes = [
     loadComponent: () => import('./stock/site-stock.page').then((m) => m.SiteStockPage),
     data: { access: { permission: 'site.view', businessTypes: ['Service'], addOns: ['SiteServices'] } },
   },
+  {
+    path: 'site/billing',
+    loadComponent: () => import('./billing/site-billing.page').then((m) => m.SiteBillingPage),
+    data: { access: { permission: 'site.view', businessTypes: ['Service'], addOns: ['SiteServices'] } },
+  },
 ];

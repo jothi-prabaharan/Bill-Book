@@ -1,0 +1,248 @@
+.site-billing-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  @media (max-width: 600px) {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-color, #1e293b);
+  }
+
+  .subtitle {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    color: var(--text-muted, #64748b);
+  }
+
+  .filters-bar {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      label {
+        font-weight: 500;
+        font-size: 0.875rem;
+      }
+
+      select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color, #cbd5e1);
+        border-radius: 6px;
+        background: var(--bg-surface, #ffffff);
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+
+  &.alert-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #f87171;
+  }
+
+  &.alert-success {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+}
+
+.worksheet-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.worksheet-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card-section {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 1.25rem;
+
+  .section-header h2 {
+    font-size: 1.125rem;
+    margin: 0 0 1rem 0;
+    color: var(--text-color, #1e293b);
+  }
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  th {
+    background-color: var(--bg-subtle, #f8fafc);
+    font-weight: 600;
+    color: var(--text-muted, #475569);
+  }
+
+  tr:hover td {
+    background-color: var(--bg-hover, #f1f5f9);
+  }
+}
+
+.qty-input {
+  width: 80px;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.empty-hint {
+  color: var(--text-muted, #64748b);
+  font-size: 0.875rem;
+  font-style: italic;
+  padding: 1rem 0;
+  margin: 0;
+}
+
+.invoice-summary-card {
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 1.25rem;
+  position: sticky;
+  top: 1rem;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    color: var(--text-color, #1e293b);
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+
+    &.grand-total {
+      font-size: 1.125rem;
+      color: var(--primary-color, #2563eb);
+    }
+  }
+
+  .summary-divider {
+    height: 1px;
+    background: var(--border-color, #e2e8f0);
+    margin: 1rem 0;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin-bottom: 1rem;
+
+    label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-color, #334155);
+    }
+
+    input,
+    textarea {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color, #cbd5e1);
+      border-radius: 6px;
+      font-size: 0.875rem;
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color, #2563eb);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+      }
+    }
+  }
+
+  .btn-block {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .privacy-note {
+    font-size: 0.75rem;
+    color: var(--text-muted, #64748b);
+    margin-top: 1rem;
+    margin-bottom: 0;
+    line-height: 1.4;
+  }
+}
+
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s;
+
+  &.btn-primary {
+    background-color: var(--primary-color, #2563eb);
+    color: #ffffff;
+
+    &:hover:not(:disabled) {
+      background-color: #1d4ed8;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}

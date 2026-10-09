@@ -1,0 +1,204 @@
+<div class="site-billing-container">
+  <header class="page-header">
+    <div class="title-group">
+      <h1>Site Billing Worksheet</h1>
+      <p class="subtitle">Bill approved labor days and materials consumed at job sites directly to Sales invoices</p>
+    </div>
+
+    <div class="filters-bar">
+      <div class="filter-item">
+        <label for="site-select">Site:</label>
+        <select
+          id="site-select"
+          [ngModel]="selectedSiteId()"
+          (ngModelChange)="onSiteChange($event)"
+        >
+          <option *ngFor="let s of sites()" [value]="s.siteId">
+            {{ s.siteName }} ({{ s.siteCode }})
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label for="trade-select">Trade:</label>
+        <select
+          id="trade-select"
+          [ngModel]="selectedTradeId()"
+          (ngModelChange)="selectedTradeId.set($event); loadWorksheet()"
+        >
+          <option [ngValue]="null">All Trades</option>
+          <option *ngFor="let t of trades()" [value]="t.tradeId">
+            {{ t.tradeName }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage()" class="alert alert-danger">
+    {{ errorMessage() }}
+  </div>
+  <div *ngIf="successMessage()" class="alert alert-success">
+    {{ successMessage() }}
+  </div>
+
+  <div class="worksheet-layout" *ngIf="worksheet() as ws">
+    <!-- LEFT: Unbilled Items -->
+    <div class="worksheet-tables">
+      <!-- Labor Section -->
+      <section class="card-section">
+        <div class="section-header">
+          <h2>Approved Labor Awaiting Invoicing ({{ ws.laborItems.length }})</h2>
+        </div>
+
+        <div class="table-responsive" *ngIf="ws.laborItems.length > 0; else noLabor">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="40"></th>
+                <th>Laborer</th>
+                <th>Trade</th>
+                <th>Work Date</th>
+                <th>Days</th>
+                <th>OT (Hrs)</th>
+                <th>Sell Price (₹)</th>
+                <th *ngIf="canViewCost()">Cost (₹)</th>
+                <th *ngIf="canViewCost()">Margin (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let l of ws.laborItems">
+                <td>
+                  <input
+                    type="checkbox"
+                    [checked]="selectedAttendanceIds().has(l.attendanceId)"
+                    (change)="toggleLabor(l.attendanceId)"
+                  />
+                </td>
+                <td><strong>{{ l.laborerName }}</strong></td>
+                <td>{{ l.tradeName }}</td>
+                <td>{{ l.workDate }}</td>
+                <td>{{ l.dayFraction }}</td>
+                <td>{{ l.otHoursApproved }}</td>
+                <td>{{ l.totalSellAmount | number : '1.2-2' }}</td>
+                <td *ngIf="canViewCost()">
+                  {{ (l.dayCostSnapshot || 0) + (l.otCostSnapshot || 0) | number : '1.2-2' }}
+                </td>
+                <td *ngIf="canViewCost()">
+                  {{ (l.dayMarginSnapshot || 0) + (l.otMarginSnapshot || 0) | number : '1.2-2' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noLabor>
+          <p class="empty-hint">No unbilled approved labor for this site.</p>
+        </ng-template>
+      </section>
+
+      <!-- Material Section -->
+      <section class="card-section">
+        <div class="section-header">
+          <h2>Used Materials Awaiting Invoicing ({{ ws.materialItems.length }})</h2>
+        </div>
+
+        <div class="table-responsive" *ngIf="ws.materialItems.length > 0; else noMaterial">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="40"></th>
+                <th>Item ID</th>
+                <th>Usage Doc</th>
+                <th>Unbilled Qty</th>
+                <th>Qty to Bill</th>
+                <th>Unit Sell (₹)</th>
+                <th>Total Sell (₹)</th>
+                <th *ngIf="canViewCost()">Unit Cost (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let m of ws.materialItems">
+                <td>
+                  <input
+                    type="checkbox"
+                    [checked]="selectedMaterialLines().has(m.lineId)"
+                    (change)="toggleMaterial(m.lineId, m.unbilledQuantity)"
+                  />
+                </td>
+                <td><strong>#{{ m.itemId }}</strong></td>
+                <td>{{ m.documentNo }}</td>
+                <td>{{ m.unbilledQuantity | number : '1.2-2' }}</td>
+                <td>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    [max]="m.unbilledQuantity"
+                    class="qty-input"
+                    [ngModel]="selectedMaterialLines().get(m.lineId) || 0"
+                    (ngModelChange)="updateMaterialQty(m.lineId, $event, m.unbilledQuantity)"
+                  />
+                </td>
+                <td>{{ m.sellingPrice | number : '1.2-2' }}</td>
+                <td>
+                  {{ ((selectedMaterialLines().get(m.lineId) || 0) * m.sellingPrice) | number : '1.2-2' }}
+                </td>
+                <td *ngIf="canViewCost()">{{ m.unitCost | number : '1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noMaterial>
+          <p class="empty-hint">No unbilled used materials for this site.</p>
+        </ng-template>
+      </section>
+    </div>
+
+    <!-- RIGHT: Billing Invoice Summary -->
+    <aside class="invoice-summary-card">
+      <h3>Billing Summary</h3>
+
+      <div class="summary-row">
+        <span>Selected Labor:</span>
+        <strong>₹{{ selectedLaborTotal() | number : '1.2-2' }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Selected Material:</span>
+        <strong>₹{{ selectedMaterialTotal() | number : '1.2-2' }}</strong>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-row grand-total">
+        <span>Total Billable:</span>
+        <strong>₹{{ grandTotal() | number : '1.2-2' }}</strong>
+      </div>
+
+      <div class="form-group">
+        <label>Invoice Date</label>
+        <input type="date" required [(ngModel)]="billingDate" />
+      </div>
+
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" [(ngModel)]="dueDate" />
+      </div>
+
+      <div class="form-group">
+        <label>Billing Notes</label>
+        <textarea rows="3" [(ngModel)]="notes" placeholder="Notes for sales invoice..."></textarea>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary btn-block"
+        (click)="generateInvoice()"
+        [disabled]="loading() || grandTotal() <= 0"
+      >
+        {{ loading() ? 'Generating Invoice...' : 'Generate & Post Sales Invoice' }}
+      </button>
+
+      <p class="privacy-note">
+        🔒 <strong>Privacy Guarded:</strong> Real sales invoice generated with selling prices only. Internal costs and margins remain strictly within the Site module.
+      </p>
+    </aside>
+  </div>
+</div>

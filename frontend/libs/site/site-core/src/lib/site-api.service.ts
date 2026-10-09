@@ -24,6 +24,9 @@ import {
   SiteStockDocumentDto,
   SiteStockDocumentType,
   SubmitMaterialUsageRequest,
+  BillingWorksheetDto,
+  CreateSiteBillRequest,
+  SiteBillDto,
 } from './site.models';
 
 @Injectable({ providedIn: 'root' })
@@ -210,6 +213,24 @@ export class SiteApiService {
 
   submitPortalUsage(req: SubmitMaterialUsageRequest): Promise<SiteStockDocumentDto> {
     return firstValueFrom(this.http.post<SiteStockDocumentDto>('/api/site/portal/usage', req));
+  }
+
+  // --- Site Billing (TK-175) ---
+  getBillingWorksheet(
+    siteId: number,
+    fromDate?: string | null,
+    toDate?: string | null,
+    tradeId?: number | null
+  ): Promise<BillingWorksheetDto> {
+    const params: Record<string, string | number> = { siteId };
+    if (fromDate) params['fromDate'] = fromDate;
+    if (toDate) params['toDate'] = toDate;
+    if (tradeId) params['tradeId'] = tradeId;
+    return firstValueFrom(this.http.get<BillingWorksheetDto>('/api/site/billing/worksheet', { params }));
+  }
+
+  createSiteBill(req: CreateSiteBillRequest): Promise<SiteBillDto> {
+    return firstValueFrom(this.http.post<SiteBillDto>('/api/site/billing/create-bill', req));
   }
 }
 

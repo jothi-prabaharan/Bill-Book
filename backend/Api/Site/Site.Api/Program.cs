@@ -85,6 +85,13 @@ builder.Services.AddHttpClient<Site.Repository.Clients.IInventoryWarehouseClient
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+builder.Services.AddHttpClient<Site.Repository.Clients.ISalesInvoiceClient, Site.Repository.Clients.HttpSalesInvoiceClient>(client =>
+{
+    string url = builder.Configuration["Sales:BaseUrl"] ?? "http://localhost:4504";
+    client.BaseAddress = new Uri(url);
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddFileStorage(builder.Configuration);
 
 builder.Services.AddScoped<SiteSeederRepository>();
@@ -92,6 +99,7 @@ builder.Services.AddScoped<SiteRepository>();
 builder.Services.AddScoped<SiteMarginRepository>();
 builder.Services.AddScoped<SiteAttendanceRepository>();
 builder.Services.AddScoped<SiteStockRepository>();
+builder.Services.AddScoped<SiteBillingRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

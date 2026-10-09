@@ -5403,7 +5403,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** 3 dispatched and 2 used leaves 1 on site and 2 unbilled; using more than is on site is refused.
 
 ### TK-175 · Site billing: partial invoices with selling price only
-- [ ] open
+- [x] completed (Antigravity) — 2026-10-09 · tests written, not run
 - **Issue:** [#163](https://github.com/jothi-prabaharan/Bill-Book/issues/163)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-SAL, L-SITE-UI · **Depends on:** TK-172, TK-174 · **Decision:** D-59, D-60, D-64
@@ -5411,13 +5411,13 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
 - **Tables:** `sit.SiteBills`, `sit.SiteBillLines`
 - **Sub-tasks:**
-  - [ ] Billing worksheet (`SBL`): pick site, period, trade and any of labor, OT and material; it lists approved unbilled days and unbilled used material.
-  - [ ] Claim each attendance row and usage quantity with a guarded update (`SiteBillLineId IS NULL`, `BilledQuantity + q ≤ Quantity`), so two bills never take the same day or unit.
-  - [ ] Create and post the invoice through a Sales internal endpoint that calls `CreateAsync`/`PostAsync`: labor on the trade's service item (SAC), material on its item (HSN) with `WarehouseId` = the site warehouse, each line carrying only the selling price and the client description.
-  - [ ] **Privacy:** no cost or margin field crosses into `sal`, the print payload, the client portal or the e-invoice; the worksheet shows cost and margin only with `site.cost.view`.
-  - [ ] Cancelling a draft worksheet releases its claims; a posted invoice is corrected by a credit note, not by editing.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] Billing worksheet (`SBL`): pick site, period, trade and any of labor, OT and material; it lists approved unbilled days and unbilled used material.
+  - [x] Claim each attendance row and usage quantity with a guarded update (`SiteBillLineId IS NULL`, `BilledQuantity + q ≤ Quantity`), so two bills never take the same day or unit.
+  - [x] Create and post the invoice through a Sales internal endpoint that calls `CreateAsync`/`PostAsync`: labor on the trade's service item (SAC), material on its item (HSN) with `WarehouseId` = the site warehouse, each line carrying only the selling price and the client description.
+  - [x] **Privacy:** no cost or margin field crosses into `sal`, the print payload, the client portal or the e-invoice; the worksheet shows cost and margin only with `site.cost.view`.
+  - [x] Cancelling a draft worksheet releases its claims; a posted invoice is corrected by a credit note, not by editing.
+  - [x] Section 5's standard delivery sub-tasks.
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** two partial bills on one site (Electrical labor, then material) post two invoices, no day or unit is on both, 2 used of 3 dispatched bills 2, and the printed invoice holds no cost or margin.
 
 ### TK-176 · Site reports: labor days, material reconciliation and site profit

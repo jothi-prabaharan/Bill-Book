@@ -304,3 +304,81 @@ export interface SubmitMaterialUsageRequest {
   remarks?: string | null;
 }
 
+export interface UnbilledLaborItemDto {
+  attendanceId: number;
+  assignmentId: number;
+  laborerId: number;
+  laborerName: string;
+  tradeId: number;
+  tradeName: string;
+  workDate: string;
+  dayFraction: number;
+  otHoursApproved: number;
+  daySellSnapshot: number;
+  otSellSnapshot: number;
+  totalSellAmount: number;
+  dayCostSnapshot?: number | null;
+  dayMarginSnapshot?: number | null;
+  otCostSnapshot?: number | null;
+  otMarginSnapshot?: number | null;
+}
+
+export interface UnbilledMaterialItemDto {
+  lineId: number;
+  documentId: number;
+  documentNo: string;
+  itemId: number;
+  usedQuantity: number;
+  billedQuantity: number;
+  unbilledQuantity: number;
+  sellingPrice: number;
+  totalSellAmount: number;
+  unitCost?: number | null;
+  marginValue?: number | null;
+}
+
+export interface BillingWorksheetDto {
+  siteId: number;
+  siteName: string;
+  contactId: number;
+  warehouseId?: number | null;
+  laborItems: UnbilledLaborItemDto[];
+  materialItems: UnbilledMaterialItemDto[];
+}
+
+export interface MaterialLineToBillDto {
+  lineId: number;
+  quantityToBill: number;
+}
+
+export interface CreateSiteBillRequest {
+  siteId: number;
+  billingDate: string;
+  dueDate?: string | null;
+  attendanceIdsToBill?: number[] | null;
+  materialLinesToBill?: MaterialLineToBillDto[] | null;
+  notes?: string | null;
+}
+
+export interface SiteBillDto {
+  siteBillingInvoiceId: number;
+  billingNumber: string;
+  siteId: number;
+  billingDate: string;
+  salesInvoiceId?: number | null;
+  totalLaborAmount: number;
+  totalMaterialAmount: number;
+  totalBillableAmount: number;
+  lines: SiteBillLineDto[];
+}
+
+export interface SiteBillLineDto {
+  siteBillingInvoiceLineId: number;
+  lineType: string;
+  referenceId?: number | null;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+}
+
