@@ -183,6 +183,18 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<InvoiceTenderRead> InvoiceTenders => Set<InvoiceTenderRead>();
     public DbSet<WastageEntryRead> WastageEntries => Set<WastageEntryRead>();
 
+    // Site (sit, TK-170 to TK-176)
+    public DbSet<SiteJobRead> SiteJobs => Set<SiteJobRead>();
+    public DbSet<SiteTradeRead> SiteTrades => Set<SiteTradeRead>();
+    public DbSet<SiteLaborerRead> SiteLaborers => Set<SiteLaborerRead>();
+    public DbSet<SiteAssignmentRead> SiteAssignments => Set<SiteAssignmentRead>();
+    public DbSet<SiteAttendanceRead> SiteAttendances => Set<SiteAttendanceRead>();
+    public DbSet<SiteStockBalanceRead> SiteStockBalances => Set<SiteStockBalanceRead>();
+    public DbSet<SiteBillingInvoiceRead> SiteBillingInvoices => Set<SiteBillingInvoiceRead>();
+    public DbSet<SiteBillingInvoiceLineRead> SiteBillingInvoiceLines => Set<SiteBillingInvoiceLineRead>();
+    public DbSet<SiteStockDocumentRead> SiteStockDocuments => Set<SiteStockDocumentRead>();
+    public DbSet<SiteStockLineRead> SiteStockLines => Set<SiteStockLineRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -464,6 +476,18 @@ public class ReportingDbContext : TenantDbContext
         MapRead<KotLineRead>(modelBuilder, "KotLines", "sal", e => e.KotLineId);
         MapRead<InvoiceTenderRead>(modelBuilder, "InvoiceTenders", "sal", e => e.InvoiceTenderId);
         MapRead<WastageEntryRead>(modelBuilder, "WastageEntries", "inv", e => e.WastageEntryId);
+
+        // Site (sit)
+        MapRead<SiteJobRead>(modelBuilder, "Sites", "sit", e => e.SiteId);
+        MapRead<SiteTradeRead>(modelBuilder, "Trades", "sit", e => e.TradeId);
+        MapRead<SiteLaborerRead>(modelBuilder, "Laborers", "sit", e => e.LaborerId);
+        MapRead<SiteAssignmentRead>(modelBuilder, "SiteAssignments", "sit", e => e.AssignmentId);
+        MapRead<SiteAttendanceRead>(modelBuilder, "SiteAttendance", "sit", e => e.AttendanceId);
+        MapRead<SiteStockBalanceRead>(modelBuilder, "SiteStockBalances", "sit", e => e.BalanceId);
+        MapRead<SiteBillingInvoiceRead>(modelBuilder, "SiteBillingInvoices", "sit", e => e.SiteBillingInvoiceId);
+        MapRead<SiteBillingInvoiceLineRead>(modelBuilder, "SiteBillingInvoiceLines", "sit", e => e.SiteBillingInvoiceLineId);
+        MapRead<SiteStockDocumentRead>(modelBuilder, "SiteStockDocuments", "sit", e => e.DocumentId);
+        MapRead<SiteStockLineRead>(modelBuilder, "SiteStockLines", "sit", e => e.LineId);
     }
 
     private static void MapRead<TEntity>(

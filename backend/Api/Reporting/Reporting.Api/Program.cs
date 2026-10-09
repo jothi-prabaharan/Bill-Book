@@ -225,6 +225,12 @@ builder.Services.AddScoped<IReportSourceRepository, RestaurantTableTurnoverSourc
 builder.Services.AddScoped<IReportSourceRepository, RestaurantFoodCostSource>();
 builder.Services.AddScoped<IReportSourceRepository, RestaurantWastageSource>();
 builder.Services.AddScoped<IReportSourceRepository, RestaurantKotCancellationsSource>();
+
+// Site reports (TK-176)
+builder.Services.AddScoped<IReportSourceRepository, Reporting.Repository.Repositories.Sources.Site.SiteLaborerAttendanceSource>();
+builder.Services.AddScoped<IReportSourceRepository, Reporting.Repository.Repositories.Sources.Site.SiteMaterialReconciliationSource>();
+builder.Services.AddScoped<IReportSourceRepository, Reporting.Repository.Repositories.Sources.Site.SiteProfitSummarySource>();
+
 builder.Services.AddScoped<RestaurantReportRepository>();
 
 // The report builder's datasets (TK-113). Their custom field columns come

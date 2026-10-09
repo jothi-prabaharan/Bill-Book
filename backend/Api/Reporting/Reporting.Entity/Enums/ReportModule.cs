@@ -30,4 +30,7 @@ public enum ReportModule
 
     /// <summary>A Restaurant branch's day-end, sales, kitchen and food cost reports (TK-150).</summary>
     Restaurant = 16,
+
+    /// <summary>A Service branch's site reports (TK-176).</summary>
+    Site = 17,
 }

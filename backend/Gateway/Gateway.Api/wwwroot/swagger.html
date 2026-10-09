@@ -160,7 +160,13 @@
                 plugins: [
                     SwaggerUIBundle.plugins.DownloadUrl
                 ],
-                layout: "StandaloneLayout"
+                layout: "StandaloneLayout",
+                responseInterceptor: function(response) {
+                    if (response.url.includes('/openapi/') && response.obj && response.obj.servers) {
+                        response.obj.servers = [{ url: window.location.origin }];
+                    }
+                    return response;
+                }
             });
         }
 
