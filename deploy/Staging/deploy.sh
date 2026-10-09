@@ -270,7 +270,7 @@ run_deployment() {
   # 1. SWITCH TO EXISTING STAGING BRANCH & PULL LATEST CODE
   echo -e "\n[1/5] Checking out existing '$BRANCH' branch and taking latest code..."
   git checkout "$BRANCH"
-  git pull origin "$BRANCH" 2>/dev/null || echo "  [INFO] Branch synchronized with latest commits."
+  GIT_TERMINAL_PROMPT=0 git pull origin "$BRANCH" 2>/dev/null || echo "  [INFO] Branch synchronized with latest commits."
 
   # 2. STAGING DATABASE SETUP (POSTGRESQL PORT 5100)
   echo -e "\n[2/5] Preparing Staging Database on PostgreSQL Port 5100..."
