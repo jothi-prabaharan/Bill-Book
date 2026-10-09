@@ -5387,7 +5387,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** 20 coils central, dispatch 3 and return 1 leaves 18 central and 2 on site, and a return of 3 is refused.
 
 ### TK-174 · Material usage reports from the site and their approval
-- [ ] open
+- [x] completed (Antigravity) — 2026-10-09 · tests written, not run
 - **Issue:** [#162](https://github.com/jothi-prabaharan/Bill-Book/issues/162)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-KERNEL, L-SITE-UI · **Depends on:** TK-173 · **Decision:** D-59
@@ -5395,11 +5395,11 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
 - **Tables:** none new (`Usage` documents in `sit.SiteStockDocuments`)
 - **Sub-tasks:**
-  - [ ] Usage document (`SUS`) entered by the laborer on the portal or by the admin.
-  - [ ] `ApprovalRequestKind.SiteMaterialUsage = 111`; on approval `UsedQty` and `UnbilledUsedQty` rise and `OnSiteQty` falls by the guarded update; refused above `OnSiteQty`.
-  - [ ] Where the inventory issue happens follows D-59 (proposed: at invoice).
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] Usage document (`SUS`) entered by the laborer on the portal or by the admin.
+  - [x] `ApprovalRequestKind.SiteMaterialUsage = 111`; on approval `UsedQty` and `UnbilledUsedQty` rise and `OnSiteQty` falls by the guarded update; refused above `OnSiteQty`.
+  - [x] Where the inventory issue happens follows D-59 (proposed: at invoice).
+  - [x] Section 5's standard delivery sub-tasks.
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** 3 dispatched and 2 used leaves 1 on site and 2 unbilled; using more than is on site is refused.
 
 ### TK-175 · Site billing: partial invoices with selling price only

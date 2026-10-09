@@ -106,4 +106,76 @@ public sealed class SiteStockController : ControllerBase
             return Conflict(new { Message = ex.Message });
         }
     }
+
+    [HttpPost("usage")]
+    public async Task<IActionResult> SubmitUsage([FromBody] SubmitMaterialUsageRequest request, CancellationToken ct)
+    {
+        if (request is null || request.SiteId <= 0 || request.Lines == null || request.Lines.Count == 0)
+        {
+            return BadRequest(new { Message = "Valid site and used items are required." });
+        }
+
+        try
+        {
+            var result = await _repo.SubmitUsageAsync(request, ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { Message = ex.Message });
+        }
+    }
+
+    [HttpGet("usage/pending")]
+    public async Task<IActionResult> ListPendingUsage([FromQuery] long? siteId, CancellationToken ct)
+    {
+        var docs = await _repo.ListPendingUsageAsync(siteId, ct);
+        return Ok(docs);
+    }
+
+    [HttpPost("usage/{id:long}/approve")]
+    public async Task<IActionResult> ApproveUsage(long id, CancellationToken ct)
+    {
+        try
+        {
+            var result = await _repo.ApproveUsageAsync(id, ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { Message = ex.Message });
+        }
+    }
+
+    [HttpPost("usage/{id:long}/reject")]
+    public async Task<IActionResult> RejectUsage(long id, [FromBody] RejectUsageRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var result = await _repo.RejectUsageAsync(id, request?.Reason ?? "Rejected by admin", ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { Message = ex.Message });
+        }
+    }
 }
+
+public sealed class RejectUsageRequest
+{
+    public string? Reason { get; set; }
+}
+

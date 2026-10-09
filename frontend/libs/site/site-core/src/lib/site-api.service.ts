@@ -23,6 +23,7 @@ import {
   SiteStockBalanceDto,
   SiteStockDocumentDto,
   SiteStockDocumentType,
+  SubmitMaterialUsageRequest,
 } from './site.models';
 
 @Injectable({ providedIn: 'root' })
@@ -186,6 +187,29 @@ export class SiteApiService {
 
   returnStock(req: ReturnStockRequest): Promise<SiteStockDocumentDto> {
     return firstValueFrom(this.http.post<SiteStockDocumentDto>('/api/site/stock/return', req));
+  }
+
+  // --- Material Usage (TK-174) ---
+  submitMaterialUsage(req: SubmitMaterialUsageRequest): Promise<SiteStockDocumentDto> {
+    return firstValueFrom(this.http.post<SiteStockDocumentDto>('/api/site/stock/usage', req));
+  }
+
+  listPendingMaterialUsage(siteId?: number | null): Promise<SiteStockDocumentDto[]> {
+    const params: Record<string, number> = {};
+    if (siteId) params['siteId'] = siteId;
+    return firstValueFrom(this.http.get<SiteStockDocumentDto[]>('/api/site/stock/usage/pending', { params }));
+  }
+
+  approveMaterialUsage(id: number): Promise<SiteStockDocumentDto> {
+    return firstValueFrom(this.http.post<SiteStockDocumentDto>(`/api/site/stock/usage/${id}/approve`, {}));
+  }
+
+  rejectMaterialUsage(id: number, reason: string): Promise<SiteStockDocumentDto> {
+    return firstValueFrom(this.http.post<SiteStockDocumentDto>(`/api/site/stock/usage/${id}/reject`, { reason }));
+  }
+
+  submitPortalUsage(req: SubmitMaterialUsageRequest): Promise<SiteStockDocumentDto> {
+    return firstValueFrom(this.http.post<SiteStockDocumentDto>('/api/site/portal/usage', req));
   }
 }
 

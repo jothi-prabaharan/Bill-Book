@@ -38,6 +38,17 @@ public sealed record ReturnStockRequest(
     List<ReturnStockLineDto> Lines,
     string? Remarks);
 
+public sealed record MaterialUsageLineDto(
+    long ItemId,
+    decimal Quantity,
+    decimal? UnitCost = null);
+
+public sealed record SubmitMaterialUsageRequest(
+    long SiteId,
+    DateOnly DocumentDate,
+    List<MaterialUsageLineDto> Lines,
+    string? Remarks = null);
+
 public sealed record SiteStockBalanceDto(
     long BalanceId,
     long SiteId,
@@ -495,5 +506,263 @@ public sealed class SiteStockRepository
             document.ApprovalRequestId,
             document.Remarks,
             createdLines);
+    }
+
+    public async Task<SiteStockDocumentDto> SubmitUsageAsync(SubmitMaterialUsageRequest request, CancellationToken ct = default)
+    {
+        if (request.Lines is null || request.Lines.Count == 0)
+        {
+            throw new ArgumentException("Material usage requires at least one line item.");
+        }
+
+        var site = await _db.Sites.FirstOrDefaultAsync(s => s.SiteId == request.SiteId, ct)
+            ?? throw new ArgumentException($"Site {request.SiteId} not found.");
+
+        // Guarded check: verify sufficient on-site stock for all items
+        foreach (var line in request.Lines)
+        {
+            if (line.Quantity <= 0)
+            {
+                throw new ArgumentException($"Line quantity must be greater than zero for item {line.ItemId}.");
+            }
+
+            var balance = await _db.SiteStockBalances.FirstOrDefaultAsync(
+                b => b.SiteId == request.SiteId && b.ItemId == line.ItemId, ct);
+
+            decimal currentOnSite = balance?.OnSiteQty ?? 0m;
+            if (balance is null || currentOnSite < line.Quantity)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot report usage of {line.Quantity} for item {line.ItemId}. Only {currentOnSite} is currently on site.");
+            }
+        }
+
+        // Allocate document number from SUS series
+        string docNo;
+        try
+        {
+            var allocation = await _numbering.NextAsync("SUS", request.DocumentDate, ct);
+            docNo = allocation.Code;
+        }
+        catch
+        {
+            docNo = $"SUS-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(100, 999)}";
+        }
+
+        var document = new SiteStockDocument
+        {
+            DocumentType = SiteStockDocumentType.Usage,
+            DocumentNo = docNo,
+            SiteId = request.SiteId,
+            DocumentDate = request.DocumentDate,
+            Status = SiteStockDocumentStatus.Submitted, // Pending approval
+            Remarks = request.Remarks,
+        };
+
+        _db.SiteStockDocuments.Add(document);
+        await _db.SaveChangesAsync(ct);
+
+        var createdLines = new List<SiteStockLineDto>();
+
+        foreach (var line in request.Lines)
+        {
+            decimal unitCost = line.UnitCost ?? 0m;
+
+            var rule = await _marginRepo.ResolveRuleAsync(
+                assignmentId: null,
+                siteId: request.SiteId,
+                tradeId: null,
+                itemId: line.ItemId,
+                appliesTo: MarginAppliesTo.Material,
+                date: request.DocumentDate,
+                ct: ct);
+
+            var marginResult = SiteMarginRepository.Calculate(rule, unitCost);
+            decimal marginValue = marginResult.MarginAmount;
+            decimal sellingPrice = marginResult.SellingPrice;
+
+            var stockLine = new SiteStockLine
+            {
+                DocumentId = document.DocumentId,
+                ItemId = line.ItemId,
+                Quantity = line.Quantity,
+                UnitCost = unitCost,
+                MarginValue = marginValue,
+                SellingPrice = sellingPrice,
+                BilledQuantity = 0m,
+            };
+
+            _db.SiteStockLines.Add(stockLine);
+
+            createdLines.Add(new SiteStockLineDto(
+                stockLine.LineId,
+                stockLine.ItemId,
+                stockLine.Quantity,
+                stockLine.UnitCost,
+                stockLine.MarginValue,
+                stockLine.SellingPrice,
+                stockLine.BilledQuantity));
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return new SiteStockDocumentDto(
+            document.DocumentId,
+            document.DocumentType,
+            document.DocumentNo,
+            document.SiteId,
+            site.SiteName,
+            document.SourceWarehouseId,
+            document.DocumentDate,
+            document.Status,
+            document.ApprovalRequestId,
+            document.Remarks,
+            createdLines);
+    }
+
+    public async Task<SiteStockDocumentDto> ApproveUsageAsync(long documentId, CancellationToken ct = default)
+    {
+        var document = await _db.SiteStockDocuments.FirstOrDefaultAsync(d => d.DocumentId == documentId, ct)
+            ?? throw new ArgumentException($"Document {documentId} not found.");
+
+        if (document.DocumentType != SiteStockDocumentType.Usage)
+        {
+            throw new InvalidOperationException($"Document {document.DocumentNo} is not a material usage report.");
+        }
+
+        if (document.Status != SiteStockDocumentStatus.Submitted)
+        {
+            throw new InvalidOperationException($"Document {document.DocumentNo} is already in status {document.Status}.");
+        }
+
+        var lines = await _db.SiteStockLines.Where(l => l.DocumentId == documentId).ToListAsync(ct);
+        var site = await _db.Sites.FirstOrDefaultAsync(s => s.SiteId == document.SiteId, ct);
+
+        // Guarded check and update on SiteStockBalances
+        foreach (var line in lines)
+        {
+            var balance = await _db.SiteStockBalances.FirstOrDefaultAsync(
+                b => b.SiteId == document.SiteId && b.ItemId == line.ItemId, ct);
+
+            decimal currentOnSite = balance?.OnSiteQty ?? 0m;
+            if (balance is null || currentOnSite < line.Quantity)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot approve usage of {line.Quantity} for item {line.ItemId}. Only {currentOnSite} is currently on site.");
+            }
+
+            balance.UsedQty += line.Quantity;
+            balance.UnbilledUsedQty += line.Quantity;
+            balance.OnSiteQty -= line.Quantity;
+
+            if (balance.OnSiteQty < 0m)
+            {
+                throw new InvalidOperationException($"Guarded check violated: OnSiteQty became negative for item {line.ItemId}.");
+            }
+        }
+
+        document.Status = SiteStockDocumentStatus.Approved;
+        await _db.SaveChangesAsync(ct);
+
+        return new SiteStockDocumentDto(
+            document.DocumentId,
+            document.DocumentType,
+            document.DocumentNo,
+            document.SiteId,
+            site?.SiteName ?? string.Empty,
+            document.SourceWarehouseId,
+            document.DocumentDate,
+            document.Status,
+            document.ApprovalRequestId,
+            document.Remarks,
+            lines.Select(l => new SiteStockLineDto(
+                l.LineId,
+                l.ItemId,
+                l.Quantity,
+                l.UnitCost,
+                l.MarginValue,
+                l.SellingPrice,
+                l.BilledQuantity)).ToList());
+    }
+
+    public async Task<SiteStockDocumentDto> RejectUsageAsync(long documentId, string reason, CancellationToken ct = default)
+    {
+        var document = await _db.SiteStockDocuments.FirstOrDefaultAsync(d => d.DocumentId == documentId, ct)
+            ?? throw new ArgumentException($"Document {documentId} not found.");
+
+        if (document.DocumentType != SiteStockDocumentType.Usage)
+        {
+            throw new InvalidOperationException($"Document {document.DocumentNo} is not a material usage report.");
+        }
+
+        if (document.Status != SiteStockDocumentStatus.Submitted)
+        {
+            throw new InvalidOperationException($"Document {document.DocumentNo} is already in status {document.Status}.");
+        }
+
+        document.Status = SiteStockDocumentStatus.Void;
+        document.Remarks = string.IsNullOrWhiteSpace(document.Remarks)
+            ? $"Rejected: {reason}"
+            : $"{document.Remarks} | Rejected: {reason}";
+
+        await _db.SaveChangesAsync(ct);
+
+        var lines = await _db.SiteStockLines.Where(l => l.DocumentId == documentId).ToListAsync(ct);
+        var site = await _db.Sites.FirstOrDefaultAsync(s => s.SiteId == document.SiteId, ct);
+
+        return new SiteStockDocumentDto(
+            document.DocumentId,
+            document.DocumentType,
+            document.DocumentNo,
+            document.SiteId,
+            site?.SiteName ?? string.Empty,
+            document.SourceWarehouseId,
+            document.DocumentDate,
+            document.Status,
+            document.ApprovalRequestId,
+            document.Remarks,
+            lines.Select(l => new SiteStockLineDto(
+                l.LineId,
+                l.ItemId,
+                l.Quantity,
+                l.UnitCost,
+                l.MarginValue,
+                l.SellingPrice,
+                l.BilledQuantity)).ToList());
+    }
+
+    public async Task<IReadOnlyList<SiteStockDocumentDto>> ListPendingUsageAsync(long? siteId = null, CancellationToken ct = default)
+    {
+        var query = _db.SiteStockDocuments.AsNoTracking()
+            .Where(d => d.DocumentType == SiteStockDocumentType.Usage && d.Status == SiteStockDocumentStatus.Submitted);
+
+        if (siteId.HasValue) query = query.Where(d => d.SiteId == siteId.Value);
+
+        var docs = await query.OrderByDescending(d => d.DocumentDate).ThenByDescending(d => d.DocumentId).ToListAsync(ct);
+        var docIds = docs.Select(d => d.DocumentId).ToList();
+        var lines = await _db.SiteStockLines.AsNoTracking().Where(l => docIds.Contains(l.DocumentId)).ToListAsync(ct);
+        var siteIds = docs.Select(d => d.SiteId).Distinct().ToList();
+        var sites = await _db.Sites.AsNoTracking().Where(s => siteIds.Contains(s.SiteId)).ToDictionaryAsync(s => s.SiteId, s => s.SiteName, ct);
+
+        return docs.Select(d => new SiteStockDocumentDto(
+            d.DocumentId,
+            d.DocumentType,
+            d.DocumentNo,
+            d.SiteId,
+            sites.GetValueOrDefault(d.SiteId, string.Empty),
+            d.SourceWarehouseId,
+            d.DocumentDate,
+            d.Status,
+            d.ApprovalRequestId,
+            d.Remarks,
+            lines.Where(l => l.DocumentId == d.DocumentId).Select(l => new SiteStockLineDto(
+                l.LineId,
+                l.ItemId,
+                l.Quantity,
+                l.UnitCost,
+                l.MarginValue,
+                l.SellingPrice,
+                l.BilledQuantity)).ToList()
+        )).ToList();
     }
 }

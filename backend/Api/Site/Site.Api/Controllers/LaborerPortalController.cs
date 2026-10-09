@@ -39,15 +39,18 @@ public sealed class ClockOutPortalRequest
 public sealed class LaborerPortalController : ControllerBase
 {
     private readonly SiteAttendanceRepository _repo;
+    private readonly SiteStockRepository _stockRepo;
     private readonly ICurrentUser _currentUser;
     private readonly TimeProvider _timeProvider;
 
     public LaborerPortalController(
         SiteAttendanceRepository repo,
+        SiteStockRepository stockRepo,
         ICurrentUser currentUser,
         TimeProvider timeProvider)
     {
         _repo = repo;
+        _stockRepo = stockRepo;
         _currentUser = currentUser;
         _timeProvider = timeProvider;
     }
@@ -217,5 +220,34 @@ public sealed class LaborerPortalController : ControllerBase
         }
 
         return File(stream, photo.ContentType, photo.FileName);
+    }
+
+    [HttpPost("usage")]
+    public async Task<IActionResult> SubmitUsage([FromBody] SubmitMaterialUsageRequest request, CancellationToken ct)
+    {
+        long? laborerId = await ResolveLaborerIdAsync(null, ct);
+        if (!laborerId.HasValue)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "User is not linked to an active laborer profile." });
+        }
+
+        if (request is null || request.SiteId <= 0 || request.Lines == null || request.Lines.Count == 0)
+        {
+            return BadRequest(new { message = "Valid site and used items are required." });
+        }
+
+        try
+        {
+            var result = await _stockRepo.SubmitUsageAsync(request, ct);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 }

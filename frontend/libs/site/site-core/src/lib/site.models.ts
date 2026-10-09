@@ -291,3 +291,16 @@ export interface ReturnStockRequest {
   remarks?: string | null;
 }
 
+export interface MaterialUsageLineDto {
+  itemId: number;
+  quantity: number;
+  unitCost?: number | null;
+}
+
+export interface SubmitMaterialUsageRequest {
+  siteId: number;
+  documentDate: string;
+  lines: MaterialUsageLineDto[];
+  remarks?: string | null;
+}
+
