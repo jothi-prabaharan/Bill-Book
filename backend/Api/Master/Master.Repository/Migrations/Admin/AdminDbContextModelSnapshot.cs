@@ -8131,7 +8131,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Balance Sheet",
                             ParentId = 107,
-                            RoutePath = "/reports/statements/balance-sheet",
+                            RoutePath = "/reports/balance-sheet",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8149,7 +8149,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Profit & Loss",
                             ParentId = 107,
-                            RoutePath = "/reports/statements/profit-and-loss",
+                            RoutePath = "/reports/profit-and-loss",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8167,7 +8167,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Cash Flow Statement - Direct",
                             ParentId = 107,
-                            RoutePath = "/reports/r-cash-flow-statement-direct",
+                            RoutePath = "/reports/cash-flow-statement-direct",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8185,7 +8185,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Reconciliation Report",
                             ParentId = 107,
-                            RoutePath = "/reports/r-reconciliation-report",
+                            RoutePath = "/reports/reconciliation-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8219,7 +8219,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Business Performance",
                             ParentId = 108,
-                            RoutePath = "/reports/r-business-performance",
+                            RoutePath = "/reports/business-performance",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8289,7 +8289,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Journal Report",
                             ParentId = 109,
-                            RoutePath = "/reports/r-journal-report",
+                            RoutePath = "/reports/journal-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8307,7 +8307,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Account Transaction",
                             ParentId = 109,
-                            RoutePath = "/reports/r-account-transaction",
+                            RoutePath = "/reports/account-transaction",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8325,7 +8325,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Bank Summary",
                             ParentId = 109,
-                            RoutePath = "/reports/r-bank-summary",
+                            RoutePath = "/reports/bank-summary",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8343,7 +8343,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Foreign Currency Gain or Loss",
                             ParentId = 109,
-                            RoutePath = "/reports/r-foreign-currency-gain-or-loss",
+                            RoutePath = "/reports/foreign-currency-gain-or-loss",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8361,7 +8361,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Foreign Currency Gain or Loss Details",
                             ParentId = 109,
-                            RoutePath = "/reports/r-foreign-currency-gain-or-loss-details",
+                            RoutePath = "/reports/foreign-currency-gain-or-loss-details",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8395,7 +8395,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Aged Receivables Summary",
                             ParentId = 110,
-                            RoutePath = "/reports/r-aged-receivables-summary",
+                            RoutePath = "/reports/aged-receivables-summary",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8413,7 +8413,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Aged Receivables Detail",
                             ParentId = 110,
-                            RoutePath = "/reports/r-aged-receivables-detail",
+                            RoutePath = "/reports/aged-receivables-detail",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8431,7 +8431,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Receivable Invoice Summary",
                             ParentId = 110,
-                            RoutePath = "/reports/r-receivable-invoice-summary",
+                            RoutePath = "/reports/receivable-invoice-summary",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8449,7 +8449,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Receivable Invoice Detail",
                             ParentId = 110,
-                            RoutePath = "/reports/r-receivable-invoice-detail",
+                            RoutePath = "/reports/receivable-invoice-detail",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8467,7 +8467,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Invoice Track Report",
                             ParentId = 110,
-                            RoutePath = "/reports/r-invoice-track-report",
+                            RoutePath = "/reports/invoice-track-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8485,7 +8485,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Invoice/DN Payment Collection Report",
                             ParentId = 110,
-                            RoutePath = "/reports/r-invoice-dn-payment-collection-report",
+                            RoutePath = "/reports/invoice-dn-payment-collection-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8503,7 +8503,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Sales Analysis",
                             ParentId = 110,
-                            RoutePath = "/reports/r-sales-analysis",
+                            RoutePath = "/reports/sales-analysis",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8521,7 +8521,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Sales Analysis Detail Report",
                             ParentId = 110,
-                            RoutePath = "/reports/r-sales-analysis-detail-report",
+                            RoutePath = "/reports/sales-analysis-detail-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8539,7 +8539,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Sales Order Track Report",
                             ParentId = 110,
-                            RoutePath = "/reports/r-sales-order-track-report",
+                            RoutePath = "/reports/sales-order-track-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8557,7 +8557,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Quotation Track Report",
                             ParentId = 110,
-                            RoutePath = "/reports/r-quotation-track-report",
+                            RoutePath = "/reports/quotation-track-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8575,7 +8575,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Delivery Order Track Report",
                             ParentId = 110,
-                            RoutePath = "/reports/r-delivery-order-track-report",
+                            RoutePath = "/reports/delivery-order-track-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8609,7 +8609,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Aged Payables Summary",
                             ParentId = 111,
-                            RoutePath = "/reports/r-aged-payables-summary",
+                            RoutePath = "/reports/aged-payables-summary",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8627,7 +8627,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Aged Payables Details",
                             ParentId = 111,
-                            RoutePath = "/reports/r-aged-payables-details",
+                            RoutePath = "/reports/aged-payables-details",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8645,7 +8645,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Payable Invoice Summary",
                             ParentId = 111,
-                            RoutePath = "/reports/r-payable-invoice-summary",
+                            RoutePath = "/reports/payable-invoice-summary",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8663,7 +8663,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Payable Invoice Detail",
                             ParentId = 111,
-                            RoutePath = "/reports/r-payable-invoice-detail",
+                            RoutePath = "/reports/payable-invoice-detail",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8681,7 +8681,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Bills Track Report",
                             ParentId = 111,
-                            RoutePath = "/reports/r-bills-track-report",
+                            RoutePath = "/reports/bills-track-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8699,7 +8699,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Bill/DN Payment Report",
                             ParentId = 111,
-                            RoutePath = "/reports/r-bill-dn-payment-report",
+                            RoutePath = "/reports/bill-dn-payment-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8717,7 +8717,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Purchase Analysis",
                             ParentId = 111,
-                            RoutePath = "/reports/r-purchase-analysis",
+                            RoutePath = "/reports/purchase-analysis",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8735,7 +8735,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Purchase Order Track Report",
                             ParentId = 111,
-                            RoutePath = "/reports/r-purchase-order-track-report",
+                            RoutePath = "/reports/purchase-order-track-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8753,7 +8753,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Purchase Receive Order Details",
                             ParentId = 111,
-                            RoutePath = "/reports/r-purchase-receive-order-details",
+                            RoutePath = "/reports/purchase-receive-order-details",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8771,7 +8771,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Receive Order Track Report",
                             ParentId = 111,
-                            RoutePath = "/reports/r-receive-order-track-report",
+                            RoutePath = "/reports/receive-order-track-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8805,7 +8805,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Inventory Item Summary",
                             ParentId = 112,
-                            RoutePath = "/reports/r-inventory-item-summary",
+                            RoutePath = "/reports/inventory-item-summary",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8823,7 +8823,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Inventory Item Detail",
                             ParentId = 112,
-                            RoutePath = "/reports/r-inventory-item-detail",
+                            RoutePath = "/reports/inventory-item-detail",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8841,7 +8841,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Inventory Item List",
                             ParentId = 112,
-                            RoutePath = "/reports/r-inventory-item-list",
+                            RoutePath = "/reports/inventory-item-list",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8859,7 +8859,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Inventory Aging Report",
                             ParentId = 112,
-                            RoutePath = "/reports/r-inventory-aging-report",
+                            RoutePath = "/reports/inventory-aging-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8877,7 +8877,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Batch Tracking Status Report",
                             ParentId = 112,
-                            RoutePath = "/reports/r-batch-tracking-status-report",
+                            RoutePath = "/reports/batch-tracking-status-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8895,7 +8895,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Batch Tracking Detail Report",
                             ParentId = 112,
-                            RoutePath = "/reports/r-batch-tracking-detail-report",
+                            RoutePath = "/reports/batch-tracking-detail-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8913,7 +8913,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Serial Tracking Status Report",
                             ParentId = 112,
-                            RoutePath = "/reports/r-serial-tracking-status-report",
+                            RoutePath = "/reports/serial-tracking-status-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8931,7 +8931,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Serial Tracking Detail Report",
                             ParentId = 112,
-                            RoutePath = "/reports/r-serial-tracking-detail-report",
+                            RoutePath = "/reports/serial-tracking-detail-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8949,7 +8949,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Warehouse Tracking Status Report",
                             ParentId = 112,
-                            RoutePath = "/reports/r-warehouse-tracking-status-report",
+                            RoutePath = "/reports/warehouse-tracking-status-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -8983,7 +8983,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Fixed Assets Schedule",
                             ParentId = 113,
-                            RoutePath = "/reports/r-fixed-assets-schedule",
+                            RoutePath = "/reports/fixed-assets-schedule",
                             Type = "Item",
                             Version = 0u
                         },
@@ -9001,7 +9001,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Depreciation Schedule",
                             ParentId = 113,
-                            RoutePath = "/reports/r-depreciation-schedule",
+                            RoutePath = "/reports/depreciation-schedule",
                             Type = "Item",
                             Version = 0u
                         },
@@ -9019,7 +9019,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Disposal Schedule Report",
                             ParentId = 113,
-                            RoutePath = "/reports/r-disposal-schedule-report",
+                            RoutePath = "/reports/disposal-schedule-report",
                             Type = "Item",
                             Version = 0u
                         },
@@ -9037,7 +9037,7 @@ namespace Master.Repository.Migrations.Admin
                             Module = "reports",
                             Name = "Fixed Asset Reconciliation",
                             ParentId = 113,
-                            RoutePath = "/reports/r-fixed-asset-reconciliation",
+                            RoutePath = "/reports/fixed-asset-reconciliation",
                             Type = "Item",
                             Version = 0u
                         },
