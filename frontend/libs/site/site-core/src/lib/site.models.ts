@@ -1,48 +1,155 @@
 /**
- * Models and enums for the Site Services module (TK-168/TK-169).
+ * Models and enums for the Site Services module (TK-168 to TK-170).
  */
 
-export type SiteStatus = 'Draft' | 'Active' | 'OnHold' | 'Completed' | 'Closed';
-export type AssignmentStatus = 'Assigned' | 'Active' | 'Relieved' | 'Terminated';
-export type MarginScope = 'Branch' | 'Site' | 'Trade' | 'Item' | 'Assignment';
-export type MarginAppliesTo = 'All' | 'Labor' | 'Material';
-export type MarginType = 'FlatPerUnit' | 'Percent';
+export type SiteStatus = 'Planning' | 'Active' | 'OnHold' | 'Completed' | 'Closed';
+export type AssignmentStatus = 'Active' | 'Ended';
+export type MarginScope = 'Assignment' | 'Site' | 'Trade' | 'Item' | 'Branch';
+export type MarginAppliesTo = 'All' | 'Labor' | 'Overtime' | 'Material';
+export type MarginType = 'Percent' | 'FlatPerUnit';
+
+export interface TradeDto {
+  tradeId: number;
+  tradeCode: string;
+  tradeName: string;
+  defaultServiceItemId?: number | null;
+  defaultCostRatePerDay?: number | null;
+  defaultSellRatePerDay: number;
+  defaultOtCostRatePerHour?: number | null;
+  defaultOtSellRatePerHour: number;
+  isActive: boolean;
+}
+
+export interface SaveTradeDto {
+  tradeCode: string;
+  tradeName: string;
+  defaultServiceItemId?: number | null;
+  defaultCostRatePerDay: number;
+  defaultSellRatePerDay: number;
+  defaultOtCostRatePerHour: number;
+  defaultOtSellRatePerHour: number;
+  isActive: boolean;
+}
+
+export interface LaborerDto {
+  laborerId: number;
+  tradeId: number;
+  userId?: string | null;
+  employeeId?: number | null;
+  fullName: string;
+  phone: string;
+  costRatePerDay?: number | null;
+  sellRatePerDay?: number | null;
+  otCostRatePerHour?: number | null;
+  otSellRatePerHour?: number | null;
+  isActive: boolean;
+}
+
+export interface SaveLaborerDto {
+  tradeId: number;
+  userId?: string | null;
+  employeeId?: number | null;
+  fullName: string;
+  phone: string;
+  costRatePerDay?: number | null;
+  sellRatePerDay?: number | null;
+  otCostRatePerHour?: number | null;
+  otSellRatePerHour?: number | null;
+  isActive: boolean;
+}
 
 export interface SiteDto {
   siteId: number;
   siteCode: string;
   siteName: string;
-  clientContactId: number;
-  clientContactName?: string;
-  projectManagerUserId?: string | null;
-  status: SiteStatus;
-  warehouseId?: number | null;
-  addressLine1?: string | null;
-  city?: string | null;
-  state?: string | null;
-  pincode?: string | null;
+  contactId: number;
+  address: string;
   latitude?: number | null;
   longitude?: number | null;
   geofenceRadiusMeters: number;
+  warehouseId?: number | null;
+  status: SiteStatus;
   startDate?: string | null;
-  targetEndDate?: string | null;
+  estimatedEndDate?: string | null;
   actualEndDate?: string | null;
-  notes?: string | null;
 }
 
 export interface SaveSiteDto {
+  siteCode?: string | null;
   siteName: string;
-  clientContactId: number;
-  projectManagerUserId?: string | null;
-  status: SiteStatus;
-  addressLine1?: string | null;
-  city?: string | null;
-  state?: string | null;
-  pincode?: string | null;
+  contactId: number;
+  address: string;
   latitude?: number | null;
   longitude?: number | null;
   geofenceRadiusMeters: number;
+  status: SiteStatus;
   startDate?: string | null;
-  targetEndDate?: string | null;
-  notes?: string | null;
+  estimatedEndDate?: string | null;
+  actualEndDate?: string | null;
+}
+
+export interface SiteAssignmentDto {
+  siteAssignmentId: number;
+  siteId: number;
+  laborerId: number;
+  tradeId: number;
+  startDate: string;
+  endDate?: string | null;
+  costRatePerDay?: number | null;
+  sellRatePerDay?: number | null;
+  approvedDays: number;
+  approvedOtHours: number;
+  billedDays: number;
+  billedOtHours: number;
+  status: AssignmentStatus;
+}
+
+export interface SaveAssignmentDto {
+  siteId: number;
+  laborerId: number;
+  tradeId: number;
+  startDate: string;
+  endDate?: string | null;
+  costRatePerDay?: number | null;
+  sellRatePerDay?: number | null;
+  status: AssignmentStatus;
+}
+
+export interface MarginRuleDto {
+  marginRuleId: number;
+  scope: MarginScope;
+  scopeId?: number | null;
+  appliesTo: MarginAppliesTo;
+  marginType: MarginType;
+  marginValue?: number | null;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  isActive: boolean;
+}
+
+export interface SaveMarginRuleDto {
+  scope: MarginScope;
+  scopeId?: number | null;
+  appliesTo: MarginAppliesTo;
+  marginType: MarginType;
+  marginValue: number;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  isActive: boolean;
+}
+
+export interface ResolveMarginRequest {
+  assignmentId?: number | null;
+  siteId?: number | null;
+  tradeId?: number | null;
+  itemId?: number | null;
+  appliesTo: MarginAppliesTo;
+  date?: string | null;
+  cost: number;
+}
+
+export interface ResolveMarginResponse {
+  rule?: MarginRuleDto | null;
+  marginAmount?: number | null;
+  sellingPrice: number;
 }

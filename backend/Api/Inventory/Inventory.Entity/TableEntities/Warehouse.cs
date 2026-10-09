@@ -69,4 +69,7 @@ public class Warehouse : OrgScopedEntity
     public int DisplayOrder { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Optional 1:1 link to a site project in the Site service (TK-170).</summary>
+    public long? SiteId { get; set; }
 }

@@ -2462,6 +2462,9 @@ namespace Inventory.Repository.Migrations.Tenant
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
+                    b.Property<long?>("SiteId")
+                        .HasColumnType("bigint");
+
                     b.Property<int?>("StateId")
                         .HasColumnType("integer");
 
@@ -2499,6 +2502,10 @@ namespace Inventory.Repository.Migrations.Tenant
                         .HasFilter("\"IsDefault\" = true");
 
                     b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "SiteId")
+                        .HasDatabaseName("IX_Warehouses_SiteId")
+                        .HasFilter("\"SiteId\" IS NOT NULL");
 
                     b.HasIndex("OrgId", "WarehouseCode")
                         .IsUnique();

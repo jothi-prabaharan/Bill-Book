@@ -5312,22 +5312,29 @@ The queue below is one list in card-number order. Each card names its group.
   - Configured Gateway routes and clusters for Site service (port 4523).
 
 ### TK-170 · Site masters: trades, laborers, sites, assignments and margin rules
-- [~] working (Antigravity) — since 2026-10-09
+- [x] completed (Antigravity) — 2026-10-09 · tests written, not run
 - **Issue:** [#158](https://github.com/jothi-prabaharan/Bill-Book/issues/158)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-169 · **Decision:** D-62
 - **Where:** the TK-168 design; `Inventory.Entity/TableEntities/Warehouse.cs`, `Inventory.Entity/Enums/WarehouseType.cs`; `con.Contacts` for the site owner
-- **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins.
+- **State:** completed 9 October 2026.
 - **Tables:** `sit.Trades`, `sit.Laborers`, `sit.Sites`, `sit.SiteAssignments`, `sit.MarginRules`
 - **Sub-tasks:**
-  - [ ] Entities, enums (`SiteStatus`, `AssignmentStatus`, `MarginScope`, `MarginAppliesTo`, `MarginType`) and the migration with RLS.
-  - [ ] `WarehouseType.Site = 4` and `inv.Warehouses.SiteId`; creating a site creates its warehouse through a new Inventory internal endpoint, in the site's request.
-  - [ ] `SiteMarginRepository.Resolve(scope chain, appliesTo, date)`: Assignment → Site → Trade or Item → Branch, effective-dated; `FlatPerUnit` adds the value, `Percent` adds cost × value / 100.
-  - [ ] Cost-rate fallback: assignment → laborer → trade default.
-  - [ ] List and form pages for each master at 360px; margin values and cost rates shown only with `site.cost.view`.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] Entities, enums (`SiteStatus`, `AssignmentStatus`, `MarginScope`, `MarginAppliesTo`, `MarginType`) and the migration with RLS.
+  - [x] `WarehouseType.Site = 4` and `inv.Warehouses.SiteId`; creating a site creates its warehouse through a new Inventory internal endpoint (`POST /internal/warehouses/site`), in the site's request.
+  - [x] `SiteMarginRepository.Resolve(scope chain, appliesTo, date)`: Assignment → Site → Trade or Item → Branch, effective-dated; `FlatPerUnit` adds the value, `Percent` adds cost × value / 100.
+  - [x] Cost-rate fallback: assignment → laborer → trade default.
+  - [x] List and form pages for each master at 360px; margin values and cost rates shown only with `site.cost.view`.
+  - [x] Section 5's standard delivery sub-tasks.
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** a ₹1000 flat day margin on Electrical and a 10% margin on one site resolve to the site's 10% for a laborer there and to ₹1000 elsewhere; a site gets its own warehouse.
+- **As built (9 October 2026):**
+  - Updated `Trades`, `Laborers`, `Sites`, `SiteAssignments`, `MarginRules` entities and EF mappings with migration `UpdateSiteMastersSchema`.
+  - Added `WarehouseType.Site = 4` and `inv.Warehouses.SiteId` with migration `AddWarehouseSiteId` and `InternalWarehouseController` (`POST /internal/warehouses/site`).
+  - Added `SiteMarginRepository` implementing hierarchical resolution and rate fallbacks.
+  - Added master controllers with `site.cost.view` redaction: `TradesController`, `LaborersController`, `SitesController` (with automatic warehouse creation), `SiteAssignmentsController`, `MarginRulesController`.
+  - Added tabbed master management page in `frontend/libs/site/site-ui`.
+  - Wrote `SiteMarginRepositoryTests` covering the ₹1000 flat / 10% site margin resolution and rate fallbacks.
 
 ### TK-171 · Laborer portal: check-in, clock-out form, photo proof and OT claim
 - [ ] open

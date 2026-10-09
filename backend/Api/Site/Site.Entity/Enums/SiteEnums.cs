@@ -10,9 +10,38 @@ public enum SiteStatus
 {
     Planning = 1,
     Active = 2,
-    Paused = 3,
+    OnHold = 3,
     Completed = 4,
-    Cancelled = 5,
+    Closed = 5,
+}
+
+public enum AssignmentStatus
+{
+    Active = 1,
+    Ended = 2,
+}
+
+public enum MarginScope
+{
+    Assignment = 1,
+    Site = 2,
+    Trade = 3,
+    Item = 4,
+    Branch = 5,
+}
+
+public enum MarginAppliesTo
+{
+    All = 1,
+    Labor = 2,
+    Overtime = 3,
+    Material = 4,
+}
+
+public enum MarginType
+{
+    Percent = 1,
+    FlatPerUnit = 2,
 }
 
 public enum ClockApprovalStatus

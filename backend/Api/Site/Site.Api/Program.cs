@@ -77,8 +77,16 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IFinancialYearProvider>()));
 
 // ---- Service registrations ----
+builder.Services.AddHttpClient<Site.Repository.Clients.IInventoryWarehouseClient, Site.Repository.Clients.HttpInventoryWarehouseClient>(client =>
+{
+    string url = builder.Configuration["Inventory:BaseUrl"] ?? "http://localhost:4509";
+    client.BaseAddress = new Uri(url);
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddScoped<SiteSeederRepository>();
 builder.Services.AddScoped<SiteRepository>();
+builder.Services.AddScoped<SiteMarginRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

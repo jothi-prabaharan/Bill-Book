@@ -1,24 +1,368 @@
-<div class="site-page">
+<div class="site-master-container">
   <div class="page-header">
-    <h1 class="page-title">Sites & Projects</h1>
+    <h1 class="page-title">Site Services Masters</h1>
+    <div class="actions-bar">
+      @if (canEdit()) {
+        <button class="btn-primary" (click)="openAddModal()">
+          + Add {{ activeTabLabel() }}
+        </button>
+      }
+    </div>
   </div>
 
+  <nav class="tab-nav">
+    <button
+      class="tab-btn"
+      [class.active]="tab() === 'sites'"
+      (click)="setTab('sites')"
+    >
+      Sites
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="tab() === 'trades'"
+      (click)="setTab('trades')"
+    >
+      Trades
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="tab() === 'laborers'"
+      (click)="setTab('laborers')"
+    >
+      Laborers
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="tab() === 'assignments'"
+      (click)="setTab('assignments')"
+    >
+      Assignments
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="tab() === 'margins'"
+      (click)="setTab('margins')"
+    >
+      Margin Rules
+    </button>
+  </nav>
+
   @if (loading()) {
-    <p>Loading sites...</p>
-  } @else if (sites().length === 0) {
-    <p>No site projects found.</p>
+    <p>Loading...</p>
   } @else {
-    <div class="site-card-grid">
-      @for (site of sites(); track site.siteId) {
-        <div class="site-card">
-          <div class="site-code">{{ site.siteCode }}</div>
-          <div class="site-name">{{ site.siteName }}</div>
-          <div [class]="'site-status status-' + site.status.toLowerCase()">{{ site.status }}</div>
-          @if (site.city || site.state) {
-            <div>{{ site.city }} {{ site.state }}</div>
+    <!-- SITES TAB -->
+    @if (tab() === 'sites') {
+      @if (sites().length === 0) {
+        <p>No project sites configured.</p>
+      } @else {
+        <div class="card-grid">
+          @for (s of sites(); track s.siteId) {
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <span class="badge badge-planning">{{ s.siteCode }}</span>
+                  <div class="card-title">{{ s.siteName }}</div>
+                </div>
+                <span [class]="'badge badge-' + s.status.toLowerCase()">{{ s.status }}</span>
+              </div>
+              <div class="card-field">
+                <span>Address</span>
+                <span class="val">{{ s.address || '-' }}</span>
+              </div>
+              <div class="card-field">
+                <span>Geofence</span>
+                <span class="val">{{ s.geofenceRadiusMeters }}m</span>
+              </div>
+              @if (s.warehouseId) {
+                <div class="card-field">
+                  <span>Warehouse</span>
+                  <span class="val">#{{ s.warehouseId }}</span>
+                </div>
+              }
+            </div>
           }
         </div>
       }
+    }
+
+    <!-- TRADES TAB -->
+    @if (tab() === 'trades') {
+      @if (trades().length === 0) {
+        <p>No trades configured.</p>
+      } @else {
+        <div class="card-grid">
+          @for (t of trades(); track t.tradeId) {
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <span class="badge badge-planning">{{ t.tradeCode }}</span>
+                  <div class="card-title">{{ t.tradeName }}</div>
+                </div>
+                <span [class]="t.isActive ? 'badge badge-active' : 'badge badge-closed'">
+                  {{ t.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <div class="card-field">
+                <span>Sell Rate / Day</span>
+                <span class="val">₹{{ t.defaultSellRatePerDay }}</span>
+              </div>
+              @if (canViewCost()) {
+                <div class="card-field">
+                  <span>Cost Rate / Day</span>
+                  <span class="val">₹{{ t.defaultCostRatePerDay ?? 0 }}</span>
+                </div>
+              }
+              <div class="card-field">
+                <span>OT Sell / Hr</span>
+                <span class="val">₹{{ t.defaultOtSellRatePerHour }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- LABORERS TAB -->
+    @if (tab() === 'laborers') {
+      @if (laborers().length === 0) {
+        <p>No laborers configured.</p>
+      } @else {
+        <div class="card-grid">
+          @for (l of laborers(); track l.laborerId) {
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">{{ l.fullName }}</div>
+                <span [class]="l.isActive ? 'badge badge-active' : 'badge badge-closed'">
+                  {{ l.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <div class="card-field">
+                <span>Phone</span>
+                <span class="val">{{ l.phone }}</span>
+              </div>
+              <div class="card-field">
+                <span>Trade</span>
+                <span class="val">{{ tradeName(l.tradeId) }}</span>
+              </div>
+              @if (l.sellRatePerDay) {
+                <div class="card-field">
+                  <span>Sell Rate / Day</span>
+                  <span class="val">₹{{ l.sellRatePerDay }}</span>
+                </div>
+              }
+              @if (canViewCost() && l.costRatePerDay) {
+                <div class="card-field">
+                  <span>Cost Rate / Day</span>
+                  <span class="val">₹{{ l.costRatePerDay }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- ASSIGNMENTS TAB -->
+    @if (tab() === 'assignments') {
+      @if (assignments().length === 0) {
+        <p>No assignments found.</p>
+      } @else {
+        <div class="card-grid">
+          @for (a of assignments(); track a.siteAssignmentId) {
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">{{ laborerName(a.laborerId) }}</div>
+                <span [class]="a.status === 'Active' ? 'badge badge-active' : 'badge badge-closed'">
+                  {{ a.status }}
+                </span>
+              </div>
+              <div class="card-field">
+                <span>Site</span>
+                <span class="val">{{ siteName(a.siteId) }}</span>
+              </div>
+              <div class="card-field">
+                <span>Dates</span>
+                <span class="val">{{ a.startDate }} ~ {{ a.endDate || 'Ongoing' }}</span>
+              </div>
+              <div class="card-field">
+                <span>Approved Days</span>
+                <span class="val">{{ a.approvedDays }}d</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- MARGIN RULES TAB -->
+    @if (tab() === 'margins') {
+      @if (margins().length === 0) {
+        <p>No margin rules configured.</p>
+      } @else {
+        <div class="card-grid">
+          @for (m of margins(); track m.marginRuleId) {
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <span class="badge badge-planning">{{ m.scope }} Scope</span>
+                  <div class="card-title">{{ m.appliesTo }} Margin</div>
+                </div>
+                <span [class]="m.isActive ? 'badge badge-active' : 'badge badge-closed'">
+                  {{ m.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <div class="card-field">
+                <span>Margin Type</span>
+                <span class="val">{{ m.marginType }}</span>
+              </div>
+              @if (canViewCost()) {
+                <div class="card-field">
+                  <span>Margin Value</span>
+                  <span class="val">
+                    {{ m.marginType === 'Percent' ? m.marginValue + '%' : '₹' + m.marginValue }}
+                  </span>
+                </div>
+              }
+              <div class="card-field">
+                <span>Effective</span>
+                <span class="val">{{ m.effectiveFrom }} ~ {{ m.effectiveTo || 'Ongoing' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+
+  <!-- MODAL FOR ADDING -->
+  @if (showModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-sheet" (click)="$event.stopPropagation()">
+        <h2>Add {{ activeTabLabel() }}</h2>
+
+        @if (tab() === 'sites') {
+          <div class="form-group">
+            <label>Site Name *</label>
+            <input type="text" [(ngModel)]="siteForm.siteName" placeholder="e.g. City Mall Renovation" />
+          </div>
+          <div class="form-group">
+            <label>Client Contact ID *</label>
+            <input type="number" [(ngModel)]="siteForm.contactId" placeholder="Contact ID" />
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <textarea [(ngModel)]="siteForm.address" placeholder="Site physical address"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Geofence Radius (meters)</label>
+            <input type="number" [(ngModel)]="siteForm.geofenceRadiusMeters" />
+          </div>
+        }
+
+        @if (tab() === 'trades') {
+          <div class="form-group">
+            <label>Trade Code *</label>
+            <input type="text" [(ngModel)]="tradeForm.tradeCode" placeholder="e.g. ELEC" />
+          </div>
+          <div class="form-group">
+            <label>Trade Name *</label>
+            <input type="text" [(ngModel)]="tradeForm.tradeName" placeholder="e.g. Electrical" />
+          </div>
+          <div class="form-group">
+            <label>Sell Rate / Day *</label>
+            <input type="number" [(ngModel)]="tradeForm.defaultSellRatePerDay" />
+          </div>
+          <div class="form-group">
+            <label>Cost Rate / Day</label>
+            <input type="number" [(ngModel)]="tradeForm.defaultCostRatePerDay" />
+          </div>
+        }
+
+        @if (tab() === 'laborers') {
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" [(ngModel)]="laborerForm.fullName" placeholder="e.g. John Doe" />
+          </div>
+          <div class="form-group">
+            <label>Phone *</label>
+            <input type="text" [(ngModel)]="laborerForm.phone" placeholder="e.g. 9876543210" />
+          </div>
+          <div class="form-group">
+            <label>Trade *</label>
+            <select [(ngModel)]="laborerForm.tradeId">
+              @for (t of trades(); track t.tradeId) {
+                <option [value]="t.tradeId">{{ t.tradeName }} ({{ t.tradeCode }})</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (tab() === 'assignments') {
+          <div class="form-group">
+            <label>Site *</label>
+            <select [(ngModel)]="assignmentForm.siteId">
+              @for (s of sites(); track s.siteId) {
+                <option [value]="s.siteId">{{ s.siteName }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Laborer *</label>
+            <select [(ngModel)]="assignmentForm.laborerId">
+              @for (l of laborers(); track l.laborerId) {
+                <option [value]="l.laborerId">{{ l.fullName }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date *</label>
+            <input type="date" [(ngModel)]="assignmentForm.startDate" />
+          </div>
+        }
+
+        @if (tab() === 'margins') {
+          <div class="form-group">
+            <label>Scope *</label>
+            <select [(ngModel)]="marginForm.scope">
+              <option value="Branch">Branch Default</option>
+              <option value="Site">Site</option>
+              <option value="Trade">Trade</option>
+              <option value="Item">Item</option>
+              <option value="Assignment">Assignment</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Applies To *</label>
+            <select [(ngModel)]="marginForm.appliesTo">
+              <option value="All">All</option>
+              <option value="Labor">Labor</option>
+              <option value="Overtime">Overtime</option>
+              <option value="Material">Material</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Margin Type *</label>
+            <select [(ngModel)]="marginForm.marginType">
+              <option value="Percent">Percent (%)</option>
+              <option value="FlatPerUnit">Flat Per Unit (₹)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Margin Value *</label>
+            <input type="number" [(ngModel)]="marginForm.marginValue" />
+          </div>
+          <div class="form-group">
+            <label>Effective From *</label>
+            <input type="date" [(ngModel)]="marginForm.effectiveFrom" />
+          </div>
+        }
+
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+          <button class="btn-primary" (click)="saveItem()">Save</button>
+        </div>
+      </div>
     </div>
   }
 </div>

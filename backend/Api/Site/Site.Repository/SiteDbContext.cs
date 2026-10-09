@@ -42,8 +42,10 @@ public class SiteDbContext : TenantDbContext
         {
             b.HasKey(e => e.TradeId);
             b.HasIndex(e => new { e.CustomerId, e.OrgId, e.TradeCode }).IsUnique();
-            b.Property(e => e.StandardHourlyRate).HasColumnType("decimal(18,4)");
-            b.Property(e => e.StandardOvertimeHourlyRate).HasColumnType("decimal(18,4)");
+            b.Property(e => e.DefaultCostRatePerDay).HasColumnType("decimal(18,4)");
+            b.Property(e => e.DefaultSellRatePerDay).HasColumnType("decimal(18,4)");
+            b.Property(e => e.DefaultOtCostRatePerHour).HasColumnType("decimal(18,4)");
+            b.Property(e => e.DefaultOtSellRatePerHour).HasColumnType("decimal(18,4)");
         });
 
         modelBuilder.Entity<Laborer>(b =>
@@ -51,9 +53,14 @@ public class SiteDbContext : TenantDbContext
             b.HasKey(e => e.LaborerId);
             b.HasIndex(e => new { e.CustomerId, e.OrgId, e.Phone });
             b.HasIndex(e => new { e.CustomerId, e.OrgId, e.UserId }).HasFilter("\"UserId\" IS NOT NULL");
-            b.Property(e => e.CostHourlyRate).HasColumnType("decimal(18,4)");
-            b.Property(e => e.BillingHourlyRate).HasColumnType("decimal(18,4)");
-            b.Property(e => e.LaborerType).HasConversion<int>();
+            b.Property(e => e.CostRatePerDay).HasColumnType("decimal(18,4)");
+            b.Property(e => e.SellRatePerDay).HasColumnType("decimal(18,4)");
+            b.Property(e => e.OtCostRatePerHour).HasColumnType("decimal(18,4)");
+            b.Property(e => e.OtSellRatePerHour).HasColumnType("decimal(18,4)");
+            b.HasOne<Trade>()
+                .WithMany()
+                .HasForeignKey(e => e.TradeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<SiteJob>(b =>
@@ -61,8 +68,8 @@ public class SiteDbContext : TenantDbContext
             b.HasKey(e => e.SiteId);
             b.HasIndex(e => new { e.CustomerId, e.OrgId, e.SiteCode }).IsUnique();
             b.HasIndex(e => new { e.CustomerId, e.OrgId, e.Status });
-            b.Property(e => e.Latitude).HasColumnType("decimal(9,6)");
-            b.Property(e => e.Longitude).HasColumnType("decimal(9,6)");
+            b.Property(e => e.Latitude).HasColumnType("decimal(10,7)");
+            b.Property(e => e.Longitude).HasColumnType("decimal(10,7)");
             b.Property(e => e.Status).HasConversion<int>();
         });
 
@@ -70,14 +77,35 @@ public class SiteDbContext : TenantDbContext
         {
             b.HasKey(e => e.SiteAssignmentId);
             b.HasIndex(e => new { e.CustomerId, e.OrgId, e.SiteId, e.LaborerId });
+            b.Property(e => e.CostRatePerDay).HasColumnType("decimal(18,4)");
+            b.Property(e => e.SellRatePerDay).HasColumnType("decimal(18,4)");
+            b.Property(e => e.ApprovedDays).HasColumnType("decimal(8,2)");
+            b.Property(e => e.ApprovedOtHours).HasColumnType("decimal(8,2)");
+            b.Property(e => e.BilledDays).HasColumnType("decimal(8,2)");
+            b.Property(e => e.BilledOtHours).HasColumnType("decimal(8,2)");
+            b.Property(e => e.Status).HasConversion<int>();
+            b.HasOne<SiteJob>()
+                .WithMany()
+                .HasForeignKey(e => e.SiteId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<Laborer>()
+                .WithMany()
+                .HasForeignKey(e => e.LaborerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<Trade>()
+                .WithMany()
+                .HasForeignKey(e => e.TradeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<MarginRule>(b =>
         {
             b.HasKey(e => e.MarginRuleId);
-            b.Property(e => e.MinLaborMarginPercent).HasColumnType("decimal(5,2)");
-            b.Property(e => e.MinMaterialMarginPercent).HasColumnType("decimal(5,2)");
-            b.Property(e => e.SubcontractorMarkupPercent).HasColumnType("decimal(5,2)");
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.Scope, e.ScopeId });
+            b.Property(e => e.Scope).HasConversion<int>();
+            b.Property(e => e.AppliesTo).HasConversion<int>();
+            b.Property(e => e.MarginType).HasConversion<int>();
+            b.Property(e => e.MarginValue).HasColumnType("decimal(18,4)");
         });
 
         modelBuilder.Entity<LaborerClockEntry>(b =>

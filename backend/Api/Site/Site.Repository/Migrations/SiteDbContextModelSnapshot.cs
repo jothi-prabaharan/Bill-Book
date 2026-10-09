@@ -428,13 +428,7 @@ namespace Site.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("LaborerId"));
 
-                    b.Property<decimal>("BillingHourlyRate")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<long?>("ContactId")
-                        .HasColumnType("bigint");
-
-                    b.Property<decimal>("CostHourlyRate")
+                    b.Property<decimal?>("CostRatePerDay")
                         .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -446,6 +440,9 @@ namespace Site.Repository.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<long?>("EmployeeId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -453,9 +450,6 @@ namespace Site.Repository.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<int>("LaborerType")
-                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -466,10 +460,19 @@ namespace Site.Repository.Migrations
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("OtCostRatePerHour")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("OtSellRatePerHour")
+                        .HasColumnType("decimal(18,4)");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("SellRatePerDay")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<long>("TradeId")
                         .HasColumnType("bigint");
@@ -484,6 +487,8 @@ namespace Site.Repository.Migrations
                         .HasColumnName("xmin");
 
                     b.HasKey("LaborerId");
+
+                    b.HasIndex("TradeId");
 
                     b.HasIndex("CustomerId", "OrgId");
 
@@ -602,6 +607,9 @@ namespace Site.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MarginRuleId"));
 
+                    b.Property<int>("AppliesTo")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -611,14 +619,20 @@ namespace Site.Repository.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("MinLaborMarginPercent")
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<int>("MarginType")
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("MinMaterialMarginPercent")
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<decimal>("MarginValue")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -629,13 +643,10 @@ namespace Site.Repository.Migrations
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
-                    b.Property<long?>("SiteId")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Scope")
+                        .HasColumnType("integer");
 
-                    b.Property<decimal>("SubcontractorMarkupPercent")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<long?>("TradeId")
+                    b.Property<long?>("ScopeId")
                         .HasColumnType("bigint");
 
                     b.Property<uint>("Version")
@@ -648,6 +659,8 @@ namespace Site.Repository.Migrations
 
                     b.HasIndex("CustomerId", "OrgId");
 
+                    b.HasIndex("CustomerId", "OrgId", "Scope", "ScopeId");
+
                     b.ToTable("MarginRules", "sit");
                 });
 
@@ -659,10 +672,20 @@ namespace Site.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SiteAssignmentId"));
 
-                    b.Property<string>("AssignedRole")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<decimal>("ApprovedDays")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal>("ApprovedOtHours")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal>("BilledDays")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal>("BilledOtHours")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal?>("CostRatePerDay")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -676,9 +699,6 @@ namespace Site.Repository.Migrations
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
                     b.Property<long>("LaborerId")
                         .HasColumnType("bigint");
 
@@ -691,11 +711,20 @@ namespace Site.Repository.Migrations
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("SellRatePerDay")
+                        .HasColumnType("decimal(18,4)");
+
                     b.Property<long>("SiteId")
                         .HasColumnType("bigint");
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TradeId")
+                        .HasColumnType("bigint");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -704,6 +733,12 @@ namespace Site.Repository.Migrations
                         .HasColumnName("xmin");
 
                     b.HasKey("SiteAssignmentId");
+
+                    b.HasIndex("LaborerId");
+
+                    b.HasIndex("SiteId");
+
+                    b.HasIndex("TradeId");
 
                     b.HasIndex("CustomerId", "OrgId");
 
@@ -980,10 +1015,15 @@ namespace Site.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SiteId"));
 
-                    b.Property<DateOnly?>("ActualCompletionDate")
+                    b.Property<DateOnly?>("ActualEndDate")
                         .HasColumnType("date");
 
-                    b.Property<long>("ClientContactId")
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long>("ContactId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -995,17 +1035,17 @@ namespace Site.Repository.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateOnly?>("ExpectedCompletionDate")
+                    b.Property<DateOnly?>("EstimatedEndDate")
                         .HasColumnType("date");
 
-                    b.Property<int>("GeoFenceRadiusMeters")
+                    b.Property<int>("GeofenceRadiusMeters")
                         .HasColumnType("integer");
 
                     b.Property<decimal?>("Latitude")
-                        .HasColumnType("decimal(9,6)");
+                        .HasColumnType("decimal(10,7)");
 
                     b.Property<decimal?>("Longitude")
-                        .HasColumnType("decimal(9,6)");
+                        .HasColumnType("decimal(10,7)");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1015,11 +1055,6 @@ namespace Site.Repository.Migrations
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("SiteAddress")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("SiteCode")
                         .IsRequired()
@@ -1031,7 +1066,7 @@ namespace Site.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<DateOnly>("StartDate")
+                    b.Property<DateOnly?>("StartDate")
                         .HasColumnType("date");
 
                     b.Property<int>("Status")
@@ -1331,6 +1366,21 @@ namespace Site.Repository.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("DefaultCostRatePerDay")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("DefaultOtCostRatePerHour")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("DefaultOtSellRatePerHour")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("DefaultSellRatePerDay")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long?>("DefaultServiceItemId")
+                        .HasColumnType("bigint");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -1342,12 +1392,6 @@ namespace Site.Repository.Migrations
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
-
-                    b.Property<decimal>("StandardHourlyRate")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("StandardOvertimeHourlyRate")
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("TradeCode")
                         .IsRequired()
@@ -1373,6 +1417,36 @@ namespace Site.Repository.Migrations
                         .IsUnique();
 
                     b.ToTable("Trades", "sit");
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.Laborer", b =>
+                {
+                    b.HasOne("Site.Entity.TableEntities.Trade", null)
+                        .WithMany()
+                        .HasForeignKey("TradeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteAssignment", b =>
+                {
+                    b.HasOne("Site.Entity.TableEntities.Laborer", null)
+                        .WithMany()
+                        .HasForeignKey("LaborerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Site.Entity.TableEntities.SiteJob", null)
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Site.Entity.TableEntities.Trade", null)
+                        .WithMany()
+                        .HasForeignKey("TradeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

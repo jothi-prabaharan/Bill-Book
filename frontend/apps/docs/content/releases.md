@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Site Masters & Margin Engine (TK-170).** Configured master records for Trades, Laborers, Sites, Assignments, and tiered Margin Rules with automatic site warehouse creation in Inventory and cost/margin redaction without `site.cost.view`.
+
 - **Added**: **Site Services module & add-on for Service businesses (TK-169).** Service branches with the SiteServices add-on now have access to site project management and inventory stock control for site jobs. Site projects can be managed via Sites & Projects.
 
 - **Fixed**: **"Keep me signed in" now works.** Opening the app more than fifteen minutes after you last used it signed you out, ticked or not, because the first check the app made on opening was refused instead of being renewed. It is now renewed quietly, so a ticked sign-in lasts as long as you come back within seven days. The box itself also does something now: unticked, closing the browser signs you out; ticked, it does not. Before, it was ignored.

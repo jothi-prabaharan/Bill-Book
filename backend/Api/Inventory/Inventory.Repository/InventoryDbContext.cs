@@ -370,6 +370,10 @@ public class InventoryDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.DisplayOrder, e.WarehouseName })
                 .HasDatabaseName("IX_Warehouses_Order");
 
+            b.HasIndex(e => new { e.OrgId, e.SiteId })
+                .HasFilter("\"SiteId\" IS NOT NULL")
+                .HasDatabaseName("IX_Warehouses_SiteId");
+
             b.Property(e => e.WarehouseType).HasConversion<string>().HasMaxLength(15);
             b.Property(e => e.StorageType).HasConversion<string>().HasMaxLength(15);
         });

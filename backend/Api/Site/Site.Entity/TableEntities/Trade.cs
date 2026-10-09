@@ -4,6 +4,9 @@ using Shared.Kernel.Tenancy;
 
 namespace Site.Entity.TableEntities;
 
+/// <summary>
+/// Master trade catalog (e.g., Electrical, Plumbing, HVAC, Carpentry) (TK-170).
+/// </summary>
 [Table("Trades", Schema = "sit")]
 public class Trade : OrgScopedEntity
 {
@@ -18,11 +21,20 @@ public class Trade : OrgScopedEntity
     [StringLength(100, ErrorMessage = "Trade name cannot exceed 100 characters.")]
     public string TradeName { get; set; } = string.Empty;
 
-    [Range(0, 1000000, ErrorMessage = "Standard hourly rate must be between 0 and 1,000,000.")]
-    public decimal StandardHourlyRate { get; set; }
+    /// <summary>Reference to inv.Items for SAC billing invoice line.</summary>
+    public long? DefaultServiceItemId { get; set; }
 
-    [Range(0, 1000000, ErrorMessage = "Standard overtime hourly rate must be between 0 and 1,000,000.")]
-    public decimal StandardOvertimeHourlyRate { get; set; }
+    [Range(0, 1000000, ErrorMessage = "Default cost rate per day must be between 0 and 1,000,000.")]
+    public decimal DefaultCostRatePerDay { get; set; }
+
+    [Range(0, 1000000, ErrorMessage = "Default sell rate per day must be between 0 and 1,000,000.")]
+    public decimal DefaultSellRatePerDay { get; set; }
+
+    [Range(0, 1000000, ErrorMessage = "Default OT cost rate per hour must be between 0 and 1,000,000.")]
+    public decimal DefaultOtCostRatePerHour { get; set; }
+
+    [Range(0, 1000000, ErrorMessage = "Default OT sell rate per hour must be between 0 and 1,000,000.")]
+    public decimal DefaultOtSellRatePerHour { get; set; }
 
     public bool IsActive { get; set; } = true;
 }
