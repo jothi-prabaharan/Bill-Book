@@ -1,4 +1,4 @@
-﻿<div class="shell-grid-container">
+<div class="shell-grid-container">
   <div class="shell-nav-cell">
     <bb-shell-nav (logout)="logout()" />
   </div>
@@ -24,14 +24,15 @@
       (startEdit)="startEdit()"
       (resetLayout)="resetLayout()"
       (stopEdit)="stopEdit()"
-      (openExport)="openExport($event)"
-      (openImport)="openImport()"
+      
+      
     />
   </div>
 
-  <main class="shell-content-cell" bbTilt bbRouteMotion [class.tex]="isDashboard()">
+  <main class="shell-content-cell" bbTilt bbRouteMotion [class.tex]="isDashboard()" [class.master-screen-popup]="isMasterScreen()">
     <router-outlet />
   </main>
 </div>
+
 
 

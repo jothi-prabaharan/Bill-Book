@@ -1,4 +1,4 @@
-﻿import {
+import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -47,6 +47,7 @@ import { FALLBACK_RAIL, SHELL_SCREENS } from '../shell-screens';
 })
 export class ShellComponent {
   readonly isDashboard = signal<boolean>(false);
+  readonly isMasterScreen = signal<boolean>(false);
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly formats = inject(FormatSettingsService);
@@ -196,22 +197,11 @@ export class ShellComponent {
     this.board.requestReset();
   }
 
-  /**
-   * Export is owned by the screen being exported, not the shell â€” the shell
-   * only carries the control. Until a register opts in, the chosen format goes
-   * nowhere.
-   */
-  openExport(_format: string): void {
-    // Intentionally empty: wired per register.
-  }
-
-  openImport(): void {
-    // Intentionally empty: wired per register.
-  }
-
   logout(): void {
     void this.auth.signOut();
     void this.router.navigateByUrl('/login');
   }
 }
+
+
 
