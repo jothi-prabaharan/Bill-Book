@@ -18,6 +18,11 @@ import {
   SiteAttendanceSummaryDto,
   SiteDto,
   TradeDto,
+  DispatchStockRequest,
+  ReturnStockRequest,
+  SiteStockBalanceDto,
+  SiteStockDocumentDto,
+  SiteStockDocumentType,
 } from './site.models';
 
 @Injectable({ providedIn: 'root' })
@@ -150,6 +155,37 @@ export class SiteApiService {
 
   rejectAttendance(id: number, reason: string): Promise<void> {
     return firstValueFrom(this.http.post<void>(`/api/site/attendance/${id}/reject`, { reason }));
+  }
+
+  // --- Site Stock (TK-173) ---
+  listSiteStockBalances(siteId: number): Promise<SiteStockBalanceDto[]> {
+    return firstValueFrom(this.http.get<SiteStockBalanceDto[]>('/api/site/stock/balances', { params: { siteId } }));
+  }
+
+  listSiteStockDocuments(
+    siteId?: number | null,
+    type?: SiteStockDocumentType | null,
+    fromDate?: string | null,
+    toDate?: string | null
+  ): Promise<SiteStockDocumentDto[]> {
+    const params: Record<string, string | number> = {};
+    if (siteId) params['siteId'] = siteId;
+    if (type) params['type'] = type;
+    if (fromDate) params['fromDate'] = fromDate;
+    if (toDate) params['toDate'] = toDate;
+    return firstValueFrom(this.http.get<SiteStockDocumentDto[]>('/api/site/stock/documents', { params }));
+  }
+
+  getSiteStockDocument(id: number): Promise<SiteStockDocumentDto> {
+    return firstValueFrom(this.http.get<SiteStockDocumentDto>(`/api/site/stock/documents/${id}`));
+  }
+
+  dispatchStock(req: DispatchStockRequest): Promise<SiteStockDocumentDto> {
+    return firstValueFrom(this.http.post<SiteStockDocumentDto>('/api/site/stock/dispatch', req));
+  }
+
+  returnStock(req: ReturnStockRequest): Promise<SiteStockDocumentDto> {
+    return firstValueFrom(this.http.post<SiteStockDocumentDto>('/api/site/stock/return', req));
   }
 }
 

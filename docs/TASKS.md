@@ -5370,7 +5370,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** counters rise only on approval, a rejection changes nothing, and a margin change after approval does not reprice the approved day.
 
 ### TK-173 · Site stock: dispatch to site and return to central
-- [~] working (Antigravity) — since 2026-10-09
+- [x] completed (Antigravity) — 2026-10-09 · tests written, not run
 - **Issue:** [#161](https://github.com/jothi-prabaharan/Bill-Book/issues/161)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-SIT, L-INV, L-SITE-UI · **Depends on:** TK-170 · **Decision:** —
@@ -5378,12 +5378,12 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 9 October 2026. `BusinessType.Service` exists (TK-136) and refuses stock: `TradeScopeRepository.StockOnlyMenus` drops its stock screens and the stock controllers refuse it. Nothing models sites, laborers, site attendance, site stock or margins. Stock is one pool per branch and `WarehouseId` is a location only, so a dispatch is a transfer pair and posts nothing to the ledger.
 - **Tables:** `sit.SiteStockDocuments`, `sit.SiteStockLines`, `sit.SiteStockBalances`
 - **Sub-tasks:**
-  - [ ] Dispatch (`SDP`): Inventory internal endpoint posts `TransferOut` from central and `TransferIn` to the site warehouse, refused above central stock; `DispatchedQty` and `OnSiteQty` rise. Dispatching is not billing.
-  - [ ] Return (`SRT`): the reverse transfer, refused above `OnSiteQty`; `ReturnedQty` rises.
-  - [ ] `SiteStockBalances` changed only by a guarded conditional update (the stock-decrement pattern), with a check that `OnSiteQty` ≥ 0.
-  - [ ] Dispatch, return and site-stock pages.
-  - [ ] Section 5's standard delivery sub-tasks.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] Dispatch (`SDP`): Inventory internal endpoint posts `TransferOut` from central and `TransferIn` to the site warehouse, refused above central stock; `DispatchedQty` and `OnSiteQty` rise. Dispatching is not billing.
+  - [x] Return (`SRT`): the reverse transfer, refused above `OnSiteQty`; `ReturnedQty` rises.
+  - [x] `SiteStockBalances` changed only by a guarded conditional update (the stock-decrement pattern), with a check that `OnSiteQty` ≥ 0.
+  - [x] Dispatch, return and site-stock pages.
+  - [x] Section 5's standard delivery sub-tasks.
+  - [x] Test: written, never run by an AI (section 0.5).
 - **Done when:** 20 coils central, dispatch 3 and return 1 leaves 18 central and 2 on site, and a return of 3 is refused.
 
 ### TK-174 · Material usage reports from the site and their approval

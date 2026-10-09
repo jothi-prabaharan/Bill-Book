@@ -91,6 +91,7 @@ builder.Services.AddScoped<SiteSeederRepository>();
 builder.Services.AddScoped<SiteRepository>();
 builder.Services.AddScoped<SiteMarginRepository>();
 builder.Services.AddScoped<SiteAttendanceRepository>();
+builder.Services.AddScoped<SiteStockRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

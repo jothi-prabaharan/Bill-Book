@@ -1,0 +1,280 @@
+<div class="site-stock-container">
+  <header class="page-header">
+    <div class="title-group">
+      <h1>Site Stock Management</h1>
+      <p class="subtitle">Track material dispatches from central, returns, and on-site balances</p>
+    </div>
+
+    <div class="site-selector">
+      <label for="site-select">Selected Site:</label>
+      <select
+        id="site-select"
+        [ngModel]="selectedSiteId()"
+        (ngModelChange)="onSiteChange($event)"
+      >
+        <option *ngFor="let s of sites()" [value]="s.siteId">
+          {{ s.siteName }} ({{ s.siteCode }})
+        </option>
+      </select>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage()" class="alert alert-danger">
+    {{ errorMessage() }}
+  </div>
+  <div *ngIf="successMessage()" class="alert alert-success">
+    {{ successMessage() }}
+  </div>
+
+  <nav class="tab-nav">
+    <button
+      type="button"
+      [class.active]="tab() === 'balances'"
+      (click)="tab.set('balances')"
+    >
+      On-Site Balances
+    </button>
+    <button
+      type="button"
+      [class.active]="tab() === 'documents'"
+      (click)="tab.set('documents')"
+    >
+      Transfer Log
+    </button>
+    <button
+      *ngIf="canEdit()"
+      type="button"
+      [class.active]="tab() === 'dispatch'"
+      (click)="tab.set('dispatch')"
+    >
+      Dispatch to Site
+    </button>
+    <button
+      *ngIf="canEdit()"
+      type="button"
+      [class.active]="tab() === 'return'"
+      (click)="tab.set('return')"
+    >
+      Return to Central
+    </button>
+  </nav>
+
+  <!-- TAB: Balances -->
+  <section *ngIf="tab() === 'balances'" class="tab-content">
+    <div class="table-responsive" *ngIf="balances().length > 0; else noBalances">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Item ID</th>
+            <th>Dispatched</th>
+            <th>Returned</th>
+            <th>Used</th>
+            <th>On Site (Available)</th>
+            <th>Unbilled Used</th>
+            <th>Billed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of balances()">
+            <td><strong>#{{ b.itemId }}</strong></td>
+            <td>{{ b.dispatchedQty | number : '1.2-2' }}</td>
+            <td>{{ b.returnedQty | number : '1.2-2' }}</td>
+            <td>{{ b.usedQty | number : '1.2-2' }}</td>
+            <td>
+              <span class="badge badge-success">{{ b.onSiteQty | number : '1.2-2' }}</span>
+            </td>
+            <td>{{ b.unbilledUsedQty | number : '1.2-2' }}</td>
+            <td>{{ b.billedQty | number : '1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noBalances>
+      <div class="empty-state">
+        <p>No stock currently dispatched to this site.</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- TAB: Documents Log -->
+  <section *ngIf="tab() === 'documents'" class="tab-content">
+    <div class="table-responsive" *ngIf="documents().length > 0; else noDocs">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Document No</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Warehouse</th>
+            <th>Status</th>
+            <th>Items</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of documents()">
+            <td><strong>{{ d.documentNo }}</strong></td>
+            <td>
+              <span [class]="'badge badge-' + d.documentType.toLowerCase()">{{ d.documentType }}</span>
+            </td>
+            <td>{{ d.documentDate }}</td>
+            <td>Warehouse #{{ d.sourceWarehouseId }}</td>
+            <td>{{ d.status }}</td>
+            <td>{{ d.lines.length }} line(s)</td>
+            <td>{{ d.remarks || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noDocs>
+      <div class="empty-state">
+        <p>No stock documents recorded yet.</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- TAB: Dispatch Form -->
+  <section *ngIf="tab() === 'dispatch'" class="tab-content form-card">
+    <h2>Dispatch Materials to Site (SDP)</h2>
+    <form (ngSubmit)="submitDispatch()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Source Central Warehouse ID</label>
+          <input
+            type="number"
+            required
+            [(ngModel)]="dispatchForm.sourceWarehouseId"
+            name="sourceWarehouseId"
+          />
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input
+            type="date"
+            required
+            [(ngModel)]="dispatchForm.documentDate"
+            name="dispatchDate"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Item ID</label>
+          <input
+            type="number"
+            required
+            [(ngModel)]="dispatchForm.itemId"
+            name="dispatchItemId"
+          />
+        </div>
+        <div class="form-group">
+          <label>Quantity</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            required
+            [(ngModel)]="dispatchForm.quantity"
+            name="dispatchQuantity"
+          />
+        </div>
+        <div class="form-group" *ngIf="canViewCost()">
+          <label>Unit Cost (₹)</label>
+          <input
+            type="number"
+            step="0.01"
+            [(ngModel)]="dispatchForm.unitCost"
+            name="dispatchUnitCost"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Remarks</label>
+        <textarea
+          rows="2"
+          [(ngModel)]="dispatchForm.remarks"
+          name="dispatchRemarks"
+        ></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Transferring...' : 'Post Dispatch Transfer' }}
+      </button>
+    </form>
+  </section>
+
+  <!-- TAB: Return Form -->
+  <section *ngIf="tab() === 'return'" class="tab-content form-card">
+    <h2>Return Materials to Central Warehouse (SRT)</h2>
+    <p class="form-hint">Return transfers are guarded: cannot return more than currently available on site.</p>
+    <form (ngSubmit)="submitReturn()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Destination Central Warehouse ID</label>
+          <input
+            type="number"
+            required
+            [(ngModel)]="returnForm.destinationWarehouseId"
+            name="destWarehouseId"
+          />
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input
+            type="date"
+            required
+            [(ngModel)]="returnForm.documentDate"
+            name="returnDate"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Item ID</label>
+          <input
+            type="number"
+            required
+            [(ngModel)]="returnForm.itemId"
+            name="returnItemId"
+          />
+        </div>
+        <div class="form-group">
+          <label>Quantity</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            required
+            [(ngModel)]="returnForm.quantity"
+            name="returnQuantity"
+          />
+        </div>
+        <div class="form-group" *ngIf="canViewCost()">
+          <label>Unit Cost (₹)</label>
+          <input
+            type="number"
+            step="0.01"
+            [(ngModel)]="returnForm.unitCost"
+            name="returnUnitCost"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Remarks</label>
+        <textarea
+          rows="2"
+          [(ngModel)]="returnForm.remarks"
+          name="returnRemarks"
+        ></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Returning...' : 'Post Return Transfer' }}
+      </button>
+    </form>
+  </section>
+</div>

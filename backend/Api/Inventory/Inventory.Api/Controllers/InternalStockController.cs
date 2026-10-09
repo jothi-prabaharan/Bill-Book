@@ -591,5 +591,52 @@ public sealed class InternalStockController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPost("transfer")]
+    public async Task<IActionResult> Transfer(
+        [FromBody] InternalStockTransferRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse { Message = "A customer and an organization are required." });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockRepository>();
+        var db = _services.GetRequiredService<InventoryDbContext>();
+
+        await using ITransactionScope transaction = await db.Database.BeginScopeAsync(ct);
+
+        var result = await stock.TransferAsync(new TransferStockRequest
+        {
+            ItemId = request.ItemId,
+            FromWarehouseId = request.FromWarehouseId,
+            ToWarehouseId = request.ToWarehouseId,
+            Quantity = request.Quantity,
+            MovementDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            Notes = request.Notes,
+        }, ct);
+
+        if (result.Outcome != StockOutcome.Ok)
+        {
+            return Conflict(new { message = $"Stock transfer failed: {result.Outcome}" });
+        }
+
+        await transaction.CommitAsync(ct);
+        return Ok(new { success = true });
+    }
+
     private const string OpeningBalanceCode = "OPB";
+}
+
+public sealed class InternalStockTransferRequest
+{
+    public Guid CustomerId { get; set; }
+    public Guid OrgId { get; set; }
+    public long FromWarehouseId { get; set; }
+    public long ToWarehouseId { get; set; }
+    public long ItemId { get; set; }
+    public decimal Quantity { get; set; }
+    public string? Notes { get; set; }
 }

@@ -24,6 +24,9 @@ public class SiteDbContext : TenantDbContext
     public DbSet<MarginRule> MarginRules => Set<MarginRule>();
     public DbSet<SiteAttendance> SiteAttendances => Set<SiteAttendance>();
     public DbSet<SiteAttendancePhoto> SiteAttendancePhotos => Set<SiteAttendancePhoto>();
+    public DbSet<SiteStockDocument> SiteStockDocuments => Set<SiteStockDocument>();
+    public DbSet<SiteStockLine> SiteStockLines => Set<SiteStockLine>();
+    public DbSet<SiteStockBalance> SiteStockBalances => Set<SiteStockBalance>();
     public DbSet<SiteDispatch> SiteDispatches => Set<SiteDispatch>();
     public DbSet<SiteDispatchLine> SiteDispatchLines => Set<SiteDispatchLine>();
     public DbSet<SiteReturn> SiteReturns => Set<SiteReturn>();
@@ -150,6 +153,50 @@ public class SiteDbContext : TenantDbContext
                 .WithMany()
                 .HasForeignKey(e => e.AttendanceId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SiteStockDocument>(b =>
+        {
+            b.HasKey(e => e.DocumentId);
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.DocumentNo }).IsUnique();
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.SiteId, e.DocumentType });
+            b.Property(e => e.DocumentType).HasConversion<int>();
+            b.Property(e => e.Status).HasConversion<int>();
+            b.HasOne<SiteJob>()
+                .WithMany()
+                .HasForeignKey(e => e.SiteId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SiteStockLine>(b =>
+        {
+            b.HasKey(e => e.LineId);
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.DocumentId });
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,4)");
+            b.Property(e => e.UnitCost).HasColumnType("decimal(18,2)");
+            b.Property(e => e.MarginValue).HasColumnType("decimal(18,4)");
+            b.Property(e => e.SellingPrice).HasColumnType("decimal(18,2)");
+            b.Property(e => e.BilledQuantity).HasColumnType("decimal(18,4)");
+            b.HasOne<SiteStockDocument>()
+                .WithMany()
+                .HasForeignKey(e => e.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SiteStockBalance>(b =>
+        {
+            b.HasKey(e => e.BalanceId);
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.SiteId, e.ItemId }).IsUnique();
+            b.Property(e => e.DispatchedQty).HasColumnType("decimal(18,4)");
+            b.Property(e => e.ReturnedQty).HasColumnType("decimal(18,4)");
+            b.Property(e => e.UsedQty).HasColumnType("decimal(18,4)");
+            b.Property(e => e.OnSiteQty).HasColumnType("decimal(18,4)");
+            b.Property(e => e.UnbilledUsedQty).HasColumnType("decimal(18,4)");
+            b.Property(e => e.BilledQty).HasColumnType("decimal(18,4)");
+            b.HasOne<SiteJob>()
+                .WithMany()
+                .HasForeignKey(e => e.SiteId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<SiteDispatch>(b =>

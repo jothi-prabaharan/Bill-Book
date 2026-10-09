@@ -17,4 +17,9 @@ export const siteRoutes: Routes = [
     loadComponent: () => import('./approvals/clockout-approvals.page').then((m) => m.ClockoutApprovalsPage),
     data: { access: { permission: 'site.view', businessTypes: ['Service'], addOns: ['SiteServices'] } },
   },
+  {
+    path: 'site/stock',
+    loadComponent: () => import('./stock/site-stock.page').then((m) => m.SiteStockPage),
+    data: { access: { permission: 'site.view', businessTypes: ['Service'], addOns: ['SiteServices'] } },
+  },
 ];

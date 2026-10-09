@@ -23,6 +23,17 @@ public sealed class CreateSiteWarehouseResult
     public string WarehouseCode { get; set; } = string.Empty;
 }
 
+public sealed class TransferStockPayload
+{
+    public Guid CustomerId { get; set; }
+    public Guid OrgId { get; set; }
+    public long FromWarehouseId { get; set; }
+    public long ToWarehouseId { get; set; }
+    public long ItemId { get; set; }
+    public decimal Quantity { get; set; }
+    public string? Notes { get; set; }
+}
+
 public interface IInventoryWarehouseClient
 {
     Task<long?> CreateSiteWarehouseAsync(
@@ -31,6 +42,16 @@ public interface IInventoryWarehouseClient
         long siteId,
         string siteCode,
         string siteName,
+        CancellationToken ct = default);
+
+    Task<bool> TransferStockAsync(
+        Guid customerId,
+        Guid orgId,
+        long fromWarehouseId,
+        long toWarehouseId,
+        long itemId,
+        decimal quantity,
+        string? notes = null,
         CancellationToken ct = default);
 }
 
@@ -81,4 +102,45 @@ public sealed class HttpInventoryWarehouseClient : IInventoryWarehouseClient
             return null;
         }
     }
+
+    public async Task<bool> TransferStockAsync(
+        Guid customerId,
+        Guid orgId,
+        long fromWarehouseId,
+        long toWarehouseId,
+        long itemId,
+        decimal quantity,
+        string? notes = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var payload = new TransferStockPayload
+            {
+                CustomerId = customerId,
+                OrgId = orgId,
+                FromWarehouseId = fromWarehouseId,
+                ToWarehouseId = toWarehouseId,
+                ItemId = itemId,
+                Quantity = quantity,
+                Notes = notes,
+            };
+
+            HttpResponseMessage res = await _http.PostAsJsonAsync("internal/stock/transfer", payload, ct);
+            if (!res.IsSuccessStatusCode)
+            {
+                string error = await res.Content.ReadAsStringAsync(ct);
+                _log.LogWarning("Inventory stock transfer refused ({Status}): {Error}", res.StatusCode, error);
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Could not contact Inventory service for stock transfer");
+            return false;
+        }
+    }
 }
+

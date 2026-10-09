@@ -59,6 +59,22 @@ public enum ClockApprovalStatus
     Rejected = 3,
 }
 
+public enum SiteStockDocumentType
+{
+    Dispatch = 1,
+    Return = 2,
+    Usage = 3,
+}
+
+public enum SiteStockDocumentStatus
+{
+    Draft = 1,
+    Submitted = 2,
+    Approved = 3,
+    Posted = 4,
+    Void = 5,
+}
+
 public enum DispatchStatus
 {
     Draft = 1,

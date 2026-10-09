@@ -222,3 +222,72 @@ export interface SiteAttendanceDetailDto {
   photos: SiteAttendancePhotoDto[];
 }
 
+export type SiteStockDocumentType = 'Dispatch' | 'Return' | 'Usage';
+export type SiteStockDocumentStatus = 'Draft' | 'Submitted' | 'Approved' | 'Posted' | 'Void';
+
+export interface SiteStockBalanceDto {
+  balanceId: number;
+  siteId: number;
+  itemId: number;
+  dispatchedQty: number;
+  returnedQty: number;
+  usedQty: number;
+  onSiteQty: number;
+  unbilledUsedQty: number;
+  billedQty: number;
+}
+
+export interface SiteStockLineDto {
+  lineId: number;
+  itemId: number;
+  quantity: number;
+  unitCost?: number | null;
+  marginValue?: number | null;
+  sellingPrice?: number | null;
+  billedQuantity: number;
+}
+
+export interface SiteStockDocumentDto {
+  documentId: number;
+  documentType: SiteStockDocumentType;
+  documentNo: string;
+  siteId: number;
+  siteName: string;
+  sourceWarehouseId?: number | null;
+  documentDate: string;
+  status: SiteStockDocumentStatus;
+  approvalRequestId?: number | null;
+  remarks?: string | null;
+  lines: SiteStockLineDto[];
+}
+
+export interface DispatchStockLineDto {
+  itemId: number;
+  quantity: number;
+  unitCost?: number | null;
+  marginValue?: number | null;
+  sellingPrice?: number | null;
+}
+
+export interface DispatchStockRequest {
+  siteId: number;
+  sourceWarehouseId: number;
+  documentDate: string;
+  lines: DispatchStockLineDto[];
+  remarks?: string | null;
+}
+
+export interface ReturnStockLineDto {
+  itemId: number;
+  quantity: number;
+  unitCost?: number | null;
+}
+
+export interface ReturnStockRequest {
+  siteId: number;
+  destinationWarehouseId: number;
+  documentDate: string;
+  lines: ReturnStockLineDto[];
+  remarks?: string | null;
+}
+

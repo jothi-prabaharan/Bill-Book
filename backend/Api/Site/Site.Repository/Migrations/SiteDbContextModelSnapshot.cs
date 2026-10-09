@@ -1448,6 +1448,211 @@ namespace Site.Repository.Migrations
                     b.ToTable("SiteReturnLines", "sit");
                 });
 
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteStockBalance", b =>
+                {
+                    b.Property<long>("BalanceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("BalanceId"));
+
+                    b.Property<decimal>("BilledQty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("DispatchedQty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("OnSiteQty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ReturnedQty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("SiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("UnbilledUsedQty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("UsedQty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("BalanceId");
+
+                    b.HasIndex("SiteId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("CustomerId", "OrgId", "SiteId", "ItemId")
+                        .IsUnique();
+
+                    b.ToTable("SiteStockBalances", "sit");
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteStockDocument", b =>
+                {
+                    b.Property<long>("DocumentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("DocumentId"));
+
+                    b.Property<long?>("ApprovalRequestId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("DocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DocumentNo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("DocumentType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long>("SiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("SourceWarehouseId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("DocumentId");
+
+                    b.HasIndex("SiteId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("CustomerId", "OrgId", "DocumentNo")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId", "OrgId", "SiteId", "DocumentType");
+
+                    b.ToTable("SiteStockDocuments", "sit");
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteStockLine", b =>
+                {
+                    b.Property<long>("LineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("LineId"));
+
+                    b.Property<decimal>("BilledQuantity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("DocumentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("MarginValue")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("SellingPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("LineId");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("CustomerId", "OrgId", "DocumentId");
+
+                    b.ToTable("SiteStockLines", "sit");
+                });
+
             modelBuilder.Entity("Site.Entity.TableEntities.Trade", b =>
                 {
                     b.Property<long>("TradeId")
@@ -1574,6 +1779,33 @@ namespace Site.Repository.Migrations
                     b.HasOne("Site.Entity.TableEntities.SiteAttendance", null)
                         .WithMany()
                         .HasForeignKey("AttendanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteStockBalance", b =>
+                {
+                    b.HasOne("Site.Entity.TableEntities.SiteJob", null)
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteStockDocument", b =>
+                {
+                    b.HasOne("Site.Entity.TableEntities.SiteJob", null)
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Site.Entity.TableEntities.SiteStockLine", b =>
+                {
+                    b.HasOne("Site.Entity.TableEntities.SiteStockDocument", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
