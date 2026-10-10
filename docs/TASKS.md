@@ -5601,6 +5601,22 @@ The queue below is one list in card-number order. Each card names its group.
   - Found while working: `npx nx run-many -t lint` fails in `site-ui` (raw inputs and tables, and a misused promise in `site-stock.page.ts`, from the TK-17x site cards) and in `app-shell` (`@ts-nocheck` in `shell-breadcrumb.component.spec.ts`, from `bbafec25`). Neither is in this card's files, and both were failing before it.
   - The app id `com.billbook.app` (both stores) and the desktop `appId` `com.billbook.desktop` can't be changed after the first store upload or installer. The owner should confirm them before then.
 
+### TK-185 · Reset every EF migration chain to `Migration_01_InitialSetup`, with a sample-data seed
+- [~] working (Claude Opus 5.5) — since 2026-10-10
+- **Issue:** [#175](https://github.com/jothi-prabaharan/Bill-Book/issues/175)
+- **Group:** Z · Owner request
+- **Lanes:** every backend lane that owns a `Migrations` folder (L-MST, L-ACC, L-INV, L-SAL, L-PUR, L-CUS, L-RPT, L-PRT, the HRMS and School lanes, L-SIT, the gateway and the worker), L-DOC · **Depends on:** — · **Decision:** —
+- **Where:** all 25 `Migrations` folders under `backend/` (26 contexts: Master has `Admin` and `Tenant`), `backend/Api/Master/Master.Api/Services/`, `backend/Api/Master/Master.Repository/Repositories/`.
+- **State:** checked 10 October 2026. There are about 200 migrations across 26 contexts, and 59 of them carry hand-written `migrationBuilder.Sql`: RLS policies, the ledger, journal and allocation triggers, and more. EF regenerates none of that from the model.
+- **Sub-tasks:**
+  - [ ] Build a reference database from the old chains, so there is something to diff against.
+  - [ ] Delete every chain and generate one `Migration_01_InitialSetup` per context.
+  - [ ] Carry every hand-written SQL block forward. Diff the new schema dump against the reference: tables, indexes, policies, triggers, functions and seed rows.
+  - [ ] Sample-data seed: one sample user, plus one organization per `BusinessType` mapped to that user.
+  - [ ] `has-pending-model-changes` is clean for every context, and `dotnet build` is clean.
+  - [ ] Docs and release notes.
+- **Done when:** a database built from the new migrations matches one built from the old chains, RLS and triggers included, and the sample rows are present after a start against fresh databases.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
