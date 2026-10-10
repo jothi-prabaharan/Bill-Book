@@ -5609,11 +5609,11 @@ The queue below is one list in card-number order. Each card names its group.
 - **Where:** all 25 `Migrations` folders under `backend/` (26 contexts: Master has `Admin` and `Tenant`), `backend/Api/Master/Master.Api/Services/`, `backend/Api/Master/Master.Repository/Repositories/`.
 - **State:** checked 10 October 2026. There are about 200 migrations across 26 contexts, and 59 of them carry hand-written `migrationBuilder.Sql`: RLS policies, the ledger, journal and allocation triggers, and more. EF regenerates none of that from the model.
 - **Sub-tasks:**
-  - [ ] Build a reference database from the old chains, so there is something to diff against.
-  - [ ] Delete every chain and generate one `Migration_01_InitialSetup` per context.
-  - [ ] Carry every hand-written SQL block forward. Diff the new schema dump against the reference: tables, indexes, policies, triggers, functions and seed rows.
+  - [x] Build a reference database from the old chains, so there is something to diff against.
+  - [x] Delete every chain and generate one `Migration_01_InitialSetup` per context.
+  - [x] Carry every hand-written SQL block forward. Diff the new schema dump against the reference: tables, indexes, policies, triggers, functions and seed rows.
   - [ ] Sample-data seed: one sample user, plus one organization per `BusinessType` mapped to that user.
-  - [ ] `has-pending-model-changes` is clean for every context, and `dotnet build` is clean.
+  - [x] `has-pending-model-changes` is clean for every context, and `dotnet build` is clean.
   - [ ] Docs and release notes.
 - **Done when:** a database built from the new migrations matches one built from the old chains, RLS and triggers included, and the sample rows are present after a start against fresh databases.
 
