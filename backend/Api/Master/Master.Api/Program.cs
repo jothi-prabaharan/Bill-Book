@@ -70,7 +70,12 @@ builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 // other databases exist.
 builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("AdminDatabase"));
+    // History in mst, where AdminDbContextFactory puts it for `dotnet ef`. In
+    // public, a database made by `dotnet ef database update` looked unmigrated
+    // to this host, which then failed on its first CREATE TABLE (TK-185).
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("AdminDatabase"),
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "mst"));
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 
@@ -107,6 +112,7 @@ builder.Services.AddScoped<RateRepository>();
 // ---- Tenant directory, signup and provisioning. ----
 builder.Services.AddScoped<SignupRepository>();
 builder.Services.AddScoped<DemoCustomerRepository>();
+builder.Services.AddScoped<SampleDataRepository>();
 // Picks the physical database a new customer's books go in, and claims the
 // capacity for it with a guarded update. The sharded-tenancy work built the
 // registry and the resolver and left this step out, which is why every signup
@@ -161,6 +167,9 @@ builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
 // Demo customers on start, only with Bootstrap:SeedDemoCustomers (TK-154).
 builder.Services.AddHostedService<DemoCustomerBootstrapWorker>();
+// The sample customer, one branch per business type, only with
+// Bootstrap:SeedSampleData (TK-185).
+builder.Services.AddHostedService<SampleDataBootstrapWorker>();
 
 // Runs database setup and EF core migrations on startup
 builder.Services.AddHostedService<DatabaseMigrationService>();

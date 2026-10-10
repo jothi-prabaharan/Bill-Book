@@ -168,6 +168,7 @@ Public signup always makes a Standard customer, whatever the request says. An In
 
 - A platform operator makes them with **Create demo customers** on the admin **Customers** page. Running it again creates nothing new; it finishes any demo a service was too busy to set up, and the page says which.
 - An install can make them on start with `Bootstrap:SeedDemoCustomers` (off by default, so a production install never gets them by accident). Master tries a minute after starting, and again each minute until every service has answered, up to ten times.
+- For local development there is also the **sample customer** (TK-185), `SAMPLE`. It is a single Demo customer with one branch per business type and one sample user who is Owner of all of them, made on start by `Bootstrap:SeedSampleData`. See [Running locally](development).
 - Each owner's sign-in is a plus-address of one mailbox, `Bootstrap:DemoOwnerEmail` (or `Bootstrap:OwnerEmail`): `you@example.com` becomes `you+demo-retail@example.com`, so every reset lands in one inbox. Owners are created with no password; set one with **Forgot password**. No password is kept in the source. The platform admin's **Customers** page shows each customer's kind, filters by it, and lets an operator choose the kind and the first branch's business type when adding one.
 
 ## The licence

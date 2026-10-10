@@ -157,6 +157,49 @@ npx nx serve docs    # http://localhost:4300 — this site
 
 Both default to the `development` configuration. Add `--configuration staging` to serve a production-shaped build that still has source maps.
 
+## Starting from an empty database
+
+Every database has exactly one migration, `Migration_01_InitialSetup`, since 10 October 2026 (TK-185). It replaced about two hundred, so **a database migrated before then can't be upgraded**: drop it and build it again. Starting Master does all of this for you in Development: it creates the admin database and `IN000001`, migrates every schema, and seeds the first branch. To do it by hand instead:
+
+```bash
+cd backend
+# Drop. Once per database: the admin one and the shared tenant one.
+dotnet ef database drop --force --context AdminDbContext \
+  --project Api/Master/Master.Repository --startup-project Api/Master/Master.Api
+dotnet ef database drop --force --context AccountingDbContext \
+  --project Api/Accounting/Accounting.Repository --startup-project Api/Accounting/Accounting.Api
+
+# Create and migrate. Once per context, each with its own project.
+dotnet ef database update --context AdminDbContext \
+  --project Api/Master/Master.Repository --startup-project Api/Master/Master.Api
+dotnet ef database update --context ContactsDbContext \
+  --project Api/Master/Master.Repository --startup-project Api/Master/Master.Api
+dotnet ef database update --context AccountingDbContext \
+  --project Api/Accounting/Accounting.Repository --startup-project Api/Accounting/Accounting.Api
+# …and the same for every other service's context.
+```
+
+Add `--connection "…"` to any of these to point it at a database other than the one the project's settings name. `AdminDbContext` keeps its migration history in `mst`, both under `dotnet ef` and when Master starts, so a database made either way is one the other recognises.
+
+### Sample data
+
+The migrations seed reference data only: countries and states, currencies, roles, permissions and menus. There are no users or customers. For something to sign in to, turn on the sample data in your own settings (user secrets, environment variables or `appsettings.Development.json`). Never turn it on in a deployment.
+
+| Setting | What it does |
+|---|---|
+| `Bootstrap:SeedSampleData` | `true` makes the sample data when Master starts. Off by default |
+| `Bootstrap:SampleUserEmail` | The sample user's sign-in. Required: with no address, nothing is made |
+| `Bootstrap:SampleUserName` | The name shown for them. *Sample User* if left out |
+| `Bootstrap:SampleUserPassword` | Their password, stored as a BCrypt hash. Left out, they have none: use **Forgot password**, whose code Development prints to Master's console |
+
+A minute after it starts, Master makes:
+
+- the **Sample Business** customer (code `SAMPLE`, a Demo customer, so it never lapses and has no branch limit);
+- **one branch for every business type**: `RTL` Sample Retail, `PHA` Sample Pharma, `JWL` Sample Jewellery, `SCH` Sample School, `SVC` Sample Service and `RST` Sample Restaurant, each with every add-on its type allows;
+- the sample user, as **Owner** of all six. After signing in, switch between them with the branch switcher.
+
+Each branch is set up the way any new branch is, with its chart of accounts, tax rates, units, numbering series, reports and print templates, so the services it uses have to be running. Master tries again every minute, up to ten times, until each of them has answered. Then it marks the branches active. Running it again creates nothing new. **An address that already has an account keeps its own password and name**, and only gains the six branches. No credential is kept in the source.
+
 ## Checks
 
 ```bash
@@ -238,7 +281,7 @@ Re-run the script after changing a controller, and commit the result with it.
 
 ## First run caveats
 
-The backend builds, tests and migrates cleanly as of 2 August 2026: `dotnet build` with zero warnings, 58 tests passing, every EF snapshot matching its model, and all 29 migrations applied to PostgreSQL 16.
+The backend builds and migrates cleanly: `dotnet build` with zero warnings, every EF snapshot matching its model, and one migration per context, `Migration_01_InitialSetup`, applied to PostgreSQL 16 (TK-185, 10 October 2026).
 
 If a container has no `dotnet`, install it from the distribution repository rather than the install script — some environments deny `dot.net` by egress policy:
 

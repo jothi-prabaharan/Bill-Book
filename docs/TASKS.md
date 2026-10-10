@@ -5602,7 +5602,7 @@ The queue below is one list in card-number order. Each card names its group.
   - The app id `com.billbook.app` (both stores) and the desktop `appId` `com.billbook.desktop` can't be changed after the first store upload or installer. The owner should confirm them before then.
 
 ### TK-185 · Reset every EF migration chain to `Migration_01_InitialSetup`, with a sample-data seed
-- [~] working (Claude Opus 5.5) — since 2026-10-10
+- [x] completed (Claude Opus 5.5) — 2026-10-10 · tests written, not run
 - **Issue:** [#175](https://github.com/jothi-prabaharan/Bill-Book/issues/175)
 - **Group:** Z · Owner request
 - **Lanes:** every backend lane that owns a `Migrations` folder (L-MST, L-ACC, L-INV, L-SAL, L-PUR, L-CUS, L-RPT, L-PRT, the HRMS and School lanes, L-SIT, the gateway and the worker), L-DOC · **Depends on:** — · **Decision:** —
@@ -5612,10 +5612,42 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Build a reference database from the old chains, so there is something to diff against.
   - [x] Delete every chain and generate one `Migration_01_InitialSetup` per context.
   - [x] Carry every hand-written SQL block forward. Diff the new schema dump against the reference: tables, indexes, policies, triggers, functions and seed rows.
-  - [ ] Sample-data seed: one sample user, plus one organization per `BusinessType` mapped to that user.
+  - [x] Sample-data seed: one sample user, plus one organization per `BusinessType` mapped to that user.
   - [x] `has-pending-model-changes` is clean for every context, and `dotnet build` is clean.
-  - [ ] Docs and release notes.
+  - [x] Docs and release notes.
 - **Done when:** a database built from the new migrations matches one built from the old chains, RLS and triggers included, and the sample rows are present after a start against fresh databases.
+  - [ ] Owner: drop every local database, then run the suites from dropped databases (section 0.5). That means `Master.Api.Tests` (new: `SampleDataTests`), the `*RowLevelSecurityTests` and `RlsAudit`, and `Accounting.Api.Tests` for the ledger triggers.
+- **As built (Claude Opus 5.5, 10 October 2026):**
+  - **Migrations.** Every context has one migration, `Migration_01_InitialSetup`, 26 in all, replacing about 200. Each tenant migration ends with one hand-written block:
+    - `TenantRlsMigration.Enable` over a written-out `RlsTables` list taken from the policies the old chains left;
+    - `EditLogMigration.Up`;
+    - inline SQL only for what the helpers don't cover: `con.ApiClients`' customer-level read, the three `pay` tables guarded through their parent, and `acc`'s ledger, journal and money-document triggers in their TDS-aware form.
+    - `Down()` drops the edit-log triggers first and `acc`'s functions last.
+  - **Checked by catalog, not by reading.** A reference database was built from the old chains (Master's own start, plus the gateway and the worker). It was compared with one built from the new migrations: tables, columns, indexes, constraints, RLS flags, policies, triggers and functions.
+    - All match: 752 relations, 6,777 columns, 1,574 indexes, 1,014 constraints, 365 of 365 tables enabled and FORCEd, 365 policies identical in command, roles and expression, and the 29 old functions identical.
+    - The 1,102 tenant seed rows match.
+    - Rolling `acc`, `con`, `pay` and `sit` back to zero leaves no tables or functions.
+    - `has-pending-model-changes` is clean for all 26. Before, it was not for Admin, Accounting, Customer and Sales.
+  - **Deliberate differences**, all listed in the commit:
+    - The unmigrated model changes now ship: 61 currency symbols, *Curaçao*, the compliance and loyalty labels that a cp1252-encoded migration had stored as `?`; eight menu routes; the `site.*` permissions, their 25 grants and the `SiteLaborer` role; `sal.SalesRegister`'s non-unique index (`69fcb101`); and 11 `DateTime` columns now `timestamp without time zone`.
+    - Policy names in `clm`, `prf`, `rec`, `tla` (`tenant_isolation`) and `sit` (`sit_…`) are normalised to `{table}_tenant_isolation`.
+    - `sit.EditLog` gets the append-only triggers it never had.
+    - The defaults `AddColumn` had left on 43 columns are gone.
+  - **Admin's history table.** `AdminDbContextFactory` kept `dotnet ef`'s history in `mst`, while Master at run time read `public`. A database made by `dotnet ef database update` would have made Master re-run the migration and fail. Master now uses `mst` too.
+  - **Sample data** (`SampleDataRepository`, `SampleDataBootstrapWorker`):
+    - On start with `Bootstrap:SeedSampleData` (off by default), Master makes the `SAMPLE` Demo customer and one branch per business type, read from the enum: `RTL`, `PHA`, `JWL`, `SCH`, `SVC`, `RST`, each with every add-on its type allows.
+    - It also makes the sample user, Owner of all six, from `Bootstrap:SampleUserEmail`, `SampleUserName` and `SampleUserPassword`. The password is BCrypt-hashed at run time and is never in source; without one there is no password (D-45).
+    - Each branch is seeded through the ordinary `ITenantSeeder` fan-out, retried each minute up to ten times. It is idempotent, and an existing account keeps its own password and name.
+    - **Not `HasData`**, on purpose. Rows in a migration reach every deployment, production included, and a committed password hash for an Owner is the release blocker removed from `DatabaseMigrationService` on 4 September. `HasData` also can't seed a branch's books, which live in another database.
+  - **Verified here** with `dotnet ef database drop --force` and then `dotnet ef database update` for all 26 contexts into fresh databases, with every schema recording `Migration_01_InitialSetup`. Master and the 19 services a branch needs were then run with a throwaway user.
+    - The six branches went Active on the first attempt, each with 30 accounts, 6 tax rates, its numbering series, 13 print templates and 8 contact roles. Trading branches also got units, 112 reports and 4 SLA policies.
+    - `POST /api/auth/login` returned 200 with all six branches as Owner and an Active licence. A wrong password returned 401.
+  - Tests: `SampleDataTests`. They cover one branch per business type with distinct ids and codes, the add-ons, reading the user from configuration, two runs creating nothing new, a hashed password, no password, an existing account keeping its credential, an unseeded branch not activated, and the first-shard placement.
+- **Notes:**
+  - The owner asked for this on 10 October 2026. It came with "extract the user profile and credentials from the sample user details and screenshots in the repository", but the session's permission classifier refused the search for credentials. The user is therefore read from configuration, and the owner supplies the details.
+  - **Found while working, not fixed here** (follow-up suggestions raised):
+    - A customer allocated to a pooled shard gets its branch seed written into `IN000001`, because the internal seed endpoints build their context before the tenant is known (`TenantDatabaseResolver`'s fallback). The first verification run showed it: the customer was in `IN000002` with empty books. `SampleDataRepository` therefore places the sample customer in the first shard.
+    - The legacy-timestamp switch is set in static constructors, so a plain `DateTime`'s column type depends on load order.
 
 ## 3. Decisions from the owner
 
