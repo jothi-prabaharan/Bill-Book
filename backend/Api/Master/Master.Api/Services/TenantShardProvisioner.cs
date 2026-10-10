@@ -73,7 +73,7 @@ public sealed class TenantShardProvisioner : ITenantShardProvisioner
         {
             await DatabaseMigrationService.EnsureOrRequireDatabaseAsync(connection, _environment, _log, ct);
             _log.LogInformation("Migrating tenant schemas into new shard {Database}...", name);
-            await DatabaseMigrationService.MigrateTenantSchemasAsync(connection, ct);
+            await DatabaseMigrationService.MigrateTenantSchemasAsync(connection, _log, ct);
         }
         catch (InvalidOperationException ex)
         {

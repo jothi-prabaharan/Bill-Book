@@ -3,6 +3,7 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Master.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Tenancy;
 using Xunit;
@@ -75,6 +76,33 @@ public sealed class SampleDataTests
         Assert.Equal(expectedEmail, user.Email);
         Assert.Equal(expectedName, user.DisplayName);
         Assert.Equal(expectedPassword, user.Password);
+    }
+
+    [Fact]
+    public void The_sample_user_falls_back_to_the_bootstrap_owner_settings()
+    {
+        IConfiguration ownerOnly = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Bootstrap:OwnerEmail"] = "owner@example.com",
+            ["Bootstrap:OwnerName"] = "Owner",
+            ["Bootstrap:OwnerPassword"] = "owner-secret",
+        }).Build();
+
+        SampleUser? fromOwner = SampleDataRepository.UserFrom(ownerOnly);
+        Assert.Equal(new SampleUser("owner@example.com", "Owner", "owner-secret"), fromOwner);
+
+        IConfiguration both = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Bootstrap:OwnerEmail"] = "owner@example.com",
+            ["Bootstrap:OwnerPassword"] = "owner-secret",
+            ["Bootstrap:SampleUserEmail"] = "sample@example.com",
+            ["Bootstrap:SampleUserName"] = "Sample",
+        }).Build();
+
+        // A sample setting wins; each one falls back on its own.
+        Assert.Equal(new SampleUser("sample@example.com", "Sample", "owner-secret"), SampleDataRepository.UserFrom(both));
+
+        Assert.Null(SampleDataRepository.UserFrom(new ConfigurationBuilder().Build()));
     }
 
     [Theory]
@@ -188,6 +216,41 @@ public sealed class SampleDataTests
             Assert.Equal(1, await db.UserOrganizationRoles.CountAsync(
                 a => a.UserId == user.UserId && a.OrgId == orgId && a.RoleId == AdminDbContext.OwnerRoleId));
         }
+    }
+
+    [SkippableFact]
+    public async Task The_rows_alone_make_the_customer_branches_and_owner_without_calling_any_service()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await using AdminDbContext db = _admin.CreateContext();
+        await EnsureShardAsync(db);
+
+        // What Master's startup calls before it listens (TK-186): the seed
+        // fan-out calls every other service, which are still starting then.
+        var sample = new SampleUser(UniqueEmail(), "Sample User", null);
+        var seeder = new RecordingSeeder();
+        (bool _, bool userCreated) = await Create(db, seeder).EnsureRowsAsync(sample, default);
+
+        Assert.True(userCreated);
+        Assert.Empty(seeder.Calls);
+
+        db.ChangeTracker.Clear();
+        Assert.True(await db.Customers.AnyAsync(c => c.CustomerId == SampleDataRepository.CustomerId));
+        User user = await db.Users.SingleAsync(u => u.Email == sample.Email);
+        foreach (BusinessType type in SampleDataRepository.BusinessTypes)
+        {
+            Guid orgId = SampleDataRepository.OrgId(type);
+            Assert.True(await db.Organizations.AnyAsync(o => o.OrgId == orgId));
+            Assert.Equal(1, await db.UserOrganizationRoles.CountAsync(
+                a => a.UserId == user.UserId && a.OrgId == orgId && a.RoleId == AdminDbContext.OwnerRoleId));
+        }
+
+        // A second call adds nothing.
+        (bool customerCreated, bool userCreatedAgain) = await Create(db, seeder).EnsureRowsAsync(sample, default);
+        Assert.False(customerCreated);
+        Assert.False(userCreatedAgain);
+        Assert.Empty(seeder.Calls);
     }
 
     [SkippableFact]

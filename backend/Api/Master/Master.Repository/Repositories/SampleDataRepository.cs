@@ -123,6 +123,19 @@ public sealed class SampleDataRepository
     }
 
     /// <summary>
+    /// The sample user from configuration, falling back to the bootstrap
+    /// owner's settings for anything not given: <c>Bootstrap:SampleUserEmail</c>
+    /// or <c>Bootstrap:OwnerEmail</c>, and the same for the name and password.
+    /// Master's startup and <c>SampleDataBootstrapWorker</c> both read it here,
+    /// so the two agree on who the sample user is.
+    /// </summary>
+    public static SampleUser? UserFrom(IConfiguration config) =>
+        UserFrom(
+            config["Bootstrap:SampleUserEmail"] ?? config["Bootstrap:OwnerEmail"],
+            config["Bootstrap:SampleUserName"] ?? config["Bootstrap:OwnerName"],
+            config["Bootstrap:SampleUserPassword"] ?? config["Bootstrap:OwnerPassword"]);
+
+    /// <summary>
     /// Makes sure the sample customer, every sample branch and the sample user
     /// exist, the user is Owner in every branch, and each branch is seeded.
     /// Each branch is seeded on its own, so one service being down leaves the
@@ -130,14 +143,7 @@ public sealed class SampleDataRepository
     /// </summary>
     public async Task<SampleDataResult> EnsureAsync(SampleUser user, CancellationToken ct)
     {
-        bool customerCreated = await EnsureCustomerAsync(ct);
-
-        foreach (BusinessType type in BusinessTypes)
-        {
-            await EnsureBranchAsync(type, ct);
-        }
-
-        bool userCreated = await EnsureUserAsync(user, ct);
+        (bool customerCreated, bool userCreated) = await EnsureRowsAsync(user, ct);
 
         List<SampleBranchResult> branches = [];
         foreach (BusinessType type in BusinessTypes)
@@ -165,6 +171,26 @@ public sealed class SampleDataRepository
         }
 
         return new SampleDataResult(customerCreated, userCreated, branches);
+    }
+
+    /// <summary>
+    /// The rows only — customer, licence, branches, user and Owner roles — and
+    /// no seeding. Master's startup calls this before it listens (TK-186): the
+    /// seed fan-out calls every other service over HTTP, and before Master
+    /// listens those are still starting, so the fan-out is left to
+    /// <c>SampleDataBootstrapWorker</c>, which runs once the host is up.
+    /// </summary>
+    public async Task<(bool CustomerCreated, bool UserCreated)> EnsureRowsAsync(SampleUser user, CancellationToken ct)
+    {
+        bool customerCreated = await EnsureCustomerAsync(ct);
+
+        foreach (BusinessType type in BusinessTypes)
+        {
+            await EnsureBranchAsync(type, ct);
+        }
+
+        bool userCreated = await EnsureUserAsync(user, ct);
+        return (customerCreated, userCreated);
     }
 
     private async Task<bool> EnsureCustomerAsync(CancellationToken ct)

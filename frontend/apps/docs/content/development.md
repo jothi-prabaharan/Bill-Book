@@ -181,6 +181,12 @@ dotnet ef database update --context AccountingDbContext \
 
 Add `--connection "…"` to any of these to point it at a database other than the one the project's settings name. `AdminDbContext` keeps its migration history in `mst`, both under `dotnet ef` and when Master starts, so a database made either way is one the other recognises.
 
+### Starting everything at once
+
+It is safe to start every service together against empty databases, the way the **All APIs + Web App** launch does. On a first start each service migrates its own schema while Master migrates all of them, so they take turns: one migration waits for another to finish, for up to ten minutes, rather than failing after thirty seconds. A service that finds `IN000001` missing waits for Master to create it, and two hosts creating the same database or schema at the same moment both carry on (TK-186). Against a remote database a first start takes minutes, not seconds. Later starts have nothing to migrate and are quick.
+
+**A 502 from the gateway means the service behind it is not listening yet**, most often Master, which opens its port only after its own migrations. Wait for `Now listening on: http://localhost:4511` in Master's console and sign in again. A 500 from `api/auth/login` is a different fault, and Master's console names it.
+
 ### Sample data
 
 The migrations seed reference data only: countries and states, currencies, roles, permissions and menus. There are no users or customers. For something to sign in to, turn on the sample data in your own settings (user secrets, environment variables or `appsettings.Development.json`). Never turn it on in a deployment.
@@ -188,17 +194,17 @@ The migrations seed reference data only: countries and states, currencies, roles
 | Setting | What it does |
 |---|---|
 | `Bootstrap:SeedSampleData` | `true` makes the sample data when Master starts. Off by default |
-| `Bootstrap:SampleUserEmail` | The sample user's sign-in. Required: with no address, nothing is made |
-| `Bootstrap:SampleUserName` | The name shown for them. *Sample User* if left out |
-| `Bootstrap:SampleUserPassword` | Their password, stored as a BCrypt hash. Left out, they have none: use **Forgot password**, whose code Development prints to Master's console |
+| `Bootstrap:SampleUserEmail` | The sample user's sign-in. Falls back to `Bootstrap:OwnerEmail`; with neither, nothing is made |
+| `Bootstrap:SampleUserName` | The name shown for them. Falls back to `Bootstrap:OwnerName`, then *Sample User* |
+| `Bootstrap:SampleUserPassword` | Their password, stored as a BCrypt hash. Falls back to `Bootstrap:OwnerPassword`. With neither, they have none: use **Forgot password**, whose code Development prints to Master's console |
 
-A minute after it starts, Master makes:
+When it starts, Master makes:
 
 - the **Sample Business** customer (code `SAMPLE`, a Demo customer, so it never lapses and has no branch limit);
 - **one branch for every business type**: `RTL` Sample Retail, `PHA` Sample Pharma, `JWL` Sample Jewellery, `SCH` Sample School, `SVC` Sample Service and `RST` Sample Restaurant, each with every add-on its type allows;
 - the sample user, as **Owner** of all six. After signing in, switch between them with the branch switcher.
 
-Each branch is set up the way any new branch is, with its chart of accounts, tax rates, units, numbering series, reports and print templates, so the services it uses have to be running. Master tries again every minute, up to ten times, until each of them has answered. Then it marks the branches active. Running it again creates nothing new. **An address that already has an account keeps its own password and name**, and only gains the six branches. No credential is kept in the source.
+Before it listens, Master writes each branch's chart of accounts, tax rates, payment terms, units, numbering series and print templates itself, and marks the branches active, so you can sign in as soon as Master is up. A minute later it sets each branch up the way any new branch is, through every service the branch uses: reports, contact roles, SLA policies, and the HRMS and School data. Those services have to be running for that, so Master tries again every minute, up to ten times, until each of them has answered. Running it again creates nothing new. **An address that already has an account keeps its own password and name**, and only gains the six branches. No credential is kept in the source.
 
 ## Checks
 

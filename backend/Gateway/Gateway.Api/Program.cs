@@ -87,7 +87,7 @@ WebApplication app = builder.Build();
 using (IServiceScope scope = app.Services.CreateScope())
 {
     GatewayDbContext db = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
-    await db.Database.MigrateAsync();
+    await StartupMigration.MigrateAsync(db.Database, app.Logger, "Gateway", CancellationToken.None);
 }
 
 // First in the pipeline: the duration it records should cover everything the

@@ -15,6 +15,7 @@ using Printing.Repository.SeedData;
 using Purchase.Repository;
 using Reporting.Repository;
 using Sales.Repository;
+using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Apps;
 
@@ -58,8 +59,7 @@ public class DatabaseMigrationService : IHostedService
 
         // 1. Run EF Core Migrations for Admin
         var adminDb = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
-        _logger.LogInformation("Migrating Admin database...");
-        await adminDb.Database.MigrateAsync(cancellationToken);
+        await StartupMigration.MigrateAsync(adminDb.Database, _logger, "Admin", cancellationToken);
 
         // 2. Seed Geography Data
         _logger.LogInformation("Seeding global geography data...");
@@ -85,7 +85,7 @@ public class DatabaseMigrationService : IHostedService
             string shardConnection = TenantConnectionString(adminDbString, shard);
             await EnsureOrRequireDatabaseAsync(shardConnection, cancellationToken);
             _logger.LogInformation("Migrating tenant schemas for {Database}...", shard);
-            await MigrateTenantSchemasAsync(shardConnection, cancellationToken);
+            await MigrateTenantSchemasAsync(shardConnection, _logger, cancellationToken);
         }
 
         // 3c. Each shard's count of customers, recounted from mst.Customers
@@ -197,7 +197,7 @@ public class DatabaseMigrationService : IHostedService
         _logger.LogInformation("Migrating tenant schemas for {Database}...", tenantDbName);
         var dummyTenant = new TenantContext { CustomerId = Guid.Empty, OrgId = Guid.Empty };
 
-        await MigrateTenantSchemasAsync(tenantConnectionString, ct);
+        await MigrateTenantSchemasAsync(tenantConnectionString, _logger, ct);
 
         // Blank optional phones in con, inv and cus are NULL, never '' (TK-21).
         await using (var contacts = new ContactsDbContext(new DbContextOptionsBuilder<ContactsDbContext>().UseNpgsql(tenantConnectionString).Options, dummyTenant))
@@ -216,20 +216,21 @@ public class DatabaseMigrationService : IHostedService
         var headOfficeCustomerId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         await SeedBranchMasterDataAsync(tenantConnectionString, headOfficeCustomerId, headOfficeOrgId, ct);
 
-        // Seed 6 sample branches if Bootstrap:SeedSampleData is enabled (TK-185)
+        // Seed 6 sample branches if Bootstrap:SeedSampleData is enabled (TK-185).
+        // Rows and direct seed only: this runs before Master listens, and the
+        // HTTP fan-out to every service is SampleDataBootstrapWorker's, once the
+        // host is up. Run here, it held Master's port shut while each call to a
+        // service still starting failed in turn, and login answered 502 (TK-186).
         if (_config.GetValue<bool>("Bootstrap:SeedSampleData"))
         {
             _logger.LogInformation("Seeding sample customer and 6 business-type branches...");
-            var sampleUser = SampleDataRepository.UserFrom(
-                _config["Bootstrap:SampleUserEmail"] ?? _config["Bootstrap:OwnerEmail"],
-                _config["Bootstrap:SampleUserName"] ?? _config["Bootstrap:OwnerName"],
-                _config["Bootstrap:SampleUserPassword"] ?? _config["Bootstrap:OwnerPassword"]);
+            var sampleUser = SampleDataRepository.UserFrom(_config);
 
             if (sampleUser != null)
             {
                 using var sampleScope = _services.CreateScope();
                 var sampleRepo = sampleScope.ServiceProvider.GetRequiredService<SampleDataRepository>();
-                await sampleRepo.EnsureAsync(sampleUser, ct);
+                await sampleRepo.EnsureRowsAsync(sampleUser, ct);
 
                 foreach (BusinessType type in SampleDataRepository.BusinessTypes)
                 {
@@ -332,33 +333,33 @@ public class DatabaseMigrationService : IHostedService
     /// for the first shard at startup, for every other registered shard at
     /// startup, and for a shard provisioned when the pool fills (TK-46).
     /// </summary>
-    public static async Task MigrateTenantSchemasAsync(string connectionString, CancellationToken ct)
+    public static async Task MigrateTenantSchemasAsync(string connectionString, ILogger logger, CancellationToken ct)
     {
         var tenant = new TenantContext { CustomerId = Guid.Empty, OrgId = Guid.Empty };
 
-        await MigrateContextAsync<ContactsDbContext>(connectionString, tenant, "con", ct);
-        await MigrateContextAsync<AccountingDbContext>(connectionString, tenant, "acc", ct);
-        await MigrateContextAsync<CustomerDbContext>(connectionString, tenant, "cus", ct);
-        await MigrateContextAsync<Employee.Repository.EmployeeDbContext>(connectionString, tenant, "hrm", ct);
-        await MigrateContextAsync<InventoryDbContext>(connectionString, tenant, "inv", ct);
-        await MigrateContextAsync<PurchaseDbContext>(connectionString, tenant, "pur", ct);
-        await MigrateContextAsync<PrintingDbContext>(connectionString, tenant, "prt", ct);
-        await MigrateContextAsync<ReportingDbContext>(connectionString, tenant, "rpt", ct);
-        await MigrateContextAsync<SalesDbContext>(connectionString, tenant, "sal", ct);
-        await MigrateContextAsync<Payroll.Repository.PayrollDbContext>(connectionString, tenant, "pay", ct);
-        await MigrateContextAsync<TimeLeave.Repository.TimeLeaveDbContext>(connectionString, tenant, "tla", ct);
-        await MigrateContextAsync<Student.Repository.StudentDbContext>(connectionString, tenant, "sis", ct);
-        await MigrateContextAsync<Admission.Repository.AdmissionDbContext>(connectionString, tenant, "adm", ct);
-        await MigrateContextAsync<Attendance.Repository.AttendanceDbContext>(connectionString, tenant, "att", ct);
-        await MigrateContextAsync<Fee.Repository.FeeDbContext>(connectionString, tenant, "fee", ct);
-        await MigrateContextAsync<Facility.Repository.FacilityDbContext>(connectionString, tenant, "fac", ct);
-        await MigrateContextAsync<WorkOrder.Repository.WorkOrderDbContext>(connectionString, tenant, "wrk", ct);
-        await MigrateContextAsync<Preventive.Repository.PreventiveDbContext>(connectionString, tenant, "ppm", ct);
-        await MigrateContextAsync<MaintenanceContract.Repository.MaintenanceContractDbContext>(connectionString, tenant, "amc", ct);
-        await MigrateContextAsync<Claims.Repository.ClaimsDbContext>(connectionString, tenant, "clm", ct);
-        await MigrateContextAsync<Recruitment.Repository.RecruitmentDbContext>(connectionString, tenant, "rec", ct);
-        await MigrateContextAsync<Performance.Repository.PerformanceDbContext>(connectionString, tenant, "prf", ct);
-        await MigrateContextAsync<Site.Repository.SiteDbContext>(connectionString, tenant, "sit", ct);
+        await MigrateContextAsync<ContactsDbContext>(connectionString, tenant, "con", logger, ct);
+        await MigrateContextAsync<AccountingDbContext>(connectionString, tenant, "acc", logger, ct);
+        await MigrateContextAsync<CustomerDbContext>(connectionString, tenant, "cus", logger, ct);
+        await MigrateContextAsync<Employee.Repository.EmployeeDbContext>(connectionString, tenant, "hrm", logger, ct);
+        await MigrateContextAsync<InventoryDbContext>(connectionString, tenant, "inv", logger, ct);
+        await MigrateContextAsync<PurchaseDbContext>(connectionString, tenant, "pur", logger, ct);
+        await MigrateContextAsync<PrintingDbContext>(connectionString, tenant, "prt", logger, ct);
+        await MigrateContextAsync<ReportingDbContext>(connectionString, tenant, "rpt", logger, ct);
+        await MigrateContextAsync<SalesDbContext>(connectionString, tenant, "sal", logger, ct);
+        await MigrateContextAsync<Payroll.Repository.PayrollDbContext>(connectionString, tenant, "pay", logger, ct);
+        await MigrateContextAsync<TimeLeave.Repository.TimeLeaveDbContext>(connectionString, tenant, "tla", logger, ct);
+        await MigrateContextAsync<Student.Repository.StudentDbContext>(connectionString, tenant, "sis", logger, ct);
+        await MigrateContextAsync<Admission.Repository.AdmissionDbContext>(connectionString, tenant, "adm", logger, ct);
+        await MigrateContextAsync<Attendance.Repository.AttendanceDbContext>(connectionString, tenant, "att", logger, ct);
+        await MigrateContextAsync<Fee.Repository.FeeDbContext>(connectionString, tenant, "fee", logger, ct);
+        await MigrateContextAsync<Facility.Repository.FacilityDbContext>(connectionString, tenant, "fac", logger, ct);
+        await MigrateContextAsync<WorkOrder.Repository.WorkOrderDbContext>(connectionString, tenant, "wrk", logger, ct);
+        await MigrateContextAsync<Preventive.Repository.PreventiveDbContext>(connectionString, tenant, "ppm", logger, ct);
+        await MigrateContextAsync<MaintenanceContract.Repository.MaintenanceContractDbContext>(connectionString, tenant, "amc", logger, ct);
+        await MigrateContextAsync<Claims.Repository.ClaimsDbContext>(connectionString, tenant, "clm", logger, ct);
+        await MigrateContextAsync<Recruitment.Repository.RecruitmentDbContext>(connectionString, tenant, "rec", logger, ct);
+        await MigrateContextAsync<Performance.Repository.PerformanceDbContext>(connectionString, tenant, "prf", logger, ct);
+        await MigrateContextAsync<Site.Repository.SiteDbContext>(connectionString, tenant, "sit", logger, ct);
     }
 
     /// <summary>
@@ -386,7 +387,7 @@ public class DatabaseMigrationService : IHostedService
     public static string TenantConnectionString(string adminConnectionString, string databaseName) =>
         new NpgsqlConnectionStringBuilder(adminConnectionString) { Database = databaseName }.ConnectionString;
 
-    private static async Task MigrateContextAsync<TContext>(string connectionString, ITenantContext tenant, string schema, CancellationToken ct) 
+    private static async Task MigrateContextAsync<TContext>(string connectionString, ITenantContext tenant, string schema, ILogger logger, CancellationToken ct)
         where TContext : TenantDbContext
     {
         var optionsBuilder = new DbContextOptionsBuilder<TContext>();
@@ -394,9 +395,8 @@ public class DatabaseMigrationService : IHostedService
         var options = optionsBuilder.Options;
 
         // Instantiate via reflection since all TenantDbContexts take (DbContextOptions<T>, ITenantContext)
-        var context = (TContext)Activator.CreateInstance(typeof(TContext), options, tenant)!;
-        await context.Database.MigrateAsync(ct);
-        await context.DisposeAsync();
+        await using var context = (TContext)Activator.CreateInstance(typeof(TContext), options, tenant)!;
+        await StartupMigration.MigrateAsync(context.Database, logger, schema, ct);
     }
 
     /// <summary>
@@ -474,7 +474,17 @@ public class DatabaseMigrationService : IHostedService
             logger.LogInformation("Creating database {Database}...", targetDatabase);
             string sql = $"CREATE DATABASE \"{targetDatabase}\" ENCODING 'UTF8' TEMPLATE template0";
             await using var createCmd = new NpgsqlCommand(sql, connection);
-            await createCmd.ExecuteNonQueryAsync(ct);
+            try
+            {
+                await createCmd.ExecuteNonQueryAsync(ct);
+            }
+            catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.DuplicateDatabase)
+            {
+                // A service starting alongside created it between the check
+                // and this statement: EF's Migrate creates a missing database
+                // itself. It is there, which is all this needed (TK-186).
+                logger.LogInformation("Database {Database} was created by another host meanwhile.", targetDatabase);
+            }
         }
     }
 

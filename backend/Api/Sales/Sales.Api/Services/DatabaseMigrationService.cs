@@ -2,7 +2,7 @@ using Sales.Repository.Repositories;
 using Sales.Repository.Clients;
 using Sales.Repository;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using Shared.Kernel.Persistence;
 
 namespace Sales.Api.Services;
 
@@ -27,31 +27,8 @@ public class DatabaseMigrationService : IHostedService
         using var scope = _services.CreateScope();
 
         var db = scope.ServiceProvider.GetRequiredService<SalesDbContext>();
-        
-        int retries = 5;
-        while (retries > 0)
-        {
-            try
-            {
-                _logger.LogInformation("Migrating Sales database...");
-                await db.Database.MigrateAsync(cancellationToken);
-                _logger.LogInformation("Sales database migration complete.");
-                break;
-            }
-            catch (Exception ex) when (ex is PostgresException { SqlState: "3D000" } || ex is NpgsqlException || ex is TimeoutException || ex.InnerException is TimeoutException)
-            {
-                retries--;
-                if (retries == 0) throw;
 
-                if (ex is PostgresException { SqlState: "3D000" })
-                    _logger.LogWarning("Database does not exist yet. Waiting 2s for Master.Api to create it...");
-                else
-                    _logger.LogWarning("Transient error ({Message}) during migration. Retrying in 2s...", ex.Message);
-
-                // Add jitter to avoid thundering herd when 20 services start at once
-                await Task.Delay(2000 + Random.Shared.Next(0, 1000), cancellationToken);
-            }
-        }
+        await StartupMigration.MigrateAsync(db.Database, _logger, "Sales", cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

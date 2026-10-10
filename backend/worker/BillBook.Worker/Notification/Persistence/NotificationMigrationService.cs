@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Kernel.Persistence;
 
 namespace BillBook.Worker.Notification.Persistence;
 
@@ -26,8 +27,7 @@ public sealed class NotificationMigrationService : IHostedService
         using IServiceScope scope = _scopes.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
 
-        _log.LogInformation("Migrating the ntf schema...");
-        await db.Database.MigrateAsync(cancellationToken);
+        await StartupMigration.MigrateAsync(db.Database, _log, "ntf", cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

@@ -9,8 +9,8 @@ namespace Master.Api.Services;
 /// by default, so a production install never gets it by accident.
 ///
 /// The user comes from <c>Bootstrap:SampleUserEmail</c>,
-/// <c>Bootstrap:SampleUserName</c> and <c>Bootstrap:SampleUserPassword</c>; no
-/// credential is in source. Without a password the user is created with none and
+/// <c>Bootstrap:SampleUserName</c> and <c>Bootstrap:SampleUserPassword</c>, each
+/// falling back to the matching <c>Bootstrap:Owner*</c> setting. Without a password the user is created with none and
 /// signs in through forgot-password.
 ///
 /// It runs after the host has started, because seeding a branch calls every
@@ -42,12 +42,11 @@ public sealed class SampleDataBootstrapWorker : BackgroundService
             return;
         }
 
-        SampleUser? user = SampleDataRepository.UserFrom(
-            _config["Bootstrap:SampleUserEmail"], _config["Bootstrap:SampleUserName"], _config["Bootstrap:SampleUserPassword"]);
+        SampleUser? user = SampleDataRepository.UserFrom(_config);
 
         if (user is null)
         {
-            _log.LogWarning("Bootstrap:SeedSampleData is on but Bootstrap:SampleUserEmail is not an email address, so no sample data was made.");
+            _log.LogWarning("Bootstrap:SeedSampleData is on but neither Bootstrap:SampleUserEmail nor Bootstrap:OwnerEmail is an email address, so no sample data was made.");
             return;
         }
 

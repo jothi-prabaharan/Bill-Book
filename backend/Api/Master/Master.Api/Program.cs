@@ -73,13 +73,13 @@ builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
     // History in mst, where AdminDbContextFactory puts it for `dotnet ef`. In
     // public, a database made by `dotnet ef database update` looked unmigrated
     // to this host, which then failed on its first CREATE TABLE (TK-185).
+    //
+    // No EnableRetryOnFailure, here or on the contacts context: a retrying
+    // strategy refuses every BeginTransactionAsync, and every write endpoint,
+    // login included, opens one. Startup resilience is StartupMigration's (TK-186).
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("AdminDatabase"),
-        npgsql => 
-        {
-            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "mst");
-            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
-        });
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "mst"));
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 
@@ -97,11 +97,7 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 {
     options.UseNpgsql(
         sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
-        npgsql => 
-        {
-            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con");
-            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
-        });
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());

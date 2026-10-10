@@ -5650,7 +5650,7 @@ The queue below is one list in card-number order. Each card names its group.
     - The legacy-timestamp switch is set in static constructors, so a plain `DateTime`'s column type depends on load order.
 
 ### TK-186 · Startup: migration lock timeouts, Master not listening, login 500
-- [~] working (Claude Opus 5.5) — since 2026-10-10
+- [x] completed (Claude Opus 5.5) — 2026-10-10 · tests written, not run
 - **Issue:** [#176](https://github.com/jothi-prabaharan/Bill-Book/issues/176)
 - **Group:** Z · Owner request
 - **Lanes:** L-MST, L-DEPS (`Shared.Kernel/Persistence`), every service's `Services/DatabaseMigrationService.cs`, the gateway and the worker, L-DOC · **Depends on:** — · **Decision:** —
@@ -5660,12 +5660,25 @@ The queue below is one list in card-number order. Each card names its group.
   - Login answers 502 from the gateway. Master's startup job calls the HTTP seed fan-out for the six sample branches before Kestrel binds, while the services are still starting: 76 failed calls locally, each about 2–4 s on Windows.
   - Login answers 500 once Master is up. `EnableRetryOnFailure` on Master's two contexts makes every `BeginTransactionAsync` throw, and every write endpoint opens one (hard rule 13).
 - **Sub-tasks:**
-  - [ ] One shared migration runner: a long command timeout for the migration only, a wait for a database Master has not created yet, and a retry on a transient connection failure. Every startup migration goes through it.
-  - [ ] Remove `EnableRetryOnFailure` from `AdminDbContext` and `ContactsDbContext`.
-  - [ ] Master's startup makes the sample rows and their direct seed only; the HTTP fan-out stays in `SampleDataBootstrapWorker`, after Master listens.
-  - [ ] Docs and release notes.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] One shared migration runner: a long command timeout for the migration only, a wait for a database Master has not created yet, and a retry on a transient connection failure. Every startup migration goes through it.
+  - [x] Remove `EnableRetryOnFailure` from `AdminDbContext` and `ContactsDbContext`.
+  - [x] Master's startup makes the sample rows and their direct seed only; the HTTP fan-out stays in `SampleDataBootstrapWorker`, after Master listens.
+  - [x] Docs and release notes.
+  - [x] Test: written, never run by an AI (section 0.5).
+  - [ ] Owner: pull, start **All APIs + Web App** against the remote database, and sign in. Run `Shared.Kernel.Tests` (`StartupMigrationTests`) and `Master.Api.Tests` (`SampleDataTests`).
 - **Done when:** a start of everything against fresh databases has no service failing its migration, Master listens without waiting on other services, and login answers 200.
+- **As built (Claude Opus 5.5, 10 October 2026):**
+  - **`Shared.Kernel.Persistence.StartupMigration`.** It sets a ten-minute command timeout for the migration and puts the old one back afterwards. It waits up to ten minutes, every 5 s, for a missing database (3D000). It retries five times on a transient failure, and on a lost create race (42P04, 42P06, 42P07, 23505): EF creates a missing database itself, so a service can create `IN000001` while Master does. All 21 services' `DatabaseMigrationService`, Master's admin and per-tenant-schema migrations, the gateway and the notification migration go through it. Their own retry loops are gone: five tries two seconds apart, and Accounting's caught only 3D000.
+  - **Master's `CREATE DATABASE`** treats 42P04 as done, for the same race.
+  - **`EnableRetryOnFailure` removed** from Master's two contexts (`7bbcad37`), with a comment saying why. The connection string's `Timeout=60;Command Timeout=120` from the same commit stays.
+  - **Sample data at startup.** `SampleDataRepository.EnsureRowsAsync` makes the customer, licence, branches, user and Owner roles without seeding. The startup job calls it in place of `EnsureAsync`, keeping its direct seed and its activation (`9800ffde`). The fan-out runs a minute after start in `SampleDataBootstrapWorker`, and both read the user through `SampleDataRepository.UserFrom(IConfiguration)`, falling back to `Bootstrap:Owner*`.
+  - **Reproduced first, then checked here** against local PostgreSQL:
+    - With `acc`'s history table locked for 50 s, Accounting.Api failed at 30,069 ms before the fix; after it, Accounting waited, migrated 45 tables and listened.
+    - Master at `HEAD` made 76 failed seed calls before it listened. At about 2–4 s for each refused connection on Windows, that is the minutes of 502.
+    - Login straight to Master returned 500 with *NpgsqlRetryingExecutionStrategy does not support user-initiated transactions*.
+    - After the fix, three rounds of the gateway, Master and 13 services started together from dropped databases: 15 of 15 listened in about 30 s every time, and five 42P04 races were retried.
+    - `POST /api/auth/login` through the gateway returned 200 with seven branches as Owner (the head office and the six sample branches); a wrong password returned 401.
+  - **Not changed:** Master still migrates every tenant schema that the services also migrate. That second path is TK-183's to remove; this card makes the two safe to run together.
 
 ## 3. Decisions from the owner
 
