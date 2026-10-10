@@ -75,7 +75,11 @@ builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
     // to this host, which then failed on its first CREATE TABLE (TK-185).
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("AdminDatabase"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "mst"));
+        npgsql => 
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "mst");
+            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+        });
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 
@@ -93,7 +97,11 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 {
     options.UseNpgsql(
         sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con"));
+        npgsql => 
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con");
+            npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+        });
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());
