@@ -45,9 +45,11 @@ public sealed class SalesOrdersController : ControllerBase
         [FromQuery] int skip = 0,
         [FromQuery] int take = DefaultPageSize,
         [FromQuery] string? status = null,
-        [FromQuery] string? search = null)
+        [FromQuery] string? search = null,
+        [FromQuery] DateOnly? from = null,
+        [FromQuery] DateOnly? to = null)
     {
-        SalesOrderListPage page = await _SalesOrders.ListAsync(skip, take, status, search, ct);
+        SalesOrderListPage page = await _SalesOrders.ListAsync(skip, take, status, search, ct, from, to);
         return Ok(page);
     }
 

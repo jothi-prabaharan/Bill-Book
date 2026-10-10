@@ -10,8 +10,19 @@ public class PurchaseTransactionListItem
     public DateOnly DocumentDate { get; set; }
     public long ContactId { get; set; }
     public string? ContactName { get; set; }
+    public string CurrencyCode { get; set; } = string.Empty;
+
+    /// <summary>The value before tax, in <see cref="CurrencyCode"/> (TK-187).</summary>
+    public decimal TaxableAmount { get; set; }
+
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// An order's fulfilment — Open, Partly…, Closed, Cancelled — for the
+    /// list's status once the order is confirmed; null for every other type (TK-187).
+    /// </summary>
+    public string? FulfilmentStatus { get; set; }
     public DateOnly? DueDate { get; set; }
 }
 

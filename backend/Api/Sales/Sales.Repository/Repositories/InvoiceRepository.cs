@@ -1261,12 +1261,6 @@ public sealed class InvoiceRepository : IInvoiceRepository
             query = query.Where(x => x.DocumentDate <= to.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(status)
-            && Enum.TryParse(status.Trim(), ignoreCase: true, out DocumentStatus wanted))
-        {
-            query = query.Where(x => x.Status == wanted);
-        }
-
         if (!string.IsNullOrWhiteSpace(search))
         {
             string term = search.Trim();
@@ -1291,9 +1285,24 @@ public sealed class InvoiceRepository : IInvoiceRepository
                 && (e.Status == EInvoiceStatus.Failed || e.Status == EInvoiceStatus.Pending)));
         }
 
+        // The status tabs count under every other filter, so a tab says what
+        // choosing it would show (TK-187). Counted before the status narrows.
+        Dictionary<string, int> statusCounts = (await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync(ct))
+            .ToDictionary(g => g.Status.ToString(), g => g.Count);
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse(status.Trim(), ignoreCase: true, out DocumentStatus wanted))
+        {
+            query = query.Where(x => x.Status == wanted);
+        }
+
         // Counted before paging: the screen has to say how many matched, not how
         // many fitted on the page.
         int total = await query.CountAsync(ct);
+        decimal totalBase = await query.SumAsync(x => x.TotalAmountBase, ct);
 
         List<InvoiceListItem> rows = await query
             .OrderByDescending(x => x.DocumentDate)
@@ -1350,6 +1359,8 @@ public sealed class InvoiceRepository : IInvoiceRepository
             Skip = safeSkip,
             Take = safeTake,
             Rows = rows,
+            StatusCounts = statusCounts,
+            TotalAmountBase = totalBase,
         };
     }
 

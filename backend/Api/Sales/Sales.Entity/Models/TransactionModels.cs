@@ -5,13 +5,24 @@ namespace Sales.Entity.Models;
 public class SalesTransactionListItem
 {
     public long TransactionId { get; set; }
-    public string TransactionType { get; set; } = string.Empty; // "Quote", "SalesOrder", "Invoice", "CreditNote"
+    public string TransactionType { get; set; } = string.Empty; // "Quote", "SalesOrder", "Invoice", "DeliveryChallan", "CreditNote"
     public string DocumentNo { get; set; } = string.Empty;
     public DateOnly DocumentDate { get; set; }
     public long ContactId { get; set; }
     public string? ContactName { get; set; }
+    public string CurrencyCode { get; set; } = string.Empty;
+
+    /// <summary>The value before tax, in <see cref="CurrencyCode"/> (TK-187).</summary>
+    public decimal TaxableAmount { get; set; }
+
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// An order's fulfilment — Open, Partly…, Closed, Cancelled — for the
+    /// list's status once the order is confirmed; null for every other type (TK-187).
+    /// </summary>
+    public string? FulfilmentStatus { get; set; }
     public DateOnly? DueDate { get; set; } 
 
     /// <summary>A quote's answer from the customer portal: Accepted or Rejected, null when none (TK-96).</summary>

@@ -9,17 +9,17 @@ export const salesRoutes: Routes = [
   {
     path: 'quotes',
     loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent),
-    data: { motionIndex: 4, depth: 0, type: 'Quote', title: 'Quotes', newRoute: '/sales/quotes/new', newTitle: 'New Quote', access: { permission: 'sales.view' } }
+    data: { motionIndex: 4, depth: 0, type: 'Quote', title: 'Quotes', newRoute: '/sales/quotes/new', newTitle: 'New quote', access: { permission: 'sales.view' } }
   },
   {
     path: 'delivery-challans',
     loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent),
-    data: { motionIndex: 4, depth: 0, type: 'DeliveryChallan', title: 'Delivery challans', newRoute: '/sales/delivery-challans/new', newTitle: 'New Delivery challan', access: { permission: 'sales.view' } }
+    data: { motionIndex: 4, depth: 0, type: 'DeliveryChallan', title: 'Delivery challans', newRoute: '/sales/delivery-challans/new', newTitle: 'New delivery challan', access: { permission: 'sales.view' } }
   },
   {
     path: 'credit-notes',
     loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent),
-    data: { motionIndex: 4, depth: 0, type: 'CreditNote', title: 'Credit notes', newRoute: '/sales/credit-notes/new', newTitle: 'New Credit note', access: { permission: 'sales.view' } }
+    data: { motionIndex: 4, depth: 0, type: 'CreditNote', title: 'Credit notes', newRoute: '/sales/credit-notes/new', newTitle: 'New credit note', access: { permission: 'sales.view' } }
   },
   {
     path: '',

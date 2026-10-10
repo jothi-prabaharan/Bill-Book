@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { SalesListComponent } from './sales-list.component';
+import { SALES_REGISTERS, SalesListComponent, salesListStatus } from './sales-list.component';
 import { TransactionService, SalesTransactionListItem } from '@bill-book/sales-core';
 
 describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
@@ -94,22 +94,22 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
       expect(comp.transactions()).toEqual(sampleTransactions);
     });
 
-    it('SLIST-T1-02: Column definitions define 6 columns with proper alignment', () => {
+    it('SLIST-T1-02: The register\'s six columns, amounts as money (TK-187)', () => {
       const comp = createComponent();
       const cols = comp.columns;
 
       expect(cols.length).toBe(6);
       expect(cols.map(c => c.field)).toEqual([
-        'documentDate',
-        'transactionType',
         'documentNo',
+        'documentDate',
         'contactName',
-        'totalAmount',
-        'status'
+        'listStatus',
+        'taxableAmount',
+        'totalAmount'
       ]);
 
-      const amountCol = cols.find(c => c.field === 'totalAmount');
-      expect(amountCol?.align).toBe('right');
+      expect(cols.find(c => c.field === 'totalAmount')?.dataType).toBe('money');
+      expect(cols.find(c => c.field === 'taxableAmount')?.dataType).toBe('money');
     });
 
     it('SLIST-T1-03: setType updates selectedType and re-queries transaction list', () => {
@@ -228,5 +228,38 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
       comp.navigateToTransaction(comp.transactions()[0]);
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/sales/invoices/101']);
     });
+  });
+});
+
+describe('Sales register rules (TK-187)', () => {
+  const row = (over: Partial<SalesTransactionListItem>): SalesTransactionListItem => ({
+    transactionId: 1,
+    transactionType: 'SalesOrder',
+    documentNo: 'SO-1',
+    documentDate: '2026-09-01',
+    contactId: 1,
+    contactName: 'A',
+    totalAmount: 100,
+    status: 'Posted',
+    ...over,
+  });
+
+  it('SREG-01: a confirmed order shows its fulfilment; a draft shows draft', () => {
+    expect(salesListStatus(row({ fulfilmentStatus: 'PartlyDelivered' }))).toBe('PartlyDelivered');
+    expect(salesListStatus(row({ status: 'Draft', fulfilmentStatus: 'Open' }))).toBe('Draft');
+    expect(salesListStatus(row({ status: 'ReadyToPost', fulfilmentStatus: 'Open' }))).toBe('ReadyToPost');
+  });
+
+  it('SREG-02: every other document shows its own status', () => {
+    expect(salesListStatus(row({ transactionType: 'Invoice', status: 'Posted', fulfilmentStatus: null }))).toBe('Posted');
+    expect(salesListStatus(row({ transactionType: 'Quote', status: 'Void' }))).toBe('Void');
+  });
+
+  it('SREG-03: each document type has its series code', () => {
+    expect(SALES_REGISTERS['Quote'].code).toBe('QTE');
+    expect(SALES_REGISTERS['SalesOrder'].code).toBe('SOR');
+    expect(SALES_REGISTERS['DeliveryChallan'].code).toBe('DLC');
+    expect(SALES_REGISTERS['Invoice'].code).toBe('INV');
+    expect(SALES_REGISTERS['CreditNote'].code).toBe('CRN');
   });
 });

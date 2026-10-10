@@ -102,6 +102,6 @@ An order is never deleted. Its number was spent when it was created, so abandoni
 
 ## Finding one
 
-The list pages on the server, so a branch with ten years of orders opens as fast as a branch with ten. It can be filtered by status and searched by order number.
+The list pages on the server, so a branch with ten years of orders opens as fast as a branch with ten. It can be narrowed by period and status tab, and searched by order number. Its tab counts and total cover every matching order, not only the page. It shows **Status** and **Fulfilment** as two columns. See [Document lists](lists).
 
 At narrow widths — a phone held upright — the grid becomes one card per order, the filters stack, and every action is a full-width target.

@@ -31,6 +31,16 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **Every document list has one design (TK-187).** That covers quotes, sales orders, invoices, delivery challans, credit notes, purchase orders, goods receipts, bills, debit notes, journal entries, spend money, receive money, transfers and the chart of accounts.
+  - **Heading and tabs:** each list shows its code and record count, then status tabs with counts, *Cancelled ( 0 )* included.
+  - **Period and total:** one card holds the period presets, a **From**/**To** that waits for **Apply** and uses your branch's date format, and the total in INR.
+  - **Rows:** the grid fills the screen at any window size. Each row has a checkbox, the document code before its number, a Taxable column, and the currency after the Total.
+  - **Pages:** the foot chooses 10, 25, 50 or 100 rows a page, and the list remembers your choice.
+  - **Orders:** a purchase or sales order shows how much has arrived or gone out once it is confirmed.
+  - **Totals across pages:** the invoice and sales order totals and counts now cover every match, not only the page on screen.
+  - **Chart of accounts:** the chart is one list with each account's debit or credit balance for the period.
+  - **Fixed on the way:** the **Delivery challans** list was always empty, because the server had no branch for challans. The journal, spend money, receive money and transfer lists never showed their **Delete**, **Reverse**, **Void** or **Allocate** buttons, and the purchase list's own cells did not draw. See [Document lists](lists).
+
 - **Fixed**: **Starting every service together on a new database (TK-186).** On a first start against an empty database, a service could stop with *Timeout during reading attempt* while another was still migrating, or with *database "IN000001" already exists* when two created it at once. Sign-in then answered 502 while Master was still calling services that had not started, and 500 once Master was up, because a retry setting refused every request that saves anything, sign-in included. Services now wait their turn to migrate, Master opens its port without waiting on the others, and sign-in works. See [Starting everything at once](development#starting-everything-at-once).
 
 - **Added**: **Sample data for a development install (TK-185).** With `Bootstrap:SeedSampleData` on, Master makes a *Sample Business* customer with one branch for every business type, plus a sample user who is Owner of all six. Branches are *Sample Retail*, *Sample Pharma*, *Sample Jewellery*, *Sample School*, *Sample Service* and *Sample Restaurant*, and each has every add-on its type allows. The user's address, name and password come from your own settings (`Bootstrap:SampleUserEmail`, `Bootstrap:SampleUserName`, `Bootstrap:SampleUserPassword`), never from the source. It is off by default, so a deployment never gets it. See [Running locally](development).

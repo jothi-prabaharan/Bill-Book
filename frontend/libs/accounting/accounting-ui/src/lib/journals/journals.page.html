@@ -1,10 +1,13 @@
-<header class="page-head">
-  <h1>Journal entries</h1>
-  <div class="head-actions">
-    <a class="link" routerLink="/accounting/trial-balance">Trial balance →</a>
-    <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New entry</button>
-  </div>
-</header>
+<bb-register-header
+  title="Journal entries"
+  code="JRN"
+  [count]="periodRows().length"
+  newLabel="New entry"
+  [newDisabled]="busy()"
+  (create)="startCreate()"
+>
+  <a class="link" routerLink="/accounting/trial-balance">Trial balance →</a>
+</bb-register-header>
 
 @if (budgetWarnings().length > 0) {
   <div class="budget-warning" role="status">
@@ -244,59 +247,58 @@
   </section>
 }
 
-<div class="filters">
-  <div class="field">
-    <bb-select
-      label="Status"
-      placeholder="All"
-      [options]="statusOptions"
-      name="statusFilter"
-      [(ngModel)]="statusFilter"
-      (ngModelChange)="load()"
-    />
-  </div>
-</div>
+<bb-status-tabs label="Status filters" [tabs]="tabs()" [value]="statusFilter()" (valueChange)="statusFilter.set($event)" />
 
-<bb-data-grid [gridCode]="'JOURNALS'" [columns]="columns" [data]="rows()">
-  <ng-template bbCellTemplate="journalDate" let-row>
-    {{ row.journalDate }}
-  </ng-template>
+<section class="register-card">
+  <bb-period-filter-bar initialPreset="this-financial-year" [total]="periodTotal()" (rangeChange)="range.set($event)" />
 
-  <ng-template bbCellTemplate="journalNo" let-row>
-    <a class="link" href="javascript:void(0)" (click)="open(row.journalId)">
-      {{ row.journalNo ?? 'Unnumbered draft' }}
-    </a>
-  </ng-template>
+  <bb-data-grid
+    register
+    fillHeight
+    flush
+    stackOnPhone
+    label="Journal entries"
+    [gridCode]="'JOURNALS'"
+    [columns]="columns"
+    [data]="visibleRows()"
+    (rowClick)="open($event.journalId)"
+  >
+    <ng-template bbCellTemplate="journalNo" let-row>
+      <bb-doc-number code="JRN" [number]="row.journalNo ?? 'Unnumbered draft'" />
+    </ng-template>
 
-  <ng-template bbCellTemplate="reference" let-row>
-    {{ row.reference ?? row.memo ?? '' }}
-  </ng-template>
+    <ng-template bbCellTemplate="journalDate" let-row>
+      <span class="reg-date">{{ row.journalDate | registerDate }}</span>
+    </ng-template>
 
-  <ng-template bbCellTemplate="totalDebit" let-row>
-    {{ row.totalDebit | number: '1.2-2' }}
-  </ng-template>
+    <ng-template bbCellTemplate="reference" let-row>
+      {{ row.reference ?? row.memo ?? '' }}
+    </ng-template>
 
-  <ng-template bbCellTemplate="totalCredit" let-row>
-    {{ row.totalCredit | number: '1.2-2' }}
-  </ng-template>
+    <ng-template bbCellTemplate="status" let-row>
+      <span [class]="'tag ' + statusTone(row.status)">{{ row.status }}</span>
+      @if (row.totalDebit !== row.totalCredit) {
+        <span class="badge off" title="Out of balance — cannot be posted as it stands">
+          Unbalanced
+        </span>
+      }
+    </ng-template>
 
-  <ng-template bbCellTemplate="status" let-row>
-    <span class="badge" [class.reversed]="row.status === 'Reversed'">{{ row.status }}</span>
-    @if (row.totalDebit !== row.totalCredit) {
-      <span class="badge off" title="Out of balance — cannot be posted as it stands">
-        Unbalanced
-      </span>
-    }
-  </ng-template>
+    <ng-template bbCellTemplate="totalDebit" let-row>
+      <bb-money-cell [value]="row.totalDebit" [currency]="row.currencyCode" />
+    </ng-template>
 
-  <ng-template bbCellTemplate="actions" let-row>
-    @if (row.status === 'Draft') {
-      <button type="button" class="link" (click)="discard(row)">Delete</button>
-    } @else if (row.status === 'Posted') {
-      <button type="button" class="link" (click)="reverse(row)">Reverse</button>
-    }
-  </ng-template>
-</bb-data-grid>
+    <ng-template bbCellTemplate="totalCredit" let-row>
+      <bb-money-cell [value]="row.totalCredit" [currency]="row.currencyCode" />
+    </ng-template>
 
-
-
+    <ng-template bbCellTemplate="actions" let-row>
+      <!-- The row opens the entry; these act on it without opening it. -->
+      @if (row.status === 'Draft') {
+        <button type="button" class="link" (click)="$event.stopPropagation(); discard(row)">Delete</button>
+      } @else if (row.status === 'Posted') {
+        <button type="button" class="link" (click)="$event.stopPropagation(); reverse(row)">Reverse</button>
+      }
+    </ng-template>
+  </bb-data-grid>
+</section>

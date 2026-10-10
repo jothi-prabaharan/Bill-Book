@@ -1026,17 +1026,23 @@ public sealed class SalesOrderRepository
     /// plus every line and tax row hanging off it.
     /// </summary>
     public async Task<SalesOrderListPage> ListAsync(
-        int skip, int take, string? status, string? search, CancellationToken ct)
+        int skip, int take, string? status, string? search, CancellationToken ct,
+        DateOnly? from = null, DateOnly? to = null)
     {
         int safeSkip = Math.Max(skip, 0);
         int safeTake = Math.Clamp(take, 1, MaxPageSize);
 
         IQueryable<SalesOrder> query = _db.SalesOrders;
 
-        if (!string.IsNullOrWhiteSpace(status)
-            && Enum.TryParse(status.Trim(), ignoreCase: true, out DocumentStatus wanted))
+        // The register's period (TK-187); both ends inclusive.
+        if (from.HasValue)
         {
-            query = query.Where(o => o.Status == wanted);
+            query = query.Where(o => o.DocumentDate >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(o => o.DocumentDate <= to.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -1045,9 +1051,24 @@ public sealed class SalesOrderRepository
             query = query.Where(o => o.DocumentNo.Contains(term));
         }
 
+        // The status tabs count under every other filter, so a tab says what
+        // choosing it would show (TK-187). Counted before the status narrows.
+        Dictionary<string, int> statusCounts = (await query
+                .GroupBy(o => o.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync(ct))
+            .ToDictionary(g => g.Status.ToString(), g => g.Count);
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse(status.Trim(), ignoreCase: true, out DocumentStatus wanted))
+        {
+            query = query.Where(o => o.Status == wanted);
+        }
+
         // Counted before paging: the screen has to say how many matched, not how
         // many fitted on the page.
         int total = await query.CountAsync(ct);
+        decimal totalBase = await query.SumAsync(o => o.TotalAmountBase, ct);
 
         List<SalesOrderListItem> rows = await query
             .OrderByDescending(o => o.DocumentDate)
@@ -1098,6 +1119,8 @@ public sealed class SalesOrderRepository
             Skip = safeSkip,
             Take = safeTake,
             Rows = rows,
+            StatusCounts = statusCounts,
+            TotalAmountBase = totalBase,
         };
     }
 

@@ -27,14 +27,34 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  DataGridService,
+  DocNumberComponent,
   MessageBoxComponent,
+  MoneyCellComponent,
+  PeriodFilterBarComponent,
+  PeriodRange,
+  RegisterDatePipe,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
   SearchInputComponent,
-  
+  StatusTabsComponent,
   UiMessage,
+  rangeForPreset,
+  registerStatusLabel,
+  registerStatusTone,
+  statusTabsFromCounts,
 } from '@bill-book/ui-components';
 
-/** What one page asks for. Matches the grid's own default. */
-const PAGE_SIZE = 25;
+const GRID_CODE = 'INVOICE_LIST';
+
+/** The statuses an invoice can be in, for the register's tabs (TK-187). */
+export const INVOICE_STATUSES: readonly RegisterStatusOption[] = [
+  { value: 'Draft', label: 'Draft' },
+  { value: 'ReadyToPost', label: 'Ready to post' },
+  { value: 'Posted', label: 'Posted' },
+  { value: 'Void', label: 'Void' },
+];
+
 
 /**
  * The invoice list.
@@ -62,9 +82,15 @@ const PAGE_SIZE = 25;
     MessageBoxComponent,
     AllocationModalComponent,
     CheckboxComponent,
-    
     SearchInputComponent,
+    PeriodFilterBarComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
+    DocNumberComponent,
+    MoneyCellComponent,
+    RegisterDatePipe,
   ],
+  host: { class: 'register-page' },
   templateUrl: './invoice-list.component.html',
   styleUrl: './invoice-list.component.scss',
 })
@@ -80,7 +106,26 @@ export class InvoiceListComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly messages = signal<UiMessage[]>([]);
 
-  protected readonly pageSize = PAGE_SIZE;
+  /** The register's page size: the person's last choice, else the smallest. */
+  protected readonly pageSize = signal(inject(DataGridService).loadState(GRID_CODE)?.pageSize ?? 10);
+  protected readonly gridCode = GRID_CODE;
+
+  /** The register's period; a dated register opens on the financial year. */
+  protected readonly range = signal<PeriodRange>(rangeForPreset('this-financial-year'));
+
+  /** Matches per status under the other filters, from the server. */
+  protected readonly statusCounts = signal<Record<string, number>>({});
+
+  /** What every matching invoice comes to in base currency, from the server. */
+  protected readonly totalBase = signal(0);
+
+  protected readonly tabs = computed(() => statusTabsFromCounts(this.statusCounts(), INVOICE_STATUSES));
+
+  /** Invoices in the period under the other filters — the All tab's count. */
+  protected readonly periodCount = computed(() => this.tabs()[0]?.count ?? 0);
+
+  protected readonly statusLabel = registerStatusLabel;
+  protected readonly statusTone = registerStatusTone;
 
   // --- Allocation modal -----------------------------------------------------
   protected readonly allocateOpen = signal(false);
@@ -101,26 +146,18 @@ export class InvoiceListComponent implements OnInit {
   /** Only invoices whose IRN was refused or is still pending (TK-92). */
   protected eInvoiceAttention = false;
 
-  protected readonly statuses: readonly { value: string; label: string }[] = [
-    { value: '', label: 'All statuses' },
-    { value: 'Draft', label: 'Draft' },
-    { value: 'ReadyToPost', label: 'Ready to post' },
-    { value: 'Posted', label: 'Posted' },
-    { value: 'Void', label: 'Void' },
-  ];
-
   protected readonly columns: ColumnDef[] = [
-    { field: 'documentDate', header: 'Date', dataType: 'date' },
     { field: 'documentNo', header: 'Number', isTemplate: true },
+    { field: 'documentDate', header: 'Date', dataType: 'date', isTemplate: true },
     { field: 'contactName', header: 'Customer' },
     { field: 'dueDate', header: 'Due', isTemplate: true },
-    { field: 'totalAmount', header: 'Amount', align: 'right', dataType: 'money' },
-    { field: 'settlementStatus', header: 'Payment', isTemplate: true },
     { field: 'status', header: 'Status', isTemplate: true },
+    { field: 'settlementStatus', header: 'Payment', isTemplate: true },
     { field: 'eInvoiceStatus', header: 'E-invoice', isTemplate: true },
+    { field: 'taxableAmount', header: 'Taxable', dataType: 'money', isTemplate: true },
+    { field: 'totalAmount', header: 'Total', dataType: 'money', isTemplate: true },
   ];
 
-  protected readonly isEmpty = computed(() => !this.loading() && this.rows().length === 0);
 
   /**
    * What the rows on this page come to.
@@ -147,8 +184,10 @@ export class InvoiceListComponent implements OnInit {
         // The server clamps this again. Both do it, because a page that trusted
         // the server and a server that trusted the page would each be relying
         // on the other.
-        skip: Math.max(0, (this.page() - 1) * PAGE_SIZE),
-        take: PAGE_SIZE,
+        skip: Math.max(0, (this.page() - 1) * this.pageSize()),
+        take: this.pageSize(),
+        from: this.range().from || undefined,
+        to: this.range().to || undefined,
         status: this.status || undefined,
         search: this.search.trim() || undefined,
         overdueOnly: this.overdueOnly || undefined,
@@ -157,11 +196,15 @@ export class InvoiceListComponent implements OnInit {
 
       this.rows.set(result.rows);
       this.total.set(result.total);
+      this.statusCounts.set(result.statusCounts ?? {});
+      this.totalBase.set(result.totalAmountBase ?? this.pageTotal());
     } catch (error) {
       const failure = readApiFailure(error);
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
       this.rows.set([]);
       this.total.set(0);
+      this.statusCounts.set({});
+      this.totalBase.set(0);
     } finally {
       this.loading.set(false);
     }
@@ -176,6 +219,21 @@ export class InvoiceListComponent implements OnInit {
   protected async onPageChange(page: number): Promise<void> {
     this.page.set(page);
     await this.load();
+  }
+
+  /** The grid moves itself to page one and says so through pageChange, which reloads. */
+  protected onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+  }
+
+  protected async setStatus(status: string): Promise<void> {
+    this.status = status;
+    await this.onFilterChange();
+  }
+
+  protected async setRange(range: PeriodRange): Promise<void> {
+    this.range.set(range);
+    await this.onFilterChange();
   }
 
   protected open(invoice: InvoiceListItem): void {
@@ -344,15 +402,5 @@ export class InvoiceListComponent implements OnInit {
     return eInvoiceNeedsAttention(status) ? 'badge expired' : 'chip';
   }
 
-  protected statusTag(status: string): string {
-    switch (status) {
-      case 'Posted':
-        return 'tag tag-accent';
-      case 'Void':
-        return 'tag tag-outline';
-      default:
-        return 'tag tag-neutral';
-    }
-  }
 }
 

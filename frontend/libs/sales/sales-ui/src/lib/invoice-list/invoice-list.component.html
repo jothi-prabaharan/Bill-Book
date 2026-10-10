@@ -1,45 +1,23 @@
-<section class="inv-list">
-  <header class="inv-list__head">
-    <h1 class="inv-list__title">Invoices</h1>
+<bb-register-header title="Invoices" code="INV" [count]="periodCount()" newLabel="New invoice" (create)="create()" />
 
-    <button type="button" class="btn btn-primary" (click)="create()">New invoice</button>
-  </header>
+<!-- Anything the server refused. Field-level problems never reach here; this
+     is where a rule about the request itself is shown. -->
+<bb-message-box [messages]="messages()" />
 
-  <!-- Anything the server refused. Field-level problems never reach here; this
-       is where a rule about the request itself is shown. -->
-  <bb-message-box [messages]="messages()" />
+<bb-status-tabs label="Status filters" [tabs]="tabs()" [value]="status" (valueChange)="setStatus($event)" />
 
-  <form class="inv-list__filters" (ngSubmit)="onFilterChange()">
-    <nav aria-label="Status filters" class="flex flex-wrap gap-6px mr-4">
-      <button type="button" (click)="status = ''; onFilterChange()" [attr.aria-pressed]="status === ''" class="btn btn-secondary text-sm tab-all">All statuses</button>
-      
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Draft'; onFilterChange()" [attr.aria-pressed]="status === 'Draft'">Draft</button>
-      </span>
-
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'ReadyToPost'; onFilterChange()" [attr.aria-pressed]="status === 'ReadyToPost'">Ready to post</button>
-      </span>
-
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Posted'; onFilterChange()" [attr.aria-pressed]="status === 'Posted'">Posted</button>
-      </span>
-
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Void'; onFilterChange()" [attr.aria-pressed]="status === 'Void'">Void</button>
-      </span>
-    </nav>
-
-    <div class="field inv-list__filter inv-list__filter--grow">
-      <bb-search-input
-        id="inv-search"
-        label="Invoice number"
-        name="search"
-        placeholder="INV/2026/0001"
-        [debounceMs]="0"
-        [(ngModel)]="search"
-      />
-    </div>
+<section class="register-card">
+  <bb-period-filter-bar initialPreset="this-financial-year" [total]="totalBase()" (rangeChange)="setRange($event)">
+    <bb-search-input
+      class="inv-list__search"
+      id="inv-search"
+      ariaLabel="Invoice number"
+      name="search"
+      placeholder="Invoice number"
+      [debounceMs]="400"
+      [(ngModel)]="search"
+      (ngModelChange)="onFilterChange()"
+    />
 
     <bb-checkbox
       id="inv-overdue"
@@ -58,90 +36,91 @@
       [(ngModel)]="eInvoiceAttention"
       (ngModelChange)="onFilterChange()"
     />
+  </bb-period-filter-bar>
 
-    <button type="submit" class="btn btn-secondary inv-list__apply">Search</button>
-  </form>
+  <bb-data-grid
+    register
+    fillHeight
+    flush
+    stackOnPhone
+    label="Invoices"
+    emptyText="No invoices match. Clear the filters, or raise one from a confirmed sales order."
+    [gridCode]="gridCode"
+    [columns]="columns"
+    [data]="rows()"
+    [loading]="loading()"
+    [totalCount]="total()"
+    [pageSize]="pageSize()"
+    [currentPage]="page()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+    (rowClick)="open($event)"
+  >
+    <ng-template bbCellTemplate="documentNo" let-row>
+      <bb-doc-number code="INV" [number]="row.documentNo" />
 
-  <div class="card bg-surface inv-list__grid">
-    <bb-data-grid fillHeight
-      [gridCode]="'INVOICE_LIST'"
-      [columns]="columns"
-      [data]="rows()"
-      [loading]="loading()"
-      [totalCount]="total()"
-      [pageSize]="pageSize"
-      [currentPage]="page()"
-      (pageChange)="onPageChange($event)"
-      (rowClick)="open($event)"
-    >
-      <ng-template bbCellTemplate="documentNo" let-row>
-        <span class="tabular-nums">{{ row.documentNo }}</span>
+      @if (row.salesOrderId) {
+        <span class="chip" title="Raised from a sales order">from order</span>
+      }
+    </ng-template>
 
-        @if (row.salesOrderId) {
-          <span class="chip" title="Raised from a sales order">from order</span>
+    <ng-template bbCellTemplate="documentDate" let-row>
+      <span class="reg-date">{{ row.documentDate | registerDate }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="dueDate" let-row>
+      @if (row.dueDate) {
+        <span class="tabular-nums">{{ row.dueDate | registerDate }}</span>
+
+        @if (row.daysOverdue > 0) {
+          <span class="badge expired">{{ row.daysOverdue }}d late</span>
         }
-      </ng-template>
+      }
+    </ng-template>
 
-      <ng-template bbCellTemplate="dueDate" let-row>
-        @if (row.dueDate) {
-          <span class="tabular-nums">{{ row.dueDate | date }}</span>
+    <ng-template bbCellTemplate="status" let-row>
+      <span [class]="'tag ' + statusTone(row.status)">{{ statusLabel(row.status) }}</span>
 
-          @if (row.daysOverdue > 0) {
-            <span class="badge expired">{{ row.daysOverdue }}d late</span>
-          }
+      @if (canAllocate(row)) {
+        <button
+          type="button"
+          class="btn btn-ghost inv-list__allocate"
+          [attr.aria-label]="'Allocate credits against ' + row.documentNo"
+          (click)="allocate(row, $event)"
+        >
+          Allocate
+        </button>
+      }
+    </ng-template>
+
+    <ng-template bbCellTemplate="settlementStatus" let-row>
+      @if (row.settlementStatus) {
+        <span [class]="settlementTag(row.settlementStatus)">{{ row.settlementStatus }}</span>
+
+        @if (row.settlementStatus === 'PartPaid' && row.outstandingAmount !== undefined) {
+          <span class="chip tabular-nums"><bb-money-cell [value]="row.outstandingAmount" /> due</span>
         }
-      </ng-template>
+      } @else {
+        <span class="inv-list__muted">—</span>
+      }
+    </ng-template>
 
-      <ng-template bbCellTemplate="settlementStatus" let-row>
-        @if (row.settlementStatus) {
-          <span [class]="settlementTag(row.settlementStatus)">{{ row.settlementStatus }}</span>
+    <ng-template bbCellTemplate="eInvoiceStatus" let-row>
+      @if (row.eInvoiceStatus) {
+        <span [class]="eInvoiceTag(row.eInvoiceStatus)">{{ eInvoiceLabel(row.eInvoiceStatus) }}</span>
+      } @else {
+        <span class="inv-list__muted">—</span>
+      }
+    </ng-template>
 
-          @if (row.settlementStatus === 'PartPaid' && row.outstandingAmount !== undefined) {
-            <span class="chip tabular-nums">{{ row.outstandingAmount | number: '1.2-2' }} due</span>
-          }
-        } @else {
-          <span class="inv-list__muted">—</span>
-        }
-      </ng-template>
+    <ng-template bbCellTemplate="taxableAmount" let-row>
+      <bb-money-cell [value]="row.taxableAmount" />
+    </ng-template>
 
-      <ng-template bbCellTemplate="eInvoiceStatus" let-row>
-        @if (row.eInvoiceStatus) {
-          <span [class]="eInvoiceTag(row.eInvoiceStatus)">{{ eInvoiceLabel(row.eInvoiceStatus) }}</span>
-        } @else {
-          <span class="inv-list__muted">—</span>
-        }
-      </ng-template>
-
-      <ng-template bbCellTemplate="status" let-row>
-        <span [class]="statusTag(row.status)">{{ row.status }}</span>
-
-        @if (canAllocate(row)) {
-          <button
-            type="button"
-            class="btn btn-ghost inv-list__allocate"
-            [attr.aria-label]="'Allocate credits against ' + row.documentNo"
-            (click)="allocate(row, $event)"
-          >
-            Allocate
-          </button>
-        }
-      </ng-template>
-    </bb-data-grid>
-
-    @if (isEmpty()) {
-      <p class="inv-list__empty">
-        No invoices match. Clear the filters, or raise one from a confirmed sales order.
-      </p>
-    } @else {
-      <!-- Labelled as the page's own, because that is what it is: the server
-           pages before it sums, so a figure across every match is a different
-           query and calling this one "outstanding" would invite a reconciliation
-           against a number that is short. -->
-      <p class="inv-list__foot">
-        This page: <strong class="tabular-nums">{{ pageTotal() | number: '1.2-2' }}</strong>
-      </p>
-    }
-  </div>
+    <ng-template bbCellTemplate="totalAmount" let-row>
+      <bb-money-cell [value]="row.totalAmount" [currency]="row.currencyCode" />
+    </ng-template>
+  </bb-data-grid>
 </section>
 
 <bb-allocation-modal

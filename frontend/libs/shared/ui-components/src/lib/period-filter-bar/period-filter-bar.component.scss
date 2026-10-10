@@ -1,28 +1,38 @@
 :host {
   display: block;
+  border-bottom: 1px solid var(--color-divider);
 }
 
+/* One row when it fits: the filters on the left, the total at the right end.
+   When it does not, the total is what moves to a line of its own, still at the
+   right; the filters wrap among themselves only when even they do not fit. */
 .period-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-3);
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2);
+}
+
+.period-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .period-presets {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 6px;
 
   .btn {
     margin: 0;
     font-size: 12px;
-    padding: 4px 9px;
-    min-height: 28px;
+    padding: 4px 11px;
+    min-height: 30px;
   }
 }
 
@@ -31,36 +41,106 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--color-divider);
 }
 
 .period-date {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+
+  bb-branch-date-input {
+    width: 118px;
+  }
+
+  /* The calendar sits inside the field, and only while the dates can be
+     changed: under a preset the field is a read-out, and a button that does
+     nothing is noise. */
+  ::ng-deep .bb-bdate__toggle {
+    position: absolute;
+    top: 50%;
+    right: 3px;
+    transform: translateY(-50%);
+    min-width: 24px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
+  }
+
+  ::ng-deep .bb-bdate__toggle:disabled {
+    display: none;
+  }
+
+  ::ng-deep .bb-bdate__field:not(:disabled) {
+    padding-right: 28px;
+  }
+
+  /* The field sits inline with its label; the form-field's own spacing is for
+     a stacked form, not a filter bar. */
+  ::ng-deep .field,
+  ::ng-deep bb-form-field {
+    margin: 0;
+  }
+
+  ::ng-deep .input {
+    min-height: 30px;
+    font-size: 12px;
+    font-family: var(--font-body);
+  }
+
+  ::ng-deep .input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  }
 }
 
 .period-date-label {
   font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
 
-.period-date .input {
-  min-height: 28px;
+.period-apply {
+  margin: 0;
+  min-height: 30px;
   font-size: 12px;
-  /* Dates read as body copy, never as a heading. */
-  font-family: var(--font-body);
+  padding: 4px 13px;
+  background: var(--color-accent-100);
+  border-color: var(--color-accent-300);
+  color: var(--color-accent-700);
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent-200);
+    border-color: var(--color-accent-500);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+  }
 }
 
-.period-date .input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: color-mix(in srgb, var(--color-text) 4%, transparent);
+.period-extra:empty {
+  display: none;
+}
+
+.period-extra {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* The total sits behind a hairline at the right end of the bar. */
 .period-total {
+  flex: none;
   margin-left: auto;
   display: flex;
   flex-direction: column;
@@ -85,6 +165,16 @@
 }
 
 @media (max-width: 700px) {
+  .period-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .period-dates {
+    padding-left: 0;
+    border-left: 0;
+  }
+
   .period-total {
     margin-left: 0;
     align-items: flex-start;

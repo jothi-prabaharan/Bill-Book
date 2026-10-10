@@ -294,6 +294,56 @@ public sealed class SalesOrderServiceTests
     }
 
     [SkippableFact]
+    public async Task The_status_counts_ignore_the_status_filter_and_the_total_covers_every_page()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        SalesOrderResult first = await h.Service.CreateAsync(
+            Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
+        await h.Service.CreateAsync(Request([Line(quantity: 2m, unitPrice: 100m, taxGroupId: 1)]), default);
+        await h.Service.CreateAsync(Request([Line(quantity: 3m, unitPrice: 100m, taxGroupId: 1)]), default);
+        await h.Service.ConfirmAsync(first.SalesOrderId, default);
+
+        // The register's tabs (TK-187): what each status would show, whichever is chosen.
+        SalesOrderListPage posted = await h.Service.ListAsync(0, 1, "Posted", null, default);
+        Assert.Equal(2, posted.StatusCounts["Draft"]);
+        Assert.Equal(1, posted.StatusCounts["Posted"]);
+        Assert.Equal(1, posted.Total);
+
+        // The bar's total is every match in base currency, not the one row on the page.
+        SalesOrderListPage all = await h.Service.ListAsync(0, 1, null, null, default);
+        Assert.Single(all.Rows);
+        Assert.Equal(3, all.Total);
+        Assert.True(all.TotalAmountBase > all.Rows.Single().TotalAmount);
+        Assert.True(all.TotalAmountBase > posted.TotalAmountBase);
+    }
+
+    [SkippableFact]
+    public async Task The_list_filters_by_period_and_counts_inside_it()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        // Request() dates every order 1 June 2026.
+        await h.Service.CreateAsync(Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
+
+        SalesOrderListPage june = await h.Service.ListAsync(
+            0, 50, null, null, default, new DateOnly(2026, 6, 1), new DateOnly(2026, 6, 30));
+        SalesOrderListPage july = await h.Service.ListAsync(
+            0, 50, null, null, default, new DateOnly(2026, 7, 1), new DateOnly(2026, 7, 31));
+
+        Assert.Equal(1, june.Total);
+        Assert.Equal(1, june.StatusCounts["Draft"]);
+
+        Assert.Equal(0, july.Total);
+        Assert.Empty(july.StatusCounts);
+        Assert.Equal(0m, july.TotalAmountBase);
+    }
+
+    [SkippableFact]
     public async Task Another_branchs_order_is_forbidden_rather_than_not_found()
     {
         Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);

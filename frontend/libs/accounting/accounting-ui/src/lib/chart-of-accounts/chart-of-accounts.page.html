@@ -1,15 +1,12 @@
-<header class="page-head">
-  <h1>Chart of accounts</h1>
-  <div class="head-actions">
-    <bb-export-import />
-    <bb-checkbox
-      text="Show inactive"
-      [(ngModel)]="showInactive"
-      (ngModelChange)="load()"
-    />
-    <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New account</button>
-  </div>
-</header>
+<bb-register-header
+  title="Chart of accounts"
+  [count]="registerRows().length"
+  newLabel="New account"
+  [newDisabled]="busy()"
+  (create)="startCreate()"
+>
+  <bb-export-import />
+</bb-register-header>
 
 @if (message()) {
   <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
@@ -111,49 +108,66 @@
     <div class="editor-actions">
       <button class="btn btn-primary" type="submit" [disabled]="busy()">Save</button>
       <button type="button" class="link" (click)="editing.set(false)">Cancel</button>
+      @if (editingAccount(); as account) {
+        @if (!account.isSystemDefault && account.isActive) {
+          <button type="button" class="link danger" [disabled]="busy()" (click)="deactivate(account)">Deactivate</button>
+        }
+      }
     </div>
   </form>
 } @else {
-  @for (group of grouped(); track group.type.accountTypeId) {
-    <section>
-      <h2>
-        {{ group.type.displayName }}
-        <span class="meta">{{ group.type.normalBalance }} · {{ group.type.reportSection }}</span>
-      </h2>
-      <bb-data-grid fillHeight [gridCode]="'CHART_OF_ACCOUNTS_' + group.type.accountTypeId" [columns]="columns" [data]="group.accounts">
-        <ng-template bbCellTemplate="code" let-row>
-          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
-            {{ row.accountCode }}
-          </div>
-        </ng-template>
-        <ng-template bbCellTemplate="name" let-row>
-          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
-            {{ row.accountName }}
-            @if (row.isSystemDefault) { <span class="badge sys">System</span> }
-            @if (row.isContra) { <span class="badge contra">Contra</span> }
-            @if (row.isLock) { <span class="badge lock">Locked</span> }
-          </div>
-        </ng-template>
-        <ng-template bbCellTemplate="flags" let-row>
-          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
-            @if (row.isBank) { <span class="chip">Bank</span> }
-            @if (row.isSales) { <span class="chip">Sales</span> }
-            @if (row.isPurchase) { <span class="chip">Purchase</span> }
-            @if (row.isPayment) { <span class="chip">Payment</span> }
-            @if (row.isJE) { <span class="chip je">Journal</span> }
-          </div>
-        </ng-template>
-        <ng-template bbCellTemplate="actions" let-row>
-          <div class="row-actions" [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
-            <button type="button" class="link" (click)="startEdit(row)">Edit</button>
-            @if (!row.isSystemDefault && row.isActive) {
-              <button type="button" class="link danger" (click)="deactivate(row)">Deactivate</button>
-            }
-          </div>
-        </ng-template>
-      </bb-data-grid>
-    </section>
-  }
+  <bb-status-tabs label="State filters" [tabs]="tabs()" [value]="stateFilter()" (valueChange)="stateFilter.set($event)" />
+
+  <section class="register-card">
+    <bb-period-filter-bar initialPreset="this-financial-year" [total]="periodTotal()" (rangeChange)="setRange($event)" />
+
+    <bb-data-grid
+      register
+      fillHeight
+      flush
+      stackOnPhone
+      label="Accounts"
+      [gridCode]="'CHART_OF_ACCOUNTS'"
+      [columns]="columns"
+      [data]="visibleRows()"
+      (rowClick)="startEdit($event)"
+    >
+      <ng-template bbCellTemplate="accountCode" let-row>
+        <span class="code" [class.child]="row.parentAccountId">{{ row.accountCode }}</span>
+      </ng-template>
+
+      <ng-template bbCellTemplate="accountTypeName" let-row>
+        <span class="type">{{ row.accountTypeName }}</span>
+      </ng-template>
+
+      <ng-template bbCellTemplate="accountName" let-row>
+        <span [class.child]="row.parentAccountId">{{ row.accountName }}</span>
+        @if (row.isSystemDefault) { <span class="badge sys">System</span> }
+        @if (row.isContra) { <span class="badge contra">Contra</span> }
+      </ng-template>
+
+      <ng-template bbCellTemplate="state" let-row>
+        <span [class]="'tag ' + stateTone(row.state)">{{ row.state }}</span>
+      </ng-template>
+
+      <ng-template bbCellTemplate="debitBalance" let-row>
+        @if (row.debitBalance) {
+          <bb-money-cell [value]="row.debitBalance" />
+        } @else {
+          <span class="none">—</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="creditBalance" let-row>
+        <span class="credit">
+          @if (row.creditBalance) {
+            <bb-money-cell [value]="row.creditBalance" />
+          } @else {
+            <span class="none">—</span>
+          }
+          <span class="code-suffix">{{ row.currencyCode || 'INR' }}</span>
+        </span>
+      </ng-template>
+    </bb-data-grid>
+  </section>
 }
-
-

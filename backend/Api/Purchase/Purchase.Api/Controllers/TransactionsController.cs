@@ -65,6 +65,8 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = b.DocumentDate,
                 ContactId = b.ContactId,
                 ContactName = b.ContactName,
+                CurrencyCode = b.CurrencyCode,
+                TaxableAmount = b.TaxableAmount,
                 TotalAmount = b.TotalAmount,
                 Status = b.Status,
                 DueDate = b.DueDate
@@ -85,8 +87,11 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = p.DocumentDate,
                 ContactId = p.ContactId,
                 ContactName = p.ContactName,
+                CurrencyCode = p.CurrencyCode,
+                TaxableAmount = p.TaxableAmount,
                 TotalAmount = p.TotalAmount,
                 Status = p.Status,
+                FulfilmentStatus = p.FulfilmentStatus,
                 DueDate = null // typically doesn't have a specific single due date on list
             }));
         }
@@ -105,6 +110,8 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = d.DocumentDate,
                 ContactId = d.ContactId,
                 ContactName = d.ContactName,
+                CurrencyCode = d.CurrencyCode,
+                TaxableAmount = d.TaxableAmount,
                 TotalAmount = d.TotalAmount,
                 Status = d.Status,
                 DueDate = null
@@ -125,7 +132,9 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = g.DocumentDate,
                 ContactId = g.ContactId,
                 ContactName = g.ContactName,
-                TotalAmount = g.TotalAmount, // actually Goods Receipts might not have a total amount in list item?
+                CurrencyCode = g.CurrencyCode,
+                TaxableAmount = g.TaxableAmount,
+                TotalAmount = g.TotalAmount,
                 Status = g.Status,
                 DueDate = null
             }));

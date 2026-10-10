@@ -19,6 +19,8 @@ public class CreditNoteListItem
     /// numbers, and the screen compares against the names, as on the invoice.
     /// </summary>
     public string Status { get; set; } = null!;
+    public string CurrencyCode { get; set; } = null!;
+    public decimal TaxableAmount { get; set; }
     public decimal TotalAmount { get; set; }
 }
 

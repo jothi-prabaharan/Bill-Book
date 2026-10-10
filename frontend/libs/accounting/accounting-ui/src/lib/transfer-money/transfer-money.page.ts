@@ -5,7 +5,20 @@ import { FormsModule } from '@angular/forms';
 import {
   BbSelectOption,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  DocNumberComponent,
+  MoneyCellComponent,
+  PeriodFilterBarComponent,
+  PeriodRange,
+  RegisterDatePipe,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
+  StatusTabsComponent,
+  countStatusTabs,
+  isWithin,
+  rangeForPreset,
+  registerStatusTone,
   BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
@@ -58,6 +71,13 @@ interface TransferListItem {
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
+    PeriodFilterBarComponent,
+    DocNumberComponent,
+    MoneyCellComponent,
+    RegisterDatePipe,
     FormsModule,
     BranchDateInputComponent,
     TextInputComponent,
@@ -65,18 +85,19 @@ interface TransferListItem {
     SelectComponent,
     MessageBoxComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './transfer-money.page.html',
   styleUrl: './transfer-money.page.scss',
 })
 export class TransferMoneyPage implements OnInit {
   columns: ColumnDef[] = [
-    { field: 'date', header: 'Date' },
-    { field: 'number', header: 'Number' },
-    { field: 'from', header: 'From' },
-    { field: 'to', header: 'To' },
-    { field: 'amount', header: 'Amount' },
+    { field: 'transactionNo', header: 'Number' },
+    { field: 'transactionDate', header: 'Date', dataType: 'date' },
+    { field: 'bankAccountName', header: 'From' },
+    { field: 'toBankAccountName', header: 'To' },
     { field: 'status', header: 'Status' },
-    { field: 'actions', header: 'Actions' },
+    { field: 'amount', header: 'Amount', dataType: 'money' },
+    { field: 'actions', header: '', sortable: false, filterable: false },
   ];
   private readonly http = inject(HttpClient);
 
@@ -89,11 +110,37 @@ export class TransferMoneyPage implements OnInit {
     })),
   );
 
-  protected readonly statusOptions: BbSelectOption<string>[] = [
+  /** Draft, posted or void, for the register's tabs (TK-187). */
+  protected readonly statuses: readonly RegisterStatusOption[] = [
     { value: 'Draft', label: 'Draft' },
     { value: 'Posted', label: 'Posted' },
     { value: 'Void', label: 'Void' },
   ];
+
+  /** The register's period; a dated register opens on the financial year. */
+  protected readonly range = signal<PeriodRange>(rangeForPreset('this-financial-year'));
+
+  /** The status tab chosen; empty is All. */
+  protected readonly statusFilter = signal('');
+
+  /** Every transfer in the period, before the status tab narrows it. */
+  protected readonly periodRows = computed(() =>
+    this.rows().filter((row) => isWithin(this.range(), row.transactionDate)),
+  );
+
+  protected readonly tabs = computed(() => countStatusTabs(this.periodRows(), this.statuses, (row) => row.status));
+
+  protected readonly visibleRows = computed(() => {
+    const status = this.statusFilter();
+    return this.periodRows().filter((row) => !status || row.status === status);
+  });
+
+  /** What the transfers on screen move, at each one's own rate, in base currency. */
+  protected readonly periodTotal = computed(() =>
+    this.visibleRows().reduce((sum, row) => sum + row.amount * (row.exchangeRate || 1), 0),
+  );
+
+  protected readonly statusTone = registerStatusTone;
 
   protected readonly rows = signal<TransferListItem[]>([]);
   protected readonly bankAccounts = signal<BankAccountOption[]>([]);
@@ -103,7 +150,6 @@ export class TransferMoneyPage implements OnInit {
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
 
-  statusFilter = '';
   protected editingId: number | null = null;
 
   transactionDate = new Date().toISOString().slice(0, 10);
@@ -152,8 +198,9 @@ export class TransferMoneyPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      const query = this.statusFilter ? `?status=${this.statusFilter}` : '';
-      this.rows.set(await this.req<TransferListItem[]>('GET', `/api/transfer-money${query}`));
+      // Every transfer, so the tabs can count each status; the tab and the
+      // period narrow in the browser, the way the document registers do.
+      this.rows.set(await this.req<TransferListItem[]>('GET', '/api/transfer-money'));
 
       if (this.bankAccounts().length === 0) {
         this.bankAccounts.set(await this.req<BankAccountOption[]>('GET', '/api/bank-accounts'));

@@ -27,6 +27,7 @@ export const DOCS: DocSection[] = [
       // end to end; the Windows, macOS, Android and iOS builds need their own
       // machines and signing, and are the owner's run (TK-184).
       { slug: 'desktop-and-mobile', title: 'Desktop and mobile apps', status: 'partial' },
+      { slug: 'lists', title: 'Document lists', status: 'built' },
     ],
   },
   {

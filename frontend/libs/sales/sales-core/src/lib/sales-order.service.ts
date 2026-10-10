@@ -113,6 +113,10 @@ export interface SalesOrderListPage {
   skip: number;
   take: number;
   rows: SalesOrderListItem[];
+  /** Matches per status under every other filter, for the register's tabs (TK-187). */
+  statusCounts?: Record<string, number>;
+  /** What every matching row comes to in the branch's base currency, not only this page (TK-187). */
+  totalAmountBase?: number;
 }
 
 export interface SalesOrderView extends SalesOrderListItem {
@@ -174,6 +178,9 @@ export interface SalesOrderListQuery {
   take?: number;
   status?: string;
   search?: string;
+  /** The register's period, `YYYY-MM-DD`, both ends inclusive (TK-187). */
+  from?: string;
+  to?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -191,6 +198,12 @@ export class SalesOrderService {
     }
     if (query.search) {
       params = params.set('search', query.search);
+    }
+    if (query.from) {
+      params = params.set('from', query.from);
+    }
+    if (query.to) {
+      params = params.set('to', query.to);
     }
 
     return firstValueFrom(this.http.get<SalesOrderListPage>(this.apiUrl, { params }));

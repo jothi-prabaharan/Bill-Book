@@ -5,7 +5,13 @@ export interface PurchaseTransactionListItem {
   documentDate: string;
   contactId: number;
   contactName: string;
+  /** The document's currency (TK-187). */
+  currencyCode?: string;
+  /** The value before tax, in the document's currency (TK-187). */
+  taxableAmount?: number;
   totalAmount: number;
   status: string;
+  /** A purchase order's Open / PartlyReceived / Closed / Cancelled; null for the other types. */
+  fulfilmentStatus?: string | null;
   dueDate?: string | null;
 }

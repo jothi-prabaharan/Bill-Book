@@ -1,36 +1,44 @@
 <div class="period-bar">
-  <div class="period-presets">
-    @for (option of presets; track option.key) {
-      <button
-        class="btn btn-secondary"
-        type="button"
-        (click)="pick(option.key)"
-        [attr.aria-pressed]="preset() === option.key"
-      >{{ option.label }}</button>
-    }
+  <div class="period-row">
+    <div class="period-presets" role="group" aria-label="Period">
+      @for (option of presets; track option.key) {
+        <button
+          class="btn btn-secondary"
+          type="button"
+          (click)="pick(option.key)"
+          [attr.aria-pressed]="preset() === option.key"
+        >{{ option.label }}</button>
+      }
+    </div>
+
+    <div class="period-dates">
+      <div class="period-date">
+        <span class="period-date-label" aria-hidden="true">From</span>
+        <bb-branch-date-input
+          ariaLabel="From"
+          [ngModel]="from()"
+          (ngModelChange)="setFrom($event)"
+          [disabled]="!isCustom()"
+        />
+      </div>
+      <div class="period-date">
+        <span class="period-date-label" aria-hidden="true">To</span>
+        <bb-branch-date-input
+          ariaLabel="To"
+          [ngModel]="to()"
+          (ngModelChange)="setTo($event)"
+          [disabled]="!isCustom()"
+        />
+      </div>
+      <button type="button" class="btn period-apply" [disabled]="!canApply()" (click)="apply()">Apply</button>
+    </div>
   </div>
 
-  <div class="period-dates">
-    <label class="period-date">
-      <span class="period-date-label">From</span>
-      <input
-        class="input"
-        type="date"
-        [value]="from()"
-        [disabled]="!isCustom()"
-        (change)="setFrom($any($event.target).value)"
-      />
-    </label>
-    <label class="period-date">
-      <span class="period-date-label">To</span>
-      <input
-        class="input"
-        type="date"
-        [value]="to()"
-        [disabled]="!isCustom()"
-        (change)="setTo($any($event.target).value)"
-      />
-    </label>
+  <!-- The page's own filters: a number search, an overdue box. Their own item,
+       so on a narrow screen they share a line with the total rather than
+       pushing it onto a third. -->
+  <div class="period-extra">
+    <ng-content />
   </div>
 
   <div class="period-total">

@@ -135,7 +135,7 @@ taken back. Undo the receipt first.
 
 ## Two statuses, side by side
 
-The list shows both, and they mean different things:
+The order shows both, and they mean different things:
 
 - **Status** — where the document is in its life: Draft, ReadyToPost, Posted,
   Void.
@@ -143,6 +143,8 @@ The list shows both, and they mean different things:
 
 An order can be Posted and still Open: issued to the vendor, nothing delivered
 yet. Received status starts moving when goods receipts are built.
+
+On the **Purchase orders** list, a confirmed order shows its received status, and its tabs are *Draft*, *Open*, *PartlyReceived*, *Closed* and *Cancelled*. A voided order reads *Cancelled*. See [Document lists](lists) (TK-187).
 
 ## Not built yet
 

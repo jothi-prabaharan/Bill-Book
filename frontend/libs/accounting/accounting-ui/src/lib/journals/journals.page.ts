@@ -8,7 +8,20 @@ import { ProjectListItem, loadProjects, projectOptions } from '../projects/proje
 import {
   BbSelectOption,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  DocNumberComponent,
+  MoneyCellComponent,
+  PeriodFilterBarComponent,
+  PeriodRange,
+  RegisterDatePipe,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
+  StatusTabsComponent,
+  countStatusTabs,
+  isWithin,
+  rangeForPreset,
+  registerStatusTone,
   BranchDateInputComponent,
   MoneyInputComponent,
   SelectComponent,
@@ -101,6 +114,13 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   imports: [InfoTooltipComponent, 
     EditHistoryComponent,
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
+    PeriodFilterBarComponent,
+    DocNumberComponent,
+    MoneyCellComponent,
+    RegisterDatePipe,
     DecimalPipe,
     FormsModule,
     RouterLink,
@@ -110,6 +130,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
     SelectComponent,
     ApprovalPanelComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './journals.page.html',
   styleUrl: './journals.page.scss',
 })
@@ -135,23 +156,49 @@ export class JournalsPage implements OnInit {
     }));
   }
 
-  protected readonly statusOptions: BbSelectOption<string>[] = [
+  /** A journal's statuses, for the register's tabs (TK-187). */
+  protected readonly statuses: readonly RegisterStatusOption[] = [
     { value: 'Draft', label: 'Draft' },
     { value: 'Posted', label: 'Posted' },
     { value: 'Reversed', label: 'Reversed' },
   ];
+
+  /** The register's period; a dated register opens on the financial year. */
+  protected readonly range = signal<PeriodRange>(rangeForPreset('this-financial-year'));
+
+  /** The status tab chosen; empty is All. */
+  protected readonly statusFilter = signal('');
+
+  /** Every journal in the period, before the status tab narrows it. */
+  protected readonly periodRows = computed(() =>
+    this.rows().filter((row) => isWithin(this.range(), row.journalDate)),
+  );
+
+  protected readonly tabs = computed(() => countStatusTabs(this.periodRows(), this.statuses, (row) => row.status));
+
+  protected readonly visibleRows = computed(() => {
+    const status = this.statusFilter();
+    return this.periodRows().filter((row) => !status || row.status === status);
+  });
+
+  /** What the journals on screen move: each one's debit side, which equals its credit side once balanced. */
+  protected readonly periodTotal = computed(() =>
+    this.visibleRows().reduce((sum, row) => sum + row.totalDebit, 0),
+  );
+
+  protected readonly statusTone = registerStatusTone;
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   columns: ColumnDef[] = [
-    { field: 'journalDate', header: 'Date' },
     { field: 'journalNo', header: 'Number' },
+    { field: 'journalDate', header: 'Date', dataType: 'date' },
     { field: 'reference', header: 'Reference' },
-    { field: 'totalDebit', header: 'Debit' },
-    { field: 'totalCredit', header: 'Credit' },
     { field: 'status', header: 'Status' },
-    { field: 'actions', header: 'Actions' }
+    { field: 'totalDebit', header: 'Debit', dataType: 'money' },
+    { field: 'totalCredit', header: 'Credit', dataType: 'money' },
+    { field: 'actions', header: '', sortable: false, filterable: false }
   ];
 
   editLinesColumns: ColumnDef[] = [
@@ -190,7 +237,6 @@ export class JournalsPage implements OnInit {
   /** Expense accounts the last save took past the approved budget (TK-109). */
   protected readonly budgetWarnings = signal<string[]>([]);
 
-  statusFilter = '';
   protected editingId: number | null = null;
 
   journalDate = new Date().toISOString().slice(0, 10);
@@ -250,8 +296,9 @@ export class JournalsPage implements OnInit {
   async load(openId: number | null = null): Promise<void> {
     this.busy.set(true);
     try {
-      const query = this.statusFilter ? `?status=${this.statusFilter}` : '';
-      this.rows.set(await this.req<JournalListItem[]>('GET', `/api/journals${query}`));
+      // Every journal, so the tabs can count each status; the tab and the
+      // period narrow in the browser, the way the document registers do.
+      this.rows.set(await this.req<JournalListItem[]>('GET', '/api/journals'));
 
       if (this.accounts().length === 0) {
         const [accounts, subs] = await Promise.all([

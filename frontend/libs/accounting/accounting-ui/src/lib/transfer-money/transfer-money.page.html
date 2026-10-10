@@ -1,7 +1,11 @@
-<header class="page-head">
-  <h1>Transfer money</h1>
-  <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New transfer</button>
-</header>
+<bb-register-header
+  title="Transfer money"
+  code="TRM"
+  [count]="periodRows().length"
+  newLabel="New transfer"
+  [newDisabled]="busy()"
+  (create)="startCreate()"
+/>
 
 @if (message()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
@@ -125,49 +129,51 @@
   </section>
 }
 
-<div class="filters">
-  <div class="field">
-    <bb-select
-      label="Status"
-      placeholder="All"
-      [options]="statusOptions"
-      name="statusFilter"
-      [(ngModel)]="statusFilter"
-      (ngModelChange)="load()"
-    />
-  </div>
-</div>
+<bb-status-tabs label="Status filters" [tabs]="tabs()" [value]="statusFilter()" (valueChange)="statusFilter.set($event)" />
 
-<bb-data-grid fillHeight [gridCode]="'TRANSFER_MONEY'" [columns]="columns" [data]="rows()">
-  <ng-template bbCellTemplate="date" let-row>
-    <div class="date-col" [class.draft]="row.status === 'Draft'">{{ row.transactionDate }}</div>
-  </ng-template>
-  <ng-template bbCellTemplate="number" let-row>
-    <button type="button" class="link" (click)="open(row.documentId)">
-      {{ row.transactionNo ?? 'Unnumbered draft' }}
-    </button>
-  </ng-template>
-  <ng-template bbCellTemplate="from" let-row>
-    {{ row.bankAccountName }}
-  </ng-template>
-  <ng-template bbCellTemplate="to" let-row>
-    {{ row.toBankAccountName ?? '—' }}
-  </ng-template>
-  <ng-template bbCellTemplate="amount" let-row>
-    <div class="num">{{ row.amount }}</div>
-  </ng-template>
-  <ng-template bbCellTemplate="status" let-row>
-    <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
-  </ng-template>
-  <ng-template bbCellTemplate="actions" let-row>
-    <div class="actions-col">
+<section class="register-card">
+  <bb-period-filter-bar initialPreset="this-financial-year" [total]="periodTotal()" (rangeChange)="range.set($event)" />
+
+  <bb-data-grid
+    register
+    fillHeight
+    flush
+    stackOnPhone
+    label="Transfers"
+    [gridCode]="'TRANSFER_MONEY'"
+    [columns]="columns"
+    [data]="visibleRows()"
+    (rowClick)="open($event.documentId)"
+  >
+    <ng-template bbCellTemplate="transactionNo" let-row>
+      <bb-doc-number code="TRM" [number]="row.transactionNo ?? 'Unnumbered draft'" />
+    </ng-template>
+
+    <ng-template bbCellTemplate="transactionDate" let-row>
+      <span class="reg-date">{{ row.transactionDate | registerDate }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="toBankAccountName" let-row>
+      {{ row.toBankAccountName ?? '—' }}
+    </ng-template>
+
+    <ng-template bbCellTemplate="status" let-row>
+      <span [class]="'tag ' + statusTone(row.status)">{{ row.status }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="amount" let-row>
+      <bb-money-cell [value]="row.amount" [currency]="row.currencyCode" />
+    </ng-template>
+
+    <ng-template bbCellTemplate="actions" let-row>
+      <!-- The row opens the transfer; these act on it without opening it. -->
       @if (row.status === 'Draft') {
-        <button type="button" class="link" (click)="discard(row)">Delete</button>
+        <button type="button" class="link" (click)="$event.stopPropagation(); discard(row)">Delete</button>
       } @else if (row.status === 'Posted') {
-        <button type="button" class="link" (click)="voidDocument(row)">Void</button>
+        <button type="button" class="link" (click)="$event.stopPropagation(); voidDocument(row)">Void</button>
       }
-    </div>
-  </ng-template>
-</bb-data-grid>
+    </ng-template>
+  </bb-data-grid>
+</section>
 
 

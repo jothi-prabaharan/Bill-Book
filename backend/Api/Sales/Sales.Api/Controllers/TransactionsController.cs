@@ -20,17 +20,20 @@ public sealed class TransactionsController : ControllerBase
     private readonly SalesOrderRepository _salesOrders;
     private readonly InvoiceRepository _invoices;
     private readonly CreditNoteRepository _creditNotes;
+    private readonly DeliveryChallanRepository _deliveryChallans;
 
     public TransactionsController(
         QuoteRepository quotes,
         SalesOrderRepository salesOrders,
         InvoiceRepository invoices,
-        CreditNoteRepository creditNotes)
+        CreditNoteRepository creditNotes,
+        DeliveryChallanRepository deliveryChallans)
     {
         _quotes = quotes;
         _salesOrders = salesOrders;
         _invoices = invoices;
         _creditNotes = creditNotes;
+        _deliveryChallans = deliveryChallans;
     }
 
     /// <summary>
@@ -67,6 +70,8 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = q.DocumentDate,
                 ContactId = q.ContactId,
                 ContactName = q.ContactName,
+                CurrencyCode = q.CurrencyCode,
+                TaxableAmount = q.TaxableAmount,
                 TotalAmount = q.TotalAmount,
                 Status = q.Status,
                 CustomerResponse = q.CustomerResponse == "None" ? null : q.CustomerResponse,
@@ -91,8 +96,11 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = s.DocumentDate,
                 ContactId = s.ContactId,
                 ContactName = s.ContactName,
+                CurrencyCode = s.CurrencyCode,
+                TaxableAmount = s.TaxableAmount,
                 TotalAmount = s.TotalAmount,
                 Status = s.Status.ToString(), // Assuming enum DocumentStatus
+                FulfilmentStatus = s.FulfilmentStatus,
                 DueDate = null // Sales Orders typically don't have due dates
             }));
         }
@@ -108,6 +116,8 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = i.DocumentDate,
                 ContactId = i.ContactId,
                 ContactName = i.ContactName,
+                CurrencyCode = i.CurrencyCode,
+                TaxableAmount = i.TaxableAmount,
                 TotalAmount = i.TotalAmount,
                 Status = i.Status.ToString(),
                 DueDate = i.DueDate
@@ -125,8 +135,31 @@ public sealed class TransactionsController : ControllerBase
                 DocumentDate = c.DocumentDate,
                 ContactId = c.ContactId,
                 ContactName = c.ContactName,
+                CurrencyCode = c.CurrencyCode,
+                TaxableAmount = c.TaxableAmount,
                 TotalAmount = c.TotalAmount,
                 Status = c.Status.ToString(),
+                DueDate = null
+            }));
+        }
+
+        // The Delivery challans list asks for this type, and until TK-187 there
+        // was no branch for it, so that list was always empty.
+        if (string.IsNullOrEmpty(type) || type.Equals("DeliveryChallan", StringComparison.OrdinalIgnoreCase))
+        {
+            var deliveryChallans = await _deliveryChallans.ListAsync(from, to, ct);
+            transactions.AddRange(deliveryChallans.Select(d => new SalesTransactionListItem
+            {
+                TransactionId = d.DeliveryChallanId,
+                TransactionType = "DeliveryChallan",
+                DocumentNo = d.DocumentNo,
+                DocumentDate = d.DocumentDate,
+                ContactId = d.ContactId,
+                ContactName = d.ContactName,
+                CurrencyCode = d.CurrencyCode,
+                TaxableAmount = d.TaxableAmount,
+                TotalAmount = d.TotalAmount,
+                Status = d.Status,
                 DueDate = null
             }));
         }

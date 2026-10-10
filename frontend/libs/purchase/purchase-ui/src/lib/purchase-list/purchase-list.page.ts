@@ -6,12 +6,22 @@ import {
   AllocationSubmission,
   AllocationTarget,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  DocNumberComponent,
+  MoneyCellComponent,
   PeriodFilterBarComponent,
   PeriodRange,
+  RegisterDatePipe,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
+  StatusTabsComponent,
   UiMessage,
+  countStatusTabs,
   isWithin,
   rangeForPreset,
+  registerStatusLabel,
+  registerStatusTone,
 } from '@bill-book/ui-components';
 import {
   AllocationApiService,
@@ -23,8 +33,51 @@ import {
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purchase-core';
+
+/** A list row with what the register draws beside the API's fields. */
+export interface PurchaseRegisterRow extends PurchaseTransactionListItem {
+  /** The document's code, for the chip before its number. */
+  code: string;
+  /** The status the register shows and filters by. */
+  listStatus: string;
+}
+
+const DOCUMENT_STATUSES: readonly RegisterStatusOption[] = [
+  { value: 'Draft', label: 'Draft' },
+  { value: 'ReadyToPost', label: 'Ready to post' },
+  { value: 'Posted', label: 'Posted' },
+  { value: 'Void', label: 'Void' },
+];
+
+/**
+ * Each purchase document's code and the statuses its register offers (TK-187).
+ * An order's status is its fulfilment once it is confirmed, which is what
+ * somebody chasing a delivery is asking about.
+ */
+export const PURCHASE_REGISTERS: Readonly<Record<string, { code: string; statuses: readonly RegisterStatusOption[] }>> = {
+  PurchaseOrder: {
+    code: 'POR',
+    statuses: [
+      { value: 'Draft', label: 'Draft' },
+      { value: 'Open', label: 'Open' },
+      { value: 'PartlyReceived', label: 'PartlyReceived' },
+      { value: 'Closed', label: 'Closed' },
+      { value: 'Cancelled', label: 'Cancelled' },
+    ],
+  },
+  GoodsReceipt: { code: 'GRN', statuses: DOCUMENT_STATUSES },
+  Bill: { code: 'BIL', statuses: DOCUMENT_STATUSES },
+  DebitNote: { code: 'DBN', statuses: DOCUMENT_STATUSES },
+};
+
+/** The status a purchase row shows: an order's fulfilment once confirmed, otherwise its document status. */
+export function purchaseListStatus(row: PurchaseTransactionListItem): string {
+  if (row.transactionType === 'PurchaseOrder' && row.fulfilmentStatus && row.status !== 'Draft' && row.status !== 'ReadyToPost') {
+    return row.fulfilmentStatus;
+  }
+  return row.status;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,12 +85,18 @@ import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purc
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
     CommonModule,
     RouterModule,
-    FormsModule,
     AllocationModalComponent,
     PeriodFilterBarComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
+    DocNumberComponent,
+    MoneyCellComponent,
+    RegisterDatePipe,
   ],
+  host: { class: 'register-page' },
   templateUrl: './purchase-list.page.html'
 })
 export class PurchaseListPage implements OnInit {
@@ -66,6 +125,7 @@ export class PurchaseListPage implements OnInit {
 
   readonly transactions = signal<PurchaseTransactionListItem[]>([]);
   selectedType: string = '';
+  private readonly type = signal('');
   selectedStatus = signal<string>('');
   pageTitle = signal<string>('');
   newRoute = signal<string>('');
@@ -75,16 +135,32 @@ export class PurchaseListPage implements OnInit {
    * Purchase is a dated register: the period bar narrows it, and the grid's own
    * column filters narrow whatever survives that. There is no list-level search.
    */
-  readonly range = signal<PeriodRange>(rangeForPreset('this-month'));
+  readonly range = signal<PeriodRange>(rangeForPreset('this-financial-year'));
+
+  /** The document type's code and statuses; a mixed list has neither. */
+  readonly register = computed(() => PURCHASE_REGISTERS[this.type()] ?? { code: '', statuses: DOCUMENT_STATUSES });
+
+  /** Every row in the period, before the status tab narrows it. */
+  readonly periodRows = computed<PurchaseRegisterRow[]>(() =>
+    this.transactions()
+      .filter((t) => isWithin(this.range(), String(t.documentDate ?? '')))
+      .map((t) => ({
+        ...t,
+        code: PURCHASE_REGISTERS[t.transactionType]?.code ?? '',
+        listStatus: purchaseListStatus(t),
+      })),
+  );
+
+  /** All, then each status with how many rows in the period have it. */
+  readonly tabs = computed(() => countStatusTabs(this.periodRows(), this.register().statuses, (r) => r.listStatus));
 
   readonly visibleTransactions = computed(() => {
     const status = this.selectedStatus();
-    return this.transactions().filter((t) => {
-      const withinDate = isWithin(this.range(), String(t.documentDate ?? ''));
-      const matchesStatus = !status || t.status === status;
-      return withinDate && matchesStatus;
-    });
+    return this.periodRows().filter((t) => !status || t.listStatus === status);
   });
+
+  protected readonly statusLabel = registerStatusLabel;
+  protected readonly statusTone = registerStatusTone;
 
   /** The bar's total sums the rows on screen, nothing else. */
   readonly periodTotal = computed(() =>
@@ -94,9 +170,6 @@ export class PurchaseListPage implements OnInit {
   setRange(range: PeriodRange) {
     this.range.set(range);
   }
-
-  // Mock properties for parity with design
-
 
   ngOnInit() {
     // The type lives in the URL so the menu can link straight to one document's
@@ -112,6 +185,8 @@ export class PurchaseListPage implements OnInit {
         this.newTitle.set(data['newTitle'] ?? '');
         if (type === this.selectedType) return;
         this.selectedType = type;
+        this.type.set(type);
+        this.selectedStatus.set('');
         this.loadTransactions();
       });
       return;
@@ -130,6 +205,7 @@ export class PurchaseListPage implements OnInit {
 
   setType(type: string) {
     this.selectedType = type;
+    this.type.set(type);
 
     // Push the tab into the URL rather than only into local state, so what the
     // person is looking at and what the address bar says cannot disagree. With a
@@ -162,11 +238,12 @@ export class PurchaseListPage implements OnInit {
   }
 
   columns: ColumnDef[] = [
-    { field: 'documentDate', header: 'Date' },
     { field: 'documentNo', header: 'Number' },
+    { field: 'documentDate', header: 'Date', dataType: 'date' },
     { field: 'contactName', header: 'Vendor' },
-    { field: 'totalAmount', header: 'Amount' },
-    { field: 'status', header: 'Status' }
+    { field: 'listStatus', header: 'Status' },
+    { field: 'taxableAmount', header: 'Taxable', dataType: 'money' },
+    { field: 'totalAmount', header: 'Total', dataType: 'money' },
   ];
 
   navigateToTransaction(transaction: PurchaseTransactionListItem) {

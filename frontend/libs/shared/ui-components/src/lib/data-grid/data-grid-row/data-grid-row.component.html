@@ -1,3 +1,10 @@
+<!-- Its click is its own: ticking a row never opens it. -->
+<td *ngIf="selectable" class="sel-col" (click)="$event.stopPropagation()">
+  <input type="checkbox"
+         [checked]="selected"
+         [attr.aria-label]="'Select row ' + (index + 1)"
+         (change)="selectToggle.emit(row)" />
+</td>
 <td *ngFor="let col of visibleColumns"
     [class.numeric]="isNumericCol(col)"
     [ngClass]="col.classes ? [col.classes, isNumericCol(col) ? 'text-right' : ''] : {'text-right': isNumericCol(col)}"

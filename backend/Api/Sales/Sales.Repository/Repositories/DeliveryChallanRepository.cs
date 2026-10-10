@@ -96,6 +96,8 @@ public sealed class DeliveryChallanRepository
                 x.ContactId,
                 x.Status,
                 x.DispatchDate,
+                x.CurrencyCode,
+                x.TaxableAmount,
                 x.TotalAmount
             })
             .ToListAsync(ct);
@@ -113,6 +115,8 @@ public sealed class DeliveryChallanRepository
             ContactName = contacts.TryGetValue(x.ContactId, out var c) ? c.Name : "Unknown",
             Status = x.Status.ToString(),
             DispatchDate = x.DispatchDate,
+            CurrencyCode = x.CurrencyCode,
+            TaxableAmount = x.TaxableAmount,
             TotalAmount = x.TotalAmount
         }).ToList();
     }

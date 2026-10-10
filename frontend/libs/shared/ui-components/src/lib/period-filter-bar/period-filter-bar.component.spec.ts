@@ -1,5 +1,7 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { PeriodFilterBarComponent } from './period-filter-bar.component';
 import { isWithin, rangeForPreset, toIsoDate } from './period-range';
 
@@ -58,35 +60,71 @@ describe('Period ranges', () => {
 });
 
 describe('PeriodFilterBarComponent', () => {
+  // The total is formatted by the branch's formats, which the service fetches.
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+  });
+
   const create = (): PeriodFilterBarComponent =>
     TestBed.runInInjectionContext(() => new PeriodFilterBarComponent());
 
-  it('PERIOD-08: Dates are only editable under Custom', () => {
+  it('PERIOD-08: Dates are only editable under Custom, which starts from the dates on screen', () => {
     const comp = create();
     comp.pick('this-month');
     expect(comp.isCustom()).toBe(false);
+    const shown = comp.from();
 
     comp.pick('custom');
     expect(comp.isCustom()).toBe(true);
-    expect(comp.from()).toBe('');
+    expect(comp.from()).toBe(shown);
   });
 
-  it('PERIOD-09: Choosing a preset and typing a custom date both announce the range', () => {
+  it('PERIOD-09: A preset applies at once; typed dates wait for Apply (TK-187)', () => {
     const comp = create();
     const seen: string[] = [];
-    comp.rangeChange.subscribe((range) => seen.push(range.preset));
+    comp.rangeChange.subscribe((range) => seen.push(`${range.preset} ${range.from}`));
 
     comp.pick('last-month');
     comp.pick('custom');
-    comp.setFrom('2026-01-01');
+    const announced = seen.length;
 
-    expect(seen).toEqual(['last-month', 'custom', 'custom']);
+    comp.setFrom('2026-01-01');
+    expect(seen.length).toBe(announced);
     expect(comp.from()).toBe('2026-01-01');
+    expect(comp.canApply()).toBe(true);
+
+    comp.apply();
+    expect(seen.at(-1)).toBe('custom 2026-01-01');
+    expect(comp.canApply()).toBe(false);
   });
 
-  it('PERIOD-10: The total is labelled with the branch currency and set tabular', () => {
+  it('PERIOD-10: The total is labelled with the branch currency and written as money', () => {
     const comp = create();
     expect(comp.totalLabel()).toBe('Total in INR');
-    expect(comp.formattedTotal()).toBe('0');
+    expect(comp.formattedTotal()).toBe('₹0');
+  });
+
+  it('PERIOD-11: Apply is refused when From is after To, and when nothing changed', () => {
+    const comp = create();
+    comp.pick('custom');
+    expect(comp.canApply()).toBe(false);
+
+    comp.setFrom('2026-09-30');
+    comp.setTo('2026-09-01');
+    expect(comp.canApply()).toBe(false);
+
+    comp.setTo('2026-10-31');
+    expect(comp.canApply()).toBe(true);
+  });
+
+  it('PERIOD-12: Choosing a preset drops a draft that was never applied', () => {
+    const comp = create();
+    comp.pick('custom');
+    comp.setFrom('2020-01-01');
+    comp.pick('this-month');
+
+    expect(comp.isCustom()).toBe(false);
+    expect(comp.from()).not.toBe('2020-01-01');
+    expect(comp.canApply()).toBe(false);
   });
 });

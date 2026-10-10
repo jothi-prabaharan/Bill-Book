@@ -1,56 +1,38 @@
-<header class="flex items-center justify-between mb-4">
-  <h1 class="text-xl font-medium m-0">{{ pageTitle() || 'Purchase' }}</h1>
+<bb-register-header
+  [title]="pageTitle() || 'Purchase'"
+  [code]="register().code"
+  [count]="periodRows().length"
+  [newLabel]="newTitle()"
+  [newRoute]="newRoute()"
+/>
 
-  @if (newRoute()) {
-    <button type="button" class="btn btn-primary" [routerLink]="newRoute()">{{ newTitle() }}</button>
-  }
-</header>
+<bb-status-tabs label="Status filters" [tabs]="tabs()" [value]="selectedStatus()" (valueChange)="setStatus($event)" />
 
-<nav aria-label="Status filters" class="flex flex-wrap mb-3 gap-6px">
-  <button type="button" (click)="setStatus('')" [attr.aria-pressed]="selectedStatus() === ''" class="btn btn-secondary text-sm tab-all">All statuses</button>
-  
-  <span class="tabgrp">
-    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Draft')" [attr.aria-pressed]="selectedStatus() === 'Draft'">Draft</button>
-  </span>
+<section class="register-card">
+  <bb-period-filter-bar initialPreset="this-financial-year" [total]="periodTotal()" (rangeChange)="setRange($event)" />
 
-  <span class="tabgrp">
-    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Open')" [attr.aria-pressed]="selectedStatus() === 'Open'">Open</button>
-  </span>
-
-  <span class="tabgrp">
-    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Posted')" [attr.aria-pressed]="selectedStatus() === 'Posted'">Posted</button>
-  </span>
-
-  <span class="tabgrp">
-    <button class="btn btn-secondary text-sm" type="button" (click)="setStatus('Void')" [attr.aria-pressed]="selectedStatus() === 'Void'">Void</button>
-  </span>
-</nav>
-
-<bb-period-filter-bar [total]="periodTotal()" (rangeChange)="setRange($event)" />
-
-<div class="card bg-surface">
-    <bb-data-grid fillHeight flush [gridCode]="'PURCHASE_LIST'" [columns]="columns" [data]="visibleTransactions()">
-    <ng-template bbCellTemplate="documentDate" let-row="row">
-      <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full tabular-nums">{{ row.documentDate | date }}</span>
+  <bb-data-grid
+    register
+    fillHeight
+    flush
+    stackOnPhone
+    label="Purchase documents"
+    [gridCode]="'PURCHASE_LIST'"
+    [columns]="columns"
+    [data]="visibleTransactions()"
+    (rowClick)="navigateToTransaction($event)"
+  >
+    <ng-template bbCellTemplate="documentNo" let-row>
+      <bb-doc-number [code]="row.code" [number]="row.documentNo" />
     </ng-template>
-    <ng-template bbCellTemplate="documentNo" let-row="row">
-      <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full">{{ row.documentNo }}</span>
+
+    <ng-template bbCellTemplate="documentDate" let-row>
+      <span class="reg-date">{{ row.documentDate | registerDate }}</span>
     </ng-template>
-    <ng-template bbCellTemplate="contactName" let-row="row">
-      <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full">{{ row.contactName }}</span>
-    </ng-template>
-    <ng-template bbCellTemplate="totalAmount" let-row="row">
-      <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full text-right tabular-nums">{{ row.totalAmount | number:'1.2-2' }}</span>
-    </ng-template>
-    <ng-template bbCellTemplate="status" let-row="row">
+
+    <ng-template bbCellTemplate="listStatus" let-row>
       <span class="flex items-center gap-2">
-        <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full">
-          <span class="tag" [ngClass]="{
-            'tag-neutral': row.status === 'Posted' || row.status === 'Closed' || row.status === 'PurchaseReturn',
-            'tag-accent': row.status === 'Open' || row.status === 'PartlyReceived',
-            'tag-outline': row.status === 'Draft' || row.status === 'Void'
-          }">{{ row.status }}</span>
-        </span>
+        <span class="tag" [ngClass]="statusTone(row.listStatus)">{{ statusLabel(row.listStatus) }}</span>
 
         @if (canAllocate(row)) {
           <button
@@ -64,8 +46,16 @@
         }
       </span>
     </ng-template>
+
+    <ng-template bbCellTemplate="taxableAmount" let-row>
+      <bb-money-cell [value]="row.taxableAmount" />
+    </ng-template>
+
+    <ng-template bbCellTemplate="totalAmount" let-row>
+      <bb-money-cell [value]="row.totalAmount" [currency]="row.currencyCode" />
+    </ng-template>
   </bb-data-grid>
-</div>
+</section>
 
 <bb-allocation-modal
   [open]="allocateOpen()"
@@ -78,6 +68,3 @@
   (save)="onAllocate($event)"
   (dismiss)="closeAllocate()"
 ></bb-allocation-modal>
-
-
-

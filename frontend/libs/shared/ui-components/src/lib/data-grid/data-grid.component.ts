@@ -92,7 +92,15 @@ export class DataGridComponent implements OnInit {
     return this._data();
   }
   set data(val: readonly any[]) {
-    this._data.set(val || []);
+    const rows = val || [];
+    this._data.set(rows);
+    // A selected row that has left the data is no longer selectable, so it is
+    // no longer selected: a new period or page starts from what is on screen.
+    const kept = this.selectedRows().filter((row) => rows.includes(row));
+    if (kept.length !== this.selectedRows().length) {
+      this.selectedRows.set(kept);
+      this.selectionChange.emit(kept);
+    }
   }
 
   @Input() loading = false;
@@ -107,11 +115,14 @@ export class DataGridComponent implements OnInit {
   }
 
   private _pageSize = signal<number>(50);
+  /** Whether the parent named a page size, which a saved one must not override. */
+  private pageSizeGiven = false;
   @Input()
   get pageSize(): number {
     return this._pageSize();
   }
   set pageSize(val: number) {
+    this.pageSizeGiven = true;
     this._pageSize.set(val || 50);
   }
 
@@ -173,6 +184,20 @@ export class DataGridComponent implements OnInit {
   @Output() selectionChange = new EventEmitter<any[]>();
   readonly selectedRows = signal<any[]>([]);
 
+  /**
+   * The transaction register's look (TK-187), for document lists only: an
+   * "All" strip with the item count, a checkbox on every row, a column menu
+   * in each heading, and a pager with a page size and first/last buttons that
+   * is always drawn. Every other grid keeps its own look; this is opt-in.
+   */
+  @Input({ transform: booleanAttribute }) register = false;
+
+  /** The page sizes the register's pager offers. */
+  @Input() pageSizes: readonly number[] = [10, 25, 50, 100];
+
+  /** Fires when the register's page size changes, for a server-paged list to refetch. */
+  @Output() pageSizeChange = new EventEmitter<number>();
+
   // Outputs
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChange = new EventEmitter<SortState>();
@@ -193,6 +218,98 @@ export class DataGridComponent implements OnInit {
 
   ngOnInit() {
     this.loadState();
+
+    // A register opens on its smallest page unless the parent or a saved
+    // choice says otherwise.
+    if (this.register && !this.pageSizeGiven) {
+      const saved = this.gridCode ? this.stateService.loadState(this.gridCode)?.pageSize : undefined;
+      this._pageSize.set(saved && this.pageSizes.includes(saved) ? saved : this.pageSizes[0] ?? 10);
+    }
+  }
+
+  /** Whether the checkbox column is drawn: always on a register, or when asked. */
+  get showSelection(): boolean {
+    return this.register || this.selectable;
+  }
+
+  isSelected(row: any): boolean {
+    return this.selectedRows().includes(row);
+  }
+
+  toggleRow(row: any): void {
+    const current = this.selectedRows();
+    const next = current.includes(row) ? current.filter((r) => r !== row) : [...current, row];
+    this.selectedRows.set(next);
+    this.selectionChange.emit(next);
+  }
+
+  /** Every row that survives the filters, across all pages, is selected. */
+  readonly allSelected = computed(() => {
+    const rows = this.filteredData();
+    const selected = this.selectedRows();
+    return rows.length > 0 && rows.every((row) => selected.includes(row));
+  });
+
+  readonly someSelected = computed(() => this.selectedRows().length > 0 && !this.allSelected());
+
+  /** The "All" box: select every filtered row, or clear the selection. */
+  toggleAll(): void {
+    const next = this.allSelected() ? [] : [...this.filteredData()];
+    this.selectedRows.set(next);
+    this.selectionChange.emit(next);
+  }
+
+  /** Every row on this page is selected. */
+  readonly pageSelected = computed(() => {
+    const rows = this.displayData();
+    const selected = this.selectedRows();
+    return rows.length > 0 && rows.every((row) => selected.includes(row));
+  });
+
+  readonly pagePartlySelected = computed(
+    () => !this.pageSelected() && this.displayData().some((row) => this.selectedRows().includes(row)),
+  );
+
+  /** The heading's box: select or clear the rows on this page only. */
+  togglePage(): void {
+    const page = this.displayData();
+    const current = this.selectedRows();
+    const next = this.pageSelected()
+      ? current.filter((row) => !page.includes(row))
+      : [...current, ...page.filter((row) => !current.includes(row))];
+    this.selectedRows.set(next);
+    this.selectionChange.emit(next);
+  }
+
+  /** Rows in the register, across every page. */
+  readonly totalItems = computed(() =>
+    this._totalCount() > 0 ? this._totalCount() : this.filteredData().length,
+  );
+
+  /** `1 to 10 of 23`, or `0 to 0 of 0`. */
+  readonly rangeSummary = computed(() => {
+    const total = this.totalItems();
+    if (total === 0) return '0 to 0 of 0';
+    const size = this._pageSize();
+    const page = this._currentPage();
+    const start = (page - 1) * size + 1;
+    const end = Math.min(page * size, total);
+    return `${start} to ${end} of ${total}`;
+  });
+
+  setPageSize(size: number): void {
+    if (size === this._pageSize()) return;
+    this._pageSize.set(size);
+    this.pageSizeChange.emit(size);
+    this.goToPage(1);
+    this.saveState();
+  }
+
+  goToPage(page: number): void {
+    const target = Math.min(Math.max(1, page), this.totalPages());
+    if (target === this._currentPage()) return;
+    this._currentPage.set(target);
+    this.pageChange.emit(target);
   }
 
   private loadState() {
@@ -279,6 +396,7 @@ export class DataGridComponent implements OnInit {
 
   applyFilter(field: string, event: Event) {
     event.stopPropagation();
+    this.resetClientPage();
     const val = this.filterVal().trim();
     const currentFilters = this.activeFilters().filter(f => f.field !== field);
     
@@ -297,9 +415,21 @@ export class DataGridComponent implements OnInit {
 
   clearFilter(field: string, event: Event) {
     event.stopPropagation();
+    this.resetClientPage();
     this.activeFilters.set(this.activeFilters().filter(f => f.field !== field));
     this.openFilterField.set(null);
     this.saveState();
+  }
+
+  /**
+   * A filter can leave fewer pages than the one being read, which would show an
+   * empty page with rows still matching. A client-paged grid goes back to the
+   * first page instead; a server-paged one is the parent's to move.
+   */
+  private resetClientPage(): void {
+    if (this._totalCount() === 0 && this._currentPage() !== 1) {
+      this._currentPage.set(1);
+    }
   }
 
   /** What is currently typed into one column's filter input. */

@@ -1,79 +1,73 @@
-<section class="sor-list">
-  <header class="sor-list__head">
-    <h1 class="sor-list__title">Sales orders</h1>
+<bb-register-header title="Sales orders" code="SOR" [count]="periodCount()" newLabel="New sales order" (create)="create()" />
 
-    <button type="button" class="btn btn-primary" (click)="create()">New sales order</button>
-  </header>
+<!-- Anything the server refused. Field-level problems never reach here; this
+     is where a rule about the request itself is shown. -->
+<bb-message-box [messages]="messages()" />
 
-  <!-- Anything the server refused. Field-level problems never reach here; this
-       is where a rule about the request itself is shown. -->
-  <bb-message-box [messages]="messages()" />
+<bb-status-tabs label="Status filters" [tabs]="tabs()" [value]="status" (valueChange)="setStatus($event)" />
 
-  <form class="sor-list__filters" (ngSubmit)="onFilterChange()">
-    <nav aria-label="Status filters" class="flex flex-wrap gap-6px mr-4">
-      <button type="button" (click)="status = ''; onFilterChange()" [attr.aria-pressed]="status === ''" class="btn btn-secondary text-sm tab-all">All statuses</button>
-      
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Draft'; onFilterChange()" [attr.aria-pressed]="status === 'Draft'">Draft</button>
-      </span>
+<section class="register-card">
+  <bb-period-filter-bar initialPreset="this-financial-year" [total]="totalBase()" (rangeChange)="setRange($event)">
+    <bb-search-input
+      class="sor-list__search"
+      id="sor-search"
+      ariaLabel="Order number"
+      name="search"
+      placeholder="Order number"
+      [debounceMs]="400"
+      [(ngModel)]="search"
+      (ngModelChange)="onFilterChange()"
+    />
+  </bb-period-filter-bar>
 
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'ReadyToPost'; onFilterChange()" [attr.aria-pressed]="status === 'ReadyToPost'">Ready to confirm</button>
-      </span>
+  <bb-data-grid
+    register
+    fillHeight
+    flush
+    stackOnPhone
+    label="Sales orders"
+    emptyText="No sales orders match. Clear the filters, or raise one from an accepted quote."
+    [gridCode]="gridCode"
+    [columns]="columns"
+    [data]="rows()"
+    [loading]="loading()"
+    [totalCount]="total()"
+    [pageSize]="pageSize()"
+    [currentPage]="page()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+    (rowClick)="open($event)"
+  >
+    <ng-template bbCellTemplate="documentNo" let-row>
+      <bb-doc-number code="SOR" [number]="row.documentNo" />
 
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Posted'; onFilterChange()" [attr.aria-pressed]="status === 'Posted'">Confirmed</button>
-      </span>
+      @if (row.quoteId) {
+        <span class="chip" title="Converted from a quote">from quote</span>
+      }
+    </ng-template>
 
-      <span class="tabgrp">
-        <button class="btn btn-secondary text-sm" type="button" (click)="status = 'Void'; onFilterChange()" [attr.aria-pressed]="status === 'Void'">Void</button>
-      </span>
-    </nav>
+    <ng-template bbCellTemplate="documentDate" let-row>
+      <span class="reg-date">{{ row.documentDate | registerDate }}</span>
+    </ng-template>
 
-    <div class="field sor-list__filter sor-list__filter--grow">
-      <bb-search-input
-        id="sor-search"
-        label="Order number"
-        name="search"
-        placeholder="SO/2026/0001"
-        [debounceMs]="0"
-        [(ngModel)]="search"
-      />
-    </div>
+    <ng-template bbCellTemplate="deliveryDate" let-row>
+      <span class="tabular-nums">{{ row.deliveryDate | registerDate }}</span>
+    </ng-template>
 
-    <button type="submit" class="btn btn-secondary sor-list__apply">Search</button>
-  </form>
+    <ng-template bbCellTemplate="status" let-row>
+      <span [class]="'tag ' + statusTone(row.status)">{{ statusLabel(row.status) }}</span>
+    </ng-template>
 
-  <div class="card bg-surface sor-list__grid">
-    <bb-data-grid fillHeight
-      [gridCode]="'SALES_ORDER_LIST'"
-      [columns]="columns"
-      [data]="rows()"
-      [loading]="loading()"
-      [totalCount]="total()"
-      [pageSize]="pageSize"
-      [currentPage]="page()"
-      (pageChange)="onPageChange($event)"
-      (rowClick)="open($event)"
-    >
-      <ng-template bbCellTemplate="documentNo" let-row>
-        <span class="tabular-nums">{{ row.documentNo }}</span>
+    <ng-template bbCellTemplate="fulfilmentStatus" let-row>
+      <span [class]="'tag ' + statusTone(row.fulfilmentStatus)">{{ row.fulfilmentStatus }}</span>
+    </ng-template>
 
-        @if (row.quoteId) {
-          <span class="chip" title="Converted from a quote">from quote</span>
-        }
-      </ng-template>
+    <ng-template bbCellTemplate="taxableAmount" let-row>
+      <bb-money-cell [value]="row.taxableAmount" />
+    </ng-template>
 
-      <ng-template bbCellTemplate="status" let-row>
-        <span [class]="statusTag(row.status)">{{ row.status }}</span>
-      </ng-template>
-    </bb-data-grid>
-
-    @if (isEmpty()) {
-      <p class="sor-list__empty">
-        No sales orders match. Clear the filters, or raise one from an accepted quote.
-      </p>
-    }
-  </div>
+    <ng-template bbCellTemplate="totalAmount" let-row>
+      <bb-money-cell [value]="row.totalAmount" [currency]="row.currencyCode" />
+    </ng-template>
+  </bb-data-grid>
 </section>
-

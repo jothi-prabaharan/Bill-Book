@@ -93,3 +93,9 @@ export * from './lib/motion/route-motion.directive';
 export * from './lib/info-tooltip/info-tooltip.component';
 
 export * from './lib/export-import/export-import.component';
+export * from './lib/register/register-format';
+export * from './lib/register/register-header.component';
+export * from './lib/register/status-tabs.component';
+export * from './lib/register/money-cell.component';
+export * from './lib/register/doc-number.component';
+export * from './lib/register/register-date.pipe';

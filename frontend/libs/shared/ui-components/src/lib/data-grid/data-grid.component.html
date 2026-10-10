@@ -1,4 +1,4 @@
-<div class="data-grid-card" [class.compact]="compact" [class.flush]="flush" [class.fill-height]="fillHeight">
+<div class="data-grid-card" [class.compact]="compact" [class.flush]="flush" [class.fill-height]="fillHeight" [class.register]="register">
   <!-- Progress bar for loading state -->
   <div *ngIf="loading" class="data-grid-loading-bar" aria-hidden="true">
     <div class="loading-pulse"></div>
@@ -6,7 +6,26 @@
 
   <!-- Above the table sit only a Clear button and the visible-row count: no
        list-level search, no status select, no filter toggle. -->
-  <div *ngIf="showCount" class="grid-bar">
+  <!-- A register's strip: select everything, and how many items there are. -->
+  <div *ngIf="register" class="reg-strip">
+    <label class="reg-check">
+      <input type="checkbox"
+             [checked]="allSelected()"
+             [indeterminate]="someSelected()"
+             [disabled]="totalItems() === 0"
+             (change)="toggleAll()" />
+      <span>All</span>
+    </label>
+    <button *ngIf="isNarrowed()"
+            type="button"
+            class="btn btn-ghost grid-clear"
+            (click)="clearAll()">Clear</button>
+    <span class="grid-count">
+      <ng-container *ngIf="selectedRows().length > 0">{{ selectedRows().length }} selected · </ng-container>{{ totalItems() }} {{ totalItems() === 1 ? 'item' : 'items' }}
+    </span>
+  </div>
+
+  <div *ngIf="showCount && !register" class="grid-bar">
     <button *ngIf="isNarrowed()"
             type="button"
             class="btn btn-ghost grid-clear"
@@ -18,6 +37,14 @@
     <table class="table" [class.compact]="compact" [class.table--stacked]="stackOnPhone" [attr.aria-label]="label || null">
       <thead>
         <tr>
+          <th *ngIf="showSelection" scope="col" class="sel-col">
+            <input type="checkbox"
+                   aria-label="Select the rows on this page"
+                   [checked]="pageSelected()"
+                   [indeterminate]="pagePartlySelected()"
+                   [disabled]="displayData().length === 0"
+                   (change)="togglePage()" />
+          </th>
           <th *ngFor="let col of visibleColumns(); let last = last"
               scope="col"
               [class.numeric]="isNumericCol(col)"
@@ -49,10 +76,16 @@
                         [style.color]="columnFilter(col.field) ? 'var(--color-accent-700)' : 'var(--color-neutral-400)'"
                         [style.background]="openFilterField() === col.field ? 'var(--color-neutral-100)' : 'transparent'"
                         style="padding: 4px; border-radius: 4px; border: 0; cursor: pointer; display: flex;"
-                        title="Filter"
+                        [attr.title]="register ? 'Column menu' : 'Filter'"
+                        [attr.aria-label]="(register ? 'Column menu: ' : 'Filter ') + headerOf(col)"
                         (click)="toggleFilter(col.field, $event)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <svg *ngIf="!register" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
+                  <svg *ngIf="register" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="4" y1="7" x2="20" y2="7"></line>
+                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                    <line x1="4" y1="17" x2="20" y2="17"></line>
                   </svg>
                 </button>
 
@@ -94,6 +127,9 @@
             [index]="index"
             [visibleColumns]="visibleColumns()"
             [templates]="templateMap"
+            [selectable]="showSelection"
+            [selected]="isSelected(row)"
+            (selectToggle)="toggleRow($event)"
             [ngClass]="rowClass ? rowClass(row) : null"
             [class.clickable-row]="clickable"
             [class.cursor-pointer]="clickable"
@@ -102,7 +138,7 @@
 
         <!-- Empty State -->
         <tr *ngIf="!loading && displayData().length === 0" class="empty-state-row">
-          <td [attr.colspan]="visibleColumns().length" class="text-center text-muted p-4">
+          <td [attr.colspan]="visibleColumns().length + (showSelection ? 1 : 0)" class="text-center text-muted p-4">
             <ng-container *ngIf="emptyTemplate || contentEmptyTemplate; else defaultEmpty">
               <ng-container *ngTemplateOutlet="emptyTemplate || contentEmptyTemplate"></ng-container>
             </ng-container>
@@ -116,8 +152,31 @@
     </table>
   </div>
 
+  <!-- A register's pager is always drawn: the page size is a choice even on
+       one page, and "1 to 3 of 3" is the count the strip above repeats. -->
+  <div *ngIf="register && paged" class="reg-pager">
+    <div class="reg-pager__size">
+      <span class="reg-pager__label">Page size</span>
+      <div class="reg-seg" role="group" aria-label="Page size">
+        <button *ngFor="let size of pageSizes"
+                type="button"
+                class="reg-seg__btn"
+                [attr.aria-pressed]="size === pageSize"
+                (click)="setPageSize(size)">{{ size }}</button>
+      </div>
+    </div>
+    <div class="reg-pager__nav">
+      <span class="reg-pager__summary">· {{ rangeSummary() }}</span>
+      <button type="button" class="reg-pager__btn" aria-label="First page" [disabled]="currentPage <= 1" (click)="goToPage(1)">«</button>
+      <button type="button" class="reg-pager__btn" aria-label="Previous page" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">‹</button>
+      <span class="reg-pager__page">Page {{ currentPage }} of {{ totalPages() }}</span>
+      <button type="button" class="reg-pager__btn" aria-label="Next page" [disabled]="currentPage >= totalPages()" (click)="goToPage(currentPage + 1)">›</button>
+      <button type="button" class="reg-pager__btn" aria-label="Last page" [disabled]="currentPage >= totalPages()" (click)="goToPage(totalPages())">»</button>
+    </div>
+  </div>
+
   <!-- Pagination Strip -->
-  <div *ngIf="showPager()" class="table-pagination">
+  <div *ngIf="showPager() && !register" class="table-pagination">
     <span class="text-muted pagination-summary">
       {{ paginationSummary() }}
     </span>

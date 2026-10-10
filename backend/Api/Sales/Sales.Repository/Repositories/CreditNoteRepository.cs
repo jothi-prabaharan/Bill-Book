@@ -113,6 +113,8 @@ public sealed class CreditNoteRepository
                 x.DocumentNo,
                 x.ContactId,
                 x.Status,
+                x.CurrencyCode,
+                x.TaxableAmount,
                 x.TotalAmount
             })
             .ToListAsync(ct);
@@ -129,6 +131,8 @@ public sealed class CreditNoteRepository
             ContactId = x.ContactId,
             ContactName = contacts.TryGetValue(x.ContactId, out var c) ? c.Name : "Unknown",
             Status = x.Status.ToString(),
+            CurrencyCode = x.CurrencyCode,
+            TaxableAmount = x.TaxableAmount,
             TotalAmount = x.TotalAmount
         }).ToList();
     }

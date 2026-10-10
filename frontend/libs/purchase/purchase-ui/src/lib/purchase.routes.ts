@@ -16,22 +16,22 @@ export const purchaseRoutes: Routes = [
   {
     path: 'bills',
     loadComponent: () => import('./purchase-list/purchase-list.page').then(m => m.PurchaseListPage),
-    data: { type: 'Bill', title: 'Bills', newRoute: '/purchase/bills/new', newTitle: 'New Bill', access: { permission: 'purchase.view' } }
+    data: { type: 'Bill', title: 'Bills', newRoute: '/purchase/bills/new', newTitle: 'New bill', access: { permission: 'purchase.view' } }
   },
   {
     path: 'purchase-orders',
     loadComponent: () => import('./purchase-list/purchase-list.page').then(m => m.PurchaseListPage),
-    data: { type: 'PurchaseOrder', title: 'Purchase orders', newRoute: '/purchase/purchase-orders/new', newTitle: 'New Purchase order', access: { permission: 'purchase.view' } }
+    data: { type: 'PurchaseOrder', title: 'Purchase orders', newRoute: '/purchase/purchase-orders/new', newTitle: 'New purchase order', access: { permission: 'purchase.view' } }
   },
   {
     path: 'goods-receipts',
     loadComponent: () => import('./purchase-list/purchase-list.page').then(m => m.PurchaseListPage),
-    data: { type: 'GoodsReceipt', title: 'Goods receipts', newRoute: '/purchase/goods-receipts/new', newTitle: 'New Goods receipt', access: { permission: 'purchase.view' } }
+    data: { type: 'GoodsReceipt', title: 'Goods receipts', newRoute: '/purchase/goods-receipts/new', newTitle: 'New goods receipt', access: { permission: 'purchase.view' } }
   },
   {
     path: 'debit-notes',
     loadComponent: () => import('./purchase-list/purchase-list.page').then(m => m.PurchaseListPage),
-    data: { type: 'DebitNote', title: 'Debit notes', newRoute: '/purchase/debit-notes/new', newTitle: 'New Debit note', access: { permission: 'purchase.view' } }
+    data: { type: 'DebitNote', title: 'Debit notes', newRoute: '/purchase/debit-notes/new', newTitle: 'New debit note', access: { permission: 'purchase.view' } }
   },
   {
     path: 'gstr2b',

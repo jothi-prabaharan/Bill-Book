@@ -1,0 +1,48 @@
+/* Transaction registers (TK-187) — the page and the card around a document list.
+
+   .register-page goes on the page's host: a column as tall as the shell's
+   content area, so the card below the heading and tabs takes whatever height is
+   left and follows the window as it is resized. The grid inside scrolls; the
+   page does not, until the screen is too short for the card's minimum, when
+   the page scrolls rather than squeezing the list to nothing. */
+
+.register-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.register-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 360px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  overflow: hidden;
+
+  > bb-data-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* A register row's date reads in the accent, the one coloured column. */
+.register-card .reg-date {
+  color: var(--color-accent-600);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A status in a register is a small square tag, quieter than the pill a form
+   heading carries: a column of them should read as data, not as buttons. */
+.register-card .tag {
+  border-radius: var(--radius-tag);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 1px 7px;
+}

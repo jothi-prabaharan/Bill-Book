@@ -80,6 +80,25 @@ public sealed class DeliveryChallanServiceTests
     }
 
     [SkippableFact]
+    public async Task The_list_carries_each_challans_taxable_value_and_currency()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        long id = await h.SaveOkAsync(
+            Request(contactGstin: "33AAAAA0000A1Z5", [Line(quantity: 10m, unitPrice: 100m)]));
+
+        // The register's Taxable column and the code after its Total (TK-187).
+        DeliveryChallanListItem row = (await h.Service.ListAsync(null, null, default))
+            .Single(x => x.DeliveryChallanId == id);
+
+        Assert.Equal(1000m, row.TaxableAmount);
+        Assert.Equal(1180m, row.TotalAmount);
+        Assert.False(string.IsNullOrEmpty(row.CurrencyCode));
+    }
+
+    [SkippableFact]
     public async Task An_inter_state_challan_saves_with_igst_only()
     {
         Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);

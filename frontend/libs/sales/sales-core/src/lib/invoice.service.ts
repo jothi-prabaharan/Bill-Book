@@ -178,6 +178,10 @@ export interface InvoiceListPage {
   skip: number;
   take: number;
   rows: InvoiceListItem[];
+  /** Matches per status under every other filter, for the register's tabs (TK-187). */
+  statusCounts?: Record<string, number>;
+  /** What every matching row comes to in the branch's base currency, not only this page (TK-187). */
+  totalAmountBase?: number;
 }
 
 export interface InvoiceView extends InvoiceListItem {

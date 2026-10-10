@@ -1,0 +1,31 @@
+<header class="reg-head">
+  <div class="reg-head__titles">
+    <h1 class="reg-head__title">{{ title() }}</h1>
+    @if (code() || countText()) {
+      <span class="reg-head__meta">
+        @if (code()) {
+          <span>{{ code() }}</span>
+        }
+        @if (code() && countText()) {
+          <span aria-hidden="true">·</span>
+        }
+        @if (countText()) {
+          <span>{{ countText() }}</span>
+        }
+      </span>
+    }
+  </div>
+
+  <div class="reg-head__actions">
+    <ng-content />
+    @if (newLabel()) {
+      @if (newRoute()) {
+        <a class="btn reg-head__new" [routerLink]="newRoute()">{{ newLabel() }}</a>
+      } @else {
+        <button type="button" class="btn reg-head__new" [disabled]="newDisabled()" (click)="create.emit()">
+          {{ newLabel() }}
+        </button>
+      }
+    }
+  </div>
+</header>

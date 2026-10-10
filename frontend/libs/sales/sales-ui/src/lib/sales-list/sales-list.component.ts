@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import {
   AllocationApiService,
   LedgerSide,
@@ -20,12 +19,62 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  DocNumberComponent,
+  MoneyCellComponent,
   PeriodFilterBarComponent,
   PeriodRange,
+  RegisterDatePipe,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
+  StatusTabsComponent,
   UiMessage,
+  countStatusTabs,
   isWithin,
   rangeForPreset,
+  registerStatusLabel,
+  registerStatusTone,
 } from '@bill-book/ui-components';
+
+/** A list row with what the register draws beside the API's fields. */
+export interface SalesRegisterRow extends SalesTransactionListItem {
+  /** The document's code, for the chip before its number. */
+  code: string;
+  /** The status the register shows and filters by. */
+  listStatus: string;
+}
+
+const DOCUMENT_STATUSES: readonly RegisterStatusOption[] = [
+  { value: 'Draft', label: 'Draft' },
+  { value: 'ReadyToPost', label: 'Ready to post' },
+  { value: 'Posted', label: 'Posted' },
+  { value: 'Void', label: 'Void' },
+];
+
+/** Each sales document's code and the statuses its register offers (TK-187). */
+export const SALES_REGISTERS: Readonly<Record<string, { code: string; statuses: readonly RegisterStatusOption[] }>> = {
+  Quote: { code: 'QTE', statuses: DOCUMENT_STATUSES },
+  SalesOrder: {
+    code: 'SOR',
+    statuses: [
+      { value: 'Draft', label: 'Draft' },
+      { value: 'Open', label: 'Open' },
+      { value: 'PartlyDelivered', label: 'PartlyDelivered' },
+      { value: 'Closed', label: 'Closed' },
+      { value: 'Cancelled', label: 'Cancelled' },
+    ],
+  },
+  DeliveryChallan: { code: 'DLC', statuses: DOCUMENT_STATUSES },
+  Invoice: { code: 'INV', statuses: DOCUMENT_STATUSES },
+  CreditNote: { code: 'CRN', statuses: DOCUMENT_STATUSES },
+};
+
+/** The status a sales row shows: an order's fulfilment once confirmed, otherwise its document status. */
+export function salesListStatus(row: SalesTransactionListItem): string {
+  if (row.transactionType === 'SalesOrder' && row.fulfilmentStatus && row.status !== 'Draft' && row.status !== 'ReadyToPost') {
+    return row.fulfilmentStatus;
+  }
+  return row.status;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,12 +83,17 @@ import {
   imports: [
     CommonModule,
     RouterModule,
-    FormsModule,
     DataGridComponent,
     DataGridCellTemplateDirective,
     AllocationModalComponent,
     PeriodFilterBarComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
+    DocNumberComponent,
+    MoneyCellComponent,
+    RegisterDatePipe,
   ],
+  host: { class: 'register-page' },
   templateUrl: './sales-list.component.html'
 })
 export class SalesListComponent implements OnInit {
@@ -68,6 +122,7 @@ export class SalesListComponent implements OnInit {
 
   readonly transactions = signal<SalesTransactionListItem[]>([]);
   selectedType: string = '';
+  private readonly type = signal('');
   selectedStatus = signal<string>('');
   pageTitle = signal<string>('');
   newRoute = signal<string>('');
@@ -77,16 +132,32 @@ export class SalesListComponent implements OnInit {
    * Sales is a dated register, so the period bar — not a search box — is what
    * narrows it. The grid's own column filters narrow whatever survives this.
    */
-  readonly range = signal<PeriodRange>(rangeForPreset('this-month'));
+  readonly range = signal<PeriodRange>(rangeForPreset('this-financial-year'));
+
+  /** The document type's code and statuses; a mixed list has no code. */
+  readonly register = computed(() => SALES_REGISTERS[this.type()] ?? { code: '', statuses: DOCUMENT_STATUSES });
+
+  /** Every row in the period, before the status tab narrows it. */
+  readonly periodRows = computed<SalesRegisterRow[]>(() =>
+    this.transactions()
+      .filter((t) => isWithin(this.range(), String(t.documentDate ?? '')))
+      .map((t) => ({
+        ...t,
+        code: SALES_REGISTERS[t.transactionType]?.code ?? '',
+        listStatus: salesListStatus(t),
+      })),
+  );
+
+  /** All, then each status with how many rows in the period have it. */
+  readonly tabs = computed(() => countStatusTabs(this.periodRows(), this.register().statuses, (r) => r.listStatus));
 
   readonly visibleTransactions = computed(() => {
     const status = this.selectedStatus();
-    return this.transactions().filter((t) => {
-      const withinDate = isWithin(this.range(), String(t.documentDate ?? ''));
-      const matchesStatus = !status || t.status === status;
-      return withinDate && matchesStatus;
-    });
+    return this.periodRows().filter((t) => !status || t.listStatus === status);
   });
+
+  protected readonly statusLabel = registerStatusLabel;
+  protected readonly statusTone = registerStatusTone;
 
   /** What the bar's "Total in INR" figure sums: the rows on screen, nothing else. */
   readonly periodTotal = computed(() =>
@@ -94,15 +165,13 @@ export class SalesListComponent implements OnInit {
   );
 
   columns: ColumnDef[] = [
-    { field: 'documentDate', header: 'Date' },
     { field: 'documentNo', header: 'Number' },
+    { field: 'documentDate', header: 'Date', dataType: 'date' },
     { field: 'contactName', header: 'Customer' },
-    { field: 'totalAmount', header: 'Amount', align: 'right' },
-    { field: 'status', header: 'Status' }
+    { field: 'listStatus', header: 'Status' },
+    { field: 'taxableAmount', header: 'Taxable', dataType: 'money' },
+    { field: 'totalAmount', header: 'Total', dataType: 'money' },
   ];
-
-  // Mock properties for parity with design
-
 
   ngOnInit() {
     // The type lives in the URL so the menu can link straight to one document's
@@ -118,6 +187,8 @@ export class SalesListComponent implements OnInit {
         this.newTitle.set(data['newTitle'] ?? '');
         if (type === this.selectedType) return;
         this.selectedType = type;
+        this.type.set(type);
+        this.selectedStatus.set('');
         this.loadTransactions();
       });
       return;
@@ -140,6 +211,7 @@ export class SalesListComponent implements OnInit {
 
   setType(type: string) {
     this.selectedType = type;
+    this.type.set(type);
 
     // Push the tab into the URL rather than only into local state, so what the
     // person is looking at and what the address bar says cannot disagree. With a

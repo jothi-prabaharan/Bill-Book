@@ -14,7 +14,20 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  DocNumberComponent,
+  MoneyCellComponent,
+  PeriodFilterBarComponent,
+  PeriodRange,
+  RegisterDatePipe,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
+  StatusTabsComponent,
+  countStatusTabs,
+  isWithin,
+  rangeForPreset,
+  registerStatusTone,
   BranchDateInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
@@ -175,6 +188,13 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   standalone: true,
   imports: [InfoTooltipComponent, 
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
+    PeriodFilterBarComponent,
+    DocNumberComponent,
+    MoneyCellComponent,
+    RegisterDatePipe,
     DecimalPipe,
     FormsModule,
     BranchDateInputComponent,
@@ -188,6 +208,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
     MessageBoxComponent,
     PercentageInputComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './money-document.page.html',
   styleUrl: './money-document.page.scss',
 })
@@ -243,12 +264,40 @@ export class MoneyDocumentPage implements OnInit {
     })),
   );
 
-  /** Draft, posted or void. Empty is "All", which the placeholder carries. */
-  protected readonly statusOptions: BbSelectOption<string>[] = [
+  /** Draft, posted or void, for the register's tabs (TK-187). */
+  protected readonly statuses: readonly RegisterStatusOption[] = [
     { value: 'Draft', label: 'Draft' },
     { value: 'Posted', label: 'Posted' },
     { value: 'Void', label: 'Void' },
   ];
+
+  /** The register's period; a dated register opens on the financial year. */
+  protected readonly range = signal<PeriodRange>(rangeForPreset('this-financial-year'));
+
+  /** The status tab chosen; empty is All. */
+  protected readonly statusFilter = signal('');
+
+  /** Every document in the period, before the status tab narrows it. */
+  protected readonly periodRows = computed(() =>
+    this.rows().filter((row) => isWithin(this.range(), row.transactionDate)),
+  );
+
+  protected readonly tabs = computed(() => countStatusTabs(this.periodRows(), this.statuses, (row) => row.status));
+
+  protected readonly visibleRows = computed(() => {
+    const status = this.statusFilter();
+    return this.periodRows().filter((row) => !status || row.status === status);
+  });
+
+  /** What the documents on screen come to, at each one's own rate, in base currency. */
+  protected readonly periodTotal = computed(() =>
+    this.visibleRows().reduce((sum, row) => sum + row.amount * (row.exchangeRate || 1), 0),
+  );
+
+  /** The document's code, for the chip before its number. */
+  protected readonly documentCode = computed(() => (this.direction() === 'spend' ? 'SPM' : 'RCM'));
+
+  protected readonly statusTone = registerStatusTone;
 
   protected readonly direction = signal<Direction>('spend');
   protected readonly rows = signal<MoneyDocumentListItem[]>([]);
@@ -277,7 +326,6 @@ export class MoneyDocumentPage implements OnInit {
   /** Which side the opened prepayment sits on, as `locateDocument` found it. */
   protected readonly allocateSide = signal<LedgerSide>('source');
 
-  statusFilter = '';
   protected editingId: number | null = null;
 
   transactionDate = new Date().toISOString().slice(0, 10);
@@ -330,13 +378,13 @@ export class MoneyDocumentPage implements OnInit {
   );
 
   protected readonly columns = computed<ColumnDef[]>(() => [
-    { field: 'transactionDate', header: 'Date' },
     { field: 'transactionNo', header: 'Number' },
+    { field: 'transactionDate', header: 'Date', dataType: 'date' },
     { field: 'contact', header: this.contactLabel() },
     { field: 'account', header: 'Account' },
-    { field: 'amount', header: 'Amount' },
     { field: 'status', header: 'Status' },
-    { field: 'actions', header: 'Actions' }
+    { field: 'amount', header: 'Amount', dataType: 'money' },
+    { field: 'actions', header: '', sortable: false, filterable: false }
   ]);
 
   private get endpoint(): string {
@@ -425,8 +473,9 @@ export class MoneyDocumentPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      const query = this.statusFilter ? `?status=${this.statusFilter}` : '';
-      this.rows.set(await this.req<MoneyDocumentListItem[]>('GET', `${this.endpoint}${query}`));
+      // Every document, so the tabs can count each status; the tab and the
+      // period narrow in the browser, the way the document registers do.
+      this.rows.set(await this.req<MoneyDocumentListItem[]>('GET', this.endpoint));
 
       if (this.bankAccounts().length === 0) {
         const [accounts, contacts] = await Promise.all([

@@ -1,0 +1,17 @@
+<nav class="status-tabs" role="tablist" [attr.aria-label]="label()">
+  @for (tab of tabs(); track tab.value) {
+    <button
+      type="button"
+      role="tab"
+      class="status-tab"
+      [class.is-active]="tab.value === value()"
+      [attr.aria-selected]="tab.value === value()"
+      (click)="select(tab.value)"
+    >
+      <span>{{ tab.label }}</span>
+      @if (tab.count !== null && tab.count !== undefined) {
+        <span class="status-tab__count">( {{ tab.count }} )</span>
+      }
+    </button>
+  }
+</nav>

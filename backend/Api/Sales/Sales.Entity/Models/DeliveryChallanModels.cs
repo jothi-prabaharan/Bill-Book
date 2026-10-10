@@ -21,6 +21,8 @@ public class DeliveryChallanListItem
     /// </summary>
     public string Status { get; set; } = null!;
     public DateOnly DispatchDate { get; set; }
+    public string CurrencyCode { get; set; } = null!;
+    public decimal TaxableAmount { get; set; }
     public decimal TotalAmount { get; set; }
 }
 

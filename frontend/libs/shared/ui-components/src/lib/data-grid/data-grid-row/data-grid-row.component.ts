@@ -17,6 +17,12 @@ export class DataGridRowComponent {
   @Input() index = 0;
   @Input() visibleColumns: ColumnDef[] = [];
   @Input() templates: Record<string, TemplateRef<any>> = {};
+
+  /** A leading checkbox cell, for a register or a selectable grid. */
+  @Input() selectable = false;
+  @Input() selected = false;
+  @Output() selectToggle = new EventEmitter<any>();
+
   @Output() rowClick = new EventEmitter<any>();
 
   onRowClick() {

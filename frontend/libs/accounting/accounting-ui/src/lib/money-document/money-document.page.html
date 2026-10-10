@@ -1,7 +1,11 @@
-<header class="page-head">
-  <h1>{{ title() }}</h1>
-  <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New</button>
-</header>
+<bb-register-header
+  [title]="title()"
+  [code]="documentCode()"
+  [count]="periodRows().length"
+  newLabel="New"
+  [newDisabled]="busy()"
+  (create)="startCreate()"
+/>
 
 @if (message()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
@@ -379,57 +383,59 @@
   </section>
 }
 
-<div class="filters">
-  <div class="field">
-    <bb-select
-      label="Status"
-      placeholder="All"
-      [options]="statusOptions"
-      name="statusFilter"
-      [(ngModel)]="statusFilter"
-      (ngModelChange)="load()"
-    />
-  </div>
-</div>
+<bb-status-tabs label="Status filters" [tabs]="tabs()" [value]="statusFilter()" (valueChange)="statusFilter.set($event)" />
 
-<bb-data-grid [gridCode]="'MONEY_DOCUMENT_LIST'" [columns]="columns()" [data]="rows()">
-  <ng-template bbCellTemplate="transactionDate" let-row>
-    {{ row.transactionDate }}
-  </ng-template>
+<section class="register-card">
+  <bb-period-filter-bar initialPreset="this-financial-year" [total]="periodTotal()" (rangeChange)="range.set($event)" />
 
-  <ng-template bbCellTemplate="transactionNo" let-row>
-    <button type="button" class="link" (click)="open(row.documentId)">
-      {{ row.transactionNo ?? 'Unnumbered draft' }}
-    </button>
-  </ng-template>
+  <bb-data-grid
+    register
+    fillHeight
+    flush
+    stackOnPhone
+    [label]="title()"
+    [gridCode]="'MONEY_DOCUMENT_LIST'"
+    [columns]="columns()"
+    [data]="visibleRows()"
+    (rowClick)="open($event.documentId)"
+  >
+    <ng-template bbCellTemplate="transactionNo" let-row>
+      <bb-doc-number [code]="documentCode()" [number]="row.transactionNo ?? 'Unnumbered draft'" />
+    </ng-template>
 
-  <ng-template bbCellTemplate="contact" let-row>
-    {{ contactName(row.contactId) }}
-  </ng-template>
+    <ng-template bbCellTemplate="transactionDate" let-row>
+      <span class="reg-date">{{ row.transactionDate | registerDate }}</span>
+    </ng-template>
 
-  <ng-template bbCellTemplate="account" let-row>
-    {{ row.bankAccountName }}
-  </ng-template>
+    <ng-template bbCellTemplate="contact" let-row>
+      {{ contactName(row.contactId) }}
+    </ng-template>
 
-  <ng-template bbCellTemplate="amount" let-row>
-    {{ row.amount | number: '1.2-2' }}
-  </ng-template>
+    <ng-template bbCellTemplate="account" let-row>
+      {{ row.bankAccountName }}
+    </ng-template>
 
-  <ng-template bbCellTemplate="status" let-row>
-    <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
-  </ng-template>
+    <ng-template bbCellTemplate="status" let-row>
+      <span [class]="'tag ' + statusTone(row.status)">{{ row.status }}</span>
+    </ng-template>
 
-  <ng-template bbCellTemplate="actions" let-row>
-    @if (row.status === 'Draft') {
-      <button type="button" class="link" (click)="discard(row)">Delete</button>
-    } @else if (row.status === 'Posted') {
-      @if (canAllocate(row)) {
-        <button type="button" class="link" (click)="allocate(row, $event)">Allocate</button>
+    <ng-template bbCellTemplate="amount" let-row>
+      <bb-money-cell [value]="row.amount" [currency]="row.currencyCode" />
+    </ng-template>
+
+    <ng-template bbCellTemplate="actions" let-row>
+      <!-- The row opens the document; these act on it without opening it. -->
+      @if (row.status === 'Draft') {
+        <button type="button" class="link" (click)="$event.stopPropagation(); discard(row)">Delete</button>
+      } @else if (row.status === 'Posted') {
+        @if (canAllocate(row)) {
+          <button type="button" class="link" (click)="allocate(row, $event)">Allocate</button>
+        }
+        <button type="button" class="link" (click)="$event.stopPropagation(); voidDocument(row)">Void</button>
       }
-      <button type="button" class="link" (click)="voidDocument(row)">Void</button>
-    }
-  </ng-template>
-</bb-data-grid>
+    </ng-template>
+  </bb-data-grid>
+</section>
 
 <bb-allocation-modal
   [open]="allocateOpen()"

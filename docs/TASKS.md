@@ -5681,7 +5681,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Not changed:** Master still migrates every tenant schema that the services also migrate. That second path is TK-183's to remove; this card makes the two safe to run together.
 
 ### TK-187 · Transaction lists: one register design across Sales, Purchase and Accounting
-- [~] working (Claude Opus 5.5) — since 2026-10-10
+- [x] completed (Claude Opus 5.5) — 2026-10-10 · tests written, not run
 - **Issue:** [#177](https://github.com/jothi-prabaharan/Bill-Book/issues/177)
 - **Group:** Z · Owner request
 - **Lanes:** L-UI (`libs/shared/ui-components`), L-SAL, L-PUR, L-ACC (their list pages and list endpoints), L-DOC · **Depends on:** — · **Decision:** —
@@ -5689,12 +5689,25 @@ The queue below is one list in card-number order. Each card names its group.
 - **State:** checked 10 October 2026. The owner's screenshot of Purchase orders is the target design, and no screen has it yet. Every list draws its own header and a row of status buttons with no counts. The period bar has no Apply button and uses the browser's date fields. The grid has no checkbox column, page-size control or first/last page buttons. The list endpoints return neither a taxable amount nor a currency, and no document has attachments to count.
 - **Owner's decisions (10 October 2026):** all of Sales, Purchase and Accounting; extend the APIs for Taxable and currency; keep Invoices' and Sales orders' search and checkbox filters; the grid features are opt-in for transaction lists only.
 - **Sub-tasks:**
-  - [ ] List endpoints return the taxable amount and the currency.
-  - [ ] Shared: register header, status tabs with counts, the period bar's register variant, and the grid's opt-in register mode.
-  - [ ] Apply the design to the thirteen lists.
-  - [ ] Docs and release notes.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] List endpoints return the taxable amount and the currency.
+  - [x] Shared: register header, status tabs with counts, the period bar's register variant, and the grid's opt-in register mode.
+  - [x] Apply the design to the thirteen lists, and to the chart of accounts (the owner's second screenshot, the same day).
+  - [x] Docs and release notes.
+  - [x] Test: written, never run by an AI (section 0.5).
+  - [ ] Owner: run `Sales.Api.Tests` (`SalesOrderServiceTests`, `DeliveryChallanServiceTests`) and the frontend suites (`data-grid-register`, `register-format`, the period bar, the sales and purchase lists, the chart of accounts), and look at the lists at your own window sizes.
 - **Done when:** every list named above draws the screenshot's design from real data, and every other grid is unchanged.
+- **As built (Claude Opus 5.5, 10 October 2026):**
+  - **APIs.** The Sales and Purchase transactions endpoints carry `CurrencyCode`, `TaxableAmount` and an order's `FulfilmentStatus`. Credit notes and delivery challans gained the first two in their list items. The invoice and sales order pages return `StatusCounts`, taken under every filter except the status, and `TotalAmountBase` across every match. The sales order list takes `from`/`to`. The journal, banking and transfer endpoints already had what the lists show.
+  - **Fixed on the way.** The Sales transactions endpoint had no branch for `DeliveryChallan`, so the Delivery challans list was always empty. The journal, money-document and transfer pages used `bbCellTemplate` without importing its directive, so their Delete, Reverse, Void and Allocate buttons never showed. The purchase list bound `let-row="row"` (undefined). The unused import in `bank-dashboard.page.ts` that failed `accounting-ui`'s lint is gone.
+  - **Shared.** `libs/shared/ui-components/src/lib/register/` holds the header, the tabs, the doc-number and money cells, the date pipe and the format helpers. The period bar's Custom dates are a draft until Apply, use `bb-branch-date-input`, and the total is in the branch's money format; only Purchase and Sales used the bar, so it changed in place. `bb-data-grid register` is opt-in. `.register-page` and `.register-card` in theming make the card fill the shell's content height at any size.
+  - **Decisions the screenshots did not settle:**
+    - A purchase order's Draft is a tab beside the screenshot's five, because drafts must be findable.
+    - Lists open on the financial year, the preset the screenshot shows.
+    - Row dates read `11 Aug 2026` as in the screenshot; date fields keep the branch pattern.
+    - Amounts drop `.00` only when whole, so paise are never hidden.
+    - The chart's total is the credit side of the accounts on screen, as in the screenshot.
+  - **Checked here** by building the web app and rendering every list with Playwright: real sign-in and shell, fixture rows for the lists, real data for the chart of accounts. At 1600×900, 1280×720 and 1280×650 the total sat on the preset row when it fitted and moved to its own line when it did not, and the card ran to the bottom edge with the pager pinned there. Lint and typecheck are clean, and the backend builds clean.
+  - **Not built:** document attachments. The screenshot's 📎 count has nothing to count, because no sales, purchase or accounting document can carry an attachment. The purchase and sales client lists still sum each row's total in its own currency; the two server-paged lists sum in base currency.
 
 ## 3. Decisions from the owner
 

@@ -234,6 +234,15 @@ public class SalesOrderListPage
     public int Take { get; set; }
 
     public List<SalesOrderListItem> Rows { get; set; } = [];
+
+    /// <summary>
+    /// How many match every filter but the status, per status — the counts on
+    /// the register's status tabs (TK-187). A status nothing has is absent.
+    /// </summary>
+    public Dictionary<string, int> StatusCounts { get; set; } = [];
+
+    /// <summary>What every matching row comes to in the branch's base currency, not only this page's (TK-187).</summary>
+    public decimal TotalAmountBase { get; set; }
 }
 
 /// <summary>

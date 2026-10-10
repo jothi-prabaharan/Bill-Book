@@ -81,7 +81,7 @@ An invoice needs a due date; a POS sale does not, because it is paid at the till
 
 The list has an **overdue** filter and shows how many days late each invoice is. Only a **posted** invoice can be overdue — a draft owes nothing yet, and a voided one never will — and that rule lives on the server, so the screen and a report cannot disagree about it.
 
-The figure under the list is **the page's own total**, and says so. The list pages on the server, so a running total across every match is a different query; a number labelled "outstanding" that only covered one page is the kind somebody reconciles against and finds short.
+The **total** beside the period covers every invoice that matches, in base currency, not only the page on screen. The server works it out with the rest of the query, so it never comes up short against the list it heads. The status tabs count the same way (TK-187).
 
 ## Printing
 
@@ -284,4 +284,4 @@ The field shows on the quote, the sales order, the delivery challan and the invo
 
 ## Finding one
 
-The list pages on the server and can be filtered by status, searched by invoice number, and narrowed to overdue. At narrow widths the grid becomes one card per invoice and the filters stack.
+The list pages on the server. It can be narrowed by period and status tab, searched by invoice number, and narrowed to overdue. It reads like every other list: see [Document lists](lists). At narrow widths the grid becomes one card per invoice and the filters stack.
