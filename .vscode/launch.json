@@ -1,691 +1,666 @@
 {
-    "version":  "0.2.0",
-    "compounds":  [
-                      {
-                          "name":  "All APIs + Web App (Edge)",
-                          "configurations":  [
-                                                 "Gateway (:4500)",
-                                                 "Accounting.Api (:4501)",
-                                                 "Admission.Api (:4502)",
-                                                 "Attendance.Api (:4503)",
-                                                 "Claims.Api (:4504)",
-                                                 "Customer.Api (:4505)",
-                                                 "Employee.Api (:4506)",
-                                                 "Facility.Api (:4507)",
-                                                 "Fee.Api (:4508)",
-                                                 "Inventory.Api (:4509)",
-                                                 "MaintenanceContract.Api (:4510)",
-                                                 "Master.Api (:4511)",
-                                                 "Payroll.Api (:4512)",
-                                                 "Performance.Api (:4513)",
-                                                 "Preventive.Api (:4514)",
-                                                 "Printing.Api (:4515)",
-                                                 "Purchase.Api (:4516)",
-                                                 "Recruitment.Api (:4517)",
-                                                 "Reporting.Api (:4518)",
-                                                 "Sales.Api (:4519)",
-                                                 "Student.Api (:4520)",
-                                                 "TimeLeave.Api (:4521)",
-                                                 "WorkOrder.Api (:4522)",
-                                                 "Web · Development (Edge, 4200)"
-                                             ],
-                          "stopAll":  false,
-                          "presentation":  {
-                                               "group":  "full-stack",
-                                               "order":  1
-                                           }
-                      },
-                      {
-                          "name":  "Core Retail APIs + Web App (Edge)",
-                          "configurations":  [
-                                                 "Gateway (:4500)",
-                                                 "Accounting.Api (:4501)",
-                                                 "Customer.Api (:4505)",
-                                                 "Inventory.Api (:4509)",
-                                                 "Master.Api (:4511)",
-                                                 "Printing.Api (:4515)",
-                                                 "Purchase.Api (:4516)",
-                                                 "Reporting.Api (:4518)",
-                                                 "Sales.Api (:4519)",
-                                                 "Web · Development (Edge, 4200)"
-                                             ],
-                          "stopAll":  false,
-                          "presentation":  {
-                                               "group":  "full-stack",
-                                               "order":  2
-                                           }
-                      }
-                  ],
-    "configurations":  [
-                           {
-                               "name":  "Web · Development (Edge, 4200)",
-                               "type":  "msedge",
-                               "request":  "launch",
-                               "preLaunchTask":  "serve-web",
-                               "url":  "http://localhost:4200",
-                               "webRoot":  "${workspaceFolder}/frontend",
-                               "sourceMaps":  true,
-                               "sourceMapPathOverrides":  {
-                                                              "webpack:///./~/*":  "${workspaceFolder}/frontend/node_modules/*",
-                                                              "webpack:///./*":  "${workspaceFolder}/frontend/*",
-                                                              "webpack:///*":  "*",
-                                                              "webpack://_N_E/*":  "${workspaceFolder}/frontend/*",
-                                                              "/apps/*":  "${workspaceFolder}/frontend/apps/*",
-                                                              "/libs/*":  "${workspaceFolder}/frontend/libs/*"
-                                                          },
-                               "resolveSourceMapLocations":  [
-                                                                 "${workspaceFolder}/frontend/**",
-                                                                 "!${workspaceFolder}/frontend/node_modules/**"
-                                                             ],
-                               "userDataDir":  false,
-                               "runtimeArgs":  [
-                                                   "--disable-features=CalculateNativeWinOcclusion"
-                                               ],
-                               "presentation":  {
-                                                    "hidden":  true
-                                                }
-                           },
-                           {
-                               "name":  "Web App (Dev Server · :4200)",
-                               "type":  "node",
-                               "request":  "launch",
-                               "program":  "${workspaceFolder}/.vscode/serve-angular.js",
-                               "args":  [
-                                            "web",
-                                            "4200",
-                                            "development"
-                                        ],
-                               "cwd":  "${workspaceFolder}/frontend",
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "frontend",
-                                                    "order":  2
-                                                }
-                           },
-                           {
-                               "name":  "Web · Staging (Edge, 4200)",
-                               "type":  "msedge",
-                               "request":  "launch",
-                               "preLaunchTask":  "serve-web-staging",
-                               "url":  "http://localhost:4200",
-                               "webRoot":  "${workspaceFolder}/frontend",
-                               "sourceMaps":  true,
-                               "sourceMapPathOverrides":  {
-                                                              "webpack:///./~/*":  "${workspaceFolder}/frontend/node_modules/*",
-                                                              "webpack:///./*":  "${workspaceFolder}/frontend/*",
-                                                              "webpack:///*":  "*",
-                                                              "webpack://_N_E/*":  "${workspaceFolder}/frontend/*",
-                                                              "/apps/*":  "${workspaceFolder}/frontend/apps/*",
-                                                              "/libs/*":  "${workspaceFolder}/frontend/libs/*"
-                                                          },
-                               "resolveSourceMapLocations":  [
-                                                                 "${workspaceFolder}/frontend/**",
-                                                                 "!${workspaceFolder}/frontend/node_modules/**"
-                                                             ],
-                               "userDataDir":  false,
-                               "runtimeArgs":  [
-                                                   "--disable-features=CalculateNativeWinOcclusion"
-                                               ],
-                               "presentation":  {
-                                                    "hidden":  true
-                                                }
-                           },
-                           {
-                               "name":  "Docs · Development (Edge, 4300)",
-                               "type":  "msedge",
-                               "request":  "launch",
-                               "preLaunchTask":  "serve-docs",
-                               "url":  "http://localhost:4300",
-                               "webRoot":  "${workspaceFolder}/frontend",
-                               "sourceMaps":  true,
-                               "sourceMapPathOverrides":  {
-                                                              "webpack:///./~/*":  "${workspaceFolder}/frontend/node_modules/*",
-                                                              "webpack:///./*":  "${workspaceFolder}/frontend/*",
-                                                              "webpack:///*":  "*",
-                                                              "webpack://_N_E/*":  "${workspaceFolder}/frontend/*",
-                                                              "/apps/*":  "${workspaceFolder}/frontend/apps/*",
-                                                              "/libs/*":  "${workspaceFolder}/frontend/libs/*"
-                                                          },
-                               "resolveSourceMapLocations":  [
-                                                                 "${workspaceFolder}/frontend/**",
-                                                                 "!${workspaceFolder}/frontend/node_modules/**"
-                                                             ],
-                               "userDataDir":  false,
-                               "runtimeArgs":  [
-                                                   "--disable-features=CalculateNativeWinOcclusion"
-                                               ]
-                           },
-                           {
-                               "name":  "Docs · Staging (Edge, 4300)",
-                               "type":  "msedge",
-                               "request":  "launch",
-                               "preLaunchTask":  "serve-docs-staging",
-                               "url":  "http://localhost:4300",
-                               "webRoot":  "${workspaceFolder}/frontend",
-                               "sourceMaps":  true,
-                               "sourceMapPathOverrides":  {
-                                                              "webpack:///./~/*":  "${workspaceFolder}/frontend/node_modules/*",
-                                                              "webpack:///./*":  "${workspaceFolder}/frontend/*",
-                                                              "webpack:///*":  "*",
-                                                              "webpack://_N_E/*":  "${workspaceFolder}/frontend/*",
-                                                              "/apps/*":  "${workspaceFolder}/frontend/apps/*",
-                                                              "/libs/*":  "${workspaceFolder}/frontend/libs/*"
-                                                          },
-                               "resolveSourceMapLocations":  [
-                                                                 "${workspaceFolder}/frontend/**",
-                                                                 "!${workspaceFolder}/frontend/node_modules/**"
-                                                             ],
-                               "userDataDir":  false,
-                               "runtimeArgs":  [
-                                                   "--disable-features=CalculateNativeWinOcclusion"
-                                               ]
-                           },
-                           {
-                               "name":  "Gateway (:4500)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Gateway/Gateway.Api/bin/Debug/net10.0/Gateway.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Gateway/Gateway.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4500"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  1
-                                                }
-                           },
-                           {
-                               "name":  "Accounting.Api (:4501)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Accounting/Accounting.Api/bin/Debug/net10.0/Accounting.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Accounting/Accounting.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4501"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  2
-                                                }
-                           },
-                           {
-                               "name":  "Admission.Api (:4502)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Admission/Admission.Api/bin/Debug/net10.0/Admission.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Admission/Admission.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4502"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  3
-                                                }
-                           },
-                           {
-                               "name":  "Attendance.Api (:4503)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Attendance/Attendance.Api/bin/Debug/net10.0/Attendance.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Attendance/Attendance.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4503"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  4
-                                                }
-                           },
-                           {
-                               "name":  "Claims.Api (:4504)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Claims/Claims.Api/bin/Debug/net10.0/Claims.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Claims/Claims.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4504"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  5
-                                                }
-                           },
-                           {
-                               "name":  "Customer.Api (:4505)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Customer/Customer.Api/bin/Debug/net10.0/Customer.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Customer/Customer.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4505"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  6
-                                                }
-                           },
-                           {
-                               "name":  "Employee.Api (:4506)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Employee/Employee.Api/bin/Debug/net10.0/Employee.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Employee/Employee.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4506"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  7
-                                                }
-                           },
-                           {
-                               "name":  "Facility.Api (:4507)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Facility/Facility.Api/bin/Debug/net10.0/Facility.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Facility/Facility.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4507"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  8
-                                                }
-                           },
-                           {
-                               "name":  "Fee.Api (:4508)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Fee/Fee.Api/bin/Debug/net10.0/Fee.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Fee/Fee.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4508"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  9
-                                                }
-                           },
-                           {
-                               "name":  "Inventory.Api (:4509)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Inventory/Inventory.Api/bin/Debug/net10.0/Inventory.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Inventory/Inventory.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4509"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  10
-                                                }
-                           },
-                           {
-                               "name":  "MaintenanceContract.Api (:4510)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/MaintenanceContract/MaintenanceContract.Api/bin/Debug/net10.0/MaintenanceContract.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/MaintenanceContract/MaintenanceContract.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4510"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  11
-                                                }
-                           },
-                           {
-                               "name":  "Master.Api (:4511)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Master/Master.Api/bin/Debug/net10.0/Master.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Master/Master.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4511"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  12
-                                                }
-                           },
-                           {
-                               "name":  "Payroll.Api (:4512)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Payroll/Payroll.Api/bin/Debug/net10.0/Payroll.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Payroll/Payroll.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4512"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  13
-                                                }
-                           },
-                           {
-                               "name":  "Performance.Api (:4513)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Performance/Performance.Api/bin/Debug/net10.0/Performance.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Performance/Performance.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4513"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  14
-                                                }
-                           },
-                           {
-                               "name":  "Preventive.Api (:4514)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Preventive/Preventive.Api/bin/Debug/net10.0/Preventive.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Preventive/Preventive.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4514"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  15
-                                                }
-                           },
-                           {
-                               "name":  "Printing.Api (:4515)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Printing/Printing.Api/bin/Debug/net10.0/Printing.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Printing/Printing.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4515"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  16
-                                                }
-                           },
-                           {
-                               "name":  "Purchase.Api (:4516)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Purchase/Purchase.Api/bin/Debug/net10.0/Purchase.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Purchase/Purchase.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4516"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  17
-                                                }
-                           },
-                           {
-                               "name":  "Recruitment.Api (:4517)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Recruitment/Recruitment.Api/bin/Debug/net10.0/Recruitment.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Recruitment/Recruitment.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4517"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  18
-                                                }
-                           },
-                           {
-                               "name":  "Reporting.Api (:4518)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Reporting/Reporting.Api/bin/Debug/net10.0/Reporting.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Reporting/Reporting.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4518"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  19
-                                                }
-                           },
-                           {
-                               "name":  "Sales.Api (:4519)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Sales/Sales.Api/bin/Debug/net10.0/Sales.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Sales/Sales.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4519"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  20
-                                                }
-                           },
-                           {
-                               "name":  "Student.Api (:4520)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/Student/Student.Api/bin/Debug/net10.0/Student.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/Student/Student.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4520"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  21
-                                                }
-                           },
-                           {
-                               "name":  "TimeLeave.Api (:4521)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/TimeLeave/TimeLeave.Api/bin/Debug/net10.0/TimeLeave.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/TimeLeave/TimeLeave.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4521"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  22
-                                                }
-                           },
-                           {
-                               "name":  "WorkOrder.Api (:4522)",
-                               "type":  "coreclr",
-                               "request":  "launch",
-                               "preLaunchTask":  "build-backend-solution",
-                               "program":  "${workspaceFolder}/backend/Api/WorkOrder/WorkOrder.Api/bin/Debug/net10.0/WorkOrder.Api.dll",
-                               "args":  [
-
-                                        ],
-                               "cwd":  "${workspaceFolder}/backend/Api/WorkOrder/WorkOrder.Api",
-                               "stopAtEntry":  false,
-                               "env":  {
-                                           "ASPNETCORE_ENVIRONMENT":  "Development",
-                                           "ASPNETCORE_URLS":  "http://localhost:4522"
-                                       },
-                               "console":  "integratedTerminal",
-                               "presentation":  {
-                                                    "hidden":  true,
-                                                    "group":  "backend",
-                                                    "order":  23
-                                                }
-                           }
-                       ]
+    "version": "0.2.0",
+    "compounds": [
+        {
+            "name": "All APIs + Web App (Edge)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Admission.Api (:4502)",
+                "Attendance.Api (:4503)",
+                "Claims.Api (:4504)",
+                "Customer.Api (:4505)",
+                "Employee.Api (:4506)",
+                "Facility.Api (:4507)",
+                "Fee.Api (:4508)",
+                "Inventory.Api (:4509)",
+                "MaintenanceContract.Api (:4510)",
+                "Master.Api (:4511)",
+                "Payroll.Api (:4512)",
+                "Performance.Api (:4513)",
+                "Preventive.Api (:4514)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Recruitment.Api (:4517)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Student.Api (:4520)",
+                "TimeLeave.Api (:4521)",
+                "WorkOrder.Api (:4522)",
+                "Site.Api (:4523)",
+                "Web · Development (Edge, 4200)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 1
+            }
+        },
+        {
+            "name": "Core Retail APIs + Web App (Edge)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Customer.Api (:4505)",
+                "Inventory.Api (:4509)",
+                "Master.Api (:4511)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Web · Development (Edge, 4200)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 2
+            }
+        }
+    ],
+    "configurations": [
+        {
+            "name": "Web · Development (Edge, 4200)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-web",
+            "url": "http://localhost:4200",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "hidden": true
+            }
+        },
+        {
+            "name": "Web App (Dev Server · :4200)",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/.vscode/serve-angular.js",
+            "args": [
+                "web",
+                "4200",
+                "development"
+            ],
+            "cwd": "${workspaceFolder}/frontend",
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "frontend",
+                "order": 2
+            }
+        },
+        {
+            "name": "Web · Staging (Edge, 4200)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-web-staging",
+            "url": "http://localhost:4200",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "hidden": true
+            }
+        },
+        {
+            "name": "Docs · Development (Edge, 4300)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-docs",
+            "url": "http://localhost:4300",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ]
+        },
+        {
+            "name": "Docs · Staging (Edge, 4300)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-docs-staging",
+            "url": "http://localhost:4300",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ]
+        },
+        {
+            "name": "Gateway (:4500)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Gateway/Gateway.Api/bin/Debug/net10.0/Gateway.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Gateway/Gateway.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4500"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 1
+            }
+        },
+        {
+            "name": "Accounting.Api (:4501)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api/bin/Debug/net10.0/Accounting.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4501"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 2
+            }
+        },
+        {
+            "name": "Admission.Api (:4502)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Admission/Admission.Api/bin/Debug/net10.0/Admission.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Admission/Admission.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4502"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 3
+            }
+        },
+        {
+            "name": "Attendance.Api (:4503)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Attendance/Attendance.Api/bin/Debug/net10.0/Attendance.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Attendance/Attendance.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4503"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 4
+            }
+        },
+        {
+            "name": "Claims.Api (:4504)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Claims/Claims.Api/bin/Debug/net10.0/Claims.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Claims/Claims.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4504"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 5
+            }
+        },
+        {
+            "name": "Customer.Api (:4505)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Customer/Customer.Api/bin/Debug/net10.0/Customer.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Customer/Customer.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4505"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 6
+            }
+        },
+        {
+            "name": "Employee.Api (:4506)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Employee/Employee.Api/bin/Debug/net10.0/Employee.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Employee/Employee.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4506"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 7
+            }
+        },
+        {
+            "name": "Facility.Api (:4507)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Facility/Facility.Api/bin/Debug/net10.0/Facility.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Facility/Facility.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4507"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 8
+            }
+        },
+        {
+            "name": "Fee.Api (:4508)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Fee/Fee.Api/bin/Debug/net10.0/Fee.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Fee/Fee.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4508"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 9
+            }
+        },
+        {
+            "name": "Inventory.Api (:4509)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Inventory/Inventory.Api/bin/Debug/net10.0/Inventory.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Inventory/Inventory.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4509"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 10
+            }
+        },
+        {
+            "name": "MaintenanceContract.Api (:4510)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/MaintenanceContract/MaintenanceContract.Api/bin/Debug/net10.0/MaintenanceContract.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/MaintenanceContract/MaintenanceContract.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4510"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 11
+            }
+        },
+        {
+            "name": "Master.Api (:4511)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Master/Master.Api/bin/Debug/net10.0/Master.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Master/Master.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4511"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 12
+            }
+        },
+        {
+            "name": "Payroll.Api (:4512)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Payroll/Payroll.Api/bin/Debug/net10.0/Payroll.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Payroll/Payroll.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4512"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 13
+            }
+        },
+        {
+            "name": "Performance.Api (:4513)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Performance/Performance.Api/bin/Debug/net10.0/Performance.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Performance/Performance.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4513"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 14
+            }
+        },
+        {
+            "name": "Preventive.Api (:4514)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Preventive/Preventive.Api/bin/Debug/net10.0/Preventive.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Preventive/Preventive.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4514"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 15
+            }
+        },
+        {
+            "name": "Printing.Api (:4515)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Printing/Printing.Api/bin/Debug/net10.0/Printing.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Printing/Printing.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4515"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 16
+            }
+        },
+        {
+            "name": "Purchase.Api (:4516)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Purchase/Purchase.Api/bin/Debug/net10.0/Purchase.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Purchase/Purchase.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4516"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 17
+            }
+        },
+        {
+            "name": "Recruitment.Api (:4517)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Recruitment/Recruitment.Api/bin/Debug/net10.0/Recruitment.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Recruitment/Recruitment.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4517"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 18
+            }
+        },
+        {
+            "name": "Reporting.Api (:4518)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Reporting/Reporting.Api/bin/Debug/net10.0/Reporting.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Reporting/Reporting.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4518"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 19
+            }
+        },
+        {
+            "name": "Sales.Api (:4519)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Sales/Sales.Api/bin/Debug/net10.0/Sales.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Sales/Sales.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4519"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 20
+            }
+        },
+        {
+            "name": "Student.Api (:4520)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Student/Student.Api/bin/Debug/net10.0/Student.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Student/Student.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4520"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 21
+            }
+        },
+        {
+            "name": "TimeLeave.Api (:4521)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/TimeLeave/TimeLeave.Api/bin/Debug/net10.0/TimeLeave.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/TimeLeave/TimeLeave.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4521"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 22
+            }
+        },
+        {
+            "name": "WorkOrder.Api (:4522)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/WorkOrder/WorkOrder.Api/bin/Debug/net10.0/WorkOrder.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/WorkOrder/WorkOrder.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4522"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 23
+            }
+        },
+        {
+            "name": "Site.Api (:4523)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-backend-solution",
+            "program": "${workspaceFolder}/backend/Api/Site/Site.Api/bin/Debug/net10.0/Site.Api.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend/Api/Site/Site.Api",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:4523"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true,
+                "group": "backend",
+                "order": 24
+            }
+        }
+    ]
 }

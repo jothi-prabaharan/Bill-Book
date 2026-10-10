@@ -1,16 +1,18 @@
 {
   "version": "2.0.0",
   "tasks": [
-
     {
       "label": "web-install",
       "type": "shell",
       "command": "npm",
-      "args": ["install"],
-      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "args": [
+        "install"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "problemMatcher": []
     },
-
     // Starts Gateway, Accounting, Inventory, Sales and Master detached, and waits
     // for each port. Signup needs all five: Master calls the middle three over
     // HTTP to seed the new organization.
@@ -20,11 +22,14 @@
       "command": "powershell",
       "args": [
         "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
+        "-ExecutionPolicy",
+        "Bypass",
         "-Command",
         "& '${workspaceFolder}/scripts/start-backend.ps1' *>&1 | Tee-Object -FilePath '${workspaceFolder}/scripts/start-backend.log'"
       ],
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": []
     },
     {
@@ -33,14 +38,16 @@
       "command": "powershell",
       "args": [
         "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
+        "-ExecutionPolicy",
+        "Bypass",
         "-Command",
         "& '${workspaceFolder}/scripts/start-backend.ps1' -Stop"
       ],
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": []
     },
-
     // Angular dev servers. Wrapper rather than `npx nx serve` directly: it reuses
     // a dev server that is already on the port instead of hanging on Angular's
     // interactive "use a different port?" prompt. See .vscode/serve-angular.js.
@@ -51,12 +58,22 @@
       "label": "serve-web",
       "type": "shell",
       "command": "node",
-      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "web", "4200", "development"],
-      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "args": [
+        "${workspaceFolder}/.vscode/serve-angular.js",
+        "web",
+        "4200",
+        "development"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
-        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/frontend"
+        ],
         "pattern": {
           "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
           "file": 1,
@@ -76,12 +93,22 @@
       "label": "serve-web-staging",
       "type": "shell",
       "command": "node",
-      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "web", "4200", "staging"],
-      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "args": [
+        "${workspaceFolder}/.vscode/serve-angular.js",
+        "web",
+        "4200",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
-        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/frontend"
+        ],
         "pattern": {
           "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
           "file": 1,
@@ -101,12 +128,22 @@
       "label": "serve-docs",
       "type": "shell",
       "command": "node",
-      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "docs", "4300", "development"],
-      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "args": [
+        "${workspaceFolder}/.vscode/serve-angular.js",
+        "docs",
+        "4300",
+        "development"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
-        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/frontend"
+        ],
         "pattern": {
           "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
           "file": 1,
@@ -126,12 +163,22 @@
       "label": "serve-docs-staging",
       "type": "shell",
       "command": "node",
-      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "docs", "4300", "staging"],
-      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "args": [
+        "${workspaceFolder}/.vscode/serve-angular.js",
+        "docs",
+        "4300",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
-        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/frontend"
+        ],
         "pattern": {
           "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
           "file": 1,
@@ -147,7 +194,6 @@
         }
       }
     },
-
     // ── Backend: build all API services in one pass (for compound launches) ──
     // Uses the .slnf filter to exclude test and worker projects.
     {
@@ -163,7 +209,6 @@
       "problemMatcher": "$msCompile",
       "group": "build"
     },
-
     // ── Backend microservice build tasks ──────────────────────────────
     // UseSharedCompilation=false prevents VBCSCompiler from holding locks
     // on Shared.Kernel.dll when multiple services build concurrently.
@@ -440,6 +485,20 @@
       "args": [
         "build",
         "${workspaceFolder}/backend/Api/Sales/Sales.Api/Sales.Api.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign",
+        "/p:UseSharedCompilation=false"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build-site-api",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/backend/Api/Site/Site.Api/Site.Api.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign",
         "/p:UseSharedCompilation=false"
