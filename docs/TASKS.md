@@ -5649,6 +5649,24 @@ The queue below is one list in card-number order. Each card names its group.
     - A customer allocated to a pooled shard gets its branch seed written into `IN000001`, because the internal seed endpoints build their context before the tenant is known (`TenantDatabaseResolver`'s fallback). The first verification run showed it: the customer was in `IN000002` with empty books. `SampleDataRepository` therefore places the sample customer in the first shard.
     - The legacy-timestamp switch is set in static constructors, so a plain `DateTime`'s column type depends on load order.
 
+### TK-186 · Startup: migration lock timeouts, Master not listening, login 500
+- [~] working (Claude Opus 5.5) — since 2026-10-10
+- **Issue:** [#176](https://github.com/jothi-prabaharan/Bill-Book/issues/176)
+- **Group:** Z · Owner request
+- **Lanes:** L-MST, L-DEPS (`Shared.Kernel/Persistence`), every service's `Services/DatabaseMigrationService.cs`, the gateway and the worker, L-DOC · **Depends on:** — · **Decision:** —
+- **Where:** `backend/Api/*/*.Api/Services/DatabaseMigrationService.cs`, `backend/Api/Master/Master.Api/Program.cs`, `backend/Gateway/Gateway.Api/Program.cs`, `backend/worker/BillBook.Worker/Notification/Persistence/NotificationMigrationService.cs`, `backend/shared/Shared.Kernel/Persistence/`.
+- **State:** checked 10 October 2026, against the remote Development database with every service started together. Three faults, each reproduced locally:
+  - `Accounting.Api` stops on `MigrateAsync` with *Timeout during reading attempt*. Every service migrates its own schema while Master migrates all 23 again, and Npgsql takes `LOCK TABLE {schema}."__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE` per migration. The waiting migrator is cut off by the 30-second default command timeout.
+  - Login answers 502 from the gateway. Master's startup job calls the HTTP seed fan-out for the six sample branches before Kestrel binds, while the services are still starting: 76 failed calls locally, each about 2–4 s on Windows.
+  - Login answers 500 once Master is up. `EnableRetryOnFailure` on Master's two contexts makes every `BeginTransactionAsync` throw, and every write endpoint opens one (hard rule 13).
+- **Sub-tasks:**
+  - [ ] One shared migration runner: a long command timeout for the migration only, a wait for a database Master has not created yet, and a retry on a transient connection failure. Every startup migration goes through it.
+  - [ ] Remove `EnableRetryOnFailure` from `AdminDbContext` and `ContactsDbContext`.
+  - [ ] Master's startup makes the sample rows and their direct seed only; the HTTP fan-out stays in `SampleDataBootstrapWorker`, after Master listens.
+  - [ ] Docs and release notes.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** a start of everything against fresh databases has no service failing its migration, Master listens without waiting on other services, and login answers 200.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
