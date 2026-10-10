@@ -177,13 +177,15 @@ cd frontend && npx nx serve web
 
 ### Deployment
 
-Each environment deploys from a checkout of its own branch (`staging`, `uat`, `production`) and nothing is committed to those branches (see `CLAUDE.md`). Staging has a one-click script:
+Each environment deploys from a checkout of its own branch (`staging`, `uat`, `production`) and nothing is committed to those branches (see `CLAUDE.md`). Each has a one-click script (`deploy | start | stop | status`):
 
 ```bash
 ./deploy/Staging/deploy.sh
+./deploy/UAT/deploy.sh
+./deploy/Production/deploy.sh
 ```
 
-It pulls the branch, prepares the databases, builds the services and the web app, and starts everything. UAT and Production have no script yet.
+They fast-forward the branch, prepare the databases, build the services and the web app, and start everything. UAT and Production read their secrets from `/home/prabha/deploy/<Environment>/secrets.env` (`DB_PASSWORD`, `INTERNAL_API_KEY`, `JWT_SIGNING_KEY`; Production also `KEYVAULT_URI`), which is never committed; see the header of each script.
 
 ---
 
