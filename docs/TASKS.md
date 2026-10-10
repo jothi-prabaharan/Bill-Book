@@ -5680,6 +5680,22 @@ The queue below is one list in card-number order. Each card names its group.
     - `POST /api/auth/login` through the gateway returned 200 with seven branches as Owner (the head office and the six sample branches); a wrong password returned 401.
   - **Not changed:** Master still migrates every tenant schema that the services also migrate. That second path is TK-183's to remove; this card makes the two safe to run together.
 
+### TK-187 · Transaction lists: one register design across Sales, Purchase and Accounting
+- [~] working (Claude Opus 5.5) — since 2026-10-10
+- **Issue:** [#177](https://github.com/jothi-prabaharan/Bill-Book/issues/177)
+- **Group:** Z · Owner request
+- **Lanes:** L-UI (`libs/shared/ui-components`), L-SAL, L-PUR, L-ACC (their list pages and list endpoints), L-DOC · **Depends on:** — · **Decision:** —
+- **Where:** `frontend/libs/shared/ui-components/src/lib/{data-grid,period-filter-bar}`, new register header and status tabs beside them; `frontend/libs/purchase/purchase-ui/src/lib/purchase-list`, `frontend/libs/sales/sales-ui/src/lib/{sales-list,invoice-list,sales-order-list}`, `frontend/libs/accounting/accounting-ui/src/lib/{journals,money-document,transfer-money}`; the list endpoints in `backend/Api/{Sales,Purchase,Accounting}`.
+- **State:** checked 10 October 2026. The owner's screenshot of Purchase orders is the target design, and no screen has it yet. Every list draws its own header and a row of status buttons with no counts. The period bar has no Apply button and uses the browser's date fields. The grid has no checkbox column, page-size control or first/last page buttons. The list endpoints return neither a taxable amount nor a currency, and no document has attachments to count.
+- **Owner's decisions (10 October 2026):** all of Sales, Purchase and Accounting; extend the APIs for Taxable and currency; keep Invoices' and Sales orders' search and checkbox filters; the grid features are opt-in for transaction lists only.
+- **Sub-tasks:**
+  - [ ] List endpoints return the taxable amount and the currency.
+  - [ ] Shared: register header, status tabs with counts, the period bar's register variant, and the grid's opt-in register mode.
+  - [ ] Apply the design to the thirteen lists.
+  - [ ] Docs and release notes.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** every list named above draws the screenshot's design from real data, and every other grid is unchanged.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
