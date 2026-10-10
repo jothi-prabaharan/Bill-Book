@@ -4,6 +4,7 @@ using System.Data.Common;
 using Accounting.Repository;
 using Customer.Repository;
 using Inventory.Repository;
+using Master.Entity.Enums;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Master.Repository.SeedData;
@@ -210,27 +211,59 @@ public class DatabaseMigrationService : IHostedService
             }
         }
 
-        var targetOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-        var seedTenant = new Shared.Kernel.Tenancy.TenantContext { CustomerId = Guid.Parse("00000000-0000-0000-0000-000000000001"), OrgId = targetOrgId };
+        // Seed Head Office branch
+        var headOfficeOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var headOfficeCustomerId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        await SeedBranchMasterDataAsync(tenantConnectionString, headOfficeCustomerId, headOfficeOrgId, ct);
 
-        // These contexts are built by hand, so nothing registers the tenant
-        // interceptor for them — it has to be added here. Without it the
-        // connection never sets app.current_customer_id / app.current_org_id,
-        // and under a FORCEd RLS policy the existence checks below see no rows
-        // and every seed insert is refused. A superuser bypasses RLS entirely,
-        // which is why this only shows up on a role that does not (Azure's
-        // server admin is not a superuser).
+        // Seed 6 sample branches if Bootstrap:SeedSampleData is enabled (TK-185)
+        if (_config.GetValue<bool>("Bootstrap:SeedSampleData"))
+        {
+            _logger.LogInformation("Seeding sample customer and 6 business-type branches...");
+            var sampleUser = SampleDataRepository.UserFrom(
+                _config["Bootstrap:SampleUserEmail"] ?? _config["Bootstrap:OwnerEmail"],
+                _config["Bootstrap:SampleUserName"] ?? _config["Bootstrap:OwnerName"],
+                _config["Bootstrap:SampleUserPassword"] ?? _config["Bootstrap:OwnerPassword"]);
+
+            if (sampleUser != null)
+            {
+                using var sampleScope = _services.CreateScope();
+                var sampleRepo = sampleScope.ServiceProvider.GetRequiredService<SampleDataRepository>();
+                await sampleRepo.EnsureAsync(sampleUser, ct);
+
+                foreach (BusinessType type in SampleDataRepository.BusinessTypes)
+                {
+                    Guid sampleOrgId = SampleDataRepository.OrgId(type);
+                    await SeedBranchMasterDataAsync(tenantConnectionString, SampleDataRepository.CustomerId, sampleOrgId, ct);
+                }
+
+                await adminDb.Organizations
+                    .Where(o => o.CustomerId == SampleDataRepository.CustomerId && o.Status != TenantStatus.Active)
+                    .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, TenantStatus.Active), ct);
+
+                await adminDb.Customers
+                    .Where(c => c.CustomerId == SampleDataRepository.CustomerId && c.Status != TenantStatus.Active)
+                    .ExecuteUpdateAsync(s => s.SetProperty(c => c.Status, TenantStatus.Active), ct);
+            }
+        }
+
+        _logger.LogInformation("Completed tenant schema migrations and seeding for {Database}.", tenantDbName);
+    }
+
+    private static async Task SeedBranchMasterDataAsync(string tenantConnectionString, Guid customerId, Guid orgId, CancellationToken ct)
+    {
+        var seedTenant = new Shared.Kernel.Tenancy.TenantContext { CustomerId = customerId, OrgId = orgId };
         var seedRls = new RlsConnectionInterceptor(seedTenant);
-        
+
         // Seed Accounting
         await using (var accDb = new AccountingDbContext(new DbContextOptionsBuilder<AccountingDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
         {
-            if (!await accDb.Accounts.IgnoreQueryFilters().AnyAsync(a => a.OrgId == targetOrgId, ct))
+            if (!await accDb.Accounts.IgnoreQueryFilters().AnyAsync(a => a.OrgId == orgId, ct))
             {
-                accDb.Accounts.AddRange(Accounting.Repository.SeedData.ChartOfAccountsSeed.Build(targetOrgId));
-                accDb.TaxMasters.AddRange(Accounting.Repository.SeedData.TaxMasterSeed.Build(targetOrgId, DateOnly.FromDateTime(DateTime.UtcNow)));
-                accDb.NumberingSeries.AddRange(Accounting.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
-                accDb.PaymentTerms.AddRange(Accounting.Repository.SeedData.PaymentTermsSeed.Build(targetOrgId));
+                accDb.Accounts.AddRange(Accounting.Repository.SeedData.ChartOfAccountsSeed.Build(orgId));
+                accDb.TaxMasters.AddRange(Accounting.Repository.SeedData.TaxMasterSeed.Build(orgId, DateOnly.FromDateTime(DateTime.UtcNow)));
+                accDb.NumberingSeries.AddRange(Accounting.Repository.SeedData.NumberingSeriesSeed.Build(orgId));
+                accDb.PaymentTerms.AddRange(Accounting.Repository.SeedData.PaymentTermsSeed.Build(orgId));
                 await accDb.SaveChangesAsync(ct);
             }
         }
@@ -238,68 +271,60 @@ public class DatabaseMigrationService : IHostedService
         // Seed Inventory
         await using (var invDb = new InventoryDbContext(new DbContextOptionsBuilder<InventoryDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
         {
-            if (!await invDb.UomTypes.IgnoreQueryFilters().AnyAsync(u => u.OrgId == targetOrgId, ct))
+            if (!await invDb.UomTypes.IgnoreQueryFilters().AnyAsync(u => u.OrgId == orgId, ct))
             {
-                var types = Inventory.Repository.SeedData.UomSeed.BuildTypes(targetOrgId);
+                var types = Inventory.Repository.SeedData.UomSeed.BuildTypes(orgId);
                 invDb.UomTypes.AddRange(types);
                 await invDb.SaveChangesAsync(ct);
-                
+
                 var typeIds = types.ToDictionary(t => t.UomTypeSystemName!, t => t.UomTypeId);
-                invDb.UnitOfMeasures.AddRange(Inventory.Repository.SeedData.UomSeed.BuildUnits(targetOrgId, typeIds));
-                invDb.MetalPurities.AddRange(Inventory.Repository.SeedData.MetalPuritiesSeed.Build(targetOrgId));
+                invDb.UnitOfMeasures.AddRange(Inventory.Repository.SeedData.UomSeed.BuildUnits(orgId, typeIds));
+                invDb.MetalPurities.AddRange(Inventory.Repository.SeedData.MetalPuritiesSeed.Build(orgId));
                 await invDb.SaveChangesAsync(ct);
             }
         }
-        
+
+        // Seed Numbering Series
         await using (var accDb2 = new AccountingDbContext(new DbContextOptionsBuilder<AccountingDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
         {
-            bool hasInvSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == targetOrgId && n.SeriesCode == "STA", ct);
+            bool hasInvSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == orgId && n.SeriesCode == "STA", ct);
             if (!hasInvSeries)
             {
-                accDb2.NumberingSeries.AddRange(Inventory.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
-                accDb2.NumberingSeries.AddRange(Sales.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
+                accDb2.NumberingSeries.AddRange(Inventory.Repository.SeedData.NumberingSeriesSeed.Build(orgId));
+                accDb2.NumberingSeries.AddRange(Sales.Repository.SeedData.NumberingSeriesSeed.Build(orgId));
                 await accDb2.SaveChangesAsync(ct);
             }
 
-            // Purchase's series have their own check rather than riding on the
-            // STA one above: a database bootstrapped before Purchase was added
-            // here already has STA, so folding POR into that block would leave
-            // it without purchase numbering for ever (TK-01).
-            bool hasPurSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == targetOrgId && n.SeriesCode == "POR", ct);
+            bool hasPurSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == orgId && n.SeriesCode == "POR", ct);
             if (!hasPurSeries)
             {
-                accDb2.NumberingSeries.AddRange(Purchase.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
+                accDb2.NumberingSeries.AddRange(Purchase.Repository.SeedData.NumberingSeriesSeed.Build(orgId));
                 await accDb2.SaveChangesAsync(ct);
             }
 
-            bool hasSitSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == targetOrgId && n.SeriesCode == "SIT", ct);
+            bool hasSitSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == orgId && n.SeriesCode == "SIT", ct);
             if (!hasSitSeries)
             {
-                accDb2.NumberingSeries.AddRange(Site.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
+                accDb2.NumberingSeries.AddRange(Site.Repository.SeedData.NumberingSeriesSeed.Build(orgId));
                 await accDb2.SaveChangesAsync(ct);
             }
         }
 
-        // Seed Printing: one default template per printable document type.
-        // Idempotent per document type, so a branch bootstrapped before
-        // Printing took templates over from Master gets its set on the next
-        // start rather than never (TK-81: re-seeded, not copied).
+        // Seed Printing
         await using (var prtDb = new PrintingDbContext(new DbContextOptionsBuilder<PrintingDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
         {
             List<string> present = await prtDb.PrintTemplates.IgnoreQueryFilters()
-                .Where(t => t.OrgId == targetOrgId)
+                .Where(t => t.OrgId == orgId)
                 .Select(t => t.DocumentTypeCode)
                 .ToListAsync(ct);
 
-            var missing = Printing.Repository.SeedData.PrintTemplateSeed.Build(targetOrgId, present);
+            var missing = Printing.Repository.SeedData.PrintTemplateSeed.Build(orgId, present);
             if (missing.Count > 0)
             {
                 prtDb.PrintTemplates.AddRange(missing);
                 await prtDb.SaveChangesAsync(ct);
             }
         }
-
-        _logger.LogInformation("Completed tenant schema migrations for {Database}.", tenantDbName);
     }
 
     /// <summary>
