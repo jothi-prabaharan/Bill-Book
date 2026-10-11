@@ -175,13 +175,28 @@ export const BUSINESS_PRICING_TIERS_SEED: BusinessPricingTier[] = [
     name: 'Discrete & Process Manufacturing',
     badge: 'BOM & Work Orders',
     tagline: 'Multi-level Bill of Materials (BOM), work orders, job work, and machine routing.',
-    baseMonthlyPrice: 3500,
+    baseMonthlyPrice: 2000,
     features: [
       'Multi-level BOM with scrap percentages and machine routing steps',
       'Production work orders with raw material staging and consumption',
       'Job work order issue & receipt with material wastage reconciliation',
       'Batch quality control inspection logs and real-time audit trails',
       'Cost layer consumptions (FIFO / Weighted Average)',
+    ],
+  },
+  {
+    id: 'services',
+    name: 'Services & Consulting',
+    badge: 'Projects & Retainers',
+    tagline: 'Milestone invoicing, timesheets, project cost tracking, and GST SAC code billing.',
+    baseMonthlyPrice: 1500,
+    features: [
+      'Milestone-based billing and recurring retainer agreements',
+      'Timesheet logging and consultant billable hour tracking',
+      'Service Accounting Code (SAC) automated GST invoicing',
+      'Project-wise profit & loss statement with expense allocation',
+      'Client advance receipt vouchers with TDS deduction management',
+      'Digital proforma invoice generation and payment tracking',
     ],
   },
 ];
@@ -471,6 +486,20 @@ export const PROJECT_SCREENSHOTS_SEED: ProjectScreenshot[] = [
       'Live gold & silver daily market rate updates',
       'Old gold exchange deductions and melt loss margins',
       'Customer gold savings deposit scheme passbook integrations',
+    ],
+  },
+  {
+    id: 'users',
+    title: 'User Management & Role Directory',
+    category: 'Security & Administration',
+    imageSrc: 'assets/screenshots/users-management.png',
+    description:
+      'Actual user management directory from live project with multi-branch provisioning, role-based access control (RBAC), user invites, and active status tracking.',
+    liveProofPoints: [
+      'Multi-branch user provisioning and role-based access control (RBAC)',
+      'Live active owner and user directory (Jothi Prabaharan, Owner)',
+      'Instant email invitations with role and branch permissions assignment',
+      'Dedicated standalone database per tenant with complete isolation',
     ],
   },
 ];

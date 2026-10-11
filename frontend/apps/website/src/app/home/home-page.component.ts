@@ -37,8 +37,10 @@ export interface ModuleTab {
   description: string;
   primaryImage: string;
   primaryCaption: string;
+  primaryUrl?: string;
   secondaryImage?: string;
   secondaryCaption?: string;
+  secondaryUrl?: string;
   highlights: string[];
 }
 
@@ -134,8 +136,10 @@ export class HomePageComponent {
         'Live executive dashboard with real profit & loss, balance sheet, revenue tracking, and cash counter registers.',
       primaryImage: 'assets/screenshots/dashboard-overview.png',
       primaryCaption: 'Executive Dashboard — Real revenue ₹58.48L, net profit ₹8.23L, sales & bank balance curves',
+      primaryUrl: 'dashboard',
       secondaryImage: 'assets/screenshots/banking-dashboard.png',
       secondaryCaption: 'Live Cash Counter & Bank Balances — ₹3,42,180 cash on hand & real-time counter drawer',
+      secondaryUrl: 'banking/dashboard',
       highlights: [
         'Automated double-entry general ledger posting on every transaction',
         'Real-time Profit & Loss, Trial Balance, and Balance Sheet generation',
@@ -151,8 +155,10 @@ export class HomePageComponent {
         'Full procurement lifecycle from Purchase Orders (POR) to Goods Receipt (GRN) and Vendor Bills with automated 3-way matching.',
       primaryImage: 'assets/screenshots/purchase-orders.png',
       primaryCaption: 'Purchase Orders Register — POR-0001 & POR-0002 records totaling ₹5,66,000 verified in register',
+      primaryUrl: 'purchase/orders',
       secondaryImage: 'assets/screenshots/purchase-bills.png',
       secondaryCaption: 'Purchase Bills Register — BIL-0001 & BIL-0002 vendor invoices totaling ₹6,41,400 with tax breakdown',
+      secondaryUrl: 'purchase/bills',
       highlights: [
         'Automated 3-way matching between Purchase Order, Goods Receipt, and Vendor Bill',
         'Tolerances for partial delivery, unit price variance, and tax verification',
@@ -168,8 +174,10 @@ export class HomePageComponent {
         'High-velocity stock management with sub-second barcode lookups and daily gold/silver market purity rate sync.',
       primaryImage: 'assets/screenshots/inventory-items.png',
       primaryCaption: 'Live Items Catalog — Barcode search, stock on hand across branches, and reorder levels',
+      primaryUrl: 'inventory/items',
       secondaryImage: 'assets/screenshots/metal-purities.png',
       secondaryCaption: 'Jewellery Metal Purity Rates — 22K (0.9160 factor), 24K & 18K bullion market rates',
+      secondaryUrl: 'settings/metal-purities',
       highlights: [
         'Sub-second item lookup by barcode, SKU, brand, or generic description',
         'Multi-branch stock visibility with inter-branch transfer vouchers',
@@ -179,18 +187,20 @@ export class HomePageComponent {
     },
     {
       id: 'masters-security',
-      title: 'Enterprise Masters & Multi-Tenant Security',
-      badge: 'PostgreSQL Standalone Protected',
+      title: 'User Management & Enterprise Masters',
+      badge: 'Role-Based Access Control',
       description:
-        'Comprehensive master directory management backed by strict PostgreSQL database isolation and branch-scoped RBAC.',
-      primaryImage: 'assets/screenshots/contacts-master.png',
-      primaryCaption: 'Contacts Directory — Customers and vendors with GSTIN verification and credit limits',
-      secondaryImage: 'assets/screenshots/login-screen.png',
-      secondaryCaption: 'Multi-Tenant Authentication — Secure branch context switching with dedicated database allocation',
+        'Multi-branch user provisioning, role-based access control (RBAC), user invite links, and master contacts directory backed by dedicated database security.',
+      primaryImage: 'assets/screenshots/users-management.png',
+      primaryCaption: 'User Directory & Access Control — Real live users (Jothi Prabaharan, Owner), role assignments, and branch provisioning',
+      primaryUrl: 'settings/users',
+      secondaryImage: 'assets/screenshots/contacts-master.png',
+      secondaryCaption: 'Master Contacts Directory — Customers, vendors, and job workers with GSTIN verification and credit limits',
+      secondaryUrl: 'contacts',
       highlights: [
+        'Real-time user provisioning with role-based access control (RBAC) across all branches',
         'PostgreSQL Standalone Database guaranteeing 100% data isolation per organization',
         'Contacts Master with automated GSTIN validation and state code tax classification',
-        'Role-Based Access Control (RBAC) with granular permissions per user per branch',
         'Complete immutable audit log recording creator, timestamp, and modification delta',
       ],
     },
@@ -283,6 +293,20 @@ export class HomePageComponent {
         'Production work orders with raw material staging and consumption',
         'Job work order issue & receipt with material wastage reconciliation',
         'Batch quality control inspection logs and real-time audit trails',
+      ],
+    },
+    {
+      id: 'services',
+      name: 'Services & Consulting',
+      tagline: 'Milestone billing, timesheets, project profitability & SAC GST invoices.',
+      badge: 'Professional Services',
+      icon: 'briefcase',
+      accent: '#2f353f',
+      features: [
+        'Milestone-based billing and recurring retainer fee schedules',
+        'Consultant timesheet logging and billable hours tracking',
+        'Automated Service Accounting Code (SAC) GST invoicing',
+        'Project-wise cost center tracking and real-time profitability',
       ],
     },
   ];

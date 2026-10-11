@@ -193,7 +193,7 @@
                 <span class="dot green"></span>
               </div>
               <div class="browser-address">
-                <span>app.billbook.cloud/{{ currentTab.id }}</span>
+                <span>app.billbook.cloud/{{ currentTab.primaryUrl || currentTab.id }}</span>
               </div>
             </div>
             <div class="browser-body">
@@ -219,7 +219,7 @@
                   <span class="dot green"></span>
                 </div>
                 <div class="browser-address">
-                  <span>app.billbook.cloud/{{ currentTab.id }}/register</span>
+                  <span>app.billbook.cloud/{{ currentTab.secondaryUrl || currentTab.id + '/register' }}</span>
                 </div>
               </div>
               <div class="browser-body">
@@ -231,6 +231,47 @@
                 <div class="screenshot-info">
                   <span class="info-label">Secondary Register</span>
                   <span class="info-text">{{ currentTab.secondaryCaption }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Verified Real Software Screenshot Gallery -->
+      <div class="software-gallery-wrap">
+        <div class="gallery-header">
+          <span class="gallery-kicker">&#10003; 100% Real Software Evidence</span>
+          <h3 class="gallery-title">Live System Registers & Interface Showcase</h3>
+          <p class="gallery-lead">Direct visual proof from the live Bill-Book ERP deployment — zero mockups, zero stock art.</p>
+        </div>
+
+        <div class="gallery-cards-grid">
+          @for (shot of projectScreenshots; track shot.id) {
+            <div class="gallery-shot-card">
+              <div class="browser-frame micro-frame">
+                <div class="browser-header">
+                  <div class="traffic-lights">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                  </div>
+                  <div class="browser-address">
+                    <span>app.billbook.cloud/{{ shot.id }}</span>
+                  </div>
+                </div>
+                <div class="browser-body">
+                  <img [src]="shot.imageSrc" [alt]="shot.title" class="screenshot-img" loading="lazy" />
+                </div>
+              </div>
+              <div class="shot-card-meta">
+                <span class="shot-category">{{ shot.category }}</span>
+                <h4 class="shot-title">{{ shot.title }}</h4>
+                <p class="shot-desc">{{ shot.description }}</p>
+                <div class="shot-points">
+                  @for (pt of shot.liveProofPoints; track pt) {
+                    <span class="point-chip">&#10003; {{ pt }}</span>
+                  }
                 </div>
               </div>
             </div>
@@ -318,6 +359,12 @@
                 <img
                   src="assets/screenshots/purchase-orders.png"
                   alt="Procurement & Institutional Orders"
+                  class="screenshot-img"
+                />
+              } @else if (activeVerticalId() === 'services') {
+                <img
+                  src="assets/screenshots/contacts-master.png"
+                  alt="Client Accounts & Professional Contacts"
                   class="screenshot-img"
                 />
               } @else {
@@ -646,6 +693,7 @@
                       <option value="Restaurants & Hospitality">Restaurants & Hospitality</option>
                       <option value="Educational Institutions">Educational Institutions</option>
                       <option value="Discrete & Process Manufacturing">Discrete & Process Manufacturing</option>
+                      <option value="Services & Consulting">Services & Consulting</option>
                       <option value="Wholesale & Distribution">Wholesale & Distribution</option>
                     </select>
                   </div>
