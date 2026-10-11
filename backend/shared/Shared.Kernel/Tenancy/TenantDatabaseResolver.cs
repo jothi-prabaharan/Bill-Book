@@ -11,8 +11,23 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
 
     public TenantDatabaseResolver(IConfiguration configuration, IMemoryCache cache)
     {
-        _adminDbConnectionString = configuration.GetConnectionString("AdminDatabase") 
-                                   ?? throw new InvalidOperationException("ConnectionStrings:AdminDatabase is missing.");
+        string rawConnectionString = configuration.GetConnectionString("AdminDatabase") 
+                                     ?? throw new InvalidOperationException("ConnectionStrings:AdminDatabase is missing.");
+        
+        var builder = new NpgsqlConnectionStringBuilder(rawConnectionString);
+        if (builder.Timeout < 60)
+        {
+            builder.Timeout = 60;
+        }
+        if (builder.CommandTimeout < 120)
+        {
+            builder.CommandTimeout = 120;
+        }
+        if (builder.KeepAlive == 0)
+        {
+            builder.KeepAlive = 30;
+        }
+        _adminDbConnectionString = builder.ConnectionString;
         _cache = cache;
     }
 
@@ -43,19 +58,47 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
 
     private string FetchDatabaseNameFromAdmin(Guid customerId)
     {
-        using var connection = new NpgsqlConnection(_adminDbConnectionString);
-        connection.Open();
-        
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT \"DatabaseName\" FROM mst.\"Customers\" WHERE \"CustomerId\" = @customerId";
-        command.Parameters.AddWithValue("customerId", customerId);
-        
-        var result = command.ExecuteScalar() as string;
-        if (string.IsNullOrEmpty(result))
+        const int maxAttempts = 5;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            throw new InvalidOperationException($"Customer {customerId} not found or DatabaseName is null.");
+            try
+            {
+                using var connection = new NpgsqlConnection(_adminDbConnectionString);
+                connection.Open();
+                
+                using var command = connection.CreateCommand();
+                command.CommandTimeout = 120;
+                command.CommandText = "SELECT \"DatabaseName\" FROM mst.\"Customers\" WHERE \"CustomerId\" = @customerId";
+                command.Parameters.AddWithValue("customerId", customerId);
+                
+                var result = command.ExecuteScalar() as string;
+                if (string.IsNullOrEmpty(result))
+                {
+                    throw new InvalidOperationException($"Customer {customerId} not found or DatabaseName is null.");
+                }
+                
+                return result;
+            }
+            catch (InvalidOperationException)
+            {
+                // Logical failure: customer not found in mst.Customers
+                throw;
+            }
+            catch (Exception ex) when (attempt < maxAttempts && IsTransient(ex))
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(Math.Min(attempt * 2, 10)));
+            }
         }
-        
-        return result;
+
+        throw new InvalidOperationException($"Failed to resolve database name for customer {customerId} after {maxAttempts} attempts.");
     }
+
+    private static bool IsTransient(Exception ex) =>
+        ex is NpgsqlException
+        || ex is TimeoutException
+        || ex.InnerException is TimeoutException
+        || ex is System.IO.IOException
+        || ex.InnerException is System.IO.IOException
+        || ex is System.Net.Sockets.SocketException
+        || ex.InnerException is System.Net.Sockets.SocketException;
 }

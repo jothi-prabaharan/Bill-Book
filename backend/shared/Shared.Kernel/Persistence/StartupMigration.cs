@@ -130,5 +130,9 @@ public static class StartupMigration
     public static bool IsTransient(Exception ex) =>
         ex is NpgsqlException { IsTransient: true }
         || ex is TimeoutException
-        || ex.InnerException is TimeoutException;
+        || ex.InnerException is TimeoutException
+        || ex is System.IO.IOException
+        || ex.InnerException is System.IO.IOException
+        || ex is System.Net.Sockets.SocketException
+        || ex.InnerException is System.Net.Sockets.SocketException;
 }

@@ -168,6 +168,8 @@ public class StartupMigrationTests
 
         Assert.True(StartupMigration.IsTransient(new TimeoutException()));
         Assert.True(StartupMigration.IsTransient(new NpgsqlException("read", new TimeoutException())));
+        Assert.True(StartupMigration.IsTransient(new System.Net.Sockets.SocketException()));
+        Assert.True(StartupMigration.IsTransient(new NpgsqlException("stream reset", new System.IO.IOException())));
         Assert.False(StartupMigration.IsTransient(Postgres(PostgresErrorCodes.SyntaxError)));
         Assert.False(StartupMigration.IsTransient(new InvalidOperationException()));
     }
