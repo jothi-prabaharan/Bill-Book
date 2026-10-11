@@ -43,12 +43,12 @@
     </ng-template>
     
     <ng-template bbCellTemplate="actions" let-row>
-      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
-      @if (row.isActive && !row.isDefault) {
-        <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
-          Deactivate
-        </button>
-      }
+      <div class="row-actions">
+        <bb-icon-button icon="edit" title="Edit warehouse" (actionClick)="startEdit(row)" [disabled]="busy()" />
+        @if (row.isActive && !row.isDefault) {
+          <bb-icon-button icon="delete" tone="danger" title="Deactivate warehouse" (actionClick)="deactivate(row)" [disabled]="busy()" />
+        }
+      </div>
     </ng-template>
   </bb-data-grid>
 </section>

@@ -8,8 +8,10 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   BranchDateInputComponent,
   FileInputComponent,
   MessageBoxComponent,
@@ -131,6 +133,7 @@ const MATCH_LABELS: Record<Form26asLineRow['matchState'], string> = {
     DataGridCellTemplateDirective,
     BranchDateInputComponent,
     FileInputComponent,
+    IconButtonComponent,
     MessageBoxComponent,
     NumberInputComponent,
     SelectComponent,
@@ -142,6 +145,7 @@ const MATCH_LABELS: Record<Form26asLineRow['matchState'], string> = {
 export class TdsPage implements OnInit {
   private readonly http = inject(HttpClient);
   protected readonly formats = inject(FormatSettingsService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly tab = signal<Tab>('sections');
   protected readonly busy = signal(false);
@@ -416,7 +420,13 @@ export class TdsPage implements OnInit {
   }
 
   protected async removeStatement(row: Form26asSummary): Promise<void> {
-    if (!confirm(`Delete the import of ${row.fileName}? The file and its matching are removed; your books are not touched.`)) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Import',
+      message: `Delete the import of ${row.fileName}? The file and its matching are removed; your books are not touched.`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

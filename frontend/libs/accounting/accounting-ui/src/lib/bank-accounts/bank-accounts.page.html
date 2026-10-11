@@ -72,17 +72,15 @@
       </div>
     </ng-template>
     <ng-template bbCellTemplate="actions" let-row>
-      <div [class.inactive]="!row.isActive">
-        <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+      <div class="row-actions" [class.inactive]="!row.isActive">
+        <bb-icon-button icon="edit" title="Edit bank account" (actionClick)="startEdit(row)" [disabled]="busy()" />
         @if (!row.isLedgerLinked) {
           <button type="button" class="link" (click)="linkLedger(row)" [disabled]="busy()">
             Link ledger
           </button>
         }
         @if (row.isActive && !row.isDefault && !row.isOnlinePaymentAccount) {
-          <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
-            Deactivate
-          </button>
+          <bb-icon-button icon="delete" tone="danger" title="Deactivate bank account" (actionClick)="deactivate(row)" [disabled]="busy()" />
         }
       </div>
     </ng-template>

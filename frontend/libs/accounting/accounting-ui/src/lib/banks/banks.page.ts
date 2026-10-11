@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MASTER_STATUSES,
   MessageBoxComponent,
   RegisterHeaderComponent,
@@ -40,6 +42,7 @@ interface Bank {
   imports: [
     DataGridCellTemplateDirective,
     DataGridComponent,
+    IconButtonComponent,
     FormsModule,
     MessageBoxComponent,
     RegisterHeaderComponent,
@@ -53,6 +56,7 @@ interface Bank {
 })
 export class BanksPage implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly rows = signal<Bank[]>([]);
   protected readonly busy = signal(false);
@@ -124,6 +128,13 @@ export class BanksPage implements OnInit {
   }
 
   async remove(row: Bank): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Bank',
+      message: `Delete the bank "${row.bankName}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     await this.run(() => this.send('DELETE', `/api/banks/${row.bankId}`, {}), 'Bank deleted.');
   }
 

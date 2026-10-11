@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MASTER_STATUSES,
   MessageBoxComponent,
   NumberInputComponent,
@@ -18,7 +19,7 @@ import {
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InfoTooltipComponent } from '@bill-book/ui-components';
 
@@ -46,6 +47,7 @@ interface Purity {
     InfoTooltipComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
@@ -74,6 +76,7 @@ export class MetalPuritiesPage implements OnInit {
     { value: 'Other', label: 'Other' },
   ];
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   columns: ColumnDef[] = [
     { field: 'metalType', header: 'Metal' },
@@ -157,6 +160,14 @@ export class MetalPuritiesPage implements OnInit {
   }
 
   async remove(row: Purity): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Purity',
+      message: `Delete the metal purity "${row.purityName}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.run(
       () => this.send('DELETE', `/api/metal-purities/${row.metalPurityId}`, {}),
       'Purity deleted.',

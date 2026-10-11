@@ -20,8 +20,8 @@
       {{ row.isActive ? 'Active' : 'Inactive' }}
     </ng-template>
     <ng-template bbCellTemplate="actions" let-row>
-      <div class="actions-col">
-        <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+      <div class="row-actions">
+        <bb-icon-button icon="edit" title="Edit tier" (actionClick)="startEdit(row)" [disabled]="busy()" />
       </div>
     </ng-template>
   </bb-data-grid>

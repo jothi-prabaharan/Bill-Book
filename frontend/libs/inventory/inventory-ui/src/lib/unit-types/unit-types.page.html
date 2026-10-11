@@ -44,11 +44,11 @@
     </ng-template>
 
     <ng-template bbCellTemplate="actions" let-row>
-      @if (!row.isSystem && row.units.length === 0) {
-        <button type="button" class="link danger" (click)="deleteType(row)" [disabled]="busy()">
-          Delete
-        </button>
-      }
+      <div class="row-actions">
+        @if (!row.isSystem && row.units.length === 0) {
+          <bb-icon-button icon="delete" tone="danger" title="Delete unit type" (actionClick)="deleteType(row)" [disabled]="busy()" />
+        }
+      </div>
     </ng-template>
   </bb-data-grid>
 </section>
@@ -128,15 +128,17 @@
       </ng-template>
 
       <ng-template bbCellTemplate="actions" let-row>
-        @if (editingUnitId() === row.uomId) {
-          <button type="button" class="link" (click)="saveUnit(type, row)">Save</button>
-          <button type="button" class="link" (click)="editingUnitId.set(null)">Cancel</button>
-        } @else {
-          <button type="button" class="link" (click)="startEditUnit(row)">Edit</button>
-          @if (!row.isSystem && !row.isUsed) {
-            <button type="button" class="link danger" (click)="deleteUnit(row)">Delete</button>
+        <div class="row-actions">
+          @if (editingUnitId() === row.uomId) {
+            <button type="button" class="link" (click)="saveUnit(type, row)">Save</button>
+            <button type="button" class="link" (click)="editingUnitId.set(null)">Cancel</button>
+          } @else {
+            <bb-icon-button icon="edit" title="Edit unit" (actionClick)="startEditUnit(row)" />
+            @if (!row.isSystem && !row.isUsed) {
+              <bb-icon-button icon="delete" tone="danger" title="Delete unit" (actionClick)="deleteUnit(row)" />
+            }
           }
-        }
+        </div>
       </ng-template>
     </bb-data-grid>
 

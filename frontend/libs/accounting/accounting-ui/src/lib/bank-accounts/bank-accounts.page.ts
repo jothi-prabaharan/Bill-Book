@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MASTER_STATUSES,
   MessageBoxComponent,
   NumberInputComponent,
@@ -18,7 +19,7 @@ import {
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InfoTooltipComponent } from '@bill-book/ui-components';
 
@@ -77,12 +78,13 @@ interface BankAccount {
   imports: [
     InfoTooltipComponent,
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
     SelectComponent,
-    DataGridCellTemplateDirective,
     MessageBoxComponent,
     RegisterHeaderComponent,
     StatusTabsComponent,
@@ -107,6 +109,7 @@ export class BankAccountsPage implements OnInit {
     this.banks().map((bank) => ({ value: bank.bankId, label: bank.bankName })),
   );
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly rows = signal<BankAccount[]>([]);
   /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
@@ -292,6 +295,14 @@ export class BankAccountsPage implements OnInit {
   }
 
   async deactivate(row: BankAccount): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Deactivate Account',
+      message: `Deactivate bank account "${row.accountName}"?`,
+      confirmText: 'Deactivate',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.run(
       () => this.send('DELETE', `/api/bank-accounts/${row.bankAccountId}`, {}),
       'Bank account deactivated.',

@@ -27,6 +27,7 @@ import {
   insertTag,
 } from '@bill-book/master-core';
 import {
+  ConfirmDialogService,
   CustomFieldDefinition,
   MessageBoxComponent,
   SelectComponent,
@@ -88,6 +89,7 @@ export class PrintTemplatesPage implements OnInit {
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   private readonly bandElements = viewChildren<ElementRef<HTMLTextAreaElement>>('bandInput');
   private readonly previewSection = viewChild<ElementRef<HTMLElement>>('previewSection');
@@ -200,8 +202,16 @@ export class PrintTemplatesPage implements OnInit {
   }
 
   protected async select(id: number): Promise<void> {
-    if (this.dirty() && !confirm('Discard the changes you have not saved?')) {
-      return;
+    if (this.dirty()) {
+      const ok = await this.confirmDialog.confirm({
+        title: 'Discard changes?',
+        message: 'Discard the changes you have not saved?',
+        confirmLabel: 'Discard',
+        tone: 'danger',
+      });
+      if (!ok) {
+        return;
+      }
     }
 
     try {
@@ -302,12 +312,17 @@ export class PrintTemplatesPage implements OnInit {
 
   protected async resetLayout(): Promise<void> {
     const detail = this.detail();
-    if (
-      detail === null ||
-      !confirm(
-        'Put the standard layout back? Your changes to the bands are replaced; the name and page settings are kept.',
-      )
-    ) {
+    if (detail === null) {
+      return;
+    }
+
+    const ok = await this.confirmDialog.confirm({
+      title: 'Reset layout?',
+      message: 'Put the standard layout back? Your changes to the bands are replaced; the name and page settings are kept.',
+      confirmLabel: 'Reset',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

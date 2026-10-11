@@ -5,9 +5,11 @@ import { FormsModule } from '@angular/forms';
 import {
   BbSelectOption,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   DocNumberComponent,
+  IconButtonComponent,
   MoneyCellComponent,
   PeriodFilterBarComponent,
   PeriodRange,
@@ -84,6 +86,7 @@ interface TransferListItem {
     NumberInputComponent,
     SelectComponent,
     MessageBoxComponent,
+    IconButtonComponent,
   ],
   host: { class: 'register-page' },
   templateUrl: './transfer-money.page.html',
@@ -100,6 +103,7 @@ export class TransferMoneyPage implements OnInit {
     { field: 'actions', header: '', sortable: false, filterable: false },
   ];
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly paymentMethods = PAYMENT_METHODS;
 
@@ -337,7 +341,13 @@ export class TransferMoneyPage implements OnInit {
   }
 
   async discard(row: TransferListItem): Promise<void> {
-    if (!confirm('Delete this draft?')) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete draft transfer?',
+      message: 'Delete this draft transfer? Everything keyed into it is lost.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

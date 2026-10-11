@@ -167,11 +167,13 @@
 
     <ng-template bbCellTemplate="actions" let-row>
       <!-- The row opens the transfer; these act on it without opening it. -->
-      @if (row.status === 'Draft') {
-        <button type="button" class="link" (click)="$event.stopPropagation(); discard(row)">Delete</button>
-      } @else if (row.status === 'Posted') {
-        <button type="button" class="link" (click)="$event.stopPropagation(); voidDocument(row)">Void</button>
-      }
+      <div class="row-actions">
+        @if (row.status === 'Draft') {
+          <bb-icon-button icon="delete" tone="danger" title="Delete draft" (actionClick)="$event.stopPropagation(); discard(row)" />
+        } @else if (row.status === 'Posted') {
+          <button type="button" class="link" (click)="$event.stopPropagation(); voidDocument(row)">Void</button>
+        }
+      </div>
     </ng-template>
   </bb-data-grid>
 </section>

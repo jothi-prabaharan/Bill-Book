@@ -23,8 +23,8 @@
     <ng-template bbCellTemplate="actions" let-row>
       <div class="row-actions">
         @if (!row.isSystemRole) {
-          <button type="button" class="link" (click)="startEdit(row.roleId)">Edit</button>
-          <button type="button" class="link danger" (click)="remove(row)">Delete</button>
+          <bb-icon-button icon="edit" title="Edit role" (actionClick)="startEdit(row.roleId)" />
+          <bb-icon-button icon="delete" tone="danger" title="Delete role" (actionClick)="remove(row)" />
         } @else {
           <span class="badge" title="System default roles cannot be edited">Locked</span>
         }

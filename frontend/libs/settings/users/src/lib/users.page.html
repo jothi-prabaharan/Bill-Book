@@ -54,12 +54,14 @@
     }
   </ng-template>
   <ng-template bbCellTemplate="actions" let-row>
-    @if (row.isInvitePending && row.isActive) {
-      <button type="button" class="link" (click)="resend(row)">Resend</button>
-    }
-    @if (row.isActive) {
-      <button type="button" class="link danger" (click)="revoke(row)">Revoke</button>
-    }
+    <div class="row-actions">
+      @if (row.isInvitePending && row.isActive) {
+        <button type="button" class="link" (click)="resend(row)">Resend</button>
+      }
+      @if (row.isActive) {
+        <bb-icon-button icon="delete" tone="danger" title="Revoke access" (actionClick)="revoke(row)" [disabled]="busy()" />
+      }
+    </div>
   </ng-template>
 </bb-data-grid>
 

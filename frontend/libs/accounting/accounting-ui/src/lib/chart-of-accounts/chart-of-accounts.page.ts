@@ -4,6 +4,7 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   MoneyCellComponent,
@@ -113,6 +114,7 @@ export class ChartOfAccountsPage implements OnInit {
     })),
   );
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly accounts = signal<AccountRow[]>([]);
   protected readonly types = signal<AccountType[]>([]);
@@ -340,7 +342,13 @@ export class ChartOfAccountsPage implements OnInit {
   }
 
   async deactivate(account: AccountRow): Promise<void> {
-    if (!confirm(`Deactivate "${account.accountName}"?`)) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Deactivate Account',
+      message: `Deactivate "${account.accountName}"?`,
+      confirmText: 'Deactivate',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

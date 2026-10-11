@@ -51,23 +51,25 @@
     }
   </ng-template>
   <ng-template bbCellTemplate="actions" let-row>
-    <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+    <div class="row-actions">
+      <bb-icon-button icon="edit" title="Edit branch" (actionClick)="startEdit(row)" [disabled]="busy()" />
 
-    @if (row.status === 'Provisioning') {
-      <button type="button" class="link" (click)="retrySeeding(row)" [disabled]="busy()">
-        Finish setup
-      </button>
-    } @else if (row.orgId !== currentOrgId() && row.status === 'Active') {
-      <button type="button" class="link" (click)="switchTo(row)" [disabled]="busy()">
-        Switch to
-      </button>
-    }
+      @if (row.status === 'Provisioning') {
+        <button type="button" class="link" (click)="retrySeeding(row)" [disabled]="busy()">
+          Finish setup
+        </button>
+      } @else if (row.orgId !== currentOrgId() && row.status === 'Active') {
+        <button type="button" class="link" (click)="switchTo(row)" [disabled]="busy()">
+          Switch to
+        </button>
+      }
 
-    @if (!row.isFirst && row.status === 'Active') {
-      <button type="button" class="link danger" (click)="suspend(row)" [disabled]="busy()">
-        Suspend
-      </button>
-    }
+      @if (!row.isFirst && row.status === 'Active') {
+        <button type="button" class="link danger" (click)="suspend(row)" [disabled]="busy()">
+          Suspend
+        </button>
+      }
+    </div>
   </ng-template>
 </bb-data-grid>
 

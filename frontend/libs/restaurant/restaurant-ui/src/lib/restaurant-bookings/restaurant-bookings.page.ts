@@ -27,6 +27,7 @@ import {
 import {
   BbSelectOption,
   BranchDateInputComponent,
+  ConfirmDialogService,
   DateTimeInputComponent,
   MessageBoxComponent,
   NumberInputComponent,
@@ -63,6 +64,7 @@ type Sheet = 'booking' | 'seat-booking' | 'waiting' | 'seat-waiting' | null;
 export class RestaurantBookingsPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly day = signal(dateOf(wallClockNow()));
   protected readonly bookings = signal<Reservation[]>([]);
@@ -170,7 +172,13 @@ export class RestaurantBookingsPage implements OnInit {
   }
 
   protected async cancel(booking: Reservation): Promise<void> {
-    if (!confirm(`Cancel ${booking.guestName}'s booking?`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Cancel booking?',
+      message: `Cancel ${booking.guestName}'s booking?`,
+      confirmLabel: 'Cancel booking',
+      tone: 'danger',
+    });
+    if (!ok) return;
     await this.run(() => firstValueFrom(this.http.post(`${RESTAURANT_API}/reservations/${booking.tableReservationId}/cancel`, {})), 'Booking cancelled.');
   }
 

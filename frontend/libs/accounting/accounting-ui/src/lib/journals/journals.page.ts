@@ -8,9 +8,11 @@ import { ProjectListItem, loadProjects, projectOptions } from '../projects/proje
 import {
   BbSelectOption,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   DocNumberComponent,
+  IconButtonComponent,
   MoneyCellComponent,
   PeriodFilterBarComponent,
   PeriodRange,
@@ -129,6 +131,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
     MoneyInputComponent,
     SelectComponent,
     ApprovalPanelComponent,
+    IconButtonComponent,
   ],
   host: { class: 'register-page' },
   templateUrl: './journals.page.html',
@@ -190,6 +193,7 @@ export class JournalsPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   columns: ColumnDef[] = [
     { field: 'journalNo', header: 'Number' },
@@ -469,11 +473,13 @@ export class JournalsPage implements OnInit {
   }
 
   async reverse(journal: JournalListItem): Promise<void> {
-    if (
-      !confirm(
-        `Reverse ${journal.journalNo}? An offsetting entry is created — both stay in the ledger.`,
-      )
-    ) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Reverse Entry',
+      message: `Reverse ${journal.journalNo}? An offsetting entry is created — both stay in the ledger.`,
+      confirmText: 'Reverse',
+      tone: 'warning',
+    });
+    if (!ok) {
       return;
     }
 
@@ -495,7 +501,13 @@ export class JournalsPage implements OnInit {
   }
 
   async discard(journal: JournalListItem): Promise<void> {
-    if (!confirm('Delete this draft?')) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Draft',
+      message: 'Delete this draft? Everything keyed into it is lost.',
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

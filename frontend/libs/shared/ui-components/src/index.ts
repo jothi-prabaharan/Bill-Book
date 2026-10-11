@@ -32,6 +32,12 @@ export * from './lib/data-grid/data-grid-cell-template.directive';
 export * from './lib/data-grid/data-grid-footer.directive';
 export * from './lib/data-grid/data-grid-status';
 
+export * from './lib/confirm-dialog/confirm-dialog.model';
+export * from './lib/confirm-dialog/confirm-dialog.service';
+export * from './lib/confirm-dialog/confirm-dialog.component';
+
+export * from './lib/icon-button/icon-button.component';
+
 /*
  * The common input system. One wrapper, four bases and nineteen controls —
  * see `apps/docs/content/inputs.md` for which to reach for and why.

@@ -32,6 +32,12 @@
 
 .editor-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; flex-wrap: wrap; }
 
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+
 
 /* At ~360px the list becomes stacked cards and the two account pickers go full
    width, so From and To read as two lines rather than two half-width boxes. */

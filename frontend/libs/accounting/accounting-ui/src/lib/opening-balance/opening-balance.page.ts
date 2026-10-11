@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
   ColumnDef,
+  ConfirmDialogService,
   DataGridComponent,
+  IconButtonComponent,
   BranchDateInputComponent,
   NumberInputComponent,
   SelectComponent,
@@ -144,11 +146,13 @@ interface LineForm {
     TextInputComponent,
     NumberInputComponent,
     SelectComponent,
+    IconButtonComponent,
   ],
   templateUrl: './opening-balance.page.html',
   styleUrl: './opening-balance.page.scss',
 })
 export class OpeningBalancePage implements OnInit {
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   /** What a line brings across: an account balance, a contact, or stock. */
   protected readonly lineTypeOptions: BbSelectOption<string>[] = [
@@ -430,13 +434,13 @@ export class OpeningBalancePage implements OnInit {
   }
 
   async finalize(): Promise<void> {
-    if (
-      !confirm(
-        'Open the books on these figures?\n\nThis cannot be undone or reopened — every balance ' +
-          'from here on is measured from it. An error found afterwards is corrected with a ' +
-          'journal entry.',
-      )
-    ) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Open the books?',
+      message: 'Open the books on these figures? This cannot be undone or reopened — every balance from here on is measured from it. An error found afterwards is corrected with a journal entry.',
+      confirmLabel: 'Open books',
+      tone: 'primary',
+    });
+    if (!ok) {
       return;
     }
 
@@ -454,7 +458,13 @@ export class OpeningBalancePage implements OnInit {
   }
 
   async discard(): Promise<void> {
-    if (!confirm('Delete this draft opening balance? Everything keyed into it is lost.')) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete draft opening balance?',
+      message: 'Delete this draft opening balance? Everything keyed into it is lost.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

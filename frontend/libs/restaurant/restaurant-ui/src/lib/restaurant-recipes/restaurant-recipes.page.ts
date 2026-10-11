@@ -19,6 +19,7 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   LookupDialogComponent,
@@ -77,6 +78,7 @@ interface ItemDetail {
 export class RestaurantRecipesPage implements OnInit {
   private readonly http = inject(HttpClient);
   protected readonly formats = inject(FormatSettingsService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly recipes = signal<Recipe[]>([]);
   protected readonly units = signal<UnitOption[]>([]);
@@ -200,7 +202,14 @@ export class RestaurantRecipesPage implements OnInit {
 
   protected async remove(): Promise<void> {
     const recipe = this.editing();
-    if (!recipe?.hasRecipe || !confirm(`Delete the recipe for ${recipe.dishName}? Billing it will use no ingredients.`)) return;
+    if (!recipe?.hasRecipe) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete recipe?',
+      message: `Delete the recipe for ${recipe.dishName}? Billing it will use no ingredients.`,
+      confirmLabel: 'Delete recipe',
+      tone: 'danger',
+    });
+    if (!ok) return;
     await this.run(async () => {
       await firstValueFrom(this.http.delete(`${RESTAURANT_RECIPES_API}/${recipe.menuItemId}`));
       this.editing.set(null);

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import {
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
@@ -84,6 +85,7 @@ export class TaxMasterPage implements OnInit {
     { field: 'actions', header: '', width: '15rem', sortable: false, filterable: false },
   ];
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly rates = signal<TaxRate[]>([]);
   protected readonly mode = signal<Mode | null>(null);
@@ -222,7 +224,13 @@ export class TaxMasterPage implements OnInit {
   }
 
   async deactivate(rate: TaxRate): Promise<void> {
-    if (!confirm(`Deactivate "${rate.taxName}"? Its sub-accounts are deactivated too.`)) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Deactivate Tax Rate',
+      message: `Deactivate "${rate.taxName}"? Its sub-accounts are deactivated too.`,
+      confirmText: 'Deactivate',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

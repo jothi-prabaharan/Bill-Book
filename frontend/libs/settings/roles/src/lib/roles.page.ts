@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import {
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MessageBoxComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -49,6 +51,7 @@ interface PermissionGroup {
   imports: [
     DataGridComponent,
     DataGridCellTemplateDirective,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
@@ -59,6 +62,7 @@ interface PermissionGroup {
 })
 export class RolesPage implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly roles = signal<RoleListItem[]>([]);
   protected readonly matrix = signal<PermissionGroup[]>([]);
@@ -206,7 +210,13 @@ export class RolesPage implements OnInit {
   }
 
   async remove(role: RoleListItem): Promise<void> {
-    if (!confirm(`Delete the role "${role.displayName}"?`)) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Role',
+      message: `Delete the role "${role.displayName}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

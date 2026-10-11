@@ -194,9 +194,7 @@
 
   <ng-template bbCellTemplate="actions" let-row>
     @if (!finalized()) {
-      <button type="button" class="icon" (click)="removeLine(lines().indexOf(row))" title="Remove line">
-        ×
-      </button>
+      <bb-icon-button icon="delete" title="Remove line" (actionClick)="removeLine(lines().indexOf(row))" />
     }
   </ng-template>
 </bb-data-grid>

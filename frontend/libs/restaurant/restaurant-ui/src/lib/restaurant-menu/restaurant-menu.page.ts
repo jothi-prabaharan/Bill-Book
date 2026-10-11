@@ -38,6 +38,7 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   LookupDialogComponent,
@@ -88,6 +89,7 @@ interface ItemOption {
 export class RestaurantMenuPage implements OnInit {
   private readonly http = inject(HttpClient);
   protected readonly formats = inject(FormatSettingsService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly tab = signal<Tab>('dishes');
   protected readonly tabs: { tab: Tab; label: string }[] = [
@@ -288,7 +290,13 @@ export class RestaurantMenuPage implements OnInit {
   protected async removeDish(): Promise<void> {
     const editing = this.editing();
     if (!editing || editing === 'new') return;
-    if (!confirm(`Take ${editing.itemName} off the menu? The item itself stays in the item master.`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Take dish off menu?',
+      message: `Take ${editing.itemName} off the menu? The item itself stays in the item master.`,
+      confirmLabel: 'Take off menu',
+      tone: 'danger',
+    });
+    if (!ok) return;
     await this.run(async () => {
       await firstValueFrom(this.http.delete(`${RESTAURANT_MENU_API}/items/${editing.itemId}`));
       this.editing.set(null);
@@ -360,7 +368,13 @@ export class RestaurantMenuPage implements OnInit {
   }
 
   protected async deleteCategory(category: MenuCategory): Promise<void> {
-    if (!confirm(`Delete the category ${category.name}?`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete category?',
+      message: `Delete the category ${category.name}?`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     await this.run(async () => {
       await firstValueFrom(this.http.delete(`${RESTAURANT_MENU_API}/categories/${category.menuCategoryId}`));
       this.editingCategory.set(null);
@@ -413,7 +427,13 @@ export class RestaurantMenuPage implements OnInit {
   }
 
   protected async deleteSchedule(schedule: MenuSchedule): Promise<void> {
-    if (!confirm(`Delete the timed menu ${schedule.name}? Its dishes will be served all day.`)) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete timed menu?',
+      message: `Delete the timed menu ${schedule.name}? Its dishes will be served all day.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     await this.run(async () => {
       await firstValueFrom(this.http.delete(`${RESTAURANT_MENU_API}/schedules/${schedule.menuScheduleId}`));
       this.editingSchedule.set(null);

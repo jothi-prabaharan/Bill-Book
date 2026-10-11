@@ -7,8 +7,10 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MASTER_STATUSES,
   MessageBoxComponent,
   RegisterHeaderComponent,
@@ -55,6 +57,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   imports: [
     InfoTooltipComponent,
     DataGridComponent,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
@@ -108,6 +111,7 @@ export class ItemCategoriesPage implements OnInit {
     { field: 'actions', header: '' },
   ];
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly rows = signal<Category[]>([]);
   /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
@@ -190,6 +194,14 @@ export class ItemCategoriesPage implements OnInit {
   }
 
   async remove(row: Category): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Category',
+      message: `Delete the category "${row.categoryName}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.run(
       () => this.send('DELETE', `/api/item-categories/${row.itemCategoryId}`, {}),
       'Category deleted.',

@@ -32,17 +32,13 @@
       {{ row.isActive ? 'Active' : 'Inactive' }}
     </ng-template>
     <ng-template bbCellTemplate="actions" let-row>
-      <div class="actions-col">
+      <div class="row-actions">
         @if (row.depth < 3) {
-          <button type="button" class="link" (click)="startAdd(row.itemCategoryId)" [disabled]="busy()">
-            + Sub
-          </button>
+          <bb-icon-button icon="add" title="Add subcategory" (actionClick)="startAdd(row.itemCategoryId)" [disabled]="busy()" />
         }
-        <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+        <bb-icon-button icon="edit" title="Edit category" (actionClick)="startEdit(row)" [disabled]="busy()" />
         @if (row.itemCount === 0) {
-          <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
-            Delete
-          </button>
+          <bb-icon-button icon="delete" tone="danger" title="Delete category" (actionClick)="remove(row)" [disabled]="busy()" />
         }
       </div>
     </ng-template>

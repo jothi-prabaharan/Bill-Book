@@ -14,9 +14,11 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   DocNumberComponent,
+  IconButtonComponent,
   MoneyCellComponent,
   PeriodFilterBarComponent,
   PeriodRange,
@@ -205,6 +207,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
     SelectComponent,
     ApprovalPanelComponent,
     CheckboxComponent,
+    IconButtonComponent,
     MessageBoxComponent,
     PercentageInputComponent,
   ],
@@ -215,6 +218,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
 export class MoneyDocumentPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   editLinesColumns: ColumnDef[] = [
     { field: 'lineNumber', header: '#' },
@@ -851,7 +855,13 @@ export class MoneyDocumentPage implements OnInit {
   }
 
   async discard(row: MoneyDocumentListItem): Promise<void> {
-    if (!confirm('Delete this draft?')) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete draft?',
+      message: 'Delete this draft? Everything keyed into it will be lost.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

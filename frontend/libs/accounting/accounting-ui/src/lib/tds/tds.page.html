@@ -94,7 +94,7 @@
           </span>
         </ng-template>
         <ng-template bbCellTemplate="actions" let-s>
-          <button type="button" class="link" (click)="startEdit(s)">Edit</button>
+          <bb-icon-button icon="edit" title="Edit section" (actionClick)="startEdit(s)" />
         </ng-template>
       </bb-data-grid>
     }

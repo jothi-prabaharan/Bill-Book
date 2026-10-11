@@ -53,16 +53,14 @@
   </ng-template>
 
   <ng-template bbCellTemplate="actions" let-row>
-    @if (editingId() !== row.contactPersonRoleId) {
-      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">
-        Rename
-      </button>
-    }
-    @if (!row.isSystem && row.usageCount === 0) {
-      <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
-        Delete
-      </button>
-    }
+    <div class="row-actions">
+      @if (editingId() !== row.contactPersonRoleId) {
+        <bb-icon-button icon="edit" title="Rename" (actionClick)="startEdit(row)" [disabled]="busy()" />
+      }
+      @if (!row.isSystem && row.usageCount === 0) {
+        <bb-icon-button icon="delete" tone="danger" title="Delete" (actionClick)="remove(row)" [disabled]="busy()" />
+      }
+    </div>
   </ng-template>
 </bb-data-grid>
 </section>

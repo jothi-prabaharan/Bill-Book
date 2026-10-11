@@ -137,12 +137,61 @@
 }
 
 .btn-icon {
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
   padding: 0;
   flex: none;
   border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  line-height: 1;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+    pointer-events: none;
+    transition: transform 120ms ease;
+  }
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent-700);
+    border-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
+    transform: translateY(-1px);
+
+    svg {
+      transform: scale(1.08);
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.95);
+  }
+
+  &.danger,
+  &.btn-icon-danger {
+    color: var(--color-danger);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+      border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
+      color: var(--color-danger);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
 }
 
 .btn-block {

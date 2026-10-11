@@ -16,7 +16,7 @@
     <bb-data-grid fillHeight [gridCode]="'SIS_YEARS'" [columns]="yearColumns" [data]="years()">
       <ng-template bbCellTemplate="isCurrent" let-row>{{ row.isCurrent ? 'Current' : row.isClosed ? 'Closed' : 'Open' }}</ng-template>
       <ng-template bbCellTemplate="actions" let-row>
-        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editYear(row)">Edit</button>
+        <bb-icon-button *bbIfCan="'sis.edit'" icon="edit" title="Edit year" (actionClick)="editYear(row)" />
       </ng-template>
     </bb-data-grid>
   }
@@ -24,7 +24,7 @@
     <bb-data-grid [gridCode]="'SIS_CLASSES'" [columns]="classColumns" [data]="classes()">
       <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
       <ng-template bbCellTemplate="actions" let-row>
-        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editClass(row)">Edit</button>
+        <bb-icon-button *bbIfCan="'sis.edit'" icon="edit" title="Edit class" (actionClick)="editClass(row)" />
       </ng-template>
     </bb-data-grid>
   }
@@ -32,7 +32,7 @@
     <bb-data-grid [gridCode]="'SIS_SECTIONS'" [columns]="sectionColumns" [data]="sections()">
       <ng-template bbCellTemplate="capacity" let-row>{{ row.capacity ?? '—' }}</ng-template>
       <ng-template bbCellTemplate="actions" let-row>
-        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editSection(row)">Edit</button>
+        <bb-icon-button *bbIfCan="'sis.edit'" icon="edit" title="Edit section" (actionClick)="editSection(row)" />
       </ng-template>
     </bb-data-grid>
   }
@@ -40,7 +40,7 @@
     <bb-data-grid [gridCode]="'SIS_SUBJECTS'" [columns]="subjectColumns" [data]="subjects()">
       <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
       <ng-template bbCellTemplate="actions" let-row>
-        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editSubject(row)">Edit</button>
+        <bb-icon-button *bbIfCan="'sis.edit'" icon="edit" title="Edit subject" (actionClick)="editSubject(row)" />
       </ng-template>
     </bb-data-grid>
   }

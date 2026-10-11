@@ -2,8 +2,12 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
   ColumnDef,
+  ConfirmDialogService,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   EmailInputComponent,
+  IconButtonComponent,
+  InfoTooltipComponent,
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -11,7 +15,6 @@ import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface UserRow {
   userId: string;
@@ -39,8 +42,11 @@ interface RoleOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-users-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent, 
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    IconButtonComponent,
     FormsModule,
     DatePipe,
     TextInputComponent,
@@ -56,6 +62,7 @@ export class UsersPage implements OnInit {
     this.roles().map((role) => ({ value: role.roleId, label: role.displayName })),
   );
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly users = signal<UserRow[]>([]);
   protected readonly roles = signal<RoleOption[]>([]);
@@ -140,7 +147,13 @@ export class UsersPage implements OnInit {
   }
 
   async revoke(user: UserRow): Promise<void> {
-    if (!confirm(`Revoke access for ${user.displayName}?`)) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Revoke Access',
+      message: `Revoke access for ${user.displayName}?`,
+      confirmText: 'Revoke',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
 

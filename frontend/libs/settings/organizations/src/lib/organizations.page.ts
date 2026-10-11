@@ -1,18 +1,20 @@
-import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
+  CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   EmailInputComponent,
+  IconButtonComponent,
+  InfoTooltipComponent,
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CheckboxComponent } from '@bill-book/ui-components';
 import { AuthService, Currency, ADD_ONS, BUSINESS_TYPES, isAddOnAllowed } from '@bill-book/auth';
-import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 interface Organization {
   orgId: string;
@@ -64,8 +66,12 @@ type OrganizationForm = Omit<
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organizations-page',
   standalone: true,
-  imports: [InfoTooltipComponent, CheckboxComponent, 
+  imports: [
+    InfoTooltipComponent,
+    CheckboxComponent,
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     SelectComponent,
@@ -123,6 +129,7 @@ export class OrganizationsPage implements OnInit {
   );
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   /** India. Replace with the head office's country once that is on the token. */
   private readonly defaultCountryId = 1;
@@ -251,6 +258,14 @@ export class OrganizationsPage implements OnInit {
   }
 
   async suspend(row: Organization): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Suspend Branch',
+      message: `Suspend branch "${row.name}"? Users will not be able to switch to this branch.`,
+      confirmText: 'Suspend',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.run(
       () => this.send('DELETE', `/api/organizations/${row.orgId}`, {}),
       'Branch suspended.',

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
@@ -52,6 +53,7 @@ export class CyclesPage implements OnInit {
   );
 
   private readonly api = inject(PerformanceApiService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly cycles = signal<ReviewCycle[]>([]);
   readonly ratingScales = signal<RatingScale[]>([]);
@@ -150,7 +152,13 @@ export class CyclesPage implements OnInit {
   }
 
   async closeCycle(id: number): Promise<void> {
-    if (!confirm('Closing the review cycle will finalize all appraisals and raise salary revisions in Payroll. Proceed?')) {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Close review cycle?',
+      message: 'Closing the review cycle will finalize all appraisals and raise salary revisions in Payroll. Proceed?',
+      confirmLabel: 'Close cycle',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
     try {

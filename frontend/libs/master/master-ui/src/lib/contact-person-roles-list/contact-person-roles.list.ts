@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, booleanAttribute, computed, input } from '@angular/core';
 import {
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MASTER_STATUSES,
   MessageBoxComponent,
   RegisterHeaderComponent,
@@ -46,6 +48,7 @@ export interface ContactPersonRole {
   imports: [InfoTooltipComponent,
     DataGridCellTemplateDirective,
     DataGridComponent,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     MessageBoxComponent,
@@ -76,6 +79,7 @@ export class ContactPersonRolesList implements OnInit {
   ];
 
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly rows = signal<ContactPersonRole[]>([]);
   protected readonly status = signal('Active');
@@ -153,6 +157,14 @@ export class ContactPersonRolesList implements OnInit {
   }
 
   async remove(row: ContactPersonRole): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Role',
+      message: `Delete the role "${row.roleName}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.run(() => this.send('DELETE', `/api/contact-person-roles/${row.contactPersonRoleId}`, {}));
   }
 

@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { AppUpdateService, UpdateModalComponent } from '@bill-book/app-update';
+import { ConfirmDialogComponent } from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-root',
   standalone: true,
-  imports: [RouterOutlet, UpdateModalComponent],
+  imports: [RouterOutlet, UpdateModalComponent, ConfirmDialogComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

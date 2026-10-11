@@ -9,7 +9,7 @@
   <ng-template bbCellTemplate="examStatus" let-row>{{ label(row.examStatus) }}</ng-template>
   <ng-template bbCellTemplate="actions" let-row>
     @if (row.examStatus === 'Planned') {
-      <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="startEdit(row)">Edit</button>
+      <bb-icon-button *bbIfCan="'sis.edit'" icon="edit" title="Edit exam" (actionClick)="startEdit(row)" />
     }
     @if (row.examStatus !== 'Planned') {
       <button type="button" class="link" (click)="openMarks(row)">Marks</button>
@@ -37,7 +37,7 @@
           <bb-select label="Subject" [options]="subjectOptions()" [(ngModel)]="s.subjectId" [clearable]="false" />
           <bb-number-input label="Maximum marks" [(ngModel)]="s.maxMarks" />
           <bb-number-input label="Pass marks" [(ngModel)]="s.passMarks" />
-          <button type="button" class="link" (click)="removeSubject(i)">Remove</button>
+          <bb-icon-button icon="delete" title="Remove subject" (actionClick)="removeSubject(i)" />
         </div>
       }
     </div>

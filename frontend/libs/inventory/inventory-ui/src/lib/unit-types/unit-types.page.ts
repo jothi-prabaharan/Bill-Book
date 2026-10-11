@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy } from '@angular/core';
 import {
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridComponent,
+  IconButtonComponent,
   NumberInputComponent,
   TextInputComponent,
   DataGridCellTemplateDirective,
@@ -16,7 +17,7 @@ import {
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InfoTooltipComponent } from '@bill-book/ui-components';
 
@@ -61,6 +62,7 @@ interface UomType {
   imports: [
     InfoTooltipComponent,
     DataGridComponent,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
@@ -76,6 +78,7 @@ interface UomType {
 })
 export class UnitTypesPage implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   columns: ColumnDef[] = [
     { field: 'uomTypeName', header: 'Type' },
@@ -174,6 +177,14 @@ export class UnitTypesPage implements OnInit {
   }
 
   async deleteType(type: UomType): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Unit Type',
+      message: `Delete unit type "${type.uomTypeName}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.run(() => this.send('DELETE', `/api/uom-types/${type.uomTypeId}`, {}), 'Unit type deleted.');
   }
 
@@ -222,10 +233,14 @@ export class UnitTypesPage implements OnInit {
    * server refuses outright once an item uses one of these units.
    */
   async setBase(unit: Unit): Promise<void> {
-    const confirmed = confirm(
-      `Make ${unit.uomCode} the base unit? Every other factor in this type is rescaled so the ` +
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Change Base Unit',
+      message:
+        `Make ${unit.uomCode} the base unit? Every other factor in this type is rescaled so the ` +
         `relationships between units stay the same.`,
-    );
+      confirmText: 'Change Base',
+      tone: 'warning',
+    });
 
     if (!confirmed) {
       return;
@@ -238,6 +253,14 @@ export class UnitTypesPage implements OnInit {
   }
 
   async deleteUnit(unit: Unit): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete Unit',
+      message: `Delete unit "${unit.uomCode}"?`,
+      confirmText: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.run(() => this.send('DELETE', `/api/uom-types/units/${unit.uomId}`, {}), 'Unit deleted.');
   }
 

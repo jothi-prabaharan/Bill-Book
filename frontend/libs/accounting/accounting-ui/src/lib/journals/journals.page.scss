@@ -33,6 +33,7 @@ button.icon { background: none; color: var(--color-text-subtle); font-size: 1.1r
 .line-col { width: 2rem; color: var(--color-text-subtle); font-size: .78rem; }
 .date-col { width: 6.5rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 .actions-col { text-align: right; white-space: nowrap; width: 5rem; }
+.row-actions { display: inline-flex; gap: 0.35rem; align-items: center; }
 .grid tr.draft { background: var(--color-warning-bg); }
 .sub { display: block; color: var(--color-text-subtle); font-size: .75rem; }
 
