@@ -141,12 +141,23 @@ public sealed class RoleRepository
     public async Task<(SaveRoleResult Result, int RoleId)> CreateAsync(
         Guid customerId, SaveRoleRequest request, CancellationToken ct)
     {
+        string trimmed = request.DisplayName.Trim();
+
+        bool duplicate = await _db.Roles.AnyAsync(
+            r => (r.CustomerId == null || r.CustomerId == customerId)
+                && (r.DisplayName.ToLower() == trimmed.ToLower() || r.SystemName.ToLower() == trimmed.ToLower()),
+            ct);
+        if (duplicate)
+        {
+            return (SaveRoleResult.DuplicateName, 0);
+        }
+
         var role = new Role
         {
             CustomerId = customerId,
-            SystemName = request.DisplayName,
-            DisplayName = request.DisplayName,
-            Description = request.Description,
+            SystemName = trimmed,
+            DisplayName = trimmed,
+            Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
             IsSystemRole = false,
             IsActive = true,
         };
@@ -173,8 +184,20 @@ public sealed class RoleRepository
             return SaveRoleResult.SystemRole;
         }
 
-        role.DisplayName = request.DisplayName;
-        role.Description = request.Description;
+        string trimmed = request.DisplayName.Trim();
+
+        bool duplicate = await _db.Roles.AnyAsync(
+            r => r.RoleId != roleId
+                && (r.CustomerId == null || r.CustomerId == customerId)
+                && (r.DisplayName.ToLower() == trimmed.ToLower() || r.SystemName.ToLower() == trimmed.ToLower()),
+            ct);
+        if (duplicate)
+        {
+            return SaveRoleResult.DuplicateName;
+        }
+
+        role.DisplayName = trimmed;
+        role.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
 
         await ReplacePermissionsAsync(roleId, request.PermissionIds, ct);
 
@@ -214,19 +237,22 @@ public sealed class RoleRepository
             .ToListAsync(ct);
         _db.RolePermissions.RemoveRange(existing);
 
-        // platform.* is operator-only — never grantable to a customer role.
-        List<int> allowed = await _db.Permissions
-            .Where(p => permissionIds.Contains(p.PermissionId) && p.Module != "platform")
-            .Select(p => p.PermissionId)
-            .ToListAsync(ct);
-
-        foreach (int permissionId in allowed)
+        if (permissionIds.Count > 0)
         {
-            _db.RolePermissions.Add(new RolePermission
+            // platform.* is operator-only — never grantable to a customer role.
+            List<int> allowed = await _db.Permissions
+                .Where(p => permissionIds.Contains(p.PermissionId) && p.Module != "platform")
+                .Select(p => p.PermissionId)
+                .ToListAsync(ct);
+
+            foreach (int permissionId in allowed)
             {
-                RoleId = roleId,
-                PermissionId = permissionId,
-            });
+                _db.RolePermissions.Add(new RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionId = permissionId,
+                });
+            }
         }
 
         await _db.SaveChangesAsync(ct);
@@ -238,6 +264,7 @@ public enum SaveRoleResult
     Ok = 1,
     NotFound = 2,
     SystemRole = 3,
+    DuplicateName = 4,
 }
 
 public enum DeleteRoleResult

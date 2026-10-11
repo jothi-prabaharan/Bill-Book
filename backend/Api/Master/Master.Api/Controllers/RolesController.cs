@@ -93,6 +93,10 @@ public sealed class RolesController : ControllerBase
         {
             Message = "System default roles cannot be edited or modified.",
         }),
+        SaveRoleResult.DuplicateName => BadRequest(new MessageResponse
+        {
+            Message = "A role with this name already exists.",
+        }),
         _ => StatusCode(StatusCodes.Status500InternalServerError),
     };
 

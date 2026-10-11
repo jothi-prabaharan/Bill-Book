@@ -66,7 +66,7 @@ export class RolesPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  private editingId: number | null = null;
+  protected editingId: number | null = null;
   form = { displayName: '', description: '' };
 
   columns: ColumnDef[] = [
@@ -85,8 +85,8 @@ export class RolesPage implements OnInit {
     this.busy.set(true);
     try {
       this.roles.set(await this.req<RoleListItem[]>('GET', '/api/roles'));
-    } catch {
-      this.error.set('Could not load roles.');
+    } catch (err: unknown) {
+      this.error.set(this.extractErrorMessage(err, 'Could not load roles.'));
     } finally {
       this.busy.set(false);
     }
@@ -99,12 +99,20 @@ export class RolesPage implements OnInit {
   }
 
   async startCreate(): Promise<void> {
-    await this.loadMatrix();
-    this.editingId = null;
-    this.isSystem.set(false);
-    this.form = { displayName: '', description: '' };
-    this.selected.set(new Set());
-    this.editing.set(true);
+    this.busy.set(true);
+    this.error.set(null);
+    try {
+      await this.loadMatrix();
+      this.editingId = null;
+      this.isSystem.set(false);
+      this.form = { displayName: '', description: '' };
+      this.selected.set(new Set());
+      this.editing.set(true);
+    } catch (err: unknown) {
+      this.error.set(this.extractErrorMessage(err, 'Could not load permissions.'));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   async startEdit(roleId: number): Promise<void> {
@@ -113,17 +121,25 @@ export class RolesPage implements OnInit {
       this.error.set('System default roles cannot be edited.');
       return;
     }
-    await this.loadMatrix();
-    const role = await this.req<RoleDetail>('GET', `/api/roles/${roleId}`);
-    if (role.isSystemRole) {
-      this.error.set('System default roles cannot be edited.');
-      return;
+    this.busy.set(true);
+    this.error.set(null);
+    try {
+      await this.loadMatrix();
+      const role = await this.req<RoleDetail>('GET', `/api/roles/${roleId}`);
+      if (role.isSystemRole) {
+        this.error.set('System default roles cannot be edited.');
+        return;
+      }
+      this.editingId = roleId;
+      this.isSystem.set(false);
+      this.form = { displayName: role.displayName, description: role.description ?? '' };
+      this.selected.set(new Set(role.permissionIds));
+      this.editing.set(true);
+    } catch (err: unknown) {
+      this.error.set(this.extractErrorMessage(err, 'Could not load role details.'));
+    } finally {
+      this.busy.set(false);
     }
-    this.editingId = roleId;
-    this.isSystem.set(false);
-    this.form = { displayName: role.displayName, description: role.description ?? '' };
-    this.selected.set(new Set(role.permissionIds));
-    this.editing.set(true);
   }
 
   togglePermission(id: number): void {
@@ -181,8 +197,7 @@ export class RolesPage implements OnInit {
       this.editing.set(false);
       await this.load();
     } catch (err: unknown) {
-      const anyErr = err as { error?: { message?: string }; message?: string };
-      this.error.set(anyErr?.error?.message ?? anyErr?.message ?? 'Could not save that role.');
+      this.error.set(this.extractErrorMessage(err, 'Could not save that role.'));
     } finally {
       this.busy.set(false);
     }
@@ -199,8 +214,7 @@ export class RolesPage implements OnInit {
       await this.req('DELETE', `/api/roles/${role.roleId}`);
       await this.load();
     } catch (err: unknown) {
-      const anyErr = err as { error?: { message?: string } };
-      this.error.set(anyErr?.error?.message ?? 'Could not delete that role.');
+      this.error.set(this.extractErrorMessage(err, 'Could not delete that role.'));
     } finally {
       this.busy.set(false);
     }
@@ -214,6 +228,31 @@ export class RolesPage implements OnInit {
 
   private hasText(value: string | null | undefined): boolean {
     return (value ?? '').trim().length > 0;
+  }
+
+  private extractErrorMessage(err: unknown, fallback: string): string {
+    const anyErr = err as {
+      error?: {
+        message?: string;
+        title?: string;
+        errors?: Record<string, string[]>;
+      };
+      message?: string;
+    };
+    if (anyErr?.error?.message) {
+      return anyErr.error.message;
+    }
+    if (anyErr?.error?.errors) {
+      const firstKey = Object.keys(anyErr.error.errors)[0];
+      const firstVal = firstKey ? anyErr.error.errors[firstKey]?.[0] : null;
+      if (firstVal) {
+        return firstVal;
+      }
+    }
+    if (anyErr?.error?.title) {
+      return anyErr.error.title;
+    }
+    return anyErr?.message ?? fallback;
   }
 
   private req<T>(method: string, url: string, body?: unknown): Promise<T> {

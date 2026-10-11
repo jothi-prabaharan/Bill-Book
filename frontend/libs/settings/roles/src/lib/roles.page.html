@@ -1,9 +1,16 @@
 <header class="page-head">
-  <h1>Roles</h1>
-  <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New role</button>
+  <h1>{{ editing() ? (editingId !== null ? 'Edit role' : 'New role') : 'Roles' }}</h1>
+  @if (!editing()) {
+    <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New role</button>
+  } @else {
+    <div class="head-actions">
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy()">Save</button>
+      <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
+    </div>
+  }
 </header>
 
-@if (error(); as failure) {
+@if (!editing() && error(); as failure) {
   <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
@@ -58,7 +65,7 @@
 
     <div class="editor-actions">
       <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy()">Save</button>
-      <button type="button" class="link" (click)="cancel()">Cancel</button>
+      <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
     </div>
   </form>
 }
