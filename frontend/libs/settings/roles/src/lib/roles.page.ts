@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import {
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   MessageBoxComponent,
   TextInputComponent,
@@ -47,6 +48,7 @@ interface PermissionGroup {
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
@@ -74,7 +76,7 @@ export class RolesPage implements OnInit {
     { field: 'description', header: 'Description' },
     { field: 'userCount', header: 'Users' },
     { field: 'permissionCount', header: 'Permissions' },
-    { field: 'actions', header: '' },
+    { field: 'actions', header: 'Actions', sortable: false, filterable: false, width: '130px' },
   ];
 
   ngOnInit(): void {

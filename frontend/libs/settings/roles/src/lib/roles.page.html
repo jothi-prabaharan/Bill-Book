@@ -21,12 +21,14 @@
       @if (row.isSystemRole) { <span class="badge">System</span> }
     </ng-template>
     <ng-template bbCellTemplate="actions" let-row>
-      @if (!row.isSystemRole) {
-        <button type="button" class="link" (click)="startEdit(row.roleId)">Edit</button>
-        <button type="button" class="link danger" (click)="remove(row)">Delete</button>
-      } @else {
-        <span class="badge" title="System default roles cannot be edited">Locked</span>
-      }
+      <div class="row-actions">
+        @if (!row.isSystemRole) {
+          <button type="button" class="link" (click)="startEdit(row.roleId)">Edit</button>
+          <button type="button" class="link danger" (click)="remove(row)">Delete</button>
+        } @else {
+          <span class="badge" title="System default roles cannot be edited">Locked</span>
+        }
+      </div>
     </ng-template>
   </bb-data-grid>
 } @else {
