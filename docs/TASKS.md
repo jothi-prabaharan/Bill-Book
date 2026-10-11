@@ -5747,6 +5747,22 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the shell at 1280px and 360px matches `Shell.dc.html` for the rail, account menu, branch switcher and mobile bar, and the login and session responses carry each branch's type, currency and organisation.
 - **Notes:** the design's Applications (globe) menu is left out on purpose: nothing backs it since TK-136 retired the App enum.
 
+### TK-190 · Master lists: the register design (Contacts, Items and the other masters)
+- [~] working (Claude Opus 5.5) — since 2026-10-11
+- **Issue:** [#180](https://github.com/jothi-prabaharan/Bill-Book/issues/180)
+- **Group:** Z · Owner request
+- **Lanes:** L-UI (the master list pages in `libs/master/master-ui`, `libs/inventory/inventory-ui`, `libs/accounting/accounting-ui`; `libs/shared/theming/src/lib/_register.scss`), L-DOC · **Depends on:** TK-187, TK-188 · **Decision:** the owner's "All master lists" (11 October 2026, asked with TK-188)
+- **Runs beside TK-189**, which holds `libs/app-shell` and `libs/shared/auth`; this card touches neither.
+- **Where:** the list pages for Contacts, Items, Item categories, Warehouses, Price lists, Banks, Bank accounts, Sub-accounts, Payment terms, Tax master, HSN/SAC codes, Contact person roles, Unit types and Metal purities.
+- **State:** checked 11 October 2026. The document lists and the chart of accounts have the register design (TK-187); every other master list still has its own heading, buttons and grid.
+- **Sub-tasks:**
+  - [ ] A filter strip for a register with no period (`.register-toolbar`), so a master's search and filters sit inside the card as a document list's sit in its period bar.
+  - [ ] Each list: register heading with count and New, Active/Inactive tabs with counts (Contacts also Draft), the card, and the grid in register mode.
+  - [ ] Check each at 1280px and 360px with its editor and row actions still working.
+  - [ ] Docs (`lists.md`, the masters page) and release notes.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** every list above reads like the Purchase orders register at 1280px and stacks at 360px, with its existing filters, editors and actions still working.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
