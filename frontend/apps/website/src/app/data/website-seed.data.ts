@@ -84,7 +84,7 @@ export const STANDALONE_DB_FEATURE = {
 };
 
 // -----------------------------------------------------------------------------
-// 3. Dynamic Business-Type Pricing Tiers (Groceries base = 1000)
+// 3. Dynamic Business-Type Pricing Tiers (Retail & Groceries base = 1500)
 // -----------------------------------------------------------------------------
 export interface BusinessPricingTier {
   id: string;
@@ -98,10 +98,10 @@ export interface BusinessPricingTier {
 export const BUSINESS_PRICING_TIERS_SEED: BusinessPricingTier[] = [
   {
     id: 'groceries',
-    name: 'Basic Groceries',
+    name: 'Retail & Groceries',
     badge: 'Retail & POS',
     tagline: 'High-speed barcode checkout, electronic weighing scale sync, and daily inventory.',
-    baseMonthlyPrice: 1000, // Explicitly 1000 per user requirement
+    baseMonthlyPrice: 1500, // 1500 per month for retail and groceries
     features: [
       'Sub-second barcode scanning and keyboard-only POS checkout',
       'Electronic weighing scale integration with tare weight calculation',

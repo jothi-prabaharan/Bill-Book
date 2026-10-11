@@ -82,7 +82,7 @@ export class HomePageComponent {
   readonly projectScreenshots: ProjectScreenshot[] = PROJECT_SCREENSHOTS_SEED;
 
   // ---------------------------------------------------------------------------
-  // Dynamic Business Pricing State (Base groceries = 1000)
+  // Dynamic Business Pricing State (Base Retail & Groceries = 1500)
   // ---------------------------------------------------------------------------
   readonly selectedBusinessTypeId = signal<string>('groceries');
 
@@ -302,8 +302,8 @@ export class HomePageComponent {
     companyName: '',
     phone: '',
     email: '',
-    vertical: 'Basic Groceries',
-    plan: 'Basic Groceries - Yearly Plan (Dedicated Standalone Database)',
+    vertical: 'Retail & Groceries',
+    plan: 'Retail & Groceries - Yearly Plan (Dedicated Standalone Database)',
     branchCount: 1,
     message: '',
   });
