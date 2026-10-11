@@ -41,18 +41,28 @@
     },
     "serve": {
       "executor": "@angular/build:dev-server",
-      "configurations": {
-        "production": {
-          "buildTarget": "website:build:production"
-        },
-        "development": {
-          "buildTarget": "website:build:development"
-        }
-      },
-      "defaultConfiguration": "development",
       "options": {
         "port": 4202
-      }
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "website:build:development",
+          "port": 4202
+        },
+        "staging": {
+          "buildTarget": "website:build:production",
+          "port": 5202
+        },
+        "uat": {
+          "buildTarget": "website:build:production",
+          "port": 6202
+        },
+        "production": {
+          "buildTarget": "website:build:production",
+          "port": 7202
+        }
+      },
+      "defaultConfiguration": "development"
     }
   }
 }

@@ -59,13 +59,13 @@
     "serve": {
       "executor": "@angular/build:dev-server",
       "options": {
-        "port": 4300
+        "port": 4201
       },
       "configurations": {
-        "development": { "buildTarget": "docs:build:development" },
-        "staging": { "buildTarget": "docs:build:staging" },
-        "uat": { "buildTarget": "docs:build:uat" },
-        "production": { "buildTarget": "docs:build:production" }
+        "development": { "buildTarget": "docs:build:development", "port": 4201 },
+        "staging": { "buildTarget": "docs:build:staging", "port": 5201 },
+        "uat": { "buildTarget": "docs:build:uat", "port": 6201 },
+        "production": { "buildTarget": "docs:build:production", "port": 7201 }
       },
       "defaultConfiguration": "development"
     }

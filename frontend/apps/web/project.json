@@ -119,16 +119,20 @@
       },
       "configurations": {
         "development": {
-          "buildTarget": "web:build:development"
+          "buildTarget": "web:build:development",
+          "port": 4200
         },
         "staging": {
-          "buildTarget": "web:build:staging"
+          "buildTarget": "web:build:staging",
+          "port": 5200
         },
         "uat": {
-          "buildTarget": "web:build:uat"
+          "buildTarget": "web:build:uat",
+          "port": 6200
         },
         "production": {
-          "buildTarget": "web:build:production"
+          "buildTarget": "web:build:production",
+          "port": 7200
         }
       },
       "defaultConfiguration": "development"

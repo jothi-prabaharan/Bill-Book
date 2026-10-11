@@ -96,7 +96,7 @@
       "args": [
         "${workspaceFolder}/.vscode/serve-angular.js",
         "web",
-        "4200",
+        "5200",
         "staging"
       ],
       "options": {
@@ -131,7 +131,7 @@
       "args": [
         "${workspaceFolder}/.vscode/serve-angular.js",
         "docs",
-        "4300",
+        "4201",
         "development"
       ],
       "options": {
@@ -166,7 +166,7 @@
       "args": [
         "${workspaceFolder}/.vscode/serve-angular.js",
         "docs",
-        "4300",
+        "5201",
         "staging"
       ],
       "options": {
@@ -236,7 +236,7 @@
       "args": [
         "${workspaceFolder}/.vscode/serve-angular.js",
         "website",
-        "4202",
+        "5202",
         "staging"
       ],
       "options": {

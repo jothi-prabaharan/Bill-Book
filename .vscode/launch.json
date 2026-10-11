@@ -30,7 +30,7 @@
                 "Site.Api (:4523)",
                 "Web · Development (Edge, 4200)",
                 "Website · Development (Edge, 4202)",
-                "Docs · Development (Edge, 4300)"
+                "Docs · Development (Edge, 4201)"
             ],
             "stopAll": false,
             "presentation": {
@@ -100,7 +100,7 @@
                 "TimeLeave.Api (:4521)",
                 "WorkOrder.Api (:4522)",
                 "Site.Api (:4523)",
-                "Docs · Development (Edge, 4300)"
+                "Docs · Development (Edge, 4201)"
             ],
             "stopAll": false,
             "presentation": {
@@ -195,7 +195,7 @@
                 "Purchase.Api (:4516)",
                 "Reporting.Api (:4518)",
                 "Sales.Api (:4519)",
-                "Docs · Development (Edge, 4300)"
+                "Docs · Development (Edge, 4201)"
             ],
             "stopAll": false,
             "presentation": {
@@ -252,11 +252,11 @@
             }
         },
         {
-            "name": "Web · Staging (Edge, 4200)",
+            "name": "Web · Staging (Edge, 5200)",
             "type": "msedge",
             "request": "launch",
             "preLaunchTask": "serve-web-staging",
-            "url": "http://localhost:4200",
+            "url": "http://localhost:5200",
             "webRoot": "${workspaceFolder}/frontend",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
@@ -280,11 +280,11 @@
             }
         },
         {
-            "name": "Docs · Development (Edge, 4300)",
+            "name": "Docs · Development (Edge, 4201)",
             "type": "msedge",
             "request": "launch",
             "preLaunchTask": "serve-docs",
-            "url": "http://localhost:4300",
+            "url": "http://localhost:4201",
             "webRoot": "${workspaceFolder}/frontend",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
@@ -305,11 +305,11 @@
             ]
         },
         {
-            "name": "Docs · Staging (Edge, 4300)",
+            "name": "Docs · Staging (Edge, 5201)",
             "type": "msedge",
             "request": "launch",
             "preLaunchTask": "serve-docs-staging",
-            "url": "http://localhost:4300",
+            "url": "http://localhost:5201",
             "webRoot": "${workspaceFolder}/frontend",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
@@ -355,11 +355,11 @@
             ]
         },
         {
-            "name": "Website · Staging (Edge, 4202)",
+            "name": "Website · Staging (Edge, 5202)",
             "type": "msedge",
             "request": "launch",
             "preLaunchTask": "serve-website-staging",
-            "url": "http://localhost:4202",
+            "url": "http://localhost:5202",
             "webRoot": "${workspaceFolder}/frontend",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
