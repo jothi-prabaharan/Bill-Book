@@ -33,6 +33,7 @@ export interface Vertical {
 export interface ModuleTab {
   id: string;
   title: string;
+  shortTitle?: string;
   badge: string;
   description: string;
   primaryImage: string;
@@ -126,11 +127,13 @@ export class HomePageComponent {
   // Module Deep Dive Tabs (Featuring Real Project Screenshots)
   // ---------------------------------------------------------------------------
   readonly activeModuleTab = signal<number>(0);
+  readonly activeSubView = signal<'primary' | 'secondary'>('primary');
 
   readonly moduleTabs: ModuleTab[] = [
     {
       id: 'financials',
       title: 'Executive Financials & Banking',
+      shortTitle: 'Financials & Banking',
       badge: 'Real-Time Double Entry',
       description:
         'Live executive dashboard with real profit & loss, balance sheet, revenue tracking, and cash counter registers.',
@@ -150,6 +153,7 @@ export class HomePageComponent {
     {
       id: 'supply-chain',
       title: 'Procurement & 3-Way Bills Matching',
+      shortTitle: 'Procurement & Bills',
       badge: 'Zero Vendor Leakage',
       description:
         'Full procurement lifecycle from Purchase Orders (POR) to Goods Receipt (GRN) and Vendor Bills with automated 3-way matching.',
@@ -169,6 +173,7 @@ export class HomePageComponent {
     {
       id: 'inventory-bullion',
       title: 'Barcode Inventory & Bullion Rates',
+      shortTitle: 'Inventory & Bullion',
       badge: 'Live Stock & Bullion Sync',
       description:
         'High-velocity stock management with sub-second barcode lookups and daily gold/silver market purity rate sync.',
@@ -188,6 +193,7 @@ export class HomePageComponent {
     {
       id: 'masters-security',
       title: 'User Management & Enterprise Masters',
+      shortTitle: 'Users & Permissions',
       badge: 'Role-Based Access Control',
       description:
         'Multi-branch user provisioning, role-based access control (RBAC), user invite links, and master contacts directory backed by dedicated database security.',
@@ -349,6 +355,11 @@ export class HomePageComponent {
 
   setModuleTab(index: number): void {
     this.activeModuleTab.set(index);
+    this.activeSubView.set('primary');
+  }
+
+  setSubView(view: 'primary' | 'secondary'): void {
+    this.activeSubView.set(view);
   }
 
   selectVertical(id: string): void {

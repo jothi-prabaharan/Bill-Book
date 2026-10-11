@@ -52,12 +52,10 @@
       <div [class.inactive]="!row.isActive">{{ row.isActive ? 'Active' : 'Inactive' }}</div>
     </ng-template>
     <ng-template bbCellTemplate="actions" let-row>
-      <div [class.inactive]="!row.isActive">
-        <button type="button" class="link" (click)="openEdit(row)" [disabled]="busy()">Edit</button>
+      <div class="row-actions" [class.inactive]="!row.isActive">
+        <bb-icon-button icon="edit" title="Edit payment term" (actionClick)="openEdit(row)" [disabled]="busy()" />
         @if (row.isActive && !row.isDefault) {
-          <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
-            Deactivate
-          </button>
+          <bb-icon-button icon="delete" tone="danger" title="Deactivate payment term" (actionClick)="deactivate(row)" [disabled]="busy()" />
         }
       </div>
     </ng-template>

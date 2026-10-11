@@ -17,6 +17,7 @@
 .handle.disabled { cursor: default; opacity: .35; }
 .actions-col { text-align: right; white-space: nowrap; }
 .actions-col .link + .link { margin-left: .6rem; }
+.row-actions { display: inline-flex; gap: 0.35rem; align-items: center; }
 
 .badge { font-size: .62rem; background: var(--color-neutral-200); color: var(--color-text-muted); padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
 .preview { font-variant-numeric: tabular-nums; }

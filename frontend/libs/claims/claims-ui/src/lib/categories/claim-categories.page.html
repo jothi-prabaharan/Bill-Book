@@ -64,9 +64,7 @@
         {{ l.amount | currency:'INR' }}
       </ng-template>
       <ng-template bbCellTemplate="claimLimitId" let-l>
-        <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; color: #dc2626;" (click)="deleteLimit(l.claimLimitId)">
-          Delete
-        </button>
+        <bb-icon-button icon="delete" tone="danger" title="Delete limit" (actionClick)="deleteLimit(l.claimLimitId)" />
       </ng-template>
     </bb-data-grid>
   </div>

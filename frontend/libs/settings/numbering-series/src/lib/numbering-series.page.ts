@@ -7,7 +7,10 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -67,8 +70,11 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-numbering-series-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent, 
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
@@ -107,6 +113,7 @@ export class NumberingSeriesPage implements OnInit {
   protected readonly documentSeriesNote = 'Document numbers must run consecutively.';
 
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   columns: ColumnDef[] = [
     { field: 'handle', header: '' },

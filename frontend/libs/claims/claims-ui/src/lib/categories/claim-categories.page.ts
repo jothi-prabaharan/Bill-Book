@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import {
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MoneyInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -35,6 +37,7 @@ import {
   styleUrl: '../claims-page.scss',
 })
 export class ClaimCategoriesPage implements OnInit {
+  private readonly confirmDialog = inject(ConfirmDialogService);
   protected readonly categoriesColumns: ColumnDef[] = [
     { field: 'code', header: 'Code' },
     { field: 'name', header: 'Name' },
@@ -156,7 +159,13 @@ export class ClaimCategoriesPage implements OnInit {
   }
 
   async deleteLimit(limitId: number): Promise<void> {
-    if (!confirm('Are you sure you want to delete this limit?')) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete limit?',
+      message: 'Are you sure you want to delete this limit?',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     this.loading.set(true);
     try {
       await this.api.deleteLimit(limitId);

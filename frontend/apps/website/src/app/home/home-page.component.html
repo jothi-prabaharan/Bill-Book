@@ -152,7 +152,7 @@
             (click)="setModuleTab(i)"
           >
             <span class="tab-index">0{{ i + 1 }}</span>
-            <span class="tab-title">{{ tab.title }}</span>
+            <span class="tab-title">{{ tab.shortTitle || tab.title }}</span>
           </button>
         }
       </div>
@@ -182,9 +182,8 @@
           </div>
         </div>
 
-        <!-- Screenshots Column -->
+        <!-- Screenshots Column (Seamless Single Frame with Sub-Register Switcher) -->
         <div class="module-screenshots-card">
-          <!-- Primary Screenshot -->
           <div class="browser-frame mini-frame">
             <div class="browser-header">
               <div class="traffic-lights">
@@ -193,48 +192,42 @@
                 <span class="dot green"></span>
               </div>
               <div class="browser-address">
-                <span>app.billbook.cloud/{{ currentTab.primaryUrl || currentTab.id }}</span>
+                <span class="lock-icon">&#128274;</span>
+                <span>app.billbook.cloud/{{ activeSubView() === 'secondary' && currentTab.secondaryUrl ? currentTab.secondaryUrl : (currentTab.primaryUrl || currentTab.id) }}</span>
               </div>
+              @if (currentTab.secondaryImage) {
+                <div class="register-switcher">
+                  <button
+                    type="button"
+                    class="sub-tab-pill"
+                    [class.active]="activeSubView() === 'primary'"
+                    (click)="setSubView('primary')"
+                  >
+                    Primary
+                  </button>
+                  <button
+                    type="button"
+                    class="sub-tab-pill"
+                    [class.active]="activeSubView() === 'secondary'"
+                    (click)="setSubView('secondary')"
+                  >
+                    Secondary
+                  </button>
+                </div>
+              }
             </div>
             <div class="browser-body">
               <img
-                [src]="currentTab.primaryImage"
-                [alt]="currentTab.primaryCaption"
+                [src]="activeSubView() === 'secondary' && currentTab.secondaryImage ? currentTab.secondaryImage : currentTab.primaryImage"
+                [alt]="activeSubView() === 'secondary' && currentTab.secondaryCaption ? currentTab.secondaryCaption : currentTab.primaryCaption"
                 class="screenshot-img"
               />
               <div class="screenshot-info">
-                <span class="info-label">Primary Register</span>
-                <span class="info-text">{{ currentTab.primaryCaption }}</span>
+                <span class="info-label">{{ activeSubView() === 'secondary' ? 'Secondary Register' : 'Live Register' }}</span>
+                <span class="info-text">{{ activeSubView() === 'secondary' && currentTab.secondaryCaption ? currentTab.secondaryCaption : currentTab.primaryCaption }}</span>
               </div>
             </div>
           </div>
-
-          <!-- Secondary Screenshot if present -->
-          @if (currentTab.secondaryImage) {
-            <div class="browser-frame mini-frame secondary-frame">
-              <div class="browser-header">
-                <div class="traffic-lights">
-                  <span class="dot red"></span>
-                  <span class="dot yellow"></span>
-                  <span class="dot green"></span>
-                </div>
-                <div class="browser-address">
-                  <span>app.billbook.cloud/{{ currentTab.secondaryUrl || currentTab.id + '/register' }}</span>
-                </div>
-              </div>
-              <div class="browser-body">
-                <img
-                  [src]="currentTab.secondaryImage"
-                  [alt]="currentTab.secondaryCaption"
-                  class="screenshot-img"
-                />
-                <div class="screenshot-info">
-                  <span class="info-label">Secondary Register</span>
-                  <span class="info-text">{{ currentTab.secondaryCaption }}</span>
-                </div>
-              </div>
-            </div>
-          }
         </div>
       </div>
 

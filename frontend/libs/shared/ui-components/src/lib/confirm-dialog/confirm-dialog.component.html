@@ -1,0 +1,57 @@
+@if (state(); as current) {
+  <div class="dialog-backdrop" (click)="onBackdropClick($event)" (keydown)="onKeydown($event)" tabindex="-1" role="presentation">
+    <div
+      class="dialog confirm-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="current.options.title"
+      (click)="$event.stopPropagation()"
+      (keydown)="onKeydown($event)"
+      tabindex="-1">
+      <div class="dialog-header">
+        <div class="icon-indicator" [class.danger]="current.options.tone === 'danger'" [class.warning]="current.options.tone === 'warning'">
+          @if (current.options.tone === 'danger') {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"/>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+          } @else if (current.options.tone === 'warning') {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          } @else {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          }
+        </div>
+        <div class="dialog-text">
+          <h2 class="dialog-title">{{ current.options.title }}</h2>
+          <p class="dialog-body">{{ current.options.message }}</p>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onCancel()">
+          {{ current.options.cancelText }}
+        </button>
+        <button
+          type="button"
+          [class]="'btn ' + (current.options.confirmButtonClass || (current.options.tone === 'danger' ? 'btn-danger' : 'btn-primary'))"
+          (click)="onConfirm()">
+          {{ current.options.confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

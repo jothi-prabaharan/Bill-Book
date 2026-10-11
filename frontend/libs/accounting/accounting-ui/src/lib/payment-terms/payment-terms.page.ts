@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  IconButtonComponent,
   MASTER_STATUSES,
   MessageBoxComponent,
   NumberInputComponent,
@@ -18,9 +19,8 @@ import {
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 type TermType = 'DueOnReceipt' | 'Net' | 'EndOfMonth' | 'DayOfNextMonth';
 
@@ -68,14 +68,14 @@ type FormModel = Pick<
   selector: 'bb-payment-terms-page',
   standalone: true,
   imports: [
-    InfoTooltipComponent,
     DataGridComponent,
+    DataGridCellTemplateDirective,
+    IconButtonComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
     SelectComponent,
-    DataGridCellTemplateDirective,
     MessageBoxComponent,
     RegisterHeaderComponent,
     StatusTabsComponent,
@@ -93,6 +93,7 @@ export class PaymentTermsPage implements OnInit {
     { value: 'DayOfNextMonth', label: 'A day of the following month' },
   ];
   private readonly http = inject(HttpClient);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly rows = signal<PaymentTerm[]>([]);
   /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
@@ -201,6 +202,14 @@ export class PaymentTermsPage implements OnInit {
   }
 
   async deactivate(row: PaymentTerm): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Deactivate Payment Term',
+      message: `Deactivate payment term "${row.termName}"?`,
+      confirmText: 'Deactivate',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
     await this.act(`/api/payment-terms/${row.paymentTermId}`, 'DELETE', 'Payment term deactivated.');
   }
 

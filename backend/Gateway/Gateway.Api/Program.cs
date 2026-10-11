@@ -51,6 +51,7 @@ builder.Services.AddDbContext<GatewayDbContext>((sp, options) =>
 // translated and logged, and the response carries a trace id with no error
 // reference on it.
 builder.Services.AddBillBookErrorHandling();
+builder.Services.AddRequestTimeouts();
 
 // ------------------------------------------------------------ cross-origin
 //
@@ -126,6 +127,8 @@ app.Use(async (context, next) =>
     context.Request.EnableBuffering();
     await next();
 });
+
+app.UseRequestTimeouts();
 
 app.MapReverseProxy(proxyPipeline =>
 {

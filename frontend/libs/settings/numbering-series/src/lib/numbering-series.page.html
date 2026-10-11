@@ -80,15 +80,15 @@
     </ng-template>
 
     <ng-template bbCellTemplate="actions" let-row>
-      <button type="button" class="link" (click)="openEdit(row)" [disabled]="busy()">Edit</button>
-      <button type="button" class="link" (click)="openCounter(row)" [disabled]="busy()">
-        Counter
-      </button>
-      @if (row.isActive) {
-        <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
-          Deactivate
+      <div class="row-actions">
+        <bb-icon-button icon="edit" title="Edit series" (actionClick)="openEdit(row)" [disabled]="busy()" />
+        <button type="button" class="link" (click)="openCounter(row)" [disabled]="busy()">
+          Counter
         </button>
-      }
+        @if (row.isActive) {
+          <bb-icon-button icon="delete" tone="danger" title="Deactivate series" (actionClick)="deactivate(row)" [disabled]="busy()" />
+        }
+      </div>
     </ng-template>
   </bb-data-grid>
 </div>
