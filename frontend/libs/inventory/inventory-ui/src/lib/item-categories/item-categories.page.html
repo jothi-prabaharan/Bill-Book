@@ -1,62 +1,53 @@
-<header class="page-head">
-  <h1>Item categories</h1>
-  <div class="head-actions">
-    <bb-checkbox
-      text="Show inactive"
-      [(ngModel)]="showInactive"
-      (ngModelChange)="load()"
-    />
-    <button class="btn btn-primary" type="button" (click)="startAdd(null)" [disabled]="busy()">+ Add category</button>
-  </div>
-</header>
+<bb-register-header title="Item categories" [count]="rows().length" newLabel="New category" [newDisabled]="busy()" (create)="startAdd(null)" />
+
+<bb-status-tabs label="Category status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message()) {
-  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
 <bb-info-tooltip text="Three levels deep at most. The defaults below are copied onto an item when it is created and then belong to the item — changing a category never rewrites items already saved."></bb-info-tooltip>
 
-<bb-data-grid fillHeight [gridCode]="'ITEM_CATEGORIES'" [columns]="columns" [data]="rows()">
-  <!-- Cdk drop list goes on a custom wrapper if bb-data-grid doesn't support it directly, but for now we put the drop list on the parent or handle it appropriately. If DataGridComponent doesn't support CdkDrag naturally, we might just put cdkDropList on the table if possible, or omit it if DataGrid abstracts it. For now, since bb-data-grid renders rows internally, drag-and-drop might need special handling. We'll map the cells. -->
-  <ng-template bbCellTemplate="handle" let-row>
-    <div class="handle-col"><span class="handle" aria-hidden="true">⠿</span></div>
-  </ng-template>
-  <ng-template bbCellTemplate="categoryName" let-row>
-    <div [class.indent-1]="row.depth === 2" [class.indent-2]="row.depth === 3" [class.inactive]="!row.isActive">
-      {{ row.categoryName }}
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="categoryCode" let-row>
-    <code>{{ row.categoryCode }}</code>
-  </ng-template>
-  <ng-template bbCellTemplate="defaultItemProfile" let-row>
-    {{ row.defaultItemProfile ?? '—' }}
-  </ng-template>
-  <ng-template bbCellTemplate="defaultCostingType" let-row>
-    {{ row.defaultCostingType ?? '—' }}
-  </ng-template>
-  <ng-template bbCellTemplate="itemCount" let-row>
-    <div class="num">{{ row.itemCount }}</div>
-  </ng-template>
-  <ng-template bbCellTemplate="active" let-row>
-    {{ row.isActive ? 'Active' : 'Inactive' }}
-  </ng-template>
-  <ng-template bbCellTemplate="actions" let-row>
-    <div class="actions-col">
-      @if (row.depth < 3) {
-        <button type="button" class="link" (click)="startAdd(row.itemCategoryId)" [disabled]="busy()">
-          + Sub
-        </button>
-      }
-      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
-      @if (row.itemCount === 0) {
-        <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
-          Delete
-        </button>
-      }
-    </div>
-  </ng-template>
-</bb-data-grid>
+<section class="register-card">
+  <bb-data-grid register fillHeight flush stackOnPhone label="Item categories" [gridCode]="'ITEM_CATEGORIES'" [columns]="columns" [data]="visibleRows()">
+    <!-- Cdk drop list goes on a custom wrapper if bb-data-grid doesn't support it directly, but for now we put the drop list on the parent or handle it appropriately. If DataGridComponent doesn't support CdkDrag naturally, we might just put cdkDropList on the table if possible, or omit it if DataGrid abstracts it. For now, since bb-data-grid renders rows internally, drag-and-drop might need special handling. We'll map the cells. -->
+    <ng-template bbCellTemplate="categoryName" let-row>
+      <div [class.indent-1]="row.depth === 2" [class.indent-2]="row.depth === 3" [class.inactive]="!row.isActive">
+        {{ row.categoryName }}
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="categoryCode" let-row>
+      <code>{{ row.categoryCode }}</code>
+    </ng-template>
+    <ng-template bbCellTemplate="defaultItemProfile" let-row>
+      {{ row.defaultItemProfile ?? '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="defaultCostingType" let-row>
+      {{ row.defaultCostingType ?? '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="itemCount" let-row>
+      <div class="num">{{ row.itemCount }}</div>
+    </ng-template>
+    <ng-template bbCellTemplate="active" let-row>
+      {{ row.isActive ? 'Active' : 'Inactive' }}
+    </ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      <div class="actions-col">
+        @if (row.depth < 3) {
+          <button type="button" class="link" (click)="startAdd(row.itemCategoryId)" [disabled]="busy()">
+            + Sub
+          </button>
+        }
+        <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+        @if (row.itemCount === 0) {
+          <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+            Delete
+          </button>
+        }
+      </div>
+    </ng-template>
+  </bb-data-grid>
+</section>
 
 @if (editingId() !== null) {
   <div class="sheet">

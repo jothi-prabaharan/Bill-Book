@@ -1,14 +1,21 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
+  MessageBoxComponent,
   NumberInputComponent,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 
 interface TaxRate {
@@ -39,18 +46,29 @@ type Mode = 'create' | 'revise' | 'rename';
  * therefore allowed on seeded rates.
  */
 import { InfoTooltipComponent } from '@bill-book/ui-components';
+/** A rate's place in its history: the live version, a closed one, or switched off. */
+function rateStatus(rate: TaxRate): string {
+  return !rate.isActive ? 'Inactive' : rate.isCurrent ? 'Current' : 'Superseded';
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-tax-master-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     FormsModule,
     BranchDateInputComponent,
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './tax-master.page.html',
   styleUrl: './tax-master.page.scss',
 })
@@ -63,7 +81,7 @@ export class TaxMasterPage implements OnInit {
     { field: 'igst', header: 'IGST' },
     { field: 'appliesTo', header: 'Applies to' },
     { field: 'effective', header: 'Effective' },
-    { field: 'actions', header: '' },
+    { field: 'actions', header: '', width: '15rem', sortable: false, filterable: false },
   ];
   private readonly http = inject(HttpClient);
 
@@ -73,7 +91,19 @@ export class TaxMasterPage implements OnInit {
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
 
-  showHistory = false;
+  /**
+   * The register's tabs (TK-190), in place of "Show superseded": every rate is
+   * loaded, superseded versions too, and the tab filters. Current first, as
+   * the rates a document can use.
+   */
+  protected readonly status = signal('Current');
+  private readonly statuses: readonly RegisterStatusOption[] = [
+    { value: 'Current', label: 'Current' },
+    { value: 'Superseded', label: 'Superseded' },
+    { value: 'Inactive', label: 'Inactive' },
+  ];
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rates(), this.statuses, rateStatus));
+  protected readonly visibleRates = computed(() => rowsInStatus(this.rates(), this.status(), rateStatus));
   private editingId: number | null = null;
 
   form = {
@@ -116,7 +146,7 @@ export class TaxMasterPage implements OnInit {
     this.busy.set(true);
     try {
       this.rates.set(
-        await this.req<TaxRate[]>('GET', `/api/tax-masters?includeHistory=${this.showHistory}`),
+        await this.req<TaxRate[]>('GET', '/api/tax-masters?includeHistory=true'),
       );
     } catch {
       this.show('Could not load tax rates.', true);

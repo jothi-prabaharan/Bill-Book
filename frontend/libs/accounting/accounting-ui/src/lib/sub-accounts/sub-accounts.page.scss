@@ -7,9 +7,6 @@
 .chip-btn { background: var(--color-neutral-200); border: 0; border-radius: 999px; padding: .3rem .8rem; font: inherit; font-size: .8rem; color: var(--color-text-muted); cursor: pointer; }
 .chip-btn.on { background: var(--color-accent-600); color: #fff; }
 .search { padding: .45rem .6rem; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; font-size: .85rem; min-width: 14rem; }
-section { margin-top: 1.75rem; }
-h2 { font-size: 1rem; border-bottom: 1px solid var(--color-divider); padding-bottom: .3rem; display: flex; gap: .6rem; align-items: baseline; }
-.meta { font-size: .72rem; color: var(--color-text-subtle); font-weight: 400; margin-left: auto; }
 .code { font-variant-numeric: tabular-nums; color: var(--color-text-muted); font-weight: 400; }
 .grid { width: 100%; border-collapse: collapse; }
 .grid td { padding: .45rem .6rem; border-bottom: 1px solid var(--color-divider); vertical-align: top; }

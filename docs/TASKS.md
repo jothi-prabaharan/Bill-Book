@@ -5748,19 +5748,23 @@ The queue below is one list in card-number order. Each card names its group.
 - **Notes:** the design's Applications (globe) menu is left out on purpose: nothing backs it since TK-136 retired the App enum.
 
 ### TK-190 · Master lists: the register design (Contacts, Items and the other masters)
-- [~] working (Claude Opus 5.5) — since 2026-10-11
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-11
 - **Issue:** [#180](https://github.com/jothi-prabaharan/Bill-Book/issues/180)
 - **Group:** Z · Owner request
-- **Lanes:** L-UI (the master list pages in `libs/master/master-ui`, `libs/inventory/inventory-ui`, `libs/accounting/accounting-ui`; `libs/shared/theming/src/lib/_register.scss`), L-DOC · **Depends on:** TK-187, TK-188 · **Decision:** the owner's "All master lists" (11 October 2026, asked with TK-188)
+- **Lanes:** L-UI (the master list pages in `libs/master/master-ui`, `libs/inventory/inventory-ui`, `libs/accounting/accounting-ui`; `libs/shared/theming/src/lib/_register.scss`, `libs/shared/ui-components/src/lib/register/register-format.ts`), L-DOC · **Depends on:** TK-187, TK-188 · **Decision:** the owner's "All master lists" (11 October 2026, asked with TK-188)
 - **Runs beside TK-189**, which holds `libs/app-shell` and `libs/shared/auth`; this card touches neither.
 - **Where:** the list pages for Contacts, Items, Item categories, Warehouses, Price lists, Banks, Bank accounts, Sub-accounts, Payment terms, Tax master, HSN/SAC codes, Contact person roles, Unit types and Metal purities.
-- **State:** checked 11 October 2026. The document lists and the chart of accounts have the register design (TK-187); every other master list still has its own heading, buttons and grid.
+- **State:** checked 11 October 2026. The document lists and the chart of accounts had the register design (TK-187); every other master list had its own heading, buttons and grid.
 - **Sub-tasks:**
-  - [ ] A filter strip for a register with no period (`.register-toolbar`), so a master's search and filters sit inside the card as a document list's sit in its period bar.
-  - [ ] Each list: register heading with count and New, Active/Inactive tabs with counts (Contacts also Draft), the card, and the grid in register mode.
-  - [ ] Check each at 1280px and 360px with its editor and row actions still working.
-  - [ ] Docs (`lists.md`, the masters page) and release notes.
-  - [ ] Test: written, never run by an AI (section 0.5).
+  - [x] `.register-toolbar`, the filter strip for a register with no period, and `.register-add`, a name box beside its button in the heading; `MASTER_STATUSES`, `masterStatus` and `rowsInStatus` for the Active/Inactive tabs.
+  - [x] Each list: register heading with count and New, tabs with counts (Contacts Active/Draft/Inactive; Tax master Current/Superseded/Inactive), the card, and the grid in register mode. Each loads its inactive rows too and filters on the tab, replacing **Show inactive** / **Show superseded**. Items' label picks are the grid's own selection. Sub-accounts are one list with a Control account column. HSN/SAC pages on the server through the grid's pager, with no tabs, since the server counts no statuses; **Retired** stays a filter. Contact person roles take a `register` input, so the Settings page has the design and the contact form's popup keeps its compact list.
+  - [x] Fixed on the way: Banks and Bank accounts drew their columns empty (no `DataGridCellTemplateDirective`); Sub-accounts' **Show inactive** was a plain field read inside a `computed`, so it never changed the list; the drag handles on eight lists had no drop handler anywhere and are removed, with Payment terms' "Drag to reorder" hint and the roles page's; Items' *Below reorder level* and *Stock adjustments* buttons set a variable `load()` never read; the sub-accounts note said a contact gets two sub-accounts, where it gets six.
+  - [x] Checked each at 1280px, and Contacts, Tax master and Unit types at 390px, against a local stack.
+  - [x] Docs (`lists.md` "Master lists", the roles section of `masters.md`) and release notes.
+  - [x] Test: written, never run by an AI (section 0.5). `register-format.spec.ts` MSTAT-01 to 03.
+- **Verified by an AI (11 October 2026):** `npm run typecheck` clean; `master-ui`, `inventory-ui`, `accounting-ui`, `ui-components` and `theming` lint clean; web builds. All fourteen pages rendered against Master, Accounting and Inventory on a local stack.
+- **Not built, and not asked for:** drag-to-reorder on any of these lists; a server count of HSN/SAC codes by status.
+- **Owner step:** run `register-format.spec.ts`.
 - **Done when:** every list above reads like the Purchase orders register at 1280px and stacks at 360px, with its existing filters, editors and actions still working.
 
 ## 3. Decisions from the owner

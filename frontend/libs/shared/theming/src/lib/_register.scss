@@ -31,6 +31,41 @@
   }
 }
 
+/* A master list's own search and filters (TK-190): the strip a document list
+   gets from its period bar, for a register with no period to choose. */
+.register-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+
+  > bb-search-input { flex: 1 1 16rem; max-width: 26rem; }
+  > bb-select { flex: 0 1 12rem; }
+  > .register-toolbar-end { margin-left: auto; display: flex; gap: var(--space-2); align-items: center; }
+}
+
+@media (max-width: 640px) {
+  .register-toolbar > bb-search-input,
+  .register-toolbar > bb-select { flex: 1 1 100%; max-width: none; }
+}
+
+/* A master that adds a row by name alone (unit types, contact person roles)
+   puts the name box and its button in the heading, side by side. */
+.register-add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  > bb-text-input { width: 14rem; }
+}
+
+@media (max-width: 640px) {
+  .register-add { width: 100%; }
+  .register-add > bb-text-input { flex: 1 1 auto; width: auto; }
+}
+
 /* A register row's date reads in the accent, the one coloured column. */
 .register-card .reg-date {
   color: var(--color-accent-600);

@@ -1,13 +1,9 @@
-<header class="page-head">
-  <h1>Sub-accounts</h1>
-  <bb-checkbox
-    text="Show inactive"
-    [(ngModel)]="showInactive"
-  />
-</header>
+<bb-register-header title="Sub-accounts" [count]="rows().length" />
+
+<bb-status-tabs label="Sub-account status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 <p class="note">
-  Sub-accounts are created by the master that owns them — a contact gets two, an item three,
+  Sub-accounts are created by the master that owns them — a contact gets six, an item three,
   a tax rate up to six. They cannot be added or renamed here.
 </p>
 
@@ -15,70 +11,39 @@
   <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
-<div class="filters">
-  <div class="chips">
-    <button
-      type="button"
-      class="chip-btn"
-      [class.on]="referenceType() === null"
-      (click)="setType(null)"
-    >
-      All
-    </button>
-    @for (t of referenceTypes; track t) {
-      <button type="button" class="chip-btn" [class.on]="referenceType() === t" (click)="setType(t)">
-        {{ t }}
-      </button>
-    }
+<section class="register-card">
+  <div class="register-toolbar">
+    <bb-search-input placeholder="Filter by name…" ariaLabel="Filter sub-accounts by name" [(ngModel)]="search"
+      (ngModelChange)="searchTerm.set($event)" />
+    <bb-select ariaLabel="Owned by" placeholder="" [options]="typeOptions" [ngModel]="referenceType() ?? ''"
+      (ngModelChange)="setType($event || null)" />
   </div>
-  <bb-search-input
-    class="search"
-    
-    placeholder="Filter by name…"
-    [(ngModel)]="search"
-    (ngModelChange)="searchTerm.set($event)"
-  />
-</div>
 
-@if (busy()) {
-  <p class="empty">Loading…</p>
-} @else {
-  @for (group of grouped(); track group.accountId) {
-    <section>
-      <h2>
-        <span class="code">{{ group.accountCode }}</span>
-        {{ group.accountName }}
-        <span class="meta">{{ group.rows.length }}</span>
-      </h2>
-      <bb-data-grid fillHeight [gridCode]="'SUB_ACCOUNTS_' + group.accountId" [columns]="columns" [data]="group.rows">
-        <ng-template bbCellTemplate="subAccountName" let-row>
-          <div [class.inactive]="!row.isActive">
-            {{ row.subAccountName }}
-            @if (!row.isActive) { <span class="badge off">Inactive</span> }
-          </div>
-        </ng-template>
-        <ng-template bbCellTemplate="tags" let-row>
-          <div class="tags" [class.inactive]="!row.isActive">
-            <span class="chip">{{ row.referenceType }}</span>
-            @if (row.taxComponent !== 'None') {
-              <span class="chip tax">{{ row.taxComponent.toUpperCase() }}</span>
-            }
-            @if (row.purpose !== 'Primary') {
-              <span class="chip advance" title="An advance held under this control account — reported apart from trade balances">
-                Advance
-              </span>
-            }
-          </div>
-        </ng-template>
-        <ng-template bbCellTemplate="referenceId" let-row>
-          <div class="ref" [class.inactive]="!row.isActive">#{{ row.referenceId }}</div>
-        </ng-template>
-      </bb-data-grid>
-    </section>
-  } @empty {
-    <p class="empty">
-      No sub-accounts yet. They appear as soon as a contact, item or tax rate is created.
-    </p>
-  }
-}
-
+  <bb-data-grid register fillHeight flush stackOnPhone label="Sub-accounts" [gridCode]="'SUB_ACCOUNTS'" [columns]="columns" [data]="visibleRows()">
+    <ng-template bbCellTemplate="control" let-row>
+      <span class="code">{{ row.accountCode }}</span> {{ row.accountName }}
+    </ng-template>
+    <ng-template bbCellTemplate="subAccountName" let-row>
+      <div [class.inactive]="!row.isActive">
+        {{ row.subAccountName }}
+        @if (!row.isActive) { <span class="badge off">Inactive</span> }
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="tags" let-row>
+      <div class="tags" [class.inactive]="!row.isActive">
+        <span class="chip">{{ row.referenceType }}</span>
+        @if (row.taxComponent !== 'None') {
+          <span class="chip tax">{{ row.taxComponent.toUpperCase() }}</span>
+        }
+        @if (row.purpose !== 'Primary') {
+          <span class="chip advance" title="An advance held under this control account — reported apart from trade balances">
+            Advance
+          </span>
+        }
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="referenceId" let-row>
+      <div class="ref" [class.inactive]="!row.isActive">#{{ row.referenceId }}</div>
+    </ng-template>
+  </bb-data-grid>
+</section>

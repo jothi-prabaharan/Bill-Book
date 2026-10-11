@@ -1,10 +1,18 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
-  CheckboxComponent,
+  BbSelectOption,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
   MessageBoxComponent,
+  RegisterHeaderComponent,
   SearchInputComponent,
+  SelectComponent,
+  StatusTabsComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -44,12 +52,16 @@ type ReferenceType = (typeof REFERENCE_TYPES)[number];
   selector: 'bb-sub-accounts-page',
   standalone: true,
   imports: [
+    DataGridCellTemplateDirective,
     DataGridComponent,
     FormsModule,
-    SearchInputComponent,
-    CheckboxComponent,
     MessageBoxComponent,
+    RegisterHeaderComponent,
+    SearchInputComponent,
+    SelectComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './sub-accounts.page.html',
   styleUrl: './sub-accounts.page.scss',
 })
@@ -60,48 +72,38 @@ export class SubAccountsPage implements OnInit {
   protected readonly rows = signal<SubAccountRow[]>([]);
 
   columns: ColumnDef[] = [
+    { field: 'control', header: 'Control account' },
     { field: 'subAccountName', header: 'Name' },
     { field: 'tags', header: 'Tags' },
-    { field: 'referenceId', header: 'Reference' }
+    { field: 'referenceId', header: 'Reference' },
+  ];
+
+  protected readonly typeOptions: BbSelectOption<string>[] = [
+    { value: '', label: 'Every owner' },
+    ...REFERENCE_TYPES.map((type) => ({ value: type, label: type })),
   ];
   protected readonly referenceType = signal<ReferenceType | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
 
-  showInactive = false;
   search = '';
 
   /**
-   * Grouped under the control account they hang from, which is the only ordering
-   * that answers the question this page is for. Inactive rows are hidden unless
-   * asked for — a retired contact's sub-accounts survive for history.
+   * One register (TK-190), ordered by the control account each row hangs from
+   * and then by name, which is the order that answers what is posting under
+   * Accounts Receivable. A retired contact's sub-accounts survive for history,
+   * on the Inactive tab.
    */
-  protected readonly grouped = computed(() => {
+  protected readonly status = signal('Active');
+  private readonly matching = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    const visible = this.rows().filter(
-      (s) =>
-        (this.showInactive || s.isActive) &&
-        (term === '' || s.subAccountName.toLowerCase().includes(term)),
-    );
-
-    const groups = new Map<number, { accountId: number; accountCode: string; accountName: string; rows: SubAccountRow[] }>();
-    for (const row of visible) {
-      const group = groups.get(row.accountId);
-      if (group) {
-        group.rows.push(row);
-      } else {
-        groups.set(row.accountId, {
-          accountId: row.accountId,
-          accountCode: row.accountCode,
-          accountName: row.accountName,
-          rows: [row],
-        });
-      }
-    }
-
-    return [...groups.values()].sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+    return this.rows()
+      .filter((s) => term === '' || s.subAccountName.toLowerCase().includes(term))
+      .sort((a, b) => a.accountCode.localeCompare(b.accountCode) || a.subAccountName.localeCompare(b.subAccountName));
   });
+  protected readonly statusTabs = computed(() => countStatusTabs(this.matching(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.matching(), this.status(), masterStatus));
 
   ngOnInit(): void {
     void this.load();

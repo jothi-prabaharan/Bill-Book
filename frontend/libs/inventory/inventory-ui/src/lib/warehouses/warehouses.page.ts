@@ -1,11 +1,19 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
+  RegisterHeaderComponent,
   SelectComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -43,13 +51,19 @@ interface Warehouse {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-warehouses-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
     SelectComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './warehouses.page.html',
   styleUrl: './warehouses.page.scss',
 })
@@ -69,7 +83,6 @@ export class WarehousesPage implements OnInit {
     { value: 'Frozen', label: 'Frozen' },
   ];
   columns: ColumnDef[] = [
-    { field: 'handle', header: 'Reorder' },
     { field: 'warehouseCode', header: 'Code' },
     { field: 'warehouseName', header: 'Name' },
     { field: 'warehouseType', header: 'Type' },
@@ -77,19 +90,22 @@ export class WarehousesPage implements OnInit {
     { field: 'city', header: 'City' },
     { field: 'gstin', header: 'GSTIN' },
     { field: 'isDefault', header: 'Default' },
-    { field: 'isActive', header: 'Active' },
-    { field: 'actions', header: 'Actions' }
+    { field: 'isActive', header: 'Status' },
+    { field: 'actions', header: '' }
   ];
 
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<Warehouse[]>([]);
+  /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
   protected readonly editingId = signal<number | null>(null);
 
-  showInactive = false;
   form = this.blank();
 
   ngOnInit(): void {
@@ -99,7 +115,7 @@ export class WarehousesPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      this.rows.set(await this.get<Warehouse[]>(`/api/warehouses?includeInactive=${this.showInactive}`));
+      this.rows.set(await this.get<Warehouse[]>('/api/warehouses?includeInactive=true'));
     } catch {
       this.fail('Could not load warehouses.');
     } finally {

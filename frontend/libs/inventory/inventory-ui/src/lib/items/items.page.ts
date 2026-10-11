@@ -1,4 +1,13 @@
-import { ExportImportComponent } from '@bill-book/ui-components';
+import {
+  ExportImportComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
+  RegisterHeaderComponent,
+  StatusTabsComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
+} from '@bill-book/ui-components';
 import { SessionContextService } from '@bill-book/auth';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
@@ -180,7 +189,9 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-items-page',
   standalone: true,
-  imports: [ExportImportComponent, InfoTooltipComponent, 
+  imports: [
+    ExportImportComponent,
+    InfoTooltipComponent,
     EditHistoryComponent,
     FormsModule,
     TextInputComponent,
@@ -194,7 +205,11 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
     CheckboxComponent,
     CustomFieldsComponent,
     LabelPrintDialog,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './items.page.html',
   styleUrl: './items.page.scss',
 })
@@ -214,7 +229,11 @@ export class ItemsPage implements OnInit {
   protected readonly customFieldDefs = signal<CustomFieldDefinition[]>([]);
   protected readonly customValues = signal<CustomFieldValues>({});
   protected readonly gridColumns = computed<ColumnDef[]>(() => [...this.columns, ...customListColumns(this.customFieldDefs())]);
-  protected readonly gridRows = computed(() => withCustomColumns(this.rows(), this.customFieldDefs()));
+  /** The register's tabs (TK-190): every item is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
+  protected readonly gridRows = computed(() => withCustomColumns(this.visibleRows(), this.customFieldDefs()));
   protected readonly types = signal<UomType[]>([]);
   protected readonly categories = signal<Category[]>([]);
   protected readonly taxRates = signal<TaxRate[]>([]);
@@ -227,7 +246,6 @@ export class ItemsPage implements OnInit {
   protected readonly warehouses = signal<Warehouse[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
-    tabFilter = 'itm';
   protected readonly messageIsError = signal(false);
   protected readonly editorOpen = signal(false);
   protected readonly editingId = signal<number | null>(null);
@@ -235,10 +253,8 @@ export class ItemsPage implements OnInit {
 
   search = '';
   profileFilter = '';
-  showInactive = false;
 
   columns: ColumnDef[] = [
-    { field: 'pick', header: 'Label' },
     { field: 'itemCode', header: 'Item code' },
     { field: 'itemName', header: 'Item name' },
     { field: 'hsnSac', header: 'HSN/SAC' },
@@ -256,17 +272,15 @@ export class ItemsPage implements OnInit {
   protected readonly labelPicks = signal<ReadonlySet<number>>(new Set());
   protected readonly labelsOpen = signal<{ labels: LabelData[]; kind: LabelKind } | null>(null);
 
-  protected toggleLabel(itemId: number, on: boolean): void {
-    const next = new Set(this.labelPicks());
-    if (on) next.add(itemId);
-    else next.delete(itemId);
-    this.labelPicks.set(next);
+  /** The rows ticked in the register grid are the ones that get labels. */
+  protected pickLabels(rows: readonly ItemListRow[]): void {
+    this.labelPicks.set(new Set(rows.map((row) => row.itemId)));
   }
 
-  /** Labels for the ticked items, or for every item the list shows. */
+  /** Labels for the ticked items, or for every item on the tab. */
   protected openListLabels(): void {
     const picked = this.labelPicks();
-    const rows = this.rows();
+    const rows = this.visibleRows();
     const profiles = (picked.size > 0 ? rows.filter((r) => picked.has(r.itemId)) : rows).map((r) => r.itemProfile);
     this.labelsOpen.set({ labels: itemListLabels(rows, picked), kind: labelKindFor(profiles) });
   }
@@ -361,10 +375,6 @@ export class ItemsPage implements OnInit {
     })),
   );
 
-  protected readonly statusFilterOptions: BbSelectOption<string>[] = [
-    { value: 'active', label: 'Active only' },
-    { value: 'any', label: 'Any status' },
-  ];
 
   protected readonly profileOptions: BbSelectOption<string>[] = [
     { value: 'Standard', label: 'Standard' },
@@ -442,20 +452,6 @@ export class ItemsPage implements OnInit {
     { value: 'JewelleryTag', label: 'Jewellery tag' },
   ];
 
-  /**
-   * The status filter, as a value `bb-select` can carry.
-   *
-   * `showInactive` is a boolean and the filter has two named states; mapping
-   * between them here keeps the control's value a string, which is what a
-   * select is good at, and leaves the flag the page already reads untouched.
-   */
-  protected get statusFilter(): string {
-    return this.showInactive ? 'any' : 'active';
-  }
-
-  protected set statusFilter(value: string) {
-    this.showInactive = value === 'any';
-  }
 
   protected readonly inventoryDecimals = computed(
     () => this.unitsOfType().find((u) => u.uomId === this.form.inventoryUomId)?.decimalPlaces ?? 0,
@@ -476,7 +472,7 @@ export class ItemsPage implements OnInit {
       if (this.profileFilter) {
         query.set('profile', this.profileFilter);
       }
-      query.set('includeInactive', String(this.showInactive));
+      query.set('includeInactive', 'true');
 
       this.rows.set(await this.get<ItemListRow[]>(`/api/items?${query}`));
     } catch {

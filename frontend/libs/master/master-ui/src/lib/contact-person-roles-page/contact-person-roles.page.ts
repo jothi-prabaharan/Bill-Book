@@ -20,6 +20,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   selector: 'bb-contact-person-roles-page',
   standalone: true,
   imports: [InfoTooltipComponent, ContactPersonRolesList],
+  host: { class: 'register-page' },
   templateUrl: './contact-person-roles.page.html',
   styleUrl: './contact-person-roles.page.scss',
 })

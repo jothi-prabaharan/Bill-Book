@@ -1,17 +1,11 @@
-<header class="page-head">
-  <h1>Tax master</h1>
-  <div class="head-actions">
-    <bb-checkbox
-      text="Show superseded"
-      [(ngModel)]="showHistory"
-      (ngModelChange)="load()"
-    />
-    <button class="btn btn-primary" type="button" (click)="startCreate()" [disabled]="busy()">+ New rate</button>
-  </div>
-</header>
+<bb-register-header title="Tax master" [count]="rates().length" newLabel="New rate" [newDisabled]="busy()" (create)="startCreate()" />
+
+@if (!mode()) {
+  <bb-status-tabs label="Rate status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
+}
 
 @if (message()) {
-  <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
 @if (mode()) {
@@ -81,46 +75,48 @@
     </div>
   </form>
 } @else {
-  <bb-data-grid fillHeight [gridCode]="'TAX_MASTER'" [columns]="columns" [data]="rates()">
-    <ng-template bbCellTemplate="name" let-r>
-      <div [class.superseded]="!r.isCurrent" [class.inactive]="!r.isActive">
-        {{ r.taxName }}
-        @if (r.isSystemRate) { <span class="badge sys">Standard</span> }
-        @if (!r.isCurrent) { <span class="badge old">Superseded</span> }
-      </div>
-    </ng-template>
-    <ng-template bbCellTemplate="total" let-r>
-      <div class="num">{{ r.totalRate }}%</div>
-    </ng-template>
-    <ng-template bbCellTemplate="cgst" let-r>
-      <div class="num">{{ r.cgstRate }}</div>
-    </ng-template>
-    <ng-template bbCellTemplate="sgst" let-r>
-      <div class="num">{{ r.sgstRate }}</div>
-    </ng-template>
-    <ng-template bbCellTemplate="igst" let-r>
-      <div class="num">{{ r.igstRate }}</div>
-    </ng-template>
-    <ng-template bbCellTemplate="appliesTo" let-r>
-      @if (r.isSales) { <span class="chip">Sales</span> }
-      @if (r.isPurchase) { <span class="chip">Purchase</span> }
-    </ng-template>
-    <ng-template bbCellTemplate="effective" let-r>
-      <div class="dates">
-        {{ r.effectiveFrom }}
-        @if (r.effectiveTo) { → {{ r.effectiveTo }} }
-      </div>
-    </ng-template>
-    <ng-template bbCellTemplate="actions" let-r>
-      <div class="row-actions">
-        @if (r.isCurrent && r.isActive) {
-          <button type="button" class="link" (click)="startRename(r)">Rename</button>
-          <button type="button" class="link" (click)="startRevise(r)">Revise</button>
-          <button type="button" class="link danger" (click)="deactivate(r)">Deactivate</button>
-        }
-      </div>
-    </ng-template>
-  </bb-data-grid>
+  <section class="register-card">
+    <bb-data-grid register fillHeight flush stackOnPhone label="Tax rates" [gridCode]="'TAX_MASTER'" [columns]="columns" [data]="visibleRates()">
+      <ng-template bbCellTemplate="name" let-r>
+        <div [class.superseded]="!r.isCurrent" [class.inactive]="!r.isActive">
+          {{ r.taxName }}
+          @if (r.isSystemRate) { <span class="badge sys">Standard</span> }
+          @if (!r.isCurrent) { <span class="badge old">Superseded</span> }
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="total" let-r>
+        <div class="num">{{ r.totalRate }}%</div>
+      </ng-template>
+      <ng-template bbCellTemplate="cgst" let-r>
+        <div class="num">{{ r.cgstRate }}</div>
+      </ng-template>
+      <ng-template bbCellTemplate="sgst" let-r>
+        <div class="num">{{ r.sgstRate }}</div>
+      </ng-template>
+      <ng-template bbCellTemplate="igst" let-r>
+        <div class="num">{{ r.igstRate }}</div>
+      </ng-template>
+      <ng-template bbCellTemplate="appliesTo" let-r>
+        @if (r.isSales) { <span class="chip">Sales</span> }
+        @if (r.isPurchase) { <span class="chip">Purchase</span> }
+      </ng-template>
+      <ng-template bbCellTemplate="effective" let-r>
+        <div class="dates">
+          {{ r.effectiveFrom }}
+          @if (r.effectiveTo) { → {{ r.effectiveTo }} }
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="actions" let-r>
+        <div class="row-actions">
+          @if (r.isCurrent && r.isActive) {
+            <button type="button" class="link" (click)="startRename(r)">Rename</button>
+            <button type="button" class="link" (click)="startRevise(r)">Revise</button>
+            <button type="button" class="link danger" (click)="deactivate(r)">Deactivate</button>
+          }
+        </div>
+      </ng-template>
+    </bb-data-grid>
+  </section>
 }
 
 

@@ -1,29 +1,20 @@
-<header class="page-head">
-  <h1>Unit types</h1>
-  <div class="head-actions">
-    <bb-checkbox
-      text="Show inactive"
-      [(ngModel)]="showInactive"
-      (ngModelChange)="load()"
-    />
-    <bb-text-input  [(ngModel)]="newTypeName" maxlength="50" placeholder="New type name" />
-    <button class="btn btn-primary" type="button" (click)="addType()" [disabled]="busy() || !newTypeName.trim()">
-      + Add type
-    </button>
+<bb-register-header title="Unit types" [count]="types().length">
+  <div class="register-add">
+    <bb-text-input ariaLabel="New type name" [(ngModel)]="newTypeName" maxlength="50" placeholder="New type name" />
+    <button class="btn" type="button" (click)="addType()" [disabled]="busy() || !newTypeName.trim()">New type</button>
   </div>
-</header>
+</bb-register-header>
+
+<bb-status-tabs label="Unit type status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message()) {
-  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
 <bb-info-tooltip text="Every conversion in the system comes from a unit's factor to its type's base unit. Pack sizes are units of their type — a 50 kg bag is a Weight unit with a factor of 50."></bb-info-tooltip>
 
-<div>
-  <bb-data-grid fillHeight [gridCode]="'UNIT_TYPES'" [columns]="columns" [data]="types()">
-    <ng-template bbCellTemplate="handle" let-row>
-      <span class="handle" Handle [class.disabled]="!canReorder" aria-hidden="true">⠿</span>
-    </ng-template>
+<section class="register-card">
+  <bb-data-grid register fillHeight flush stackOnPhone label="Unit types" [gridCode]="'UNIT_TYPES'" [columns]="columns" [data]="visibleTypes()">
 
     <ng-template bbCellTemplate="uomTypeName" let-row>
       <button type="button" class="link" (click)="toggle(row)">
@@ -60,7 +51,7 @@
       }
     </ng-template>
   </bb-data-grid>
-</div>
+</section>
 
 @if (expandedType(); as type) {
   <div class="sheet child-card">

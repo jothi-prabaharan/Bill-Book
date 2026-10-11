@@ -1,57 +1,22 @@
-
-<nav aria-label="Contact views" class="flex flex-wrap mb-3 gap-6px">
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === '' ? 'true' : null" (click)="roleFilter = ''; load()">All contacts</button>
-  </span>
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'customer' ? 'true' : null" (click)="roleFilter = 'customer'; load()">Customers</button>
-    <button class="btn btn-secondary" type="button" title="New customer" aria-label="New customer" (click)="openAdd('customer')" [disabled]="busy()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-    </button>
-  </span>
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'vendor' ? 'true' : null" (click)="roleFilter = 'vendor'; load()">Vendors</button>
-    <button class="btn btn-secondary" type="button" title="New vendor" aria-label="New vendor" (click)="openAdd('vendor')" [disabled]="busy()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-    </button>
-  </span>
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'jobworker' ? 'true' : null" (click)="roleFilter = 'jobworker'; load()">Job workers</button>
-  </span>
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'prescriber' ? 'true' : null" (click)="roleFilter = 'prescriber'; load()">Prescribers</button>
-  </span>
-  @if (isSchool()) {
-    <span class="tabgrp">
-      <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'guardian' ? 'true' : null" (click)="roleFilter = 'guardian'; load()">Guardians</button>
-    </span>
-  }
-</nav>
-
-<div class="actbar">
-  <bb-search-input  [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, code or GSTIN" aria-label="Search contacts" class="w-auto flex-1 input text-sm actbar-search"/>
-
-  <bb-select
-    ariaLabel="Filter by status"
-    class="w-auto text-sm actbar-select"
-    placeholder=""
-    [options]="statusFilterOptions"
-    [(ngModel)]="statusFilter"
-    (ngModelChange)="load()"
-  />
-
-  
-  
+<bb-register-header title="Contacts" [count]="rows().length" newLabel="New customer" [newDisabled]="busy()"
+  (create)="openAdd('customer')">
+  <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="openAdd('vendor')">New vendor</button>
   <bb-export-import />
-</div>
+</bb-register-header>
 
+<bb-status-tabs label="Contact status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message(); as failure) {
   <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
 }
 
-<div class="card bg-surface">
-  <bb-data-grid fillHeight flush [gridCode]="'CONTACTS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
+<div class="register-card">
+  <div class="register-toolbar">
+    <bb-search-input [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, code or GSTIN" ariaLabel="Search contacts" />
+    <bb-select ariaLabel="Role" placeholder="" [options]="roleOptions()" [(ngModel)]="roleFilter" (ngModelChange)="load()" />
+  </div>
+
+  <bb-data-grid register fillHeight flush stackOnPhone label="Contacts" [gridCode]="'CONTACTS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
     <ng-template bbCellTemplate="contactCode" let-row>
       {{ row.contactCode }}
     </ng-template>
@@ -72,11 +37,15 @@
     <ng-template bbCellTemplate="role" let-row>
       <span class="tag tag-neutral">{{ roleLabels(row) }}</span>
     </ng-template>
-    <ng-template bbCellTemplate="outstanding" let-row>
-      <div class="tabular-nums text-right">—</div>
+    <ng-template bbCellTemplate="status" let-row>
+      <span class="tag" [class]="statusTone(row)">{{ statusOf(row) }}</span>
     </ng-template>
     <ng-template bbCellTemplate="creditLimit" let-row>
-      <div class="tabular-nums text-right">—</div>
+      @if (row.creditLimit !== null) {
+        <bb-money-cell [value]="row.creditLimit" [currency]="row.currencyCode" />
+      } @else {
+        <span class="muted">No limit</span>
+      }
     </ng-template>
   </bb-data-grid>
 </div>

@@ -44,3 +44,17 @@ The ☰ in each column heading filters that column. The arrows beside the headin
 ## Not built yet
 
 The design shows a 📎 count of attachments on a document. Sales, purchase and accounting documents cannot carry attachments yet, so no list shows one.
+
+## Master lists
+
+The masters read the same way (TK-190): **Contacts**, **Items**, **Item categories**, **Warehouses**, **Price lists**, **Banks**, **Bank accounts**, **Sub-accounts**, and in Settings **Payment terms**, **Tax master**, **HSN & SAC codes**, **Contact person roles**, **Unit types** and **Metal purities**. There are three differences from a document list:
+
+- **No period and no total.** A master holds nothing dated to add up, so the card opens straight on the list's own search and filters: the contact's role, the metal, the sub-account's owner.
+- **The tabs are Active and Inactive.** The list opens on *Active*. Every record is loaded, inactive ones too, so both counts are right whichever tab is open. The **Show inactive** boxes these lists had are gone; the *Inactive* tab replaces them. Contacts add a *Draft* tab for contacts saved to finish later. The tax master's tabs are *Current*, *Superseded* and *Inactive*, which replace its **Show superseded** box.
+- **New starts a record.** Contacts offer **New customer** and **New vendor**. Unit types and contact person roles add a row by name, so their heading holds a name box beside **New type** or **New role**. Sub-accounts and HSN & SAC codes have no New: a master creates its own sub-accounts, and the codes are the country's.
+
+**Items**: tick rows to print labels for just those items; with none ticked, **Print labels** prints every item on the tab.
+
+**Sub-accounts** are one list now, with a **Control account** column, rather than one list per control account. The order is the same: by control account, then by name.
+
+**HSN & SAC codes** page on the server, since there are thousands. Their foot works like any other list's. There are no status tabs, because the server does not count codes by status; tick **Retired** to include retired codes.

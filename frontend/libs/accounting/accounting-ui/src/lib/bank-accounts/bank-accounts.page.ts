@@ -3,10 +3,18 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
   NumberInputComponent,
+  RegisterHeaderComponent,
   SelectComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -66,14 +74,20 @@ interface BankAccount {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bank-accounts-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
     SelectComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './bank-accounts.page.html',
   styleUrl: './bank-accounts.page.scss',
 })
@@ -95,17 +109,19 @@ export class BankAccountsPage implements OnInit {
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<BankAccount[]>([]);
+  /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
   protected readonly banks = signal<Bank[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
   protected readonly editingId = signal<number | null>(null);
 
-  showInactive = false;
   form = this.blank();
 
   columns: ColumnDef[] = [
-    { field: 'handle', header: '', isTemplate: true },
     { field: 'account', header: 'Account', isTemplate: true },
     { field: 'bank', header: 'Bank', isTemplate: true },
     { field: 'number', header: 'Number', isTemplate: true },
@@ -114,7 +130,7 @@ export class BankAccountsPage implements OnInit {
     { field: 'ledger', header: 'Ledger', isTemplate: true },
     { field: 'default', header: 'Default', isTemplate: true },
     { field: 'online', header: 'Online payments', isTemplate: true },
-    { field: 'active', header: 'Active', isTemplate: true },
+    { field: 'active', header: 'Status', isTemplate: true },
     { field: 'actions', header: '', isTemplate: true },
   ];
 
@@ -127,7 +143,7 @@ export class BankAccountsPage implements OnInit {
     this.busy.set(true);
     try {
       this.rows.set(
-        await this.get<BankAccount[]>(`/api/bank-accounts?includeInactive=${this.showInactive}`),
+        await this.get<BankAccount[]>('/api/bank-accounts?includeInactive=true'),
       );
     } catch {
       this.fail('Could not load bank accounts.');

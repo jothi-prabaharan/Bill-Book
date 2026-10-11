@@ -1,9 +1,16 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, booleanAttribute, computed, input } from '@angular/core';
 import {
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
   MessageBoxComponent,
+  RegisterHeaderComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -36,12 +43,16 @@ export interface ContactPersonRole {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-list',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [InfoTooltipComponent,
+    DataGridCellTemplateDirective,
     DataGridComponent,
     FormsModule,
     TextInputComponent,
     MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { '[class.register-page]': 'register()' },
   templateUrl: './contact-person-roles.list.html',
   styleUrl: './contact-person-roles.list.scss',
 })
@@ -49,18 +60,27 @@ export class ContactPersonRolesList implements OnInit {
   /** Emits whenever roles are added, edited, reordered or removed. */
   readonly changed = output<void>();
 
+  /**
+   * The Settings page's register design (TK-190): heading, status tabs and
+   * card. The popup on the contact form leaves it off and keeps the compact
+   * list, with the add box beneath it.
+   */
+  readonly register = input(false, { transform: booleanAttribute });
+
   columns: ColumnDef[] = [
-    { field: 'handle', header: 'Reorder' },
     { field: 'roleName', header: 'Role' },
     { field: 'usageCount', header: 'In use' },
     { field: 'isDefault', header: 'Default' },
-    { field: 'isActive', header: 'Active' },
-    { field: 'actions', header: 'Actions' }
+    { field: 'isActive', header: 'Status' },
+    { field: 'actions', header: '' },
   ];
 
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<ContactPersonRole[]>([]);
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly editingId = signal<number | null>(null);

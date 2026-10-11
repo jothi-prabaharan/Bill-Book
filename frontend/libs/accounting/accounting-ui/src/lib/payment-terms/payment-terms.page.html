@@ -1,30 +1,13 @@
-<header class="page-head">
-  <h1>Payment terms</h1>
-  <div class="head-actions">
-    <bb-checkbox
-      text="Show inactive"
-      [(ngModel)]="showInactive"
-      (ngModelChange)="load()"
-    />
-    <button class="btn btn-primary" type="button" (click)="openAdd()" [disabled]="busy()">+ Add term</button>
-  </div>
-</header>
+<bb-register-header title="Payment terms" [count]="rows().length" newLabel="New term" [newDisabled]="busy()" (create)="openAdd()" />
+
+<bb-status-tabs label="Payment term status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message()) {
-  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
-@if (!canReorder) {
-  <bb-info-tooltip text="Drag to reorder is available while inactive terms are hidden."></bb-info-tooltip>
-}
-
-<div>
-  <bb-data-grid fillHeight [gridCode]="'PAYMENT_TERMS'" [columns]="columns" [data]="rows()">
-    <ng-template bbCellTemplate="handle" let-row>
-      <div [class.inactive]="!row.isActive">
-        <span class="handle" Handle [class.disabled]="!canReorder" aria-hidden="true">⠿</span>
-      </div>
-    </ng-template>
+<section class="register-card">
+  <bb-data-grid register fillHeight flush stackOnPhone label="Payment terms" [gridCode]="'PAYMENT_TERMS'" [columns]="columns" [data]="visibleRows()">
     <ng-template bbCellTemplate="termName" let-row>
       <div [class.inactive]="!row.isActive">
         {{ row.termName }}
@@ -79,7 +62,7 @@
       </div>
     </ng-template>
   </bb-data-grid>
-</div>
+</section>
 
 @if (formOpen()) {
   <div class="sheet">

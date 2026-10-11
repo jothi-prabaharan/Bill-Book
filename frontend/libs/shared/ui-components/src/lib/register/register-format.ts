@@ -133,3 +133,21 @@ export function registerStatusTone(status: string): string {
       return 'tag-outline';
   }
 }
+
+/**
+ * A master's two states, as register tabs (TK-190). A master list loads its
+ * inactive rows too and filters on the tab, so both counts are always right.
+ */
+export const MASTER_STATUSES: readonly RegisterStatusOption[] = [
+  { value: 'Active', label: 'Active' },
+  { value: 'Inactive', label: 'Inactive' },
+];
+
+export function masterStatus(row: { isActive: boolean }): string {
+  return row.isActive ? 'Active' : 'Inactive';
+}
+
+/** The rows a tab shows: every row for All (''), else those in that status. */
+export function rowsInStatus<T>(rows: readonly T[], status: string, statusOf: (row: T) => string): T[] {
+  return status ? rows.filter((row) => statusOf(row) === status) : [...rows];
+}

@@ -5,6 +5,14 @@ import {
   DataGridComponent,
   NumberInputComponent,
   TextInputComponent,
+  DataGridCellTemplateDirective,
+  MASTER_STATUSES,
+  MessageBoxComponent,
+  RegisterHeaderComponent,
+  StatusTabsComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -50,13 +58,19 @@ interface UomType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-unit-types-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './unit-types.page.html',
   styleUrl: './unit-types.page.scss',
 })
@@ -64,11 +78,10 @@ export class UnitTypesPage implements OnInit {
   private readonly http = inject(HttpClient);
 
   columns: ColumnDef[] = [
-    { field: 'handle', header: '' },
     { field: 'uomTypeName', header: 'Type' },
     { field: 'baseUnit', header: 'Base unit' },
     { field: 'unitsCount', header: 'Units', type: 'number' },
-    { field: 'isActive', header: 'Active' },
+    { field: 'isActive', header: 'Status' },
     { field: 'actions', header: '' },
   ];
 
@@ -79,11 +92,15 @@ export class UnitTypesPage implements OnInit {
     { field: 'uqcCode', header: 'UQC' },
     { field: 'conversionToBase', header: 'Factor to base', type: 'number' },
     { field: 'decimalPlaces', header: 'Decimals', type: 'number' },
-    { field: 'isActive', header: 'Active' },
+    { field: 'isActive', header: 'Status' },
     { field: 'actions', header: '' },
   ];
 
   protected readonly types = signal<UomType[]>([]);
+  /** The register's tabs (TK-190): every type is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.types(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleTypes = computed(() => rowsInStatus(this.types(), this.status(), masterStatus));
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
@@ -95,7 +112,6 @@ export class UnitTypesPage implements OnInit {
     return id ? this.types().find(t => t.uomTypeId === id) ?? null : null;
   });
 
-  showInactive = false;
   newTypeName = '';
   newUnit = this.blankUnit();
   editUnit = this.blankUnit();
@@ -107,7 +123,7 @@ export class UnitTypesPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      this.types.set(await this.get<UomType[]>(`/api/uom-types?includeInactive=${this.showInactive}`));
+      this.types.set(await this.get<UomType[]>('/api/uom-types?includeInactive=true'));
     } catch {
       this.fail('Could not load unit types.');
     } finally {
@@ -247,7 +263,7 @@ export class UnitTypesPage implements OnInit {
   }
 
   protected get canReorder(): boolean {
-    return !this.showInactive;
+    return this.status() === 'Active';
   }
 
   /** What one of this unit is worth in the type's base unit, spelled out. */

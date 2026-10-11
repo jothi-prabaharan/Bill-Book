@@ -1,6 +1,15 @@
-<header class="page-head">
-  <h1>Metal purities</h1>
-  <div class="head-actions">
+<bb-register-header title="Metal purities" [count]="rows().length" newLabel="New purity" [newDisabled]="busy()" (create)="startAdd()" />
+
+<bb-status-tabs label="Purity status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
+
+@if (message()) {
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
+}
+
+<bb-info-tooltip text="The factor is the fraction of pure metal — 22K is 0.9160. It multiplies the pure-metal rate to price a piece, so it is fixed once an item uses it."></bb-info-tooltip>
+
+<section class="register-card">
+  <div class="register-toolbar">
     <bb-select
       ariaLabel="Filter by metal"
       placeholder="All metals"
@@ -8,58 +17,43 @@
       [(ngModel)]="metalFilter"
       (ngModelChange)="load()"
     />
-    <bb-checkbox
-      text="Show inactive"
-      [(ngModel)]="showInactive"
-      (ngModelChange)="load()"
-    />
-    <button class="btn btn-primary" type="button" (click)="startAdd()" [disabled]="busy()">+ Add purity</button>
   </div>
-</header>
 
-@if (message()) {
-  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
-}
-
-<bb-info-tooltip text="The factor is the fraction of pure metal — 22K is 0.9160. It multiplies the pure-metal rate to price a piece, so it is fixed once an item uses it."></bb-info-tooltip>
-
-<bb-data-grid fillHeight [gridCode]="'METAL_PURITIES'" [columns]="columns" [data]="rows()">
-  <ng-template bbCellTemplate="handle" let-row>
-    <span class="handle" aria-hidden="true">⠿</span>
-  </ng-template>
-
-  <ng-template bbCellTemplate="metalType" let-row>
-    <div [class.inactive]="!row.isActive">{{ row.metalType }}</div>
-  </ng-template>
-
-  <ng-template bbCellTemplate="purityName" let-row>
-    <div [class.inactive]="!row.isActive">
-      {{ row.purityName }}
-      @if (row.isSystem) {
-        <span class="badge">Built-in</span>
-      }
-    </div>
-  </ng-template>
-
-  <ng-template bbCellTemplate="purityFactor" let-row>
-    <div class="num" [class.inactive]="!row.isActive">{{ row.purityFactor }}</div>
-  </ng-template>
-
-  <ng-template bbCellTemplate="isActive" let-row>
-    <div [class.inactive]="!row.isActive">{{ row.isActive ? 'Active' : 'Inactive' }}</div>
-  </ng-template>
-
-  <ng-template bbCellTemplate="actions" let-row>
-    <div [class.inactive]="!row.isActive">
-      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
-      @if (!row.isSystem) {
-        <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
-          Delete
-        </button>
-      }
-    </div>
-  </ng-template>
-</bb-data-grid>
+  <bb-data-grid register fillHeight flush stackOnPhone label="Metal purities" [gridCode]="'METAL_PURITIES'" [columns]="columns" [data]="visibleRows()">
+  
+    <ng-template bbCellTemplate="metalType" let-row>
+      <div [class.inactive]="!row.isActive">{{ row.metalType }}</div>
+    </ng-template>
+  
+    <ng-template bbCellTemplate="purityName" let-row>
+      <div [class.inactive]="!row.isActive">
+        {{ row.purityName }}
+        @if (row.isSystem) {
+          <span class="badge">Built-in</span>
+        }
+      </div>
+    </ng-template>
+  
+    <ng-template bbCellTemplate="purityFactor" let-row>
+      <div class="num" [class.inactive]="!row.isActive">{{ row.purityFactor }}</div>
+    </ng-template>
+  
+    <ng-template bbCellTemplate="isActive" let-row>
+      <div [class.inactive]="!row.isActive">{{ row.isActive ? 'Active' : 'Inactive' }}</div>
+    </ng-template>
+  
+    <ng-template bbCellTemplate="actions" let-row>
+      <div [class.inactive]="!row.isActive">
+        <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+        @if (!row.isSystem) {
+          <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+            Delete
+          </button>
+        }
+      </div>
+    </ng-template>
+  </bb-data-grid>
+</section>
 
 @if (editingId() !== null) {
   <div class="sheet narrow">

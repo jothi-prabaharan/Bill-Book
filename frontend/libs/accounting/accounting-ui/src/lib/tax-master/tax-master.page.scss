@@ -41,3 +41,6 @@ fieldset { border: 1px solid var(--color-divider); border-radius: 8px; display: 
   .num { text-align: left; }
   .row-actions { justify-content: flex-start; }
 }
+
+/* Three links in a register cell, which does not wrap by default (TK-190). */
+.row-actions { display: flex; flex-wrap: wrap; gap: .25rem .75rem; white-space: normal; }

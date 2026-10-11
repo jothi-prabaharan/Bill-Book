@@ -7,6 +7,9 @@ import {
   MessageBoxComponent,
   SearchInputComponent,
   SelectComponent,
+  DataGridCellTemplateDirective,
+  DataGridService,
+  RegisterHeaderComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -61,14 +64,18 @@ const PAGE_SIZE = 50;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-hsn-sac-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     FormsModule,
     SearchInputComponent,
     CheckboxComponent,
     SelectComponent,
     MessageBoxComponent,
+    DataGridCellTemplateDirective,
+    RegisterHeaderComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './hsn-sac.page.html',
   styleUrl: './hsn-sac.page.scss',
 })
@@ -89,12 +96,13 @@ export class HsnSacPage implements OnInit {
 
   protected readonly rows = signal<HsnSacCode[]>([]);
   protected readonly total = signal(0);
-  protected readonly skip = signal(0);
+  /** The grid's page, from one, and its page size, remembered per grid (TK-190). */
+  protected readonly page = signal(1);
+  protected readonly pageSize = signal(inject(DataGridService).loadState('HSN_SAC')?.pageSize ?? PAGE_SIZE);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly coverage = signal<Coverage | null>(null);
 
-  protected readonly pageSize = PAGE_SIZE;
 
   /** True while the detailed nomenclature has not been imported. */
   protected readonly awaitingImport = computed(() => {
@@ -102,14 +110,6 @@ export class HsnSacPage implements OnInit {
     return c !== null && c.hsnCodes === 0;
   });
 
-  protected readonly showingFrom = computed(() =>
-    this.total() === 0 ? 0 : this.skip() + 1,
-  );
-  protected readonly showingTo = computed(() =>
-    Math.min(this.skip() + this.rows().length, this.total()),
-  );
-  protected readonly hasPrevious = computed(() => this.skip() > 0);
-  protected readonly hasNext = computed(() => this.skip() + this.rows().length < this.total());
 
   search = '';
   codeType = '';
@@ -123,18 +123,18 @@ export class HsnSacPage implements OnInit {
 
   /** Any filter change restarts at the first page — page 4 of a new search is meaningless. */
   async applyFilters(): Promise<void> {
-    this.skip.set(0);
+    this.page.set(1);
     await this.load();
   }
 
-  async previous(): Promise<void> {
-    this.skip.set(Math.max(0, this.skip() - PAGE_SIZE));
+  protected async onPageChange(page: number): Promise<void> {
+    this.page.set(page);
     await this.load();
   }
 
-  async next(): Promise<void> {
-    this.skip.set(this.skip() + PAGE_SIZE);
-    await this.load();
+  /** The grid moves itself to page one and says so through pageChange, which reloads. */
+  protected onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
   }
 
   async load(): Promise<void> {
@@ -144,8 +144,8 @@ export class HsnSacPage implements OnInit {
     const query = new URLSearchParams({
       includeChapters: String(this.includeChapters),
       includeInactive: String(this.includeInactive),
-      skip: String(this.skip()),
-      take: String(PAGE_SIZE),
+      skip: String(Math.max(0, (this.page() - 1) * this.pageSize())),
+      take: String(this.pageSize()),
     });
 
     if (this.search.trim()) {

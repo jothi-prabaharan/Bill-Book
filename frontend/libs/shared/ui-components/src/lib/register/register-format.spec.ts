@@ -7,6 +7,9 @@ import {
   registerStatusLabel,
   registerStatusTone,
   statusTabsFromCounts,
+  MASTER_STATUSES,
+  masterStatus,
+  rowsInStatus,
 } from './register-format';
 
 /** How a register writes its figures and counts its tabs (TK-187). */
@@ -88,5 +91,32 @@ describe('register-format', () => {
     expect(registerStatusTone('Void')).toBe('tag-outline');
     expect(registerStatusLabel('ReadyToPost')).toBe('Ready to post');
     expect(registerStatusLabel('PartlyReceived')).toBe('PartlyReceived');
+  });
+});
+
+/** The master lists' tabs (TK-190). */
+describe('master statuses', () => {
+  const rows = [
+    { name: 'Coimbatore', isActive: true },
+    { name: 'Hosur', isActive: true },
+    { name: 'Old godown', isActive: false },
+  ];
+
+  it('MSTAT-01: a row is Active or Inactive by its flag', () => {
+    expect(rows.map(masterStatus)).toEqual(['Active', 'Active', 'Inactive']);
+  });
+
+  it('MSTAT-02: the tabs count every row, so both are right whichever is open', () => {
+    expect(countStatusTabs(rows, MASTER_STATUSES, masterStatus).map((t) => [t.value, t.count])).toEqual([
+      ['', 3],
+      ['Active', 2],
+      ['Inactive', 1],
+    ]);
+  });
+
+  it('MSTAT-03: a tab shows its own rows, and All shows every row', () => {
+    expect(rowsInStatus(rows, 'Inactive', masterStatus).map((r) => r.name)).toEqual(['Old godown']);
+    expect(rowsInStatus(rows, '', masterStatus)).toHaveLength(3);
+    expect(rowsInStatus(rows, 'Active', masterStatus)).not.toBe(rows);
   });
 });

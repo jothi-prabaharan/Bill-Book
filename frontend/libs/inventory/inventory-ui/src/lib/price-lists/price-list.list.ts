@@ -1,12 +1,20 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import {
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
+  RegisterHeaderComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 
 interface PriceList {
@@ -20,27 +28,37 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
 @Component({
   selector: 'bb-price-list-list',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     CommonModule,
     FormsModule,
     DataGridComponent,
     TextInputComponent,
     CheckboxComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './price-list.list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PriceListListComponent implements OnInit {
   columns: ColumnDef[] = [
-    { field: 'name', header: 'Tier Name' },
+    { field: 'name', header: 'Tier name' },
     { field: 'description', header: 'Description' },
     { field: 'active', header: 'Status' },
-    { field: 'actions', header: 'Actions' }
+    { field: 'actions', header: '' }
   ];
 
   private readonly http = inject(HttpClient);
   
   protected readonly rows = signal<PriceList[]>([]);
+  /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);

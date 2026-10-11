@@ -7,9 +7,17 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
+  RegisterHeaderComponent,
   SelectComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 
 interface Category {
@@ -44,13 +52,19 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-item-categories-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
     SelectComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './item-categories.page.html',
   styleUrl: './item-categories.page.scss',
 })
@@ -85,25 +99,27 @@ export class ItemCategoriesPage implements OnInit {
     this.types().map((type) => ({ value: type.uomTypeId, label: type.uomTypeName })),
   );
   columns: ColumnDef[] = [
-    { field: 'handle', header: 'Reorder' },
     { field: 'categoryName', header: 'Category' },
     { field: 'categoryCode', header: 'Code' },
     { field: 'defaultItemProfile', header: 'Default profile' },
     { field: 'defaultCostingType', header: 'Default costing' },
     { field: 'itemCount', header: 'Items' },
-    { field: 'active', header: 'Active' },
-    { field: 'actions', header: 'Actions' },
+    { field: 'active', header: 'Status' },
+    { field: 'actions', header: '' },
   ];
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<Category[]>([]);
+  /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
   protected readonly types = signal<UomType[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
   protected readonly editingId = signal<number | null>(null);
 
-  showInactive = false;
   form = this.blank();
 
   ngOnInit(): void {
@@ -115,7 +131,7 @@ export class ItemCategoriesPage implements OnInit {
     this.busy.set(true);
     try {
       this.rows.set(
-        await this.get<Category[]>(`/api/item-categories?includeInactive=${this.showInactive}`),
+        await this.get<Category[]>('/api/item-categories?includeInactive=true'),
       );
     } catch {
       this.fail('Could not load categories.');

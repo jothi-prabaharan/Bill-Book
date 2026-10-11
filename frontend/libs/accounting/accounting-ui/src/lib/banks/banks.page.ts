@@ -1,9 +1,17 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
+  RegisterHeaderComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -30,11 +38,16 @@ interface Bank {
   selector: 'bb-banks-page',
   standalone: true,
   imports: [
+    DataGridCellTemplateDirective,
     DataGridComponent,
     FormsModule,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
     TextInputComponent,
     CheckboxComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './banks.page.html',
   styleUrl: './banks.page.scss',
 })
@@ -47,15 +60,18 @@ export class BanksPage implements OnInit {
   protected readonly messageIsError = signal(false);
   protected readonly editingId = signal<number | null>(null);
 
-  showInactive = false;
+  /** The register's tabs (TK-190): every bank is loaded and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
+
   form = { bankCode: '', bankName: '', isActive: true };
 
   columns: ColumnDef[] = [
-    { field: 'handle', header: '', isTemplate: true },
     { field: 'code', header: 'Code', isTemplate: true },
     { field: 'bank', header: 'Bank', isTemplate: true },
     { field: 'accounts', header: 'Accounts', type: 'number', isTemplate: true },
-    { field: 'active', header: 'Active', isTemplate: true },
+    { field: 'active', header: 'Status', isTemplate: true },
     { field: 'actions', header: '', isTemplate: true },
   ];
 
@@ -66,7 +82,7 @@ export class BanksPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      this.rows.set(await this.get<Bank[]>(`/api/banks?includeInactive=${this.showInactive}`));
+      this.rows.set(await this.get<Bank[]>('/api/banks?includeInactive=true'));
     } catch {
       this.fail('Could not load banks.');
     } finally {

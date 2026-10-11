@@ -1,13 +1,20 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
   NumberInputComponent,
+  RegisterHeaderComponent,
   SelectComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -35,7 +42,8 @@ interface Purity {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-metal-purities-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
     FormsModule,
@@ -43,7 +51,11 @@ interface Purity {
     NumberInputComponent,
     CheckboxComponent,
     SelectComponent,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './metal-purities.page.html',
   styleUrl: './metal-purities.page.scss',
 })
@@ -64,22 +76,24 @@ export class MetalPuritiesPage implements OnInit {
   private readonly http = inject(HttpClient);
 
   columns: ColumnDef[] = [
-    { field: 'handle', header: 'Reorder' },
     { field: 'metalType', header: 'Metal' },
     { field: 'purityName', header: 'Purity' },
     { field: 'purityFactor', header: 'Factor' },
-    { field: 'isActive', header: 'Active' },
-    { field: 'actions', header: 'Actions' }
+    { field: 'isActive', header: 'Status' },
+    { field: 'actions', header: '' }
   ];
 
   protected readonly rows = signal<Purity[]>([]);
+  /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
   protected readonly editingId = signal<number | null>(null);
 
   metalFilter = '';
-  showInactive = false;
   form = { metalType: 'Gold', purityName: '', purityFactor: 0.916, isActive: true };
 
   ngOnInit(): void {
@@ -89,7 +103,7 @@ export class MetalPuritiesPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      const query = `includeInactive=${this.showInactive}` +
+      const query = 'includeInactive=true' +
         (this.metalFilter ? `&metalType=${this.metalFilter}` : '');
       this.rows.set(await this.get<Purity[]>(`/api/metal-purities?${query}`));
     } catch {

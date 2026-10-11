@@ -1,56 +1,33 @@
-<header class="page-head">
-  <h1>Banks</h1>
-  <div class="head-actions">
-    <bb-checkbox
-      text="Show inactive"
-      [(ngModel)]="showInactive"
-      (ngModelChange)="load()"
-    />
-    <button class="btn btn-primary" type="button" (click)="startAdd()" [disabled]="busy()">+ Add bank</button>
-  </div>
-</header>
+<bb-register-header title="Banks" [count]="rows().length" newLabel="New bank" [newDisabled]="busy()" (create)="startAdd()" />
+
+<bb-status-tabs label="Bank status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message()) {
-  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
-<bb-data-grid fillHeight [gridCode]="'BANKS'" [columns]="columns" [data]="rows()">
-  <ng-template bbCellTemplate="handle" let-row>
-    <div [class.inactive]="!row.isActive">
-      <span class="handle" Handle aria-hidden="true">⠿</span>
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="code" let-row>
-    <div [class.inactive]="!row.isActive">
+<section class="register-card">
+  <bb-data-grid register fillHeight flush stackOnPhone label="Banks" [gridCode]="'BANKS'" [columns]="columns" [data]="visibleRows()">
+    <ng-template bbCellTemplate="code" let-row>
       <code>{{ row.bankCode }}</code>
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="bank" let-row>
-    <div [class.inactive]="!row.isActive">
+    </ng-template>
+    <ng-template bbCellTemplate="bank" let-row>
       {{ row.bankName }}
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="accounts" let-row>
-    <div [class.inactive]="!row.isActive">
+    </ng-template>
+    <ng-template bbCellTemplate="accounts" let-row>
       {{ row.accountCount }}
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="active" let-row>
-    <div [class.inactive]="!row.isActive">
-      {{ row.isActive ? 'Active' : 'Inactive' }}
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="actions" let-row>
-    <div [class.inactive]="!row.isActive">
+    </ng-template>
+    <ng-template bbCellTemplate="active" let-row>
+      <span class="tag" [class.tag-success]="row.isActive" [class.tag-neutral]="!row.isActive">{{ row.isActive ? 'Active' : 'Inactive' }}</span>
+    </ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
       <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
       @if (row.accountCount === 0) {
-        <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
-          Delete
-        </button>
+        <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">Delete</button>
       }
-    </div>
-  </ng-template>
-</bb-data-grid>
+    </ng-template>
+  </bb-data-grid>
+</section>
 
 @if (editingId() !== null) {
   <div class="sheet narrow">

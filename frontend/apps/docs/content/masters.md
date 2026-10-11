@@ -575,7 +575,7 @@ Seeded roles arrive with each branch. They can be **renamed but never deleted**,
 
 ## Order is the dropdown's order
 
-Drag to reorder. The order here is the order the role dropdown offers on a contact person, so the two or three used constantly can sit at the top instead of being hunted for alphabetically.
+The order here is the order the role dropdown offers on a contact person, so the two or three used constantly can sit at the top instead of being hunted for alphabetically. The list cannot be dragged into a new order yet: the handle it once showed did nothing, and was removed with the register design (TK-190).
 
 One role can be the **default**, preselected on a new contact-person row. Zero is also fine.
 

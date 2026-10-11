@@ -1,57 +1,26 @@
-<nav aria-label="Inventory views" class="flex flex-wrap mb-3 gap-6px">
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="tabFilter === 'itm' ? 'true' : null" (click)="tabFilter = 'itm'; load()">Items</button>
-    <button class="btn btn-secondary" type="button" title="New item" aria-label="New item" (click)="openAdd()" [disabled]="busy()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-    </button>
-  </span>
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="tabFilter === 'low' ? 'true' : null" (click)="tabFilter = 'low'; load()">Below reorder level</button>
-  </span>
-  <span class="tabgrp">
-    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="tabFilter === 'adj' ? 'true' : null" (click)="tabFilter = 'adj'; load()">Stock adjustments</button>
-    <button class="btn btn-secondary" type="button" title="New adjustment" aria-label="New adjustment">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-    </button>
-  </span>
-</nav>
-
-<div class="actbar">
-  <bb-search-input  [(ngModel)]="search" (keyup.enter)="load()" placeholder="Search this list" aria-label="Search items" class="w-auto flex-1 input text-sm actbar-search"/>
-  
-  <bb-select
-    ariaLabel="Filter by status"
-    class="w-auto text-sm actbar-select"
-    placeholder=""
-    [options]="statusFilterOptions"
-    [(ngModel)]="statusFilter"
-    (ngModelChange)="load()"
-  />
-
+<bb-register-header title="Items" [count]="rows().length" newLabel="New item" [newDisabled]="busy()" (create)="openAdd()">
   <bb-export-import />
+</bb-register-header>
 
-  <button type="button" class="btn btn-secondary" (click)="openListLabels()" [disabled]="rows().length === 0">
-    Print labels{{ labelPicks().size > 0 ? ' (' + labelPicks().size + ')' : '' }}
-  </button>
-</div>
-
+<bb-status-tabs label="Item status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message()) {
-  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
-<div class="card bg-surface">
-  <bb-data-grid fillHeight flush [gridCode]="'ITEMS'" [columns]="gridColumns()" [data]="gridRows()" (rowClick)="openEdit($event)">
-    <ng-template bbCellTemplate="pick" let-row>
-      <span (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
-        <bb-checkbox
-          name="labelPick"
-          [ariaLabel]="'Print a label for ' + row.itemName"
-          [ngModel]="labelPicks().has(row.itemId)"
-          (ngModelChange)="toggleLabel(row.itemId, $event)"
-        />
-      </span>
-    </ng-template>
+<section class="register-card">
+  <div class="register-toolbar">
+    <bb-search-input [(ngModel)]="search" (keyup.enter)="load()" placeholder="Code or name" ariaLabel="Search items" />
+    <div class="register-toolbar-end">
+      <!-- Ticked rows get labels; with none ticked, every item on the tab does (TK-159). -->
+      <button type="button" class="btn btn-secondary" (click)="openListLabels()" [disabled]="visibleRows().length === 0">
+        Print labels{{ labelPicks().size > 0 ? ' (' + labelPicks().size + ')' : '' }}
+      </button>
+    </div>
+  </div>
+
+  <bb-data-grid register fillHeight flush stackOnPhone label="Items" [gridCode]="'ITEMS'" [columns]="gridColumns()" [data]="gridRows()"
+    (rowClick)="openEdit($event)" (selectionChange)="pickLabels($event)">
     <ng-template bbCellTemplate="itemCode" let-row>
       {{ row.itemCode }}
     </ng-template>
@@ -71,7 +40,7 @@
       <span class="tabular-nums">—</span>
     </ng-template>
   </bb-data-grid>
-</div>
+</section>
 
 @if (editorOpen()) {
   <div class="sheet">

@@ -1,12 +1,20 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
+  MASTER_STATUSES,
+  MessageBoxComponent,
   NumberInputComponent,
+  RegisterHeaderComponent,
   SelectComponent,
+  StatusTabsComponent,
   TextInputComponent,
+  countStatusTabs,
+  masterStatus,
+  rowsInStatus,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -59,14 +67,20 @@ type FormModel = Pick<
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-payment-terms-page',
   standalone: true,
-  imports: [InfoTooltipComponent, 
+  imports: [
+    InfoTooltipComponent,
     DataGridComponent,
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
     SelectComponent,
+    DataGridCellTemplateDirective,
+    MessageBoxComponent,
+    RegisterHeaderComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './payment-terms.page.html',
   styleUrl: './payment-terms.page.scss',
 })
@@ -81,6 +95,10 @@ export class PaymentTermsPage implements OnInit {
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<PaymentTerm[]>([]);
+  /** The register's tabs (TK-190): every row is loaded, inactive ones too, and the tab filters. */
+  protected readonly status = signal('Active');
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
+  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
@@ -89,18 +107,16 @@ export class PaymentTermsPage implements OnInit {
   protected readonly editingIsSystem = signal(false);
 
   columns: ColumnDef[] = [
-    { field: 'handle', header: '', width: '40px' },
     { field: 'termName', header: 'Name' },
     { field: 'rule', header: 'Rule' },
     { field: 'sampleDueDate', header: 'Due for a bill dated today' },
     { field: 'discount', header: 'Discount' },
     { field: 'usedOn', header: 'Used on' },
     { field: 'default', header: 'Default' },
-    { field: 'isActive', header: 'Active' },
+    { field: 'isActive', header: 'Status' },
     { field: 'actions', header: '' }
   ];
 
-  showInactive = false;
   form: FormModel = this.blank();
 
   ngOnInit(): void {
@@ -111,7 +127,7 @@ export class PaymentTermsPage implements OnInit {
     this.busy.set(true);
     try {
       this.rows.set(
-        await this.get<PaymentTerm[]>(`/api/payment-terms?includeInactive=${this.showInactive}`),
+        await this.get<PaymentTerm[]>('/api/payment-terms?includeInactive=true'),
       );
     } catch {
       this.fail('Could not load payment terms.');
@@ -214,8 +230,9 @@ export class PaymentTermsPage implements OnInit {
     }
   }
 
+  /** Reordering moves a row among the ones on screen, so only the Active tab offers it. */
   protected get canReorder(): boolean {
-    return !this.showInactive;
+    return this.status() === 'Active';
   }
 
   /** Plain-English summary of the rule, so the grid does not need four columns for it. */

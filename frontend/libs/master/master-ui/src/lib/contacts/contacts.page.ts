@@ -12,9 +12,15 @@ import {
   DataGridComponent,
   ExportImportComponent,
   MessageBoxComponent,
+  MoneyCellComponent,
+  RegisterHeaderComponent,
+  RegisterStatusOption,
   SearchInputComponent,
   SelectComponent,
+  StatusTabsComponent,
+  countStatusTabs,
   customListColumns,
+  rowsInStatus,
   withCustomColumns,
 } from '@bill-book/ui-components';
 
@@ -52,6 +58,11 @@ interface ContactListItem {
  * The list only. A contact opens on its own page, `/contacts/new` and
  * `/contacts/:id` (TK-188), which is where it is edited and saved. Drafts are
  * listed here, marked, and nowhere else.
+ *
+ * In the register design (TK-190): every contact is loaded, inactive and
+ * draft ones included, and the status tabs filter them, so each tab's count is
+ * right. Search and role still go to the server, which also searches the
+ * branch's searchable custom fields.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,9 +74,13 @@ interface ContactListItem {
     ExportImportComponent,
     FormsModule,
     MessageBoxComponent,
+    MoneyCellComponent,
+    RegisterHeaderComponent,
     SearchInputComponent,
     SelectComponent,
+    StatusTabsComponent,
   ],
+  host: { class: 'register-page' },
   templateUrl: './contacts.page.html',
   styleUrl: './contacts.page.scss',
 })
@@ -80,34 +95,49 @@ export class ContactsPage implements OnInit {
   /** The branch's custom fields on contacts (TK-111): list columns and search. */
   protected readonly customFieldDefs = signal<CustomFieldDefinition[]>([]);
   protected readonly gridColumns = computed<ColumnDef[]>(() => [...this.columns, ...customListColumns(this.customFieldDefs())]);
-  protected readonly gridRows = computed(() => withCustomColumns(this.rows(), this.customFieldDefs()));
+
+  /** Active first: a list that opens on contacts nobody uses any more reads as clutter. */
+  protected readonly status = signal('Active');
+  private readonly statuses: readonly RegisterStatusOption[] = [
+    { value: 'Active', label: 'Active' },
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Inactive', label: 'Inactive' },
+  ];
+  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), this.statuses, (row) => this.statusOf(row)));
+  protected readonly gridRows = computed(() =>
+    withCustomColumns(rowsInStatus(this.rows(), this.status(), (row) => this.statusOf(row)), this.customFieldDefs()),
+  );
+
+  /** Every role, with guardians only in a School branch (TK-60). */
+  protected readonly roleOptions = computed<BbSelectOption<string>[]>(() => [
+    { value: '', label: 'Every role' },
+    { value: 'customer', label: 'Customers' },
+    { value: 'vendor', label: 'Vendors' },
+    { value: 'jobworker', label: 'Job workers' },
+    { value: 'prescriber', label: 'Prescribers' },
+    ...(this.isSchool() ? [{ value: 'guardian', label: 'Guardians' }] : []),
+  ]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
 
-  protected readonly statusFilterOptions: BbSelectOption<string>[] = [
-    { value: 'active', label: 'Active only' },
-    { value: 'any', label: 'Any status' },
-  ];
-
   search = '';
   roleFilter = '';
-  showInactive = false;
 
   columns: ColumnDef[] = [
-    { field: 'contactCode', header: 'CONTACT CODE' },
-    { field: 'nameGstin', header: 'NAME · GSTIN' },
-    { field: 'city', header: 'CITY' },
-    { field: 'role', header: 'ROLE' },
-    { field: 'outstanding', header: 'OUTSTANDING', dataType: 'money' },
-    { field: 'creditLimit', header: 'CREDIT LIMIT', dataType: 'money' },
+    { field: 'contactCode', header: 'Code' },
+    { field: 'nameGstin', header: 'Name · GSTIN' },
+    { field: 'city', header: 'City' },
+    { field: 'role', header: 'Role' },
+    { field: 'status', header: 'Status' },
+    { field: 'creditLimit', header: 'Credit limit', dataType: 'money', align: 'right' },
   ];
 
-  protected get statusFilter(): string {
-    return this.showInactive ? 'any' : 'active';
+  protected statusOf(row: ContactListItem): string {
+    return row.isDraft ? 'Draft' : row.isActive ? 'Active' : 'Inactive';
   }
 
-  protected set statusFilter(value: string) {
-    this.showInactive = value === 'any';
+  protected statusTone(row: ContactListItem): string {
+    return row.isDraft ? 'tag-warning' : row.isActive ? 'tag-success' : 'tag-neutral';
   }
 
   /** Guardians are School's (TK-60): the filter shows only in a School branch. */
@@ -139,8 +169,9 @@ export class ContactsPage implements OnInit {
       const query = new URLSearchParams();
       if (this.search.trim()) query.set('search', this.search.trim());
       if (this.roleFilter) query.set('role', this.roleFilter);
-      query.set('includeInactive', String(this.showInactive));
-      // This screen is the one place drafts are listed (TK-188).
+      // Every status, filtered by the tabs; this screen is the one place
+      // drafts are listed (TK-188).
+      query.set('includeInactive', 'true');
       query.set('includeDrafts', 'true');
 
       this.rows.set(await this.get<ContactListItem[]>(`/api/contacts?${query}`));

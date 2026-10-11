@@ -1,104 +1,93 @@
-<header class="page-head">
-  <h1>Bank accounts</h1>
-  <div class="head-actions">
-    <bb-checkbox
-      text="Show inactive"
-      [(ngModel)]="showInactive"
-      (ngModelChange)="load()"
-    />
-    <button class="btn btn-primary" type="button" (click)="startAdd()" [disabled]="busy()">+ Add account</button>
-  </div>
-</header>
+<bb-register-header title="Bank accounts" [count]="rows().length" newLabel="New account" [newDisabled]="busy()" (create)="startAdd()" />
+
+<bb-status-tabs label="Bank account status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message()) {
-  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+  <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
 <bb-info-tooltip text="Each account has its own ledger account, created automatically. Balances come from the ledger — nothing here stores one."></bb-info-tooltip>
 
-<bb-data-grid fillHeight [gridCode]="'BANK_ACCOUNTS'" [columns]="columns" [data]="rows()">
-  <ng-template bbCellTemplate="handle" let-row>
-    <div [class.inactive]="!row.isActive">
-      <span class="handle" Handle aria-hidden="true">⠿</span>
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="account" let-row>
-    <div [class.inactive]="!row.isActive">
-      {{ row.accountName }}
-      <span class="sub">{{ row.currencyCode }}</span>
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="bank" let-row>
-    <div [class.inactive]="!row.isActive">
-      {{ row.bankName ?? '—' }}
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="number" let-row>
-    <div [class.inactive]="!row.isActive">
-      <code>{{ row.accountNumber }}</code>
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="type" let-row>
-    <div [class.inactive]="!row.isActive">
-      {{ row.accountType }}
-      @if (row.odLimit) {
-        <span class="sub">Limit {{ row.odLimit }}</span>
-      }
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="ifsc" let-row>
-    <div [class.inactive]="!row.isActive">
-      <code>{{ row.ifsc ?? '—' }}</code>
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="ledger" let-row>
-    <div [class.inactive]="!row.isActive">
-      @if (row.isLedgerLinked) {
-        <span class="badge">Linked</span>
-      } @else {
-        <span class="chip">Not linked</span>
-      }
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="default" let-row>
-    <div [class.inactive]="!row.isActive">
-      @if (row.isDefault) {
-        <span class="badge">Default</span>
-      } @else if (row.isActive) {
-        <button type="button" class="link" (click)="makeDefault(row)" [disabled]="busy()">Set</button>
-      }
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="online" let-row>
-    <div [class.inactive]="!row.isActive">
-      @if (row.isOnlinePaymentAccount) {
-        <span class="badge" title="Money customers pay on the portal lands here">Receives</span>
-      } @else if (row.isActive && row.isLedgerLinked) {
-        <button type="button" class="link" (click)="makeOnlinePayments(row)" [disabled]="busy()">Set</button>
-      }
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="active" let-row>
-    <div [class.inactive]="!row.isActive">
-      {{ row.isActive ? 'Active' : 'Inactive' }}
-    </div>
-  </ng-template>
-  <ng-template bbCellTemplate="actions" let-row>
-    <div [class.inactive]="!row.isActive">
-      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
-      @if (!row.isLedgerLinked) {
-        <button type="button" class="link" (click)="linkLedger(row)" [disabled]="busy()">
-          Link ledger
-        </button>
-      }
-      @if (row.isActive && !row.isDefault && !row.isOnlinePaymentAccount) {
-        <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
-          Deactivate
-        </button>
-      }
-    </div>
-  </ng-template>
-</bb-data-grid>
+<section class="register-card">
+  <bb-data-grid register fillHeight flush stackOnPhone label="Bank accounts" [gridCode]="'BANK_ACCOUNTS'" [columns]="columns" [data]="visibleRows()">
+    <ng-template bbCellTemplate="account" let-row>
+      <div [class.inactive]="!row.isActive">
+        {{ row.accountName }}
+        <span class="sub">{{ row.currencyCode }}</span>
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="bank" let-row>
+      <div [class.inactive]="!row.isActive">
+        {{ row.bankName ?? '—' }}
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="number" let-row>
+      <div [class.inactive]="!row.isActive">
+        <code>{{ row.accountNumber }}</code>
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="type" let-row>
+      <div [class.inactive]="!row.isActive">
+        {{ row.accountType }}
+        @if (row.odLimit) {
+          <span class="sub">Limit {{ row.odLimit }}</span>
+        }
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="ifsc" let-row>
+      <div [class.inactive]="!row.isActive">
+        <code>{{ row.ifsc ?? '—' }}</code>
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="ledger" let-row>
+      <div [class.inactive]="!row.isActive">
+        @if (row.isLedgerLinked) {
+          <span class="badge">Linked</span>
+        } @else {
+          <span class="chip">Not linked</span>
+        }
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="default" let-row>
+      <div [class.inactive]="!row.isActive">
+        @if (row.isDefault) {
+          <span class="badge">Default</span>
+        } @else if (row.isActive) {
+          <button type="button" class="link" (click)="makeDefault(row)" [disabled]="busy()">Set</button>
+        }
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="online" let-row>
+      <div [class.inactive]="!row.isActive">
+        @if (row.isOnlinePaymentAccount) {
+          <span class="badge" title="Money customers pay on the portal lands here">Receives</span>
+        } @else if (row.isActive && row.isLedgerLinked) {
+          <button type="button" class="link" (click)="makeOnlinePayments(row)" [disabled]="busy()">Set</button>
+        }
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="active" let-row>
+      <div [class.inactive]="!row.isActive">
+        {{ row.isActive ? 'Active' : 'Inactive' }}
+      </div>
+    </ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      <div [class.inactive]="!row.isActive">
+        <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+        @if (!row.isLedgerLinked) {
+          <button type="button" class="link" (click)="linkLedger(row)" [disabled]="busy()">
+            Link ledger
+          </button>
+        }
+        @if (row.isActive && !row.isDefault && !row.isOnlinePaymentAccount) {
+          <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
+            Deactivate
+          </button>
+        }
+      </div>
+    </ng-template>
+  </bb-data-grid>
+</section>
 
 @if (editingId() !== null) {
   <div class="sheet">
