@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Printing.Api.Services;
 using Printing.Repository.Repositories;
@@ -43,7 +43,7 @@ builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<PrintingDbContext>((sp, options) =>
 {
     options.UseNpgsql(
-        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "prt"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),

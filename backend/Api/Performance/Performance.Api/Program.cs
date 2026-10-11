@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Performance.Api.Services;
@@ -44,7 +44,7 @@ builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<PerformanceDbContext>((sp, options) =>
 {
     options.UseNpgsql(
-        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "prf"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),

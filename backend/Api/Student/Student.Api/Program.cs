@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Student.Api.Services;
 using Student.Repository.Repositories;
 using Student.Repository;
@@ -43,7 +43,7 @@ builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<StudentDbContext>((sp, options) =>
 {
     options.UseNpgsql(
-        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "sis"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),

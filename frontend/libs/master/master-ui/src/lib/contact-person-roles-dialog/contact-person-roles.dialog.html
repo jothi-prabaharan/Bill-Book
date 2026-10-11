@@ -1,13 +1,64 @@
-<!-- Pointer-only dismissal. The keyboard equivalent is Escape, handled on the
-     component host; the backdrop itself is decorative and aria-hidden, so it is
-     not something a screen reader should be offered in the first place. -->
 <div class="backdrop" aria-hidden="true" (click)="close()"></div>
 
-<div class="dialog" role="dialog" aria-label="Manage contact person roles">
+<div
+  class="dialog"
+  role="dialog"
+  [attr.aria-label]="currentMode() === 'add' ? 'Add contact person role' : currentMode() === 'edit' ? 'Edit contact person role' : 'Manage contact person roles'"
+>
   <header>
-    <h2>Contact person roles</h2>
+    <h2>
+      @if (currentMode() === 'add') {
+        Add contact person role
+      } @else if (currentMode() === 'edit') {
+        Edit contact person role
+      } @else {
+        Manage contact person roles
+      }
+    </h2>
     <button type="button" class="link" (click)="close()">Close</button>
   </header>
 
-  <bb-contact-person-roles-list />
+  @if (error(); as err) {
+    <bb-message-box [messages]="[{ tone: 'error', text: err }]" class="dialog-error" />
+  }
+
+  @if (currentMode() === 'add' || currentMode() === 'edit') {
+    <div class="dialog-body">
+      <div class="field">
+        <bb-text-input
+          id="roleNameInput"
+          label="Role name"
+          [required]="true"
+          [(ngModel)]="roleName"
+          maxlength="50"
+          placeholder="e.g. Accounts Manager, Billing Executive"
+          (keydown.enter)="saveRole()"
+        />
+      </div>
+    </div>
+
+    <footer class="dialog-actions">
+      <button type="button" class="link manage-link" (click)="switchToManage()">Manage all roles</button>
+      <div class="spacer"></div>
+      <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="busy()">Cancel</button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="saveRole()"
+        [disabled]="busy() || !roleName.trim()"
+      >
+        {{ busy() ? 'Saving…' : (currentMode() === 'edit' ? 'Update role' : 'Save role') }}
+      </button>
+    </footer>
+  } @else {
+    <div class="dialog-manage">
+      <bb-contact-person-roles-list (changed)="onRoleChangedInList()" />
+    </div>
+
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="switchToAdd()">+ Add new role</button>
+      <div class="spacer"></div>
+      <button type="button" class="btn btn-primary" (click)="close()">Done</button>
+    </footer>
+  }
 </div>

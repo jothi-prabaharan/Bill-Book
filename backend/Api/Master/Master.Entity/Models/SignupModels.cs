@@ -186,6 +186,13 @@ public class OrgContextResponse
     /// </summary>
     public string CustomerCode { get; set; } = null!;
 
+    /// <summary>
+    /// The physical database name for this customer, taken from mst.Customers.
+    /// Carried into the access token as database_name so per-customer services
+    /// know which database to connect to without querying Master.
+    /// </summary>
+    public string? DatabaseName { get; set; }
+
     public string OrgName { get; set; } = null!;
 
     public bool DatabaseReady { get; set; }

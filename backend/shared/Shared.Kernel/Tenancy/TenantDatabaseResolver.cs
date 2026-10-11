@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
@@ -6,22 +7,27 @@ namespace Shared.Kernel.Tenancy;
 
 public class TenantDatabaseResolver : ITenantDatabaseResolver
 {
+    private const int StrictTimeoutSeconds = 180; // 3 min strict for all APIs
     private readonly string _adminDbConnectionString;
     private readonly IMemoryCache _cache;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
 
-    public TenantDatabaseResolver(IConfiguration configuration, IMemoryCache cache)
+    public TenantDatabaseResolver(
+        IConfiguration configuration,
+        IMemoryCache cache,
+        IHttpContextAccessor? httpContextAccessor = null)
     {
         string rawConnectionString = configuration.GetConnectionString("AdminDatabase") 
                                      ?? throw new InvalidOperationException("ConnectionStrings:AdminDatabase is missing.");
         
         var builder = new NpgsqlConnectionStringBuilder(rawConnectionString);
-        if (builder.Timeout < 60)
+        if (builder.Timeout < StrictTimeoutSeconds)
         {
-            builder.Timeout = 60;
+            builder.Timeout = StrictTimeoutSeconds;
         }
-        if (builder.CommandTimeout < 120)
+        if (builder.CommandTimeout < StrictTimeoutSeconds)
         {
-            builder.CommandTimeout = 120;
+            builder.CommandTimeout = StrictTimeoutSeconds;
         }
         if (builder.KeepAlive == 0)
         {
@@ -29,21 +35,51 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
         }
         _adminDbConnectionString = builder.ConnectionString;
         _cache = cache;
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    public string GetConnectionString(Guid? customerId)
+    public string GetConnectionString(Guid? customerId) =>
+        GetConnectionString(customerId, null);
+
+    public string GetConnectionString(Guid? customerId, string? databaseName)
     {
+        // 1. If database name is explicitly supplied (e.g. from ITenantContext), use it immediately
+        if (!string.IsNullOrWhiteSpace(databaseName))
+        {
+            return BuildTenantConnectionString(databaseName);
+        }
+
+        // 2. Check if the database name is provided directly in the request's access token claims
+        var user = _httpContextAccessor?.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            string? tokenDb = user.FindFirst("database_name")?.Value
+                              ?? user.FindFirst("db_name")?.Value;
+
+            if (!string.IsNullOrWhiteSpace(tokenDb))
+            {
+                // Verify customer matches if customerId is passed
+                string? customerIdClaim = user.FindFirst("customer_id")?.Value;
+                if (customerId is null || customerId == Guid.Empty ||
+                    (Guid.TryParse(customerIdClaim, out Guid tokenCustomerId) && tokenCustomerId == customerId.Value))
+                {
+                    return BuildTenantConnectionString(tokenDb);
+                }
+            }
+        }
+
         if (customerId is null || customerId == Guid.Empty)
         {
             // Default to TenantDatabase connection string if no customer is in context (e.g. at startup/migrations)
-            return new NpgsqlConnectionStringBuilder(_adminDbConnectionString) { Database = "IN000001" }.ConnectionString;
+            return BuildTenantConnectionString("IN000001");
         }
 
+        // 3. Fallback: resolve from database (mst.Customers) with caching
         string cacheKey = $"CustomerDb_{customerId}";
         
         string dbName = _cache.GetOrCreate(cacheKey, entry =>
         {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
             return FetchDatabaseNameFromAdmin(customerId.Value);
         })!;
 
@@ -52,6 +88,11 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
             throw new InvalidOperationException($"Could not determine database name for customer {customerId}");
         }
 
+        return BuildTenantConnectionString(dbName);
+    }
+
+    private string BuildTenantConnectionString(string dbName)
+    {
         var builder = new NpgsqlConnectionStringBuilder(_adminDbConnectionString) { Database = dbName };
         return builder.ConnectionString;
     }
@@ -67,7 +108,7 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
                 connection.Open();
                 
                 using var command = connection.CreateCommand();
-                command.CommandTimeout = 120;
+                command.CommandTimeout = StrictTimeoutSeconds; // 3 min strict
                 command.CommandText = "SELECT \"DatabaseName\" FROM mst.\"Customers\" WHERE \"CustomerId\" = @customerId";
                 command.Parameters.AddWithValue("customerId", customerId);
                 

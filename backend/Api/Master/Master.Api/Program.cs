@@ -1,4 +1,4 @@
-global using CustomerEntity = Master.Entity.TableEntities.Customer;
+﻿global using CustomerEntity = Master.Entity.TableEntities.Customer;
 using Shared.Kernel.Security;
 using System.Text;
 using Master.Api.Services;
@@ -96,7 +96,7 @@ builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 {
     options.UseNpgsql(
-        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),

@@ -23,6 +23,9 @@ public interface ITenantContext
     /// </summary>
     string? CustomerCode { get; }
 
+    /// <summary>The physical database name for this customer, carried in the access token claims.</summary>
+    string? DatabaseName { get; }
+
     Apps.BusinessType? BusinessType { get; }
 
     Apps.AddOn AddOns { get; }
@@ -42,6 +45,8 @@ public sealed class TenantContext : ITenantContext
     public Guid? OrgId { get; set; }
 
     public string? CustomerCode { get; set; }
+
+    public string? DatabaseName { get; set; }
 
     public Apps.BusinessType? BusinessType { get; set; }
 

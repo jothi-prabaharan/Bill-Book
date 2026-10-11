@@ -43,6 +43,7 @@ public sealed class OrgContextRepository
                 o.OrgId,
                 o.CustomerId,
                 c.CustomerCode,
+                c.DatabaseName,
                 OrgName = o.Name,
                 o.FinancialYearStartMonth,
                 o.BaseCurrency,
@@ -143,6 +144,7 @@ public sealed class OrgContextRepository
             OrgId = row.OrgId,
             CustomerId = row.CustomerId,
             CustomerCode = row.CustomerCode,
+            DatabaseName = row.DatabaseName,
             OrgName = row.OrgName,
             // No per-customer database to be ready any more — "ready" now means
             // this customer's own seeding finished (Trial/Active) rather than

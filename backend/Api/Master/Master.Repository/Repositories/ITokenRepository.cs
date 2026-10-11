@@ -31,7 +31,7 @@ public interface ITokenRepository
     /// PDF is read from the same archive folder staff read (TK-95).
     /// </remarks>
     (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
-        Guid customerId, Guid orgId, long contactId, long grantId, BusinessType? businessType = null, string? customerCode = null);
+        Guid customerId, Guid orgId, long contactId, long grantId, BusinessType? businessType = null, string? customerCode = null, string? databaseName = null);
 }
 
 public sealed class AccessTokenRequest
@@ -46,6 +46,9 @@ public sealed class AccessTokenRequest
     /// would strand every file stored under the old one.
     /// </summary>
     public required string CustomerCode { get; init; }
+
+    /// <summary>The physical database this customer's data lives in, taken from mst.Customers.</summary>
+    public string? DatabaseName { get; init; }
 
     public required Guid OrgId { get; init; }
 

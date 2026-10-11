@@ -36,6 +36,7 @@ import { SessionContextService, normaliseBusinessType } from '@bill-book/auth';
 import {
   ContactPersonRole,
   ContactPersonRolesDialog,
+  RoleSavedEvent,
 } from '../contact-person-roles-dialog/contact-person-roles.dialog';
 
 interface ContactListItem {
@@ -270,6 +271,10 @@ export class ContactsPage implements OnInit {
   protected readonly messageIsError = signal(false);
   protected readonly editorOpen = signal(false);
   protected readonly rolesOpen = signal(false);
+  protected activeRolePersonIndex: number | null = null;
+  protected readonly activeRoleMode = signal<'add' | 'edit' | 'manage'>('add');
+  protected readonly activeRoleId = signal<number | null>(null);
+  protected readonly activeRoleName = signal<string>('');
   protected readonly editingId = signal<number | null>(null);
   protected readonly errors = signal<Record<string, string>>({});
 
@@ -823,6 +828,51 @@ export class ContactsPage implements OnInit {
     value: string,
   ): string {
     return options.find((o) => o.value === value)?.label ?? value;
+  }
+
+  openAddRole(personIndex: number): void {
+    this.activeRolePersonIndex = personIndex;
+    this.activeRoleMode.set('add');
+    this.activeRoleId.set(null);
+    this.activeRoleName.set('');
+    this.rolesOpen.set(true);
+  }
+
+  openEditRole(personIndex: number): void {
+    const person = this.form.persons[personIndex];
+    if (!person || !person.contactPersonRoleId) {
+      return;
+    }
+    const role = this.roles().find((r) => r.contactPersonRoleId === person.contactPersonRoleId);
+    this.activeRolePersonIndex = personIndex;
+    this.activeRoleMode.set('edit');
+    this.activeRoleId.set(person.contactPersonRoleId);
+    this.activeRoleName.set(role?.roleName ?? '');
+    this.rolesOpen.set(true);
+  }
+
+  async onRoleSaved(saved: RoleSavedEvent): Promise<void> {
+    this.rolesOpen.set(false);
+    await this.loadLookups();
+
+    if (this.activeRolePersonIndex !== null && this.form.persons[this.activeRolePersonIndex]) {
+      let targetRoleId: number | null = null;
+      if (saved.roleId) {
+        targetRoleId = saved.roleId;
+      } else if (saved.roleName && saved.roleName.trim()) {
+        const match = this.roles().find(
+          (r) => r.roleName.trim().toLowerCase() === saved.roleName.trim().toLowerCase(),
+        );
+        if (match) {
+          targetRoleId = match.contactPersonRoleId;
+        }
+      }
+      if (targetRoleId !== null) {
+        this.form.persons[this.activeRolePersonIndex].contactPersonRoleId = targetRoleId;
+        this.clearError('personRole_' + this.activeRolePersonIndex);
+      }
+    }
+    this.succeed(saved.roleId ? 'Role updated.' : 'Role created.');
   }
 
   onRolesClosed(): void {

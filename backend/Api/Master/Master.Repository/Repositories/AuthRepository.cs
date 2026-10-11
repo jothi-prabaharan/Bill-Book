@@ -362,6 +362,7 @@ public sealed class AuthRepository
             UserId = user.UserId,
             CustomerId = ctx.CustomerId,
             CustomerCode = ctx.CustomerCode,
+            DatabaseName = ctx.DatabaseName,
             OrgId = orgId,
             BusinessType = ctx.BusinessType,
             AddOns = ctx.AddOns,

@@ -1,4 +1,4 @@
-using Shared.Kernel.Restaurant;
+﻿using Shared.Kernel.Restaurant;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reporting.Api.Services;
 using Reporting.Repository.Repositories;
@@ -60,7 +60,7 @@ builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<ReportingDbContext>((sp, options) =>
 {
     options.UseNpgsql(
-        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "rpt"));
 
     // RlsConnectionInterceptor is what sets app.current_org_id, and it sets it

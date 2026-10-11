@@ -7,44 +7,76 @@
   [hintId]="hintId()"
   [errorId]="errorId()"
 >
-  <select
-    class="input bb-select__field"
-    [id]="controlId()"
-    [name]="name() || null"
-    [disabled]="effectiveDisabled() || readonly() || loading()"
-    [required]="required()"
-    [attr.aria-label]="effectiveAriaLabel()"
-    [attr.aria-invalid]="invalid() ? 'true' : null"
-    [attr.aria-describedby]="describedBy()"
-    [attr.aria-busy]="loading() ? 'true' : null"
-    (change)="onSelect($event)"
-    (blur)="onBlur()"
-  >
-    @if (loading()) {
-      <option value="">Loading…</option>
-    } @else if (isEmpty()) {
-      <option value="">{{ emptyText() }}</option>
-    } @else {
-      @if (placeholder()) {
-        <!-- `selected` is set per option rather than `value` on the select: on
-             the first render the select's property is written before its
-             options exist, so the value would not stick. -->
-        <option value="" [selected]="selectedIndex() === ''" [disabled]="!clearable() && selectedIndex() !== ''">
-          {{ placeholder() }}
-        </option>
-      }
+  <div class="bb-select__wrap">
+    <select
+      class="input bb-select__field"
+      [id]="controlId()"
+      [name]="name() || null"
+      [disabled]="effectiveDisabled() || readonly() || loading()"
+      [required]="required()"
+      [attr.aria-label]="effectiveAriaLabel()"
+      [attr.aria-invalid]="invalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      [attr.aria-busy]="loading() ? 'true' : null"
+      (change)="onSelect($event)"
+      (blur)="onBlur()"
+    >
+      @if (loading()) {
+        <option value="">Loading…</option>
+      } @else if (isEmpty()) {
+        <option value="">{{ emptyText() }}</option>
+      } @else {
+        @if (placeholder()) {
+          <!-- `selected` is set per option rather than `value` on the select: on
+               the first render the select's property is written before its
+               options exist, so the value would not stick. -->
+          <option value="" [selected]="selectedIndex() === ''" [disabled]="!clearable() && selectedIndex() !== ''">
+            {{ placeholder() }}
+          </option>
+        }
 
-      @for (option of ungrouped(); track option.value) {
-        <option [value]="indexOf(option)" [selected]="isSelected(option)" [disabled]="!!option.disabled">{{ option.label }}</option>
-      }
+        @for (option of ungrouped(); track option.value) {
+          <option [value]="indexOf(option)" [selected]="isSelected(option)" [disabled]="!!option.disabled">{{ option.label }}</option>
+        }
 
-      @for (group of groups(); track group) {
-        <optgroup [label]="group">
-          @for (option of optionsIn(group); track option.value) {
-            <option [value]="indexOf(option)" [selected]="isSelected(option)" [disabled]="!!option.disabled">{{ option.label }}</option>
-          }
-        </optgroup>
+        @for (group of groups(); track group) {
+          <optgroup [label]="group">
+            @for (option of optionsIn(group); track option.value) {
+              <option [value]="indexOf(option)" [selected]="isSelected(option)" [disabled]="!!option.disabled">{{ option.label }}</option>
+            }
+          </optgroup>
+        }
       }
+    </select>
+
+    @if (showAdd()) {
+      <button
+        type="button"
+        class="bb-select__action-btn"
+        (click)="onAdd($event)"
+        [disabled]="effectiveDisabled() || readonly()"
+        title="Add new"
+        aria-label="Add new"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </button>
     }
-  </select>
+
+    @if (showEdit()) {
+      <button
+        type="button"
+        class="bb-select__action-btn"
+        (click)="onEdit($event)"
+        [disabled]="effectiveDisabled() || readonly() || editDisabled()"
+        title="Edit selected"
+        aria-label="Edit selected"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+        </svg>
+      </button>
+    }
+  </div>
 </bb-form-field>

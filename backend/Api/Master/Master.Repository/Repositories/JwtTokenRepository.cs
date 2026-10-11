@@ -59,6 +59,12 @@ public sealed class JwtTokenRepository : ITokenRepository
             new("role_id", request.RoleId.ToString()),
         };
 
+        if (!string.IsNullOrEmpty(request.DatabaseName))
+        {
+            claims.Add(new Claim("database_name", request.DatabaseName));
+            claims.Add(new Claim("db_name", request.DatabaseName));
+        }
+
         if (request.LicenseExpiry is DateOnly expiry)
         {
             claims.Add(new Claim("license_expiry", expiry.ToString("yyyy-MM-dd")));
@@ -133,7 +139,7 @@ public sealed class JwtTokenRepository : ITokenRepository
     public static readonly TimeSpan PortalSessionLifetime = TimeSpan.FromHours(1);
 
     public (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
-        Guid customerId, Guid orgId, long contactId, long grantId, BusinessType? businessType = null, string? customerCode = null)
+        Guid customerId, Guid orgId, long contactId, long grantId, BusinessType? businessType = null, string? customerCode = null, string? databaseName = null)
     {
         var claims = new List<Claim>
         {
@@ -147,6 +153,12 @@ public sealed class JwtTokenRepository : ITokenRepository
         if (!string.IsNullOrEmpty(customerCode))
         {
             claims.Add(new Claim("customer_code", customerCode));
+        }
+
+        if (!string.IsNullOrEmpty(databaseName))
+        {
+            claims.Add(new Claim("database_name", databaseName));
+            claims.Add(new Claim("db_name", databaseName));
         }
 
         // The branch's business type, as on a staff token (TK-136): a School

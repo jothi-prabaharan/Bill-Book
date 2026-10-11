@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 set -euo pipefail
 
 # ==============================================================================
@@ -94,8 +94,8 @@ load_secrets() {
 export_environment() {
   export ASPNETCORE_ENVIRONMENT="$ENV_NAME"
   export DOTNET_ENVIRONMENT="$ENV_NAME"
-  export ConnectionStrings__AdminDatabase="Host=$DB_HOST;Port=$DB_PORT;Database=$ADMIN_DB;Username=$DB_USER;Password=$DB_PASSWORD;Keepalive=30;Timeout=60;Command Timeout=120"
-  export ConnectionStrings__TenantDatabase="Host=$DB_HOST;Port=$DB_PORT;Database=$TENANT_DB;Username=$DB_USER;Password=$DB_PASSWORD;Keepalive=30;Timeout=60;Command Timeout=120"
+  export ConnectionStrings__AdminDatabase="Host=$DB_HOST;Port=$DB_PORT;Database=$ADMIN_DB;Username=$DB_USER;Password=$DB_PASSWORD;Keepalive=30;Timeout=180;Command Timeout=180"
+  export ConnectionStrings__TenantDatabase="Host=$DB_HOST;Port=$DB_PORT;Database=$TENANT_DB;Username=$DB_USER;Password=$DB_PASSWORD;Keepalive=30;Timeout=180;Command Timeout=180"
   export Internal__ApiKey="$INTERNAL_API_KEY"
   export Jwt__SigningKey="$JWT_SIGNING_KEY"
   export KeyVault__Uri="$KEYVAULT_URI"

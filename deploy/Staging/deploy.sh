@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 set -e
 
 # ==============================================================================
@@ -20,8 +20,8 @@ mkdir -p "$DIST_DIR/backend" "$DIST_DIR/frontend/web" "$LOG_DIR" "$RUN_DIR"
 
 # Environment configuration
 export ASPNETCORE_ENVIRONMENT="Staging"
-export ConnectionStrings__AdminDatabase="Host=192.168.1.101;Port=5100;Database=EP_Admin;Username=postgres;Password=555;Keepalive=30;Timeout=60;Command Timeout=120"
-export ConnectionStrings__TenantDatabase="Host=192.168.1.101;Port=5100;Database=IN000001;Username=postgres;Password=555;Keepalive=30;Timeout=60;Command Timeout=120"
+export ConnectionStrings__AdminDatabase="Host=192.168.1.101;Port=5100;Database=EP_Admin;Username=postgres;Password=555;Keepalive=30;Timeout=180;Command Timeout=180"
+export ConnectionStrings__TenantDatabase="Host=192.168.1.101;Port=5100;Database=IN000001;Username=postgres;Password=555;Keepalive=30;Timeout=180;Command Timeout=180"
 
 export Master__BaseUrl="http://192.168.1.101:5504"
 export Accounting__BaseUrl="http://192.168.1.101:5501"

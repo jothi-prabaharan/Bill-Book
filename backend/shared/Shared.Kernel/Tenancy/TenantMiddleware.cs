@@ -20,6 +20,7 @@ public sealed class TenantMiddleware
             writable.CustomerId = Claim(context.User, "customer_id");
             writable.OrgId = Claim(context.User, "org_id");
             writable.CustomerCode = context.User.FindFirst("customer_code")?.Value;
+            writable.DatabaseName = context.User.FindFirst("database_name")?.Value ?? context.User.FindFirst("db_name")?.Value;
             writable.BusinessType = Internal.ScopeClaims.BusinessTypeOf(context.User);
             writable.AddOns = Internal.ScopeClaims.AddOnsOf(context.User);
             writable.PlanTier = Internal.ScopeClaims.PlanTierOf(context.User);

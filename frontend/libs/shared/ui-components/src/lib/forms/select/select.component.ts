@@ -62,7 +62,36 @@ export class SelectComponent<TValue extends string | number = string | number>
   /** Shown in place of the placeholder when there is nothing to choose from. */
   readonly emptyText = input<string>('Nothing to choose from');
 
+  /** Shows an inline Add action button beside the select. */
+  readonly showAdd = input<boolean, boolean | string>(false, {
+    transform: (value) => value === '' || value === 'true' || value === true,
+  });
+
+  /** Shows an inline Edit action button beside the select. */
+  readonly showEdit = input<boolean, boolean | string>(false, {
+    transform: (value) => value === '' || value === 'true' || value === true,
+  });
+
+  /** Disables the Edit action button (e.g. when no option is chosen). */
+  readonly editDisabled = input<boolean, boolean | string>(false, {
+    transform: (value) => value === '' || value === 'true' || value === true,
+  });
+
   readonly valueChange = output<TValue | null>();
+  readonly add = output<void>();
+  readonly edit = output<void>();
+
+  protected onAdd(event: MouseEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.add.emit();
+  }
+
+  protected onEdit(event: MouseEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.edit.emit();
+  }
 
   protected readonly selected = signal<TValue | null>(null);
 

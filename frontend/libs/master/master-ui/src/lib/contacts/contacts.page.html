@@ -532,7 +532,6 @@
     @if (tab() === 'persons') {
       <div class="child-actions">
         <button id="addPersonBtn" class="btn btn-primary" type="button" (click)="addPerson()">+ Add person</button>
-        <button type="button" class="link" (click)="rolesOpen.set(true)">Manage roles</button>
       </div>
 
       @if (errors()['persons']) {
@@ -553,6 +552,11 @@
                 [(ngModel)]="person.contactPersonRoleId"
                 [error]="errors()['personRole_' + $index] || ''"
                 (ngModelChange)="clearError('personRole_' + $index)"
+                [showAdd]="true"
+                [showEdit]="true"
+                [editDisabled]="!person.contactPersonRoleId"
+                (add)="openAddRole($index)"
+                (edit)="openEditRole($index)"
               />
             </div>
 
@@ -975,7 +979,13 @@
 }
 
 @if (rolesOpen()) {
-  <bb-contact-person-roles-dialog (closed)="onRolesClosed()" />
+  <bb-contact-person-roles-dialog
+    [mode]="activeRoleMode()"
+    [roleId]="activeRoleId()"
+    [initialRoleName]="activeRoleName()"
+    (saved)="onRoleSaved($event)"
+    (closed)="onRolesClosed()"
+  />
 }
 
 

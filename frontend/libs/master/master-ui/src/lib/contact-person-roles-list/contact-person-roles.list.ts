@@ -7,7 +7,7 @@ import {
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InfoTooltipComponent } from '@bill-book/ui-components';
 
@@ -46,6 +46,9 @@ export interface ContactPersonRole {
   styleUrl: './contact-person-roles.list.scss',
 })
 export class ContactPersonRolesList implements OnInit {
+  /** Emits whenever roles are added, edited, reordered or removed. */
+  readonly changed = output<void>();
+
   columns: ColumnDef[] = [
     { field: 'handle', header: 'Reorder' },
     { field: 'roleName', header: 'Role' },
@@ -158,6 +161,7 @@ export class ContactPersonRolesList implements OnInit {
     try {
       await action();
       await this.load();
+      this.changed.emit();
     } catch (err: unknown) {
       const anyErr = err as { error?: { message?: string } };
       this.error.set(anyErr?.error?.message ?? 'That did not work.');
