@@ -17,3 +17,28 @@
   }
 }
 
+.sheet-error {
+  margin: var(--space-2, 8px) 0 0;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  background: var(--color-danger-subtle, rgba(220, 38, 38, 0.1));
+  border: 1px solid var(--color-danger-border, #f87171);
+  border-radius: var(--radius-md, 6px);
+  color: var(--color-danger-text, #b91c1c);
+  font-size: var(--font-size-sm, 13px);
+  font-weight: 500;
+}
+
+fieldset.roles.fieldset-error {
+  border-color: var(--color-danger-border, #f87171);
+  background: var(--color-danger-subtle, rgba(220, 38, 38, 0.05));
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--space-2, 8px);
+}
+
+.field-error {
+  display: block;
+  color: var(--color-danger-text, #b91c1c);
+  font-size: var(--font-size-xs, 12px);
+  margin-top: var(--space-1, 4px);
+}
+

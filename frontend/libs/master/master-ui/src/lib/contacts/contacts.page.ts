@@ -21,6 +21,7 @@ import {
   CustomFieldValues,
   CustomFieldsComponent,
   compactValues,
+  isEmptyValue,
   customListColumns,
   defaultValues,
   withCustomColumns,
@@ -221,12 +222,12 @@ interface PortalAccessState {
   expiresAt: string | null;
 }
 
-import { InfoTooltipComponent } from '@bill-book/ui-components';
+import { InfoTooltipComponent, MessageBoxComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
-  imports: [ExportImportComponent, InfoTooltipComponent, 
+  imports: [ExportImportComponent, InfoTooltipComponent, MessageBoxComponent, 
     EditHistoryComponent,
     DatePipe,
     DataGridComponent,
@@ -270,6 +271,36 @@ export class ContactsPage implements OnInit {
   protected readonly editorOpen = signal(false);
   protected readonly rolesOpen = signal(false);
   protected readonly editingId = signal<number | null>(null);
+  protected readonly errors = signal<Record<string, string>>({});
+
+  protected clearError(field: string): void {
+    if (this.errors()[field]) {
+      this.errors.update((e) => {
+        const next = { ...e };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  protected focusField(fieldId: string, targetTab?: Tab): void {
+    if (targetTab && this.tab() !== targetTab) {
+      this.tab.set(targetTab);
+    }
+    setTimeout(() => {
+      const el = document.getElementById(fieldId);
+      if (el) {
+        if (typeof el.focus === 'function') {
+          el.focus();
+        }
+        const focusable = el.querySelector<HTMLElement>('input, select, textarea, button, [tabindex]');
+        if (focusable && typeof focusable.focus === 'function' && document.activeElement !== el) {
+          focusable.focus();
+        }
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  }
 
   /** The last portal link made for the open contact: a customer's portal, or a guardian's parent portal from School (TK-69). */
   protected readonly portalLink = signal<PortalLinkMade | null>(null);
@@ -465,14 +496,25 @@ export class ContactsPage implements OnInit {
     }
   }
 
-  openAdd(): void {
+  openAdd(role?: 'customer' | 'vendor'): void {
     this.editingId.set(null);
     this.portalLink.set(null);
     this.portalAccess.set(null);
     this.form = this.blank();
+    if (role === 'vendor') {
+      this.form.isCustomer = false;
+      this.form.isVendor = true;
+    } else if (role === 'customer') {
+      this.form.isCustomer = true;
+      this.form.isVendor = false;
+    }
     this.addPerson();
     this.tab.set('general');
+    this.errors.set({});
+    this.message.set(null);
+    this.messageIsError.set(false);
     this.editorOpen.set(true);
+    this.focusField('displayName', 'general');
   }
 
   async openEdit(row: ContactListItem): Promise<void> {
@@ -494,6 +536,9 @@ export class ContactsPage implements OnInit {
       this.editingId.set(row.contactId);
       this.portalLink.set(null);
       this.portalAccess.set(null);
+      this.errors.set({});
+      this.message.set(null);
+      this.messageIsError.set(false);
       this.tab.set('general');
       this.editorOpen.set(true);
       void this.loadPortalAccess(row.contactId);
@@ -868,10 +913,54 @@ export class ContactsPage implements OnInit {
         await this.load();
       }
     } catch (err: unknown) {
-      this.fail(this.messageOf(err, 'Could not save that contact.'));
+      this.handleApiError(err);
     } finally {
       this.busy.set(false);
     }
+  }
+
+  private handleApiError(err: unknown): void {
+    const anyErr = err as {
+      error?: {
+        message?: string;
+        errors?: Record<string, string[]>;
+      };
+    };
+    const body = anyErr?.error;
+    const msg = body?.message ?? this.messageOf(err, 'Could not save that contact.');
+    this.fail(msg);
+
+    const newErrors: Record<string, string> = {};
+    if (body?.errors && typeof body.errors === 'object') {
+      for (const [key, msgs] of Object.entries(body.errors)) {
+        if (msgs && msgs.length > 0) {
+          const lower = key.charAt(0).toLowerCase() + key.slice(1);
+          newErrors[lower] = msgs[0];
+        }
+      }
+    }
+
+    const lowerMsg = msg.toLowerCase();
+    if (lowerMsg.includes('code')) {
+      newErrors['contactCode'] = msg;
+      this.focusField('contactCode', 'general');
+    } else if (lowerMsg.includes('gstin')) {
+      newErrors['gstin'] = msg;
+      this.focusField('gstin', 'general');
+    } else if (lowerMsg.includes('udyam')) {
+      newErrors['udyamNumber'] = msg;
+      this.focusField('udyamNumber', 'general');
+    } else if (lowerMsg.includes('tds')) {
+      newErrors['tdsSection'] = msg;
+      this.focusField('tdsSection', 'general');
+    } else if (lowerMsg.includes('display name')) {
+      newErrors['displayName'] = msg;
+      this.focusField('displayName', 'general');
+    } else if (Object.keys(newErrors).length > 0) {
+      const firstKey = Object.keys(newErrors)[0];
+      this.focusField(firstKey, 'general');
+    }
+    this.errors.set(newErrors);
   }
 
   /**
@@ -963,34 +1052,62 @@ export class ContactsPage implements OnInit {
   }
 
   private validateForm(): boolean {
+    const errs: Record<string, string> = {};
+    let firstErrorField: { id: string; tab: Tab; message: string } | null = null;
+
+    const addError = (fieldId: string, tab: Tab, msg: string) => {
+      errs[fieldId] = msg;
+      if (!firstErrorField) {
+        firstErrorField = { id: fieldId, tab, message: msg };
+      }
+    };
+
+    // 1. General tab validations
     if (!this.hasText(this.form.displayName)) {
-      this.fail('Display name is required.');
-      return false;
+      addError('displayName', 'general', 'Display name is required.');
     }
 
     if (!this.hasText(this.form.contactCategory)) {
-      this.fail('Contact category is required.');
-      return false;
-    }
-
-    if (!this.hasText(this.form.gstRegistrationType)) {
-      this.fail('GST registration type is required.');
-      return false;
-    }
-
-    if (!this.hasText(this.form.currencyCode)) {
-      this.fail('Currency is required.');
-      return false;
+      addError('contactCategory', 'general', 'Contact category is required.');
     }
 
     if (!this.form.isCustomer && !this.form.isVendor && !this.form.isJobWorker && !this.form.isPrescriber && !this.form.isGuardian) {
-      this.fail('Select at least one role (Customer, Vendor, Job worker, Prescriber or Guardian).');
-      return false;
+      addError('isCustomer', 'general', 'Select at least one role (Customer, Vendor, Job worker, Prescriber or Guardian).');
+      errs['roles'] = 'Select at least one role (Customer, Vendor, Job worker, Prescriber or Guardian).';
+    }
+
+    if (!this.hasText(this.form.gstRegistrationType)) {
+      addError('gstRegistrationType', 'general', 'GST registration type is required.');
+    }
+
+    const gstinRequired = ['Regular', 'Composition', 'Sez'].includes(this.form.gstRegistrationType);
+    if (gstinRequired) {
+      if (!this.hasText(this.form.gstin)) {
+        addError('gstin', 'general', 'GSTIN is required for regular, composition and SEZ registrations.');
+      } else if (this.form.gstin!.trim().length !== 15) {
+        addError('gstin', 'general', 'GSTIN must be 15 characters.');
+      } else if (this.form.placeOfSupplyStateId) {
+        const state = this.states().find((s) => s.stateId === this.form.placeOfSupplyStateId);
+        if (state && !this.form.gstin!.trim().toUpperCase().startsWith(state.stateCode)) {
+          addError('gstin', 'general', "The GSTIN's first two digits do not match the place of supply.");
+        }
+      }
+    } else if (this.hasText(this.form.gstin)) {
+      addError('gstin', 'general', 'Unregistered, overseas and consumer contacts cannot carry a GSTIN.');
+    }
+
+    if (this.hasText(this.form.pan) && this.form.pan!.trim().length !== 10) {
+      addError('pan', 'general', 'PAN must be 10 characters.');
+    }
+
+    if (!this.hasText(this.form.currencyCode)) {
+      addError('currencyCode', 'general', 'Currency is required.');
+    } else if (this.form.currencyCode.trim().length !== 3) {
+      addError('currencyCode', 'general', 'Currency must be a 3-letter code.');
     }
 
     if (this.form.isTdsApplicable && !this.hasText(this.form.tdsSection)) {
-      this.fail('TDS section is required when TDS is applicable.');
-      return false;
+      addError('tdsSection', 'general', 'TDS section is required when TDS is applicable.');
     }
 
     // A lower-deduction certificate is all five facts or none (TK-117).
@@ -1002,108 +1119,126 @@ export class ContactsPage implements OnInit {
       this.form.lowerDeductionLimit != null,
     ];
     if (certificate.some((x) => x) && !certificate.every((x) => x)) {
-      this.fail('A lower-deduction certificate needs its number, rate, validity dates and limit.');
-      return false;
+      addError('lowerDeductionCertificateNo', 'general', 'A lower-deduction certificate needs its number, rate, validity dates and limit.');
+    } else if (
+      this.form.lowerDeductionValidFrom &&
+      this.form.lowerDeductionValidTo &&
+      this.form.lowerDeductionValidTo < this.form.lowerDeductionValidFrom
+    ) {
+      addError('lowerDeductionValidTo', 'general', 'Certificate validity end date must be on or after the start date.');
     }
 
     if (this.form.isMsme && !this.hasText(this.form.udyamNumber)) {
-      this.fail('Udyam number is required for MSME contacts.');
-      return false;
+      addError('udyamNumber', 'general', 'Udyam number is required for MSME contacts.');
     }
 
+    // Check required custom fields (TK-111)
+    for (const def of this.customFieldDefs()) {
+      if (def.isActive && def.isRequired) {
+        const val = this.form.customFields?.[def.key];
+        if (isEmptyValue(val)) {
+          addError(`cf_${def.key}`, 'general', `${def.label} is required.`);
+        }
+      }
+    }
+
+    // 2. Persons tab validations
     if (this.form.persons.length === 0) {
-      this.fail('At least one contact person is required.');
-      return false;
-    }
-
-    const defaultPersons = this.form.persons.filter((person) => person.isDefault);
-    if (defaultPersons.length !== 1) {
-      this.fail('Exactly one default contact person is required.');
-      return false;
-    }
-
-    const primary = defaultPersons[0];
-    if (!this.hasText(primary.email) && !this.hasText(primary.mobileNumber)) {
-      this.fail('Default contact person needs an email or mobile number.');
-      return false;
-    }
-
-    for (let i = 0; i < this.form.persons.length; i += 1) {
-      const person = this.form.persons[i];
-      if (person.contactPersonRoleId <= 0) {
-        this.fail(`Choose a role for person row ${i + 1}.`);
-        return false;
+      addError('addPersonBtn', 'persons', 'At least one contact person is required.');
+    } else {
+      const defaultPersons = this.form.persons.filter((person) => person.isDefault);
+      if (defaultPersons.length !== 1) {
+        addError('personFirst_0', 'persons', 'Exactly one default contact person is required.');
+      } else {
+        const defaultIndex = this.form.persons.findIndex((p) => p.isDefault);
+        const primary = defaultPersons[0];
+        if (!this.hasText(primary.email) && !this.hasText(primary.mobileNumber)) {
+          addError(`personEmail_${defaultIndex}`, 'persons', 'Default contact person needs an email or mobile number.');
+          errs[`personMobile_${defaultIndex}`] = 'Default contact person needs an email or mobile number.';
+        }
       }
 
-      if (!this.hasText(person.firstName)) {
-        this.fail(`First name is required for person row ${i + 1}.`);
-        return false;
+      for (let i = 0; i < this.form.persons.length; i += 1) {
+        const person = this.form.persons[i];
+        if (person.contactPersonRoleId <= 0) {
+          addError(`personRole_${i}`, 'persons', `Choose a role for person row ${i + 1}.`);
+        }
+
+        if (!this.hasText(person.firstName)) {
+          addError(`personFirst_${i}`, 'persons', `First name is required for person row ${i + 1}.`);
+        }
+
+        if (this.hasText(person.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email!.trim())) {
+          addError(`personEmail_${i}`, 'persons', `Email for person row ${i + 1} must be a valid email address.`);
+        }
       }
     }
 
+    // 3. Addresses tab validations
     const billingDefaults = this.form.addresses.filter(
       (address) => address.addressType === 'Billing' && address.isDefault,
     );
     if (billingDefaults.length > 1) {
-      this.fail('Only one default billing address is allowed.');
-      return false;
+      addError('addr1_0', 'addresses', 'Only one default billing address is allowed.');
     }
 
     const shippingDefaults = this.form.addresses.filter(
       (address) => address.addressType === 'Shipping' && address.isDefault,
     );
     if (shippingDefaults.length > 1) {
-      this.fail('Only one default shipping address is allowed.');
-      return false;
+      addError('addr1_0', 'addresses', 'Only one default shipping address is allowed.');
     }
 
     for (let i = 0; i < this.form.addresses.length; i += 1) {
       const address = this.form.addresses[i];
       if (!this.hasText(address.addressLine1)) {
-        this.fail(`Address line 1 is required for address row ${i + 1}.`);
-        return false;
+        addError(`addr1_${i}`, 'addresses', `Address line 1 is required for address row ${i + 1}.`);
       }
 
       if (!this.hasText(address.city)) {
-        this.fail(`City is required for address row ${i + 1}.`);
-        return false;
+        addError(`city_${i}`, 'addresses', `City is required for address row ${i + 1}.`);
       }
     }
 
+    // 4. Banking tab validations
     for (let i = 0; i < this.form.bankDetails.length; i += 1) {
       const bank = this.form.bankDetails[i];
       if (!this.hasText(bank.accountHolderName)) {
-        this.fail(`Account holder name is required for bank row ${i + 1}.`);
-        return false;
+        addError(`bankHolder_${i}`, 'banking', `Account holder name is required for bank row ${i + 1}.`);
       }
 
       if (!this.hasText(bank.bankName)) {
-        this.fail(`Bank name is required for bank row ${i + 1}.`);
-        return false;
+        addError(`bankName_${i}`, 'banking', `Bank name is required for bank row ${i + 1}.`);
       }
 
       if (!this.hasText(bank.accountNumber)) {
-        this.fail(`Account number is required for bank row ${i + 1}.`);
-        return false;
+        addError(`bankAccount_${i}`, 'banking', `Account number is required for bank row ${i + 1}.`);
       }
 
       if (!this.hasText(bank.accountKind)) {
-        this.fail(`Account type is required for bank row ${i + 1}.`);
-        return false;
+        addError(`bankKind_${i}`, 'banking', `Account type is required for bank row ${i + 1}.`);
       }
     }
 
+    // 5. Licences tab validations
     for (let i = 0; i < this.form.licences.length; i += 1) {
       const licence = this.form.licences[i];
       if (!this.hasText(licence.licenceType)) {
-        this.fail(`Licence type is required for licence row ${i + 1}.`);
-        return false;
+        addError(`licType_${i}`, 'licences', `Licence type is required for licence row ${i + 1}.`);
       }
 
       if (!this.hasText(licence.licenceNumber)) {
-        this.fail(`Licence number is required for licence row ${i + 1}.`);
-        return false;
+        addError(`licNo_${i}`, 'licences', `Licence number is required for licence row ${i + 1}.`);
       }
+    }
+
+    this.errors.set(errs);
+
+    const first = firstErrorField as { id: string; tab: Tab; message: string } | null;
+    if (first) {
+      this.fail(first.message);
+      this.focusField(first.id, first.tab);
+      return false;
     }
 
     return true;

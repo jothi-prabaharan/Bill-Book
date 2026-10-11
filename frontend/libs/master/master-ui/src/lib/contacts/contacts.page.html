@@ -5,13 +5,13 @@
   </span>
   <span class="tabgrp">
     <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'customer' ? 'true' : null" (click)="roleFilter = 'customer'; load()">Customers</button>
-    <button class="btn btn-secondary" type="button" title="New customer" aria-label="New customer" (click)="openAdd()" [disabled]="busy()">
+    <button class="btn btn-secondary" type="button" title="New customer" aria-label="New customer" (click)="openAdd('customer')" [disabled]="busy()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
     </button>
   </span>
   <span class="tabgrp">
     <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'vendor' ? 'true' : null" (click)="roleFilter = 'vendor'; load()">Vendors</button>
-    <button class="btn btn-secondary" type="button" title="New vendor" aria-label="New vendor" (click)="openAdd()" [disabled]="busy()">
+    <button class="btn btn-secondary" type="button" title="New vendor" aria-label="New vendor" (click)="openAdd('vendor')" [disabled]="busy()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
     </button>
   </span>
@@ -85,6 +85,9 @@
       @if (editingId() !== null) {
         <code class="muted">{{ form.contactCode }}</code>
       }
+      @if (message() && messageIsError()) {
+        <bb-message-box class="sheet-error" [messages]="[{ tone: 'error', text: message()! }]" />
+      }
     </header>
 
     <nav class="tabs">
@@ -116,101 +119,182 @@
     @if (tab() === 'general') {
       <div class="fields">
         <div class="field">
-          <bb-text-input label="Display name"  [(ngModel)]="form.displayName" maxlength="200" />
+          <bb-text-input
+            id="displayName"
+            label="Display name"
+            [(ngModel)]="form.displayName"
+            [required]="true"
+            [error]="errors()['displayName'] || ''"
+            (ngModelChange)="clearError('displayName')"
+            maxlength="200"
+          />
         </div>
 
         <div class="field">
-          <bb-text-input label="Legal name" hint="Name as on the GST certificate, if different. Prints on documents."  [(ngModel)]="form.legalName" maxlength="200" />
+          <bb-text-input
+            id="legalName"
+            label="Legal name"
+            hint="Name as on the GST certificate, if different. Prints on documents."
+            [(ngModel)]="form.legalName"
+            [error]="errors()['legalName'] || ''"
+            (ngModelChange)="clearError('legalName')"
+            maxlength="200"
+          />
         </div>
 
         <div class="field">
-          <bb-text-input label="Code" hint="Leave empty to take the next code from the numbering series."  [(ngModel)]="form.contactCode" maxlength="20" [disabled]="editingId() !== null" />
+          <bb-text-input
+            id="contactCode"
+            label="Code"
+            hint="Leave empty to take the next code from the numbering series."
+            [(ngModel)]="form.contactCode"
+            [error]="errors()['contactCode'] || ''"
+            (ngModelChange)="clearError('contactCode')"
+            maxlength="20"
+            [disabled]="editingId() !== null"
+          />
         </div>
 
         <div class="field">
           <bb-select
+            id="contactCategory"
             label="Category"
             placeholder=""
+            [required]="true"
             [options]="categoryOptions"
             [(ngModel)]="form.contactCategory"
+            [error]="errors()['contactCategory'] || ''"
+            (ngModelChange)="clearError('contactCategory')"
           />
         </div>
 
-        <fieldset class="roles">
+        <fieldset class="roles" [class.fieldset-error]="!!errors()['roles']" id="roles" tabindex="-1">
           <legend>Roles</legend>
-          <bb-checkbox text="Customer" name="isCustomer" [(ngModel)]="form.isCustomer" />
-          <bb-checkbox text="Vendor" name="isVendor" [(ngModel)]="form.isVendor" />
-          <bb-checkbox text="Job worker" name="isJobWorker" [(ngModel)]="form.isJobWorker" />
-          <bb-checkbox text="Prescriber" name="isPrescriber" [(ngModel)]="form.isPrescriber" />
+          <bb-checkbox id="isCustomer" text="Customer" name="isCustomer" [(ngModel)]="form.isCustomer" (ngModelChange)="clearError('roles'); clearError('isCustomer')" />
+          <bb-checkbox text="Vendor" name="isVendor" [(ngModel)]="form.isVendor" (ngModelChange)="clearError('roles'); clearError('isCustomer')" />
+          <bb-checkbox text="Job worker" name="isJobWorker" [(ngModel)]="form.isJobWorker" (ngModelChange)="clearError('roles'); clearError('isCustomer')" />
+          <bb-checkbox text="Prescriber" name="isPrescriber" [(ngModel)]="form.isPrescriber" (ngModelChange)="clearError('roles'); clearError('isCustomer')" />
           @if (isSchool() || form.isGuardian) {
-            <bb-checkbox text="Guardian" name="isGuardian" [(ngModel)]="form.isGuardian" />
+            <bb-checkbox text="Guardian" name="isGuardian" [(ngModel)]="form.isGuardian" (ngModelChange)="clearError('roles'); clearError('isCustomer')" />
+          }
+          @if (errors()['roles']) {
+            <span class="field-error" role="alert">{{ errors()['roles'] }}</span>
           }
           <small>Tick every role that applies — one contact, not one per role.</small>
         </fieldset>
 
         <div class="field">
           <bb-select
+            id="gstRegistrationType"
             label="GST registration"
             placeholder=""
+            [required]="true"
             [options]="gstRegistrationOptions"
             [(ngModel)]="form.gstRegistrationType"
-            (ngModelChange)="onRegistrationChange()"
+            [error]="errors()['gstRegistrationType'] || ''"
+            (ngModelChange)="clearError('gstRegistrationType'); onRegistrationChange()"
           />
         </div>
 
         @if (gstinAllowed) {
           <div class="field">
-            <bb-text-input label="GSTIN" hint="Its first two digits must match the place of supply."  [(ngModel)]="form.gstin" maxlength="15" class="uppercase" />
+            <bb-text-input
+              id="gstin"
+              label="GSTIN"
+              hint="Its first two digits must match the place of supply."
+              [(ngModel)]="form.gstin"
+              [required]="gstinAllowed"
+              [error]="errors()['gstin'] || ''"
+              (ngModelChange)="clearError('gstin')"
+              maxlength="15"
+              class="uppercase"
+            />
           </div>
         }
 
         <div class="field">
           <bb-select
+            id="placeOfSupplyStateId"
             label="Place of supply"
             placeholder="Not set"
             hint="Decides CGST + SGST versus IGST."
             [options]="stateOptions()"
             [(ngModel)]="form.placeOfSupplyStateId"
+            [error]="errors()['placeOfSupplyStateId'] || ''"
+            (ngModelChange)="clearError('placeOfSupplyStateId')"
           />
         </div>
 
         <div class="field">
-          <bb-text-input label="PAN"  [(ngModel)]="form.pan" maxlength="10" class="uppercase" />
+          <bb-text-input
+            id="pan"
+            label="PAN"
+            [(ngModel)]="form.pan"
+            [error]="errors()['pan'] || ''"
+            (ngModelChange)="clearError('pan')"
+            maxlength="10"
+            class="uppercase"
+          />
         </div>
 
         <div class="field">
-          <bb-text-input label="Currency"  [(ngModel)]="form.currencyCode" maxlength="3" />
+          <bb-text-input
+            id="currencyCode"
+            label="Currency"
+            [(ngModel)]="form.currencyCode"
+            [required]="true"
+            [error]="errors()['currencyCode'] || ''"
+            (ngModelChange)="clearError('currencyCode')"
+            maxlength="3"
+          />
         </div>
 
         <div class="field">
           <bb-select
+            id="paymentTermId"
             label="Payment terms"
             placeholder="Not set"
             [options]="paymentTermOptions()"
             [(ngModel)]="form.paymentTermId"
+            [error]="errors()['paymentTermId'] || ''"
+            (ngModelChange)="clearError('paymentTermId')"
           />
         </div>
 
         <div class="field">
           <bb-money-input
+            id="creditLimit"
             label="Credit limit"
             hint="Empty means no limit."
             name="creditLimit"
             [(ngModel)]="form.creditLimit"
+            [error]="errors()['creditLimit'] || ''"
+            (ngModelChange)="clearError('creditLimit')"
           />
         </div>
 
         <div class="field">
-          <bb-number-input label="Max outstanding days" hint="Counted from the due date, not the invoice date."  [(ngModel)]="form.maxOutstandingDays" min="0" />
+          <bb-number-input
+            id="maxOutstandingDays"
+            label="Max outstanding days"
+            hint="Counted from the due date, not the invoice date."
+            [(ngModel)]="form.maxOutstandingDays"
+            [error]="errors()['maxOutstandingDays'] || ''"
+            (ngModelChange)="clearError('maxOutstandingDays')"
+            min="0"
+          />
         </div>
 
         <div class="field">
           <!-- A percentage, not a plain number: 10 means ten per cent, which is
                what the column holds and what the line maths divides by 100. -->
           <bb-percentage-input
+            id="maxDiscountPercent"
             label="Max discount %"
             name="maxDiscountPercent"
             [(ngModel)]="form.maxDiscountPercent"
+            [error]="errors()['maxDiscountPercent'] || ''"
+            (ngModelChange)="clearError('maxDiscountPercent')"
           />
         </div>
 
@@ -220,37 +304,81 @@
           <div class="field">
             @if (tdsSectionOptions().length > 0) {
               <bb-select
+                id="tdsSection"
                 label="TDS section"
                 name="tdsSection"
                 placeholder="Choose a section"
+                [required]="form.isTdsApplicable"
                 [options]="tdsSectionOptions()"
                 [(ngModel)]="form.tdsSection"
+                [error]="errors()['tdsSection'] || ''"
+                (ngModelChange)="clearError('tdsSection')"
               />
             } @else {
-              <bb-text-input label="TDS section" name="tdsSection" [(ngModel)]="form.tdsSection" maxlength="10" />
+              <bb-text-input
+                id="tdsSection"
+                label="TDS section"
+                name="tdsSection"
+                [required]="form.isTdsApplicable"
+                [(ngModel)]="form.tdsSection"
+                [error]="errors()['tdsSection'] || ''"
+                (ngModelChange)="clearError('tdsSection')"
+                maxlength="10"
+              />
             }
           </div>
           <div class="field">
             <bb-text-input
+              id="lowerDeductionCertificateNo"
               label="Lower-deduction certificate"
               hint="Section 197. Leave blank unless the vendor holds one."
               name="lowerDeductionCertificateNo"
               [(ngModel)]="form.lowerDeductionCertificateNo"
+              [error]="errors()['lowerDeductionCertificateNo'] || ''"
+              (ngModelChange)="clearError('lowerDeductionCertificateNo')"
               maxlength="20"
             />
           </div>
           @if (form.lowerDeductionCertificateNo) {
             <div class="field">
-              <bb-percentage-input label="Certificate rate %" name="lowerDeductionRate" [(ngModel)]="form.lowerDeductionRate" />
+              <bb-percentage-input
+                id="lowerDeductionRate"
+                label="Certificate rate %"
+                name="lowerDeductionRate"
+                [(ngModel)]="form.lowerDeductionRate"
+                [error]="errors()['lowerDeductionRate'] || ''"
+                (ngModelChange)="clearError('lowerDeductionRate')"
+              />
             </div>
             <div class="field">
-              <bb-money-input label="Certificate limit" name="lowerDeductionLimit" [(ngModel)]="form.lowerDeductionLimit" />
+              <bb-money-input
+                id="lowerDeductionLimit"
+                label="Certificate limit"
+                name="lowerDeductionLimit"
+                [(ngModel)]="form.lowerDeductionLimit"
+                [error]="errors()['lowerDeductionLimit'] || ''"
+                (ngModelChange)="clearError('lowerDeductionLimit')"
+              />
             </div>
             <div class="field">
-              <bb-branch-date-input label="Valid from" name="lowerDeductionValidFrom" [(ngModel)]="form.lowerDeductionValidFrom" />
+              <bb-branch-date-input
+                id="lowerDeductionValidFrom"
+                label="Valid from"
+                name="lowerDeductionValidFrom"
+                [(ngModel)]="form.lowerDeductionValidFrom"
+                [error]="errors()['lowerDeductionValidFrom'] || ''"
+                (ngModelChange)="clearError('lowerDeductionValidFrom')"
+              />
             </div>
             <div class="field">
-              <bb-branch-date-input label="Valid to" name="lowerDeductionValidTo" [(ngModel)]="form.lowerDeductionValidTo" />
+              <bb-branch-date-input
+                id="lowerDeductionValidTo"
+                label="Valid to"
+                name="lowerDeductionValidTo"
+                [(ngModel)]="form.lowerDeductionValidTo"
+                [error]="errors()['lowerDeductionValidTo'] || ''"
+                (ngModelChange)="clearError('lowerDeductionValidTo')"
+              />
             </div>
           }
         }
@@ -259,7 +387,15 @@
 
         @if (form.isMsme) {
           <div class="field">
-            <bb-text-input label="Udyam number"  [(ngModel)]="form.udyamNumber" maxlength="20" />
+            <bb-text-input
+              id="udyamNumber"
+              label="Udyam number"
+              [required]="form.isMsme"
+              [(ngModel)]="form.udyamNumber"
+              [error]="errors()['udyamNumber'] || ''"
+              (ngModelChange)="clearError('udyamNumber')"
+              maxlength="20"
+            />
           </div>
         }
 
@@ -277,7 +413,7 @@
 
     @if (tab() === 'addresses') {
       <div class="child-actions">
-        <button class="btn btn-primary" type="button" (click)="addAddress()">+ Add address</button>
+        <button id="addAddressBtn" class="btn btn-primary" type="button" (click)="addAddress()">+ Add address</button>
         <button type="button" class="link" (click)="copyBillingToShipping()">
           Copy billing to shipping
         </button>
@@ -288,6 +424,7 @@
           <div class="fields">
             <div class="field">
               <bb-select
+                [id]="'addrType_' + $index"
                 label="Type"
                 placeholder=""
                 [options]="addressTypeOptions"
@@ -297,23 +434,54 @@
             </div>
 
             <div class="field">
-              <bb-text-input label="Label"  [(ngModel)]="address.label" [name]="'addrLabel' + $index" maxlength="50" />
+              <bb-text-input
+                [id]="'addrLabel_' + $index"
+                label="Label"
+                [(ngModel)]="address.label"
+                [name]="'addrLabel' + $index"
+                maxlength="50"
+              />
             </div>
 
             <div class="field wide">
-              <bb-text-input label="Address line 1"  [(ngModel)]="address.addressLine1" [name]="'addr1' + $index" maxlength="200" />
+              <bb-text-input
+                [id]="'addr1_' + $index"
+                label="Address line 1"
+                [required]="true"
+                [(ngModel)]="address.addressLine1"
+                [name]="'addr1' + $index"
+                [error]="errors()['addr1_' + $index] || ''"
+                (ngModelChange)="clearError('addr1_' + $index)"
+                maxlength="200"
+              />
             </div>
 
             <div class="field wide">
-              <bb-text-input label="Address line 2"  [(ngModel)]="address.addressLine2" [name]="'addr2' + $index" maxlength="200" />
+              <bb-text-input
+                [id]="'addr2_' + $index"
+                label="Address line 2"
+                [(ngModel)]="address.addressLine2"
+                [name]="'addr2' + $index"
+                maxlength="200"
+              />
             </div>
 
             <div class="field">
-              <bb-text-input label="City"  [(ngModel)]="address.city" [name]="'city' + $index" maxlength="100" />
+              <bb-text-input
+                [id]="'city_' + $index"
+                label="City"
+                [required]="true"
+                [(ngModel)]="address.city"
+                [name]="'city' + $index"
+                [error]="errors()['city_' + $index] || ''"
+                (ngModelChange)="clearError('city_' + $index)"
+                maxlength="100"
+              />
             </div>
 
             <div class="field">
               <bb-select
+                [id]="'state_' + $index"
                 label="State"
                 placeholder="Not set"
                 [options]="stateNameOptions()"
@@ -323,11 +491,23 @@
             </div>
 
             <div class="field">
-              <bb-text-input label="Postal code"  [(ngModel)]="address.postalCode" [name]="'pin' + $index" maxlength="10" />
+              <bb-text-input
+                [id]="'pin_' + $index"
+                label="Postal code"
+                [(ngModel)]="address.postalCode"
+                [name]="'pin' + $index"
+                maxlength="10"
+              />
             </div>
 
             <div class="field">
-              <bb-text-input label="Mobile"  [(ngModel)]="address.mobileNumber" [name]="'addrMobile' + $index" maxlength="20" />
+              <bb-text-input
+                [id]="'addrMobile_' + $index"
+                label="Mobile"
+                [(ngModel)]="address.mobileNumber"
+                [name]="'addrMobile' + $index"
+                maxlength="20"
+              />
             </div>
           </div>
 
@@ -351,59 +531,106 @@
 
     @if (tab() === 'persons') {
       <div class="child-actions">
-        <button class="btn btn-primary" type="button" (click)="addPerson()">+ Add person</button>
+        <button id="addPersonBtn" class="btn btn-primary" type="button" (click)="addPerson()">+ Add person</button>
         <button type="button" class="link" (click)="rolesOpen.set(true)">Manage roles</button>
       </div>
+
+      @if (errors()['persons']) {
+        <bb-message-box class="mb-3" [messages]="[{ tone: 'error', text: errors()['persons'] }]" />
+      }
 
       @for (person of form.persons; track $index) {
         <div class="child-card">
           <div class="fields">
             <div class="field">
               <bb-select
+                [id]="'personRole_' + $index"
                 label="Role"
                 placeholder=""
+                [required]="true"
                 [options]="personRoleOptions()"
                 [name]="'role' + $index"
                 [(ngModel)]="person.contactPersonRoleId"
+                [error]="errors()['personRole_' + $index] || ''"
+                (ngModelChange)="clearError('personRole_' + $index)"
               />
             </div>
 
             <div class="field">
-              <bb-text-input label="First name"  [(ngModel)]="person.firstName" [name]="'first' + $index" maxlength="100" />
+              <bb-text-input
+                [id]="'personFirst_' + $index"
+                label="First name"
+                [required]="true"
+                [(ngModel)]="person.firstName"
+                [name]="'first' + $index"
+                [error]="errors()['personFirst_' + $index] || ''"
+                (ngModelChange)="clearError('personFirst_' + $index)"
+                maxlength="100"
+              />
             </div>
 
             <div class="field">
-              <bb-text-input label="Last name"  [(ngModel)]="person.lastName" [name]="'last' + $index" maxlength="100" />
+              <bb-text-input
+                [id]="'personLast_' + $index"
+                label="Last name"
+                [(ngModel)]="person.lastName"
+                [name]="'last' + $index"
+                maxlength="100"
+              />
             </div>
 
             <div class="field">
-              <bb-text-input label="Designation"  [(ngModel)]="person.designation" [name]="'desig' + $index" maxlength="100" />
+              <bb-text-input
+                [id]="'personDesig_' + $index"
+                label="Designation"
+                [(ngModel)]="person.designation"
+                [name]="'desig' + $index"
+                maxlength="100"
+              />
             </div>
 
             <div class="field">
               <bb-email-input
+                [id]="'personEmail_' + $index"
                 label="Email"
                 maxlength="150"
                 [(ngModel)]="person.email"
                 [name]="'email' + $index"
+                [error]="errors()['personEmail_' + $index] || ''"
+                (ngModelChange)="clearError('personEmail_' + $index)"
               />
             </div>
 
             <div class="field">
               <bb-phone-input
+                [id]="'personMobile_' + $index"
                 label="Mobile"
                 maxlength="20"
                 [(ngModel)]="person.mobileNumber"
                 [name]="'mobile' + $index"
+                [error]="errors()['personMobile_' + $index] || ''"
+                (ngModelChange)="clearError('personMobile_' + $index)"
               />
             </div>
 
             <div class="field">
-              <bb-text-input label="Phone"  [(ngModel)]="person.phoneNumber" [name]="'phone' + $index" maxlength="20" />
+              <bb-text-input
+                [id]="'personPhone_' + $index"
+                label="Phone"
+                [(ngModel)]="person.phoneNumber"
+                [name]="'phone' + $index"
+                maxlength="20"
+              />
             </div>
 
             <div class="field">
-              <bb-text-input label="Website"  [(ngModel)]="person.website" [name]="'web' + $index" maxlength="200" />
+              <bb-text-input
+                [id]="'personWeb_' + $index"
+                label="Website"
+                [(ngModel)]="person.website"
+                [name]="'web' + $index"
+                maxlength="200"
+              />
             </div>
           </div>
 
@@ -429,7 +656,7 @@
 
     @if (tab() === 'banking') {
       <div class="child-actions">
-        <button class="btn btn-primary" type="button" (click)="addBankDetail()">+ Add account</button>
+        <button id="addBankBtn" class="btn btn-primary" type="button" (click)="addBankDetail()">+ Add account</button>
       </div>
 
       @for (bank of form.bankDetails; track $index) {
@@ -437,34 +664,62 @@
           <div class="fields">
             <div class="field wide">
               <bb-text-input
- label="Account holder name" hint="Exactly as on the passbook — a transfer is rejected when it differs."                
+                [id]="'bankHolder_' + $index"
+                label="Account holder name"
+                hint="Exactly as on the passbook — a transfer is rejected when it differs."
+                [required]="true"
                 [(ngModel)]="bank.accountHolderName"
                 [name]="'holder' + $index"
+                [error]="errors()['bankHolder_' + $index] || ''"
+                (ngModelChange)="clearError('bankHolder_' + $index)"
                 maxlength="100"
               />
             </div>
 
             <div class="field">
-              <bb-text-input label="Bank"  [(ngModel)]="bank.bankName" [name]="'bankName' + $index" maxlength="100" />
-            </div>
-
-            <div class="field">
-              <bb-text-input label="Account number"  [(ngModel)]="bank.accountNumber" [name]="'acctNo' + $index" maxlength="30" />
-            </div>
-
-            <div class="field">
-              <bb-select
-                label="Account type"
-                placeholder=""
-                [options]="bankAccountKindOptions"
-                [name]="'acctKind' + $index"
-                [(ngModel)]="bank.accountKind"
+              <bb-text-input
+                [id]="'bankName_' + $index"
+                label="Bank"
+                [required]="true"
+                [(ngModel)]="bank.bankName"
+                [name]="'bankName' + $index"
+                [error]="errors()['bankName_' + $index] || ''"
+                (ngModelChange)="clearError('bankName_' + $index)"
+                maxlength="100"
               />
             </div>
 
             <div class="field">
               <bb-text-input
- label="IFSC"                
+                [id]="'bankAccount_' + $index"
+                label="Account number"
+                [required]="true"
+                [(ngModel)]="bank.accountNumber"
+                [name]="'acctNo' + $index"
+                [error]="errors()['bankAccount_' + $index] || ''"
+                (ngModelChange)="clearError('bankAccount_' + $index)"
+                maxlength="30"
+              />
+            </div>
+
+            <div class="field">
+              <bb-select
+                [id]="'bankKind_' + $index"
+                label="Account type"
+                placeholder=""
+                [required]="true"
+                [options]="bankAccountKindOptions"
+                [name]="'acctKind' + $index"
+                [(ngModel)]="bank.accountKind"
+                [error]="errors()['bankKind_' + $index] || ''"
+                (ngModelChange)="clearError('bankKind_' + $index)"
+              />
+            </div>
+
+            <div class="field">
+              <bb-text-input
+                [id]="'bankIfsc_' + $index"
+                label="IFSC"
                 [(ngModel)]="bank.ifsc"
                 [name]="'ifsc' + $index"
                 maxlength="11"
@@ -473,11 +728,24 @@
             </div>
 
             <div class="field">
-              <bb-text-input label="Branch"  [(ngModel)]="bank.branchName" [name]="'branch' + $index" maxlength="100" />
+              <bb-text-input
+                [id]="'bankBranch_' + $index"
+                label="Branch"
+                [(ngModel)]="bank.branchName"
+                [name]="'branch' + $index"
+                maxlength="100"
+              />
             </div>
 
             <div class="field">
-              <bb-text-input label="UPI id" hint="Often the only detail a small vendor gives you."  [(ngModel)]="bank.upiId" [name]="'upi' + $index" maxlength="100" />
+              <bb-text-input
+                [id]="'bankUpi_' + $index"
+                label="UPI id"
+                hint="Often the only detail a small vendor gives you."
+                [(ngModel)]="bank.upiId"
+                [name]="'upi' + $index"
+                maxlength="100"
+              />
             </div>
           </div>
 
@@ -501,7 +769,7 @@
 
     @if (tab() === 'licences') {
       <div class="child-actions">
-        <button class="btn btn-primary" type="button" (click)="addLicence()">+ Add licence</button>
+        <button id="addLicenceBtn" class="btn btn-primary" type="button" (click)="addLicence()">+ Add licence</button>
       </div>
 
       @for (licence of form.licences; track $index) {
@@ -509,21 +777,35 @@
           <div class="fields">
             <div class="field">
               <bb-select
+                [id]="'licType_' + $index"
                 label="Type"
                 placeholder=""
+                [required]="true"
                 [options]="licenceTypes"
                 [name]="'licType' + $index"
                 [(ngModel)]="licence.licenceType"
+                [error]="errors()['licType_' + $index] || ''"
+                (ngModelChange)="clearError('licType_' + $index)"
               />
             </div>
 
             <div class="field">
-              <bb-text-input label="Number"  [(ngModel)]="licence.licenceNumber" [name]="'licNo' + $index" maxlength="50" />
+              <bb-text-input
+                [id]="'licNo_' + $index"
+                label="Number"
+                [required]="true"
+                [(ngModel)]="licence.licenceNumber"
+                [name]="'licNo' + $index"
+                [error]="errors()['licNo_' + $index] || ''"
+                (ngModelChange)="clearError('licNo_' + $index)"
+                maxlength="50"
+              />
             </div>
 
             <div class="field">
               <bb-text-input
- label="Issuing authority"                
+                [id]="'licAuth_' + $index"
+                label="Issuing authority"
                 [(ngModel)]="licence.issuingAuthority"
                 [name]="'licAuth' + $index"
                 maxlength="100"
@@ -531,16 +813,28 @@
             </div>
 
             <div class="field">
-              <bb-branch-date-input label="Issued on"  [(ngModel)]="licence.issuedOn" [name]="'licFrom' + $index" />
+              <bb-branch-date-input
+                [id]="'licFrom_' + $index"
+                label="Issued on"
+                [(ngModel)]="licence.issuedOn"
+                [name]="'licFrom' + $index"
+              />
             </div>
 
             <div class="field">
-              <bb-branch-date-input label="Expires on" hint="Leave empty when the licence does not expire."  [(ngModel)]="licence.expiresOn" [name]="'licTo' + $index" />
+              <bb-branch-date-input
+                [id]="'licTo_' + $index"
+                label="Expires on"
+                hint="Leave empty when the licence does not expire."
+                [(ngModel)]="licence.expiresOn"
+                [name]="'licTo' + $index"
+              />
             </div>
 
             <div class="field">
               <bb-text-input
- label="Description"
+                [id]="'licDesc_' + $index"
+                label="Description"
                 hint="&quot;Form 20B&quot;, &quot;Retail&quot; — the authority's own wording."
                 [(ngModel)]="licence.description"
                 [name]="'licDesc' + $index"
@@ -579,7 +873,8 @@
         <div class="fields">
           <div class="field">
             <bb-select
- label="Document type"              ariaLabel="Document type"
+              label="Document type"
+              ariaLabel="Document type"
               placeholder=""
               [options]="documentTypes"
               name="uploadType"
@@ -588,11 +883,11 @@
           </div>
 
           <div class="field">
-            <bb-text-input label="Description"  [(ngModel)]="uploadDescription" name="uploadDesc" maxlength="500" />
+            <bb-text-input label="Description" [(ngModel)]="uploadDescription" name="uploadDesc" maxlength="500" />
           </div>
 
           <div class="field">
-            <bb-branch-date-input label="Expires on" hint="Optional — for agreements and certificates that lapse."  [(ngModel)]="uploadExpiryDate" name="uploadExpiry" />
+            <bb-branch-date-input label="Expires on" hint="Optional — for agreements and certificates that lapse." [(ngModel)]="uploadExpiryDate" name="uploadExpiry" />
           </div>
 
           <div class="field wide">
@@ -659,7 +954,7 @@
     }
 
     <div class="sheet-actions">
-      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.displayName">Save contact</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy()">Save contact</button>
       @if (editingId() !== null) {
         <button type="button" class="link" (click)="makePortalLink()" [disabled]="busy()">Portal link</button>
         @if ((portalAccess()?.liveLinks ?? 0) > 0) {
