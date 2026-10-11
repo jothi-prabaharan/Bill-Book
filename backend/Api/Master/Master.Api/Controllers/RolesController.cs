@@ -34,7 +34,7 @@ public sealed class RolesController : ControllerBase
             return Forbid();
         }
 
-        return Ok(await _roles.ListAsync(customerId, ct));
+        return Ok(await _roles.ListAsync(customerId, _currentUser.OrgId, ct));
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public sealed class RolesController : ControllerBase
             return Forbid();
         }
 
-        RoleDetail? role = await _roles.GetAsync(customerId, roleId, ct);
+        RoleDetail? role = await _roles.GetAsync(customerId, roleId, _currentUser.OrgId, ct);
         return role is null ? NotFound() : Ok(role);
     }
 
@@ -89,6 +89,10 @@ public sealed class RolesController : ControllerBase
     private IActionResult Refused(SaveRoleResult result) => result switch
     {
         SaveRoleResult.NotFound => NotFound(),
+        SaveRoleResult.SystemRole => BadRequest(new MessageResponse
+        {
+            Message = "System default roles cannot be edited or modified.",
+        }),
         _ => StatusCode(StatusCodes.Status500InternalServerError),
     };
 

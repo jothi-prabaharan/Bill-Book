@@ -14,9 +14,11 @@
       @if (row.isSystemRole) { <span class="badge">System</span> }
     </ng-template>
     <ng-template bbCellTemplate="actions" let-row>
-      <button type="button" class="link" (click)="startEdit(row.roleId)">Edit</button>
       @if (!row.isSystemRole) {
+        <button type="button" class="link" (click)="startEdit(row.roleId)">Edit</button>
         <button type="button" class="link danger" (click)="remove(row)">Delete</button>
+      } @else {
+        <span class="badge" title="System default roles cannot be edited">Locked</span>
       }
     </ng-template>
   </bb-data-grid>
@@ -29,30 +31,20 @@
       <bb-text-input label="Description" name="description" [(ngModel)]="form.description" maxlength="300" />
     </div>
 
-    @if (isSystem()) {
-      <p class="note">
-        This is a system role. You can rename it for display, but its permissions are fixed
-        and it cannot be deleted.
-      </p>
-    }
-
     <h2>Permissions</h2>
     @for (group of matrix(); track group.module) {
       <fieldset class="module">
         <legend>
           {{ group.module }}
-          @if (!isSystem()) {
-            <button type="button" class="link" (click)="toggleModule(group)">
-              {{ allSelected(group) ? 'Clear' : 'Select all' }}
-            </button>
-          }
+          <button type="button" class="link" (click)="toggleModule(group)">
+            {{ allSelected(group) ? 'Clear' : 'Select all' }}
+          </button>
         </legend>
         <div class="actions-grid">
           @for (p of group.permissions; track p.permissionId) {
             <bb-checkbox
               [text]="p.action"
               [name]="'perm' + p.permissionId"
-              [disabled]="isSystem()"
               [ngModel]="selected().has(p.permissionId)"
               (ngModelChange)="togglePermission(p.permissionId)"
             />

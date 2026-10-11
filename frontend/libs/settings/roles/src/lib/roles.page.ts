@@ -108,10 +108,19 @@ export class RolesPage implements OnInit {
   }
 
   async startEdit(roleId: number): Promise<void> {
+    const existing = this.roles().find((r) => r.roleId === roleId);
+    if (existing?.isSystemRole) {
+      this.error.set('System default roles cannot be edited.');
+      return;
+    }
     await this.loadMatrix();
     const role = await this.req<RoleDetail>('GET', `/api/roles/${roleId}`);
+    if (role.isSystemRole) {
+      this.error.set('System default roles cannot be edited.');
+      return;
+    }
     this.editingId = roleId;
-    this.isSystem.set(role.isSystemRole);
+    this.isSystem.set(false);
     this.form = { displayName: role.displayName, description: role.description ?? '' };
     this.selected.set(new Set(role.permissionIds));
     this.editing.set(true);
@@ -145,6 +154,11 @@ export class RolesPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (this.isSystem()) {
+      this.error.set('System default roles cannot be edited.');
+      return;
+    }
+
     if (!this.hasText(this.form.displayName)) {
       this.error.set('Role name is required.');
       return;
@@ -165,8 +179,9 @@ export class RolesPage implements OnInit {
       }
       this.editing.set(false);
       await this.load();
-    } catch {
-      this.error.set('Could not save that role.');
+    } catch (err: unknown) {
+      const anyErr = err as { error?: { message?: string } };
+      this.error.set(anyErr?.error?.message ?? 'Could not save that role.');
     } finally {
       this.busy.set(false);
     }

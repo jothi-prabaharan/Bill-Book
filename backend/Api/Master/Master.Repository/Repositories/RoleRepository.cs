@@ -14,7 +14,7 @@ public sealed class RoleRepository
     public RoleRepository(AdminDbContext db) => _db = db;
 
     /// <summary>System roles plus this customer's own (D-36, TK-127: roles span types).</summary>
-    public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, CancellationToken ct)
+    public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, Guid? orgId, CancellationToken ct)
     {
         IQueryable<Role> roles = _db.Roles.Where(r => r.CustomerId == null || r.CustomerId == customerId);
 
@@ -28,13 +28,19 @@ public sealed class RoleRepository
                 Description = r.Description,
                 IsSystemRole = r.IsSystemRole,
                 IsActive = r.IsActive,
-                UserCount = _db.UserOrganizationRoles.Count(u => u.RoleId == r.RoleId && u.IsActive),
+                UserCount = orgId.HasValue
+                    ? _db.UserOrganizationRoles.Count(u =>
+                        u.RoleId == r.RoleId &&
+                        u.OrgId == orgId.Value &&
+                        u.IsActive &&
+                        _db.Users.Any(usr => usr.UserId == u.UserId && usr.IsActive))
+                    : 0,
                 PermissionCount = _db.RolePermissions.Count(p => p.RoleId == r.RoleId),
             })
             .ToListAsync(ct);
     }
 
-    public async Task<RoleDetail?> GetAsync(Guid customerId, int roleId, CancellationToken ct)
+    public async Task<RoleDetail?> GetAsync(Guid customerId, int roleId, Guid? orgId, CancellationToken ct)
     {
         Role? role = await _db.Roles.FirstOrDefaultAsync(
             r => r.RoleId == roleId && (r.CustomerId == null || r.CustomerId == customerId), ct);
@@ -48,6 +54,15 @@ public sealed class RoleRepository
             .Select(p => p.PermissionId)
             .ToListAsync(ct);
 
+        int userCount = orgId.HasValue
+            ? await _db.UserOrganizationRoles.CountAsync(
+                u => u.RoleId == roleId &&
+                     u.OrgId == orgId.Value &&
+                     u.IsActive &&
+                     _db.Users.Any(usr => usr.UserId == u.UserId && usr.IsActive),
+                ct)
+            : 0;
+
         return new RoleDetail
         {
             RoleId = role.RoleId,
@@ -55,8 +70,7 @@ public sealed class RoleRepository
             Description = role.Description,
             IsSystemRole = role.IsSystemRole,
             IsActive = role.IsActive,
-            UserCount = await _db.UserOrganizationRoles.CountAsync(
-                u => u.RoleId == roleId && u.IsActive, ct),
+            UserCount = userCount,
             PermissionCount = permissionIds.Count,
             PermissionIds = permissionIds,
         };
@@ -144,15 +158,16 @@ public sealed class RoleRepository
             return SaveRoleResult.NotFound;
         }
 
-        // A system role may be relabelled but its permission set is fixed, and
-        // SystemName never changes — code and reports key on it.
+        // System default roles are completely locked and cannot be edited, modified, or updated.
+        if (role.IsSystemRole || role.CustomerId == null)
+        {
+            return SaveRoleResult.SystemRole;
+        }
+
         role.DisplayName = request.DisplayName;
         role.Description = request.Description;
 
-        if (!role.IsSystemRole)
-        {
-            await ReplacePermissionsAsync(roleId, request.PermissionIds, ct);
-        }
+        await ReplacePermissionsAsync(roleId, request.PermissionIds, ct);
 
         await _db.SaveChangesAsync(ct);
         return SaveRoleResult.Ok;
@@ -213,6 +228,7 @@ public enum SaveRoleResult
 {
     Ok = 1,
     NotFound = 2,
+    SystemRole = 3,
 }
 
 public enum DeleteRoleResult
