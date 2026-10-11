@@ -196,7 +196,7 @@ export class HomePageComponent {
       shortTitle: 'Users & Permissions',
       badge: 'Role-Based Access Control',
       description:
-        'Multi-branch user provisioning, role-based access control (RBAC), user invite links, and master contacts directory backed by dedicated database security.',
+        'Multi-branch user provisioning, role-based access control (RBAC), user invite links, and master contacts directory with dedicated database security.',
       primaryImage: 'assets/screenshots/users-management.png',
       primaryCaption: 'User Directory & Access Control — Real live users (Jothi Prabaharan, Owner), role assignments, and branch provisioning',
       primaryUrl: 'settings/users',
@@ -204,10 +204,10 @@ export class HomePageComponent {
       secondaryCaption: 'Master Contacts Directory — Customers, vendors, and job workers with GSTIN verification and credit limits',
       secondaryUrl: 'contacts',
       highlights: [
-        'Real-time user provisioning with role-based access control (RBAC) across all branches',
-        'PostgreSQL Standalone Database guaranteeing 100% data isolation per organization',
-        'Contacts Master with automated GSTIN validation and state code tax classification',
-        'Complete immutable audit log recording creator, timestamp, and modification delta',
+        'Real-time user provisioning with role-based access control (RBAC)',
+        'PostgreSQL Standalone Database guaranteeing 100% data isolation',
+        'Contacts Master with automated GSTIN validation & state tax codes',
+        'Complete immutable audit log recording creator, time, and delta',
       ],
     },
   ];
