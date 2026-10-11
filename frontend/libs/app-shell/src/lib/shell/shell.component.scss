@@ -8,7 +8,7 @@
   display: grid;
   /* Rail, secondary menu, content. The middle column is `auto` so it takes the
      panel's own width and collapses to nothing when there is no panel. */
-  grid-template-columns: 68px auto 1fr;
+  grid-template-columns: 64px auto 1fr;
   grid-template-rows: 46px auto 1fr;
   height: 100dvh;
   width: 100vw;
@@ -38,7 +38,10 @@
   grid-row: 2 / span 2;
   min-height: 0;
   display: flex;
-  z-index: var(--z-rail);
+  /* Under the rail, as the design layers them (rail 5, breadcrumb 4, panel
+     beneath): sharing the rail's layer put the panel, later in the DOM, over
+     the rail's account menu (TK-189). */
+  z-index: var(--z-breadcrumb);
 }
 
 .shell-breadcrumb-cell {

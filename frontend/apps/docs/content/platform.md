@@ -132,6 +132,12 @@ There are no apps any more (TK-136). A customer buys one product, and what each 
 - **`GET /api/me/context`** returns your name and email, the branch, its business type and add-ons, the licence and your permissions. It returns no internal ids.
 - **Keep me signed in.** Ticked, you stay signed in after closing the browser, for as long as you come back within the refresh token's seven days; each visit renews it. Unticked, a reload or a new tab keeps you signed in, but closing the browser signs you out. Either way the access token lasts fifteen minutes and is renewed quietly, including when the app is reopened after a break.
 
+### Switching branch, and the frame around every page
+
+- **The branch switcher groups branches by organisation (TK-189).** The group holding your current branch is open, and opening another closes it. Each branch shows its business type, organisation and currency. Searching matches the branch, organisation, role, GSTIN or city, and opens every group so nothing is hidden. `GET /api/auth/organizations`, `GET /api/auth/session` and the login response carry `customerName`, `businessType` (a branch with none reads as `Retail`), `baseCurrency`, `gstin` and `city` for each branch, read in one query.
+- **The rail** is 64px wide. Its account button shows your initials and your role in the current branch, and opens a menu with your name, role, email and **Logout**. Escape, a click outside or moving to another page closes it.
+- **On a phone** the tab bar holds Home, Purchase, Sales and Banking, and **More** holds the rest. The top bar keeps the branch switcher, notifications, help and sign out. New, Search, Favourites and the financial-year tag are desktop only.
+
 ### Signing up
 
 - **Signup asks what the business does.** Choose the first branch's kind of business and its add-ons. Pick **HRMS or Payroll only** for a customer that trades nothing, and then tick HRMS, Payroll or both. An add-on the business type does not allow cannot be ticked.

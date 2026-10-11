@@ -7,10 +7,10 @@
   position: relative;
   z-index: var(--z-rail);
   height: 100%;
-  width: 68px;
+  width: 64px;
   background: var(--color-ink);
   color: var(--color-neutral-100);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -46,11 +46,11 @@
   align-items: center;
   gap: 3px;
   padding: 5px 0;
-  border-radius: var(--radius-md);
+  border-radius: 4px;
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 10px;
-  letter-spacing: 0;
+  letter-spacing: 0.03em;
   color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
   text-align: center;
   text-decoration: none;
@@ -92,7 +92,128 @@
 }
 
 .user-profile-item {
+  width: 100%;
+  box-sizing: border-box;
   padding-bottom: var(--space-1);
+  background: none;
+  border: 0;
+  color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
+}
+
+/* The role under the avatar: a long one (Accountant) ellipsises rather than
+   being clipped at both ends of the 56px item. */
+.rail-role {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The account button and its menu (TK-189). */
+.rail-account {
+  position: relative;
+}
+
+.railav {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--color-neutral-100) 32%, transparent);
+  font-family: var(--font-heading);
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  color: var(--color-neutral-100);
+}
+
+.account-menu {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  /* 64px rail + the design's 8px gap; bottom is set from the button. */
+  left: 72px;
+  width: 256px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  white-space: normal;
+  text-align: left;
+}
+
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.account-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--color-neutral-100);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+}
+
+.account-text {
+  min-width: 0;
+}
+
+.account-name {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.account-role,
+.account-email {
+  display: block;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+.account-role {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.account-email {
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.profitem {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px var(--space-3);
+  font-size: 13.5px;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-accent-800);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
 }
 
 .shell-sidebar-divider {
@@ -104,9 +225,9 @@
 .shell-mobile-nav {
   display: flex;
   align-items: stretch;
-  border-top: 1px solid var(--color-divider);
   padding-bottom: env(safe-area-inset-bottom);
-  background: var(--color-bg);
+  background: var(--color-ink);
+  box-shadow: var(--shadow-lg);
 }
 
 .tab-item {
@@ -118,7 +239,7 @@
   flex: 1;
   min-height: 50px;
   font-size: 10px;
-  color: var(--color-text);
+  color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
   background: transparent;
   border: 0;
   padding: 0;
@@ -126,8 +247,12 @@
   cursor: pointer;
   transition: color 120ms ease, box-shadow 120ms ease;
 
+  &:hover {
+    color: var(--color-accent-400);
+  }
+
   &.active {
-    color: var(--color-accent-800);
+    color: var(--color-accent);
     box-shadow: inset 0 2px 0 var(--color-accent);
   }
 }

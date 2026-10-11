@@ -2,6 +2,13 @@ export interface AccessibleOrg {
   orgId: string;
   orgName: string;
   roleName: string;
+  /** The organisation the branch belongs to; the branch switcher groups by it. */
+  customerName?: string | null;
+  /** Retail, Pharma, Jewellery, School, Service or Restaurant. */
+  businessType?: string;
+  baseCurrency?: string | null;
+  gstin?: string | null;
+  city?: string | null;
 }
 
 export interface SessionState {

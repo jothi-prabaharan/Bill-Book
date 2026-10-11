@@ -132,20 +132,42 @@ public sealed class AuthRepository
             .Select(g => g.First())
             .ToList();
 
+        // One read for every branch, with what the switcher shows beside each:
+        // its organisation, trade, currency, GSTIN and city (TK-189).
+        List<Guid> orgIds = assignments.Select(a => a.OrgId).ToList();
+        var branches = await (
+            from o in _db.Organizations.AsNoTracking()
+            join c in _db.Customers on o.CustomerId equals c.CustomerId
+            where orgIds.Contains(o.OrgId)
+            select new
+            {
+                o.OrgId,
+                o.Name,
+                CustomerName = c.Name,
+                o.BusinessType,
+                o.BaseCurrency,
+                o.Gstin,
+                o.City,
+            }).ToDictionaryAsync(b => b.OrgId, ct);
+
         var orgs = new List<AccessibleOrgDto>();
 
         foreach (var assignment in assignments)
         {
-            // Names live in Platform, so a branch that cannot be resolved is
-            // still listed rather than silently dropped — a missing branch is
-            // something to see, not to hide.
-            OrgContextResponse? ctx = await _orgs.ResolveAsync(assignment.OrgId, ct);
+            // A branch that cannot be resolved is still listed rather than
+            // silently dropped — a missing branch is something to see, not to hide.
+            branches.TryGetValue(assignment.OrgId, out var branch);
 
             orgs.Add(new AccessibleOrgDto
             {
                 OrgId = assignment.OrgId,
-                OrgName = ctx?.OrgName ?? "(unavailable)",
+                OrgName = branch?.Name ?? "(unavailable)",
                 RoleName = assignment.RoleName,
+                CustomerName = branch?.CustomerName,
+                BusinessType = (branch?.BusinessType ?? BusinessType.Retail).ToString(),
+                BaseCurrency = branch?.BaseCurrency,
+                Gstin = branch?.Gstin,
+                City = branch?.City,
             });
         }
 

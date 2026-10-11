@@ -122,6 +122,71 @@
   gap: 1px;
 }
 
+.org-group {
+  min-width: 0;
+}
+
+/* One organisation's fold, as the design's `.grouphead`. */
+.org-grouphead {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 7px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+
+  &:hover {
+    color: var(--color-accent-800);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+}
+
+.org-grouphead-icon {
+  flex: none;
+  opacity: 0.7;
+}
+
+.org-grouphead-name {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.org-grouphead-count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.org-grouphead-chevron {
+  flex: none;
+  transition: transform 120ms ease;
+
+  &.shut {
+    transform: rotate(-90deg);
+  }
+}
+
+.org-group-rows {
+  display: grid;
+  gap: 1px;
+  padding-bottom: var(--space-1);
+}
+
 .org-list-btn {
   all: unset;
   box-sizing: border-box;
@@ -420,6 +485,26 @@
 @media (min-width: 861px) {
   .mobile-header-elements {
     display: none !important;
+  }
+}
+
+/* A phone keeps the switcher, notifications, help and sign out; New, Search
+   and Favourites are desktop tools in the design (TK-189). */
+@media (max-width: 860px) {
+  .topact--desk {
+    display: none;
+  }
+
+  /* At 360px the switcher, the year and the three actions left do not fit,
+     and the design's phone bar has no year in it: the switcher takes what is
+     left and ellipsises the branch name instead. */
+  .fy-tag {
+    display: none;
+  }
+
+  .shell-org-picker {
+    min-width: 0;
+    flex: 1 1 auto;
   }
 }
 

@@ -22,6 +22,20 @@ public class AccessibleOrgDto
     public string OrgName { get; set; } = null!;
 
     public string RoleName { get; set; } = null!;
+
+    /// <summary>The organisation (customer) the branch belongs to; the switcher groups by it.</summary>
+    public string? CustomerName { get; set; }
+
+    /// <summary>The branch's trade, as a <c>BusinessType</c> name: Retail, Pharma, Jewellery, School, Service or Restaurant.</summary>
+    public string BusinessType { get; set; } = "Retail";
+
+    /// <summary>The currency the branch keeps its books in.</summary>
+    public string? BaseCurrency { get; set; }
+
+    /// <summary>The branch's GSTIN, so the switcher can be searched by it. Null on an unregistered branch.</summary>
+    public string? Gstin { get; set; }
+
+    public string? City { get; set; }
 }
 
 public class SessionStateResponse

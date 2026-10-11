@@ -149,13 +149,56 @@ export class ShellTopbarComponent {
   readonly filteredOrgs = computed(() => {
     const query = this.orgQuery().trim().toLowerCase();
     if (!query) return this.allOrgs();
-    return this.allOrgs().filter(
-      (o) =>
-        o.orgName.toLowerCase().includes(query) || o.roleName.toLowerCase().includes(query),
+    return this.allOrgs().filter((o) =>
+      [o.orgName, o.roleName, o.customerName, o.gstin, o.city]
+        .some((field) => !!field && field.toLowerCase().includes(query)),
     );
   });
 
   readonly orgEmpty = computed(() => this.filteredOrgs().length === 0);
+
+  /**
+   * The group the person has opened or shut; `undefined` until they touch one,
+   * which means the current branch's group is the open one.
+   */
+  private readonly orgSection = signal<string | null | undefined>(undefined);
+
+  /** The group that is open when no search is running. */
+  private readonly openOrgGroup = computed(() => {
+    const chosen = this.orgSection();
+    if (chosen !== undefined) return chosen;
+    return orgGroupName(this.allOrgs().find((o) => o.orgId === this.currentOrgId()));
+  });
+
+  /**
+   * Branches grouped by their organisation, in the order the API lists them
+   * (TK-189). One group is open at a time; a search opens every group so no
+   * match is hidden behind a fold.
+   */
+  readonly orgGroups = computed<readonly OrgGroup[]>(() => {
+    const searching = this.orgQuery().trim().length > 0;
+    const groups = new Map<string, AccessibleOrg[]>();
+    for (const org of this.filteredOrgs()) {
+      const name = orgGroupName(org);
+      groups.set(name, [...(groups.get(name) ?? []), org]);
+    }
+    return [...groups].map(([name, orgs]) => ({
+      name,
+      orgs,
+      open: searching || name === this.openOrgGroup(),
+    }));
+  });
+
+  toggleOrgGroup(group: OrgGroup): void {
+    this.orgSection.set(this.openOrgGroup() === group.name ? null : group.name);
+  }
+
+  /** The row's second line: trade · organisation · currency, as the design has it. */
+  orgMeta(org: AccessibleOrg): string {
+    return [org.businessType ?? 'Retail', org.customerName ?? org.roleName, org.baseCurrency]
+      .filter(Boolean)
+      .join(' · ');
+  }
 
   /**
    * Screens this role may actually open — what Search and Favourites are drawn
@@ -265,6 +308,7 @@ export class ShellTopbarComponent {
 
   private clearQueries(): void {
     this.orgQuery.set('');
+    this.orgSection.set(undefined);
     this.newQuery.set('');
     this.searchQuery.set('');
     this.favQuery.set('');
@@ -369,6 +413,18 @@ export class ShellTopbarComponent {
     void this.auth.signOut();
     void this.router.navigateByUrl('/login');
   }
+}
+
+/** One organisation's branches in the switcher. */
+export interface OrgGroup {
+  readonly name: string;
+  readonly orgs: readonly AccessibleOrg[];
+  readonly open: boolean;
+}
+
+/** The organisation a branch is filed under; an older API without it puts every branch in one group. */
+function orgGroupName(org: AccessibleOrg | undefined): string {
+  return org?.customerName?.trim() || 'Branches';
 }
 
 /** Storage can throw in a private window; a missing org id is not fatal here. */

@@ -27,7 +27,7 @@
 
         <bb-search-input
                 class="org-search-input"
-                placeholder="Search organisation, branch or role"
+                placeholder="Search organisation, branch or GSTIN"
                 ariaLabel="Search organizations"
                 [debounceMs]="0"
                 [ngModel]="orgQuery()"
@@ -35,22 +35,37 @@
               />
 
         <div class="org-list-container">
-          @for (org of filteredOrgs(); track org.orgId) {
-            <button
-              type="button"
-              class="org-list-btn"
-              (click)="pickOrg(org.orgId)"
-              [attr.aria-current]="org.orgId === currentOrgId() ? 'true' : null"
-            >
-              <span class="avatar" aria-hidden="true">{{ initials(org.orgName) }}</span>
-              <span class="org-list-text">
-                <span class="org-item-name">{{ org.orgName }}</span>
-                <span class="org-item-role">{{ org.roleName }}</span>
-              </span>
-              @if (org.orgId === currentOrgId()) {
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-current-check"><path d="M20 6 9 17l-5-5"/></svg>
+          @for (grp of orgGroups(); track grp.name) {
+            <div class="org-group">
+              <button class="org-grouphead" type="button" (click)="toggleOrgGroup(grp)" [attr.aria-expanded]="grp.open">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-grouphead-icon"><path d="M3 21h18"/><path d="M5 21V5l7-3v19"/><path d="M19 21V9l-7-4"/></svg>
+                <span class="org-grouphead-name">{{ grp.name }}</span>
+                <span class="org-grouphead-count">{{ grp.orgs.length }}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-grouphead-chevron" [class.shut]="!grp.open"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              @if (grp.open) {
+                <div class="org-group-rows">
+                  @for (org of grp.orgs; track org.orgId) {
+                    <button
+                      type="button"
+                      class="org-list-btn"
+                      (click)="pickOrg(org.orgId)"
+                      [attr.aria-current]="org.orgId === currentOrgId() ? 'true' : null"
+                      [title]="org.roleName"
+                    >
+                      <span class="avatar" aria-hidden="true">{{ initials(org.orgName) }}</span>
+                      <span class="org-list-text">
+                        <span class="org-item-name">{{ org.orgName }}</span>
+                        <span class="org-item-role">{{ orgMeta(org) }}</span>
+                      </span>
+                      @if (org.orgId === currentOrgId()) {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-current-check"><path d="M20 6 9 17l-5-5"/></svg>
+                      }
+                    </button>
+                  }
+                </div>
               }
-            </button>
+            </div>
           }
           @if (orgEmpty()) {
             <div class="popover-empty">No branch matches that.</div>
@@ -70,7 +85,7 @@
 
   <div class="topacts">
     <!-- New transaction -->
-    <div class="topact">
+    <div class="topact topact--desk">
       <button class="btn btn-ghost" type="button" (click)="toggleNew()" [attr.aria-expanded]="newOpen()" title="New transaction" aria-label="New transaction">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       </button>
@@ -112,7 +127,7 @@
     </div>
 
     <!-- Search -->
-    <div class="topact">
+    <div class="topact topact--desk">
       <button class="btn btn-ghost" type="button" (click)="toggleSearch()" [attr.aria-expanded]="searchOpen()" title="Search" aria-label="Search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
       </button>
@@ -160,7 +175,7 @@
     </div>
 
     <!-- Favourites -->
-    <div class="topact">
+    <div class="topact topact--desk">
       <button class="btn btn-ghost" type="button" (click)="toggleFav()" [attr.aria-expanded]="favOpen()" title="Favourites" aria-label="Favourites">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"/></svg>
       </button>

@@ -298,8 +298,78 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
     expect(comp.newEmpty()).toBe(true);
   });
 
+  // ---- Branch switcher grouped by organisation (TK-189) -------------------
+
+  const groupedOrgs: AccessibleOrg[] = [
+    { orgId: 'org-1', orgName: 'Chennai', roleName: 'Owner', customerName: 'Kumar Textiles', businessType: 'Retail', baseCurrency: 'INR', gstin: '33AAAAA0000A1Z5', city: 'Chennai' },
+    { orgId: 'org-2', orgName: 'Coimbatore', roleName: 'Owner', customerName: 'Kumar Textiles', businessType: 'Retail', baseCurrency: 'INR', gstin: '33BBBBB0000B1Z5', city: 'Coimbatore' },
+    { orgId: 'org-3', orgName: 'Anna Nagar', roleName: 'Accountant', customerName: 'Kumar Pharma', businessType: 'Pharma', baseCurrency: 'INR', gstin: null, city: 'Chennai' },
+  ];
+
+  it('TOPBAR-17: branches are grouped by organisation, in the order the API lists them', () => {
+    const comp = createComponent();
+    comp.allOrgs.set(groupedOrgs);
+
+    const groups = comp.orgGroups();
+    expect(groups.map((g) => g.name)).toEqual(['Kumar Textiles', 'Kumar Pharma']);
+    expect(groups[0].orgs.map((o) => o.orgId)).toEqual(['org-1', 'org-2']);
+    expect(groups[1].orgs.map((o) => o.orgId)).toEqual(['org-3']);
+  });
+
+  it('TOPBAR-18: only the current branch\'s group is open at first, and opening another shuts it', () => {
+    const comp = createComponent();
+    comp.allOrgs.set(groupedOrgs);
+
+    expect(comp.orgGroups().map((g) => g.open)).toEqual([true, false]);
+
+    comp.toggleOrgGroup(comp.orgGroups()[1]);
+    expect(comp.orgGroups().map((g) => g.open)).toEqual([false, true]);
+
+    comp.toggleOrgGroup(comp.orgGroups()[1]);
+    expect(comp.orgGroups().map((g) => g.open)).toEqual([false, false]);
+  });
+
+  it('TOPBAR-19: closing the switcher forgets which group was opened', () => {
+    const comp = createComponent();
+    comp.allOrgs.set(groupedOrgs);
+    comp.toggleOrg();
+    comp.toggleOrgGroup(comp.orgGroups()[1]);
+
+    comp.closeAll();
+    expect(comp.orgGroups().map((g) => g.open)).toEqual([true, false]);
+  });
+
+  it('TOPBAR-20: a search opens every group and matches GSTIN and city as well as names', () => {
+    const comp = createComponent();
+    comp.allOrgs.set(groupedOrgs);
+
+    comp.setOrgQuery('33bbbbb');
+    expect(comp.orgGroups().map((g) => [g.name, g.orgs.map((o) => o.orgId), g.open])).toEqual([
+      ['Kumar Textiles', ['org-2'], true],
+    ]);
+
+    comp.setOrgQuery('chennai');
+    expect(comp.orgGroups().map((g) => g.name)).toEqual(['Kumar Textiles', 'Kumar Pharma']);
+    expect(comp.orgGroups().every((g) => g.open)).toBe(true);
+
+    comp.setOrgQuery('kumar pharma');
+    expect(comp.filteredOrgs().map((o) => o.orgId)).toEqual(['org-3']);
+  });
+
+  it('TOPBAR-21: a row reads trade · organisation · currency', () => {
+    const comp = createComponent();
+    expect(comp.orgMeta(groupedOrgs[2])).toBe('Pharma · Kumar Pharma · INR');
+  });
+
+  it('TOPBAR-22: an API without the new fields still lists every branch, in one group, with its role', () => {
+    const comp = createComponent();
+    comp.allOrgs.set(mockOrgs);
+
+    const groups = comp.orgGroups();
+    expect(groups.length).toBe(1);
+    expect(groups[0].name).toBe('Branches');
+    expect(groups[0].open).toBe(true);
+    expect(groups[0].orgs.length).toBe(3);
+    expect(comp.orgMeta(mockOrgs[1])).toBe('Retail · Manager');
+  });
 });
-
-
-
-

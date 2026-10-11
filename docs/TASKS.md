@@ -5738,14 +5738,19 @@ The queue below is one list in card-number order. Each card names its group.
 - **Where:** `frontend/libs/app-shell/src/lib/{nav,topbar,shell,subpanel}/`, `frontend/libs/shared/auth/src/lib/auth.models.ts`, `backend/Api/Master/Master.Entity/Models/AuthModels.cs`, `Master.Repository/Repositories/AuthRepository.cs` (`AccessibleOrgsAsync`). Design: Claude Design export `Shell.dc.html`, lines 212–566.
 - **State:** checked 11 October 2026. Rail is 68px with `--shadow-md`, Home is always `aria-current`, and the profile is a person icon linking to `#`. The branch list is flat (name and role). `AccessibleOrgDto` has only id, name and role, and is built with one `ResolveAsync` per branch. On a phone the tab bar is light, New/Search/Favourites still show, and the secondary menu is hidden with nowhere to go.
 - **Sub-tasks:**
-  - [ ] Rail: 64px, `--shadow-lg`, labels `.03em`; `aria-current` from the active route; initials avatar and role; account menu (name, role, email; Manage, Logout).
-  - [ ] API: `AccessibleOrgDto` gains `CustomerName`, `BusinessType`, `BaseCurrency`, `Gstin`, `City`, read in one query.
-  - [ ] Branch switcher: grouped by organisation, one group open at a time (the current branch's), rows `Type · Organisation · Currency`, search by GSTIN and city too.
+  - [x] Rail: 64px, `--shadow-lg`, labels `.03em`; `aria-current` from the active route; initials avatar and role; account menu (name, role, email; Logout). The design's **Manage** (edit your own name and email) is left out: no endpoint lets a user update themselves.
+  - [x] API: `AccessibleOrgDto` gains `CustomerName`, `BusinessType`, `BaseCurrency`, `Gstin`, `City`, read in one query.
+  - [x] Branch switcher: grouped by organisation, one group open at a time (the current branch's), rows `Type · Organisation · Currency`, search by GSTIN and city too.
   - [ ] Mobile: dark tab bar (Home, Purchase, Sales, Banking, More); New, Search and Favourites hidden; the secondary menu as a bottom sheet.
-  - [ ] Docs and release notes.
-  - [ ] Test: written, never run by an AI (section 0.5).
+    - [x] Tab bar, hidden desktop tools, and the year tag dropped so the bar fits at 360px.
+    - [ ] The secondary menu as a bottom sheet, and the More sheet with the account card and a 3-column grid.
+  - [ ] Docs and release notes (written for what is done so far).
+  - [ ] Test: written, never run by an AI (section 0.5) — `AccessibleOrgsTests`, TOPBAR-17–22, NAV-06–12 so far.
 - **Done when:** the shell at 1280px and 360px matches `Shell.dc.html` for the rail, account menu, branch switcher and mobile bar, and the login and session responses carry each branch's type, currency and organisation.
 - **Notes:** the design's Applications (globe) menu is left out on purpose: nothing backs it since TK-136 retired the App enum.
+  - Checked by building the web app and rendering the real shell with Playwright against a stubbed API, at 1280×760 and 360×740. The account menu's bottom edge lines up with its button. The sub-panel now sits on the breadcrumb's layer, below the rail, as in the design; sharing the rail's layer had painted it over the account menu.
+  - The server's menu gives Home `module: "dashboard"`, while the fallback rail gives it `null`. The phone tabs match on both.
+  - Found in passing, not fixed here: the rail's icon `@switch` has no case for School, HRMS, Maintenance, Restaurant or Approvals (`users`, `graduation-cap`, `wallet`, `wrench`, `utensils`, `check-circle`), so those entries show a label with no icon. `npm ci` fails because `frontend/package-lock.json` is out of sync with `package.json` on `main`.
 
 ### TK-190 · Master lists: the register design (Contacts, Items and the other masters)
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-11

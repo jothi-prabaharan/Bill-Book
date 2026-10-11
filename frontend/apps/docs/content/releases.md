@@ -31,6 +31,11 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **The app frame follows the design (TK-189).**
+  - **Branch switcher:** branches are grouped by organisation, and each shows its business type, organisation and currency. You can search by GSTIN or city as well as by name.
+  - **Rail:** the rail is 64px with the design's shadow. The account button shows your initials and role, and opens a menu with your name, email and **Logout**. Only the page you are on is marked current; Home was always marked before.
+  - **Phone:** the tabs are Home, Purchase, Sales and Banking, with the rest under **More**. The top bar drops New, Search, Favourites and the year tag so notifications, help and sign out fit at 360px.
+
 - **Changed**: **The master lists have the same design as the document lists (TK-190).** That covers Contacts, Items, Item categories, Warehouses, Price lists, Banks, Bank accounts, Sub-accounts, Payment terms, Tax master, HSN & SAC codes, Contact person roles, Unit types and Metal purities.
   - **Heading and tabs:** each list shows its record count and a New button, then *Active* and *Inactive* tabs with counts in place of **Show inactive**. Contacts add *Draft*; the tax master's tabs are *Current*, *Superseded* and *Inactive*.
   - **Filters:** each list's own search and filters sit in the card above the grid.
