@@ -32,6 +32,7 @@ import {
     TextInputComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
+    IconButtonComponent,
   ],
   templateUrl: './claim-categories.page.html',
   styleUrl: '../claims-page.scss',

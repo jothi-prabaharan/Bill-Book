@@ -148,3 +148,5 @@ Thumbs.db
 
 # Throwaway Edge profile created by the "Web (Edge, 4200)" debug config.
 .vscode/.edge-debug-profile/
+
+.agents/
