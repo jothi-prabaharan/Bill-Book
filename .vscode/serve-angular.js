@@ -61,7 +61,7 @@ isPortServing().then(async (serving) => {
   if (serving) {
     // If the dev server is already running, wait briefly for the API Gateway
     // to bind so Edge does not open before Gateway and hit ECONNREFUSED.
-    if (project === 'web') {
+    if (project === 'web' || project === 'website') {
       for (let i = 0; i < 10; i++) {
         if (await isGatewayServing()) break;
         await new Promise((r) => setTimeout(r, 500));
@@ -74,7 +74,7 @@ isPortServing().then(async (serving) => {
 
   // Single command string: passing an args array alongside shell:true is
   // deprecated (DEP0190) because the arguments are concatenated unescaped.
-  const child = spawn(`npx nx serve ${project} --configuration ${configuration}`, {
+  const child = spawn(`npx nx serve ${project} --port ${PORT} --configuration ${configuration}`, {
     cwd: FRONTEND,
     stdio: 'inherit',
     shell: true,

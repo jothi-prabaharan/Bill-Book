@@ -28,12 +28,119 @@
                 "TimeLeave.Api (:4521)",
                 "WorkOrder.Api (:4522)",
                 "Site.Api (:4523)",
-                "Web · Development (Edge, 4200)"
+                "Web · Development (Edge, 4200)",
+                "Website · Development (Edge, 4202)",
+                "Docs · Development (Edge, 4300)"
             ],
             "stopAll": false,
             "presentation": {
                 "group": "full-stack",
                 "order": 1
+            }
+        },
+        {
+            "name": "All APIs + Website App (Edge)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Admission.Api (:4502)",
+                "Attendance.Api (:4503)",
+                "Claims.Api (:4504)",
+                "Customer.Api (:4505)",
+                "Employee.Api (:4506)",
+                "Facility.Api (:4507)",
+                "Fee.Api (:4508)",
+                "Inventory.Api (:4509)",
+                "MaintenanceContract.Api (:4510)",
+                "Master.Api (:4511)",
+                "Payroll.Api (:4512)",
+                "Performance.Api (:4513)",
+                "Preventive.Api (:4514)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Recruitment.Api (:4517)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Student.Api (:4520)",
+                "TimeLeave.Api (:4521)",
+                "WorkOrder.Api (:4522)",
+                "Site.Api (:4523)",
+                "Website · Development (Edge, 4202)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 2
+            }
+        },
+        {
+            "name": "All APIs + Docs App (Edge)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Admission.Api (:4502)",
+                "Attendance.Api (:4503)",
+                "Claims.Api (:4504)",
+                "Customer.Api (:4505)",
+                "Employee.Api (:4506)",
+                "Facility.Api (:4507)",
+                "Fee.Api (:4508)",
+                "Inventory.Api (:4509)",
+                "MaintenanceContract.Api (:4510)",
+                "Master.Api (:4511)",
+                "Payroll.Api (:4512)",
+                "Performance.Api (:4513)",
+                "Preventive.Api (:4514)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Recruitment.Api (:4517)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Student.Api (:4520)",
+                "TimeLeave.Api (:4521)",
+                "WorkOrder.Api (:4522)",
+                "Site.Api (:4523)",
+                "Docs · Development (Edge, 4300)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 3
+            }
+        },
+        {
+            "name": "All APIs + Web App Only (Edge)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Admission.Api (:4502)",
+                "Attendance.Api (:4503)",
+                "Claims.Api (:4504)",
+                "Customer.Api (:4505)",
+                "Employee.Api (:4506)",
+                "Facility.Api (:4507)",
+                "Fee.Api (:4508)",
+                "Inventory.Api (:4509)",
+                "MaintenanceContract.Api (:4510)",
+                "Master.Api (:4511)",
+                "Payroll.Api (:4512)",
+                "Performance.Api (:4513)",
+                "Preventive.Api (:4514)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Recruitment.Api (:4517)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Student.Api (:4520)",
+                "TimeLeave.Api (:4521)",
+                "WorkOrder.Api (:4522)",
+                "Site.Api (:4523)",
+                "Web · Development (Edge, 4200)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 4
             }
         },
         {
@@ -53,7 +160,47 @@
             "stopAll": false,
             "presentation": {
                 "group": "full-stack",
-                "order": 2
+                "order": 5
+            }
+        },
+        {
+            "name": "Core Retail APIs + Website App (Edge)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Customer.Api (:4505)",
+                "Inventory.Api (:4509)",
+                "Master.Api (:4511)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Website · Development (Edge, 4202)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 6
+            }
+        },
+        {
+            "name": "Core Retail APIs + Docs App (Edge)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Customer.Api (:4505)",
+                "Inventory.Api (:4509)",
+                "Master.Api (:4511)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Docs · Development (Edge, 4300)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 7
             }
         }
     ],
@@ -163,6 +310,56 @@
             "request": "launch",
             "preLaunchTask": "serve-docs-staging",
             "url": "http://localhost:4300",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ]
+        },
+        {
+            "name": "Website · Development (Edge, 4202)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-website",
+            "url": "http://localhost:4202",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ]
+        },
+        {
+            "name": "Website · Staging (Edge, 4202)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-website-staging",
+            "url": "http://localhost:4202",
             "webRoot": "${workspaceFolder}/frontend",
             "sourceMaps": true,
             "sourceMapPathOverrides": {

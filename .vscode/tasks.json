@@ -194,6 +194,76 @@
         }
       }
     },
+    {
+      "label": "serve-website",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/.vscode/serve-angular.js",
+        "website",
+        "4202",
+        "development"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/frontend"
+        ],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run website:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
+    {
+      "label": "serve-website-staging",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/.vscode/serve-angular.js",
+        "website",
+        "4202",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/frontend"
+        ],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run website:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
     // ── Backend: build all API services in one pass (for compound launches) ──
     // Uses the .slnf filter to exclude test and worker projects.
     {
