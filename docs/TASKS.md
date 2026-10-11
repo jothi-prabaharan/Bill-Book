@@ -5725,6 +5725,24 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test: written, never run by an AI (section 0.5).
 - **Done when:** a contact can be saved as a draft and later saved for real from the new page; its addresses carry a kind, the two defaults and their own contact person; and documents pick the default billing and shipping addresses.
 
+### TK-189 · Shell chrome: match `Shell.dc.html` (rail, profile menu, grouped branch list, mobile)
+- [~] working (Claude Opus 5.5) — since 2026-10-11
+- **Issue:** [#179](https://github.com/jothi-prabaharan/Bill-Book/issues/179)
+- **Group:** Z · Owner request
+- **Lanes:** L-UI (`frontend/libs/app-shell`, `frontend/libs/shared/auth`), L-MST (`AuthModels.cs`, `AuthRepository.AccessibleOrgsAsync`) · **Depends on:** — · **Decision:** —
+- **Owner's override (11 October 2026):** runs beside TK-188, which also holds L-MST and L-UI. The files do not overlap: TK-188 is contacts (`ContactsDbContext`, `master-ui/contacts`), this card is the shell and the login's branch list.
+- **Where:** `frontend/libs/app-shell/src/lib/{nav,topbar,shell,subpanel}/`, `frontend/libs/shared/auth/src/lib/auth.models.ts`, `backend/Api/Master/Master.Entity/Models/AuthModels.cs`, `Master.Repository/Repositories/AuthRepository.cs` (`AccessibleOrgsAsync`). Design: Claude Design export `Shell.dc.html`, lines 212–566.
+- **State:** checked 11 October 2026. Rail is 68px with `--shadow-md`, Home is always `aria-current`, and the profile is a person icon linking to `#`. The branch list is flat (name and role). `AccessibleOrgDto` has only id, name and role, and is built with one `ResolveAsync` per branch. On a phone the tab bar is light, New/Search/Favourites still show, and the secondary menu is hidden with nowhere to go.
+- **Sub-tasks:**
+  - [ ] Rail: 64px, `--shadow-lg`, labels `.03em`; `aria-current` from the active route; initials avatar and role; account menu (name, role, email; Manage, Logout).
+  - [ ] API: `AccessibleOrgDto` gains `CustomerName`, `BusinessType`, `BaseCurrency`, `Gstin`, `City`, read in one query.
+  - [ ] Branch switcher: grouped by organisation, one group open at a time (the current branch's), rows `Type · Organisation · Currency`, search by GSTIN and city too.
+  - [ ] Mobile: dark tab bar (Home, Purchase, Sales, Banking, More); New, Search and Favourites hidden; the secondary menu as a bottom sheet.
+  - [ ] Docs and release notes.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** the shell at 1280px and 360px matches `Shell.dc.html` for the rail, account menu, branch switcher and mobile bar, and the login and session responses carry each branch's type, currency and organisation.
+- **Notes:** the design's Applications (globe) menu is left out on purpose: nothing backs it since TK-136 retired the App enum.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
