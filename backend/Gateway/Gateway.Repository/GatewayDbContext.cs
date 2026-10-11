@@ -9,8 +9,19 @@ namespace Gateway.Repository;
 /// The gateway owns this context outright. It never reaches into another service's
 /// DbContext, and no other service reads this one.
 /// </summary>
-public class GatewayDbContext(DbContextOptions<GatewayDbContext> options) : DbContext(options)
+public class GatewayDbContext : DbContext
 {
+    public GatewayDbContext(DbContextOptions<GatewayDbContext> options) : base(options)
+    {
+        try
+        {
+            Database.SetCommandTimeout(180);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
     public DbSet<RequestLog> RequestLogs => Set<RequestLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

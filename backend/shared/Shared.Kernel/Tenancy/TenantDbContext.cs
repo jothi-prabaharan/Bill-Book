@@ -44,6 +44,14 @@ public abstract class TenantDbContext : DbContext
         : base(options)
     {
         Tenant = tenant;
+        try
+        {
+            Database.SetCommandTimeout(180);
+        }
+        catch (InvalidOperationException)
+        {
+            // Non-relational provider in tests
+        }
     }
 
     protected ITenantContext Tenant { get; }

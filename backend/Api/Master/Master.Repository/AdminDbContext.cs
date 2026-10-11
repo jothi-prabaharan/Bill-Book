@@ -40,6 +40,14 @@ public class AdminDbContext : DbContext
     public AdminDbContext(DbContextOptions<AdminDbContext> options)
         : base(options)
     {
+        try
+        {
+            Database.SetCommandTimeout(180);
+        }
+        catch (InvalidOperationException)
+        {
+            // Non-relational provider in tests
+        }
     }
 
     public DbSet<Country> Countries => Set<Country>();
