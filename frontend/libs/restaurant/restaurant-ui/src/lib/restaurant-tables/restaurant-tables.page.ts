@@ -24,7 +24,7 @@ import {
   statusAction,
   statusLabel,
 } from '@bill-book/restaurant-core';
-import { BbSelectOption, CheckboxComponent, MessageBoxComponent, NumberInputComponent, SelectComponent, TextInputComponent, UiMessage } from '@bill-book/ui-components';
+import { BbSelectOption, CheckboxComponent, ConfirmDialogService, MessageBoxComponent, NumberInputComponent, SelectComponent, TextInputComponent, UiMessage } from '@bill-book/ui-components';
 
 type Sheet = 'actions' | 'move' | 'merge' | 'edit-table' | 'edit-floor' | null;
 
@@ -45,6 +45,7 @@ type Sheet = 'actions' | 'move' | 'merge' | 'edit-table' | 'edit-floor' | null;
 export class RestaurantTablesPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly plan = signal<FloorPlan>({ floors: [] });
   protected readonly floorId = signal<number | null>(null);
@@ -241,7 +242,14 @@ export class RestaurantTablesPage implements OnInit {
   }
 
   protected async deleteFloor(): Promise<void> {
-    if (this.editingFloorId == null || !confirm('Delete this floor?')) return;
+    if (this.editingFloorId == null) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete floor?',
+      message: 'Delete this floor?',
+      confirmLabel: 'Delete floor',
+      tone: 'danger',
+    });
+    if (!ok) return;
     const id = this.editingFloorId;
     await this.run(() => firstValueFrom(this.http.delete(`${RESTAURANT_API}/floors/${id}`)), 'Floor deleted.');
   }
@@ -277,7 +285,14 @@ export class RestaurantTablesPage implements OnInit {
   }
 
   protected async deleteTable(): Promise<void> {
-    if (this.editingTableId == null || !confirm('Delete this table?')) return;
+    if (this.editingTableId == null) return;
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete table?',
+      message: 'Delete this table?',
+      confirmLabel: 'Delete table',
+      tone: 'danger',
+    });
+    if (!ok) return;
     const id = this.editingTableId;
     await this.run(() => firstValueFrom(this.http.delete(`${RESTAURANT_API}/tables/${id}`)), 'Table deleted.');
   }
