@@ -18,6 +18,25 @@ public sealed class RoleRepository
     {
         IQueryable<Role> roles = _db.Roles.Where(r => r.CustomerId == null || r.CustomerId == customerId);
 
+        if (!orgId.HasValue)
+        {
+            return await roles
+                .OrderBy(r => r.CustomerId == null ? 0 : 1)
+                .ThenBy(r => r.RoleId)
+                .Select(r => new RoleListItem
+                {
+                    RoleId = r.RoleId,
+                    DisplayName = r.DisplayName,
+                    Description = r.Description,
+                    IsSystemRole = r.IsSystemRole,
+                    IsActive = r.IsActive,
+                    UserCount = 0,
+                    PermissionCount = _db.RolePermissions.Count(p => p.RoleId == r.RoleId),
+                })
+                .ToListAsync(ct);
+        }
+
+        Guid branchId = orgId.Value;
         return await roles
             .OrderBy(r => r.CustomerId == null ? 0 : 1)
             .ThenBy(r => r.RoleId)
@@ -28,13 +47,7 @@ public sealed class RoleRepository
                 Description = r.Description,
                 IsSystemRole = r.IsSystemRole,
                 IsActive = r.IsActive,
-                UserCount = orgId.HasValue
-                    ? _db.UserOrganizationRoles.Count(u =>
-                        u.RoleId == r.RoleId &&
-                        u.OrgId == orgId.Value &&
-                        u.IsActive &&
-                        _db.Users.Any(usr => usr.UserId == u.UserId && usr.IsActive))
-                    : 0,
+                UserCount = _db.UserOrganizationRoles.Count(u => u.RoleId == r.RoleId && u.OrgId == branchId && u.IsActive),
                 PermissionCount = _db.RolePermissions.Count(p => p.RoleId == r.RoleId),
             })
             .ToListAsync(ct);
@@ -56,11 +69,7 @@ public sealed class RoleRepository
 
         int userCount = orgId.HasValue
             ? await _db.UserOrganizationRoles.CountAsync(
-                u => u.RoleId == roleId &&
-                     u.OrgId == orgId.Value &&
-                     u.IsActive &&
-                     _db.Users.Any(usr => usr.UserId == u.UserId && usr.IsActive),
-                ct)
+                u => u.RoleId == roleId && u.OrgId == orgId.Value && u.IsActive, ct)
             : 0;
 
         return new RoleDetail

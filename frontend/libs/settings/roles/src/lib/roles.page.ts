@@ -177,11 +177,12 @@ export class RolesPage implements OnInit {
       } else {
         await this.req('PUT', `/api/roles/${this.editingId}`, body);
       }
+      this.editingId = null;
       this.editing.set(false);
       await this.load();
     } catch (err: unknown) {
-      const anyErr = err as { error?: { message?: string } };
-      this.error.set(anyErr?.error?.message ?? 'Could not save that role.');
+      const anyErr = err as { error?: { message?: string }; message?: string };
+      this.error.set(anyErr?.error?.message ?? anyErr?.message ?? 'Could not save that role.');
     } finally {
       this.busy.set(false);
     }
@@ -206,6 +207,7 @@ export class RolesPage implements OnInit {
   }
 
   cancel(): void {
+    this.editingId = null;
     this.editing.set(false);
     this.error.set(null);
   }

@@ -23,7 +23,10 @@
     </ng-template>
   </bb-data-grid>
 } @else {
-  <form class="editor" (ngSubmit)="save()">
+  <form class="editor" novalidate (ngSubmit)="save()">
+    @if (error(); as failure) {
+      <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+    }
     <div class="field">
       <bb-text-input label="Name" name="displayName" [(ngModel)]="form.displayName" required maxlength="100" />
     </div>
@@ -54,7 +57,7 @@
     }
 
     <div class="editor-actions">
-      <button class="btn btn-primary" type="submit" [disabled]="busy()">Save</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy()">Save</button>
       <button type="button" class="link" (click)="cancel()">Cancel</button>
     </div>
   </form>
