@@ -63,6 +63,15 @@ public static class ReliabilityRegistration
         services.Configure<MvcOptions>(options =>
             options.Filters.Add<TransactionFilter>());
 
+        services.ConfigureHttpClientDefaults(clientBuilder =>
+            clientBuilder.ConfigureHttpClient(client =>
+            {
+                if (client.Timeout < TimeSpan.FromMinutes(3))
+                {
+                    client.Timeout = TimeSpan.FromMinutes(3);
+                }
+            }));
+
         services.AddBillBookErrorHandling();
 
         return services;

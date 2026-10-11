@@ -1,3 +1,4 @@
+using Gateway.Api;
 using Gateway.Api.Logging;
 using Gateway.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,13 @@ using Shared.Kernel.Persistence;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddConfigFilter<GatewayTimeoutConfigFilter>()
+    .ConfigureHttpClient((context, handler) =>
+    {
+        handler.ConnectTimeout = TimeSpan.FromMinutes(3);
+        handler.PooledConnectionIdleTimeout = TimeSpan.FromMinutes(3);
+    });
 
 // ------------------------------------------------------------ request logging
 builder.Services.Configure<RequestLogOptions>(

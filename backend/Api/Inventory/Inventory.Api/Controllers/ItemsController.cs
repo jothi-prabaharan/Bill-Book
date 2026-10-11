@@ -51,7 +51,7 @@ public sealed class ItemsController : ControllerBase
     /// </summary>
     [HttpGet("custom-fields")]
     public async Task<IActionResult> CustomFields([FromServices] ICustomFieldDefinitions definitions, CancellationToken ct) =>
-        await definitions.GetAsync(CustomFieldEntityKind.Item, ct) is { } fields ? Ok(fields) : StatusCode(StatusCodes.Status503ServiceUnavailable);
+        await definitions.GetAsync(CustomFieldEntityKind.Item, ct) is { } fields ? Ok(fields) : Ok(Array.Empty<CustomFieldDefinitionDto>());
 
     [HttpGet("{itemId:long}")]
     public async Task<IActionResult> Get(long itemId, CancellationToken ct)

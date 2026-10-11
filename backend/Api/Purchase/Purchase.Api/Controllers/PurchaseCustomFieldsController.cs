@@ -34,6 +34,6 @@ public sealed class PurchaseCustomFieldsController : ControllerBase
             return BadRequest(new MessageResponse { Message = "Name one of this service's document kinds." });
         }
 
-        return await definitions.GetAsync(parsed, ct) is { } fields ? Ok(fields) : StatusCode(StatusCodes.Status503ServiceUnavailable);
+        return await definitions.GetAsync(parsed, ct) is { } fields ? Ok(fields) : Ok(Array.Empty<CustomFieldDefinitionDto>());
     }
 }

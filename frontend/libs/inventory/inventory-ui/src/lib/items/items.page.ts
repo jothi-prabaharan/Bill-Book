@@ -491,14 +491,32 @@ export class ItemsPage implements OnInit {
       }
     };
 
-    await Promise.all([
+    const ctx = await this.session.ensure();
+    const bt = ctx?.businessType;
+    const addOns = ctx?.addOns ?? '';
+
+    const calls: Promise<void>[] = [
       load<UomType>('/api/uom-types', (r) => this.types.set(r)),
       load<Category>('/api/item-categories', (r) => this.categories.set(r)),
-      load<Purity>('/api/metal-purities', (r) => this.purities.set(r)),
-      load<Warehouse>('/api/warehouses', (r) => this.warehouses.set(r)),
       load<TaxRate>('/api/tax-masters', (r) => this.taxRates.set(r)),
       load<CustomFieldDefinition>('/api/items/custom-fields', (r) => this.customFieldDefs.set(r)),
-    ]);
+    ];
+
+    if (bt === 'Jewellery') {
+      calls.push(load<Purity>('/api/metal-purities', (r) => this.purities.set(r)));
+    } else {
+      this.purities.set([]);
+    }
+
+    const warehouseBt = bt === 'Retail' || bt === 'Pharma' || bt === 'Jewellery' || bt === 'Restaurant';
+    const hasSite = addOns.includes('SiteServices');
+    if (warehouseBt || hasSite) {
+      calls.push(load<Warehouse>('/api/warehouses', (r) => this.warehouses.set(r)));
+    } else {
+      this.warehouses.set([]);
+    }
+
+    await Promise.all(calls);
   }
 
   openAdd(): void {

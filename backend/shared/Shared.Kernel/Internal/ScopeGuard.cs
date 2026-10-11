@@ -39,16 +39,25 @@ public static class ScopeGuard
             .OfType<RequireAddOnAttribute>()
             .FirstOrDefault();
 
-        var actionBt = (context.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor)?.MethodInfo
-            .GetCustomAttributes(typeof(RequireBusinessTypeAttribute), true)
-            .OfType<RequireBusinessTypeAttribute>()
-            .LastOrDefault()
-            ?? context.ActionDescriptor.EndpointMetadata.OfType<RequireBusinessTypeAttribute>().LastOrDefault(a => !ReferenceEquals(a, controllerBt));
-        var actionAo = (context.ActionDescriptor as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor)?.MethodInfo
-            .GetCustomAttributes(typeof(RequireAddOnAttribute), true)
-            .OfType<RequireAddOnAttribute>()
-            .LastOrDefault()
-            ?? context.ActionDescriptor.EndpointMetadata.OfType<RequireAddOnAttribute>().LastOrDefault(a => !ReferenceEquals(a, controllerAo));
+        RequireBusinessTypeAttribute? actionBt = null;
+        RequireAddOnAttribute? actionAo = null;
+
+        if (context.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor cad)
+        {
+            actionBt = cad.MethodInfo
+                .GetCustomAttributes(typeof(RequireBusinessTypeAttribute), true)
+                .OfType<RequireBusinessTypeAttribute>()
+                .LastOrDefault();
+            actionAo = cad.MethodInfo
+                .GetCustomAttributes(typeof(RequireAddOnAttribute), true)
+                .OfType<RequireAddOnAttribute>()
+                .LastOrDefault();
+        }
+        else
+        {
+            actionBt = context.ActionDescriptor.EndpointMetadata.OfType<RequireBusinessTypeAttribute>().LastOrDefault();
+            actionAo = context.ActionDescriptor.EndpointMetadata.OfType<RequireAddOnAttribute>().LastOrDefault();
+        }
 
         ClaimsPrincipal user = context.HttpContext.User;
         BusinessType? tokenBt = ScopeClaims.BusinessTypeOf(user);
