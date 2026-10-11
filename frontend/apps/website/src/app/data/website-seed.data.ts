@@ -34,7 +34,7 @@ export interface ProjectScreenshot {
 }
 
 // -----------------------------------------------------------------------------
-// 1. Application Owner Profile (Strictly Chennai and Mogappair, 7010449938)
+// 1. Application Owner Profile (Strictly Chennai and Kumbakonam, 7010449938)
 // -----------------------------------------------------------------------------
 export const APPLICATION_OWNER_SEED: ApplicationOwnerProfile = {
   legalName: 'Eternal Pathway Technologies Pvt Ltd',
@@ -54,12 +54,12 @@ export const APPLICATION_OWNER_SEED: ApplicationOwnerProfile = {
       badge: 'Chennai Branch',
     },
     {
-      branchId: 'branch-mogappair',
-      name: 'Mogappair',
-      location: 'Mogappair',
+      branchId: 'branch-kumbakonam',
+      name: 'Kumbakonam',
+      location: 'Kumbakonam',
       phone: '7010449938',
       email: 'info@yourbusiness.com',
-      badge: 'Mogappair Branch',
+      badge: 'Kumbakonam Branch',
     },
   ],
 };
@@ -238,7 +238,7 @@ export const PLAN_CYCLE_BOXES: PlanCycleBox[] = [
       'Separate Standalone Database exclusively allocated',
       'Everything in Monthly Plan included',
       '10% recurring cost advantage',
-      'Priority technical support line (Chennai & Mogappair)',
+      'Priority technical support line (Chennai & Kumbakonam)',
       'Quarterly tax filing reconciliation reviews',
     ],
   },

@@ -9,9 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  ADDON_MODULES_SEED,
   APPLICATION_OWNER_SEED,
-  AddOnModule,
   ApplicationOwnerProfile,
   BUSINESS_PRICING_TIERS_SEED,
   BusinessPricingTier,
@@ -75,13 +73,12 @@ export class HomePageComponent {
   private readonly http = inject(HttpClient);
 
   // ---------------------------------------------------------------------------
-  // Master Seed Data (Owner details: Chennai & Mogappair, Phone: 7010449938)
+  // Master Seed Data (Owner details: Chennai & Kumbakonam, Phone: 7010449938)
   // ---------------------------------------------------------------------------
   readonly ownerProfile: ApplicationOwnerProfile = APPLICATION_OWNER_SEED;
   readonly standaloneDbFeature = STANDALONE_DB_FEATURE;
   readonly businessPricingTiers: BusinessPricingTier[] = BUSINESS_PRICING_TIERS_SEED;
   readonly planCycleBoxes: PlanCycleBox[] = PLAN_CYCLE_BOXES;
-  readonly addonModules: AddOnModule[] = ADDON_MODULES_SEED;
   readonly projectScreenshots: ProjectScreenshot[] = PROJECT_SCREENSHOTS_SEED;
 
   // ---------------------------------------------------------------------------
@@ -357,15 +354,6 @@ export class HomePageComponent {
       message: `I am interested in ${tier.name} on the ${box.name} subscription (${calculatedBox.billingText}) with an exclusive Standalone Database allocated for my organization. Please provide a live demo and quotation.`,
     }));
 
-    this.scrollToSection('contact');
-  }
-
-  selectAddOnForEnquiry(addon: AddOnModule): void {
-    const tier = this.activeBusinessTier();
-    this.form.update((f) => ({
-      ...f,
-      message: `${f.message ? f.message + '\n' : ''}I would also like to include the "${addon.title}" add-on (${addon.priceLabel}) for our ${tier.name} setup.`,
-    }));
     this.scrollToSection('contact');
   }
 

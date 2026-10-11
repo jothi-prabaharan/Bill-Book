@@ -55,7 +55,7 @@
 
         <p class="hero-subtitle">
           Unify high-velocity billing, automated double-entry accounting, multi-branch inventory,
-          3-way purchase matching, and GST filing in one robust cloud platform. Built with .NET 10 and PostgreSQL.
+          3-way purchase matching, and GST filing in one robust cloud platform.
         </p>
 
         <div class="hero-cta-group">
@@ -83,9 +83,9 @@
             <span class="stat-sub">Automated GSTR-1 & ITC</span>
           </div>
           <div class="stat-card">
-            <span class="stat-value">Postgres RLS</span>
-            <span class="stat-label">Tenant Security</span>
-            <span class="stat-sub">Row-level isolation</span>
+            <span class="stat-value">Dedicated</span>
+            <span class="stat-label">Standalone DB</span>
+            <span class="stat-sub">100% Data Isolation</span>
           </div>
           <div class="stat-card">
             <span class="stat-value">Multi-Branch</span>
@@ -137,8 +137,8 @@
         <span class="section-kicker">Platform Depth</span>
         <h2 class="section-title">Real-Time Platform Architecture & Actual Working UI</h2>
         <p class="section-lead">
-          Every screenshot displayed below is captured directly from our live working software — built with .NET 10,
-          EF Core, PostgreSQL, and Angular. Inspect the real registers, ledgers, and transactions.
+          Every screenshot displayed below is captured directly from our live working software.
+          Inspect the real registers, ledgers, and transactions.
         </p>
       </div>
 
@@ -481,52 +481,6 @@
           </div>
         }
       </div>
-
-      <!-- Dedicated Add-Ons Catalog Section -->
-      <div class="addons-catalog-section">
-        <div class="addons-header">
-          <div class="addons-title-group">
-            <span class="badge-pill addons-kicker">Modular Extensions</span>
-            <h3 class="addons-title">Available ERP Feature Add-Ons</h3>
-            <p class="addons-subtitle">
-              Expand your dedicated ERP deployment with specialized add-on capabilities.
-              Easily toggle add-ons as your organization expands across locations.
-            </p>
-          </div>
-        </div>
-
-        <div class="addons-grid">
-          @for (addon of addonModules; track addon.id) {
-            <div class="addon-card">
-              <div class="addon-top">
-                <span class="addon-badge">{{ addon.badge }}</span>
-                <span class="addon-price tabular-nums">{{ addon.priceLabel }}</span>
-              </div>
-              <h4 class="addon-title">{{ addon.title }}</h4>
-              <p class="addon-desc">{{ addon.description }}</p>
-
-              <ul class="addon-specs-list">
-                @for (spec of addon.features; track spec) {
-                  <li class="addon-spec-item">
-                    <span class="spec-check">&#10003;</span>
-                    <span>{{ spec }}</span>
-                  </li>
-                }
-              </ul>
-
-              <div class="addon-cta-row">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline full-width"
-                  (click)="selectAddOnForEnquiry(addon)"
-                >
-                  <span>Request with {{ addon.title }} &rarr;</span>
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
     </div>
   </section>
 
@@ -545,7 +499,7 @@
       </div>
 
       <div class="contact-grid">
-        <!-- Left Column: Owner & Branches (ONLY Chennai & Mogappair) -->
+        <!-- Left Column: Owner & Branches (ONLY Chennai & Kumbakonam) -->
         <div class="contact-info-column">
           <!-- Branches Cards -->
           <div class="branches-wrapper">
@@ -766,7 +720,7 @@
         </div>
         <p class="brand-tagline">
           Next-generation multi-tenant retail ERP and automated accounting SaaS.
-          Powered by .NET 10, PostgreSQL Row-Level Security, and Angular.
+          Built for speed, accuracy, and enterprise-grade data privacy.
         </p>
       </div>
 
@@ -785,7 +739,7 @@
         <h4 class="col-heading">Operational Hubs</h4>
         <ul class="col-list">
           <li class="branch-tag-item"><span class="tag-bullet">&#9679;</span> Chennai Branch</li>
-          <li class="branch-tag-item"><span class="tag-bullet">&#9679;</span> Mogappair Branch</li>
+          <li class="branch-tag-item"><span class="tag-bullet">&#9679;</span> Kumbakonam Branch</li>
           <li class="hotline-item">Direct: <strong class="tabular-nums">7010449938</strong></li>
           <li class="email-item">Email: <strong>{{ ownerProfile.primaryEmail }}</strong></li>
         </ul>
@@ -797,9 +751,9 @@
         &copy; 2026 Bill-Book Cloud ERP. All rights reserved.
       </div>
       <div class="footer-badges">
-        <span class="tech-badge">.NET 10 + EF Core</span>
-        <span class="tech-badge">PostgreSQL RLS</span>
-        <span class="tech-badge">Angular 20</span>
+        <span class="tech-badge">Standalone Database</span>
+        <span class="tech-badge">Automated Accounting</span>
+        <span class="tech-badge">GST Compliant</span>
       </div>
     </div>
   </div>
