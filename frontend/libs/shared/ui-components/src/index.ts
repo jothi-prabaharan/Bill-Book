@@ -100,6 +100,7 @@ export * from './lib/info-tooltip/info-tooltip.component';
 
 export * from './lib/export-import/export-import.component';
 export * from './lib/register/register-format';
+export * from './lib/register/create-request';
 export * from './lib/register/register-header.component';
 export * from './lib/register/status-tabs.component';
 export * from './lib/register/money-cell.component';

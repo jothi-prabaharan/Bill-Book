@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, ElementRef, HostListener, computed, inject, input, output, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { AccessibleOrg, AuthService, SessionContextService } from '@bill-book/auth';
 import { MenuService } from '../menu.service';
 import { FALLBACK_RAIL, ShellRailItem } from '../shell-screens';
+import { PHONE_TAB_MODULES, ShellNavigationService } from '../shell-navigation.service';
+import { ShellIconComponent } from './shell-icon.component';
 
 /**
  * One entry in the rail. Kept as an exported name because the shell and its specs
@@ -25,7 +27,7 @@ export type NavItem = ShellRailItem;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-nav',
   standalone: true,
-  imports: [RouterLink],
+  imports: [ShellIconComponent],
   templateUrl: './shell-nav.component.html',
   styleUrl: './shell-nav.component.scss',
 })
@@ -35,6 +37,7 @@ export class ShellNavComponent {
   private readonly menuService = inject(MenuService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
+  protected readonly navigation = inject(ShellNavigationService);
 
   readonly userDisplayName = input<string>('Praba');
   readonly userRoleName = input<string>('Owner');
@@ -72,10 +75,10 @@ export class ShellNavComponent {
    * under More. Falls back to the first four when those are not on the menu.
    */
   readonly mobileTopNav = computed(() => {
-    const preferred = MOBILE_TABS
-      .map((module) => this.nav().find((item) => (item.module ?? 'dashboard') === module))
+    const preferred = PHONE_TAB_MODULES
+      .map((module) => this.nav().find((item) => (item.module || 'dashboard') === module))
       .filter((item): item is NavItem => !!item);
-    return preferred.length === MOBILE_TABS.length ? preferred : this.nav().slice(0, 4);
+    return preferred.length === PHONE_TAB_MODULES.length ? preferred : this.nav().slice(0, 4);
   });
 
   readonly mobileMoreNav = computed(() => {
@@ -83,62 +86,45 @@ export class ShellNavComponent {
     return this.nav().filter((item) => !top.has(item.path));
   });
 
-  readonly currentUrl = signal(this.router.url);
-
   constructor() {
     void this.auth.accessibleOrganizations().then((orgs) => this.orgs.set(orgs)).catch(() => undefined);
 
-    // Navigating closes the account menu, as it closes the top bar's panels,
-    // and keeps the current URL signal in sync for rail item active highlighting.
+    // Navigating closes the account menu, as it closes the top bar's panels.
     this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        this.profileOpen.set(false);
-        this.currentUrl.set(event.urlAfterRedirects);
-      }
+      if (event instanceof NavigationEnd) this.profileOpen.set(false);
     });
   }
 
-  /** The menu currently owning the route on screen, according to MenuService. */
-  readonly currentMenu = computed(() => this.menuService.menuForPath(this.currentUrl()));
-
   /**
-   * Whether a rail item represents the active module.
-   * Matches via MenuService.menuForPath so that cross-module routes (e.g. /settings/hsn-sac
-   * or /settings/unit-types which belong to Inventory, or /accounting/reconciliation
-   * which belongs to Banking) accurately highlight their owning module rail item.
+   * Whether a rail entry is the current module: the one whose secondary menu is
+   * open, which is the screen's own module until another is picked on the rail
+   * (TK-189). Resolved by `ShellNavigationService`, the same answer the panel,
+   * the phone sheet and the breadcrumb use, so they cannot disagree. A screen
+   * filed under another module's menu — /settings/hsn-sac is Inventory's — marks
+   * that module.
    */
   isActive(item: NavItem): boolean {
-    const activeMenu = this.currentMenu();
-    if (activeMenu) {
-      if (activeMenu.name.toLowerCase() === item.label.toLowerCase()) {
-        return true;
-      }
-      if (item.module && activeMenu.module && item.module.toLowerCase() === activeMenu.module.toLowerCase()) {
-        return true;
-      }
-      return false;
-    }
-
-    const url = this.currentUrl().split('?')[0];
-    const path = item.path.split('?')[0];
-    if (url === path) return true;
-    if (path !== '/' && path !== '/dashboard' && url.startsWith(path + '/')) {
-      return true;
-    }
-
-    const urlSegment = url.split('/')[1];
-    if (urlSegment && urlSegment !== 'dashboard') {
-      const pathSegment = path.split('/')[1];
-      if (pathSegment === urlSegment) {
-        return true;
-      }
-      if (item.module && item.module.toLowerCase() === urlSegment.toLowerCase()) {
-        return true;
-      }
-    }
-
-    return false;
+    return this.navigation.isCurrent(item);
   }
+
+  /** Whether the entry opens a secondary menu rather than a screen. */
+  hasMenu(item: NavItem): boolean {
+    const menu = item.code ? this.menuService.menuByCode(item.code) : null;
+    return !!menu && this.menuService.rowCount(menu) > 1;
+  }
+
+  /**
+   * A click on a rail entry or tab: open its module's menu, or go to its screen
+   * when it has none (`ShellNavigationService.pickRail`). A modified or middle
+   * click is left to the browser, which opens the module's screen in a new tab.
+   */
+  pick(item: NavItem, event: MouseEvent): void {
+    this.profileOpen.set(false);
+    this.navigation.pickRail(item, event);
+  }
+
+  /** The More tab is current while a module that is not a tab is. */
+  readonly moreActive = computed(() => this.mobileMoreNav().some((item) => this.isActive(item)));
 
   /**
    * The menu's bottom edge, level with the account button's. The menu is
@@ -165,6 +151,12 @@ export class ShellNavComponent {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.profileOpen.set(false);
+    this.navigation.closeMore();
+  }
+
+  /** A tap on the dim area around the More sheet, not on the sheet itself. */
+  onMoreBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.navigation.closeMore();
   }
 
   /** What the rail shows until the server's tree arrives. */
@@ -196,9 +188,3 @@ export class ShellNavComponent {
     this.logout.emit();
   }
 }
-
-/**
- * The design's four phone tabs, by module; More holds the rest. Home is
- * `dashboard` on the server's menu and has no module on the fallback rail.
- */
-const MOBILE_TABS: readonly string[] = ['dashboard', 'purchase', 'sales', 'banking'];

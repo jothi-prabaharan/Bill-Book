@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { onCreateRequest } from './create-request';
 
 /**
  * A transaction register's heading (TK-187): the title, the document's code and
@@ -8,6 +9,10 @@ import { RouterLink } from '@angular/router';
  * The button goes to `newRoute` when one is given and emits `create` otherwise,
  * for a page that opens its editor in place. Anything else the heading needs —
  * a link to a related report — is projected beside it.
+ *
+ * The secondary menu's + asks for a new record with `?action=create`; the heading
+ * answers it as if its own button had been pressed, so every register that uses
+ * it opens its form from the menu with nothing of its own to wire (TK-189).
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +36,24 @@ export class RegisterHeaderComponent {
   readonly newDisabled = input<boolean>(false);
 
   readonly create = output<void>();
+
+  private readonly router = inject(Router);
+
+  constructor() {
+    // A register is disabled while it loads; a request from the menu waits for
+    // the button rather than being dropped.
+    onCreateRequest(
+      () => {
+        const route = this.newRoute();
+        if (route) {
+          void this.router.navigateByUrl(route);
+        } else {
+          this.create.emit();
+        }
+      },
+      () => !!this.newLabel() && !this.newDisabled(),
+    );
+  }
 
   readonly countText = computed(() => {
     const count = this.count();

@@ -12,6 +12,7 @@ import {
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 import { BudgetListItem } from './budget.models';
 import { yearLabel } from './budget-math';
@@ -64,6 +65,11 @@ export class BudgetsPage implements OnInit {
   protected readonly messageIsError = signal(false);
 
   protected form: CreateForm = this.blankForm();
+
+  constructor() {
+    // The secondary menu's + asks for a new budget with ?action=create (TK-189).
+    onCreateRequest(() => this.startCreate());
+  }
 
   ngOnInit(): void {
     void this.load();

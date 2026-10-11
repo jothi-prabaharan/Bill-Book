@@ -79,10 +79,10 @@
     grid-template-rows: 46px auto 1fr auto;
   }
 
-  /* The design moves the secondary menu into a bottom sheet on a phone; until
-     that exists there is nowhere to put it. */
+  /* On a phone the secondary menu is a bottom sheet (TK-189), fixed over the
+     page, so its cell takes no room in the grid. */
   .shell-subpanel-cell {
-    display: none;
+    display: contents;
   }
 
   .shell-topbar-cell {
@@ -104,5 +104,8 @@
     grid-column: 1;
     grid-row: 4;
     height: auto;
+    /* No layer of its own on a phone: the tab bar overlaps nothing, and a layer
+       here kept the More sheet's backdrop under the top bar (TK-189). */
+    z-index: auto;
   }
 }

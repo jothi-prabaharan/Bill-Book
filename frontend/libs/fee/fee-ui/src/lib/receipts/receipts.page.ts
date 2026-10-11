@@ -26,6 +26,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 /**
@@ -65,6 +66,9 @@ export class ReceiptsPage implements OnInit {
   protected readonly taking = signal(false);
   protected readonly voiding = signal<FeeReceipt | null>(null);
 
+  /** Set once start() has read the bank accounts a new receipt takes its first one from. */
+  private readonly loaded = signal(false);
+
   protected form: SaveReceipt = ReceiptsPage.blank();
   protected voidReason = '';
 
@@ -87,6 +91,13 @@ export class ReceiptsPage implements OnInit {
     { field: 'documentStatus', header: 'Status' },
     { field: 'actions', header: '' },
   ];
+
+  constructor() {
+    // The secondary menu's + asks for a new fee receipt with ?action=create (TK-189). It
+    // waits for start() as well as for the page to be free: the + usually opens the page
+    // fresh, and before the accounts are read the receipt would have no "Into" account.
+    onCreateRequest(() => this.startTake(), () => !this.busy() && this.loaded());
+  }
 
   ngOnInit(): void {
     void this.start();
@@ -190,6 +201,7 @@ export class ReceiptsPage implements OnInit {
     } catch (error) {
       this.fail(error);
     }
+    this.loaded.set(true);
   }
 
   private fail(error: unknown): void {

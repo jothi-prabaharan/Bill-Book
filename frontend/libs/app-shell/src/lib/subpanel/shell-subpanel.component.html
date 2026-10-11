@@ -45,8 +45,8 @@
         }
 
         @if (isOpen(group)) {
-          @for (sub of group.subMenus; track sub.subMenuId) {
-            <span class="subrow" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="!!group.name">
+          @for (sub of group.subMenus; track sub.subMenuId; let i = $index) {
+            <span class="subrow" [style.--r]="i" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="!!group.name">
               <button
                 class="subrow-link"
                 type="button"
@@ -75,4 +75,81 @@
       }
     </div>
   </nav>
+}
+
+<!-- On a phone the same menu is a bottom sheet (TK-189, Shell.dc.html .subsheet) -->
+@if (sheetVisible()) {
+  <div class="subsheet-backdrop" role="presentation" tabindex="-1" (click)="onSheetBackdrop($event)" (keydown.escape)="navigation.dismissSheet()">
+    <nav class="subpanel subsheet" [attr.aria-label]="label()">
+      <div class="subsheet-head">
+        <button class="iconbtn subsheet-back" type="button" (click)="back()" aria-label="Back">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="subhead-label">{{ label() }}</span>
+        <span class="subhead-count">{{ count() }}</span>
+      </div>
+
+    @if (searchable()) {
+      <div class="subsearch">
+        <bb-search-input
+              [placeholder]="'Search ' + label().toLowerCase()"
+              [ariaLabel]="'Search ' + label().toLowerCase()"
+              [debounceMs]="0"
+              [ngModel]="query()"
+              (ngModelChange)="setQuery($event)"
+            />
+      </div>
+    }
+
+      <div class="subbody subsheet-body">
+      @for (group of groups(); track group.code) {
+        @if (group.name) {
+          <button
+            class="grouphead-row"
+            type="button"
+            (click)="toggleGroup(group)"
+            [attr.aria-expanded]="isOpen(group)"
+          >
+            <svg
+              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+              class="grouphead-chevron" [class.shut]="!isOpen(group)"
+            ><path d="m6 9 6 6 6-6"/></svg>
+            <span class="grouphead-name">{{ group.name }}</span>
+            <span class="grouphead-count">{{ group.subMenus.length }}</span>
+          </button>
+        }
+
+        @if (isOpen(group)) {
+          @for (sub of group.subMenus; track sub.subMenuId; let i = $index) {
+            <span class="subrow" [style.--r]="i" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="!!group.name">
+              <button
+                class="subrow-link"
+                type="button"
+                (click)="go(sub)"
+                [attr.aria-current]="isCurrent(sub) ? 'page' : null"
+              >{{ sub.name }}</button>
+
+              @if (canCreate(sub)) {
+                <button
+                  class="subrow-plus"
+                  type="button"
+                  (click)="create(sub, $event)"
+                  [attr.aria-label]="createLabel(sub)"
+                  [title]="createLabel(sub)"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                </button>
+              }
+            </span>
+          }
+        }
+      }
+
+      @if (count() === 0) {
+        <div class="subempty">Nothing matches that.</div>
+      }
+      </div>
+    </nav>
+  </div>
 }

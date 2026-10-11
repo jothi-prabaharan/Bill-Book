@@ -4,11 +4,20 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { MenuGroupView, MenuView, SubMenuView } from './menu.models';
 import {
+  FALLBACK_RAIL,
   SHELL_SCREENS,
   ShellRailItem,
   ShellScreen,
   ShellScreenGroup,
 } from './shell-screens';
+
+/** One step of the breadcrumb trail, as `crumbsFor` builds it from the tree. */
+export interface MenuCrumb {
+  readonly label: string;
+  readonly path: string;
+  readonly isLink: boolean;
+  readonly isLast: boolean;
+}
 
 /**
  * The navigation tree, loaded once per session from `GET /api/menu`.
@@ -44,9 +53,11 @@ export class MenuService {
   readonly tree = computed(() => this.menus());
 
   /**
-   * The rail, derived from the tree. A module with no route of its own lands on
-   * the first screen in its panel — the panel is not built yet, so the rail has
-   * to take the person somewhere.
+   * The rail, derived from the tree. An entry's `path` is where its module lands:
+   * the module's own route, or else the first screen in its panel. Clicking an
+   * entry with a secondary menu opens that menu rather than going there (TK-189,
+   * `ShellNavigationService.pickRail`); the path is for one with no menu, and for
+   * opening the module in a new tab.
    *
    * Empty until the tree loads; the components that draw a rail fall back to
    * `FALLBACK_RAIL` while it is.
@@ -61,8 +72,14 @@ export class MenuService {
         // carried: landing pre-filtered on one document type is not what clicking
         // the module means.
         const path = (menu.routePath ?? firstScreen)?.split('?')[0];
+        // The fallback tree has no icons; borrow the static rail's so a failed
+        // menu call still draws them.
+        const icon =
+          menu.icon ??
+          FALLBACK_RAIL.find((r) => r.code === menu.code || r.label === menu.name)?.icon ??
+          '';
         return path
-          ? { path, label: menu.name, icon: menu.icon ?? '', module: menu.module }
+          ? { code: menu.code, path, label: menu.name, icon, module: menu.module }
           : null;
       })
       .filter((item): item is ShellRailItem => item !== null),
@@ -180,6 +197,133 @@ export class MenuService {
     return rows.find((s) => !!s.routePath && !s.routePath.includes('?') && s.routePath === clean) ?? null;
   }
 
+  /** The menu with this code, or null. */
+  menuByCode(code: string): MenuView | null {
+    return this.menus().find((menu) => menu.code === code) ?? null;
+  }
+
+  /** How many screens a menu's panel lists. */
+  rowCount(menu: MenuView): number {
+    return menu.groups.reduce((total, group) => total + group.subMenus.length, 0);
+  }
+
+  /**
+   * The row a URL is on, or sits under (TK-189).
+   *
+   * The row itself first (`subMenuFor`), then the row the URL is a child of — a
+   * form at `/sales/invoices/new` or a record at `/sales/invoices/42` belongs to
+   * the Invoices row, so the panel keeps that row marked while it is open. Only a
+   * row with no query of its own can be a parent: a typed register shares its path
+   * with its siblings, so a prefix says nothing about which of them owns a child.
+   */
+  rowForPath(url: string): SubMenuView | null {
+    const own = this.subMenuFor(url);
+    if (own) return own;
+
+    const path = url.split('?')[0];
+    let best: SubMenuView | null = null;
+    for (const row of this.menus().flatMap((menu) => menu.groups.flatMap((group) => group.subMenus))) {
+      const route = row.routePath;
+      if (!route || route.includes('?') || !path.startsWith(`${route}/`)) continue;
+      if (!best || route.length > (best.routePath?.length ?? 0)) best = row;
+    }
+    return best;
+  }
+
+  /**
+   * The breadcrumb trail for a URL, from the tree: module › screen › the form or
+   * record under it (TK-189). Null for a URL the tree does not know, so the caller
+   * can fall back to spelling out the path. Home has no trail of its own: the
+   * strip always starts with Home.
+   */
+  crumbsFor(url: string): MenuCrumb[] | null {
+    const [path, query] = url.split('?');
+    if (path === '/' || path.startsWith('/dashboard')) return [];
+
+    const menu = this.menuForPath(url);
+    if (!menu) return null;
+
+    const landing = (menu.routePath ?? this.firstRoute(menu) ?? path).split('?')[0];
+    const trail: MenuCrumb[] = [{ label: menu.name, path: landing, isLink: true, isLast: false }];
+
+    const row = this.rowForPath(url);
+    const rowPath = row?.routePath?.split('?')[0];
+    if (row && rowPath) {
+      const atRow = path === rowPath;
+      trail.push({ label: row.name, path: row.routePath as string, isLink: !atRow, isLast: atRow });
+      if (!atRow) {
+        trail.push({ label: this.childLabel(path.slice(rowPath.length), query, row), path, isLink: false, isLast: true });
+      }
+      return trail;
+    }
+
+    if (menu.routePath && path === menu.routePath.split('?')[0]) {
+      return [{ label: menu.name, path, isLink: false, isLast: true }];
+    }
+
+    const last = path.split('/').filter(Boolean).pop() ?? '';
+    trail.push({ label: humanise(last), path, isLink: false, isLast: true });
+    return trail;
+  }
+
+  /**
+   * Where starting a new record on a screen goes — the secondary menu's + and the
+   * top bar's New menu both ask here, so they cannot disagree (TK-189).
+   *
+   * A document with a form of its own goes to that form: `/sales/invoices/new`.
+   * The rows carry no create route, so this maps the codes that have one. Any
+   * other screen opens its form in place, so it is asked to with
+   * `?action=create`, which the register heading (and `onCreateRequest`) answers.
+   * Appending `/new` to a path that has no such route is how the top bar's New
+   * menu used to land on the dashboard.
+   */
+  createPath(sub: SubMenuView): string | null {
+    const known: Record<string, string> = {
+      qot: '/sales/quotes/new',
+      sor: '/sales/sales-orders/new',
+      dlc: '/sales/delivery-challans/new',
+      inv: '/sales/invoices/new',
+      crn: '/sales/credit-notes/new',
+      por: '/purchase/purchase-orders/new',
+      grn: '/purchase/goods-receipts/new',
+      bil: '/purchase/bills/new',
+      dbn: '/purchase/debit-notes/new',
+      // Forms with a page of their own (TK-188 and the HR/School builds): the
+      // list's ?action=create would only bounce on to these.
+      both: '/contacts/new',
+      cus: '/contacts/new?role=customer',
+      ven: '/contacts/new?role=vendor',
+      emp: '/hrm/employees/new',
+      stu: '/sis/students/new',
+      apl: '/admission/applications/new',
+    };
+    if (known[sub.code]) return known[sub.code];
+    if (NO_CREATE_FORM.has(sub.code)) return null;
+    return sub.routePath ? `${sub.routePath.split('?')[0]}?action=create` : null;
+  }
+
+  /** The first screen in a menu's panel. */
+  private firstRoute(menu: MenuView): string | null {
+    return menu.groups.flatMap((group) => group.subMenus).find((sub) => !!sub.routePath)?.routePath ?? null;
+  }
+
+  /**
+   * What the crumb after a screen says: "New invoice" for its form, "New vendor"
+   * for a contact in a role (TK-188), "Edit invoice" for an edit route, and the
+   * record's kind for a record.
+   */
+  private childLabel(rest: string, query: string | undefined, row: SubMenuView): string {
+    const parts = rest.split('/').filter(Boolean);
+    const kind = (row.singularName ?? row.name).trim();
+    if (parts[0] === 'new') {
+      const role = new URLSearchParams(query ?? '').get('role');
+      if (role) return `New ${role === 'jobworker' ? 'job worker' : role.toLowerCase()}`;
+      return `New ${kind.toLowerCase()}`;
+    }
+    if (parts.includes('edit')) return `Edit ${kind.toLowerCase()}`;
+    return row.singularName ? kind : humanise(parts[parts.length - 1] ?? '');
+  }
+
   /**
    * Whether this user may take an action on a screen — `allows('/sales/invoices',
    * 'create')`. A screen the tree has never heard of answers false: the shell
@@ -247,4 +391,17 @@ export class MenuService {
     this.menus.set(menus);
     this.usingFallback.set(true);
   }
+}
+
+/**
+ * Rows Master's seed marks creatable whose screens have no form for one record,
+ * so the + would open the list and nothing else (TK-189): fee demands are raised
+ * in bulk from a fee structure, and every dish already has a recipe row to edit.
+ */
+const NO_CREATE_FORM: ReadonlySet<string> = new Set(['fdm', 'rst-recipes']);
+
+/** A path segment as words: `hsn-sac` → `Hsn sac`. */
+function humanise(segment: string): string {
+  const words = decodeURIComponent(segment).replace(/-/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

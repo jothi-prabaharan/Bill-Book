@@ -31,6 +31,12 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **The rail and the secondary menu work as the design has them (TK-189).**
+  - **Rail:** a module with a menu opens it, and the page stays put until you pick a screen. Clicking the open module hides or shows its menu. A hidden menu now comes back when you pick another module; before, it stayed hidden everywhere until the breadcrumb button was found. The current module stays marked on its forms and records, and modules added for HRMS, School, Restaurant, Maintenance and Approvals show their icons.
+  - **Secondary menu:** the **+** beside a row opens the new-record form on every list that has one, once the list has loaded. It used to do nothing on Items, Item categories, Stock and money documents, the chart of accounts, journals and every other list without a `/new` page, and the top bar's **New** menu sent those to the dashboard. Fee demands and Recipes have no such form, so they no longer show a **+**. The screen you are on stays marked on its form, the section holding it opens after a reload, and a Reports search with no match no longer removes the menu. The rows slide in one after another, as designed.
+  - **Breadcrumb:** built from the menu, so it reads *Home › Inventory › HSN and SAC codes* rather than *Settings › Hsn sac*, and *New invoice* rather than *New*. Each page transition now animates its current crumb, not the rail item; transitions between screens had not played at all.
+  - **Phone:** a tab opens its module's menu as a bottom sheet, the only way to reach a module's other screens on a phone. **More** shows your account above the other modules, three to a row, and its dimmed backdrop now covers the top bar.
+
 - **Changed**: **The app frame follows the design (TK-189).**
   - **Branch switcher:** branches are grouped by organisation, and each shows its business type, organisation and currency. You can search by GSTIN or city as well as by name.
   - **Rail:** the rail is 64px with the design's shadow. The account button shows your initials and role, and opens a menu with your name, email and **Logout**. Only the page you are on is marked current; Home was always marked before.

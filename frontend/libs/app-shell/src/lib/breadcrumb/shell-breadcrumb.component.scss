@@ -10,7 +10,10 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 4px var(--space-4);
+  /* 42px, level with the secondary menu's header beside it (Shell.dc.html .crumbs). */
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 0 var(--space-4);
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-divider);
   font-size: 12px;
@@ -124,8 +127,9 @@
 
 /* On a phone the trail is the screen's name and its actions. "Home › Sales ›
    Invoices" plus Export and Import is wider than the screen, which pushed the
-   last button off the edge; the links are one tap away in the bottom bar, and
-   the secondary menu they sit beside does not exist at this width. */
+   last button off the edge; the links are one tap away in the bottom bar. The
+   menu button goes too, as in the design: on a phone a tab, or More, opens the
+   module's menu as a bottom sheet (TK-189). */
 @media (max-width: 860px) {
   .crumbs {
     flex-wrap: nowrap;

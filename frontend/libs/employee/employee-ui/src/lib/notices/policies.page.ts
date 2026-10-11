@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { IfCanDirective } from '@bill-book/auth';
 import { EmployeeApiService, PolicyDocument } from '@bill-book/employee-core';
-import { CheckboxComponent, BranchDateInputComponent, MessageBoxComponent, TextInputComponent, UiMessage } from '@bill-book/ui-components';
+import { CheckboxComponent, BranchDateInputComponent, MessageBoxComponent, TextInputComponent, UiMessage, onCreateRequest } from '@bill-book/ui-components';
 
 /** People › Policies (H1, TK-48). HRMS only. Acknowledgements come with self-service (H8). */
 @Component({
@@ -22,6 +22,11 @@ export class PoliciesPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly editingId = signal<number | null | undefined>(undefined);
   protected form: PolicyDocument = this.blank();
+
+  constructor() {
+    // The secondary menu's + asks for a new policy with ?action=create (TK-189).
+    onCreateRequest(() => this.startAdd());
+  }
 
   ngOnInit(): void {
     void this.load();

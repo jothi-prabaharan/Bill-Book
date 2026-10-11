@@ -18,6 +18,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 interface UomType {
@@ -104,6 +105,11 @@ export class RestaurantWastagePage implements OnInit {
   ];
 
   protected readonly wastageReasonLabel = wastageReasonLabel;
+
+  constructor() {
+    // The secondary menu's + asks for a new wastage entry with ?action=create (TK-189).
+    onCreateRequest(() => this.startRecording());
+  }
 
   ngOnInit(): void {
     void this.load();

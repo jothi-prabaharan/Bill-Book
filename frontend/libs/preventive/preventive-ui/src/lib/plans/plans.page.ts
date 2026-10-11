@@ -26,6 +26,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 type Tab = 'plans' | 'occurrences';
@@ -93,6 +94,12 @@ export class PlansPage implements OnInit {
     { field: 'occurrenceStatus', header: 'Status' },
     { field: 'actions', header: '' },
   ];
+
+  constructor() {
+    // The secondary menu's + asks for a new preventive plan with ?action=create (TK-189).
+    // It waits while the page is busy, as the page's own New button does.
+    onCreateRequest(() => this.startAdd(), () => !this.busy());
+  }
 
   ngOnInit(): void {
     void this.start();

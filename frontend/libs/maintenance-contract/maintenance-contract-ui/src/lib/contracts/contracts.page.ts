@@ -32,6 +32,7 @@ import {
   TextInputComponent,
   TextareaComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 /**
@@ -102,6 +103,12 @@ export class ContractsPage implements OnInit {
     { field: 'contractStatus', header: 'Status' },
     { field: 'actions', header: '' },
   ];
+
+  constructor() {
+    // The secondary menu's + asks for a new AMC contract with ?action=create (TK-189).
+    // It waits while the page is busy, as the page's own New button does.
+    onCreateRequest(() => this.startAdd(), () => !this.busy());
+  }
 
   ngOnInit(): void {
     void this.start();

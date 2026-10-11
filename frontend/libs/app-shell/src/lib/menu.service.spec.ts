@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { MenuService } from './menu.service';
-import { MenuView } from './menu.models';
+import { MenuView, SubMenuView } from './menu.models';
 
 const TREE: MenuView[] = [
   {
@@ -148,5 +148,96 @@ describe('MenuService (libs/app-shell)', () => {
 
     expect(service.usingFallback()).toBe(true);
     expect(service.rail().length).toBeGreaterThan(0);
+  });
+
+  // ---- TK-189: codes, row lookup and the breadcrumb trail -------------------
+
+  it('MENU-08: Each rail entry carries the code of the menu it opens', async () => {
+    const service = create();
+    await service.load();
+
+    expect(service.rail().map((r) => r.code)).toEqual(['home', 'sales']);
+  });
+
+  it('MENU-09: The fallback rail still draws its icons', async () => {
+    http.get = vi.fn().mockReturnValue(throwError(() => new Error('offline')));
+    const service = create();
+    await service.load();
+
+    const sales = service.rail().find((r) => r.label === 'Sales');
+    expect(sales?.icon).toBe('shopping-cart');
+    expect(service.rail().every((r) => !!r.icon)).toBe(true);
+  });
+
+  it('MENU-10: A menu is found by its code, and counts its screens', async () => {
+    const service = create();
+    await service.load();
+
+    const sales = service.menuByCode('sales');
+    expect(sales?.name).toBe('Sales');
+    expect(service.rowCount(sales!)).toBe(2);
+    expect(service.menuByCode('nowhere')).toBeNull();
+  });
+
+  it('MENU-11: A form or record belongs to the row it sits under', async () => {
+    const service = create();
+    await service.load();
+
+    expect(service.rowForPath('/sales/invoices')?.code).toBe('inv');
+    expect(service.rowForPath('/sales/invoices/new')?.code).toBe('inv');
+    expect(service.rowForPath('/sales/invoices/42/edit')?.code).toBe('inv');
+    expect(service.rowForPath('/sales/transactions/9')?.code).toBe('all');
+    expect(service.rowForPath('/nowhere/at/all')).toBeNull();
+  });
+
+  it('MENU-12: The breadcrumb is module, screen, then the form or record', async () => {
+    const service = create();
+    await service.load();
+
+    const labels = (url: string) => service.crumbsFor(url)?.map((c) => c.label);
+
+    expect(service.crumbsFor('/dashboard')).toEqual([]);
+    expect(service.crumbsFor('/sales/invoices')).toEqual([
+      { label: 'Sales', path: '/sales/transactions', isLink: true, isLast: false },
+      { label: 'Invoices', path: '/sales/invoices', isLink: false, isLast: true },
+    ]);
+    expect(labels('/sales/invoices/new')).toEqual(['Sales', 'Invoices', 'New invoice']);
+    expect(service.crumbsFor('/sales/invoices/new')?.[1].isLink).toBe(true);
+    expect(labels('/sales/invoices/42')).toEqual(['Sales', 'Invoices', 'Invoice']);
+    expect(labels('/sales/invoices/42/edit')).toEqual(['Sales', 'Invoices', 'Edit invoice']);
+    expect(labels('/sales/transactions/9')).toEqual(['Sales', 'All transactions', '9']);
+  });
+
+  it('MENU-13: A URL the tree does not know gets no trail, so the caller spells out the path', async () => {
+    const service = create();
+    await service.load();
+
+    expect(service.crumbsFor('/nowhere/at/all')).toBeNull();
+  });
+
+  it('MENU-14: The + opens a form: its own page, the list asked to open one, or nothing', () => {
+    const service = create();
+    const sub = (code: string, routePath: string | null): SubMenuView => ({
+      subMenuId: 0,
+      code,
+      name: code,
+      routePath,
+      icon: null,
+      module: 'x',
+      canCreate: true,
+      singularName: null,
+      hasAccess: true,
+      allowedActions: ['view', 'create'],
+    });
+
+    expect(service.createPath(sub('inv', '/sales/invoices'))).toBe('/sales/invoices/new');
+    expect(service.createPath(sub('both', '/contacts'))).toBe('/contacts/new');
+    expect(service.createPath(sub('ven', null))).toBe('/contacts/new?role=vendor');
+    expect(service.createPath(sub('itm', '/inventory/items'))).toBe('/inventory/items?action=create');
+    expect(service.createPath(sub('rin', '/sales/recurring-invoices?status=active'))).toBe('/sales/recurring-invoices?action=create');
+    // No form for one record behind these, so no + at all.
+    expect(service.createPath(sub('fdm', '/fee/demands'))).toBeNull();
+    expect(service.createPath(sub('rst-recipes', '/restaurant/recipes'))).toBeNull();
+    expect(service.createPath(sub('xyz', null))).toBeNull();
   });
 });

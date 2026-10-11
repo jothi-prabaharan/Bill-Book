@@ -170,6 +170,12 @@ export const SHELL_REGISTERS: readonly string[] = [
 
 /** One entry in the navigation rail. */
 export interface ShellRailItem {
+  /**
+   * The menu this entry opens: `MenuView.code` from the server's tree, or the
+   * fallback tree's code (its group name, lowercased). What the rail, the
+   * secondary menu and the phone sheet agree on as "this module" (TK-189).
+   */
+  code?: string;
   path: string;
   label: string;
   /** Lucide icon name, matching what the menu seed stores. */
@@ -185,14 +191,14 @@ export interface ShellRailItem {
  * and the nav both need it, and two copies of a menu is how they come to disagree.
  */
 export const FALLBACK_RAIL: readonly ShellRailItem[] = [
-  { path: '/dashboard', label: 'Home', icon: 'house', module: null },
-  { path: '/contacts', label: 'Contacts', icon: 'users-round', module: 'contacts' },
-  { path: '/inventory', label: 'Inventory', icon: 'boxes', module: 'inventory' },
-  { path: '/purchase/bills', label: 'Purchase', icon: 'package', module: 'purchase' },
-  { path: '/sales/quotes', label: 'Sales', icon: 'shopping-cart', module: 'sales' },
-  { path: '/banking', label: 'Banking', icon: 'landmark', module: 'banking' },
-  { path: '/accounting', label: 'Accounts', icon: 'book-open', module: 'accounting' }, // STRICT UI RULE: Accounts
-  { path: '/reports', label: 'Reports', icon: 'chart-no-axes-combined', module: 'reports' },
-  { path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
+  { code: 'home', path: '/dashboard', label: 'Home', icon: 'house', module: null },
+  { code: 'contacts', path: '/contacts', label: 'Contacts', icon: 'users-round', module: 'contacts' },
+  { code: 'inventory', path: '/inventory', label: 'Inventory', icon: 'boxes', module: 'inventory' },
+  { code: 'purchase', path: '/purchase/bills', label: 'Purchase', icon: 'package', module: 'purchase' },
+  { code: 'sales', path: '/sales/quotes', label: 'Sales', icon: 'shopping-cart', module: 'sales' },
+  { code: 'banking', path: '/banking', label: 'Banking', icon: 'landmark', module: 'banking' },
+  { code: 'accounts', path: '/accounting', label: 'Accounts', icon: 'book-open', module: 'accounting' }, // STRICT UI RULE: Accounts
+  { code: 'reports', path: '/reports', label: 'Reports', icon: 'chart-no-axes-combined', module: 'reports' },
+  { code: 'settings', path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
 ];
 

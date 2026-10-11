@@ -14,6 +14,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 type Tab = 'buildings' | 'spaces';
@@ -77,6 +78,19 @@ export class SpacesPage implements OnInit {
     { field: 'isActive', header: 'Status' },
     { field: 'actions', header: '' },
   ];
+
+  constructor() {
+    // The secondary menu's + asks for a new building with ?action=create (TK-189). It is
+    // labelled "New building", so it opens on the Buildings tab even from Spaces, where
+    // "+ Add" would start a space. It waits while the page is busy, as "+ Add" does.
+    onCreateRequest(
+      () => {
+        this.choose('buildings');
+        this.startAdd();
+      },
+      () => !this.busy(),
+    );
+  }
 
   ngOnInit(): void {
     void this.load();

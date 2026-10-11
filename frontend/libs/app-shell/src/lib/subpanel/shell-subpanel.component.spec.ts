@@ -6,6 +6,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { ShellSubpanelComponent } from './shell-subpanel.component';
 import { MenuService } from '../menu.service';
 import { ShellPanelService } from '../panel-state.service';
+import { ShellNavigationService } from '../shell-navigation.service';
 import { MenuView } from '../menu.models';
 
 const sub = (over: Partial<MenuView['groups'][number]['subMenus'][number]> = {}) => ({
@@ -232,5 +233,81 @@ describe('ShellSubpanelComponent (libs/app-shell)', () => {
 
     panel.setWidth(300);
     expect(panel.widthPx()).toBe('300px');
+  });
+
+  // ---- TK-189 -------------------------------------------------------------
+
+  it('PANEL-12: A search that matches nothing keeps the panel and its search box', async () => {
+    const comp = await create('/settings/users');
+
+    comp.setQuery('@@@nothing@@@');
+    expect(comp.count()).toBe(0);
+    expect(comp.visible()).toBe(true);
+  });
+
+  it('PANEL-13: A form or a record under a row keeps that row current', async () => {
+    const onForm = await create('/sales/invoices/new');
+    expect(onForm.label()).toBe('Sales');
+    expect(onForm.groups()[0].subMenus.filter((s) => onForm.isCurrent(s)).map((s) => s.code)).toEqual(['inv']);
+
+    const onRecord = await create('/sales/invoices/42/edit');
+    expect(onRecord.groups()[0].subMenus.filter((s) => onRecord.isCurrent(s)).map((s) => s.code)).toEqual(['inv']);
+  });
+
+  it('PANEL-14: A deeper URL under a typed register marks nothing rather than guessing', async () => {
+    // /sales/transactions?type=Quote shares its path with its siblings, so a
+    // child of the path says nothing about which of them it belongs to; only the
+    // query-free mixed register can claim it.
+    const comp = await create('/sales/transactions/7');
+    expect(comp.groups()[0].subMenus.filter((s) => comp.isCurrent(s)).map((s) => s.code)).toEqual(['all']);
+  });
+
+  it('PANEL-15: On a phone the menu is a sheet, shown only while it is open', async () => {
+    const comp = await create('/sales/invoices');
+    const navigation = TestBed.inject(ShellNavigationService);
+    navigation.isPhone.set(true);
+
+    expect(comp.visible()).toBe(false);
+    expect(comp.sheetVisible()).toBe(false);
+
+    navigation.sheetOpen.set(true);
+    expect(comp.sheetVisible()).toBe(true);
+
+    // Picking a row closes the sheet as well as navigating.
+    const invoices = comp.groups()[0].subMenus[2];
+    comp.go(invoices);
+    expect(navigation.sheetOpen()).toBe(false);
+    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/sales/invoices');
+  });
+
+  it('PANEL-16: A module picked on the rail shows its menu while the screen stays put', async () => {
+    const comp = await create('/sales/invoices');
+    const navigation = TestBed.inject(ShellNavigationService);
+
+    navigation.pickRail({ code: 'settings', path: '/settings/organization', label: 'Settings', icon: 'settings', module: 'settings' });
+    expect(comp.label()).toBe('Settings');
+    expect(mockRouter.navigateByUrl).not.toHaveBeenCalled();
+
+    // Navigating anywhere hands the menu back to the screen's module.
+    routerEvents$.next(new NavigationEnd(1, '/sales/invoices/new', '/sales/invoices/new'));
+    expect(comp.label()).toBe('Sales');
+  });
+
+  it('PANEL-17: The sheet\'s Back closes it; from a module that is not a tab it returns to More', async () => {
+    const comp = await create('/settings/users');
+    const navigation = TestBed.inject(ShellNavigationService);
+    navigation.isPhone.set(true);
+    navigation.sheetOpen.set(true);
+
+    comp.back();
+    expect(navigation.sheetOpen()).toBe(false);
+    expect(navigation.moreOpen()).toBe(true);
+
+    const sales = await create('/sales/invoices');
+    const salesNav = TestBed.inject(ShellNavigationService);
+    salesNav.isPhone.set(true);
+    salesNav.sheetOpen.set(true);
+    sales.back();
+    expect(salesNav.moreOpen()).toBe(false);
   });
 });

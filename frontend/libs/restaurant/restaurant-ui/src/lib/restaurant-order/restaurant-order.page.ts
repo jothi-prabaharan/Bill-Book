@@ -50,6 +50,7 @@ import {
   TextInputComponent,
   TextareaComponent,
   UiMessage,
+  onCreateRequest,
   printHtml,
 } from '@bill-book/ui-components';
 
@@ -103,6 +104,9 @@ export class RestaurantOrderPage implements OnInit {
   protected readonly search = signal('');
   protected readonly messages = signal<UiMessage[]>([]);
   protected readonly busy = signal(false);
+
+  /** Set once start() has read the settings and staff a new order takes its type and waiter from. */
+  private readonly loaded = signal(false);
 
   /** The order on screen: null for the list, 'new' while a new one is being built. */
   protected readonly editing = signal<RestaurantOrder | 'new' | null>(null);
@@ -170,6 +174,12 @@ export class RestaurantOrderPage implements OnInit {
     orderProblem(this.settings(), { orderType: this.orderType(), restaurantTableId: this.tableId(), waiterUserId: this.waiterId(), contactId: this.contactId() }),
   );
 
+  constructor() {
+    // The secondary menu's + asks for a new order with ?action=create (TK-189). It waits for
+    // start(), as ?table= does: before the settings are read, a dine-in branch would get a takeaway.
+    onCreateRequest(() => this.newOrder(), () => this.loaded());
+  }
+
   ngOnInit(): void {
     void this.start();
   }
@@ -185,6 +195,7 @@ export class RestaurantOrderPage implements OnInit {
     } catch (error) {
       this.fail(error, 'The order screen could not be loaded.');
     }
+    this.loaded.set(true);
 
     await this.loadOrders();
     const params = this.route.snapshot.queryParamMap;

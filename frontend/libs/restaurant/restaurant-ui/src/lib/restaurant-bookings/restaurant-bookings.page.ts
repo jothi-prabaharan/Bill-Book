@@ -34,6 +34,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 type Sheet = 'booking' | 'seat-booking' | 'waiting' | 'seat-waiting' | null;
@@ -95,6 +96,11 @@ export class RestaurantBookingsPage implements OnInit {
     return this.tables()
       .filter((t) => t.status === 'Free' && t.seats >= partySize)
       .map((t) => ({ value: t.restaurantTableId, label: `${t.code} · ${t.seats} seats` }));
+  }
+
+  constructor() {
+    // The secondary menu's + asks for a new booking with ?action=create (TK-189).
+    onCreateRequest(() => this.newBooking());
   }
 
   ngOnInit(): void {

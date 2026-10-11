@@ -75,7 +75,15 @@ export class ShellComponent {
   /** The URL as a signal, so anything derived from the route recomputes. */
   private readonly url = signal('/');
 
-  readonly crumbs = signal<BreadcrumbItem[]>([]);
+  /**
+   * The trail: from the menu tree — module › screen › form or record — once it
+   * has loaded, and spelled out from the URL before then or for a screen the
+   * tree does not list (TK-189).
+   */
+  readonly crumbs = computed<BreadcrumbItem[]>(() => {
+    const url = this.url();
+    return this.menuService.crumbsFor(url) ?? buildCrumbs(url);
+  });
 
   readonly isHome = computed(() => this.url() === '/dashboard' || this.url() === '/');
 
@@ -133,16 +141,15 @@ export class ShellComponent {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.url.set(event.urlAfterRedirects);
-        this.updateCrumbs(event.urlAfterRedirects);
       }
     });
 
     this.url.set(this.router.url);
-    this.updateCrumbs(this.router.url);
   }
 
+  /** Points the trail at a URL, as a navigation does. */
   updateCrumbs(url: string): void {
-    this.crumbs.set(buildCrumbs(url));
+    this.url.set(url);
   }
 
   toggleStar(): void {

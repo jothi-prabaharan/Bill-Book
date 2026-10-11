@@ -112,12 +112,13 @@ export class ShellTopbarComponent {
       .map((menu) => {
         const docs = menu.groups
           .flatMap((g) => g.subMenus)
-          .filter((s) => s.canCreate && s.routePath)
+          .filter((s) => s.canCreate && s.allowedActions.includes('create'))
           .map((s) => ({
             label: s.singularName ?? s.name,
             code: s.code.substring(0, 3).toUpperCase(),
-            path: `${s.routePath}/new`,
-          }));
+            path: this.menuService.createPath(s),
+          }))
+          .filter((d): d is DocGroupItem => d.path !== null);
         return { name: menu.name, docs };
       })
       .filter((g) => g.docs.length > 0);

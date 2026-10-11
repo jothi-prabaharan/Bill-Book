@@ -3,23 +3,28 @@ import { SearchInputComponent } from '@bill-book/ui-components';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MenuGroupView, SubMenuView } from '../menu.models';
 import { MenuService } from '../menu.service';
 import { ShellPanelService } from '../panel-state.service';
+import { ShellNavigationService } from '../shell-navigation.service';
 
 /**
- * The secondary menu: the module's own screens, beside the rail.
+ * The secondary menu: the module's own screens, beside the rail, or a bottom
+ * sheet on a phone.
  *
- * Which module it shows follows the URL rather than a click — whatever screen you
- * are on, the panel is that module's. That keeps the panel and the content from
- * ever disagreeing, which is the failure the design's own note about the rail warns
- * against.
+ * It shows the module `ShellNavigationService` says is open: the one picked on
+ * the rail, else the one that owns the screen on view. Picking a row navigates,
+ * which hands the menu back to the screen's module, so the rail, the panel and
+ * the content agree again after every navigation (TK-189).
  *
  * Sections collapse one at a time, an unnamed section is always open and draws no
  * header, a row reveals its create button on hover, and Reports gets a search box
@@ -38,11 +43,12 @@ export class ShellSubpanelComponent {
   private readonly menuService = inject(MenuService);
   private readonly router = inject(Router);
   protected readonly panel = inject(ShellPanelService);
+  protected readonly navigation = inject(ShellNavigationService);
 
   /** The current URL, as a signal so the panel follows navigation. */
   private readonly url = signal('/');
 
-  readonly menu = computed(() => this.menuService.menuForPath(this.url()));
+  readonly menu = computed(() => this.navigation.panelMenu());
 
   readonly label = computed(() => this.menu()?.name ?? '');
 
@@ -76,8 +82,22 @@ export class ShellSubpanelComponent {
     this.groups().reduce((total, group) => total + group.subMenus.length, 0),
   );
 
-  /** Nothing to show means no panel at all, not an empty one. */
-  readonly visible = computed(() => !this.panel.collapsed() && this.groups().length > 0);
+  /**
+   * A module with no secondary menu has no panel at all, not an empty one. A
+   * search that matches nothing keeps the panel and its search box, and says so
+   * (TK-189: it used to remove the box being typed into).
+   */
+  private readonly hasRows = computed(() => (this.menu()?.groups.length ?? 0) > 0);
+
+  /** The desktop panel. */
+  readonly visible = computed(
+    () => !this.navigation.isPhone() && !this.panel.collapsed() && this.hasRows(),
+  );
+
+  /** The phone's bottom sheet. */
+  readonly sheetVisible = computed(
+    () => this.navigation.isPhone() && this.navigation.sheetOpen() && this.hasRows(),
+  );
 
   constructor() {
     this.url.set(this.router.url);
@@ -89,10 +109,28 @@ export class ShellSubpanelComponent {
         // A search is about finding one screen. Once you are on it, it has done
         // its job and should not still be narrowing the list you come back to.
         this.query.set('');
-        this.openSectionForCurrentUrl();
+        this.openCurrentSection();
       });
 
-    this.openSectionForCurrentUrl();
+    this.openCurrentSection();
+
+    // And again when the tree arrives after the first paint, which on a reload or
+    // a deep link it always does: until then there is no section to open (TK-189).
+    // Only the screen's row and the menu are tracked, so opening or shutting a
+    // section by hand is never undone until the screen changes.
+    effect(() => {
+      this.currentRoute();
+      this.menu();
+      untracked(() => this.openCurrentSection());
+    });
+  }
+
+  /** Open the named section holding the screen on view, if the open menu has one. */
+  private openCurrentSection(): void {
+    const route = this.currentRoute();
+    if (!route) return;
+    const group = this.menu()?.groups.find((g) => g.subMenus.some((s) => s.routePath === route));
+    if (group?.name) this.panel.openGroup.set(group.code);
   }
 
   setQuery(value: string): void {
@@ -131,7 +169,12 @@ export class ShellSubpanelComponent {
     // of its own; a typed register has to be matched on its type or not at all.
     const path = url.split('?')[0];
     const bare = rows.find((s) => !!s.routePath && !s.routePath.includes('?') && s.routePath === path);
-    return bare?.routePath ?? null;
+    if (bare?.routePath) return bare.routePath;
+
+    // A form or a record under a row — /sales/invoices/new, /sales/invoices/42 —
+    // keeps that row marked, as the design does while a document is being made.
+    const parent = this.menuService.rowForPath(url);
+    return parent?.routePath && rows.includes(parent) ? parent.routePath : null;
   });
 
   isCurrent(sub: SubMenuView): boolean {
@@ -140,6 +183,9 @@ export class ShellSubpanelComponent {
 
   go(sub: SubMenuView): void {
     if (!sub.routePath) return;
+    // The sheet closes on the pick itself, so picking the screen already on view
+    // (which navigates nowhere) still closes it.
+    this.navigation.sheetOpen.set(false);
     void this.router.navigateByUrl(sub.routePath);
   }
 
@@ -150,6 +196,7 @@ export class ShellSubpanelComponent {
    */
   create(sub: SubMenuView, event: Event): void {
     event.stopPropagation();
+    this.navigation.sheetOpen.set(false);
     const path = this.createPath(sub);
     if (path) void this.router.navigateByUrl(path);
   }
@@ -162,33 +209,24 @@ export class ShellSubpanelComponent {
     return `New ${(sub.singularName ?? sub.name).toLowerCase()}`;
   }
 
-  /**
-   * `/sales/transactions?type=Invoice` creates at `/sales/invoices/new`, so the
-   * form path cannot be derived from the register's path by appending. The tree
-   * does not carry a create route, so this maps the document codes it does carry.
-   */
+  /** Where the + goes for a row: its form's own route, or the list asked to open it. */
   private createPath(sub: SubMenuView): string | null {
-    const known: Record<string, string> = {
-      qot: '/sales/quotes/new',
-      sor: '/sales/sales-orders/new',
-      dlc: '/sales/delivery-challans/new',
-      inv: '/sales/invoices/new',
-      crn: '/sales/credit-notes/new',
-      por: '/purchase/purchase-orders/new',
-      grn: '/purchase/goods-receipts/new',
-      bil: '/purchase/bills/new',
-      dbn: '/purchase/debit-notes/new',
-    };
-    if (known[sub.code]) return known[sub.code];
-
-    // Everything else creates in place: a master-data screen opens its own form.
-    return sub.routePath ? `${sub.routePath.split('?')[0]}?action=create` : null;
+    return this.menuService.createPath(sub);
   }
 
-  /** Open the section holding the screen you just landed on. */
-  private openSectionForCurrentUrl(): void {
-    const group = this.groups().find((g) => g.subMenus.some((s) => this.isCurrent(s)));
-    if (group?.name) this.panel.openGroup.set(group.code);
+  /** The sheet's Back: close it, or return to More for a module that is not a tab. */
+  back(): void {
+    this.navigation.closeSheet();
+  }
+
+  /** A tap on the dim area above the sheet, not on the sheet itself, closes it. */
+  onSheetBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.navigation.dismissSheet();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.navigation.sheetOpen()) this.navigation.dismissSheet();
   }
 
   // --- Resize ---------------------------------------------------------------

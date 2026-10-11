@@ -49,6 +49,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 type Tab = 'dishes' | 'categories' | 'schedules';
@@ -151,6 +152,18 @@ export class RestaurantMenuPage implements OnInit {
   protected readonly daysLabel = daysLabel;
   protected readonly hoursLabel = hoursLabel;
   protected readonly orderTypeLabel = orderTypeLabel;
+
+  constructor() {
+    // The secondary menu's + asks for a new dish with ?action=create (TK-189). The dish's
+    // sheet is on the Dishes tab, and like "Add a dish" it waits for a category to go under.
+    onCreateRequest(
+      () => {
+        this.choose('dishes');
+        this.newDish();
+      },
+      () => this.categories().length > 0,
+    );
+  }
 
   ngOnInit(): void {
     void this.loadAll();

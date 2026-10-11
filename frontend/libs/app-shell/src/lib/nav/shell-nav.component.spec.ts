@@ -9,6 +9,7 @@ import { ShellNavComponent } from './shell-nav.component';
 import { AccessibleOrg, AuthService, SessionContext, SessionContextService } from '@bill-book/auth';
 import { MenuService } from '../menu.service';
 import { ShellRailItem } from '../shell-screens';
+import { ShellNavigationService } from '../shell-navigation.service';
 
 describe('ShellNavComponent (libs/app-shell)', () => {
   let routerEvents$: Subject<RouterEvent>;
@@ -133,7 +134,9 @@ describe('ShellNavComponent (libs/app-shell)', () => {
       { path: '/banking', label: 'Banking', icon: 'landmark', module: 'banking' },
       { path: '/reports', label: 'Reports', icon: 'chart-no-axes-combined', module: 'reports' },
     ];
-    TestBed.overrideProvider(MenuService, { useValue: { rail: signal(serverRail) } });
+    TestBed.overrideProvider(MenuService, {
+      useValue: { rail: signal(serverRail), menuForPath: () => null, menuByCode: () => null, rowCount: () => 0 },
+    });
     const comp = createComponent();
 
     expect(comp.mobileTopNav().map((i) => i.label)).toEqual(['Home', 'Purchase', 'Sales', 'Banking']);
@@ -260,4 +263,44 @@ describe('ShellNavComponent (libs/app-shell)', () => {
     expect(comp.isActive(inventoryItem)).toBe(false);
     expect(comp.isActive(contactsItem)).toBe(true);
   });
+
+  // ---- TK-189: picking on the rail, the More tab ---------------------------
+
+  it('NAV-16: A rail click goes through the shared navigation rule', () => {
+    const comp = createComponent();
+    const navigation = TestBed.inject(ShellNavigationService);
+    const pick = vi.spyOn(navigation, 'pickRail').mockReturnValue(false);
+    const sales = comp.nav().find((i) => i.label === 'Sales')!;
+    const event = new MouseEvent('click');
+
+    comp.toggleProfile({ currentTarget: null } as unknown as MouseEvent);
+    comp.pick(sales, event);
+
+    expect(pick).toHaveBeenCalledWith(sales, event);
+    expect(comp.profileOpen()).toBe(false);
+  });
+
+  it('NAV-17: More is marked while the screen is in a module that is not a tab', () => {
+    const comp = createComponent();
+    routerEvents$.next(new NavigationEnd(1, '/settings/users', '/settings/users'));
+    expect(comp.moreActive()).toBe(true);
+
+    routerEvents$.next(new NavigationEnd(2, '/sales/quotes', '/sales/quotes'));
+    expect(comp.moreActive()).toBe(false);
+  });
+
+  it('NAV-18: Only a tap on the dim area closes More, not one on the sheet', () => {
+    const comp = createComponent();
+    const navigation = TestBed.inject(ShellNavigationService);
+    navigation.moreOpen.set(true);
+    const backdrop = document.createElement('div');
+    const sheet = document.createElement('div');
+
+    comp.onMoreBackdrop({ target: sheet, currentTarget: backdrop } as unknown as MouseEvent);
+    expect(navigation.moreOpen()).toBe(true);
+
+    comp.onMoreBackdrop({ target: backdrop, currentTarget: backdrop } as unknown as MouseEvent);
+    expect(navigation.moreOpen()).toBe(false);
+  });
 });
+

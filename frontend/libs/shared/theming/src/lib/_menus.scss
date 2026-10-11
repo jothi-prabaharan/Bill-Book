@@ -190,6 +190,12 @@
     cursor: not-allowed;
   }
 
+  /* A toggle that is on — the breadcrumb's menu button while the menu shows
+     (Shell.dc.html .iconbtn[aria-pressed='true']). */
+  &[aria-pressed='true'] {
+    color: var(--color-accent-800);
+  }
+
   &:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;

@@ -9,6 +9,7 @@ import {
   TextInputComponent,
   ApprovalPanelComponent,
   ScanComponent,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 import { gtinCandidates, matchScannedItem, parseGs1 } from '@bill-book/scan-core';
 import { scanOntoSheet } from './stock-scan';
@@ -219,6 +220,13 @@ export class StockAdjustmentsPage implements OnInit {
       { field: 'notes', header: 'Note' }
     );
     return cols;
+  }
+
+  constructor() {
+    // The secondary menu's + asks for a new stock adjustment with ?action=create (TK-189).
+    // It starts a write-off, the sheet's default kind, as the first button does.
+    // It waits while the page is busy, as the page's own New button does.
+    onCreateRequest(() => this.newSheet('Adjustment'), () => !this.busy());
   }
 
   ngOnInit(): void {

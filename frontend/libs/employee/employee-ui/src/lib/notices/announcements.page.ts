@@ -13,6 +13,7 @@ import {
   TextInputComponent,
   TextareaComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 
 /** People › Announcements (H1, TK-48). HRMS only. Pinned ones first, newest next. */
@@ -39,6 +40,11 @@ export class AnnouncementsPage implements OnInit {
     { value: 'Location', label: 'One location' },
     { value: 'Grade', label: 'One grade' },
   ];
+
+  constructor() {
+    // The secondary menu's + asks for a new announcement with ?action=create (TK-189).
+    onCreateRequest(() => this.startAdd());
+  }
 
   ngOnInit(): void {
     void this.load();

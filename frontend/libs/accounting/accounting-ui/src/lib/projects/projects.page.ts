@@ -13,6 +13,7 @@ import {
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 import { ProjectListItem } from './project-options';
 import { InfoTooltipComponent } from '@bill-book/ui-components';
@@ -133,6 +134,11 @@ export class ProjectsPage implements OnInit {
   protected statusFilter = '';
   protected form: ProjectForm = this.blankForm();
   private members: ProjectView['members'] = [];
+
+  constructor() {
+    // The secondary menu's + asks for a new project with ?action=create (TK-189).
+    onCreateRequest(() => this.startNew());
+  }
 
   ngOnInit(): void {
     const routed = Number(this.route.snapshot.paramMap.get('projectId'));

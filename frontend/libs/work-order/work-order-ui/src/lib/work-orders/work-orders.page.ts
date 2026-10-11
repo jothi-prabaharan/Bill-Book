@@ -18,6 +18,7 @@ import {
   TextInputComponent,
   TextareaComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 import {
   SaveWorkOrder,
@@ -116,6 +117,12 @@ export class WorkOrdersPage implements OnInit {
     { field: 'workOrderStatus', header: 'Status' },
     { field: 'actions', header: '' },
   ];
+
+  constructor() {
+    // The secondary menu's + asks for a new work order with ?action=create (TK-189).
+    // It waits while the page is busy, as the page's own New button does.
+    onCreateRequest(() => this.startAdd(), () => !this.busy());
+  }
 
   ngOnInit(): void {
     void this.start();

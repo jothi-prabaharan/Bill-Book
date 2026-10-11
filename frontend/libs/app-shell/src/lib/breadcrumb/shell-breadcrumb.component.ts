@@ -13,6 +13,7 @@ import { filter } from 'rxjs/operators';
 import { SHELL_REGISTERS } from '../shell-screens';
 import { MenuService } from '../menu.service';
 import { ShellPanelService } from '../panel-state.service';
+import { ShellNavigationService } from '../shell-navigation.service';
 
 export interface BreadcrumbItem {
   label: string;
@@ -94,6 +95,7 @@ export class ShellBreadcrumbComponent {
   private readonly menuService = inject(MenuService);
   protected readonly auth = inject(AuthService);
   protected readonly panel = inject(ShellPanelService);
+  private readonly navigation = inject(ShellNavigationService);
 
   readonly crumbsInput = input<BreadcrumbItem[] | null>(null);
   readonly crumbClick = output<BreadcrumbItem>();
@@ -114,15 +116,15 @@ export class ShellBreadcrumbComponent {
    * out rather than disappearing, so the strip does not reflow as you move between
    * modules that have a panel and modules that do not.
    */
-  readonly hasPanel = computed(
-    () => (this.menuService.menuForPath(this.url())?.groups.length ?? 0) > 0,
-  );
+  readonly hasPanel = computed(() => (this.navigation.panelMenu()?.groups.length ?? 0) > 0);
 
-  readonly panelShown = computed(() => this.hasPanel() && !this.panel.collapsed());
+  /** Whether the secondary menu is showing: the panel on a desktop, the sheet on a phone. */
+  readonly panelShown = computed(() => this.hasPanel() && this.navigation.panelShown());
 
   readonly panelToggleLabel = computed(() => {
-    const menu = this.menuService.menuForPath(this.url());
-    if (!menu || !this.hasPanel()) return 'No menu for this screen';
+    const menu = this.navigation.panelMenu();
+    if (!menu) return 'No menu for this screen';
+    if (!this.hasPanel()) return `No menu for ${menu.name}`;
     return this.panelShown() ? `Hide ${menu.name} menu` : `Show ${menu.name} menu`;
   });
 
@@ -162,7 +164,7 @@ export class ShellBreadcrumbComponent {
   }
 
   updateCrumbs(url: string): void {
-    this.crumbs.set(buildCrumbs(url));
+    this.crumbs.set(this.menuService.crumbsFor(url) ?? buildCrumbs(url));
   }
 
   onCrumbClicked(crumb: BreadcrumbItem): void {
@@ -170,7 +172,7 @@ export class ShellBreadcrumbComponent {
   }
 
   togglePanel(): void {
-    this.panel.toggle();
+    this.navigation.togglePanel();
   }
 
   onToggleStar(): void {

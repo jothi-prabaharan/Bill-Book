@@ -19,6 +19,7 @@ import {
   TextInputComponent,
   TextareaComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 import {
   INTERVAL_OPTIONS,
@@ -109,6 +110,11 @@ export class ServicePlansPage implements OnInit {
   protected readonly cadence = cadence;
   protected readonly dueLabel = dueLabel;
   protected readonly dueTone = dueTone;
+
+  constructor() {
+    // The secondary menu's + asks for a new service plan with ?action=create (TK-189).
+    onCreateRequest(() => this.create());
+  }
 
   ngOnInit(): void {
     void this.start();

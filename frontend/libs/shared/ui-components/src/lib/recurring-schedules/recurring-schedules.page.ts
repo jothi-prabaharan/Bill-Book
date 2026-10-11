@@ -16,6 +16,7 @@ import { TextInputComponent } from '../text-input/text-input.component';
 import { NumberInputComponent } from '../number-input/number-input.component';
 import { MessageBoxComponent } from '../message-box/message-box.component';
 import { UiMessage } from '../message-box/message-box.model';
+import { onCreateRequest } from '../register/create-request';
 import {
   FREQUENCY_OPTIONS,
   RECURRING_KINDS,
@@ -106,6 +107,11 @@ export class RecurringSchedulesPage implements OnInit {
 
   /** The template, start and frequency lock once something has been raised. */
   protected readonly locked = computed(() => (this.selected()?.occurrencesCreated ?? 0) > 0);
+
+  constructor() {
+    // The secondary menu's + asks for a new schedule with ?action=create (TK-189).
+    onCreateRequest(() => this.create());
+  }
 
   ngOnInit(): void {
     void this.load();

@@ -17,6 +17,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  onCreateRequest,
 } from '@bill-book/ui-components';
 import { academicOptions } from '../academic-options';
 
@@ -87,6 +88,12 @@ export class EnquiriesPage implements OnInit {
     { field: 'actions', header: '' },
   ];
 
+  constructor() {
+    // The secondary menu's + asks for a new enquiry with ?action=create (TK-189).
+    // It waits while the page is busy, as the page's own New button does.
+    onCreateRequest(() => this.startAdd(), () => !this.busy());
+  }
+
   ngOnInit(): void {
     void this.start();
   }
@@ -144,6 +151,8 @@ export class EnquiriesPage implements OnInit {
   }
 
   private async start(): Promise<void> {
+    // Busy from the start: a new enquiry takes its year from these lookups.
+    this.busy.set(true);
     try {
       const options = await academicOptions(this.studentApi);
       this.years.set(options.years);
