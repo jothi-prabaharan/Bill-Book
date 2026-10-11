@@ -5709,6 +5709,22 @@ The queue below is one list in card-number order. Each card names its group.
   - **Checked here** by building the web app and rendering every list with Playwright: real sign-in and shell, fixture rows for the lists, real data for the chart of accounts. At 1600×900, 1280×720 and 1280×650 the total sat on the preset row when it fitted and moved to its own line when it did not, and the card ran to the bottom edge with the pager pinned there. Lint and typecheck are clean, and the backend builds clean.
   - **Not built:** document attachments. The screenshot's 📎 count has nothing to count, because no sales, purchase or accounting document can carry an attachment. The purchase and sales client lists still sum each row's total in its own currency; the two server-paged lists sum in base currency.
 
+### TK-188 · Contact form: its own page, draft contacts, address kinds, people linked to addresses
+- [~] working (Claude Opus 5.5) — since 2026-10-11
+- **Issue:** [#178](https://github.com/jothi-prabaharan/Bill-Book/issues/178)
+- **Group:** Z · Owner request
+- **Lanes:** L-MST (contacts: entity, `ContactsDbContext` and its migration, `ContactRepository`, the contacts controllers), L-UI (`libs/master/master-ui/src/lib/contacts`), L-DOC · **Depends on:** TK-187 · **Decision:** —
+- **Where:** `backend/Api/Master/Master.Entity/TableEntities/{Contact,ContactAddress,ContactPerson}.cs`, `Master.Entity/Models/ContactModels.cs`, `Master.Repository/{ContactsDbContext.cs,Repositories/ContactRepository.cs}`, `Master.Api/Controllers/{ContactsController,InternalContactLookupController}.cs`, `frontend/libs/master/master-ui/src/lib/contacts/`.
+- **State:** checked 11 October 2026. The contact form is an editor inside the contacts list. A contact has no draft state. An address is typed Billing or Shipping with one default flag, and carries its own contact name and phone. Contact people are a separate list with roles and emails, linked to no address.
+- **Owner's decisions (11 October 2026):** a real draft state; a contact person may belong to one address; an address has a kind (Registered office, Warehouse, Branch, Other) and separate Default billing and Default shipping flags.
+- **Sub-tasks:**
+  - [ ] Model and migration: `Contact.IsDraft`; `ContactAddress.Kind`, `IsDefaultBilling`, `IsDefaultShipping` in place of `AddressType`, `IsDefault` and the address's own contact fields; `ContactPerson.ContactAddressId`.
+  - [ ] Repository: a draft skips the save checks but keeps a display name, gets no sub-ledger accounts until it is saved, and stays out of every picker and internal lookup; one default billing and one default shipping address per contact.
+  - [ ] The form as a page, `/contacts/new` and `/contacts/:id`, in the screenshots' five sections, with Save draft and Save.
+  - [ ] Docs and release notes.
+  - [ ] Test: written, never run by an AI (section 0.5).
+- **Done when:** a contact can be saved as a draft and later saved for real from the new page; its addresses carry a kind, the two defaults and their own contact person; and documents pick the default billing and shipping addresses.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
