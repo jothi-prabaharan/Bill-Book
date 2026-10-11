@@ -15,10 +15,11 @@ if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 Import-Module WebAdministration
 
 switch ($Environment) {
-    "Staging"    { $FrontendPort = 5200; $BackendPort = 5500 }
-    "UAT"        { $FrontendPort = 6200; $BackendPort = 6500 }
-    "Production" { $FrontendPort = 7200; $BackendPort = 7500 }
+    "Staging"    { $WebPort = 5200; $DocsPort = 5201; $WebsitePort = 5202; $BackendPort = 5500 }
+    "UAT"        { $WebPort = 6200; $DocsPort = 6201; $WebsitePort = 6202; $BackendPort = 6500 }
+    "Production" { $WebPort = 7200; $DocsPort = 7201; $WebsitePort = 7202; $BackendPort = 7500 }
 }
+$FrontendPort = $WebPort
 
 $basePath = "C:\inetpub\wwwroot\BillBook\$Environment"
 $backendAppPool = "BillBook_Backend_Pool_$Environment"
