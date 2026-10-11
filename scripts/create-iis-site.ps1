@@ -31,7 +31,7 @@ $backendApps = @(
     "performance", "preventive", "printing", "purchase", "recruitment", 
     "reporting", "sales", "student", "timeleave", "workorder", "worker"
 )
-$frontendApps = @("web", "admin", "portal", "docs")
+$frontendApps = @("web", "admin", "portal", "docs", "website")
 
 # 1. CREATE DIRECTORIES FIRST
 Write-Host "`n--- PREPARING DIRECTORIES ---"
@@ -63,14 +63,23 @@ Initialize-AppPool -Name $frontendAppPool
 Write-Host "`n--- CONFIGURING IIS SITES ---"
 $backendSite = "BillBook_Backend_$Environment"
 $frontendSite = "BillBook_Frontend_$Environment"
+$docsSite = "BillBook_Docs_$Environment"
+$websiteSite = "BillBook_Website_$Environment"
 
 if (Test-Path "IIS:\Sites\$backendSite") { Remove-WebSite -Name $backendSite }
 if (Test-Path "IIS:\Sites\$frontendSite") { Remove-WebSite -Name $frontendSite }
+if (Test-Path "IIS:\Sites\$docsSite") { Remove-WebSite -Name $docsSite }
+if (Test-Path "IIS:\Sites\$websiteSite") { Remove-WebSite -Name $websiteSite }
 
 New-WebSite -Name $backendSite -Port $BackendPort -PhysicalPath "$basePath\backend\gateway" -ApplicationPool $backendAppPool | Out-Null
-New-WebSite -Name $frontendSite -Port $FrontendPort -PhysicalPath "$basePath\frontend_root" -ApplicationPool $frontendAppPool | Out-Null
+New-WebSite -Name $frontendSite -Port $WebPort -PhysicalPath "$basePath\frontend_root" -ApplicationPool $frontendAppPool | Out-Null
+New-WebSite -Name $docsSite -Port $DocsPort -PhysicalPath "$basePath\frontend\docs" -ApplicationPool $frontendAppPool | Out-Null
+New-WebSite -Name $websiteSite -Port $WebsitePort -PhysicalPath "$basePath\frontend\website" -ApplicationPool $frontendAppPool | Out-Null
+
 Write-Host "Created Site: $backendSite (Port $BackendPort)"
-Write-Host "Created Site: $frontendSite (Port $FrontendPort)"
+Write-Host "Created Site: $frontendSite (Port $WebPort)"
+Write-Host "Created Site: $docsSite (Port $DocsPort)"
+Write-Host "Created Site: $websiteSite (Port $WebsitePort)"
 
 # 4. CREATE VIRTUAL APPLICATIONS
 Write-Host "`n--- CONFIGURING VIRTUAL APPLICATIONS ---"
@@ -85,15 +94,18 @@ foreach ($app in $frontendApps) {
 
 # 5. FIREWALL RULES
 Write-Host "`n--- CONFIGURING FIREWALL ---"
-$fwBackend = "BillBook_Backend_$BackendPort"
-if (-Not (Get-NetFirewallRule -DisplayName $fwBackend -ErrorAction SilentlyContinue)) {
-    New-NetFirewallRule -DisplayName $fwBackend -Direction Inbound -LocalPort $BackendPort -Protocol TCP -Action Allow | Out-Null
-    Write-Host "Opened Port $BackendPort"
-}
-$fwFrontend = "BillBook_Frontend_$FrontendPort"
-if (-Not (Get-NetFirewallRule -DisplayName $fwFrontend -ErrorAction SilentlyContinue)) {
-    New-NetFirewallRule -DisplayName $fwFrontend -Direction Inbound -LocalPort $FrontendPort -Protocol TCP -Action Allow | Out-Null
-    Write-Host "Opened Port $FrontendPort"
+$firewallPorts = @(
+    @{ Name = "BillBook_Backend_$BackendPort"; Port = $BackendPort },
+    @{ Name = "BillBook_Web_$WebPort"; Port = $WebPort },
+    @{ Name = "BillBook_Docs_$DocsPort"; Port = $DocsPort },
+    @{ Name = "BillBook_Website_$WebsitePort"; Port = $WebsitePort }
+)
+
+foreach ($fw in $firewallPorts) {
+    if (-Not (Get-NetFirewallRule -DisplayName $fw.Name -ErrorAction SilentlyContinue)) {
+        New-NetFirewallRule -DisplayName $fw.Name -Direction Inbound -LocalPort $fw.Port -Protocol TCP -Action Allow | Out-Null
+        Write-Host "Opened Port $($fw.Port)"
+    }
 }
 
 Write-Host "`nIIS SETUP COMPLETE for $Environment!"
