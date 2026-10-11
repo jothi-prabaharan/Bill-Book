@@ -104,9 +104,9 @@ export const SHELL_SCREENS: readonly ShellScreen[] = [
   { label: 'Payment terms', path: '/settings/payment-terms', group: 'Settings', module: 'settings' },
   { label: 'Closing dates', path: '/settings/closing-dates', group: 'Settings', module: 'settings' },
   { label: 'Contact person roles', path: '/settings/contact-person-roles', group: 'Settings', module: 'settings' },
-  { label: 'Unit types', path: '/settings/unit-types', group: 'Settings', module: 'settings' },
-  { label: 'HSN/SAC codes', path: '/settings/hsn-sac', group: 'Settings', module: 'settings' },
-  { label: 'Metal purities', path: '/settings/metal-purities', group: 'Settings', module: 'settings' },
+  { label: 'UOM types', path: '/settings/unit-types', group: 'Inventory', module: 'settings' },
+  { label: 'HSN/SAC codes', path: '/settings/hsn-sac', group: 'Inventory', module: 'settings' },
+  { label: 'Metal purities', path: '/settings/metal-purities', group: 'Inventory', module: 'settings' },
 ];
 
 /** A heading plus the rows under it, as the popovers render them. */

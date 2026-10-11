@@ -219,4 +219,45 @@ describe('ShellNavComponent (libs/app-shell)', () => {
     comp.toggleProfile({ currentTarget: button } as unknown as MouseEvent);
     expect(comp.menuBottom()).toBe(70);
   });
+
+  // ---- Active module highlighting (menu selection) -----------------------
+
+  it('NAV-13: marks the owning module active when viewing a cross-module route (e.g. /settings/hsn-sac in Inventory)', () => {
+    const comp = createComponent();
+    routerEvents$.next(new NavigationEnd(1, '/settings/hsn-sac', '/settings/hsn-sac'));
+
+    const inventoryItem = comp.nav().find((i) => i.label === 'Inventory');
+    const settingsItem = comp.nav().find((i) => i.label === 'Settings');
+    const homeItem = comp.nav().find((i) => i.label === 'Home');
+
+    expect(inventoryItem).toBeDefined();
+    expect(comp.isActive(inventoryItem!)).toBe(true);
+    expect(comp.isActive(settingsItem!)).toBe(false);
+    expect(comp.isActive(homeItem!)).toBe(false);
+  });
+
+  it('NAV-14: marks rail item active for standard module routes', () => {
+    const comp = createComponent();
+    routerEvents$.next(new NavigationEnd(1, '/inventory/items', '/inventory/items'));
+
+    const inventoryItem = comp.nav().find((i) => i.label === 'Inventory');
+    const contactsItem = comp.nav().find((i) => i.label === 'Contacts');
+
+    expect(comp.isActive(inventoryItem!)).toBe(true);
+    expect(comp.isActive(contactsItem!)).toBe(false);
+  });
+
+  it('NAV-15: updates active rail item on navigation', () => {
+    const comp = createComponent();
+    const inventoryItem = comp.nav().find((i) => i.label === 'Inventory')!;
+    const contactsItem = comp.nav().find((i) => i.label === 'Contacts')!;
+
+    routerEvents$.next(new NavigationEnd(1, '/inventory/categories', '/inventory/categories'));
+    expect(comp.isActive(inventoryItem)).toBe(true);
+    expect(comp.isActive(contactsItem)).toBe(false);
+
+    routerEvents$.next(new NavigationEnd(2, '/contacts', '/contacts'));
+    expect(comp.isActive(inventoryItem)).toBe(false);
+    expect(comp.isActive(contactsItem)).toBe(true);
+  });
 });

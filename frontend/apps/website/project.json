@@ -1,0 +1,53 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "website",
+  "projectType": "application",
+  "sourceRoot": "apps/website/src",
+  "tags": ["type:app", "platform:browser", "scope:website"],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/website",
+        "index": "apps/website/src/index.html",
+        "browser": "apps/website/src/main.ts",
+        "tsConfig": "apps/website/tsconfig.json",
+        "polyfills": ["zone.js"],
+        "styles": ["apps/website/src/styles.scss"],
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/web/src/assets",
+            "output": "assets"
+          }
+        ]
+      },
+      "configurations": {
+        "production": {
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "website:build:production"
+        },
+        "development": {
+          "buildTarget": "website:build:development"
+        }
+      },
+      "defaultConfiguration": "development",
+      "options": {
+        "port": 4202
+      }
+    }
+  }
+}

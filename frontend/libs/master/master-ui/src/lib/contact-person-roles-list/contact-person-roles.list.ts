@@ -183,8 +183,21 @@ export class ContactPersonRolesList implements OnInit {
       await this.load();
       this.changed.emit();
     } catch (err: unknown) {
-      const anyErr = err as { error?: { message?: string } };
-      this.error.set(anyErr?.error?.message ?? 'That did not work.');
+      const anyErr = err as {
+        error?: {
+          message?: string;
+          detail?: string;
+          title?: string;
+          errors?: Record<string, string[]>;
+        };
+      };
+      const errObj = anyErr?.error;
+      const extracted = errObj?.message
+        || (errObj?.errors ? Object.values(errObj.errors).flat().join(' ') : null)
+        || errObj?.detail
+        || errObj?.title
+        || 'That did not work.';
+      this.error.set(extracted);
       await this.load();
     } finally {
       this.busy.set(false);

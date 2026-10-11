@@ -120,7 +120,24 @@ app.MapGet("/swagger", () => Results.File(Path.Combine(app.Environment.WebRootPa
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
-app.MapReverseProxy();
+// Enable request body buffering so that downstream connection retries can rewind and replay payloads.
+app.Use(async (context, next) =>
+{
+    context.Request.EnableBuffering();
+    await next();
+});
+
+app.MapReverseProxy(proxyPipeline =>
+{
+    proxyPipeline.Use((context, next) =>
+    {
+        ILogger logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("Gateway.StartupRetry");
+        return GatewayStartupRetryMiddleware.ExecuteAsync(context, next, logger);
+    });
+    proxyPipeline.UseSessionAffinity();
+    proxyPipeline.UseLoadBalancing();
+    proxyPipeline.UsePassiveHealthChecks();
+});
 
 app.Run();
 

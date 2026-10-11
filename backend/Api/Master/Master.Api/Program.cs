@@ -1,4 +1,4 @@
-﻿global using CustomerEntity = Master.Entity.TableEntities.Customer;
+global using CustomerEntity = Master.Entity.TableEntities.Customer;
 using Shared.Kernel.Security;
 using System.Text;
 using Master.Api.Services;
@@ -78,8 +78,12 @@ builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
     // strategy refuses every BeginTransactionAsync, and every write endpoint,
     // login included, opens one. Startup resilience is StartupMigration's (TK-186).
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("AdminDatabase"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "mst"));
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetAdminConnectionString(),
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "mst");
+            npgsql.CommandTimeout(180);
+        });
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 
@@ -97,7 +101,11 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 {
     options.UseNpgsql(
         sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con"));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con");
+            npgsql.CommandTimeout(180);
+        });
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());

@@ -1,0 +1,708 @@
+<!-- Top Announcement Ribbon -->
+<div class="announcement-ribbon">
+  <div class="container ribbon-content">
+    <span class="ribbon-tag">🇮🇳 India's Complete Retail Cloud</span>
+    <span>100% GST & e-Way Compliant • High-Speed POS • Multi-Branch Accounting • CRM Lead Automation</span>
+    <a href="#contact" class="ribbon-link">Book Free Demo &rarr;</a>
+  </div>
+</div>
+
+<!-- Main Header / Navbar -->
+<header class="site-header glass-panel">
+  <div class="container header-container">
+    <a href="#" class="brand-logo">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/>
+          <path d="M12 22V12"/>
+          <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/>
+          <path d="m7.5 4.27 9 5.15"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">Bill-Book</span>
+        <span class="brand-sub">RetailErp & Accounting Cloud</span>
+      </div>
+    </a>
+
+    <!-- Desktop Navigation Links -->
+    <nav class="desktop-nav">
+      <a href="#business-models" class="nav-link">Business Models</a>
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#pricing" class="nav-link">Plans & Pricing</a>
+      <a href="#organization" class="nav-link">Organization</a>
+      <a href="#contact" class="nav-link">Contact</a>
+    </nav>
+
+    <!-- Desktop Action Buttons -->
+    <div class="header-actions">
+      <a href="/login" class="btn btn-outline" title="Sign in to your Bill-Book workspace">
+        <span>Launch App</span>
+      </a>
+      <a href="#contact" class="btn btn-primary" title="Request a personalized demo">
+        <span>Schedule Demo</span>
+      </a>
+    </div>
+
+    <!-- Mobile Menu Toggle Button -->
+    <button class="mobile-menu-btn" (click)="toggleMobileMenu()" aria-label="Toggle navigation menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" x2="20" y1="12" y2="12"/>
+        <line x1="4" x2="20" y1="6" y2="6"/>
+        <line x1="4" x2="20" y1="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile Drawer Menu -->
+  @if (mobileMenuOpen()) {
+    <div class="mobile-drawer">
+      <nav class="mobile-nav-links">
+        <a href="#business-models" (click)="closeMobileMenu()" class="mobile-nav-link">Business Models</a>
+        <a href="#features" (click)="closeMobileMenu()" class="mobile-nav-link">Features & Suite</a>
+        <a href="#pricing" (click)="closeMobileMenu()" class="mobile-nav-link">Plans & Pricing</a>
+        <a href="#organization" (click)="closeMobileMenu()" class="mobile-nav-link">Organization Details</a>
+        <a href="#contact" (click)="closeMobileMenu()" class="mobile-nav-link">Contact & Enquiry</a>
+      </nav>
+      <div class="mobile-drawer-actions">
+        <a href="/login" class="btn btn-outline full-width">Launch App</a>
+        <a href="#contact" (click)="closeMobileMenu()" class="btn btn-primary full-width">Schedule Demo</a>
+      </div>
+    </div>
+  }
+</header>
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container hero-container">
+    <div class="hero-text-col">
+      <div class="hero-badge badge-pill">
+        <span class="badge-dot"></span>
+        <span>Built for Indian SMBs, Retailers & Institutions</span>
+      </div>
+
+      <h1 class="hero-title">
+        Empower Your Retail Business With <span class="gradient-text">Next-Gen Intelligence</span>
+      </h1>
+
+      <p class="hero-description">
+        The unified cloud platform combining fast barcode POS, automated Indian GST invoicing, real-time multi-warehouse inventory, and double-entry accounting. Engineered specifically for supermarkets, jewellery showrooms, pharmacies, restaurants, and educational institutions.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="#contact" class="btn btn-primary btn-lg">
+          <span>Request Free 1-on-1 Demo</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#pricing" class="btn btn-outline btn-lg">
+          <span>View Pricing Plans</span>
+        </a>
+      </div>
+
+      <!-- Trust Metrics Strip -->
+      <div class="trust-metrics">
+        <div class="metric-item">
+          <span class="metric-value tabular-nums">10,000+</span>
+          <span class="metric-label">Daily Bills Processed</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-value tabular-nums">100%</span>
+          <span class="metric-label">Indian GST Compliant</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-value tabular-nums">&lt;1 Sec</span>
+          <span class="metric-label">POS Checkout Speed</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-value tabular-nums">99.98%</span>
+          <span class="metric-label">Cloud Uptime SLA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Interactive Dashboard Visual -->
+    <div class="hero-visual-col">
+      <div class="dashboard-mockup-card">
+        <div class="mockup-header">
+          <div class="mockup-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="mockup-title">Eternal Pathway Retail — Live Branch Overview</div>
+          <span class="mockup-badge">Active</span>
+        </div>
+
+        <div class="mockup-body">
+          <!-- Metric Widgets Row -->
+          <div class="mockup-grid-3">
+            <div class="widget-card">
+              <span class="widget-label">Today's Total Sales</span>
+              <span class="widget-value tabular-nums">₹1,48,250.00</span>
+              <span class="widget-trend positive">+14.2% vs yesterday</span>
+            </div>
+            <div class="widget-card">
+              <span class="widget-label">Receivables Balance</span>
+              <span class="widget-value tabular-nums">₹34,180.00</span>
+              <span class="widget-trend neutral">8 Invoices pending</span>
+            </div>
+            <div class="widget-card">
+              <span class="widget-label">Low Stock Alerts</span>
+              <span class="widget-value tabular-nums text-danger">4 Items</span>
+              <span class="widget-trend negative">Reorder required</span>
+            </div>
+          </div>
+
+          <!-- Simulated Live Transaction Table -->
+          <div class="mockup-table-container">
+            <div class="table-header-row">
+              <span>Invoice #</span>
+              <span>Customer</span>
+              <span>GSTIN</span>
+              <span>Amount</span>
+              <span>Status</span>
+            </div>
+            <div class="table-data-row">
+              <span class="font-mono">INV-2026-0842</span>
+              <span>Kavitha Silks</span>
+              <span>33AAACK8291M1Z4</span>
+              <span class="tabular-nums font-semibold">₹42,500.00</span>
+              <span class="status-chip paid">Paid</span>
+            </div>
+            <div class="table-data-row">
+              <span class="font-mono">INV-2026-0843</span>
+              <span>Senthil Supermarket</span>
+              <span>33BBNPK4190P1Z2</span>
+              <span class="tabular-nums font-semibold">₹18,920.00</span>
+              <span class="status-chip paid">Paid</span>
+            </div>
+            <div class="table-data-row">
+              <span class="font-mono">INV-2026-0844</span>
+              <span>Meenakshi Pharma</span>
+              <span>33AACCP9112L1Z9</span>
+              <span class="tabular-nums font-semibold">₹6,450.00</span>
+              <span class="status-chip pending">Pending</span>
+            </div>
+          </div>
+
+          <!-- Quick Actions Row -->
+          <div class="mockup-footer-actions">
+            <span class="action-btn">🛒 Open POS Till</span>
+            <span class="action-btn">📄 New GST Invoice</span>
+            <span class="action-btn">📦 Stock Adjustment</span>
+            <span class="action-btn">🏦 Reconcile Bank</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Business Models & Verticals Section -->
+<section id="business-models" class="section business-models-section">
+  <div class="container">
+    <div class="section-header text-center">
+      <span class="section-tag badge-pill">Industry Specific Solutions</span>
+      <h2 class="section-title">Tailored For Every Indian Business Model</h2>
+      <p class="section-subtitle">
+        Retail isn't one-size-fits-all. Bill-Book features specialized trade modules engineered with the exact domain workflows your vertical requires.
+      </p>
+    </div>
+
+    <!-- Vertical Selector Tabs -->
+    <div class="verticals-tabs">
+      @for (v of verticals; track v.id) {
+        <button
+          class="tab-button"
+          [class.active]="activeVerticalId() === v.id"
+          (click)="selectVertical(v.id)"
+        >
+          <span>{{ v.name }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Active Vertical Detail Card -->
+    <div class="vertical-showcase-card">
+      <div class="showcase-content">
+        <div class="showcase-badge badge-pill" [style.background-color]="activeVertical().accent + '15'" [style.color]="activeVertical().accent">
+          {{ activeVertical().badge }}
+        </div>
+        <h3 class="showcase-title">{{ activeVertical().name }}</h3>
+        <p class="showcase-tagline">{{ activeVertical().tagline }}</p>
+
+        <div class="showcase-features-list">
+          @for (feat of activeVertical().features; track feat) {
+            <div class="feature-item">
+              <span class="check-icon" [style.color]="activeVertical().accent">✓</span>
+              <span>{{ feat }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="showcase-actions">
+          <a href="#contact" (click)="selectPlanForEnquiry(activeVertical().name)" class="btn btn-primary">
+            <span>Explore {{ activeVertical().name }} Solution</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="showcase-visual" [style.background]="'radial-gradient(circle at top right, ' + activeVertical().accent + '18, transparent 70%)'">
+        <div class="visual-card">
+          <div class="visual-card-title">Key Capabilities Built-In</div>
+          <div class="caps-grid">
+            <div class="cap-box">
+              <span class="cap-num">01</span>
+              <span class="cap-text">100% Tax Compliant</span>
+            </div>
+            <div class="cap-box">
+              <span class="cap-num">02</span>
+              <span class="cap-text">Keyboard Optimized</span>
+            </div>
+            <div class="cap-box">
+              <span class="cap-num">03</span>
+              <span class="cap-text">Real-time Stock Deduct</span>
+            </div>
+            <div class="cap-box">
+              <span class="cap-num">04</span>
+              <span class="cap-text">Multi-Branch Sync</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Full Product Suite Features Section -->
+<section id="features" class="section features-section">
+  <div class="container">
+    <div class="section-header text-center">
+      <span class="section-tag badge-pill">Integrated SaaS Cloud</span>
+      <h2 class="section-title">Everything Needed To Run Your Enterprise</h2>
+      <p class="section-subtitle">
+        Eliminate disconnected software. Bill-Book consolidates your counter billing, supply chain, accounts, human resources, and customer support into a single reliable system.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <!-- Feature Card 1 -->
+      <div class="feature-card">
+        <div class="card-icon-wrap primary">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h3 class="card-title">GST Invoicing & E-Way Bills</h3>
+        <p class="card-desc">Generate B2B and B2C invoices with auto-tax split (CGST, SGST, IGST), HSN/SAC lookups, e-Invoicing QR codes, and 1-click GSTR-1 JSON exports.</p>
+      </div>
+
+      <!-- Feature Card 2 -->
+      <div class="feature-card">
+        <div class="card-icon-wrap success">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></svg>
+        </div>
+        <h3 class="card-title">Multi-Warehouse Inventory</h3>
+        <p class="card-desc">Track items across central godowns and branch counters. Supports serial numbers, batch tracking, expiry date monitoring, and automated stock adjustments.</p>
+      </div>
+
+      <!-- Feature Card 3 -->
+      <div class="feature-card">
+        <div class="card-icon-wrap warning">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/></svg>
+        </div>
+        <h3 class="card-title">High-Speed POS Counter</h3>
+        <p class="card-desc">Sub-second keyboard shortcuts, barcode reader integration, cash drawer kick, electronic scale reading, and rapid slip thermal printing.</p>
+      </div>
+
+      <!-- Feature Card 4 -->
+      <div class="feature-card">
+        <div class="card-icon-wrap info">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M11.12 2.198a2 2 0 0 1 1.76.006l7.866 3.847c.476.233.31.949-.22.949H3.474c-.53 0-.695-.716-.22-.949z"/></svg>
+        </div>
+        <h3 class="card-title">Bank Reconciliation</h3>
+        <p class="card-desc">Direct statement imports, spend and receive money mapping, inter-bank transfers, and automatic match recognition for uncleared cheques.</p>
+      </div>
+
+      <!-- Feature Card 5 -->
+      <div class="feature-card">
+        <div class="card-icon-wrap purple">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+        </div>
+        <h3 class="card-title">Indian Accounting Ledger</h3>
+        <p class="card-desc">Standard Indian Chart of Accounts with double-entry general ledger, manual journal entries, trial balance, P&L statements, and balance sheets.</p>
+      </div>
+
+      <!-- Feature Card 6 -->
+      <div class="feature-card">
+        <div class="card-icon-wrap rose">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="card-title">CRM & Lead Pipeline</h3>
+        <p class="card-desc">Captures website inquiries, assigns leads, tracks demo conversion, schedules customer follow-ups, and resolves SLA helpdesk tickets.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Plans & Pricing Section -->
+<section id="pricing" class="section pricing-section">
+  <div class="container">
+    <div class="section-header text-center">
+      <span class="section-tag badge-pill">Transparent Pricing</span>
+      <h2 class="section-title">Simple Plans That Grow With Your Business</h2>
+      <p class="section-subtitle">
+        No hidden fees. Every plan includes GST compliance, unlimited updates, and secure cloud backups.
+      </p>
+
+      <!-- Billing Toggle Switch -->
+      <div class="billing-toggle-container">
+        <span class="toggle-label" [class.active]="!isAnnual()">Monthly Billing</span>
+        <button class="toggle-switch" (click)="toggleBilling()" [attr.aria-checked]="isAnnual()" role="switch" aria-label="Toggle annual billing discount">
+          <span class="toggle-slider" [class.on]="isAnnual()"></span>
+        </button>
+        <span class="toggle-label" [class.active]="isAnnual()">
+          Annual Billing
+          <span class="discount-pill">Save 20%</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Pricing Cards Grid -->
+    <div class="pricing-grid">
+      @for (plan of plans; track plan.id) {
+        <div class="pricing-card" [class.featured]="plan.popular">
+          @if (plan.badge) {
+            <div class="popular-ribbon">{{ plan.badge }}</div>
+          }
+
+          <div class="card-top">
+            <h3 class="plan-name">{{ plan.name }}</h3>
+            <p class="plan-desc">{{ plan.description }}</p>
+
+            <div class="price-box">
+              <span class="currency">₹</span>
+              <span class="amount tabular-nums">
+                {{ isAnnual() ? (plan.annualPrice / 12 | number: '1.0-0') : plan.monthlyPrice }}
+              </span>
+              <span class="period">/ month</span>
+            </div>
+            @if (isAnnual()) {
+              <span class="billed-annually tabular-nums">Billed ₹{{ plan.annualPrice | number }} annually</span>
+            } @else {
+              <span class="billed-annually">Billed monthly</span>
+            }
+          </div>
+
+          <div class="features-list">
+            <span class="features-headline">Included Features:</span>
+            @for (feat of plan.features; track feat) {
+              <div class="plan-feature-row">
+                <span class="feature-check">✓</span>
+                <span>{{ feat }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="card-bottom">
+            <button
+              class="btn full-width"
+              [class.btn-primary]="plan.popular"
+              [class.btn-outline]="!plan.popular"
+              (click)="selectPlanForEnquiry(plan.name)"
+            >
+              <span>Choose {{ plan.name }}</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Interactive CRM Lead Enquiry & Demo Booking Section -->
+<section id="contact" class="section enquiry-section">
+  <div class="container">
+    <div class="enquiry-card-wrapper">
+      <div class="enquiry-info-col">
+        <span class="section-tag badge-pill">Connect With Us</span>
+        <h2 class="enquiry-title">Ready To Transform Your Retail Operations?</h2>
+        <p class="enquiry-desc">
+          Schedule a personalized demo or inquire about customized multi-branch deployments. Your inquiry is directly routed into our enterprise CRM lead pipeline for immediate response.
+        </p>
+
+        <!-- Direct Contact Points -->
+        <div class="contact-points-list">
+          <div class="contact-point-item">
+            <div class="point-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div class="point-details">
+              <span class="point-title">Direct Sales Hotline</span>
+              <span class="point-value font-mono">+91 98765 43210</span>
+              <span class="point-sub">Mon to Sat, 9:00 AM – 7:00 PM IST</span>
+            </div>
+          </div>
+
+          <div class="contact-point-item">
+            <div class="point-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="point-details">
+              <span class="point-title">Corporate Inquiries</span>
+              <span class="point-value font-mono">sales&#64;billbook.in</span>
+              <span class="point-sub">support&#64;billbook.in</span>
+            </div>
+          </div>
+
+          <div class="contact-point-item">
+            <div class="point-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div class="point-details">
+              <span class="point-title">Registered Office</span>
+              <span class="point-value">Eternal Pathway Technologies</span>
+              <span class="point-sub">Chennai & Madurai, Tamil Nadu, India</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reactive Lead Enquiry Form -->
+      <div class="enquiry-form-col">
+        <div class="form-container-card">
+          @if (submissionSuccess()) {
+            <div class="success-confirmation">
+              <div class="success-icon-badge">✓</div>
+              <h3 class="success-title">Enquiry Received Successfully!</h3>
+              <p class="success-text">
+                Thank you for your interest in Bill-Book. Your request has been securely registered into our CRM Lead pipeline.
+              </p>
+              <div class="lead-reference-box">
+                <span class="ref-label">CRM Lead Reference ID</span>
+                <span class="ref-number font-mono">#LEAD-{{ submittedLeadId() }}</span>
+              </div>
+              <p class="success-subtext">Our product specialist will contact you on your registered phone/email within 2 business hours.</p>
+              <button class="btn btn-primary" (click)="resetForm()">Submit Another Enquiry</button>
+            </div>
+          } @else {
+            <h3 class="form-heading">Schedule Your Free Demo</h3>
+            <p class="form-subheading">Fill out the form below to receive a live demo and quotation.</p>
+
+            @if (submissionError()) {
+              <div class="form-alert error">
+                <span>{{ submissionError() }}</span>
+              </div>
+            }
+
+            <form (ngSubmit)="submitEnquiry()" class="lead-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="contact-name">Full Name <span class="req">*</span></label>
+                  <input
+                    id="contact-name"
+                    type="text"
+                    [(ngModel)]="form().name"
+                    name="name"
+                    placeholder="e.g. Rajesh Kumar"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="contact-company">Shop / Company Name</label>
+                  <input
+                    id="contact-company"
+                    type="text"
+                    [(ngModel)]="form().companyName"
+                    name="companyName"
+                    placeholder="e.g. Kumar Supermarket"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="contact-phone">Phone / WhatsApp <span class="req">*</span></label>
+                  <input
+                    id="contact-phone"
+                    type="tel"
+                    [(ngModel)]="form().phone"
+                    name="phone"
+                    placeholder="e.g. +91 98765 43210"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="contact-email">Email Address</label>
+                  <input
+                    id="contact-email"
+                    type="email"
+                    [(ngModel)]="form().email"
+                    name="email"
+                    placeholder="e.g. rajesh@example.com"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="contact-vertical">Business Model / Trade</label>
+                  <select id="contact-vertical" [(ngModel)]="form().vertical" name="vertical">
+                    <option value="Retail / Supermarket">Retail / Supermarket</option>
+                    <option value="Jewellery & Bullion">Jewellery & Bullion</option>
+                    <option value="Pharma & Healthcare">Pharma & Healthcare</option>
+                    <option value="Restaurant & Food">Restaurant & Food</option>
+                    <option value="School & College">School & College</option>
+                    <option value="Services & Professional">Services & Professional</option>
+                    <option value="Other Trade">Other Trade</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="contact-plan">Preferred Plan</label>
+                  <select id="contact-plan" [(ngModel)]="form().plan" name="plan">
+                    <option value="Starter">Starter (₹499/mo)</option>
+                    <option value="Professional">Professional (₹1,299/mo)</option>
+                    <option value="Enterprise">Enterprise (₹2,999/mo)</option>
+                    <option value="Custom Multi-Branch">Custom Multi-Branch</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="contact-message">Requirements / Specific Needs</label>
+                <textarea
+                  id="contact-message"
+                  [(ngModel)]="form().message"
+                  name="message"
+                  rows="3"
+                  placeholder="Tell us about your counters, number of branches, or hardware setup..."
+                ></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-lg full-width" [disabled]="isSubmitting()">
+                @if (isSubmitting()) {
+                  <span>Connecting with CRM...</span>
+                } @else {
+                  <span>Submit Demo Enquiry & Save Lead</span>
+                }
+              </button>
+
+              <span class="privacy-note">🔒 Your information is private and never shared. Handled securely per IT Act & GST data protection standards.</span>
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Organization & Corporate Identity Section -->
+<section id="organization" class="section organization-section">
+  <div class="container">
+    <div class="section-header text-center">
+      <span class="section-tag badge-pill">Organization Profile</span>
+      <h2 class="section-title">Built By Indian ERP Specialists</h2>
+      <p class="section-subtitle">
+        Eternal Pathway Technologies is committed to engineering enterprise-grade, compliant software solutions for Indian merchants, distributors, and educational campuses.
+      </p>
+    </div>
+
+    <div class="org-details-grid">
+      <div class="org-card">
+        <h3 class="org-card-title">Corporate Structure</h3>
+        <p class="org-card-desc">Headquartered in Tamil Nadu, India, with dedicated engineering teams specializing in high-throughput database design, GST regulatory reporting, and cloud infrastructure.</p>
+        <div class="org-facts">
+          <div class="fact-row"><span>Entity Name:</span> <strong>Eternal Pathway Technologies Pvt Ltd</strong></div>
+          <div class="fact-row"><span>Product Brand:</span> <strong>Bill-Book SaaS</strong></div>
+          <div class="fact-row"><span>Jurisdiction:</span> <strong>India (State of Tamil Nadu)</strong></div>
+        </div>
+      </div>
+
+      <div class="org-card">
+        <h3 class="org-card-title">Security & Tenancy</h3>
+        <p class="org-card-desc">Every business operates within an isolated PostgreSQL schema with multi-layer Row-Level Security (RLS) policies. No customer's financial or stock ledger can ever cross boundaries.</p>
+        <div class="org-facts">
+          <div class="fact-row"><span>Isolation:</span> <strong>Database Row-Level Security (RLS)</strong></div>
+          <div class="fact-row"><span>Encryption:</span> <strong>TLS 1.3 in transit & AES-256 at rest</strong></div>
+          <div class="fact-row"><span>Backups:</span> <strong>Automated Hourly Snapshots</strong></div>
+        </div>
+      </div>
+
+      <div class="org-card">
+        <h3 class="org-card-title">Compliance Readiness</h3>
+        <p class="org-card-desc">Continuous synchronization with the GSTN portal for real-time HSN/SAC code updates, e-Invoice IRN schema revisions, and e-Way bill distance threshold calculators.</p>
+        <div class="org-facts">
+          <div class="fact-row"><span>GST Returns:</span> <strong>GSTR-1, GSTR-3B & GSTR-9 Ready</strong></div>
+          <div class="fact-row"><span>e-Invoicing:</span> <strong>IRN QR Code & Signed PDF</strong></div>
+          <div class="fact-row"><span>Audit Trail:</span> <strong>MCA Compliant Edit Log (TK-118)</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Corporate Footer -->
+<footer class="site-footer">
+  <div class="container footer-container">
+    <div class="footer-top">
+      <div class="footer-brand-col">
+        <div class="brand-logo footer-logo">
+          <div class="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/>
+              <path d="M12 22V12"/>
+            </svg>
+          </div>
+          <span class="brand-name">Bill-Book</span>
+        </div>
+        <p class="footer-tagline">
+          The next-generation retail ERP and accounting SaaS built to power modern Indian commerce with speed, precision, and compliance.
+        </p>
+        <div class="footer-cert-badges">
+          <span class="cert-badge">🇮🇳 Make In India</span>
+          <span class="cert-badge">🛡️ GST Ready</span>
+          <span class="cert-badge">🔒 256-bit SSL</span>
+        </div>
+      </div>
+
+      <div class="footer-links-col">
+        <span class="col-title">Business Models</span>
+        <a href="#business-models">Supermarkets & Kirana</a>
+        <a href="#business-models">Jewellery & Bullion</a>
+        <a href="#business-models">Pharma & Healthcare</a>
+        <a href="#business-models">Restaurants & Cafes</a>
+        <a href="#business-models">Schools & Colleges</a>
+        <a href="#business-models">Services & Consulting</a>
+      </div>
+
+      <div class="footer-links-col">
+        <span class="col-title">Platform & Apps</span>
+        <a href="#features">RetailErp Core</a>
+        <a href="#features">Point of Sale (POS)</a>
+        <a href="#features">Indian GST Engine</a>
+        <a href="#features">Double-Entry Accounting</a>
+        <a href="#features">CRM & Helpdesk Support</a>
+        <a href="#pricing">Plans & Pricing</a>
+      </div>
+
+      <div class="footer-links-col">
+        <span class="col-title">Organization & Contact</span>
+        <span class="footer-address">Eternal Pathway Technologies</span>
+        <span class="footer-address">Anna Salai, Chennai, TN - 600002</span>
+        <span class="footer-address font-mono">sales&#64;billbook.in</span>
+        <span class="footer-address font-mono">+91 98765 43210</span>
+        <a href="#contact" class="footer-contact-link">Schedule a Demo &rarr;</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 Eternal Pathway Technologies Pvt Ltd. All rights reserved. Bill-Book is a registered trademark.</p>
+      <div class="footer-legal-links">
+        <a href="#organization">Security & Tenancy</a>
+        <a href="#organization">Privacy Policy</a>
+        <a href="#organization">Terms of Service</a>
+      </div>
+    </div>
+  </div>
+</footer>

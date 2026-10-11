@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, ElementRef, HostListener, computed, inject, input, output, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { AccessibleOrg, AuthService, SessionContextService } from '@bill-book/auth';
 import { MenuService } from '../menu.service';
 import { FALLBACK_RAIL, ShellRailItem } from '../shell-screens';
@@ -25,7 +25,7 @@ export type NavItem = ShellRailItem;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-nav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink],
   templateUrl: './shell-nav.component.html',
   styleUrl: './shell-nav.component.scss',
 })
@@ -33,6 +33,7 @@ export class ShellNavComponent {
   protected readonly auth = inject(AuthService);
   private readonly session = inject(SessionContextService);
   private readonly menuService = inject(MenuService);
+  private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
 
   readonly userDisplayName = input<string>('Praba');
@@ -82,13 +83,61 @@ export class ShellNavComponent {
     return this.nav().filter((item) => !top.has(item.path));
   });
 
+  readonly currentUrl = signal(this.router.url);
+
   constructor() {
     void this.auth.accessibleOrganizations().then((orgs) => this.orgs.set(orgs)).catch(() => undefined);
 
-    // Navigating closes the account menu, as it closes the top bar's panels.
-    inject(Router).events.subscribe((event) => {
-      if (event instanceof NavigationEnd) this.profileOpen.set(false);
+    // Navigating closes the account menu, as it closes the top bar's panels,
+    // and keeps the current URL signal in sync for rail item active highlighting.
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.profileOpen.set(false);
+        this.currentUrl.set(event.urlAfterRedirects);
+      }
     });
+  }
+
+  /** The menu currently owning the route on screen, according to MenuService. */
+  readonly currentMenu = computed(() => this.menuService.menuForPath(this.currentUrl()));
+
+  /**
+   * Whether a rail item represents the active module.
+   * Matches via MenuService.menuForPath so that cross-module routes (e.g. /settings/hsn-sac
+   * or /settings/unit-types which belong to Inventory, or /accounting/reconciliation
+   * which belongs to Banking) accurately highlight their owning module rail item.
+   */
+  isActive(item: NavItem): boolean {
+    const activeMenu = this.currentMenu();
+    if (activeMenu) {
+      if (activeMenu.name.toLowerCase() === item.label.toLowerCase()) {
+        return true;
+      }
+      if (item.module && activeMenu.module && item.module.toLowerCase() === activeMenu.module.toLowerCase()) {
+        return true;
+      }
+      return false;
+    }
+
+    const url = this.currentUrl().split('?')[0];
+    const path = item.path.split('?')[0];
+    if (url === path) return true;
+    if (path !== '/' && path !== '/dashboard' && url.startsWith(path + '/')) {
+      return true;
+    }
+
+    const urlSegment = url.split('/')[1];
+    if (urlSegment && urlSegment !== 'dashboard') {
+      const pathSegment = path.split('/')[1];
+      if (pathSegment === urlSegment) {
+        return true;
+      }
+      if (item.module && item.module.toLowerCase() === urlSegment.toLowerCase()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

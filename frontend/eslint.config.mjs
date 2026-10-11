@@ -261,5 +261,11 @@ export default tseslint.config(
     ],
     rules: { 'no-restricted-syntax': commonComponentRule({ input: inputAllowing('radio') }) },
   },
+  {
+    // The public marketing website is an unauthenticated standalone landing page,
+    // not an ERP tenant screen consuming @bill-book/ui-components.
+    files: ['apps/website/**/*.html'],
+    rules: { 'no-restricted-syntax': 'off' },
+  },
 );
 

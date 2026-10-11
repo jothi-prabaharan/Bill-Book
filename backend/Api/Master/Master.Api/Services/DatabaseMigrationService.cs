@@ -61,45 +61,22 @@ public class DatabaseMigrationService : IHostedService
         var adminDb = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
         await StartupMigration.MigrateAsync(adminDb.Database, _logger, "Admin", cancellationToken);
 
-        // 2. Seed Geography Data
-        _logger.LogInformation("Seeding global geography data...");
-        string jsonPath = Path.Combine(AppContext.BaseDirectory, "SeedData", "states.json");
-        if (File.Exists(jsonPath))
+        // 2. Ensure IN000001 entry in TenantDatabases and bootstrap operator user
+        var tenantDbEntry = await adminDb.TenantDatabases.FirstOrDefaultAsync(d => d.DatabaseName == "IN000001", cancellationToken);
+        if (tenantDbEntry == null)
         {
-            await using var stream = File.OpenRead(jsonPath);
-            await GeographyJsonLoader.ImportStatesAsync(adminDb, stream, cancellationToken);
-            _logger.LogInformation("Geography seeding complete.");
+            adminDb.TenantDatabases.Add(new TenantDatabase
+            {
+                DatabaseName = "IN000001",
+                PlanType = PlanTier.Elite,
+                MaxCustomers = 1,
+                CurrentCustomers = 1
+            });
+            await BootstrapFirstOperatorAsync(adminDb, "IN000001", cancellationToken);
+            await adminDb.SaveChangesAsync(cancellationToken);
         }
 
-        // 3. Ensure IN000001 Database Exists and seed it
-        await EnsureTenantDatabaseSetupAsync(adminDb, adminDbString, "IN000001", cancellationToken);
-
-        // 3b. Every other registered shard gets the same migrations (TK-46),
-        // so a schema change reaches every customer, not only IN000001's.
-        List<string> otherShards = await adminDb.TenantDatabases
-            .Where(d => d.DatabaseName != "IN000001")
-            .Select(d => d.DatabaseName)
-            .ToListAsync(cancellationToken);
-        foreach (string shard in otherShards)
-        {
-            string shardConnection = TenantConnectionString(adminDbString, shard);
-            await EnsureOrRequireDatabaseAsync(shardConnection, cancellationToken);
-            _logger.LogInformation("Migrating tenant schemas for {Database}...", shard);
-            await MigrateTenantSchemasAsync(shardConnection, _logger, cancellationToken);
-        }
-
-        // 3c. Each shard's count of customers, recounted from mst.Customers
-        // (TK-46). It replaced a count of branches, and a recount at every
-        // start also corrects any drift from a signup that failed after its
-        // claim.
-        await RecountShardCustomersAsync(adminDb, cancellationToken);
-
-        // Blank optional phones are NULL, never '' (D-04, TK-21).
-        await BlankPhoneBackfill.RunAdminAsync(adminDb, cancellationToken);
-
-        // 4. Platform operators named by configuration (D-01). Every start, not
-        // only the first, so an operator added to the setting later is granted
-        // at the next deploy. Grant-only; revoking is an operator's action.
+        // 3. Platform operators named by configuration (D-01)
         IReadOnlyList<string> operatorEmails = PlatformOperatorRepository.BootstrapEmails(_config);
         int granted = await PlatformOperatorRepository.ApplyBootstrapAsync(adminDb, operatorEmails, cancellationToken);
         if (granted > 0)
@@ -107,8 +84,7 @@ public class DatabaseMigrationService : IHostedService
             _logger.LogInformation("Granted platform operator access to {Count} user(s) from Bootstrap:OperatorEmails.", granted);
         }
 
-        // 5. The bootstrap customer is the Internal one (D-44, TK-153). An install
-        // that created it before then has it as Standard: convert it, once.
+        // 4. The bootstrap customer is the Internal one (D-44, TK-153)
         AddOn internalAddOns = InternalCustomerRepository.AddOnsFrom(_config["Bootstrap:InternalAddOns"], out string? addOnProblem);
         if (addOnProblem is not null)
         {
@@ -121,27 +97,75 @@ public class DatabaseMigrationService : IHostedService
             _logger.LogInformation("Made the first customer the Internal one, with a Service head office.");
         }
 
-        // Migrate-and-exit, for a deployment that runs migrations as a job ahead
-        // of rolling out new revisions. Without it a job running this image
-        // would migrate and then serve HTTP forever, and the job would time out
-        // and be recorded as failed after doing everything it was asked to.
-        //
-        // A graceful stop exits 0, which is what marks the job succeeded. A
-        // migration that throws never reaches this line: the host fails to
-        // start, the process exits non-zero, and the job fails — which is how a
-        // deploy pipeline learns to stop before shifting traffic.
-        //
-        // The stop waits for ApplicationStarted rather than happening here.
-        // This runs *during* host startup, before Kestrel binds, and a stop
-        // requested now cancels that bind — which surfaces as an unhandled
-        // TaskCanceledException, exit code 134, and a job recorded as failed
-        // after every migration succeeded. Found by running it, not by reading
-        // it: the log said "stopping" and the process crashed anyway.
+        // 5. Ensure physical tenant database and Contacts (con) schema for Master.Api
+        string tenantConnectionString = TenantConnectionString(adminDbString, "IN000001");
+        await EnsureOrRequireDatabaseAsync(tenantConnectionString, cancellationToken);
+        var dummyTenant = new TenantContext { CustomerId = Guid.Empty, OrgId = Guid.Empty };
+        await MigrateContextAsync<ContactsDbContext>(tenantConnectionString, dummyTenant, "con", _logger, cancellationToken);
+
+        // If running in migration CLI job mode (Migrations:ExitWhenDone), run all remaining tenant schemas synchronously.
+        // In normal server mode, run remaining tenant migrations in the background so Kestrel port 4511 opens immediately.
         if (_config.GetValue<bool>("Migrations:ExitWhenDone"))
         {
-            _logger.LogInformation("Migrations:ExitWhenDone is set; migrations are complete, stopping once started.");
+            _logger.LogInformation("Migrations:ExitWhenDone is set; completing all tenant migrations synchronously...");
+            await CompleteTenantMigrationsAndSeedingAsync(adminDb, adminDbString, cancellationToken);
+            _logger.LogInformation("Migrations complete, stopping once host is started.");
             _lifetime.ApplicationStarted.Register(_lifetime.StopApplication);
         }
+        else
+        {
+            _logger.LogInformation("Master.Api startup complete. Kestrel is binding port; launching background tenant schema setup.");
+            _ = Task.Run(() => RunBackgroundTenantSetupAsync(adminDbString, CancellationToken.None));
+        }
+    }
+
+    private async Task RunBackgroundTenantSetupAsync(string adminDbString, CancellationToken ct)
+    {
+        try
+        {
+            using var scope = _services.CreateScope();
+            var adminDb = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
+            await CompleteTenantMigrationsAndSeedingAsync(adminDb, adminDbString, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Background tenant migrations and seeding failed.");
+        }
+    }
+
+    private async Task CompleteTenantMigrationsAndSeedingAsync(AdminDbContext adminDb, string adminDbString, CancellationToken ct)
+    {
+        // 1. Seed Geography Data
+        _logger.LogInformation("Seeding global geography data...");
+        string jsonPath = Path.Combine(AppContext.BaseDirectory, "SeedData", "states.json");
+        if (File.Exists(jsonPath))
+        {
+            await using var stream = File.OpenRead(jsonPath);
+            await GeographyJsonLoader.ImportStatesAsync(adminDb, stream, ct);
+            _logger.LogInformation("Geography seeding complete.");
+        }
+
+        // 2. Ensure IN000001 Database Exists and seed it
+        await EnsureTenantDatabaseSetupAsync(adminDb, adminDbString, "IN000001", ct);
+
+        // 3. Every other registered shard gets the same migrations (TK-46)
+        List<string> otherShards = await adminDb.TenantDatabases
+            .Where(d => d.DatabaseName != "IN000001")
+            .Select(d => d.DatabaseName)
+            .ToListAsync(ct);
+        foreach (string shard in otherShards)
+        {
+            string shardConnection = TenantConnectionString(adminDbString, shard);
+            await EnsureOrRequireDatabaseAsync(shardConnection, ct);
+            _logger.LogInformation("Migrating tenant schemas for {Database}...", shard);
+            await MigrateTenantSchemasAsync(shardConnection, _logger, ct);
+        }
+
+        // 4. Shard recount & blank phones
+        await RecountShardCustomersAsync(adminDb, ct);
+        await BlankPhoneBackfill.RunAdminAsync(adminDb, ct);
+
+        _logger.LogInformation("Background database setup and tenant migrations complete.");
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -391,7 +415,11 @@ public class DatabaseMigrationService : IHostedService
         where TContext : TenantDbContext
     {
         var optionsBuilder = new DbContextOptionsBuilder<TContext>();
-        optionsBuilder.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", schema));
+        optionsBuilder.UseNpgsql(connectionString, npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", schema);
+            npgsql.CommandTimeout(180);
+        });
         var options = optionsBuilder.Options;
 
         // Instantiate via reflection since all TenantDbContexts take (DbContextOptions<T>, ITenantContext)

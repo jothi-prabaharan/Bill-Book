@@ -56,6 +56,11 @@ public sealed class ContactPersonRoleRepository
     public async Task<SaveRoleOutcome> CreateAsync(
         SaveContactPersonRoleRequest request, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(request?.RoleName))
+        {
+            return SaveRoleOutcome.InvalidName;
+        }
+
         if (await NameTakenAsync(request.RoleName, null, ct))
         {
             return SaveRoleOutcome.DuplicateName;
@@ -244,8 +249,8 @@ public sealed class ContactPersonRoleRepository
 
     private Task<bool> NameTakenAsync(string roleName, long? exceptId, CancellationToken ct)
     {
-        string name = roleName.Trim();
+        string name = roleName.Trim().ToLower();
         return _db.ContactPersonRoles.AnyAsync(
-            r => r.RoleName == name && (exceptId == null || r.ContactPersonRoleId != exceptId), ct);
+            r => r.RoleName.ToLower() == name && (exceptId == null || r.ContactPersonRoleId != exceptId), ct);
     }
 }

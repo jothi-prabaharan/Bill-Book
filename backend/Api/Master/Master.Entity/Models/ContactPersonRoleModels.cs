@@ -39,4 +39,5 @@ public enum SaveRoleOutcome
     SystemRoleUndeletable = 3,
     RoleInUse = 4,
     DefaultRoleMustStayActive = 5,
+    InvalidName = 6,
 }

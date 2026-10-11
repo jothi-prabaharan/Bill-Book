@@ -11,7 +11,8 @@
     "lint": "nx run-many -t lint",
     "typecheck": "tsc --noEmit -p tsconfig.eslint.json",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
-    "docs": "nx serve docs"
+    "docs": "nx serve docs",
+    "website": "nx serve website"
   },
   "devDependencies": {
     "@angular-devkit/core": "^20.0.0",

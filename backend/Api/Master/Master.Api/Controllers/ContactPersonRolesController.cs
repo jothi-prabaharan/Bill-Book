@@ -58,6 +58,10 @@ public sealed class ContactPersonRolesController : ControllerBase
         {
             SaveRoleOutcome.Ok => onOk(),
             SaveRoleOutcome.NotFound => NotFound(),
+            SaveRoleOutcome.InvalidName => BadRequest(new MessageResponse
+            {
+                Message = "Role name is required.",
+            }),
             SaveRoleOutcome.DuplicateName => BadRequest(new MessageResponse
             {
                 Message = "Another role already uses that name.",

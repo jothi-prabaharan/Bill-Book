@@ -33,10 +33,16 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
         {
             builder.KeepAlive = 30;
         }
+        if (builder.MaxPoolSize > 25)
+        {
+            builder.MaxPoolSize = 25;
+        }
         _adminDbConnectionString = builder.ConnectionString;
         _cache = cache;
         _httpContextAccessor = httpContextAccessor;
     }
+
+    public string GetAdminConnectionString() => _adminDbConnectionString;
 
     public string GetConnectionString(Guid? customerId) =>
         GetConnectionString(customerId, null);

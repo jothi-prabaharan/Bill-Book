@@ -99,8 +99,21 @@ export class ContactPersonRolesDialog implements OnInit {
         this.saved.emit({ roleName: trimmed });
       }
     } catch (err: unknown) {
-      const anyErr = err as { error?: { message?: string } };
-      this.error.set(anyErr?.error?.message ?? 'Could not save role.');
+      const anyErr = err as {
+        error?: {
+          message?: string;
+          detail?: string;
+          title?: string;
+          errors?: Record<string, string[]>;
+        };
+      };
+      const errObj = anyErr?.error;
+      const extracted = errObj?.message
+        || (errObj?.errors ? Object.values(errObj.errors).flat().join(' ') : null)
+        || errObj?.detail
+        || errObj?.title
+        || 'Could not save role.';
+      this.error.set(extracted);
     } finally {
       this.busy.set(false);
     }

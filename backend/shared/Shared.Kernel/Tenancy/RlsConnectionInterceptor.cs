@@ -77,7 +77,7 @@ public sealed class RlsConnectionInterceptor : DbCommandInterceptor
     {
         string? prefix = PrefixFor(_tenant.CustomerId, _tenant.OrgId);
 
-        if (prefix is not null)
+        if (prefix is not null && !command.CommandText.StartsWith("SET LOCAL app.current_customer_id"))
         {
             command.CommandText = prefix + command.CommandText;
         }

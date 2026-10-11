@@ -33,7 +33,7 @@ public sealed class InternalCustomersController : ControllerBase
     [HttpGet("active-organizations")]
     public async Task<IActionResult> ActiveOrganizations(CancellationToken ct)
     {
-        var items = await _db.Organizations
+        var items = await _db.Organizations.AsNoTracking()
             .Where(o => o.Status == TenantStatus.Active)
             .OrderBy(o => o.CustomerId).ThenBy(o => o.OrgId)
             .Select(o => new { o.CustomerId, o.OrgId, o.AddOns, o.BusinessType })
