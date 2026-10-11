@@ -18,6 +18,11 @@
         "assets": [
           {
             "glob": "**/*",
+            "input": "apps/website/src/assets",
+            "output": "assets"
+          },
+          {
+            "glob": "**/*",
             "input": "apps/web/src/assets",
             "output": "assets"
           }
