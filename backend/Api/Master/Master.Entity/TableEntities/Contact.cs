@@ -123,7 +123,8 @@ public class Contact : OrgScopedEntity
     [MaxLength(20, ErrorMessage = "Udyam number cannot exceed 20 characters.")]
     public string? UdyamNumber { get; set; }
 
-    [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
+    /// <summary>Formatted text from the contact form's editor (TK-188), so room for its markup.</summary>
+    [MaxLength(4000, ErrorMessage = "Notes cannot exceed 4000 characters.")]
     public string? Notes { get; set; }
 
     /// <summary>
@@ -144,6 +145,13 @@ public class Contact : OrgScopedEntity
     public System.Text.Json.JsonDocument? CustomFields { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Saved without the save checks, to finish later (TK-188). A draft keeps a
+    /// display name and a role, gets no sub-ledger accounts and appears in no
+    /// document picker until it is saved; a saved contact never returns to draft.
+    /// </summary>
+    public bool IsDraft { get; set; }
 
     public Guid? DefaultPriceListId { get; set; }
 }

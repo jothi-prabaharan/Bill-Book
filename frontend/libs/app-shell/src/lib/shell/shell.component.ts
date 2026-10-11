@@ -17,6 +17,7 @@ import { ShellSubpanelComponent } from '../subpanel/shell-subpanel.component';
 import {
   ShellBreadcrumbComponent,
   BreadcrumbItem,
+  buildCrumbs,
 } from '../breadcrumb/shell-breadcrumb.component';
 import { ShellBoardService } from '../board-state.service';
 import { FavouritesService } from '../favourites.service';
@@ -141,39 +142,7 @@ export class ShellComponent {
   }
 
   updateCrumbs(url: string): void {
-    if (url === '/' || url.startsWith('/dashboard')) {
-      this.crumbs.set([]);
-      return;
-    }
-
-    const parts = url.split('?')[0].split('/').filter((p) => p);
-    const result: BreadcrumbItem[] = [];
-    let currentPath = '';
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      currentPath += '/' + part;
-
-      let label = part.replace(/-/g, ' ');
-      label = label.charAt(0).toUpperCase() + label.slice(1);
-
-      // Special cases
-      if (label.toLowerCase() === 'coa') {
-        label = 'Chart of Accounts';
-      } else if (label.toLowerCase() === 'accounting') {
-        label = 'Accounts'; // STRICT: "Accounts"
-      }
-
-      const isLast = i === parts.length - 1;
-      result.push({
-        label,
-        path: currentPath,
-        isLink: !isLast,
-        isLast,
-      });
-    }
-
-    this.crumbs.set(result);
+    this.crumbs.set(buildCrumbs(url));
   }
 
   toggleStar(): void {

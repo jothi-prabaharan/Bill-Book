@@ -416,6 +416,20 @@ So a contact carries **roles** instead: tick every one that applies.
 
 Receivable and payable stay apart in the ledger through their sub-accounts, not through separate master records. At least one role is required — a contact with none would not appear on any screen.
 
+## The contact page
+
+A contact opens on its own page: **New customer** at `/contacts/new` (or **New vendor**, from the vendor list's **+**), and an existing contact at its own address from the list. The page is five sections in one column — **Identity**, **Tax & statutory**, **Trading terms**, **Addresses & contact people** and **Notes** — with payout accounts, licences, documents, the client portal and the history folded away below them until they hold something.
+
+**Save** checks everything this page describes and returns you to the list. **Save draft** keeps what you have typed with only a display name and a role, so a contact you are still collecting details for does not have to be finished in one sitting.
+
+A **draft**:
+
+- is marked *Draft* in the contact list, and appears in **no document's contact picker** until it is saved;
+- gets **no sub-accounts** until then, since nothing can be posted against it;
+- skips the GST, TDS and MSME checks and the need for a reachable contact person, which all apply on the save that ends it.
+
+**A saved contact cannot be made a draft again** — documents may already name it and its sub-accounts may hold balances. Deactivate it instead when it is no longer used.
+
 ## Contact code
 
 Left empty, the code comes from the numbering series: `CUST-00001` for a customer, `VEND-00001` for a vendor. Both roles ticked gets a customer code, since that is the one customers quote back at you.
@@ -441,17 +455,23 @@ One GSTIN, one contact. A second contact with the same GSTIN is refused — if t
 
 ## Addresses
 
-Billing and shipping, with one default of each. **Copy billing to shipping** is on the toolbar because that is the common case.
+Each address says **what it is** — *Registered office*, *Warehouse*, *Branch* or *Other* — and carries two ticks: **Default billing**, where documents bill the contact, and **Default shipping**, where they deliver. One address may be both, and usually is; each tick can sit on only one address, so ticking it on one clears it from the rest. A new contact starts with one address that is both.
 
-An address in another state is not a formality: it changes the place of supply for goods delivered there, and a branch with its own registration carries its own GSTIN on the address.
+An address in another state is not a formality: it changes the place of supply for goods delivered there, and a branch with its own registration carries its own GSTIN on the address (**GSTIN at this address**).
+
+An address nobody typed into is not saved. One that is started needs its first line and a city, even in a draft.
 
 ## People
 
-Every contact needs **at least one person**, and exactly one of them is the **default**.
+**Every address can carry its own contact person** — the one to ask for there: the owner at the registered office, the stores in-charge at the warehouse. Each has a name, a role, a phone and an email. People who belong to the contact as a whole rather than to one address go under **+ Add a contact person**.
 
-The default is where the contact's email and phone come from — there is no separate contact-level email, deliberately, so there is never a question of which of two addresses an invoice goes to. For that reason the default person must have an email or a mobile number; anyone else can be a name alone.
+Every saved contact needs **at least one person**, and exactly one of them is the **main contact**. Tick **Main contact** on the person you want; left unticked, it is the person at the default billing address, else the first person.
 
-Roles come from a small master maintained in a popup, reachable from the contact list and from the form itself, so a missing role never forces you to abandon a half-filled contact. Renaming a built-in role is fine; deleting one that people hold is not — make it inactive, and existing contacts keep it so their history still reads correctly.
+The main contact is where the contact's email and phone come from — there is no separate contact-level email, deliberately, so there is never a question of which of two addresses an invoice goes to. For that reason the main contact must have an email or a phone; anyone else can be a name alone.
+
+Removing an address keeps its person with the contact, no longer tied to an address.
+
+Roles come from a small master maintained in a popup, reachable from **Manage roles** beside the other contact people on the form, so a missing role never forces you to abandon a half-filled contact. Renaming a built-in role is fine; deleting one that people hold is not — make it inactive, and existing contacts keep it so their history still reads correctly.
 
 ## Bank details
 

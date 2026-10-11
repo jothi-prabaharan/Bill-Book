@@ -47,17 +47,34 @@ public sealed class InternalContactAddressesTests
             await db.SaveChangesAsync();
             contactId = contact.ContactId;
 
-            db.ContactAddresses.AddRange(
-                new ContactAddress
+            var shipping = new ContactAddress
+            {
+                ContactId = contactId, Kind = AddressKind.Warehouse, IsDefaultShipping = true,
+                AddressLine1 = "Site 4", City = "Hosur", CountryId = 1, PostalCode = "635109",
+            };
+            var billing = new ContactAddress
+            {
+                ContactId = contactId, Kind = AddressKind.RegisteredOffice, IsDefaultBilling = true,
+                AddressLine1 = "12 Anna Salai", AddressLine2 = "Teynampet", City = "Chennai",
+                CountryId = 1, PostalCode = "600018",
+            };
+            db.ContactAddresses.AddRange(shipping, billing);
+            var role = new ContactPersonRole { RoleName = "Accounts" };
+            db.ContactPersonRoles.Add(role);
+            await db.SaveChangesAsync();
+
+            // The phone is the one of the person linked to the billing address
+            // (TK-188), ahead of the contact's default person.
+            db.ContactPersons.AddRange(
+                new ContactPerson
                 {
-                    ContactId = contactId, AddressType = AddressType.Shipping, IsDefault = true,
-                    AddressLine1 = "Site 4", City = "Hosur", CountryId = 1, PostalCode = "635109",
+                    ContactId = contactId, ContactPersonRoleId = role.ContactPersonRoleId,
+                    FirstName = "Default", MobileNumber = "9000000000", IsDefault = true,
                 },
-                new ContactAddress
+                new ContactPerson
                 {
-                    ContactId = contactId, AddressType = AddressType.Billing, IsDefault = true,
-                    AddressLine1 = "12 Anna Salai", AddressLine2 = "Teynampet", City = "Chennai",
-                    CountryId = 1, PostalCode = "600018", MobileNumber = "9840012345",
+                    ContactId = contactId, ContactPersonRoleId = role.ContactPersonRoleId,
+                    ContactAddressId = billing.ContactAddressId, FirstName = "Accounts desk", MobileNumber = "9840012345",
                 });
             await db.SaveChangesAsync();
         }

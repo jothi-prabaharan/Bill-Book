@@ -1,0 +1,261 @@
+/* The contact page (TK-188), after the owner's "New customer" design: one
+   column of bordered sections, each headed by a small accent kicker. */
+
+:host {
+  display: block;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-6, 32px);
+}
+
+.cf-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.cf-title {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.cf-code {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.cf-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.cf-section {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-bg);
+  padding: var(--space-3) var(--space-3) var(--space-4);
+}
+
+.cf-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-divider, var(--color-border));
+}
+
+.cf-kicker {
+  margin: 0 0 var(--space-3);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-700, var(--color-accent));
+}
+
+.cf-section-head .cf-kicker {
+  margin: 0;
+}
+
+.cf-kicker-muted {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.cf-aside {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+}
+
+.cf-grid {
+  display: grid;
+  gap: var(--space-2) var(--space-4);
+  // Top, so a field showing an error under it keeps its label in line.
+  align-items: start;
+}
+
+.cf-grid-1 { grid-template-columns: minmax(0, 1fr); }
+.cf-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cf-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.cf-sub {
+  margin-top: var(--space-2);
+}
+
+.cf-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5, 24px);
+  margin-top: var(--space-3);
+}
+
+.cf-checks.cf-invalid {
+  outline: 1px solid var(--color-danger);
+  outline-offset: 6px;
+  border-radius: var(--radius-sm, 4px);
+}
+
+.cf-field-error {
+  margin: var(--space-2) 0 0;
+  font-size: 0.75rem;
+  color: var(--color-danger);
+}
+
+/* One address and the person to ask for there. */
+.cf-address {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-divider, var(--color-border));
+
+  &:first-of-type {
+    padding-top: 0;
+  }
+}
+
+.cf-address-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.cf-number {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex: none;
+}
+
+.cf-kind {
+  width: 11rem;
+}
+
+.cf-remove {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 var(--space-1);
+
+  &:hover {
+    color: var(--color-danger);
+  }
+}
+
+.cf-person {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--color-border-strong, var(--color-border));
+}
+
+.cf-person-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.cf-main {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.cf-other + .cf-other {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--color-border-strong, var(--color-border));
+}
+
+.cf-other-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.cf-add {
+  display: flex;
+  gap: var(--space-5, 24px);
+  flex-wrap: wrap;
+  padding-top: var(--space-3);
+}
+
+.cf-add-link {
+  font-weight: 600;
+}
+
+.cf-custom {
+  display: block;
+  margin-top: var(--space-3);
+}
+
+/* The sections the design leaves out, kept for what they hold: closed until
+   they have rows. */
+.cf-more > summary {
+  cursor: pointer;
+  margin: 0;
+  list-style: revert;
+}
+
+.cf-more[open] > summary {
+  margin-bottom: var(--space-3);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 1100px) {
+  .cf-grid-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cf-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* At ~360px every grid is one column and the buttons share the width. */
+@media (max-width: 640px) {
+  .cf-grid-4,
+  .cf-grid-5 { grid-template-columns: minmax(0, 1fr); }
+
+  .cf-actions {
+    width: 100%;
+
+    .btn { flex: 1 1 auto; }
+  }
+
+  .cf-kind { width: 100%; order: 2; }
+  .cf-remove { order: 1; }
+}

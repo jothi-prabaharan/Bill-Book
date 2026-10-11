@@ -214,6 +214,18 @@ export const appRoutes: Routes = withUpdateGate([
         loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactsPage),
         data: { access: { permission: 'contacts.view' } },
       },
+      // A contact's own page (TK-188): new at /contacts/new (?role=vendor for
+      // a vendor), an existing one or a draft at /contacts/:id.
+      {
+        path: 'contacts/new',
+        loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactFormPage),
+        data: { access: { permission: 'contacts.view' } },
+      },
+      {
+        path: 'contacts/:id',
+        loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactFormPage),
+        data: { access: { permission: 'contacts.view' } },
+      },
       // The nav rail points at /inventory, so it needs somewhere to land. Items
       // is the primary feature of the inventory module.
       { path: 'inventory', pathMatch: 'full', redirectTo: 'inventory/items' },

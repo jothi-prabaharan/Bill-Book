@@ -34,14 +34,19 @@ public sealed class ContactsController : ControllerBase
         _configuration = configuration;
     }
 
-    /// <summary><paramref name="role"/> is customer, vendor, jobworker or prescriber.</summary>
+    /// <summary>
+    /// <paramref name="role"/> is customer, vendor, jobworker or prescriber.
+    /// Drafts (TK-188) are left out unless <paramref name="includeDrafts"/>:
+    /// every document picker reads this list, and only the contacts screen asks.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? search,
         [FromQuery] string? role,
         [FromQuery] bool includeInactive,
+        [FromQuery] bool includeDrafts,
         CancellationToken ct) =>
-        Ok(await _contacts.ListAsync(search, role, includeInactive, ct));
+        Ok(await _contacts.ListAsync(search, role, includeInactive, ct, includeDrafts));
 
     /// <summary>
     /// The branch's custom fields on contacts (TK-111), for the contact form and
@@ -221,7 +226,19 @@ public sealed class ContactsController : ControllerBase
             }),
             SaveContactOutcome.MultipleDefaultAddresses => BadRequest(new MessageResponse
             {
-                Message = "Only one billing address and one shipping address can be the default.",
+                Message = "Only one address can be the default billing address, and one the default shipping address.",
+            }),
+            SaveContactOutcome.CannotReturnToDraft => BadRequest(new MessageResponse
+            {
+                Message = "A saved contact cannot be made a draft again. Deactivate it instead if it is no longer used.",
+            }),
+            SaveContactOutcome.UnknownAddressLink => BadRequest(new MessageResponse
+            {
+                Message = "A contact person is linked to an address that is not on this contact.",
+            }),
+            SaveContactOutcome.StillDraft => BadRequest(new MessageResponse
+            {
+                Message = "This contact is a draft. Save it and its sub-accounts are created then.",
             }),
             SaveContactOutcome.SubLedgerUnavailable => StatusCode(
                 StatusCodes.Status409Conflict,

@@ -24,6 +24,56 @@ export interface BreadcrumbItem {
 
 
 /**
+ * The crumbs for a URL: one per path segment, the last one not a link. The
+ * shell and the strip both build them here, so a rule is written once.
+ */
+export function buildCrumbs(url: string): BreadcrumbItem[] {
+  if (url === '/' || url.startsWith('/dashboard')) {
+    return [];
+  }
+
+  const [path, query] = url.split('?');
+  const parts = path.split('/').filter((p) => p);
+  const result: BreadcrumbItem[] = [];
+  let currentPath = '';
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    currentPath += '/' + part;
+
+    let label = part.replace(/-/g, ' ');
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+
+    // Special case expansions and strict UI rule for Accounts
+    if (label.toLowerCase() === 'coa') {
+      label = 'Chart of Accounts';
+    } else if (label.toLowerCase() === 'accounting') {
+      label = 'Accounts'; // STRICT: "Accounts"
+    }
+
+    const isLast = i === parts.length - 1;
+
+    // A new record in a role (TK-188): /contacts/new?role=vendor reads
+    // "New vendor", as the form's own heading does.
+    if (isLast && part === 'new') {
+      const role = new URLSearchParams(query ?? '').get('role');
+      if (role) {
+        label = `New ${role === 'jobworker' ? 'job worker' : role.toLowerCase()}`;
+      }
+    }
+
+    result.push({
+      label,
+      path: currentPath,
+      isLink: !isLast,
+      isLast,
+    });
+  }
+
+  return result;
+}
+
+/**
  * The breadcrumb strip (`z-index: 4`). It replaces page titles outright — no
  * module screen renders a heading of its own — and it is where module-level
  * controls live: Export, Import, the board's basis toggle and Customize, and
@@ -112,39 +162,7 @@ export class ShellBreadcrumbComponent {
   }
 
   updateCrumbs(url: string): void {
-    if (url === '/' || url.startsWith('/dashboard')) {
-      this.crumbs.set([]);
-      return;
-    }
-
-    const parts = url.split('?')[0].split('/').filter((p) => p);
-    const result: BreadcrumbItem[] = [];
-    let currentPath = '';
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      currentPath += '/' + part;
-
-      let label = part.replace(/-/g, ' ');
-      label = label.charAt(0).toUpperCase() + label.slice(1);
-
-      // Special case expansions and strict UI rule for Accounts
-      if (label.toLowerCase() === 'coa') {
-        label = 'Chart of Accounts';
-      } else if (label.toLowerCase() === 'accounting') {
-        label = 'Accounts'; // STRICT: "Accounts"
-      }
-
-      const isLast = i === parts.length - 1;
-      result.push({
-        label,
-        path: currentPath,
-        isLink: !isLast,
-        isLast,
-      });
-    }
-
-    this.crumbs.set(result);
+    this.crumbs.set(buildCrumbs(url));
   }
 
   onCrumbClicked(crumb: BreadcrumbItem): void {

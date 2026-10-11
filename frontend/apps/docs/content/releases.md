@@ -31,6 +31,14 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **A contact opens on its own page, with Save draft beside Save (TK-188).** **New customer** (or **New vendor**) is a page of its own now, laid out as five sections: Identity, Tax & statutory, Trading terms, Addresses & contact people, and Notes. Payout accounts, licences, documents, the client portal and the history fold away below them.
+  - **Drafts:** **Save draft** keeps a contact with only a name and a role. A draft is marked *Draft* in the contact list, appears in no document's contact picker, and gets its ledger sub-accounts when it is saved. A saved contact can't become a draft again.
+  - **Addresses:** each address says what it is (*Registered office*, *Warehouse*, *Branch* or *Other*) and carries a **Default billing** and a **Default shipping** tick. One address may be both.
+  - **People:** every address can carry its own contact person, with a name, role, phone and email. Tick **Main contact** for the one invoices and reminders go to.
+  - **Mistakes:** each one shows under its field, and the cursor goes to the first.
+  - **Notes** take bold, italics and lists.
+  - **⚠ Breaking** for a database that already holds contacts: billing and shipping types become *Registered office* with no default ticked, and the name and phone typed on an address are dropped. Open each contact and choose its defaults again. See [Contacts](masters#the-contact-page).
+
 - **Changed**: **Every document list has one design (TK-187).** That covers quotes, sales orders, invoices, delivery challans, credit notes, purchase orders, goods receipts, bills, debit notes, journal entries, spend money, receive money, transfers and the chart of accounts.
   - **Heading and tabs:** each list shows its code and record count, then status tabs with counts, *Cancelled ( 0 )* included.
   - **Period and total:** one card holds the period presets, a **From**/**To** that waits for **Apply** and uses your branch's date format, and the total in INR.

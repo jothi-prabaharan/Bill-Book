@@ -68,16 +68,23 @@ public sealed class ContactRepository
     /// <summary>
     /// The list. Email, mobile and city come from the default person and default
     /// billing address, resolved in one extra query each rather than per row —
-    /// this screen is the classic N+1.
+    /// this screen is the classic N+1. Drafts are left out unless asked for
+    /// (TK-188): every document picker reads this list, and a draft is not yet
+    /// a contact a document may name.
     /// </summary>
     public async Task<IReadOnlyList<ContactListItem>> ListAsync(
-        string? search, string? role, bool includeInactive, CancellationToken ct)
+        string? search, string? role, bool includeInactive, CancellationToken ct, bool includeDrafts = false)
     {
         IQueryable<Contact> query = _db.Contacts;
 
         if (!includeInactive)
         {
             query = query.Where(c => c.IsActive);
+        }
+
+        if (!includeDrafts)
+        {
+            query = query.Where(c => !c.IsDraft);
         }
 
         query = role?.ToLowerInvariant() switch
@@ -119,9 +126,7 @@ public sealed class ContactRepository
             .ToDictionaryAsync(p => p.ContactId, ct);
 
         Dictionary<long, string> cities = await _db.ContactAddresses
-            .Where(a => ids.Contains(a.ContactId)
-                && a.IsDefault
-                && a.AddressType == AddressType.Billing)
+            .Where(a => ids.Contains(a.ContactId) && a.IsDefaultBilling)
             .ToDictionaryAsync(a => a.ContactId, a => a.City, ct);
 
         return contacts.Select(c =>
@@ -148,8 +153,9 @@ public sealed class ContactRepository
 
         List<ContactAddress> addresses = await _db.ContactAddresses
             .Where(a => a.ContactId == contactId)
-            .OrderByDescending(a => a.IsDefault)
-            .ThenBy(a => a.Label)
+            .OrderByDescending(a => a.IsDefaultBilling)
+            .ThenByDescending(a => a.IsDefaultShipping)
+            .ThenBy(a => a.ContactAddressId)
             .ToListAsync(ct);
 
         List<ContactPerson> persons = await _db.ContactPersons
@@ -234,8 +240,7 @@ public sealed class ContactRepository
         ContactPerson? defaultPerson = persons.FirstOrDefault(p => p.IsDefault);
         detail.Email = defaultPerson?.Email;
         detail.MobileNumber = defaultPerson?.MobileNumber;
-        detail.City = addresses
-            .FirstOrDefault(a => a.IsDefault && a.AddressType == AddressType.Billing)?.City;
+        detail.City = addresses.FirstOrDefault(a => a.IsDefaultBilling)?.City;
 
         return detail;
     }
@@ -426,8 +431,9 @@ public sealed class ContactRepository
             return new SaveContactResult(invalid, null, null);
         }
 
-        // A new contact meets every required custom field (TK-111).
-        if (await CustomFieldRefusalAsync(request.CustomFields ?? [], previous: null, ct) is string refused)
+        // A new contact meets every required custom field (TK-111); a draft
+        // only has to hold values that fit (TK-188).
+        if (await CustomFieldRefusalAsync(request.CustomFields ?? [], previous: null, ct, requireAll: !request.IsDraft) is string refused)
         {
             return new SaveContactResult(SaveContactOutcome.CustomFieldsRefused, null, null, refused);
         }
@@ -442,7 +448,7 @@ public sealed class ContactRepository
             return new SaveContactResult(SaveContactOutcome.DuplicateCode, null, null);
         }
 
-        var contact = new Contact { ContactCode = code };
+        var contact = new Contact { ContactCode = code, IsDraft = request.IsDraft };
         Apply(contact, request, category, registration);
         contact.CustomFields = CustomFieldStore.Write(request.CustomFields);
 
@@ -452,6 +458,21 @@ public sealed class ContactRepository
         await ReplaceChildrenAsync(contact.ContactId, request, ct);
         await _db.SaveChangesAsync(ct);
 
+        // A draft gets its sub-ledger when it is saved (TK-188): until then no
+        // document can name it, so nothing could post to one.
+        if (contact.IsDraft)
+        {
+            return new SaveContactResult(SaveContactOutcome.Ok, contact.ContactId, contact.ContactCode);
+        }
+
+        return await ProvisionSubLedgerAsync(contact, ct);
+    }
+
+    /// <summary>
+    /// The sub-accounts for a contact just saved, or just taken out of draft.
+    /// </summary>
+    private async Task<SaveContactResult> ProvisionSubLedgerAsync(Contact contact, CancellationToken ct)
+    {
         // Two sub-accounts, receivable and payable, written by Accounting.
         //
         // Reported, not rolled back. An HTTP call cannot join this transaction,
@@ -495,6 +516,12 @@ public sealed class ContactRepository
             return SaveContactOutcome.SubLedgerAlreadyLinked;
         }
 
+        // A draft is given its sub-ledger by the save that ends it (TK-188).
+        if (contact.IsDraft)
+        {
+            return SaveContactOutcome.StillDraft;
+        }
+
         bool provisioned = await _subAccounts.ProvisionForContactAsync(
             contact.ContactId, contact.DisplayName, ct);
 
@@ -518,6 +545,13 @@ public sealed class ContactRepository
             return new SaveContactResult(SaveContactOutcome.NotFound, null, null);
         }
 
+        // Documents may already name a saved contact, and its sub-ledger
+        // carries balances, so it never goes back to draft (TK-188).
+        if (request.IsDraft && !contact.IsDraft)
+        {
+            return new SaveContactResult(SaveContactOutcome.CannotReturnToDraft, null, null);
+        }
+
         if (!TryParse(request, out ContactCategory category, out GstRegistrationType registration))
         {
             return new SaveContactResult(SaveContactOutcome.InvalidValue, null, null);
@@ -530,8 +564,16 @@ public sealed class ContactRepository
         }
 
         // Custom fields left out of the request are kept as stored (TK-111).
-        if (request.CustomFields is not null
-            && await CustomFieldRefusalAsync(request.CustomFields, CustomFieldStore.Read(contact.CustomFields), ct) is string refused)
+        // Ending a draft is the first save that must meet every required one,
+        // so it is checked against what will be stored whether sent or not.
+        bool endsDraft = contact.IsDraft && !request.IsDraft;
+        Dictionary<string, System.Text.Json.JsonElement>? previous = CustomFieldStore.Read(contact.CustomFields);
+        if ((request.CustomFields is not null || endsDraft)
+            && await CustomFieldRefusalAsync(
+                request.CustomFields ?? previous ?? [],
+                previous,
+                ct,
+                requireAll: endsDraft) is string refused)
         {
             return new SaveContactResult(SaveContactOutcome.CustomFieldsRefused, null, null, refused);
         }
@@ -544,8 +586,17 @@ public sealed class ContactRepository
             contact.CustomFields = CustomFieldStore.Write(request.CustomFields);
         }
 
+        contact.IsDraft = request.IsDraft;
+
         await ReplaceChildrenAsync(contactId, request, ct);
         await _db.SaveChangesAsync(ct);
+
+        // Ending a draft is the contact's first real save, so it is given its
+        // sub-ledger now, the way a contact saved outright is on create.
+        if (endsDraft && contact.SubLedgerProvisionedAt is null)
+        {
+            return await ProvisionSubLedgerAsync(contact, ct);
+        }
 
         return new SaveContactResult(SaveContactOutcome.Ok, contact.ContactId, contact.ContactCode);
     }
@@ -570,6 +621,12 @@ public sealed class ContactRepository
     /// <summary>
     /// Every rule that spans rows or crosses a service, in one place. Row-level
     /// rules are check constraints on the table and are not repeated here.
+    ///
+    /// <b>A draft is checked only for what would make it wrong rather than
+    /// unfinished</b> (TK-188): a role, a GSTIN no other contact holds, at most
+    /// one default of each kind, and person roles and address links that
+    /// exist. Everything else (the GST, TDS and MSME rules, a default person
+    /// who can be reached) waits for the save that ends the draft.
     /// </summary>
     private async Task<SaveContactOutcome> ValidateAsync(
         SaveContactRequest request,
@@ -582,6 +639,78 @@ public sealed class ContactRepository
             return SaveContactOutcome.NoRole;
         }
 
+        if (!request.IsDraft)
+        {
+            SaveContactOutcome complete = await ValidateCompleteAsync(request, registration, ct);
+            if (complete != SaveContactOutcome.Ok)
+            {
+                return complete;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Gstin))
+        {
+            bool duplicate = await _db.Contacts.AnyAsync(
+                c => c.Gstin == request.Gstin
+                    && (existingContactId == null || c.ContactId != existingContactId),
+                ct);
+
+            if (duplicate)
+            {
+                return SaveContactOutcome.DuplicateGstin;
+            }
+        }
+
+        List<ContactPersonModel> persons = request.Persons.Where(p => p.IsActive).ToList();
+        if (persons.Count(p => p.IsDefault) > 1)
+        {
+            return SaveContactOutcome.NoDefaultPerson;
+        }
+
+        long[] roleIds = persons.Select(p => p.ContactPersonRoleId).Distinct().ToArray();
+        int known = await _db.ContactPersonRoles
+            .CountAsync(r => roleIds.Contains(r.ContactPersonRoleId), ct);
+
+        if (known != roleIds.Length)
+        {
+            return SaveContactOutcome.UnknownRole;
+        }
+
+        // A person is linked to an address the same request holds: by position
+        // for one added in this save, by id for one it keeps.
+        long[] keptAddressIds = request.Addresses
+            .Where(a => a.ContactAddressId > 0)
+            .Select(a => a.ContactAddressId)
+            .ToArray();
+
+        bool unknownLink = request.Persons.Any(p => p.AddressIndex is int index
+            ? index >= request.Addresses.Count
+            : p.ContactAddressId is long id && !keptAddressIds.Contains(id));
+
+        if (unknownLink)
+        {
+            return SaveContactOutcome.UnknownAddressLink;
+        }
+
+        // The filtered unique indexes would reject these too, but as a 500
+        // rather than something the user can act on.
+        List<ContactAddressModel> addresses = request.Addresses.Where(a => a.IsActive).ToList();
+        if (addresses.Count(a => a.IsDefaultBilling) > 1 || addresses.Count(a => a.IsDefaultShipping) > 1)
+        {
+            return SaveContactOutcome.MultipleDefaultAddresses;
+        }
+
+        return request.BankDetails.Count(b => b.IsActive && b.IsDefault) > 1
+            ? SaveContactOutcome.MultipleDefaultBankDetails
+            : SaveContactOutcome.Ok;
+    }
+
+    /// <summary>The rules a contact must meet to be used on documents, and a draft need not yet.</summary>
+    private async Task<SaveContactOutcome> ValidateCompleteAsync(
+        SaveContactRequest request,
+        GstRegistrationType registration,
+        CancellationToken ct)
+    {
         bool gstinRequired = registration is GstRegistrationType.Regular
             or GstRegistrationType.Composition
             or GstRegistrationType.Sez;
@@ -652,19 +781,6 @@ public sealed class ContactRepository
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Gstin))
-        {
-            bool duplicate = await _db.Contacts.AnyAsync(
-                c => c.Gstin == request.Gstin
-                    && (existingContactId == null || c.ContactId != existingContactId),
-                ct);
-
-            if (duplicate)
-            {
-                return SaveContactOutcome.DuplicateGstin;
-            }
-        }
-
         List<ContactPersonModel> persons = request.Persons.Where(p => p.IsActive).ToList();
         if (persons.Count == 0)
         {
@@ -680,37 +796,8 @@ public sealed class ContactRepository
         // Contact-level email and phone resolve to this row, so a default with
         // neither leaves invoices and reminders with nowhere to go.
         ContactPersonModel defaultPerson = defaults[0];
-        if (string.IsNullOrWhiteSpace(defaultPerson.Email)
-            && string.IsNullOrWhiteSpace(defaultPerson.MobileNumber))
-        {
-            return SaveContactOutcome.DefaultPersonNeedsContactDetail;
-        }
-
-        long[] roleIds = persons.Select(p => p.ContactPersonRoleId).Distinct().ToArray();
-        int known = await _db.ContactPersonRoles
-            .CountAsync(r => roleIds.Contains(r.ContactPersonRoleId), ct);
-
-        if (known != roleIds.Length)
-        {
-            return SaveContactOutcome.UnknownRole;
-        }
-
-        // The filtered unique index would reject this too, but as a 500 rather
-        // than something the user can act on.
-        bool duplicateDefaults = request.Addresses
-            .Where(a => a.IsActive && a.IsDefault)
-            .GroupBy(a => a.AddressType)
-            .Any(g => g.Count() > 1);
-
-        if (duplicateDefaults)
-        {
-            return SaveContactOutcome.MultipleDefaultAddresses;
-        }
-
-        // Same rule as addresses and people: the filtered unique index would
-        // catch it, but as a 500 rather than something a user can act on.
-        return request.BankDetails.Count(b => b.IsActive && b.IsDefault) > 1
-            ? SaveContactOutcome.MultipleDefaultBankDetails
+        return string.IsNullOrWhiteSpace(defaultPerson.Email) && string.IsNullOrWhiteSpace(defaultPerson.MobileNumber)
+            ? SaveContactOutcome.DefaultPersonNeedsContactDetail
             : SaveContactOutcome.Ok;
     }
 
@@ -740,6 +827,10 @@ public sealed class ContactRepository
     /// Replaces the addresses and people. Rows arriving with an id are updated,
     /// rows without one inserted, and rows no longer present are removed — the
     /// aggregate is what the caller sent, not a merge of it.
+    ///
+    /// Saved in steps (TK-188): every default cleared first, then the
+    /// addresses, then the people, so a person can be linked to an address
+    /// added in the same save, by its position in the request.
     /// </summary>
     private async Task ReplaceChildrenAsync(
         long contactId, SaveContactRequest request, CancellationToken ct)
@@ -748,14 +839,44 @@ public sealed class ContactRepository
             .Where(a => a.ContactId == contactId)
             .ToListAsync(ct);
 
+        List<ContactPerson> existingPersons = await _db.ContactPersons
+            .Where(p => p.ContactId == contactId)
+            .ToListAsync(ct);
+
         long[] keptAddressIds = request.Addresses
             .Where(a => a.ContactAddressId > 0)
             .Select(a => a.ContactAddressId)
             .ToArray();
 
+        long[] keptPersonIds = request.Persons
+            .Where(p => p.ContactPersonId > 0)
+            .Select(p => p.ContactPersonId)
+            .ToArray();
+
         _db.ContactAddresses.RemoveRange(
             existingAddresses.Where(a => !keptAddressIds.Contains(a.ContactAddressId)));
 
+        _db.ContactPersons.RemoveRange(
+            existingPersons.Where(p => !keptPersonIds.Contains(p.ContactPersonId)));
+
+        // Every default is cleared and saved before any is set. The filtered
+        // unique indexes are checked statement by statement, so moving a
+        // default from one row to another in a single save could reach the new
+        // row before the old one is cleared.
+        foreach (ContactAddress row in existingAddresses)
+        {
+            row.IsDefaultBilling = false;
+            row.IsDefaultShipping = false;
+        }
+
+        foreach (ContactPerson row in existingPersons)
+        {
+            row.IsDefault = false;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        var addressRows = new List<ContactAddress>(request.Addresses.Count);
         foreach (ContactAddressModel model in request.Addresses)
         {
             ContactAddress? row = model.ContactAddressId > 0
@@ -768,10 +889,13 @@ public sealed class ContactRepository
                 _db.ContactAddresses.Add(row);
             }
 
-            row.AddressType = Enum.TryParse(model.AddressType, ignoreCase: true, out AddressType type)
-                ? type
-                : AddressType.Billing;
-            row.IsDefault = model.IsDefault;
+            row.Kind = Enum.TryParse(model.Kind, ignoreCase: true, out AddressKind kind)
+                ? kind
+                : AddressKind.RegisteredOffice;
+            // An inactive address is never a default: documents would bill a
+            // place the contact has left.
+            row.IsDefaultBilling = model.IsDefaultBilling && model.IsActive;
+            row.IsDefaultShipping = model.IsDefaultShipping && model.IsActive;
             row.Label = model.Label;
             row.AddressLine1 = model.AddressLine1;
             row.AddressLine2 = model.AddressLine2;
@@ -781,11 +905,12 @@ public sealed class ContactRepository
             row.CountryId = model.CountryId;
             row.PostalCode = model.PostalCode;
             row.Gstin = model.Gstin;
-            row.ContactPersonName = model.ContactPersonName;
-            row.PhoneNumber = PhoneNumbers.NormalizeOptional(model.PhoneNumber);
-            row.MobileNumber = PhoneNumbers.NormalizeOptional(model.MobileNumber);
             row.IsActive = model.IsActive;
+            addressRows.Add(row);
         }
+
+        // The ids of addresses added just now, for the people linked to them.
+        await _db.SaveChangesAsync(ct);
 
         List<ContactBankDetail> existingBankDetails = await _db.ContactBankDetails
             .Where(b => b.ContactId == contactId)
@@ -868,25 +993,6 @@ public sealed class ContactRepository
             row.IsActive = model.IsActive;
         }
 
-        List<ContactPerson> existingPersons = await _db.ContactPersons
-            .Where(p => p.ContactId == contactId)
-            .ToListAsync(ct);
-
-        long[] keptPersonIds = request.Persons
-            .Where(p => p.ContactPersonId > 0)
-            .Select(p => p.ContactPersonId)
-            .ToArray();
-
-        _db.ContactPersons.RemoveRange(
-            existingPersons.Where(p => !keptPersonIds.Contains(p.ContactPersonId)));
-
-        // Defaults are cleared before any is set, so the filtered unique index
-        // never sees two at once mid-save.
-        foreach (ContactPerson person in existingPersons)
-        {
-            person.IsDefault = false;
-        }
-
         foreach (ContactPersonModel model in request.Persons)
         {
             ContactPerson? row = model.ContactPersonId > 0
@@ -900,6 +1006,15 @@ public sealed class ContactRepository
             }
 
             row.ContactPersonRoleId = model.ContactPersonRoleId;
+            // By position for an address added in this save, else by the id of
+            // one the request keeps; validation has checked that it holds it.
+            int? linked = model.AddressIndex
+                ?? (model.ContactAddressId is long addressId
+                    ? request.Addresses.FindIndex(a => a.ContactAddressId == addressId)
+                    : null);
+            row.ContactAddressId = linked is int index && index >= 0
+                ? addressRows[index].ContactAddressId
+                : null;
             row.Salutation = model.Salutation;
             row.FirstName = model.FirstName;
             row.LastName = model.LastName;
@@ -908,7 +1023,7 @@ public sealed class ContactRepository
             row.PhoneNumber = PhoneNumbers.NormalizeOptional(model.PhoneNumber);
             row.MobileNumber = PhoneNumbers.NormalizeOptional(model.MobileNumber);
             row.Website = model.Website;
-            row.IsDefault = model.IsDefault;
+            row.IsDefault = model.IsDefault && model.IsActive;
             row.IsActive = model.IsActive;
         }
     }
@@ -970,7 +1085,8 @@ public sealed class ContactRepository
     private async Task<string?> CustomFieldRefusalAsync(
         IReadOnlyDictionary<string, JsonElement> values,
         IReadOnlyDictionary<string, JsonElement>? previous,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool requireAll)
     {
         if (_customFields is null)
         {
@@ -983,7 +1099,20 @@ public sealed class ContactRepository
             return "Custom fields could not be checked just now, so nothing was saved. Try again.";
         }
 
-        IReadOnlyList<string> errors = CustomFieldValidator.Validate(definitions, values, previous);
+        // The validator asks for every required field only of a new row, which
+        // it knows by having no previous values. A draft (TK-188) is let off
+        // that by an empty set; ending one is held to it whatever was stored.
+        List<string> errors = [.. CustomFieldValidator.Validate(
+            definitions, values, previous ?? (requireAll ? null : new Dictionary<string, JsonElement>()))];
+
+        if (requireAll && previous is not null)
+        {
+            errors.AddRange(definitions
+                .Where(d => d.IsActive && d.IsRequired
+                    && (!values.TryGetValue(d.Key, out JsonElement value) || CustomFieldValidator.IsEmpty(value)))
+                .Select(d => $"{d.Label} is required."));
+        }
+
         return errors.Count == 0 ? null : string.Join(" ", errors);
     }
 
@@ -1009,6 +1138,7 @@ public sealed class ContactRepository
         CurrencyCode = c.CurrencyCode,
         CreditLimit = c.CreditLimit,
         IsActive = c.IsActive,
+        IsDraft = c.IsDraft,
         IsSubLedgerLinked = c.SubLedgerProvisionedAt is not null,
         CustomFields = CustomFieldStore.Read(c.CustomFields),
     };
@@ -1029,6 +1159,7 @@ public sealed class ContactRepository
         CurrencyCode = c.CurrencyCode,
         CreditLimit = c.CreditLimit,
         IsActive = c.IsActive,
+        IsDraft = c.IsDraft,
         IsSubLedgerLinked = c.SubLedgerProvisionedAt is not null,
         LegalName = c.LegalName,
         Pan = c.Pan,
@@ -1056,8 +1187,9 @@ public sealed class ContactRepository
     private static ContactAddressModel MapAddress(ContactAddress a) => new()
     {
         ContactAddressId = a.ContactAddressId,
-        AddressType = a.AddressType.ToString(),
-        IsDefault = a.IsDefault,
+        Kind = a.Kind.ToString(),
+        IsDefaultBilling = a.IsDefaultBilling,
+        IsDefaultShipping = a.IsDefaultShipping,
         Label = a.Label,
         AddressLine1 = a.AddressLine1,
         AddressLine2 = a.AddressLine2,
@@ -1067,9 +1199,6 @@ public sealed class ContactRepository
         CountryId = a.CountryId,
         PostalCode = a.PostalCode,
         Gstin = a.Gstin,
-        ContactPersonName = a.ContactPersonName,
-        PhoneNumber = a.PhoneNumber,
-        MobileNumber = a.MobileNumber,
         IsActive = a.IsActive,
     };
 
@@ -1077,6 +1206,7 @@ public sealed class ContactRepository
     {
         ContactPersonId = p.ContactPersonId,
         ContactPersonRoleId = p.ContactPersonRoleId,
+        ContactAddressId = p.ContactAddressId,
         Salutation = p.Salutation,
         FirstName = p.FirstName,
         LastName = p.LastName,

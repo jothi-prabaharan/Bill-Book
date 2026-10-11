@@ -15,7 +15,8 @@ namespace Master.Api.Services;
 /// 1 does not allow for this. <see cref="Shared.Kernel.Validation.PhoneNumbers"/>
 /// stops new blanks at every write; this clears the ones written before it. It
 /// is idempotent — each statement touches only rows still holding <c>''</c> —
-/// so running on every start costs six indexed-nothing updates.
+/// so running on every start costs a few indexed-nothing updates. Addresses
+/// hold no phone since TK-188: the person linked to one does.
 ///
 /// It runs where Master already migrates every tenant schema. The tenant tables
 /// are read past the query filter because no branch is chosen at startup, which
@@ -45,10 +46,6 @@ public static class BlankPhoneBackfill
     {
         int cleared = 0;
 
-        cleared += await contacts.ContactAddresses.IgnoreQueryFilters().Where(a => a.PhoneNumber == "")
-            .ExecuteUpdateAsync(s => s.SetProperty(a => a.PhoneNumber, (string?)null), ct);
-        cleared += await contacts.ContactAddresses.IgnoreQueryFilters().Where(a => a.MobileNumber == "")
-            .ExecuteUpdateAsync(s => s.SetProperty(a => a.MobileNumber, (string?)null), ct);
         cleared += await contacts.ContactPersons.IgnoreQueryFilters().Where(p => p.PhoneNumber == "")
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.PhoneNumber, (string?)null), ct);
         cleared += await contacts.ContactPersons.IgnoreQueryFilters().Where(p => p.MobileNumber == "")

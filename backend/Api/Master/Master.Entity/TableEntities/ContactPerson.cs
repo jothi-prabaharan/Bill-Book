@@ -17,6 +17,12 @@ public class ContactPerson : OrgScopedEntity
 
     public long ContactPersonRoleId { get; set; }
 
+    /// <summary>
+    /// The address this person is the one to ask for at (TK-188); null for a
+    /// person who belongs to the contact as a whole.
+    /// </summary>
+    public long? ContactAddressId { get; set; }
+
     [MaxLength(10, ErrorMessage = "Salutation cannot exceed 10 characters.")]
     public string? Salutation { get; set; }
 

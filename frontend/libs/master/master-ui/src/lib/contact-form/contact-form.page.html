@@ -1,0 +1,343 @@
+<div class="contact-form">
+  <header class="cf-head">
+    <h1 class="sr-only">{{ heading() }}</h1>
+    @if (!isNew) {
+      <p class="cf-title">
+        <span class="cf-code">{{ form.contactCode }}</span>
+        {{ heading() }}
+        @if (storedAsDraft()) {
+          <span class="tag tag-warning">Draft</span>
+        }
+      </p>
+    }
+    <div class="cf-actions">
+      <button type="button" class="btn btn-ghost" (click)="cancel()" [disabled]="busy()">Cancel</button>
+      @if (canSaveDraft) {
+        <button type="button" class="btn btn-secondary" (click)="save(true)" [disabled]="busy() || !loaded()">Save draft</button>
+      }
+      <button type="button" class="btn btn-primary" (click)="save(false)" [disabled]="busy() || !loaded()">Save</button>
+    </div>
+  </header>
+
+  @if (error(); as failure) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+  }
+  @if (notice(); as note) {
+    <bb-message-box [messages]="[{ tone: 'success', text: note }]" />
+  }
+  @if (!isNew && !storedAsDraft() && !form.isSubLedgerLinked) {
+    <bb-message-box tone="warning">
+      This contact has no receivable and payable sub-accounts yet, so it cannot be invoiced or billed.
+      <button type="button" class="link" (click)="linkSubLedger()" [disabled]="busy()">Link sub-ledger</button>
+    </bb-message-box>
+  }
+
+  @if (loaded()) {
+    <section class="cf-section" aria-labelledby="cf-identity">
+      <h2 id="cf-identity" class="cf-kicker">Identity</h2>
+      <div class="cf-grid cf-grid-4">
+        <bb-text-input label="Contact code" name="contactCode" placeholder="Auto from the series" maxlength="20"
+          [(ngModel)]="form.contactCode" [disabled]="!isNew" [id]="'contactCode'" [error]="errors()['contactCode'] || ''" (ngModelChange)="clearError('contactCode')" />
+        <bb-text-input label="Display name" name="displayName" placeholder="What you call them" maxlength="200"
+          [(ngModel)]="form.displayName" [required]="true" [id]="'displayName'" [error]="errors()['displayName'] || ''" (ngModelChange)="clearError('displayName')" />
+        <bb-text-input label="Legal name" name="legalName" placeholder="As on the GST certificate" maxlength="200"
+          [(ngModel)]="form.legalName" [id]="'legalName'" [error]="errors()['legalName'] || ''" (ngModelChange)="clearError('legalName')" />
+        <bb-select label="Category" name="category" placeholder="" [options]="categoryOptions"
+          [(ngModel)]="form.contactCategory" />
+      </div>
+      <div class="cf-checks" id="roles" tabindex="-1" [class.cf-invalid]="!!errors()['roles']">
+        <bb-checkbox text="Customer" name="isCustomer" [(ngModel)]="form.isCustomer" (ngModelChange)="clearError('roles')" />
+        <bb-checkbox text="Vendor" name="isVendor" [(ngModel)]="form.isVendor" (ngModelChange)="clearError('roles')" />
+        <bb-checkbox text="Job worker" name="isJobWorker" [(ngModel)]="form.isJobWorker" (ngModelChange)="clearError('roles')" />
+        <bb-checkbox text="Prescriber" name="isPrescriber" [(ngModel)]="form.isPrescriber" (ngModelChange)="clearError('roles')" />
+        @if (isSchool() || form.isGuardian) {
+          <bb-checkbox text="Guardian" name="isGuardian" [(ngModel)]="form.isGuardian" (ngModelChange)="clearError('roles')" />
+        }
+        <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
+      </div>
+      @if (errors()['roles']) {
+        <p class="cf-field-error" role="alert">{{ errors()['roles'] }}</p>
+      }
+    </section>
+
+    <section class="cf-section" aria-labelledby="cf-tax">
+      <h2 id="cf-tax" class="cf-kicker">Tax &amp; statutory</h2>
+      <div class="cf-grid cf-grid-5">
+        <bb-select label="GST registration" name="gstRegistrationType" placeholder="" [options]="gstRegistrationOptions"
+          [(ngModel)]="form.gstRegistrationType" (ngModelChange)="onRegistrationChange(); clearError('gstin')" />
+        <bb-text-input label="GSTIN" name="gstin" placeholder="33AABCE1234F1Z5" maxlength="15" class="uppercase"
+          [(ngModel)]="form.gstin" [disabled]="!gstinAllowed" [required]="gstinAllowed" [id]="'gstin'" [error]="errors()['gstin'] || ''" (ngModelChange)="clearError('gstin')" />
+        <bb-text-input label="PAN" name="pan" placeholder="AABCE1234F" maxlength="10" class="uppercase"
+          [(ngModel)]="form.pan" [id]="'pan'" [error]="errors()['pan'] || ''" (ngModelChange)="clearError('pan')" />
+        <bb-text-input label="TAN" name="tan" maxlength="10" class="uppercase" [(ngModel)]="form.tan" [id]="'tan'" [error]="errors()['tan'] || ''" (ngModelChange)="clearError('tan')" />
+        <bb-select label="Place of supply" name="placeOfSupply" placeholder="Not set" [options]="stateOptions()"
+          [(ngModel)]="form.placeOfSupplyStateId" (ngModelChange)="clearError('gstin')" />
+        <bb-select label="Country" name="country" placeholder="Not set" [options]="countryOptions()"
+          [(ngModel)]="form.countryId" />
+        @if (tdsSectionOptions().length > 0) {
+          <bb-select label="TDS section" name="tdsSection" placeholder="194C" [options]="tdsSectionOptions()"
+            [(ngModel)]="form.tdsSection" [disabled]="!form.isTdsApplicable" [required]="form.isTdsApplicable" [id]="'tdsSection'" [error]="errors()['tdsSection'] || ''" (ngModelChange)="clearError('tdsSection')" />
+        } @else {
+          <bb-text-input label="TDS section" name="tdsSection" placeholder="194C" maxlength="10"
+            [(ngModel)]="form.tdsSection" [disabled]="!form.isTdsApplicable" [required]="form.isTdsApplicable" [id]="'tdsSection'" [error]="errors()['tdsSection'] || ''" (ngModelChange)="clearError('tdsSection')" />
+        }
+        <bb-text-input label="Udyam number" name="udyamNumber" placeholder="UDYAM-TN-33-0001234" maxlength="20"
+          [(ngModel)]="form.udyamNumber" [disabled]="!form.isMsme" [required]="form.isMsme" [id]="'udyamNumber'" [error]="errors()['udyamNumber'] || ''" (ngModelChange)="clearError('udyamNumber')" />
+      </div>
+      <div class="cf-checks">
+        <bb-checkbox text="TDS applicable" name="isTdsApplicable" [(ngModel)]="form.isTdsApplicable" (ngModelChange)="clearError('tdsSection')" />
+        <bb-checkbox text="Registered MSME" name="isMsme" [(ngModel)]="form.isMsme" (ngModelChange)="clearError('udyamNumber')" />
+      </div>
+      @if (form.isTdsApplicable) {
+        <div class="cf-grid cf-grid-5 cf-sub">
+          <bb-text-input label="Lower-deduction certificate" name="ldcNo" hint="Section 197, if the vendor holds one."
+            maxlength="20" [(ngModel)]="form.lowerDeductionCertificateNo" [id]="'lowerDeductionCertificateNo'" [error]="errors()['lowerDeductionCertificateNo'] || ''" (ngModelChange)="clearError('lowerDeductionCertificateNo')" />
+          @if (form.lowerDeductionCertificateNo) {
+            <bb-percentage-input label="Certificate rate %" name="ldcRate" [(ngModel)]="form.lowerDeductionRate" />
+            <bb-money-input label="Certificate limit" name="ldcLimit" [(ngModel)]="form.lowerDeductionLimit" />
+            <bb-branch-date-input label="Valid from" name="ldcFrom" [(ngModel)]="form.lowerDeductionValidFrom" />
+            <bb-branch-date-input label="Valid to" name="ldcTo" [(ngModel)]="form.lowerDeductionValidTo" [id]="'lowerDeductionValidTo'" [error]="errors()['lowerDeductionValidTo'] || ''" (ngModelChange)="clearError('lowerDeductionValidTo')" />
+          }
+        </div>
+      }
+    </section>
+
+    <section class="cf-section" aria-labelledby="cf-terms">
+      <h2 id="cf-terms" class="cf-kicker">Trading terms</h2>
+      <div class="cf-grid cf-grid-5">
+        <bb-select label="Currency" name="currency" placeholder="" [options]="currencyOptions()"
+          [(ngModel)]="form.currencyCode" [required]="true" [id]="'currencyCode'" [error]="errors()['currencyCode'] || ''" (ngModelChange)="clearError('currencyCode')" />
+        <bb-select label="Payment terms" name="paymentTerm" placeholder="Not set" [options]="termOptions()"
+          [(ngModel)]="form.paymentTermId" />
+        <bb-money-input label="Credit limit" name="creditLimit" hint="Empty means no limit." [(ngModel)]="form.creditLimit" />
+        <bb-number-input label="Max outstanding days" name="maxOutstandingDays" min="0" [(ngModel)]="form.maxOutstandingDays" />
+        <bb-percentage-input label="Max discount %" name="maxDiscountPercent" [(ngModel)]="form.maxDiscountPercent" />
+        <bb-select label="Receivable account" name="receivableAccount" placeholder="Accounts Receivable (default)"
+          [options]="receivableOptions()" [(ngModel)]="form.receivableAccountId" />
+        <bb-select label="Payable account" name="payableAccount" placeholder="Accounts Payable (default)"
+          [options]="payableOptions()" [(ngModel)]="form.payableAccountId" />
+      </div>
+    </section>
+
+    <section class="cf-section cf-addresses" aria-labelledby="cf-addresses">
+      <div class="cf-section-head">
+        <h2 id="cf-addresses" class="cf-kicker">Addresses &amp; contact people</h2>
+        <p class="cf-aside">Every address can carry its own contact person. Documents pick one of these.</p>
+      </div>
+
+      @for (card of addresses; track card.key; let i = $index) {
+        <div class="cf-address">
+          <div class="cf-address-bar">
+            <span class="cf-number" aria-hidden="true">{{ i + 1 }}</span>
+            <bb-select class="cf-kind" [ariaLabel]="'Kind of address ' + (i + 1)" placeholder="" [options]="addressKinds"
+              [name]="'kind' + card.key" [(ngModel)]="card.kind" />
+            <bb-checkbox text="Default billing" [name]="'billing' + card.key" [ngModel]="card.isDefaultBilling"
+              (ngModelChange)="setDefault(card, 'isDefaultBilling', $event)" />
+            <bb-checkbox text="Default shipping" [name]="'shipping' + card.key" [ngModel]="card.isDefaultShipping"
+              (ngModelChange)="setDefault(card, 'isDefaultShipping', $event)" />
+            <button type="button" class="cf-remove" [attr.aria-label]="'Remove address ' + (i + 1)" title="Remove this address"
+              (click)="removeAddress(card)">&times;</button>
+          </div>
+
+          <div class="cf-grid cf-grid-1">
+            <bb-text-input label="Address line 1" [name]="'line1' + card.key" maxlength="200" [(ngModel)]="card.addressLine1"
+              [id]="'line1_' + card.key" [error]="errors()['line1_' + card.key] || ''" (ngModelChange)="clearError('line1_' + card.key)" />
+            <bb-text-input label="Address line 2" [name]="'line2' + card.key" maxlength="200" [(ngModel)]="card.addressLine2" />
+          </div>
+          <div class="cf-grid cf-grid-4 cf-sub">
+            <bb-text-input label="City" [name]="'city' + card.key" maxlength="100" [(ngModel)]="card.city"
+              [id]="'city_' + card.key" [error]="errors()['city_' + card.key] || ''" (ngModelChange)="clearError('city_' + card.key)" />
+            <bb-text-input label="Postal code" [name]="'pin' + card.key" maxlength="10" [(ngModel)]="card.postalCode" />
+            <bb-select label="State" [name]="'state' + card.key" placeholder="Not set" [options]="stateOptions()"
+              [(ngModel)]="card.stateId" />
+            <bb-text-input label="GSTIN at this address" [name]="'agstin' + card.key" maxlength="15"
+              [(ngModel)]="card.gstin" />
+          </div>
+
+          @if (personFor(card); as person) {
+            <div class="cf-person">
+              <div class="cf-person-head">
+                <h3 class="cf-kicker cf-kicker-muted">Contact person</h3>
+                <bb-checkbox class="cf-main" text="Main contact" [name]="'main' + person.key" [ngModel]="isMain(person)"
+                  (ngModelChange)="$event && setMainPerson(person)" />
+              </div>
+              <div class="cf-grid cf-grid-4">
+                <bb-text-input label="Name" [name]="'pname' + person.key" maxlength="200" [(ngModel)]="person.name"
+                  [id]="'pname_' + person.key" [error]="errors()['pname_' + person.key] || ''" (ngModelChange)="clearError('pname_' + person.key)" />
+                <bb-select label="Role" [name]="'prole' + person.key" placeholder="" [options]="roleOptions()"
+                  [(ngModel)]="person.contactPersonRoleId" [id]="'prole_' + person.key" [error]="errors()['prole_' + person.key] || ''" (ngModelChange)="clearError('prole_' + person.key)" />
+                <bb-phone-input label="Phone" [name]="'pphone' + person.key" maxlength="20" [(ngModel)]="person.mobileNumber"
+                  [id]="'pphone_' + person.key" [error]="errors()['pphone_' + person.key] || ''" (ngModelChange)="clearError('pphone_' + person.key)" />
+                <bb-email-input label="Email" [name]="'pemail' + person.key" maxlength="150" [(ngModel)]="person.email"
+                  [id]="'pemail_' + person.key" [error]="errors()['pemail_' + person.key] || ''" (ngModelChange)="clearError('pemail_' + person.key); clearError('pphone_' + person.key)" />
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (otherPersons.length > 0) {
+        <div class="cf-address cf-others">
+          <div class="cf-person-head">
+            <h3 class="cf-kicker cf-kicker-muted">Other contact people</h3>
+            <button type="button" class="link" (click)="rolesOpen.set(true)">Manage roles</button>
+          </div>
+          @for (person of otherPersons; track person.key) {
+            <div class="cf-other">
+              <div class="cf-grid cf-grid-4">
+                <bb-text-input label="Name" [name]="'oname' + person.key" maxlength="200" [(ngModel)]="person.name"
+                  [id]="'pname_' + person.key" [error]="errors()['pname_' + person.key] || ''" (ngModelChange)="clearError('pname_' + person.key)" />
+                <bb-select label="Role" [name]="'orole' + person.key" placeholder="" [options]="roleOptions()"
+                  [(ngModel)]="person.contactPersonRoleId" [id]="'prole_' + person.key" [error]="errors()['prole_' + person.key] || ''" (ngModelChange)="clearError('prole_' + person.key)" />
+                <bb-phone-input label="Phone" [name]="'ophone' + person.key" maxlength="20" [(ngModel)]="person.mobileNumber"
+                  [id]="'pphone_' + person.key" [error]="errors()['pphone_' + person.key] || ''" (ngModelChange)="clearError('pphone_' + person.key)" />
+                <bb-email-input label="Email" [name]="'oemail' + person.key" maxlength="150" [(ngModel)]="person.email"
+                  [id]="'pemail_' + person.key" [error]="errors()['pemail_' + person.key] || ''" (ngModelChange)="clearError('pemail_' + person.key); clearError('pphone_' + person.key)" />
+              </div>
+              <div class="cf-other-foot">
+                <bb-checkbox class="cf-main" text="Main contact" [name]="'main' + person.key" [ngModel]="isMain(person)"
+                  (ngModelChange)="$event && setMainPerson(person)" />
+                <button type="button" class="link danger" (click)="removePerson(person)">Remove</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="cf-add">
+        <button type="button" class="link cf-add-link" (click)="addAddress()">+ Add an address</button>
+        <button type="button" id="addPerson" class="link cf-add-link" (click)="addPerson()">+ Add a contact person</button>
+      </div>
+    </section>
+
+    <section class="cf-section" aria-labelledby="cf-notes">
+      <h2 id="cf-notes" class="cf-kicker">Notes</h2>
+      <bb-rich-text-input name="notes" ariaLabel="Notes" placeholder="Anything the team should know" rows="4"
+        maxlength="2000" [(ngModel)]="form.notes" />
+      @if (customFieldDefs().length > 0) {
+        <!-- The branch's own fields on contacts (TK-111). -->
+        <div id="customFields" tabindex="-1">
+          <bb-custom-fields class="cf-custom" [definitions]="customFieldDefs()" [(value)]="form.customFields"
+            (valueChange)="clearError('customFields')" />
+          @if (errors()['customFields']) {
+            <p class="cf-field-error" role="alert">{{ errors()['customFields'] }}</p>
+          }
+        </div>
+      }
+    </section>
+
+    <details class="cf-section cf-more" [open]="bankDetails.length > 0">
+      <summary class="cf-kicker">Payout accounts ({{ bankDetails.length }})</summary>
+      <p class="cf-aside">The contact's own accounts, for money we send them. The branch's accounts live under Banking.</p>
+      @for (bank of bankDetails; track $index; let i = $index) {
+        <div class="cf-address">
+          <div class="cf-grid cf-grid-4">
+            <bb-text-input label="Account holder" [name]="'holder' + i" maxlength="100" [(ngModel)]="bank.accountHolderName" [id]="'bankHolder_' + i" [error]="errors()['bankHolder_' + i] || ''" (ngModelChange)="clearError('bankHolder_' + i)" />
+            <bb-text-input label="Bank" [name]="'bank' + i" maxlength="100" [(ngModel)]="bank.bankName" [id]="'bankName_' + i" [error]="errors()['bankName_' + i] || ''" (ngModelChange)="clearError('bankName_' + i)" />
+            <bb-text-input label="Account number" [name]="'acct' + i" maxlength="30" [(ngModel)]="bank.accountNumber" [id]="'bankAccount_' + i" [error]="errors()['bankAccount_' + i] || ''" (ngModelChange)="clearError('bankAccount_' + i)" />
+            <bb-select label="Account type" [name]="'kind' + i" placeholder="" [options]="bankAccountKindOptions" [(ngModel)]="bank.accountKind" />
+            <bb-text-input label="IFSC" [name]="'ifsc' + i" maxlength="11" class="uppercase" [(ngModel)]="bank.ifsc" />
+            <bb-text-input label="Branch" [name]="'branch' + i" maxlength="100" [(ngModel)]="bank.branchName" />
+            <bb-text-input label="UPI id" [name]="'upi' + i" maxlength="100" [(ngModel)]="bank.upiId" />
+          </div>
+          <div class="cf-other-foot">
+            <bb-checkbox class="cf-main" text="Default payout account" [name]="'bdefault' + i" [ngModel]="bank.isDefault"
+              (ngModelChange)="$event && setDefaultBankDetail(i)" />
+            <button type="button" class="link danger" (click)="removeBankDetail(i)">Remove</button>
+          </div>
+        </div>
+      }
+      <div class="cf-add"><button type="button" class="link cf-add-link" (click)="addBankDetail()">+ Add a payout account</button></div>
+    </details>
+
+    <details class="cf-section cf-more" [open]="licences.length > 0">
+      <summary class="cf-kicker">Licences ({{ licences.length }})</summary>
+      @for (licence of licences; track $index; let i = $index) {
+        <div class="cf-address">
+          <div class="cf-grid cf-grid-4">
+            <bb-select label="Type" [name]="'lic' + i" placeholder="" [options]="licenceTypes" [(ngModel)]="licence.licenceType" />
+            <bb-text-input label="Number" [name]="'licNo' + i" maxlength="50" [(ngModel)]="licence.licenceNumber" [id]="'licNo_' + i" [error]="errors()['licNo_' + i] || ''" (ngModelChange)="clearError('licNo_' + i)" />
+            <bb-text-input label="Issuing authority" [name]="'licAuth' + i" maxlength="100" [(ngModel)]="licence.issuingAuthority" />
+            <bb-text-input label="Description" [name]="'licDesc' + i" maxlength="100" [(ngModel)]="licence.description" />
+            <bb-branch-date-input label="Issued on" [name]="'licFrom' + i" [(ngModel)]="licence.issuedOn" />
+            <bb-branch-date-input label="Expires on" [name]="'licTo' + i" [(ngModel)]="licence.expiresOn" />
+          </div>
+          <div class="cf-other-foot">
+            @switch (licenceStatus(licence)) {
+              @case ('expired') { <span class="tag tag-danger">Expired</span> }
+              @case ('soon') { <span class="tag tag-warning">Expires within 30 days</span> }
+              @case ('valid') { <span class="tag tag-success">Valid</span> }
+              @default { <span class="muted">No expiry</span> }
+            }
+            <button type="button" class="link danger" (click)="removeLicence(i)">Remove</button>
+          </div>
+        </div>
+      }
+      <div class="cf-add"><button type="button" class="link cf-add-link" (click)="addLicence()">+ Add a licence</button></div>
+    </details>
+
+    @if (!isNew) {
+      <details class="cf-section cf-more" [open]="attachments.length > 0">
+        <summary class="cf-kicker">Documents ({{ attachments.length }})</summary>
+        <div class="cf-grid cf-grid-4">
+          <bb-select label="Document type" name="uploadType" placeholder="" [options]="documentTypes" [(ngModel)]="uploadDocumentType" />
+          <bb-text-input label="Description" name="uploadDesc" maxlength="500" [(ngModel)]="uploadDescription" />
+          <bb-branch-date-input label="Expires on" name="uploadExpiry" [(ngModel)]="uploadExpiryDate" />
+          <bb-file-input label="File" accept="application/pdf,image/jpeg,image/png,image/webp,image/tiff" maxSizeMb="10"
+            buttonText="Choose file" hint="PDF or image, up to 10 MB. Uploads as soon as you choose it."
+            [disabled]="uploading()" (selectionChange)="uploadFile($event)" />
+        </div>
+        @if (attachments.length > 0) {
+          <bb-data-grid [gridCode]="'CONTACT_DOCS'" [columns]="documentColumns" [data]="attachments">
+            <ng-template bbCellTemplate="file" let-row>
+              <strong>{{ row.fileName }}</strong>
+              @if (row.description) { <span class="muted"> · {{ row.description }}</span> }
+            </ng-template>
+            <ng-template bbCellTemplate="type" let-row>{{ labelOf(documentTypes, row.documentType) }}</ng-template>
+            <ng-template bbCellTemplate="size" let-row>{{ formatSize(row.fileSizeBytes) }}</ng-template>
+            <ng-template bbCellTemplate="expires" let-row>{{ row.expiryDate ?? '—' }}</ng-template>
+            <ng-template bbCellTemplate="actions" let-row>
+              <button type="button" class="link" (click)="downloadFile(row)">Download</button>
+              <button type="button" class="link danger" (click)="deleteFile(row)">Remove</button>
+            </ng-template>
+          </bb-data-grid>
+        }
+      </details>
+
+      @if (!storedAsDraft()) {
+        <details class="cf-section cf-more">
+          <summary class="cf-kicker">Client portal</summary>
+          <p class="cf-aside">
+            @if ((portalAccess()?.liveLinks ?? 0) > 0) {
+              {{ portalAccess()!.liveLinks }} {{ portalAccess()!.liveLinks === 1 ? 'link works' : 'links work' }}
+              @if (portalAccess()!.expiresAt) { until {{ portalAccess()!.expiresAt | date: 'mediumDate' }} }.
+            } @else {
+              No portal link works for this contact.
+            }
+            @if (portalAccess()?.lastUsedAt) { Last opened {{ portalAccess()!.lastUsedAt | date: 'medium' }}. }
+          </p>
+          @if (portalLink(); as link) {
+            <bb-text-input readonly name="portalLink"
+              [label]="link.url ? 'Portal link: send this to the contact. It is shown only now.' : 'Portal code, for this app\'s /portal/access/ address. It is shown only now.'"
+              [ngModel]="link.url ?? link.code" (focus)="$any($event.target).select()" />
+          }
+          <div class="cf-add">
+            <button type="button" class="link cf-add-link" (click)="makePortalLink()" [disabled]="busy()">Make a portal link</button>
+            @if ((portalAccess()?.liveLinks ?? 0) > 0) {
+              <button type="button" class="link danger" (click)="revokePortalAccess()" [disabled]="busy()">Revoke portal access</button>
+            }
+          </div>
+        </details>
+      }
+
+      <details class="cf-section cf-more">
+        <summary class="cf-kicker">History</summary>
+        <bb-edit-history service="master" entity="Contacts" [key]="contactId()" heading="Changes to this contact" />
+      </details>
+    }
+  }
+</div>
+
+@if (rolesOpen()) {
+  <bb-contact-person-roles-dialog (closed)="onRolesClosed()" />
+}

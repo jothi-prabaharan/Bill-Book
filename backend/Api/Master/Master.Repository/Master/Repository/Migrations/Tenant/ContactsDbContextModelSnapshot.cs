@@ -351,6 +351,9 @@ namespace Master.Repository.Migrations.Tenant
                     b.Property<bool>("IsCustomer")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDraft")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsGuardian")
                         .HasColumnType("boolean");
 
@@ -402,8 +405,8 @@ namespace Master.Repository.Migrations.Tenant
                         .HasColumnType("uuid");
 
                     b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
@@ -484,15 +487,15 @@ namespace Master.Repository.Migrations.Tenant
 
                     b.ToTable("Contacts", "con", t =>
                         {
-                            t.HasCheckConstraint("chk_contact_gstin_registration", "(\"GstRegistrationType\" IN ('Regular', 'Composition', 'Sez') AND \"Gstin\" IS NOT NULL) OR (\"GstRegistrationType\" IN ('Unregistered', 'Overseas', 'Consumer') AND \"Gstin\" IS NULL)");
+                            t.HasCheckConstraint("chk_contact_gstin_registration", "\"IsDraft\" = true OR (\"GstRegistrationType\" IN ('Regular', 'Composition', 'Sez') AND \"Gstin\" IS NOT NULL) OR (\"GstRegistrationType\" IN ('Unregistered', 'Overseas', 'Consumer') AND \"Gstin\" IS NULL)");
 
                             t.HasCheckConstraint("chk_contact_limits", "(\"CreditLimit\" IS NULL OR \"CreditLimit\" >= 0) AND (\"MaxOutstandingDays\" IS NULL OR \"MaxOutstandingDays\" >= 0) AND (\"MaxDiscountPercent\" IS NULL OR (\"MaxDiscountPercent\" >= 0 AND \"MaxDiscountPercent\" <= 100))");
 
-                            t.HasCheckConstraint("chk_contact_msme", "\"IsMsme\" = false OR \"UdyamNumber\" IS NOT NULL");
+                            t.HasCheckConstraint("chk_contact_msme", "\"IsDraft\" = true OR \"IsMsme\" = false OR \"UdyamNumber\" IS NOT NULL");
 
                             t.HasCheckConstraint("chk_contact_role", "\"IsCustomer\" = true OR \"IsVendor\" = true OR \"IsJobWorker\" = true OR \"IsPrescriber\" = true OR \"IsGuardian\" = true");
 
-                            t.HasCheckConstraint("chk_contact_tds", "\"IsTdsApplicable\" = false OR \"TdsSection\" IS NOT NULL");
+                            t.HasCheckConstraint("chk_contact_tds", "\"IsDraft\" = true OR \"IsTdsApplicable\" = false OR \"TdsSection\" IS NOT NULL");
                         });
                 });
 
@@ -513,11 +516,6 @@ namespace Master.Repository.Migrations.Tenant
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("AddressType")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -525,10 +523,6 @@ namespace Master.Repository.Migrations.Tenant
 
                     b.Property<long>("ContactId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("ContactPersonName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("CountryId")
                         .HasColumnType("integer");
@@ -549,8 +543,16 @@ namespace Master.Repository.Migrations.Tenant
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsDefault")
+                    b.Property<bool>("IsDefaultBilling")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefaultShipping")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Label")
                         .HasMaxLength(50)
@@ -560,10 +562,6 @@ namespace Master.Repository.Migrations.Tenant
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("MobileNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -572,10 +570,6 @@ namespace Master.Repository.Migrations.Tenant
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(10)
@@ -596,10 +590,15 @@ namespace Master.Repository.Migrations.Tenant
 
                     b.HasIndex("CustomerId", "OrgId");
 
-                    b.HasIndex("OrgId", "ContactId", "AddressType")
+                    b.HasIndex("OrgId", "ContactId");
+
+                    b.HasIndex(new[] { "OrgId", "ContactId" }, "IX_ContactAddresses_DefaultBilling")
                         .IsUnique()
-                        .HasDatabaseName("IX_ContactAddresses_Default")
-                        .HasFilter("\"IsDefault\" = true");
+                        .HasFilter("\"IsDefaultBilling\" = true");
+
+                    b.HasIndex(new[] { "OrgId", "ContactId" }, "IX_ContactAddresses_DefaultShipping")
+                        .IsUnique()
+                        .HasFilter("\"IsDefaultShipping\" = true");
 
                     b.ToTable("ContactAddresses", "con");
                 });
@@ -865,6 +864,9 @@ namespace Master.Repository.Migrations.Tenant
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ContactPersonId"));
 
+                    b.Property<long?>("ContactAddressId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("ContactId")
                         .HasColumnType("bigint");
 
@@ -935,6 +937,8 @@ namespace Master.Repository.Migrations.Tenant
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("ContactPersonId");
+
+                    b.HasIndex("ContactAddressId");
 
                     b.HasIndex("ContactId");
 
@@ -1643,6 +1647,11 @@ namespace Master.Repository.Migrations.Tenant
 
             modelBuilder.Entity("Master.Entity.TableEntities.ContactPerson", b =>
                 {
+                    b.HasOne("Master.Entity.TableEntities.ContactAddress", null)
+                        .WithMany()
+                        .HasForeignKey("ContactAddressId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Master.Entity.TableEntities.Contact", null)
                         .WithMany()
                         .HasForeignKey("ContactId")

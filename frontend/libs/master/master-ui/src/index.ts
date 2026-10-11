@@ -3,6 +3,7 @@ export * from './lib/hsn-sac/hsn-sac.page';
 
 // Contacts.
 export * from './lib/contacts/contacts.page';
+export * from './lib/contact-form/contact-form.page';
 export * from './lib/contact-person-roles-list/contact-person-roles.list';
 
 export * from './lib/contact-person-roles-page/contact-person-roles.page';

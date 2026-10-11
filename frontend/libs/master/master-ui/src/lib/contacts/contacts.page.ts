@@ -1,43 +1,22 @@
-import { ExportImportComponent } from '@bill-book/ui-components';
-import { ChangeDetectionStrategy, computed } from '@angular/core';
-import {
-  BbFileSelection,
-  BbSelectOption,
-  CheckboxComponent,
-  ColumnDef,
-  DataGridComponent,
-  BranchDateInputComponent,
-  EmailInputComponent,
-  FileInputComponent,
-  MoneyInputComponent,
-  NumberInputComponent,
-  PercentageInputComponent,
-  PhoneInputComponent,
-  SearchInputComponent,
-  SelectComponent,
-  TextInputComponent,
-  TextareaComponent,
-  CustomFieldDefinition,
-  CustomFieldValues,
-  CustomFieldsComponent,
-  compactValues,
-  isEmptyValue,
-  customListColumns,
-  defaultValues,
-  withCustomColumns,
-  EditHistoryComponent,
-} from '@bill-book/ui-components';
-import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SessionContextService, normaliseBusinessType } from '@bill-book/auth';
 import {
-  ContactPersonRole,
-  ContactPersonRolesDialog,
-  RoleSavedEvent,
-} from '../contact-person-roles-dialog/contact-person-roles.dialog';
+  BbSelectOption,
+  ColumnDef,
+  CustomFieldDefinition,
+  CustomFieldValues,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  ExportImportComponent,
+  MessageBoxComponent,
+  SearchInputComponent,
+  SelectComponent,
+  customListColumns,
+  withCustomColumns,
+} from '@bill-book/ui-components';
 
 interface ContactListItem {
   contactId: number;
@@ -55,6 +34,8 @@ interface ContactListItem {
   currencyCode: string;
   creditLimit: number | null;
   isActive: boolean;
+  /** Saved to finish later (TK-188): on no document picker until saved. */
+  isDraft: boolean;
   isSubLedgerLinked: boolean;
   email: string | null;
   mobileNumber: string | null;
@@ -63,326 +44,64 @@ interface ContactListItem {
   customFields?: CustomFieldValues | null;
 }
 
-interface AddressModel {
-  contactAddressId: number;
-  addressType: 'Billing' | 'Shipping';
-  isDefault: boolean;
-  label: string | null;
-  addressLine1: string;
-  addressLine2: string | null;
-  landmark: string | null;
-  city: string;
-  stateId: number | null;
-  countryId: number;
-  postalCode: string | null;
-  gstin: string | null;
-  contactPersonName: string | null;
-  phoneNumber: string | null;
-  mobileNumber: string | null;
-  isActive: boolean;
-}
-
-interface PersonModel {
-  contactPersonId: number;
-  contactPersonRoleId: number;
-  roleName?: string | null;
-  salutation: string | null;
-  firstName: string;
-  lastName: string | null;
-  designation: string | null;
-  email: string | null;
-  phoneNumber: string | null;
-  mobileNumber: string | null;
-  website: string | null;
-  isDefault: boolean;
-  isActive: boolean;
-}
-
-interface BankDetailModel {
-  contactBankDetailId: number;
-  accountHolderName: string;
-  bankName: string;
-  accountNumber: string;
-  ifsc: string | null;
-  branchName: string | null;
-  accountKind: 'Savings' | 'Current' | 'Other';
-  upiId: string | null;
-  isDefault: boolean;
-  isActive: boolean;
-}
-
-interface LicenceModel {
-  contactLicenceId: number;
-  licenceType: string;
-  licenceNumber: string;
-  description: string | null;
-  issuingAuthority: string | null;
-  issuedOn: string | null;
-  expiresOn: string | null;
-  isActive: boolean;
-  daysUntilExpiry: number | null;
-}
-
-interface AttachmentModel {
-  contactAttachmentId: number;
-  contactId: number;
-  documentType: string;
-  fileName: string;
-  contentType: string;
-  fileSizeBytes: number;
-  description: string | null;
-  expiryDate: string | null;
-  uploadedAt: string | null;
-  downloadUrl: string | null;
-}
-
-interface ContactDetail extends ContactListItem {
-  legalName: string | null;
-  pan: string | null;
-  tan: string | null;
-  placeOfSupplyStateId: number | null;
-  countryId: number | null;
-  paymentTermId: number | null;
-  maxOutstandingDays: number | null;
-  maxDiscountPercent: number | null;
-  isTdsApplicable: boolean;
-  tdsSection: string | null;
-  lowerDeductionCertificateNo: string | null;
-  lowerDeductionRate: number | null;
-  lowerDeductionValidFrom: string | null;
-  lowerDeductionValidTo: string | null;
-  lowerDeductionLimit: number | null;
-  isMsme: boolean;
-  udyamNumber: string | null;
-  notes: string | null;
-  customFields: CustomFieldValues;
-  defaultPriceListId: string | null;
-  addresses: AddressModel[];
-  persons: PersonModel[];
-  bankDetails: BankDetailModel[];
-  licences: LicenceModel[];
-  /** Read-only through the aggregate — files have their own endpoint. */
-  attachments: AttachmentModel[];
-}
-
-interface PaymentTerm {
-  paymentTermId: number;
-  termName: string;
-  isDefault: boolean;
-}
-
-interface State {
-  stateId: number;
-  stateCode: string;
-  stateName: string;
-}
-
-type Tab = 'general' | 'addresses' | 'persons' | 'banking' | 'licences' | 'documents' | 'history';
-
-/** Mirrors Contacts.Entity.Enums.LicenceType. */
-const LICENCE_TYPES: readonly { value: string; label: string }[] = [
-  { value: 'DrugLicence', label: 'Drug licence' },
-  { value: 'Fssai', label: 'FSSAI' },
-  { value: 'Bis', label: 'BIS' },
-  { value: 'MedicalRegistration', label: 'Medical registration' },
-  { value: 'Other', label: 'Other' },
-];
-
-/** Mirrors Contacts.Entity.Enums.AttachmentDocumentType. */
-const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
-  { value: 'GstCertificate', label: 'GST certificate' },
-  { value: 'PanCard', label: 'PAN card' },
-  { value: 'Agreement', label: 'Agreement' },
-  { value: 'PurchaseOrder', label: 'Purchase order' },
-  { value: 'CancelledCheque', label: 'Cancelled cheque' },
-  { value: 'Msme', label: 'MSME certificate' },
-  { value: 'Licence', label: 'Licence' },
-  { value: 'Other', label: 'Other' },
-];
-
 /**
- * Customers, vendors, job workers and prescribers — one master with role flags,
+ * Customers, vendors, job workers and prescribers: one master with role flags,
  * because in Indian SMB books the same party is routinely both a customer and a
  * vendor.
  *
- * The contact saves as a whole: the rules that matter are rules about the set
- * (at least one person, exactly one default, one default address per type), so
- * the set has to arrive together.
+ * The list only. A contact opens on its own page, `/contacts/new` and
+ * `/contacts/:id` (TK-188), which is where it is edited and saved. Drafts are
+ * listed here, marked, and nowhere else.
  */
-/** A portal link just made (TK-94): the code in it is shown once. */
-interface PortalLinkMade {
-  code: string;
-  url: string | null;
-  expiresAt: string;
-}
-
-/** What the contact screen shows about a contact's portal access (TK-94). */
-interface PortalAccessState {
-  liveLinks: number;
-  lastUsedAt: string | null;
-  expiresAt: string | null;
-}
-
-import { InfoTooltipComponent, MessageBoxComponent } from '@bill-book/ui-components';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
-  imports: [ExportImportComponent, InfoTooltipComponent, MessageBoxComponent, 
-    EditHistoryComponent,
-    DatePipe,
+  imports: [
+    DataGridCellTemplateDirective,
     DataGridComponent,
-    CustomFieldsComponent,
+    ExportImportComponent,
     FormsModule,
-    ContactPersonRolesDialog,
-    BranchDateInputComponent,
-    TextInputComponent,
-    NumberInputComponent,
+    MessageBoxComponent,
     SearchInputComponent,
-    EmailInputComponent,
-    PhoneInputComponent,
-    PercentageInputComponent,
-    CheckboxComponent,
-    TextareaComponent,
-    MoneyInputComponent,
     SelectComponent,
-    FileInputComponent,
   ],
   templateUrl: './contacts.page.html',
   styleUrl: './contacts.page.scss',
 })
 export class ContactsPage implements OnInit {
   private readonly http = inject(HttpClient);
-
-  /** India. Replace with the org's country once the org context service lands. */
-  private readonly defaultCountryId = 1;
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly session = inject(SessionContextService);
 
   protected readonly rows = signal<ContactListItem[]>([]);
 
-  /** The branch's custom fields on contacts (TK-111): the form section, list columns and search. */
+  /** The branch's custom fields on contacts (TK-111): list columns and search. */
   protected readonly customFieldDefs = signal<CustomFieldDefinition[]>([]);
   protected readonly gridColumns = computed<ColumnDef[]>(() => [...this.columns, ...customListColumns(this.customFieldDefs())]);
   protected readonly gridRows = computed(() => withCustomColumns(this.rows(), this.customFieldDefs()));
-  protected readonly roles = signal<ContactPersonRole[]>([]);
-  protected readonly terms = signal<PaymentTerm[]>([]);
-  protected readonly states = signal<State[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
-  protected readonly messageIsError = signal(false);
-  protected readonly editorOpen = signal(false);
-  protected readonly rolesOpen = signal(false);
-  protected activeRolePersonIndex: number | null = null;
-  protected readonly activeRoleMode = signal<'add' | 'edit' | 'manage'>('add');
-  protected readonly activeRoleId = signal<number | null>(null);
-  protected readonly activeRoleName = signal<string>('');
-  protected readonly editingId = signal<number | null>(null);
-  protected readonly errors = signal<Record<string, string>>({});
-
-  protected clearError(field: string): void {
-    if (this.errors()[field]) {
-      this.errors.update((e) => {
-        const next = { ...e };
-        delete next[field];
-        return next;
-      });
-    }
-  }
-
-  protected focusField(fieldId: string, targetTab?: Tab): void {
-    if (targetTab && this.tab() !== targetTab) {
-      this.tab.set(targetTab);
-    }
-    setTimeout(() => {
-      const el = document.getElementById(fieldId);
-      if (el) {
-        if (typeof el.focus === 'function') {
-          el.focus();
-        }
-        const focusable = el.querySelector<HTMLElement>('input, select, textarea, button, [tabindex]');
-        if (focusable && typeof focusable.focus === 'function' && document.activeElement !== el) {
-          focusable.focus();
-        }
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-  }
-
-  /** The last portal link made for the open contact: a customer's portal, or a guardian's parent portal from School (TK-69). */
-  protected readonly portalLink = signal<PortalLinkMade | null>(null);
-
-  /** How many of the open contact's portal links still work, and when one was last used (TK-94). */
-  protected readonly portalAccess = signal<PortalAccessState | null>(null);
-  protected readonly tab = signal<Tab>('general');
-  protected readonly uploading = signal(false);
-
-  protected readonly licenceTypes = LICENCE_TYPES;
-
-  /*
-   * The option lists, in the shape `bb-select` takes. `LICENCE_TYPES` and
-   * `DOCUMENT_TYPES` are already `{ value, label }` and are passed straight in.
-   */
-
-  /** The branch's TDS sections (TK-117), for the contact's section. */
-  protected readonly tdsSectionOptions = signal<BbSelectOption<string>[]>([]);
 
   protected readonly statusFilterOptions: BbSelectOption<string>[] = [
     { value: 'active', label: 'Active only' },
     { value: 'any', label: 'Any status' },
   ];
 
-  protected readonly categoryOptions: BbSelectOption<string>[] = [
-    { value: 'Business', label: 'Business' },
-    { value: 'Individual', label: 'Individual' },
+  search = '';
+  roleFilter = '';
+  showInactive = false;
+
+  columns: ColumnDef[] = [
+    { field: 'contactCode', header: 'CONTACT CODE' },
+    { field: 'nameGstin', header: 'NAME · GSTIN' },
+    { field: 'city', header: 'CITY' },
+    { field: 'role', header: 'ROLE' },
+    { field: 'outstanding', header: 'OUTSTANDING', dataType: 'money' },
+    { field: 'creditLimit', header: 'CREDIT LIMIT', dataType: 'money' },
   ];
 
-  protected readonly gstRegistrationOptions: BbSelectOption<string>[] = [
-    { value: 'Regular', label: 'Regular' },
-    { value: 'Composition', label: 'Composition' },
-    { value: 'Unregistered', label: 'Unregistered' },
-    { value: 'Sez', label: 'SEZ' },
-    { value: 'Overseas', label: 'Overseas' },
-    { value: 'Consumer', label: 'Consumer' },
-  ];
-
-  protected readonly addressTypeOptions: BbSelectOption<string>[] = [
-    { value: 'Billing', label: 'Billing' },
-    { value: 'Shipping', label: 'Shipping' },
-  ];
-
-  protected readonly bankAccountKindOptions: BbSelectOption<string>[] = [
-    { value: 'Savings', label: 'Savings' },
-    { value: 'Current', label: 'Current' },
-    { value: 'Other', label: 'Other' },
-  ];
-
-  /** Place of supply names the code as well: it is what decides CGST/SGST vs IGST. */
-  protected readonly stateOptions = computed<BbSelectOption<number>[]>(() =>
-    this.states().map((state) => ({
-      value: state.stateId,
-      label: `${state.stateCode} — ${state.stateName}`,
-    })),
-  );
-
-  /** An address only needs the name; the code is not what somebody posts to. */
-  protected readonly stateNameOptions = computed<BbSelectOption<number>[]>(() =>
-    this.states().map((state) => ({ value: state.stateId, label: state.stateName })),
-  );
-
-  protected readonly paymentTermOptions = computed<BbSelectOption<number>[]>(() =>
-    this.terms().map((term) => ({ value: term.paymentTermId, label: term.termName })),
-  );
-
-  protected readonly personRoleOptions = computed<BbSelectOption<number>[]>(() =>
-    this.roles().map((role) => ({
-      value: role.contactPersonRoleId,
-      label: role.roleName,
-    })),
-  );
-
-  /**
-   * The status filter as a value a select can carry. `showInactive` is a
-   * boolean the page already reads; mapping here leaves it untouched.
-   */
   protected get statusFilter(): string {
     return this.showInactive ? 'any' : 'active';
   }
@@ -390,1007 +109,56 @@ export class ContactsPage implements OnInit {
   protected set statusFilter(value: string) {
     this.showInactive = value === 'any';
   }
-  protected readonly documentTypes = DOCUMENT_TYPES;
 
-  search = '';
-  roleFilter = '';
-  columns: ColumnDef[] = [
-    { field: 'contactCode', header: 'CONTACT CODE' },
-    { field: 'nameGstin', header: 'NAME · GSTIN' },
-    { field: 'city', header: 'CITY' },
-    { field: 'role', header: 'ROLE' },
-    { field: 'outstanding', header: 'OUTSTANDING', dataType: 'money' },
-    { field: 'creditLimit', header: 'CREDIT LIMIT', dataType: 'money' }
-  ];
-
-  documentColumns: ColumnDef[] = [
-    { field: 'file', header: 'File' },
-    { field: 'type', header: 'Type' },
-    { field: 'size', header: 'Size' },
-    { field: 'expires', header: 'Expires' },
-    { field: 'actions', header: 'Actions' }
-  ];
-
-  showInactive = false;
-
-  uploadDocumentType = 'Other';
-  uploadDescription: string | null = null;
-  uploadExpiryDate: string | null = null;
-
-  form: ContactDetail = this.blank();
-
-  private readonly router = inject(Router);
-
-  private readonly session = inject(SessionContextService);
-
-  /** Guardians are School's (TK-60): the filter and the checkbox show only in a School branch. */
+  /** Guardians are School's (TK-60): the filter shows only in a School branch. */
   protected isSchool(): boolean {
     return normaliseBusinessType(this.session.context()?.businessType) === 'School';
   }
-  private readonly route = inject(ActivatedRoute);
 
   ngOnInit(): void {
-    void this.load();
-    void this.loadLookups();
-    this.route.queryParamMap.subscribe(params => {
-      if (params.get('action') === 'create') {
-        this.openAdd();
+    // `?action=create` is how the section menu and older links ask for a new
+    // contact; the form has its own page now, so pass them on to it.
+    const params = this.route.snapshot.queryParamMap;
+    if (params.get('action') === 'create') {
+      const queryParams: Record<string, string> = {};
+      for (const key of ['role', 'returnUrl', 'returnMaster']) {
+        const value = params.get(key);
+        if (value) queryParams[key] = value;
       }
-    });
+      void this.router.navigate(['/contacts/new'], { queryParams, replaceUrl: true });
+      return;
+    }
+
+    void this.load();
+    void this.loadCustomFields();
   }
 
   async load(): Promise<void> {
     this.busy.set(true);
     try {
       const query = new URLSearchParams();
-      if (this.search.trim()) {
-        query.set('search', this.search.trim());
-      }
-      if (this.roleFilter) {
-        query.set('role', this.roleFilter);
-      }
+      if (this.search.trim()) query.set('search', this.search.trim());
+      if (this.roleFilter) query.set('role', this.roleFilter);
       query.set('includeInactive', String(this.showInactive));
+      // This screen is the one place drafts are listed (TK-188).
+      query.set('includeDrafts', 'true');
 
       this.rows.set(await this.get<ContactListItem[]>(`/api/contacts?${query}`));
-    } catch {
-      this.fail('Could not load contacts.');
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  async loadLookups(): Promise<void> {
-    try {
-      this.roles.set(await this.get<ContactPersonRole[]>('/api/contact-person-roles'));
-    } catch {
-      // The editor needs roles; the list does not. Failing quietly here keeps
-      // the list usable when Contacts is up but the roles call fails.
-    }
-
-    try {
-      this.customFieldDefs.set(await this.get<CustomFieldDefinition[]>('/api/contacts/custom-fields'));
-    } catch {
-      /* a branch with no custom fields, or Master briefly unreachable: the form works without them */
-    }
-
-    try {
-      this.terms.set(await this.get<PaymentTerm[]>('/api/payment-terms'));
-    } catch {
-      /* payment terms are optional on a contact */
-    }
-
-    try {
-      this.states.set(
-        await this.get<State[]>(`/api/master/countries/${this.defaultCountryId}/states`),
-      );
-    } catch {
-      /* the GSTIN/state check happens server-side regardless */
-    }
-
-    try {
-      // A contact's TDS section names one of the branch's TDS sections (TK-117).
-      const sections = await this.get<{ sectionCode: string; natureOfPayment: string; isActive: boolean }[]>('/api/tds/sections');
-      const seen = new Set<string>();
-      this.tdsSectionOptions.set(
-        sections
-          .filter((s) => s.isActive && !seen.has(s.sectionCode) && seen.add(s.sectionCode))
-          .map((s) => ({ value: s.sectionCode, label: `${s.sectionCode} · ${s.natureOfPayment}` })),
-      );
-    } catch {
-      /* without accounting access the section is checked when the contact is saved */
-    }
-  }
-
-  openAdd(role?: 'customer' | 'vendor'): void {
-    this.editingId.set(null);
-    this.portalLink.set(null);
-    this.portalAccess.set(null);
-    this.form = this.blank();
-    if (role === 'vendor') {
-      this.form.isCustomer = false;
-      this.form.isVendor = true;
-    } else if (role === 'customer') {
-      this.form.isCustomer = true;
-      this.form.isVendor = false;
-    }
-    this.addPerson();
-    this.tab.set('general');
-    this.errors.set({});
-    this.message.set(null);
-    this.messageIsError.set(false);
-    this.editorOpen.set(true);
-    this.focusField('displayName', 'general');
-  }
-
-  async openEdit(row: ContactListItem): Promise<void> {
-    this.busy.set(true);
-    try {
-      const detail = await this.get<ContactDetail>(`/api/contacts/${row.contactId}`);
-
-      // The child collections drive @for loops, so an absent one has to become
-      // an empty array rather than reach the template as undefined.
-      this.form = {
-        ...detail,
-        addresses: detail.addresses ?? [],
-        persons: detail.persons ?? [],
-        bankDetails: detail.bankDetails ?? [],
-        licences: detail.licences ?? [],
-        attachments: detail.attachments ?? [],
-        customFields: detail.customFields ?? {},
-      };
-      this.editingId.set(row.contactId);
-      this.portalLink.set(null);
-      this.portalAccess.set(null);
-      this.errors.set({});
       this.message.set(null);
-      this.messageIsError.set(false);
-      this.tab.set('general');
-      this.editorOpen.set(true);
-      void this.loadPortalAccess(row.contactId);
     } catch {
-      this.fail('Could not open that contact.');
+      this.message.set('Could not load contacts.');
     } finally {
       this.busy.set(false);
     }
   }
 
-  addAddress(): void {
-    this.form.addresses = [
-      ...this.form.addresses,
-      {
-        contactAddressId: 0,
-        addressType: 'Billing',
-        isDefault: !this.form.addresses.some((a) => a.addressType === 'Billing' && a.isDefault),
-        label: null,
-        addressLine1: '',
-        addressLine2: null,
-        landmark: null,
-        city: '',
-        stateId: null,
-        countryId: this.defaultCountryId,
-        postalCode: null,
-        gstin: null,
-        contactPersonName: null,
-        phoneNumber: null,
-        mobileNumber: null,
-        isActive: true,
-      },
-    ];
+  /** A new contact in the given role: `/contacts/new?role=vendor`. */
+  openAdd(role: 'customer' | 'vendor' = 'customer'): void {
+    void this.router.navigate(['/contacts/new'], { queryParams: { role } });
   }
 
-  removeAddress(index: number): void {
-    this.form.addresses = this.form.addresses.filter((_, i) => i !== index);
-  }
-
-  /** One default per type, so setting one clears the other of the same type. */
-  setDefaultAddress(index: number): void {
-    const target = this.form.addresses[index];
-    this.form.addresses = this.form.addresses.map((a, i) =>
-      a.addressType === target.addressType ? { ...a, isDefault: i === index } : a,
-    );
-  }
-
-  /** Copies the default billing address into a new shipping address. */
-  copyBillingToShipping(): void {
-    const billing = this.form.addresses.find((a) => a.addressType === 'Billing' && a.isDefault);
-    if (!billing) {
-      return;
-    }
-
-    this.form.addresses = [
-      ...this.form.addresses,
-      {
-        ...billing,
-        contactAddressId: 0,
-        addressType: 'Shipping',
-        isDefault: !this.form.addresses.some((a) => a.addressType === 'Shipping' && a.isDefault),
-      },
-    ];
-  }
-
-  addPerson(): void {
-    const defaultRole = this.roles().find((r) => r.isDefault) ?? this.roles()[0];
-    this.form.persons = [
-      ...this.form.persons,
-      {
-        contactPersonId: 0,
-        contactPersonRoleId: defaultRole?.contactPersonRoleId ?? 0,
-        salutation: null,
-        firstName: '',
-        lastName: null,
-        designation: null,
-        email: null,
-        phoneNumber: null,
-        mobileNumber: null,
-        website: null,
-        isDefault: this.form.persons.length === 0,
-        isActive: true,
-      },
-    ];
-  }
-
-  removePerson(index: number): void {
-    const removed = this.form.persons[index];
-    const remaining = this.form.persons.filter((_, i) => i !== index);
-
-    // Never leave the contact without a default — the first remaining person
-    // takes it, because contact-level email and phone resolve from that row.
-    if (removed.isDefault && remaining.length > 0) {
-      remaining[0] = { ...remaining[0], isDefault: true };
-    }
-
-    this.form.persons = remaining;
-  }
-
-  setDefaultPerson(index: number): void {
-    this.form.persons = this.form.persons.map((p, i) => ({ ...p, isDefault: i === index }));
-  }
-
-  addBankDetail(): void {
-    this.form.bankDetails = [
-      ...this.form.bankDetails,
-      {
-        contactBankDetailId: 0,
-        accountHolderName: this.form.legalName ?? this.form.displayName,
-        bankName: '',
-        accountNumber: '',
-        ifsc: null,
-        branchName: null,
-        accountKind: 'Current',
-        upiId: null,
-        // The first account is the default; after that it is a choice.
-        isDefault: !this.form.bankDetails.some((b) => b.isDefault),
-        isActive: true,
-      },
-    ];
-  }
-
-  removeBankDetail(index: number): void {
-    const removed = this.form.bankDetails[index];
-    const remaining = this.form.bankDetails.filter((_, i) => i !== index);
-
-    // A contact with accounts but no default would make a payment screen ask a
-    // question it has no reason to ask.
-    if (removed.isDefault && remaining.length > 0) {
-      remaining[0] = { ...remaining[0], isDefault: true };
-    }
-
-    this.form.bankDetails = remaining;
-  }
-
-  setDefaultBankDetail(index: number): void {
-    this.form.bankDetails = this.form.bankDetails.map((b, i) => ({
-      ...b,
-      isDefault: i === index,
-    }));
-  }
-
-  addLicence(): void {
-    this.form.licences = [
-      ...this.form.licences,
-      {
-        contactLicenceId: 0,
-        licenceType: 'DrugLicence',
-        licenceNumber: '',
-        description: null,
-        issuingAuthority: null,
-        issuedOn: null,
-        expiresOn: null,
-        isActive: true,
-        daysUntilExpiry: null,
-      },
-    ];
-  }
-
-  removeLicence(index: number): void {
-    this.form.licences = this.form.licences.filter((_, i) => i !== index);
-  }
-
-  /**
-   * Expired / expiring / valid, from the expiry date the user is looking at
-   * rather than the one the server sent — the row may have just been edited.
-   */
-  protected licenceStatus(licence: LicenceModel): 'none' | 'expired' | 'soon' | 'valid' {
-    if (!licence.expiresOn) {
-      return 'none';
-    }
-
-    const days = Math.floor(
-      (Date.parse(licence.expiresOn) - Date.parse(new Date().toISOString().slice(0, 10))) / 86_400_000,
-    );
-
-    return days < 0 ? 'expired' : days <= 30 ? 'soon' : 'valid';
-  }
-
-  /**
-   * Uploads immediately rather than on save. Files cannot ride in the contact's
-   * JSON body, and holding them in memory until save would lose them on cancel.
-   */
-  /**
-   * The attachment the picker settled on.
-   *
-   * `bb-file-input` reports the accepted files rather than the DOM event: it
-   * has already checked the kind and the size, which a browser only applies to
-   * its own dialogue — a file dragged in or chosen through "All files" reaches
-   * the element regardless. The API checks both again, and that is the one that
-   * counts.
-   */
-  async uploadFile(selection: BbFileSelection): Promise<void> {
-    const file = selection.files[0];
-    const contactId = this.editingId();
-
-    if (!file || contactId === null) {
-      return;
-    }
-
-    const body = new FormData();
-    body.append('file', file);
-    body.append('documentType', this.uploadDocumentType);
-    if (this.uploadDescription) {
-      body.append('description', this.uploadDescription);
-    }
-    if (this.uploadExpiryDate) {
-      body.append('expiryDate', this.uploadExpiryDate);
-    }
-
-    this.uploading.set(true);
-    try {
-      await new Promise<unknown>((resolve, reject) =>
-        this.http
-          .post(`/api/contacts/${contactId}/attachments`, body)
-          .subscribe({ next: resolve, error: reject }),
-      );
-
-      this.form.attachments = await this.get<AttachmentModel[]>(
-        `/api/contacts/${contactId}/attachments`,
-      );
-      this.uploadDescription = null;
-      this.uploadExpiryDate = null;
-      this.succeed('File uploaded.');
-    } catch (err: unknown) {
-      this.fail(this.messageOf(err, 'Could not upload that file.'));
-    } finally {
-      this.uploading.set(false);
-      // `bb-file-input` clears its own element after a pick, so choosing the
-      // same file again still reports it.
-    }
-  }
-
-  /**
-   * Fetches the bytes through the API rather than linking to them: the request
-   * needs the bearer token, which an anchor href cannot carry.
-   */
-  async downloadFile(attachment: AttachmentModel): Promise<void> {
-    try {
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        this.http
-          .get(`/api/contacts/attachments/${attachment.contactAttachmentId}/download`, {
-            responseType: 'blob',
-          })
-          .subscribe({ next: resolve, error: reject }),
-      );
-
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = attachment.fileName;
-      anchor.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      this.fail('Could not download that file.');
-    }
-  }
-
-  async deleteFile(attachment: AttachmentModel): Promise<void> {
-    try {
-      await this.send('DELETE', `/api/contacts/attachments/${attachment.contactAttachmentId}`, {});
-      this.form.attachments = this.form.attachments.filter(
-        (a) => a.contactAttachmentId !== attachment.contactAttachmentId,
-      );
-      this.succeed('File removed.');
-    } catch (err: unknown) {
-      this.fail(this.messageOf(err, 'Could not remove that file.'));
-    }
-  }
-
-  protected formatSize(bytes: number): string {
-    if (bytes < 1024) {
-      return `${bytes} B`;
-    }
-
-    return bytes < 1_048_576
-      ? `${Math.round(bytes / 1024)} KB`
-      : `${(bytes / 1_048_576).toFixed(1)} MB`;
-  }
-
-  protected labelOf(
-    options: readonly { value: string; label: string }[],
-    value: string,
-  ): string {
-    return options.find((o) => o.value === value)?.label ?? value;
-  }
-
-  openAddRole(personIndex: number): void {
-    this.activeRolePersonIndex = personIndex;
-    this.activeRoleMode.set('add');
-    this.activeRoleId.set(null);
-    this.activeRoleName.set('');
-    this.rolesOpen.set(true);
-  }
-
-  openEditRole(personIndex: number): void {
-    const person = this.form.persons[personIndex];
-    if (!person || !person.contactPersonRoleId) {
-      return;
-    }
-    const role = this.roles().find((r) => r.contactPersonRoleId === person.contactPersonRoleId);
-    this.activeRolePersonIndex = personIndex;
-    this.activeRoleMode.set('edit');
-    this.activeRoleId.set(person.contactPersonRoleId);
-    this.activeRoleName.set(role?.roleName ?? '');
-    this.rolesOpen.set(true);
-  }
-
-  async onRoleSaved(saved: RoleSavedEvent): Promise<void> {
-    this.rolesOpen.set(false);
-    await this.loadLookups();
-
-    if (this.activeRolePersonIndex !== null && this.form.persons[this.activeRolePersonIndex]) {
-      let targetRoleId: number | null = null;
-      if (saved.roleId) {
-        targetRoleId = saved.roleId;
-      } else if (saved.roleName && saved.roleName.trim()) {
-        const match = this.roles().find(
-          (r) => r.roleName.trim().toLowerCase() === saved.roleName.trim().toLowerCase(),
-        );
-        if (match) {
-          targetRoleId = match.contactPersonRoleId;
-        }
-      }
-      if (targetRoleId !== null) {
-        this.form.persons[this.activeRolePersonIndex].contactPersonRoleId = targetRoleId;
-        this.clearError('personRole_' + this.activeRolePersonIndex);
-      }
-    }
-    this.succeed(saved.roleId ? 'Role updated.' : 'Role created.');
-  }
-
-  onRolesClosed(): void {
-    this.rolesOpen.set(false);
-    void this.loadLookups();
-  }
-
-  async save(): Promise<void> {
-    if (!this.validateForm()) {
-      return;
-    }
-
-    const payload = {
-      ...this.form,
-      contactCode: this.cleanOptional(this.form.contactCode),
-      displayName: this.form.displayName.trim(),
-      legalName: this.cleanOptional(this.form.legalName),
-      gstin: this.cleanOptional(this.form.gstin)?.toUpperCase() ?? null,
-      currencyCode: this.form.currencyCode.trim().toUpperCase(),
-      tdsSection: this.cleanOptional(this.form.tdsSection),
-      lowerDeductionCertificateNo: this.cleanOptional(this.form.lowerDeductionCertificateNo),
-      lowerDeductionRate: this.form.lowerDeductionRate ?? null,
-      lowerDeductionValidFrom: this.form.lowerDeductionValidFrom || null,
-      lowerDeductionValidTo: this.form.lowerDeductionValidTo || null,
-      lowerDeductionLimit: this.form.lowerDeductionLimit ?? null,
-      udyamNumber: this.cleanOptional(this.form.udyamNumber),
-      notes: this.cleanOptional(this.form.notes),
-      customFields: compactValues(this.form.customFields ?? {}),
-      addresses: this.form.addresses.map((address) => ({
-        ...address,
-        label: this.cleanOptional(address.label),
-        addressLine1: address.addressLine1.trim(),
-        addressLine2: this.cleanOptional(address.addressLine2),
-        landmark: this.cleanOptional(address.landmark),
-        city: address.city.trim(),
-        postalCode: this.cleanOptional(address.postalCode),
-        gstin: this.cleanOptional(address.gstin)?.toUpperCase() ?? null,
-        contactPersonName: this.cleanOptional(address.contactPersonName),
-        phoneNumber: this.cleanOptional(address.phoneNumber),
-        mobileNumber: this.cleanOptional(address.mobileNumber),
-      })),
-      persons: this.form.persons.map((person) => ({
-        ...person,
-        firstName: person.firstName.trim(),
-        lastName: this.cleanOptional(person.lastName),
-        designation: this.cleanOptional(person.designation),
-        email: this.cleanOptional(person.email),
-        phoneNumber: this.cleanOptional(person.phoneNumber),
-        mobileNumber: this.cleanOptional(person.mobileNumber),
-        website: this.cleanOptional(person.website),
-      })),
-      bankDetails: this.form.bankDetails.map((bank) => ({
-        ...bank,
-        accountHolderName: bank.accountHolderName.trim(),
-        bankName: bank.bankName.trim(),
-        accountNumber: bank.accountNumber.trim(),
-        ifsc: this.cleanOptional(bank.ifsc)?.toUpperCase() ?? null,
-        branchName: this.cleanOptional(bank.branchName),
-        upiId: this.cleanOptional(bank.upiId),
-      })),
-      licences: this.form.licences.map((licence) => ({
-        ...licence,
-        licenceType: licence.licenceType.trim(),
-        licenceNumber: licence.licenceNumber.trim(),
-        description: this.cleanOptional(licence.description),
-        issuingAuthority: this.cleanOptional(licence.issuingAuthority),
-      })),
-    };
-
-    this.busy.set(true);
-    try {
-      const id = this.editingId();
-      let newId: number | null = null;
-      if (id === null) {
-        const result = await this.send<{ contactId: number }>('POST', '/api/contacts', payload);
-        newId = result.contactId;
-      } else {
-        await this.send('PUT', `/api/contacts/${id}`, payload);
-      }
-      this.editorOpen.set(false);
-      this.succeed('Contact saved.');
-
-      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-      const returnMaster = this.route.snapshot.queryParamMap.get('returnMaster');
-      if (id === null && returnUrl && returnMaster && newId) {
-        void this.router.navigateByUrl(`${returnUrl}?returnMaster=${returnMaster}&returnId=${newId}`);
-      } else {
-        await this.load();
-      }
-    } catch (err: unknown) {
-      this.handleApiError(err);
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  private handleApiError(err: unknown): void {
-    const anyErr = err as {
-      error?: {
-        message?: string;
-        errors?: Record<string, string[]>;
-      };
-    };
-    const body = anyErr?.error;
-    const msg = body?.message ?? this.messageOf(err, 'Could not save that contact.');
-    this.fail(msg);
-
-    const newErrors: Record<string, string> = {};
-    if (body?.errors && typeof body.errors === 'object') {
-      for (const [key, msgs] of Object.entries(body.errors)) {
-        if (msgs && msgs.length > 0) {
-          const lower = key.charAt(0).toLowerCase() + key.slice(1);
-          newErrors[lower] = msgs[0];
-        }
-      }
-    }
-
-    const lowerMsg = msg.toLowerCase();
-    if (lowerMsg.includes('code')) {
-      newErrors['contactCode'] = msg;
-      this.focusField('contactCode', 'general');
-    } else if (lowerMsg.includes('gstin')) {
-      newErrors['gstin'] = msg;
-      this.focusField('gstin', 'general');
-    } else if (lowerMsg.includes('udyam')) {
-      newErrors['udyamNumber'] = msg;
-      this.focusField('udyamNumber', 'general');
-    } else if (lowerMsg.includes('tds')) {
-      newErrors['tdsSection'] = msg;
-      this.focusField('tdsSection', 'general');
-    } else if (lowerMsg.includes('display name')) {
-      newErrors['displayName'] = msg;
-      this.focusField('displayName', 'general');
-    } else if (Object.keys(newErrors).length > 0) {
-      const firstKey = Object.keys(newErrors)[0];
-      this.focusField(firstKey, 'general');
-    }
-    this.errors.set(newErrors);
-  }
-
-  /**
-   * Creates the sub-accounts for a contact whose call failed when it was saved.
-   * Safe to run twice — Accounting's provisioning is idempotent.
-   */
-  async linkSubLedger(row: ContactListItem): Promise<void> {
-    this.busy.set(true);
-    try {
-      await this.send('POST', `/api/contacts/${row.contactId}/link-sub-ledger`, {});
-      this.succeed('Sub-accounts created.');
-      await this.load();
-    } catch (err: unknown) {
-      this.fail(this.messageOf(err, 'Could not create the sub-accounts.'));
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  /** Makes a portal link for the open contact. From School it opens the parent portal (TK-69). */
-  async makePortalLink(): Promise<void> {
-    const id = this.editingId();
-    if (id === null) return;
-    this.busy.set(true);
-    try {
-      const link = await this.send<PortalLinkMade>('POST', `/api/contacts/${id}/portal-link`, {});
-      this.portalLink.set(link);
-      this.succeed(`Portal link made. It works until ${new Date(link.expiresAt).toLocaleDateString()} unless you revoke it.`);
-      await this.loadPortalAccess(id);
-    } catch (err: unknown) {
-      this.fail(this.messageOf(err, 'Could not make a portal link.'));
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  /** Revokes every portal link the open contact has (TK-94). Sessions already open end within the hour. */
-  async revokePortalAccess(): Promise<void> {
-    const id = this.editingId();
-    if (id === null) return;
-    this.busy.set(true);
-    try {
-      await this.send<{ revoked: number }>('POST', `/api/contacts/${id}/portal-access/revoke`, {});
-      this.portalLink.set(null);
-      this.succeed('Portal access revoked. The contact cannot open a new session, and any open one ends within the hour.');
-      await this.loadPortalAccess(id);
-    } catch (err: unknown) {
-      this.fail(this.messageOf(err, 'Could not revoke portal access.'));
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  private async loadPortalAccess(contactId: number): Promise<void> {
-    try {
-      const state = await this.get<PortalAccessState>(`/api/contacts/${contactId}/portal-access`);
-      if (this.editingId() === contactId) this.portalAccess.set(state);
-    } catch {
-      // The contact still opens; the access line is simply left off.
-    }
-  }
-
-  async deactivate(row: ContactListItem): Promise<void> {
-    this.busy.set(true);
-    try {
-      await this.send('DELETE', `/api/contacts/${row.contactId}`, {});
-      this.succeed('Contact deactivated.');
-      await this.load();
-    } catch (err: unknown) {
-      this.fail(this.messageOf(err, 'Could not deactivate that contact.'));
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  protected roleNameOf(roleId: number): string {
-    return this.roles().find((r) => r.contactPersonRoleId === roleId)?.roleName ?? '—';
-  }
-
-  /** Unregistered, overseas and consumer contacts cannot carry a GSTIN. */
-  protected get gstinAllowed(): boolean {
-    return ['Regular', 'Composition', 'Sez'].includes(this.form.gstRegistrationType);
-  }
-
-  onRegistrationChange(): void {
-    if (!this.gstinAllowed) {
-      this.form.gstin = null;
-    }
-  }
-
-  private validateForm(): boolean {
-    const errs: Record<string, string> = {};
-    let firstErrorField: { id: string; tab: Tab; message: string } | null = null;
-
-    const addError = (fieldId: string, tab: Tab, msg: string) => {
-      errs[fieldId] = msg;
-      if (!firstErrorField) {
-        firstErrorField = { id: fieldId, tab, message: msg };
-      }
-    };
-
-    // 1. General tab validations
-    if (!this.hasText(this.form.displayName)) {
-      addError('displayName', 'general', 'Display name is required.');
-    }
-
-    if (!this.hasText(this.form.contactCategory)) {
-      addError('contactCategory', 'general', 'Contact category is required.');
-    }
-
-    if (!this.form.isCustomer && !this.form.isVendor && !this.form.isJobWorker && !this.form.isPrescriber && !this.form.isGuardian) {
-      addError('isCustomer', 'general', 'Select at least one role (Customer, Vendor, Job worker, Prescriber or Guardian).');
-      errs['roles'] = 'Select at least one role (Customer, Vendor, Job worker, Prescriber or Guardian).';
-    }
-
-    if (!this.hasText(this.form.gstRegistrationType)) {
-      addError('gstRegistrationType', 'general', 'GST registration type is required.');
-    }
-
-    const gstinRequired = ['Regular', 'Composition', 'Sez'].includes(this.form.gstRegistrationType);
-    if (gstinRequired) {
-      if (!this.hasText(this.form.gstin)) {
-        addError('gstin', 'general', 'GSTIN is required for regular, composition and SEZ registrations.');
-      } else if (this.form.gstin!.trim().length !== 15) {
-        addError('gstin', 'general', 'GSTIN must be 15 characters.');
-      } else if (this.form.placeOfSupplyStateId) {
-        const state = this.states().find((s) => s.stateId === this.form.placeOfSupplyStateId);
-        if (state && !this.form.gstin!.trim().toUpperCase().startsWith(state.stateCode)) {
-          addError('gstin', 'general', "The GSTIN's first two digits do not match the place of supply.");
-        }
-      }
-    } else if (this.hasText(this.form.gstin)) {
-      addError('gstin', 'general', 'Unregistered, overseas and consumer contacts cannot carry a GSTIN.');
-    }
-
-    if (this.hasText(this.form.pan) && this.form.pan!.trim().length !== 10) {
-      addError('pan', 'general', 'PAN must be 10 characters.');
-    }
-
-    if (!this.hasText(this.form.currencyCode)) {
-      addError('currencyCode', 'general', 'Currency is required.');
-    } else if (this.form.currencyCode.trim().length !== 3) {
-      addError('currencyCode', 'general', 'Currency must be a 3-letter code.');
-    }
-
-    if (this.form.isTdsApplicable && !this.hasText(this.form.tdsSection)) {
-      addError('tdsSection', 'general', 'TDS section is required when TDS is applicable.');
-    }
-
-    // A lower-deduction certificate is all five facts or none (TK-117).
-    const certificate = [
-      this.hasText(this.form.lowerDeductionCertificateNo),
-      this.form.lowerDeductionRate != null,
-      this.hasText(this.form.lowerDeductionValidFrom),
-      this.hasText(this.form.lowerDeductionValidTo),
-      this.form.lowerDeductionLimit != null,
-    ];
-    if (certificate.some((x) => x) && !certificate.every((x) => x)) {
-      addError('lowerDeductionCertificateNo', 'general', 'A lower-deduction certificate needs its number, rate, validity dates and limit.');
-    } else if (
-      this.form.lowerDeductionValidFrom &&
-      this.form.lowerDeductionValidTo &&
-      this.form.lowerDeductionValidTo < this.form.lowerDeductionValidFrom
-    ) {
-      addError('lowerDeductionValidTo', 'general', 'Certificate validity end date must be on or after the start date.');
-    }
-
-    if (this.form.isMsme && !this.hasText(this.form.udyamNumber)) {
-      addError('udyamNumber', 'general', 'Udyam number is required for MSME contacts.');
-    }
-
-    // Check required custom fields (TK-111)
-    for (const def of this.customFieldDefs()) {
-      if (def.isActive && def.isRequired) {
-        const val = this.form.customFields?.[def.key];
-        if (isEmptyValue(val)) {
-          addError(`cf_${def.key}`, 'general', `${def.label} is required.`);
-        }
-      }
-    }
-
-    // 2. Persons tab validations
-    if (this.form.persons.length === 0) {
-      addError('addPersonBtn', 'persons', 'At least one contact person is required.');
-    } else {
-      const defaultPersons = this.form.persons.filter((person) => person.isDefault);
-      if (defaultPersons.length !== 1) {
-        addError('personFirst_0', 'persons', 'Exactly one default contact person is required.');
-      } else {
-        const defaultIndex = this.form.persons.findIndex((p) => p.isDefault);
-        const primary = defaultPersons[0];
-        if (!this.hasText(primary.email) && !this.hasText(primary.mobileNumber)) {
-          addError(`personEmail_${defaultIndex}`, 'persons', 'Default contact person needs an email or mobile number.');
-          errs[`personMobile_${defaultIndex}`] = 'Default contact person needs an email or mobile number.';
-        }
-      }
-
-      for (let i = 0; i < this.form.persons.length; i += 1) {
-        const person = this.form.persons[i];
-        if (person.contactPersonRoleId <= 0) {
-          addError(`personRole_${i}`, 'persons', `Choose a role for person row ${i + 1}.`);
-        }
-
-        if (!this.hasText(person.firstName)) {
-          addError(`personFirst_${i}`, 'persons', `First name is required for person row ${i + 1}.`);
-        }
-
-        if (this.hasText(person.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email!.trim())) {
-          addError(`personEmail_${i}`, 'persons', `Email for person row ${i + 1} must be a valid email address.`);
-        }
-      }
-    }
-
-    // 3. Addresses tab validations
-    const billingDefaults = this.form.addresses.filter(
-      (address) => address.addressType === 'Billing' && address.isDefault,
-    );
-    if (billingDefaults.length > 1) {
-      addError('addr1_0', 'addresses', 'Only one default billing address is allowed.');
-    }
-
-    const shippingDefaults = this.form.addresses.filter(
-      (address) => address.addressType === 'Shipping' && address.isDefault,
-    );
-    if (shippingDefaults.length > 1) {
-      addError('addr1_0', 'addresses', 'Only one default shipping address is allowed.');
-    }
-
-    for (let i = 0; i < this.form.addresses.length; i += 1) {
-      const address = this.form.addresses[i];
-      if (!this.hasText(address.addressLine1)) {
-        addError(`addr1_${i}`, 'addresses', `Address line 1 is required for address row ${i + 1}.`);
-      }
-
-      if (!this.hasText(address.city)) {
-        addError(`city_${i}`, 'addresses', `City is required for address row ${i + 1}.`);
-      }
-    }
-
-    // 4. Banking tab validations
-    for (let i = 0; i < this.form.bankDetails.length; i += 1) {
-      const bank = this.form.bankDetails[i];
-      if (!this.hasText(bank.accountHolderName)) {
-        addError(`bankHolder_${i}`, 'banking', `Account holder name is required for bank row ${i + 1}.`);
-      }
-
-      if (!this.hasText(bank.bankName)) {
-        addError(`bankName_${i}`, 'banking', `Bank name is required for bank row ${i + 1}.`);
-      }
-
-      if (!this.hasText(bank.accountNumber)) {
-        addError(`bankAccount_${i}`, 'banking', `Account number is required for bank row ${i + 1}.`);
-      }
-
-      if (!this.hasText(bank.accountKind)) {
-        addError(`bankKind_${i}`, 'banking', `Account type is required for bank row ${i + 1}.`);
-      }
-    }
-
-    // 5. Licences tab validations
-    for (let i = 0; i < this.form.licences.length; i += 1) {
-      const licence = this.form.licences[i];
-      if (!this.hasText(licence.licenceType)) {
-        addError(`licType_${i}`, 'licences', `Licence type is required for licence row ${i + 1}.`);
-      }
-
-      if (!this.hasText(licence.licenceNumber)) {
-        addError(`licNo_${i}`, 'licences', `Licence number is required for licence row ${i + 1}.`);
-      }
-    }
-
-    this.errors.set(errs);
-
-    const first = firstErrorField as { id: string; tab: Tab; message: string } | null;
-    if (first) {
-      this.fail(first.message);
-      this.focusField(first.id, first.tab);
-      return false;
-    }
-
-    return true;
-  }
-
-  private blank(): ContactDetail {
-    return {
-      contactId: 0,
-      contactCode: '',
-      displayName: '',
-      contactCategory: 'Business',
-      isCustomer: true,
-      isVendor: false,
-      isJobWorker: false,
-      isPrescriber: false,
-      isGuardian: false,
-      gstin: null,
-      gstRegistrationType: 'Unregistered',
-      currencyCode: 'INR',
-      creditLimit: null,
-      isActive: true,
-      isSubLedgerLinked: false,
-      email: null,
-      mobileNumber: null,
-      city: null,
-      legalName: null,
-      pan: null,
-      tan: null,
-      placeOfSupplyStateId: null,
-      countryId: this.defaultCountryId,
-      paymentTermId: this.terms().find((t) => t.isDefault)?.paymentTermId ?? null,
-      maxOutstandingDays: null,
-      maxDiscountPercent: null,
-      isTdsApplicable: false,
-      tdsSection: null,
-      lowerDeductionCertificateNo: null,
-      lowerDeductionRate: null,
-      lowerDeductionValidFrom: null,
-      lowerDeductionValidTo: null,
-      lowerDeductionLimit: null,
-      isMsme: false,
-      udyamNumber: null,
-      notes: null,
-      customFields: defaultValues(this.customFieldDefs()),
-      addresses: [],
-      persons: [],
-      bankDetails: [],
-      licences: [],
-      attachments: [],
-      defaultPriceListId: null,
-    };
-  }
-
-  private succeed(text: string): void {
-    this.message.set(text);
-    this.messageIsError.set(false);
-  }
-
-  private fail(text: string): void {
-    this.message.set(text);
-    this.messageIsError.set(true);
-  }
-
-  private hasText(value: string | null | undefined): boolean {
-    return (value ?? '').trim().length > 0;
-  }
-
-  private cleanOptional(value: string | null | undefined): string | null {
-    const cleaned = (value ?? '').trim();
-    return cleaned.length > 0 ? cleaned : null;
-  }
-
-  private messageOf(err: unknown, fallback: string): string {
-    const anyErr = err as { error?: { message?: string } };
-    return anyErr?.error?.message ?? fallback;
-  }
-
-  private get<T>(url: string): Promise<T> {
-    return new Promise((resolve, reject) =>
-      this.http.get<T>(url).subscribe({ next: resolve, error: reject }),
-    );
-  }
-
-  private send<T = unknown>(
-    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-    url: string,
-    body: unknown,
-  ): Promise<T> {
-    return new Promise((resolve, reject) =>
-      this.http
-        .request<T>(method, url, { body })
-        .subscribe({ next: resolve as (value: T) => void, error: reject }),
-    );
-  }
-
-  openFilter: string | null = null;
-  filterOp: string = 'contains';
-  filterVal: string = '';
-
-  toggleFilter(col: string, event: Event) {
-    event.stopPropagation();
-    this.openFilter = this.openFilter === col ? null : col;
+  openEdit(row: ContactListItem): void {
+    void this.router.navigate(['/contacts', row.contactId]);
   }
 
   roleLabels(row: ContactListItem): string {
@@ -1403,7 +171,15 @@ export class ContactsPage implements OnInit {
     return roles.join(' & ') || '—';
   }
 
+  private async loadCustomFields(): Promise<void> {
+    try {
+      this.customFieldDefs.set(await this.get<CustomFieldDefinition[]>('/api/contacts/custom-fields'));
+    } catch {
+      /* a branch with no custom fields: the list works without them */
+    }
+  }
+
+  private get<T>(url: string): Promise<T> {
+    return new Promise((resolve, reject) => this.http.get<T>(url).subscribe({ next: resolve, error: reject }));
+  }
 }
-
-
-

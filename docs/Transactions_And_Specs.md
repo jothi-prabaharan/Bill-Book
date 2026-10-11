@@ -736,7 +736,7 @@ Customers, vendors, job workers and prescribers — one table with role flags. S
 | ReceivableAccountId · PayableAccountId | long? | Overrides; unenforced → `acc.Accounts` |
 | IsTdsApplicable + TdsSection | bool + string(10)? | |
 | IsMsme + UdyamNumber | bool + string(20)? | |
-| Notes | string(500)? | |
+| Notes | string(4000)? | Formatted text from the contact form's editor (TK-188) |
 | IsActive | bool | Default true |
 
 **No email, phone or website.** They live on `con.ContactPersons`, where exactly one row is the default — one place to look up where an invoice is emailed rather than two that can disagree.
@@ -745,19 +745,21 @@ Indexes: unique (OrgId, ContactCode) · filtered unique (OrgId, Gstin) WHERE NOT
 
 Check constraints: at least one role · TDS ⇒ section · MSME ⇒ Udyam · limits in range · registration type ⇔ GSTIN present or absent
 
-Validated in C# (spans rows or crosses a service): **GSTIN's first two digits must equal the place-of-supply state's GST code**, verified against `mst.States` through Master's API and cached · GSTIN unique across contacts · at least one active person, exactly one default · the default person must have an email or mobile · one default address per type.
+Validated in C# (spans rows or crosses a service): **GSTIN's first two digits must equal the place-of-supply state's GST code**, verified against `mst.States` through Master's API and cached · GSTIN unique across contacts · at least one active person, exactly one default · the default person must have an email or mobile · one default billing and one default shipping address · a person's address link names an address in the same request.
+
+**Drafts** (`IsDraft`, TK-188): a draft is checked only for a role, a GSTIN no other contact holds, at most one default of each kind, and person roles and address links that exist. The TDS, MSME and GSTIN-registration check constraints each open with `"IsDraft" = true OR`. A draft is left off `GET /api/contacts` unless `includeDrafts=true`, counts as inactive in the internal lookup, and is given its sub-accounts by the save that ends it; a saved contact is refused `IsDraft = true`.
 
 **On create** → six sub-accounts in Accounting via `POST internal/sub-accounts/provision` — trade, prepayment advance and overpayment advance beneath each of Accounts Receivable and Accounts Payable, discriminated by `SubAccountPurpose`. Idempotent **per target**, so re-running it for a contact created before the advances existed backfills exactly the four it is missing.
 
 ### `con.ContactAddresses` ✅
-| ContactAddressId long PK · OrgId · ContactId (FK, cascade) · AddressType enum→string(10) Billing/Shipping · IsDefault · Label string(50)? · AddressLine1 string(200) · AddressLine2 string(200)? · Landmark string(100)? · City string(100) · StateId int? · CountryId int · PostalCode string(10)? · Gstin string(15)? · ContactPersonName string(100)? · PhoneNumber · MobileNumber · IsActive |
+| ContactAddressId long PK · OrgId · ContactId (FK, cascade) · Kind enum→string(20) RegisteredOffice/Warehouse/Branch/Other · IsDefaultBilling · IsDefaultShipping · Label string(50)? · AddressLine1 string(200) · AddressLine2 string(200)? · Landmark string(100)? · City string(100) · StateId int? · CountryId int · PostalCode string(10)? · Gstin string(15)? · IsActive |
 
-Filtered unique (OrgId, ContactId, AddressType) WHERE IsDefault — one default billing, one default shipping.
+Filtered unique (OrgId, ContactId) WHERE IsDefaultBilling, and another WHERE IsDefaultShipping: one default of each, and one address may be both (TK-188). Who to ask for at the address is a `con.ContactPersons` row naming it, not columns here.
 
 **Place of supply resolution**: document override → default Shipping state → `Contact.PlaceOfSupplyStateId` → default Billing state. Wrong order posts IGST on intra-state sales.
 
 ### `con.ContactPersons` ✅
-| ContactPersonId long PK · OrgId · ContactId (FK, cascade) · ContactPersonRoleId (FK, **restrict**) · Salutation string(10)? · FirstName string(100) · LastName string(100)? · Designation string(100)? · Email string(150)? · PhoneNumber · MobileNumber · Website string(200)? · IsDefault · IsActive |
+| ContactPersonId long PK · OrgId · ContactId (FK, cascade) · ContactPersonRoleId (FK, **restrict**) · ContactAddressId (FK, **set null**)? · Salutation string(10)? · FirstName string(100) · LastName string(100)? · Designation string(100)? · Email string(150)? · PhoneNumber · MobileNumber · Website string(200)? · IsDefault · IsActive |
 
 Filtered unique (OrgId, ContactId) WHERE IsDefault · (OrgId, MobileNumber) WHERE NOT NULL — counter staff search by phone constantly.
 

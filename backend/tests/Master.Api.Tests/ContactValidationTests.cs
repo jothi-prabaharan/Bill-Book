@@ -102,10 +102,10 @@ public sealed class ContactValidationTests
         [
             new ContactAddressModel
             {
-                AddressType = "Billing",
+                Kind = "RegisteredOffice",
                 AddressLine1 = "Brigade Road",
                 City = "Bengaluru",
-                IsDefault = true,
+                IsDefaultBilling = true,
                 IsActive = true,
             }
         ],
@@ -300,18 +300,18 @@ public sealed class ContactValidationTests
         [
             new ContactAddressModel
             {
-                AddressType = "Billing",
+                Kind = "RegisteredOffice",
                 AddressLine1 = "Office 1",
                 City = "Bengaluru",
-                IsDefault = true,
+                IsDefaultBilling = true,
                 IsActive = true,
             },
             new ContactAddressModel
             {
-                AddressType = "Billing",
+                Kind = "RegisteredOffice",
                 AddressLine1 = "Office 2",
                 City = "Bengaluru",
-                IsDefault = true,
+                IsDefaultBilling = true,
                 IsActive = true,
             }
         ];

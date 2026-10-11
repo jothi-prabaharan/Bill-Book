@@ -105,13 +105,15 @@ public class ContactsDbContext : TenantDbContext
                     "\"IsCustomer\" = true OR \"IsVendor\" = true "
                         + "OR \"IsJobWorker\" = true OR \"IsPrescriber\" = true OR \"IsGuardian\" = true");
 
+                // A draft is saved to be finished later (TK-188), so the rules
+                // that make a contact usable on documents wait for its save.
                 table.HasCheckConstraint(
                     "chk_contact_tds",
-                    "\"IsTdsApplicable\" = false OR \"TdsSection\" IS NOT NULL");
+                    "\"IsDraft\" = true OR \"IsTdsApplicable\" = false OR \"TdsSection\" IS NOT NULL");
 
                 table.HasCheckConstraint(
                     "chk_contact_msme",
-                    "\"IsMsme\" = false OR \"UdyamNumber\" IS NOT NULL");
+                    "\"IsDraft\" = true OR \"IsMsme\" = false OR \"UdyamNumber\" IS NOT NULL");
 
                 table.HasCheckConstraint(
                     "chk_contact_limits",
@@ -124,7 +126,7 @@ public class ContactsDbContext : TenantDbContext
                 // Getting this wrong misfiles the contact in GSTR-1.
                 table.HasCheckConstraint(
                     "chk_contact_gstin_registration",
-                    "(\"GstRegistrationType\" IN ('Regular', 'Composition', 'Sez') "
+                    "\"IsDraft\" = true OR (\"GstRegistrationType\" IN ('Regular', 'Composition', 'Sez') "
                         + "AND \"Gstin\" IS NOT NULL) "
                         + "OR (\"GstRegistrationType\" IN ('Unregistered', 'Overseas', 'Consumer') "
                         + "AND \"Gstin\" IS NULL)");
@@ -134,15 +136,21 @@ public class ContactsDbContext : TenantDbContext
         modelBuilder.Entity<ContactAddress>(b =>
         {
             b.HasKey(e => e.ContactAddressId);
-            b.HasIndex(e => new { e.OrgId, e.ContactId, e.AddressType });
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
 
-            // One default billing and one default shipping per contact.
-            b.HasIndex(e => new { e.OrgId, e.ContactId, e.AddressType })
+            // One default billing and one default shipping per contact; one
+            // address may be both (TK-188). Named in HasIndex itself: an index
+            // on the same columns without a name is the one above, configured
+            // again, rather than a second index.
+            b.HasIndex(e => new { e.OrgId, e.ContactId }, "IX_ContactAddresses_DefaultBilling")
                 .IsUnique()
-                .HasFilter("\"IsDefault\" = true")
-                .HasDatabaseName("IX_ContactAddresses_Default");
+                .HasFilter("\"IsDefaultBilling\" = true");
 
-            b.Property(e => e.AddressType).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.OrgId, e.ContactId }, "IX_ContactAddresses_DefaultShipping")
+                .IsUnique()
+                .HasFilter("\"IsDefaultShipping\" = true");
+
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
 
             b.HasOne<Contact>()
                 .WithMany()
@@ -175,6 +183,14 @@ public class ContactsDbContext : TenantDbContext
                 .WithMany()
                 .HasForeignKey(e => e.ContactId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // The address a person is the one to ask for at (TK-188). Removing
+            // the address leaves the person with the contact, not deleted.
+            b.HasIndex(e => e.ContactAddressId);
+            b.HasOne<ContactAddress>()
+                .WithMany()
+                .HasForeignKey(e => e.ContactAddressId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Restrict, not cascade: deleting a role must not silently delete
             // the people who hold it.

@@ -92,7 +92,9 @@ public sealed class InternalContactLookupController : ControllerBase
                 IsCustomer = c.IsCustomer,
                 IsVendor = c.IsVendor,
                 IsGuardian = c.IsGuardian,
-                IsActive = c.IsActive,
+                // A draft (TK-188) is not yet a contact a document may name,
+                // so callers that refuse an inactive contact refuse it too.
+                IsActive = c.IsActive && !c.IsDraft,
                 IsMsme = c.IsMsme,
                 UdyamNumber = c.UdyamNumber,
             })
@@ -201,7 +203,7 @@ public sealed class InternalContactLookupController : ControllerBase
 
         var db = _services.GetRequiredService<ContactsDbContext>();
         long? existing = await db.Contacts
-            .Where(c => c.IsGuardian && c.IsActive
+            .Where(c => c.IsGuardian && c.IsActive && !c.IsDraft
                 && db.ContactPersons.Any(p => p.ContactId == c.ContactId && p.IsActive && p.MobileNumber == mobile))
             .OrderBy(c => c.ContactId)
             .Select(c => (long?)c.ContactId)
@@ -228,9 +230,10 @@ public sealed class InternalContactLookupController : ControllerBase
     /// <summary>
     /// Each contact's legal name and billing address as fields (TK-91): the IRP's
     /// buyer block needs a PIN and a state code, which a document's printed
-    /// address does not hold separately. The default active billing address is
-    /// taken, then any active billing address, then any active address. The state
-    /// code is the address's own, else the contact's place of supply.
+    /// address does not hold separately. The default billing address is taken,
+    /// else the first active address (TK-188: an address has a kind now, not a
+    /// billing/shipping type). The state code is the address's own, else the
+    /// contact's place of supply.
     /// </summary>
     [HttpPost("addresses")]
     public async Task<IActionResult> Addresses([FromBody] ContactLookupRequest request, CancellationToken ct)
@@ -262,10 +265,26 @@ public sealed class InternalContactLookupController : ControllerBase
                 c.GstRegistrationType,
                 Address = db.ContactAddresses
                     .Where(a => a.ContactId == c.ContactId && a.IsActive)
-                    .OrderBy(a => a.AddressType == Master.Entity.Enums.AddressType.Billing ? 0 : 1)
-                    .ThenBy(a => a.IsDefault ? 0 : 1)
+                    .OrderBy(a => a.IsDefaultBilling ? 0 : 1)
                     .ThenBy(a => a.ContactAddressId)
-                    .Select(a => new { a.AddressLine1, a.AddressLine2, a.City, a.PostalCode, a.StateId, a.Gstin, a.PhoneNumber, a.MobileNumber })
+                    .Select(a => new
+                    {
+                        a.AddressLine1,
+                        a.AddressLine2,
+                        a.City,
+                        a.PostalCode,
+                        a.StateId,
+                        a.Gstin,
+                        // The person to ask for at this address (TK-188), else
+                        // the contact's default person.
+                        Phone = db.ContactPersons
+                            .Where(p => p.ContactId == c.ContactId && p.IsActive
+                                && (p.ContactAddressId == a.ContactAddressId || p.IsDefault)
+                                && (p.MobileNumber != null || p.PhoneNumber != null))
+                            .OrderBy(p => p.ContactAddressId == a.ContactAddressId ? 0 : 1)
+                            .Select(p => p.MobileNumber ?? p.PhoneNumber)
+                            .FirstOrDefault(),
+                    })
                     .FirstOrDefault(),
             })
             .ToListAsync(ct);
@@ -285,7 +304,7 @@ public sealed class InternalContactLookupController : ControllerBase
                 City = c.Address?.City,
                 PostalCode = c.Address?.PostalCode,
                 StateCode = stateId is int id ? await states.GetStateCodeAsync(id, ct) : null,
-                PhoneNumber = c.Address?.MobileNumber ?? c.Address?.PhoneNumber,
+                PhoneNumber = c.Address?.Phone,
                 RegistrationType = c.GstRegistrationType.ToString(),
             });
         }

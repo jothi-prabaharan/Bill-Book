@@ -40,6 +40,9 @@ public class ContactListItem
 
     public bool IsActive { get; set; }
 
+    /// <summary>Saved to finish later; in no picker until it is saved (TK-188).</summary>
+    public bool IsDraft { get; set; }
+
     /// <summary>From the default contact person — the contact itself stores neither.</summary>
     public string? Email { get; set; }
 
@@ -110,10 +113,15 @@ public class ContactAddressModel
     /// <summary>Zero on a row being added.</summary>
     public long ContactAddressId { get; set; }
 
-    [Required(ErrorMessage = "Address type is required.")]
-    public string AddressType { get; set; } = "Billing";
+    /// <summary>RegisteredOffice, Warehouse, Branch or Other (TK-188).</summary>
+    [Required(ErrorMessage = "Address kind is required.")]
+    public string Kind { get; set; } = "RegisteredOffice";
 
-    public bool IsDefault { get; set; }
+    /// <summary>Where documents bill this contact; one per contact.</summary>
+    public bool IsDefaultBilling { get; set; }
+
+    /// <summary>Where documents deliver, and so the place of supply for goods; one per contact.</summary>
+    public bool IsDefaultShipping { get; set; }
 
     [MaxLength(50, ErrorMessage = "Label cannot exceed 50 characters.")]
     public string? Label { get; set; }
@@ -142,15 +150,6 @@ public class ContactAddressModel
     [MaxLength(15, ErrorMessage = "GSTIN must be 15 characters.")]
     public string? Gstin { get; set; }
 
-    [MaxLength(100, ErrorMessage = "Contact person cannot exceed 100 characters.")]
-    public string? ContactPersonName { get; set; }
-
-    [MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters.")]
-    public string? PhoneNumber { get; set; }
-
-    [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
-    public string? MobileNumber { get; set; }
-
     public bool IsActive { get; set; } = true;
 }
 
@@ -163,6 +162,20 @@ public class ContactPersonModel
 
     /// <summary>Read-only, filled on the way out so the grid need not join.</summary>
     public string? RoleName { get; set; }
+
+    /// <summary>
+    /// The address this person is the one to ask for at (TK-188), by id: an
+    /// address the contact already has. Null for a person of the whole contact.
+    /// </summary>
+    public long? ContactAddressId { get; set; }
+
+    /// <summary>
+    /// The same, by position in the request's <c>Addresses</c>, for an address
+    /// added in this save and so without an id yet. Wins over the id when both
+    /// are given. Never returned.
+    /// </summary>
+    [Range(0, 99, ErrorMessage = "Address index must be between 0 and 99.")]
+    public int? AddressIndex { get; set; }
 
     [MaxLength(10, ErrorMessage = "Salutation cannot exceed 10 characters.")]
     public string? Salutation { get; set; }
@@ -285,7 +298,7 @@ public class SaveContactRequest
     [MaxLength(20, ErrorMessage = "Udyam number cannot exceed 20 characters.")]
     public string? UdyamNumber { get; set; }
 
-    [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
+    [MaxLength(4000, ErrorMessage = "Notes cannot exceed 4000 characters.")]
     public string? Notes { get; set; }
 
     /// <summary>
@@ -295,6 +308,13 @@ public class SaveContactRequest
     public Dictionary<string, System.Text.Json.JsonElement>? CustomFields { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Save as a draft (TK-188): only a display name and a role are checked,
+    /// and the contact stays out of every picker until a save without it. A
+    /// saved contact cannot be returned to draft.
+    /// </summary>
+    public bool IsDraft { get; set; }
 
     public List<ContactAddressModel> Addresses { get; set; } = [];
 
@@ -344,6 +364,15 @@ public enum SaveContactOutcome
 
     /// <summary>The TDS section is not one of the branch's TDS sections (TK-117).</summary>
     TdsSectionUnknown = 22,
+
+    /// <summary>A saved contact sent back as a draft (TK-188): documents may already name it.</summary>
+    CannotReturnToDraft = 23,
+
+    /// <summary>A contact person linked to an address the request does not hold (TK-188).</summary>
+    UnknownAddressLink = 24,
+
+    /// <summary>Linking the sub-ledger of a draft, which gets it when it is saved (TK-188).</summary>
+    StillDraft = 25,
 }
 
 public sealed record SaveContactResult(SaveContactOutcome Outcome, long? ContactId, string? ContactCode, string? Detail = null);

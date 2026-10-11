@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Master.Entity.Enums;
 using Shared.Kernel.Tenancy;
-using Shared.Kernel.Validation;
 
 namespace Master.Entity.TableEntities;
 
@@ -17,10 +16,20 @@ public class ContactAddress : OrgScopedEntity
 
     public long ContactId { get; set; }
 
-    public AddressType AddressType { get; set; } = AddressType.Billing;
+    /// <summary>What the address is: registered office, warehouse, branch (TK-188).</summary>
+    public AddressKind Kind { get; set; } = AddressKind.RegisteredOffice;
 
-    /// <summary>One default per contact and type, enforced by a filtered unique index.</summary>
-    public bool IsDefault { get; set; }
+    /// <summary>
+    /// Where documents bill this contact. One per contact, enforced by a
+    /// filtered unique index; it may be the default shipping address too.
+    /// </summary>
+    public bool IsDefaultBilling { get; set; }
+
+    /// <summary>
+    /// Where documents deliver to this contact, and so, for goods, the place of
+    /// supply. One per contact, enforced by a filtered unique index.
+    /// </summary>
+    public bool IsDefaultShipping { get; set; }
 
     [MaxLength(50, ErrorMessage = "Label cannot exceed 50 characters.")]
     public string? Label { get; set; }
@@ -52,17 +61,8 @@ public class ContactAddress : OrgScopedEntity
     [MaxLength(15, ErrorMessage = "GSTIN must be 15 characters.")]
     public string? Gstin { get; set; }
 
-    /// <summary>Who receives the delivery at this site.</summary>
-    [MaxLength(100, ErrorMessage = "Contact person cannot exceed 100 characters.")]
-    public string? ContactPersonName { get; set; }
-
-    [MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters.")]
-    [Landline]
-    public string? PhoneNumber { get; set; }
-
-    [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
-    [Mobile]
-    public string? MobileNumber { get; set; }
+    // Who to ask for at this address is a ContactPerson whose ContactAddressId
+    // names it (TK-188), so a name, role, phone and email live in one place.
 
     public bool IsActive { get; set; } = true;
 }
