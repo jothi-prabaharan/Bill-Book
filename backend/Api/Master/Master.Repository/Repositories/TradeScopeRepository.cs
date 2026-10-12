@@ -50,7 +50,7 @@ public static class TradeScopeRepository
         Dictionary<string, Vertical[]> trades = new(StringComparer.OrdinalIgnoreCase)
         {
             // Settings › Metal purity: the jewellery trade's karat and fineness table.
-            ["mtp"] = RetailAndJewellery,
+            ["mtp"] = [Vertical.Jewellery],
         };
 
         foreach (string code in StockOnlyMenus)

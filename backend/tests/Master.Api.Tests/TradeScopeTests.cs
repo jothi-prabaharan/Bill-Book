@@ -18,12 +18,12 @@ namespace Master.Api.Tests;
 public sealed class TradeScopeTests
 {
     [Theory]
-    [InlineData(Vertical.Retail, true)]
+    [InlineData(Vertical.Retail, false)]
     [InlineData(Vertical.Jewellery, true)]
     [InlineData(Vertical.Pharma, false)]
     [InlineData(Vertical.Service, false)]
     [InlineData(Vertical.Restaurant, false)]
-    public void Metal_purity_is_shown_to_retail_and_jewellery_branches_only(Vertical trade, bool shown)
+    public void Metal_purity_is_shown_to_jewellery_branches_only(Vertical trade, bool shown)
     {
         Assert.Equal(shown, TradeScopeRepository.ShowsMenu("mtp", trade));
     }

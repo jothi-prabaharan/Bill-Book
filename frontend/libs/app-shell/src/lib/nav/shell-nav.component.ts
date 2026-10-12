@@ -37,7 +37,7 @@ export class ShellNavComponent {
   private readonly session = inject(SessionContextService);
   private readonly menuService = inject(MenuService);
   private readonly router = inject(Router);
-  private readonly elementRef = inject(ElementRef);
+  private readonly elementRef = inject(ElementRef, { optional: true });
   protected readonly navigation = inject(ShellNavigationService);
   protected readonly pwa = inject(PwaInstallService);
 
@@ -145,7 +145,7 @@ export class ShellNavComponent {
   @HostListener('document:pointerdown', ['$event.target'])
   onPointerDownOutside(target: EventTarget | null): void {
     if (!this.profileOpen()) return;
-    const account = (this.elementRef.nativeElement as HTMLElement).querySelector('.rail-account');
+    const account = (this.elementRef?.nativeElement as HTMLElement | undefined)?.querySelector?.('.rail-account');
     if (target instanceof Node && account?.contains(target)) return;
     this.profileOpen.set(false);
   }

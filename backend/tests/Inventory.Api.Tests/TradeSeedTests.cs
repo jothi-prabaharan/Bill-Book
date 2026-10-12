@@ -49,26 +49,27 @@ public sealed class TradeSeedTests
     }
 
     [SkippableFact]
-    public async Task A_retail_branch_is_seeded_with_purities()
+    public async Task A_jewellery_branch_is_seeded_with_purities_and_retail_is_not()
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
 
         Guid orgId = Guid.NewGuid();
         await using InventoryDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
 
-        Assert.True(await new MetalPurityRepository(db).SeedForOrganizationAsync(orgId, "Retail", default) > 0);
+        Assert.Equal(0, await new MetalPurityRepository(db).SeedForOrganizationAsync(orgId, "Retail", default));
+        Assert.True(await new MetalPurityRepository(db).SeedForOrganizationAsync(orgId, "Jewellery", default) > 0);
     }
 
     [Theory]
-    [InlineData("Retail", true)]
-    [InlineData("General", true)] // what Retail was called before TK-136
+    [InlineData("Retail", false)]
+    [InlineData("General", false)]
     [InlineData("jewellery", true)]
     [InlineData("Pharma", false)]
     [InlineData("School", false)]
     [InlineData("Service", false)]
     [InlineData("Restaurant", false)]
     [InlineData(null, false)]
-    public void Only_retail_and_jewellery_are_seeded_with_purities(string? vertical, bool seeds) =>
+    public void Only_jewellery_is_seeded_with_purities(string? vertical, bool seeds) =>
         Assert.Equal(seeds, MetalPurityRepository.SeedsPurities(vertical));
 
     /// <summary>

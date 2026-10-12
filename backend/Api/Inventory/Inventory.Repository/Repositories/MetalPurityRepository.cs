@@ -173,17 +173,12 @@ public sealed class MetalPurityRepository
     }
 
     /// <summary>
-    /// The trades a branch is seeded with metal purities for: Retail, the
-    /// everything branch, and Jewellery (D-10, TK-30), plus <c>General</c>, which
-    /// is what Retail was called before TK-136. The same two trades see
-    /// Settings › Metal purity. A chemist, a school, a service business or a
-    /// restaurant prices nothing in karats, so the rows would only clutter.
+    /// The trades a branch is seeded with metal purities for: Jewellery only (D-10, TK-30, D-65).
+    /// Settings › Metal purity is shown only to jewellery.
     /// </summary>
     public static bool SeedsPurities(string? vertical) =>
         vertical is not null
-        && (vertical.Equals("Retail", StringComparison.OrdinalIgnoreCase)
-            || vertical.Equals("General", StringComparison.OrdinalIgnoreCase)
-            || vertical.Equals("Jewellery", StringComparison.OrdinalIgnoreCase));
+        && vertical.Equals("Jewellery", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Writes the standard purities for an organization, adding only what is

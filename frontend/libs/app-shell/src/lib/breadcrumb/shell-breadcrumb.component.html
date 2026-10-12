@@ -45,9 +45,6 @@
     <ng-content select="[bbShellActions], .acts" />
 
     @if (isHome()) {
-      <button class="btn btn-ghost" type="button" (click)="onToggleBase()" [attr.aria-pressed]="base()">
-        <span class="knob" aria-hidden="true"></span>{{ baseLabel() }}
-      </button>
       @if (notEditing()) {
         @if (auth.has('platform.view')) {
           <a class="btn btn-ghost" routerLink="/admin">Admin portal</a>
@@ -58,9 +55,5 @@
         <button class="btn btn-secondary" type="button" (click)="onStopEdit()">Done</button>
       }
     }
-
-    
   </div>
 </nav>
-
-

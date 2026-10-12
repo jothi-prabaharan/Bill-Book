@@ -110,7 +110,7 @@ export class ShellTopbarComponent {
    * `app.routes.ts` — a tile that leads nowhere is worse than no tile.
    */
   readonly newGroups = computed<readonly DocGroup[]>(() => {
-    return this.menuService.tree()
+    const fromMenu = this.menuService.tree()
       .map((menu) => {
         const docs = menu.groups
           .flatMap((g) => g.subMenus)
@@ -124,6 +124,8 @@ export class ShellTopbarComponent {
         return { name: menu.name, docs };
       })
       .filter((g) => g.docs.length > 0);
+
+    return fromMenu.length > 0 ? fromMenu : DEFAULT_DOC_GROUPS;
   });
 
   readonly currentOrgId = computed(() => readOrgId());
@@ -442,3 +444,33 @@ function readOrgId(): string | null {
     return null;
   }
 }
+
+const DEFAULT_DOC_GROUPS: readonly DocGroup[] = [
+  {
+    name: 'Sales',
+    docs: [
+      { label: 'Invoice', code: 'INV', path: '/sales/invoices/new' },
+      { label: 'Sales order', code: 'SOR', path: '/sales/sales-orders/new' },
+      { label: 'Quote', code: 'QOT', path: '/sales/quotes/new' },
+      { label: 'Delivery challan', code: 'DLC', path: '/sales/delivery-challans/new' },
+      { label: 'Credit note', code: 'CRN', path: '/sales/credit-notes/new' },
+    ],
+  },
+  {
+    name: 'Purchase',
+    docs: [
+      { label: 'Bill', code: 'BIL', path: '/purchase/bills/new' },
+      { label: 'Purchase order', code: 'POR', path: '/purchase/purchase-orders/new' },
+      { label: 'Goods receipt', code: 'GRN', path: '/purchase/goods-receipts/new' },
+      { label: 'Debit note', code: 'DBN', path: '/purchase/debit-notes/new' },
+    ],
+  },
+  {
+    name: 'Banking',
+    docs: [
+      { label: 'Receive money', code: 'REC', path: '/banking/receive-money' },
+      { label: 'Spend money', code: 'PAY', path: '/banking/spend-money' },
+      { label: 'Transfer money', code: 'TRF', path: '/banking/transfer-money' },
+    ],
+  },
+];
