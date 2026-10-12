@@ -18,22 +18,25 @@ import {
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
   BbSelectOption,
   BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
-  ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
   ScanComponent,
   addScannedItem,
   LookupRow,
-  MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
   TextareaComponent,
   TextInputComponent,
+  CheckboxComponent,
   totalsOf,
   UiMessage,
   ProjectOption,
@@ -76,6 +79,10 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
   selector: 'bb-delivery-challan-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
     DocumentCustomFieldsComponent,
     FormFieldComponent,
     LookupDialogComponent,
@@ -84,13 +91,12 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
     ReactiveFormsModule,
     RouterModule,
     DocumentLineGridComponent,
-    MessageBoxComponent,
     BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
+    CheckboxComponent,
     NumberInputComponent,
     SelectComponent,
-    ExchangeRateInputComponent,
     EwayBillPanel,
   ],
   templateUrl: './delivery-challan-form.component.html',
@@ -99,6 +105,13 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
 export class DeliveryChallanFormComponent implements OnInit {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
+
+  protected copyBillingToShipping(event?: Event | boolean): void {
+    const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
+    if (checked) {
+      this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
+    }
+  }
 
   private readonly fb = inject(FormBuilder);
   private readonly challans = inject(DeliveryChallanService);
@@ -511,7 +524,7 @@ export class DeliveryChallanFormComponent implements OnInit {
    * Which tax columns to draw. The challan's own `IsInterState` is decided on
    * the server against the branch's real state; this only picks the columns.
    */
-  private looksInterState(): boolean {
+  protected looksInterState(): boolean {
     const value = this.formValue();
     const stated = value.placeOfSupplyStateCode ?? '';
     const gstin = value.contactGstin ?? '';

@@ -4,11 +4,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { QuoteService, SalesLookupService, SaveQuoteRequest, blankGridLine } from '@bill-book/sales-core';
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
   BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
-  ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
   ScanComponent,
@@ -16,6 +19,7 @@ import {
   LookupRow,
   TextareaComponent,
   TextInputComponent,
+  CheckboxComponent,
   totalsOf,
   ProjectOption,
   ProjectOptionsService,
@@ -31,6 +35,10 @@ import { SalesPicker } from '../sales-picker';
   selector: 'bb-quote-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
     DocumentCustomFieldsComponent,
     CommonModule,
     ReactiveFormsModule,
@@ -38,11 +46,11 @@ import { SalesPicker } from '../sales-picker';
     RouterModule,
     TextInputComponent,
     TextareaComponent,
+    CheckboxComponent,
     BranchDateInputComponent,
     FormFieldComponent,
     LookupDialogComponent,
     ScanComponent,
-    ExchangeRateInputComponent,
   ],
   templateUrl: './quote-form.component.html',
   styleUrls: ['./quote-form.component.scss']
@@ -50,6 +58,20 @@ import { SalesPicker } from '../sales-picker';
 export class QuoteFormComponent implements OnInit {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
+  protected readonly documentNo = signal<string | null>(null);
+  protected readonly saving = signal<boolean>(false);
+
+  protected looksInterState(): boolean {
+    const pos = this.form.controls.placeOfSupplyStateCode.value;
+    return !!pos && pos !== '33';
+  }
+
+  protected copyBillingToShipping(event?: Event | boolean): void {
+    const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
+    if (checked) {
+      this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
+    }
+  }
 
   private fb = inject(FormBuilder);
   private quoteService = inject(QuoteService);
@@ -122,6 +144,7 @@ export class QuoteFormComponent implements OnInit {
   loadQuote() {
     if (!this.quoteId) return;
     this.quoteService.get(this.quoteId).subscribe(q => {
+      this.documentNo.set((q as any).documentNo ?? (q as any).quoteNumber ?? null);
       this.contactLabel.set(SalesPicker.savedLabel(null, q.contactName, q.contactId));
       this.form.patchValue({
         documentDate: q.documentDate,

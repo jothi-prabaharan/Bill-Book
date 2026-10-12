@@ -1,144 +1,227 @@
-<div class="page">
-  <header class="page__header">
-    <div>
-      <h1>
-        @if (isNew()) {
-          New debit note
-        } @else {
-          {{ documentNo() }}
-        }
-      </h1>
-      @if (!isNew()) {
-        <p class="page__pills">
-          <span class="pill">{{ status() }}</span>
-          <span class="pill">{{ reasonCode() }}</span>
-        </p>
+<bb-create-page
+  [primaryLabel]="isNew() ? 'Save draft' : 'Save'"
+  [canDraft]="canDraft()"
+  [busy]="saving()"
+  [messages]="messages()"
+  (save)="save()"
+  (saveDraft)="save()"
+>
+  <div createActions class="child-actions m-0">
+    @if (!isNew()) {
+      @if (canPost()) {
+        <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="post()">
+          Post the debit note
+        </button>
       }
-    </div>
-    <a class="btn" routerLink="..">Back to list</a>
-  </header>
-
-  @if (error(); as failure) {
-    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
-  }
-  @if (notice(); as note) {
-    <bb-message-box [messages]="[{ tone: 'success', text: note }]" />
-  }
+      @if (!readonlyDoc()) {
+        <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="voidOpen.set(!voidOpen())">
+          Void
+        </button>
+      }
+    }
+  </div>
 
   @if (readonlyDoc()) {
     <bb-message-box tone="info">
-      This debit note has been posted.
-      @if (movesStock()) {
-        The goods have gone back, so it cannot be undone &mdash; receive them
-        again on a new goods receipt if the vendor returns them.
+      @if (status() === 'Void') {
+        This debit note has been voided. Its number stays on record; raise a new one.
+      } @else {
+        This debit note has been posted.
+        @if (movesStock()) {
+          The goods have gone back, so it cannot be undone &mdash; receive them
+          again on a new goods receipt if the vendor returns them.
+        } @else {
+          The vendor is owed less; the goods stayed on the shelf.
+        }
       }
     </bb-message-box>
+  } @else {
+    @if (movesStock()) {
+      <bb-message-box tone="warning">
+        <strong>This reason sends the goods back.</strong> Posting removes the
+        quantities below from stock. Once posted it cannot be undone.
+      </bb-message-box>
+    } @else {
+      <bb-message-box tone="info">
+        <strong>This reason moves money only.</strong> The goods stay on the
+        shelf; what changes is what the vendor is owed and the input tax claimed.
+      </bb-message-box>
+    }
   }
 
-  @if (loading()) {
-    <p class="state">Loading&hellip;</p>
-  } @else {
-    <section class="card">
-      <h2 class="card__title">What is being corrected</h2>
-
-      <div class="grid">
-        <div class="field">
-          <span class="field__label">Vendor</span>
-          <button
-            type="button"
-            class="picker"
-            [disabled]="readonlyDoc()"
-            (click)="openVendorPicker()"
-          >
-            {{ contactLabel() || 'Choose a vendor' }}
-          </button>
-        </div>
+  <div class="create-stack">
+    <!-- Card 1: Document -->
+    <div class="card">
+      <div class="card-kicker">Document</div>
+      <div class="form-grid">
+        <bb-number-field
+          [number]="documentNo() || ''"
+          module="purchase"
+          series="DBN"
+          [date]="documentDate()"
+        />
 
         <div class="field">
-          <span class="field__label">Against bill</span>
-          <button
-            type="button"
-            class="picker"
-            [disabled]="readonlyDoc()"
-            (click)="openBillPicker()"
-          >
-            {{ billLabel() || 'Choose the bill this corrects' }}
-          </button>
-          <span class="field__hint">
-            Required. GST wants a debit note to name the document it corrects,
-            and returning stock needs the bill line to find the cost layer it
-            arrived on.
-          </span>
-        </div>
-
-        <label class="field">
-          <span class="field__label">Date</span>
           <bb-branch-date-input
-            
-            class="input"
+            id="dbn-date"
+            label="Debit note date"
+            [required]="true"
             [disabled]="readonlyDoc()"
             [ngModel]="documentDate()"
             (ngModelChange)="documentDate.set($event)"
-            name="documentDate"
           />
-        </label>
+        </div>
 
         <div class="field">
           <bb-select
+            id="dbn-reason"
             label="Reason"
             placeholder=""
             [hint]="reasonHint()"
             [options]="reasonOptions"
-            name="reasonCode"
             [disabled]="readonlyDoc()"
             [ngModel]="reasonCode()"
             (ngModelChange)="reasonCode.set($event)"
           />
         </div>
 
-        <label class="field">
-          <span class="field__label">Place of supply</span>
+        <div class="field">
+          <bb-form-field
+            label="Vendor"
+            controlId="dbn-vendor"
+            [required]="true"
+          >
+            <button
+              id="dbn-vendor"
+              type="button"
+              class="input picker"
+              [disabled]="readonlyDoc()"
+              (click)="openVendorPicker()"
+            >
+              {{ contactLabel() || 'Choose a vendor' }}
+            </button>
+          </bb-form-field>
+        </div>
+
+        <div class="field">
+          <bb-form-field
+            label="Against bill"
+            controlId="dbn-bill"
+            [required]="true"
+            hint="The posted bill this corrects."
+          >
+            <button
+              id="dbn-bill"
+              type="button"
+              class="input picker"
+              [disabled]="readonlyDoc()"
+              (click)="openBillPicker()"
+            >
+              {{ billLabel() || 'Choose the bill this corrects' }}
+            </button>
+          </bb-form-field>
+        </div>
+
+        <div class="field">
           <bb-text-input
-            
-            class="input"
+            id="dbn-currency"
+            label="Currency"
+            maxlength="3"
+            [uppercase]="true"
+            [disabled]="readonlyDoc()"
+            [ngModel]="currencyCode()"
+            (ngModelChange)="currencyCode.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <bb-exchange-rate-field
+            [currency]="currencyCode()"
+            [date]="documentDate()"
+            [locked]="!isNew()"
+            [(rate)]="exchangeRate"
+          />
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="dbn-pos"
+            label="Place of supply"
             maxlength="2"
+            placeholder="33"
+            hint="Leave blank to follow vendor's GSTIN."
             [disabled]="readonlyDoc()"
             [ngModel]="placeOfSupplyStateCode()"
             (ngModelChange)="placeOfSupplyStateCode.set($event)"
-            name="placeOfSupplyStateCode"
-            placeholder="2-digit state code"
           />
-        </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Row: Address Details -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Vendor details</div>
+        <div class="field">
+          <bb-text-input
+            id="dbn-gstin"
+            label="Vendor GSTIN"
+            maxlength="15"
+            [uppercase]="true"
+            [disabled]="readonlyDoc()"
+            [ngModel]="contactGstin()"
+            (ngModelChange)="contactGstin.set($event)"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea
+            id="dbn-billing"
+            label="Billing address"
+            rows="3"
+            [disabled]="readonlyDoc()"
+            [ngModel]="billingAddress()"
+            (ngModelChange)="billingAddress.set($event)"
+          />
+        </div>
+        <div class="card-meta">
+          {{ isInterState() ? 'Inter-state IGST' : 'Intra-state CGST + SGST' }}
+        </div>
       </div>
 
-      @if (movesStock()) {
-        <bb-message-box tone="warning">
-          <strong>This reason sends the goods back.</strong> Posting removes the
-          quantities below from stock, at what the layers they came from were
-          carrying. Once posted it cannot be undone.
-        </bb-message-box>
-      } @else {
-        <bb-message-box tone="info">
-          <strong>This reason moves money only.</strong> The goods stay on the
-          shelf; what changes is what the vendor is owed and the input tax
-          claimed.
-        </bb-message-box>
-      }
-    </section>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="card-kicker" style="margin-bottom:0">Deliver to</div>
+          <bb-checkbox text="Same as vendor" [disabled]="readonlyDoc()" (change)="copyBillingToShipping()" />
+        </div>
+        <div class="field">
+          <bb-textarea
+            id="dbn-shipping"
+            label="Shipping address"
+            rows="3"
+            [disabled]="readonlyDoc()"
+            [ngModel]="shippingAddress()"
+            (ngModelChange)="shippingAddress.set($event)"
+          />
+        </div>
+        <div class="card-meta">Destination address for returned goods</div>
+      </div>
+    </div>
 
-    <section class="card">
-      <div class="card__header">
-        <h2 class="card__title">
-          @if (movesStock()) {
-            What is going back
-          } @else {
-            What is being credited
-          }
-        </h2>
+    <!-- Card 3: Items -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)">
+        <div class="card-kicker" style="margin-bottom:0">
+          {{ movesStock() ? 'What is going back' : 'What is being credited' }}
+        </div>
         @if (lines().length > 0 && !readonlyDoc()) {
-          <button type="button" class="btn btn-secondary" (click)="returnAll()">
-            Take everything outstanding
-          </button>
+          <div style="display:flex;gap:var(--space-2)">
+            <button type="button" class="btn btn-secondary m-0" (click)="returnAll()">
+              Take everything outstanding
+            </button>
+            <button type="button" class="btn btn-secondary m-0" (click)="zeroAll()">
+              Set all to zero
+            </button>
+          </div>
         }
       </div>
 
@@ -146,7 +229,7 @@
         <p class="state">Choose a bill above to see what can be corrected.</p>
       } @else {
         @if (!readonlyDoc()) {
-          <div class="dbn-form__scan">
+          <div style="margin-bottom: var(--space-2); max-width: 420px">
             <bb-scan
               label="Scan"
               placeholder="Scan an item going back"
@@ -156,7 +239,8 @@
             />
           </div>
         }
-                <bb-data-grid fillHeight [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
+
+        <bb-data-grid fillHeight [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
           <ng-template bbCellTemplate="label" let-row="row">
             {{ row.label }}
           </ng-template>
@@ -181,79 +265,111 @@
             {{ row.quantity * row.unitPrice | number: '1.2-2' }}
           </ng-template>
         </bb-data-grid>
-        <div class="flex justify-between p-3 bg-surface border-t border-divider font-bold">
-          <span class="num">Before tax</span>
-          <span class="num total">{{ total() | number: '1.2-2' }}</span>
-        </div>
 
-        <p class="field__hint">
+        <p class="field__hint" style="margin-top: var(--space-2)">
           Prices come from the bill and cannot be changed &mdash; a credit has to
           match what was charged. Tax is worked out by the server and reversed
           against the same rates the bill claimed.
         </p>
       }
-    </section>
+    </div>
 
-    <section class="card">
-      <h2 class="card__title">Notes</h2>
-      <div class="field field--wide">
-        <bb-textarea
-          label="Notes"
-          rows="2"
-          [disabled]="readonlyDoc()"
-          [ngModel]="notes_()"
-          (ngModelChange)="notes_.set($event)"
-          name="notes"
-        />
+    <!-- Card Row: Notes & Totals -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Notes</div>
+        <div class="field">
+          <bb-textarea
+            id="dbn-notes"
+            label="Notes"
+            rows="3"
+            placeholder="Prints on the document"
+            [disabled]="readonlyDoc()"
+            [ngModel]="notes_()"
+            (ngModelChange)="notes_.set($event)"
+          />
+        </div>
+      </div>
+
+      <div class="card" style="width:min(340px,100%);flex:none">
+        <div class="card-kicker">Totals</div>
+        <div style="display:grid;gap:6px;margin-top:var(--space-2);font-size:13px;font-variant-numeric:tabular-nums">
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Sub total (before tax)</span>
+            <span>{{ total() | number: '1.2-2' }}</span>
+          </div>
+          <div style="height:1px;background:var(--color-divider);margin:var(--space-1) 0"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span>Total</span>
+            <span style="font-family:var(--font-heading);font-size:22px;color:var(--color-accent)">
+              ₹{{ total() | number: '1.2-2' }}
+            </span>
+          </div>
+        </div>
+        <div class="card-meta">
+          {{ isInterState() ? 'Inter-state IGST applicable' : 'Intra-state CGST & SGST applicable' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- More Details Card -->
+    <bb-more-details title="More details" summary="Approvals, custom fields, and void reason">
+      <div class="field" style="margin-bottom: var(--space-3)">
         <bb-document-custom-fields source="/api/purchase/custom-fields?kind=DebitNote" [(value)]="customValues" [isNew]="debitNoteId() === null" />
       </div>
-    </section>
-
-    @if (!readonlyDoc()) {
-      <footer class="actions">
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving()"
-          (click)="save()"
-        >
-          {{ saving() ? 'Saving…' : 'Save draft' }}
-        </button>
-
-        @if (!isNew()) {
-          <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
-            Post the debit note
-          </button>
-          <span class="actions__hint">
-            Posting debits Accounts Payable, credits Purchase Returns and
-            reverses the input tax.
-          </span>
-        }
-      </footer>
 
       @if (debitNoteId(); as id) {
-        <!-- The document's approval chain, when a workflow covers it (TK-100). -->
-        <bb-approval-panel
-          [basePath]="'/api/purchase/debit-notes/' + id"
-          [documentStatus]="status()"
-          (changed)="load(id)"
-        />
+        <div class="field" style="margin-bottom: var(--space-3)">
+          <bb-approval-panel
+            [basePath]="'/api/purchase/debit-notes/' + id"
+            [documentStatus]="status()"
+            (changed)="load(id)"
+          />
+        </div>
       }
-    }
-  }
 
-  <bb-lookup-dialog
-    [open]="picker() !== 'none'"
-    [title]="pickerTitle()"
-    [placeholder]="pickerPlaceholder()"
-    [emptyText]="pickerEmptyText()"
-    [rows]="pickerRows()"
-    [loading]="pickerLoading()"
-    (searchChange)="onPickerSearch($event)"
-    (choose)="onPickerChoose($event)"
-    (dismiss)="closePicker()"
-  />
-</div>
+      @if (voidOpen()) {
+        <div class="card" style="border-color:var(--color-danger);margin-top:var(--space-3)">
+          <div class="card-kicker" style="color:var(--color-danger)">Void this debit note</div>
+          <p class="card-meta" style="margin-top:0;margin-bottom:var(--space-2)">
+            The debit note and its number stay on record. The reason is required.
+          </p>
+          <div class="field">
+            <bb-textarea
+              id="dbn-void-reason"
+              label="Reason for voiding"
+              rows="2"
+              [ngModel]="voidReason()"
+              (ngModelChange)="voidReason.set($event)"
+            />
+          </div>
+          <div style="margin-top:var(--space-2);display:flex;gap:var(--space-2)">
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="saving() || !voidReason().trim()"
+              (click)="voidDebitNote()"
+            >
+              Confirm void
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="voidOpen.set(false)">
+              Cancel
+            </button>
+          </div>
+        </div>
+      }
+    </bb-more-details>
+  </div>
+</bb-create-page>
 
-
-
+<bb-lookup-dialog
+  [open]="picker() !== 'none'"
+  [title]="pickerTitle()"
+  [placeholder]="pickerPlaceholder()"
+  [emptyText]="pickerEmptyText()"
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="onPickerSearch($event)"
+  (choose)="onPickerChoose($event)"
+  (dismiss)="closePicker()"
+/>

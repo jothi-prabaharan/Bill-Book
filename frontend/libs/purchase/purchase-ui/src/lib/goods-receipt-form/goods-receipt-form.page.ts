@@ -6,6 +6,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
+  FormFieldComponent,
   ScanComponent,
   ColumnDef,
   DataGridComponent,
@@ -20,7 +25,10 @@ import {
   TaxGroupOption,
   TextInputComponent,
   TextareaComponent,
+  CheckboxComponent,
   recalculate,
+  totalsOf,
+  UiMessage,
   ProjectOption,
   ProjectOptionsService,
   CustomFieldValues,
@@ -67,6 +75,11 @@ type Picker = 'none' | 'vendor' | 'item' | 'order';
   selector: 'bb-goods-receipt-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
+    FormFieldComponent,
     ScanComponent,
     DocumentCustomFieldsComponent,
     DataGridComponent,
@@ -79,6 +92,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'order';
     TextInputComponent,
     QuantityInputComponent,
     TextareaComponent,
+    CheckboxComponent,
     MessageBoxComponent,
     LabelPrintDialog,
   ],
@@ -126,8 +140,14 @@ export class GoodsReceiptFormPage {
   protected readonly vendorDeliveryNoteNo = signal('');
   protected readonly vendorDeliveryNoteDate = signal('');
   protected readonly placeOfSupplyStateCode = signal('');
+  protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');
+  protected readonly currencyCode = signal('INR');
+  protected readonly exchangeRate = signal(1);
   protected readonly notes = signal('');
+  protected readonly termsAndConditions = signal('');
+  protected readonly voidOpen = signal(false);
+  protected readonly voidReason = signal('');
   protected readonly isInterState = signal(false);
 
   protected readonly lines = signal<readonly DocumentLine[]>([]);
@@ -167,6 +187,24 @@ export class GoodsReceiptFormPage {
   );
 
   protected readonly isNew = computed(() => this.goodsReceiptId() === null);
+
+  protected readonly canDraft = computed(() => this.isNew() || this.status() === 'Draft');
+  protected readonly canPost = computed(() => !this.isNew() && !this.readonlyDoc());
+
+  protected readonly totals = computed(() => totalsOf(this.lines()));
+
+  protected readonly messages = computed<UiMessage[]>(() => {
+    const list: UiMessage[] = [];
+    const err = this.error();
+    const not = this.notice();
+    if (err) list.push({ tone: 'error', text: err });
+    if (not) list.push({ tone: 'success', text: not });
+    return list;
+  });
+
+  protected copyBillingToShipping(): void {
+    this.shippingAddress.set(this.billingAddress());
+  }
 
   protected readonly gridContext = computed<DocumentLineContext>(() => ({
     isInterState: this.isInterState(),
@@ -249,8 +287,16 @@ export class GoodsReceiptFormPage {
       this.purchaseOrderNo.set(view.purchaseOrderNo ?? '');
       this.vendorDeliveryNoteNo.set(view.vendorDeliveryNoteNo ?? '');
       this.vendorDeliveryNoteDate.set(view.vendorDeliveryNoteDate ?? '');
+      this.placeOfSupplyStateCode.set(
+        view.placeOfSupplyStateId ? String(view.placeOfSupplyStateId).padStart(2, '0') : '',
+      );
+      this.billingAddress.set(view.billingAddress ?? '');
       this.shippingAddress.set(view.shippingAddress ?? '');
+      this.currencyCode.set(view.currencyCode ?? 'INR');
+      this.exchangeRate.set(view.exchangeRate ?? 1);
       this.notes.set(view.notes ?? '');
+      this.termsAndConditions.set(view.termsAndConditions ?? '');
+      this.voidReason.set(view.voidReason ?? '');
       this.customValues.set(view.customFields ?? {});
       this.isInterState.set(view.isInterState);
 
@@ -779,6 +825,28 @@ export class GoodsReceiptFormPage {
     }
   }
 
+  protected async voidReceipt(): Promise<void> {
+    const id = this.goodsReceiptId();
+    if (id === null || !this.voidReason().trim()) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.error.set(null);
+    this.notice.set(null);
+
+    try {
+      await this.receipts.void(id, { reason: this.voidReason().trim() });
+      await this.load(id);
+      this.voidOpen.set(false);
+      this.notice.set('Goods receipt voided.');
+    } catch (err) {
+      this.error.set(this.messageFrom(err));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
   private toRequest(contactId: number): SaveGoodsReceiptRequest {
     const receiving = this.receiving();
 
@@ -822,8 +890,12 @@ export class GoodsReceiptFormPage {
       vendorDeliveryNoteDate: this.vendorDeliveryNoteDate() || null,
       contactGstin: this.contactGstin() || null,
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
+      billingAddress: this.billingAddress() || null,
       shippingAddress: this.shippingAddress() || null,
+      currencyCode: this.currencyCode() || 'INR',
+      exchangeRate: this.exchangeRate() || 1,
       notes: this.notes() || null,
+      termsAndConditions: this.termsAndConditions() || null,
       customFields: compactValues(this.customValues()),
       lines,
     };

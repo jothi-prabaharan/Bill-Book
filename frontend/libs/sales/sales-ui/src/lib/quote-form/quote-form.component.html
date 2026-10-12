@@ -1,143 +1,210 @@
-<div class="page-container">
-  <header class="page-header">
-    <h1>{{ isEdit ? 'Edit Quote' : 'New Quote' }}</h1>
-    <button class="btn btn-primary" (click)="save()">Save</button>
-  </header>
+<bb-create-page
+  [primaryLabel]="isEdit ? 'Save' : 'Save quote'"
+  [canDraft]="false"
+  [busy]="saving()"
+  (save)="save()"
+>
+  <form class="create-stack" [formGroup]="form">
+    <!-- Card 1: Document -->
+    <div class="card">
+      <div class="card-kicker">Document</div>
+      <div class="form-grid">
+        <bb-number-field
+          [number]="documentNo()"
+          module="sales"
+          series="QOT"
+          [date]="form.controls.documentDate.value"
+        />
 
-  <!--
-    Common inputs throughout. The fields this replaced were all `bb-text-input`,
-    including the two dates and the exchange rate — so a date was keyed as free
-    text and a rate that needs eight decimal places stepped by a hundredth.
-  -->
-  <form [formGroup]="form" class="form-grid">
-    <div class="form-group">
-      <bb-branch-date-input id="documentDate" label="Date" formControlName="documentDate" [required]="true" />
-    </div>
-    <div class="form-group">
-      <bb-branch-date-input id="validUntil" label="Valid Until" formControlName="validUntil" [required]="true" />
-    </div>
-    <div class="form-group">
-      <bb-form-field
-        label="Customer"
-        controlId="contactId"
-        [required]="true"
-        [error]="form.controls.contactId.touched && form.controls.contactId.invalid ? 'Choose the customer.' : ''"
-      >
-        <button id="contactId" type="button" class="input picker" (click)="openCustomerPicker()">
-          {{ contactLabel() || 'Choose a customer' }}
-        </button>
-      </bb-form-field>
-    </div>
-    <div class="form-group">
-      <bb-text-input
-        id="contactGstin"
-        label="Contact GSTIN"
-        maxlength="15"
-        [uppercase]="true"
-        formControlName="contactGstin"
-      />
-    </div>
-    <div class="form-group">
-      <bb-text-input
-        id="placeOfSupplyStateCode"
-        label="Place of Supply State Code"
-        inputmode="numeric"
-        maxlength="2"
-        formControlName="placeOfSupplyStateCode"
-      />
-    </div>
-    <div class="form-group">
-      <bb-text-input
-        id="currencyCode"
-        label="Currency"
-        maxlength="3"
-        [uppercase]="true"
-        formControlName="currencyCode"
-        [required]="true"
-      />
-    </div>
-    <div class="form-group">
-      <!-- Eight decimal places, matching decimal(18,8) on the column. -->
-      <bb-exchange-rate-input
-        id="exchangeRate"
-        label="Exchange Rate"
-        [fromCurrency]="form.controls.currencyCode.value ?? ''"
-        formControlName="exchangeRate"
-        [required]="true"
-      />
-    </div>
-    <div class="form-group">
-      <bb-textarea id="billingAddress" label="Billing Address" rows="2" formControlName="billingAddress" />
-    </div>
-    <div class="form-group">
-      <bb-textarea id="shippingAddress" label="Shipping Address" rows="2" formControlName="shippingAddress" />
-    </div>
-    <div class="form-group full-width">
-      <bb-textarea id="notes" label="Notes" rows="2" formControlName="notes" />
-      <bb-document-custom-fields source="/api/sales/custom-fields?kind=Quote" [(value)]="customValues" [isNew]="!quoteId" />
-    </div>
-    <div class="form-group full-width">
-      <bb-textarea
-        id="termsAndConditions"
-        label="Terms and Conditions"
-        rows="2"
-        formControlName="termsAndConditions"
-      />
-    </div>
-  </form>
+        <div class="field">
+          <bb-branch-date-input
+            id="quote-date"
+            label="Quote date"
+            formControlName="documentDate"
+            [required]="true"
+          />
+        </div>
 
-  <div class="line-grid-container">
-    @if (!context.readonly) {
-      <div class="line-grid-scan">
-        <bb-scan
-          label="Scan"
-          placeholder="Scan or type a barcode or item code"
-          ariaLabel="Scan an item onto the lines"
-          [global]="true"
-          (scanned)="onScan($event)"
+        <div class="field">
+          <bb-branch-date-input
+            id="quote-valid"
+            label="Valid until"
+            formControlName="validUntil"
+            [required]="true"
+          />
+        </div>
+
+        <div class="field">
+          <bb-form-field
+            label="Customer"
+            controlId="quote-contact"
+            [required]="true"
+            [error]="form.controls.contactId.touched && form.controls.contactId.invalid ? 'Choose the customer.' : ''"
+          >
+            <button id="quote-contact" type="button" class="input picker" (click)="openCustomerPicker()">
+              {{ contactLabel() || 'Choose a customer' }}
+            </button>
+          </bb-form-field>
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="quote-currency"
+            label="Currency"
+            maxlength="3"
+            [uppercase]="true"
+            formControlName="currencyCode"
+            [required]="true"
+          />
+        </div>
+
+        <div class="field">
+          <bb-exchange-rate-field
+            [currency]="form.controls.currencyCode.value"
+            [date]="form.controls.documentDate.value"
+            [locked]="isEdit"
+            [(rate)]="form.controls.exchangeRate.value"
+          />
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="quote-pos"
+            label="Place of supply"
+            inputmode="numeric"
+            maxlength="2"
+            placeholder="33"
+            hint="Leave blank to take it from the GSTIN."
+            formControlName="placeOfSupplyStateCode"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Row: Billing & Shipping Address -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Billing address</div>
+        <div class="field">
+          <bb-text-input
+            id="quote-gstin"
+            label="Customer GSTIN"
+            maxlength="15"
+            [uppercase]="true"
+            formControlName="contactGstin"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="quote-billing" label="Billing address" rows="3" formControlName="billingAddress" />
+        </div>
+        <div class="card-meta">{{ looksInterState() ? 'Inter-state IGST' : 'Intra-state CGST + SGST' }}</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2)">
+          <bb-checkbox text="Same as billing" (change)="copyBillingToShipping($event)" />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="quote-shipping" label="Shipping address" rows="3" formControlName="shippingAddress" />
+        </div>
+        <div class="card-meta">Delivery destination for the goods or services.</div>
+      </div>
+    </div>
+
+    <!-- Card 3: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
+      <div class="line-grid-container" style="border:none;margin-top:0">
+        @if (!context.readonly) {
+          <div style="margin-bottom: var(--space-3)">
+            <bb-scan
+              label="Scan"
+              placeholder="Scan or type a barcode or item code"
+              ariaLabel="Scan an item onto the lines"
+              [global]="true"
+              (scanned)="onScan($event)"
+            />
+          </div>
+        }
+        <bb-document-line-grid
+          [projects]="projectOptions()"
+          [lines]="lines"
+          [context]="context"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
         />
       </div>
-    }
-    <bb-document-line-grid
-      [projects]="projectOptions()"
-      [lines]="lines"
-      [context]="context"
-      (linesChange)="onLinesChange($event)"
-      (pickItem)="onPickItem($event)"
-    ></bb-document-line-grid>
-  </div>
+    </div>
 
-  <div class="totals-panel">
-    <div class="total-row">
-      <span>Sub Total</span>
-      <span>{{ (totals.subTotal / 100) | number:'1.2-2' }}</span>
+    <!-- Card Row: Notes & Totals -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Notes &amp; Terms</div>
+        <div class="field">
+          <bb-textarea id="quote-notes" label="Notes" rows="2" placeholder="Prints on the document" formControlName="notes" />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="quote-terms" label="Terms and conditions" rows="2" formControlName="termsAndConditions" />
+        </div>
+      </div>
+
+      <div class="card" style="width:min(340px,100%);flex:none">
+        <div class="card-kicker">Totals</div>
+        <div style="display:grid;gap:6px;margin-top:var(--space-2);font-size:13px;font-variant-numeric:tabular-nums">
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Sub total</span>
+            <span>{{ totals.subTotal / 100 | number: '1.2-2' }}</span>
+          </div>
+          @if (totals.discountAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Discount</span>
+              <span>-{{ totals.discountAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals.cgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">CGST</span>
+              <span>{{ totals.cgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals.sgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">SGST</span>
+              <span>{{ totals.sgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals.igstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">IGST</span>
+              <span>{{ totals.igstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals.cessAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Cess</span>
+              <span>{{ totals.cessAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          <div style="height:1px;background:var(--color-divider);margin:var(--space-1) 0"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span>Total</span>
+            <span style="font-family:var(--font-heading);font-size:22px;color:var(--color-accent)">
+              ₹{{ totals.totalAmount / 100 | number: '1.2-2' }}
+            </span>
+          </div>
+        </div>
+        <div class="card-meta">{{ looksInterState() ? 'Inter-state IGST applicable' : 'Intra-state CGST & SGST applicable' }}</div>
+      </div>
     </div>
-    <div class="total-row" *ngIf="totals.discountAmount > 0">
-      <span>Discount</span>
-      <span>-{{ (totals.discountAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cgstAmount > 0">
-      <span>CGST</span>
-      <span>{{ (totals.cgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.sgstAmount > 0">
-      <span>SGST</span>
-      <span>{{ (totals.sgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.igstAmount > 0">
-      <span>IGST</span>
-      <span>{{ (totals.igstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cessAmount > 0">
-      <span>CESS</span>
-      <span>{{ (totals.cessAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row grand-total">
-      <span>Total Amount</span>
-      <span>{{ (totals.totalAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-  </div>
-</div>
+
+    <!-- More Details Card -->
+    <bb-more-details title="More details" summary="Custom fields and specifications">
+      <div class="field" style="margin-bottom: var(--space-3)">
+        <bb-document-custom-fields source="/api/sales/custom-fields?kind=Quote" [(value)]="customValues" [isNew]="!quoteId" />
+      </div>
+    </bb-more-details>
+  </form>
+</bb-create-page>
 
 <bb-lookup-dialog
   [open]="picker.open()"
@@ -151,4 +218,3 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
-

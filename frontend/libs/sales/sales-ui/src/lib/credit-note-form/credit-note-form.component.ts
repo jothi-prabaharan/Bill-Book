@@ -23,6 +23,10 @@ import { SalesPicker } from '../sales-picker';
 import { matchScannedItem } from '@bill-book/scan-core';
 import { ReturnLine, returnScanned, zeroReturnQuantities } from './credit-note-scan';
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
   AllocationGridComponent,
   AllocationRow,
   BbSelectOption,
@@ -30,13 +34,12 @@ import {
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
-  ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
   ScanComponent,
   LookupRow,
-  MessageBoxComponent,
   NumberInputComponent,
+  CheckboxComponent,
   SelectComponent,
   TextareaComponent,
   TextInputComponent,
@@ -72,6 +75,10 @@ type CreditNoteGridLine = ReturnLine;
   selector: 'bb-credit-note-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     FormFieldComponent,
@@ -82,13 +89,12 @@ type CreditNoteGridLine = ReturnLine;
     RouterModule,
     DocumentLineGridComponent,
     AllocationGridComponent,
-    MessageBoxComponent,
     BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
     NumberInputComponent,
+    CheckboxComponent,
     SelectComponent,
-    ExchangeRateInputComponent,
   ],
   templateUrl: './credit-note-form.component.html',
   styleUrl: './credit-note-form.component.scss',
@@ -96,6 +102,13 @@ type CreditNoteGridLine = ReturnLine;
 export class CreditNoteFormComponent implements OnInit {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
+
+  protected copyBillingToShipping(event?: Event | boolean): void {
+    const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
+    if (checked) {
+      this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
+    }
+  }
 
   private readonly fb = inject(FormBuilder);
   private readonly creditNotes = inject(CreditNoteService);
@@ -576,7 +589,7 @@ export class CreditNoteFormComponent implements OnInit {
   }
 
   /** Which tax columns to draw. The note's own `IsInterState` is decided on the server. */
-  private looksInterState(): boolean {
+  protected looksInterState(): boolean {
     const value = this.formValue();
     const stated = value.placeOfSupplyStateCode ?? '';
     const gstin = value.contactGstin ?? '';

@@ -4,6 +4,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
+  FormFieldComponent,
   addScannedItem,
   ScanComponent,
   BranchDateInputComponent,
@@ -16,7 +21,10 @@ import {
   TaxGroupOption,
   TextInputComponent,
   TextareaComponent,
+  CheckboxComponent,
   recalculate,
+  totalsOf,
+  UiMessage,
   ApprovalPanelComponent,
   ProjectOption,
   ProjectOptionsService,
@@ -64,6 +72,11 @@ type Picker = 'none' | 'vendor' | 'item';
   selector: 'bb-purchase-order-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
+    FormFieldComponent,
     ScanComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
@@ -75,6 +88,7 @@ type Picker = 'none' | 'vendor' | 'item';
     BranchDateInputComponent,
     TextInputComponent,
     TextareaComponent,
+    CheckboxComponent,
     MessageBoxComponent,
   ],
   templateUrl: './purchase-order-form.page.html',
@@ -101,19 +115,36 @@ export class PurchaseOrderFormPage {
   protected readonly contactLabel = signal<string>('');
   protected readonly contactGstin = signal('');
   protected readonly placeOfSupplyStateCode = signal('');
+  protected readonly currencyCode = signal('INR');
+  protected readonly exchangeRate = signal(1);
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');
   protected readonly notes = signal('');
   protected readonly termsAndConditions = signal('');
   protected readonly isInterState = signal(false);
 
+  protected copyBillingToShipping(event?: Event | boolean): void {
+    const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
+    if (checked) {
+      this.shippingAddress.set(this.billingAddress());
+    }
+  }
+
   protected readonly lines = signal<readonly DocumentLine[]>([]);
+  protected readonly totals = computed(() => totalsOf(this.lines()));
   protected readonly taxGroups = signal<readonly TaxGroupOption[]>([]);
 
   protected readonly saving = signal(false);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
+
+  protected readonly messages = computed<UiMessage[]>(() => {
+    const list: UiMessage[] = [];
+    if (this.error()) list.push({ tone: 'error', text: this.error()! });
+    if (this.notice()) list.push({ tone: 'success', text: this.notice()! });
+    return list;
+  });
 
   // ---- Lookups ----------------------------------------------------------
 
@@ -144,6 +175,7 @@ export class PurchaseOrderFormPage {
   );
 
   protected readonly isNew = computed(() => this.purchaseOrderId() === null);
+  protected readonly canDraft = computed(() => this.isNew() || this.status() === 'Draft');
 
   protected readonly canApprove = computed(() => this.status() === 'Draft');
 
@@ -231,6 +263,8 @@ export class PurchaseOrderFormPage {
           : String(view.contactId),
       );
       this.contactGstin.set(view.contactGstin ?? '');
+      this.currencyCode.set(view.currencyCode ?? 'INR');
+      this.exchangeRate.set(view.exchangeRate ?? 1);
       this.billingAddress.set(view.billingAddress ?? '');
       this.shippingAddress.set(view.shippingAddress ?? '');
       this.notes.set(view.notes ?? '');
@@ -563,6 +597,8 @@ export class PurchaseOrderFormPage {
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
       billingAddress: this.billingAddress() || null,
       shippingAddress: this.shippingAddress() || null,
+      currencyCode: this.currencyCode() || 'INR',
+      exchangeRate: this.exchangeRate() || 1,
       notes: this.notes() || null,
       customFields: compactValues(this.customValues()),
       termsAndConditions: this.termsAndConditions() || null,

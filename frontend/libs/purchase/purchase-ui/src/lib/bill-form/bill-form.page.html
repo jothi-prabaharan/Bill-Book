@@ -1,28 +1,25 @@
-<div class="page">
-  <header class="page__header">
-    <div>
-      <h1>
-        @if (isNew()) {
-          New bill
-        } @else {
-          {{ documentNo() }}
-        }
-      </h1>
-      @if (!isNew()) {
-        <p class="page__pills">
-          <span class="pill">{{ status() }}</span>
-          @if (status() === 'Posted' && daysOverdue() > 0) {
-            <span class="pill pill--void">{{ daysOverdue() }} days overdue</span>
-          }
-        </p>
-      }
-    </div>
-    <a class="btn" routerLink="..">Back to list</a>
-  </header>
+<bb-create-page
+  [primaryLabel]="isNew() ? 'Save draft' : 'Save'"
+  [canDraft]="canDraft()"
+  [busy]="saving()"
+  [messages]="messages()"
+  (save)="save()"
+  (saveDraft)="save()"
+>
+  <div createActions class="child-actions m-0">
+    @if (canPost()) {
+      <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="post()">
+        Post
+      </button>
+    }
 
-  @if (error(); as failure) {
-    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
-  }
+    @if (!isNew()) {
+      <button type="button" class="btn btn-secondary m-0" (click)="openLabels()">
+        Print labels
+      </button>
+    }
+  </div>
+
   @if (budgetWarnings().length > 0) {
     <bb-message-box tone="warning">
       Saved, but over budget:
@@ -33,189 +30,188 @@
       </ul>
     </bb-message-box>
   }
-  @if (notice(); as note) {
-    <bb-message-box [messages]="[{ tone: 'success', text: note }]" />
-  }
 
   @if (readonlyDoc()) {
     <bb-message-box tone="info">
-      This bill has been posted. Correct it with a debit note rather than
-      changing it.
+      This bill has been posted. Correct it with a debit note rather than changing it.
     </bb-message-box>
   }
 
-  @if (loading()) {
-    <p class="state">Loading&hellip;</p>
-  } @else {
-    <section class="card">
-      <h2 class="card__title">Vendor &amp; their bill</h2>
+  <div class="create-stack">
+    <!-- Card 1: Document -->
+    <div class="card">
+      <div class="card-kicker">Document</div>
+      <div class="form-grid">
+        <bb-number-field
+          [number]="documentNo() || ''"
+          module="purchase"
+          series="BIL"
+          [date]="documentDate()"
+        />
 
-      <div class="grid">
         <div class="field">
-          <span class="field__label">Vendor</span>
-          <button
-            type="button"
-            class="picker"
+          <bb-branch-date-input
+            id="bil-date"
+            label="Received date"
+            [required]="true"
             [disabled]="readonlyDoc()"
-            (click)="openVendorPicker()"
-          >
-            {{ contactLabel() || 'Choose a vendor' }}
-          </button>
+            [ngModel]="documentDate()"
+            (ngModelChange)="documentDate.set($event)"
+          />
         </div>
 
-        <label class="field">
-          <span class="field__label">Vendor's bill number</span>
+        <div class="field">
+          <bb-branch-date-input
+            id="bil-due"
+            label="Due date"
+            hint="Payables aging is based on this date."
+            [required]="true"
+            [disabled]="readonlyDoc()"
+            [ngModel]="dueDate()"
+            (ngModelChange)="dueDate.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <bb-form-field
+            label="Vendor"
+            controlId="bil-vendor"
+            [required]="true"
+          >
+            <button
+              id="bil-vendor"
+              type="button"
+              class="input picker"
+              [disabled]="readonlyDoc()"
+              (click)="openVendorPicker()"
+            >
+              {{ contactLabel() || 'Choose a vendor' }}
+            </button>
+          </bb-form-field>
+        </div>
+
+        <div class="field">
           <bb-text-input
-            
-            class="input"
+            id="bil-vendor-no"
+            label="Vendor's bill no."
+            hint="Input tax credit is claimed against this number."
             maxlength="50"
             [disabled]="readonlyDoc()"
             [ngModel]="vendorBillNo()"
             (ngModelChange)="vendorBillNo.set($event)"
-            name="vendorBillNo"
           />
-          <span class="field__hint">
-            <strong>Theirs, not ours.</strong> Input tax credit is claimed against
-            this number, and one vendor cannot bill the same one twice in a
-            financial year.
-          </span>
-        </label>
+        </div>
 
-        <label class="field">
-          <span class="field__label">Their bill date</span>
+        <div class="field">
           <bb-branch-date-input
-            
-            class="input"
+            id="bil-vendor-date"
+            label="Their bill date"
+            hint="The tax period the credit falls in."
             [disabled]="readonlyDoc()"
             [ngModel]="vendorBillDate()"
             (ngModelChange)="vendorBillDate.set($event)"
-            name="vendorBillDate"
           />
-          <span class="field__hint">The tax period the credit falls in.</span>
-        </label>
+        </div>
 
         <div class="field">
+          <bb-text-input
+            id="bil-currency"
+            label="Currency"
+            maxlength="3"
+            [uppercase]="true"
+            [disabled]="readonlyDoc()"
+            [ngModel]="currencyCode()"
+            (ngModelChange)="currencyCode.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <bb-exchange-rate-field
+            [currency]="currencyCode()"
+            [date]="documentDate()"
+            [locked]="!isNew()"
+            [(rate)]="exchangeRate"
+          />
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="bil-pos"
+            label="Place of supply"
+            maxlength="2"
+            placeholder="33"
+            hint="Leave blank to take from GSTIN."
+            [disabled]="readonlyDoc()"
+            [ngModel]="placeOfSupplyStateCode()"
+            (ngModelChange)="placeOfSupplyStateCode.set($event)"
+          />
+        </div>
+
+        <div class="field" style="display:flex;align-items:center;padding-top:var(--space-4)">
           <bb-checkbox
             text="Reverse charge"
-            name="isReverseCharge"
+            hint="Vendor charged no GST; you pay it."
             [disabled]="readonlyDoc()"
             [ngModel]="isReverseCharge()"
             (ngModelChange)="isReverseCharge.set($event)"
           />
-          <span class="field__hint">
-            The vendor charged no GST and you pay it. They are owed the total without tax.
-          </span>
         </div>
+      </div>
+    </div>
 
-        @if (tds(); as t) {
-          <div class="field tds">
-            <span class="field__label">TDS deducted</span>
-            <strong>{{ formats.formatMoney(t.amount) }}</strong>
-            <span class="field__hint">
-              Under {{ t.section }} on {{ formats.formatMoney(t.base) }}. The vendor is owed the payable less this.
-              @if (t.note) { {{ t.note }} }
-            </span>
-          </div>
-        }
-
-        <label class="field">
-          <span class="field__label">Received on</span>
-          <bb-branch-date-input
-            
-            class="input"
-            [disabled]="readonlyDoc()"
-            [ngModel]="documentDate()"
-            (ngModelChange)="documentDate.set($event)"
-            name="documentDate"
-          />
-        </label>
-
-        <label class="field">
-          <span class="field__label">Due</span>
-          <bb-branch-date-input
-            
-            class="input"
-            [disabled]="readonlyDoc()"
-            [ngModel]="dueDate()"
-            (ngModelChange)="dueDate.set($event)"
-            name="dueDate"
-          />
-          <span class="field__hint">Payables aging is only as good as this date.</span>
-        </label>
-
-        <label class="field">
-          <span class="field__label">Vendor GSTIN</span>
+    <!-- Card Row: Address Details -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Vendor details</div>
+        <div class="field">
           <bb-text-input
-            
-            class="input"
+            id="bil-gstin"
+            label="Vendor GSTIN"
             maxlength="15"
+            [uppercase]="true"
             [disabled]="readonlyDoc()"
             [ngModel]="contactGstin()"
             (ngModelChange)="contactGstin.set($event)"
-            name="contactGstin"
           />
-        </label>
-
-        <label class="field">
-          <span class="field__label">Place of supply</span>
-          <bb-text-input
-            
-            class="input"
-            maxlength="2"
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea
+            id="bil-billing"
+            label="Billing address"
+            rows="3"
             [disabled]="readonlyDoc()"
-            [ngModel]="placeOfSupplyStateCode()"
-            (ngModelChange)="placeOfSupplyStateCode.set($event)"
-            name="placeOfSupplyStateCode"
-            placeholder="2-digit state code"
+            [ngModel]="billingAddress()"
+            (ngModelChange)="billingAddress.set($event)"
           />
-        </label>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 class="card__title">Against a goods receipt?</h2>
-
-      <div class="grid">
-        <div class="field">
-          <span class="field__label">Goods receipt</span>
-          <button
-            type="button"
-            class="picker"
-            [disabled]="readonlyDoc()"
-            (click)="openReceiptPicker()"
-          >
-            {{ goodsReceiptNo() || 'None — this bill brings the goods in itself' }}
-          </button>
-          @if (againstReceipt() && !readonlyDoc()) {
-            <button type="button" class="btn btn-link" (click)="clearReceipt()">
-              Detach
-            </button>
-          }
+        </div>
+        <div class="card-meta">
+          {{ isInterState() ? 'Inter-state IGST' : 'Intra-state CGST + SGST' }}
         </div>
       </div>
 
-      @if (againstReceipt()) {
-        <bb-message-box tone="info">
-          The goods are already on the shelf, so this bill <strong>moves no
-          stock</strong> — it clears Goods Received Not Invoiced and owes the
-          vendor. The lines came from the receipt and are locked: a bill has to
-          agree with its receipt to the paise, because purchase price variance is
-          not implemented yet. If the vendor billed a different price, detach the
-          receipt or correct it there.
-        </bb-message-box>
-      } @else {
-        <p class="field__hint">
-          With no receipt this bill <strong>does move stock</strong>: it debits
-          Inventory directly and brings the goods in.
-        </p>
-      }
-    </section>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="card-kicker" style="margin-bottom:0">Shipping address</div>
+          <bb-checkbox text="Same as billing" [disabled]="readonlyDoc()" (change)="copyBillingToShipping($event)" />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea
+            id="bil-shipping"
+            rows="3"
+            [disabled]="readonlyDoc()"
+            [ngModel]="shippingAddress()"
+            (ngModelChange)="shippingAddress.set($event)"
+          />
+        </div>
+        <div class="card-meta">Destination premises for goods or services.</div>
+      </div>
+    </div>
 
-    <section class="card">
-      <h2 class="card__title">Lines</h2>
-
+    <!-- Card 3: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
       @if (!readonlyDoc() && !againstReceipt()) {
-        <div class="bill-form__scan">
+        <div class="field" style="margin-bottom: var(--space-3)">
           <bb-scan
             label="Scan"
             placeholder="Scan or type a barcode or item code"
@@ -225,129 +221,199 @@
           />
         </div>
       }
-      <bb-document-line-grid
-      [projects]="projectOptions()"
-      [showBilling]="true"
-        [lines]="lines()"
-        [context]="gridContext()"
-        [taxGroups]="taxGroups()"
-        [showLineType]="true"
-        (linesChange)="onLinesChange($event)"
-        (pickItem)="onPickItem($event)"
-      />
 
-      @if (!againstReceipt()) {
-        <p class="field__hint">
-          An <strong>expense</strong> line posts to the account you name; a
-          <strong>capital</strong> line posts to Fixed Asset and moves no stock.
-        </p>
-      }
-    </section>
-
-    @if (lines().length > 0) {
-      <section class="card">
-        <h2 class="card__title">Input tax credit</h2>
-        <p class="field__hint">
-          GST you cannot claim is added to the line's cost instead of Input GST, and GSTR-3B
-          shows it apart.
-        </p>
-        <ul class="itc-lines">
-          @for (line of lines(); track $index) {
-            <li>
-              <span class="itc-lines__label">
-                {{ $index + 1 }}. {{ line.itemLabel || line.description || 'Line ' + ($index + 1) }}
-              </span>
-              <bb-select
-                [ariaLabel]="'Input tax credit for line ' + ($index + 1)"
-                [options]="eligibilityOptions"
-                [clearable]="false"
-                [disabled]="readonlyDoc()"
-                [ngModel]="line.itcEligibility ?? 'Eligible'"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="setEligibility($index, $event)"
-              />
-            </li>
-          }
-        </ul>
-      </section>
-    }
-
-    <section class="card">
-      <h2 class="card__title">Notes</h2>
-      <div class="field field--wide">
-        <bb-textarea
-          label="Notes"
-          rows="2"
-          [disabled]="readonlyDoc()"
-          [ngModel]="notes()"
-          (ngModelChange)="notes.set($event)"
-          name="notes"
+      <div style="overflow-x:auto">
+        <bb-document-line-grid
+          [projects]="projectOptions()"
+          [showBilling]="true"
+          [lines]="lines()"
+          [context]="gridContext()"
+          [taxGroups]="taxGroups()"
+          [showLineType]="true"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
         />
+      </div>
+
+      @if (againstReceipt()) {
+        <div class="card-meta" style="margin-top:var(--space-2)">
+          Lines locked to goods receipt #{{ goodsReceiptNo() }}.
+        </div>
+      }
+    </div>
+
+    <!-- Card Row: Notes & Totals -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Notes &amp; Terms</div>
+        <div class="field">
+          <bb-textarea
+            id="bil-notes"
+            label="Notes"
+            rows="2"
+            placeholder="Prints on the document"
+            [disabled]="readonlyDoc()"
+            [ngModel]="notes()"
+            (ngModelChange)="notes.set($event)"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea
+            id="bil-terms"
+            label="Terms and conditions"
+            rows="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="termsAndConditions()"
+            (ngModelChange)="termsAndConditions.set($event)"
+          />
+        </div>
+      </div>
+
+      <div class="card" style="width:min(340px,100%);flex:none">
+        <div class="card-kicker">Totals</div>
+        <div style="display:grid;gap:6px;margin-top:var(--space-2);font-size:13px;font-variant-numeric:tabular-nums">
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Sub total</span>
+            <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
+          </div>
+          @if (totals().discountAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Discount</span>
+              <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().cgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">CGST</span>
+              <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().sgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">SGST</span>
+              <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().igstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">IGST</span>
+              <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().cessAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Cess</span>
+              <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (tds(); as t) {
+            <div style="display:flex;justify-content:space-between;color:var(--color-text-muted)">
+              <span>TDS ({{ t.section }})</span>
+              <span>-{{ formats.formatMoney(t.amount) }}</span>
+            </div>
+          }
+          <div style="height:1px;background:var(--color-divider);margin:var(--space-1) 0"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span>Total</span>
+            <span style="font-family:var(--font-heading);font-size:22px;color:var(--color-accent)">
+              ₹{{ totals().totalAmount / 100 | number: '1.2-2' }}
+            </span>
+          </div>
+        </div>
+        <div class="card-meta">
+          {{ isInterState() ? 'Inter-state IGST applicable' : 'Intra-state CGST & SGST applicable' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- More Details Card -->
+    <bb-more-details title="More details" summary="Goods receipt, ITC eligibility, custom fields, and history">
+      <!-- Goods Receipt Card / Row -->
+      <div class="field" style="margin-bottom: var(--space-3)">
+        <bb-form-field label="Goods receipt" hint="Link against a received goods delivery to clear clearing account.">
+          <div style="display:flex;gap:var(--space-2);align-items:center">
+            <button
+              type="button"
+              class="input picker"
+              style="flex:1"
+              [disabled]="readonlyDoc()"
+              (click)="openReceiptPicker()"
+            >
+              {{ goodsReceiptNo() || 'None — this bill brings goods in directly' }}
+            </button>
+            @if (againstReceipt() && !readonlyDoc()) {
+              <button type="button" class="btn btn-secondary m-0" (click)="clearReceipt()">
+                Detach
+              </button>
+            }
+          </div>
+        </bb-form-field>
+      </div>
+
+      <!-- ITC Eligibility lines -->
+      @if (lines().length > 0) {
+        <div class="field" style="margin-bottom: var(--space-3)">
+          <div class="card-kicker">Input tax credit</div>
+          <p class="card-meta" style="margin-top:0;margin-bottom:var(--space-2)">
+            Ineligible GST is added into line cost rather than Input GST.
+          </p>
+          <div style="display:grid;gap:var(--space-2)">
+            @for (line of lines(); track $index) {
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3)">
+                <span style="font-size:12.5px;color:var(--color-text)">
+                  {{ $index + 1 }}. {{ line.itemLabel || line.description || 'Line ' + ($index + 1) }}
+                </span>
+                <div style="width:200px">
+                  <bb-select
+                    [ariaLabel]="'Input tax credit for line ' + ($index + 1)"
+                    [options]="eligibilityOptions"
+                    [clearable]="false"
+                    [disabled]="readonlyDoc()"
+                    [ngModel]="line.itcEligibility ?? 'Eligible'"
+                    (ngModelChange)="setEligibility($index, $event)"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="field" style="margin-bottom: var(--space-3)">
         <bb-document-custom-fields source="/api/purchase/custom-fields?kind=Bill" [(value)]="customValues" [isNew]="billId() === null" />
       </div>
-    </section>
-
-    @if (!readonlyDoc()) {
-      <footer class="actions">
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="saving()"
-          (click)="save()"
-        >
-          {{ saving() ? 'Saving…' : 'Save draft' }}
-        </button>
-
-        @if (!isNew()) {
-          <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
-            Post the bill
-          </button>
-          <span class="actions__hint">
-            Posting claims the input tax credit and owes the vendor.
-          </span>
-        }
-      </footer>
-
-      @if (!isNew()) {
-        <p class="actions">
-          <button type="button" class="btn btn-secondary" (click)="openLabels()">Print labels</button>
-          <span class="actions__hint">One label per unit on each item line.</span>
-        </p>
-      }
-
-      @if (labelsOpen(); as job) {
-        <bb-label-print-dialog [labels]="job.labels" [kind]="job.kind" (closed)="labelsOpen.set(null)" />
-      }
 
       @if (billId(); as id) {
-        <!-- The document's approval chain, when a workflow covers it (TK-100). -->
-        <bb-approval-panel
-          [basePath]="'/api/purchase/bills/' + id"
-          [documentStatus]="status()"
-          (changed)="load(id)"
-        />
-      }
+        <div class="field" style="margin-bottom: var(--space-3)">
+          <bb-approval-panel
+            [basePath]="'/api/purchase/bills/' + id"
+            [documentStatus]="status()"
+            (changed)="load(id)"
+          />
+        </div>
 
-      @if (billId(); as id) {
-        <details class="doc-history">
+        <details class="doc-history" style="margin-top:var(--space-2)">
           <summary>History</summary>
           <bb-edit-history service="purchase" entity="Bills" [key]="id" heading="Changes to this bill" />
         </details>
       }
-    }
-  }
+    </bb-more-details>
+  </div>
+</bb-create-page>
 
-  <bb-lookup-dialog
-    [open]="picker() !== 'none'"
-    [title]="pickerTitle()"
-    [placeholder]="pickerPlaceholder()"
-    [emptyText]="pickerEmptyText()"
-    [rows]="pickerRows()"
-    [loading]="pickerLoading()"
-    [initialTerm]="pickerTerm()"
-    (searchChange)="onPickerSearch($event)"
-    (choose)="onPickerChoose($event)"
-    (dismiss)="closePicker()"
-  />
-</div>
+<bb-lookup-dialog
+  [open]="picker() !== 'none'"
+  [title]="pickerTitle()"
+  [placeholder]="pickerPlaceholder()"
+  [emptyText]="pickerEmptyText()"
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  [initialTerm]="pickerTerm()"
+  (searchChange)="onPickerSearch($event)"
+  (choose)="onPickerChoose($event)"
+  (dismiss)="closePicker()"
+/>
 
+@if (labelsOpen(); as job) {
+  <bb-label-print-dialog [labels]="job.labels" [kind]="job.kind" (closed)="labelsOpen.set(null)" />
+}

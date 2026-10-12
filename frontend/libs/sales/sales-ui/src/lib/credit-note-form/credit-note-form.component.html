@@ -1,280 +1,319 @@
-<section class="crn-form">
-  <header class="crn-form__head">
-    <div class="crn-form__identity">
-      <h1 class="crn-form__title">
-        {{ isEdit() ? (documentNo() || 'Credit note') : 'New credit note' }}
-      </h1>
+<bb-create-page
+  [primaryLabel]="isEdit() ? 'Save' : (canPost() ? 'Save & post' : 'Save')"
+  [canDraft]="!isEdit() || status() === 'Draft'"
+  [busy]="saving()"
+  [messages]="messages()"
+  (save)="canPost() && !isEdit() ? post() : save()"
+  (saveDraft)="save()"
+>
+  <div createActions class="child-actions m-0">
+    @if (canPost()) {
+      <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="post()">
+        Post
+      </button>
+    }
 
-      @if (isEdit()) {
-        <span class="tag tag-neutral">{{ status() }}</span>
+    @if (canVoid()) {
+      <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="voidCreditNote()">
+        Void
+      </button>
+    }
+  </div>
 
-        @if (form.controls.invoiceId.value; as invoiceId) {
-          <a class="chip" [routerLink]="['/sales/invoices', invoiceId]">the invoice</a>
-        }
-      }
+  <form class="create-stack" [formGroup]="form">
+    <!-- Card 1: Document -->
+    <div class="card">
+      <div class="card-kicker">Document</div>
+      <div class="form-grid">
+        <bb-number-field
+          [number]="documentNo()"
+          module="sales"
+          series="CN"
+          [date]="form.controls.documentDate.value"
+        />
+
+        <div class="field">
+          <bb-branch-date-input
+            id="crn-date"
+            label="Credit note date"
+            formControlName="documentDate"
+            [required]="true"
+            [error]="showError('documentDate') ? 'Give the credit note a date.' : ''"
+          />
+        </div>
+
+        <div class="field">
+          <bb-select
+            id="crn-reason"
+            label="Reason"
+            hint="Only a sales return brings goods back into stock."
+            placeholder=""
+            [options]="reasonCodes"
+            formControlName="reasonCode"
+            [clearable]="false"
+          />
+        </div>
+
+        <div class="field">
+          <bb-form-field
+            label="Invoice"
+            controlId="crn-invoice"
+            [required]="true"
+            hint="The posted invoice this corrects."
+            [error]="showError('invoiceId') ? 'Choose the invoice this corrects.' : ''"
+          >
+            <div style="display:flex;gap:var(--space-2);align-items:center">
+              <bb-number-input
+                id="crn-invoice"
+                placeholder="Invoice id"
+                formControlName="invoiceId"
+                style="flex:1"
+              />
+              @if (editable()) {
+                <button
+                  type="button"
+                  class="btn btn-secondary m-0"
+                  style="white-space:nowrap"
+                  [disabled]="loadingInvoice()"
+                  (click)="loadInvoice()"
+                >
+                  {{ loadingInvoice() ? 'Loading…' : 'Load invoice' }}
+                </button>
+              }
+            </div>
+          </bb-form-field>
+        </div>
+
+        <div class="field">
+          <bb-form-field
+            label="Customer"
+            controlId="crn-contact"
+            [required]="true"
+            [error]="showError('contactId') ? 'Choose the customer.' : ''"
+          >
+            <button
+              id="crn-contact"
+              type="button"
+              class="input picker"
+              [disabled]="form.controls.contactId.disabled"
+              (click)="openCustomerPicker()"
+            >
+              {{ contactLabel() || 'Choose a customer' }}
+            </button>
+          </bb-form-field>
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="crn-currency"
+            label="Currency"
+            maxlength="3"
+            [uppercase]="true"
+            formControlName="currencyCode"
+            [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
+          />
+        </div>
+
+        <div class="field">
+          <bb-exchange-rate-field
+            [currency]="form.controls.currencyCode.value"
+            [date]="form.controls.documentDate.value"
+            [locked]="isEdit()"
+            [(rate)]="form.controls.exchangeRate.value"
+          />
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="crn-pos"
+            label="Place of supply"
+            inputmode="numeric"
+            maxlength="2"
+            placeholder="33"
+            hint="Leave blank to take it from the GSTIN."
+            formControlName="placeOfSupplyStateCode"
+            [error]="
+              showError('placeOfSupplyStateCode')
+                ? 'Place of supply is a two-digit state code.'
+                : ''
+            "
+          />
+        </div>
+      </div>
     </div>
 
-    <div class="crn-form__actions">
-      @if (canPost()) {
-        <!-- A sales return puts goods back into stock; after that it can only be
-             answered with a new invoice, not withdrawn. -->
-        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
-          Post
-        </button>
+    <!-- Card Row: Address Details -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Billing address</div>
+        <div class="field">
+          <bb-text-input
+            id="crn-gstin"
+            label="Customer GSTIN"
+            maxlength="15"
+            [uppercase]="true"
+            formControlName="contactGstin"
+            [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="crn-billing" label="Billing address" rows="3" formControlName="billingAddress" />
+        </div>
+        <div class="card-meta">
+          {{ looksInterState() ? 'Inter-state IGST' : 'Intra-state CGST + SGST' }}
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="card-kicker" style="margin-bottom:0">Shipping address</div>
+          <bb-checkbox text="Same as billing" (change)="copyBillingToShipping($event)" />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="crn-shipping" rows="3" formControlName="shippingAddress" />
+        </div>
+        <div class="card-meta">Delivery destination for the goods or services.</div>
+      </div>
+    </div>
+
+    @if (editable() && allocationRows().length > 0) {
+      <div class="card">
+        <div class="card-kicker">Invoice allocation</div>
+        <p class="card-meta" style="margin-top:0;margin-bottom:var(--space-2)">The customer's open invoices. Allocating to one of them links this credit note.</p>
+        <bb-allocation-grid
+          [rows]="allocationRows()"
+          [amountToAllocate]="amountToAllocate()"
+          (rowsChange)="onAllocationRowsChange($event)"
+        />
+      </div>
+    }
+
+    <!-- Card 3: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
+      <div class="field" style="margin-bottom: var(--space-3)">
+        <div style="display:flex;gap:var(--space-2);align-items:center">
+          <div style="flex:1">
+            <bb-scan
+              label="Scan"
+              placeholder="Scan or type a barcode or item code"
+              ariaLabel="Scan an item onto the lines"
+              [global]="true"
+              (scanned)="onScan($event)"
+            />
+          </div>
+          @if (!context().readonly || lines().length === 0) {
+            <button type="button" class="btn btn-secondary m-0" style="height:36px;white-space:nowrap" (click)="zeroQuantities()">
+              Set all to zero
+            </button>
+          }
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <bb-document-line-grid
+          [lines]="lines()"
+          [context]="context()"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
+        />
+      </div>
+    </div>
+
+    <!-- Card Row: Notes & Totals -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Notes</div>
+        <div class="field">
+          <bb-textarea id="crn-notes" label="Notes" rows="4" placeholder="Prints on the document" formControlName="notes" />
+        </div>
+      </div>
+
+      <div class="card" style="width:min(340px,100%);flex:none">
+        <div class="card-kicker">Totals</div>
+        <div style="display:grid;gap:6px;margin-top:var(--space-2);font-size:13px;font-variant-numeric:tabular-nums">
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Sub total</span>
+            <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
+          </div>
+          @if (totals().discountAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Discount</span>
+              <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().cgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">CGST</span>
+              <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().sgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">SGST</span>
+              <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().igstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">IGST</span>
+              <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().cessAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Cess</span>
+              <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          <div style="height:1px;background:var(--color-divider);margin:var(--space-1) 0"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span>Total</span>
+            <span style="font-family:var(--font-heading);font-size:22px;color:var(--color-accent)">
+              ₹{{ totals().totalAmount / 100 | number: '1.2-2' }}
+            </span>
+          </div>
+        </div>
+        <div class="card-meta">{{ looksInterState() ? 'Inter-state IGST applicable' : 'Intra-state CGST & SGST applicable' }}</div>
+      </div>
+    </div>
+
+    <!-- More Details Card -->
+    <bb-more-details title="More details" summary="Approvals, custom fields, and void reason">
+      @if (creditNoteId(); as approvalId) {
+        <div class="field" style="margin-bottom: var(--space-3)">
+          <bb-approval-panel
+            [basePath]="'/api/sales/credit-notes/' + approvalId"
+            [documentStatus]="status()"
+            (changed)="load()"
+          />
+        </div>
       }
+
+      <div class="field" style="margin-bottom: var(--space-3)">
+        <bb-document-custom-fields source="/api/sales/custom-fields?kind=CreditNote" [(value)]="customValues" [isNew]="creditNoteId() === null" />
+      </div>
 
       @if (canVoid()) {
-        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="voidCreditNote()">
-          Void
-        </button>
+        <form class="field crn-form__void" [formGroup]="voidForm" style="margin-top: var(--space-3)">
+          <bb-text-input
+            id="crn-void-reason"
+            label="Reason, if voiding"
+            maxlength="300"
+            placeholder="Raised against the wrong invoice"
+            formControlName="reason"
+            [required]="true"
+            [error]="
+              voidForm.controls.reason.invalid && voidForm.controls.reason.touched
+                ? 'Say why this credit note is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
+                : ''
+            "
+          />
+        </form>
       }
-
-      @if (editable()) {
-        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
-          {{ saving() ? 'Saving…' : 'Save' }}
-        </button>
-      }
-    </div>
-  </header>
-
-  <bb-message-box [messages]="messages()" />
-
-  @if (canVoid()) {
-    <form class="field crn-form__void" [formGroup]="voidForm">
-      <bb-text-input
-        id="crn-void-reason"
-        label="Reason, if voiding"
-        maxlength="300"
-        placeholder="Raised against the wrong invoice"
-        formControlName="reason"
-        [required]="true"
-        [error]="
-          voidForm.controls.reason.invalid && voidForm.controls.reason.touched
-            ? 'Say why this credit note is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
-            : ''
-        "
-      />
-    </form>
-  }
-
-  <form class="crn-form__fields" [formGroup]="form">
-    <div class="field">
-      <bb-branch-date-input
-        id="crn-date"
-        label="Credit note date"
-        formControlName="documentDate"
-        [required]="true"
-        [error]="showError('documentDate') ? 'Give the credit note a date.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <bb-select
-        id="crn-reason"
-        label="Reason"
-        hint="Only a sales return brings goods back into stock."
-        placeholder=""
-        [options]="reasonCodes"
-        formControlName="reasonCode"
-      />
-    </div>
-
-    <div class="field crn-form__invoice">
-      <!-- An invoice id until the invoice picker lands with the other lookups. -->
-      <bb-number-input
-        id="crn-invoice"
-        label="Invoice"
-        hint="The posted invoice this corrects."
-        min="1"
-        step="1"
-        inputmode="numeric"
-        formControlName="invoiceId"
-        [required]="true"
-        [error]="showError('invoiceId') ? 'Choose the invoice this corrects.' : ''"
-      />
-
-      @if (editable()) {
-        <button
-          type="button"
-          class="btn btn-secondary crn-form__load"
-          [disabled]="loadingInvoice()"
-          (click)="loadInvoice()"
-        >
-          {{ loadingInvoice() ? 'Loading…' : 'Load invoice' }}
-        </button>
-      }
-    </div>
-
-    <div class="field">
-      <bb-form-field
-  label="Customer"
-  controlId="crn-contact"
-  [required]="true"
-  [error]="showError('contactId') ? 'Choose the customer.' : ''"
->
-  <button
-    id="crn-contact"
-    type="button"
-    class="input picker"
-    [disabled]="form.controls.contactId.disabled"
-    (click)="openCustomerPicker()"
-  >
-    {{ contactLabel() || 'Choose a customer' }}
-  </button>
-</bb-form-field>
-    </div>
-
-    <div class="field">
-      <bb-text-input
-        id="crn-gstin"
-        label="Customer GSTIN"
-        maxlength="15"
-        [uppercase]="true"
-        formControlName="contactGstin"
-        [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <bb-text-input
-        id="crn-pos"
-        label="Place of supply"
-        inputmode="numeric"
-        maxlength="2"
-        placeholder="33"
-        hint="Leave blank to take it from the GSTIN."
-        formControlName="placeOfSupplyStateCode"
-        [error]="
-          showError('placeOfSupplyStateCode') ? 'Place of supply is a two-digit state code.' : ''
-        "
-      />
-    </div>
-
-    <div class="field">
-      <bb-text-input
-        id="crn-currency"
-        label="Currency"
-        maxlength="3"
-        [uppercase]="true"
-        formControlName="currencyCode"
-        [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <bb-exchange-rate-input
-        id="crn-rate"
-        label="Exchange rate"
-        [fromCurrency]="form.controls.currencyCode.value"
-        formControlName="exchangeRate"
-        [required]="true"
-        [error]="showError('exchangeRate') ? 'Exchange rate must be greater than zero.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <bb-textarea id="crn-billing" label="Billing address" rows="2" formControlName="billingAddress" />
-    </div>
-
-    <div class="field">
-      <bb-textarea id="crn-shipping" label="Shipping address" rows="2" formControlName="shippingAddress" />
-    </div>
-
-    <div class="field crn-form__wide">
-      <bb-textarea id="crn-notes" label="Notes" rows="2" formControlName="notes" />
-      <bb-document-custom-fields source="/api/sales/custom-fields?kind=CreditNote" [(value)]="customValues" [isNew]="creditNoteId() === null" />
-    </div>
+    </bb-more-details>
   </form>
-
-  @if (creditNoteId(); as approvalId) {
-    <!-- The credit note's approval chain, when a workflow covers it (TK-102). -->
-    <bb-approval-panel
-      [basePath]="'/api/sales/credit-notes/' + approvalId"
-      [documentStatus]="status()"
-      (changed)="load()"
-    />
-  }
-
-  @if (editable() && allocationRows().length > 0) {
-    <!-- The customer's open invoices. Allocating to one of them loads it. -->
-    <div class="crn-form__allocation">
-      <bb-allocation-grid
-        [rows]="allocationRows()"
-        [amountToAllocate]="amountToAllocate()"
-        (rowsChange)="onAllocationRowsChange($event)"
-      />
-    </div>
-  }
-
-  <div class="crn-form__lines">
-    @if (!context().readonly || lines().length === 0) {
-      <div class="crn-form__scan">
-        <bb-scan
-          label="Scan"
-          placeholder="Scan or type a barcode or item code"
-          ariaLabel="Scan an item onto the lines"
-          [global]="true"
-          (scanned)="onScan($event)"
-        />
-        <button type="button" class="btn btn-link" (click)="zeroQuantities()">Set all to zero</button>
-      </div>
-    }
-    <bb-document-line-grid
-      [lines]="lines()"
-      [context]="context()"
-      (linesChange)="onLinesChange($event)"
-      (pickItem)="onPickItem($event)"
-    />
-  </div>
-
-  <!-- Paise throughout, divided only to display. -->
-  <div class="crn-form__totals">
-    <div class="crn-form__total">
-      <span>Sub total</span>
-      <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
-    </div>
-
-    @if (totals().discountAmount > 0) {
-      <div class="crn-form__total">
-        <span>Discount</span>
-        <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().cgstAmount > 0) {
-      <div class="crn-form__total crn-form__total--tax">
-        <span>CGST</span>
-        <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().sgstAmount > 0) {
-      <div class="crn-form__total crn-form__total--tax">
-        <span>SGST</span>
-        <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().igstAmount > 0) {
-      <div class="crn-form__total crn-form__total--tax">
-        <span>IGST</span>
-        <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().cessAmount > 0) {
-      <div class="crn-form__total crn-form__total--tax">
-        <span>Cess</span>
-        <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    <div class="crn-form__total crn-form__total--grand">
-      <span>Total</span>
-      <span>{{ totals().totalAmount / 100 | number: '1.2-2' }}</span>
-    </div>
-  </div>
-</section>
+</bb-create-page>
 
 <bb-lookup-dialog
   [open]="picker.open()"
@@ -287,4 +326,3 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
-

@@ -18,19 +18,22 @@ import {
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
   BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
-  ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
   ScanComponent,
   addScannedItem,
   LookupRow,
-  MessageBoxComponent,
   TextareaComponent,
   TextInputComponent,
+  CheckboxComponent,
   totalsOf,
   UiMessage,
   ApprovalPanelComponent,
@@ -71,6 +74,10 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
   selector: 'bb-sales-order-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     FormFieldComponent,
@@ -80,11 +87,10 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
     ReactiveFormsModule,
     RouterModule,
     DocumentLineGridComponent,
-    MessageBoxComponent,
     TextInputComponent,
     TextareaComponent,
+    CheckboxComponent,
     BranchDateInputComponent,
-    ExchangeRateInputComponent,
     QuoteToOrderDialogComponent,
     StockAvailabilityDrawerComponent,
   ],
@@ -94,6 +100,13 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
 export class SalesOrderFormComponent implements OnInit {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
+
+  protected copyBillingToShipping(event?: Event | boolean): void {
+    const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
+    if (checked) {
+      this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
+    }
+  }
 
   private readonly fb = inject(FormBuilder);
   private readonly orders = inject(SalesOrderService);
@@ -583,7 +596,7 @@ export class SalesOrderFormComponent implements OnInit {
    * code the screen cannot tell, and guesses intra-state — the ordinary case,
    * and one the server corrects on save if it is wrong.
    */
-  private looksInterState(): boolean {
+  protected looksInterState(): boolean {
     // Read through formValue, not off the controls: the controls are not
     // signals, so reading them here would make `context` cache its first answer.
     const value = this.formValue();

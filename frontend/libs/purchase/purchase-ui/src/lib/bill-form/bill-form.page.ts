@@ -5,6 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
+  FormFieldComponent,
   addScannedItem,
   ScanComponent,
   ApprovalPanelComponent,
@@ -27,6 +32,8 @@ import {
   TextareaComponent,
   compactValues,
   recalculate,
+  totalsOf,
+  UiMessage,
   EditHistoryComponent,
   LabelData,
   LabelKind,
@@ -64,6 +71,11 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
   selector: 'bb-bill-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
+    FormFieldComponent,
     ScanComponent,
     EditHistoryComponent,
     DocumentCustomFieldsComponent,
@@ -125,8 +137,20 @@ export class BillFormPage {
   protected readonly vendorBillDate = signal(this.today());
   protected readonly dueDate = signal('');
   protected readonly placeOfSupplyStateCode = signal('');
+  protected readonly currencyCode = signal('INR');
+  protected readonly exchangeRate = signal(1);
+  protected readonly billingAddress = signal('');
+  protected readonly shippingAddress = signal('');
   protected readonly notes = signal('');
+  protected readonly termsAndConditions = signal('');
   protected readonly isInterState = signal(false);
+
+  protected copyBillingToShipping(event?: Event | boolean): void {
+    const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
+    if (checked) {
+      this.shippingAddress.set(this.billingAddress());
+    }
+  }
 
   /** The vendor charged no GST and this business pays it (TK-115, D-30). */
   protected readonly isReverseCharge = signal(false);
@@ -142,6 +166,7 @@ export class BillFormPage {
   ];
 
   protected readonly lines = signal<readonly DocumentLine[]>([]);
+  protected readonly totals = computed(() => totalsOf(this.lines()));
   protected readonly taxGroups = signal<readonly TaxGroupOption[]>([]);
 
   /** Receipt line ids, positional with `lines`. Required on a bill against a receipt. */
@@ -151,6 +176,13 @@ export class BillFormPage {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
+
+  protected readonly messages = computed<UiMessage[]>(() => {
+    const list: UiMessage[] = [];
+    if (this.error()) list.push({ tone: 'error', text: this.error()! });
+    if (this.notice()) list.push({ tone: 'success', text: this.notice()! });
+    return list;
+  });
 
   /**
    * Expense accounts the last save took past the approved budget (TK-109).
@@ -183,6 +215,8 @@ export class BillFormPage {
   );
 
   protected readonly isNew = computed(() => this.billId() === null);
+  protected readonly canPost = computed(() => !this.isNew() && !this.readonlyDoc());
+  protected readonly canDraft = computed(() => this.isNew() || this.status() === 'Draft');
 
   protected readonly againstReceipt = computed(() => this.goodsReceiptId() !== null);
 
@@ -261,7 +295,12 @@ export class BillFormPage {
       this.vendorBillNo.set(view.vendorBillNo);
       this.vendorBillDate.set(view.vendorBillDate);
       this.dueDate.set(view.dueDate);
+      this.currencyCode.set(view.currencyCode ?? 'INR');
+      this.exchangeRate.set(view.exchangeRate ?? 1);
+      this.billingAddress.set(view.billingAddress ?? '');
+      this.shippingAddress.set(view.shippingAddress ?? '');
       this.notes.set(view.notes ?? '');
+      this.termsAndConditions.set(view.termsAndConditions ?? '');
       this.customValues.set(view.customFields ?? {});
       this.isInterState.set(view.isInterState);
       this.isReverseCharge.set(view.isReverseCharge ?? false);
@@ -733,9 +772,14 @@ export class BillFormPage {
       dueDate: this.dueDate() || null,
       contactGstin: this.contactGstin() || null,
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
+      billingAddress: this.billingAddress() || null,
+      shippingAddress: this.shippingAddress() || null,
+      currencyCode: this.currencyCode() || 'INR',
+      exchangeRate: this.exchangeRate() || 1,
       landedCostAmount: 0,
       isReverseCharge: this.isReverseCharge(),
       notes: this.notes() || null,
+      termsAndConditions: this.termsAndConditions() || null,
       customFields: compactValues(this.customValues()),
       lines,
     };

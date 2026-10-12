@@ -1,329 +1,330 @@
-<section class="sor-form">
-  <header class="sor-form__head">
-    <div class="sor-form__identity">
-      <h1 class="sor-form__title">
-        {{ isEdit() ? (documentNo() || 'Sales order') : 'New sales order' }}
-      </h1>
+<bb-create-page
+  [primaryLabel]="isEdit() ? 'Save' : 'Save order'"
+  [canDraft]="!isEdit() || status() === 'Draft'"
+  [busy]="saving()"
+  [messages]="messages()"
+  (save)="save()"
+>
+  <div createActions class="child-actions m-0">
+    @if (!isEdit()) {
+      <button type="button" class="btn btn-secondary m-0" (click)="showConvert.set(true)">
+        From a quote
+      </button>
+    }
 
-      @if (isEdit()) {
-        <span class="tag tag-neutral">{{ status() }}</span>
-        <span class="tag tag-accent">{{ fulfilment() }}</span>
+    @if (isEdit()) {
+      <button type="button" class="btn btn-secondary m-0" (click)="openStock()">Stock</button>
+    }
 
-        @if (status() === 'Posted') {
-          <span class="tag tag-neutral">{{ fullyInvoiced() ? 'Fully invoiced' : 'Invoice owed' }}</span>
-        }
+    @if (canShortClose()) {
+      <button
+        type="button"
+        class="btn btn-secondary m-0"
+        [disabled]="saving()"
+        (click)="shortClose()"
+      >
+        Close short
+      </button>
+    }
+
+    @if (canConfirm()) {
+      <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="confirm()">
+        Confirm &amp; reserve
+      </button>
+    }
+
+    @if (canVoid()) {
+      <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="voidOrder()">
+        Void
+      </button>
+    }
+  </div>
+
+  <form class="create-stack" [formGroup]="form">
+    <!-- Card 1: Document -->
+    <div class="card">
+      <div class="card-kicker">Document</div>
+      <div class="form-grid">
+        <bb-number-field
+          [number]="documentNo()"
+          module="sales"
+          series="SO"
+          [date]="form.controls.documentDate.value"
+        />
+
+        <div class="field">
+          <bb-branch-date-input
+            id="sor-date"
+            label="Order date"
+            formControlName="documentDate"
+            [required]="true"
+            [error]="showError('documentDate') ? 'Give the order a date.' : ''"
+          />
+        </div>
+
+        <div class="field">
+          <bb-branch-date-input
+            id="sor-delivery"
+            label="Delivery date"
+            hint="When the customer is expecting the goods."
+            formControlName="deliveryDate"
+          />
+        </div>
+
+        <div class="field">
+          <bb-form-field
+            label="Customer"
+            controlId="sor-contact"
+            [required]="true"
+            [error]="showError('contactId') ? 'Choose the customer.' : ''"
+          >
+            <button
+              id="sor-contact"
+              type="button"
+              class="input picker"
+              [disabled]="form.controls.contactId.disabled"
+              (click)="openCustomerPicker()"
+            >
+              {{ contactLabel() || 'Choose a customer' }}
+            </button>
+          </bb-form-field>
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="sor-currency"
+            label="Currency"
+            maxlength="3"
+            [uppercase]="true"
+            formControlName="currencyCode"
+            [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
+          />
+        </div>
+
+        <div class="field">
+          <bb-exchange-rate-field
+            [currency]="form.controls.currencyCode.value"
+            [date]="form.controls.documentDate.value"
+            [locked]="isEdit()"
+            [(rate)]="form.controls.exchangeRate.value"
+          />
+        </div>
+
+        <div class="field">
+          <bb-text-input
+            id="sor-pos"
+            label="Place of supply"
+            inputmode="numeric"
+            maxlength="2"
+            placeholder="33"
+            hint="Leave blank to take it from the GSTIN."
+            formControlName="placeOfSupplyStateCode"
+            [error]="
+              showError('placeOfSupplyStateCode')
+                ? 'Place of supply is a two-digit state code.'
+                : ''
+            "
+          />
+        </div>
 
         @if (quoteId()) {
-          <a class="chip" [routerLink]="['/sales/quotes', quoteId()]">from quote</a>
+          <div class="field">
+            <span class="field-label">Source document</span>
+            <a class="chip" [routerLink]="['/sales/quotes', quoteId()]">from quote</a>
+          </div>
         }
-      }
+      </div>
     </div>
 
-    <div class="sor-form__actions">
-      @if (!isEdit()) {
-        <button type="button" class="btn btn-secondary" (click)="showConvert.set(true)">
-          From a quote
-        </button>
+    <!-- Card Row: Billing & Shipping Address -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Billing address</div>
+        <div class="field">
+          <bb-text-input
+            id="sor-gstin"
+            label="Customer GSTIN"
+            maxlength="15"
+            [uppercase]="true"
+            formControlName="contactGstin"
+            [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="sor-billing" label="Billing address" rows="3" formControlName="billingAddress" />
+        </div>
+        <div class="card-meta">{{ looksInterState() ? 'Inter-state IGST' : 'Intra-state CGST + SGST' }}</div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2)">
+          <bb-checkbox text="Same as billing" (change)="copyBillingToShipping($event)" />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="sor-shipping" label="Shipping address" rows="3" formControlName="shippingAddress" />
+        </div>
+        <div class="card-meta">Delivery destination for the goods or services.</div>
+      </div>
+    </div>
+
+    <!-- Card 3: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
+      <div class="sor-form__lines" style="border:none;margin-top:0">
+        @if (!context().readonly) {
+          <div style="margin-bottom: var(--space-3)">
+            <bb-scan
+              label="Scan"
+              placeholder="Scan or type a barcode or item code"
+              ariaLabel="Scan an item onto the lines"
+              [global]="true"
+              (scanned)="onScan($event)"
+            />
+          </div>
+        }
+        <bb-document-line-grid
+          [projects]="projectOptions()"
+          [lines]="lines()"
+          [context]="context()"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
+        />
+      </div>
+    </div>
+
+    <!-- Card Row: Notes & Totals -->
+    <div class="card-row">
+      <div class="card">
+        <div class="card-kicker">Notes &amp; Terms</div>
+        <div class="field">
+          <bb-textarea id="sor-notes" label="Notes" rows="2" placeholder="Prints on the document" formControlName="notes" />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="sor-terms" label="Terms and conditions" rows="2" formControlName="termsAndConditions" />
+        </div>
+      </div>
+
+      <div class="card" style="width:min(340px,100%);flex:none">
+        <div class="card-kicker">Totals</div>
+        <div style="display:grid;gap:6px;margin-top:var(--space-2);font-size:13px;font-variant-numeric:tabular-nums">
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Sub total</span>
+            <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
+          </div>
+          @if (totals().discountAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Discount</span>
+              <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().cgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">CGST</span>
+              <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().sgstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">SGST</span>
+              <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().igstAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">IGST</span>
+              <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          @if (totals().cessAmount > 0) {
+            <div style="display:flex;justify-content:space-between">
+              <span class="text-muted">Cess</span>
+              <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
+            </div>
+          }
+          <div style="height:1px;background:var(--color-divider);margin:var(--space-1) 0"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span>Total</span>
+            <span style="font-family:var(--font-heading);font-size:22px;color:var(--color-accent)">
+              ₹{{ totals().totalAmount / 100 | number: '1.2-2' }}
+            </span>
+          </div>
+        </div>
+        <div class="card-meta">{{ looksInterState() ? 'Inter-state IGST applicable' : 'Intra-state CGST & SGST applicable' }}</div>
+      </div>
+    </div>
+
+    <!-- More Details Card -->
+    <bb-more-details title="More details" summary="Approvals, custom fields, and document lifecycle">
+      <div class="field" style="margin-bottom: var(--space-3)">
+        <bb-document-custom-fields source="/api/sales/custom-fields?kind=SalesOrder" [(value)]="customValues" [isNew]="salesOrderId() === null" />
+      </div>
+
+      @if (approvalOffered()) {
+        <div class="approval-offer" style="margin-bottom: var(--space-3)">
+          <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="saving()">Request approval</button>
+          <span>Saves the order as a draft and sends it to the approver. It cannot be confirmed until they agree.</span>
+        </div>
       }
 
-      @if (isEdit()) {
-        <button type="button" class="btn btn-secondary" (click)="openStock()">Stock</button>
-      }
-
-      @if (canShortClose()) {
-        <button
-          type="button"
-          class="btn btn-secondary"
-          [disabled]="saving()"
-          (click)="shortClose()"
-        >
-          Close short
-        </button>
-      }
-
-      @if (canConfirm()) {
-        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="confirm()">
-          Confirm &amp; reserve
-        </button>
+      @if (salesOrderId(); as overrideId) {
+        @if (creditOverride()) {
+          <bb-approval-panel
+            heading="Credit limit override"
+            [basePath]="'/api/sales/sales-orders/' + overrideId + '/overrides/credit-limit'"
+            [allowSubmit]="false"
+            [documentStatus]="status()"
+            (changed)="load()"
+          />
+        }
+        @if (discountOverride()) {
+          <bb-approval-panel
+            heading="Discount override"
+            [basePath]="'/api/sales/sales-orders/' + overrideId + '/overrides/discount'"
+            [allowSubmit]="false"
+            [documentStatus]="status()"
+            (changed)="load()"
+          />
+        }
       }
 
       @if (canVoid()) {
-        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="voidOrder()">
-          Void
-        </button>
+        <form class="field sor-form__void" [formGroup]="voidForm" style="margin-top: var(--space-3)">
+          <bb-text-input
+            id="sor-void-reason"
+            label="Reason, if voiding"
+            maxlength="300"
+            placeholder="Customer cancelled the order"
+            formControlName="reason"
+            [required]="true"
+            [error]="
+              voidForm.controls.reason.invalid && voidForm.controls.reason.touched
+                ? 'Say why this order is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
+                : ''
+            "
+          />
+        </form>
       }
 
-      @if (editable()) {
-        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
-          {{ saving() ? 'Saving…' : 'Save' }}
-        </button>
+      @if (canShortClose()) {
+        <form class="field sor-form__void" [formGroup]="shortCloseForm" style="margin-top: var(--space-3)">
+          <bb-text-input
+            id="sor-shortclose-reason"
+            label="Reason, if closing short"
+            maxlength="300"
+            placeholder="Customer took four of ten and cancelled the rest"
+            formControlName="reason"
+            [required]="true"
+            [error]="
+              shortCloseForm.controls.reason.invalid && shortCloseForm.controls.reason.touched
+                ? 'Say why this order is being closed short. It is what tells an order that was fulfilled apart from one that was stopped.'
+                : ''
+            "
+          />
+        </form>
       }
-    </div>
-  </header>
-
-  <!-- Rules about the document, and everything the server refused. Field
-       constraints live on their fields, below. -->
-  <bb-message-box [messages]="messages()" />
-
-  @if (approvalOffered()) {
-    <!-- Past the credit or discount limit: an approver may let this one order through (TK-102). -->
-    <div class="approval-offer">
-      <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="saving()">Request approval</button>
-      <span>Saves the order as a draft and sends it to the approver. It cannot be confirmed until they agree.</span>
-    </div>
-  }
-
-  @if (salesOrderId(); as overrideId) {
-    @if (creditOverride()) {
-      <bb-approval-panel
-        heading="Credit limit override"
-        [basePath]="'/api/sales/sales-orders/' + overrideId + '/overrides/credit-limit'"
-        [allowSubmit]="false"
-        [documentStatus]="status()"
-        (changed)="load()"
-      />
-    }
-    @if (discountOverride()) {
-      <bb-approval-panel
-        heading="Discount override"
-        [basePath]="'/api/sales/sales-orders/' + overrideId + '/overrides/discount'"
-        [allowSubmit]="false"
-        [documentStatus]="status()"
-        (changed)="load()"
-      />
-    }
-  }
-
-  @if (canVoid()) {
-    <form class="field sor-form__void" [formGroup]="voidForm">
-      <bb-text-input
-        id="sor-void-reason"
-        label="Reason, if voiding"
-        maxlength="300"
-        placeholder="Customer cancelled the order"
-        formControlName="reason"
-        [required]="true"
-        [error]="
-          voidForm.controls.reason.invalid && voidForm.controls.reason.touched
-            ? 'Say why this order is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
-            : ''
-        "
-      />
-    </form>
-  }
-
-  @if (canShortClose()) {
-    <form class="field sor-form__void" [formGroup]="shortCloseForm">
-      <bb-text-input
-        id="sor-shortclose-reason"
-        label="Reason, if closing short"
-        maxlength="300"
-        placeholder="Customer took four of ten and cancelled the rest"
-        formControlName="reason"
-        [required]="true"
-        [error]="
-          shortCloseForm.controls.reason.invalid && shortCloseForm.controls.reason.touched
-            ? 'Say why this order is being closed short. It is what tells an order that was fulfilled apart from one that was stopped.'
-            : ''
-        "
-      />
-    </form>
-  }
-
-  <!--
-    Common inputs throughout, so this form and the invoice form are the same
-    field for the same job. The messages and when they show are unchanged.
-  -->
-  <form class="sor-form__fields" [formGroup]="form">
-    <div class="field">
-      <bb-branch-date-input
-        id="sor-date"
-        label="Order date"
-        formControlName="documentDate"
-        [required]="true"
-        [error]="showError('documentDate') ? 'Give the order a date.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <bb-branch-date-input
-        id="sor-delivery"
-        label="Delivery date"
-        hint="When the customer is expecting the goods."
-        formControlName="deliveryDate"
-      />
-    </div>
-
-    <div class="field">
-      <bb-form-field
-        label="Customer"
-        controlId="sor-contact"
-        [required]="true"
-        [error]="showError('contactId') ? 'Choose the customer.' : ''"
-      >
-        <button
-          id="sor-contact"
-          type="button"
-          class="input picker"
-          [disabled]="form.controls.contactId.disabled"
-          (click)="openCustomerPicker()"
-        >
-          {{ contactLabel() || 'Choose a customer' }}
-        </button>
-      </bb-form-field>
-    </div>
-
-    <div class="field">
-      <bb-text-input
-        id="sor-gstin"
-        label="Customer GSTIN"
-        maxlength="15"
-        [uppercase]="true"
-        formControlName="contactGstin"
-        [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <bb-text-input
-        id="sor-pos"
-        label="Place of supply"
-        inputmode="numeric"
-        maxlength="2"
-        placeholder="33"
-        hint="Leave blank to take it from the GSTIN."
-        formControlName="placeOfSupplyStateCode"
-        [error]="
-          showError('placeOfSupplyStateCode')
-            ? 'Place of supply is a two-digit state code.'
-            : ''
-        "
-      />
-    </div>
-
-    <div class="field">
-      <bb-text-input
-        id="sor-currency"
-        label="Currency"
-        maxlength="3"
-        [uppercase]="true"
-        formControlName="currencyCode"
-        [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <!-- Eight places, matching decimal(18,8) on the column. The field this
-           replaced stepped by 0.0001 and showed four. -->
-      <bb-exchange-rate-input
-        id="sor-rate"
-        label="Exchange rate"
-        hint="A snapshot at the order's date, never looked up live."
-        [fromCurrency]="form.controls.currencyCode.value"
-        formControlName="exchangeRate"
-        [required]="true"
-        [error]="showError('exchangeRate') ? 'Exchange rate must be greater than zero.' : ''"
-      />
-    </div>
-
-    <div class="field">
-      <bb-textarea id="sor-billing" label="Billing address" rows="2" formControlName="billingAddress" />
-    </div>
-
-    <div class="field">
-      <bb-textarea
-        id="sor-shipping"
-        label="Shipping address"
-        rows="2"
-        formControlName="shippingAddress"
-      />
-    </div>
-
-    <div class="field sor-form__wide">
-      <bb-textarea id="sor-notes" label="Notes" rows="2" formControlName="notes" />
-      <bb-document-custom-fields source="/api/sales/custom-fields?kind=SalesOrder" [(value)]="customValues" [isNew]="salesOrderId() === null" />
-    </div>
-
-    <div class="field sor-form__wide">
-      <bb-textarea
-        id="sor-terms"
-        label="Terms and conditions"
-        rows="2"
-        formControlName="termsAndConditions"
-      />
-    </div>
+    </bb-more-details>
   </form>
-
-  <div class="sor-form__lines">
-    @if (!context().readonly) {
-      <div class="so-form__scan">
-        <bb-scan
-          label="Scan"
-          placeholder="Scan or type a barcode or item code"
-          ariaLabel="Scan an item onto the lines"
-          [global]="true"
-          (scanned)="onScan($event)"
-        />
-      </div>
-    }
-    <bb-document-line-grid
-      [projects]="projectOptions()"
-      [lines]="lines()"
-      [context]="context()"
-      (linesChange)="onLinesChange($event)"
-      (pickItem)="onPickItem($event)"
-    />
-  </div>
-
-  <!-- Paise throughout, divided only to display: the grid's totals are integers
-       and dividing at the last moment is what keeps them adding up. -->
-  <div class="sor-form__totals">
-    <div class="sor-form__total">
-      <span>Sub total</span>
-      <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
-    </div>
-
-    @if (totals().discountAmount > 0) {
-      <div class="sor-form__total">
-        <span>Discount</span>
-        <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().cgstAmount > 0) {
-      <div class="sor-form__total sor-form__total--tax">
-        <span>CGST</span>
-        <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().sgstAmount > 0) {
-      <div class="sor-form__total sor-form__total--tax">
-        <span>SGST</span>
-        <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().igstAmount > 0) {
-      <div class="sor-form__total sor-form__total--tax">
-        <span>IGST</span>
-        <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    @if (totals().cessAmount > 0) {
-      <div class="sor-form__total sor-form__total--tax">
-        <span>Cess</span>
-        <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
-      </div>
-    }
-
-    <div class="sor-form__total sor-form__total--grand">
-      <span>Total</span>
-      <span>{{ totals().totalAmount / 100 | number: '1.2-2' }}</span>
-    </div>
-  </div>
-</section>
+</bb-create-page>
 
 @if (showStock()) {
   <bb-stock-availability-drawer
@@ -353,4 +354,3 @@
   (choose)="picker.choose($event)"
   (dismiss)="picker.close()"
 />
-

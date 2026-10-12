@@ -6,6 +6,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
+  FormFieldComponent,
+  UiMessage,
   ScanComponent,
   BbSelectOption,
   ColumnDef,
@@ -15,6 +21,7 @@ import {
   LookupRow,
   MessageBoxComponent,
   QuantityInputComponent,
+  CheckboxComponent,
   SelectComponent,
   TextInputComponent,
   TextareaComponent,
@@ -79,6 +86,11 @@ interface ReturnLine {
   selector: 'bb-debit-note-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
+    FormFieldComponent,
     ScanComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
@@ -90,6 +102,7 @@ interface ReturnLine {
     BranchDateInputComponent,
     TextInputComponent,
     QuantityInputComponent,
+    CheckboxComponent,
     SelectComponent,
     TextareaComponent,
     MessageBoxComponent,
@@ -126,6 +139,13 @@ export class DebitNoteFormPage {
   protected readonly billLabel = signal('');
   protected readonly reasonCode = signal('PurchaseReturn');
   protected readonly placeOfSupplyStateCode = signal('');
+  protected readonly billingAddress = signal('');
+  protected readonly shippingAddress = signal('');
+  protected readonly currencyCode = signal('INR');
+  protected readonly exchangeRate = signal(1);
+  protected readonly isInterState = signal(false);
+  protected readonly voidOpen = signal(false);
+  protected readonly voidReason = signal('');
   protected readonly notes_ = signal('');
 
   protected readonly lines = signal<readonly ReturnLine[]>([]);
@@ -134,6 +154,28 @@ export class DebitNoteFormPage {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
+
+  protected readonly canDraft = computed(() => this.isNew() || this.status() === 'Draft');
+  protected readonly canPost = computed(() => !this.isNew() && !this.readonlyDoc());
+
+  protected readonly messages = computed<UiMessage[]>(() => {
+    const list: UiMessage[] = [];
+    const err = this.error();
+    const not = this.notice();
+    if (err) list.push({ tone: 'error', text: err });
+    if (not) list.push({ tone: 'success', text: not });
+    return list;
+  });
+
+  protected copyBillingToShipping(): void {
+    this.shippingAddress.set(this.billingAddress());
+  }
+
+  protected zeroAll(): void {
+    this.lines.set(
+      this.lines().map((line) => ({ ...line, quantity: 0 })),
+    );
+  }
 
   protected readonly picker = signal<Picker>('none');
   protected readonly pickerRows = signal<readonly LookupRow[]>([]);
@@ -197,7 +239,14 @@ export class DebitNoteFormPage {
       this.billId.set(view.billId);
       this.billLabel.set(view.billNo ?? String(view.billId));
       this.reasonCode.set(view.reasonCode);
+      this.placeOfSupplyStateCode.set(
+        view.placeOfSupplyStateId ? String(view.placeOfSupplyStateId).padStart(2, '0') : '',
+      );
+      this.currencyCode.set(view.currencyCode ?? 'INR');
+      this.exchangeRate.set(view.exchangeRate ?? 1);
+      this.isInterState.set(view.isInterState);
       this.notes_.set(view.notes ?? '');
+      this.voidReason.set(view.voidReason ?? '');
       this.customValues.set(view.customFields ?? {});
 
       this.lines.set(
@@ -346,6 +395,19 @@ export class DebitNoteFormPage {
       if (!this.contactGstin() && bill.contactGstin) {
         this.contactGstin.set(bill.contactGstin);
       }
+      if (bill.billingAddress && !this.billingAddress()) {
+        this.billingAddress.set(bill.billingAddress);
+      }
+      if (bill.shippingAddress && !this.shippingAddress()) {
+        this.shippingAddress.set(bill.shippingAddress);
+      }
+      if (bill.currencyCode) {
+        this.currencyCode.set(bill.currencyCode);
+      }
+      if (bill.exchangeRate) {
+        this.exchangeRate.set(bill.exchangeRate);
+      }
+      this.isInterState.set(bill.isInterState);
     } catch {
       this.error.set('That bill could not be read, so its lines were not copied.');
     }
@@ -495,6 +557,28 @@ export class DebitNoteFormPage {
     }
   }
 
+  protected async voidDebitNote(): Promise<void> {
+    const id = this.debitNoteId();
+    if (id === null || !this.voidReason().trim()) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.error.set(null);
+    this.notice.set(null);
+
+    try {
+      await this.notes.void(id, { reason: this.voidReason().trim() });
+      await this.load(id);
+      this.voidOpen.set(false);
+      this.notice.set('Debit note voided.');
+    } catch (err) {
+      this.error.set(this.messageFrom(err));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
   private toRequest(contactId: number, billId: number): SaveDebitNoteRequest {
     const lines: SaveDebitNoteLineRequest[] = this.activeLines().map((line) => ({
       billDetailId: line.billDetailId,
@@ -521,6 +605,8 @@ export class DebitNoteFormPage {
       reasonCode: this.reasonCode(),
       contactGstin: this.contactGstin() || null,
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
+      currencyCode: this.currencyCode() || 'INR',
+      exchangeRate: this.exchangeRate() || 1,
       notes: this.notes_() || null,
       customFields: compactValues(this.customValues()),
       lines,

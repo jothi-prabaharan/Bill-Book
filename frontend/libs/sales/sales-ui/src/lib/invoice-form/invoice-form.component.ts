@@ -25,6 +25,10 @@ import {
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
+  CreatePageComponent,
+  NumberFieldComponent,
+  ExchangeRateFieldComponent,
+  MoreDetailsComponent,
   ApprovalPanelComponent,
   ColumnDef,
   EditHistoryComponent,
@@ -37,7 +41,6 @@ import {
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
-  ExchangeRateInputComponent,
   FormFieldComponent,
   LookupDialogComponent,
   ScanComponent,
@@ -49,6 +52,7 @@ import {
   ProjectOptionsService,
   TextInputComponent,
   TextareaComponent,
+  CheckboxComponent,
   UiMessage,
   compactValues,
   recalculate,
@@ -86,6 +90,10 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
   selector: 'bb-invoice-form',
   standalone: true,
   imports: [
+    CreatePageComponent,
+    NumberFieldComponent,
+    ExchangeRateFieldComponent,
+    MoreDetailsComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     EditHistoryComponent,
@@ -103,8 +111,8 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     NumberInputComponent,
     TextInputComponent,
     TextareaComponent,
+    CheckboxComponent,
     BranchDateInputComponent,
-    ExchangeRateInputComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
     DataGridFooterDirective,
@@ -575,6 +583,13 @@ export class InvoiceFormComponent implements OnInit {
     return field.invalid && (field.touched || field.dirty);
   }
 
+  protected copyBillingToShipping(event?: Event | boolean): void {
+    const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
+    if (checked) {
+      this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
+    }
+  }
+
   /**
    * What the screen guesses about the place of supply, for the grid's columns.
    *
@@ -582,7 +597,7 @@ export class InvoiceFormComponent implements OnInit {
    * `IsInterState` comes from `PlaceOfSupply.Resolve` on the server, against the
    * branch's real state code; this only decides which columns are drawn.
    */
-  private looksInterState(): boolean {
+  protected looksInterState(): boolean {
     // Read through the signal, not the controls, or this never recomputes.
     const value = this.formValue();
     const stated = value.placeOfSupplyStateCode ?? '';
