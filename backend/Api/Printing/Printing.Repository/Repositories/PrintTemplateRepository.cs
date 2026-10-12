@@ -56,6 +56,28 @@ public sealed class PrintTemplateRepository
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// The active layouts for one document type, default first, for a create
+    /// page's Print template field (TK-192). Empty when the branch has none, and
+    /// the renderer then falls back to the standard layout.
+    /// </summary>
+    public async Task<IReadOnlyList<PrintTemplateChoice>> ChoicesAsync(string documentTypeCode, CancellationToken ct)
+    {
+        string code = documentTypeCode.Trim().ToUpperInvariant();
+
+        return await _db.PrintTemplates
+            .Where(t => t.IsActive && t.DocumentTypeCode == code)
+            .OrderByDescending(t => t.IsDefault)
+            .ThenBy(t => t.TemplateName)
+            .Select(t => new PrintTemplateChoice
+            {
+                PrintTemplateId = t.PrintTemplateId,
+                TemplateName = t.TemplateName,
+                IsDefault = t.IsDefault,
+            })
+            .ToListAsync(ct);
+    }
+
     public async Task<PrintTemplateResult<PrintTemplateDetail>> GetAsync(long id, CancellationToken ct)
     {
         PrintTemplate? template = await Find(id, ct);

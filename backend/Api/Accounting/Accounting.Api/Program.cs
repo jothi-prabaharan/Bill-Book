@@ -76,6 +76,7 @@ builder.Services.AddScoped<SubAccountRepository>();
 builder.Services.AddScoped<TaxMasterRepository>();
 builder.Services.AddScoped<NumberingSeriesRepository>();
 builder.Services.AddScoped<PaymentTermRepository>();
+builder.Services.AddScoped<DocumentChoicesRepository>();
 builder.Services.AddScoped<BankLedgerRepository>();
 builder.Services.AddScoped<LedgerPostingRepository>();
 builder.Services.AddScoped<PeriodLockRepository>();

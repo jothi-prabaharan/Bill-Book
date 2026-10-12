@@ -18,6 +18,19 @@ public class PrintTemplateListItem
 }
 
 /// <summary>The whole template, including the version a later save has to echo back.</summary>
+/// <summary>
+/// A layout a document's create page offers in its Print template field
+/// (TK-192): just what the select shows, the branch default first.
+/// </summary>
+public class PrintTemplateChoice
+{
+    public long PrintTemplateId { get; set; }
+
+    public string TemplateName { get; set; } = null!;
+
+    public bool IsDefault { get; set; }
+}
+
 public class PrintTemplateDetail
 {
     public long PrintTemplateId { get; set; }
