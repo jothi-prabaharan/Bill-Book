@@ -5781,6 +5781,19 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `register-format.spec.ts`.
 - **Done when:** every list above reads like the Purchase orders register at 1280px and stacks at 360px, with its existing filters, editors and actions still working.
 
+### TK-191 · Metal purity on Retail branches (D-65)
+- [~] working (Claude Opus 5.5) — since 2026-10-12
+- **Issue:** [#181](https://github.com/jothi-prabaharan/Bill-Book/issues/181)
+- **Group:** Z · Owner request
+- **Lanes:** L-INV (`MetalPuritiesController`, `Inventory.Api.Tests`), L-DOC (`masters.md`) · **Depends on:** — · **Decision:** D-65
+- **Where:** `backend/Api/Inventory/Inventory.Api/Controllers/MetalPuritiesController.cs` (its `[RequireBusinessType]`), `backend/tests/Inventory.Api.Tests/TradeSeedTests.cs`, `frontend/apps/docs/content/masters.md` › Metal purities.
+- **State:** checked 12 October 2026. Master's menu (`TradeScopeRepository.MenuTrades["mtp"]`) and Inventory's seed (`MetalPurityRepository.SeedsPurities`) give metal purities to Retail and Jewellery, but the controller admits Jewellery only, so on a Retail branch the screen opens and `GET /api/metal-purities` answers 403. Found by TK-189's check of every menu row.
+- **Sub-tasks:**
+  - [ ] `MetalPuritiesController` admits Retail and Jewellery.
+  - [ ] Test: written, never run by an AI (section 0.5): the controller admits exactly the trades the seed fills.
+  - [ ] Docs and release notes.
+- **Done when:** on a Retail branch, Settings › Metal purity lists and saves purities, and `TradeSeedTests` passes.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -5855,7 +5868,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-62 | Is a laborer an HRMS employee, or a light profile in the Site service with only a login? | TK-170, TK-171 | **A light profile in the Site service with a login, and an optional `EmployeeId` link** (owner, 2026-10-09); no HRMS purchase needed. TK-170, TK-171 |
 | D-63 | A check-in outside the site's radius: refuse it, or accept and flag it for the admin? | TK-171 (check-in) | **Accept and flag** (owner, 2026-10-09): the check-in is saved and flagged for the admin at approval. TK-171 |
 | D-64 | GST on a site bill: separate supplies (labor on SAC, material on HSN) or one composite supply? | TK-175 (the invoice lines) | **Separate lines** (owner, 2026-10-09): labour on SAC, material on HSN, each at its own GST rate. TK-175 |
-| D-65 | Does a **Retail** branch get Settings › Metal purity? The menu (`TradeScopeRepository.MenuTrades["mtp"]`, pinned by `TradeScopeTests`) and the seed give it to Retail and Jewellery, but `MetalPuritiesController` is `[RequireBusinessType(Jewellery)]`, so on a Retail branch the screen opens and every call answers 403. Widen the controller to Retail, or narrow the menu and the seed to Jewellery? | — (found by TK-189's check) | **Open**, asked 2026-10-11 |
+| D-65 | Does a **Retail** branch get Settings › Metal purity? The menu (`TradeScopeRepository.MenuTrades["mtp"]`, pinned by `TradeScopeTests`) and the seed give it to Retail and Jewellery, but `MetalPuritiesController` is `[RequireBusinessType(Jewellery)]`, so on a Retail branch the screen opens and every call answers 403. Widen the controller to Retail, or narrow the menu and the seed to Jewellery? | TK-191 | **Retail and Jewellery** (owner, 2026-10-12): the controller is widened to Retail, matching the menu and the seed. TK-191 |
 
 ---
 
