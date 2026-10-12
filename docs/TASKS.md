@@ -5819,7 +5819,8 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a user with only the Purchase role loads tax rates, payment terms, accounts, the next bill number and the bill's print templates; the frame and fields render at 1280px and 360px.
 
 ### TK-193 · Create pages: the nine sales and purchase documents
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-12
+- **Issue:** [#183](https://github.com/jothi-prabaharan/Bill-Book/issues/183)
 - **Group:** Z · Owner request
 - **Lanes:** L-UI (`document-line-grid` and a shared document form in ui-components), L-SAL-UI, L-PUR-UI, L-SAL and L-PUR (line and address fields below), L-DOC · **Depends on:** TK-192 · **Decision:** as TK-192
 - **Where:** `sales-ui/src/lib/{quote,sales-order,delivery-challan,invoice,credit-note}-form/`, `purchase-ui/src/lib/{purchase-order,goods-receipt,bill,debit-note}-form/`, `ui-components/src/lib/document-line-grid/`. Design lines 728–922, script 5215–5380.
