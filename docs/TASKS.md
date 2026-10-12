@@ -5796,6 +5796,66 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `TradeSeedTests`.
 - **Done when:** on a Retail branch, Settings › Metal purity lists and saves purities, and `TradeSeedTests` passes.
 
+### TK-192 · Create pages: the shared page frame and the choices every form reads
+- [~] working (Claude Opus 5.5) — since 2026-10-12
+- **Issue:** [#182](https://github.com/jothi-prabaharan/Bill-Book/issues/182)
+- **Group:** Z · Owner request
+- **Lanes:** L-UI (`frontend/libs/shared/{ui-components,theming,api-client}`), L-ACC (a choices controller per module), L-PRT (print-template choices), `backend/Gateway/Gateway.Api/appsettings.json` (the `/api/choices` route), L-DOC (`platform.md`) · **Depends on:** — · **Decision:** the owner's plan of 12 October 2026 (below)
+- **Why:** the owner asked for every create page to match the Claude Design export `Shell.dc.html` (create page, lines 721–1621). This card is the part every form shares; TK-193 to TK-195 use it.
+- **Owner's answers (12 October 2026):** all four cards, in order; the exchange rate is shown read-only from the rate master, **with no pencil**, so the operator-only rule on rates stands; fields the app has and the design does not show stay, in a **More details** card after the design's cards. Defaults the owner did not object to: Save draft only where a draft exists; Save rather than Save & post on quotes, sales orders and purchase orders; descriptions and notes stay plain text; a purchase order still delivers to the branch's warehouse.
+- **State:** checked 12 October 2026. Each form has its own heading and buttons. The lists a form needs are behind the owning module's permission — tax rates, accounts and payment terms need `accounting.view`, numbering series and print templates `settings.view` — so a purchase clerk's bill form gets an empty tax list without saying so (`purchase-lookup.service.ts` `purchaseTaxRates`).
+- **Sub-tasks:**
+  - [ ] `bb-create-page` (ui-components): the design's frame — Save draft (only when the form has drafts) and Save / Save & post top right, the message box, busy state, no heading of its own (the breadcrumb names the page); actions stack at 360px.
+  - [ ] Shared fields: a read-only **Number** ("From the number series master", or "Assigned on save"), a read-only **Exchange rate** from `GET api/rates/exchange` for the document's currency and date, and a **More details** card.
+  - [ ] Accounting: read-only choices per module under `api/choices/{module}/…` — tax rates, payment terms, accounts usable there, and the next number of the module's own series — one controller per module, each behind that module's `.view`, returning option lists only; routed by the gateway.
+  - [ ] Printing: the print templates for one document type, behind that document's module.
+  - [ ] `DocumentChoicesService` in the frontend, used by TK-193 to TK-195.
+  - [ ] Test: written, never run by an AI (section 0.5).
+  - [ ] Docs and release notes.
+- **Done when:** a user with only the Purchase role loads tax rates, payment terms, accounts, the next bill number and the bill's print templates; the frame and fields render at 1280px and 360px.
+
+### TK-193 · Create pages: the nine sales and purchase documents
+- [ ] open
+- **Group:** Z · Owner request
+- **Lanes:** L-UI (`document-line-grid` and a shared document form in ui-components), L-SAL-UI, L-PUR-UI, L-SAL and L-PUR (line and address fields below), L-DOC · **Depends on:** TK-192 · **Decision:** as TK-192
+- **Where:** `sales-ui/src/lib/{quote,sales-order,delivery-challan,invoice,credit-note}-form/`, `purchase-ui/src/lib/{purchase-order,goods-receipt,bill,debit-note}-form/`, `ui-components/src/lib/document-line-grid/`. Design lines 728–922, script 5215–5380.
+- **State:** checked 12 October 2026. Nine separate pages in two styles (sales: reactive forms, heading and actions on top; purchase: signals, cards, actions in a footer); only the line grid is shared. Purchase has no currency, rate or addresses; addresses are free text on sales; the GST split reads the GSTIN or a typed state, and four sales forms hard-code the branch state `'33'`.
+- **Sub-tasks:**
+  - [ ] One document form: the Document card (number, date, print template, party with "+ Add new contact" that returns to the half-made document, payment terms and due date on invoices and bills only, currency, read-only rate, source document), billing and shipping cards from the contact's addresses with the CGST/SGST or IGST note, line cards (item, description, quantity, unit, price, discount, account, tax), notes beside totals, More details.
+  - [ ] Each of the nine documents on it, keeping its own required fields (quote valid-until, challan dispatch date, vendor bill number and date).
+  - [ ] Backend: addresses on the debit note's request; description, unit and account on challan and credit-note lines.
+  - [ ] Test, docs and release notes.
+- **Not built (owner, 12 October 2026):** a quote from an enquiry and a purchase order from a requisition — no requisition exists.
+- **Done when:** all nine create pages read like the design at 1280px and stack at 360px, and save, post and convert as they do today.
+
+### TK-194 · Create pages: journal, account, tax rate, payment term, receive, spend and transfer
+- [ ] open
+- **Group:** Z · Owner request
+- **Lanes:** L-ACC-UI, L-WEB (`app.routes.ts`), L-MST (menu seed: tax rates and payment terms become creatable, with a migration), L-DOC · **Depends on:** TK-192 · **Decision:** as TK-192
+- **Where:** `accounting-ui/src/lib/{journals,chart-of-accounts,tax-master,payment-terms,money-document,transfer-money}/`. Design lines 923–999, 1301–1425, 1457–1575.
+- **State:** checked 12 October 2026. None has a `/new` route: journal, money and transfer editors sit above their list, account and tax swap the list out, payment terms open a sheet. Journals and money documents send no currency or rate; receive and spend settle documents by typed id.
+- **Sub-tasks:**
+  - [ ] Each form on its own `/new` page (and `/:id` where drafts are edited), on TK-192's frame.
+  - [ ] Journal and money documents: currency and the read-only rate; receive and spend: the allocation table (Document, Date, Outstanding, This settlement) from `api/allocations/open-documents`; "+ Add new contact".
+  - [ ] Account: currency. Tax rate: Active, the split shown read-only. Payment term: every field shown, "Preselect on new contacts".
+  - [ ] Test, docs and release notes.
+- **Not built (owner, 12 October 2026):** a tax rate's "effective to" and a payment term's display order — the server sets both.
+- **Done when:** all seven open from the menu's + on their own page, read like the design, and save as they do today.
+
+### TK-195 · Create pages: items, item groups, stock adjustments and the contact form
+- [ ] open
+- **Group:** Z · Owner request
+- **Lanes:** L-INV-UI, L-MST-UI (contact form), L-WEB, L-INV (item group: code from a series, description, sort order, 200-character name; migration), L-CON (Government category, Site office address kind), L-DOC · **Depends on:** TK-192 · **Decision:** as TK-192
+- **Where:** `inventory-ui/src/lib/{items,item-categories,stock-adjustments}/`, `master-ui/src/lib/contact-form/`. Design lines 1000–1300, 1426–1456, 1576–1621.
+- **State:** checked 12 October 2026. Items, item categories and stock adjustments open full-screen overlays that hide the breadcrumb; the item form is tabbed and always says "Item". The contact form is already its own page and close to the design.
+- **Sub-tasks:**
+  - [ ] Item: its own page of cards in the design's order, the noun per business type (Medicine, Ornament, Dish…), the profile defaulting to the branch's type, School and Service locked to services; Description, Standard cost, Min and Max stock shown; barcodes, custom fields and history in More details.
+  - [ ] Item group and stock adjustment on their own pages; the adjustment gains On book and Difference.
+  - [ ] Contact form: Government category, Site office address kind, the return banner, the last address cannot be removed.
+  - [ ] Test, docs and release notes.
+- **Not built (owner, 12 October 2026):** contact groups; dish menu details, the service billing card and the jewellery "sold by weight" and "tag per piece" flags — nothing stores them; HUID stays per piece.
+- **Done when:** all four open from the menu's + on their own page and read like the design at 1280px and 360px.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
