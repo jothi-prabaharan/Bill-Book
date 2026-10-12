@@ -24,22 +24,22 @@ import { DataGridRowComponent } from './data-grid-row/data-grid-row.component';
 import { DataGridCellTemplateDirective } from './data-grid-cell-template.directive';
 import { DataGridFooterDirective } from './data-grid-footer.directive';
 
-/** Classes for one row, from the row itself â€” an over-allocated line, a short item. */
+/** Classes for one row, from the row itself — an over-allocated line, a short item. */
 export type DataGridRowClass = (row: any) => string | string[] | Record<string, boolean> | null | undefined;
 
 /**
  * The product's one table.
  *
  * A list of records someone browses gets the defaults: sorting, a filter per
- * column, a row count and paging. A table the page composes â€” a posting
+ * column, a row count and paging. A table the page composes — a posting
  * preview with a totals footer, a statement section, rows of editable amounts
- * â€” turns those off (`[sortable]="false"`, `[showColumnFilters]="false"`,
+ * — turns those off (`[sortable]="false"`, `[showColumnFilters]="false"`,
  * `[showCount]="false"`, `[paged]="false"`), adds `flush` when it already sits
  * in a card, and uses `rowClass` and a `bbGridFooter` template for what a list
  * never needs. There is deliberately no second table component: every table in
  * the product draws through this one, so they all look, scroll and read the
  * same. (`bb-report-grid` and `bb-document-line-grid` are not tables in that
- * sense â€” one is the report engine, the other the document line editor.)
+ * sense — one is the report engine, the other the document line editor.)
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -139,7 +139,7 @@ export class DataGridComponent implements OnInit {
 
   /**
    * The permanent column-filter row. Filtering is per column and always
-   * available â€” there is no list-level search box and no toggle to reveal this,
+   * available — there is no list-level search box and no toggle to reveal this,
    * because a filter you have to go and find is a filter nobody uses.
    */
   @Input({ transform: booleanAttribute }) showColumnFilters = true;
@@ -148,7 +148,7 @@ export class DataGridComponent implements OnInit {
   @Input({ transform: booleanAttribute }) showExport = true;
 
   /**
-   * Split the rows into pages. Off for a table that is read as a whole â€” a
+   * Split the rows into pages. Off for a table that is read as a whole — a
    * statement section, a posting preview, a timesheet week.
    */
   private _paged = signal(true);
@@ -455,7 +455,7 @@ export class DataGridComponent implements OnInit {
     () => this.activeFilters().length > 0 || this.sortField() !== null,
   );
 
-  /** How many rows survive the filters â€” what the Clear button is measured against. */
+  /** How many rows survive the filters — what the Clear button is measured against. */
   readonly visibleRowCount = computed(() => this.filteredData().length);
 
   /** Drop every column filter and the sort in one press. */
@@ -561,7 +561,7 @@ export class DataGridComponent implements OnInit {
     }
   }
 
-  /** A column's heading. An empty one stays empty â€” an actions column has none. */
+  /** A column's heading. An empty one stays empty — an actions column has none. */
   headerOf(col: ColumnDef): string {
     return col.header ?? col.title ?? col.field;
   }

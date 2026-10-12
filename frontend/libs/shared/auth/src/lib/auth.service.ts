@@ -98,7 +98,7 @@ export class AuthService {
    * What this user may do in the branch they are signed in to, read off the
    * token. **Only for pages outside the shell** (the platform admin pages): pages under the
    * shell read `SessionContextService` instead (TK-44). Read off the token
-   * rather than stored separately â€” switching branch replaces the token,
+   * rather than stored separately — switching branch replaces the token,
    * so the permissions follow without anything having to remember to clear them.
    */
   readonly permissions = computed(() => new Set(readPermissions(this.accessToken())));
@@ -164,7 +164,7 @@ export class AuthService {
   /**
    * Moves to another branch without signing out. A branch is a separate set of
    * books, so this issues a new token carrying that org and the permissions
-   * held there â€” the old token keeps naming the old branch and is replaced.
+   * held there — the old token keeps naming the old branch and is replaced.
    */
   async switchOrganization(orgId: string): Promise<TokenResponse> {
     const response = await firstValueFrom(
@@ -186,7 +186,7 @@ export class AuthService {
    * **The refresh token is spent by this call.** The server rotates it: the one
    * sent is revoked and a new one comes back, so the new one must be stored
    * before anything else can use it. Presenting the old one again is read as
-   * reuse and ends the whole session â€” which is the intended behaviour when a
+   * reuse and ends the whole session — which is the intended behaviour when a
    * token has been stolen, and a bug if this method ever let two refreshes run
    * at once. `inFlight` is why it cannot: a second caller awaits the first
    * rather than sending the same token a second time.
@@ -212,7 +212,7 @@ export class AuthService {
 
     if (refreshToken === null) {
       // An access token with no refresh token beside it is a session that
-      // cannot continue â€” storage was cleared, or this is an older sign-in from
+      // cannot continue — storage was cleared, or this is an older sign-in from
       // before rotation. Either way it ends here rather than looping.
       this.clear();
 
@@ -231,7 +231,7 @@ export class AuthService {
 
       return response.accessToken;
     } catch {
-      // Expired, revoked, or replayed â€” all the same to the client, and all
+      // Expired, revoked, or replayed — all the same to the client, and all
       // mean the same thing: this session is over.
       this.clear();
 
@@ -284,7 +284,7 @@ export class AuthService {
 
   /**
    * Licence state travels with the branch, not with the user, so switching
-   * branch replaces all three values rather than merging them â€” an expired
+   * branch replaces all three values rather than merging them — an expired
    * Chennai must not leave its date showing after moving to a live Bangalore.
    */
   private storeLicense(response: TokenResponse): void {

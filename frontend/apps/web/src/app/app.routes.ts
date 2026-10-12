@@ -97,7 +97,7 @@ export const appRoutes: Routes = withUpdateGate([
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ProjectsPage),
         data: { access: { permission: 'projects.view' } },
       },
-      // The timesheet (TK-106) â€” before the :projectId route, which would otherwise take 'timesheet' as an id.
+      // The timesheet (TK-106) — before the :projectId route, which would otherwise take 'timesheet' as an id.
       {
         path: 'accounting/projects/timesheet',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TimesheetPage),
@@ -158,7 +158,7 @@ export const appRoutes: Routes = withUpdateGate([
       },
       {
         // Settling is per contact, so the id is the route rather than a filter
-        // inside the screen â€” it makes the workspace linkable from a contact,
+        // inside the screen — it makes the workspace linkable from a contact,
         // a statement or an aging report.
         path: 'accounting/allocations/:contactId',
         loadComponent: () =>

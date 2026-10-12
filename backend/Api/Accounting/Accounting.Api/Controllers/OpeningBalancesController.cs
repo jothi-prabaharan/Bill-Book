@@ -41,7 +41,7 @@ public sealed class OpeningBalancesController : ControllerBase
     /// <summary>
     /// Whether it may be finalized, and what is stopping it. Read continuously by
     /// the screen rather than only when Finalize is pressed — a migration is keyed
-    /// over weeks, and finding at the end that it is out by â‚¹4,300 means auditing
+    /// over weeks, and finding at the end that it is out by ₹4,300 means auditing
     /// all of it instead of the line just typed.
     /// </summary>
     [HttpGet("readiness")]

@@ -50,7 +50,7 @@ export const salesRoutes: Routes = [
     path: 'sales-orders/:id',
     loadComponent: () => import('./sales-order-form/sales-order-form.component').then(m => m.SalesOrderFormComponent), data: { motionIndex: 4, depth: 2 }
   },
-  // Its own list, beside the mixed transaction list â€” the mixed one cannot
+  // Its own list, beside the mixed transaction list — the mixed one cannot
   // filter by overdue or search an invoice number, which is what somebody
   // chasing a payment actually wants.
   {

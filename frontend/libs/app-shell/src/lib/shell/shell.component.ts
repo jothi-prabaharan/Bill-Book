@@ -28,7 +28,7 @@ import { FALLBACK_RAIL, SHELL_SCREENS } from '../shell-screens';
 /**
  * Root CSS Grid layout orchestrator (`bb-shell`).
  *
- * Owns the frame â€” 56px rail, 46px top bar, breadcrumb strip, scrolling outlet â€”
+ * Owns the frame — 56px rail, 46px top bar, breadcrumb strip, scrolling outlet —
  * and the breadcrumb trail. Panels belong to the top bar; board state belongs to
  * `ShellBoardService`. Nothing about either is duplicated here.
  */
@@ -56,7 +56,7 @@ export class ShellComponent {
   private readonly favourites = inject(FavouritesService);
   private readonly menuService = inject(MenuService);
 
-  /** The rail before `/api/menu` answers â€” see `shell-screens.ts`. */
+  /** The rail before `/api/menu` answers — see `shell-screens.ts`. */
   private readonly all: readonly NavItem[] = FALLBACK_RAIL;
 
   /**
@@ -92,7 +92,7 @@ export class ShellComponent {
   readonly editing = computed(() => this.board.editing());
 
   /**
-   * Only a screen the menu knows about can be starred â€” a document being edited
+   * Only a screen the menu knows about can be starred — a document being edited
    * is not one. The server's tree answers first; the static registry covers the
    * moment before it loads.
    */
@@ -101,7 +101,7 @@ export class ShellComponent {
     const fromServer = this.menuService.screens();
     const source = fromServer.length > 0 ? fromServer : SHELL_SCREENS;
 
-    // Exact first: a typed register â€” /sales/transactions?type=Invoice â€” is its
+    // Exact first: a typed register — /sales/transactions?type=Invoice — is its
     // own screen and stars separately from the mixed list it shares a path with.
     // Bare-path matching is for screens that carry no query; a typed register is
     // matched exactly or not at all, or starring one would star them all.

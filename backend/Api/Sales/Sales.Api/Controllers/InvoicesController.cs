@@ -21,8 +21,8 @@ public sealed class InvoicesController : ControllerBase
     /// <summary>
     /// One constructor, taking the interface.
     ///
-    /// There were two Ã¢â‚¬” one on the concrete <c>InvoiceRepository</c> and one on the
-    /// interface Ã¢â‚¬” which worked only because <c>IInvoiceRepository</c> was never
+    /// There were two — one on the concrete <c>InvoiceRepository</c> and one on the
+    /// interface — which worked only because <c>IInvoiceRepository</c> was never
     /// registered, so exactly one was resolvable. Registering it later, as this
     /// commit does, would have made both resolvable and
     /// <c>ActivatorUtilities</c> throws on an ambiguous constructor: every
@@ -41,7 +41,7 @@ public sealed class InvoicesController : ControllerBase
     /// One page of invoices, newest first.
     ///
     /// <c>skip</c> and <c>take</c> arrive off a query string and are clamped in
-    /// the service rather than trusted Ã¢â‚¬” a negative skip is a hand-edited URL
+    /// the service rather than trusted — a negative skip is a hand-edited URL
     /// that either throws or silently serves page one while the pager claims
     /// otherwise.
     /// </summary>
@@ -110,7 +110,7 @@ public sealed class InvoicesController : ControllerBase
 
     /// <summary>
     /// The PDF archived when this invoice was posted (TK-22). Not found for a
-    /// draft, for a invoice in another branch, or when the file is missing Ã¢â‚¬” the
+    /// draft, for a invoice in another branch, or when the file is missing — the
     /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
     /// hand the document to someone outside the business.
     /// </summary>

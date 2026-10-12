@@ -1,4 +1,4 @@
-﻿@if (editing() && removed().length) {
+@if (editing() && removed().length) {
   <div class="widget-tray">
     <span class="widget-tray-label">Add a widget</span>
     @for (widget of removed(); track widget.id) {
@@ -12,10 +12,10 @@
     <div class="card" [style.grid-column]="'span ' + span(widget.id)" [style.--i]="i">
       @if (editing()) {
         <div class="wbar">
-          <button class="wbtn" type="button" (click)="moveLeft(widget.id)" [attr.aria-label]="'Move ' + widget.label + ' earlier'" title="Move earlier">â†</button>
-          <button class="wbtn" type="button" (click)="moveRight(widget.id)" [attr.aria-label]="'Move ' + widget.label + ' later'" title="Move later">â†’</button>
-          <button class="wbtn" type="button" (click)="resize(widget.id)" [attr.aria-label]="'Change the width of ' + widget.label" title="Change width">â‡”</button>
-          <button class="wbtn" type="button" (click)="remove(widget.id)" [attr.aria-label]="'Remove ' + widget.label" title="Remove">âœ•</button>
+          <button class="wbtn" type="button" (click)="moveLeft(widget.id)" [attr.aria-label]="'Move ' + widget.label + ' earlier'" title="Move earlier">&larr;</button>
+          <button class="wbtn" type="button" (click)="moveRight(widget.id)" [attr.aria-label]="'Move ' + widget.label + ' later'" title="Move later">&rarr;</button>
+          <button class="wbtn" type="button" (click)="resize(widget.id)" [attr.aria-label]="'Change the width of ' + widget.label" title="Change width">&hArr;</button>
+          <button class="wbtn" type="button" (click)="remove(widget.id)" [attr.aria-label]="'Remove ' + widget.label" title="Remove">&times;</button>
         </div>
       }
 
@@ -100,15 +100,15 @@
           } @else {
             <div class="empty-hint">No product sales recorded yet</div>
           }
-          <div class="card-meta">Fiscal year to date Â· weighted average cost</div>
+          <div class="card-meta">Fiscal year to date &middot; weighted average cost</div>
         }
 
         @case ('aging') {
-          <div class="card-kicker">Outstanding â€” largest and oldest first</div>
+          <div class="card-kicker">Outstanding &mdash; largest and oldest first</div>
           @if (outstanding().length) {
             <bb-data-grid
               flush
-              label="Outstanding â€” largest and oldest first"
+              label="Outstanding &mdash; largest and oldest first"
               [columns]="outstandingColumns"
               [data]="outstanding()"
               [sortable]="false"
@@ -123,7 +123,7 @@
           } @else {
             <div class="empty-hint">No outstanding receivables</div>
           }
-          <div class="card-meta">{{ receivablesKpi() }} total Â· {{ overdueReceivablesKpi() }} overdue</div>
+          <div class="card-meta">{{ receivablesKpi() }} total &middot; {{ overdueReceivablesKpi() }} overdue</div>
         }
 
         @case ('compliance') {
@@ -147,7 +147,7 @@
           } @else {
             <div class="empty-hint">No upcoming statutory filings</div>
           }
-          <div class="card-meta">Statutory filing rules Â· Reminders sent to accounting users</div>
+          <div class="card-meta">Statutory filing rules &middot; Reminders sent to accounting users</div>
         }
 
         @case ('services') {

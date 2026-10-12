@@ -208,7 +208,7 @@ public sealed class MePayrollController : ControllerBase
         sb.AppendLine("  </div>");
         sb.AppendLine("  <div class='table-grid'>");
         sb.AppendLine("    <div>");
-        sb.AppendLine("      <table><thead><tr><th>Earnings</th><th>Amount (â‚¹)</th></tr></thead><tbody>");
+        sb.AppendLine("      <table><thead><tr><th>Earnings</th><th>Amount (&#8377;)</th></tr></thead><tbody>");
         foreach (var e in earnings)
         {
             string name = components.TryGetValue(e.SalaryComponentId, out var c) ? c.Name : e.Kind.ToString();
@@ -218,7 +218,7 @@ public sealed class MePayrollController : ControllerBase
         sb.AppendLine("      </tbody></table>");
         sb.AppendLine("    </div>");
         sb.AppendLine("    <div>");
-        sb.AppendLine("      <table><thead><tr><th>Deductions</th><th>Amount (â‚¹)</th></tr></thead><tbody>");
+        sb.AppendLine("      <table><thead><tr><th>Deductions</th><th>Amount (&#8377;)</th></tr></thead><tbody>");
         foreach (var d in deductions)
         {
             string name = components.TryGetValue(d.SalaryComponentId, out var c) ? c.Name : d.Kind.ToString();
@@ -230,7 +230,7 @@ public sealed class MePayrollController : ControllerBase
         sb.AppendLine("  </div>");
         sb.AppendLine("  <div class='net-box'>");
         sb.AppendLine("    <div class='net-label'>NET SALARY PAYABLE:</div>");
-        sb.AppendLine($"    <div class='net-amount'>â‚¹ {payslip.NetPay:N2}</div>");
+        sb.AppendLine($"    <div class='net-amount'>&#8377; {payslip.NetPay:N2}</div>");
         sb.AppendLine("  </div>");
         sb.AppendLine("  <div class='footer'>");
         sb.AppendLine("    <p>This is a computer generated document and does not require a physical signature.</p>");

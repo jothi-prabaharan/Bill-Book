@@ -69,7 +69,7 @@ public sealed class PurchaseOrdersController : ControllerBase
             : result.Detail is null ? NoContent() : Ok(new MessageResponse { Message = result.Detail });
     }
 
-    /// <summary>Draft â†’ ReadyToPost. The review step, for branches that want one.</summary>
+    /// <summary>Draft → ReadyToPost. The review step, for branches that want one.</summary>
     [HttpPost("{purchaseOrderId:long}/approve")]
     [PermissionAction("approve")]
     public async Task<IActionResult> Approve(long purchaseOrderId, CancellationToken ct)
