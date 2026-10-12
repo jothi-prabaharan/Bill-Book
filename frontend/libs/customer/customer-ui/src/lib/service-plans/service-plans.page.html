@@ -25,6 +25,13 @@
     emptyText="No plans here."
     (rowClick)="open($event)"
   >
+    <ng-template bbCellTemplate="itemId" let-r>
+      @if (itemLabel(r.itemId); as itm) {
+        <span class="tag tag-accent">{{ itm }}</span>
+      } @else {
+        <span class="plans__muted">—</span>
+      }
+    </ng-template>
     <ng-template bbCellTemplate="interval" let-r>{{ cadence(r.interval, r.every) }}</ng-template>
     <ng-template bbCellTemplate="nextDueDate" let-r>
       {{ date(r.nextDueDate) }}
@@ -58,6 +65,7 @@
           <span class="plans__label">Customer</span>
           <button type="button" class="btn btn-secondary" (click)="openPicker()">{{ contactLabel() || 'Choose a customer' }}</button>
         </div>
+        <bb-select label="Service item (optional)" name="itemId" placeholder="Choose a service item" [options]="serviceItemOptions()" [(ngModel)]="draft.itemId" (ngModelChange)="onServiceItemChange($event)" />
         <bb-select label="Repeats" name="interval" [clearable]="false" [options]="intervalOptions" [(ngModel)]="draft.interval" />
         <bb-number-input label="Every" name="every" [min]="1" [max]="24" [(ngModel)]="draft.every" />
         <bb-branch-date-input label="Starts" name="start" [(ngModel)]="draft.startDate" />

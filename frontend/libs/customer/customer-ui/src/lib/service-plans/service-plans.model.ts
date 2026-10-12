@@ -30,6 +30,7 @@ export interface ServicePlan {
 export interface ServicePlanDraft {
   name: string;
   contactId: number | null;
+  itemId: number | null;
   interval: ServicePlanInterval;
   every: number;
   startDate: string | null;
@@ -73,13 +74,14 @@ export function dueTone(daysToDue: number): string {
 }
 
 export function emptyPlan(today: string): ServicePlanDraft {
-  return { name: '', contactId: null, interval: 'Monthly', every: 6, startDate: today, endDate: null, leadDays: 7, nextDueDate: null, notes: '' };
+  return { name: '', contactId: null, itemId: null, interval: 'Monthly', every: 6, startDate: today, endDate: null, leadDays: 7, nextDueDate: null, notes: '' };
 }
 
 export function planDraftOf(p: ServicePlan): ServicePlanDraft {
   return {
     name: p.name,
     contactId: p.contactId,
+    itemId: p.itemId,
     interval: p.interval,
     every: p.every,
     startDate: p.startDate,
@@ -105,6 +107,7 @@ export function planRequest(d: ServicePlanDraft): Record<string, unknown> {
   return {
     name: d.name.trim(),
     contactId: d.contactId,
+    itemId: d.itemId ?? null,
     interval: d.interval,
     every: d.every,
     startDate: d.startDate,

@@ -2,7 +2,7 @@
   <bb-export-import />
 </bb-register-header>
 
-<bb-status-tabs label="Item status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
+<bb-status-tabs label="Item type" [tabs]="typeTabs()" [value]="selectedType()" (valueChange)="selectedType.set($event)" />
 
 @if (message()) {
   <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
@@ -11,6 +11,7 @@
 <section class="register-card">
   <div class="register-toolbar">
     <bb-search-input [(ngModel)]="search" (keyup.enter)="load()" placeholder="Code or name" ariaLabel="Search items" />
+    <bb-select ariaLabel="Status" placeholder="" [options]="statusOptions" [(ngModel)]="status" />
     <div class="register-toolbar-end">
       <!-- Ticked rows get labels; with none ticked, every item on the tab does (TK-159). -->
       <button type="button" class="btn btn-secondary" (click)="openListLabels()" [disabled]="visibleRows().length === 0">
@@ -27,6 +28,11 @@
     <ng-template bbCellTemplate="itemName" let-row>
       {{ row.itemName }}
     </ng-template>
+    <ng-template bbCellTemplate="itemType" let-row>
+      <span class="tag" [class.tag-accent]="row.itemType === 'Service'" [class.tag-neutral]="row.itemType !== 'Service'">
+        {{ row.itemType === 'NonStock' ? 'Non-Inventory' : (row.itemType === 'Goods' ? 'Inventory' : row.itemType) }}
+      </span>
+    </ng-template>
     <ng-template bbCellTemplate="hsnSac" let-row>
       —
     </ng-template>
@@ -38,6 +44,13 @@
     </ng-template>
     <ng-template bbCellTemplate="stockValue" let-row>
       <span class="tabular-nums">—</span>
+    </ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      @if (row.itemType === 'Service') {
+        <button type="button" class="btn btn-ghost btn-sm" (click)="$event.stopPropagation(); setServiceReminder(row)" title="Set service reminder">
+          Set reminder
+        </button>
+      }
     </ng-template>
   </bb-data-grid>
 </section>
@@ -237,6 +250,64 @@
         }
         <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
       </div>
+
+      @if (form.itemType === 'Service') {
+        <div class="service-reminder-card">
+          <div class="service-reminder-head">
+            <div>
+              <h3>Service reminder settings</h3>
+              <p class="service-reminder-hint">
+                Configure default reminder schedule and intervals for this service item.
+              </p>
+            </div>
+            @if (editingId() !== null) {
+              <button type="button" class="btn btn-secondary" (click)="setServiceReminder(form)">
+                Set customer service plan
+              </button>
+            }
+          </div>
+          <div class="fields">
+            <div class="field">
+              <bb-select
+                label="Repeat interval"
+                placeholder=""
+                [options]="serviceIntervalOptions"
+                [(ngModel)]="serviceReminderInterval"
+                (ngModelChange)="onServiceReminderSettingChange()"
+              />
+            </div>
+            <div class="field">
+              <bb-number-input
+                label="Every (periods)"
+                hint="Repeat every 1 to 24 intervals"
+                [min]="1"
+                [max]="24"
+                [(ngModel)]="serviceReminderEvery"
+                (ngModelChange)="onServiceReminderSettingChange()"
+              />
+            </div>
+            <div class="field">
+              <bb-number-input
+                label="Remind days ahead"
+                hint="Notify customer 0 to 90 days ahead"
+                [min]="0"
+                [max]="90"
+                [(ngModel)]="serviceReminderLeadDays"
+                (ngModelChange)="onServiceReminderSettingChange()"
+              />
+            </div>
+            <div class="field wide">
+              <bb-text-input
+                label="Reminder note"
+                hint="Instructions included in customer reminder emails"
+                maxlength="200"
+                [(ngModel)]="serviceReminderNotes"
+                (ngModelChange)="onServiceReminderSettingChange()"
+              />
+            </div>
+          </div>
+        </div>
+      }
     }
 
     @if (tab() === 'units') {

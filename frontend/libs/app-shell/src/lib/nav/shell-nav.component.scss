@@ -287,7 +287,8 @@
 /* The More sheet (TK-189), as the design's: the account on top, then every
    module that is not a tab, three to a row. Driven by
    ShellNavigationService.moreOpen, so a tile or a navigation closes it. */
-.more-backdrop {
+.more-backdrop,
+.shell-more-overlay {
   position: fixed;
   inset: 0;
   z-index: var(--z-dropdown);
@@ -298,7 +299,8 @@
   animation: fadeIn 130ms linear both;
 }
 
-.more-sheet {
+.more-sheet,
+.shell-more-panel {
   position: relative;
   z-index: 21;
   width: 100%;

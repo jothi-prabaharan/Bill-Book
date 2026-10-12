@@ -37,13 +37,14 @@ public sealed class ItemsController : ControllerBase
         [FromQuery] string? search,
         [FromQuery] string? profile,
         [FromQuery] long? categoryId,
+        [FromQuery] string? itemType,
         [FromQuery] bool includeInactive,
         [FromQuery] int? skip,
         [FromQuery] int? take,
         CancellationToken ct) =>
         skip is null && take is null
-            ? Ok(await _items.ListAsync(search, profile, categoryId, includeInactive, ct))
-            : Ok(await _items.PageAsync(search, profile, categoryId, includeInactive, skip ?? 0, take ?? 50, ct));
+            ? Ok(await _items.ListAsync(search, profile, categoryId, includeInactive, ct, itemType))
+            : Ok(await _items.PageAsync(search, profile, categoryId, includeInactive, skip ?? 0, take ?? 50, ct, itemType));
 
     /// <summary>
     /// The branch's custom fields on items (TK-111), for the item form and list.

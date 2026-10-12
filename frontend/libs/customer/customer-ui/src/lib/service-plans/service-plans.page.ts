@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -93,8 +93,15 @@ export class ServicePlansPage implements OnInit {
   ];
   protected readonly intervalOptions: BbSelectOption<string>[] = INTERVAL_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
 
+  protected readonly serviceItems = signal<{ itemId: number; itemName: string; itemCode: string }[]>([]);
+  protected readonly serviceItemOptions = computed<BbSelectOption<number>[]>(() => [
+    { value: 0, label: 'None (general service)' },
+    ...this.serviceItems().map((i) => ({ value: i.itemId, label: `${i.itemCode ? i.itemCode + ' — ' : ''}${i.itemName}` })),
+  ]);
+
   protected readonly columns: ColumnDef[] = [
     { field: 'name', header: 'Plan' },
+    { field: 'itemId', header: 'Service item', isTemplate: true, width: '11rem' },
     { field: 'contactId', header: 'Customer', width: '7rem' },
     { field: 'interval', header: 'Repeats', isTemplate: true, width: '9rem' },
     { field: 'nextDueDate', header: 'Next service', isTemplate: true, width: '12rem' },
@@ -121,11 +128,45 @@ export class ServicePlansPage implements OnInit {
   }
 
   private async start(): Promise<void> {
-    await this.load();
+    await Promise.all([this.load(), this.loadServiceItems()]);
     const open = Number(this.route.snapshot.queryParamMap.get('open'));
     const row = open ? this.plans().find((p) => p.servicePlanId === open) : undefined;
     if (row) {
       this.open(row);
+    } else {
+      const qItemId = Number(this.route.snapshot.queryParamMap.get('itemId'));
+      const qItemName = this.route.snapshot.queryParamMap.get('itemName');
+      if (qItemId) {
+        this.create();
+        this.draft.itemId = qItemId;
+        if (qItemName) {
+          this.draft.name = qItemName;
+        }
+      }
+    }
+  }
+
+  protected async loadServiceItems(): Promise<void> {
+    try {
+      const items = await firstValueFrom(this.http.get<{ itemId: number; itemName: string; itemCode: string; itemType: string }[]>('/api/items?itemType=Service'));
+      this.serviceItems.set(items ?? []);
+    } catch {
+      // Non-critical lookup
+    }
+  }
+
+  protected itemLabel(itemId: number | null): string | null {
+    if (!itemId) return null;
+    const found = this.serviceItems().find((i) => i.itemId === itemId);
+    return found ? found.itemName : `Item #${itemId}`;
+  }
+
+  protected onServiceItemChange(itemId: number | null): void {
+    if (itemId && (!this.draft.name || !this.draft.name.trim())) {
+      const found = this.serviceItems().find((i) => i.itemId === itemId);
+      if (found) {
+        this.draft.name = found.itemName;
+      }
     }
   }
 

@@ -14,3 +14,33 @@
 /* The drag preview the CDK lifts out of the table. */
 .cdk-drag-preview { box-shadow: 0 3px 12px rgb(0 0 0 / 18%); background: var(--color-bg); border-radius: 6px; }
 .cdk-drag-placeholder { opacity: .3; }
+
+.service-reminder-card {
+  margin-top: var(--space-4, 1rem);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  background: color-mix(in srgb, var(--color-surface, #fff) 94%, var(--color-primary, #6366f1) 6%);
+}
+
+.service-reminder-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-3, 0.75rem);
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+.service-reminder-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7280);
+}
+

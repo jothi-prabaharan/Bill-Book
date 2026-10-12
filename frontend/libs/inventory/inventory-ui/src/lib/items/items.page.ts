@@ -3,11 +3,13 @@ import {
   MASTER_STATUSES,
   MessageBoxComponent,
   RegisterHeaderComponent,
+  StatusTab,
   StatusTabsComponent,
   countStatusTabs,
   masterStatus,
   rowsInStatus,
 } from '@bill-book/ui-components';
+import { Router } from '@angular/router';
 import { SessionContextService } from '@bill-book/auth';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
@@ -215,6 +217,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
 })
 export class ItemsPage implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly session = inject(SessionContextService);
 
   /**
@@ -229,10 +232,46 @@ export class ItemsPage implements OnInit {
   protected readonly customFieldDefs = signal<CustomFieldDefinition[]>([]);
   protected readonly customValues = signal<CustomFieldValues>({});
   protected readonly gridColumns = computed<ColumnDef[]>(() => [...this.columns, ...customListColumns(this.customFieldDefs())]);
-  /** The register's tabs (TK-190): every item is loaded, inactive ones too, and the tab filters. */
+  /** The register's status and type tabs: split by item type with counts. */
   protected readonly status = signal('Active');
-  protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
-  protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
+  protected readonly selectedType = signal('All');
+  protected readonly statusOptions: BbSelectOption<string>[] = [
+    { value: '', label: 'All statuses' },
+    { value: 'Active', label: 'Active' },
+    { value: 'Inactive', label: 'Inactive' },
+  ];
+
+  protected readonly typeTabs = computed<readonly StatusTab[]>(() => {
+    const all = this.rows();
+    const inventoryCount = all.filter((r) => r.itemType === 'Inventory' || r.itemType === 'Goods').length;
+    const nonInventoryCount = all.filter((r) => r.itemType === 'Non-Inventory' || r.itemType === 'NonStock').length;
+    const serviceCount = all.filter((r) => r.itemType === 'Service').length;
+    const groupCount = all.filter((r) => r.itemType === 'Group').length;
+
+    return [
+      { value: 'All', label: 'All', count: all.length },
+      { value: 'Inventory', label: 'Inventory', count: inventoryCount },
+      { value: 'Non-Inventory', label: 'Non-Inventory', count: nonInventoryCount },
+      { value: 'Service', label: 'Service', count: serviceCount },
+      { value: 'Group', label: 'Group', count: groupCount },
+    ];
+  });
+
+  protected readonly visibleRows = computed(() => {
+    let rows = rowsInStatus(this.rows(), this.status(), masterStatus);
+    const type = this.selectedType();
+    if (type === 'Inventory') {
+      rows = rows.filter((r) => r.itemType === 'Inventory' || r.itemType === 'Goods');
+    } else if (type === 'Non-Inventory') {
+      rows = rows.filter((r) => r.itemType === 'Non-Inventory' || r.itemType === 'NonStock');
+    } else if (type === 'Service') {
+      rows = rows.filter((r) => r.itemType === 'Service');
+    } else if (type === 'Group') {
+      rows = rows.filter((r) => r.itemType === 'Group');
+    }
+    return rows;
+  });
+
   protected readonly gridRows = computed(() => withCustomColumns(this.visibleRows(), this.customFieldDefs()));
   protected readonly types = signal<UomType[]>([]);
   protected readonly categories = signal<Category[]>([]);
@@ -257,14 +296,44 @@ export class ItemsPage implements OnInit {
   columns: ColumnDef[] = [
     { field: 'itemCode', header: 'Item code' },
     { field: 'itemName', header: 'Item name' },
+    { field: 'itemType', header: 'Type', isTemplate: true, width: '9rem' },
     { field: 'hsnSac', header: 'HSN/SAC' },
     { field: 'status', header: 'Status' },
     { field: 'onHand', header: 'On hand', align: 'right' },
     { field: 'stockValue', header: 'Stock value', align: 'right' },
+    { field: 'actions', header: '', isTemplate: true, width: '9rem' },
   ];
 
   form: ItemDetail = this.blank();
   hsnSearch = '';
+
+  // Service reminder settings (for Service items)
+  protected serviceReminderInterval = 'Monthly';
+  protected serviceReminderEvery = 6;
+  protected serviceReminderLeadDays = 7;
+  protected serviceReminderNotes = '';
+
+  protected readonly serviceIntervalOptions: BbSelectOption<string>[] = [
+    { value: 'Monthly', label: 'Monthly' },
+    { value: 'Yearly', label: 'Yearly' },
+    { value: 'Weekly', label: 'Weekly' },
+    { value: 'Daily', label: 'Daily' },
+  ];
+
+  protected onServiceReminderSettingChange(): void {
+    const vals = { ...this.customValues() };
+    vals['service_interval'] = this.serviceReminderInterval;
+    vals['service_every'] = this.serviceReminderEvery;
+    vals['service_lead_days'] = this.serviceReminderLeadDays;
+    vals['service_notes'] = this.serviceReminderNotes;
+    this.customValues.set(vals);
+  }
+
+  setServiceReminder(item: { itemId: number; itemName: string }): void {
+    void this.router.navigate(['/customer/service-plans'], {
+      queryParams: { itemId: item.itemId, itemName: item.itemName },
+    });
+  }
 
   // ---- Labels (TK-159) -----------------------------------------------------
 
@@ -383,8 +452,10 @@ export class ItemsPage implements OnInit {
   ];
 
   protected readonly itemTypeOptions: BbSelectOption<string>[] = [
-    { value: 'Goods', label: 'Goods' },
+    { value: 'Inventory', label: 'Inventory' },
+    { value: 'Non-Inventory', label: 'Non-Inventory' },
     { value: 'Service', label: 'Service' },
+    { value: 'Group', label: 'Group' },
   ];
 
   protected readonly taxPreferenceOptions: BbSelectOption<string>[] = [
@@ -523,6 +594,10 @@ export class ItemsPage implements OnInit {
     this.editingId.set(null);
     this.form = this.blank();
     this.customValues.set(defaultValues(this.customFieldDefs()));
+    this.serviceReminderInterval = 'Monthly';
+    this.serviceReminderEvery = 6;
+    this.serviceReminderLeadDays = 7;
+    this.serviceReminderNotes = '';
     this.clearHsnSearch();
     this.tab.set('general');
     this.editorOpen.set(true);
@@ -533,6 +608,11 @@ export class ItemsPage implements OnInit {
     try {
       this.form = await this.get<ItemDetail>(`/api/items/${row.itemId}`);
       this.customValues.set(this.form.customFields ?? {});
+      const custom = this.form.customFields ?? {};
+      this.serviceReminderInterval = String(custom['service_interval'] ?? 'Monthly');
+      this.serviceReminderEvery = Number(custom['service_every'] ?? 6);
+      this.serviceReminderLeadDays = Number(custom['service_lead_days'] ?? 7);
+      this.serviceReminderNotes = String(custom['service_notes'] ?? '');
       this.editingId.set(row.itemId);
       this.clearHsnSearch();
       void this.showCurrentHsn();
@@ -732,8 +812,13 @@ export class ItemsPage implements OnInit {
   }
 
   onItemTypeChange(): void {
-    if (this.form.itemType === 'Service') {
+    if (this.form.itemType === 'Service' || this.form.itemType === 'Non-Inventory' || this.form.itemType === 'Group') {
       this.form.costingType = 'None';
+      this.form.trackInventory = false;
+      this.onCostingChange();
+    } else if (this.form.itemType === 'Inventory' || this.form.itemType === 'Goods') {
+      this.form.costingType = 'WeightedAverage';
+      this.form.trackInventory = true;
       this.onCostingChange();
     }
   }
@@ -957,7 +1042,7 @@ export class ItemsPage implements OnInit {
       itemCode: '',
       itemName: '',
       itemProfile: 'Standard',
-      itemType: service ? 'Service' : 'Goods',
+      itemType: service ? 'Service' : 'Inventory',
       categoryName: null,
       costingType: service ? 'None' : 'WeightedAverage',
       trackInventory: !service,

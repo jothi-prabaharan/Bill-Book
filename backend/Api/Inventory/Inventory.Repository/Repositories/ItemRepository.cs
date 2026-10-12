@@ -49,9 +49,9 @@ public sealed class ItemRepository
     /// caller that passes neither <c>skip</c> nor <c>take</c>.
     /// </summary>
     public async Task<IReadOnlyList<ItemListItem>> ListAsync(
-        string? search, string? profile, long? categoryId, bool includeInactive, CancellationToken ct)
+        string? search, string? profile, long? categoryId, bool includeInactive, CancellationToken ct, string? itemType = null)
     {
-        List<Item> items = await Filtered(search, profile, categoryId, includeInactive, await SearchableKeysAsync(search, ct))
+        List<Item> items = await Filtered(search, profile, categoryId, itemType, includeInactive, await SearchableKeysAsync(search, ct))
             .Take(UnpagedLimit)
             .ToListAsync(ct);
 
@@ -66,12 +66,12 @@ public sealed class ItemRepository
     /// </summary>
     public async Task<ItemListPage> PageAsync(
         string? search, string? profile, long? categoryId, bool includeInactive,
-        int skip, int take, CancellationToken ct)
+        int skip, int take, CancellationToken ct, string? itemType = null)
     {
         int safeSkip = Math.Max(skip, 0);
         int safeTake = Math.Clamp(take, 1, MaxPageSize);
 
-        IQueryable<Item> query = Filtered(search, profile, categoryId, includeInactive, await SearchableKeysAsync(search, ct));
+        IQueryable<Item> query = Filtered(search, profile, categoryId, itemType, includeInactive, await SearchableKeysAsync(search, ct));
 
         // Counted before paging: the pager needs how many matched, not how many
         // fitted on the page.
@@ -99,7 +99,7 @@ public sealed class ItemRepository
     /// anywhere, case-insensitively, as before; an exact item code ranks next.
     /// </summary>
     private IQueryable<Item> Filtered(
-        string? search, string? profile, long? categoryId, bool includeInactive, IReadOnlyCollection<string> searchableKeys)
+        string? search, string? profile, long? categoryId, string? itemType, bool includeInactive, IReadOnlyCollection<string> searchableKeys)
     {
         IQueryable<Item> query = _db.Items;
 
@@ -116,6 +116,11 @@ public sealed class ItemRepository
         if (categoryId is long category)
         {
             query = query.Where(i => i.ItemCategoryId == category);
+        }
+
+        if (!string.IsNullOrWhiteSpace(itemType) && ParseItemType(itemType, out ItemType filterType))
+        {
+            query = query.Where(i => i.ItemType == filterType);
         }
 
         if (string.IsNullOrWhiteSpace(search))
@@ -388,7 +393,7 @@ public sealed class ItemRepository
     private async Task<SaveItemOutcome> ValidateAsync(
         SaveItemRequest request, ParsedItem parsed, long? itemId, CancellationToken ct)
     {
-        if (parsed.Type == ItemType.Service && request.TrackInventory)
+        if ((parsed.Type == ItemType.Service || parsed.Type == ItemType.NonStock || parsed.Type == ItemType.Group) && request.TrackInventory)
         {
             return SaveItemOutcome.ServiceCannotBeStocked;
         }
@@ -679,13 +684,60 @@ public sealed class ItemRepository
     private static bool TryParse(SaveItemRequest request, out ParsedItem parsed)
     {
         bool ok = Enum.TryParse(request.ItemProfile, ignoreCase: true, out ItemProfile profile)
-            & Enum.TryParse(request.ItemType, ignoreCase: true, out ItemType type)
+            & ParseItemType(request.ItemType, out ItemType type)
             & Enum.TryParse(request.TaxPreference, ignoreCase: true, out TaxPreference tax)
             & Enum.TryParse(request.CostingType, ignoreCase: true, out CostingType costing);
 
         parsed = new ParsedItem(profile, type, tax, costing);
         return ok;
     }
+
+    public static bool ParseItemType(string? raw, out ItemType type)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            type = ItemType.Inventory;
+            return false;
+        }
+
+        string clean = raw.Trim().Replace("-", "").Replace(" ", "");
+        if (clean.Equals("NonInventory", StringComparison.OrdinalIgnoreCase) ||
+            clean.Equals("NonStock", StringComparison.OrdinalIgnoreCase))
+        {
+            type = ItemType.NonStock;
+            return true;
+        }
+
+        if (clean.Equals("Inventory", StringComparison.OrdinalIgnoreCase) ||
+            clean.Equals("Goods", StringComparison.OrdinalIgnoreCase))
+        {
+            type = ItemType.Inventory;
+            return true;
+        }
+
+        if (clean.Equals("Service", StringComparison.OrdinalIgnoreCase))
+        {
+            type = ItemType.Service;
+            return true;
+        }
+
+        if (clean.Equals("Group", StringComparison.OrdinalIgnoreCase))
+        {
+            type = ItemType.Group;
+            return true;
+        }
+
+        return Enum.TryParse(clean, ignoreCase: true, out type);
+    }
+
+    public static string FormatItemType(ItemType type) => type switch
+    {
+        ItemType.NonStock => "Non-Inventory",
+        ItemType.Inventory or ItemType.Goods => "Inventory",
+        ItemType.Service => "Service",
+        ItemType.Group => "Group",
+        _ => type.ToString(),
+    };
 
     /// <summary>Why an item's custom field values cannot be saved, or null. Unreadable definitions refuse the save rather than store unchecked values.</summary>
     private async Task<string?> CustomFieldRefusalAsync(
@@ -722,7 +774,7 @@ public sealed class ItemRepository
         ItemCode = i.ItemCode,
         ItemName = i.ItemName,
         ItemProfile = i.ItemProfile.ToString(),
-        ItemType = i.ItemType.ToString(),
+        ItemType = FormatItemType(i.ItemType),
         ItemCategoryId = i.ItemCategoryId,
         CategoryName = i.ItemCategoryId is long id ? categoryNames.GetValueOrDefault(id) : null,
         CostingType = i.CostingType.ToString(),

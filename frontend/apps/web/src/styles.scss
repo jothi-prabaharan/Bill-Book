@@ -343,3 +343,11 @@ nav[aria-label='Modules']::-webkit-scrollbar { width: 0; height: 0; }
   .sheet { border-radius: 0; margin-left: -1rem; margin-right: -1rem; }
 }
 
+/* Table header layer stacking and z-index contract */
+.listwrap .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-head);
+  box-shadow: var(--shadow-table-head);
+}
+

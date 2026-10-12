@@ -39,4 +39,20 @@ public sealed class ServiceBranchItemTests
     {
         Assert.Null(ItemRepository.TradeRefusal(trade, ItemType.Goods, trackInventory: true));
     }
+
+    [Theory]
+    [InlineData("Inventory", ItemType.Inventory, "Inventory")]
+    [InlineData("Goods", ItemType.Inventory, "Inventory")]
+    [InlineData("Non-Inventory", ItemType.NonStock, "Non-Inventory")]
+    [InlineData("NonInventory", ItemType.NonStock, "Non-Inventory")]
+    [InlineData("NonStock", ItemType.NonStock, "Non-Inventory")]
+    [InlineData("Service", ItemType.Service, "Service")]
+    [InlineData("Group", ItemType.Group, "Group")]
+    public void Item_types_parse_and_format_consistently(string input, ItemType expectedType, string expectedFormatted)
+    {
+        Assert.True(ItemRepository.ParseItemType(input, out ItemType parsed));
+        Assert.Equal(expectedType, parsed);
+        Assert.Equal(expectedFormatted, ItemRepository.FormatItemType(parsed));
+    }
 }
+
