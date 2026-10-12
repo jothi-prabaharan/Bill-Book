@@ -3,3 +3,4 @@ export * from './lib/runtime-config';
 export * from './lib/api-base-url.interceptor';
 export * from './lib/api-messages';
 export * from './lib/allocation-api.service';
+export * from './lib/document-choices.service';

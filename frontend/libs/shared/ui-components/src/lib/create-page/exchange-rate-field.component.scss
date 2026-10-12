@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+.rate-field__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.rate-field__problem {
+  color: var(--color-danger);
+}

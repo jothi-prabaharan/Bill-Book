@@ -50,6 +50,8 @@ disagrees with its body.
 
 If no rate can be chosen, no purchase GST rates are set up yet: add them under
 **Settings → Tax master**. A rate marked sales-only will not be offered here.
+The list needs only Purchase access: it comes from `GET /api/choices/purchase/tax-rates`,
+not from the tax master, which needs Accounting access to read.
 
 ### Place of supply matters more here than on an invoice
 

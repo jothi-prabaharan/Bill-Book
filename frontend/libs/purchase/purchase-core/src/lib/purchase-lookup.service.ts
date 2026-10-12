@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { DocumentChoicesService } from '@bill-book/api-client';
 
 /** A vendor, as the contacts list serves it. */
 export interface VendorOption {
@@ -104,6 +105,7 @@ export interface BranchDocumentSettings {
 @Injectable({ providedIn: 'root' })
 export class PurchaseLookupService {
   private readonly http = inject(HttpClient);
+  private readonly choices = inject(DocumentChoicesService);
 
   /**
    * Vendors matching a search term.
@@ -223,13 +225,14 @@ export class PurchaseLookupService {
    * The rates a purchase line may use: in force today, active, and flagged for
    * purchase. A rate marked sales-only is not offered, which is what the flag
    * is for.
+   *
+   * Read through Purchase's own choices route (TK-192). The tax master itself
+   * is behind `accounting.view`, so a purchase clerk without it got an empty
+   * list here without being told.
    */
   async purchaseTaxRates(): Promise<TaxRateOption[]> {
-    const rows = await firstValueFrom(
-      this.http.get<TaxRateOption[]>('/api/tax-masters?includeHistory=false'),
-    );
-
-    return rows.filter((row) => row.isPurchase && row.isActive && row.isCurrent);
+    const rows = await this.choices.taxRates('purchase');
+    return rows.map((row) => ({ ...row, isPurchase: true, isCurrent: true, isActive: true }));
   }
 
   /**

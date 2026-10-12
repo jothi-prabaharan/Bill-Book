@@ -1,0 +1,19 @@
+<div class="create-page__actions">
+  <ng-content select="[createActions]" />
+  @if (canDraft()) {
+    <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="saveDraft.emit()">
+      {{ draftLabel() }}
+    </button>
+  }
+  <button type="button" class="btn btn-primary" [disabled]="busy() || primaryDisabled()" (click)="save.emit()">
+    {{ primaryLabel() }}
+  </button>
+</div>
+
+@if (messages().length) {
+  <bb-message-box class="create-page__messages" [messages]="messages()" />
+}
+
+<div class="create-page__body create-stack">
+  <ng-content />
+</div>

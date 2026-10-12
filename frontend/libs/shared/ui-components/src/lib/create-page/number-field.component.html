@@ -1,0 +1,14 @@
+<div class="field">
+  <label [for]="fieldId()">{{ label() }}</label>
+  <input
+    class="input number-field__value"
+    [id]="fieldId()"
+    [value]="shown()"
+    readonly
+    [attr.aria-busy]="loading() || null"
+    [attr.aria-describedby]="isPreview() ? fieldId() + '-src' : null"
+  />
+  @if (isPreview()) {
+    <span class="field-hint" [id]="fieldId() + '-src'">From the number series master</span>
+  }
+</div>

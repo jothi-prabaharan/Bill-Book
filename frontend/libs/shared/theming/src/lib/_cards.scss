@@ -177,3 +177,28 @@
     }
   }
 }
+
+/*
+ * A create page's cards (TK-192, Shell.dc.html 721–1621): one column with the
+ * design's space between cards, and a row of cards that sit side by side when
+ * there is room — billing beside shipping, notes beside totals — and stack on
+ * a phone. `bb-create-page` puts the first on its body; a form that wraps the
+ * cards puts it on the `<form>`.
+ */
+.create-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+
+  > * {
+    flex: 1 1 300px;
+    min-width: 0;
+  }
+}
+

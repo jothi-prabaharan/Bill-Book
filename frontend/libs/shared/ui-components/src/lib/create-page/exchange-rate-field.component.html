@@ -1,0 +1,13 @@
+<div class="field">
+  <label [for]="fieldId()">{{ label() }}</label>
+  <input
+    class="input rate-field__value"
+    [id]="fieldId()"
+    [value]="shown()"
+    readonly
+    [attr.aria-busy]="state() === 'loading' || null"
+    [attr.aria-invalid]="isProblem() || null"
+    [attr.aria-describedby]="fieldId() + '-note'"
+  />
+  <span class="field-hint" [class.rate-field__problem]="isProblem()" [id]="fieldId() + '-note'">{{ note() }}</span>
+</div>

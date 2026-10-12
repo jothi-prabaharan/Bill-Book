@@ -99,6 +99,11 @@ export * from './lib/motion/route-motion.directive';
 export * from './lib/info-tooltip/info-tooltip.component';
 
 export * from './lib/export-import/export-import.component';
+export * from './lib/create-page/create-page.model';
+export * from './lib/create-page/create-page.component';
+export * from './lib/create-page/number-field.component';
+export * from './lib/create-page/exchange-rate-field.component';
+export * from './lib/create-page/more-details.component';
 export * from './lib/register/register-format';
 export * from './lib/register/create-request';
 export * from './lib/register/register-header.component';

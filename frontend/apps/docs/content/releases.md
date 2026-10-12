@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **Purchase clerks get the GST rates on purchase orders, goods receipts and bills** without Accounting access (TK-192). The rate list read the tax master, which needs Accounting access, so for anyone without it the list came up empty, with nothing on screen to say why.
+
 - **Fixed**: **Settings › Metal purity works on a Retail branch.** The menu showed it and the branch was seeded with purities, but the server admitted Jewellery branches only, so the screen opened but could neither list nor save a purity (D-65, TK-191).
 
 - **Fixed**: **The rail and the secondary menu work as the design has them (TK-189).**

@@ -1,0 +1,21 @@
+<section class="card more-details">
+  <button
+    type="button"
+    class="more-details__head"
+    [attr.aria-expanded]="open()"
+    [attr.aria-controls]="bodyId"
+    (click)="toggle()"
+  >
+    <span class="card-kicker more-details__title">{{ title() }}</span>
+    @if (!open() && summary()) {
+      <span class="more-details__summary">{{ summary() }}</span>
+    }
+    <svg class="more-details__chevron" [class.more-details__chevron--open]="open()" width="14" height="14" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m6 9 6 6 6-6"></path>
+    </svg>
+  </button>
+  <div class="more-details__body" [id]="bodyId" [hidden]="!open()">
+    <ng-content />
+  </div>
+</section>

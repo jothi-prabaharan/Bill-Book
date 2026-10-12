@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+/* Shell.dc.html line 722: right-aligned, wrapping, the design's gap. */
+.create-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.create-page__messages {
+  display: block;
+  margin-bottom: var(--space-3);
+}

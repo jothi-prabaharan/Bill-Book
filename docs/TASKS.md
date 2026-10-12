@@ -5797,21 +5797,25 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** on a Retail branch, Settings › Metal purity lists and saves purities, and `TradeSeedTests` passes.
 
 ### TK-192 · Create pages: the shared page frame and the choices every form reads
-- [~] working (Claude Opus 5.5) — since 2026-10-12
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-12
 - **Issue:** [#182](https://github.com/jothi-prabaharan/Bill-Book/issues/182)
 - **Group:** Z · Owner request
-- **Lanes:** L-UI (`frontend/libs/shared/{ui-components,theming,api-client}`), L-ACC (a choices controller per module), L-PRT (print-template choices), `backend/Gateway/Gateway.Api/appsettings.json` (the `/api/choices` route), L-DOC (`platform.md`) · **Depends on:** — · **Decision:** the owner's plan of 12 October 2026 (below)
+- **Lanes:** L-UI (`frontend/libs/shared/{ui-components,theming,api-client}`), L-ACC (a choices controller per module), L-PRT (print-template choices), L-PUR-UI (`purchase-lookup.service.ts` only), `backend/Gateway/Gateway.Api/appsettings.json` (the `/api/choices` route), L-DOC (`platform.md`) · **Depends on:** — · **Decision:** the owner's plan of 12 October 2026 (below)
 - **Why:** the owner asked for every create page to match the Claude Design export `Shell.dc.html` (create page, lines 721–1621). This card is the part every form shares; TK-193 to TK-195 use it.
 - **Owner's answers (12 October 2026):** all four cards, in order; the exchange rate is shown read-only from the rate master, **with no pencil**, so the operator-only rule on rates stands; fields the app has and the design does not show stay, in a **More details** card after the design's cards. Defaults the owner did not object to: Save draft only where a draft exists; Save rather than Save & post on quotes, sales orders and purchase orders; descriptions and notes stay plain text; a purchase order still delivers to the branch's warehouse.
 - **State:** checked 12 October 2026. Each form has its own heading and buttons. The lists a form needs are behind the owning module's permission — tax rates, accounts and payment terms need `accounting.view`, numbering series and print templates `settings.view` — so a purchase clerk's bill form gets an empty tax list without saying so (`purchase-lookup.service.ts` `purchaseTaxRates`).
 - **Sub-tasks:**
-  - [ ] `bb-create-page` (ui-components): the design's frame — Save draft (only when the form has drafts) and Save / Save & post top right, the message box, busy state, no heading of its own (the breadcrumb names the page); actions stack at 360px.
-  - [ ] Shared fields: a read-only **Number** ("From the number series master", or "Assigned on save"), a read-only **Exchange rate** from `GET api/rates/exchange` for the document's currency and date, and a **More details** card.
-  - [ ] Accounting: read-only choices per module under `api/choices/{module}/…` — tax rates, payment terms, accounts usable there, and the next number of the module's own series — one controller per module, each behind that module's `.view`, returning option lists only; routed by the gateway.
-  - [ ] Printing: the print templates for one document type, behind that document's module.
-  - [ ] `DocumentChoicesService` in the frontend, used by TK-193 to TK-195.
-  - [ ] Test: written, never run by an AI (section 0.5).
-  - [ ] Docs and release notes.
+  - [x] `bb-create-page` (ui-components): the design's frame — Save draft (only when the form has drafts) and Save / Save & post top right, the message box, busy state, no heading of its own (the breadcrumb names the page); actions stack at 360px.
+  - [x] Shared fields: a read-only **Number** ("From the number series master", or "Assigned on save"), a read-only **Exchange rate** from `GET api/rates/exchange` for the document's currency and date, and a **More details** card.
+  - [x] Accounting: read-only choices per module under `api/choices/{module}/…` — tax rates, payment terms, accounts usable there, and the next number of the module's own series — one controller per module, each behind that module's `.view`, returning option lists only; routed by the gateway.
+  - [x] Printing: the print templates for one document type, behind that document's module.
+  - [x] `DocumentChoicesService` (`@bill-book/api-client`), used by TK-193 to TK-195. The purchase forms already read their tax rates through it (`purchase-lookup.service.ts`), which fixes the empty list for a purchase clerk.
+  - [x] Test: written, never run by an AI (section 0.5) — `DocumentChoicesTests`, `PrintTemplateChoicesTests`, `document-choices.spec.ts` CHOICE-01–07, `create-page.model.spec.ts` CPAGE-01–05, `purchase-lookup.service.spec.ts` PLOOK-01.
+  - [x] Docs (`purchase.md`: the rate list needs only Purchase access) and release notes. The frame itself is documented with the first pages that use it (TK-193).
+- **Built:** `api/choices/{sales,purchase,banking,accounting,contacts,inventory}/…` in Accounting (`DocumentChoicesRepository`; the next number through `INumberGenerator.PeekAsync`, which nothing called before, so preview and allocation pick the same series) and `api/print-templates/choices/{sales,purchase,banking,accounting}/{docType}` in Printing; `bb-create-page`, `bb-number-field`, `bb-exchange-rate-field` (no pencil; a saved document's rate is `locked` and never looked up again), `bb-more-details`, and `.create-stack` / `.card-row` in theming.
+- **Verified by an AI (12 October 2026):** Accounting, Printing and both test projects build with no warnings; `npm run typecheck` clean; `ui-components`, `api-client`, `purchase-core` and `theming` lint clean; `web` and `docs` build. Against the built app and a stub that refuses `/api/tax-masters` with 403, the new-bill page reads its rates from `/api/choices/purchase/tax-rates` and never asks the tax master.
+- **Not checked here:** no page uses the frame yet, so its rendering at 1280px and 360px is checked with TK-193's first page.
+- **Owner step:** run the tests named above.
 - **Done when:** a user with only the Purchase role loads tax rates, payment terms, accounts, the next bill number and the bill's print templates; the frame and fields render at 1280px and 360px.
 
 ### TK-193 · Create pages: the nine sales and purchase documents
