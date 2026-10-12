@@ -3,76 +3,178 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bill-Book API Documentation</title>
+    <title>Bill-Book API Gateway • Swagger Testing Hub</title>
     <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css">
     <style>
         :root {
-            --bg-color: #0b0f17;
+            --bg-color: #fafafa;
             --topbar-bg: #111827;
-            --border-color: #1f2937;
-            --text-main: #f1f5f9;
-            --accent: #38bdf8;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --code-bg: #2d3748;
+            --code-text: #f7fafc;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            
+            /* Swagger Method Colors */
+            --get-color: #61affe;
+            --get-bg: #ebf3fb;
+            --get-border: #61affe;
+            
+            --post-color: #49cc90;
+            --post-bg: #e8f6f0;
+            --post-border: #49cc90;
+            
+            --put-color: #fca130;
+            --put-bg: #fbf1e8;
+            --put-border: #fca130;
+            
+            --delete-color: #f93e3e;
+            --delete-bg: #fae7e7;
+            --delete-border: #f93e3e;
+            
+            --patch-color: #50e3c2;
+            --patch-bg: #eef9f8;
+            --patch-border: #50e3c2;
+            
+            --auth-green: #49cc90;
+            --auth-green-hover: #3eb880;
+            --exec-blue: #4990e2;
+            --exec-blue-hover: #357ae8;
         }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0b0f17;
+                --topbar-bg: #111827;
+                --card-bg: #161f30;
+                --text-main: #f3f4f6;
+                --text-muted: #9ca3af;
+                --border-color: #27354a;
+                --code-bg: #0d131f;
+                --code-text: #e2e8f0;
+                
+                --get-bg: #10263f;
+                --post-bg: #0e2f23;
+                --put-bg: #352514;
+                --delete-bg: #361517;
+                --patch-bg: #102d28;
+            }
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #fafafa;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
+
+        /* Topbar */
         .gateway-topbar {
             background-color: var(--topbar-bg);
-            color: var(--text-main);
+            color: #ffffff;
             padding: 0.75rem 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 1000;
+            border-bottom: 1px solid #1f2937;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         .topbar-left {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
             text-decoration: none;
             color: inherit;
         }
         .topbar-logo {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            object-fit: contain;
         }
         .topbar-title {
-            font-size: 1.125rem;
+            font-size: 1.15rem;
             font-weight: 700;
             letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .gateway-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            border-radius: 9999px;
+            font-family: var(--font-mono);
         }
         .topbar-right {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
+
         .service-picker {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
         }
+        .service-picker label {
+            color: #94a3b8;
+            font-weight: 500;
+        }
         .service-select {
             background-color: #1f2937;
             color: #f1f5f9;
             border: 1px solid #374151;
-            padding: 0.4rem 0.75rem;
+            padding: 0.45rem 0.85rem;
             border-radius: 6px;
             font-size: 0.875rem;
             font-weight: 500;
             outline: none;
             cursor: pointer;
+            min-width: 260px;
         }
         .service-select:focus {
-            border-color: var(--accent);
+            border-color: #38bdf8;
         }
+
+        /* Swagger Authorize Button */
+        .auth-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            background-color: transparent;
+            color: var(--auth-green);
+            border: 2px solid var(--auth-green);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .auth-btn:hover {
+            background-color: rgba(73, 204, 144, 0.15);
+        }
+        .auth-btn.is-authorized {
+            background-color: var(--auth-green);
+            color: #ffffff;
+        }
+        .auth-btn.is-authorized:hover {
+            background-color: var(--auth-green-hover);
+        }
+
         .back-link {
             color: #94a3b8;
             text-decoration: none;
@@ -85,21 +187,799 @@
         .back-link:hover {
             color: #f1f5f9;
         }
-        /* Style adjustments for Swagger UI inside container */
-        .swagger-ui .topbar { display: none; }
-        .swagger-ui { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Info Header */
+        .info-header {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .info-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .info-top h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .oas-version-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #374151;
+            color: #f9fafb;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+        .info-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        .routing-notice {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #0284c7;
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        @media (prefers-color-scheme: dark) {
+            .routing-notice { color: #38bdf8; }
+        }
+
+        /* Controls & Filter Bar */
+        .filter-bar {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 1rem 0.5rem 2.25rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .search-input:focus {
+            border-color: #38bdf8;
+        }
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 16px;
+            height: 16px;
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .method-pills {
+            display: flex;
+            gap: 0.25rem;
+        }
+        .pill-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.35rem 0.65rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .pill-btn.active, .pill-btn:hover {
+            border-color: #38bdf8;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .toggle-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .toggle-btn:hover {
+            border-color: #9ca3af;
+        }
+
+        /* Microservice Accordion Container */
+        .microservice-block {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .microservice-header {
+            padding: 1rem 1.5rem;
+            background-color: rgba(0,0,0,0.02);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+        .microservice-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .microservice-title h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .service-port-badge {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: #e2e8f0;
+            color: #334155;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        @media (prefers-color-scheme: dark) {
+            .service-port-badge {
+                background: #1e293b;
+                color: #94a3b8;
+            }
+        }
+        .microservice-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .endpoint-count-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-color);
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Tag / Controller Groups */
+        .tag-group {
+            margin: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        .tag-group:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .tag-header {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+            cursor: pointer;
+        }
+        .tag-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .tag-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Swagger Endpoint Operations */
+        .operation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .op-block {
+            border-radius: 6px;
+            border: 1px solid transparent;
+            overflow: hidden;
+            transition: border-color 0.15s ease;
+        }
+        .op-block.get    { border-color: var(--get-border); background-color: var(--get-bg); }
+        .op-block.post   { border-color: var(--post-border); background-color: var(--post-bg); }
+        .op-block.put    { border-color: var(--put-border); background-color: var(--put-bg); }
+        .op-block.delete { border-color: var(--delete-border); background-color: var(--delete-bg); }
+        .op-block.patch  { border-color: var(--patch-border); background-color: var(--patch-bg); }
+
+        .op-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            user-select: none;
+            gap: 0.75rem;
+        }
+        .op-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+            overflow: hidden;
+        }
+        .method-badge {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #ffffff;
+            width: 80px;
+            text-align: center;
+            padding: 0.35rem 0;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+        .get .method-badge    { background-color: var(--get-color); }
+        .post .method-badge   { background-color: var(--post-color); }
+        .put .method-badge    { background-color: var(--put-color); }
+        .delete .method-badge { background-color: var(--delete-color); }
+        .patch .method-badge  { background-color: var(--patch-color); }
+
+        .op-path {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+        .op-summary {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .op-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        .lock-icon {
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+        }
+        .chevron-icon {
+            transition: transform 0.2s ease;
+        }
+        .op-block.expanded .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Operation Body / Content */
+        .op-body {
+            display: none;
+            background-color: var(--card-bg);
+            border-top: 1px solid inherit;
+            padding: 1.25rem;
+        }
+        .op-block.expanded .op-body {
+            display: block;
+        }
+
+        .op-description-bar {
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .gateway-route-badge {
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            color: #0284c7;
+            font-weight: 600;
+        }
+        @media (prefers-color-scheme: dark) {
+            .gateway-route-badge { color: #38bdf8; }
+        }
+
+        /* Try it out button */
+        .try-btn {
+            background: transparent;
+            border: 1px solid #64748b;
+            color: var(--text-main);
+            padding: 0.35rem 0.85rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .try-btn.active {
+            background-color: #64748b;
+            color: #ffffff;
+        }
+
+        /* Section titles inside operation */
+        .op-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin: 1rem 0 0.5rem 0;
+        }
+
+        /* Parameters Table */
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        .param-table th {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .param-table td {
+            padding: 0.65rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .param-name {
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+        .param-required {
+            color: #ef4444;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 0.25rem;
+        }
+        .param-type {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            display: block;
+        }
+        .param-input {
+            width: 100%;
+            padding: 0.4rem 0.65rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .param-input:focus {
+            border-color: #38bdf8;
+        }
+
+        /* Request Body Area */
+        .body-container {
+            margin-bottom: 1rem;
+        }
+        .body-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .body-editor {
+            width: 100%;
+            min-height: 140px;
+            padding: 0.75rem;
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            outline: none;
+            resize: vertical;
+            line-height: 1.4;
+        }
+        .body-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.35rem;
+        }
+        .small-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .small-btn:hover {
+            color: var(--text-main);
+            border-color: #94a3b8;
+        }
+
+        /* Execute Button Row */
+        .execute-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.25rem 0;
+            padding: 0.75rem;
+            background-color: var(--bg-color);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        .execute-btn {
+            background-color: var(--exec-blue);
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .execute-btn:hover {
+            background-color: var(--exec-blue-hover);
+        }
+        .execute-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .clear-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .clear-btn:hover {
+            color: var(--text-main);
+            border-color: #94a3b8;
+        }
+
+        /* Live Response View */
+        .response-container {
+            display: none;
+            margin-top: 1.25rem;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 1rem;
+        }
+        .response-container.visible {
+            display: block;
+        }
+
+        .alert-401 {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+        .alert-401 button {
+            background-color: #ef4444;
+            color: #ffffff;
+            border: none;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .resp-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .status-badge {
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 4px;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .status-2xx { background-color: var(--post-color); }
+        .status-3xx { background-color: #38bdf8; }
+        .status-4xx { background-color: var(--put-color); }
+        .status-5xx { background-color: var(--delete-color); }
+
+        .resp-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .code-box-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 0.75rem 0 0.35rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .code-box {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.825rem;
+            overflow-x: auto;
+            max-height: 380px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Modal: Global Authorize */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.65);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            backdrop-filter: blur(2px);
+        }
+        .modal-backdrop.open {
+            display: flex;
+        }
+        .modal-dialog {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: modalFadeIn 0.15s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .modal-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .scheme-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            background: rgba(73, 204, 144, 0.15);
+            color: var(--auth-green);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+        .token-input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+        .token-textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 0.65rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            border-radius: 6px;
+            outline: none;
+        }
+        .token-textarea:focus {
+            border-color: var(--auth-green);
+        }
+        .jwt-info-box {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+        }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            background-color: rgba(0,0,0,0.02);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        /* Empty & Loading states */
+        .loading-card {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-muted);
+        }
+        .spinner {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-radius: 50%;
+            border-top-color: #38bdf8;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .service-offline-banner {
+            background-color: rgba(239, 68, 68, 0.08);
+            border: 1px dashed rgba(239, 68, 68, 0.4);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        .service-offline-banner strong {
+            color: #ef4444;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 0.65rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: toastIn 0.2s ease-out;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
+    <!-- Topbar Navigation -->
     <header class="gateway-topbar">
-        <a href="/" class="topbar-left">
-            <img src="/favicon.png" alt="Bill-Book Logo" class="topbar-logo">
-            <span class="topbar-title">Bill-Book API Documentation</span>
+        <a href="/" class="topbar-left" title="Back to Gateway Dashboard">
+            <img src="/favicon.png" onerror="this.onerror=null;this.src='./favicon.png';" alt="Bill-Book" class="topbar-logo">
+            <span class="topbar-title">
+                Bill-Book Swagger Portal
+                <span class="gateway-badge" id="gateway-origin-badge">Gateway: ...</span>
+            </span>
         </a>
         <div class="topbar-right">
             <div class="service-picker">
-                <label for="service-selector">Service:</label>
+                <label for="service-selector">Service Scope:</label>
                 <select id="service-selector" class="service-select">
+                    <option value="all">✨ All Services (Aggregated 23 Microservices)</option>
                     <option value="master">Master (Port 4504)</option>
                     <option value="accounting">Accounting (Port 4501)</option>
                     <option value="inventory">Inventory (Port 4503)</option>
@@ -125,60 +1005,931 @@
                     <option value="site">Site Services (Port 4523)</option>
                 </select>
             </div>
+            <button id="global-auth-btn" class="auth-btn" title="Set JWT Bearer Token for Gateway Requests">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="auth-lock-icon">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span id="auth-btn-label">Authorize</span>
+            </button>
             <a href="/" class="back-link">
                 &larr; Gateway Home
             </a>
         </div>
     </header>
 
-    <div id="swagger-ui"></div>
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Documentation Header -->
+        <section class="info-header">
+            <div class="info-top">
+                <div>
+                    <h1 id="doc-title">
+                        Bill-Book API Gateway
+                        <span class="oas-version-badge">OAS 3.1</span>
+                    </h1>
+                    <p class="info-desc" id="doc-desc">
+                        Centralized API aggregation and testing hub. All test requests are routed strictly through the Gateway URL with automatic Bearer token injection.
+                    </p>
+                </div>
+                <div class="routing-notice">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span>Strict Gateway Routing Active: Under no circumstances are downstream ports called directly.</span>
+                </div>
+            </div>
+        </section>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-standalone-preset.min.js"></script>
+        <!-- Search & Method Filter Bar -->
+        <section class="filter-bar">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="filter-input" class="search-input" placeholder="Filter endpoints by path, tag, or description...">
+            </div>
+            <div class="filter-actions">
+                <div class="method-pills">
+                    <button class="pill-btn active" data-method="ALL">ALL</button>
+                    <button class="pill-btn" data-method="GET">GET</button>
+                    <button class="pill-btn" data-method="POST">POST</button>
+                    <button class="pill-btn" data-method="PUT">PUT</button>
+                    <button class="pill-btn" data-method="DELETE">DELETE</button>
+                    <button class="pill-btn" data-method="PATCH">PATCH</button>
+                </div>
+                <button id="toggle-all-btn" class="toggle-btn">Expand All</button>
+            </div>
+        </section>
+
+        <!-- Loading / Operations Root -->
+        <div id="operations-root">
+            <div class="loading-card">
+                <div class="spinner"></div>
+                <p>Loading OpenAPI specifications from API Gateway...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Global Authorize Modal -->
+    <div id="auth-modal" class="modal-backdrop">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Available Authorizations
+                </h3>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <span class="scheme-badge">bearerAuth (http, Bearer)</span>
+                    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                        JWT Bearer token authentication for the Bill-Book API Gateway. When saved, all "Try it out" test executions will automatically include the <code>Authorization: Bearer &lt;token&gt;</code> header.
+                    </p>
+                </div>
+                <div class="token-input-group">
+                    <label for="jwt-token-input">Value (JWT Bearer Token):</label>
+                    <textarea id="jwt-token-input" class="token-textarea" placeholder="Paste your Bearer token or raw JWT (e.g. eyJhbGciOiJIUzI1Ni...)"></textarea>
+                </div>
+                <div id="jwt-preview" class="jwt-info-box" style="display: none;">
+                    <!-- Decoded token metadata preview -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-logout-btn" class="small-btn" style="padding: 0.5rem 1rem; color: #ef4444; border-color: #ef4444;" style="display: none;">Logout / Clear</button>
+                <button id="modal-cancel-btn" class="small-btn" style="padding: 0.5rem 1rem;">Close</button>
+                <button id="modal-save-btn" class="execute-btn" style="background-color: var(--auth-green);">Authorize</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        let selectedService = urlParams.get('service') || 'master';
-        const selector = document.getElementById('service-selector');
-        if ([...selector.options].some(o => o.value === selectedService)) {
-            selector.value = selectedService;
-        } else {
-            selectedService = 'master';
-            selector.value = selectedService;
+        // Microservices catalog matching Gateway.Api config
+        const MICROSERVICES = [
+            { id: "master", name: "Master", port: 4504, openApi: "/openapi/master/v1.json" },
+            { id: "accounting", name: "Accounting", port: 4501, openApi: "/openapi/accounting/v1.json" },
+            { id: "inventory", name: "Inventory", port: 4503, openApi: "/openapi/inventory/v1.json" },
+            { id: "sales", name: "Sales", port: 4507, openApi: "/openapi/sales/v1.json" },
+            { id: "purchase", name: "Purchase", port: 4505, openApi: "/openapi/purchase/v1.json" },
+            { id: "customer", name: "Customer", port: 4502, openApi: "/openapi/customer/v1.json" },
+            { id: "reporting", name: "Reporting", port: 4506, openApi: "/openapi/reporting/v1.json" },
+            { id: "printing", name: "Printing", port: 4508, openApi: "/openapi/printing/v1.json" },
+            { id: "hrm", name: "Employee (HRM)", port: 4509, openApi: "/openapi/hrm/v1.json" },
+            { id: "payroll", name: "Payroll", port: 4511, openApi: "/openapi/payroll/v1.json" },
+            { id: "timeleave", name: "Time and Leave", port: 4510, openApi: "/openapi/timeleave/v1.json" },
+            { id: "claims", name: "Claims", port: 4514, openApi: "/openapi/claims/v1.json" },
+            { id: "recruitment", name: "Recruitment", port: 4512, openApi: "/openapi/recruitment/v1.json" },
+            { id: "performance", name: "Performance", port: 4513, openApi: "/openapi/performance/v1.json" },
+            { id: "sis", name: "SIS", port: 4515, openApi: "/openapi/sis/v1.json" },
+            { id: "admission", name: "Admission", port: 4516, openApi: "/openapi/admission/v1.json" },
+            { id: "attendance", name: "Attendance", port: 4517, openApi: "/openapi/attendance/v1.json" },
+            { id: "fee", name: "Fee", port: 4518, openApi: "/openapi/fee/v1.json" },
+            { id: "facility", name: "Facility", port: 4519, openApi: "/openapi/facility/v1.json" },
+            { id: "workorder", name: "Work Order", port: 4520, openApi: "/openapi/workorder/v1.json" },
+            { id: "preventive", name: "Preventive Maintenance", port: 4521, openApi: "/openapi/preventive/v1.json" },
+            { id: "amc", name: "Maintenance Contract (AMC)", port: 4522, openApi: "/openapi/amc/v1.json" },
+            { id: "site", name: "Site Services", port: 4523, openApi: "/openapi/site/v1.json" }
+        ];
+
+        // State
+        const state = {
+            gatewayOrigin: (window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file')) ? window.location.origin : 'http://localhost:4500',
+            selectedService: 'all',
+            authToken: localStorage.getItem('billbook_gateway_jwt') || sessionStorage.getItem('billbook_gateway_jwt') || '',
+            searchQuery: '',
+            selectedMethod: 'ALL',
+            allExpanded: false,
+            specs: new Map(), // serviceId -> { spec, error, endpoints: [] }
+            totalEndpoints: 0
+        };
+
+        // DOM Elements
+        const gatewayOriginBadge = document.getElementById('gateway-origin-badge');
+        const serviceSelector = document.getElementById('service-selector');
+        const operationsRoot = document.getElementById('operations-root');
+        const globalAuthBtn = document.getElementById('global-auth-btn');
+        const authBtnLabel = document.getElementById('auth-btn-label');
+        const authLockIcon = document.getElementById('auth-lock-icon');
+        const authModal = document.getElementById('auth-modal');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalSaveBtn = document.getElementById('modal-save-btn');
+        const modalLogoutBtn = document.getElementById('modal-logout-btn');
+        const jwtTokenInput = document.getElementById('jwt-token-input');
+        const jwtPreview = document.getElementById('jwt-preview');
+        const filterInput = document.getElementById('filter-input');
+        const toggleAllBtn = document.getElementById('toggle-all-btn');
+        const methodPills = document.querySelectorAll('.pill-btn');
+        const toastContainer = document.getElementById('toast-container');
+
+        // Initialize Gateway URL Badge
+        gatewayOriginBadge.textContent = 'Gateway: ' + state.gatewayOrigin;
+
+        // Toast Helper
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
-        let ui;
-        function loadDocs(service) {
-            const specUrl = '/openapi/' + service + '/v1.json';
-            ui = SwaggerUIBundle({
-                url: specUrl,
-                dom_id: '#swagger-ui',
-                deepLinking: true,
-                presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIStandalonePreset
-                ],
-                plugins: [
-                    SwaggerUIBundle.plugins.DownloadUrl
-                ],
-                layout: "StandaloneLayout",
-                responseInterceptor: function(response) {
-                    if (response.url.includes('/openapi/') && response.obj && response.obj.servers) {
-                        response.obj.servers = [{ url: window.location.origin }];
-                    }
-                    return response;
+        // JWT Helpers
+        function parseJwt(token) {
+            try {
+                const clean = token.replace(/^Bearer\s+/i, '').trim();
+                const parts = clean.split('.');
+                if (parts.length !== 3) return null;
+                const base64Url = parts[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function updateAuthState() {
+            if (state.authToken) {
+                globalAuthBtn.classList.add('is-authorized');
+                authBtnLabel.textContent = 'Authorized 🔒';
+                authLockIcon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>';
+                modalLogoutBtn.style.display = 'inline-block';
+            } else {
+                globalAuthBtn.classList.remove('is-authorized');
+                authBtnLabel.textContent = 'Authorize';
+                authLockIcon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path>';
+                modalLogoutBtn.style.display = 'none';
+            }
+        }
+
+        function renderJwtPreview(token) {
+            const decoded = parseJwt(token);
+            if (!decoded) {
+                jwtPreview.style.display = 'none';
+                jwtPreview.innerHTML = '';
+                return;
+            }
+            const expDate = decoded.exp ? new Date(decoded.exp * 1000).toLocaleString() : 'Never';
+            const isExpired = decoded.exp && (decoded.exp * 1000 < Date.now());
+            jwtPreview.style.display = 'block';
+            jwtPreview.innerHTML = `
+                <div><strong>Subject/User:</strong> ${decoded.sub || decoded.nameid || decoded.name || 'Unknown'}</div>
+                <div><strong>Org / Tenant:</strong> ${decoded.OrgId || decoded.org_id || decoded.CustomerId || 'N/A'}</div>
+                <div><strong>Expires:</strong> <span style="color: ${isExpired ? '#ef4444' : '#10b981'}">${expDate} ${isExpired ? '(EXPIRED)' : ''}</span></div>
+            `;
+        }
+
+        jwtTokenInput.addEventListener('input', (e) => {
+            renderJwtPreview(e.target.value);
+        });
+
+        // Open Authorize Modal
+        globalAuthBtn.addEventListener('click', () => {
+            jwtTokenInput.value = state.authToken;
+            renderJwtPreview(state.authToken);
+            authModal.classList.add('open');
+            jwtTokenInput.focus();
+        });
+
+        function closeAuthModal() {
+            authModal.classList.remove('open');
+        }
+
+        modalCloseBtn.addEventListener('click', closeAuthModal);
+        modalCancelBtn.addEventListener('click', closeAuthModal);
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) closeAuthModal();
+        });
+
+        modalSaveBtn.addEventListener('click', () => {
+            let val = jwtTokenInput.value.trim();
+            if (val) {
+                if (!val.toLowerCase().startsWith('bearer ')) {
+                    val = 'Bearer ' + val;
                 }
+                state.authToken = val;
+                localStorage.setItem('billbook_gateway_jwt', val);
+                sessionStorage.setItem('billbook_gateway_jwt', val);
+                showToast('Authorization Bearer token saved successfully!', 'success');
+            } else {
+                state.authToken = '';
+                localStorage.removeItem('billbook_gateway_jwt');
+                sessionStorage.removeItem('billbook_gateway_jwt');
+            }
+            updateAuthState();
+            closeAuthModal();
+        });
+
+        modalLogoutBtn.addEventListener('click', () => {
+            state.authToken = '';
+            localStorage.removeItem('billbook_gateway_jwt');
+            sessionStorage.removeItem('billbook_gateway_jwt');
+            jwtTokenInput.value = '';
+            renderJwtPreview('');
+            updateAuthState();
+            showToast('Logged out. Bearer token removed.', 'info');
+            closeAuthModal();
+        });
+
+        // Query Param initialization
+        const urlParams = new URLSearchParams(window.location.search);
+        let paramService = urlParams.get('service');
+        if (paramService && (paramService === 'all' || MICROSERVICES.some(s => s.id === paramService))) {
+            state.selectedService = paramService;
+            serviceSelector.value = paramService;
+        } else {
+            state.selectedService = 'all';
+            serviceSelector.value = 'all';
+        }
+
+        serviceSelector.addEventListener('change', (e) => {
+            const svc = e.target.value;
+            state.selectedService = svc;
+            const newUrl = new URL(window.location);
+            if (svc === 'all') {
+                newUrl.searchParams.delete('service');
+            } else {
+                newUrl.searchParams.set('service', svc);
+            }
+            window.history.pushState({}, '', newUrl);
+            renderAll();
+        });
+
+        // Filter Handlers
+        filterInput.addEventListener('input', (e) => {
+            state.searchQuery = e.target.value.toLowerCase().trim();
+            filterDomOperations();
+        });
+
+        methodPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                methodPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                state.selectedMethod = pill.dataset.method;
+                filterDomOperations();
+            });
+        });
+
+        toggleAllBtn.addEventListener('click', () => {
+            state.allExpanded = !state.allExpanded;
+            toggleAllBtn.textContent = state.allExpanded ? 'Collapse All' : 'Expand All';
+            document.querySelectorAll('.op-block').forEach(b => {
+                if (state.allExpanded) b.classList.add('expanded');
+                else b.classList.remove('expanded');
+            });
+            document.querySelectorAll('.microservice-block').forEach(b => {
+                const body = b.querySelector('.microservice-content');
+                if (body) body.style.display = state.allExpanded ? 'block' : 'none';
+            });
+        });
+
+        // Schema Sample Generator
+        function generateSampleFromSchema(schema, spec, depth = 0) {
+            if (!schema || depth > 4) return {};
+            if (schema.$ref) {
+                const refKey = schema.$ref.replace('#/components/schemas/', '');
+                if (spec.components && spec.components.schemas && spec.components.schemas[refKey]) {
+                    return generateSampleFromSchema(spec.components.schemas[refKey], spec, depth + 1);
+                }
+                return {};
+            }
+            if (schema.example !== undefined) return schema.example;
+            if (schema.default !== undefined) return schema.default;
+
+            const type = schema.type;
+            if (type === 'string') {
+                if (schema.format === 'date-time') return new Date().toISOString();
+                if (schema.format === 'uuid') return '00000000-0000-0000-0000-000000000000';
+                return schema.enum ? schema.enum[0] : 'string';
+            }
+            if (type === 'integer' || type === 'number') {
+                return 0;
+            }
+            if (type === 'boolean') {
+                return true;
+            }
+            if (type === 'array') {
+                return [generateSampleFromSchema(schema.items, spec, depth + 1)];
+            }
+            if (type === 'object' || schema.properties) {
+                const obj = {};
+                if (schema.properties) {
+                    for (const [key, propSchema] of Object.entries(schema.properties)) {
+                        obj[key] = generateSampleFromSchema(propSchema, spec, depth + 1);
+                    }
+                }
+                return obj;
+            }
+            return {};
+        }
+
+        // Fetch OpenAPI Spec for a service
+        async function fetchServiceSpec(service) {
+            try {
+                const res = await fetch(service.openApi, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status} (${res.statusText})`);
+                }
+                const spec = await res.json();
+                
+                // Parse endpoints
+                const endpoints = [];
+                if (spec.paths) {
+                    for (const [pathKey, pathItem] of Object.entries(spec.paths)) {
+                        const methods = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head'];
+                        for (const m of methods) {
+                            if (pathItem[m]) {
+                                const op = pathItem[m];
+                                endpoints.push({
+                                    serviceId: service.id,
+                                    serviceName: service.name,
+                                    path: pathKey,
+                                    method: m.toUpperCase(),
+                                    summary: op.summary || '',
+                                    description: op.description || '',
+                                    tags: (op.tags && op.tags.length > 0) ? op.tags : ['General'],
+                                    parameters: (pathItem.parameters || []).concat(op.parameters || []),
+                                    requestBody: op.requestBody,
+                                    responses: op.responses || {},
+                                    operationId: op.operationId || `${m}_${pathKey}`,
+                                    spec: spec
+                                });
+                            }
+                        }
+                    }
+                }
+                return { spec, endpoints, error: null };
+            } catch (err) {
+                return { spec: null, endpoints: [], error: err.message };
+            }
+        }
+
+        // Load all specs in parallel
+        async function loadSpecs() {
+            operationsRoot.innerHTML = `
+                <div class="loading-card">
+                    <div class="spinner"></div>
+                    <p>Fetching OpenAPI specs for 23 microservices via Gateway...</p>
+                </div>
+            `;
+
+            const promises = MICROSERVICES.map(async (svc) => {
+                const res = await fetchServiceSpec(svc);
+                state.specs.set(svc.id, res);
+            });
+
+            await Promise.allSettled(promises);
+            renderAll();
+        }
+
+        // Render UI
+        function renderAll() {
+            let totalOps = 0;
+            const container = document.createElement('div');
+
+            const servicesToDisplay = state.selectedService === 'all'
+                ? MICROSERVICES
+                : MICROSERVICES.filter(s => s.id === state.selectedService);
+
+            servicesToDisplay.forEach(svc => {
+                const svcData = state.specs.get(svc.id) || { spec: null, endpoints: [], error: 'Not loaded' };
+                const svcBlock = document.createElement('div');
+                svcBlock.className = 'microservice-block';
+                svcBlock.dataset.service = svc.id;
+
+                const header = document.createElement('div');
+                header.className = 'microservice-header';
+                header.innerHTML = `
+                    <div class="microservice-title">
+                        <h2>${svc.name} Service</h2>
+                        <span class="service-port-badge">Port ${svc.port}</span>
+                    </div>
+                    <div class="microservice-meta">
+                        <span class="endpoint-count-badge">${svcData.endpoints ? svcData.endpoints.length : 0} endpoints</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                `;
+
+                const content = document.createElement('div');
+                content.className = 'microservice-content';
+
+                if (svcData.error) {
+                    content.innerHTML = `
+                        <div class="service-offline-banner">
+                            <div>
+                                <strong>⚠️ Service Spec Unavailable:</strong> Downstream port ${svc.port} returned ${svcData.error}.
+                                <span style="display: block; font-size: 0.8rem; margin-top: 0.25rem;">
+                                    When this microservice is launched, Gateway will dynamically route requests.
+                                </span>
+                            </div>
+                            <button class="small-btn" onclick="retryService('${svc.id}')">Retry Spec</button>
+                        </div>
+                    `;
+                } else if (!svcData.endpoints || svcData.endpoints.length === 0) {
+                    content.innerHTML = `<p style="padding: 1.5rem; color: var(--text-muted);">No endpoints documented for ${svc.name}.</p>`;
+                } else {
+                    totalOps += svcData.endpoints.length;
+
+                    // Group by Tag
+                    const tagMap = new Map();
+                    svcData.endpoints.forEach(ep => {
+                        const tag = ep.tags[0] || 'General';
+                        if (!tagMap.has(tag)) tagMap.set(tag, []);
+                        tagMap.get(tag).push(ep);
+                    });
+
+                    for (const [tag, eps] of tagMap.entries()) {
+                        const tagGroup = document.createElement('div');
+                        tagGroup.className = 'tag-group';
+                        tagGroup.innerHTML = `
+                            <div class="tag-header">
+                                <span class="tag-name">${tag}</span>
+                                <span class="tag-desc">${eps.length} API operation${eps.length > 1 ? 's' : ''}</span>
+                            </div>
+                        `;
+
+                        const opList = document.createElement('div');
+                        opList.className = 'operation-list';
+
+                        eps.forEach(ep => {
+                            opList.appendChild(createOperationElement(ep, svcData.spec));
+                        });
+
+                        tagGroup.appendChild(opList);
+                        content.appendChild(tagGroup);
+                    }
+                }
+
+                header.addEventListener('click', () => {
+                    const isOpen = content.style.display !== 'none';
+                    content.style.display = isOpen ? 'none' : 'block';
+                    header.querySelector('.chevron-icon').style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+                });
+
+                svcBlock.appendChild(header);
+                svcBlock.appendChild(content);
+                container.appendChild(svcBlock);
+            });
+
+            state.totalEndpoints = totalOps;
+            operationsRoot.innerHTML = '';
+            if (servicesToDisplay.length === 0) {
+                operationsRoot.innerHTML = '<p style="text-align: center; padding: 2rem;">No matching microservices found.</p>';
+            } else {
+                operationsRoot.appendChild(container);
+            }
+
+            filterDomOperations();
+        }
+
+        // Window level retry function
+        window.retryService = async function(svcId) {
+            const svc = MICROSERVICES.find(s => s.id === svcId);
+            if (!svc) return;
+            showToast(`Retrying ${svc.name}...`, 'info');
+            const res = await fetchServiceSpec(svc);
+            state.specs.set(svc.id, res);
+            renderAll();
+        };
+
+        // Create DOM element for a single endpoint
+        function createOperationElement(ep, spec) {
+            const block = document.createElement('div');
+            block.className = `op-block ${ep.method.toLowerCase()}`;
+            block.dataset.method = ep.method;
+            block.dataset.path = ep.path.toLowerCase();
+            block.dataset.summary = ep.summary.toLowerCase();
+
+            const header = document.createElement('div');
+            header.className = 'op-header';
+            header.innerHTML = `
+                <div class="op-header-left">
+                    <span class="method-badge">${ep.method}</span>
+                    <span class="op-path">${escapeHtml(ep.path)}</span>
+                    <span class="op-summary">${escapeHtml(ep.summary)}</span>
+                </div>
+                <div class="op-header-right">
+                    <span class="lock-icon" title="Secured Gateway Endpoint">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chevron-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            `;
+
+            const body = document.createElement('div');
+            body.className = 'op-body';
+
+            // Top bar with Gateway Route & Try it out toggle
+            const topBar = document.createElement('div');
+            topBar.className = 'op-description-bar';
+            topBar.innerHTML = `
+                <div>
+                    <span class="gateway-route-badge">TARGET: ${state.gatewayOrigin}${escapeHtml(ep.path)}</span>
+                    ${ep.description ? `<p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">${escapeHtml(ep.description)}</p>` : ''}
+                </div>
+                <button class="try-btn">Try it out</button>
+            `;
+            body.appendChild(topBar);
+
+            // Container for interactive controls
+            const controlsContainer = document.createElement('div');
+            controlsContainer.className = 'op-controls-container';
+            controlsContainer.style.display = 'none';
+
+            // Parameters Table
+            if (ep.parameters && ep.parameters.length > 0) {
+                const paramTitle = document.createElement('div');
+                paramTitle.className = 'op-section-title';
+                paramTitle.textContent = 'Parameters';
+                controlsContainer.appendChild(paramTitle);
+
+                const table = document.createElement('table');
+                table.className = 'param-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Parameter</th>
+                            <th style="width: 50%;">Value</th>
+                            <th style="width: 25%;">Type / In</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
+                ep.parameters.forEach(p => {
+                    const tr = document.createElement('tr');
+                    const isRequired = p.required || p.in === 'path';
+                    const pType = p.schema ? (p.schema.type || 'string') : 'string';
+                    tr.innerHTML = `
+                        <td>
+                            <span class="param-name">${escapeHtml(p.name)}</span>
+                            ${isRequired ? '<span class="param-required">* required</span>' : ''}
+                        </td>
+                        <td>
+                            <input type="text" class="param-input" data-param-name="${escapeHtml(p.name)}" data-param-in="${escapeHtml(p.in)}" placeholder="${isRequired ? 'required' : '(optional)'}" value="${p.schema && p.schema.default !== undefined ? escapeHtml(p.schema.default) : ''}">
+                        </td>
+                        <td>
+                            <span class="param-type">${escapeHtml(p.in)} (${escapeHtml(pType)})</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(p.description || '')}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                controlsContainer.appendChild(table);
+            }
+
+            // Request Body Editor
+            let bodyTextarea = null;
+            if (ep.requestBody && ep.requestBody.content) {
+                const bodyTitle = document.createElement('div');
+                bodyTitle.className = 'op-section-title';
+                bodyTitle.textContent = 'Request Body';
+                controlsContainer.appendChild(bodyTitle);
+
+                const jsonContent = ep.requestBody.content['application/json'];
+                let sampleObj = {};
+                if (jsonContent && jsonContent.schema) {
+                    sampleObj = generateSampleFromSchema(jsonContent.schema, spec);
+                }
+                const sampleStr = JSON.stringify(sampleObj, null, 2);
+
+                const bodyBox = document.createElement('div');
+                bodyBox.className = 'body-container';
+                bodyBox.innerHTML = `
+                    <div class="body-header">
+                        <span>application/json</span>
+                        <div class="body-actions">
+                            <button type="button" class="small-btn format-btn">Format JSON</button>
+                            <button type="button" class="small-btn reset-btn">Reset Sample</button>
+                        </div>
+                    </div>
+                    <textarea class="body-editor" spellcheck="false">${escapeHtml(sampleStr)}</textarea>
+                `;
+                bodyTextarea = bodyBox.querySelector('.body-editor');
+
+                bodyBox.querySelector('.format-btn').addEventListener('click', () => {
+                    try {
+                        const parsed = JSON.parse(bodyTextarea.value);
+                        bodyTextarea.value = JSON.stringify(parsed, null, 2);
+                    } catch (e) {
+                        showToast('Invalid JSON: ' + e.message, 'error');
+                    }
+                });
+
+                bodyBox.querySelector('.reset-btn').addEventListener('click', () => {
+                    bodyTextarea.value = sampleStr;
+                });
+
+                controlsContainer.appendChild(bodyBox);
+            }
+
+            // Execute & Clear Row
+            const executeRow = document.createElement('div');
+            executeRow.className = 'execute-row';
+            executeRow.innerHTML = `
+                <button type="button" class="execute-btn">
+                    <span>Execute</span>
+                </button>
+                <button type="button" class="clear-btn">Clear</button>
+                <span class="auth-hint" style="font-size: 0.8rem; color: var(--text-muted); margin-left: auto;">
+                    ${state.authToken ? '🔐 Auth Header Active' : '🔓 No Auth Header (Public/Guest)'}
+                </span>
+            `;
+            controlsContainer.appendChild(executeRow);
+
+            // Response Box
+            const responseContainer = document.createElement('div');
+            responseContainer.className = 'response-container';
+            controlsContainer.appendChild(responseContainer);
+
+            body.appendChild(controlsContainer);
+
+            // Toggle Try It Out
+            const tryBtn = topBar.querySelector('.try-btn');
+            tryBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isActive = tryBtn.classList.toggle('active');
+                tryBtn.textContent = isActive ? 'Cancel' : 'Try it out';
+                controlsContainer.style.display = isActive ? 'block' : 'none';
+            });
+
+            // Toggle Expand Operation
+            header.addEventListener('click', () => {
+                block.classList.toggle('expanded');
+            });
+
+            // Execute Handler (Live Testing via Gateway)
+            const executeBtn = executeRow.querySelector('.execute-btn');
+            const clearBtn = executeRow.querySelector('.clear-btn');
+
+            clearBtn.addEventListener('click', () => {
+                responseContainer.innerHTML = '';
+                responseContainer.classList.remove('visible');
+            });
+
+            executeBtn.addEventListener('click', async () => {
+                executeBtn.disabled = true;
+                executeBtn.innerHTML = `
+                    <div class="spinner" style="width: 14px; height: 14px; border-width: 2px; margin: 0; vertical-align: middle;"></div>
+                    <span>Sending...</span>
+                `;
+
+                try {
+                    await executeLiveGatewayRequest(ep, controlsContainer, responseContainer, bodyTextarea);
+                } catch (err) {
+                    responseContainer.innerHTML = `
+                        <div class="alert-401" style="background-color: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;">
+                            <strong>Execution Error:</strong> ${escapeHtml(err.message)}
+                        </div>
+                    `;
+                    responseContainer.classList.add('visible');
+                } finally {
+                    executeBtn.disabled = false;
+                    executeBtn.innerHTML = `<span>Execute</span>`;
+                }
+            });
+
+            block.appendChild(header);
+            block.appendChild(body);
+            return block;
+        }
+
+        // Live Gateway Request Execution
+        async function executeLiveGatewayRequest(ep, controlsContainer, responseContainer, bodyTextarea) {
+            let renderedPath = ep.path;
+            const queryParams = new URLSearchParams();
+            const headers = {
+                'Accept': 'application/json'
+            };
+
+            // Collect parameter inputs
+            const inputs = controlsContainer.querySelectorAll('.param-input');
+            inputs.forEach(inp => {
+                const name = inp.dataset.paramName;
+                const loc = inp.dataset.paramIn;
+                const val = inp.value.trim();
+
+                if (loc === 'path') {
+                    renderedPath = renderedPath.replace(new RegExp(`{${name}}`, 'g'), encodeURIComponent(val));
+                } else if (loc === 'query' && val) {
+                    queryParams.set(name, val);
+                } else if (loc === 'header' && val) {
+                    headers[name] = val;
+                }
+            });
+
+            // CRITICAL: Always strictly target Gateway origin
+            const queryString = queryParams.toString();
+            const fullPath = renderedPath + (queryString ? `?${queryString}` : '');
+            const targetUrl = new URL(fullPath, state.gatewayOrigin).toString();
+
+            // Inject Global Bearer Token
+            if (state.authToken) {
+                headers['Authorization'] = state.authToken;
+            }
+
+            // Body
+            let reqBody = null;
+            if (bodyTextarea && ['POST', 'PUT', 'PATCH'].includes(ep.method)) {
+                reqBody = bodyTextarea.value;
+                headers['Content-Type'] = 'application/json';
+            }
+
+            // Build curl command for display
+            let curlCmd = `curl -X '${ep.method}' '${targetUrl}'`;
+            for (const [k, v] of Object.entries(headers)) {
+                curlCmd += ` \\\n  -H '${k}: ${v}'`;
+            }
+            if (reqBody) {
+                curlCmd += ` \\\n  -d '${reqBody.replace(/'/g, "'\\''")}'`;
+            }
+
+            // Execute fetch
+            const startTime = performance.now();
+            let res;
+            let resText = '';
+            let resHeaders = {};
+            let isError = false;
+
+            try {
+                res = await fetch(targetUrl, {
+                    method: ep.method,
+                    headers: headers,
+                    body: reqBody
+                });
+                resText = await res.text();
+                for (const [key, value] of res.headers.entries()) {
+                    resHeaders[key] = value;
+                }
+            } catch (netErr) {
+                isError = true;
+                res = { status: 0, statusText: 'Network / Gateway Error' };
+                resText = netErr.message;
+            }
+
+            const duration = Math.round(performance.now() - startTime);
+
+            // Attempt to pretty-print JSON response
+            let formattedBody = resText;
+            try {
+                const jsonParsed = JSON.parse(resText);
+                formattedBody = JSON.stringify(jsonParsed, null, 2);
+            } catch (_) {}
+
+            // Determine status badge class
+            let statusClass = 'status-2xx';
+            if (res.status >= 300 && res.status < 400) statusClass = 'status-3xx';
+            else if (res.status >= 400 && res.status < 500) statusClass = 'status-4xx';
+            else if (res.status >= 500 || res.status === 0) statusClass = 'status-5xx';
+
+            // 401 Interception Alert
+            let alertHtml = '';
+            if (res.status === 401) {
+                alertHtml = `
+                    <div class="alert-401">
+                        <div>
+                            <strong>⚠️ 401 Unauthorized:</strong> Gateway rejected this request. A valid Bearer token is missing or expired.
+                        </div>
+                        <button type="button" onclick="document.getElementById('global-auth-btn').click()">Open Authorize Modal</button>
+                    </div>
+                `;
+            }
+
+            // Render Response
+            responseContainer.innerHTML = `
+                ${alertHtml}
+                <div class="resp-meta-row">
+                    <span class="status-badge ${statusClass}">${res.status} ${res.statusText || ''}</span>
+                    <span class="resp-time">Duration: ${duration} ms</span>
+                    <span class="resp-time">Routed via: <strong>${escapeHtml(state.gatewayOrigin)}</strong></span>
+                </div>
+                
+                <div class="code-box-title">
+                    <span>Generated cURL Command:</span>
+                    <button type="button" class="small-btn copy-curl-btn">Copy</button>
+                </div>
+                <div class="code-box curl-box">${escapeHtml(curlCmd)}</div>
+
+                <div class="code-box-title">Request URL:</div>
+                <div class="code-box" style="padding: 0.4rem 0.75rem;">${escapeHtml(targetUrl)}</div>
+
+                <div class="code-box-title">
+                    <span>Response Body (${res.status}):</span>
+                    <button type="button" class="small-btn copy-body-btn">Copy</button>
+                </div>
+                <div class="code-box resp-body-box">${escapeHtml(formattedBody)}</div>
+
+                <div class="code-box-title">Response Headers:</div>
+                <div class="code-box" style="font-size: 0.75rem; max-height: 140px;">${escapeHtml(JSON.stringify(resHeaders, null, 2))}</div>
+            `;
+            responseContainer.classList.add('visible');
+
+            // Copy buttons
+            responseContainer.querySelector('.copy-curl-btn').addEventListener('click', () => {
+                navigator.clipboard.writeText(curlCmd);
+                showToast('cURL copied to clipboard!', 'info');
+            });
+            responseContainer.querySelector('.copy-body-btn').addEventListener('click', () => {
+                navigator.clipboard.writeText(formattedBody);
+                showToast('Response body copied to clipboard!', 'info');
             });
         }
 
-        selector.addEventListener('change', (e) => {
-            const svc = e.target.value;
-            const newUrl = new URL(window.location);
-            newUrl.searchParams.set('service', svc);
-            window.history.pushState({}, '', newUrl);
-            loadDocs(svc);
-        });
+        // Filter operations by search text and HTTP method
+        function filterDomOperations() {
+            const query = state.searchQuery;
+            const method = state.selectedMethod;
 
-        loadDocs(selectedService);
+            document.querySelectorAll('.op-block').forEach(op => {
+                const opMethod = op.dataset.method;
+                const opPath = op.dataset.path;
+                const opSummary = op.dataset.summary;
+
+                const matchMethod = (method === 'ALL' || opMethod === method);
+                const matchQuery = !query || opPath.includes(query) || opSummary.includes(query) || opMethod.toLowerCase().includes(query);
+
+                if (matchMethod && matchQuery) {
+                    op.style.display = 'block';
+                } else {
+                    op.style.display = 'none';
+                }
+            });
+
+            // Hide empty tag groups and microservice blocks
+            document.querySelectorAll('.tag-group').forEach(tg => {
+                const visibleOps = Array.from(tg.querySelectorAll('.op-block')).some(o => o.style.display !== 'none');
+                tg.style.display = visibleOps ? 'block' : 'none';
+            });
+
+            document.querySelectorAll('.microservice-block').forEach(mb => {
+                const visibleTags = Array.from(mb.querySelectorAll('.tag-group')).some(t => t.style.display !== 'none');
+                const hasOfflineBanner = mb.querySelector('.service-offline-banner');
+                mb.style.display = (visibleTags || hasOfflineBanner) ? 'block' : 'none';
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Initial setup
+        updateAuthState();
+        loadSpecs();
     </script>
 </body>
 </html>

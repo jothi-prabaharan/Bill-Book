@@ -1,26 +1,103 @@
 <div class="layout">
-  <aside>
-    <a class="brand" routerLink="/overview">
-      <img src="assets/bill-book-mark.png" alt="Bill-Book Logo" class="brand-logo" />
-      <span class="brand-name">Bill-Book <span class="brand-suffix">docs</span></span>
-    </a>
-    @for (section of docs; track section.title) {
-      <h2>{{ section.title }}</h2>
-      <ul>
-        @for (page of section.pages; track page.slug) {
-          <li>
-            <a [routerLink]="'/' + page.slug" routerLinkActive="active">
-              {{ page.title }}
-              @if (page.status !== 'built') {
-                <span class="tag" [class.planned]="page.status === 'planned'">
-                  {{ page.status }}
-                </span>
-              }
-            </a>
-          </li>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a class="brand" routerLink="/overview">
+        <img src="assets/bill-book-mark.png" alt="Bill-Book Logo" class="brand-logo" />
+        <span class="brand-name">Bill-Book <span class="brand-suffix">docs</span></span>
+      </a>
+
+      <!-- Quick Search Box -->
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search docs..."
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          aria-label="Search documentation"
+        />
+        @if (searchQuery()) {
+          <button type="button" class="search-clear" (click)="clearSearch()" aria-label="Clear search">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 001.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
         }
-      </ul>
-    }
+      </div>
+
+      <!-- Quick collapse / expand toggle buttons -->
+      <div class="nav-controls">
+        <span class="nav-count">{{ filteredGroups().length }} Groups</span>
+        <div class="nav-actions">
+          <button type="button" class="nav-btn" (click)="expandAll()" title="Expand all sections">Expand</button>
+          <span class="nav-sep">·</span>
+          <button type="button" class="nav-btn" (click)="collapseAll()" title="Collapse all sections">Collapse</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Groups and Submenus -->
+    <nav class="sidebar-nav">
+      @for (group of filteredGroups(); track group.name) {
+        <div class="group-container">
+          <div class="group-header">
+            <span class="group-name">{{ group.name }}</span>
+            <span class="group-badge">{{ group.sections.length }}</span>
+          </div>
+
+          <div class="group-sections">
+            @for (section of group.sections; track section.title) {
+              <div class="section-container" [class.is-expanded]="isSectionExpanded(section.title)">
+                <!-- Section Header / Submenu Trigger -->
+                <button
+                  type="button"
+                  class="section-toggle"
+                  (click)="toggleSection(section.title, $event)"
+                  [attr.aria-expanded]="isSectionExpanded(section.title)"
+                >
+                  <span class="section-title">
+                    <svg class="chevron-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                    </svg>
+                    <span>{{ section.title }}</span>
+                  </span>
+                  <span class="section-count">{{ section.pages.length }}</span>
+                </button>
+
+                <!-- Submenu Page Links -->
+                @if (isSectionExpanded(section.title)) {
+                  <ul class="submenu-list">
+                    @for (page of section.pages; track page.slug) {
+                      <li class="submenu-item">
+                        <a [routerLink]="'/' + page.slug" routerLinkActive="active" class="submenu-link">
+                          <span class="page-title">{{ page.title }}</span>
+                          @if (page.status !== 'built') {
+                            <span class="tag" [class.planned]="page.status === 'planned'">
+                              {{ page.status }}
+                            </span>
+                          }
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="no-results">
+          <p>No documentation pages found matching &ldquo;{{ searchQuery() }}&rdquo;</p>
+          <button type="button" class="btn-reset" (click)="clearSearch()">Clear search</button>
+        </div>
+      }
+    </nav>
   </aside>
-  <main><router-outlet /></main>
+
+  <main class="content-viewport">
+    <router-outlet />
+  </main>
 </div>

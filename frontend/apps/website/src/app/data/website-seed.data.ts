@@ -220,27 +220,8 @@ export interface PlanCycleBox {
 
 export const PLAN_CYCLE_BOXES: PlanCycleBox[] = [
   {
-    id: 'monthly',
-    boxNumber: 'Box 1',
-    name: 'Per Month',
-    subLabel: 'Flexible monthly billing with zero lock-in',
-    discountPercent: 0,
-    badge: 'Monthly Plan',
-    badgeClass: 'badge-neutral',
-    highlight: false,
-    periodMonths: 1,
-    ctaText: 'Select Monthly Plan',
-    perks: [
-      'Separate Standalone Database exclusively allocated',
-      'Full ERP and double-entry accounting suite',
-      'Sub-second barcode scanning and POS checkout',
-      'Automated GST e-invoicing and return exports',
-      'Daily automatic database snapshots',
-    ],
-  },
-  {
     id: 'quarterly',
-    boxNumber: 'Box 2',
+    boxNumber: 'Box 1',
     name: 'Per Quarter',
     subLabel: '3-month cycle tailored for seasonal operations',
     discountPercent: 10,
@@ -251,7 +232,7 @@ export const PLAN_CYCLE_BOXES: PlanCycleBox[] = [
     ctaText: 'Select Quarterly Plan',
     perks: [
       'Separate Standalone Database exclusively allocated',
-      'Everything in Monthly Plan included',
+      'Full ERP and double-entry accounting suite',
       '10% recurring cost advantage',
       'Priority technical support line (Chennai & Kumbakonam)',
       'Quarterly tax filing reconciliation reviews',
@@ -259,7 +240,7 @@ export const PLAN_CYCLE_BOXES: PlanCycleBox[] = [
   },
   {
     id: 'yearly',
-    boxNumber: 'Box 3',
+    boxNumber: 'Box 2',
     name: 'Per Year',
     subLabel: 'Maximum savings with guaranteed annual SLA',
     discountPercent: 20,
@@ -267,7 +248,7 @@ export const PLAN_CYCLE_BOXES: PlanCycleBox[] = [
     badgeClass: 'badge-best',
     highlight: true,
     periodMonths: 12,
-    ctaText: 'Select Yearly Plan &rarr;',
+    ctaText: 'Select Yearly Plan →',
     perks: [
       'Separate Standalone Database exclusively allocated',
       'Everything in Quarterly Plan included',

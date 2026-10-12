@@ -1456,18 +1456,18 @@
     }
   }
 
-  // 3-Box Pricing Grid (Exactly 3 Cards Side-by-Side)
+  // Pricing Grid (2 Cards Side-by-Side: Quarterly & Yearly)
   .three-box-pricing-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 24px;
-    max-width: 1140px;
+    gap: 28px;
+    max-width: 860px;
     margin: 0 auto 60px auto;
     align-items: stretch;
     min-width: 0;
 
-    @media (min-width: 900px) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .pricing-box-card {
