@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **Settings › Metal purity works on a Retail branch.** The menu showed it and the branch was seeded with purities, but the server admitted Jewellery branches only, so the screen opened but could neither list nor save a purity (D-65, TK-191).
+
 - **Fixed**: **The rail and the secondary menu work as the design has them (TK-189).**
   - **Rail:** a module with a menu opens it, and the page stays put until you pick a screen. Clicking the open module hides or shows its menu. A hidden menu now comes back when you pick another module; before, it stayed hidden everywhere until the breadcrumb button was found. The current module stays marked on its forms and records, and modules added for HRMS, School, Restaurant, Maintenance and Approvals show their icons.
   - **Secondary menu:** the **+** beside a row opens the new-record form on every list that has one, once the list has loaded. It used to do nothing on Items, Item categories, Stock and money documents, the chart of accounts, journals and every other list without a `/new` page, and the top bar's **New** menu sent those to the dashboard. Fee demands and Recipes have no such form, so they no longer show a **+**. The screen you are on stays marked on its form, the section holding it opens after a reload, and a Reports search with no match no longer removes the menu. The rows slide in one after another, as designed.

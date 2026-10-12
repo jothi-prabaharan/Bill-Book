@@ -668,6 +668,8 @@ A warehouse in another state carries its own GSTIN, because it changes the place
 
 Gold, silver and platinum purities with their **factor** — the fraction of pure metal, so 22K is 0.9160. It multiplies the pure-metal rate to price a piece, which is why it is frozen once an item uses it.
 
+**Retail and Jewellery branches have them**, in Settings › Metal purity, seeded with the standard purities when the branch is created. Other trades have neither the screen nor the purities.
+
 ## Barcodes
 
 An item can carry several: the manufacturer's EAN, a shop-printed label, a pack-level code. Each is unique across the organization, because one scan has to resolve to one item. A pharma pack's **GS1 DataMatrix** carries GTIN, batch and expiry in one symbol, so the scanner parses it rather than matching it whole.

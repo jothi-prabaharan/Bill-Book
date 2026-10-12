@@ -1,7 +1,11 @@
+using System.Reflection;
+using Inventory.Api.Controllers;
 using Inventory.Api.Services;
 using Inventory.Repository.Repositories;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Internal;
 using Xunit;
 
 namespace Inventory.Api.Tests;
@@ -66,4 +70,24 @@ public sealed class TradeSeedTests
     [InlineData(null, false)]
     public void Only_retail_and_jewellery_are_seeded_with_purities(string? vertical, bool seeds) =>
         Assert.Equal(seeds, MetalPurityRepository.SeedsPurities(vertical));
+
+    /// <summary>
+    /// The API admits exactly the trades the seed fills (D-65): it admitted
+    /// Jewellery alone while a Retail branch was seeded and shown the screen,
+    /// so every call from that screen answered 403.
+    /// </summary>
+    [Theory]
+    [InlineData(BusinessType.Retail)]
+    [InlineData(BusinessType.Pharma)]
+    [InlineData(BusinessType.Jewellery)]
+    [InlineData(BusinessType.School)]
+    [InlineData(BusinessType.Service)]
+    [InlineData(BusinessType.Restaurant)]
+    public void The_metal_purity_api_admits_the_trades_seeded_with_purities(BusinessType trade)
+    {
+        RequireBusinessTypeAttribute guard =
+            typeof(MetalPuritiesController).GetCustomAttribute<RequireBusinessTypeAttribute>()!;
+
+        Assert.Equal(MetalPurityRepository.SeedsPurities(trade.ToString()), guard.Allows(trade));
+    }
 }

@@ -5782,16 +5782,18 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** every list above reads like the Purchase orders register at 1280px and stacks at 360px, with its existing filters, editors and actions still working.
 
 ### TK-191 · Metal purity on Retail branches (D-65)
-- [~] working (Claude Opus 5.5) — since 2026-10-12
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-12
 - **Issue:** [#181](https://github.com/jothi-prabaharan/Bill-Book/issues/181)
 - **Group:** Z · Owner request
 - **Lanes:** L-INV (`MetalPuritiesController`, `Inventory.Api.Tests`), L-DOC (`masters.md`) · **Depends on:** — · **Decision:** D-65
 - **Where:** `backend/Api/Inventory/Inventory.Api/Controllers/MetalPuritiesController.cs` (its `[RequireBusinessType]`), `backend/tests/Inventory.Api.Tests/TradeSeedTests.cs`, `frontend/apps/docs/content/masters.md` › Metal purities.
 - **State:** checked 12 October 2026. Master's menu (`TradeScopeRepository.MenuTrades["mtp"]`) and Inventory's seed (`MetalPurityRepository.SeedsPurities`) give metal purities to Retail and Jewellery, but the controller admits Jewellery only, so on a Retail branch the screen opens and `GET /api/metal-purities` answers 403. Found by TK-189's check of every menu row.
 - **Sub-tasks:**
-  - [ ] `MetalPuritiesController` admits Retail and Jewellery.
-  - [ ] Test: written, never run by an AI (section 0.5): the controller admits exactly the trades the seed fills.
-  - [ ] Docs and release notes.
+  - [x] `MetalPuritiesController` admits Retail and Jewellery.
+  - [x] Test: written, never run by an AI (section 0.5): `TradeSeedTests.The_metal_purity_api_admits_the_trades_seeded_with_purities` holds the controller to `SeedsPurities` for all six trades, so the two cannot drift apart again.
+  - [x] Docs (`masters.md` › Metal purities says which branches have them) and release notes.
+- **Verified by an AI (12 October 2026):** `Inventory.Api.Tests` builds with no warnings.
+- **Owner step:** run `TradeSeedTests`.
 - **Done when:** on a Retail branch, Settings › Metal purity lists and saves purities, and `TradeSeedTests` passes.
 
 ## 3. Decisions from the owner
