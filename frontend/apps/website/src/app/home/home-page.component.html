@@ -104,10 +104,6 @@
               <span class="dot yellow"></span>
               <span class="dot green"></span>
             </div>
-            <div class="browser-address">
-              <span class="lock-icon">&#128274;</span>
-              <span>app.billbook.cloud/accounting/dashboard</span>
-            </div>
             <div class="browser-actions">
               <span class="status-badge">Live System</span>
             </div>
@@ -191,10 +187,6 @@
                 <span class="dot yellow"></span>
                 <span class="dot green"></span>
               </div>
-              <div class="browser-address">
-                <span class="lock-icon">&#128274;</span>
-                <span>app.billbook.cloud/{{ activeSubView() === 'secondary' && currentTab.secondaryUrl ? currentTab.secondaryUrl : (currentTab.primaryUrl || currentTab.id) }}</span>
-              </div>
               @if (currentTab.secondaryImage) {
                 <div class="register-switcher">
                   <button
@@ -248,9 +240,6 @@
                     <span class="dot red"></span>
                     <span class="dot yellow"></span>
                     <span class="dot green"></span>
-                  </div>
-                  <div class="browser-address">
-                    <span>app.billbook.cloud/{{ shot.id }}</span>
                   </div>
                 </div>
                 <div class="browser-body">
@@ -336,9 +325,6 @@
                 <span class="dot red"></span>
                 <span class="dot yellow"></span>
                 <span class="dot green"></span>
-              </div>
-              <div class="browser-address">
-                <span>app.billbook.cloud/verticals/{{ activeVerticalId() }}</span>
               </div>
             </div>
             <div class="browser-body">
