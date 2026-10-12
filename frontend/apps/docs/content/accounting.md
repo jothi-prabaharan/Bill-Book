@@ -4,6 +4,8 @@
 
 ## The list
 
+![Chart of Accounts Register](assets/screenshots/chart-of-accounts.png)
+
 The chart is one list of every account, in the order the chart reads: by type, then each parent followed by its children, then by code. It reads like every other list (see [Document lists](lists)). The *Active*, *Inactive* and *Locked* tabs replace the old **Show inactive** box, and inactive accounts are always counted. **Debit** and **Credit** show each account's balance for the chosen period, taken from the trial balance: one side per account, the side its balance falls on. The total is the credit side of the accounts on screen; across the whole chart it equals the debit side. Click an account to edit it; **Deactivate** is in the editor (TK-187).
 
 ## Two levels, not three
@@ -140,6 +142,8 @@ POST   /internal/sub-accounts/deactivate
 
 
 # Banks & bank accounts
+
+![Banking Dashboard & Statements](assets/screenshots/banking-dashboard.png)
 
 **Banking › Banks** and **Banking › Bank accounts**
 

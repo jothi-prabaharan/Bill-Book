@@ -16,7 +16,7 @@ public sealed class RoleRepository
     /// <summary>System roles plus this customer's own (D-36, TK-127: roles span types).</summary>
     public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, Guid? orgId, CancellationToken ct)
     {
-        IQueryable<Role> roles = _db.Roles.Where(r => r.CustomerId == null || r.CustomerId == customerId);
+        IQueryable<Role> roles = _db.Roles.Where(r => (r.CustomerId == null || r.CustomerId == customerId) && r.IsActive);
 
         if (!orgId.HasValue)
         {
@@ -56,7 +56,7 @@ public sealed class RoleRepository
     public async Task<RoleDetail?> GetAsync(Guid customerId, int roleId, Guid? orgId, CancellationToken ct)
     {
         Role? role = await _db.Roles.FirstOrDefaultAsync(
-            r => r.RoleId == roleId && (r.CustomerId == null || r.CustomerId == customerId), ct);
+            r => r.RoleId == roleId && (r.CustomerId == null || r.CustomerId == customerId) && r.IsActive, ct);
         if (role is null)
         {
             return null;
@@ -143,8 +143,24 @@ public sealed class RoleRepository
     {
         string trimmed = request.DisplayName.Trim();
 
+        Role? existingInactive = await _db.Roles.FirstOrDefaultAsync(
+            r => r.CustomerId == customerId
+                && !r.IsActive
+                && (r.DisplayName.ToLower() == trimmed.ToLower() || r.SystemName.ToLower() == trimmed.ToLower()),
+            ct);
+        if (existingInactive != null)
+        {
+            existingInactive.DisplayName = trimmed;
+            existingInactive.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
+            existingInactive.IsActive = true;
+            await _db.SaveChangesAsync(ct);
+            await ReplacePermissionsAsync(existingInactive.RoleId, request.PermissionIds, ct);
+            return (SaveRoleResult.Ok, existingInactive.RoleId);
+        }
+
         bool duplicate = await _db.Roles.AnyAsync(
             r => (r.CustomerId == null || r.CustomerId == customerId)
+                && r.IsActive
                 && (r.DisplayName.ToLower() == trimmed.ToLower() || r.SystemName.ToLower() == trimmed.ToLower()),
             ct);
         if (duplicate)
@@ -172,7 +188,7 @@ public sealed class RoleRepository
         Guid customerId, int roleId, SaveRoleRequest request, CancellationToken ct)
     {
         Role? role = await _db.Roles.FirstOrDefaultAsync(
-            r => r.RoleId == roleId && (r.CustomerId == null || r.CustomerId == customerId), ct);
+            r => r.RoleId == roleId && (r.CustomerId == null || r.CustomerId == customerId) && r.IsActive, ct);
         if (role is null)
         {
             return SaveRoleResult.NotFound;
@@ -189,6 +205,7 @@ public sealed class RoleRepository
         bool duplicate = await _db.Roles.AnyAsync(
             r => r.RoleId != roleId
                 && (r.CustomerId == null || r.CustomerId == customerId)
+                && r.IsActive
                 && (r.DisplayName.ToLower() == trimmed.ToLower() || r.SystemName.ToLower() == trimmed.ToLower()),
             ct);
         if (duplicate)
@@ -209,7 +226,7 @@ public sealed class RoleRepository
     public async Task<DeleteRoleResult> DeleteAsync(Guid customerId, int roleId, CancellationToken ct)
     {
         Role? role = await _db.Roles.FirstOrDefaultAsync(
-            r => r.RoleId == roleId && r.CustomerId == customerId, ct);
+            r => r.RoleId == roleId && r.CustomerId == customerId && r.IsActive, ct);
         if (role is null)
         {
             // Either it does not exist or it is a system role, which is never deletable.
@@ -217,8 +234,12 @@ public sealed class RoleRepository
             return isSystem ? DeleteRoleResult.SystemRole : DeleteRoleResult.NotFound;
         }
 
-        bool inUse = await _db.UserOrganizationRoles.AnyAsync(
-            u => u.RoleId == roleId && u.IsActive, ct);
+        bool inUse = await (
+            from assignment in _db.UserOrganizationRoles
+            join user in _db.Users on assignment.UserId equals user.UserId
+            where assignment.RoleId == roleId && assignment.IsActive && user.IsActive
+            select assignment
+        ).AnyAsync(ct);
         if (inUse)
         {
             return DeleteRoleResult.InUse;

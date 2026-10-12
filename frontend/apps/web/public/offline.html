@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — Bill-Book</title>
+    <link rel="icon" type="image/png" href="assets/bill-book-mark.png" />
+    <style>
+      :root {
+        --bb-bg: #f8fafc;
+        --bb-card-bg: #ffffff;
+        --bb-border: #e2e8f0;
+        --bb-text-main: #0f172a;
+        --bb-text-muted: #64748b;
+        --bb-primary: #2563eb;
+        --bb-primary-hover: #1d4ed8;
+        --bb-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        --bb-font-mono: 'IBM Plex Mono', monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        background-color: var(--bb-bg);
+        color: var(--bb-text-main);
+        font-family: var(--bb-font);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+
+      .offline-card {
+        background: var(--bb-card-bg);
+        border: 1px solid var(--bb-border);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        max-width: 440px;
+        width: 100%;
+        padding: 2.5rem 2rem;
+        text-align: center;
+      }
+
+      .logo {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 1.5rem;
+        display: block;
+      }
+
+      .icon-container {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: #fee2e2;
+        color: #ef4444;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+      }
+
+      h1 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--bb-text-main);
+      }
+
+      p {
+        font-size: 0.925rem;
+        line-height: 1.5;
+        color: var(--bb-text-muted);
+        margin-bottom: 1.75rem;
+      }
+
+      .pill {
+        display: inline-block;
+        background-color: #f1f5f9;
+        color: #475569;
+        font-family: var(--bb-font-mono);
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 9999px;
+        margin-bottom: 1.5rem;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        background-color: var(--bb-primary);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+      }
+
+      .btn:hover {
+        background-color: var(--bb-primary-hover);
+      }
+
+      .btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .footer-note {
+        margin-top: 1.5rem;
+        font-size: 0.8rem;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="offline-card" role="alert">
+      <img src="assets/bill-book-mark.png" alt="Bill-Book" class="logo" />
+      <div class="icon-container" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+      </div>
+      <h1>Connection Required</h1>
+      <div class="pill">Real-time Ledgers & Books</div>
+      <p>
+        Bill-Book connects directly to your live accounting books and GST records. Please check your network connection to continue.
+      </p>
+      <button class="btn" type="button" onclick="handleRetry()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        Retry Connection
+      </button>
+      <div class="footer-note">Automatic reconnection active</div>
+    </div>
+
+    <script>
+      function handleRetry() {
+        window.location.reload();
+      }
+
+      window.addEventListener('online', () => {
+        window.location.reload();
+      });
+    </script>
+  </body>
+</html>

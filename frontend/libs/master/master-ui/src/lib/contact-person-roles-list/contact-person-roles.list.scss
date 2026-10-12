@@ -1,5 +1,28 @@
 .error { color: var(--color-danger); font-size: .85rem; }
-.hint { color: var(--color-text-muted); font-size: .78rem; margin: .75rem 0 0; }
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: .78rem;
+  margin: .85rem 0 0;
+}
+.register-add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  flex-shrink: 0;
+
+  bb-text-input {
+    width: 14rem;
+    max-width: 100%;
+  }
+
+  .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 .grid { width: 100%; border-collapse: collapse; margin-top: .75rem; }

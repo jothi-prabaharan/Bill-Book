@@ -5,6 +5,43 @@ import { ActivatedRoute } from '@angular/router';
 import { marked } from 'marked';
 import { ALL_PAGES } from '../docs.manifest';
 
+// Configure custom marked renderer to wrap screenshots in a browser frame
+const renderer = new marked.Renderer();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+renderer.image = (arg1: any, arg2?: any, arg3?: any) => {
+  let href = '';
+  let title = '';
+  let text = '';
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    href = arg1.href ?? '';
+    title = arg1.title ?? '';
+    text = arg1.text ?? '';
+  } else {
+    href = arg1 ?? '';
+    title = arg2 ?? '';
+    text = arg3 ?? '';
+  }
+  const caption = text || title || 'Bill-Book Cloud ERP';
+  return `<figure class="browser-frame">
+    <div class="browser-frame__bar">
+      <div class="browser-frame__dots">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+      </div>
+      <div class="browser-frame__url">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span>app.billbook.in</span>
+      </div>
+    </div>
+    <div class="browser-frame__viewport">
+      <img src="${href}" alt="${caption}" loading="lazy" />
+    </div>
+    ${caption ? `<figcaption class="browser-frame__caption">${caption}</figcaption>` : ''}
+  </figure>`;
+};
+marked.use({ renderer });
+
 /** Loads a markdown file from content/ and renders it. */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -255,6 +255,19 @@
       }
     </div>
 
+    @if (pwa.canInstall()) {
+      <button
+        class="btn btn-ghost pwa-install-btn"
+        type="button"
+        title="Install Bill-Book as app"
+        aria-label="Install Bill-Book as app"
+        (click)="installPwa()"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/><path d="m9 10 3 3 3-3"/><line x1="12" x2="12" y1="6" y2="13"/></svg>
+        <span class="pwa-install-label">Install App</span>
+      </button>
+    }
+
     <button class="btn btn-ghost" type="button" title="Help" aria-label="Help">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
     </button>

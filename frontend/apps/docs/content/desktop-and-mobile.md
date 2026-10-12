@@ -5,6 +5,15 @@ and on Android and iOS phones and tablets. Every screen is the same as in the
 browser; the apps add what only an installed app can do, and they keep themselves
 up to date.
 
+## Progressive Web App (PWA)
+
+Bill-Book can be installed directly from the browser as a standalone desktop or mobile application on `localhost` as well as staging and production environments:
+
+- **Browser omnibox install**: Chrome and Edge display an "Install Bill-Book" button in the address bar.
+- **In-app install button**: An **Install App** button appears in the top bar and user account menu when the application is eligible for installation.
+- **Standalone desktop experience**: Runs in an independent application window with its own taskbar icon and launch shortcuts.
+- **Real-time ledger safety**: API calls (`/api/*`) strictly bypass caching to guarantee double-entry accounting integrity. A branded offline fallback page (`/offline.html`) handles network dropouts with automatic retry.
+
 ## On a computer
 
 **Receipts and labels print straight away.** A till receipt, a kitchen ticket, a

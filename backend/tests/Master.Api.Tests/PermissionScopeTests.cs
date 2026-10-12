@@ -185,4 +185,43 @@ public sealed class RoleMatrixScopeTests
         Assert.Equal(SaveRoleResult.Ok, result);
         Assert.True(roleId > 0);
     }
+
+    [SkippableFact]
+    public async Task Deleting_a_role_soft_deletes_and_removes_from_list_and_can_be_recreated()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await using AdminDbContext db = _admin.CreateContext();
+        var repo = new RoleRepository(db);
+        Guid customerId = Guid.NewGuid();
+        string roleName = $"CustomRole_{Guid.NewGuid():N}"[..20];
+
+        int sales = await db.Permissions.Where(p => p.Code == "sales.view").Select(p => p.PermissionId).SingleAsync();
+
+        (SaveRoleResult createRes, int roleId) = await repo.CreateAsync(
+            customerId,
+            new SaveRoleRequest { DisplayName = roleName, PermissionIds = [sales] },
+            default);
+        Assert.Equal(SaveRoleResult.Ok, createRes);
+
+        var listBefore = await repo.ListAsync(customerId, null, default);
+        Assert.Contains(listBefore, r => r.RoleId == roleId);
+
+        DeleteRoleResult deleteRes = await repo.DeleteAsync(customerId, roleId, default);
+        Assert.Equal(DeleteRoleResult.Ok, deleteRes);
+
+        var listAfter = await repo.ListAsync(customerId, null, default);
+        Assert.DoesNotContain(listAfter, r => r.RoleId == roleId);
+
+        // Re-creating with the same name reactivates the role cleanly
+        (SaveRoleResult recreateRes, int newRoleId) = await repo.CreateAsync(
+            customerId,
+            new SaveRoleRequest { DisplayName = roleName, PermissionIds = [sales] },
+            default);
+        Assert.Equal(SaveRoleResult.Ok, recreateRes);
+        Assert.Equal(roleId, newRoleId);
+
+        var listRecreated = await repo.ListAsync(customerId, null, default);
+        Assert.Contains(listRecreated, r => r.RoleId == roleId);
+    }
 }

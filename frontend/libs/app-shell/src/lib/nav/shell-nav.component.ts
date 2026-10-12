@@ -5,6 +5,7 @@ import { AccessibleOrg, AuthService, SessionContextService } from '@bill-book/au
 import { MenuService } from '../menu.service';
 import { FALLBACK_RAIL, ShellRailItem } from '../shell-screens';
 import { PHONE_TAB_MODULES, ShellNavigationService } from '../shell-navigation.service';
+import { PwaInstallService } from '../pwa-install.service';
 import { ShellIconComponent } from './shell-icon.component';
 
 /**
@@ -38,6 +39,7 @@ export class ShellNavComponent {
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
   protected readonly navigation = inject(ShellNavigationService);
+  protected readonly pwa = inject(PwaInstallService);
 
   readonly userDisplayName = input<string>('Praba');
   readonly userRoleName = input<string>('Owner');
@@ -182,6 +184,12 @@ export class ShellNavComponent {
   readonly settingsItem = computed(() =>
     this.nav().find((item) => item.module === 'settings'),
   );
+
+  installPwa(): void {
+    this.profileOpen.set(false);
+    this.navigation.closeMore();
+    void this.pwa.promptInstall();
+  }
 
   onLogout(): void {
     this.profileOpen.set(false);

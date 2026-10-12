@@ -121,8 +121,10 @@
 
     <section class="cf-section cf-addresses" aria-labelledby="cf-addresses">
       <div class="cf-section-head">
-        <h2 id="cf-addresses" class="cf-kicker">Addresses &amp; contact people</h2>
-        <p class="cf-aside">Every address can carry its own contact person. Documents pick one of these.</p>
+        <div>
+          <h2 id="cf-addresses" class="cf-kicker">Addresses</h2>
+          <p class="cf-aside">Billing and shipping locations for this contact. Documents pick one of these.</p>
+        </div>
       </div>
 
       @for (card of addresses; track card.key; let i = $index) {
@@ -153,59 +155,69 @@
             <bb-text-input label="GSTIN at this address" [name]="'agstin' + card.key" maxlength="15"
               [(ngModel)]="card.gstin" />
           </div>
-
-          @if (personFor(card); as person) {
-            <div class="cf-person">
-              <div class="cf-person-head">
-                <h3 class="cf-kicker cf-kicker-muted">Contact person</h3>
-                <bb-checkbox class="cf-main" text="Main contact" [name]="'main' + person.key" [ngModel]="isMain(person)"
-                  (ngModelChange)="$event && setMainPerson(person)" />
-              </div>
-              <div class="cf-grid cf-grid-4">
-                <bb-text-input label="Name" [name]="'pname' + person.key" maxlength="200" [(ngModel)]="person.name"
-                  [id]="'pname_' + person.key" [error]="errors()['pname_' + person.key] || ''" (ngModelChange)="clearError('pname_' + person.key)" />
-                <bb-select label="Role" [name]="'prole' + person.key" placeholder="" [options]="roleOptions()"
-                  [(ngModel)]="person.contactPersonRoleId" [id]="'prole_' + person.key" [error]="errors()['prole_' + person.key] || ''" (ngModelChange)="clearError('prole_' + person.key)" />
-                <bb-phone-input label="Phone" [name]="'pphone' + person.key" maxlength="20" [(ngModel)]="person.mobileNumber"
-                  [id]="'pphone_' + person.key" [error]="errors()['pphone_' + person.key] || ''" (ngModelChange)="clearError('pphone_' + person.key)" />
-                <bb-email-input label="Email" [name]="'pemail' + person.key" maxlength="150" [(ngModel)]="person.email"
-                  [id]="'pemail_' + person.key" [error]="errors()['pemail_' + person.key] || ''" (ngModelChange)="clearError('pemail_' + person.key); clearError('pphone_' + person.key)" />
-              </div>
-            </div>
-          }
         </div>
       }
 
-      @if (otherPersons.length > 0) {
-        <div class="cf-address cf-others">
-          <div class="cf-person-head">
-            <h3 class="cf-kicker cf-kicker-muted">Other contact people</h3>
-            <button type="button" class="link" (click)="rolesOpen.set(true)">Manage roles</button>
+      <div class="cf-add">
+        <button type="button" class="link cf-add-link" (click)="addAddress()">+ Add an address</button>
+      </div>
+    </section>
+
+    <section class="cf-section cf-persons" aria-labelledby="cf-persons">
+      <div class="cf-section-head">
+        <div>
+          <h2 id="cf-persons" class="cf-kicker">Contact people</h2>
+          <p class="cf-aside">People who work with this contact. Documents and reminders reach the main contact.</p>
+        </div>
+        <button type="button" class="link" (click)="openManageRoles()">Manage roles</button>
+      </div>
+
+      @for (person of persons; track person.key; let i = $index) {
+        <div class="cf-person-row">
+          <div class="cf-person-bar">
+            <div class="cf-person-identity">
+              <span class="cf-number" aria-hidden="true">{{ i + 1 }}</span>
+              <span class="cf-person-label">{{ person.name.trim() || 'Contact person ' + (i + 1) }}</span>
+            </div>
+            <div class="cf-person-bar-actions">
+              <bb-checkbox class="cf-main" text="Main contact" [name]="'main' + person.key" [ngModel]="isMain(person)"
+                (ngModelChange)="$event && setMainPerson(person)" />
+              @if (persons.length > 1) {
+                <button type="button" class="cf-remove" [attr.aria-label]="'Remove contact person ' + (i + 1)" title="Remove this person"
+                  (click)="removePerson(person)">&times;</button>
+              }
+            </div>
           </div>
-          @for (person of otherPersons; track person.key) {
-            <div class="cf-other">
-              <div class="cf-grid cf-grid-4">
-                <bb-text-input label="Name" [name]="'oname' + person.key" maxlength="200" [(ngModel)]="person.name"
-                  [id]="'pname_' + person.key" [error]="errors()['pname_' + person.key] || ''" (ngModelChange)="clearError('pname_' + person.key)" />
-                <bb-select label="Role" [name]="'orole' + person.key" placeholder="" [options]="roleOptions()"
-                  [(ngModel)]="person.contactPersonRoleId" [id]="'prole_' + person.key" [error]="errors()['prole_' + person.key] || ''" (ngModelChange)="clearError('prole_' + person.key)" />
-                <bb-phone-input label="Phone" [name]="'ophone' + person.key" maxlength="20" [(ngModel)]="person.mobileNumber"
-                  [id]="'pphone_' + person.key" [error]="errors()['pphone_' + person.key] || ''" (ngModelChange)="clearError('pphone_' + person.key)" />
-                <bb-email-input label="Email" [name]="'oemail' + person.key" maxlength="150" [(ngModel)]="person.email"
-                  [id]="'pemail_' + person.key" [error]="errors()['pemail_' + person.key] || ''" (ngModelChange)="clearError('pemail_' + person.key); clearError('pphone_' + person.key)" />
-              </div>
-              <div class="cf-other-foot">
-                <bb-checkbox class="cf-main" text="Main contact" [name]="'main' + person.key" [ngModel]="isMain(person)"
-                  (ngModelChange)="$event && setMainPerson(person)" />
-                <button type="button" class="link danger" (click)="removePerson(person)">Remove</button>
-              </div>
+
+          <div class="cf-grid cf-grid-4">
+            <bb-text-input label="Name" [name]="'pname' + person.key" maxlength="200" [(ngModel)]="person.name"
+              [id]="'pname_' + person.key" [error]="errors()['pname_' + person.key] || ''" (ngModelChange)="clearError('pname_' + person.key)" />
+
+            <div class="cf-role-wrap">
+              <bb-select label="Role" [name]="'prole' + person.key" placeholder="" [options]="roleOptions()"
+                [(ngModel)]="person.contactPersonRoleId" [id]="'prole_' + person.key"
+                [showAdd]="true" (add)="openAddRole(person)"
+                [error]="errors()['prole_' + person.key] || ''" (ngModelChange)="clearError('prole_' + person.key)" />
+              <button type="button" class="link cf-add-role-link" (click)="openAddRole(person)">+ Add role</button>
+            </div>
+
+            <bb-phone-input label="Phone" [name]="'pphone' + person.key" maxlength="20" [(ngModel)]="person.mobileNumber"
+              [id]="'pphone_' + person.key" [error]="errors()['pphone_' + person.key] || ''" (ngModelChange)="clearError('pphone_' + person.key)" />
+
+            <bb-email-input label="Email" [name]="'pemail' + person.key" maxlength="150" [(ngModel)]="person.email"
+              [id]="'pemail_' + person.key" [error]="errors()['pemail_' + person.key] || ''" (ngModelChange)="clearError('pemail_' + person.key); clearError('pphone_' + person.key)" />
+          </div>
+
+          @if (addresses.length > 1) {
+            <div class="cf-grid cf-grid-4 cf-sub">
+              <bb-select label="Linked address (optional)" [name]="'paddr' + person.key" placeholder=""
+                [options]="addressLinkOptions()" [(ngModel)]="person.addressKey" />
             </div>
           }
         </div>
       }
 
       <div class="cf-add">
-        <button type="button" class="link cf-add-link" (click)="addAddress()">+ Add an address</button>
         <button type="button" id="addPerson" class="link cf-add-link" (click)="addPerson()">+ Add a contact person</button>
       </div>
     </section>
@@ -339,5 +351,5 @@
 </div>
 
 @if (rolesOpen()) {
-  <bb-contact-person-roles-dialog (closed)="onRolesClosed()" />
+  <bb-contact-person-roles-dialog [mode]="rolesDialogMode()" (saved)="onRoleSaved($event)" (closed)="onRolesClosed()" />
 }

@@ -20,6 +20,11 @@
             "glob": "**/*.md",
             "input": "apps/docs/content",
             "output": "content"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/website/src/assets",
+            "output": "assets"
           }
         ]
       },

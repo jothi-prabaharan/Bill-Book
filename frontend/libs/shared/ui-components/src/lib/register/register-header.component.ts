@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { InfoTooltipComponent } from '../info-tooltip/info-tooltip.component';
 import { onCreateRequest } from './create-request';
 
 /**
@@ -18,12 +19,15 @@ import { onCreateRequest } from './create-request';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-register-header',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, InfoTooltipComponent],
   templateUrl: './register-header.component.html',
   styleUrl: './register-header.component.scss',
 })
 export class RegisterHeaderComponent {
   readonly title = input.required<string>();
+
+  /** An optional info tooltip text shown right next to the title. */
+  readonly hint = input<string>('');
 
   /** The document's code — `POR`, `INV` — or empty for a register of several kinds. */
   readonly code = input<string>('');

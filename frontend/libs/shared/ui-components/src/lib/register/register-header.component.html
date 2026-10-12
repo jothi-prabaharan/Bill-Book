@@ -1,6 +1,9 @@
 <header class="reg-head">
   <div class="reg-head__titles">
     <h1 class="reg-head__title">{{ title() }}</h1>
+    @if (hint()) {
+      <bb-info-tooltip [text]="hint()" />
+    }
     @if (code() || countText()) {
       <span class="reg-head__meta">
         @if (code()) {

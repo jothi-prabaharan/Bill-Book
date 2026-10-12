@@ -2,6 +2,8 @@
 
 A multi-tenant retail ERP and accounting product for Indian SMBs. Bill Books is the functional benchmark.
 
+![Executive Dashboard Overview](assets/screenshots/dashboard-overview.png)
+
 This is the **help and reference site**. It is a static app — markdown files, no API and no database — so it can be hosted anywhere and read offline.
 
 ## What this documents

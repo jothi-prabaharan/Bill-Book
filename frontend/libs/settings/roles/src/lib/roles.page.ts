@@ -90,7 +90,8 @@ export class RolesPage implements OnInit {
   async load(): Promise<void> {
     this.busy.set(true);
     try {
-      this.roles.set(await this.req<RoleListItem[]>('GET', '/api/roles'));
+      const items = await this.req<RoleListItem[]>('GET', '/api/roles');
+      this.roles.set(items.filter((r) => r.isActive !== false));
     } catch (err: unknown) {
       this.error.set(this.extractErrorMessage(err, 'Could not load roles.'));
     } finally {
@@ -224,6 +225,7 @@ export class RolesPage implements OnInit {
     this.error.set(null);
     try {
       await this.req('DELETE', `/api/roles/${role.roleId}`);
+      this.roles.update((list) => list.filter((r) => r.roleId !== role.roleId));
       await this.load();
     } catch (err: unknown) {
       this.error.set(this.extractErrorMessage(err, 'Could not delete that role.'));

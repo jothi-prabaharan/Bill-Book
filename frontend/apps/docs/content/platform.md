@@ -127,12 +127,16 @@ There are no apps any more (TK-136). A customer buys one product, and what each 
 
 ### Signing in
 
+![Authentication & Sign In](assets/screenshots/login-screen.png)
+
 - **A sign-in is for a branch.** You are offered every branch where you hold a role, once, whatever roles you hold in it.
 - **The token carries the branch's scope**: its `business_type` and `add_ons` claims, the permissions of every role you hold in that branch, and the customer's licence. It carries no `app` claim. A token minted before 5 October 2026 that still names an app, or says `General`, reads as a Retail branch until it expires.
 - **`GET /api/me/context`** returns your name and email, the branch, its business type and add-ons, the licence and your permissions. It returns no internal ids.
 - **Keep me signed in.** Ticked, you stay signed in after closing the browser, for as long as you come back within the refresh token's seven days; each visit renews it. Unticked, a reload or a new tab keeps you signed in, but closing the browser signs you out. Either way the access token lasts fifteen minutes and is renewed quietly, including when the app is reopened after a break.
 
 ### Switching branch, and the frame around every page
+
+![Application Navigation & Rail](assets/screenshots/app-navigation.png)
 
 - **The branch switcher groups branches by organisation (TK-189).** The group holding your current branch is open, and opening another closes it. Each branch shows its business type, organisation and currency. Searching matches the branch, organisation, role, GSTIN or city, and opens every group so nothing is hidden. `GET /api/auth/organizations`, `GET /api/auth/session` and the login response carry `customerName`, `businessType` (a branch with none reads as `Retail`), `baseCurrency`, `gstin` and `city` for each branch, read in one query.
 - **The rail** is 64px wide. Its account button shows your initials and your role in the current branch, and opens a menu with your name, role, email and **Logout**. Escape, a click outside or moving to another page closes it.
@@ -209,6 +213,8 @@ An expired customer **still authenticates normally**. The tokens issue, and the 
 Letting login itself fail would have been simpler to build and worse to use — the customer could not see why they were locked out, or reach a renew button.
 
 ## User limit
+
+![User Roles & Permission Management](assets/screenshots/users-management.png)
 
 Inviting a user checks `MaxUsers` and returns `409` with an upgrade prompt when the cap is reached, rather than creating a user that cannot log in.
 

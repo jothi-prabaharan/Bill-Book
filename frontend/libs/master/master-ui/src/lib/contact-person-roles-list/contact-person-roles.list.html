@@ -1,14 +1,13 @@
 @if (register()) {
-  <bb-register-header title="Contact person roles" [count]="rows().length">
+  <bb-register-header title="Contact person roles" [count]="rows().length"
+    hint="What a person at a contact does (e.g. Accounts, Purchase, Dispatch). Used in contact forms and documents.">
     <div class="register-add">
       <bb-text-input ariaLabel="New role name" [(ngModel)]="newRoleName" maxlength="50" placeholder="New role name" />
-      <button class="btn" type="button" (click)="add()" [disabled]="busy() || !newRoleName.trim()">New role</button>
+      <button class="btn btn-primary" type="button" (click)="add()" [disabled]="busy() || !newRoleName.trim()">New role</button>
     </div>
   </bb-register-header>
 
   <bb-status-tabs label="Role status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
-
-  <ng-content />
 }
 
 @if (error(); as failure) {
@@ -72,6 +71,9 @@
   </div>
 }
 
-<bb-info-tooltip text="A role that people already hold cannot be deleted — make it inactive instead, so existing contacts keep it and their history still reads correctly."></bb-info-tooltip>
+<p class="hint">
+  <bb-info-tooltip text="Deletion policy" />
+  <span>A role that people already hold cannot be deleted — make it inactive instead, so existing contacts keep it and their history still reads correctly.</span>
+</p>
 
 

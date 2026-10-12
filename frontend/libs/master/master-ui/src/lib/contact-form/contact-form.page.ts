@@ -33,6 +33,7 @@ import {
 import {
   ContactPersonRole,
   ContactPersonRolesDialog,
+  RoleSavedEvent,
 } from '../contact-person-roles-dialog/contact-person-roles.dialog';
 import {
   ADDRESS_KINDS,
@@ -233,6 +234,8 @@ export class ContactFormPage implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
   protected readonly rolesOpen = signal(false);
+  protected readonly rolesDialogMode = signal<'add' | 'edit' | 'manage'>('add');
+  protected roleTargetPerson: PersonRow | null = null;
   protected readonly uploading = signal(false);
   protected readonly portalLink = signal<PortalLinkMade | null>(null);
   protected readonly portalAccess = signal<PortalAccessState | null>(null);
@@ -320,6 +323,14 @@ export class ContactFormPage implements OnInit {
     this.roles().map((role) => ({ value: role.contactPersonRoleId, label: role.roleName })),
   );
 
+  protected readonly addressLinkOptions = computed<BbSelectOption<string>[]>(() => [
+    { value: '', label: 'All / General' },
+    ...this.addresses.map((card, i) => ({
+      value: card.key,
+      label: `Address ${i + 1} (${card.city || card.addressLine1 || card.kind})`,
+    })),
+  ]);
+
   /** Receivables are assets (type 1) and payables liabilities (type 2), ids fixed by mst.AccountTypes. */
   protected readonly receivableOptions = computed<BbSelectOption<number>[]>(() => this.accountOptions(1));
   protected readonly payableOptions = computed<BbSelectOption<number>[]>(() => this.accountOptions(2));
@@ -378,16 +389,12 @@ export class ContactFormPage implements OnInit {
   addAddress(): void {
     const card = blankAddress(this.form.countryId ?? this.defaultCountryId, this.addresses.length === 0);
     this.addresses = [...this.addresses, card];
-    this.persons = [...this.persons, blankPerson(this.defaultRoleId(), card.key)];
   }
 
   removeAddress(card: AddressCard): void {
     this.addresses = this.addresses.filter((row) => row !== card);
-    // Its person goes with it unless they were already saved: a saved person
-    // stays with the contact, unlinked, as the database would leave them.
-    this.persons = this.persons
-      .filter((row) => row.addressKey !== card.key || row.contactPersonId > 0)
-      .map((row) => (row.addressKey === card.key ? { ...row, addressKey: null } : row));
+    // Unlink any person that was linked to this address card
+    this.persons = this.persons.map((row) => (row.addressKey === card.key ? { ...row, addressKey: null } : row));
   }
 
   /** One default billing and one default shipping address: ticking one clears the rest. */
@@ -408,6 +415,9 @@ export class ContactFormPage implements OnInit {
 
   removePerson(person: PersonRow): void {
     this.persons = this.persons.filter((row) => row !== person);
+    if (this.persons.length === 0) {
+      this.persons = [blankPerson(this.defaultRoleId(), null)];
+    }
   }
 
   /**
@@ -751,8 +761,44 @@ export class ContactFormPage implements OnInit {
     return options.find((option) => option.value === value)?.label ?? value;
   }
 
+  openAddRole(person: PersonRow): void {
+    this.roleTargetPerson = person;
+    this.rolesDialogMode.set('add');
+    this.rolesOpen.set(true);
+  }
+
+  openManageRoles(): void {
+    this.roleTargetPerson = null;
+    this.rolesDialogMode.set('manage');
+    this.rolesOpen.set(true);
+  }
+
+  async onRoleSaved(event: RoleSavedEvent): Promise<void> {
+    try {
+      const refreshedRoles = await this.get<ContactPersonRole[]>('/api/contact-person-roles');
+      this.roles.set(refreshedRoles);
+
+      if (this.roleTargetPerson) {
+        const match = event.roleId
+          ? refreshedRoles.find((r) => r.contactPersonRoleId === event.roleId)
+          : refreshedRoles.find((r) => r.roleName.trim().toLowerCase() === event.roleName.trim().toLowerCase());
+
+        if (match) {
+          this.roleTargetPerson.contactPersonRoleId = match.contactPersonRoleId;
+          this.clearError(`prole_${this.roleTargetPerson.key}`);
+        }
+      }
+    } catch {
+      // keep quiet
+    } finally {
+      this.rolesOpen.set(false);
+      this.roleTargetPerson = null;
+    }
+  }
+
   onRolesClosed(): void {
     this.rolesOpen.set(false);
+    this.roleTargetPerson = null;
     void this.get<ContactPersonRole[]>('/api/contact-person-roles')
       .then((roles) => this.roles.set(roles))
       .catch(() => undefined);
@@ -783,9 +829,8 @@ export class ContactFormPage implements OnInit {
             : role === 'guardian' ? 'New guardian'
               : 'New customer',
     );
-    this.addresses = [];
-    this.persons = [];
-    this.addAddress();
+    this.addresses = [blankAddress(this.form.countryId ?? this.defaultCountryId, true)];
+    this.persons = [blankPerson(this.defaultRoleId(), null)];
     this.bankDetails = [];
     this.licences = [];
     this.attachments = [];
@@ -808,14 +853,10 @@ export class ContactFormPage implements OnInit {
         rows.addresses.push(blankAddress(fields.countryId ?? this.defaultCountryId, true));
       }
       this.addresses = rows.addresses;
-      // Every card shows a "Contact person" block, so a card nobody is linked
-      // to gets a blank one; left blank, it is not sent.
-      this.persons = [
-        ...rows.persons,
-        ...rows.addresses
-          .filter((card) => !rows.persons.some((person) => person.addressKey === card.key))
-          .map((card) => blankPerson(this.defaultRoleId(), card.key)),
-      ];
+      if (rows.persons.length === 0) {
+        rows.persons.push(blankPerson(this.defaultRoleId(), null));
+      }
+      this.persons = rows.persons;
       this.bankDetails = bankDetails ?? [];
       this.licences = licences ?? [];
       this.attachments = attachments ?? [];

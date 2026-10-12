@@ -418,6 +418,8 @@ Receivable and payable stay apart in the ledger through their sub-accounts, not 
 
 ## The contact page
 
+![Contacts Master Directory](assets/screenshots/contacts-master.png)
+
 A contact opens on its own page: **New customer** at `/contacts/new` (or **New vendor**, from the vendor list's **+**), and an existing contact at its own address from the list. The page is five sections in one column — **Identity**, **Tax & statutory**, **Trading terms**, **Addresses & contact people** and **Notes** — with payout accounts, licences, documents, the client portal and the history folded away below them until they hold something.
 
 **Save** checks everything this page describes and returns you to the list. **Save draft** keeps what you have typed with only a display name and a role, so a contact you are still collecting details for does not have to be finished in one sitting.
@@ -652,6 +654,8 @@ Three levels deep at most. Each can default an item's **profile**, **costing met
 
 ## Item profiles
 
+![Inventory Items & Profiles](assets/screenshots/inventory-items.png)
+
 The profile decides which extra tab appears and which extension table the item carries.
 
 - **Pharma** — salt, strength, dosage form, pack size, manufacturer, drug schedule, storage, and **minimum expiry on receipt**, which refuses inward stock that is too short-dated to sell. Selecting it presets FEFO with batch and expiry tracking, and marks prices tax-inclusive.
@@ -665,6 +669,8 @@ Locations for movements and reporting. **Stock is one shared pool across every w
 A warehouse in another state carries its own GSTIN, because it changes the place of supply for goods despatched from it. Cold-chain storage is a field rather than a note: breaking it makes the stock unsaleable.
 
 ## Metal purities
+
+![Metal Purities & Karat Masters](assets/screenshots/metal-purities.png)
 
 Gold, silver and platinum purities with their **factor** — the fraction of pure metal, so 22K is 0.9160. It multiplies the pure-metal rate to price a piece, which is why it is frozen once an item uses it.
 

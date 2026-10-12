@@ -12,6 +12,8 @@ Every arrow is optional. A bill keyed straight in, with no order and no receipt
 behind it, is the most common entry point — a service, a utility, a trader who
 never raises paperwork.
 
+![Purchase Orders Register](assets/screenshots/purchase-orders.png)
+
 ## What an order does, and what it deliberately does not
 
 **It reaches no account and holds no stock.** Nothing is posted to the ledger,
@@ -271,6 +273,8 @@ stage rather than a fault, but it does mean the account is currently one-way.
 
 A bill records what a vendor is owed, and it is the document input tax credit is
 claimed on.
+
+![Purchase Bills Register](assets/screenshots/purchase-bills.png)
 
 ```
 POR ──▶ GRN ──▶ BIL ──▶ SPM

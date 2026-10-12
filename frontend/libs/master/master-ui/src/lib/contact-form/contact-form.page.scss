@@ -167,18 +167,41 @@
   }
 }
 
-.cf-person {
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px dashed var(--color-border-strong, var(--color-border));
+/* Contact person rows. */
+.cf-person-row {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-divider, var(--color-border));
+
+  &:first-of-type {
+    padding-top: 0;
+  }
 }
 
-.cf-person-head {
+.cf-person-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-2);
+}
+
+.cf-person-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cf-person-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.cf-person-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
 }
 
 .cf-main {
@@ -190,18 +213,25 @@
   cursor: pointer;
 }
 
-.cf-other + .cf-other {
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px dashed var(--color-border-strong, var(--color-border));
-}
-
-.cf-other-foot {
+.cf-role-wrap {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  flex-direction: column;
+  position: relative;
+
+  .cf-add-role-link {
+    align-self: flex-start;
+    margin-top: 3px;
+    font-size: 0.76rem;
+    color: var(--color-accent-700);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 .cf-add {

@@ -22,6 +22,7 @@ import { FavouritesService } from '../favourites.service';
 import { MenuService } from '../menu.service';
 import { ShellNotificationsService } from '../notifications.service';
 import { ScanToOpenService } from '../scan-to-open.service';
+import { PwaInstallService } from '../pwa-install.service';
 import {
   SHELL_SCREENS,
   ShellScreen,
@@ -75,6 +76,7 @@ export class ShellTopbarComponent {
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
   private readonly scanToOpen = inject(ScanToOpenService);
+  protected readonly pwa = inject(PwaInstallService);
 
   /** The last scanned document code that opened nothing, said under the scan field. */
   readonly scanMiss = signal<string | null>(null);
@@ -405,6 +407,10 @@ export class ShellTopbarComponent {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.closeAll();
+  }
+
+  installPwa(): void {
+    void this.pwa.promptInstall();
   }
 
   doLogout(): void {

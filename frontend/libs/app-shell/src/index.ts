@@ -16,6 +16,7 @@ export * from './lib/board-state.service';
 export * from './lib/favourites.service';
 export * from './lib/notifications.service';
 export * from './lib/scan-to-open.service';
+export * from './lib/pwa-install.service';
 
 // Navigation contracts: the server's menu tree, and the static fallback
 export * from './lib/menu.models';

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component } from '@angular/core';
 import { ContactPersonRolesList } from '../contact-person-roles-list/contact-person-roles.list';
-import { InfoTooltipComponent } from '@bill-book/ui-components';
 
 /**
  * Settings › Contact person roles.
@@ -19,7 +18,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-page',
   standalone: true,
-  imports: [InfoTooltipComponent, ContactPersonRolesList],
+  imports: [ContactPersonRolesList],
   host: { class: 'register-page' },
   templateUrl: './contact-person-roles.page.html',
   styleUrl: './contact-person-roles.page.scss',

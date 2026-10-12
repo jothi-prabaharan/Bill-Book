@@ -12,16 +12,26 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&display=swap"
     />
-    <!--
-      Makes the app installable: Chrome and Edge show an "Install" button in the
-      address bar, and the installed app opens in its own window with its own
-      taskbar icon. Deliberately no service worker — the app is useless offline
-      (every screen reads live books), and a cached copy of an old build is a
-      worse failure than a page that says it cannot connect.
-    -->
-    <link rel="manifest" href="manifest.webmanifest" />
+    <!-- PWA manifest and mobile/desktop app support -->
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#f3f2f2" />
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Bill-Book" />
+    <meta name="application-name" content="Bill-Book" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js', { scope: '/' })
+            .catch((err) => {
+              console.warn('[PWA] ServiceWorker registration failed:', err);
+            });
+        });
+      }
+    </script>
     <!--
       Deployment settings, read before the application starts. The file shipped
       with the build sets nothing, so the app uses its built-in defaults; a

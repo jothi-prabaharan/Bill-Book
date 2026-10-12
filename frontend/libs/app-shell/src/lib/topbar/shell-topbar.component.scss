@@ -518,3 +518,30 @@
   font-size: 12px;
   color: var(--color-danger, #a2332a);
 }
+
+.pwa-install-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 6px);
+  padding: 0 10px;
+  height: 32px;
+  border-radius: var(--radius-md, 6px);
+  color: var(--color-accent, #2563eb);
+  font-weight: 500;
+  font-size: 13px;
+  background: color-mix(in srgb, var(--color-accent, #2563eb) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent, #2563eb) 25%, transparent);
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent, #2563eb) 14%, transparent);
+  }
+
+  @media (max-width: 860px) {
+    padding: 0 6px;
+
+    .pwa-install-label {
+      display: none;
+    }
+  }
+}
+
