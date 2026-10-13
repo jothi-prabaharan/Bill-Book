@@ -340,6 +340,9 @@ export class MenuService {
       grn: '/purchase/goods-receipts/new',
       bil: '/purchase/bills/new',
       dbn: '/purchase/debit-notes/new',
+      spd: '/banking/spend-money/new',
+      rcv: '/banking/receive-money/new',
+      trf: '/banking/transfer-money/new',
       // Forms with a page of their own (TK-188 and the HR/School builds): the
       // list's ?action=create would only bounce on to these.
       both: '/contacts/new',

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { DOC_GROUPS, DocGroup, DocPage, DocSection } from './docs.manifest';
+import { DOC_GROUPS, DocGroup } from './docs.manifest';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -177,7 +177,7 @@ public sealed class CostingWorker : BackgroundService
                 .Select(i => (CostingType?)i.CostingType)
                 .FirstOrDefaultAsync(ct);
 
-            if (costingType == CostingType.WeightedAverage)
+            if (costingType is CostingType.WeightedAverage or CostingType.MovingAverage)
             {
                 periodLock ??= await scope.ServiceProvider
                     .GetRequiredService<IAccountingPeriodLock>()

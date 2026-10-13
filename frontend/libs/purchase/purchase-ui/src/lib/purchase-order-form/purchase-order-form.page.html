@@ -40,7 +40,25 @@
     <!-- Card 1: Document -->
     <div class="card">
       <div class="card-kicker">Document</div>
-      <div class="form-grid">
+      <div class="doc-header-grid">
+        <div class="field">
+          <bb-form-field
+            label="Vendor"
+            controlId="po-vendor"
+            [required]="true"
+          >
+            <button
+              id="po-vendor"
+              type="button"
+              class="input picker"
+              [disabled]="readonlyDoc()"
+              (click)="openVendorPicker()"
+            >
+              {{ contactLabel() || 'Choose a vendor' }}
+            </button>
+          </bb-form-field>
+        </div>
+
         <bb-number-field
           [number]="documentNo() || ''"
           module="purchase"
@@ -71,21 +89,16 @@
         </div>
 
         <div class="field">
-          <bb-form-field
-            label="Vendor"
-            controlId="po-vendor"
-            [required]="true"
-          >
-            <button
-              id="po-vendor"
-              type="button"
-              class="input picker"
-              [disabled]="readonlyDoc()"
-              (click)="openVendorPicker()"
-            >
-              {{ contactLabel() || 'Choose a vendor' }}
-            </button>
-          </bb-form-field>
+          <bb-text-input
+            id="po-pos"
+            label="Place of supply"
+            maxlength="2"
+            placeholder="33"
+            hint="Leave blank to follow vendor's GSTIN."
+            [disabled]="readonlyDoc()"
+            [ngModel]="placeOfSupplyStateCode()"
+            (ngModelChange)="placeOfSupplyStateCode.set($event)"
+          />
         </div>
 
         <div class="field">
@@ -106,19 +119,6 @@
             [date]="documentDate()"
             [locked]="!isNew()"
             [(rate)]="exchangeRate"
-          />
-        </div>
-
-        <div class="field">
-          <bb-text-input
-            id="po-pos"
-            label="Place of supply"
-            maxlength="2"
-            placeholder="33"
-            hint="Leave blank to follow vendor's GSTIN."
-            [disabled]="readonlyDoc()"
-            [ngModel]="placeOfSupplyStateCode()"
-            (ngModelChange)="placeOfSupplyStateCode.set($event)"
           />
         </div>
       </div>

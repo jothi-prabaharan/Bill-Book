@@ -468,9 +468,9 @@ const DEFAULT_DOC_GROUPS: readonly DocGroup[] = [
   {
     name: 'Banking',
     docs: [
-      { label: 'Receive money', code: 'REC', path: '/banking/receive-money' },
-      { label: 'Spend money', code: 'PAY', path: '/banking/spend-money' },
-      { label: 'Transfer money', code: 'TRF', path: '/banking/transfer-money' },
+      { label: 'Receive money', code: 'REC', path: '/banking/receive-money/new' },
+      { label: 'Spend money', code: 'PAY', path: '/banking/spend-money/new' },
+      { label: 'Transfer money', code: 'TRF', path: '/banking/transfer-money/new' },
     ],
   },
 ];

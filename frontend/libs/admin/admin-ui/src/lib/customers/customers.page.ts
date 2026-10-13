@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import {
   BbSelectOption,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   EmailInputComponent,
   PasswordInputComponent,
@@ -85,6 +86,7 @@ interface CreateCustomerForm {
   standalone: true,
   imports: [InfoTooltipComponent, 
     DataGridComponent,
+    DataGridCellTemplateDirective,
     FormsModule,
     TextInputComponent,
     SelectComponent,

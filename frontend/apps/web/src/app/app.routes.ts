@@ -311,12 +311,32 @@ export const appRoutes: Routes = withUpdateGate([
       // for by name.
       {
         path: 'banking/spend-money',
-        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentListPage),
+        data: { access: { permission: 'banking.view' }, direction: 'spend' },
+      },
+      {
+        path: 'banking/spend-money/new',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentFormPage),
+        data: { access: { permission: 'banking.view' }, direction: 'spend' },
+      },
+      {
+        path: 'banking/spend-money/:id',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentFormPage),
         data: { access: { permission: 'banking.view' }, direction: 'spend' },
       },
       {
         path: 'banking/receive-money',
-        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentListPage),
+        data: { access: { permission: 'banking.view' }, direction: 'receive' },
+      },
+      {
+        path: 'banking/receive-money/new',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentFormPage),
+        data: { access: { permission: 'banking.view' }, direction: 'receive' },
+      },
+      {
+        path: 'banking/receive-money/:id',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentFormPage),
         data: { access: { permission: 'banking.view' }, direction: 'receive' },
       },
       {
@@ -326,7 +346,17 @@ export const appRoutes: Routes = withUpdateGate([
       },
       {
         path: 'banking/transfer-money',
-        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TransferMoneyPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TransferMoneyListPage),
+        data: { access: { permission: 'banking.view' } },
+      },
+      {
+        path: 'banking/transfer-money/new',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TransferMoneyFormPage),
+        data: { access: { permission: 'banking.view' } },
+      },
+      {
+        path: 'banking/transfer-money/:id',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TransferMoneyFormPage),
         data: { access: { permission: 'banking.view' } },
       },
       // Feature modules mount here as they are built:

@@ -30,7 +30,8 @@ type AccountType =
   | 'CashCredit'
   | 'CreditCard'
   | 'Wallet'
-  | 'Cash';
+  | 'Cash'
+  | 'EEFC';
 
 interface Bank {
   bankId: number;
@@ -103,6 +104,7 @@ export class BankAccountsPage implements OnInit {
     { value: 'CreditCard', label: 'Credit card' },
     { value: 'Wallet', label: 'Wallet' },
     { value: 'Cash', label: 'Cash in hand' },
+    { value: 'EEFC', label: 'EEFC account' },
   ];
 
   protected readonly bankOptions = computed<BbSelectOption<number>[]>(() =>

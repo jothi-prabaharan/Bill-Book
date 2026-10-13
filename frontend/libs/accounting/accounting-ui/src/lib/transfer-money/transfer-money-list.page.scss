@@ -1,0 +1,13 @@
+.link { color: var(--color-accent-700); text-decoration: none; background: none; border: 0; font: inherit; font-size: inherit; padding: 0; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.error { color: var(--color-danger); }
+.notice { color: var(--color-success); }
+.hint { font-size: .78rem; color: var(--color-text-muted); }
+.empty { color: var(--color-text-subtle); font-size: .85rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}

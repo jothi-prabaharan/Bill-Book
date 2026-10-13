@@ -1,0 +1,60 @@
+<bb-register-header
+  title="Transfer money"
+  code="TRM"
+  [count]="periodRows().length"
+  newLabel="New transfer"
+  [newDisabled]="busy()"
+  (create)="createTransfer()"
+/>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<bb-status-tabs label="Status filters" [tabs]="tabs()" [value]="statusFilter()" (valueChange)="statusFilter.set($event)" />
+
+<section class="register-card">
+  <bb-period-filter-bar initialPreset="this-financial-year" [total]="periodTotal()" (rangeChange)="range.set($event)" />
+
+  <bb-data-grid
+    register
+    fillHeight
+    flush
+    stackOnPhone
+    label="Transfers"
+    [gridCode]="'TRANSFER_MONEY'"
+    [columns]="columns"
+    [data]="visibleRows()"
+    (rowClick)="openTransfer($event.documentId)"
+  >
+    <ng-template bbCellTemplate="transactionNo" let-row>
+      <bb-doc-number code="TRM" [number]="row.transactionNo ?? 'Unnumbered draft'" />
+    </ng-template>
+
+    <ng-template bbCellTemplate="transactionDate" let-row>
+      <span class="reg-date">{{ row.transactionDate | registerDate }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="toBankAccountName" let-row>
+      {{ row.toBankAccountName ?? '—' }}
+    </ng-template>
+
+    <ng-template bbCellTemplate="status" let-row>
+      <span [class]="'tag ' + statusTone(row.status)">{{ row.status }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="amount" let-row>
+      <bb-money-cell [value]="row.amount" [currency]="row.currencyCode" />
+    </ng-template>
+
+    <ng-template bbCellTemplate="actions" let-row>
+      <div class="row-actions">
+        @if (row.status === 'Draft') {
+          <bb-icon-button icon="delete" tone="danger" title="Delete draft" (actionClick)="$event.stopPropagation(); discard(row)" />
+        } @else if (row.status === 'Posted') {
+          <button type="button" class="link" (click)="$event.stopPropagation(); voidDocument(row)">Void</button>
+        }
+      </div>
+    </ng-template>
+  </bb-data-grid>
+</section>

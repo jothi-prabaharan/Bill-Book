@@ -3,6 +3,7 @@ import {
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   MessageBoxComponent,
   SelectComponent,
@@ -42,6 +43,7 @@ interface MasterCurrency {
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
     FormsModule,
     CheckboxComponent,
     SelectComponent,

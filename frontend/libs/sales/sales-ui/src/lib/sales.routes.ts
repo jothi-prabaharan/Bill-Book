@@ -3,8 +3,8 @@ import { Routes } from '@angular/router';
 export const salesRoutes: Routes = [
   {
     path: 'transactions',
-    redirectTo: 'quotes',
-    pathMatch: 'full'
+    loadComponent: () => import('./sales-list/sales-list.component').then(m => m.SalesListComponent),
+    data: { motionIndex: 4, depth: 0, title: 'All transactions', newRoute: '/sales/invoices/new', newTitle: 'New invoice', access: { permission: 'sales.view' } }
   },
   {
     path: 'quotes',

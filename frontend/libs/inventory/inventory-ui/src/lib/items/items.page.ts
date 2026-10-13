@@ -1,11 +1,9 @@
 import {
   ExportImportComponent,
-  MASTER_STATUSES,
   MessageBoxComponent,
   RegisterHeaderComponent,
   StatusTab,
   StatusTabsComponent,
-  countStatusTabs,
   masterStatus,
   rowsInStatus,
 } from '@bill-book/ui-components';
@@ -54,6 +52,7 @@ type Profile = 'Standard' | 'Pharma' | 'Jewellery';
 type Costing =
   | 'None'
   | 'WeightedAverage'
+  | 'MovingAverage'
   | 'Fifo'
   | 'Lifo'
   | 'Fefo'
@@ -469,6 +468,7 @@ export class ItemsPage implements OnInit {
   protected readonly costingOptions: BbSelectOption<string>[] = [
     { value: 'None', label: 'Not stocked' },
     { value: 'WeightedAverage', label: 'Weighted average' },
+    { value: 'MovingAverage', label: 'Moving average' },
     { value: 'Fifo', label: 'FIFO' },
     { value: 'Lifo', label: 'LIFO' },
     { value: 'Fefo', label: 'FEFO — earliest expiry' },
@@ -927,6 +927,7 @@ export class ItemsPage implements OnInit {
       case 'None':
         return 'Not stocked — no cost is relieved when this is sold.';
       case 'WeightedAverage':
+      case 'MovingAverage':
         return 'One average cost per item, across every warehouse in this branch.';
       case 'Fifo':
         return 'Cost layers consumed oldest receipt first.';

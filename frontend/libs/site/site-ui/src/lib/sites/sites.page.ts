@@ -96,8 +96,8 @@ export class SitesPage implements OnInit {
     isActive: true,
   };
 
-  async ngOnInit(): Promise<void> {
-    await this.loadAll();
+  ngOnInit(): void {
+    void this.loadAll();
   }
 
   setTab(t: Tab): void {

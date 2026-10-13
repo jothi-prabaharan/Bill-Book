@@ -41,7 +41,25 @@
     <!-- Card 1: Document -->
     <div class="card">
       <div class="card-kicker">Document</div>
-      <div class="form-grid">
+      <div class="doc-header-grid">
+        <div class="field">
+          <bb-form-field
+            label="Vendor"
+            controlId="bil-vendor"
+            [required]="true"
+          >
+            <button
+              id="bil-vendor"
+              type="button"
+              class="input picker"
+              [disabled]="readonlyDoc()"
+              (click)="openVendorPicker()"
+            >
+              {{ contactLabel() || 'Choose a vendor' }}
+            </button>
+          </bb-form-field>
+        </div>
+
         <bb-number-field
           [number]="documentNo() || ''"
           module="purchase"
@@ -70,24 +88,6 @@
             [ngModel]="dueDate()"
             (ngModelChange)="dueDate.set($event)"
           />
-        </div>
-
-        <div class="field">
-          <bb-form-field
-            label="Vendor"
-            controlId="bil-vendor"
-            [required]="true"
-          >
-            <button
-              id="bil-vendor"
-              type="button"
-              class="input picker"
-              [disabled]="readonlyDoc()"
-              (click)="openVendorPicker()"
-            >
-              {{ contactLabel() || 'Choose a vendor' }}
-            </button>
-          </bb-form-field>
         </div>
 
         <div class="field">
@@ -147,7 +147,7 @@
           />
         </div>
 
-        <div class="field" style="display:flex;align-items:center;padding-top:var(--space-4)">
+        <div class="field field--checkbox-align">
           <bb-checkbox
             text="Reverse charge"
             hint="Vendor charged no GST; you pay it."

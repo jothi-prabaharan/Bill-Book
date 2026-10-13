@@ -1,0 +1,354 @@
+<header class="form-header">
+  <button type="button" class="link back-link" (click)="goBack()">
+    ← Back to {{ title() }}
+  </button>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+@if (viewing(); as d) {
+  <section class="editor readonly">
+    <h2>
+      {{ d.transactionNo }}
+      <span class="badge" [class.void]="d.status === 'Void'">{{ d.status }}</span>
+    </h2>
+
+    <p class="note">
+      A posted document is never edited. Void it instead — the ledger rows are withdrawn and the
+      document keeps its number, because a gap in a series is what an auditor asks about.
+    </p>
+
+    <dl class="meta">
+      <div><dt>Date</dt><dd>{{ d.transactionDate }}</dd></div>
+      <div><dt>{{ contactLabel() }}</dt><dd>{{ contactName(d.contactId) }}</dd></div>
+      <div><dt>Account</dt><dd>{{ d.bankAccountName }}</dd></div>
+      <div><dt>Amount</dt><dd>{{ d.amount | number: '1.2-2' }} {{ d.currencyCode }}</dd></div>
+      <div><dt>Method</dt><dd>{{ d.paymentMethod }}</dd></div>
+      <div><dt>Reference</dt><dd>{{ d.referenceNo ?? '—' }}</dd></div>
+      <div><dt>Memo</dt><dd>{{ d.memo ?? '—' }}</dd></div>
+      @if (d.tdsAmount) {
+        <div><dt>TDS withheld</dt><dd>{{ d.tdsAmount | number: '1.2-2' }} @if (d.tdsSectionCode) { · {{ d.tdsSectionCode }} } @if (d.deductorTan) { · {{ d.deductorTan }} }</dd></div>
+      }
+      @if (d.isTdsChallan) {
+        <div><dt>TDS challan</dt><dd>{{ d.challanSectionCode }} · {{ d.challanMonth }} · {{ d.challanNo ?? '—' }} · BSR {{ d.bsrCode ?? '—' }}</dd></div>
+      }
+    </dl>
+
+    <bb-data-grid [gridCode]="'MONEY_DOCUMENT_VIEW_LINES'" [columns]="viewLinesColumns" [data]="d.lines">
+      <ng-template bbCellTemplate="lineNumber" let-row>
+        {{ row.lineNumber }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="source" let-row>
+        {{ sourceFor(row.ledgerSourceId)?.label ?? 'Source ' + row.ledgerSourceId }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="settles" let-row>
+        @if (row.mappingTransactionTypeCode) {
+          {{ row.mappingTransactionTypeCode }} #{{ row.mappingTransactionId ?? '—' }}
+        } @else {
+          <span class="none">—</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="memo" let-row>
+        {{ row.lineMemo ?? '' }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="amount" let-row>
+        {{ row.amount | number: '1.2-2' }}
+      </ng-template>
+    </bb-data-grid>
+
+    <div class="totals-footer">
+      <div>Total</div>
+      <div class="num">{{ d.amount | number: '1.2-2' }}</div>
+    </div>
+
+    <div class="editor-actions">
+      <button type="button" class="btn btn-ghost" (click)="goBack()">Close</button>
+      @if (d.status === 'Posted') {
+        @if (d.contactId !== null) {
+          <button class="btn btn-primary" type="button" (click)="startAllocation()" [disabled]="busy()">Allocate</button>
+        }
+        <button class="btn btn-secondary" type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
+      }
+    </div>
+
+    @if (allocating()) {
+      <bb-allocation-form
+        [contactId]="d.contactId!"
+        [sourceTransactionTypeCode]="direction() === 'spend' ? 'SPM' : 'RCM'"
+        [sourceTransactionId]="d.documentId"
+        [availableAmount]="d.amount"
+        [targetTypeCodes]="direction() === 'spend' ? ['BIL'] : ['INV']"
+        (closeForm)="onAllocationClosed($event)"
+      ></bb-allocation-form>
+    }
+  </section>
+} @else {
+  <section class="editor">
+    <h2>{{ editingId === null ? 'New ' + title().toLowerCase() : 'Draft' }}</h2>
+
+    <div class="head-fields">
+      <div class="field">
+        <bb-branch-date-input label="Date" [(ngModel)]="transactionDate" name="transactionDate" />
+      </div>
+      <div class="field wide">
+        <bb-select
+          [label]="direction() === 'spend' ? 'Paid from' : 'Received into'"
+          [options]="bankAccountOptions()"
+          name="bankAccountId"
+          [(ngModel)]="bankAccountId"
+        />
+      </div>
+      <div class="field wide">
+        <bb-select
+          [label]="contactLabel()"
+          [options]="contactOptions()"
+          name="contactId"
+          [(ngModel)]="contactId"
+          (ngModelChange)="onContact()"
+        />
+      </div>
+      <div class="field">
+        <bb-number-input
+          label="Amount"
+          inputmode="decimal"
+          step="0.01"
+          min="0"
+          [(ngModel)]="amount"
+          name="amount"
+        />
+      </div>
+      <div class="field">
+        <bb-select
+          label="Method"
+          placeholder=""
+          [options]="paymentMethods"
+          name="paymentMethod"
+          [(ngModel)]="paymentMethod"
+        />
+      </div>
+      <div class="field">
+        <bb-text-input label="Reference" [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
+      </div>
+      <div class="field">
+        <bb-branch-date-input label="Reference date" [(ngModel)]="referenceDate" name="referenceDate" />
+      </div>
+      <div class="field wide">
+        <bb-text-input label="Memo" [(ngModel)]="memo" name="memo" placeholder="Why this payment was made" />
+      </div>
+      @if (direction() === 'receive') {
+        <div class="field">
+          <bb-number-input label="TDS withheld" inputmode="decimal" step="0.01" min="0" [(ngModel)]="tdsAmount" name="tdsAmount" />
+        </div>
+        @if (tdsAmount) {
+          <div class="field">
+            <bb-text-input label="Customer's TAN" [(ngModel)]="deductorTan" name="deductorTan" maxlength="10" class="uppercase" />
+          </div>
+          <div class="field">
+            <bb-text-input label="TDS section" [(ngModel)]="tdsSectionCode" name="tdsSectionCode" maxlength="10" />
+          </div>
+        }
+      } @else {
+        <div class="field wide">
+          <bb-checkbox
+            text="TDS challan"
+            hint="A payment of deducted TDS to the government, for one section and month."
+            name="isTdsChallan"
+            [(ngModel)]="isTdsChallan"
+          />
+        </div>
+      }
+    </div>
+
+    @if (direction() === 'spend' && isTdsChallan) {
+      <div class="head-fields">
+        <div class="field">
+          <bb-text-input label="Section" [(ngModel)]="challanSectionCode" name="challanSectionCode" maxlength="10" />
+        </div>
+        <div class="field">
+          <bb-branch-date-input label="Month (any day in it)" [(ngModel)]="challanMonth" name="challanMonth" />
+        </div>
+        <div class="field">
+          <bb-text-input label="Challan number" [(ngModel)]="challanNo" name="challanNo" maxlength="20" />
+        </div>
+        <div class="field">
+          <bb-text-input label="BSR code" [(ngModel)]="bsrCode" name="bsrCode" maxlength="10" />
+        </div>
+      </div>
+    } @else {
+      @if (contactId === null) {
+        <p class="empty">
+          Choose the contact first. The account each line posts to is that contact’s own balance
+          beneath receivables or payables, so until one is chosen there is nothing to point a line
+          at.
+        </p>
+      }
+
+      <bb-data-grid fillHeight [gridCode]="'MONEY_DOCUMENT_LINES'" [columns]="editLinesColumns" [data]="lines()">
+        <ng-template bbCellTemplate="lineNumber" let-row let-index="index">
+          {{ index + 1 }}
+        </ng-template>
+
+        <ng-template bbCellTemplate="source" let-row>
+          <bb-select
+            ariaLabel="What this is for"
+            [options]="sourceOptions"
+            name="ledgerSourceId"
+            [(ngModel)]="row.ledgerSourceId"
+            (ngModelChange)="onSource(row)"
+          />
+        </ng-template>
+
+        <ng-template bbCellTemplate="postsTo" let-row>
+          @if (subAccountFor(row); as a) {
+            <span class="locked" title="{{ a.accountName }} ({{ a.accountCode }})">
+              {{ a.subAccountName }}
+            </span>
+          } @else if (row.ledgerSourceId !== null && subAccountsFor() === contactId) {
+            <span class="missing">Missing account</span>
+          } @else {
+            <span class="none">—</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="settles" let-row>
+          @if (row.mappingTransactionTypeCode) {
+            <span class="chip">{{ row.mappingTransactionTypeCode }}</span>
+            <bb-text-input
+              ariaLabel="Document number"
+              [(ngModel)]="row.mappingTransactionId"
+              name="mappingTransactionId"
+              placeholder="Number"
+              (ngModelChange)="touch()"
+            />
+          } @else {
+            <span class="none">—</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="project" let-row>
+          @if (projectOptions().length > 0) {
+            <bb-select
+              ariaLabel="Project"
+              placeholder="None"
+              [options]="projectOptions()"
+              [(ngModel)]="row.projectId"
+              name="projectId"
+              (ngModelChange)="touch()"
+            />
+            @if (direction() === 'spend' && row.projectId !== null) {
+              <bb-checkbox
+                text="Charge on"
+                [(ngModel)]="row.isBillable"
+                name="isBillable"
+                (ngModelChange)="touch()"
+              />
+              @if (row.isBillable) {
+                <bb-number-input
+                  class="markup"
+                  [(ngModel)]="row.markupPercent"
+                  name="markupPercent"
+                  placeholder="Markup %"
+                  [min]="0"
+                  [step]="0.5"
+                  (ngModelChange)="touch()"
+                />
+              }
+            }
+          } @else {
+            <span class="none">—</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="memo" let-row>
+          <bb-text-input
+            ariaLabel="Line memo"
+            [(ngModel)]="row.lineMemo"
+            name="lineMemo"
+            placeholder="Line memo"
+          />
+        </ng-template>
+
+        <ng-template bbCellTemplate="amount" let-row>
+          <bb-number-input
+            ariaLabel="Line amount"
+            inputmode="decimal"
+            step="0.01"
+            min="0"
+            [(ngModel)]="row.amount"
+            name="lineAmount"
+            (ngModelChange)="touch()"
+          />
+          @if (unallocated !== 0) {
+            <button type="button" class="link fill" (click)="fill(row)">Fill rest</button>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="actions" let-row let-index="index">
+          <bb-icon-button
+            icon="delete"
+            tone="danger"
+            title="Delete line"
+            [disabled]="lines().length <= 1"
+            (actionClick)="removeLine(index)"
+          />
+        </ng-template>
+      </bb-data-grid>
+
+      <div style="margin-top: 8px;">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="addLine()">+ Add line</button>
+      </div>
+
+      <div class="totals" [class.balanced]="unallocated === 0" [class.off]="unallocated !== 0">
+        <div>
+          <span>Amount</span>
+          <strong>{{ amount || 0 | number: '1.2-2' }}</strong>
+        </div>
+        <div>
+          <span>Allocated</span>
+          <strong>{{ allocated | number: '1.2-2' }}</strong>
+        </div>
+        <div class="diff">
+          <span>Unallocated</span>
+          <strong>{{ unallocated | number: '1.2-2' }}</strong>
+        </div>
+      </div>
+
+      @if (unallocated > 0) {
+        <div style="margin-top: 4px;"><button type="button" class="link" (click)="addOverpayment()">Add {{ unallocated | number: '1.2-2' }} as {{ overpaymentLabel.toLowerCase() }}</button> <bb-info-tooltip text="{{ unallocated | number: '1.2-2' }} is not yet accounted for. An excess over what was owed is an overpayment."></bb-info-tooltip></div>
+      } @else if (unallocated < 0) {
+        <bb-info-tooltip text="The lines add up to {{ allocated | number: '1.2-2' }}, more than the {{ amount || 0 | number: '1.2-2' }} that moved."></bb-info-tooltip>
+      }
+
+      @if (direction() === 'spend' && advanceTotal > 0) {
+        <div class="tds-check">
+          <button type="button" class="link" (click)="checkTds()" [disabled]="busy()">Work out TDS on the advance</button>
+          @if (tdsPreview(); as q) {
+            @if (q.applies && q.tdsAmount > 0) {
+              <span>TDS {{ q.tdsAmount | number: '1.2-2' }} under {{ q.sectionCode }}. {{ q.note }}</span>
+            } @else {
+              <span>No TDS is due. {{ q.note }}</span>
+            }
+          }
+        </div>
+      }
+    }
+
+    <div class="editor-actions">
+      <button type="button" class="btn btn-ghost" (click)="goBack()">Cancel</button>
+      <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+      <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost">
+        Post
+      </button>
+    </div>
+
+    @if (direction() === 'spend' && editingId; as id) {
+      <bb-approval-panel [basePath]="'/api/spend-money/' + id" documentStatus="Draft" (changed)="open(id)" />
+    }
+  </section>
+}

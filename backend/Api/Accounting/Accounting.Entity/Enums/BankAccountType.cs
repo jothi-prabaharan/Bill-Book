@@ -16,4 +16,6 @@ public enum BankAccountType
     Wallet = 5,
     /// <summary>Cash in hand. Has no bank behind it.</summary>
     Cash = 6,
+    /// <summary>Exchange Earners' Foreign Currency account (FC current account).</summary>
+    EEFC = 7,
 }

@@ -642,7 +642,7 @@ public sealed class StockRepository
         // receipt, and one never written could not be reconstructed later.
         return direction == StockDirection.In
             || CostingRepository.ConsumesLayers(item.CostingType)
-            || item.CostingType == CostingType.WeightedAverage;
+            || item.CostingType is CostingType.WeightedAverage or CostingType.MovingAverage;
     }
 
     /// <summary>Only a return can name a movement it reverses.</summary>

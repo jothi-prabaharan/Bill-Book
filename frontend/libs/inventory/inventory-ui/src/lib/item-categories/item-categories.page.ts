@@ -92,6 +92,7 @@ export class ItemCategoriesPage implements OnInit {
 
   protected readonly costingOptions: BbSelectOption<string>[] = [
     { value: 'WeightedAverage', label: 'Weighted average' },
+    { value: 'MovingAverage', label: 'Moving average' },
     { value: 'Fifo', label: 'FIFO' },
     { value: 'Lifo', label: 'LIFO' },
     { value: 'Fefo', label: 'FEFO' },

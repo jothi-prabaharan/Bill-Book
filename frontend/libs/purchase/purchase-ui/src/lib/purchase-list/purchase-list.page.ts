@@ -33,6 +33,7 @@ import {
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { combineLatest, of } from 'rxjs';
 import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purchase-core';
 
 /** A list row with what the register draws beside the API's fields. */
@@ -69,6 +70,13 @@ export const PURCHASE_REGISTERS: Readonly<Record<string, { code: string; statuse
   GoodsReceipt: { code: 'GRN', statuses: DOCUMENT_STATUSES },
   Bill: { code: 'BIL', statuses: DOCUMENT_STATUSES },
   DebitNote: { code: 'DBN', statuses: DOCUMENT_STATUSES },
+};
+
+const PURCHASE_META: Record<string, { title: string; newRoute: string; newTitle: string }> = {
+  Bill: { title: 'Bills', newRoute: '/purchase/bills/new', newTitle: 'New bill' },
+  PurchaseOrder: { title: 'Purchase orders', newRoute: '/purchase/purchase-orders/new', newTitle: 'New purchase order' },
+  GoodsReceipt: { title: 'Goods receipts', newRoute: '/purchase/goods-receipts/new', newTitle: 'New goods receipt' },
+  DebitNote: { title: 'Debit notes', newRoute: '/purchase/debit-notes/new', newTitle: 'New debit note' },
 };
 
 /** The status a purchase row shows: an order's fulfilment once confirmed, otherwise its document status. */
@@ -171,6 +179,8 @@ export class PurchaseListPage implements OnInit {
     this.range.set(range);
   }
 
+  private hasLoaded = false;
+
   ngOnInit() {
     // The type lives in the URL so the menu can link straight to one document's
     // register — /purchase/transactions?type=Bill — and so a filtered list can be
@@ -178,12 +188,17 @@ export class PurchaseListPage implements OnInit {
     // read once: moving between two document types is the same route with a
     // different parameter, and Angular reuses the page.
     if (this.route) {
-      this.route.data.subscribe((data) => {
-        const type = data['type'] ?? '';
-        this.pageTitle.set(data['title'] ?? '');
-        this.newRoute.set(data['newRoute'] ?? '');
-        this.newTitle.set(data['newTitle'] ?? '');
-        if (type === this.selectedType) return;
+      const data$ = this.route.data ?? of({});
+      const queryParams$ = this.route.queryParams ?? of({});
+      combineLatest([data$, queryParams$]).subscribe(([data, params]) => {
+        const type = data['type'] ?? params['type'] ?? '';
+        const meta = PURCHASE_META[type];
+        this.pageTitle.set(data['title'] ?? meta?.title ?? 'All transactions');
+        this.newRoute.set(data['newRoute'] ?? meta?.newRoute ?? '/purchase/bills/new');
+        this.newTitle.set(data['newTitle'] ?? meta?.newTitle ?? 'New bill');
+
+        if (this.hasLoaded && type === this.selectedType) return;
+        this.hasLoaded = true;
         this.selectedType = type;
         this.type.set(type);
         this.selectedStatus.set('');
@@ -207,6 +222,11 @@ export class PurchaseListPage implements OnInit {
     this.selectedType = type;
     this.type.set(type);
 
+    const meta = PURCHASE_META[type];
+    this.pageTitle.set(meta?.title ?? 'All transactions');
+    this.newRoute.set(meta?.newRoute ?? '/purchase/bills/new');
+    this.newTitle.set(meta?.newTitle ?? 'New bill');
+
     // Push the tab into the URL rather than only into local state, so what the
     // person is looking at and what the address bar says cannot disagree. With a
     // route present the subscription above does the reload; without one there is
@@ -217,7 +237,6 @@ export class PurchaseListPage implements OnInit {
         queryParams: { type: type || null },
         queryParamsHandling: 'merge',
       });
-      return;
     }
 
     this.loadTransactions();

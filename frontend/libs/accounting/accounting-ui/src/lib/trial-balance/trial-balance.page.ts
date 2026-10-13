@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
   MessageBoxComponent,
@@ -52,6 +53,7 @@ interface AccountType {
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
     DecimalPipe,
     FormsModule,
     RouterLink,

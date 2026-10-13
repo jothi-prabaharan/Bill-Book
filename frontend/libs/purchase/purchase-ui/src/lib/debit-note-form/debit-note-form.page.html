@@ -53,38 +53,7 @@
     <!-- Card 1: Document -->
     <div class="card">
       <div class="card-kicker">Document</div>
-      <div class="form-grid">
-        <bb-number-field
-          [number]="documentNo() || ''"
-          module="purchase"
-          series="DBN"
-          [date]="documentDate()"
-        />
-
-        <div class="field">
-          <bb-branch-date-input
-            id="dbn-date"
-            label="Debit note date"
-            [required]="true"
-            [disabled]="readonlyDoc()"
-            [ngModel]="documentDate()"
-            (ngModelChange)="documentDate.set($event)"
-          />
-        </div>
-
-        <div class="field">
-          <bb-select
-            id="dbn-reason"
-            label="Reason"
-            placeholder=""
-            [hint]="reasonHint()"
-            [options]="reasonOptions"
-            [disabled]="readonlyDoc()"
-            [ngModel]="reasonCode()"
-            (ngModelChange)="reasonCode.set($event)"
-          />
-        </div>
-
+      <div class="doc-header-grid">
         <div class="field">
           <bb-form-field
             label="Vendor"
@@ -122,6 +91,37 @@
           </bb-form-field>
         </div>
 
+        <bb-number-field
+          [number]="documentNo() || ''"
+          module="purchase"
+          series="DBN"
+          [date]="documentDate()"
+        />
+
+        <div class="field">
+          <bb-branch-date-input
+            id="dbn-date"
+            label="Debit note date"
+            [required]="true"
+            [disabled]="readonlyDoc()"
+            [ngModel]="documentDate()"
+            (ngModelChange)="documentDate.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <bb-select
+            id="dbn-reason"
+            label="Reason"
+            placeholder=""
+            [hint]="reasonHint()"
+            [options]="reasonOptions"
+            [disabled]="readonlyDoc()"
+            [ngModel]="reasonCode()"
+            (ngModelChange)="reasonCode.set($event)"
+          />
+        </div>
+
         <div class="field">
           <bb-text-input
             id="dbn-currency"
@@ -140,19 +140,6 @@
             [date]="documentDate()"
             [locked]="!isNew()"
             [(rate)]="exchangeRate"
-          />
-        </div>
-
-        <div class="field">
-          <bb-text-input
-            id="dbn-pos"
-            label="Place of supply"
-            maxlength="2"
-            placeholder="33"
-            hint="Leave blank to follow vendor's GSTIN."
-            [disabled]="readonlyDoc()"
-            [ngModel]="placeOfSupplyStateCode()"
-            (ngModelChange)="placeOfSupplyStateCode.set($event)"
           />
         </div>
       </div>

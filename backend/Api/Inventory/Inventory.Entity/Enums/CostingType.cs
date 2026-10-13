@@ -25,4 +25,7 @@ public enum CostingType
 
     /// <summary>Each physical piece carries its own cost. Needs serial tracking.</summary>
     SpecificIdentification = 5,
+
+    /// <summary>Moving average / perpetual weighted average cost.</summary>
+    MovingAverage = 6,
 }

@@ -10,8 +10,8 @@ import { Routes } from '@angular/router';
 export const purchaseRoutes: Routes = [
   {
     path: 'transactions',
-    redirectTo: 'bills',
-    pathMatch: 'full'
+    loadComponent: () => import('./purchase-list/purchase-list.page').then(m => m.PurchaseListPage),
+    data: { title: 'All transactions', newRoute: '/purchase/bills/new', newTitle: 'New bill', access: { permission: 'purchase.view' } }
   },
   {
     path: 'bills',

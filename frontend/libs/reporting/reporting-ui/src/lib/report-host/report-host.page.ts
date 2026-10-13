@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -84,7 +85,9 @@ export class ReportHostPage implements OnInit {
   protected readonly savingCustom = signal(false);
   protected readonly scheduling = signal(false);
 
+  private readonly destroyRef = inject(DestroyRef);
   private reportKey = '';
+  private customId: number | null = null;
 
   protected readonly columns = computed(() => this.metadata()?.columns ?? []);
 
@@ -94,8 +97,17 @@ export class ReportHostPage implements OnInit {
   protected readonly title = computed(() => this.custom()?.title ?? this.metadata()?.title ?? 'Report');
 
   ngOnInit(): void {
-    this.reportKey = this.route.snapshot.paramMap.get('reportKey') ?? '';
-    void this.load();
+    combineLatest([this.route.paramMap, this.route.queryParamMap])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([params, queryParams]) => {
+        const key = params.get('reportKey') ?? '';
+        const customId = queryParams.get('custom') ? Number(queryParams.get('custom')) : null;
+        if (key && (key !== this.reportKey || customId !== this.customId)) {
+          this.reportKey = key;
+          this.customId = customId;
+          void this.load();
+        }
+      });
   }
 
   /**

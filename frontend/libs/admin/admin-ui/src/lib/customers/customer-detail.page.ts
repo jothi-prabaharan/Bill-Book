@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   MessageBoxComponent,
 } from '@bill-book/ui-components';
@@ -31,6 +32,7 @@ interface OrganizationRow {
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
     RouterLink,
     MessageBoxComponent,
   ],

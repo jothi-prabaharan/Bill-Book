@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
   NumberInputComponent,
@@ -109,6 +110,7 @@ const REASONS: readonly { value: string; label: string }[] = [
   standalone: true,
   imports: [InfoTooltipComponent, 
     DataGridComponent,
+    DataGridCellTemplateDirective,
     FormsModule,
     BranchDateInputComponent,
     TextInputComponent,

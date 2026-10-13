@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
   MessageBoxComponent,
@@ -77,6 +78,7 @@ interface AccountType {
   standalone: true,
   imports: [
     DataGridComponent,
+    DataGridCellTemplateDirective,
     DecimalPipe,
     FormsModule,
     RouterLink,

@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ColumnDef,
+  DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
   MessageBoxComponent,
@@ -56,6 +57,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   standalone: true,
   imports: [InfoTooltipComponent, 
     DataGridComponent,
+    DataGridCellTemplateDirective,
     FormsModule,
     BranchDateInputComponent,
     TextInputComponent,

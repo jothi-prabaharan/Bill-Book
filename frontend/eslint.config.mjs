@@ -267,5 +267,20 @@ export default tseslint.config(
     files: ['apps/website/**/*.html'],
     rules: { 'no-restricted-syntax': 'off' },
   },
+  {
+    // The documentation app is a developer reference viewer, not a tenant ERP screen.
+    files: ['apps/docs/**/*.html'],
+    rules: { 'no-restricted-syntax': 'off' },
+  },
+  {
+    // Site service mobile laborer portal and worksheets (TK-171-TK-175).
+    files: ['libs/site/site-ui/**/*.html'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      '@angular-eslint/template/label-has-associated-control': 'off',
+      '@angular-eslint/template/click-events-have-key-events': 'off',
+      '@angular-eslint/template/interactive-supports-focus': 'off',
+    },
+  },
 );
 

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { combineLatest, of } from 'rxjs';
 import {
   AllocationApiService,
   LedgerSide,
@@ -66,6 +67,14 @@ export const SALES_REGISTERS: Readonly<Record<string, { code: string; statuses: 
   DeliveryChallan: { code: 'DLC', statuses: DOCUMENT_STATUSES },
   Invoice: { code: 'INV', statuses: DOCUMENT_STATUSES },
   CreditNote: { code: 'CRN', statuses: DOCUMENT_STATUSES },
+};
+
+const SALES_META: Record<string, { title: string; newRoute: string; newTitle: string }> = {
+  Quote: { title: 'Quotes', newRoute: '/sales/quotes/new', newTitle: 'New quote' },
+  SalesOrder: { title: 'Sales orders', newRoute: '/sales/sales-orders/new', newTitle: 'New sales order' },
+  Invoice: { title: 'Invoices', newRoute: '/sales/invoices/new', newTitle: 'New invoice' },
+  DeliveryChallan: { title: 'Delivery challans', newRoute: '/sales/delivery-challans/new', newTitle: 'New delivery challan' },
+  CreditNote: { title: 'Credit notes', newRoute: '/sales/credit-notes/new', newTitle: 'New credit note' },
 };
 
 /** The status a sales row shows: an order's fulfilment once confirmed, otherwise its document status. */
@@ -173,6 +182,8 @@ export class SalesListComponent implements OnInit {
     { field: 'totalAmount', header: 'Total', dataType: 'money' },
   ];
 
+  private hasLoaded = false;
+
   ngOnInit() {
     // The type lives in the URL so the menu can link straight to one document's
     // register — /sales/transactions?type=Invoice — and so a filtered list can be
@@ -180,12 +191,17 @@ export class SalesListComponent implements OnInit {
     // read once: moving between two document types is the same route with a
     // different parameter, and Angular reuses the component.
     if (this.route) {
-      this.route.data.subscribe((data) => {
-        const type = data['type'] ?? '';
-        this.pageTitle.set(data['title'] ?? '');
-        this.newRoute.set(data['newRoute'] ?? '');
-        this.newTitle.set(data['newTitle'] ?? '');
-        if (type === this.selectedType) return;
+      const data$ = this.route.data ?? of({});
+      const queryParams$ = this.route.queryParams ?? of({});
+      combineLatest([data$, queryParams$]).subscribe(([data, params]) => {
+        const type = data['type'] ?? params['type'] ?? '';
+        const meta = SALES_META[type];
+        this.pageTitle.set(data['title'] ?? meta?.title ?? 'All transactions');
+        this.newRoute.set(data['newRoute'] ?? meta?.newRoute ?? '/sales/invoices/new');
+        this.newTitle.set(data['newTitle'] ?? meta?.newTitle ?? 'New invoice');
+
+        if (this.hasLoaded && type === this.selectedType) return;
+        this.hasLoaded = true;
         this.selectedType = type;
         this.type.set(type);
         this.selectedStatus.set('');
@@ -213,6 +229,11 @@ export class SalesListComponent implements OnInit {
     this.selectedType = type;
     this.type.set(type);
 
+    const meta = SALES_META[type];
+    this.pageTitle.set(meta?.title ?? 'All transactions');
+    this.newRoute.set(meta?.newRoute ?? '/sales/invoices/new');
+    this.newTitle.set(meta?.newTitle ?? 'New invoice');
+
     // Push the tab into the URL rather than only into local state, so what the
     // person is looking at and what the address bar says cannot disagree. With a
     // route present the subscription above does the reload; without one there is
@@ -223,7 +244,6 @@ export class SalesListComponent implements OnInit {
         queryParams: { type: type || null },
         queryParamsHandling: 'merge',
       });
-      return;
     }
 
     this.loadTransactions();

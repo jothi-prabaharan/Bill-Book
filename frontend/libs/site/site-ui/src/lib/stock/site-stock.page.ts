@@ -69,8 +69,8 @@ export class SiteStockPage implements OnInit {
     remarks: '',
   };
 
-  async ngOnInit(): Promise<void> {
-    await this.loadSites();
+  ngOnInit(): void {
+    void this.loadSites();
   }
 
   async loadSites(): Promise<void> {

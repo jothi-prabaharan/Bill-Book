@@ -39,9 +39,14 @@ export interface CardMenuGroup {
 
 interface BankAccountApiResponse {
   bankAccountId: number;
+  bankName?: string;
   accountName: string;
   accountNumber: string;
   currencyCode: string;
+  accountType?: string;
+  isDefault?: boolean;
+  isActive?: boolean;
+  isLedgerLinked?: boolean;
 }
 
 const DEFAULT_ACCOUNTS: BankCardAccount[] = [
@@ -260,24 +265,37 @@ export class BankDashboardPage implements OnInit {
     this.http.get<BankAccountApiResponse[]>('/api/bank-accounts').subscribe({
       next: (list) => {
         if (list && list.length > 0) {
-          // If server returns real accounts, blend them with visual defaults
-          const mapped = list.map((item, index) => {
-            const def = DEFAULT_ACCOUNTS[index % DEFAULT_ACCOUNTS.length];
+          const mapped: BankCardAccount[] = list.map((item) => {
+            const sym = item.currencyCode === 'USD' ? String.fromCharCode(36) : item.currencyCode === 'AED' ? 'د.إ' : item.currencyCode === 'EUR' ? '€' : item.currencyCode === 'GBP' ? '£' : '₹';
+            const maskedNo = item.accountNumber && item.accountNumber.length > 4
+              ? '••••' + item.accountNumber.slice(-4)
+              : item.accountNumber || '—';
             return {
-              ...def,
-              id: String(item.bankAccountId || def.id),
-              name: item.accountName || def.name,
-              number: item.accountNumber || def.number,
-              ccy: item.currencyCode || def.ccy,
-              sym: item.currencyCode === 'USD' ? '$' : item.currencyCode === 'AED' ? 'د.إ' : '₹',
+              id: String(item.bankAccountId),
+              name: item.accountName,
+              number: maskedNo,
+              ccy: item.currencyCode || 'INR',
+              sym,
+              tag: item.isDefault ? 'Primary' : (item.isActive ? 'Active' : 'Inactive'),
+              kind: item.isDefault ? 'tag-accent' : 'tag-neutral',
+              bal: '0.00',
+              stmtBal: '0.00',
+              baseBal: item.currencyCode !== 'INR' ? '0.00' : undefined,
+              baseStmtBal: item.currencyCode !== 'INR' ? '0.00' : undefined,
+              book: '8,50 50,50 92,50 134,50 176,50 212,50',
+              stmt: '8,50 50,50 92,50 134,50 176,50 212,50',
+              meta: item.bankName ? (item.bankName + ' · ' + (item.accountType ?? 'Account')) : (item.accountType ?? 'Bank account'),
+              fromLabel: 'Current',
+              toLabel: item.currencyCode || 'INR',
             };
           });
           this.accounts.set(mapped);
+        } else {
+          this.accounts.set([]);
         }
       },
       error: () => {
-        // Safe fallback to classical default accounts
-        this.accounts.set(DEFAULT_ACCOUNTS);
+        this.accounts.set([]);
       },
     });
   }

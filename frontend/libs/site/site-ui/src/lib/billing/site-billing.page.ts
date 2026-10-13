@@ -70,8 +70,8 @@ export class SiteBillingPage implements OnInit {
 
   readonly grandTotal = computed(() => this.selectedLaborTotal() + this.selectedMaterialTotal());
 
-  async ngOnInit(): Promise<void> {
-    await this.loadInitialData();
+  ngOnInit(): void {
+    void this.loadInitialData();
   }
 
   async loadInitialData(): Promise<void> {

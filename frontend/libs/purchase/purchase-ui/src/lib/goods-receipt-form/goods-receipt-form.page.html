@@ -38,25 +38,7 @@
     <!-- Card 1: Document -->
     <div class="card">
       <div class="card-kicker">Document</div>
-      <div class="form-grid">
-        <bb-number-field
-          [number]="documentNo() || ''"
-          module="purchase"
-          series="GRN"
-          [date]="documentDate()"
-        />
-
-        <div class="field">
-          <bb-branch-date-input
-            id="grn-date"
-            label="Receipt date"
-            [required]="true"
-            [disabled]="readonlyDoc()"
-            [ngModel]="documentDate()"
-            (ngModelChange)="documentDate.set($event)"
-          />
-        </div>
-
+      <div class="doc-header-grid">
         <div class="field">
           <bb-form-field
             label="Vendor"
@@ -92,6 +74,24 @@
           </bb-form-field>
         </div>
 
+        <bb-number-field
+          [number]="documentNo() || ''"
+          module="purchase"
+          series="GRN"
+          [date]="documentDate()"
+        />
+
+        <div class="field">
+          <bb-branch-date-input
+            id="grn-date"
+            label="Receipt date"
+            [required]="true"
+            [disabled]="readonlyDoc()"
+            [ngModel]="documentDate()"
+            (ngModelChange)="documentDate.set($event)"
+          />
+        </div>
+
         <div class="field">
           <bb-text-input
             id="grn-delnote"
@@ -108,43 +108,10 @@
           <bb-branch-date-input
             id="grn-delnote-date"
             label="Delivery note date"
+            hint="Date printed on the supplier delivery note."
             [disabled]="readonlyDoc()"
             [ngModel]="vendorDeliveryNoteDate()"
             (ngModelChange)="vendorDeliveryNoteDate.set($event)"
-          />
-        </div>
-
-        <div class="field">
-          <bb-text-input
-            id="grn-currency"
-            label="Currency"
-            maxlength="3"
-            [uppercase]="true"
-            [disabled]="readonlyDoc()"
-            [ngModel]="currencyCode()"
-            (ngModelChange)="currencyCode.set($event)"
-          />
-        </div>
-
-        <div class="field">
-          <bb-exchange-rate-field
-            [currency]="currencyCode()"
-            [date]="documentDate()"
-            [locked]="!isNew()"
-            [(rate)]="exchangeRate"
-          />
-        </div>
-
-        <div class="field">
-          <bb-text-input
-            id="grn-pos"
-            label="Place of supply"
-            maxlength="2"
-            placeholder="33"
-            hint="2-digit state code if no vendor GSTIN."
-            [disabled]="readonlyDoc()"
-            [ngModel]="placeOfSupplyStateCode()"
-            (ngModelChange)="placeOfSupplyStateCode.set($event)"
           />
         </div>
       </div>
