@@ -57,7 +57,22 @@
 
 @if (editorOpen()) {
   <div class="sheet">
-    <h2>{{ editingId() === null ? 'New item' : form.itemName }}</h2>
+    <div class="sheet-header">
+      <h2>{{ editingId() === null ? 'New item' : form.itemName }}</h2>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" (click)="editorOpen.set(false)">Cancel</button>
+        @if (form.itemId) {
+          <button type="button" class="btn btn-secondary" (click)="openItemLabels()">Print labels</button>
+          @if (form.isBatchTracked) {
+            <button type="button" class="btn btn-secondary" (click)="openTrackedLabels('batch')">Batch labels</button>
+          }
+          @if (form.isSerialTracked) {
+            <button type="button" class="btn btn-secondary" (click)="openTrackedLabels('serial')">Serial labels</button>
+          }
+        }
+        <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.itemName">Save</button>
+      </div>
+    </div>
 
     @if (locked) {
       <p class="note">
@@ -631,20 +646,6 @@
         <bb-info-tooltip text="No barcodes. One scan must resolve to one item, so each code is unique."></bb-info-tooltip>
       }
     }
-
-    <div class="sheet-actions">
-      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.itemName">Save item</button>
-      @if (form.itemId) {
-        <button type="button" class="link" (click)="openItemLabels()">Print labels</button>
-        @if (form.isBatchTracked) {
-          <button type="button" class="link" (click)="openTrackedLabels('batch')">Batch labels</button>
-        }
-        @if (form.isSerialTracked) {
-          <button type="button" class="link" (click)="openTrackedLabels('serial')">Serial labels</button>
-        }
-      }
-      <button type="button" class="link" (click)="editorOpen.set(false)">Cancel</button>
-    </div>
   </div>
 }
 

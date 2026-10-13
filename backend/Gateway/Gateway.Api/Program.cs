@@ -119,33 +119,46 @@ app.UseStaticFiles();
 // Serve the unified Swagger API documentation portal
 app.MapGet("/swagger", () => Results.File(Path.Combine(app.Environment.WebRootPath, "swagger.html"), "text/html"));
 
-app.MapGet("/api/gateway/services", () => Results.Ok(new[]
+app.MapGet("/api/gateway/services", (IConfiguration config) =>
 {
-    new { id = "master", name = "Master", port = 4504, openApi = "/openapi/master/v1.json" },
-    new { id = "accounting", name = "Accounting", port = 4501, openApi = "/openapi/accounting/v1.json" },
-    new { id = "inventory", name = "Inventory", port = 4503, openApi = "/openapi/inventory/v1.json" },
-    new { id = "sales", name = "Sales", port = 4507, openApi = "/openapi/sales/v1.json" },
-    new { id = "purchase", name = "Purchase", port = 4505, openApi = "/openapi/purchase/v1.json" },
-    new { id = "customer", name = "Customer", port = 4502, openApi = "/openapi/customer/v1.json" },
-    new { id = "reporting", name = "Reporting", port = 4506, openApi = "/openapi/reporting/v1.json" },
-    new { id = "printing", name = "Printing", port = 4508, openApi = "/openapi/printing/v1.json" },
-    new { id = "hrm", name = "Employee (HRM)", port = 4509, openApi = "/openapi/hrm/v1.json" },
-    new { id = "payroll", name = "Payroll", port = 4511, openApi = "/openapi/payroll/v1.json" },
-    new { id = "timeleave", name = "Time and Leave", port = 4510, openApi = "/openapi/timeleave/v1.json" },
-    new { id = "claims", name = "Claims", port = 4514, openApi = "/openapi/claims/v1.json" },
-    new { id = "recruitment", name = "Recruitment", port = 4512, openApi = "/openapi/recruitment/v1.json" },
-    new { id = "performance", name = "Performance", port = 4513, openApi = "/openapi/performance/v1.json" },
-    new { id = "sis", name = "SIS", port = 4515, openApi = "/openapi/sis/v1.json" },
-    new { id = "admission", name = "Admission", port = 4516, openApi = "/openapi/admission/v1.json" },
-    new { id = "attendance", name = "Attendance", port = 4517, openApi = "/openapi/attendance/v1.json" },
-    new { id = "fee", name = "Fee", port = 4518, openApi = "/openapi/fee/v1.json" },
-    new { id = "facility", name = "Facility", port = 4519, openApi = "/openapi/facility/v1.json" },
-    new { id = "workorder", name = "Work Order", port = 4520, openApi = "/openapi/workorder/v1.json" },
-    new { id = "preventive", name = "Preventive Maintenance", port = 4521, openApi = "/openapi/preventive/v1.json" },
-    new { id = "amc", name = "Maintenance Contract (AMC)", port = 4522, openApi = "/openapi/amc/v1.json" },
-    new { id = "site", name = "Site Services", port = 4523, openApi = "/openapi/site/v1.json" }
-}));
+    var services = new[]
+    {
+        new { id = "master", name = "Master", openApi = "/openapi/master/v1.json" },
+        new { id = "accounting", name = "Accounting", openApi = "/openapi/accounting/v1.json" },
+        new { id = "inventory", name = "Inventory", openApi = "/openapi/inventory/v1.json" },
+        new { id = "sales", name = "Sales", openApi = "/openapi/sales/v1.json" },
+        new { id = "purchase", name = "Purchase", openApi = "/openapi/purchase/v1.json" },
+        new { id = "customer", name = "Customer", openApi = "/openapi/customer/v1.json" },
+        new { id = "reporting", name = "Reporting", openApi = "/openapi/reporting/v1.json" },
+        new { id = "printing", name = "Printing", openApi = "/openapi/printing/v1.json" },
+        new { id = "hrm", name = "Employee (HRM)", openApi = "/openapi/hrm/v1.json" },
+        new { id = "payroll", name = "Payroll", openApi = "/openapi/payroll/v1.json" },
+        new { id = "timeleave", name = "Time and Leave", openApi = "/openapi/timeleave/v1.json" },
+        new { id = "claims", name = "Claims", openApi = "/openapi/claims/v1.json" },
+        new { id = "recruitment", name = "Recruitment", openApi = "/openapi/recruitment/v1.json" },
+        new { id = "performance", name = "Performance", openApi = "/openapi/performance/v1.json" },
+        new { id = "sis", name = "SIS", openApi = "/openapi/sis/v1.json" },
+        new { id = "admission", name = "Admission", openApi = "/openapi/admission/v1.json" },
+        new { id = "attendance", name = "Attendance", openApi = "/openapi/attendance/v1.json" },
+        new { id = "fee", name = "Fee", openApi = "/openapi/fee/v1.json" },
+        new { id = "facility", name = "Facility", openApi = "/openapi/facility/v1.json" },
+        new { id = "workorder", name = "Work Order", openApi = "/openapi/workorder/v1.json" },
+        new { id = "preventive", name = "Preventive Maintenance", openApi = "/openapi/preventive/v1.json" },
+        new { id = "amc", name = "Maintenance Contract (AMC)", openApi = "/openapi/amc/v1.json" },
+        new { id = "site", name = "Site Services", openApi = "/openapi/site/v1.json" }
+    };
 
+    return Results.Ok(services.Select(s =>
+    {
+        string? destAddress = config[$"ReverseProxy:Clusters:{s.id}:Destinations:d1:Address"];
+        int port = 0;
+        if (!string.IsNullOrEmpty(destAddress) && Uri.TryCreate(destAddress, UriKind.Absolute, out Uri? uri))
+        {
+            port = uri.Port;
+        }
+        return new { s.id, s.name, port, s.openApi };
+    }));
+});
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
 // Enable request body buffering so that downstream connection retries can rewind and replay payloads.

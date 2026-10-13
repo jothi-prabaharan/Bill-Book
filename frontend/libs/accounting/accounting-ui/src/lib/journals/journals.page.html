@@ -25,7 +25,16 @@
 
 @if (editing()) {
   <section class="editor">
-    <h2>{{ editingId === null ? 'New entry' : 'Draft entry' }}</h2>
+    <div class="editor-header">
+      <h2>{{ editingId === null ? 'New entry' : 'Draft entry' }}</h2>
+      <div class="editor-actions">
+        <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
+        <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+        <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost()">
+          Post
+        </button>
+      </div>
+    </div>
 
     <div class="head-fields">
       <div class="field">
@@ -154,14 +163,6 @@
       <bb-info-tooltip text="The entry is out by {{ difference() | number: '1.2-2' }}. It can be saved as a draft as it stands — only posting needs it to balance."></bb-info-tooltip>
     }
 
-    <div class="editor-actions">
-      <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
-      <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
-      <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost()">
-        Post
-      </button>
-    </div>
-
     @if (editingId; as id) {
       <!-- The journal's approval chain, when a workflow covers it (TK-101). -->
       <bb-approval-panel [basePath]="'/api/journals/' + id" documentStatus="Draft" (changed)="open(id)" />
@@ -178,10 +179,18 @@
 
 @if (viewing(); as j) {
   <section class="editor readonly">
-    <h2>
-      {{ j.journalNo }}
-      <span class="badge" [class.reversed]="j.status === 'Reversed'">{{ j.status }}</span>
-    </h2>
+    <div class="editor-header">
+      <h2>
+        {{ j.journalNo }}
+        <span class="badge" [class.reversed]="j.status === 'Reversed'">{{ j.status }}</span>
+      </h2>
+      <div class="editor-actions">
+        <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
+        @if (j.status === 'Posted') {
+          <button class="btn btn-secondary" type="button" (click)="reverse(j)" [disabled]="busy()">Reverse</button>
+        }
+      </div>
+    </div>
 
     <p class="note">
       A posted entry is never edited. Correct it with a reversing entry — the reversal stands beside
@@ -231,13 +240,6 @@
       <div>Total</div>
       <div class="num">{{ j.totalDebit | number: '1.2-2' }} Debit</div>
       <div class="num">{{ j.totalCredit | number: '1.2-2' }} Credit</div>
-    </div>
-
-    <div class="editor-actions">
-      <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
-      @if (j.status === 'Posted') {
-        <button class="btn btn-secondary" type="button" (click)="reverse(j)" [disabled]="busy()">Reverse</button>
-      }
     </div>
 
     <details class="doc-history">

@@ -27,6 +27,22 @@
 
 .sheet { margin-top: 1.25rem; border: 1px solid var(--color-divider); border-radius: 10px; padding: 1rem; max-width: 46rem; }
 .sheet.narrow { max-width: 26rem; }
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: 0.75rem;
+
+  h2 {
+    margin: 0;
+  }
+
+  .sheet-actions {
+    margin-top: 0;
+  }
+}
 .sheet h2 { margin: 0 0 .75rem; font-size: 1rem; }
 .preview-box { background: var(--color-surface-muted); border-radius: 8px; padding: .75rem; display: grid; gap: .2rem; margin-bottom: 1rem; }
 .preview-label { font-size: .7rem; color: var(--color-text-subtle); }

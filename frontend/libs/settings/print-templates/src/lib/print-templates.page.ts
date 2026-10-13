@@ -498,13 +498,24 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
     }
 
     try {
-      const [templates, placeholders] = await Promise.all([
+      const [fetchedTemplates, placeholders] = await Promise.all([
         this.api.list(code),
         this.api.placeholders(code),
       ]);
 
       if (this.documentType() !== code) {
         return;
+      }
+
+      let templates = fetchedTemplates;
+      if (templates.length === 0 && this.canEdit()) {
+        try {
+          const typeName = this.documentTypeName() || code;
+          const created = await this.api.create(code, typeName);
+          templates = [created];
+        } catch {
+          // If creation fails, proceed with empty list
+        }
       }
 
       this.templates.set(templates);

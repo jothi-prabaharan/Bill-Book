@@ -33,7 +33,6 @@ interface OrganizationRow {
   imports: [
     DataGridComponent,
     DataGridCellTemplateDirective,
-    RouterLink,
     MessageBoxComponent,
   ],
   templateUrl: './customer-detail.page.html',

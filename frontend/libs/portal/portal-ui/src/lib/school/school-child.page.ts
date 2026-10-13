@@ -18,7 +18,6 @@ import { PortalAttendance, PortalChild, PortalExam, attendancePercent } from './
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     MessageBoxComponent,
     MonthInputComponent,
     DataGridComponent,

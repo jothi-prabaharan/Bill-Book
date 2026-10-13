@@ -41,7 +41,7 @@ public sealed class PrintTemplateRepository
             query = query.Where(t => t.DocumentTypeCode == code);
         }
 
-        return await query
+        var list = await query
             .OrderBy(t => t.DocumentTypeCode)
             .ThenByDescending(t => t.IsDefault)
             .ThenBy(t => t.TemplateName)
@@ -54,6 +54,42 @@ public sealed class PrintTemplateRepository
                 UpdatedAt = t.ModifiedAt ?? t.CreatedAt,
             })
             .ToListAsync(ct);
+
+        if (list.Count == 0 && !string.IsNullOrWhiteSpace(documentTypeCode))
+        {
+            string code = documentTypeCode.Trim().ToUpperInvariant();
+            DocumentTypeProfile? profile = DocumentTypeCatalog.Find(code);
+            if (profile != null)
+            {
+                var template = new PrintTemplate
+                {
+                    DocumentTypeCode = profile.Code,
+                    TemplateName = profile.Name,
+                    IsDefault = true,
+                    IsActive = true,
+                    Settings = DefaultLayoutGenerator.BuildSettings(profile),
+                    Content = DefaultLayoutGenerator.Build(profile),
+                    TemplateVersion = 1,
+                    SeedVersion = DefaultLayoutGenerator.SeedVersion,
+                };
+                _db.PrintTemplates.Add(template);
+                await _db.SaveChangesAsync(ct);
+
+                list =
+                [
+                    new PrintTemplateListItem
+                    {
+                        PrintTemplateId = template.PrintTemplateId,
+                        TemplateName = template.TemplateName,
+                        DocumentTypeCode = template.DocumentTypeCode,
+                        IsDefault = template.IsDefault,
+                        UpdatedAt = template.ModifiedAt ?? template.CreatedAt,
+                    }
+                ];
+            }
+        }
+
+        return list;
     }
 
     /// <summary>

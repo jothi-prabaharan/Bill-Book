@@ -1,6 +1,11 @@
 <header class="page-head">
   <h1>{{ admissionNo() ?? 'New student' }}</h1>
-  <a routerLink="/sis/students" class="btn btn-ghost">Back to students</a>
+  <div class="page-actions" style="display: flex; gap: var(--space-2); align-items: center;">
+    <a routerLink="/sis/students" class="btn btn-ghost">Cancel</a>
+    <button *bbIfCan="studentId() === null ? 'sis.create' : 'sis.edit'" type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">
+      Save
+    </button>
+  </div>
 </header>
 
 <bb-message-box [messages]="messages()" />
@@ -72,10 +77,4 @@
     </div>
   </section>
 }
-
-<div class="sheet-actions">
-  <button *bbIfCan="studentId() === null ? 'sis.create' : 'sis.edit'" type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">
-    Save
-  </button>
-</div>
 

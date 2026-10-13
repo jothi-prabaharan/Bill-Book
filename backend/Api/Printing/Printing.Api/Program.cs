@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Printing.Api.Services;
 using Printing.Repository.Repositories;
@@ -82,10 +82,7 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi().AllowAnonymous();
-}
+app.MapOpenApi().AllowAnonymous();
 
 // First in the pipeline. A failure in authentication or in the tenant
 // middleware below is answered in the product's shape rather than by Kestrel.

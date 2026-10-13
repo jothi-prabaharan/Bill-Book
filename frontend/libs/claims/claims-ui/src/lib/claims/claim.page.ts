@@ -24,7 +24,6 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
     NumberInputComponent,
     SelectComponent,
     TextInputComponent,

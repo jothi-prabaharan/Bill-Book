@@ -1,5 +1,10 @@
 <div class="create-page__actions">
   <ng-content select="[createActions]" />
+  @if (showCancel()) {
+    <button type="button" class="btn btn-ghost" [disabled]="busy()" (click)="onCancel()">
+      Cancel
+    </button>
+  }
   @if (canDraft()) {
     <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="saveDraft.emit()">
       {{ draftLabel() }}

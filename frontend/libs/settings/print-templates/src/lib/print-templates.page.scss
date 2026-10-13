@@ -364,6 +364,15 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #201f1d;
+}
+
+.pt-empty-loading {
+  padding: var(--space-8);
+  text-align: center;
 }
 
 .pt-seg {

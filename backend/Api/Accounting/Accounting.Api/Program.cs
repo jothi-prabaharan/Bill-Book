@@ -1,4 +1,4 @@
-﻿using Shared.Kernel.Approvals;
+using Shared.Kernel.Approvals;
 using Accounting.Api.Services;
 using Accounting.Repository.Repositories;
 using Shared.Kernel.Security;
@@ -214,15 +214,11 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi().AllowAnonymous();
-}
-
 // First in the pipeline. A failure in authentication or in the tenant
 // middleware below is answered in the product's shape rather than by Kestrel.
 app.UseBillBookErrorHandling();
 
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -230,6 +226,7 @@ app.UseAuthorization();
 app.UseMiddleware<TenantMiddleware>();
 
 app.MapControllers();
+app.MapOpenApi().AllowAnonymous();
 
 app.Run();
 

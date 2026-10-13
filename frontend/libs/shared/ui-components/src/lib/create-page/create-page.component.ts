@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, input, output } from '@angular/core';
 import { MessageBoxComponent } from '../message-box/message-box.component';
 import { UiMessage } from '../message-box/message-box.model';
 
@@ -42,6 +42,18 @@ export class CreatePageComponent {
 
   readonly messages = input<readonly UiMessage[]>([]);
 
+  /** Whether to show the Cancel button on the top right. Defaults to true. */
+  readonly showCancel = input<boolean>(true);
+
   readonly save = output<void>();
   readonly saveDraft = output<void>();
+  @Output() readonly cancel = new EventEmitter<void>();
+
+  protected onCancel(): void {
+    if (this.cancel.observed) {
+      this.cancel.emit();
+    } else {
+      window.history.back();
+    }
+  }
 }

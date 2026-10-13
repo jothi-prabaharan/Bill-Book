@@ -1,19 +1,24 @@
-<header class="form-header">
-  <button type="button" class="link back-link" (click)="goBack()">
-    ← Back to {{ title() }}
-  </button>
-</header>
-
 @if (message()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
 @if (viewing(); as d) {
   <section class="editor readonly">
-    <h2>
-      {{ d.transactionNo }}
-      <span class="badge" [class.void]="d.status === 'Void'">{{ d.status }}</span>
-    </h2>
+    <div class="editor-header">
+      <h2>
+        {{ d.transactionNo }}
+        <span class="badge" [class.void]="d.status === 'Void'">{{ d.status }}</span>
+      </h2>
+      <div class="editor-actions">
+        <button type="button" class="btn btn-ghost" (click)="goBack()">Close</button>
+        @if (d.status === 'Posted') {
+          @if (d.contactId !== null) {
+            <button class="btn btn-primary" type="button" (click)="startAllocation()" [disabled]="busy()">Allocate</button>
+          }
+          <button class="btn btn-secondary" type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
+        }
+      </div>
+    </div>
 
     <p class="note">
       A posted document is never edited. Void it instead — the ledger rows are withdrawn and the
@@ -67,16 +72,6 @@
       <div class="num">{{ d.amount | number: '1.2-2' }}</div>
     </div>
 
-    <div class="editor-actions">
-      <button type="button" class="btn btn-ghost" (click)="goBack()">Close</button>
-      @if (d.status === 'Posted') {
-        @if (d.contactId !== null) {
-          <button class="btn btn-primary" type="button" (click)="startAllocation()" [disabled]="busy()">Allocate</button>
-        }
-        <button class="btn btn-secondary" type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
-      }
-    </div>
-
     @if (allocating()) {
       <bb-allocation-form
         [contactId]="d.contactId!"
@@ -90,7 +85,16 @@
   </section>
 } @else {
   <section class="editor">
-    <h2>{{ editingId === null ? 'New ' + title().toLowerCase() : 'Draft' }}</h2>
+    <div class="editor-header">
+      <h2>{{ editingId === null ? 'New ' + title().toLowerCase() : 'Draft' }}</h2>
+      <div class="editor-actions">
+        <button type="button" class="btn btn-ghost" (click)="goBack()">Cancel</button>
+        <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+        <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost">
+          Post
+        </button>
+      </div>
+    </div>
 
     <div class="head-fields">
       <div class="field">
@@ -338,14 +342,6 @@
         </div>
       }
     }
-
-    <div class="editor-actions">
-      <button type="button" class="btn btn-ghost" (click)="goBack()">Cancel</button>
-      <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
-      <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost">
-        Post
-      </button>
-    </div>
 
     @if (direction() === 'spend' && editingId; as id) {
       <bb-approval-panel [basePath]="'/api/spend-money/' + id" documentStatus="Draft" (changed)="open(id)" />

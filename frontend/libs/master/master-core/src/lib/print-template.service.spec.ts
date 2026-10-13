@@ -61,7 +61,7 @@ describe('PrintTemplateService', () => {
   it('saves with PUT and echoes the version it read', async () => {
     const pending = service.update(7, {
       templateName: 'A4',
-      settings: { paperSize: 0 },
+      settings: { paperSize: 'A4' },
       content: {
         fixedHeaderHtml: '',
         headerHtml: '<div>{{Document.No}}</div>',
@@ -75,7 +75,7 @@ describe('PrintTemplateService', () => {
     const request = httpMock.expectOne('/api/print-templates/7');
     expect(request.request.method).toBe('PUT');
     expect(request.request.body.templateVersion).toBe(3);
-    expect(request.request.body.settings).toEqual({ paperSize: 0 });
+    expect(request.request.body.settings).toEqual({ paperSize: 'A4' });
 
     request.flush({ printTemplateId: 7, templateVersion: 4 });
     expect((await pending).templateVersion).toBe(4);

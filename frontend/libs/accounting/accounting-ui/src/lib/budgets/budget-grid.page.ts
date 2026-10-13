@@ -69,7 +69,6 @@ function keyOf(accountId: number, projectId: number | null): string {
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     TextInputComponent,
     SelectComponent,
     CheckboxComponent,

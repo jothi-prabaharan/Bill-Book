@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using MaintenanceContract.Api.Services;
 using MaintenanceContract.Repository.Repositories;
 using MaintenanceContract.Repository;
@@ -92,10 +92,7 @@ builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi().AllowAnonymous();
-}
+app.MapOpenApi().AllowAnonymous();
 
 app.UseBillBookErrorHandling();
 

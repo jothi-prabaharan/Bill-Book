@@ -44,3 +44,23 @@
   color: var(--color-text-muted, #6b7280);
 }
 
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-3, 0.75rem);
+
+  h2 {
+    margin: 0;
+  }
+
+  .sheet-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    flex-wrap: wrap;
+  }
+}
+

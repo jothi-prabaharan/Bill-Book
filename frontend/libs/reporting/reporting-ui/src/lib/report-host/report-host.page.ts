@@ -48,7 +48,6 @@ import { ReportScheduleDialog } from '../schedules/report-schedule.dialog';
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     ReportGridComponent,
     FilterBarComponent,
     ColumnChooserDialog,

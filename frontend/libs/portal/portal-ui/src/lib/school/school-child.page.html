@@ -1,5 +1,4 @@
 <main class="portal">
-  <a routerLink="/portal/school" class="link">← Back</a>
   <h1>{{ child()?.studentName ?? 'Your child' }}</h1>
   @if (child(); as c) {
     <p class="muted">{{ c.admissionNo }}@if (c.className) { · Class {{ c.className }}{{ c.sectionName ? ' - ' + c.sectionName : '' }} }</p>

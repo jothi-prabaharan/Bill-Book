@@ -583,6 +583,25 @@
                 System Health
             </a>
         </footer>
-    </div>
+    <script>
+        fetch('/api/gateway/services')
+            .then(res => res.json())
+            .then(services => {
+                if (!Array.isArray(services)) return;
+                const cards = document.querySelectorAll('.route-card');
+                cards.forEach(card => {
+                    const nameEl = card.querySelector('.service-name');
+                    const portBadge = card.querySelector('.port-badge');
+                    if (nameEl && portBadge) {
+                        const nameText = nameEl.textContent.trim().toLowerCase();
+                        const match = services.find(s => s.name.toLowerCase() === nameText || nameText.includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(nameText));
+                        if (match && match.port) {
+                            portBadge.textContent = 'Port ' + match.port;
+                        }
+                    }
+                });
+            })
+            .catch(() => {});
+    </script>
 </body>
 </html>

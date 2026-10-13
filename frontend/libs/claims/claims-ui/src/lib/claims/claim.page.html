@@ -1,8 +1,7 @@
 @if (claim(); as c) {
   <div class="page-head">
     <div>
-      <a routerLink="/claims" style="text-decoration: none; color: var(--color-primary); font-size: 0.875rem;">← Back to Claims</a>
-      <h1 style="margin-top: 4px;">{{ c.claimNo }}</h1>
+      <h1>{{ c.claimNo }}</h1>
       <p>Submitted by {{ c.employeeName || 'Emp #' + c.employeeId }} on {{ c.claimDate }}</p>
     </div>
     <div style="display: flex; gap: 8px; align-items: center;">
