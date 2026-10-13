@@ -1383,11 +1383,6 @@ overwriting theirs, and nothing is written. Reload and apply your changes again.
 
 ## What is not here yet
 
-- **Paper, margins and footer position on screen.** Everything above under Paper and Where the
-  footer sits is stored and printed, but the editor only edits the bands and the name; the page
-  settings a template already has are kept as they are
-- **Deleting a template from the screen.** The rules under Defaults apply; the button is not there
-  yet
 - **Printing the other document types through their templates.** Invoices print through theirs
   (see Invoices); quotes, orders, bills and the rest still print with their own fixed layouts,
   or not at all

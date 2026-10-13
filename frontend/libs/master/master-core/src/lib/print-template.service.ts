@@ -16,14 +16,38 @@ export interface PrintContent {
   fixedFooterHtml: string;
 }
 
-/**
- * Paper, margins and band positions.
- *
- * Held as the server sends it and sent back untouched: this screen edits the
- * bands, not the page settings, and restating their shape here would be a
- * second copy to keep in step with `PrintSettings`.
- */
-export type PrintSettings = Record<string, unknown>;
+export type PrinterType = 'laser' | 'thermal';
+export type PaperSize = 'A4' | 'A5' | 'Letter' | 'Legal';
+export type SegmentPosition = 'inline' | 'bottom';
+
+export interface SegmentMargin {
+  aboveMm: number;
+  belowMm: number;
+}
+
+export interface SegmentMargins {
+  fixedHeader: SegmentMargin;
+  header: SegmentMargin;
+  details: SegmentMargin;
+  footer: SegmentMargin;
+  fixedFooter: SegmentMargin;
+}
+
+export interface PrintSettings {
+  printerType?: PrinterType;
+  paperSize?: PaperSize;
+  rollWidthMm?: number;
+  rollUnit?: 'mm' | 'in';
+  marginTopMm?: number;
+  marginBottomMm?: number;
+  marginLeftMm?: number;
+  marginRightMm?: number;
+  footerPos?: SegmentPosition;
+  fixedFooterPos?: SegmentPosition;
+  fixedFooterPref?: SegmentPosition;
+  segMargins?: SegmentMargins;
+  [key: string]: unknown;
+}
 
 export interface DocumentTypeOption {
   code: string;
@@ -118,10 +142,28 @@ export class PrintTemplateService {
    * A new template on the platform's generated layout. The first one for a
    * document type becomes its default, so a branch with none can start here.
    */
-  create(documentTypeCode: string, templateName: string): Promise<PrintTemplateDetail> {
-    return firstValueFrom(
-      this.http.post<PrintTemplateDetail>(this.base, { documentTypeCode, templateName }),
-    );
+  create(
+    documentTypeCode: string,
+    templateName: string,
+    copyFromId?: number,
+    settings?: PrintSettings,
+    content?: PrintContent,
+  ): Promise<PrintTemplateDetail> {
+    const body: Record<string, unknown> = { documentTypeCode, templateName };
+    if (copyFromId !== undefined) {
+      body['copyFromId'] = copyFromId;
+    }
+    if (settings !== undefined) {
+      body['settings'] = settings;
+    }
+    if (content !== undefined) {
+      body['content'] = content;
+    }
+    return firstValueFrom(this.http.post<PrintTemplateDetail>(this.base, body));
+  }
+
+  delete(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.base}/${id}`));
   }
 
   update(id: number, request: UpdatePrintTemplateRequest): Promise<PrintTemplateDetail> {

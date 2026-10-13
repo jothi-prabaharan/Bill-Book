@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Visual WYSIWYG Print Template Editor from Claude Design (Settings › Print templates).** Replaces the text-only band editor with a visual designer featuring true paper geometry (A4, A5, Letter, Legal for laser/inkjet; 58, 80, 112 mm for thermal rolls), zoom scaling (Fit width, 50%–200%), live segment editing for all five bands with auto-pinning to page bottom, a rich formatting ribbon (font families, sizes, colors, alignment, lists, and complete table manipulation tools), placeholder chips with list repeat indicators (`↻`), template duplication, deletion, and real-time paginated multi-page preview with sample data substitution.
+
 - **Fixed**: **Purchase clerks get the GST rates on purchase orders, goods receipts and bills** without Accounting access (TK-192). The rate list read the tax master, which needs Accounting access, so for anyone without it the list came up empty, with nothing on screen to say why.
 
 - **Fixed**: **Settings › Metal purity works on a Retail branch.** The menu showed it and the branch was seeded with purities, but the server admitted Jewellery branches only, so the screen opened but could neither list nor save a purity (D-65, TK-191).

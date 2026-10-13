@@ -1,4 +1,4 @@
-<div class="pt-page">
+<div class="pt-shell">
   <header class="pt-head">
     <div>
       <h1 class="pt-title">Print templates</h1>
@@ -6,200 +6,973 @@
     </div>
 
     <div class="field pt-type">
-          <bb-select
-            label="Document type"
-            name="documentType"
-            [clearable]="false"
-            [options]="typeOptions()"
-            [ngModel]="documentType()"
-            (ngModelChange)="onTypeChange($event)"
-          />
-        </div>
+      <bb-select
+        label="Document type"
+        name="documentType"
+        [clearable]="false"
+        [options]="typeOptions()"
+        [ngModel]="documentType()"
+        (ngModelChange)="onTypeChange($event)"
+      />
+    </div>
   </header>
 
   <bb-message-box [messages]="messages()" />
 
-  <div class="pt-body" [class.pt-previewing]="previewOpen()">
-    <aside class="pt-list" aria-label="Templates">
-      <h2 class="pt-section">{{ documentTypeName() }}</h2>
+  @if (detail(); as curTemplate) {
+    <div class="pt-workspace">
+      <!-- Left sidebar: Configuration & Formatting Ribbon -->
+      <aside class="pt-sidebar" aria-label="Template configuration">
+        <div>
+          <h2 class="pt-doc-title">{{ documentTypeName() }}</h2>
+          <span class="pt-doc-sub">Print template</span>
+        </div>
 
-      @if (templates().length === 0) {
-        <bb-info-tooltip text="This branch has no template for this document type yet, so it prints with the standard layout."></bb-info-tooltip>
-      }
+        <!-- Template picker & actions -->
+        <div class="field">
+          <label for="pe-template">Template</label>
+          <div class="pt-template-row">
+            <select
+              class="input pt-template-select"
+              id="pe-template"
+              [ngModel]="curTemplate.printTemplateId"
+              (ngModelChange)="select($event)"
+            >
+              @for (t of templates(); track t.printTemplateId) {
+                <option [value]="t.printTemplateId">
+                  {{ t.templateName }}{{ t.isDefault ? ' · default' : '' }}
+                </option>
+              }
+            </select>
+            @if (canEdit()) {
+              <button
+                class="pt-ic pt-btn-add"
+                type="button"
+                title="New template"
+                aria-label="New template"
+                (click)="newTemplate()"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
+            }
+          </div>
 
-      <ul class="pt-templates">
-        @for (template of templates(); track template.printTemplateId) {
-          <li>
+          @if (canEdit()) {
+            <div class="pt-template-actions">
+              <button class="btn btn-ghost btn-xs" type="button" (click)="duplicateTemplate()">
+                Duplicate
+              </button>
+              @if (curTemplate.isDefault) {
+                <span class="tag tag-accent">Default</span>
+              } @else {
+                <button class="btn btn-ghost btn-xs" type="button" (click)="makeDefault()">
+                  Set default
+                </button>
+              }
+              @if (templates().length > 1) {
+                <button class="btn btn-ghost btn-xs" type="button" (click)="deleteTemplate()">
+                  Delete
+                </button>
+              }
+              <button class="btn btn-ghost btn-xs" type="button" (click)="resetLayout()">
+                Reset
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Template name -->
+        <div class="field">
+          <label for="pe-name">Template name</label>
+          <input
+            class="input"
+            id="pe-name"
+            type="text"
+            maxlength="100"
+            [readOnly]="!canEdit()"
+            [ngModel]="draftName()"
+            (ngModelChange)="draftName.set($event)"
+            placeholder="Name this layout"
+          />
+          <span class="pt-field-hint">Renames the selected template</span>
+        </div>
+
+        <!-- Printer type -->
+        <div class="field">
+          <label>Printer type</label>
+          <div class="seg">
             <button
               type="button"
-              class="pt-template"
-              [class.picked]="detail()?.printTemplateId === template.printTemplateId"
-              (click)="select(template.printTemplateId)"
+              class="seg-opt"
+              [class.active]="isLaser()"
+              [disabled]="!canEdit()"
+              (click)="setPrinterType('laser')"
             >
-              <span class="truncate">{{ template.templateName }}</span>
-              @if (template.isDefault) {
-                <span class="tag tag-accent">Default</span>
-              }
+              Laser / inkjet
             </button>
-          </li>
-        }
-      </ul>
-
-      @if (canEdit()) {
-        <div class="pt-new">
-          <div class="field">
-                <bb-text-input
-                  label="New template"
-                  name="newName"
-                  placeholder="Name"
-                  [maxlength]="100"
-                  [ngModel]="newName()"
-                  (ngModelChange)="newName.set($event)"
-                />
-              </div>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            [disabled]="busy() || newName().trim() === ''"
-            (click)="create()"
-          >
-            Create from the standard layout
-          </button>
+            <button
+              type="button"
+              class="seg-opt"
+              [class.active]="!isLaser()"
+              [disabled]="!canEdit()"
+              (click)="setPrinterType('thermal')"
+            >
+              Thermal roll
+            </button>
+          </div>
         </div>
-      }
 
-      @if (canEdit() && detail()) {
-        <section class="pt-fields" aria-label="Insert field">
-          <h2 class="pt-section mt-3">Insert field</h2>
-          <bb-info-tooltip text="Goes into the band you last clicked in, at the cursor."></bb-info-tooltip>
-
-          @for (group of placeholders(); track group.group) {
-            <details class="pt-group" [open]="$first">
-              <summary>
-                {{ group.group }}
-                @if (group.isList) {
-                  <span class="tag tag-neutral" title="Repeats once per row">Repeats</span>
-                }
-              </summary>
-              <ul>
-                @for (field of group.placeholders; track field.tag) {
-                  <li>
-                    <button
-                      type="button"
-                      class="pt-field"
-                      [title]="field.tag"
-                      (click)="insert(field.tag)"
-                    >
-                      {{ field.description }}
-                    </button>
-                  </li>
-                }
-              </ul>
-            </details>
-          }
-        </section>
-      }
-    </aside>
-
-    @if (detail(); as template) {
-      @if (draftContent(); as draft) {
-        <section class="pt-editor" aria-label="Editor">
-          <div class="pt-editor-head">
-            <div class="field flex-1">
-                  <bb-text-input
-                    label="Name"
-                    name="draftName"
-                    [maxlength]="100"
-                    [readonly]="!canEdit()"
-                    [ngModel]="draftName()"
-                    (ngModelChange)="draftName.set($event)"
-                  />
-                </div>
-
-            <div class="pt-actions">
-              @if (canEdit()) {
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  [disabled]="busy() || !dirty() || draftName().trim() === ''"
-                  (click)="saveAndPreview()"
-                >
-                  Save and preview
-                </button>
-                @if (!template.isDefault) {
-                  <button
-                    type="button"
-                    class="btn btn-secondary"
-                    [disabled]="busy()"
-                    (click)="makeDefault()"
-                  >
-                    Make default
-                  </button>
-                }
-                <button
-                  type="button"
-                  class="btn btn-ghost"
-                  [disabled]="busy()"
-                  (click)="resetLayout()"
-                >
-                  Reset to the standard layout
-                </button>
-              }
-              <button type="button" class="btn btn-ghost pt-show-preview" (click)="openPreview()">
-                Preview
+        <!-- Laser: Paper size -->
+        @if (isLaser()) {
+          <div class="field">
+            <label for="pe-paper">Paper size</label>
+            <select
+              class="input"
+              id="pe-paper"
+              [disabled]="!canEdit()"
+              [ngModel]="paperSize()"
+              (ngModelChange)="setPaperSize($event)"
+            >
+              <option value="A4">A4 (210×297 mm)</option>
+              <option value="A5">A5 (148×210 mm)</option>
+              <option value="Letter">Letter (216×279 mm)</option>
+              <option value="Legal">Legal (216×356 mm)</option>
+            </select>
+          </div>
+        } @else {
+          <!-- Thermal: Roll width & Unit -->
+          <div class="field">
+            <label for="pe-roll">Roll width</label>
+            <select
+              class="input"
+              id="pe-roll"
+              [disabled]="!canEdit()"
+              [ngModel]="rollWidthMm()"
+              (ngModelChange)="setRollWidth($event)"
+            >
+              <option [ngValue]="58">58 mm</option>
+              <option [ngValue]="80">80 mm</option>
+              <option [ngValue]="112">112 mm</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Display unit</label>
+            <div class="seg">
+              <button
+                type="button"
+                class="seg-opt"
+                [class.active]="rollUnit() === 'mm'"
+                [disabled]="!canEdit()"
+                (click)="setRollUnit('mm')"
+              >
+                mm
+              </button>
+              <button
+                type="button"
+                class="seg-opt"
+                [class.active]="rollUnit() === 'in'"
+                [disabled]="!canEdit()"
+                (click)="setRollUnit('in')"
+              >
+                inch
               </button>
             </div>
           </div>
+        }
 
-          @if (template.canResetToLatest) {
-            <p class="note">A newer standard layout is available. Reset to use it.</p>
-          }
-
-          <div class="pt-bands">
-            @for (band of bands; track band.key) {
-              <label class="field">
-                <span class="field-label">{{ band.label }}</span>
-                <span class="field-hint">{{ band.hint }}</span>
-                <textarea
-                  #bandInput
-                  class="input pt-band"
-                  spellcheck="false"
-                  rows="6"
-                  [attr.data-band]="band.key"
-                  [class.pt-band-active]="activeBand() === band.key"
-                  [readOnly]="!canEdit()"
-                  [value]="draft[band.key]"
-                  (focus)="activeBand.set(band.key)"
-                  (input)="onBandInput(band.key, $any($event.target).value)"
-                ></textarea>
-              </label>
-            }
+        <!-- Page margins -->
+        <div class="field">
+          <label>Page margins (mm)</label>
+          <div class="pt-margin-grid">
+            <span class="pt-margin-cell">
+              <span class="pt-margin-label">Top</span>
+              <input
+                class="input"
+                type="number"
+                min="0"
+                [readOnly]="!canEdit()"
+                [ngModel]="draftSettings().marginTopMm"
+                (ngModelChange)="setMargin('Top', +$event || 0)"
+                aria-label="Top margin"
+              />
+            </span>
+            <span class="pt-margin-cell">
+              <span class="pt-margin-label">Bottom</span>
+              <input
+                class="input"
+                type="number"
+                min="0"
+                [readOnly]="!canEdit()"
+                [ngModel]="draftSettings().marginBottomMm"
+                (ngModelChange)="setMargin('Bottom', +$event || 0)"
+                aria-label="Bottom margin"
+              />
+            </span>
+            <span class="pt-margin-cell">
+              <span class="pt-margin-label">Left</span>
+              <input
+                class="input"
+                type="number"
+                min="0"
+                [readOnly]="!canEdit()"
+                [ngModel]="draftSettings().marginLeftMm"
+                (ngModelChange)="setMargin('Left', +$event || 0)"
+                aria-label="Left margin"
+              />
+            </span>
+            <span class="pt-margin-cell">
+              <span class="pt-margin-label">Right</span>
+              <input
+                class="input"
+                type="number"
+                min="0"
+                [readOnly]="!canEdit()"
+                [ngModel]="draftSettings().marginRightMm"
+                (ngModelChange)="setMargin('Right', +$event || 0)"
+                aria-label="Right margin"
+              />
+            </span>
           </div>
-        </section>
+        </div>
 
-        <section #previewSection class="pt-preview" aria-label="Preview">
-          <div class="pt-preview-head">
-            <h2 class="pt-section m-0">
-              Preview
-              @if (previewPages() > 0) {
-                <span class="hint">· {{ previewPages() }} {{ previewPages() === 1 ? 'page' : 'pages' }}, sample data</span>
-              }
-            </h2>
-            <button type="button" class="btn btn-ghost pt-close-preview" (click)="previewOpen.set(false)">
-              Close
+        <!-- Segment Spacing -->
+        <div class="field">
+          <label>Spacing above / below {{ activeSegLabel() }} (mm)</label>
+          <div class="pt-margin-grid">
+            <span class="pt-margin-cell">
+              <span class="pt-margin-label">Above</span>
+              <input
+                class="input"
+                type="number"
+                min="0"
+                step="1"
+                [readOnly]="!canEdit()"
+                [ngModel]="activeSegTopMm()"
+                (ngModelChange)="setSegMargin('above', +$event || 0)"
+                aria-label="Space above"
+              />
+            </span>
+            <span class="pt-margin-cell">
+              <span class="pt-margin-label">Below</span>
+              <input
+                class="input"
+                type="number"
+                min="0"
+                step="1"
+                [readOnly]="!canEdit()"
+                [ngModel]="activeSegBottomMm()"
+                (ngModelChange)="setSegMargin('below', +$event || 0)"
+                aria-label="Space below"
+              />
+            </span>
+          </div>
+          <span class="pt-field-hint">Applies to the segment selected above the page</span>
+        </div>
+
+        <!-- Footer position -->
+        <div class="field">
+          <label>Footer position</label>
+          <div class="seg">
+            <button
+              type="button"
+              class="seg-opt"
+              [class.active]="!footerInline()"
+              [disabled]="!canEdit()"
+              (click)="setFooterPos('bottom')"
+            >
+              Bottom of page
+            </button>
+            <button
+              type="button"
+              class="seg-opt"
+              [class.active]="footerInline()"
+              [disabled]="!canEdit()"
+              (click)="setFooterPos('inline')"
+            >
+              Next to details
             </button>
           </div>
+        </div>
 
-          @if (dirty()) {
-            <p class="note">The preview shows the saved template. Save to see your changes.</p>
+        <!-- Fixed footer position -->
+        <div class="field">
+          <label>Fixed footer position</label>
+          <div class="seg">
+            <button
+              type="button"
+              class="seg-opt"
+              [class.active]="!fixedFooterInline()"
+              [disabled]="!canEdit() || ffLocked()"
+              (click)="setFixedFooterPos('bottom')"
+            >
+              Bottom of page
+            </button>
+            <button
+              type="button"
+              class="seg-opt"
+              [class.active]="fixedFooterInline()"
+              [disabled]="!canEdit() || ffLocked()"
+              (click)="setFixedFooterPos('inline')"
+            >
+              Next to details
+            </button>
+          </div>
+          @if (ffLocked()) {
+            <span class="pt-field-hint">
+              Locked to bottom while Footer is pinned, so it can't collapse above the footer.
+            </span>
           }
+        </div>
 
-          @if (previewHtml(); as html) {
-            <iframe class="pt-frame" title="Print preview" sandbox="" [srcdoc]="html"></iframe>
-          }
-        </section>
-      }
-    }
-  </div>
+        <!-- Formatting Ribbon (Edit Mode) -->
+        @if (mode() === 'edit' && canEdit()) {
+          <div class="pt-ribbon">
+            <!-- Font Family & Size -->
+            <div class="pt-ribbon-group">
+              <span class="menuhead">Font</span>
+              <select
+                class="input pt-ribbon-select"
+                aria-label="Font family"
+                (change)="setFontFamily($any($event.target).value)"
+              >
+                @for (font of fontFamilies; track font) {
+                  <option [value]="font" [selected]="lastFont() === font">{{ font }}</option>
+                }
+              </select>
+
+              <div class="pt-row-gap">
+                <select
+                  class="input pt-size-select"
+                  aria-label="Font size"
+                  (change)="setFontSize(+$any($event.target).value)"
+                >
+                  @for (sz of fontSizes; track sz) {
+                    <option [value]="sz" [selected]="sz === 11">{{ sz }}px</option>
+                  }
+                </select>
+                <button
+                  class="btn btn-ghost btn-xs"
+                  type="button"
+                  (mousedown)="keepSel($event)"
+                  (click)="applyPageFont()"
+                >
+                  Apply to page
+                </button>
+              </div>
+
+              <!-- Styles: B, I, U, S -->
+              <div class="pt-row-gap">
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Bold"
+                  [attr.aria-pressed]="ptFmt().b"
+                  (mousedown)="keepSel($event)"
+                  (click)="doBold()"
+                >
+                  <b>B</b>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Italic"
+                  [attr.aria-pressed]="ptFmt().i"
+                  (mousedown)="keepSel($event)"
+                  (click)="doItalic()"
+                >
+                  <i>I</i>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Underline"
+                  [attr.aria-pressed]="ptFmt().u"
+                  (mousedown)="keepSel($event)"
+                  (click)="doUnderline()"
+                >
+                  <span style="text-decoration:underline">U</span>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Strikethrough"
+                  [attr.aria-pressed]="ptFmt().s"
+                  (mousedown)="keepSel($event)"
+                  (click)="doStrike()"
+                >
+                  <span style="text-decoration:line-through">S</span>
+                </button>
+              </div>
+
+              <!-- Colors -->
+              <div class="pt-colors-row">
+                <span class="pt-color-picker-wrap" title="Font colour">
+                  <input
+                    type="color"
+                    class="pt-color-input"
+                    [value]="foreColor()"
+                    (change)="pickFore($any($event.target).value)"
+                    aria-label="Font colour"
+                  />
+                  @for (c of foreSwatches; track c) {
+                    <button
+                      class="pt-sw"
+                      type="button"
+                      [style.background]="c"
+                      (mousedown)="keepSel($event)"
+                      (click)="pickFore(c)"
+                    ></button>
+                  }
+                </span>
+
+                <span class="pt-color-picker-wrap" title="Highlight colour">
+                  <input
+                    type="color"
+                    class="pt-color-input"
+                    [value]="hiliteColor()"
+                    (change)="pickHilite($any($event.target).value)"
+                    aria-label="Highlight colour"
+                  />
+                  @for (c of hiliteSwatches; track c) {
+                    <button
+                      class="pt-sw"
+                      type="button"
+                      [style.background]="c"
+                      (mousedown)="keepSel($event)"
+                      (click)="pickHilite(c)"
+                    ></button>
+                  }
+                </span>
+              </div>
+            </div>
+
+            <!-- Paragraph -->
+            <div class="pt-ribbon-group">
+              <span class="menuhead">Paragraph</span>
+              <div class="pt-row-gap">
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Align left"
+                  [attr.aria-pressed]="ptFmt().l"
+                  (mousedown)="keepSel($event)"
+                  (click)="align('left')"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M4 6h16M4 12h10M4 18h14"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Align center"
+                  [attr.aria-pressed]="ptFmt().c"
+                  (mousedown)="keepSel($event)"
+                  (click)="align('center')"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M4 6h16M8 12h8M6 18h12"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Align right"
+                  [attr.aria-pressed]="ptFmt().r"
+                  (mousedown)="keepSel($event)"
+                  (click)="align('right')"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M4 6h16M10 12h10M6 18h14"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Justify"
+                  [attr.aria-pressed]="ptFmt().j"
+                  (mousedown)="keepSel($event)"
+                  (click)="align('justify')"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                  </svg>
+                </button>
+                <span class="pt-vdivider"></span>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Bulleted list"
+                  [attr.aria-pressed]="ptFmt().ul"
+                  (mousedown)="keepSel($event)"
+                  (click)="doUl()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/><path d="M9 6h11M9 12h11M9 18h11"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Numbered list"
+                  [attr.aria-pressed]="ptFmt().ol"
+                  (mousedown)="keepSel($event)"
+                  (click)="doOl()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 5v3M4 13v3M4.5 8h-1M4.5 16h-1" stroke-width="1.2"/>
+                  </svg>
+                </button>
+                <span class="pt-vdivider"></span>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Decrease indent"
+                  (mousedown)="keepSel($event)"
+                  (click)="doOutdent()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 6h10M10 12h10M10 18h10M7 9 4 12l3 3"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Increase indent"
+                  (mousedown)="keepSel($event)"
+                  (click)="doIndent()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 6h10M10 12h10M10 18h10M4 9l3 3-3 3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Table Tools -->
+            <div class="pt-ribbon-group">
+              <span class="menuhead">Table</span>
+              <div class="pt-row-gap">
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Insert table"
+                  (mousedown)="keepSel($event)"
+                  (click)="insertTable()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18M3 16h18M11 4v16"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Insert row below"
+                  (mousedown)="keepSel($event)"
+                  (click)="rowBelow()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="4" width="18" height="10" rx="1"/><path d="M12 17v5M9 19h6"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Insert column right"
+                  (mousedown)="keepSel($event)"
+                  (click)="colRight()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="2" y="4" width="10" height="16" rx="1"/><path d="M18 8v8M15 12h6"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Merge cells"
+                  (mousedown)="keepSel($event)"
+                  (click)="mergeCells()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v6M8 13h8"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Split cell"
+                  (mousedown)="keepSel($event)"
+                  (click)="splitCell()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16M9 9l-2 3 2 3M15 9l2 3-2 3"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Delete row"
+                  (mousedown)="keepSel($event)"
+                  (click)="delRow()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="6" width="18" height="7" rx="1"/><path d="M8 18h8"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Delete column"
+                  (mousedown)="keepSel($event)"
+                  (click)="delCol()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="4" y="3" width="7" height="18" rx="1"/><path d="M16 8v8"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Delete cell"
+                  (mousedown)="keepSel($event)"
+                  (click)="delCell()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="4" width="18" height="16" rx="1"/><path d="M9 10l6 4M15 10l-6 4"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Cell borders"
+                  (mousedown)="keepSel($event)"
+                  (click)="toggleBorder()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="4" y="4" width="16" height="16"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Cell shading"
+                  (mousedown)="keepSel($event)"
+                  (click)="toggleShade()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="pt-row-gap">
+                <input
+                  class="input pt-num-input"
+                  type="number"
+                  min="1"
+                  max="100"
+                  placeholder="Col %"
+                  title="Selected column width (%)"
+                  (change)="setColWidth(+$any($event.target).value)"
+                />
+                <input
+                  class="input pt-num-input"
+                  type="number"
+                  min="8"
+                  max="200"
+                  placeholder="Row px"
+                  title="Selected row height (px)"
+                  (change)="setRowHeight(+$any($event.target).value)"
+                />
+              </div>
+            </div>
+          </div>
+        }
+      </aside>
+
+      <!-- Right Area: Toolbar + WYSIWYG Canvas -->
+      <main class="pt-canvas-area">
+        <!-- Top Toolbar -->
+        <div class="pt-canvas-toolbar">
+          <!-- Segment Tabs -->
+          <div class="btngrp" role="tablist" aria-label="Segments">
+            @for (seg of segments; track seg.code) {
+              <button
+                class="btn btn-secondary pt-tab-btn"
+                type="button"
+                role="tab"
+                [class.picked]="activeSeg() === seg.code"
+                [disabled]="mode() === 'preview'"
+                (click)="setActiveSeg(seg.code)"
+              >
+                {{ seg.label }}
+              </button>
+            }
+          </div>
+
+          <!-- Actions: Zoom, Insert Field, Preview, Discard, Save -->
+          <div class="pt-canvas-actions">
+            <select
+              class="input pt-zoom-select"
+              title="Zoom"
+              aria-label="Zoom"
+              [ngModel]="zoomStr()"
+              (ngModelChange)="onZoomChange($event)"
+            >
+              <option value="fit">Fit width</option>
+              <option value="0.5">50%</option>
+              <option value="0.75">75%</option>
+              <option value="1">100%</option>
+              <option value="1.25">125%</option>
+              <option value="1.5">150%</option>
+              <option value="2">200%</option>
+            </select>
+
+            <button
+              class="btn btn-secondary"
+              type="button"
+              [disabled]="mode() === 'preview' || !canEdit()"
+              (click)="openFields($event)"
+            >
+              Insert field
+            </button>
+
+            <button
+              class="btn btn-secondary"
+              type="button"
+              (click)="togglePreview()"
+            >
+              {{ mode() === 'preview' ? 'Back to edit' : 'Preview' }}
+            </button>
+
+            <span class="pt-vdivider"></span>
+
+            @if (flash()) {
+              <span class="pt-flash-msg">{{ flash() }}</span>
+            }
+
+            @if (canEdit()) {
+              <button
+                class="btn btn-ghost"
+                type="button"
+                [disabled]="busy() || !dirty()"
+                (click)="discard()"
+              >
+                Discard
+              </button>
+              <button
+                class="btn btn-primary"
+                type="button"
+                [disabled]="busy() || !dirty() || draftName().trim() === ''"
+                (click)="save()"
+              >
+                Save
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Canvas (Edit Mode) -->
+        @if (mode() === 'edit') {
+          <div #paperScroller class="pt-scroller">
+            <div [style.width]="zoomWidth()" [style.height]="zoomHeight()" class="pt-zoom-container">
+              <div [style.transform]="zoomScale()" class="pt-zoom-scaler">
+                <div
+                  class="pt-page"
+                  [style.width.px]="pageWidthPx()"
+                  [style.height]="canvasHeight()"
+                  [style.padding]="canvasPadding()"
+                >
+                  @for (seg of segments; track seg.code) {
+                    <div
+                      class="pt-seg"
+                      [attr.data-seg-on]="activeSeg() === seg.code ? '1' : null"
+                      [attr.data-pin]="isSegPinned(seg.code) ? '1' : null"
+                      [attr.data-pin-first]="isSegPinFirst(seg.code) ? '1' : null"
+                      [style.margin]="getSegMarginStyle(seg.code)"
+                      (click)="setActiveSeg(seg.code)"
+                    >
+                      <div
+                        #segContent
+                        class="pt-seg-content"
+                        [attr.data-seg]="seg.code"
+                        [contentEditable]="canEdit() && activeSeg() === seg.code"
+                        (mouseup)="onSnap()"
+                        (keyup)="onSnap()"
+                        (input)="onSegmentInput(seg.code)"
+                      ></div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Canvas (Preview Mode) -->
+        @if (mode() === 'preview') {
+          <div #paperScroller class="pt-scroller">
+            <div [style.width]="zoomWidth()" [style.height]="zoomHeight()" class="pt-zoom-container">
+              <div [style.transform]="zoomScale()" class="pt-zoom-scaler">
+                <div
+                  class="pt-preview-viewport"
+                  [style.width.px]="pageWidthPx()"
+                  [style.height]="viewportHeight()"
+                >
+                  <!-- Flow Area with Translation -->
+                  <div
+                    class="pt-preview-flow-wrap"
+                    [style.top]="flowTop()"
+                    [style.bottom]="flowBottom()"
+                    [style.left.px]="padLeft()"
+                    [style.right.px]="padRight()"
+                  >
+                    @if (cutTop()) {
+                      <div class="pt-cut-line pt-cut-top"></div>
+                    }
+                    @if (cutBottom()) {
+                      <div class="pt-cut-line pt-cut-bottom"></div>
+                    }
+                    <div [style.transform]="flowShift()">
+                      <div #flowMeasure>
+                        <div #fhMeasure [style.margin]="getSegMarginStyle('fh')">
+                          <div class="pt-cap">Fixed header</div>
+                          <div [innerHTML]="mockHtml('fh')"></div>
+                        </div>
+                        <div [style.margin]="getSegMarginStyle('h')">
+                          <div class="pt-cap">Header</div>
+                          <div [innerHTML]="mockHtml('h')"></div>
+                        </div>
+                        <div [style.margin]="getSegMarginStyle('d')">
+                          <div class="pt-cap">Details</div>
+                          <div [innerHTML]="mockHtml('d')"></div>
+                        </div>
+                        @if (footerInline()) {
+                          <div [style.margin]="getSegMarginStyle('f')">
+                            <div class="pt-cap" style="margin-top:6px">Footer</div>
+                            <div [innerHTML]="mockHtml('f')"></div>
+                          </div>
+                        }
+                        @if (fixedFooterInline()) {
+                          <div [style.margin]="getSegMarginStyle('ff')">
+                            <div class="pt-cap" style="margin-top:6px">Fixed footer</div>
+                            <div [innerHTML]="mockHtml('ff')"></div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Repeated Header on Page > 1 -->
+                  @if (isLaser() && previewPage() > 1) {
+                    <div
+                      class="pt-preview-rep-fh"
+                      [style.left.px]="padLeft()"
+                      [style.right.px]="padRight()"
+                      [style.top.px]="padTop()"
+                    >
+                      <div class="pt-cap">Fixed header · repeated</div>
+                      <div [innerHTML]="mockHtml('fh')"></div>
+                    </div>
+                  }
+
+                  <!-- Pinned Footers at Bottom -->
+                  <div
+                    #pinnedMeasure
+                    class="pt-preview-pinned"
+                    [style.left.px]="padLeft()"
+                    [style.right.px]="padRight()"
+                    [style.bottom.px]="padBottom()"
+                  >
+                    @if (!footerInline() && (isLastPage() || !isLaser())) {
+                      <div #footerMeasure style="background:#fff">
+                        <div class="pt-cap">Footer · last page</div>
+                        <div [innerHTML]="mockHtml('f')"></div>
+                      </div>
+                    }
+                    @if (!fixedFooterInline()) {
+                      <div #ffMeasure style="background:#fff">
+                        <div class="pt-cap" style="margin-top:6px">Fixed footer · every page</div>
+                        <div [innerHTML]="mockHtml('ff')"></div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="pt-pagination">
+            @if (isLaser()) {
+              <button
+                class="btn btn-ghost"
+                type="button"
+                [disabled]="previewPage() <= 1"
+                (click)="prevPage()"
+              >
+                Prev
+              </button>
+              <span class="pt-page-count">
+                Page {{ previewPage() }} of {{ previewPageCount() }}
+              </span>
+              <button
+                class="btn btn-ghost"
+                type="button"
+                [disabled]="previewPage() >= previewPageCount()"
+                (click)="nextPage()"
+              >
+                Next
+              </button>
+            }
+          </div>
+        }
+      </main>
+    </div>
+  }
 </div>
 
+<!-- Insert Field Popover Dialog -->
+@if (fieldsOpen()) {
+  <div class="dialog-backdrop" (click)="closeFields()">
+    <div
+      role="dialog"
+      aria-label="Insert field"
+      class="pt-fields-dialog"
+      [style.left.px]="fieldsPos().left"
+      [style.top.px]="fieldsPos().top"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="pt-fields-head">
+        <span class="pt-fields-title">Insert field</span>
+        <button class="btn btn-ghost btn-xs" type="button" (click)="closeFields()">Close</button>
+      </div>
+
+      <div class="pt-fields-grid">
+        @for (grp of placeholders(); track grp.group) {
+          <div class="pt-fields-col">
+            <div class="pt-fields-group-head">
+              <span class="menuhead">{{ grp.group }}</span>
+              @if (grp.isList) {
+                <span class="tag tag-outline" title="Repeats per row">list</span>
+              }
+            </div>
+
+            @for (field of grp.placeholders; track field.tag) {
+              <button
+                class="pt-field-item"
+                type="button"
+                [title]="field.description"
+                (click)="insertField(field.tag, grp.isList)"
+              >
+                {{ field.tag }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
