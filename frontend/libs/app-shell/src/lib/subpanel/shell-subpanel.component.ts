@@ -127,10 +127,20 @@ export class ShellSubpanelComponent {
 
   /** Open the named section holding the screen on view, if the open menu has one. */
   private openCurrentSection(): void {
+    const menu = this.menu();
+    if (!menu || menu.groups.length === 0) return;
     const route = this.currentRoute();
-    if (!route) return;
-    const group = this.menu()?.groups.find((g) => g.subMenus.some((s) => s.routePath === route));
-    if (group?.name) this.panel.openGroup.set(group.code);
+    const group = route
+      ? menu.groups.find((g) => g.subMenus.some((s) => s.routePath === route))
+      : null;
+    if (group?.name) {
+      this.panel.openGroup.set(group.code);
+    } else if (this.panel.openGroup() === null || !menu.groups.some((g) => g.code === this.panel.openGroup())) {
+      const firstNamed = menu.groups.find((g) => !!g.name);
+      if (firstNamed) {
+        this.panel.openGroup.set(firstNamed.code);
+      }
+    }
   }
 
   setQuery(value: string): void {

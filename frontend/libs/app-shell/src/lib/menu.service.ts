@@ -13,10 +13,107 @@ import {
 
 const MENU_CACHE_KEY = 'bb_menu_cache';
 
+/**
+ * Rebuild the tree from the static registry, shaped like the server's response
+ * so nothing downstream has to know the difference. Every action is granted:
+ * the fallback exists so a person is not stranded, and the server refuses
+ * anything they should not do regardless of what the buttons offer.
+ */
+export function buildFallbackMenu(): MenuView[] {
+  const byGroup = new Map<string, ShellScreen[]>();
+  for (const screen of SHELL_SCREENS) {
+    const list = byGroup.get(screen.group) ?? [];
+    list.push(screen);
+    byGroup.set(screen.group, list);
+  }
+
+  let menuId = 0;
+  let subId = 0;
+  return [...byGroup.entries()].map(([name, screens]) => {
+    menuId += 1;
+    const isReports = name.toLowerCase() === 'reports';
+    const hasSubGroups = screens.some((s) => !s.subGroup);
+
+    let groups: MenuGroupView[] = [];
+    if (screens.length > 1) {
+      if (hasSubGroups) {
+        const subGroupMap = new Map<string, ShellScreen[]>();
+        for (const screen of screens) {
+          const sgName = screen.subGroup ?? name;
+          if (!subGroupMap.has(sgName)) {
+            subGroupMap.set(sgName, []);
+          }
+          subGroupMap.get(sgName)!.push(screen);
+        }
+
+        groups = [...subGroupMap.entries()].map(([sgName, sList]) => {
+          menuId += 1;
+          return {
+            menuGroupId: menuId,
+            code: `fallback-${menuId}`,
+            name: sgName,
+            icon: null,
+            subMenus: sList.map((screen) => {
+              subId += 1;
+              return {
+                subMenuId: subId,
+                code: `fallback-${subId}`,
+                name: screen.label,
+                routePath: screen.path,
+                icon: null,
+                module: screen.module ?? 'dashboard',
+                canCreate: false,
+                singularName: null,
+                hasAccess: true,
+                allowedActions: ['view', 'create', 'edit', 'delete', 'print', 'export'],
+              };
+            }),
+          };
+        });
+      } else {
+        groups = [
+          {
+            menuGroupId: menuId,
+            code: `fallback-${menuId}`,
+            name: null,
+            icon: null,
+            subMenus: screens.map((screen) => {
+              subId += 1;
+              return {
+                subMenuId: subId,
+                code: `fallback-${subId}`,
+                name: screen.label,
+                routePath: screen.path,
+                icon: null,
+                module: screen.module ?? 'dashboard',
+                canCreate: false,
+                singularName: null,
+                hasAccess: true,
+                allowedActions: ['view', 'create', 'edit', 'delete', 'print', 'export'],
+              };
+            }),
+          },
+        ];
+      }
+    }
+
+    return {
+      menuId,
+      code: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name,
+      icon: null,
+      module: screens[0]?.module ?? 'dashboard',
+      routePath: screens.length === 1 ? screens[0].path : null,
+      isSearchable: isReports,
+      groups,
+    };
+  });
+}
+
 function getInitialMenu(): readonly MenuView[] {
-  if (typeof sessionStorage !== 'undefined') {
+  if (typeof window !== 'undefined') {
     try {
-      const raw = sessionStorage.getItem(MENU_CACHE_KEY);
+      const raw = sessionStorage.getItem(MENU_CACHE_KEY) || localStorage.getItem(MENU_CACHE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -27,7 +124,7 @@ function getInitialMenu(): readonly MenuView[] {
       // ignore
     }
   }
-  return [];
+  return buildFallbackMenu();
 }
 
 /** One step of the breadcrumb trail, as `crumbsFor` builds it from the tree. */
@@ -167,9 +264,11 @@ export class MenuService {
       }
       this.menus.set(menus);
       this.usingFallback.set(false);
-      if (typeof sessionStorage !== 'undefined') {
+      if (typeof window !== 'undefined') {
         try {
-          sessionStorage.setItem(MENU_CACHE_KEY, JSON.stringify(menus));
+          const json = JSON.stringify(menus);
+          sessionStorage.setItem(MENU_CACHE_KEY, json);
+          localStorage.setItem(MENU_CACHE_KEY, json);
         } catch {
           // ignore storage error
         }
@@ -184,9 +283,10 @@ export class MenuService {
   }
 
   clearCache(): void {
-    if (typeof sessionStorage !== 'undefined') {
+    if (typeof window !== 'undefined') {
       try {
         sessionStorage.removeItem(MENU_CACHE_KEY);
+        localStorage.removeItem(MENU_CACHE_KEY);
       } catch {
         // ignore
       }
@@ -395,96 +495,7 @@ export class MenuService {
    * anything they should not do regardless of what the buttons offer.
    */
   private fallback(): void {
-    const byGroup = new Map<string, ShellScreen[]>();
-    for (const screen of SHELL_SCREENS) {
-      const list = byGroup.get(screen.group) ?? [];
-      list.push(screen);
-      byGroup.set(screen.group, list);
-    }
-
-    let menuId = 0;
-    let subId = 0;
-    const menus: MenuView[] = [...byGroup.entries()].map(([name, screens]) => {
-      menuId += 1;
-      const isReports = name.toLowerCase() === 'reports';
-      const hasSubGroups = screens.some((s) => !!s.subGroup);
-
-      let groups: MenuGroupView[] = [];
-      if (screens.length > 1) {
-        if (hasSubGroups) {
-          const subGroupMap = new Map<string, ShellScreen[]>();
-          for (const screen of screens) {
-            const sgName = screen.subGroup ?? name;
-            if (!subGroupMap.has(sgName)) {
-              subGroupMap.set(sgName, []);
-            }
-            subGroupMap.get(sgName)!.push(screen);
-          }
-
-          groups = [...subGroupMap.entries()].map(([sgName, sList]) => {
-            menuId += 1;
-            return {
-              menuGroupId: menuId,
-              code: `fallback-${menuId}`,
-              name: sgName,
-              icon: null,
-              subMenus: sList.map((screen) => {
-                subId += 1;
-                return {
-                  subMenuId: subId,
-                  code: `fallback-${subId}`,
-                  name: screen.label,
-                  routePath: screen.path,
-                  icon: null,
-                  module: screen.module ?? 'dashboard',
-                  canCreate: false,
-                  singularName: null,
-                  hasAccess: true,
-                  allowedActions: ['view', 'create', 'edit', 'delete', 'print', 'export'],
-                };
-              }),
-            };
-          });
-        } else {
-          groups = [
-            {
-              menuGroupId: menuId,
-              code: `fallback-${menuId}`,
-              name: null,
-              icon: null,
-              subMenus: screens.map((screen) => {
-                subId += 1;
-                return {
-                  subMenuId: subId,
-                  code: `fallback-${subId}`,
-                  name: screen.label,
-                  routePath: screen.path,
-                  icon: null,
-                  module: screen.module ?? 'dashboard',
-                  canCreate: false,
-                  singularName: null,
-                  hasAccess: true,
-                  allowedActions: ['view', 'create', 'edit', 'delete', 'print', 'export'],
-                };
-              }),
-            },
-          ];
-        }
-      }
-
-      return {
-        menuId,
-        code: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        name,
-        icon: null,
-        module: screens[0]?.module ?? 'dashboard',
-        routePath: screens.length === 1 ? screens[0].path : null,
-        isSearchable: isReports,
-        groups,
-      };
-    });
-
-    this.menus.set(menus);
+    this.menus.set(buildFallbackMenu());
     this.usingFallback.set(true);
   }
 }
