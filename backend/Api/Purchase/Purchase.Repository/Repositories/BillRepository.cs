@@ -258,6 +258,13 @@ public sealed class BillRepository
     /// <summary>Everything create and update do identically. One copy, called twice.</summary>
     private async Task<BillResult> ApplyAsync(Bill bill, SaveBillRequest request, CancellationToken ct)
     {
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new BillResult(
+                BillOutcome.LineInvalid,
+                Detail: "A bill needs at least one line with a quantity greater than zero.");
+        }
+
         if (request.VendorBillDate > request.DocumentDate)
         {
             return new BillResult(
@@ -1293,6 +1300,7 @@ public sealed class BillRepository
                 CurrencyCode = b.CurrencyCode,
                 TaxableAmount = b.TaxableAmount,
                 TotalAmount = b.TotalAmount,
+                ItemCount = b.Lines.Count,
                 Status = b.Status.ToString(),
                 IsInterState = b.IsInterState,
                 DaysOverdue = b.Status == DocumentStatus.Posted

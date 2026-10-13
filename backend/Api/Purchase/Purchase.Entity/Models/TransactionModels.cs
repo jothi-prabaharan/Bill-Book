@@ -18,6 +18,9 @@ public class PurchaseTransactionListItem
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
 
+    /// <summary>The count of line items in this transaction.</summary>
+    public int ItemCount { get; set; }
+
     /// <summary>
     /// An order's fulfilment — Open, Partly…, Closed, Cancelled — for the
     /// list's status once the order is confirmed; null for every other type (TK-187).

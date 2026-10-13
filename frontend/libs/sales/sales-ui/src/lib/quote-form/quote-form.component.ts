@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { QuoteService, SalesLookupService, SaveQuoteRequest, blankGridLine } from '@bill-book/sales-core';
+import { QuoteService, SalesLookupService, SaveQuoteRequest, blankGridLine, toGridLine, toApiLine } from '@bill-book/sales-core';
 import {
   CreatePageComponent,
   NumberFieldComponent,
@@ -97,7 +97,7 @@ export class QuoteFormComponent implements OnInit {
   
   private readonly changes = inject(ChangeDetectorRef);
 
-  lines: DocumentLine[] = [];
+  lines: DocumentLine[] = [blankGridLine(1)];
 
   /** The chosen customer as it reads on the form; the id itself is the `contactId` control. */
   readonly contactLabel = signal('');
@@ -160,18 +160,11 @@ export class QuoteFormComponent implements OnInit {
         termsAndConditions: q.termsAndConditions
       });
       this.customValues.set(q.customFields ?? {});
-      // Map lines if API returned them
-      this.lines = (q.lines || []).map(l => ({
-        itemId: l.itemId,
-        description: l.description,
-        hsnSacCode: l.hsnSacCode,
-        accountId: l.accountId,
-        taxTreatment: l.taxTreatment || 'Taxable',
-        taxMasterId: l.taxMasterId,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent || 0
-      } as any));
+      // Map lines through the scale boundary. Straight in, a ₹100 line reads as zero.
+      this.lines = (q.lines && q.lines.length > 0)
+        ? q.lines.map((l, i) => toGridLine(l, i + 1))
+        : [blankGridLine(1)];
+      this.changes.markForCheck();
     });
   }
 
@@ -210,6 +203,13 @@ export class QuoteFormComponent implements OnInit {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
 
+    const priced = this.lines.filter(l => (l.quantity ?? 0) > 0);
+    if (priced.length === 0) {
+      return;
+    }
+
+    this.saving.set(true);
+
     const val = this.form.value;
     const request: SaveQuoteRequest = {
       documentDate: val.documentDate!,
@@ -224,23 +224,33 @@ export class QuoteFormComponent implements OnInit {
       notes: val.notes || undefined,
       customFields: compactValues(this.customValues()),
       termsAndConditions: val.termsAndConditions || undefined,
-      lines: this.lines.map(l => ({
-        itemId: l.itemId ?? undefined,
-        description: l.description ?? undefined,
-        hsnSacCode: l.hsnSacCode ?? undefined,
-        accountId: l.accountId ?? undefined,
-        taxTreatment: l.taxTreatment,
-        taxMasterId: l.taxMasterId ?? undefined,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent ?? 0
-      } as any) )
+      lines: priced.map(l => {
+        const api = toApiLine(l);
+        return {
+          itemId: api.itemId ?? undefined,
+          description: api.description ?? undefined,
+          hsnSacCode: api.hsnSacCode ?? undefined,
+          accountId: api.accountId ?? undefined,
+          taxTreatment: api.taxTreatment ?? 'Taxable',
+          taxMasterId: api.taxMasterId ?? undefined,
+          quantity: api.quantity ?? 0,
+          unitPrice: api.unitPrice ?? 0,
+          discountPercent: api.discountPercent ?? 0,
+          lineNotes: api.lineNotes ?? undefined,
+        };
+      })
     };
 
     if (this.isEdit && this.quoteId) {
-      this.quoteService.update(this.quoteId, request).subscribe(() => { void this.router.navigate(['../'], { relativeTo: this.route }); });
+      this.quoteService.update(this.quoteId, request).subscribe({
+        next: () => { void this.router.navigate(['../'], { relativeTo: this.route }); },
+        error: () => { this.saving.set(false); }
+      });
     } else {
-      this.quoteService.create(request).subscribe(() => { void this.router.navigate(['../'], { relativeTo: this.route }); });
+      this.quoteService.create(request).subscribe({
+        next: () => { void this.router.navigate(['../'], { relativeTo: this.route }); },
+        error: () => { this.saving.set(false); }
+      });
     }
   }
 }

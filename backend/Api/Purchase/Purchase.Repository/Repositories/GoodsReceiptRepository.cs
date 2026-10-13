@@ -116,6 +116,13 @@ public sealed class GoodsReceiptRepository
                 Detail: "Branch base currency could not be read.");
         }
 
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new GoodsReceiptResult(
+                GoodsReceiptOutcome.LineInvalid,
+                Detail: "A goods receipt needs at least one line with a quantity greater than zero.");
+        }
+
         GoodsReceipt receipt = new()
         {
             TransactionTypeCode = "GRN",
@@ -145,6 +152,13 @@ public sealed class GoodsReceiptRepository
     public async Task<GoodsReceiptResult> UpdateAsync(
         long goodsReceiptId, SaveGoodsReceiptRequest request, CancellationToken ct)
     {
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new GoodsReceiptResult(
+                GoodsReceiptOutcome.LineInvalid,
+                Detail: "A goods receipt needs at least one line with a quantity greater than zero.");
+        }
+
         GoodsReceipt? receipt = await _db.GoodsReceipts
             .Include(r => r.Lines)
             .ThenInclude(l => l.Taxes)
@@ -175,10 +189,6 @@ public sealed class GoodsReceiptRepository
         receipt.DocumentDate = request.DocumentDate;
         receipt.PrintTemplateId = request.PrintTemplateId;
 
-        _db.GoodsReceiptDetailTaxes.RemoveRange(receipt.Lines.SelectMany(l => l.Taxes));
-        _db.GoodsReceiptDetails.RemoveRange(receipt.Lines);
-        receipt.Lines.Clear();
-
         GoodsReceiptResult applied = await ApplyAsync(receipt, request, ct);
         if (applied.Outcome != GoodsReceiptOutcome.Ok)
         {
@@ -193,6 +203,13 @@ public sealed class GoodsReceiptRepository
     private async Task<GoodsReceiptResult> ApplyAsync(
         GoodsReceipt receipt, SaveGoodsReceiptRequest request, CancellationToken ct)
     {
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new GoodsReceiptResult(
+                GoodsReceiptOutcome.LineInvalid,
+                Detail: "A goods receipt needs at least one line with a quantity greater than zero.");
+        }
+
         BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
         if (settings is null)
         {
@@ -264,6 +281,7 @@ public sealed class GoodsReceiptRepository
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
         List<TaxLineResult> taxLines = new(request.Lines.Count);
+        List<GoodsReceiptDetail> newLines = new(request.Lines.Count);
 
         for (int i = 0; i < request.Lines.Count; i++)
         {
@@ -386,7 +404,7 @@ public sealed class GoodsReceiptRepository
                 });
             }
 
-            receipt.Lines.Add(detail);
+            newLines.Add(detail);
         }
 
         TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
@@ -402,6 +420,18 @@ public sealed class GoodsReceiptRepository
             Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
         receipt.TotalAmount = totals.TotalAmount + receipt.RoundOffAmount;
         receipt.TotalAmountBase = receipt.TotalAmount * receipt.ExchangeRate;
+
+        if (receipt.Lines.Count > 0)
+        {
+            _db.GoodsReceiptDetailTaxes.RemoveRange(receipt.Lines.SelectMany(l => l.Taxes));
+            _db.GoodsReceiptDetails.RemoveRange(receipt.Lines);
+            receipt.Lines.Clear();
+        }
+
+        foreach (GoodsReceiptDetail line in newLines)
+        {
+            receipt.Lines.Add(line);
+        }
 
         return new GoodsReceiptResult(GoodsReceiptOutcome.Ok, receipt.GoodsReceiptId);
     }
@@ -815,6 +845,7 @@ public sealed class GoodsReceiptRepository
                 CurrencyCode = r.CurrencyCode,
                 TaxableAmount = r.TaxableAmount,
                 TotalAmount = r.TotalAmount,
+                ItemCount = r.Lines.Count,
                 Status = r.Status.ToString(),
                 IsInterState = r.IsInterState,
                 RejectedQuantity = r.Lines.Sum(l => l.RejectedQuantity),

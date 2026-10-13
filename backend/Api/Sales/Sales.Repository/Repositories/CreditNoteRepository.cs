@@ -115,7 +115,8 @@ public sealed class CreditNoteRepository
                 x.Status,
                 x.CurrencyCode,
                 x.TaxableAmount,
-                x.TotalAmount
+                x.TotalAmount,
+                ItemCount = x.Lines.Count
             })
             .ToListAsync(ct);
 
@@ -133,7 +134,8 @@ public sealed class CreditNoteRepository
             Status = x.Status.ToString(),
             CurrencyCode = x.CurrencyCode,
             TaxableAmount = x.TaxableAmount,
-            TotalAmount = x.TotalAmount
+            TotalAmount = x.TotalAmount,
+            ItemCount = x.ItemCount
         }).ToList();
     }
 
@@ -244,6 +246,11 @@ public sealed class CreditNoteRepository
         else
         {
             creditNote = new CreditNote();
+        }
+
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new CreditNoteResult(CreditNoteOutcome.LineInvalid, Detail: "A credit note needs at least one line with a quantity greater than zero.");
         }
 
         // Everything that can refuse is checked before anything changes, so a

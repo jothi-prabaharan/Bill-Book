@@ -73,6 +73,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = q.CurrencyCode,
                 TaxableAmount = q.TaxableAmount,
                 TotalAmount = q.TotalAmount,
+                ItemCount = q.ItemCount,
                 Status = q.Status,
                 CustomerResponse = q.CustomerResponse == "None" ? null : q.CustomerResponse,
                 DueDate = q.ValidUntil
@@ -99,6 +100,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = s.CurrencyCode,
                 TaxableAmount = s.TaxableAmount,
                 TotalAmount = s.TotalAmount,
+                ItemCount = s.ItemCount,
                 Status = s.Status.ToString(), // Assuming enum DocumentStatus
                 FulfilmentStatus = s.FulfilmentStatus,
                 DueDate = null // Sales Orders typically don't have due dates
@@ -119,6 +121,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = i.CurrencyCode,
                 TaxableAmount = i.TaxableAmount,
                 TotalAmount = i.TotalAmount,
+                ItemCount = i.ItemCount,
                 Status = i.Status.ToString(),
                 DueDate = i.DueDate
             }));
@@ -138,6 +141,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = c.CurrencyCode,
                 TaxableAmount = c.TaxableAmount,
                 TotalAmount = c.TotalAmount,
+                ItemCount = c.ItemCount,
                 Status = c.Status.ToString(),
                 DueDate = null
             }));
@@ -159,6 +163,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = d.CurrencyCode,
                 TaxableAmount = d.TaxableAmount,
                 TotalAmount = d.TotalAmount,
+                ItemCount = d.ItemCount,
                 Status = d.Status,
                 DueDate = null
             }));

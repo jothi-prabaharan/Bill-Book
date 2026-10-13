@@ -177,6 +177,7 @@ export class SalesListComponent implements OnInit {
     { field: 'documentNo', header: 'Number' },
     { field: 'documentDate', header: 'Date', dataType: 'date' },
     { field: 'contactName', header: 'Customer' },
+    { field: 'itemCount', header: 'Items', numeric: true },
     { field: 'listStatus', header: 'Status' },
     { field: 'taxableAmount', header: 'Taxable', dataType: 'money' },
     { field: 'totalAmount', header: 'Total', dataType: 'money' },

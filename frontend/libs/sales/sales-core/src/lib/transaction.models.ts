@@ -10,6 +10,8 @@ export interface SalesTransactionListItem {
   /** The value before tax, in the document's currency (TK-187). */
   taxableAmount?: number;
   totalAmount: number;
+  /** Number of line items on the document. */
+  itemCount?: number;
   status: string;
   /** A sales order's Open / PartlyDelivered / Closed / Cancelled; null for the other types. */
   fulfilmentStatus?: string | null;

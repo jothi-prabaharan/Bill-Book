@@ -105,6 +105,11 @@ public sealed class QuoteRepository
             return new QuoteResult(QuoteOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
         }
 
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new QuoteResult(QuoteOutcome.LineInvalid, Detail: "A quote needs at least one line with a quantity greater than zero.");
+        }
+
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
 
         for (int i = 0; i < request.Lines.Count; i++)
@@ -273,8 +278,13 @@ public sealed class QuoteRepository
             return new QuoteResult(QuoteOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
         }
 
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new QuoteResult(QuoteOutcome.LineInvalid, Detail: "A quote needs at least one line with a quantity greater than zero.");
+        }
+
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
-        Quote.Lines.Clear();
+        var newLines = new List<QuoteDetail>(request.Lines.Count);
 
         for (int i = 0; i < request.Lines.Count; i++)
         {
@@ -356,7 +366,13 @@ public sealed class QuoteRepository
                 });
             }
 
-            Quote.Lines.Add(detail);
+            newLines.Add(detail);
+        }
+
+        Quote.Lines.Clear();
+        foreach (var l in newLines)
+        {
+            Quote.Lines.Add(l);
         }
 
         TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
@@ -555,6 +571,7 @@ public sealed class QuoteRepository
                 CurrencyCode = q.CurrencyCode,
                 TaxableAmount = q.TaxableAmount,
                 TotalAmount = q.TotalAmount,
+                ItemCount = q.Lines.Count,
                 Status = q.Status.ToString(),
                 IsInterState = q.IsInterState,
                 ConvertedToSalesOrderId = _db.SalesOrders.Where(o => o.QuoteId == q.QuoteId).Select(o => (long?)o.SalesOrderId).FirstOrDefault(),

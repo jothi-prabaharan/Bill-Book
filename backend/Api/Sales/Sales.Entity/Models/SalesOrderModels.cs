@@ -308,6 +308,8 @@ public class SalesOrderListItem
 
     public decimal TotalAmount { get; set; }
 
+    public int ItemCount { get; set; }
+
     public string Status { get; set; } = null!;
 
     public bool IsInterState { get; set; }

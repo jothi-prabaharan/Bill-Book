@@ -490,6 +490,12 @@ export class PurchaseOrderFormPage {
       return;
     }
 
+    const priced = this.lines().filter((line) => line.quantity > 0);
+    if (priced.length === 0) {
+      this.error.set('A purchase order needs at least one line with a quantity on it.');
+      return;
+    }
+
     this.saving.set(true);
     this.error.set(null);
     this.notice.set(null);
@@ -567,7 +573,9 @@ export class PurchaseOrderFormPage {
    * crossed — and totals are not sent at all, because the server computes them.
    */
   private toRequest(contactId: number): SavePurchaseOrderRequest {
-    const lines: SavePurchaseOrderLineRequest[] = this.lines().map((line) => ({
+    const lines: SavePurchaseOrderLineRequest[] = this.lines()
+      .filter((line) => line.quantity > 0)
+      .map((line) => ({
       itemId: line.itemId,
       description: line.description,
       hsnSacCode: line.hsnSacCode,

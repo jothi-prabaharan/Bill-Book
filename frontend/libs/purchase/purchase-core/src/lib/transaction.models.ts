@@ -10,6 +10,8 @@ export interface PurchaseTransactionListItem {
   /** The value before tax, in the document's currency (TK-187). */
   taxableAmount?: number;
   totalAmount: number;
+  /** Number of line items on the document. */
+  itemCount?: number;
   status: string;
   /** A purchase order's Open / PartlyReceived / Closed / Cancelled; null for the other types. */
   fulfilmentStatus?: string | null;

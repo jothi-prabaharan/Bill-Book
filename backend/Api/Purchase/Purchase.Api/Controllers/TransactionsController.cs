@@ -68,6 +68,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = b.CurrencyCode,
                 TaxableAmount = b.TaxableAmount,
                 TotalAmount = b.TotalAmount,
+                ItemCount = b.ItemCount,
                 Status = b.Status,
                 DueDate = b.DueDate
             }));
@@ -90,6 +91,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = p.CurrencyCode,
                 TaxableAmount = p.TaxableAmount,
                 TotalAmount = p.TotalAmount,
+                ItemCount = p.ItemCount,
                 Status = p.Status,
                 FulfilmentStatus = p.FulfilmentStatus,
                 DueDate = null // typically doesn't have a specific single due date on list
@@ -113,6 +115,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = d.CurrencyCode,
                 TaxableAmount = d.TaxableAmount,
                 TotalAmount = d.TotalAmount,
+                ItemCount = d.ItemCount,
                 Status = d.Status,
                 DueDate = null
             }));
@@ -135,6 +138,7 @@ public sealed class TransactionsController : ControllerBase
                 CurrencyCode = g.CurrencyCode,
                 TaxableAmount = g.TaxableAmount,
                 TotalAmount = g.TotalAmount,
+                ItemCount = g.ItemCount,
                 Status = g.Status,
                 DueDate = null
             }));

@@ -116,6 +116,12 @@ public sealed class DebitNoteRepository
                 Detail: "Branch base currency could not be read.");
         }
 
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new DebitNoteResult(
+                DebitNoteOutcome.LineInvalid, Detail: "A debit note needs at least one line with a quantity greater than zero.");
+        }
+
         DebitNote note = new()
         {
             TransactionTypeCode = "DBN",
@@ -144,6 +150,12 @@ public sealed class DebitNoteRepository
     public async Task<DebitNoteResult> UpdateAsync(
         long debitNoteId, SaveDebitNoteRequest request, CancellationToken ct)
     {
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new DebitNoteResult(
+                DebitNoteOutcome.LineInvalid, Detail: "A debit note needs at least one line with a quantity greater than zero.");
+        }
+
         DebitNote? note = await _db.DebitNotes
             .Include(n => n.Lines)
             .ThenInclude(l => l.Taxes)
@@ -178,10 +190,6 @@ public sealed class DebitNoteRepository
         note.DocumentDate = request.DocumentDate;
         note.PrintTemplateId = request.PrintTemplateId;
 
-        _db.DebitNoteDetailTaxes.RemoveRange(note.Lines.SelectMany(l => l.Taxes));
-        _db.DebitNoteDetails.RemoveRange(note.Lines);
-        note.Lines.Clear();
-
         DebitNoteResult applied = await ApplyAsync(note, request, ct);
         if (applied.Outcome != DebitNoteOutcome.Ok)
         {
@@ -195,6 +203,12 @@ public sealed class DebitNoteRepository
     private async Task<DebitNoteResult> ApplyAsync(
         DebitNote note, SaveDebitNoteRequest request, CancellationToken ct)
     {
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new DebitNoteResult(
+                DebitNoteOutcome.LineInvalid, Detail: "A debit note needs at least one line with a quantity greater than zero.");
+        }
+
         BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
         if (settings is null)
         {
@@ -259,6 +273,7 @@ public sealed class DebitNoteRepository
         }
 
         List<TaxLineResult> taxLines = new(request.Lines.Count);
+        List<DebitNoteDetail> newLines = new(request.Lines.Count);
 
         // What each bill line has left, decremented as this note's own lines are
         // read — so two lines against the same bill line cannot each take the
@@ -366,7 +381,7 @@ public sealed class DebitNoteRepository
                 });
             }
 
-            note.Lines.Add(detail);
+            newLines.Add(detail);
         }
 
         TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
@@ -388,6 +403,18 @@ public sealed class DebitNoteRepository
             Math.Round(refundable, 0, MidpointRounding.AwayFromZero) - refundable;
         note.TotalAmount = refundable + note.RoundOffAmount;
         note.TotalAmountBase = note.TotalAmount * note.ExchangeRate;
+
+        if (note.Lines.Count > 0)
+        {
+            _db.DebitNoteDetailTaxes.RemoveRange(note.Lines.SelectMany(l => l.Taxes));
+            _db.DebitNoteDetails.RemoveRange(note.Lines);
+            note.Lines.Clear();
+        }
+
+        foreach (DebitNoteDetail line in newLines)
+        {
+            note.Lines.Add(line);
+        }
 
         return new DebitNoteResult(DebitNoteOutcome.Ok, note.DebitNoteId);
     }
@@ -910,6 +937,7 @@ public sealed class DebitNoteRepository
                 CurrencyCode = n.CurrencyCode,
                 TaxableAmount = n.TaxableAmount,
                 TotalAmount = n.TotalAmount,
+                ItemCount = n.Lines.Count,
                 Status = n.Status.ToString(),
                 IsInterState = n.IsInterState,
                 MovesStock = n.ReasonCode == DebitNoteReason.PurchaseReturn,

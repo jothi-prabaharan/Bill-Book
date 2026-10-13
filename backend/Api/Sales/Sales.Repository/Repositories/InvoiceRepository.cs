@@ -14,6 +14,7 @@ using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Storage;
+using Shared.Kernel.Persistence;
 
 namespace Sales.Repository.Repositories;
 
@@ -524,6 +525,13 @@ public sealed class InvoiceRepository : IInvoiceRepository
             return new InvoiceResult(InvoiceOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
         }
 
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.LineInvalid,
+                Detail: "An invoice needs at least one line with a quantity greater than zero.");
+        }
+
         if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
         {
             return new InvoiceResult(InvoiceOutcome.LineInvalid, Detail: projectRefusal);
@@ -647,6 +655,8 @@ public sealed class InvoiceRepository : IInvoiceRepository
             return refusedAtLimit;
         }
 
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
+
         var detailLines = invoice.Lines.ToList();
         invoice.Lines.Clear();
 
@@ -673,8 +683,9 @@ public sealed class InvoiceRepository : IInvoiceRepository
 
         invoice.Lines.AddRange(detailLines);
         await SaveProjectItemsAsync(invoice, request.ProjectItems, ct);
-        return await RequestOverridesAsync(invoice, limits, ct)
-            ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+        InvoiceResult? overrideResult = await RequestOverridesAsync(invoice, limits, ct);
+        await tx.CommitAsync(ct);
+        return overrideResult ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
     }
 
     public async Task<InvoiceResult> UpdateAsync(
@@ -763,15 +774,12 @@ public sealed class InvoiceRepository : IInvoiceRepository
             return new InvoiceResult(InvoiceOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
         }
 
-        var existingLines = await _db.InvoiceDetails
-            .Where(d => d.InvoiceId == invoiceId)
-            .Include(d => d.Taxes)
-            .ToListAsync(ct);
-
-        _db.InvoiceDetailTaxes.RemoveRange(existingLines.SelectMany(l => l.Taxes));
-        _db.InvoiceDetails.RemoveRange(existingLines);
-        invoice.Lines.Clear();
-        await _db.SaveChangesAsync(ct);
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.LineInvalid,
+                Detail: "An invoice needs at least one line with a quantity greater than zero.");
+        }
 
         if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
         {
@@ -904,6 +912,16 @@ public sealed class InvoiceRepository : IInvoiceRepository
             return refusedAtLimit;
         }
 
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
+
+        var existingLines = await _db.InvoiceDetails
+            .Where(d => d.InvoiceId == invoiceId)
+            .Include(d => d.Taxes)
+            .ToListAsync(ct);
+
+        _db.InvoiceDetailTaxes.RemoveRange(existingLines.SelectMany(l => l.Taxes));
+        _db.InvoiceDetails.RemoveRange(existingLines);
+        invoice.Lines.Clear();
         await _db.SaveChangesAsync(ct);
 
         foreach (var detail in newDetails)
@@ -926,8 +944,9 @@ public sealed class InvoiceRepository : IInvoiceRepository
 
         invoice.Lines.AddRange(newDetails);
         await SaveProjectItemsAsync(invoice, request.ProjectItems, ct);
-        return await RequestOverridesAsync(invoice, limits, ct)
-            ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+        InvoiceResult? overrideResult = await RequestOverridesAsync(invoice, limits, ct);
+        await tx.CommitAsync(ct);
+        return overrideResult ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
     }
 
     /// <summary>
@@ -1459,6 +1478,7 @@ public sealed class InvoiceRepository : IInvoiceRepository
                 CurrencyCode = x.CurrencyCode,
                 TaxableAmount = x.TaxableAmount,
                 TotalAmount = x.TotalAmount,
+                ItemCount = x.Lines.Count,
                 Status = x.Status.ToString(),
                 IsInterState = x.IsInterState,
                 DaysOverdue = x.Status == DocumentStatus.Posted && x.DueDate.HasValue

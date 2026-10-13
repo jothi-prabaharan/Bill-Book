@@ -98,7 +98,8 @@ public sealed class DeliveryChallanRepository
                 x.DispatchDate,
                 x.CurrencyCode,
                 x.TaxableAmount,
-                x.TotalAmount
+                x.TotalAmount,
+                ItemCount = x.Lines.Count
             })
             .ToListAsync(ct);
 
@@ -117,7 +118,8 @@ public sealed class DeliveryChallanRepository
             DispatchDate = x.DispatchDate,
             CurrencyCode = x.CurrencyCode,
             TaxableAmount = x.TaxableAmount,
-            TotalAmount = x.TotalAmount
+            TotalAmount = x.TotalAmount,
+            ItemCount = x.ItemCount
         }).ToList();
     }
 
@@ -227,6 +229,11 @@ public sealed class DeliveryChallanRepository
         else
         {
             deliveryChallan = new DeliveryChallan();
+        }
+
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new DeliveryChallanResult(DeliveryChallanOutcome.LineInvalid, Detail: "A delivery challan needs at least one line with a quantity greater than zero.");
         }
 
         // Everything that can refuse is checked before anything is changed, so a

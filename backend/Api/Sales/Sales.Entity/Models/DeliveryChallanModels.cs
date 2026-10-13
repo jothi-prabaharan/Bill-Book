@@ -24,6 +24,7 @@ public class DeliveryChallanListItem
     public string CurrencyCode { get; set; } = null!;
     public decimal TaxableAmount { get; set; }
     public decimal TotalAmount { get; set; }
+    public int ItemCount { get; set; }
 }
 
 public class DeliveryChallanView

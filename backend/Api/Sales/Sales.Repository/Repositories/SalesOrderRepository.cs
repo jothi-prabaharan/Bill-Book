@@ -132,6 +132,11 @@ public sealed class SalesOrderRepository
             return new SalesOrderResult(SalesOrderOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
         }
 
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new SalesOrderResult(SalesOrderOutcome.LineInvalid, Detail: "A sales order needs at least one line with a quantity greater than zero.");
+        }
+
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
 
         for (int i = 0; i < request.Lines.Count; i++)
@@ -322,8 +327,13 @@ public sealed class SalesOrderRepository
             return new SalesOrderResult(SalesOrderOutcome.CustomFieldsRefused, Detail: customFieldsRefused);
         }
 
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new SalesOrderResult(SalesOrderOutcome.LineInvalid, Detail: "A sales order needs at least one line with a quantity greater than zero.");
+        }
+
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
-        SalesOrder.Lines.Clear();
+        var newLines = new List<SalesOrderDetail>(request.Lines.Count);
 
         for (int i = 0; i < request.Lines.Count; i++)
         {
@@ -405,7 +415,13 @@ public sealed class SalesOrderRepository
                 });
             }
 
-            SalesOrder.Lines.Add(detail);
+            newLines.Add(detail);
+        }
+
+        SalesOrder.Lines.Clear();
+        foreach (var l in newLines)
+        {
+            SalesOrder.Lines.Add(l);
         }
 
         TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
@@ -1087,6 +1103,7 @@ public sealed class SalesOrderRepository
                 CurrencyCode = o.CurrencyCode,
                 TaxableAmount = o.TaxableAmount,
                 TotalAmount = o.TotalAmount,
+                ItemCount = o.Lines.Count,
                 Status = o.Status.ToString(),
                 IsInterState = o.IsInterState,
                 InvoicedDocumentId = _db.Invoices

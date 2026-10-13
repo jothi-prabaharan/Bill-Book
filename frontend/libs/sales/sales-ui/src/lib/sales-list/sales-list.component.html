@@ -30,6 +30,10 @@
       <span class="reg-date">{{ row.documentDate | registerDate }}</span>
     </ng-template>
 
+    <ng-template bbCellTemplate="itemCount" let-row>
+      <span class="text-muted">{{ row.itemCount ?? 0 }}</span>
+    </ng-template>
+
     <ng-template bbCellTemplate="listStatus" let-row>
       <span class="flex items-center gap-2">
         <span class="tag" [ngClass]="statusTone(row.listStatus)">{{ statusLabel(row.listStatus) }}</span>

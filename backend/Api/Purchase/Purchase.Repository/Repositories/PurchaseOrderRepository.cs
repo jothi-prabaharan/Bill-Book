@@ -179,6 +179,13 @@ public sealed class PurchaseOrderRepository
     private async Task<PurchaseOrderResult> ApplyAsync(
         PurchaseOrder order, SavePurchaseOrderRequest request, CancellationToken ct)
     {
+        if (request.Lines == null || request.Lines.Count == 0 || !request.Lines.Any(l => l.Quantity > 0))
+        {
+            return new PurchaseOrderResult(
+                PurchaseOrderOutcome.LineInvalid,
+                Detail: "A purchase order needs at least one line with a quantity greater than zero.");
+        }
+
         if (request.ExpectedDate is DateOnly expected && expected < request.DocumentDate)
         {
             return new PurchaseOrderResult(
@@ -614,6 +621,7 @@ public sealed class PurchaseOrderRepository
                 CurrencyCode = o.CurrencyCode,
                 TaxableAmount = o.TaxableAmount,
                 TotalAmount = o.TotalAmount,
+                ItemCount = o.Lines.Count,
                 Status = o.Status.ToString(),
                 IsInterState = o.IsInterState,
                 ReceiptCount = _db.GoodsReceipts.Count(g => g.PurchaseOrderId == o.PurchaseOrderId),
