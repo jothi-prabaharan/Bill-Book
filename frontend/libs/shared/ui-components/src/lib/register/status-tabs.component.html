@@ -1,3 +1,4 @@
+<!-- Desktop view (> 768px) -->
 <nav class="status-tabs" role="tablist" [attr.aria-label]="label()">
   @for (tab of tabs(); track tab.value) {
     <button
@@ -15,3 +16,64 @@
     </button>
   }
 </nav>
+
+<!-- Mobile view (<= 768px): Button trigger -->
+<div class="mobile-status-trigger">
+  <button
+    type="button"
+    class="mobile-status-btn"
+    (click)="openModal()"
+    [attr.aria-label]="label()"
+  >
+    <div class="mobile-status-btn__left">
+      <span class="mobile-status-btn__label">Status:</span>
+      <span class="mobile-status-btn__active">{{ activeTab().label || 'All' }}</span>
+      @if (activeTab().count !== null && activeTab().count !== undefined) {
+        <span class="mobile-status-btn__count">({{ activeTab().count }})</span>
+      }
+    </div>
+    <svg class="mobile-status-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </button>
+</div>
+
+<!-- Mobile Status Modal Popup -->
+@if (modalOpen()) {
+  <div class="dialog-backdrop" (click)="closeModal()">
+    <div class="mobile-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="mobile-dialog__head">
+        <h3 class="mobile-dialog__title">Select Status</h3>
+        <button type="button" class="mobile-dialog__close" aria-label="Close" (click)="closeModal()">
+          ✕
+        </button>
+      </div>
+
+      <div class="mobile-dialog__body">
+        <div class="status-options-list" role="radiogroup">
+          @for (tab of tabs(); track tab.value) {
+            <button
+              type="button"
+              class="status-option-item"
+              [class.is-active]="tab.value === value()"
+              (click)="selectAndClose(tab.value)"
+            >
+              <div class="status-option-item__left">
+                <span class="status-option-radio">
+                  @if (tab.value === value()) {
+                    <span class="radio-dot"></span>
+                  }
+                </span>
+                <span class="status-option-label">{{ tab.label }}</span>
+              </div>
+              @if (tab.count !== null && tab.count !== undefined) {
+                <span class="status-option-count">( {{ tab.count }} )</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

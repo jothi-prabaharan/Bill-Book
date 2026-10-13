@@ -244,21 +244,34 @@
   font-size: 12px;
 }
 
-.reg-pager__size,
+.reg-pager__size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: nowrap;
+}
+
+.reg-pager__size-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .reg-pager__nav {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .reg-pager__label,
 .reg-pager__summary {
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .reg-pager__summary {
-  margin-right: var(--space-1);
   font-size: 11px;
 }
 
@@ -333,16 +346,34 @@
 .reg-pager__page {
   padding: 0 var(--space-1);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {
   .reg-pager {
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    padding: var(--space-2);
   }
 
-  .reg-pager__summary {
+  .reg-pager__size {
+    display: flex;
+    justify-content: space-between;
     width: 100%;
-    text-align: center;
+    align-items: center;
+  }
+
+  .reg-pager__nav {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .reg-pager__btn {
+    width: 32px;
+    height: 32px;
   }
 }
 

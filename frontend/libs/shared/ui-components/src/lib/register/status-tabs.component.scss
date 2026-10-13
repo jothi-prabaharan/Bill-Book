@@ -47,3 +47,220 @@
   color: var(--color-accent-700);
   font-variant-numeric: tabular-nums;
 }
+
+/* --- Mobile View (<= 768px): Button trigger & modal popup --- */
+.mobile-status-trigger {
+  display: none;
+}
+
+.mobile-status-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-md, 6px);
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-accent-400);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+}
+
+.mobile-status-btn__left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-status-btn__label {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.mobile-status-btn__active {
+  font-weight: 600;
+  color: var(--color-accent-600);
+}
+
+.mobile-status-btn__count {
+  color: var(--color-accent-700);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+.mobile-status-btn__icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+/* Modal Popup */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-neutral-900, #0f172a) 45%, transparent);
+  backdrop-filter: blur(2px);
+  z-index: 990;
+  animation: filterModalFadeIn 150ms ease-out forwards;
+}
+
+@keyframes filterModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes filterModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mobile-dialog {
+  position: relative;
+  z-index: 995;
+  width: min(400px, 100%);
+  max-height: calc(100vh - 32px);
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--color-divider, rgba(0, 0, 0, 0.1));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: filterModalSlideUp 180ms ease-out forwards;
+}
+
+.mobile-dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-divider, rgba(0, 0, 0, 0.08));
+}
+
+.mobile-dialog__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.mobile-dialog__close {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 4px);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: var(--color-neutral-100, #f1f5f9);
+    color: var(--color-text);
+  }
+}
+
+.mobile-dialog__body {
+  padding: 8px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.status-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-option-item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 8px);
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background: var(--color-neutral-100, #f1f5f9);
+  }
+
+  &.is-active {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-accent-700);
+    font-weight: 600;
+
+    .status-option-radio {
+      border-color: var(--color-accent-500);
+    }
+  }
+}
+
+.status-option-item__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-option-radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border, #cbd5e1);
+  flex-shrink: 0;
+}
+
+.radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent-600);
+}
+
+.status-option-count {
+  color: var(--color-accent-700);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .status-tabs {
+    display: none;
+  }
+
+  .mobile-status-trigger {
+    display: block;
+  }
+}
+

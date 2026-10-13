@@ -62,6 +62,9 @@ export class PeriodFilterBarComponent {
   /** Custom dates typed but not yet applied; null when nothing is pending. */
   private readonly draft = signal<{ from: string; to: string } | null>(null);
 
+  /** Modal popup open state for mobile view. */
+  readonly modalOpen = signal(false);
+
   readonly preset = computed(() => this.range().preset);
   readonly from = computed(() => this.draft()?.from ?? this.range().from);
   readonly to = computed(() => this.draft()?.to ?? this.range().to);
@@ -74,6 +77,18 @@ export class PeriodFilterBarComponent {
     if (draft.from && draft.to && draft.from > draft.to) return false;
     const range = this.range();
     return draft.from !== range.from || draft.to !== range.to;
+  });
+
+  readonly canApplyMobile = computed(() => {
+    const f = this.from();
+    const t = this.to();
+    if (f && t && f > t) return false;
+    return true;
+  });
+
+  readonly activePresetLabel = computed(() => {
+    const p = this.presets.find((x) => x.key === this.preset());
+    return p ? p.label : 'Date filter';
   });
 
   readonly totalLabel = computed(
@@ -118,8 +133,42 @@ export class PeriodFilterBarComponent {
     this.commit({ preset: 'custom', from: draft.from, to: draft.to });
   }
 
+  openModal(): void {
+    if (this.isCustom()) {
+      this.draft.set({ from: this.from(), to: this.to() });
+    } else {
+      this.draft.set(null);
+    }
+    this.modalOpen.set(true);
+  }
+
+  closeModal(): void {
+    this.draft.set(null);
+    this.modalOpen.set(false);
+  }
+
+  pickAndApplyPreset(preset: PeriodPreset): void {
+    this.pick(preset);
+    if (preset !== 'custom') {
+      this.closeModal();
+    }
+  }
+
+  applyAndClose(): void {
+    if (this.isCustom()) {
+      const f = this.from();
+      const t = this.to();
+      if (!f || !t || f <= t) {
+        this.commit({ preset: 'custom', from: f, to: t });
+        this.draft.set(null);
+      }
+    }
+    this.closeModal();
+  }
+
   private commit(range: PeriodRange): void {
     this.range.set(range);
     this.rangeChange.emit(range);
   }
 }
+

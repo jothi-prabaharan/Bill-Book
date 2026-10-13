@@ -156,17 +156,19 @@
        one page, and "1 to 3 of 3" is the count the strip above repeats. -->
   <div *ngIf="register && paged" class="reg-pager">
     <div class="reg-pager__size">
-      <span class="reg-pager__label">Page size</span>
-      <div class="reg-seg" role="group" aria-label="Page size">
-        <button *ngFor="let size of pageSizes"
-                type="button"
-                class="reg-seg__btn"
-                [attr.aria-pressed]="size === pageSize"
-                (click)="setPageSize(size)">{{ size }}</button>
+      <div class="reg-pager__size-group">
+        <span class="reg-pager__label">Page size</span>
+        <div class="reg-seg" role="group" aria-label="Page size">
+          <button *ngFor="let size of pageSizes"
+                  type="button"
+                  class="reg-seg__btn"
+                  [attr.aria-pressed]="size === pageSize"
+                  (click)="setPageSize(size)">{{ size }}</button>
+        </div>
       </div>
+      <span class="reg-pager__summary">{{ rangeSummary() }}</span>
     </div>
     <div class="reg-pager__nav">
-      <span class="reg-pager__summary">· {{ rangeSummary() }}</span>
       <button type="button" class="reg-pager__btn" aria-label="First page" [disabled]="currentPage <= 1" (click)="goToPage(1)">«</button>
       <button type="button" class="reg-pager__btn" aria-label="Previous page" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">‹</button>
       <span class="reg-pager__page">Page {{ currentPage }} of {{ totalPages() }}</span>

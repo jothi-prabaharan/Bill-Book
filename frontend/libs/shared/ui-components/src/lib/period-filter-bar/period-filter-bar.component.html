@@ -1,4 +1,5 @@
-<div class="period-bar">
+<!-- Desktop view (> 768px) -->
+<div class="period-bar period-bar--desktop">
   <div class="period-row">
     <div class="period-presets" role="group" aria-label="Period">
       @for (option of presets; track option.key) {
@@ -34,9 +35,7 @@
     </div>
   </div>
 
-  <!-- The page's own filters: a number search, an overdue box. Their own item,
-       so on a narrow screen they share a line with the total rather than
-       pushing it onto a third. -->
+  <!-- The page's own filters: a number search, an overdue box. -->
   <div class="period-extra">
     <ng-content />
   </div>
@@ -46,3 +45,89 @@
     <span class="period-total-value">{{ formattedTotal() }}</span>
   </div>
 </div>
+
+<!-- Mobile view (<= 768px) -->
+<div class="period-bar period-bar--mobile">
+  <div class="mobile-period-header">
+    <button type="button" class="mobile-date-filter-btn" (click)="openModal()" aria-label="Filter by date">
+      <div class="mobile-date-filter-btn__left">
+        <span class="mobile-date-filter-btn__icon">📅</span>
+        <span class="mobile-date-filter-btn__text">Date: {{ activePresetLabel() }}</span>
+      </div>
+      <svg class="mobile-date-filter-btn__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </button>
+
+    <div class="mobile-period-total">
+      <span class="mobile-period-total__label">{{ totalLabel() }}</span>
+      <span class="mobile-period-total__value">{{ formattedTotal() }}</span>
+    </div>
+  </div>
+
+  <!-- Extra filters: search input, etc. -->
+  <div class="period-extra">
+    <ng-content />
+  </div>
+</div>
+
+<!-- Mobile Period Filter Modal Popup -->
+@if (modalOpen()) {
+  <div class="dialog-backdrop" (click)="closeModal()">
+    <div class="mobile-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="mobile-dialog__head">
+        <h3 class="mobile-dialog__title">Filter by Date</h3>
+        <button type="button" class="mobile-dialog__close" aria-label="Close" (click)="closeModal()">
+          ✕
+        </button>
+      </div>
+
+      <div class="mobile-dialog__body">
+        <div class="presets-grid" role="group" aria-label="Period Presets">
+          @for (option of presets; track option.key) {
+            <button
+              type="button"
+              class="preset-card-btn"
+              [class.is-active]="preset() === option.key"
+              (click)="pickAndApplyPreset(option.key)"
+            >
+              <span class="preset-card-label">{{ option.label }}</span>
+              @if (preset() === option.key) {
+                <span class="preset-card-check">✓</span>
+              }
+            </button>
+          }
+        </div>
+
+        @if (isCustom()) {
+          <div class="custom-dates-box">
+            <div class="custom-date-row">
+              <span class="custom-date-label">From</span>
+              <bb-branch-date-input
+                ariaLabel="From"
+                [ngModel]="from()"
+                (ngModelChange)="setFrom($event)"
+              />
+            </div>
+            <div class="custom-date-row">
+              <span class="custom-date-label">To</span>
+              <bb-branch-date-input
+                ariaLabel="To"
+                [ngModel]="to()"
+                (ngModelChange)="setTo($event)"
+              />
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="mobile-dialog__foot">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+        @if (isCustom()) {
+          <button type="button" class="btn btn-primary" [disabled]="!canApplyMobile()" (click)="applyAndClose()">Apply</button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
