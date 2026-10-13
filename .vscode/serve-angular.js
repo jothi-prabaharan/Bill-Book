@@ -78,6 +78,7 @@ isPortServing().then(async (serving) => {
     cwd: FRONTEND,
     stdio: 'inherit',
     shell: true,
+    env: { ...process.env, NX_DAEMON: 'false' },
   });
   child.on('exit', (code) => process.exit(code ?? 0));
 });
