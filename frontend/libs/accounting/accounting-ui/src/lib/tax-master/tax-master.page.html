@@ -1,81 +1,92 @@
 <bb-register-header title="Tax master" [count]="rates().length" newLabel="New rate" [newDisabled]="busy()" (create)="startCreate()" />
 
-@if (!mode()) {
-  <bb-status-tabs label="Rate status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
-}
+<bb-status-tabs label="Rate status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
 @if (message()) {
   <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
 @if (mode()) {
-  <form class="editor" (ngSubmit)="save()">
-    @if (mode() === 'revise') {
-      <p class="note">
-        This creates a new version. The current one is closed the day before the date below,
-        so documents dated earlier keep the old rate.
-      </p>
-    }
-    @if (mode() === 'rename') {
-      <p class="note">
-        Display name only. This is a standard rate — its split and identity stay fixed, so
-        reports and GST returns are unaffected.
-      </p>
-    }
+  <div class="backdrop" aria-hidden="true" (click)="mode.set(null)"></div>
+  <div class="dialog dialog-wide" role="dialog" aria-labelledby="tax-editor-title">
+    <header class="dialog-header">
+      <h2 id="tax-editor-title">
+        {{ mode() === 'create' ? 'New tax rate' : mode() === 'revise' ? 'Revise tax rate' : 'Rename tax rate' }}
+      </h2>
+      <button type="button" class="link close-btn" (click)="mode.set(null)" aria-label="Close dialog">✕</button>
+    </header>
 
-    <div class="field">
-      <bb-text-input label="Name" name="taxName" [(ngModel)]="form.taxName" required maxlength="50" />
-    </div>
+    <form (ngSubmit)="save()">
+      <div class="dialog-body">
+        @if (mode() === 'revise') {
+          <p class="note">
+            This creates a new version. The current one is closed the day before the date below,
+            so documents dated earlier keep the old rate.
+          </p>
+        }
+        @if (mode() === 'rename') {
+          <p class="note">
+            Display name only. This is a standard rate — its split and identity stay fixed, so
+            reports and GST returns are unaffected.
+          </p>
+        }
 
-    @if (mode() !== 'rename') {
-      <div class="row">
-        <div class="field">
-          <bb-number-input
- label="Total rate %"            name="totalRate"
-            
-            step="0.01"
-            min="0"
-            [(ngModel)]="form.totalRate"
-            (ngModelChange)="recalc()"
-            required
-          />
+        <div class="field" style="margin-bottom: 0.75rem;">
+          <bb-text-input label="Name" name="taxName" [(ngModel)]="form.taxName" required maxlength="50" />
         </div>
-        <div class="field">
-          <bb-number-input label="Cess %" name="cessRate"  step="0.01" min="0" [(ngModel)]="form.cessRate" />
-        </div>
+
+        @if (mode() !== 'rename') {
+          <div class="row" style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div class="field" style="flex: 1;">
+              <bb-number-input
+                label="Total rate %"
+                name="totalRate"
+                step="0.01"
+                min="0"
+                [(ngModel)]="form.totalRate"
+                (ngModelChange)="recalc()"
+                required
+              />
+            </div>
+            <div class="field" style="flex: 1;">
+              <bb-number-input label="Cess %" name="cessRate" step="0.01" min="0" [(ngModel)]="form.cessRate" />
+            </div>
+          </div>
+
+          <div class="split" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.75rem;">
+            <div><span>CGST: </span><strong>{{ half() }}%</strong></div>
+            <div><span>SGST: </span><strong>{{ half() }}%</strong></div>
+            <div><span>IGST: </span><strong>{{ form.totalRate || 0 }}%</strong></div>
+            <bb-info-tooltip text="Derived automatically: intra-state splits in half, inter-state carries the full rate."></bb-info-tooltip>
+          </div>
+
+          <div class="field" style="margin-bottom: 0.75rem;">
+            <bb-branch-date-input label="Effective from" name="effectiveFrom" [(ngModel)]="form.effectiveFrom" required />
+          </div>
+
+          <fieldset style="border: 1px solid var(--color-divider); border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem;">
+            <legend style="padding: 0 0.35rem; font-weight: 600; font-size: 0.8rem;">Applies to</legend>
+            <bb-checkbox text="Sales" hint="Output tax." name="isSales" [(ngModel)]="form.isSales" />
+            <bb-checkbox
+              text="Purchases"
+              hint="Input tax."
+              name="isPurchase"
+              [(ngModel)]="form.isPurchase"
+            />
+            <bb-info-tooltip text="At least one is required. Each direction gets its own CGST, SGST and IGST sub-accounts."></bb-info-tooltip>
+          </fieldset>
+        }
       </div>
 
-      <div class="split">
-        <div><span>CGST</span><strong>{{ half() }}</strong></div>
-        <div><span>SGST</span><strong>{{ half() }}</strong></div>
-        <div><span>IGST</span><strong>{{ form.totalRate || 0 }}</strong></div>
-        <bb-info-tooltip text="Derived automatically: intra-state splits in half, inter-state carries the full rate."></bb-info-tooltip>
-      </div>
+      <footer class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="mode.set(null)">Cancel</button>
+        <button class="btn btn-primary" type="submit" [disabled]="busy() || !valid()">Save</button>
+      </footer>
+    </form>
+  </div>
+}
 
-      <div class="field">
-        <bb-branch-date-input label="Effective from" name="effectiveFrom"  [(ngModel)]="form.effectiveFrom" required />
-      </div>
-
-      <fieldset>
-        <legend>Applies to</legend>
-        <bb-checkbox text="Sales" hint="Output tax." name="isSales" [(ngModel)]="form.isSales" />
-        <bb-checkbox
-          text="Purchases"
-          hint="Input tax."
-          name="isPurchase"
-          [(ngModel)]="form.isPurchase"
-        />
-        <bb-info-tooltip text="At least one is required. Each direction gets its own CGST, SGST and IGST sub-accounts."></bb-info-tooltip>
-      </fieldset>
-    }
-
-    <div class="editor-actions">
-      <button class="btn btn-primary" type="submit" [disabled]="busy() || !valid()">Save</button>
-      <button type="button" class="link" (click)="mode.set(null)">Cancel</button>
-    </div>
-  </form>
-} @else {
-  <section class="register-card">
+<section class="register-card">
     <bb-data-grid register fillHeight flush stackOnPhone label="Tax rates" [gridCode]="'TAX_MASTER'" [columns]="columns" [data]="visibleRates()">
       <ng-template bbCellTemplate="name" let-r>
         <div [class.superseded]="!r.isCurrent" [class.inactive]="!r.isActive">
@@ -117,7 +128,6 @@
       </ng-template>
     </bb-data-grid>
   </section>
-}
 
 
 

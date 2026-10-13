@@ -1,6 +1,9 @@
 <header class="page-head">
   <h1>Branches</h1>
   <div class="head-actions">
+    @if (!canAddBranch()) {
+      <span class="badge trial" style="margin-right: 8px;">Paid feature</span>
+    }
     <button class="btn btn-primary" type="button" (click)="startAdd()" [disabled]="busy()">+ Add branch</button>
   </div>
 </header>

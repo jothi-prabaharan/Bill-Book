@@ -80,7 +80,10 @@ type FormModel = Pick<
     RegisterHeaderComponent,
     StatusTabsComponent,
   ],
-  host: { class: 'register-page' },
+  host: {
+    class: 'register-page',
+    '(document:keydown.escape)': 'onEscape()',
+  },
   templateUrl: './payment-terms.page.html',
   styleUrl: './payment-terms.page.scss',
 })
@@ -159,6 +162,12 @@ export class PaymentTermsPage implements OnInit {
       isActive: row.isActive,
     };
     this.formOpen.set(true);
+  }
+
+  onEscape(): void {
+    if (this.formOpen()) {
+      this.formOpen.set(false);
+    }
   }
 
   onTermTypeChange(): void {

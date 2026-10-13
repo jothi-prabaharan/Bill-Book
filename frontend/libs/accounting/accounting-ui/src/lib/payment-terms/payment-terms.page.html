@@ -63,8 +63,12 @@
 </section>
 
 @if (formOpen()) {
-  <div class="sheet">
-    <h2>{{ editing() === null ? 'New payment term' : 'Edit payment term' }}</h2>
+  <div class="backdrop" aria-hidden="true" (click)="formOpen.set(false)"></div>
+  <div class="dialog dialog-wide" role="dialog" aria-labelledby="term-dialog-title">
+    <header class="dialog-header">
+      <h2 id="term-dialog-title">{{ editing() === null ? 'New payment term' : 'Edit payment term' }}</h2>
+      <button type="button" class="link close-btn" (click)="formOpen.set(false)" aria-label="Close dialog">✕</button>
+    </header>
 
     @if (editingIsSystem()) {
       <p class="note">
@@ -73,69 +77,71 @@
       </p>
     }
 
-    <div class="fields">
-      <div class="field">
-        <bb-text-input label="Name"  [(ngModel)]="form.termName" maxlength="50" />
-      </div>
+    <div class="dialog-body">
+      <div class="fields">
+        <div class="field">
+          <bb-text-input label="Name" [(ngModel)]="form.termName" maxlength="50" />
+        </div>
 
-      <div class="field">
-        <bb-select
-          label="Due date rule"
-          placeholder=""
-          [options]="termTypeOptions"
-          [disabled]="editingIsSystem()"
-          [(ngModel)]="form.termType"
-          (ngModelChange)="onTermTypeChange()"
+        <div class="field">
+          <bb-select
+            label="Due date rule"
+            placeholder=""
+            [options]="termTypeOptions"
+            [disabled]="editingIsSystem()"
+            [(ngModel)]="form.termType"
+            (ngModelChange)="onTermTypeChange()"
+          />
+        </div>
+
+        @if (form.termType === 'Net' || form.termType === 'EndOfMonth') {
+          <div class="field">
+            <bb-number-input label="Days" [(ngModel)]="form.dueDays" min="0" max="365" [disabled]="editingIsSystem()" />
+          </div>
+        }
+
+        @if (form.termType === 'DayOfNextMonth') {
+          <div class="field">
+            <bb-number-input label="Day of month" hint="A day past the end of a short month falls on its last day." [(ngModel)]="form.dueDayOfMonth" min="1" max="31" [disabled]="editingIsSystem()" />
+          </div>
+        }
+
+        <div class="field">
+          <bb-number-input
+            label="Early-payment discount %"
+            [(ngModel)]="form.discountPercent"
+            min="0"
+            max="100"
+            step="0.01"
+            [disabled]="editingIsSystem()"
+          />
+        </div>
+
+        <div class="field">
+          <bb-number-input label="Paid within (days)" hint="Must not run past the due date, or it could never be earned." [(ngModel)]="form.discountDays" min="0" max="365" [disabled]="editingIsSystem()" />
+        </div>
+
+        <bb-checkbox
+          text="Available on sales documents"
+          [(ngModel)]="form.isSales"
+        />
+
+        <bb-checkbox
+          text="Available on purchase documents"
+          [(ngModel)]="form.isPurchase"
+        />
+
+        <bb-checkbox
+          text="Active"
+          [(ngModel)]="form.isActive"
         />
       </div>
-
-      @if (form.termType === 'Net' || form.termType === 'EndOfMonth') {
-        <div class="field">
-          <bb-number-input label="Days"  [(ngModel)]="form.dueDays" min="0" max="365" [disabled]="editingIsSystem()" />
-        </div>
-      }
-
-      @if (form.termType === 'DayOfNextMonth') {
-        <div class="field">
-          <bb-number-input label="Day of month" hint="A day past the end of a short month falls on its last day."  [(ngModel)]="form.dueDayOfMonth" min="1" max="31" [disabled]="editingIsSystem()" />
-        </div>
-      }
-
-      <div class="field">
-        <bb-number-input
- label="Early-payment discount %"          
-          [(ngModel)]="form.discountPercent"
-          min="0"
-          max="100"
-          step="0.01"
-          [disabled]="editingIsSystem()"
-        />
-      </div>
-
-      <div class="field">
-        <bb-number-input label="Paid within (days)" hint="Must not run past the due date, or it could never be earned."  [(ngModel)]="form.discountDays" min="0" max="365" [disabled]="editingIsSystem()" />
-      </div>
-
-      <bb-checkbox
-        text="Available on sales documents"
-        [(ngModel)]="form.isSales"
-      />
-
-      <bb-checkbox
-        text="Available on purchase documents"
-        [(ngModel)]="form.isPurchase"
-      />
-
-      <bb-checkbox
-        text="Active"
-        [(ngModel)]="form.isActive"
-      />
     </div>
 
-    <div class="sheet-actions">
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="formOpen.set(false)" [disabled]="busy()">Cancel</button>
       <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.termName">Save</button>
-      <button type="button" class="link" (click)="formOpen.set(false)">Cancel</button>
-    </div>
+    </footer>
   </div>
 }
 

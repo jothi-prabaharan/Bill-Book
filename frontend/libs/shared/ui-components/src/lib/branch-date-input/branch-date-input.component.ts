@@ -112,6 +112,10 @@ export class BranchDateInputComponent extends BbControlBase<string | null> {
 
   protected readonly isInvalid = computed(() => this.shownError() !== '');
 
+  protected readonly isInteractive = computed(
+    () => !this.effectiveDisabled() && !this.readonly(),
+  );
+
   protected readonly describedByIds = computed<string | null>(() => {
     if (this.shownError()) {
       return this.errorId();
@@ -161,12 +165,19 @@ export class BranchDateInputComponent extends BbControlBase<string | null> {
     this.problem.set('');
   }
 
+  protected onInputClick(): void {
+    if (this.isInteractive()) {
+      this.toggleCalendar();
+    }
+  }
+
   protected onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.commit();
-    } else if (event.key === 'ArrowDown' && event.altKey) {
+    if (!this.isInteractive()) {
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
       event.preventDefault();
-      this.openCalendar();
+      this.toggleCalendar();
     }
   }
 
@@ -211,6 +222,9 @@ export class BranchDateInputComponent extends BbControlBase<string | null> {
   }
 
   protected toggleCalendar(): void {
+    if (!this.isInteractive()) {
+      return;
+    }
     if (this.open()) {
       this.closeCalendar(true);
     } else {
@@ -219,7 +233,7 @@ export class BranchDateInputComponent extends BbControlBase<string | null> {
   }
 
   protected openCalendar(): void {
-    if (this.effectiveDisabled() || this.readonly()) {
+    if (!this.isInteractive()) {
       return;
     }
 
@@ -232,7 +246,7 @@ export class BranchDateInputComponent extends BbControlBase<string | null> {
   protected closeCalendar(returnFocus: boolean): void {
     this.open.set(false);
     if (returnFocus) {
-      setTimeout(() => this.host.nativeElement.querySelector<HTMLButtonElement>('.bb-bdate__toggle')?.focus());
+      setTimeout(() => this.host.nativeElement.querySelector<HTMLInputElement>('.bb-bdate__field')?.focus());
     }
   }
 

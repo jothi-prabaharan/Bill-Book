@@ -2152,3 +2152,89 @@
     }
   }
 }
+
+/* ==========================================================================
+   Trial Banner Section & CTA Enhancements
+   ========================================================================== */
+.trial-banner-section {
+  background: linear-gradient(135deg, var(--color-ink) 0%, #1a202c 100%);
+  color: #ffffff;
+  padding: 64px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  .trial-banner-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 28px;
+
+    @media (min-width: 860px) {
+      flex-direction: row;
+      justify-content: space-between;
+      text-align: left;
+    }
+  }
+
+  .trial-banner-content {
+    max-width: 650px;
+
+    .trial-banner-kicker {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent-400, #f6ad55);
+      margin-bottom: 8px;
+    }
+
+    .trial-banner-title {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 12px;
+      color: #ffffff;
+    }
+
+    .trial-banner-text {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+      margin: 0;
+    }
+  }
+
+  .trial-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+
+    .trial-cta-glow {
+      box-shadow: 0 0 24px rgba(224, 86, 36, 0.45);
+      font-weight: 700;
+
+      &:hover {
+        box-shadow: 0 0 32px rgba(224, 86, 36, 0.7);
+      }
+    }
+  }
+}
+
+.trial-header-btn {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pulse-trial-btn {
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(224, 86, 36, 0.35);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(224, 86, 36, 0.5);
+  }
+}

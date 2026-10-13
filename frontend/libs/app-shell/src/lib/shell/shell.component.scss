@@ -51,7 +51,6 @@
 }
 
 .shell-content-cell {
-  transform: translateZ(0); /* Create containing block for popups */
   grid-column: 3;
   grid-row: 3;
   min-height: 0;

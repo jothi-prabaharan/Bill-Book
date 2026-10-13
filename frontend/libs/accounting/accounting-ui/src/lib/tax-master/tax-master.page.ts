@@ -69,11 +69,19 @@ function rateStatus(rate: TaxRate): string {
     RegisterHeaderComponent,
     StatusTabsComponent,
   ],
-  host: { class: 'register-page' },
+  host: {
+    class: 'register-page',
+    '(document:keydown.escape)': 'onEscape()',
+  },
   templateUrl: './tax-master.page.html',
   styleUrl: './tax-master.page.scss',
 })
 export class TaxMasterPage implements OnInit {
+  onEscape(): void {
+    if (this.mode()) {
+      this.mode.set(null);
+    }
+  }
   columns: ColumnDef[] = [
     { field: 'name', header: 'Name' },
     { field: 'total', header: 'Total' },

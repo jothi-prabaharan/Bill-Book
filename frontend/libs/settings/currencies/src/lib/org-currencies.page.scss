@@ -1,7 +1,75 @@
 .page-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .head-actions { display: flex; align-items: center; gap: 1rem; }
 .inline { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; }
-.add-row { display: flex; gap: .5rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-neutral-900, #14161e) 45%, transparent);
+  backdrop-filter: blur(1.5px);
+  z-index: var(--z-modal, 1050);
+}
+
+.dialog {
+  position: fixed;
+  z-index: calc(var(--z-modal, 1050) + 1);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(30rem, calc(100vw - 2rem));
+  max-height: min(85vh, 36rem);
+  overflow-y: auto;
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-lg, 10px);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-xl, 0 16px 48px rgb(0 0 0 / 25%));
+  border: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-divider);
+    padding-bottom: 0.75rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+    }
+
+    .close-btn {
+      font-size: 1rem;
+      color: var(--color-slate-light);
+      cursor: pointer;
+      &:hover { color: var(--color-ink); }
+    }
+  }
+
+  .dialog-body {
+    padding: 0.75rem 0;
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-slate-dark);
+      margin-bottom: 0.35rem;
+    }
+  }
+
+  .dialog-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2, 8px);
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-divider);
+  }
+}
 .grid { width: 100%; border-collapse: collapse; margin-top: 1rem; }
 .grid th, .grid td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(--color-divider); }
 .grid tr.inactive { opacity: .55; }

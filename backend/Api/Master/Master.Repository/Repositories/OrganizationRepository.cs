@@ -122,12 +122,22 @@ public sealed class OrganizationRepository
 
         int allowed = licence?.MaxOrganizations ?? 0;
 
+        var customer = await _db.Customers
+            .Where(c => c.CustomerId == customerId)
+            .Select(c => new { c.Kind, c.PlanTier })
+            .FirstOrDefaultAsync(ct);
+
         // An Internal or Demo customer is not billed, so it has no branch cap
         // and its branches carry no expiry of their own (D-44, TK-152).
-        bool unbilled = CustomerKindRepository.NeverLapses(await _db.Customers
-            .Where(c => c.CustomerId == customerId)
-            .Select(c => c.Kind)
-            .FirstOrDefaultAsync(ct));
+        bool unbilled = CustomerKindRepository.NeverLapses(customer?.Kind ?? CustomerKind.Standard);
+        bool isPaidPlan = unbilled || (customer?.PlanTier != PlanTier.Trial);
+
+        // Adding additional branches is strictly a paid feature:
+        if (existing >= 1 && !isPaidPlan)
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.PaidPlanRequired, null, []);
+        }
 
         // Beyond the licence, a branch is not refused — it is created on its own
         // trial. A business opening a second counter should be able to set it up

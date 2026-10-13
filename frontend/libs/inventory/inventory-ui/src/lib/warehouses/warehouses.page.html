@@ -54,58 +54,64 @@
 </section>
 
 @if (editingId() !== null) {
-  <div class="sheet">
-    <h2>{{ editingId() === 0 ? 'New warehouse' : 'Edit warehouse' }}</h2>
-    <div class="fields">
-      <div class="field">
-        <bb-text-input label="Name"  [(ngModel)]="form.warehouseName" maxlength="100" />
-      </div>
-      <div class="field">
-        <bb-text-input label="Code" hint="Blank takes the next code from the numbering series."  [(ngModel)]="form.warehouseCode" maxlength="20" [disabled]="editingId() !== 0" />
-      </div>
-      <div class="field">
-        <bb-select
-          label="Type"
-          placeholder=""
-          [options]="warehouseTypeOptions"
-          [(ngModel)]="form.warehouseType"
+  <div class="backdrop" aria-hidden="true" (click)="editingId.set(null)"></div>
+  <div class="dialog dialog-wide" role="dialog" aria-labelledby="wh-dialog-title">
+    <header class="dialog-header">
+      <h2 id="wh-dialog-title">{{ editingId() === 0 ? 'New warehouse' : 'Edit warehouse' }}</h2>
+      <button type="button" class="link close-btn" (click)="editingId.set(null)" aria-label="Close dialog">✕</button>
+    </header>
+    <div class="dialog-body">
+      <div class="fields">
+        <div class="field">
+          <bb-text-input label="Name" [(ngModel)]="form.warehouseName" maxlength="100" />
+        </div>
+        <div class="field">
+          <bb-text-input label="Code" hint="Blank takes the next code from the numbering series." [(ngModel)]="form.warehouseCode" maxlength="20" [disabled]="editingId() !== 0" />
+        </div>
+        <div class="field">
+          <bb-select
+            label="Type"
+            placeholder=""
+            [options]="warehouseTypeOptions"
+            [(ngModel)]="form.warehouseType"
+          />
+        </div>
+        <div class="field">
+          <bb-select
+            label="Storage"
+            placeholder=""
+            [options]="storageTypeOptions"
+            [(ngModel)]="form.storageType"
+          />
+        </div>
+        <div class="field wide">
+          <bb-text-input label="Address line 1" [(ngModel)]="form.addressLine1" maxlength="200" />
+        </div>
+        <div class="field">
+          <bb-text-input label="City" [(ngModel)]="form.city" maxlength="100" />
+        </div>
+        <div class="field">
+          <bb-text-input label="Postal code" [(ngModel)]="form.postalCode" maxlength="10" />
+        </div>
+        <div class="field">
+          <bb-text-input label="GSTIN" hint="A warehouse in another state carries its own registration." [(ngModel)]="form.gstin" maxlength="15" />
+        </div>
+        <div class="field">
+          <bb-text-input label="Contact person" [(ngModel)]="form.contactPersonName" maxlength="100" />
+        </div>
+        <div class="field">
+          <bb-text-input label="Mobile" [(ngModel)]="form.mobileNumber" maxlength="20" />
+        </div>
+        <bb-checkbox
+          text="Active"
+          [(ngModel)]="form.isActive"
         />
       </div>
-      <div class="field">
-        <bb-select
-          label="Storage"
-          placeholder=""
-          [options]="storageTypeOptions"
-          [(ngModel)]="form.storageType"
-        />
-      </div>
-      <div class="field wide">
-        <bb-text-input label="Address line 1"  [(ngModel)]="form.addressLine1" maxlength="200" />
-      </div>
-      <div class="field">
-        <bb-text-input label="City"  [(ngModel)]="form.city" maxlength="100" />
-      </div>
-      <div class="field">
-        <bb-text-input label="Postal code"  [(ngModel)]="form.postalCode" maxlength="10" />
-      </div>
-      <div class="field">
-        <bb-text-input label="GSTIN" hint="A warehouse in another state carries its own registration."  [(ngModel)]="form.gstin" maxlength="15" />
-      </div>
-      <div class="field">
-        <bb-text-input label="Contact person"  [(ngModel)]="form.contactPersonName" maxlength="100" />
-      </div>
-      <div class="field">
-        <bb-text-input label="Mobile"  [(ngModel)]="form.mobileNumber" maxlength="20" />
-      </div>
-      <bb-checkbox
-        text="Active"
-        [(ngModel)]="form.isActive"
-      />
     </div>
-    <div class="sheet-actions">
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="editingId.set(null)" [disabled]="busy()">Cancel</button>
       <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.warehouseName">Save</button>
-      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
-    </div>
+    </footer>
   </div>
 }
 

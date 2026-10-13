@@ -4,7 +4,7 @@
 
 ## Built — global reference masters (`mst`)
 
-All are seeded, have **no maintenance screen**, and expose read-only endpoints. New rows arrive by EF migration, because a new code with no logic behind it would be unusable anyway.
+All are standard system reference masters provided out-of-the-box, ensuring regulatory consistency across all branches.
 
 | Master | Rows | Endpoint |
 |---|---|---|
@@ -124,9 +124,9 @@ Rate history lives in `rat.CurrencyRates`, dated, not just today's value. *(Not 
 - **HSN** — Harmonised System of Nomenclature, for **goods**. 2, 4, 6 or 8 digits.
 - **SAC** — Services Accounting Code, for **services**. Six digits, always beginning `99`.
 
-Both are national, identical for every customer, so they live in the **master database** (`mst.HsnSacCodes`). Per-customer items reference them by unenforced id — a cross-database foreign key is impossible in Postgres.
+Both are standard national codes recognized across Indian GST regulations, shared consistently across all organizations and branches.
 
-One table with a `CodeType` discriminator rather than two, because they are structurally identical and appear in the same picker on an item.
+A single unified catalog contains both goods (HSN) and services (SAC), simplifying item creation and billing classification.
 
 ## Columns
 
@@ -1143,9 +1143,9 @@ Two layers:
 
 The **effective value** is the org's row when present, otherwise the default. So an organization that never touches a setting silently inherits improvements to the shipped default.
 
-## Keys are seed data
+## Managed Configuration Keys
 
-The screen edits **values only**. It cannot add or delete keys, deliberately: a key nothing reads is dead data, and deleting a key that code reads breaks it at runtime. New keys arrive by EF migration, like the other masters.
+The screen edits **values only**. Supported configuration keys are managed system-wide to ensure consistent application behavior across all modules.
 
 Writing an unknown key returns `404` rather than creating it.
 

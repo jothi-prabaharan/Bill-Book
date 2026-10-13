@@ -51,6 +51,9 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   templateUrl: './api-clients.list.html',
   styleUrl: './api-clients.list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown.escape)': 'onEscape()',
+  },
 })
 export class ApiClientsListComponent implements OnInit {
   protected readonly clientsColumns: ColumnDef[] = [
@@ -66,11 +69,25 @@ export class ApiClientsListComponent implements OnInit {
 
   readonly clients = signal<ApiClientRow[]>([]);
   readonly roles = signal<ApiClientRole[]>([]);
+  readonly creating = signal(false);
   readonly newClientName = signal('');
   readonly newRoleId = signal<number | null>(null);
   readonly generatedKey = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly busy = signal(false);
+
+  openCreate(): void {
+    this.creating.set(true);
+    this.newClientName.set('');
+    this.newRoleId.set(null);
+    this.error.set(null);
+  }
+
+  onEscape(): void {
+    if (this.creating()) {
+      this.creating.set(false);
+    }
+  }
 
   readonly roleOptions = computed<BbSelectOption<number>[]>(() =>
     this.roles().map((r) => ({ value: r.roleId, label: r.isSystemRole ? `${r.displayName} (standard)` : r.displayName })),
@@ -108,6 +125,7 @@ export class ApiClientsListComponent implements OnInit {
       this.generatedKey.set(created.apiKey);
       this.newClientName.set('');
       this.newRoleId.set(null);
+      this.creating.set(false);
     });
   }
 

@@ -257,6 +257,10 @@ public sealed class OrganizationsController : ControllerBase
             {
                 Message = "One or more requested add-ons are not allowed for this business type.",
             }),
+            SaveOrganizationOutcome.PaidPlanRequired => StatusCode(StatusCodes.Status403Forbidden, new MessageResponse
+            {
+                Message = "Adding additional branches is a paid feature. Please upgrade your subscription to add more branches.",
+            }),
             SaveOrganizationOutcome.CreatedOnTrial => NoContent(),
 
             _ => StatusCode(StatusCodes.Status500InternalServerError),

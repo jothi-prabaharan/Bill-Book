@@ -5,19 +5,40 @@
 
 .bb-bdate {
   position: relative;
-  display: flex;
-  align-items: stretch;
-  gap: var(--space-1, 4px);
+  display: block;
+  width: 100%;
 }
 
 .bb-bdate__field {
-  flex: 1 1 auto;
-  min-width: 0;
+  width: 100%;
   box-sizing: border-box;
   font-family: var(--font-body, system-ui, sans-serif);
+  padding-right: 2.25rem;
+  user-select: none;
+  cursor: default;
+
+  &.bb-bdate__field--interactive {
+    cursor: pointer;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 }
 
-.bb-bdate__toggle,
+.bb-bdate__icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #667085);
+  pointer-events: none;
+}
+
 .bb-bdate__nav,
 .bb-bdate__close {
   display: inline-flex;

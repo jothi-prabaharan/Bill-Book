@@ -64,3 +64,39 @@ public class AcceptInvitationRequest
     [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
     public string ConfirmPassword { get; set; } = null!;
 }
+
+public class UserProfileDto
+{
+    public Guid UserId { get; set; }
+
+    public string Email { get; set; } = null!;
+
+    public string DisplayName { get; set; } = null!;
+
+    public string? MobileNumber { get; set; }
+
+    public string ThemePreference { get; set; } = "System";
+
+    public string? RoleName { get; set; }
+
+    public DateTimeOffset? LastLoginAt { get; set; }
+}
+
+public class UpdateUserProfileRequest
+{
+    [Required(ErrorMessage = "Display name is required.")]
+    [MaxLength(200, ErrorMessage = "Display name cannot exceed 200 characters.")]
+    public string DisplayName { get; set; } = null!;
+
+    [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
+    public string? MobileNumber { get; set; }
+
+    [MaxLength(50, ErrorMessage = "Theme preference cannot exceed 50 characters.")]
+    public string? ThemePreference { get; set; }
+
+    [MinLength(8, ErrorMessage = "New password must be at least 8 characters.")]
+    public string? NewPassword { get; set; }
+
+    public string? CurrentPassword { get; set; }
+}
+

@@ -245,7 +245,7 @@
         <div class="cf-address">
           <div class="cf-grid cf-grid-4">
             <bb-text-input label="Account holder" [name]="'holder' + i" maxlength="100" [(ngModel)]="bank.accountHolderName" [id]="'bankHolder_' + i" [error]="errors()['bankHolder_' + i] || ''" (ngModelChange)="clearError('bankHolder_' + i)" />
-            <bb-text-input label="Bank" [name]="'bank' + i" maxlength="100" [(ngModel)]="bank.bankName" [id]="'bankName_' + i" [error]="errors()['bankName_' + i] || ''" (ngModelChange)="clearError('bankName_' + i)" />
+            <bb-select label="Bank" [name]="'bank' + i" placeholder="Select bank" [options]="bankSelectOptions(bank.bankName)" [(ngModel)]="bank.bankName" [id]="'bankName_' + i" [error]="errors()['bankName_' + i] || ''" (ngModelChange)="clearError('bankName_' + i)" />
             <bb-text-input label="Account number" [name]="'acct' + i" maxlength="30" [(ngModel)]="bank.accountNumber" [id]="'bankAccount_' + i" [error]="errors()['bankAccount_' + i] || ''" (ngModelChange)="clearError('bankAccount_' + i)" />
             <bb-select label="Account type" [name]="'kind' + i" placeholder="" [options]="bankAccountKindOptions" [(ngModel)]="bank.accountKind" />
             <bb-text-input label="IFSC" [name]="'ifsc' + i" maxlength="11" class="uppercase" [(ngModel)]="bank.ifsc" />

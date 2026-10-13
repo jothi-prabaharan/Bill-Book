@@ -16,81 +16,90 @@
 </div>
 
 @if (editing()) {
-  <form class="editor" (ngSubmit)="save()">
-    <h2>{{ editingId === null ? 'New field on ' + kindLabel(form.entityKind) : form.label }}</h2>
-    <div class="row">
-      <div class="field grow">
-        <bb-text-input label="Label" name="label" [(ngModel)]="form.label" (ngModelChange)="onLabel()" maxlength="80" required />
-      </div>
-      <div class="field grow">
-        <bb-text-input
-          label="Key"
-          name="key"
-          [hint]="editingId === null ? 'Stored values are filed under it, so it cannot change later.' : 'Fixed.'"
-          [(ngModel)]="form.key"
-          (ngModelChange)="onKey()"
-          maxlength="40"
-          [disabled]="editingId !== null"
-          required
-        />
-      </div>
-      <div class="field">
-        <bb-select label="Type" name="dataType" [options]="typeOptions" [clearable]="false" [(ngModel)]="form.dataType" [disabled]="editingId !== null" />
-      </div>
-    </div>
+  <div class="backdrop" aria-hidden="true" (click)="cancel()"></div>
+  <div class="dialog dialog-wide" role="dialog" aria-labelledby="custom-field-dialog-title">
+    <header class="dialog-header">
+      <h2 id="custom-field-dialog-title">{{ editingId === null ? 'New field on ' + kindLabel(form.entityKind) : form.label }}</h2>
+      <button type="button" class="link close-btn" (click)="cancel()" aria-label="Close dialog">✕</button>
+    </header>
 
-    @if (hasOptions(form.dataType)) {
-      <fieldset class="options">
-        <legend>Options</legend>
-        @for (option of form.options; track $index; let i = $index) {
-          <div class="option">
-            <bb-text-input ariaLabel="Option value" placeholder="value" [name]="'ov' + i" [(ngModel)]="option.value" [disabled]="option.saved" [maxlength]="60" />
-            <bb-text-input ariaLabel="Option label" placeholder="Label" [name]="'ol' + i" [(ngModel)]="option.label" [maxlength]="80" />
-            <bb-checkbox class="check" text="Active" [name]="'oa' + i" [(ngModel)]="option.active" />
-            @if (!option.saved) {
-              <button type="button" class="link" (click)="removeOption(i)" aria-label="Remove option">×</button>
-            }
+    <form class="editor" (ngSubmit)="save()">
+      <div class="dialog-body">
+        <div class="row" style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
+          <div class="field grow" style="flex: 1;">
+            <bb-text-input label="Label" name="label" [(ngModel)]="form.label" (ngModelChange)="onLabel()" maxlength="80" required />
           </div>
-        }
-        <button type="button" class="btn btn-secondary" (click)="addOption()">Add option</button>
-        <small class="muted">A saved option cannot be removed, because records may hold it. Deactivate it instead.</small>
-      </fieldset>
-    }
-
-    <div class="row">
-      <div class="field grow">
-        <bb-text-input
-          label="Default value"
-          name="defaultValue"
-          [hint]="form.dataType === 'MultiSelect' ? 'Option values separated by commas.' : form.dataType === 'Boolean' ? 'true or false.' : 'Filled in on new records.'"
-          [(ngModel)]="form.defaultValue"
-          maxlength="4000"
-        />
-      </div>
-      @if (isText(form.dataType)) {
-        <div class="field narrow">
-          <bb-number-input label="Maximum length" name="maxLength" [(ngModel)]="form.maxLength" />
+          <div class="field grow" style="flex: 1;">
+            <bb-text-input
+              label="Key"
+              name="key"
+              [hint]="editingId === null ? 'Stored values are filed under it, so it cannot change later.' : 'Fixed.'"
+              [(ngModel)]="form.key"
+              (ngModelChange)="onKey()"
+              maxlength="40"
+              [disabled]="editingId !== null"
+              required
+            />
+          </div>
+          <div class="field" style="width: 140px;">
+            <bb-select label="Type" name="dataType" [options]="typeOptions" [clearable]="false" [(ngModel)]="form.dataType" [disabled]="editingId !== null" />
+          </div>
         </div>
-      }
-      <div class="field narrow">
-        <bb-number-input label="Order" name="displayOrder" [(ngModel)]="form.displayOrder" />
+
+        @if (hasOptions(form.dataType)) {
+          <fieldset class="options" style="border: 1px solid var(--color-divider); border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem;">
+            <legend style="padding: 0 0.35rem; font-weight: 600; font-size: 0.8rem;">Options</legend>
+            @for (option of form.options; track $index; let i = $index) {
+              <div class="option" style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.35rem;">
+                <bb-text-input ariaLabel="Option value" placeholder="value" [name]="'ov' + i" [(ngModel)]="option.value" [disabled]="option.saved" [maxlength]="60" />
+                <bb-text-input ariaLabel="Option label" placeholder="Label" [name]="'ol' + i" [(ngModel)]="option.label" [maxlength]="80" />
+                <bb-checkbox class="check" text="Active" [name]="'oa' + i" [(ngModel)]="option.active" />
+                @if (!option.saved) {
+                  <button type="button" class="link" (click)="removeOption(i)" aria-label="Remove option">×</button>
+                }
+              </div>
+            }
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addOption()">Add option</button>
+            <small class="muted" style="display: block; margin-top: 0.35rem;">A saved option cannot be removed, because records may hold it. Deactivate it instead.</small>
+          </fieldset>
+        }
+
+        <div class="row" style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem;">
+          <div class="field grow" style="flex: 1;">
+            <bb-text-input
+              label="Default value"
+              name="defaultValue"
+              [hint]="form.dataType === 'MultiSelect' ? 'Option values separated by commas.' : form.dataType === 'Boolean' ? 'true or false.' : 'Filled in on new records.'"
+              [(ngModel)]="form.defaultValue"
+              maxlength="4000"
+            />
+          </div>
+          @if (isText(form.dataType)) {
+            <div class="field narrow" style="width: 130px;">
+              <bb-number-input label="Maximum length" name="maxLength" [(ngModel)]="form.maxLength" />
+            </div>
+          }
+          <div class="field narrow" style="width: 100px;">
+            <bb-number-input label="Order" name="displayOrder" [(ngModel)]="form.displayOrder" />
+          </div>
+        </div>
+
+        <div class="flags" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; margin-bottom: 0.75rem;">
+          <bb-checkbox text="Required on new records" name="isRequired" [(ngModel)]="form.isRequired" />
+          <bb-checkbox text="Show in the list" name="showInList" [(ngModel)]="form.showInList" />
+          <bb-checkbox text="Offer on print templates" name="showOnPrint" [(ngModel)]="form.showOnPrint" />
+          <bb-checkbox text="Searchable" name="isSearchable" [(ngModel)]="form.isSearchable" />
+          <bb-checkbox text="Carry forward to the next document" name="carryForward" [(ngModel)]="form.carryForward" />
+          <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
+        </div>
       </div>
-    </div>
 
-    <div class="flags">
-      <bb-checkbox text="Required on new records" name="isRequired" [(ngModel)]="form.isRequired" />
-      <bb-checkbox text="Show in the list" name="showInList" [(ngModel)]="form.showInList" />
-      <bb-checkbox text="Offer on print templates" name="showOnPrint" [(ngModel)]="form.showOnPrint" />
-      <bb-checkbox text="Searchable" name="isSearchable" [(ngModel)]="form.isSearchable" />
-      <bb-checkbox text="Carry forward to the next document" name="carryForward" [(ngModel)]="form.carryForward" />
-      <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
-    </div>
-
-    <div class="actions">
-      <button class="btn btn-primary" type="submit" [disabled]="busy() || !canEdit()">Save</button>
-      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
-    </div>
-  </form>
+      <footer class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        <button class="btn btn-primary" type="submit" [disabled]="busy() || !canEdit()">Save</button>
+      </footer>
+    </form>
+  </div>
 }
 
 @if (fields().length === 0) {

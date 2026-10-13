@@ -4,6 +4,7 @@ using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Tenancy;
 
@@ -31,12 +32,18 @@ public sealed class MenuRepository
     private readonly AdminDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly RestaurantSettingsRepository? _restaurant;
+    private readonly IMemoryCache? _cache;
 
-    public MenuRepository(AdminDbContext db, ITenantContext tenant, RestaurantSettingsRepository? restaurant = null)
+    public MenuRepository(
+        AdminDbContext db,
+        ITenantContext tenant,
+        RestaurantSettingsRepository? restaurant = null,
+        IMemoryCache? cache = null)
     {
         _db = db;
         _tenant = tenant;
         _restaurant = restaurant;
+        _cache = cache;
     }
 
     /// <summary>
@@ -78,10 +85,17 @@ public sealed class MenuRepository
             ? _tenant.Permissions
             : new HashSet<string>();
 
+        Guid? orgId = _tenant.OrgId;
+        string cacheKey = $"user_menu_{_tenant.CustomerId}_{orgId}_{string.Join(",", permissions.OrderBy(p => p))}";
+
+        if (_cache is not null && _cache.TryGetValue(cacheKey, out IReadOnlyList<MenuView>? cached) && cached is not null)
+        {
+            return cached;
+        }
+
         // The branch's trade narrows the menu (D-10, TK-30): a screen that
         // belongs to another trade is not offered. Retail when unknown, which
         // shows everything — the same default the branch itself has.
-        Guid? orgId = _tenant.OrgId;
         var orgScope = orgId is null
             ? null
             : await _db.Organizations.AsNoTracking()
@@ -202,6 +216,11 @@ public sealed class MenuRepository
                 IsSearchable = rail.IsSearchable,
                 Groups = groups,
             });
+        }
+
+        if (_cache is not null)
+        {
+            _cache.Set(cacheKey, menus, TimeSpan.FromMinutes(10));
         }
 
         return menus;

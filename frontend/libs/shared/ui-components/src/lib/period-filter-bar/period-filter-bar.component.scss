@@ -54,33 +54,10 @@
     width: 118px;
   }
 
-  /* The calendar sits inside the field, and only while the dates can be
-     changed: under a preset the field is a read-out, and a button that does
-     nothing is noise. */
-  ::ng-deep .bb-bdate__toggle {
-    position: absolute;
-    top: 50%;
-    right: 3px;
-    transform: translateY(-50%);
-    min-width: 24px;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-
-    svg {
-      width: 15px;
-      height: 15px;
-    }
-  }
-
-  ::ng-deep .bb-bdate__toggle:disabled {
-    display: none;
-  }
-
-  ::ng-deep .bb-bdate__field:not(:disabled) {
-    padding-right: 28px;
+  /* The calendar icon sits inside the field */
+  ::ng-deep .bb-bdate__icon svg {
+    width: 15px;
+    height: 15px;
   }
 
   /* The field sits inline with its label; the form-field's own spacing is for

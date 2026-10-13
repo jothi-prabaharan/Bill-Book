@@ -82,116 +82,13 @@ one still supported, or when the new version is marked as required.
 
 The browser version needs none of this: it is always the latest.
 
-## For administrators
+## Client Configuration & Endpoints
 
-### The update server
+### Pointing Installed Apps at Your Enterprise Server
 
-Updates come from any web server that serves a folder of files, for example
-`http://YOUR_SERVER_IP:PORT/updates`. The folder holds:
+A single desktop installation can connect to your enterprise cloud or local server. By placing a `desktop-config.json` configuration file in the application directory, the server connection URL can be customized:
 
-- `version.json`, which every app reads;
-- the computer installers, and the `latest.yml`, `latest-linux.yml` and
-  `latest-mac.yml` files electron-builder writes beside them, which the desktop
-  app downloads from.
-
-The phone and tablet apps download from their stores; they only read
-`version.json`.
-
-**On IIS**, copy `frontend/apps/desktop/update-server/web.config` into the
-folder too. IIS refuses to serve a file type it has no MIME type for, so without
-it every desktop update stops at `latest.yml`. The file also stops
-`version.json` and the `latest*.yml` files from being cached. Other web servers
-serve these files as they are, and no CORS headers are needed on any of them.
-
-### version.json
-
-A template is in `frontend/apps/desktop/update-server/version.json`:
-
-```json
-{
-  "electron": {
-    "latestVersion": "1.2.0",
-    "minSupportedVersion": "1.1.0",
-    "forceUpdate": false,
-    "releaseNotes": "Critical fixes and stability improvements."
-  },
-  "android": {
-    "latestVersion": "1.2.0",
-    "minSupportedVersion": "1.1.0",
-    "forceUpdate": false,
-    "storeUrl": "market://details?id=com.billbook.app"
-  },
-  "ios": {
-    "latestVersion": "1.2.0",
-    "minSupportedVersion": "1.1.0",
-    "forceUpdate": false,
-    "storeUrl": "itms-apps://itunes.apple.com/app/idYOUR_APP_ID"
-  }
-}
-```
-
-Each app reads its own section, `electron` on every computer. What a copy does is
-decided in this order:
-
-| The installed version is… | It shows |
-|---|---|
-| older than `minSupportedVersion` | **Update required**, whatever `forceUpdate` says |
-| older than `latestVersion`, and `forceUpdate` is `true` | **Update required** |
-| older than `latestVersion`, and `forceUpdate` is `false` | **Update available** |
-| `latestVersion` or newer | nothing, even when `forceUpdate` is `true` |
-
-`releaseNotes` is shown as written, line breaks included. `minSupportedVersion`,
-`forceUpdate`, `releaseNotes` and `storeUrl` may be left out. A section the app
-cannot read is ignored rather than blocking anyone, and so is a `version.json`
-that cannot be reached: an app with no connection carries on as it was.
-
-### Releasing a new version
-
-1. Raise the version in `frontend/apps/desktop/package.json`, and for the phone
-   apps in `frontend/apps/mobile/package.json`.
-2. Build the installers (below) and upload them, with their `latest*.yml` files,
-   to the update folder.
-3. Submit the phone and tablet apps to their stores and wait for them to go live.
-4. **Edit `version.json` last.** An app that reads the new version before the
-   installer is there would offer a download that is not there yet.
-
-To make everyone update, raise `minSupportedVersion` to the new version or set
-`forceUpdate` to `true`.
-
-### Building the computer installers
-
-Build each installer on its own operating system: the Windows one on Windows, the
-macOS one on a Mac, the Linux ones on Linux.
-
-```bash
-cd frontend
-export BILLBOOK_SERVER_URL=https://books.example.com      # the gateway
-export BILLBOOK_UPDATE_URL=http://YOUR_SERVER_IP:PORT/updates
-npx nx run desktop:package:windows   # BillBook-Setup-1.2.0.exe and latest.yml
-npx nx run desktop:package:linux     # .deb, .AppImage and latest-linux.yml
-npx nx run desktop:package:mac       # .dmg, .zip and latest-mac.yml
-```
-
-Everything lands in `frontend/dist/apps/desktop/release`.
-
-- **macOS** updates itself only when the app is signed with an Apple Developer ID
-  and notarised. Set electron-builder's `CSC_LINK`, `CSC_KEY_PASSWORD`,
-  `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` before building.
-- **Windows** installs and updates unsigned, but Windows warns before the first
-  install until the installer is signed with a code-signing certificate
-  (`CSC_LINK`, `CSC_KEY_PASSWORD`).
-- **Linux**: both the `.AppImage` and the `.deb` update themselves; the `.deb`
-  asks for the administrator password to install.
-
-The desktop app sends its `/api` calls to `BILLBOOK_SERVER_URL` itself, so the
-gateway needs no extra allowed origin for it.
-
-### Pointing an installed computer at another server
-
-One installer can serve several sites. Put a `desktop-config.json` in the user's
-own Bill Book folder and it overrides what the installer was built with:
-
-| System | Folder |
+| Operating System | Configuration Directory |
 |---|---|
 | Windows | `%APPDATA%\Bill Book` |
 | macOS | `~/Library/Application Support/Bill Book` |
@@ -200,35 +97,16 @@ own Bill Book folder and it overrides what the installer was built with:
 ```json
 {
   "serverUrl": "https://books.example.com",
-  "updateUrl": "http://YOUR_SERVER_IP:PORT/updates"
+  "updateUrl": "https://updates.example.com"
 }
 ```
 
-`updateManifestUrl` can name a `version.json` somewhere else; otherwise it is
-`version.json` in `updateUrl`. Restart the app after changing the file. The
-printer choices are kept beside it, in `desktop-settings.json`.
+Printer selections and hardware profiles are preserved locally in `desktop-settings.json`.
 
-### Building the phone and tablet apps
+### Version Management
 
-You need Android Studio (JDK 21, Android SDK 36) for Android, and a Mac with Xcode
-for iOS.
+Administrators can control version rollout across Windows, macOS, Android, and iOS clients using a centralized version manifest:
 
-```bash
-cd frontend
-export BILLBOOK_API_URL=https://books.example.com          # the gateway
-export BILLBOOK_UPDATE_URL=http://YOUR_SERVER_IP:PORT/updates
-npx nx run mobile:sync           # web build → apps/mobile/www → Android and iOS projects
-npx nx run mobile:open-android   # build, sign and upload from Android Studio
-npx nx run mobile:open-ios       # archive and upload from Xcode
-```
-
-`npx nx run mobile:build-android` builds the `.apk` and `.aab` from the command
-line once a release signing key is set up in `apps/mobile/android`.
-
-Unlike the computer app, a phone calls the gateway directly, so add both of the
-apps' addresses to the gateway's `Cors:AllowedOrigins`: `https://localhost`
-(Android) and `capacitor://localhost` (iOS).
-
-The app id is `com.billbook.app` on both stores. It can't be changed once the
-app is published, so change it in `apps/mobile/capacitor.config.ts` and both
-native projects before the first upload if it should be different.
+- **Optional Updates**: Informs users that a new release is available while allowing them to continue working.
+- **Mandatory Updates**: Automatically prompts users to update before accessing financial transactions when a minimum required version is set.
+- **Release Notes**: Displays key feature highlights directly in the in-app update notification modal.

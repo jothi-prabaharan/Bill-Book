@@ -49,6 +49,9 @@ interface MasterCurrency {
   ],
   templateUrl: './org-currencies.page.html',
   styleUrl: './org-currencies.page.scss',
+  host: {
+    '(document:keydown.escape)': 'onEscape()',
+  },
 })
 export class OrgCurrenciesPage implements OnInit {
 
@@ -100,10 +103,23 @@ export class OrgCurrenciesPage implements OnInit {
 
   async openAdd(): Promise<void> {
     this.selectedCurrencyId = 0;
+    this.error.set(null);
     this.adding.set(true);
     this.available.set(
       await this.get<MasterCurrency[]>(`/api/organizations/${this.orgId()}/currencies/available`),
     );
+  }
+
+  closeAdd(): void {
+    this.adding.set(false);
+    this.selectedCurrencyId = 0;
+    this.error.set(null);
+  }
+
+  onEscape(): void {
+    if (this.adding()) {
+      this.closeAdd();
+    }
   }
 
   async save(): Promise<void> {

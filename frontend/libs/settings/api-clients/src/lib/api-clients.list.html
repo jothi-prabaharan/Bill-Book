@@ -1,33 +1,52 @@
 <div class="api-clients">
-  <h2>API keys</h2>
+  <div class="page-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+    <h2 style="margin: 0;">API keys</h2>
+    <button class="btn btn-primary" type="button" (click)="openCreate()" [disabled]="busy()">+ Generate API key</button>
+  </div>
   <bb-info-tooltip text="An API key lets another system work with this branch. Each key acts as a role and can do exactly what that role's permissions allow. A change of role reaches a key within five minutes."></bb-info-tooltip>
 
   @if (error(); as failure) {
     <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
   }
 
-  <form class="create" (ngSubmit)="createClient()">
-    <bb-text-input
-      label="Integration name"
-      placeholder="E.g. Shopify POS Integration"
-      name="newClientName"
-      [ngModel]="newClientName()"
-      (ngModelChange)="newClientName.set($event)"
-    />
-    <bb-select
-      label="Acts as role"
-      name="newRoleId"
-      [options]="roleOptions()"
-      [ngModel]="newRoleId()"
-      (ngModelChange)="newRoleId.set($event)"
-    />
-    <div class="actions">
-      <button class="btn btn-primary" type="submit" [disabled]="busy()">Generate API key</button>
+  @if (creating()) {
+    <div class="backdrop" aria-hidden="true" (click)="creating.set(false)"></div>
+    <div class="dialog" role="dialog" aria-labelledby="generate-key-title">
+      <header class="dialog-header">
+        <h2 id="generate-key-title">Generate API key</h2>
+        <button type="button" class="link close-btn" (click)="creating.set(false)" aria-label="Close dialog">✕</button>
+      </header>
+      <form (ngSubmit)="createClient()">
+        <div class="dialog-body">
+          <div class="field" style="margin-bottom: 0.75rem;">
+            <bb-text-input
+              label="Integration name"
+              placeholder="E.g. Shopify POS Integration"
+              name="newClientName"
+              [ngModel]="newClientName()"
+              (ngModelChange)="newClientName.set($event)"
+            />
+          </div>
+          <div class="field">
+            <bb-select
+              label="Acts as role"
+              name="newRoleId"
+              [options]="roleOptions()"
+              [ngModel]="newRoleId()"
+              (ngModelChange)="newRoleId.set($event)"
+            />
+          </div>
+        </div>
+        <footer class="dialog-actions">
+          <button type="button" class="btn btn-secondary" (click)="creating.set(false)">Cancel</button>
+          <button class="btn btn-primary" type="submit" [disabled]="busy() || !newClientName().trim() || !newRoleId()">Generate API key</button>
+        </footer>
+      </form>
     </div>
-  </form>
+  }
 
   @if (generatedKey(); as key) {
-    <div class="success" role="status">
+    <div class="success" role="status" style="margin-bottom: 1rem;">
       <strong>Your new API key:</strong> <code>{{ key }}</code>
       <br />Copy it now. It will not be shown again.
     </div>

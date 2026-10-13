@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -2752,7 +2752,7 @@ namespace Master.Repository.Migrations.Admin
                     { 1008, 0, "Retail", false, "uot", null, null, 5, "ruler", true, false, null, null, "settings", "UOM types", 102, "/settings/unit-types", null, "Item" },
                     { 1009, 0, "Retail", false, "whs", null, null, 6, "warehouse", true, false, null, null, "inventory", "Warehouses", 102, "/inventory/warehouses", null, "Item" },
                     { 1010, 0, "Retail", false, "hsn", null, null, 7, "hash", true, false, null, null, "settings", "HSN and SAC codes", 102, "/settings/hsn-sac", null, "Item" },
-                    { 1011, 0, "Retail", false, "mtp", null, null, 8, "gem", true, false, null, null, "settings", "Metal purity", 102, "/settings/metal-purities", null, "Item" },
+                    { 1011, 0, "Jewellery", false, "mtp", null, null, 8, "gem", true, false, null, null, "settings", "Metal purity", 102, "/settings/metal-purities", null, "Item" },
                     { 1012, 0, "Retail", true, "por", null, null, 1, "clipboard-list", true, false, null, null, "purchase", "Purchase orders", 103, "/purchase/purchase-orders", "Purchase order", "Item" },
                     { 1013, 0, "Retail", true, "grn", null, null, 2, "package-check", true, false, null, null, "purchase", "Goods receipts", 103, "/purchase/goods-receipts", "Goods receipt", "Item" },
                     { 1014, 0, "Retail", true, "bil", null, null, 3, "receipt", true, false, null, null, "purchase", "Bills", 103, "/purchase/bills", "Bill", "Item" },
@@ -2894,7 +2894,8 @@ namespace Master.Repository.Migrations.Admin
                     { 1151, 0, "Restaurant", false, "rst-reports", null, null, 7, "bar-chart-3", true, true, null, null, "restaurant", "Reports", 124, "/restaurant/reports", null, "Item" },
                     { 1152, 0, "Restaurant", false, "pt-kot", null, null, 13, "printer", true, false, null, null, "settings", "Kitchen ticket", 117, "/settings/print-templates/KOT", null, "Item" },
                     { 1153, 8, null, false, "pos", null, null, 6, "monitor", true, false, null, null, "sales", "Point of sale", 104, "/pos", null, "Item" },
-                    { 1154, 0, "Restaurant", true, "rst-bookings", null, null, 8, "calendar-clock", true, true, null, null, "restaurant", "Bookings", 124, "/restaurant/bookings", "Booking", "Item" }
+                    { 1154, 0, "Restaurant", true, "rst-bookings", null, null, 8, "calendar-clock", true, true, null, null, "restaurant", "Bookings", 124, "/restaurant/bookings", "Booking", "Item" },
+                    { 1155, 0, null, true, "tkt", null, null, 10, "life-buoy", true, true, null, null, "support", "Support / Bug report", 114, "/settings/support", "Ticket", "Item" }
                 });
 
             migrationBuilder.InsertData(
@@ -3420,7 +3421,10 @@ namespace Master.Repository.Migrations.Admin
                     { 516, "approve", null, null, 1153, null, null, "sales", "sales.approve" },
                     { 517, "view", null, null, 1154, null, null, "restaurant", "restaurant.view" },
                     { 518, "create", null, null, 1154, null, null, "restaurant", "restaurant.create" },
-                    { 519, "edit", null, null, 1154, null, null, "restaurant", "restaurant.edit" }
+                    { 519, "edit", null, null, 1154, null, null, "restaurant", "restaurant.edit" },
+                    { 520, "view", null, null, 1155, null, null, "support", "support.view" },
+                    { 521, "create", null, null, 1155, null, null, "support", "support.create" },
+                    { 522, "edit", null, null, 1155, null, null, "support", "support.edit" }
                 });
 
             migrationBuilder.CreateIndex(

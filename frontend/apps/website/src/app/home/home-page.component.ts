@@ -346,6 +346,19 @@ export class HomePageComponent {
   // ---------------------------------------------------------------------------
   // Navigation & Plan Actions
   // ---------------------------------------------------------------------------
+  get appTrialUrl(): string {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      return 'http://localhost:4200/signup';
+    }
+    return '/signup';
+  }
+
+  navigateToTrial(): void {
+    if (typeof window !== 'undefined') {
+      window.location.href = this.appTrialUrl;
+    }
+  }
+
   scrollToSection(sectionId: string): void {
     const el = document.getElementById(sectionId);
     if (el) {

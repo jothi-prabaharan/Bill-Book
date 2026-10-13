@@ -11,20 +11,43 @@
 </header>
 
 @if (adding()) {
-  <div class="add-row">
-    <bb-select
-      ariaLabel="Currency to add"
-      placeholder="Select a currency…"
-      [options]="availableOptions()"
-      [(ngModel)]="selectedCurrencyId"
-    />
-    <button class="btn btn-primary" type="button" (click)="save()" [disabled]="!selectedCurrencyId || busy()">Save</button>
-    <button type="button" class="link" (click)="adding.set(false)">Cancel</button>
+  <div class="backdrop" aria-hidden="true" (click)="closeAdd()"></div>
+  <div class="dialog" role="dialog" aria-labelledby="add-currency-title">
+    <header>
+      <h2 id="add-currency-title">Add currency</h2>
+      <button type="button" class="link close-btn" (click)="closeAdd()" aria-label="Close dialog">✕</button>
+    </header>
+
+    @if (error(); as failure) {
+      <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+    }
+
+    <div class="dialog-body">
+      <div class="field">
+        <label for="currency-select" class="form-label">Currency</label>
+        <bb-select
+          id="currency-select"
+          ariaLabel="Currency to add"
+          placeholder="Select a currency…"
+          [options]="availableOptions()"
+          [(ngModel)]="selectedCurrencyId"
+        />
+      </div>
+    </div>
+
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeAdd()" [disabled]="busy()">Cancel</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="!selectedCurrencyId || busy()">
+        {{ busy() ? 'Adding…' : 'Add currency' }}
+      </button>
+    </footer>
   </div>
 }
 
 @if (error(); as failure) {
-  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+  @if (!adding()) {
+    <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+  }
 }
 
 <bb-data-grid fillHeight [gridCode]="'ORG_CURRENCIES'" [columns]="columns" [data]="rows()">

@@ -11,6 +11,25 @@ import {
   ShellScreenGroup,
 } from './shell-screens';
 
+const MENU_CACHE_KEY = 'bb_menu_cache';
+
+function getInitialMenu(): readonly MenuView[] {
+  if (typeof sessionStorage !== 'undefined') {
+    try {
+      const raw = sessionStorage.getItem(MENU_CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return [];
+}
+
 /** One step of the breadcrumb trail, as `crumbsFor` builds it from the tree. */
 export interface MenuCrumb {
   readonly label: string;
@@ -40,9 +59,9 @@ export interface MenuCrumb {
 @Injectable({ providedIn: 'root' })
 export class MenuService {
   private readonly http = inject(HttpClient);
+  private inFlightLoad: Promise<void> | null = null;
 
-
-  private readonly menus = signal<readonly MenuView[]>([]);
+  private readonly menus = signal<readonly MenuView[]>(getInitialMenu());
 
   /** True once a load has finished, whether it succeeded or fell back. */
   readonly loaded = signal(false);
@@ -124,20 +143,53 @@ export class MenuService {
    * Never rejects — a failure lands on the fallback and says so.
    */
   async load(): Promise<void> {
+    if (this.inFlightLoad) {
+      return this.inFlightLoad;
+    }
+    this.inFlightLoad = this.doLoad();
+    try {
+      await this.inFlightLoad;
+    } finally {
+      this.inFlightLoad = null;
+    }
+  }
+
+  private async doLoad(): Promise<void> {
     try {
       const menus = await firstValueFrom(
         this.http.get<MenuView[]>('/api/menu'),
       );
       if (!Array.isArray(menus) || menus.length === 0) {
-        this.fallback();
+        if (this.menus().length === 0) {
+          this.fallback();
+        }
         return;
       }
       this.menus.set(menus);
       this.usingFallback.set(false);
+      if (typeof sessionStorage !== 'undefined') {
+        try {
+          sessionStorage.setItem(MENU_CACHE_KEY, JSON.stringify(menus));
+        } catch {
+          // ignore storage error
+        }
+      }
     } catch {
-      this.fallback();
+      if (this.menus().length === 0) {
+        this.fallback();
+      }
     } finally {
       this.loaded.set(true);
+    }
+  }
+
+  clearCache(): void {
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.removeItem(MENU_CACHE_KEY);
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -351,6 +403,72 @@ export class MenuService {
     let subId = 0;
     const menus: MenuView[] = [...byGroup.entries()].map(([name, screens]) => {
       menuId += 1;
+      const isReports = name.toLowerCase() === 'reports';
+      const hasSubGroups = screens.some((s) => !!s.subGroup);
+
+      let groups: MenuGroupView[] = [];
+      if (screens.length > 1) {
+        if (hasSubGroups) {
+          const subGroupMap = new Map<string, ShellScreen[]>();
+          for (const screen of screens) {
+            const sgName = screen.subGroup ?? name;
+            if (!subGroupMap.has(sgName)) {
+              subGroupMap.set(sgName, []);
+            }
+            subGroupMap.get(sgName)!.push(screen);
+          }
+
+          groups = [...subGroupMap.entries()].map(([sgName, sList]) => {
+            menuId += 1;
+            return {
+              menuGroupId: menuId,
+              code: `fallback-${menuId}`,
+              name: sgName,
+              icon: null,
+              subMenus: sList.map((screen) => {
+                subId += 1;
+                return {
+                  subMenuId: subId,
+                  code: `fallback-${subId}`,
+                  name: screen.label,
+                  routePath: screen.path,
+                  icon: null,
+                  module: screen.module ?? 'dashboard',
+                  canCreate: false,
+                  singularName: null,
+                  hasAccess: true,
+                  allowedActions: ['view', 'create', 'edit', 'delete', 'print', 'export'],
+                };
+              }),
+            };
+          });
+        } else {
+          groups = [
+            {
+              menuGroupId: menuId,
+              code: `fallback-${menuId}`,
+              name: null,
+              icon: null,
+              subMenus: screens.map((screen) => {
+                subId += 1;
+                return {
+                  subMenuId: subId,
+                  code: `fallback-${subId}`,
+                  name: screen.label,
+                  routePath: screen.path,
+                  icon: null,
+                  module: screen.module ?? 'dashboard',
+                  canCreate: false,
+                  singularName: null,
+                  hasAccess: true,
+                  allowedActions: ['view', 'create', 'edit', 'delete', 'print', 'export'],
+                };
+              }),
+            },
+          ];
+        }
+      }
+
       return {
         menuId,
         code: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
@@ -358,33 +476,8 @@ export class MenuService {
         icon: null,
         module: screens[0]?.module ?? 'dashboard',
         routePath: screens.length === 1 ? screens[0].path : null,
-        isSearchable: false,
-        groups:
-          screens.length === 1
-            ? []
-            : [
-                {
-                  menuGroupId: menuId,
-                  code: `fallback-${menuId}`,
-                  name: null,
-                  icon: null,
-                  subMenus: screens.map((screen) => {
-                    subId += 1;
-                    return {
-                      subMenuId: subId,
-                      code: `fallback-${subId}`,
-                      name: screen.label,
-                      routePath: screen.path,
-                      icon: null,
-                      module: screen.module ?? 'dashboard',
-                      canCreate: false,
-                      singularName: null,
-                      hasAccess: true,
-                      allowedActions: ['view', 'create', 'edit', 'delete', 'print', 'export'],
-                    };
-                  }),
-                },
-              ],
+        isSearchable: isReports,
+        groups,
       };
     });
 

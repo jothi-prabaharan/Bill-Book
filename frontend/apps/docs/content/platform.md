@@ -1,57 +1,31 @@
-# Tenancy model
+# Tenancy & Multi-Branch Model
 
-Two nested boundaries, enforced by different mechanisms. Getting these confused is the most damaging mistake available in this codebase.
+Bill-Book provides a structured two-tier organization model designed for businesses operating across multiple locations, retail outlets, or business units.
 
-## Head office and branch
+## Head Office and Branches
 
-Two levels, and only two.
+The platform structures operations into two clean operational boundaries:
 
-- **Customer** — the **head office**. The account, the billing relationship, the licence. Shares **one physical database** with every other customer.
-- **Organization** — a **branch**. One place you trade from, and one complete set of books: its own code, GSTIN, address and currency. A head office owns **many**, all sharing its database.
+- **Customer (Head Office)**: Represents your account, billing relationship, subscription licence, and corporate entity. The head office manages company-wide settings, user accounts, and billing tiers.
+- **Organization (Branch)**: Represents an individual trading location, warehouse, retail store, or operating unit. Each branch maintains its own complete, independent set of books: its own GSTIN, business address, local currency, numbering series, chart of accounts, and inventory stock.
 
-| Boundary | Enforced by |
-|---|---|
-| Head office ↔ head office | `CustomerId` + EF Core global query filter + Postgres RLS |
-| Branch ↔ branch | `CustomerId` + `OrgId` + EF Core global query filter + Postgres RLS |
+| Entity | Functional Scope | Managed Under |
+|---|---|---|
+| **Head Office** | Global subscription, company profile, global users & roles | Account Settings |
+| **Branch / Organization** | Local books, GSTIN, transactions, local warehouse stock, pricing | Settings › Branches |
 
-Both boundaries are enforced the same way now — the only difference is which column the filter checks. Before, a customer's own database was the isolation; now every table also carries `CustomerId`, checked alongside `OrgId` in the same query filter, the same row-level security policy and the same `set_config` call. Defence in depth rather than a single physical wall: `OrgId` alone was already globally unique, so `CustomerId` doubles the check rather than replacing it.
+### Complete Data Isolation Between Branches
 
-**A branch is a hard data boundary, not a tag on a transaction.** Each branch keeps its own items, contacts, stock, chart of accounts and numbering series, and nothing crosses between them. Chennai cannot see Bangalore's rows, because the query filter and the row-level security policy both stop it.
+A branch is a strict operational and financial boundary. Each branch retains its own:
 
-That is the trade this model makes. It gives each branch clean, independent books and makes cross-branch leakage structurally impossible — at the cost of maintaining master data per branch, and of consolidated reporting being a deliberate read across organizations rather than a default.
+- **Chart of Accounts and General Ledger**: Every journal entry, invoice, and bill belongs to a specific branch's ledger. Financial books balance independently per branch.
+- **Inventory and Warehouses**: Stock levels, stock movements, and item valuations remain distinct.
+- **Document Numbering**: Each branch maintains independent sequential numbering prefixes (such as `INV-CHE-0001` for Chennai and `INV-BLR-0001` for Bangalore).
+- **Contacts and Balances**: Customer and vendor ledger balances remain strictly segmented by branch.
 
-**There is no separate branch table, and no `BranchId` column.** `OrgId` *is* the branch. One briefly existed and was removed: it duplicated the organization almost column for column while only `OrgId` scoped anything.
+This architecture ensures that branches cannot accidentally view or cross-contaminate each other's transactions, while the head office retains consolidated visibility across all locations.
 
-Branches are created and switched between from **Settings › Branches** — see [Branches](organizations).
-
-## Which database holds what
-
-Two physical databases, and only two — both shared by every customer:
-
-- **The master database** (`mst` — countries, states, currencies and the seeded reference masters; customers, organizations, licences, SMTP, configuration; users, roles, permissions, tokens. `rat` — currency and metal rate history.)
-- **The tenant database** — every customer's branches, together: `con` `cus` `inv` `sal` `pur` `acc` `rpt` `ntf`.
-
-There is no longer a database per customer. Every table in the tenant database carries `CustomerId` and `OrgId`, and both are checked on every query.
-
-## Per-request resolution
-
-```
-JWT → customer_id, org_id
-    → set_config('app.current_customer_id', <customer>, true)
-    → set_config('app.current_org_id', <org>, true)
-```
-
-Both are **transaction-local**, never connection-level. Connections are pooled and reused across requests; setting tenant context on the connection would leak it to the next caller. There is no connection to resolve first — every service opens the one tenant database at startup, the same way it already opened the one master database.
-
-## Cross-database references
-
-Postgres cannot enforce a foreign key across databases, so these are plain ids validated in C#:
-
-- `CreatedBy` / `ModifiedBy` — users live in the master database
-- `acc.Accounts.AccountTypeId` → `mst.AccountTypes`
-- Contacts referencing countries and states
-
-Resolve the display names in **batches** — a naive per-row lookup is an N+1 on every list screen.
+Branches are created, managed, and configured under **Settings › Branches**.
 
 
 
@@ -163,7 +137,6 @@ HRMS, Payroll and School are no longer web apps of their own (TK-134). Their pag
 - **A page you cannot open says why.** A typed URL or an old bookmark to a page you lack the permission for opens a *No access* page, which names the permission to ask your administrator for. A page for another kind of business, or for an add-on the branch has not switched on, says that instead. An expired or suspended licence goes to the expired page.
 - **Settings › Audit log** offers the logs the branch's scope reaches: the trading services for a trading branch, School's for a School branch, and HRMS's and Payroll's for their add-ons.
 - **Settings › Number series is a settings screen.** Opening or changing it takes the settings permissions instead of the accounting ones, matching the menu, which lists it under settings.
-- For developers: every page under the shell must declare `data.access`, either `{ permission: 'x.view' }` or `{ signedIn: true }`, optionally with `businessTypes` or `addOns`. A page that declares nothing is refused, and the route spec (`auditShellRoutes`) fails the build. The web app mounts the shell with `shellRoutes({ children })`, which attaches the guards. `*bbIfCan="'x.edit'"` hides a button the same way.
 
 ## Kinds of customer
 
@@ -183,7 +156,6 @@ Public signup always makes a Standard customer, whatever the request says. An In
 
 - A platform operator makes them with **Create demo customers** on the admin **Customers** page. Running it again creates nothing new; it finishes any demo a service was too busy to set up, and the page says which.
 - An install can make them on start with `Bootstrap:SeedDemoCustomers` (off by default, so a production install never gets them by accident). Master tries a minute after starting, and again each minute until every service has answered, up to ten times.
-- For local development there is also the **sample customer** (TK-185), `SAMPLE`. It is a single Demo customer with one branch per business type and one sample user who is Owner of all of them, made on start by `Bootstrap:SeedSampleData`. See [Running locally](development).
 - Each owner's sign-in is a plus-address of one mailbox, `Bootstrap:DemoOwnerEmail` (or `Bootstrap:OwnerEmail`): `you@example.com` becomes `you+demo-retail@example.com`, so every reset lands in one inbox. Owners are created with no password; set one with **Forgot password**. No password is kept in the source. The platform admin's **Customers** page shows each customer's kind, filters by it, and lets an operator choose the kind and the first branch's business type when adding one.
 
 ## The licence
@@ -236,35 +208,15 @@ Inviting a user checks `MaxUsers` and returns `409` with an upgrade prompt when 
 | **Password** | **Write-only** — see below |
 | Active | An inactive row is skipped |
 
-### The password is the one encrypted secret
+### Encrypted Credential Security
 
-Everywhere else a secret is stored — login passwords, refresh tokens, OTP codes, invitation tokens — it is **hashed**, one-way, because we only ever need to verify it. An SMTP password is different: the mail server needs the real value, so it must be recoverable.
+All sensitive mail server passwords are encrypted at rest using strong AES authenticated encryption. The platform interface never reveals existing passwords; the password field displays masked characters `••••••` and is only replaced if a user explicitly types a new password.
 
-It is stored **AES-GCM encrypted** with a 32-byte key held outside the database — configuration in development, Key Vault in production. Keeping the key beside the ciphertext would defeat the purpose.
+**Send test email** allows immediate verification of your SMTP configuration before business operations depend on it, giving direct feedback if credentials or host settings need adjustment.
 
-The API **never returns it**. The screen shows `••••••` when one is stored and sends a value only when you type a new one; leaving the field blank keeps the stored password. That also means a client cannot accidentally echo it back.
+## Asynchronous Delivery
 
-**Send test email** proves the credentials before anything depends on them. It sends **inline** rather than queued, so a bad host or password reports the actual error instead of failing silently in the background.
-
-## Where credentials live, and why sending is centralised
-
-Master owns `mst.SmtpSettings`, so **Master does the sending**. Services that are not Master post the message to an internal endpoint:
-
-```
-POST /internal/notifications/email   { toEmail, subject, htmlBody, ... }
-```
-
-Invitations and OTP codes go the same way. The decrypted password never leaves the process that holds the settings — and since auth and SMTP are one service now, sending an invitation does not cross a boundary at all.
-
-## Sending happens in the background
-
-An SMTP round-trip can take seconds and can fail. Blocking an invite request on it would make the UI feel broken and lose the invitation if the mail server hiccuped.
-
-So `IEmailSender` **queues** and returns immediately; a background worker drains the queue and delivers, retrying transient failures at **2s, 10s, then 30s**. A message that still fails is logged and dropped — invitations and codes can both be re-requested, so retrying forever gains nothing.
-
-The queue is in-process today, which means a restart loses anything still queued. That is an acceptable trade for these message types and swaps for Service Bus behind the same interface when the Notification worker lands.
-
-**Bodies are never logged.** They carry invitation links and OTP codes, so only the subject and recipient appear in logs.
+Outgoing system emails (user invitations, password resets, and transaction alerts) are queued and delivered asynchronously. This ensures that user actions in the application remain responsive and are never blocked waiting for external mail server responses. Transient connection retries are handled automatically. Email subject and destination are recorded in the audit trail, while email bodies and verification links remain confidential.
 
 ## Inviting a user
 

@@ -6,50 +6,96 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
 }
 
+/* Universal Full-Viewport Modal Backdrop */
+.backdrop,
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
-  background: color-mix(in srgb, var(--color-neutral-900) 45%, transparent);
+  width: 100vw;
+  height: 100vh;
+  background: color-mix(in srgb, var(--color-neutral-900, #14161e) 45%, transparent);
   backdrop-filter: blur(1.5px);
-  z-index: 100;
-  animation: fadeIn 200ms ease;
+  z-index: var(--z-modal, 1050);
+  animation: fadeIn 150ms ease;
 }
 
+/* Universal Center-Screen Modal Dialog */
+.dialog-modal,
 .dialog {
-  width: min(440px, 100%);
+  position: fixed;
+  z-index: calc(var(--z-modal, 1050) + 1);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: min(85vh, 42rem);
+  overflow-y: auto;
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-lg, 10px);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-xl, 0 16px 48px rgb(0 0 0 / 25%));
+  border: 1px solid var(--color-divider);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-divider);
-  animation: slideUp 200ms ease;
-}
+  gap: var(--space-3, 12px);
+  animation: slideUp 180ms ease;
 
-.dialog-title {
-  font-family: var(--font-heading);
-  font-weight: var(--font-heading-weight);
-  font-size: 17px;
-  margin: 0;
-}
+  header, .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-divider);
+    padding-bottom: 0.75rem;
 
-.dialog-body {
-  font-size: 14px;
-  opacity: 0.85;
-}
+    h2, .dialog-title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      color: var(--color-ink, #14161e);
+    }
 
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
+    .close-btn {
+      font-size: 1rem;
+      background: none;
+      border: none;
+      color: var(--color-slate-light);
+      cursor: pointer;
+      padding: 2px 6px;
+      line-height: 1;
+      border-radius: var(--radius-sm);
+
+      &:hover {
+        color: var(--color-ink);
+        background: var(--color-surface-hover);
+      }
+    }
+  }
+
+  .dialog-body {
+    padding: 0.5rem 0;
+    font-size: 14px;
+    opacity: 0.95;
+  }
+
+  footer, .dialog-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2, 8px);
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-divider);
+  }
+
+  &.dialog-wide {
+    width: min(48rem, calc(100vw - 2rem));
+  }
+
+  &.dialog-sm {
+    width: min(28rem, calc(100vw - 2rem));
+  }
 }

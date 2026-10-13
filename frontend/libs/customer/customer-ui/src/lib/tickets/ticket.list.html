@@ -1,7 +1,7 @@
 <div class="tickets-container">
   <div class="header-actions">
-    <h2>Tickets</h2>
-    <button class="btn btn-primary" (click)="showForm.set(true)">New Ticket</button>
+    <h2>Support & Bug Reports</h2>
+    <button class="btn btn-primary" (click)="showForm.set(true)">Report Issue / Ticket</button>
   </div>
   
   <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
@@ -11,7 +11,7 @@
   </div>
   
   <div *ngIf="!loading() && tickets().length === 0" class="empty-state">
-    <p>No tickets found.</p>
+    <p>No support tickets or bug reports found.</p>
   </div>
 
   <bb-data-grid fillHeight

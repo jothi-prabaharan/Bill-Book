@@ -57,7 +57,10 @@ interface Purity {
     RegisterHeaderComponent,
     StatusTabsComponent,
   ],
-  host: { class: 'register-page' },
+  host: {
+    class: 'register-page',
+    '(document:keydown.escape)': 'onEscape()',
+  },
   templateUrl: './metal-purities.page.html',
   styleUrl: './metal-purities.page.scss',
 })
@@ -129,6 +132,16 @@ export class MetalPuritiesPage implements OnInit {
   startAdd(): void {
     this.editingId.set(0);
     this.form = { metalType: 'Gold', purityName: '', purityFactor: 0.916, isActive: true };
+  }
+
+  cancelEdit(): void {
+    this.editingId.set(null);
+  }
+
+  onEscape(): void {
+    if (this.editingId() !== null) {
+      this.cancelEdit();
+    }
   }
 
   async save(): Promise<void> {

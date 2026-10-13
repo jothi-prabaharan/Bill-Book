@@ -318,6 +318,9 @@ public enum SaveOrganizationOutcome
 
     /// <summary>An add-on the business type does not allow is refused (D-36, TK-127).</summary>
     DisallowedAddOn = 17,
+
+    /// <summary>Adding additional branches requires an active paid subscription plan.</summary>
+    PaidPlanRequired = 18,
 }
 
 public sealed record SaveOrganizationResult(

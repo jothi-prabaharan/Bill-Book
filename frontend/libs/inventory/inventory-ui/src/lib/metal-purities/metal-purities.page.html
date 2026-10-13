@@ -54,33 +54,41 @@
 </section>
 
 @if (editingId() !== null) {
-  <div class="sheet narrow">
-    <h2>{{ editingId() === 0 ? 'New purity' : 'Edit purity' }}</h2>
-    <div class="fields">
-      <div class="field">
-        <bb-select
-          label="Metal"
-          placeholder=""
-          [options]="metalOptions"
-          [disabled]="editingId() !== 0"
-          [(ngModel)]="form.metalType"
+  <div class="backdrop" aria-hidden="true" (click)="cancelEdit()"></div>
+  <div class="dialog dialog-sm" role="dialog" aria-labelledby="purity-dialog-title">
+    <header class="dialog-header">
+      <h2 id="purity-dialog-title">{{ editingId() === 0 ? 'New purity' : 'Edit purity' }}</h2>
+      <button type="button" class="link close-btn" (click)="cancelEdit()" aria-label="Close dialog">✕</button>
+    </header>
+    <div class="dialog-body">
+      <div class="fields-stack" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div class="field">
+          <bb-select
+            label="Metal"
+            placeholder=""
+            [options]="metalOptions"
+            [disabled]="editingId() !== 0"
+            [(ngModel)]="form.metalType"
+          />
+        </div>
+        <div class="field">
+          <bb-text-input label="Name" hint="What the counter calls it: 22K, 916, 999." [(ngModel)]="form.purityName" maxlength="20" />
+        </div>
+        <div class="field">
+          <bb-number-input label="Factor" [(ngModel)]="form.purityFactor" step="0.0001" min="0.0001" max="1" />
+        </div>
+        <bb-checkbox
+          text="Active"
+          [(ngModel)]="form.isActive"
         />
       </div>
-      <div class="field">
-        <bb-text-input label="Name" hint="What the counter calls it: 22K, 916, 999."  [(ngModel)]="form.purityName" maxlength="20" />
-      </div>
-      <div class="field">
-        <bb-number-input label="Factor"  [(ngModel)]="form.purityFactor" step="0.0001" min="0.0001" max="1" />
-      </div>
-      <bb-checkbox
-        text="Active"
-        [(ngModel)]="form.isActive"
-      />
     </div>
-    <div class="sheet-actions">
-      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.purityName">Save</button>
-      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
-    </div>
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancelEdit()" [disabled]="busy()">Cancel</button>
+      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.purityName">
+        {{ busy() ? 'Saving…' : 'Save purity' }}
+      </button>
+    </footer>
   </div>
 }
 

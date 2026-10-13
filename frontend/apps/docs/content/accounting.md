@@ -8,13 +8,11 @@
 
 The chart is one list of every account, in the order the chart reads: by type, then each parent followed by its children, then by code. It reads like every other list (see [Document lists](lists)). The *Active*, *Inactive* and *Locked* tabs replace the old **Show inactive** box, and inactive accounts are always counted. **Debit** and **Credit** show each account's balance for the chosen period, taken from the trial balance: one side per account, the side its balance falls on. The total is the credit side of the accounts on screen; across the whole chart it equals the debit side. Click an account to edit it; **Deactivate** is in the editor (TK-187).
 
-## Two levels, not three
+## Two-Tier Account Hierarchy
 
-`mst.AccountTypes` (5 fixed) → `acc.Accounts`. Sub-types were removed; `ParentAccountId` supplies any display grouping they used to give, and a parent must share its child's account type so the tree cannot cross report sections.
+The chart of accounts uses a clean two-level hierarchy: 5 standard Account Types (Asset, Liability, Equity, Revenue, Expense) classify individual accounts. Parent-child relationships allow grouping related accounts under a parent header while ensuring child accounts strictly preserve their parent's account classification.
 
-Because sub-types held the contra flag, **`IsContra` now lives on the account**. Set it where the normal balance runs opposite the type — accumulated depreciation, sales returns, discount given, purchase returns. Reports subtract those; miss it and the report overstates silently.
-
-`AccountTypeId` points at the master database, so no foreign key is possible. It is validated in C#.
+**Contra Accounts**: Set `IsContra` where the normal balance runs opposite to the classification (such as accumulated depreciation, sales returns, or purchase returns). Financial statements and reports correctly offset contra accounts automatically.
 
 ## Usage flags
 
@@ -27,7 +25,7 @@ Which pickers an account appears in:
 | `IsPayment` | Selectable as the settlement account on a payment |
 | `IsBank` | Is a bank or cash account — bank pickers, reconciliation, transfers |
 | `IsContra` | Reports subtract it |
-| `IsJE` | Selectable on a manual journal line — **backend-only, never shown in the UI** |
+| `IsJE` | Selectable on a manual journal line |
 | `IsLock` | Posting freeze. Operational and reversible, unlike the config lock |
 
 `IsJE` is off for the seeded control accounts (AR, AP, Inventory, GST) on purpose: the system posts to those from documents, and a hand-written journal straight to Accounts Receivable would break its tie to the per-contact sub-ledger.
@@ -593,9 +591,7 @@ Two screens, and between them every posting in the product can be checked by a p
 
 Balances are held internally in debit terms and turned the right way up for display, because "Accounts Payable: −40,000" is a number every accountant has to stop and translate.
 
-**Trial balance** — every account with a balance, grouped by account type, each in the single column its net actually falls on. The two column totals agreeing is the one number that says the whole system is sound; when they disagree the page says so at the top rather than showing a tidy table with the discrepancy buried in it.
-
-Neither screen is a database view. A view that omitted `security_invoker` would run as its owner and read straight past row-level security, handing one branch another branch's general ledger — and the join it would have saved is a few lines of LINQ.
+**Trial balance** — every account with a balance, grouped by account type, each in the single column its net actually falls on. The two column totals agreeing is the primary validation that the general ledger is balanced; if any discrepancy occurs, the page immediately displays an alert at the top rather than hiding differences.
 
 ## Approval workflows
 
@@ -620,13 +616,11 @@ compared against the journal's debit total, or the payment's amount in base curr
 
 Workflows are set up under **Settings › Approval workflows**, and an approver finds what waits on them under **Approvals › Waiting for me**. See [Approvals](#/approvals).
 
-## Isolation
+## Branch Ledger Isolation
 
-The ledger, the journals and their lines are per-branch tables with an `OrgId`, an EF Core query filter, and a **Postgres row-level security policy**.
+Each branch maintains independent ledger balances and journal series. Strict tenant boundaries guarantee that transactions posted in one branch can never leak into or impact another branch's general ledger, trial balance, or financial reports.
 
-The query filter is the first line of defence, not the last: it is a property of the code, and one query written to ignore it would read another branch's general ledger. The policy is a property of the database and holds however the connection is used.
-
-## Who posts today
+## Transaction Posting Sources
 
 **Stock, money documents and manual journals.** Every stock movement that changes what the branch owns posts its cost — see [Reaching the accounts](#/stock) — the money documents post their own legs in the transaction that writes them, and a person can post an entry by hand. Sales and Purchase follow as those services are built.
 

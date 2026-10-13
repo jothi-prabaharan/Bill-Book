@@ -185,6 +185,12 @@ export class ShellNavComponent {
     this.nav().find((item) => item.module === 'settings'),
   );
 
+  onProfileClick(): void {
+    this.profileOpen.set(false);
+    this.navigation.closeMore();
+    void this.router.navigate(['/profile']);
+  }
+
   installPwa(): void {
     this.profileOpen.set(false);
     this.navigation.closeMore();

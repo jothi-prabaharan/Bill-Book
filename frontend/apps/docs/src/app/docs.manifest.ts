@@ -147,7 +147,7 @@ export const DOC_GROUPS: DocGroup[] = [
     ],
   },
   {
-    name: 'Extensions & Dev',
+    name: 'Extensions',
     sections: [
       {
         title: 'Add-ons',
@@ -157,19 +157,6 @@ export const DOC_GROUPS: DocGroup[] = [
           { slug: 'service-plans', title: 'Service Plans', status: 'built' },
           { slug: 'savings-scheme', title: 'Savings Scheme', status: 'built' },
           { slug: 'site-services', title: 'Site Services', status: 'partial' },
-        ],
-      },
-      {
-        title: 'Development',
-        icon: 'development',
-        pages: [
-          { slug: 'development', title: 'Development', status: 'built' },
-          { slug: 'inputs', title: 'Common components', status: 'built' },
-          // 'partial' rather than 'built': the Azure templates and pipeline are
-          // complete and verified locally, but have not been run against Azure, and
-          // the first run stops at the migration step until the admin migration is
-          // re-squashed — see deploy/azure/README.md.
-          { slug: 'deployment', title: 'Deployment', status: 'partial' },
         ],
       },
     ],

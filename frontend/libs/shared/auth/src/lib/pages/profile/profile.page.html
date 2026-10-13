@@ -1,0 +1,167 @@
+<div class="profile-viewport">
+  <div class="profile-container">
+    <header class="profile-header">
+      <div class="header-titles">
+        <h1 class="page-title">My Profile</h1>
+        <p class="page-subtitle">Manage your personal information, display settings, and password.</p>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="profile-loading">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Loading profile details...</p>
+      </div>
+    } @else {
+      <!-- User Summary Banner -->
+      <section class="summary-card" aria-label="Account Summary">
+        <div class="avatar-col">
+          <div class="profile-avatar" aria-hidden="true">
+            {{ userInitials() }}
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="name-row">
+            <h2 class="user-display-name">{{ profile()?.displayName }}</h2>
+            @if (profile()?.roleName) {
+              <span class="role-badge">{{ profile()?.roleName }}</span>
+            }
+          </div>
+          <p class="user-email">{{ profile()?.email }}</p>
+          @if (profile()?.lastLoginAt) {
+            <p class="last-login">
+              Last login: {{ profile()?.lastLoginAt | date: 'medium' }}
+            </p>
+          }
+        </div>
+      </section>
+
+      <div class="cards-grid">
+        <!-- Personal Information Section -->
+        <section class="content-card" aria-labelledby="personal-info-heading">
+          <div class="card-head">
+            <h3 id="personal-info-heading" class="card-title">Personal Information</h3>
+            <p class="card-subtitle">Update your public display name, contact phone, and theme preference.</p>
+          </div>
+
+          @if (notice()) {
+            <bb-message-box tone="success">{{ notice() }}</bb-message-box>
+          }
+          @if (error()) {
+            <bb-message-box tone="error">{{ error() }}</bb-message-box>
+          }
+
+          <form (ngSubmit)="saveProfile()" class="form-body">
+            <div class="form-grid">
+              <bb-text-input
+                label="Display name"
+                name="displayName"
+                [(ngModel)]="displayName"
+                [required]="true"
+                maxlength="200"
+                placeholder="Your full name"
+              />
+
+              <bb-phone-input
+                label="Mobile number"
+                name="mobileNumber"
+                [(ngModel)]="mobileNumber"
+                maxlength="20"
+                placeholder="+91 98765 43210"
+              />
+
+              <bb-select
+                label="Theme preference"
+                name="themePreference"
+                [(ngModel)]="themePreference"
+                [options]="themeOptions"
+              />
+
+              <div class="field-disabled">
+                <bb-text-input
+                  label="Email address"
+                  name="email"
+                  [ngModel]="profile()?.email"
+                  [disabled]="true"
+                  hint="Email address cannot be changed."
+                />
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="saving()"
+              >
+                @if (saving()) {
+                  <span>Saving...</span>
+                } @else {
+                  <span>Save Changes</span>
+                }
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Security & Password Section -->
+        <section class="content-card" aria-labelledby="security-heading">
+          <div class="card-head">
+            <h3 id="security-heading" class="card-title">Security & Password</h3>
+            <p class="card-subtitle">Ensure your account is using a strong password of at least 8 characters.</p>
+          </div>
+
+          @if (passwordNotice()) {
+            <bb-message-box tone="success">{{ passwordNotice() }}</bb-message-box>
+          }
+          @if (passwordError()) {
+            <bb-message-box tone="error">{{ passwordError() }}</bb-message-box>
+          }
+
+          <form (ngSubmit)="changePassword()" class="form-body">
+            <div class="form-grid">
+              <bb-password-input
+                label="Current password"
+                name="currentPassword"
+                [(ngModel)]="currentPassword"
+                [required]="true"
+                placeholder="Enter current password"
+              />
+
+              <bb-password-input
+                label="New password"
+                name="newPassword"
+                [(ngModel)]="newPassword"
+                [required]="true"
+                minlength="8"
+                placeholder="At least 8 characters"
+              />
+
+              <bb-password-input
+                label="Confirm new password"
+                name="confirmPassword"
+                [(ngModel)]="confirmPassword"
+                [required]="true"
+                placeholder="Re-enter new password"
+              />
+            </div>
+
+            <div class="card-actions">
+              <button
+                type="submit"
+                class="btn btn-secondary"
+                [disabled]="changingPassword()"
+              >
+                @if (changingPassword()) {
+                  <span>Updating password...</span>
+                } @else {
+                  <span>Update Password</span>
+                }
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    }
+  </div>
+</div>

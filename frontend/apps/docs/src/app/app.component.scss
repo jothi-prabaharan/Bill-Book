@@ -205,23 +205,57 @@
 
 /* Group container */
 .group-container {
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
 
   &:last-child {
     margin-bottom: 0.5rem;
   }
+
+  &.is-open {
+    .group-chevron {
+      transform: rotate(90deg);
+    }
+  }
 }
 
-.group-header {
+.group-header-btn {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.5rem;
-  margin-bottom: 0.3rem;
+  padding: 0.4rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+
+  &:hover {
+    background: var(--color-surface-hover);
+  }
+
+  .group-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .group-chevron {
+    width: 13px;
+    height: 13px;
+    color: var(--color-accent-700);
+    transition: transform 150ms ease;
+    flex-shrink: 0;
+
+    &.open {
+      transform: rotate(90deg);
+    }
+  }
 
   .group-name {
     font-family: var(--font-heading);
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.08em;

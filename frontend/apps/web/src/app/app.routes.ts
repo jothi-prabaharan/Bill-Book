@@ -53,6 +53,16 @@ export const appRoutes: Routes = withUpdateGate([
         loadComponent: () => import('@bill-book/approvals').then((m) => m.ApprovalsInboxPage),
         data: { access: { signedIn: true } },
       },
+      {
+        path: 'profile',
+        loadComponent: () => import('@bill-book/auth').then((m) => m.ProfilePage),
+        data: { access: { signedIn: true } },
+      },
+      {
+        path: 'settings/profile',
+        loadComponent: () => import('@bill-book/auth').then((m) => m.ProfilePage),
+        data: { access: { signedIn: true } },
+      },
       // Users, roles, branches, organization settings, currencies,
       // configuration, email, API keys, print templates and numbering:
       // the pages every branch shares, from one lib (TK-47).
@@ -193,22 +203,21 @@ export const appRoutes: Routes = withUpdateGate([
       // seeds crm.* and support.*, never customer.*. These guards name the same
       // modules LeadsController and TicketsController demand, so a role that
       // cannot open the page cannot reach the API behind it either.
-      {
-        path: 'customer/leads',
-        loadComponent: () => import('@bill-book/customer-ui').then((m) => m.LeadList),
-        data: { access: { permission: 'crm.view' } },
-      },
+      { path: 'customer/leads', pathMatch: 'full', redirectTo: 'dashboard' },
       // Service plans (TK-140): after-sales care, under support like tickets.
       {
         path: 'customer/service-plans',
         loadComponent: () => import('@bill-book/customer-ui').then((m) => m.ServicePlansPage),
         data: { access: { permission: 'support.view' } },
       },
+      // Support / Bug reporting moved to Settings (user requirement).
       {
-        path: 'customer/tickets',
+        path: 'settings/support',
         loadComponent: () => import('@bill-book/customer-ui').then((m) => m.TicketList),
         data: { access: { permission: 'support.view' } },
       },
+      { path: 'settings/tickets', pathMatch: 'full', redirectTo: 'settings/support' },
+      { path: 'customer/tickets', pathMatch: 'full', redirectTo: 'settings/support' },
       {
         path: 'contacts',
         loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactsPage),
@@ -275,7 +284,7 @@ export const appRoutes: Routes = withUpdateGate([
         path: 'settings/metal-purities',
         loadComponent: () =>
           import('@bill-book/inventory-ui').then((m) => m.MetalPuritiesPage),
-        data: { access: { permission: 'inventory.view' } },
+        data: { access: { permission: 'inventory.view', businessTypes: ['Jewellery'] } },
       },
       // The nav rail points at /banking, so it needs somewhere to land. Spend
       // money is the right default: it is the screen this module is opened for.

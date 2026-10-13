@@ -28,65 +28,75 @@
         }
       </div>
 
-      <!-- Quick collapse / expand toggle buttons -->
+      <!-- Quick collapse toggle -->
       <div class="nav-controls">
         <span class="nav-count">{{ filteredGroups().length }} Groups</span>
         <div class="nav-actions">
-          <button type="button" class="nav-btn" (click)="expandAll()" title="Expand all sections">Expand</button>
-          <span class="nav-sep">·</span>
-          <button type="button" class="nav-btn" (click)="collapseAll()" title="Collapse all sections">Collapse</button>
+          <button type="button" class="nav-btn" (click)="collapseAll()" title="Collapse all sections">Collapse all</button>
         </div>
       </div>
     </div>
 
-    <!-- Navigation Groups and Submenus -->
+    <!-- Navigation Groups and Submenus (One group open at a time) -->
     <nav class="sidebar-nav">
       @for (group of filteredGroups(); track group.name) {
-        <div class="group-container">
-          <div class="group-header">
-            <span class="group-name">{{ group.name }}</span>
+        <div class="group-container" [class.is-open]="isGroupExpanded(group.name)">
+          <button
+            type="button"
+            class="group-header-btn"
+            (click)="toggleGroup(group.name, $event)"
+            [attr.aria-expanded]="isGroupExpanded(group.name)"
+          >
+            <span class="group-title-wrap">
+              <svg class="group-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+              </svg>
+              <span class="group-name">{{ group.name }}</span>
+            </span>
             <span class="group-badge">{{ group.sections.length }}</span>
-          </div>
+          </button>
 
-          <div class="group-sections">
-            @for (section of group.sections; track section.title) {
-              <div class="section-container" [class.is-expanded]="isSectionExpanded(section.title)">
-                <!-- Section Header / Submenu Trigger -->
-                <button
-                  type="button"
-                  class="section-toggle"
-                  (click)="toggleSection(section.title, $event)"
-                  [attr.aria-expanded]="isSectionExpanded(section.title)"
-                >
-                  <span class="section-title">
-                    <svg class="chevron-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-                    </svg>
-                    <span>{{ section.title }}</span>
-                  </span>
-                  <span class="section-count">{{ section.pages.length }}</span>
-                </button>
+          @if (isGroupExpanded(group.name)) {
+            <div class="group-sections">
+              @for (section of group.sections; track section.title) {
+                <div class="section-container" [class.is-expanded]="isSectionExpanded(section.title)">
+                  <!-- Section Header / Submenu Trigger -->
+                  <button
+                    type="button"
+                    class="section-toggle"
+                    (click)="toggleSection(section.title, group.name, $event)"
+                    [attr.aria-expanded]="isSectionExpanded(section.title)"
+                  >
+                    <span class="section-title">
+                      <svg class="chevron-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                      </svg>
+                      <span>{{ section.title }}</span>
+                    </span>
+                    <span class="section-count">{{ section.pages.length }}</span>
+                  </button>
 
-                <!-- Submenu Page Links -->
-                @if (isSectionExpanded(section.title)) {
-                  <ul class="submenu-list">
-                    @for (page of section.pages; track page.slug) {
-                      <li class="submenu-item">
-                        <a [routerLink]="'/' + page.slug" routerLinkActive="active" class="submenu-link">
-                          <span class="page-title">{{ page.title }}</span>
-                          @if (page.status !== 'built') {
-                            <span class="tag" [class.planned]="page.status === 'planned'">
-                              {{ page.status }}
-                            </span>
-                          }
-                        </a>
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
-            }
-          </div>
+                  <!-- Submenu Page Links -->
+                  @if (isSectionExpanded(section.title)) {
+                    <ul class="submenu-list">
+                      @for (page of section.pages; track page.slug) {
+                        <li class="submenu-item">
+                          <a [routerLink]="'/' + page.slug" (click)="scrollToTop()" routerLinkActive="active" class="submenu-link">
+                            <span class="page-title">{{ page.title }}</span>
+                            @if (page.status !== 'built') {
+                              <span class="tag" [class.planned]="page.status === 'planned'">
+                                {{ page.status }}
+                              </span>
+                            }
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </div>
+          }
         </div>
       } @empty {
         <div class="no-results">
@@ -97,7 +107,7 @@
     </nav>
   </aside>
 
-  <main class="content-viewport">
+  <main #contentViewport class="content-viewport">
     <router-outlet />
   </main>
 </div>

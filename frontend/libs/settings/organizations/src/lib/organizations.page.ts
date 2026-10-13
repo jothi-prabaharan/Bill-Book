@@ -14,7 +14,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService, Currency, ADD_ONS, BUSINESS_TYPES, isAddOnAllowed } from '@bill-book/auth';
+import { AuthService, Currency, ADD_ONS, BUSINESS_TYPES, isAddOnAllowed, SessionContextService } from '@bill-book/auth';
 
 interface Organization {
   orgId: string;
@@ -129,10 +129,21 @@ export class OrganizationsPage implements OnInit {
   );
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionContextService);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
   /** India. Replace with the head office's country once that is on the token. */
   private readonly defaultCountryId = 1;
+
+  protected readonly isPaidPlan = computed(() => {
+    const tier = this.session.context()?.planTier;
+    return tier !== undefined && tier !== 'Trial';
+  });
+
+  protected readonly canAddBranch = computed(() => {
+    if (this.rows().length === 0) return true;
+    return this.isPaidPlan();
+  });
 
   protected readonly rows = signal<Organization[]>([]);
   protected readonly states = signal<State[]>([]);
@@ -193,6 +204,10 @@ export class OrganizationsPage implements OnInit {
   }
 
   startAdd(): void {
+    if (!this.canAddBranch()) {
+      this.fail('Adding additional branches is a paid feature. Please upgrade your subscription to add more branches.');
+      return;
+    }
     this.editingId.set('');
     this.form = this.blank();
   }

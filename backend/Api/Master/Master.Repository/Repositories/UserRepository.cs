@@ -18,19 +18,22 @@ public sealed class UserRepository
     private readonly OrgContextRepository _orgs;
     private readonly IConfiguration _config;
     private readonly TimeProvider _clock;
+    private readonly IPasswordHasherRepository _hasher;
 
     public UserRepository(
         AdminDbContext db,
         IEmailSender email,
         OrgContextRepository orgs,
         IConfiguration config,
-        TimeProvider clock)
+        TimeProvider clock,
+        IPasswordHasherRepository? hasher = null)
     {
         _db = db;
         _email = email;
         _orgs = orgs;
         _config = config;
         _clock = clock;
+        _hasher = hasher ?? new BcryptPasswordHasher();
     }
 
     /// <summary>Users assigned to the current organization.</summary>
@@ -237,6 +240,68 @@ public sealed class UserRepository
                 $"You have been invited to join {orgName} on Bill-Book.\n\n" +
                 $"Set your password: {link}\n\nThis link expires in 7 days.",
         }, ct);
+    }
+
+    public async Task<UserProfileDto?> GetProfileAsync(Guid userId, Guid? orgId, CancellationToken ct)
+    {
+        var user = await _db.Users.FindAsync(new object[] { userId }, ct);
+        if (user is null) return null;
+
+        string? roleName = null;
+        if (orgId.HasValue)
+        {
+            roleName = await (
+                from a in _db.UserOrganizationRoles
+                join r in _db.Roles on a.RoleId equals r.RoleId
+                where a.UserId == userId && a.OrgId == orgId.Value && a.IsActive
+                select r.DisplayName
+            ).FirstOrDefaultAsync(ct);
+        }
+
+        return new UserProfileDto
+        {
+            UserId = user.UserId,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            MobileNumber = user.MobileNumber,
+            ThemePreference = user.ThemePreference.ToString(),
+            RoleName = roleName ?? (user.IsPlatformOperator ? "Platform Operator" : "User"),
+            LastLoginAt = user.LastLoginAt,
+        };
+    }
+
+    public async Task<(bool success, string? error)> UpdateProfileAsync(
+        Guid userId, UpdateUserProfileRequest request, CancellationToken ct)
+    {
+        var user = await _db.Users.FindAsync(new object[] { userId }, ct);
+        if (user is null) return (false, "User not found.");
+
+        user.DisplayName = request.DisplayName.Trim();
+        user.MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber);
+
+        if (!string.IsNullOrWhiteSpace(request.ThemePreference)
+            && Enum.TryParse<Master.Entity.Enums.ThemePreference>(request.ThemePreference, true, out var theme))
+        {
+            user.ThemePreference = theme;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+            {
+                return (false, "Current password is required to change password.");
+            }
+
+            if (!string.IsNullOrEmpty(user.PasswordHash) && !_hasher.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                return (false, "Current password is incorrect.");
+            }
+
+            user.PasswordHash = _hasher.Hash(request.NewPassword);
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return (true, null);
     }
 }
 

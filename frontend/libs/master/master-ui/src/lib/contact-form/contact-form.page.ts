@@ -291,6 +291,34 @@ export class ContactFormPage implements OnInit {
     { value: 'Other', label: 'Other' },
   ];
 
+  protected readonly bankOptions: BbSelectOption<string>[] = [
+    { value: 'State Bank of India', label: 'State Bank of India (SBI)' },
+    { value: 'HDFC Bank', label: 'HDFC Bank' },
+    { value: 'ICICI Bank', label: 'ICICI Bank' },
+    { value: 'Axis Bank', label: 'Axis Bank' },
+    { value: 'Kotak Mahindra Bank', label: 'Kotak Mahindra Bank' },
+    { value: 'Punjab National Bank', label: 'Punjab National Bank (PNB)' },
+    { value: 'Bank of Baroda', label: 'Bank of Baroda' },
+    { value: 'Canara Bank', label: 'Canara Bank' },
+    { value: 'Union Bank of India', label: 'Union Bank of India' },
+    { value: 'IndusInd Bank', label: 'IndusInd Bank' },
+    { value: 'Yes Bank', label: 'Yes Bank' },
+    { value: 'IDFC FIRST Bank', label: 'IDFC FIRST Bank' },
+    { value: 'Federal Bank', label: 'Federal Bank' },
+    { value: 'Indian Bank', label: 'Indian Bank' },
+    { value: 'Central Bank of India', label: 'Central Bank of India' },
+    { value: 'Other Bank', label: 'Other Bank' },
+  ];
+
+  protected bankSelectOptions(currentBank?: string): BbSelectOption<string>[] {
+    if (!currentBank) return this.bankOptions;
+    const exists = this.bankOptions.some((b) => b.value.toLowerCase() === currentBank.toLowerCase());
+    if (!exists && currentBank.trim().length > 0) {
+      return [{ value: currentBank, label: currentBank }, ...this.bankOptions];
+    }
+    return this.bankOptions;
+  }
+
   protected readonly documentColumns: ColumnDef[] = [
     { field: 'file', header: 'File' },
     { field: 'type', header: 'Type' },
@@ -532,15 +560,25 @@ export class ContactFormPage implements OnInit {
       isDraft: draft,
       addresses: rows.addresses,
       persons: rows.persons,
-      bankDetails: this.bankDetails.map((bank) => ({
-        ...bank,
-        accountHolderName: bank.accountHolderName.trim(),
-        bankName: bank.bankName.trim(),
-        accountNumber: bank.accountNumber.trim(),
-        ifsc: this.clean(bank.ifsc)?.toUpperCase() ?? null,
-        branchName: this.clean(bank.branchName),
-        upiId: this.clean(bank.upiId),
-      })),
+      bankDetails: this.bankDetails
+        .filter(
+          (bank) =>
+            this.hasText(bank.accountHolderName) ||
+            this.hasText(bank.bankName) ||
+            this.hasText(bank.accountNumber) ||
+            this.hasText(bank.ifsc) ||
+            this.hasText(bank.branchName) ||
+            this.hasText(bank.upiId),
+        )
+        .map((bank) => ({
+          ...bank,
+          accountHolderName: bank.accountHolderName.trim() || this.form.displayName.trim(),
+          bankName: bank.bankName.trim(),
+          accountNumber: bank.accountNumber.trim(),
+          ifsc: this.clean(bank.ifsc)?.toUpperCase() ?? null,
+          branchName: this.clean(bank.branchName),
+          upiId: this.clean(bank.upiId),
+        })),
       licences: this.licences.map((licence) => ({
         ...licence,
         licenceNumber: licence.licenceNumber.trim(),
@@ -974,9 +1012,20 @@ export class ContactFormPage implements OnInit {
     found.push(...rowErrors(this.addresses, this.persons, draft));
 
     this.bankDetails.forEach((bank, i) => {
-      if (!this.hasText(bank.accountHolderName)) add(`bankHolder_${i}`, `Payout account ${i + 1} needs the holder's name.`);
-      if (!this.hasText(bank.bankName)) add(`bankName_${i}`, `Payout account ${i + 1} needs the bank.`);
-      if (!this.hasText(bank.accountNumber)) add(`bankAccount_${i}`, `Payout account ${i + 1} needs the account number.`);
+      const hasAny =
+        this.hasText(bank.accountHolderName) ||
+        this.hasText(bank.bankName) ||
+        this.hasText(bank.accountNumber) ||
+        this.hasText(bank.ifsc) ||
+        this.hasText(bank.branchName) ||
+        this.hasText(bank.upiId);
+      if (hasAny) {
+        if (!this.hasText(bank.accountHolderName) && !this.hasText(this.form.displayName)) {
+          add(`bankHolder_${i}`, `Payout account ${i + 1} needs the holder's name.`);
+        }
+        if (!this.hasText(bank.bankName)) add(`bankName_${i}`, `Payout account ${i + 1} needs the bank.`);
+        if (!this.hasText(bank.accountNumber)) add(`bankAccount_${i}`, `Payout account ${i + 1} needs the account number.`);
+      }
     });
 
     this.licences.forEach((licence, i) => {

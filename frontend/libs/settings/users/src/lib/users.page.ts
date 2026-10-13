@@ -55,8 +55,16 @@ interface RoleOption {
   ],
   templateUrl: './users.page.html',
   styleUrl: './users.page.scss',
+  host: {
+    '(document:keydown.escape)': 'onEscape()',
+  },
 })
 export class UsersPage implements OnInit {
+  onEscape(): void {
+    if (this.inviting()) {
+      this.inviting.set(false);
+    }
+  }
 
   protected readonly roleOptions = computed<BbSelectOption<number>[]>(() =>
     this.roles().map((role) => ({ value: role.roleId, label: role.displayName })),

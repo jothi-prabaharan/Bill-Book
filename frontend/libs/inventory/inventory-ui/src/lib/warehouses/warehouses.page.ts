@@ -65,7 +65,10 @@ interface Warehouse {
     RegisterHeaderComponent,
     StatusTabsComponent,
   ],
-  host: { class: 'register-page' },
+  host: {
+    class: 'register-page',
+    '(document:keydown.escape)': 'onEscape()',
+  },
   templateUrl: './warehouses.page.html',
   styleUrl: './warehouses.page.scss',
 })
@@ -129,6 +132,12 @@ export class WarehousesPage implements OnInit {
   startAdd(): void {
     this.editingId.set(0);
     this.form = this.blank();
+  }
+
+  onEscape(): void {
+    if (this.editingId() !== null) {
+      this.editingId.set(null);
+    }
   }
 
   startEdit(row: Warehouse): void {

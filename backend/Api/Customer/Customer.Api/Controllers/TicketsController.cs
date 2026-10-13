@@ -22,7 +22,6 @@ namespace Customer.Api.Controllers;
 [RequireModulePermission("support")]
 [Route("api/tickets")]
 [RequireBusinessType]
-[RequireAddOn(AddOn.Crm)]
 public sealed class TicketsController : ControllerBase
 {
     private readonly CustomerDbContext _db;

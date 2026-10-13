@@ -273,7 +273,7 @@ After each sale the till prints a receipt through the browser, as a page exactly
 
 ## Scanning items
 
-**The Scan field above the lines adds an item by its barcode** (TK-161). Scan into it with a barcode scanner, type a barcode or item code and press Enter, or tap the camera button on a phone; the camera opens as a small window in the top-right corner, so the lines stay in view (see [Scanning](inputs#scanning)).
+**The Scan field above the lines adds an item by its barcode** (TK-161). Scan into it with a barcode scanner, type a barcode or item code and press Enter, or tap the camera button on a phone; the camera opens as a small window in the top-right corner, so the lines stay in view.
 
 - **A scan adds a line of one**, using the empty line a new document starts with before adding another.
 - **Scanning the same item again adds one to its line** rather than adding a second line, so three scans of a barcode give one line with quantity 3.

@@ -10,32 +10,41 @@
 }
 
 @if (inviting()) {
-  <form class="invite" (ngSubmit)="invite()">
-    <div class="field">
-      <bb-email-input label="Email" name="email" [required]="true" [(ngModel)]="form.email" />
-    </div>
-    <div class="field">
-      <bb-text-input label="Name" name="displayName" [(ngModel)]="form.displayName" required />
-    </div>
-    <div class="field">
-      <bb-text-input label="Mobile (optional)" name="mobileNumber" [(ngModel)]="form.mobileNumber" />
-    </div>
-    <div class="field">
-      <bb-select
-        label="Role"
-        placeholder="Select…"
-        name="roleId"
-        [required]="true"
-        [options]="roleOptions()"
-        [(ngModel)]="form.roleId"
-      />
-    </div>
-    <div class="invite-actions">
-      <button class="btn btn-primary" type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
-      <button type="button" class="link" (click)="inviting.set(false)">Cancel</button>
-    </div>
-    <bb-info-tooltip text="They will receive an email with a link to set their own password. No temporary password is created."></bb-info-tooltip>
-  </form>
+  <div class="backdrop" aria-hidden="true" (click)="inviting.set(false)"></div>
+  <div class="dialog" role="dialog" aria-labelledby="invite-user-title">
+    <header class="dialog-header">
+      <h2 id="invite-user-title">Invite user</h2>
+      <button type="button" class="link close-btn" (click)="inviting.set(false)" aria-label="Close dialog">✕</button>
+    </header>
+    <form (ngSubmit)="invite()">
+      <div class="dialog-body">
+        <div class="field">
+          <bb-email-input label="Email" name="email" [required]="true" [(ngModel)]="form.email" />
+        </div>
+        <div class="field">
+          <bb-text-input label="Name" name="displayName" [(ngModel)]="form.displayName" required />
+        </div>
+        <div class="field">
+          <bb-text-input label="Mobile (optional)" name="mobileNumber" [(ngModel)]="form.mobileNumber" />
+        </div>
+        <div class="field">
+          <bb-select
+            label="Role"
+            placeholder="Select…"
+            name="roleId"
+            [required]="true"
+            [options]="roleOptions()"
+            [(ngModel)]="form.roleId"
+          />
+        </div>
+        <bb-info-tooltip text="They will receive an email with a link to set their own password. No temporary password is created."></bb-info-tooltip>
+      </div>
+      <footer class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="inviting.set(false)">Cancel</button>
+        <button class="btn btn-primary" type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
+      </footer>
+    </form>
+  </div>
 }
 
 <bb-data-grid fillHeight [gridCode]="'USERS'" [columns]="columns" [data]="users()">

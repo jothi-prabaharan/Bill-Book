@@ -174,6 +174,9 @@ export class AuthService {
     localStorage.setItem(ACCESS_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
     localStorage.setItem(ORG_KEY, orgId);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('bb_menu_cache');
+    }
     this.activeOrgId.set(orgId);
     this.storeLicense(response);
     this.accessToken.set(response.accessToken);
@@ -274,6 +277,9 @@ export class AuthService {
     localStorage.removeItem(EXPIRY_KEY);
     localStorage.removeItem(EXPIRY_SCOPE_KEY);
     localStorage.removeItem(REMEMBER_KEY);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('bb_menu_cache');
+    }
     removeSessionCookie();
     this.accessToken.set(null);
     this.licenseStatus.set(null);

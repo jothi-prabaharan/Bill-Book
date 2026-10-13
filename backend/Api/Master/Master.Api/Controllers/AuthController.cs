@@ -282,6 +282,56 @@ public sealed class AuthController : ControllerBase
             : BadRequest(new MessageResponse { Message = "This invitation link is invalid or has expired." });
     }
 
+    private Guid? CallerOrgId() =>
+        Guid.TryParse(
+            User.FindFirst("org_id")?.Value
+                ?? User.FindFirst("org")?.Value,
+            out Guid orgId)
+            ? orgId
+            : null;
+
+    /// <summary>Returns the current authenticated user's profile details.</summary>
+    [Authorize]
+    [HttpGet("profile")]
+    [HttpGet("/api/users/profile")]
+    [HttpGet("/api/users/me")]
+    public async Task<IActionResult> GetProfile(
+        [FromServices] UserRepository users,
+        CancellationToken ct)
+    {
+        if (CallerUserId() is not Guid userId)
+        {
+            return Unauthorized();
+        }
+
+        var profile = await users.GetProfileAsync(userId, CallerOrgId(), ct);
+        return profile is null ? NotFound() : Ok(profile);
+    }
+
+    /// <summary>Updates display name, phone, theme, and optionally changes password.</summary>
+    [Authorize]
+    [HttpPut("profile")]
+    [HttpPut("/api/users/profile")]
+    [HttpPut("/api/users/me")]
+    public async Task<IActionResult> UpdateProfile(
+        [FromBody] UpdateUserProfileRequest request,
+        [FromServices] UserRepository users,
+        CancellationToken ct)
+    {
+        if (CallerUserId() is not Guid userId)
+        {
+            return Unauthorized();
+        }
+
+        var (success, error) = await users.UpdateProfileAsync(userId, request, ct);
+        if (!success)
+        {
+            return BadRequest(new MessageResponse { Message = error ?? "Failed to update profile." });
+        }
+
+        return Ok(new MessageResponse { Message = "Profile updated successfully." });
+    }
+
     private string? Ip() => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     private string? UserAgent() => Request.Headers.UserAgent.ToString();

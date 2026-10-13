@@ -47,8 +47,16 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
   imports: [InfoTooltipComponent, FormsModule, TextInputComponent, SelectComponent, NumberInputComponent, CheckboxComponent, CustomFieldsComponent],
   templateUrl: './custom-fields-settings.page.html',
   styleUrl: './custom-fields-settings.page.scss',
+  host: {
+    '(document:keydown.escape)': 'onEscape()',
+  },
 })
 export class CustomFieldsSettingsPage implements OnInit {
+  onEscape(): void {
+    if (this.editing()) {
+      this.cancel();
+    }
+  }
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionContextService);
 
