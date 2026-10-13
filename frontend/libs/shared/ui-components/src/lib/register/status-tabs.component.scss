@@ -50,7 +50,7 @@
 
 /* --- Mobile View (<= 768px): Button trigger & modal popup --- */
 .mobile-status-trigger {
-  display: none;
+  display: none !important;
 }
 
 .mobile-status-btn {
@@ -256,11 +256,11 @@
 
 @media (max-width: 768px) {
   .status-tabs {
-    display: none;
+    display: none !important;
   }
 
   .mobile-status-trigger {
-    display: block;
+    display: block !important;
   }
 }
 

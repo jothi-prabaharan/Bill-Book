@@ -27,9 +27,13 @@ export class StatusTabsComponent {
   /** Modal popup open state for mobile view. */
   readonly modalOpen = signal(false);
 
-  readonly activeTab = computed(
-    () => this.tabs().find((t) => t.value === this.value()) ?? this.tabs()[0],
-  );
+  readonly activeTab = computed(() => {
+    const list = this.tabs();
+    if (!list || list.length === 0) {
+      return { value: '', label: 'All', count: 0 };
+    }
+    return list.find((t) => t.value === this.value()) ?? list[0];
+  });
 
   select(value: string): void {
     if (value !== this.value()) this.valueChange.emit(value);

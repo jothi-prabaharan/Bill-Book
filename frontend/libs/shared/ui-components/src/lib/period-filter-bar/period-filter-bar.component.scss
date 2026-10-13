@@ -142,7 +142,7 @@
 }
 
 .period-bar--mobile {
-  display: none;
+  display: none !important;
 }
 
 /* --- Mobile View (<= 768px): Compact trigger bar & popup dialog --- */
@@ -415,11 +415,11 @@
 
 @media (max-width: 768px) {
   .period-bar--desktop {
-    display: none;
+    display: none !important;
   }
 
   .period-bar--mobile {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     gap: var(--space-2);
     padding: var(--space-2);
