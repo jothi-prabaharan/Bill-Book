@@ -779,6 +779,12 @@ export class GoodsReceiptFormPage {
       return;
     }
 
+    const priced = this.lines().filter(l => (l.quantity ?? 0) > 0);
+    if (priced.length === 0) {
+      this.error.set('A goods receipt needs at least one line with a quantity on it.');
+      return;
+    }
+
     this.saving.set(true);
     this.error.set(null);
     this.notice.set(null);
@@ -850,7 +856,10 @@ export class GoodsReceiptFormPage {
   private toRequest(contactId: number): SaveGoodsReceiptRequest {
     const receiving = this.receiving();
 
-    const lines: SaveGoodsReceiptLineRequest[] = this.lines().map((line, index) => {
+    const lines: SaveGoodsReceiptLineRequest[] = this.lines()
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) => (line.quantity ?? 0) > 0)
+      .map(({ line, index }) => {
       const row = receiving[index];
 
       return {

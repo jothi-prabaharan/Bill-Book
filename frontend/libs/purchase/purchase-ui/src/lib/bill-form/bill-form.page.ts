@@ -679,8 +679,9 @@ export class BillFormPage {
       return;
     }
 
-    if (this.lines().length === 0) {
-      this.error.set('Add at least one line item to the bill.');
+    const priced = this.lines().filter(l => (l.quantity ?? 0) > 0);
+    if (priced.length === 0) {
+      this.error.set('Add at least one line item with a quantity greater than zero to the bill.');
       return;
     }
 
@@ -737,7 +738,10 @@ export class BillFormPage {
   }
 
   private toRequest(contactId: number): SaveBillRequest {
-    const lines: SaveBillLineRequest[] = this.lines().map((line, index) => ({
+    const lines: SaveBillLineRequest[] = this.lines()
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) => (line.quantity ?? 0) > 0)
+      .map(({ line, index }) => ({
       itemId: line.itemId,
       goodsReceiptDetailId: this.receiptLineIds[index] ?? null,
       description: line.description,
