@@ -19,11 +19,9 @@ namespace Shared.Kernel.Printing;
 public static partial class MergeTags
 {
     /// <summary>
-    /// <c>{{Tag}}</c>. The inner pattern excludes braces, so an unclosed or
-    /// nested brace fails to match rather than swallowing the rest of the
-    /// document looking for a delimiter.
+    /// Matches <c>{{Tag}}</c> (standard for static fields) or <c>&lt;&lt;Tag&gt;&gt;</c> / <c>«Tag»</c> (standard for list fields).
     /// </summary>
-    [GeneratedRegex(@"\{\{([^{}]+)\}\}", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?:\{\{|<<|«)([^{}<>«»]+)(?:\}\}|>>|»)", RegexOptions.CultureInvariant)]
     public static partial Regex TagPattern { get; }
 
     /// <summary>Every tag in the order it appears. Duplicates kept.</summary>

@@ -98,6 +98,12 @@ export interface PrintPreview {
   unknownTags: string[];
 }
 
+export interface PreviewPrintTemplateRequest {
+  sampleDocId?: number;
+  settings?: PrintSettings;
+  content?: PrintContent;
+}
+
 export interface UpdatePrintTemplateRequest {
   templateName: string;
   settings: PrintSettings;
@@ -179,9 +185,9 @@ export class PrintTemplateService {
     return firstValueFrom(this.http.post<PrintTemplateDetail>(`${this.base}/${id}/reset`, {}));
   }
 
-  /** The saved template, rendered against sample data. */
-  preview(id: number): Promise<PrintPreview> {
-    return firstValueFrom(this.http.post<PrintPreview>(`${this.base}/${id}/preview`, {}));
+  /** The saved or draft template, rendered against sample data. */
+  preview(id: number, request?: PreviewPrintTemplateRequest): Promise<PrintPreview> {
+    return firstValueFrom(this.http.post<PrintPreview>(`${this.base}/${id}/preview`, request ?? {}));
   }
 }
 
@@ -201,9 +207,9 @@ export const PRINT_BANDS: ReadonlyArray<{
   { key: 'fixedFooterHtml', label: 'Terms', hint: 'Every page, at the bottom.' },
 ];
 
-/** The merge tag for a placeholder, as the renderer matches it. */
-export function mergeTag(tag: string): string {
-  return `{{${tag}}}`;
+/** The merge tag for a placeholder: {{Tag}} for static fields, <<Tag>> for list fields. */
+export function mergeTag(tag: string, isList = false): string {
+  return isList ? `<<${tag}>>` : `{{${tag}}}`;
 }
 
 /**

@@ -354,8 +354,8 @@ public sealed class PrintTemplateRepository
 
         PrintRenderResult rendered = _renderer.Render(new PrintRenderRequest
         {
-            Settings = template.Settings,
-            Content = template.Content,
+            Settings = request.Settings ?? template.Settings,
+            Content = request.Content ?? template.Content,
             DocumentTypeCode = template.DocumentTypeCode,
             Payload = SamplePayloadRepository.For(template.DocumentTypeCode),
         });

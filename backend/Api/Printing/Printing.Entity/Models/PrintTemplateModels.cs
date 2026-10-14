@@ -118,6 +118,12 @@ public class PreviewPrintTemplateRequest
     /// against sample data, which is what the editor uses.
     /// </summary>
     public long? SampleDocId { get; set; }
+
+    /// <summary>Optional unsaved draft settings to preview.</summary>
+    public PrintSettings? Settings { get; set; }
+
+    /// <summary>Optional unsaved draft content to preview.</summary>
+    public PrintContent? Content { get; set; }
 }
 
 /// <summary>Rendered output, ready for the preview pane.</summary>

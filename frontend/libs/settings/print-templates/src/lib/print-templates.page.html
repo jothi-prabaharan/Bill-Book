@@ -811,6 +811,17 @@
               {{ mode() === 'preview' ? 'Back to edit' : 'Preview' }}
             </button>
 
+            @if (mode() === 'preview') {
+              <button
+                class="btn btn-primary"
+                type="button"
+                [disabled]="busy()"
+                (click)="printPreview()"
+              >
+                Print
+              </button>
+            }
+
             <span class="pt-vdivider"></span>
 
             @if (flash()) {
@@ -992,6 +1003,14 @@
                 Next
               </button>
             }
+            <button
+              class="btn btn-primary"
+              type="button"
+              [disabled]="busy()"
+              (click)="printPreview()"
+            >
+              Print
+            </button>
           </div>
         }
       </main>

@@ -37,6 +37,7 @@ import {
   MessageBoxComponent,
   SelectComponent,
   UiMessage,
+  printHtml,
 } from '@bill-book/ui-components';
 
 export const MM_PX = 3.7795; // 1 mm = 3.7795 px shared constant
@@ -634,10 +635,11 @@ export class PrintTemplatesPage implements OnInit {
 
   protected tagToChip(html: string): string {
     if (!html) return '';
-    return html.replace(/\{\{([^{}]+)\}\}/g, (_match, rawTag) => {
-      const tag = rawTag.trim();
-      const isList = this.isListTag(tag);
-      return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `<<${tag}>>` : `{{${tag}}}`}</span>\u00a0`;
+    return html.replace(/(?:\{\{([^{}]+)\}\}|(?:<<|«)([^<>«»]+)(?:>>|»))/g, (_match, tag1, tag2) => {
+      const rawTag = (tag1 ?? tag2 ?? '').trim();
+      if (!rawTag) return '';
+      const isList = tag2 != null || this.isListTag(rawTag);
+      return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `<<${rawTag}>>` : `{{${rawTag}}}`}</span>\u00a0`;
     });
   }
 
@@ -649,13 +651,25 @@ export class PrintTemplatesPage implements OnInit {
     chips.forEach((chip) => {
       const raw = chip.textContent || '';
       const cleanTag = raw.replace(/[↻\s«»{}<>]/g, '').trim();
-      const tagNode = document.createTextNode(`{{${cleanTag}}}`);
+      const isList =
+        chip.classList.contains('pt-chip--list') ||
+        raw.includes('<<') ||
+        raw.includes('«') ||
+        this.isListTag(cleanTag);
+      const tagNode = document.createTextNode(isList ? `<<${cleanTag}>>` : `{{${cleanTag}}}`);
       chip.replaceWith(tagNode);
     });
     return div.innerHTML;
   }
 
   private isListTag(tag: string): boolean {
+    const dot = tag.indexOf('.');
+    if (dot > 0) {
+      const prefix = tag.substring(0, dot).toLowerCase();
+      if (['item', 'tax', 'payment', 'alloc', 'line'].includes(prefix)) {
+        return true;
+      }
+    }
     for (const group of this.placeholders()) {
       if (group.isList && group.placeholders.some((p) => p.tag.toLowerCase() === tag.toLowerCase())) {
         return true;
@@ -1584,6 +1598,64 @@ export class PrintTemplatesPage implements OnInit {
         this.loadContentIntoDom(draft);
       }
     }
+  }
+
+  protected async printPreview(): Promise<void> {
+    const detail = this.detail();
+    if (!detail) return;
+
+    this.busy.set(true);
+    try {
+      this.bankContentFromDom();
+      const preview = await this.api.preview(detail.printTemplateId, {
+        settings: this.draftSettings(),
+        content: this.draftContent() ?? detail.content,
+      });
+
+      if (preview?.html) {
+        printHtml(preview.html, this.isLaser() ? 'document' : 'receipt');
+      } else {
+        this.printClientPreview();
+      }
+    } catch {
+      this.printClientPreview();
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  private printClientPreview(): void {
+    const s = this.draftSettings();
+    const isLaser = (s.printerType ?? 'laser') === 'laser';
+    const paper = (s.paperSize ?? 'A4') as PaperSize;
+    const rollW = s.rollWidthMm ?? 80;
+
+    const pageCss = isLaser
+      ? `@page { size: ${paper} portrait; margin: ${s.marginTopMm ?? 10}mm ${s.marginRightMm ?? 10}mm ${s.marginBottomMm ?? 10}mm ${s.marginLeftMm ?? 10}mm; }`
+      : `@page { size: ${rollW}mm auto; margin: ${s.marginTopMm ?? 2}mm ${s.marginRightMm ?? 2}mm ${s.marginBottomMm ?? 2}mm ${s.marginLeftMm ?? 2}mm; }`;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+${pageCss}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; line-height: 1.4; margin: 0; padding: 0; color: #111; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 4px 6px; }
+.pt-print-block { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('fh')))}</div>
+  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('h')))}</div>
+  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('d')))}</div>
+  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('f')))}</div>
+  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('ff')))}</div>
+</body>
+</html>`;
+
+    printHtml(html, isLaser ? 'document' : 'receipt');
   }
 
   private bankContentFromDom(): void {
