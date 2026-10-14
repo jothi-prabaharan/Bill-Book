@@ -1,53 +1,204 @@
-<bb-form-field
-  [label]="label()"
-  [controlId]="controlId()"
-  [required]="required()"
-  [hint]="hint()"
-  [error]="error()"
-  [hintId]="hintId()"
-  [errorId]="errorId()"
->
-  <div class="bb-search" [class.bb-search--busy]="loading()">
-    <svg class="bb-search__icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-         aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
+@if (!mobileButton()) {
+  <bb-form-field
+    [label]="label()"
+    [controlId]="controlId()"
+    [required]="required()"
+    [hint]="hint()"
+    [error]="error()"
+    [hintId]="hintId()"
+    [errorId]="errorId()"
+  >
+    <div class="bb-search" [class.bb-search--busy]="loading()">
+      <svg class="bb-search__icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" />
+      </svg>
 
-    <input
-      type="search"
-      class="search-input bb-search__field"
-      [id]="controlId()"
-      [name]="name() || null"
-      [placeholder]="placeholder()"
-      [disabled]="effectiveDisabled()"
-      [readonly]="readonly()"
+      <input
+        type="search"
+        class="search-input bb-search__field"
+        [id]="controlId()"
+        [name]="name() || null"
+        [placeholder]="placeholder()"
+        [disabled]="effectiveDisabled()"
+        [readonly]="readonly()"
+        [required]="required()"
+        [attr.autocomplete]="autocomplete() || 'off'"
+        [attr.aria-label]="effectiveAriaLabel()"
+        [attr.aria-invalid]="invalid() ? 'true' : null"
+        [attr.aria-describedby]="describedBy()"
+        [attr.aria-controls]="controlsId() || null"
+        [attr.aria-busy]="loading() ? 'true' : null"
+        [value]="innerValue()"
+        (input)="onInput($event)"
+        (keydown)="onKeyDown($event)"
+        (blur)="onBlur()"
+      />
+
+      @if (loading()) {
+        <span class="bb-search__spinner" role="status" aria-label="Searching"></span>
+      } @else if (innerValue()) {
+        <button
+          type="button"
+          class="bb-search__clear"
+          aria-label="Clear search"
+          [disabled]="effectiveDisabled() || readonly()"
+          (click)="onClear()"
+        >
+          ×
+        </button>
+      }
+    </div>
+  </bb-form-field>
+} @else {
+  <!-- Desktop view (> 860px) -->
+  <div class="search-desktop-wrap">
+    <bb-form-field
+      [label]="label()"
+      [controlId]="controlId()"
       [required]="required()"
-      [attr.autocomplete]="autocomplete() || 'off'"
-      [attr.aria-label]="effectiveAriaLabel()"
-      [attr.aria-invalid]="invalid() ? 'true' : null"
-      [attr.aria-describedby]="describedBy()"
-      [attr.aria-controls]="controlsId() || null"
-      [attr.aria-busy]="loading() ? 'true' : null"
-      [value]="innerValue()"
-      (input)="onInput($event)"
-      (keydown)="onKeyDown($event)"
-      (blur)="onBlur()"
-    />
+      [hint]="hint()"
+      [error]="error()"
+      [hintId]="hintId()"
+      [errorId]="errorId()"
+    >
+      <div class="bb-search" [class.bb-search--busy]="loading()">
+        <svg class="bb-search__icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
 
-    @if (loading()) {
-      <span class="bb-search__spinner" role="status" aria-label="Searching"></span>
-    } @else if (innerValue()) {
-      <button
-        type="button"
-        class="bb-search__clear"
-        aria-label="Clear search"
-        [disabled]="effectiveDisabled() || readonly()"
-        (click)="onClear()"
-      >
-        ×
-      </button>
-    }
+        <input
+          type="search"
+          class="search-input bb-search__field"
+          [id]="controlId()"
+          [name]="name() || null"
+          [placeholder]="placeholder()"
+          [disabled]="effectiveDisabled()"
+          [readonly]="readonly()"
+          [required]="required()"
+          [attr.autocomplete]="autocomplete() || 'off'"
+          [attr.aria-label]="effectiveAriaLabel()"
+          [attr.aria-invalid]="invalid() ? 'true' : null"
+          [attr.aria-describedby]="describedBy()"
+          [attr.aria-controls]="controlsId() || null"
+          [attr.aria-busy]="loading() ? 'true' : null"
+          [value]="innerValue()"
+          (input)="onInput($event)"
+          (keydown)="onKeyDown($event)"
+          (blur)="onBlur()"
+        />
+
+        @if (loading()) {
+          <span class="bb-search__spinner" role="status" aria-label="Searching"></span>
+        } @else if (innerValue()) {
+          <button
+            type="button"
+            class="bb-search__clear"
+            aria-label="Clear search"
+            [disabled]="effectiveDisabled() || readonly()"
+            (click)="onClear()"
+          >
+            ×
+          </button>
+        }
+      </div>
+    </bb-form-field>
   </div>
-</bb-form-field>
+
+  <!-- Mobile view (<= 860px): Button trigger -->
+  <div class="search-mobile-wrap">
+    <button
+      type="button"
+      class="mobile-search-btn"
+      [class.is-active]="innerValue()"
+      (click)="openMobileModal()"
+      [attr.aria-label]="effectiveAriaLabel()"
+    >
+      <div class="mobile-search-btn__left">
+        <svg class="bb-search__icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <span class="mobile-search-btn__text">
+          {{ innerValue() ? innerValue() : (placeholder() || 'Search') }}
+        </span>
+      </div>
+
+      @if (innerValue()) {
+        <span
+          role="button"
+          tabindex="0"
+          class="mobile-search-btn__clear"
+          (click)="$event.stopPropagation(); onClear()"
+          aria-label="Clear search"
+        >✕</span>
+      } @else {
+        <svg class="mobile-search-btn__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      }
+    </button>
+  </div>
+
+  <!-- Mobile Search Modal Dialog -->
+  @if (mobileModalOpen()) {
+    <div class="dialog-backdrop" (click)="closeMobileModal()">
+      <div class="mobile-dialog search-modal-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <div class="mobile-dialog__head">
+          <h3 class="mobile-dialog__title">{{ placeholder() || 'Search' }}</h3>
+          <button type="button" class="mobile-dialog__close" aria-label="Close" (click)="closeMobileModal()">
+            ✕
+          </button>
+        </div>
+
+        <div class="mobile-dialog__body">
+          <div class="bb-search bb-search--modal" [class.bb-search--busy]="loading()">
+            <svg class="bb-search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              class="search-input bb-search__field"
+              [placeholder]="placeholder()"
+              [value]="innerValue()"
+              (input)="onInput($event)"
+              (keydown)="onModalKeyDown($event)"
+              autofocus
+            />
+            @if (innerValue()) {
+              <button
+                type="button"
+                class="bb-search__clear"
+                aria-label="Clear search"
+                (click)="onClear()"
+              >
+                ×
+              </button>
+            }
+          </div>
+
+          @if (innerValue()) {
+            <div class="search-modal-hint">
+              Searching for <strong>{{ innerValue() }}</strong>
+            </div>
+          }
+        </div>
+
+        <div class="mobile-dialog__foot">
+          <button type="button" class="btn btn-secondary" (click)="onClear(); closeMobileModal()">Clear</button>
+          <button type="button" class="btn btn-primary" (click)="closeMobileModal()">Done</button>
+        </div>
+      </div>
+    </div>
+  }
+}

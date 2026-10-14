@@ -2,17 +2,11 @@
   <h1>Stock</h1>
   <div class="head-actions">
     <bb-search-input
-      
       [(ngModel)]="search"
       (ngModelChange)="load()"
       placeholder="Search items"
       aria-label="Search items"
-    />
-    <bb-checkbox
-      text="Below reorder level"
-      name="belowReorderOnly"
-      [(ngModel)]="belowReorderOnly"
-      (ngModelChange)="load()"
+      [mobileButton]="true"
     />
   </div>
 </header>

@@ -141,8 +141,12 @@
   font-variant-numeric: tabular-nums;
 }
 
-.period-bar--mobile {
+.period-mobile-only {
   display: none !important;
+}
+
+.period-desktop-only {
+  display: flex !important;
 }
 
 /* --- Mobile View (<= 768px): Compact trigger bar & popup dialog --- */
@@ -414,15 +418,26 @@
 }
 
 @media (max-width: 860px) {
-  .period-bar--desktop {
+  .period-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .period-desktop-only {
     display: none !important;
   }
 
-  .period-bar--mobile {
+  .period-mobile-only {
     display: flex !important;
+  }
+
+  .period-extra {
+    width: 100%;
+    display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    padding: var(--space-2);
   }
 }
 

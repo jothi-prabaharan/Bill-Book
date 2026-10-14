@@ -10,7 +10,7 @@
 
 <section class="register-card">
   <div class="register-toolbar">
-    <bb-search-input [(ngModel)]="search" (keyup.enter)="load()" placeholder="Code or name" ariaLabel="Search items" />
+    <bb-search-input [(ngModel)]="search" (keyup.enter)="load()" placeholder="Code or name" ariaLabel="Search items" [mobileButton]="true" />
     <bb-select ariaLabel="Status" placeholder="" [options]="statusOptions" [(ngModel)]="status" />
     <div class="register-toolbar-end">
       <!-- Ticked rows get labels; with none ticked, every item on the tab does (TK-159). -->

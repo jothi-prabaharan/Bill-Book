@@ -15,6 +15,7 @@
       name="search"
       placeholder="Order number"
       [debounceMs]="400"
+      [mobileButton]="true"
       [(ngModel)]="search"
       (ngModelChange)="onFilterChange()"
     />

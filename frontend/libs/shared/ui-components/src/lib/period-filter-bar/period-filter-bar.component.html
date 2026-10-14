@@ -1,6 +1,6 @@
-<!-- Desktop view (> 768px) -->
-<div class="period-bar period-bar--desktop">
-  <div class="period-row">
+<div class="period-bar">
+  <!-- Desktop view (> 860px) -->
+  <div class="period-row period-desktop-only">
     <div class="period-presets" role="group" aria-label="Period">
       @for (option of presets; track option.key) {
         <button
@@ -35,20 +35,8 @@
     </div>
   </div>
 
-  <!-- The page's own filters: a number search, an overdue box. -->
-  <div class="period-extra">
-    <ng-content />
-  </div>
-
-  <div class="period-total">
-    <span class="period-total-label">{{ totalLabel() }}</span>
-    <span class="period-total-value">{{ formattedTotal() }}</span>
-  </div>
-</div>
-
-<!-- Mobile view (<= 768px) -->
-<div class="period-bar period-bar--mobile">
-  <div class="mobile-period-header">
+  <!-- Mobile view (<= 860px) -->
+  <div class="mobile-period-header period-mobile-only">
     <button type="button" class="mobile-date-filter-btn" (click)="openModal()" aria-label="Filter by date">
       <div class="mobile-date-filter-btn__left">
         <span class="mobile-date-filter-btn__icon">📅</span>
@@ -65,9 +53,15 @@
     </div>
   </div>
 
-  <!-- Extra filters: search input, etc. -->
+  <!-- The page's own filters: a number search, etc. -->
   <div class="period-extra">
     <ng-content />
+  </div>
+
+  <!-- Desktop total at right end (> 860px) -->
+  <div class="period-total period-desktop-only">
+    <span class="period-total-label">{{ totalLabel() }}</span>
+    <span class="period-total-value">{{ formattedTotal() }}</span>
   </div>
 </div>
 

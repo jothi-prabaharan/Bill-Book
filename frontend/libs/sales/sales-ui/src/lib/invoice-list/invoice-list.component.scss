@@ -5,11 +5,6 @@
   width: 190px;
 }
 
-.inv-list__check {
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .inv-list__muted {
   color: var(--color-text-subtle);
 }
@@ -21,7 +16,7 @@
   font-size: 11px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 860px) {
   .inv-list__search {
     width: 100%;
   }

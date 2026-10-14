@@ -15,25 +15,8 @@
       name="search"
       placeholder="Invoice number"
       [debounceMs]="400"
+      [mobileButton]="true"
       [(ngModel)]="search"
-      (ngModelChange)="onFilterChange()"
-    />
-
-    <bb-checkbox
-      id="inv-overdue"
-      class="inv-list__check"
-      text="Overdue only"
-      name="overdueOnly"
-      [(ngModel)]="overdueOnly"
-      (ngModelChange)="onFilterChange()"
-    />
-
-    <bb-checkbox
-      id="inv-einvoice"
-      class="inv-list__check"
-      text="E-invoice needs attention"
-      name="eInvoiceAttention"
-      [(ngModel)]="eInvoiceAttention"
       (ngModelChange)="onFilterChange()"
     />
   </bb-period-filter-bar>

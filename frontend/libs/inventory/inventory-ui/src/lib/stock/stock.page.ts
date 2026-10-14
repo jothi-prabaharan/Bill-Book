@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
-  CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
@@ -168,7 +167,6 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
     NumberInputComponent,
     SearchInputComponent,
     LookupDialogComponent,
-    CheckboxComponent,
     QuantityInputComponent,
     SelectComponent,
     TextareaComponent,

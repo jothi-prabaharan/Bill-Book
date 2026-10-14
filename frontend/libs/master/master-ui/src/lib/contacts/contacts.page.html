@@ -12,7 +12,7 @@
 
 <div class="register-card">
   <div class="register-toolbar">
-    <bb-search-input [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, code or GSTIN" ariaLabel="Search contacts" />
+    <bb-search-input [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, code or GSTIN" ariaLabel="Search contacts" [mobileButton]="true" />
     <bb-select ariaLabel="Role" placeholder="" [options]="roleOptions()" [(ngModel)]="roleFilter" (ngModelChange)="load()" />
   </div>
 

@@ -57,6 +57,15 @@ export class SearchInputComponent extends BbControlBase<string> implements OnDes
   /** The id of the results element, so a screen reader ties the two together. */
   readonly controlsId = input<string>('');
 
+  /**
+   * On a mobile screen (<= 860px), display as a button that opens a focused search modal.
+   */
+  readonly mobileButton = input<boolean, boolean | string>(false, {
+    transform: (value) => value === '' || value === 'true' || value === true,
+  });
+
+  protected readonly mobileModalOpen = signal(false);
+
   // eslint-disable-next-line @angular-eslint/no-output-native
   readonly search = output<string>();
   readonly clear = output<void>();
@@ -65,6 +74,28 @@ export class SearchInputComponent extends BbControlBase<string> implements OnDes
   protected readonly innerValue = signal<string>('');
 
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  protected openMobileModal(): void {
+    if (this.effectiveDisabled() || this.readonly()) {
+      return;
+    }
+    this.mobileModalOpen.set(true);
+  }
+
+  protected closeMobileModal(): void {
+    this.mobileModalOpen.set(false);
+  }
+
+  protected onModalKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.cancelPending();
+      this.search.emit(this.innerValue());
+      this.closeMobileModal();
+    } else if (event.key === 'Escape') {
+      this.closeMobileModal();
+    }
+  }
 
   ngOnDestroy(): void {
     this.cancelPending();
