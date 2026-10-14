@@ -81,6 +81,11 @@ public sealed class RlsConnectionInterceptor : DbCommandInterceptor
         {
             command.CommandText = prefix + command.CommandText;
         }
+
+        if (command.CommandTimeout < 180)
+        {
+            command.CommandTimeout = 180;
+        }
     }
 
     public override InterceptionResult<DbDataReader> ReaderExecuting(

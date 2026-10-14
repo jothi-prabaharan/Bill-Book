@@ -64,7 +64,11 @@ builder.Services.AddDbContext<PurchaseDbContext>((sp, options) =>
 {
     options.UseNpgsql(
         sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "pur"));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "pur");
+            npgsql.CommandTimeout(180);
+        });
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());

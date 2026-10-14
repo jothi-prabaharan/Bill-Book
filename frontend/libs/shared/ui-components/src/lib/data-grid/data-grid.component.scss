@@ -362,18 +362,29 @@
     justify-content: space-between;
     width: 100%;
     align-items: center;
+    gap: var(--space-2);
   }
 
   .reg-pager__nav {
     display: flex;
     justify-content: center;
+    align-items: center;
     width: 100%;
     gap: 8px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--color-divider);
   }
 
   .reg-pager__btn {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 420px) {
+  .reg-pager__label {
+    display: none;
   }
 }
 

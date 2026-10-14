@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -59,10 +60,22 @@ try
             services.AddBillBookWorkerErrorAudit<BillBook.Worker.Notification.Persistence.NotificationDbContext>();
 
             // The master database for RateSync
-            var adminConnectionString = config.GetConnectionString("AdminDatabase") ?? "Host=localhost;Database=billbook_master;Username=postgres;Password=postgres";
+            var rawAdminConnectionString = config.GetConnectionString("AdminDatabase") ?? "Host=localhost;Database=billbook_master;Username=postgres;Password=postgres";
+            var csb = new NpgsqlConnectionStringBuilder(rawAdminConnectionString);
+            if (csb.Timeout < 180) csb.Timeout = 180;
+            if (csb.CommandTimeout < 180) csb.CommandTimeout = 180;
+            if (csb.KeepAlive == 0 || csb.KeepAlive > 5) csb.KeepAlive = 5;
+            csb.TcpKeepAlive = true;
+            csb.TcpKeepAliveTime = 5;
+            csb.TcpKeepAliveInterval = 1;
+            csb.ConnectionIdleLifetime = 20;
+            csb.ConnectionPruningInterval = 5;
+            csb.ConnectionLifetime = 120;
+            if (csb.MaxPoolSize > 15) csb.MaxPoolSize = 15;
+
             services.AddDbContext<Master.Repository.AdminDbContext>((sp, options) =>
             {
-                options.UseNpgsql(adminConnectionString);
+                options.UseNpgsql(csb.ConnectionString, npgsql => npgsql.CommandTimeout(180));
                 options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
             });
 

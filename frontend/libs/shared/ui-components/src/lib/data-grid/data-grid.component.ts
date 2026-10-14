@@ -291,7 +291,8 @@ export class DataGridComponent implements OnInit {
     const total = this.totalItems();
     if (total === 0) return '0 to 0 of 0';
     const size = this._pageSize();
-    const page = this._currentPage();
+    const pages = this.totalPages();
+    const page = Math.min(Math.max(1, this._currentPage()), pages);
     const start = (page - 1) * size + 1;
     const end = Math.min(page * size, total);
     return `${start} to ${end} of ${total}`;
@@ -515,7 +516,8 @@ export class DataGridComponent implements OnInit {
     const list = this.filteredData();
     const total = this._totalCount();
     const size = this._pageSize();
-    const page = this._currentPage();
+    const pages = this.totalPages();
+    const page = Math.min(Math.max(1, this._currentPage()), pages);
 
     if (total > 0 || !this.paged) {
       // Server-side pagination (the parent passed the page), or no paging at all.
@@ -538,7 +540,8 @@ export class DataGridComponent implements OnInit {
   paginationSummary = computed(() => {
     const total = this._totalCount() > 0 ? this._totalCount() : this.filteredData().length;
     const size = this._pageSize();
-    const page = this._currentPage();
+    const pages = this.totalPages();
+    const page = Math.min(Math.max(1, this._currentPage()), pages);
     if (total === 0) return '0 records';
     const start = (page - 1) * size + 1;
     const end = Math.min(page * size, total);

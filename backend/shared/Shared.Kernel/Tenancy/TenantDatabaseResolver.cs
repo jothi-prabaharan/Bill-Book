@@ -29,15 +29,19 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
         {
             builder.CommandTimeout = StrictTimeoutSeconds;
         }
-        if (builder.KeepAlive == 0 || builder.KeepAlive > 10)
+        if (builder.KeepAlive == 0 || builder.KeepAlive > 5)
         {
-            builder.KeepAlive = 10;
+            builder.KeepAlive = 5;
         }
         builder.TcpKeepAlive = true;
-        builder.ConnectionIdleLifetime = 30;
-        if (builder.MaxPoolSize > 25)
+        builder.TcpKeepAliveTime = 5;
+        builder.TcpKeepAliveInterval = 1;
+        builder.ConnectionIdleLifetime = 20;
+        builder.ConnectionPruningInterval = 5;
+        builder.ConnectionLifetime = 120;
+        if (builder.MaxPoolSize > 15)
         {
-            builder.MaxPoolSize = 25;
+            builder.MaxPoolSize = 15;
         }
         _adminDbConnectionString = builder.ConnectionString;
         _cache = cache;

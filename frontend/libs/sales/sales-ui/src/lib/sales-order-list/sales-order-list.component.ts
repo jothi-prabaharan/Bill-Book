@@ -165,13 +165,15 @@ export class SalesOrderListComponent implements OnInit {
   }
 
   protected async onPageChange(page: number): Promise<void> {
+    if (this.page() === page) return;
     this.page.set(page);
     await this.load();
   }
 
-  /** The grid moves itself to page one and says so through pageChange, which reloads. */
-  protected onPageSizeChange(size: number): void {
+  protected async onPageSizeChange(size: number): Promise<void> {
     this.pageSize.set(size);
+    this.page.set(1);
+    await this.load();
   }
 
   protected async setStatus(status: string): Promise<void> {

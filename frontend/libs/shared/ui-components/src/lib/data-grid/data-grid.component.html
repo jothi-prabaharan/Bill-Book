@@ -168,7 +168,7 @@
       </div>
       <span class="reg-pager__summary">{{ rangeSummary() }}</span>
     </div>
-    <div class="reg-pager__nav">
+    <div class="reg-pager__nav" *ngIf="totalPages() > 1">
       <button type="button" class="reg-pager__btn" aria-label="First page" [disabled]="currentPage <= 1" (click)="goToPage(1)">«</button>
       <button type="button" class="reg-pager__btn" aria-label="Previous page" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">‹</button>
       <span class="reg-pager__page">Page {{ currentPage }} of {{ totalPages() }}</span>

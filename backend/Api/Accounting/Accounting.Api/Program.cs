@@ -64,7 +64,11 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
 {
     options.UseNpgsql(
         sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "acc"));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "acc");
+            npgsql.CommandTimeout(180);
+        });
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());

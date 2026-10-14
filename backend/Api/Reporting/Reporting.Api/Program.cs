@@ -61,7 +61,11 @@ builder.Services.AddDbContext<ReportingDbContext>((sp, options) =>
 {
     options.UseNpgsql(
         sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId, sp.GetService<ITenantContext>()?.DatabaseName),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "rpt"));
+        npgsql =>
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "rpt");
+            npgsql.CommandTimeout(180);
+        });
 
     // RlsConnectionInterceptor is what sets app.current_org_id, and it sets it
     // transaction-locally — a SET LOCAL prefixed to every command (TK-08).

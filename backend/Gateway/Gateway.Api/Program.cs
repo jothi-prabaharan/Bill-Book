@@ -2,6 +2,7 @@ using Gateway.Api;
 using Gateway.Api.Logging;
 using Gateway.Repository;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Persistence;
 
@@ -43,7 +44,7 @@ builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 // CreatedBy.
 builder.Services.AddDbContext<GatewayDbContext>((sp, options) =>
 {
-    options.UseNpgsql(RequiredConnectionString("AdminDatabase"));
+    options.UseNpgsql(RequiredConnectionString("AdminDatabase"), npgsql => npgsql.CommandTimeout(180));
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 // The Gateway proxies rather than serving controllers, so there is no
@@ -187,9 +188,24 @@ app.Run();
 // Settings with no safe default. Blank is treated as missing: appsettings.json ships
 // every key present but empty so the shape is discoverable, which means a `??` fallback
 // would never fire and a broken value would flow on silently instead.
-string RequiredConnectionString(string name) =>
-    builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
+string RequiredConnectionString(string name)
+{
+    string raw = builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
         ? value
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
+    var csb = new NpgsqlConnectionStringBuilder(raw);
+    if (csb.Timeout < 180) csb.Timeout = 180;
+    if (csb.CommandTimeout < 180) csb.CommandTimeout = 180;
+    if (csb.KeepAlive == 0 || csb.KeepAlive > 5) csb.KeepAlive = 5;
+    csb.TcpKeepAlive = true;
+    csb.TcpKeepAliveTime = 5;
+    csb.TcpKeepAliveInterval = 1;
+    csb.ConnectionIdleLifetime = 20;
+    csb.ConnectionPruningInterval = 5;
+    csb.ConnectionLifetime = 120;
+    if (csb.MaxPoolSize > 15) csb.MaxPoolSize = 15;
+    return csb.ConnectionString;
+}
