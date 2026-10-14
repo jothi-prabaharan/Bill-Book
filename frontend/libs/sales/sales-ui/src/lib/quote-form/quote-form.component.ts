@@ -62,7 +62,6 @@ import { SalesPicker } from '../sales-picker';
     ReactiveFormsModule,
     DocumentLineGridComponent,
     RouterModule,
-    TextInputComponent,
     SelectComponent,
     TextareaComponent,
     CheckboxComponent,

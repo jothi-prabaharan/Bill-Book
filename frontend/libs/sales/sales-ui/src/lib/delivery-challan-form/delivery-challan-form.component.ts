@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { readApiFailure } from '@bill-book/api-client';
 import {
@@ -96,6 +96,7 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
     LookupDialogComponent,
     ScanComponent,
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     RouterModule,
     DocumentLineGridComponent,

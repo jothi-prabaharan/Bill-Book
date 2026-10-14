@@ -110,7 +110,6 @@ interface ReturnLine {
     RouterModule,
     LookupDialogComponent,
     BranchDateInputComponent,
-    TextInputComponent,
     QuantityInputComponent,
     CheckboxComponent,
     SelectComponent,

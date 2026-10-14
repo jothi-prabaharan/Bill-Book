@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { readApiFailure } from '@bill-book/api-client';
@@ -93,6 +93,7 @@ type CreditNoteGridLine = ReturnLine;
     LookupDialogComponent,
     ScanComponent,
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     RouterModule,
     DocumentLineGridComponent,
