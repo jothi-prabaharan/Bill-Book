@@ -52,8 +52,11 @@ public static class PrintSubstitutionRepository
             return new SubstitutionResult();
         }
 
+        string normalizedHtml = System.Text.RegularExpressions.Regex.Replace(
+            html, @"<<([A-Za-z0-9_.]+)>>", "&lt;&lt;$1&gt;&gt;");
+
         var parser = new HtmlParser();
-        IHtmlDocument document = parser.ParseDocument($"<body>{html}</body>");
+        IHtmlDocument document = parser.ParseDocument($"<body>{normalizedHtml}</body>");
         var unknown = new List<string>();
 
         ExpandRepeatingRows(document, documentTypeCode, payload, format, sanitizer, unknown);

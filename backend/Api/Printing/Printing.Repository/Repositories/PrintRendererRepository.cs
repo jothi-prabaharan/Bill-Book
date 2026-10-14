@@ -93,7 +93,9 @@ public sealed class PrintRendererRepository
         foreach (PrintSegment segment in PrintSegmentsRepository.InOrder)
         {
             string rawHtml = PrintSegmentsRepository.Html(content, segment);
-            string sanitizedHtml = sanitizer.Sanitize(rawHtml);
+            string safeRawHtml = System.Text.RegularExpressions.Regex.Replace(
+                rawHtml, @"<<([A-Za-z0-9_.]+)>>", "&lt;&lt;$1&gt;&gt;");
+            string sanitizedHtml = sanitizer.Sanitize(safeRawHtml);
             SubstitutionResult result = PrintSubstitutionRepository.Resolve(
                 sanitizedHtml,
                 request.DocumentTypeCode,

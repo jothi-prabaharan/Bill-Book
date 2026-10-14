@@ -887,13 +887,15 @@ export class PrintTemplatesPage implements OnInit {
           .replace(/[↻\s«»{}<>]/g, '')
           .trim();
         if (text) {
-          return `<<${text}>>`;
+          return this.isListTag(text) ? `<<${text}>>` : `{{${text}}}`;
         }
         return '';
       },
     );
 
-    return clean.replace(
+    const normalized = clean.replace(/<<([a-zA-Z0-9_.]+)>>/g, '&lt;&lt;$1&gt;&gt;');
+
+    return normalized.replace(
       /(?:\{\{([^{}]+)\}\}|(?:<<|«|&lt;&lt;)([^<>«»&]+)(?:>>|»|&gt;&gt;))/g,
       (_match, tag1, tag2) => {
         const rawTag = (tag1 ?? tag2 ?? '')
@@ -902,7 +904,7 @@ export class PrintTemplatesPage implements OnInit {
           .replace(/[↻\s«»{}<>]/g, '')
           .trim();
         if (!rawTag) return '';
-        const isList = tag2 != null || this.isListTag(rawTag);
+        const isList = this.isListTag(rawTag);
         return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `&lt;&lt;${rawTag}&gt;&gt;` : `{{${rawTag}}}`}</span>\u00a0`;
       },
     );
@@ -2584,8 +2586,20 @@ th, td {
   }
 
   protected ptMockHtml(html: string): string {
+    const normalizedHtml = (html || '').replace(/<<([a-zA-Z0-9_.]+)>>/g, '&lt;&lt;$1&gt;&gt;');
     const root = document.createElement('div');
-    root.innerHTML = html || '';
+    root.innerHTML = normalizedHtml;
+
+    // Convert any stray HTML elements (e.g. <item.slno> or <tax.component>) back into text nodes
+    const strayElements = Array.from(root.querySelectorAll('*')).filter((el) =>
+      /^(item|tax|alloc|line|payment)\./i.test(el.tagName),
+    );
+    strayElements.forEach((el) => {
+      const tagName = el.tagName;
+      const textNode = document.createTextNode(`<<${tagName}>>`);
+      el.replaceWith(textNode);
+    });
+
     const tagOf = (text: string) =>
       text
         .replace(/&lt;/g, '<')
@@ -2614,6 +2628,22 @@ th, td {
           const t = tagOf(match[1]);
           if (this.isListTag(t)) {
             listTag = t;
+          }
+        }
+      }
+
+      if (!listTag) {
+        const walker = document.createTreeWalker(tr, NodeFilter.SHOW_TEXT);
+        let textNode: Node | null;
+        while ((textNode = walker.nextNode())) {
+          const text = textNode.nodeValue || '';
+          const match = text.match(/(?:\{\{|<<|«|&lt;&lt;)\s*([^{}<>«»&]+?)\s*(?:\}\}|>>|»|&gt;&gt;)/i);
+          if (match) {
+            const t = tagOf(match[1]);
+            if (this.isListTag(t)) {
+              listTag = t;
+              break;
+            }
           }
         }
       }
