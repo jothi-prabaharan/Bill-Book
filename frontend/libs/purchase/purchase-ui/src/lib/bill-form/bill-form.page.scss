@@ -254,9 +254,22 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px 14px;
   margin-top: 8px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 10px;
+
+    .vendor-field {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* Address cards equal heights */
+/* Address cards equal heights and mobile accordion */
 .address-row {
   display: flex;
   gap: 12px;
@@ -274,10 +287,68 @@
   flex-direction: column;
   justify-content: space-between;
 
+  &__head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: default;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+  }
+
+  &__chevron {
+    display: none;
+    color: var(--color-text-muted, #6b7280);
+    transition: transform 0.2s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+    margin-top: var(--space-2, 8px);
+  }
+
   &__body {
     flex: 1;
     display: flex;
     flex-direction: column;
+  }
+
+  @media (max-width: 768px) {
+    &__head {
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    &__chevron {
+      display: inline-block;
+    }
+
+    &__content--hidden {
+      display: none !important;
+    }
+
+    &--collapsed {
+      padding: 10px 14px;
+    }
   }
 }
 

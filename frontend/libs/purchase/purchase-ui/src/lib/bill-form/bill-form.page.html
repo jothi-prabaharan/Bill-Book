@@ -43,7 +43,7 @@
     <div class="card">
       <div class="card-kicker">Document</div>
       <div class="doc-header-grid">
-        <div class="field">
+        <div class="field vendor-field">
           <bb-form-field
             label="Vendor"
             controlId="bil-vendor-search"
@@ -243,37 +243,60 @@
 
     <!-- Card Row: Address Details -->
     <div class="card-row address-row">
-      <div class="card address-card">
-        <div class="card-kicker">Vendor details</div>
-        @if (billingAddressOptions().length > 0) {
-          <div class="field">
-            <bb-select
-              id="bil-billing-select"
-              label="Choose address"
-              placeholder="Choose from vendor's addresses…"
-              [options]="billingAddressOptions()"
+      <div class="card address-card" [class.address-card--collapsed]="!vendorDetailsOpen()">
+        <button
+          type="button"
+          class="address-card__head"
+          [attr.aria-expanded]="vendorDetailsOpen()"
+          (click)="toggleVendorDetails()"
+        >
+          <span class="card-kicker" style="margin-bottom:0">Vendor details</span>
+          <svg class="address-card__chevron" [class.address-card__chevron--open]="vendorDetailsOpen()" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </button>
+
+        <div class="address-card__content" [class.address-card__content--hidden]="!vendorDetailsOpen()">
+          @if (billingAddressOptions().length > 0) {
+            <div class="field">
+              <bb-select
+                id="bil-billing-select"
+                label="Choose address"
+                placeholder="Choose from vendor's addresses…"
+                [options]="billingAddressOptions()"
+                [disabled]="readonlyDoc()"
+                [ngModel]="selectedBillingAddressId()"
+                (ngModelChange)="onBillingAddressChange($event)"
+              />
+            </div>
+          }
+          <div class="field address-card__body" [style.marginTop]="billingAddressOptions().length > 0 ? 'var(--space-2)' : null">
+            <bb-textarea
+              id="bil-billing"
+              label="Billing address"
+              rows="3"
               [disabled]="readonlyDoc()"
-              [ngModel]="selectedBillingAddressId()"
-              (ngModelChange)="onBillingAddressChange($event)"
+              [ngModel]="billingAddress()"
+              (ngModelChange)="billingAddress.set($event)"
             />
           </div>
-        }
-        <div class="field address-card__body" [style.marginTop]="billingAddressOptions().length > 0 ? 'var(--space-2)' : null">
-          <bb-textarea
-            id="bil-billing"
-            label="Billing address"
-            rows="3"
-            [disabled]="readonlyDoc()"
-            [ngModel]="billingAddress()"
-            (ngModelChange)="billingAddress.set($event)"
-          />
+          <div class="card-meta">Primary billing premises from vendor records.</div>
         </div>
-        <div class="card-meta">Primary billing premises from vendor records.</div>
       </div>
 
-      <div class="card address-card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="card-kicker" style="margin-bottom:0">Shipping address</div>
+      <div class="card address-card" [class.address-card--collapsed]="!shippingAddressOpen()">
+        <div class="address-card__head-row">
+          <button
+            type="button"
+            class="address-card__head"
+            [attr.aria-expanded]="shippingAddressOpen()"
+            (click)="toggleShippingAddress()"
+          >
+            <span class="card-kicker" style="margin-bottom:0">Shipping address</span>
+            <svg class="address-card__chevron" [class.address-card__chevron--open]="shippingAddressOpen()" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
           <bb-checkbox
             text="Same as billing"
             [disabled]="readonlyDoc()"
@@ -281,30 +304,33 @@
             (ngModelChange)="onSameAsBillingChange($event)"
           />
         </div>
-        @if (!sameAsBilling() && shippingAddressOptions().length > 0) {
-          <div class="field" style="margin-top: var(--space-2)">
-            <bb-select
-              id="bil-shipping-select"
-              label="Choose address"
-              placeholder="Choose from vendor's addresses…"
-              [options]="shippingAddressOptions()"
-              [disabled]="readonlyDoc()"
-              [ngModel]="selectedShippingAddressId()"
-              (ngModelChange)="onShippingAddressChange($event)"
+
+        <div class="address-card__content" [class.address-card__content--hidden]="!shippingAddressOpen()">
+          @if (!sameAsBilling() && shippingAddressOptions().length > 0) {
+            <div class="field" style="margin-top: var(--space-2)">
+              <bb-select
+                id="bil-shipping-select"
+                label="Choose address"
+                placeholder="Choose from vendor's addresses…"
+                [options]="shippingAddressOptions()"
+                [disabled]="readonlyDoc()"
+                [ngModel]="selectedShippingAddressId()"
+                (ngModelChange)="onShippingAddressChange($event)"
+              />
+            </div>
+          }
+          <div class="field address-card__body" style="margin-top: var(--space-2)">
+            <bb-textarea
+              id="bil-shipping"
+              label="Shipping address"
+              rows="3"
+              [disabled]="readonlyDoc() || sameAsBilling()"
+              [ngModel]="shippingAddress()"
+              (ngModelChange)="shippingAddress.set($event)"
             />
           </div>
-        }
-        <div class="field address-card__body" style="margin-top: var(--space-2)">
-          <bb-textarea
-            id="bil-shipping"
-            label="Shipping address"
-            rows="3"
-            [disabled]="readonlyDoc() || sameAsBilling()"
-            [ngModel]="shippingAddress()"
-            (ngModelChange)="shippingAddress.set($event)"
-          />
+          <div class="card-meta">Destination premises for goods or services.</div>
         </div>
-        <div class="card-meta">Destination premises for goods or services.</div>
       </div>
     </div>
 

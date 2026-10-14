@@ -168,6 +168,16 @@ export class BillFormPage {
   protected readonly selectedBillingAddressId = signal<number | null>(null);
   protected readonly selectedShippingAddressId = signal<number | null>(null);
   protected readonly sameAsBilling = signal(true);
+  protected readonly vendorDetailsOpen = signal(true);
+  protected readonly shippingAddressOpen = signal(false);
+
+  protected toggleVendorDetails(): void {
+    this.vendorDetailsOpen.update((v) => !v);
+  }
+
+  protected toggleShippingAddress(): void {
+    this.shippingAddressOpen.update((v) => !v);
+  }
 
   protected readonly billingAddressOptions = computed<BbSelectOption<number>[]>(() =>
     this.contactAddresses().map((a) => ({
