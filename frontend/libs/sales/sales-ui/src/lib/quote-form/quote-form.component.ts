@@ -28,7 +28,6 @@ import {
   addScannedItem,
   LookupRow,
   TextareaComponent,
-  TextInputComponent,
   CheckboxComponent,
   totalsOf,
   ProjectOption,
@@ -164,6 +163,24 @@ export class QuoteFormComponent implements OnInit {
       label: formatAddressOptionLabel(a),
     }))
   );
+
+  readonly billingAddressPlaceholder = computed(() => {
+    if (!this.form.controls.contactId.value) {
+      return 'Choose customer first…';
+    }
+    return this.billingAddressOptions().length > 0
+      ? 'Choose from customer\'s addresses…'
+      : 'No addresses saved for this customer';
+  });
+
+  readonly shippingAddressPlaceholder = computed(() => {
+    if (!this.form.controls.contactId.value) {
+      return 'Choose customer first…';
+    }
+    return this.shippingAddressOptions().length > 0
+      ? 'Choose from customer\'s addresses…'
+      : 'No addresses saved for this customer';
+  });
 
   private async loadContactAddresses(contactId: number, preserveExisting = false): Promise<void> {
     const summary = await this.lookups.contactAddresses?.(contactId);

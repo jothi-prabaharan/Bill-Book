@@ -140,22 +140,20 @@
     <div class="card-row">
       <div class="card">
         <div class="card-kicker">Billing address</div>
-        @if (billingAddressOptions().length > 0) {
-          <div class="field">
-            <bb-select
-              id="sor-billing-select"
-              label="Choose address"
-              placeholder="Choose from customer's addresses…"
-              [options]="billingAddressOptions()"
-              [disabled]="context().readonly"
-              [ngModel]="selectedBillingAddressId()"
-              (ngModelChange)="onBillingAddressChange($event)"
-              [ngModelOptions]="{ standalone: true }"
-            />
-          </div>
-        }
-        <div class="field" [style.marginTop]="billingAddressOptions().length > 0 ? 'var(--space-2)' : null">
-          <bb-textarea id="sor-billing" label="Billing address" rows="3" formControlName="billingAddress" />
+        <div class="field">
+          <bb-select
+            id="sor-billing-select"
+            label="Choose address"
+            [placeholder]="billingAddressPlaceholder()"
+            [options]="billingAddressOptions()"
+            [disabled]="context().readonly || billingAddressOptions().length === 0"
+            [ngModel]="selectedBillingAddressId()"
+            (ngModelChange)="onBillingAddressChange($event)"
+            [ngModelOptions]="{ standalone: true }"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-textarea id="sor-billing" label="Address details" rows="3" formControlName="billingAddress" />
         </div>
       </div>
 
@@ -170,14 +168,14 @@
             [ngModelOptions]="{ standalone: true }"
           />
         </div>
-        @if (!sameAsBilling() && shippingAddressOptions().length > 0) {
+        @if (!sameAsBilling()) {
           <div class="field" style="margin-top: var(--space-2)">
             <bb-select
               id="sor-shipping-select"
               label="Choose address"
-              placeholder="Choose from customer's addresses…"
+              [placeholder]="shippingAddressPlaceholder()"
               [options]="shippingAddressOptions()"
-              [disabled]="context().readonly"
+              [disabled]="context().readonly || shippingAddressOptions().length === 0"
               [ngModel]="selectedShippingAddressId()"
               (ngModelChange)="onShippingAddressChange($event)"
               [ngModelOptions]="{ standalone: true }"
@@ -185,7 +183,7 @@
           </div>
         }
         <div class="field" style="margin-top: var(--space-2)">
-          <bb-textarea id="sor-shipping" label="Shipping address" rows="3" formControlName="shippingAddress" />
+          <bb-textarea id="sor-shipping" label="Address details" rows="3" formControlName="shippingAddress" />
         </div>
         <div class="card-meta">Delivery destination for the goods or services.</div>
       </div>

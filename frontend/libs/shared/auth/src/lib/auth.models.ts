@@ -9,6 +9,10 @@ export interface AccessibleOrg {
   baseCurrency?: string | null;
   gstin?: string | null;
   city?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  postalCode?: string | null;
+  stateId?: number | null;
 }
 
 export interface SessionState {

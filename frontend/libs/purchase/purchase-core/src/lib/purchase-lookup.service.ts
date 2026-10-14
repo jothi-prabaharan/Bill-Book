@@ -136,6 +136,44 @@ export function formatAddressOptionLabel(addr: {
   return summary ? `${kindLabel}: ${summary}` : kindLabel;
 }
 
+export interface OrgAddressOption {
+  orgId: string;
+  orgName: string;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  stateId?: number | null;
+  postalCode?: string | null;
+  gstin?: string | null;
+  formattedAddress: string;
+  label: string;
+}
+
+export function formatOrgAddress(org: {
+  orgName?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+}): string {
+  const parts: string[] = [];
+  if (org.orgName?.trim()) parts.push(org.orgName.trim());
+  if (org.addressLine1?.trim()) parts.push(org.addressLine1.trim());
+  if (org.addressLine2?.trim()) parts.push(org.addressLine2.trim());
+  const cityZip = [org.city?.trim(), org.postalCode?.trim()].filter(Boolean).join(' - ');
+  if (cityZip) parts.push(cityZip);
+  return parts.join(', ');
+}
+
+export function formatOrgAddressOptionLabel(org: {
+  orgName: string;
+  city?: string | null;
+  addressLine1?: string | null;
+}): string {
+  const loc = [org.city, org.addressLine1].filter(Boolean).join(', ');
+  return loc ? `${org.orgName} (${loc})` : org.orgName;
+}
+
 /** What the branch has decided about how its documents are built. */
 export interface BranchDocumentSettings {
   stateCode: string;

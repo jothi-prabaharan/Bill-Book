@@ -45,9 +45,9 @@ import {
   PurchaseLookupService,
   SaveDebitNoteLineRequest,
   SaveDebitNoteRequest,
-  ContactAddressOption,
-  formatContactAddress,
-  formatAddressOptionLabel,
+  OrgAddressOption,
+  formatOrgAddress,
+  formatOrgAddressOptionLabel,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 import { debitScanned } from './debit-note-scan';
@@ -163,97 +163,112 @@ export class DebitNoteFormPage {
   protected readonly placeOfSupplyStateCode = signal(this.getOrgStateCode());
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');
-  protected readonly contactAddresses = signal<ContactAddressOption[]>([]);
-  protected readonly selectedBillingAddressId = signal<number | null>(null);
-  protected readonly selectedShippingAddressId = signal<number | null>(null);
+  protected readonly organizationAddresses = signal<OrgAddressOption[]>([]);
+  protected readonly selectedBillingOrgId = signal<string | null>(null);
+  protected readonly selectedShippingOrgId = signal<string | null>(null);
   protected readonly sameAsBilling = signal(true);
 
-  protected readonly billingAddressOptions = computed<BbSelectOption<number>[]>(() =>
-    this.contactAddresses().map((a) => ({
-      value: a.contactAddressId,
-      label: formatAddressOptionLabel(a),
+  protected readonly billingAddressOptions = computed<BbSelectOption<string>[]>(() =>
+    this.organizationAddresses().map((a) => ({
+      value: a.orgId,
+      label: a.label,
     }))
   );
 
-  protected readonly shippingAddressOptions = computed<BbSelectOption<number>[]>(() =>
-    this.contactAddresses().map((a) => ({
-      value: a.contactAddressId,
-      label: formatAddressOptionLabel(a),
+  protected readonly shippingAddressOptions = computed<BbSelectOption<string>[]>(() =>
+    this.organizationAddresses().map((a) => ({
+      value: a.orgId,
+      label: a.label,
     }))
   );
 
-  private async loadContactAddresses(contactId: number, preserveExisting = false): Promise<void> {
-    const summary = await this.lookups.contactAddresses?.(contactId);
-    if (!summary) {
-      this.contactAddresses.set([]);
-      return;
-    }
-    this.contactAddresses.set(summary.addresses);
+  protected readonly billingAddressPlaceholder = computed(() =>
+    this.billingAddressOptions().length > 0
+      ? 'Choose organization branch address…'
+      : 'No organization address available'
+  );
 
-    if (summary.gstin) {
-      this.contactGstin.set(summary.gstin);
-    }
+  protected readonly shippingAddressPlaceholder = computed(() =>
+    this.shippingAddressOptions().length > 0
+      ? 'Choose organization branch address…'
+      : 'No organization address available'
+  );
 
-    if (summary.addresses.length === 0) return;
+  private async loadOrganizationAddresses(preserveExisting = false): Promise<void> {
+    let orgs = this.auth.organizations();
+    if (!orgs || orgs.length === 0) {
+      try {
+        orgs = await this.auth.accessibleOrganizations();
+      } catch {
+        orgs = [];
+      }
+    }
+    const mapped: OrgAddressOption[] = (orgs ?? []).map((o) => ({
+      orgId: o.orgId,
+      orgName: o.orgName,
+      addressLine1: o.addressLine1,
+      addressLine2: o.addressLine2,
+      city: o.city,
+      stateId: o.stateId,
+      postalCode: o.postalCode,
+      gstin: o.gstin,
+      formattedAddress: formatOrgAddress(o),
+      label: formatOrgAddressOptionLabel(o),
+    }));
+    this.organizationAddresses.set(mapped);
+
+    if (mapped.length === 0) return;
+
+    const currentOrgId = this.auth.activeOrgId();
+    const currentOrg = mapped.find((o) => o.orgId === currentOrgId) ?? mapped[0];
 
     if (!preserveExisting || !this.billingAddress()) {
-      const defaultBilling = summary.addresses.find((a) => a.isDefaultBilling) ?? summary.addresses[0];
-      if (defaultBilling) {
-        this.selectedBillingAddressId.set(defaultBilling.contactAddressId);
-        this.billingAddress.set(formatContactAddress(defaultBilling));
-        if (defaultBilling.gstin) {
-          this.contactGstin.set(defaultBilling.gstin);
-        }
+      if (currentOrg) {
+        this.selectedBillingOrgId.set(currentOrg.orgId);
+        this.billingAddress.set(currentOrg.formattedAddress);
       }
     } else {
-      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.billingAddress());
+      const matched = mapped.find((o) => o.formattedAddress === this.billingAddress() || o.orgId === currentOrgId);
       if (matched) {
-        this.selectedBillingAddressId.set(matched.contactAddressId);
+        this.selectedBillingOrgId.set(matched.orgId);
       }
     }
 
     if (!preserveExisting || !this.shippingAddress()) {
       if (this.sameAsBilling()) {
         this.shippingAddress.set(this.billingAddress());
-        this.selectedShippingAddressId.set(this.selectedBillingAddressId());
-      } else {
-        const defaultShipping = summary.addresses.find((a) => a.isDefaultShipping) ?? summary.addresses[0];
-        if (defaultShipping) {
-          this.selectedShippingAddressId.set(defaultShipping.contactAddressId);
-          this.shippingAddress.set(formatContactAddress(defaultShipping));
-        }
+        this.selectedShippingOrgId.set(this.selectedBillingOrgId());
+      } else if (currentOrg) {
+        this.selectedShippingOrgId.set(currentOrg.orgId);
+        this.shippingAddress.set(currentOrg.formattedAddress);
       }
     } else {
-      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.shippingAddress());
+      const matched = mapped.find((o) => o.formattedAddress === this.shippingAddress());
       if (matched) {
-        this.selectedShippingAddressId.set(matched.contactAddressId);
+        this.selectedShippingOrgId.set(matched.orgId);
       }
     }
   }
 
-  protected onBillingAddressChange(addressId: number | null): void {
-    this.selectedBillingAddressId.set(addressId);
-    if (addressId === null) return;
-    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
-    if (addr) {
-      const formatted = formatContactAddress(addr);
-      this.billingAddress.set(formatted);
-      if (addr.gstin) {
-        this.contactGstin.set(addr.gstin);
-      }
+  protected onBillingAddressChange(orgId: string | null): void {
+    this.selectedBillingOrgId.set(orgId);
+    if (!orgId) return;
+    const org = this.organizationAddresses().find((o) => o.orgId === orgId);
+    if (org) {
+      this.billingAddress.set(org.formattedAddress);
       if (this.sameAsBilling()) {
-        this.shippingAddress.set(formatted);
-        this.selectedShippingAddressId.set(addressId);
+        this.shippingAddress.set(org.formattedAddress);
+        this.selectedShippingOrgId.set(orgId);
       }
     }
   }
 
-  protected onShippingAddressChange(addressId: number | null): void {
-    this.selectedShippingAddressId.set(addressId);
-    if (addressId === null) return;
-    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
-    if (addr) {
-      this.shippingAddress.set(formatContactAddress(addr));
+  protected onShippingAddressChange(orgId: string | null): void {
+    this.selectedShippingOrgId.set(orgId);
+    if (!orgId) return;
+    const org = this.organizationAddresses().find((o) => o.orgId === orgId);
+    if (org) {
+      this.shippingAddress.set(org.formattedAddress);
     }
   }
 
@@ -261,7 +276,7 @@ export class DebitNoteFormPage {
     this.sameAsBilling.set(checked);
     if (checked) {
       this.shippingAddress.set(this.billingAddress());
-      this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+      this.selectedShippingOrgId.set(this.selectedBillingOrgId());
     }
   }
 
@@ -339,6 +354,8 @@ export class DebitNoteFormPage {
     const id = this.route.snapshot.paramMap.get('id');
     if (id !== null && id !== 'new') {
       void this.load(Number(id));
+    } else {
+      void this.loadOrganizationAddresses(false);
     }
   }
 
@@ -360,9 +377,7 @@ export class DebitNoteFormPage {
           : String(view.contactId),
       );
       this.contactGstin.set(view.contactGstin ?? '');
-      if (view.contactId) {
-        void this.loadContactAddresses(view.contactId, true);
-      }
+      void this.loadOrganizationAddresses(true);
       this.billId.set(view.billId);
       this.billLabel.set(view.billNo ?? String(view.billId));
       this.reasonCode.set(view.reasonCode);
@@ -469,8 +484,6 @@ export class DebitNoteFormPage {
         this.contactGstin.set(row.meta);
       }
 
-      void this.loadContactAddresses(row.id);
-
       // The bill belonged to the previous vendor.
       this.billId.set(null);
       this.billLabel.set('');
@@ -524,9 +537,7 @@ export class DebitNoteFormPage {
       if (bill.contactGstin) {
         this.contactGstin.set(bill.contactGstin);
       }
-      if (bill.contactId) {
-        void this.loadContactAddresses(bill.contactId, true);
-      }
+      void this.loadOrganizationAddresses(true);
       if (bill.billingAddress && !this.billingAddress()) {
         this.billingAddress.set(bill.billingAddress);
       }

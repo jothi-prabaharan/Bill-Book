@@ -148,6 +148,10 @@ public sealed class AuthRepository
                 o.BaseCurrency,
                 o.Gstin,
                 o.City,
+                o.AddressLine1,
+                o.AddressLine2,
+                o.PostalCode,
+                o.StateId,
             }).ToDictionaryAsync(b => b.OrgId, ct);
 
         var orgs = new List<AccessibleOrgDto>();
@@ -168,6 +172,10 @@ public sealed class AuthRepository
                 BaseCurrency = branch?.BaseCurrency,
                 Gstin = branch?.Gstin,
                 City = branch?.City,
+                AddressLine1 = branch?.AddressLine1,
+                AddressLine2 = branch?.AddressLine2,
+                PostalCode = branch?.PostalCode,
+                StateId = branch?.StateId,
             });
         }
 

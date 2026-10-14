@@ -128,30 +128,29 @@
     <!-- Card Row: Address Details -->
     <div class="card-row">
       <div class="card">
-        <div class="card-kicker">Vendor details</div>
-        @if (billingAddressOptions().length > 0) {
-          <div class="field">
-            <bb-select
-              id="po-billing-select"
-              label="Choose address"
-              placeholder="Choose from vendor's addresses…"
-              [options]="billingAddressOptions()"
-              [disabled]="readonlyDoc()"
-              [ngModel]="selectedBillingAddressId()"
-              (ngModelChange)="onBillingAddressChange($event)"
-            />
-          </div>
-        }
-        <div class="field" [style.marginTop]="billingAddressOptions().length > 0 ? 'var(--space-2)' : null">
+        <div class="card-kicker">Billing address</div>
+        <div class="field">
+          <bb-select
+            id="po-billing-select"
+            label="Choose address"
+            [placeholder]="billingAddressPlaceholder()"
+            [options]="billingAddressOptions()"
+            [disabled]="readonlyDoc() || billingAddressOptions().length === 0"
+            [ngModel]="selectedBillingOrgId()"
+            (ngModelChange)="onBillingAddressChange($event)"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
           <bb-textarea
             id="po-billing"
-            label="Billing address"
+            label="Address details"
             rows="3"
             [disabled]="readonlyDoc()"
             [ngModel]="billingAddress()"
             (ngModelChange)="billingAddress.set($event)"
           />
         </div>
+        <div class="card-meta">Our organization billing premises.</div>
       </div>
 
       <div class="card">
@@ -164,15 +163,15 @@
             (ngModelChange)="onSameAsBillingChange($event)"
           />
         </div>
-        @if (!sameAsBilling() && shippingAddressOptions().length > 0) {
+        @if (!sameAsBilling()) {
           <div class="field" style="margin-top: var(--space-2)">
             <bb-select
               id="po-shipping-select"
               label="Choose address"
-              placeholder="Choose from vendor's addresses…"
+              [placeholder]="shippingAddressPlaceholder()"
               [options]="shippingAddressOptions()"
-              [disabled]="readonlyDoc()"
-              [ngModel]="selectedShippingAddressId()"
+              [disabled]="readonlyDoc() || shippingAddressOptions().length === 0"
+              [ngModel]="selectedShippingOrgId()"
               (ngModelChange)="onShippingAddressChange($event)"
             />
           </div>
@@ -180,13 +179,14 @@
         <div class="field" style="margin-top: var(--space-2)">
           <bb-textarea
             id="po-shipping"
+            label="Address details"
             rows="3"
             [disabled]="readonlyDoc() || sameAsBilling()"
             [ngModel]="shippingAddress()"
             (ngModelChange)="shippingAddress.set($event)"
           />
         </div>
-        <div class="card-meta">Destination premises for goods delivery.</div>
+        <div class="card-meta">Our organization delivery destination.</div>
       </div>
     </div>
 

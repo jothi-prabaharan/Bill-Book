@@ -158,7 +158,9 @@ export class AuthService {
 
   /** The branches this user may work in, read after login for the switcher. */
   async accessibleOrganizations(): Promise<AccessibleOrg[]> {
-    return firstValueFrom(this.http.get<AccessibleOrg[]>('/api/auth/organizations'));
+    const orgs = await firstValueFrom(this.http.get<AccessibleOrg[]>('/api/auth/organizations'));
+    this.organizations.set(orgs);
+    return orgs;
   }
 
   /**

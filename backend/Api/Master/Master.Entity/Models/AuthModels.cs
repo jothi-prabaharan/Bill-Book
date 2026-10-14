@@ -36,6 +36,14 @@ public class AccessibleOrgDto
     public string? Gstin { get; set; }
 
     public string? City { get; set; }
+
+    public string? AddressLine1 { get; set; }
+
+    public string? AddressLine2 { get; set; }
+
+    public string? PostalCode { get; set; }
+
+    public int? StateId { get; set; }
 }
 
 public class SessionStateResponse

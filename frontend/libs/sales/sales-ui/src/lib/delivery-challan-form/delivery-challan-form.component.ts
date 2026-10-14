@@ -214,6 +214,24 @@ export class DeliveryChallanFormComponent implements OnInit {
     }))
   );
 
+  protected readonly billingAddressPlaceholder = computed(() => {
+    if (!this.form.controls.contactId.value) {
+      return 'Choose customer first…';
+    }
+    return this.billingAddressOptions().length > 0
+      ? 'Choose from customer\'s addresses…'
+      : 'No addresses saved for this customer';
+  });
+
+  protected readonly shippingAddressPlaceholder = computed(() => {
+    if (!this.form.controls.contactId.value) {
+      return 'Choose customer first…';
+    }
+    return this.shippingAddressOptions().length > 0
+      ? 'Choose from customer\'s addresses…'
+      : 'No addresses saved for this customer';
+  });
+
   private async loadContactAddresses(contactId: number, preserveExisting = false): Promise<void> {
     const summary = await this.lookups.contactAddresses?.(contactId);
     if (!summary) {
