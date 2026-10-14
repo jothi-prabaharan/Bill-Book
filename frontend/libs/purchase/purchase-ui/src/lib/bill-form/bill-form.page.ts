@@ -197,14 +197,14 @@ export class BillFormPage {
 
   protected readonly billingAddressPlaceholder = computed(() =>
     this.billingAddressOptions().length > 0
-      ? 'Choose organization branch address…'
-      : 'No organization address available'
+      ? 'Choose branch address…'
+      : 'No branch address available'
   );
 
   protected readonly shippingAddressPlaceholder = computed(() =>
     this.shippingAddressOptions().length > 0
-      ? 'Choose organization branch address…'
-      : 'No organization address available'
+      ? 'Choose branch address…'
+      : 'No branch address available'
   );
 
   private async loadOrganizationAddresses(preserveExisting = false): Promise<void> {
@@ -216,7 +216,13 @@ export class BillFormPage {
         orgs = [];
       }
     }
-    const mapped: OrgAddressOption[] = (orgs ?? []).map((o) => ({
+    const currentOrgId = this.auth.activeOrgId();
+    // In purchase transactions, only the active branch's address is listed
+    const branchOrgs = currentOrgId
+      ? (orgs ?? []).filter((o) => o.orgId === currentOrgId)
+      : (orgs && orgs.length > 0 ? [orgs[0]] : []);
+
+    const mapped: OrgAddressOption[] = branchOrgs.map((o) => ({
       orgId: o.orgId,
       orgName: o.orgName,
       addressLine1: o.addressLine1,
@@ -232,8 +238,7 @@ export class BillFormPage {
 
     if (mapped.length === 0) return;
 
-    const currentOrgId = this.auth.activeOrgId();
-    const currentOrg = mapped.find((o) => o.orgId === currentOrgId) ?? mapped[0];
+    const currentOrg = mapped[0];
 
     if (!preserveExisting || !this.billingAddress()) {
       if (currentOrg) {
@@ -632,9 +637,7 @@ export class BillFormPage {
   protected selectVendor(vendor: VendorOption): void {
     this.contactId.set(vendor.contactId);
     this.contactLabel.set(`${vendor.contactCode} ${vendor.displayName}`.trim());
-    if (vendor.gstin) {
-      this.contactGstin.set(vendor.gstin);
-    }
+    this.contactGstin.set(vendor.gstin ?? '');
     this.clearReceipt();
     this.vendorDropdownOpen.set(false);
     this.vendorSearchTerm.set('');
@@ -781,10 +784,7 @@ export class BillFormPage {
       this.contactId.set(row.id);
       this.contactLabel.set(`${row.code} ${row.name}`.trim());
 
-      if (row.meta && !this.contactGstin()) {
-        this.contactGstin.set(row.meta);
-      }
-
+      this.contactGstin.set(row.meta ?? '');
       this.clearReceipt();
     } else if (which === 'receipt') {
       this.goodsReceiptId.set(row.id);
@@ -869,7 +869,7 @@ export class BillFormPage {
         ),
       );
 
-      if (!this.contactGstin() && receipt.contactGstin) {
+      if (receipt.contactGstin) {
         this.contactGstin.set(receipt.contactGstin);
       }
     } catch {

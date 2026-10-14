@@ -157,11 +157,13 @@ export function formatOrgAddress(org: {
   postalCode?: string | null;
 }): string {
   const parts: string[] = [];
-  if (org.orgName?.trim()) parts.push(org.orgName.trim());
   if (org.addressLine1?.trim()) parts.push(org.addressLine1.trim());
   if (org.addressLine2?.trim()) parts.push(org.addressLine2.trim());
   const cityZip = [org.city?.trim(), org.postalCode?.trim()].filter(Boolean).join(' - ');
   if (cityZip) parts.push(cityZip);
+  if (parts.length === 0 && org.orgName?.trim()) {
+    parts.push(org.orgName.trim());
+  }
   return parts.join(', ');
 }
 
@@ -169,9 +171,14 @@ export function formatOrgAddressOptionLabel(org: {
   orgName: string;
   city?: string | null;
   addressLine1?: string | null;
+  addressLine2?: string | null;
+  postalCode?: string | null;
 }): string {
-  const loc = [org.city, org.addressLine1].filter(Boolean).join(', ');
-  return loc ? `${org.orgName} (${loc})` : org.orgName;
+  const addr = formatOrgAddress(org);
+  if (org.addressLine1?.trim() || org.city?.trim()) {
+    return addr;
+  }
+  return `${org.orgName} (Branch address)`;
 }
 
 /** What the branch has decided about how its documents are built. */

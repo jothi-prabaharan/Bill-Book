@@ -276,8 +276,8 @@ export class InvoiceFormComponent implements OnInit {
     }
     this.contactAddresses.set(summary.addresses);
 
-    if (summary.gstin) {
-      this.form.controls.contactGstin.setValue(summary.gstin);
+    if (!preserveExisting || !this.form.controls.contactGstin.value) {
+      this.form.controls.contactGstin.setValue(summary.gstin ?? '');
     }
 
     if (summary.addresses.length === 0) return;
@@ -287,9 +287,6 @@ export class InvoiceFormComponent implements OnInit {
       if (defaultBilling) {
         this.selectedBillingAddressId.set(defaultBilling.contactAddressId);
         this.form.controls.billingAddress.setValue(formatContactAddress(defaultBilling));
-        if (defaultBilling.gstin) {
-          this.form.controls.contactGstin.setValue(defaultBilling.gstin);
-        }
       }
     } else {
       const matched = summary.addresses.find((a) => formatContactAddress(a) === this.form.controls.billingAddress.value);
@@ -324,9 +321,6 @@ export class InvoiceFormComponent implements OnInit {
     if (addr) {
       const formatted = formatContactAddress(addr);
       this.form.controls.billingAddress.setValue(formatted);
-      if (addr.gstin) {
-        this.form.controls.contactGstin.setValue(addr.gstin);
-      }
       if (this.sameAsBilling()) {
         this.form.controls.shippingAddress.setValue(formatted);
         this.selectedShippingAddressId.set(addressId);
@@ -362,7 +356,7 @@ export class InvoiceFormComponent implements OnInit {
           lines: formatContactAddress(match),
           email: null,
           phone: null,
-          gstin: match.gstin || this.form.controls.contactGstin.value || null,
+          gstin: this.form.controls.contactGstin.value || null,
         };
       }
     }
@@ -399,7 +393,7 @@ export class InvoiceFormComponent implements OnInit {
           lines: formatContactAddress(match),
           email: null,
           phone: null,
-          gstin: match.gstin || null,
+          gstin: this.form.controls.contactGstin.value || null,
         };
       }
     }
@@ -411,7 +405,7 @@ export class InvoiceFormComponent implements OnInit {
         lines: raw,
         email: null,
         phone: null,
-        gstin: null,
+        gstin: this.form.controls.contactGstin.value || null,
       };
     }
     return null;
@@ -602,9 +596,7 @@ export class InvoiceFormComponent implements OnInit {
     this.form.controls.contactId.setValue(row.id);
     this.form.controls.contactId.markAsTouched();
 
-    if (row.meta) {
-      this.form.controls.contactGstin.setValue(row.meta);
-    }
+    this.form.controls.contactGstin.setValue(row.meta ?? '');
     void this.loadContactAddresses(row.id);
   }
 

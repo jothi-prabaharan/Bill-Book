@@ -85,32 +85,50 @@ const CUSTOM_FIELD_KINDS: Record<string, string> = {
   DBN: 'DebitNote',
 };
 
-const MOCK_ROWS: Record<string, number> = { Item: 42, Tax: 3, Payment: 2, Alloc: 3, Line: 6 };
+const MOCK_ROWS: Record<string, number> = { Item: 4, Tax: 3, Payment: 2, Alloc: 3, Line: 4 };
 
 const MOCK_SINGLE: Record<string, string> = {
   // Organization
-  'Organization.Logo': '<div style="display:inline-block;padding:4px 12px;background:#201f1d;color:#f2610f;font-weight:800;font-size:16px;border-radius:4px;letter-spacing:1px">MERIDIAN</div>',
+  'Organization.Logo': '<img src="assets/bill-book-logo.svg" alt="MERIDIAN" style="max-height:48px;max-width:180px;object-fit:contain;" />',
   'Organization.Name': 'Meridian Trading Co. Pvt Ltd',
+  'Organization.OrgName': 'Meridian Trading Co. Pvt Ltd',
+  'Organization.CompanyName': 'Meridian Trading Co. Pvt Ltd',
   'Organization.LegalName': 'Meridian Trading Company Private Limited',
+  'Organization.TradeName': 'Meridian Trading Co.',
   'Organization.Address': '14 Fort Road, Ballard Estate, Fort<br>Mumbai, Maharashtra 400001',
+  'Organization.OrgAddress': '14 Fort Road, Ballard Estate, Fort<br>Mumbai, Maharashtra 400001',
+  'Organization.BranchAddress': '14 Fort Road, Ballard Estate, Fort<br>Mumbai, Maharashtra 400001',
   'Organization.Gstin': '27AABCM1234K1Z9',
   'Organization.GSTIN': '27AABCM1234K1Z9',
   'Organization.StateName': 'Maharashtra',
+  'Organization.State': 'Maharashtra',
   'Organization.Phone': '+91 22 4021 8890',
+  'Organization.OrgPhone': '+91 22 4021 8890',
   'Organization.Email': 'billing@meridiantrading.example.com',
+  'Organization.OrgEmail': 'billing@meridiantrading.example.com',
   'Organization.BankName': 'HDFC Bank Ltd',
   'Organization.BankAccountNo': '50200012345678',
+  'Organization.BankAccNo': '50200012345678',
+  'Organization.AccountNo': '50200012345678',
   'Organization.BankIfsc': 'HDFC0000042',
+  'Organization.Ifsc': 'HDFC0000042',
+  'Organization.IFSC': 'HDFC0000042',
   'Organization.BankBranch': 'Fort Branch, Mumbai',
+  'Organization.Branch': 'Fort Branch, Mumbai',
   'Organization.UpiId': 'meridian@hdfcbank',
+  'Organization.UPI': 'meridian@hdfcbank',
 
   // Document
   'Document.No': 'SI/2026/00418',
+  'Document.DocNo': 'SI/2026/00418',
   'Document.Date': '06-Sep-2026',
+  'Document.DocDate': '06-Sep-2026',
   'Document.DueDate': '21-Sep-2026',
   'Document.DeliveryDate': '15-Sep-2026',
   'Document.Reference': 'PO/2026/00219',
+  'Document.RefNo': 'PO/2026/00219',
   'Document.OriginalDocumentNo': 'SI/2026/00311',
+  'Document.OrigDocNo': 'SI/2026/00311',
   'Document.Reason': 'Short supply against original invoice',
   'Document.Status': 'Posted',
   'Document.PlaceOfSupply': '29 - Karnataka',
@@ -119,34 +137,65 @@ const MOCK_SINGLE: Record<string, string> = {
   'Document.Notes': 'Thank you for your business. Please remit payment via bank transfer or scan UPI QR code.',
   'Document.Terms': '1. Payment due within 15 days.<br>2. Interest @ 18% p.a. charged on overdue invoices.<br>3. Subject to Mumbai jurisdiction.',
   'Document.VehicleNo': 'MH 12 QT 4417',
+  'Document.VehicleNumber': 'MH 12 QT 4417',
   'Document.TransporterName': 'VRL Logistics Ltd',
+  'Document.Transporter': 'VRL Logistics Ltd',
   'Document.EwayBillNo': '241088491028',
+  'Document.EwbNo': '241088491028',
   'Document.EwayBillDate': '06-Sep-2026',
+  'Document.EwbDate': '06-Sep-2026',
   'Document.PaymentMode': 'Bank transfer (NEFT)',
   'Document.BankAccountName': 'HDFC Current A/c - 5678',
   'Document.BarcodeImage': '<div style="display:inline-block;font-family:monospace;padding:2px 8px;border:1px dashed #666;font-size:11px;letter-spacing:3px">||| | | |||| | ||| | |||</div>',
+  'Document.Barcode': '<div style="display:inline-block;font-family:monospace;padding:2px 8px;border:1px dashed #666;font-size:11px;letter-spacing:3px">||| | | |||| | ||| | |||</div>',
   'Document.QrImage': '<div style="display:inline-block;width:56px;height:56px;border:2px solid #201f1d;background:repeating-linear-gradient(45deg,#201f1d,#201f1d 3px,#fff 3px,#fff 6px);border-radius:2px" title="QR Code"></div>',
+  'Document.QrCode': '<div style="display:inline-block;width:56px;height:56px;border:2px solid #201f1d;background:repeating-linear-gradient(45deg,#201f1d,#201f1d 3px,#fff 3px,#fff 6px);border-radius:2px" title="QR Code"></div>',
 
   // Party
   'Party.Name': 'Halcyon Interiors Pvt Ltd',
+  'Party.PartyName': 'Halcyon Interiors Pvt Ltd',
+  'Party.CustomerName': 'Halcyon Interiors Pvt Ltd',
+  'Party.VendorName': 'Sundar Steel Works Pvt Ltd',
   'Party.Address': '3rd Floor, Prestige Atrium, Residency Road<br>Bengaluru, Karnataka 560025',
+  'Party.BillingAddress': '3rd Floor, Prestige Atrium, Residency Road<br>Bengaluru, Karnataka 560025',
   'Party.ShippingAddress': 'Site 42, Outer Ring Road, Marathahalli<br>Bengaluru, Karnataka 560037',
+  'Party.DeliveryAddress': 'Site 42, Outer Ring Road, Marathahalli<br>Bengaluru, Karnataka 560037',
   'Party.Gstin': '29AACCH8821P1ZB',
   'Party.GSTIN': '29AACCH8821P1ZB',
+  'Party.GstNo': '29AACCH8821P1ZB',
   'Party.StateName': 'Karnataka',
+  'Party.State': 'Karnataka',
   'Party.Phone': '+91 80 4123 9900',
+  'Party.Mobile': '+91 80 4123 9900',
   'Party.Email': 'accounts@halcyoninteriors.com',
 
   // Totals
   'Totals.SubTotal': '62,316.00',
+  'Totals.Subtotal': '62,316.00',
+  'Totals.GrossAmount': '62,316.00',
+  'Totals.GrossTotal': '62,316.00',
   'Totals.Discount': '500.00',
+  'Totals.TotalDiscount': '500.00',
   'Totals.TaxableValue': '61,816.00',
+  'Totals.TaxableAmount': '61,816.00',
   'Totals.Tax': '11,126.88',
+  'Totals.TotalTax': '11,126.88',
+  'Totals.TaxAmount': '11,126.88',
   'Totals.RoundOff': '0.12',
+  'Totals.Rounding': '0.12',
   'Totals.GrandTotal': '72,943.00',
+  'Totals.Total': '72,943.00',
+  'Totals.TotalAmount': '72,943.00',
+  'Totals.NetAmount': '72,943.00',
+  'Totals.InvoiceTotal': '72,943.00',
   'Totals.AmountInWords': 'Rupees Seventy Two Thousand Nine Hundred Forty Three only',
+  'Totals.TotalInWords': 'Rupees Seventy Two Thousand Nine Hundred Forty Three only',
   'Totals.Paid': '50,000.00',
+  'Totals.PaidAmount': '50,000.00',
   'Totals.Outstanding': '22,943.00',
+  'Totals.Balance': '22,943.00',
+  'Totals.BalanceDue': '22,943.00',
+  'Totals.DueAmount': '22,943.00',
 
   // Payment UPI
   'Payment.UpiQr': '<div style="display:inline-block;width:72px;height:72px;border:2px solid #16a34a;background:repeating-linear-gradient(45deg,#16a34a,#16a34a 3px,#fff 3px,#fff 6px);border-radius:4px;position:relative" title="UPI QR Code"><span style="position:absolute;bottom:2px;left:2px;right:2px;background:#fff;font-size:8px;font-weight:bold;text-align:center;color:#16a34a">UPI PAY</span></div>',
@@ -228,7 +277,7 @@ const MOCK_ITEMS: [string, string, string, string, string, string, string, strin
   ['Mild steel angle 50×50×6 mm', 'Grade IS 2062 E250A — standard lengths 6m', '7216', '120.000', 'kg', '78.50', '0.00', '9,420.00', '18.00', '11,115.60'],
   ['MS flat bar 40×6 mm', 'Hot rolled mild steel flats commercial grade', '7214', '86.000', 'kg', '74.20', '0.00', '6,381.20', '18.00', '7,529.82'],
   ['Galvanised sheet 1.6 mm', 'Class 8 zero spangle zinc coated 120 gsm', '7210', '24.000', 'sheet', '1,180.00', '500.00', '27,820.00', '18.00', '32,827.60'],
-  ['SS 304 pipe 25 mm', 'Schedule 10 thickness annealed & pickled', '7306', '48.000', 'm', '512.00', '0.00', '24,576.00', '18.00', '28,999.68'],
+  ['SS 304 pipe 25 mm', 'Schedule 10 thickness annealed & pickled', '7306', '35.537', 'm', '512.00', '0.00', '18,194.80', '18.00', '21,469.86'],
   ['Powder coating — matte black', 'Pure polyester electrostatic coating', '9988', '160.000', 'sqft', '46.00', '0.00', '7,360.00', '18.00', '8,684.80'],
   ['Hex bolt M10×40 zinc', 'High tensile grade 8.8 zinc plated', '7318', '400.000', 'nos', '11.40', '0.00', '4,560.00', '18.00', '5,380.80'],
   ['Welding consumables', 'AWS E7018 low hydrogen electrodes 3.15 mm', '8311', '18.000', 'kg', '268.00', '0.00', '4,824.00', '18.00', '5,692.32'],
@@ -247,35 +296,72 @@ const MOCK_KOT_ITEMS: [string, string, string, string, string, string, string][]
 
 const MOCK_LIST: Record<string, ((i: number, docType?: string) => string) | string[]> = {
   'Item.SlNo': (i: number) => String(i + 1),
+  'Item.SNo': (i: number) => String(i + 1),
+  'Item.Sno': (i: number) => String(i + 1),
+  'Item.SNO': (i: number) => String(i + 1),
+  'Item.Sl.No': (i: number) => String(i + 1),
+  'Item.SrNo': (i: number) => String(i + 1),
+  'Item.Sr.No': (i: number) => String(i + 1),
+  'Item.SerialNo': (i: number) => String(i + 1),
+  'Item.No': (i: number) => String(i + 1),
   'Item.ItemName': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][0] : MOCK_ITEMS[i % MOCK_ITEMS.length][0]),
+  'Item.Name': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][0] : MOCK_ITEMS[i % MOCK_ITEMS.length][0]),
   'Item.Description': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][1] : MOCK_ITEMS[i % MOCK_ITEMS.length][1]),
+  'Item.Desc': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][1] : MOCK_ITEMS[i % MOCK_ITEMS.length][1]),
   'Item.HsnSac': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][2] : MOCK_ITEMS[i % MOCK_ITEMS.length][2]),
   'Item.HSN': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][2] : MOCK_ITEMS[i % MOCK_ITEMS.length][2]),
+  'Item.Hsn': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][2] : MOCK_ITEMS[i % MOCK_ITEMS.length][2]),
+  'Item.Sac': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][2] : MOCK_ITEMS[i % MOCK_ITEMS.length][2]),
+  'Item.HsnCode': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][2] : MOCK_ITEMS[i % MOCK_ITEMS.length][2]),
   'Item.Quantity': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][3] : MOCK_ITEMS[i % MOCK_ITEMS.length][3]),
   'Item.Qty': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][3] : MOCK_ITEMS[i % MOCK_ITEMS.length][3]),
   'Item.Uom': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][4] : MOCK_ITEMS[i % MOCK_ITEMS.length][4]),
   'Item.Unit': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][4] : MOCK_ITEMS[i % MOCK_ITEMS.length][4]),
+  'Item.UOM': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][4] : MOCK_ITEMS[i % MOCK_ITEMS.length][4]),
   'Item.Rate': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][5] : MOCK_ITEMS[i % MOCK_ITEMS.length][5]),
+  'Item.Price': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][5] : MOCK_ITEMS[i % MOCK_ITEMS.length][5]),
+  'Item.UnitPrice': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][5] : MOCK_ITEMS[i % MOCK_ITEMS.length][5]),
   'Item.Discount': (i: number, dt?: string) => (dt === 'KOT' ? '0.00' : MOCK_ITEMS[i % MOCK_ITEMS.length][6]),
+  'Item.Disc': (i: number, dt?: string) => (dt === 'KOT' ? '0.00' : MOCK_ITEMS[i % MOCK_ITEMS.length][6]),
   'Item.TaxableValue': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][6] : MOCK_ITEMS[i % MOCK_ITEMS.length][7]),
+  'Item.Taxable': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][6] : MOCK_ITEMS[i % MOCK_ITEMS.length][7]),
   'Item.TaxRate': (i: number, dt?: string) => (dt === 'KOT' ? '5.00' : MOCK_ITEMS[i % MOCK_ITEMS.length][8]),
+  'Item.Tax': (i: number, dt?: string) => (dt === 'KOT' ? '28.00' : (MOCK_ITEMS[i % MOCK_ITEMS.length] ? String((parseFloat(MOCK_ITEMS[i % MOCK_ITEMS.length][9].replace(/,/g, '')) - parseFloat(MOCK_ITEMS[i % MOCK_ITEMS.length][7].replace(/,/g, ''))).toFixed(2)) : '1,695.60')),
+  'Item.TaxAmount': (i: number, dt?: string) => (dt === 'KOT' ? '28.00' : (MOCK_ITEMS[i % MOCK_ITEMS.length] ? String((parseFloat(MOCK_ITEMS[i % MOCK_ITEMS.length][9].replace(/,/g, '')) - parseFloat(MOCK_ITEMS[i % MOCK_ITEMS.length][7].replace(/,/g, ''))).toFixed(2)) : '1,695.60')),
   'Item.Amount': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][6] : MOCK_ITEMS[i % MOCK_ITEMS.length][9]),
+  'Item.Total': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][6] : MOCK_ITEMS[i % MOCK_ITEMS.length][9]),
+  'Item.LineTotal': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][6] : MOCK_ITEMS[i % MOCK_ITEMS.length][9]),
   'Tax.Component': ['CGST', 'SGST', 'IGST'],
   'Tax.Name': ['CGST', 'SGST', 'IGST'],
+  'Tax.Type': ['CGST', 'SGST', 'IGST'],
   'Tax.Rate': ['9.00', '9.00', '18.00'],
+  'Tax.Percent': ['9.00', '9.00', '18.00'],
+  'Tax.Percentage': ['9.00', '9.00', '18.00'],
+  'Tax.TaxRate': ['9.00', '9.00', '18.00'],
   'Tax.TaxableValue': ['61,816.00', '61,816.00', '61,816.00'],
+  'Tax.Taxable': ['61,816.00', '61,816.00', '61,816.00'],
+  'Tax.TaxableAmount': ['61,816.00', '61,816.00', '61,816.00'],
   'Tax.Amount': ['5,563.44', '5,563.44', '11,126.88'],
+  'Tax.Tax': ['5,563.44', '5,563.44', '11,126.88'],
+  'Tax.TaxAmount': ['5,563.44', '5,563.44', '11,126.88'],
   'Payment.Date': ['28-Aug-2026', '04-Sep-2026'],
   'Payment.Mode': ['Bank transfer (NEFT)', 'UPI transfer'],
+  'Payment.PaymentMode': ['Bank transfer (NEFT)', 'UPI transfer'],
   'Payment.Reference': ['UTR 402188173', 'UPI 6620041188'],
+  'Payment.Ref': ['UTR 402188173', 'UPI 6620041188'],
+  'Payment.RefNo': ['UTR 402188173', 'UPI 6620041188'],
   'Payment.Amount': ['35,000.00', '15,000.00'],
+  'Payment.PaidAmount': ['35,000.00', '15,000.00'],
   'Alloc.DocumentNo': ['SI/2026/00311', 'SI/2026/00344', 'SI/2026/00418'],
   'Alloc.DocNo': ['SI/2026/00311', 'SI/2026/00344', 'SI/2026/00418'],
   'Alloc.DocumentDate': ['12-Aug-2026', '24-Aug-2026', '06-Sep-2026'],
   'Alloc.Date': ['12-Aug-2026', '24-Aug-2026', '06-Sep-2026'],
   'Alloc.DocumentTotal': ['84,200.00', '1,12,400.00', '72,943.00'],
+  'Alloc.Total': ['84,200.00', '1,12,400.00', '72,943.00'],
   'Alloc.Amount': ['50,000.00', '22,943.00', '72,943.00'],
+  'Alloc.AllocatedAmount': ['50,000.00', '22,943.00', '72,943.00'],
   'Alloc.Balance': ['34,200.00', '89,457.00', '0.00'],
+  'Alloc.BalanceDue': ['34,200.00', '89,457.00', '0.00'],
   'Line.AccountCode': ['4010', '1510', '5020', '2010'],
   'Line.AccountName': [
     'Depreciation Expense',
@@ -303,6 +389,7 @@ const MOCK_LIST: Record<string, ((i: number, docType?: string) => string) | stri
   ],
   'Line.Debit': ['18,400.00', '', '65,000.00', ''],
   'Line.Credit': ['', '18,400.00', '', '65,000.00'],
+  'Line.Amount': ['18,400.00', '18,400.00', '65,000.00', '65,000.00'],
 };
 
 @Component({
@@ -451,6 +538,24 @@ export class PrintTemplatesPage implements OnInit {
   protected readonly showSplits = signal<boolean>(true);
   protected readonly customRows = signal<number>(1);
   protected readonly customCols = signal<number>(2);
+
+  // Column Width Mouse Drag & Drop State
+  protected readonly colResizeState = signal<{
+    segCode: SegCode;
+    table: HTMLTableElement;
+    colIndex: number;
+    startX: number;
+    currentX: number;
+    startW1: number;
+    startW2: number;
+    totalW: number;
+    startPct1: number;
+    startPct2: number;
+    curPct1: number;
+    curPct2: number;
+    top: number;
+    bottom: number;
+  } | null>(null);
 
   // Page-level typography
   protected readonly pageFontFamily = signal<string>('Arial');
@@ -771,11 +876,16 @@ export class PrintTemplatesPage implements OnInit {
 
   protected tagToChip(html: string): string {
     if (!html) return '';
-    // Heal any previously corrupted empty chips like <span ...><></span> or <span ...><item.slno></item.slno></span>
+    // Heal any previously corrupted empty chips or encoded tags
     const clean = html.replace(
       /<span[^>]*class="[^"]*pt-chip[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
       (_match, inner) => {
-        const text = inner.replace(/<[^>]+>/g, '').replace(/[↻\s«»{}<>]/g, '').trim();
+        const text = inner
+          .replace(/<[^>]+>/g, '')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/[↻\s«»{}<>]/g, '')
+          .trim();
         if (text) {
           return `<<${text}>>`;
         }
@@ -783,12 +893,19 @@ export class PrintTemplatesPage implements OnInit {
       },
     );
 
-    return clean.replace(/(?:\{\{([^{}]+)\}\}|(?:<<|«)([^<>«»]+)(?:>>|»))/g, (_match, tag1, tag2) => {
-      const rawTag = (tag1 ?? tag2 ?? '').trim();
-      if (!rawTag) return '';
-      const isList = tag2 != null || this.isListTag(rawTag);
-      return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `&lt;&lt;${rawTag}&gt;&gt;` : `{{${rawTag}}}`}</span>\u00a0`;
-    });
+    return clean.replace(
+      /(?:\{\{([^{}]+)\}\}|(?:<<|«|&lt;&lt;)([^<>«»&]+)(?:>>|»|&gt;&gt;))/g,
+      (_match, tag1, tag2) => {
+        const rawTag = (tag1 ?? tag2 ?? '')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/[↻\s«»{}<>]/g, '')
+          .trim();
+        if (!rawTag) return '';
+        const isList = tag2 != null || this.isListTag(rawTag);
+        return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `&lt;&lt;${rawTag}&gt;&gt;` : `{{${rawTag}}}`}</span>\u00a0`;
+      },
+    );
   }
 
   protected chipToTag(html: string): string {
@@ -798,7 +915,11 @@ export class PrintTemplatesPage implements OnInit {
     const chips = div.querySelectorAll('.pt-chip');
     chips.forEach((chip) => {
       const raw = chip.textContent || '';
-      const cleanTag = raw.replace(/[↻\s«»{}<>]/g, '').trim();
+      const cleanTag = raw
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/[↻\s«»{}<>]/g, '')
+        .trim();
       if (!cleanTag) {
         chip.remove();
         return;
@@ -815,15 +936,20 @@ export class PrintTemplatesPage implements OnInit {
   }
 
   protected isListTag(tag: string): boolean {
-    const dot = tag.indexOf('.');
+    const clean = tag
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/[↻\s«»{}<>]/g, '')
+      .trim();
+    const dot = clean.indexOf('.');
     if (dot > 0) {
-      const prefix = tag.substring(0, dot).toLowerCase();
+      const prefix = clean.substring(0, dot).toLowerCase();
       if (['item', 'tax', 'payment', 'alloc', 'line'].includes(prefix)) {
         return true;
       }
     }
     for (const group of this.placeholders()) {
-      if (group.isList && group.placeholders.some((p) => p.tag.toLowerCase() === tag.toLowerCase())) {
+      if (group.isList && group.placeholders.some((p) => p.tag.toLowerCase() === clean.toLowerCase())) {
         return true;
       }
     }
@@ -1965,6 +2091,217 @@ export class PrintTemplatesPage implements OnInit {
     this.setColWidth(next);
   }
 
+  protected autoColWidth(): void {
+    this.recordSnapshot(true);
+    this.setColWidth(0);
+    this.showFlash('Column width set to auto');
+  }
+
+  protected equalizeCols(): void {
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { table } = ctx;
+    this.recordSnapshot(true);
+
+    const maxCols = Math.max(
+      ...Array.from(table.rows).map((r) => {
+        let count = 0;
+        for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+          count += c.colSpan || 1;
+        }
+        return count;
+      }),
+    );
+
+    if (maxCols <= 0) return;
+    const equalW = Math.round((100 / maxCols) * 10) / 10;
+
+    for (const r of Array.from(table.rows)) {
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        const span = c.colSpan || 1;
+        c.style.width = `${Math.round(equalW * span * 10) / 10}%`;
+        c.removeAttribute('width');
+      }
+    }
+
+    this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+    this.recordSnapshot(true);
+    this.showFlash(`Equalized ${maxCols} columns (${equalW}% each)`);
+  }
+
+  protected autoActiveSectionCols(): void {
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+    const table = segEl.querySelector('table');
+    if (!table) return;
+
+    this.recordSnapshot(true);
+    for (const r of Array.from(table.rows)) {
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        c.style.width = '';
+        c.removeAttribute('width');
+      }
+    }
+    this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+    this.recordSnapshot(true);
+    this.showFlash('Section columns set to auto');
+  }
+
+  protected equalizeActiveSectionCols(): void {
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+    const table = segEl.querySelector('table');
+    if (!table) return;
+
+    this.recordSnapshot(true);
+    const maxCols = Math.max(
+      ...Array.from(table.rows).map((r) => {
+        let count = 0;
+        for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+          count += c.colSpan || 1;
+        }
+        return count;
+      }),
+    );
+
+    if (maxCols <= 0) return;
+    const equalW = Math.round((100 / maxCols) * 10) / 10;
+
+    for (const r of Array.from(table.rows)) {
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        const span = c.colSpan || 1;
+        c.style.width = `${Math.round(equalW * span * 10) / 10}%`;
+        c.removeAttribute('width');
+      }
+    }
+
+    this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+    this.recordSnapshot(true);
+    this.showFlash(`Equalized ${maxCols} columns (${equalW}% each)`);
+  }
+
+  // ---- Mouse Drag & Drop Column Alignment -----------------------------------
+
+  protected onCellHover(e: MouseEvent, segCode: SegCode): void {
+    if (this.colResizeState() || !this.canEdit() || this.mode() !== 'edit') return;
+    const target = e.target as HTMLElement;
+    const cell = target.closest('td, th') as HTMLTableCellElement | null;
+    if (!cell) {
+      document.body.style.cursor = '';
+      return;
+    }
+    const rect = cell.getBoundingClientRect();
+    const distFromRight = rect.right - e.clientX;
+    const nextCell = cell.nextElementSibling as HTMLTableCellElement | null;
+    if (distFromRight >= 0 && distFromRight <= 8 && nextCell) {
+      cell.style.cursor = 'col-resize';
+    } else {
+      cell.style.cursor = '';
+    }
+  }
+
+  protected onCellMouseDown(e: MouseEvent, segCode: SegCode): void {
+    if (!this.canEdit() || this.mode() !== 'edit') return;
+    const target = e.target as HTMLElement;
+    const cell = target.closest('td, th') as HTMLTableCellElement | null;
+    if (!cell) return;
+    const rect = cell.getBoundingClientRect();
+    const distFromRight = rect.right - e.clientX;
+    const nextCell = cell.nextElementSibling as HTMLTableCellElement | null;
+    if (distFromRight >= 0 && distFromRight <= 8 && nextCell) {
+      const table = cell.closest('table');
+      const row = cell.closest('tr');
+      if (!table || !row) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const colIdx = this.getColIndex(row, cell);
+      const z = this.zoom();
+      const tableRect = table.getBoundingClientRect();
+      const c1W = cell.getBoundingClientRect().width / z;
+      const c2W = nextCell.getBoundingClientRect().width / z;
+      const totalW = tableRect.width / z;
+      const p1 = Math.round((c1W / totalW) * 1000) / 10;
+      const p2 = Math.round((c2W / totalW) * 1000) / 10;
+
+      this.colResizeState.set({
+        segCode,
+        table,
+        colIndex: colIdx,
+        startX: e.clientX,
+        currentX: e.clientX,
+        startW1: c1W,
+        startW2: c2W,
+        totalW,
+        startPct1: p1,
+        startPct2: p2,
+        curPct1: p1,
+        curPct2: p2,
+        top: tableRect.top,
+        bottom: tableRect.bottom,
+      });
+      document.body.style.cursor = 'col-resize';
+    }
+  }
+
+  @HostListener('window:mousemove', ['$event'])
+  protected handleMouseMove(e: MouseEvent): void {
+    const st = this.colResizeState();
+    if (!st) return;
+
+    const z = this.zoom();
+    const deltaPx = (e.clientX - st.startX) / z;
+    const sumPct = st.startPct1 + st.startPct2;
+
+    const deltaPct = (deltaPx / st.totalW) * 100;
+    const newPct1 = Math.max(3, Math.min(sumPct - 3, Math.round((st.startPct1 + deltaPct) * 10) / 10));
+    const newPct2 = Math.round((sumPct - newPct1) * 10) / 10;
+
+    this.colResizeState.set({
+      ...st,
+      currentX: e.clientX,
+      curPct1: newPct1,
+      curPct2: newPct2,
+    });
+  }
+
+  @HostListener('window:mouseup')
+  protected handleMouseUp(): void {
+    const st = this.colResizeState();
+    if (!st) return;
+
+    this.recordSnapshot(true);
+    for (const r of Array.from(st.table.rows)) {
+      let cIdx = 0;
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        const span = c.colSpan || 1;
+        if (cIdx === st.colIndex && span === 1) {
+          c.style.width = `${st.curPct1}%`;
+          c.removeAttribute('width');
+        } else if (cIdx === st.colIndex + 1 && span === 1) {
+          c.style.width = `${st.curPct2}%`;
+          c.removeAttribute('width');
+        }
+        cIdx += span;
+      }
+    }
+
+    document.body.style.cursor = '';
+    this.colResizeState.set(null);
+    this.onSegmentInput(st.segCode);
+    this.updateSelectedCellInfo();
+    this.recordSnapshot(true);
+    this.showFlash(`Column width adjusted: ${st.curPct1}% / ${st.curPct2}%`);
+  }
+
   protected setRowHeight(px: number): void {
     const ctx = this.getTableContext();
     if (!ctx) return;
@@ -2142,46 +2479,46 @@ th, td {
   }
 
   private mockVal(tag: string, i: number): string {
-    const clean = tag.replace(/[↻\s«»{}<>]/g, '').trim();
+    const clean = tag.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/[↻\s«»{}<>]/g, '').trim();
     const docType = this.documentType() ?? 'INV';
 
     // Document-specific overrides
-    if (clean === 'Party.Name' || clean === 'Customer.Name') {
+    if (clean === 'Party.Name' || clean === 'Party.PartyName' || clean === 'Party.CustomerName' || clean === 'Party.VendorName' || clean === 'Customer.Name' || clean === 'Vendor.Name') {
       return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
         ? 'Sundar Steel Works Pvt Ltd'
         : 'Halcyon Interiors Pvt Ltd';
     }
-    if (clean === 'Party.Address' || clean === 'Customer.Address') {
+    if (clean === 'Party.Address' || clean === 'Party.BillingAddress' || clean === 'Party.PartyAddress' || clean === 'Customer.Address' || clean === 'Vendor.Address') {
       return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
         ? 'Plot 42, MIDC Phase II, Chakan Industrial Area<br>Pune, Maharashtra 411026'
         : '3rd Floor, Prestige Atrium, Residency Road<br>Bengaluru, Karnataka 560025';
     }
-    if (clean === 'Party.ShippingAddress') {
+    if (clean === 'Party.ShippingAddress' || clean === 'Party.DeliveryAddress') {
       return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
         ? '14 Fort Road, Ballard Estate<br>Mumbai, Maharashtra 400001'
         : 'Site 42, Outer Ring Road, Marathahalli<br>Bengaluru, Karnataka 560037';
     }
-    if (clean === 'Party.Gstin' || clean === 'Customer.GSTIN' || clean === 'Party.GSTIN') {
+    if (clean === 'Party.Gstin' || clean === 'Party.GSTIN' || clean === 'Party.GstNo' || clean === 'Customer.GSTIN' || clean === 'Vendor.GSTIN') {
       return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
         ? '27AAFCS4471M1Z2'
         : '29AACCH8821P1ZB';
     }
-    if (clean === 'Party.StateName') {
+    if (clean === 'Party.StateName' || clean === 'Party.State') {
       return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
         ? 'Maharashtra'
         : 'Karnataka';
     }
-    if (clean === 'Party.Phone') {
+    if (clean === 'Party.Phone' || clean === 'Party.Mobile') {
       return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
         ? '+91 20 2712 4400'
         : '+91 80 4123 9900';
     }
-    if (clean === 'Party.Email') {
+    if (clean === 'Party.Email' || clean === 'Party.EmailAddress') {
       return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
         ? 'sales@sundarsteel.example.com'
         : 'accounts@halcyoninteriors.com';
     }
-    if (clean === 'Document.No' || clean === 'InvoiceNo') {
+    if (clean === 'Document.No' || clean === 'Document.DocNo' || clean === 'InvoiceNo') {
       switch (docType) {
         case 'QTE': return 'QOT/2026/00319';
         case 'SOR': return 'SOR/2026/00943';
@@ -2198,7 +2535,7 @@ th, td {
         default: return 'SI/2026/00418';
       }
     }
-    if (clean === 'Document.Reference' || clean === 'PONumber') {
+    if (clean === 'Document.Reference' || clean === 'Document.RefNo' || clean === 'PONumber') {
       switch (docType) {
         case 'INV': return 'PO/2026/00219';
         case 'BIL': return 'SSW/26/894';
@@ -2211,7 +2548,7 @@ th, td {
         default: return 'PO/2026/00219';
       }
     }
-    if (clean === 'Document.OriginalDocumentNo' || clean === 'AgainstInvoiceNo') {
+    if (clean === 'Document.OriginalDocumentNo' || clean === 'Document.OrigDocNo' || clean === 'AgainstInvoiceNo' || clean === 'AgainstDocNo') {
       return docType === 'DBN' ? 'BIL/2026/01207' : 'SI/2026/00311';
     }
     if (clean === 'Document.Reason' || clean === 'Reason') {
@@ -2220,18 +2557,27 @@ th, td {
         : 'Short supply against original invoice';
     }
 
-    const listGen = MOCK_LIST[clean];
-    if (listGen) {
+    // List fields case-insensitive lookup
+    const listKey = Object.keys(MOCK_LIST).find((k) => k.toLowerCase() === clean.toLowerCase());
+    if (listKey) {
+      const listGen = MOCK_LIST[listKey];
       return typeof listGen === 'function' ? listGen(i, docType) : listGen[i % listGen.length];
     }
 
+    // Single fields exact lookup
     if (MOCK_SINGLE[clean] != null) {
       return MOCK_SINGLE[clean];
     }
 
-    const lower = clean.toLowerCase();
-    for (const [k, v] of Object.entries(MOCK_SINGLE)) {
-      if (k.toLowerCase() === lower) return v;
+    // Single fields case-insensitive lookup
+    const singleKey = Object.keys(MOCK_SINGLE).find((k) => k.toLowerCase() === clean.toLowerCase());
+    if (singleKey) {
+      return MOCK_SINGLE[singleKey];
+    }
+
+    // Custom field fallback
+    if (clean.toLowerCase().startsWith('custom.')) {
+      return `Sample ${clean.substring(7)}`;
     }
 
     return clean;
@@ -2240,20 +2586,41 @@ th, td {
   protected ptMockHtml(html: string): string {
     const root = document.createElement('div');
     root.innerHTML = html || '';
-    const tagOf = (el: Element) => (el.textContent || '').replace(/[↻\s«»{}<>]/g, '').trim();
+    const tagOf = (text: string) =>
+      text
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/[↻\s«»{}<>]/g, '')
+        .trim();
 
+    // 1. Expand repeating table rows for list tags
     Array.from(root.querySelectorAll('tr')).forEach((tr) => {
       if (tr.querySelector('tr')) return;
-      const listChip = Array.from(tr.querySelectorAll('.pt-chip')).find(
-        (c) =>
-          c.classList.contains('pt-chip--list') ||
-          (c.textContent || '').includes('<<') ||
-          (c.textContent || '').includes('«') ||
-          (c.textContent || '').indexOf('↻') >= 0 ||
-          this.isListTag(tagOf(c)),
-      );
-      if (!listChip) return;
-      const n = MOCK_ROWS[tagOf(listChip).split('.')[0]] || 1;
+
+      let listTag: string | null = null;
+      const chips = Array.from(tr.querySelectorAll('.pt-chip'));
+      for (const chip of chips) {
+        const t = tagOf(chip.textContent || '');
+        if (chip.classList.contains('pt-chip--list') || this.isListTag(t)) {
+          listTag = t;
+          break;
+        }
+      }
+
+      if (!listTag) {
+        const trHtml = tr.innerHTML || '';
+        const match = trHtml.match(/(?:\{\{|<<|«|&lt;&lt;)\s*([^{}<>«»&]+?)\s*(?:\}\}|>>|»|&gt;&gt;)/i);
+        if (match) {
+          const t = tagOf(match[1]);
+          if (this.isListTag(t)) {
+            listTag = t;
+          }
+        }
+      }
+
+      if (!listTag) return;
+      const group = listTag.split('.')[0] || 'Item';
+      const n = MOCK_ROWS[group] || (this.documentType() === 'KOT' ? 5 : 4);
       tr.setAttribute('data-mock-i', '0');
       let anchor = tr;
       for (let i = 1; i < n; i++) {
@@ -2264,10 +2631,12 @@ th, td {
       }
     });
 
+    // 2. Replace all .pt-chip elements with mock values
     Array.from(root.querySelectorAll('.pt-chip')).forEach((chip) => {
       const row = chip.closest('tr[data-mock-i]');
-      const tag = tagOf(chip);
-      const val = this.mockVal(tag, row ? Number(row.getAttribute('data-mock-i')) : 0);
+      const tag = tagOf(chip.textContent || '');
+      const rowIdx = row ? Number(row.getAttribute('data-mock-i')) || 0 : 0;
+      const val = this.mockVal(tag, rowIdx);
       if (typeof val === 'string' && val.includes('<') && val.includes('>')) {
         const span = document.createElement('span');
         span.innerHTML = val;
@@ -2276,6 +2645,42 @@ th, td {
         chip.replaceWith(document.createTextNode(val));
       }
     });
+
+    // 3. Fallback pass: walk all text nodes in root and replace unchipped raw tags
+    const tagRegex = /(?:\{\{|<<|«|&lt;&lt;)\s*([^{}<>«»&]+?)\s*(?:\}\}|>>|»|&gt;&gt;)/gi;
+    const walkTextNodes = (node: Node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.nodeValue || '';
+        if (tagRegex.test(text)) {
+          tagRegex.lastIndex = 0;
+          const row = (node.parentElement as HTMLElement)?.closest('tr[data-mock-i]');
+          const rowIdx = row ? Number(row.getAttribute('data-mock-i')) || 0 : 0;
+
+          let hasMarkup = false;
+          const replaced = text.replace(tagRegex, (_match, raw) => {
+            const val = this.mockVal(tagOf(raw), rowIdx);
+            if (typeof val === 'string' && val.includes('<') && val.includes('>')) {
+              hasMarkup = true;
+            }
+            return val;
+          });
+
+          if (hasMarkup) {
+            const span = document.createElement('span');
+            span.innerHTML = replaced;
+            node.parentNode?.replaceChild(span, node);
+          } else {
+            node.nodeValue = replaced;
+          }
+        }
+      } else {
+        for (const child of Array.from(node.childNodes)) {
+          walkTextNodes(child);
+        }
+      }
+    };
+
+    walkTextNodes(root);
 
     return root.innerHTML;
   }

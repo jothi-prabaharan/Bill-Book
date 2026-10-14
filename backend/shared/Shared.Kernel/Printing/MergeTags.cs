@@ -21,7 +21,7 @@ public static partial class MergeTags
     /// <summary>
     /// Matches <c>{{Tag}}</c> (standard for static fields) or <c>&lt;&lt;Tag&gt;&gt;</c> / <c>«Tag»</c> (standard for list fields).
     /// </summary>
-    [GeneratedRegex(@"(?:\{\{|<<|«)([^{}<>«»]+)(?:\}\}|>>|»)", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?:\{\{|<<|«|&lt;&lt;)([^{}<>«»&]+)(?:\}\}|>>|»|&gt;&gt;)", RegexOptions.CultureInvariant)]
     public static partial Regex TagPattern { get; }
 
     /// <summary>Every tag in the order it appears. Duplicates kept.</summary>

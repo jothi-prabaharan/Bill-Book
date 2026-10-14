@@ -741,6 +741,16 @@
                 </div>
               </div>
 
+              <div class="pt-table-align-row">
+                <div class="pt-size-control">
+                  <span class="pt-sub-label">Col align</span>
+                  <div class="pt-btn-group">
+                    <button class="pt-btn-col-action" type="button" title="Auto column width (content-fit)" (mousedown)="keepSel($event)" (click)="autoColWidth()">Auto</button>
+                    <button class="pt-btn-col-action" type="button" title="Equalize all column widths" (mousedown)="keepSel($event)" (click)="equalizeCols()">Equal</button>
+                  </div>
+                </div>
+              </div>
+
               @if (selectedCellInfo().hasCell) {
                 <div class="pt-cell-status">
                   Selected: Row {{ selectedCellInfo().rowIndex }}, Col {{ selectedCellInfo().colIndex }}
@@ -1016,6 +1026,8 @@
                             <button type="button" (click)="applySectionSplit(2, 2)" title="2 Rows × 2 Columns">2×2</button>
                             <button type="button" (click)="addSectionRow()" title="Add Row">+ Row</button>
                             <button type="button" (click)="addSectionCol()" title="Add Column">+ Col</button>
+                            <button type="button" (click)="autoActiveSectionCols()" title="Auto column width for all tables in section">Auto</button>
+                            <button type="button" (click)="equalizeActiveSectionCols()" title="Equalize column widths for all tables in section">Equal</button>
                           </span>
                         </div>
                       }
@@ -1028,11 +1040,26 @@
                         (keyup)="onSnap($event)"
                         (click)="onSnap($event)"
                         (input)="onSegmentInput(seg.code)"
+                        (mousemove)="onCellHover($event, seg.code)"
+                        (mousedown)="onCellMouseDown($event, seg.code)"
                       ></div>
                     </div>
                   }
                 </div>
               </div>
+            </div>
+          </div>
+        }
+
+        @if (colResizeState(); as st) {
+          <div
+            class="pt-col-resize-guide"
+            [style.left.px]="st.currentX"
+            [style.top.px]="st.top"
+            [style.height.px]="st.bottom - st.top"
+          >
+            <div class="pt-col-resize-badge">
+              {{ st.curPct1 }}% | {{ st.curPct2 }}%
             </div>
           </div>
         }

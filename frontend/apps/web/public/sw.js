@@ -9,6 +9,8 @@ const PRECACHE_ASSETS = [
   '/manifest.webmanifest',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/assets/bill-book-logo.svg',
+  '/assets/bill-book-mark.svg',
   '/assets/bill-book-mark.png',
 ];
 

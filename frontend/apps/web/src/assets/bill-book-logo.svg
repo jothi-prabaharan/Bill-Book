@@ -1,0 +1,376 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%">
+  <defs>
+    <!-- Front Cover Main Surface Gradient -->
+    <linearGradient id="coverGrad" x1="18%" y1="5%" x2="82%" y2="92%">
+      <stop offset="0%" stop-color="#3b434e" />
+      <stop offset="45%" stop-color="#2d333c" />
+      <stop offset="100%" stop-color="#1f242a" />
+    </linearGradient>
+
+    <!-- 3D Cylindrical Spine Gradient -->
+    <linearGradient id="spineGrad" x1="78" y1="420" x2="186" y2="438" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1c2026" />
+      <stop offset="20%" stop-color="#373e48" />
+      <stop offset="46%" stop-color="#5a6575" />
+      <stop offset="74%" stop-color="#2d333c" />
+      <stop offset="90%" stop-color="#14171c" />
+      <stop offset="100%" stop-color="#2e343e" />
+    </linearGradient>
+
+    <!-- Front Cover Outer Rim Highlight -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#737f8e" />
+      <stop offset="40%" stop-color="#464e5a" />
+      <stop offset="100%" stop-color="#252a32" />
+    </linearGradient>
+
+    <!-- Front Cover 3D Board Thickness Wall Gradient -->
+    <linearGradient id="boardEdgeGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#1a1e24" />
+      <stop offset="12%" stop-color="#2a3038" />
+      <stop offset="85%" stop-color="#171b20" />
+      <stop offset="100%" stop-color="#101317" />
+    </linearGradient>
+
+    <!-- Back Cover & Bottom U-Turn Rim Gradient -->
+    <linearGradient id="backCoverGrad" x1="0%" y1="45%" x2="100%" y2="55%">
+      <stop offset="0%" stop-color="#252b33" />
+      <stop offset="8%" stop-color="#454d59" />
+      <stop offset="20%" stop-color="#282e36" />
+      <stop offset="82%" stop-color="#181c22" />
+      <stop offset="94%" stop-color="#2f3640" />
+      <stop offset="100%" stop-color="#1c2026" />
+    </linearGradient>
+
+    <!-- Crisp Paper-White Gradient for Page Block -->
+    <linearGradient id="pagesGrad" x1="58" y1="845" x2="882" y2="885" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#cfd5de" />
+      <stop offset="4%" stop-color="#f4f6f9" />
+      <stop offset="14%" stop-color="#ffffff" />
+      <stop offset="78%" stop-color="#ffffff" />
+      <stop offset="92%" stop-color="#f5f7fa" />
+      <stop offset="100%" stop-color="#e1e6ee" />
+    </linearGradient>
+
+    <!-- Right Fore-Edge Subtle Paper Shading -->
+    <linearGradient id="rightPagesGrad" x1="860" y1="850" x2="965" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#eef1f6" />
+      <stop offset="15%" stop-color="#cfd6e0" />
+      <stop offset="100%" stop-color="#7c8594" />
+    </linearGradient>
+
+    <!-- Orange Emblem Top Face Gradient -->
+    <linearGradient id="orangeTopGrad" x1="15%" y1="8%" x2="85%" y2="92%">
+      <stop offset="0%" stop-color="#ff8624" />
+      <stop offset="48%" stop-color="#f56408" />
+      <stop offset="100%" stop-color="#dc4b00" />
+    </linearGradient>
+
+    <!-- Book Outer Drop Shadow -->
+    <filter id="bookShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000000" flood-opacity="0.85" />
+    </filter>
+
+    <!-- Soft Blur for Page Overhang Shadow -->
+    <filter id="overhangShadowBlur" x="-10%" y="-30%" width="120%" height="160%">
+      <feGaussianBlur stdDeviation="5" />
+    </filter>
+
+    <!-- Realistic Multi-Layer Cast Shadow for Orange Emblem -->
+    <filter id="emblemDropShadow" x="-15%" y="-15%" width="135%" height="145%">
+      <!-- Soft Deep Cast Shadow (Down & Slightly Left) -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="softBlur" />
+      <feOffset in="softBlur" dx="-3" dy="22" result="softOffset" />
+      <feComponentTransfer in="softOffset" result="softShadow">
+        <feFuncA type="linear" slope="0.8" />
+      </feComponentTransfer>
+
+      <!-- Medium Right-And-Bottom Shadow (Matches Right Edge Bar/Loop Shadows) -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="rightBlur" />
+      <feOffset in="rightBlur" dx="5" dy="15" result="rightOffset" />
+      <feComponentTransfer in="rightOffset" result="rightShadow">
+        <feFuncA type="linear" slope="0.75" />
+      </feComponentTransfer>
+
+      <!-- Tight Contact Occlusion Shadow Directly Under Extrusion Base -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="tightBlur" />
+      <feOffset in="tightBlur" dx="-1.5" dy="15.5" result="tightOffset" />
+      <feComponentTransfer in="tightOffset" result="tightShadow">
+        <feFuncA type="linear" slope="0.95" />
+      </feComponentTransfer>
+
+      <feMerge>
+        <feMergeNode in="softShadow" />
+        <feMergeNode in="rightShadow" />
+        <feMergeNode in="tightShadow" />
+      </feMerge>
+    </filter>
+
+    <!-- Clip Path for Front Cover Surface -->
+    <clipPath id="frontCoverClip">
+      <path d="M 12,806 
+               C 18,778 46,772 90,778 
+               L 782,866 
+               C 830,872 864,844 872,796 
+               L 968,120 
+               C 972,88 952,70 916,67 
+               L 244,14 
+               C 196,10 156,16 148,48 
+               L 12,806 Z" />
+    </clipPath>
+
+    <!-- Clip Path for 3D Bottom & Right-Corner Page Block -->
+    <clipPath id="pagesClip">
+      <path d="M 62,806 
+               L 780,894 
+               C 830,900 864,872 876,816 
+               L 866,900 
+               C 854,948 820,970 772,964 
+               L 84,888 
+               C 58,885 48,848 62,806 Z" />
+    </clipPath>
+
+    <!-- Master Orange Emblem Vector Geometry -->
+    <path id="emblemShape" fill-rule="evenodd" d="
+      M 778,205 
+      L 842,214 
+      L 832,276 
+      C 878,322 890,402 858,474 
+      C 822,546 738,572 652,544 
+      C 596,526 556,478 522,420 
+      C 482,465 436,508 380,522 
+      C 282,542 194,472 192,364 
+      C 190,256 278,185 376,198 
+      C 438,206 490,252 532,314 
+      C 588,264 662,225 756,234 
+      L 748,288 
+      C 672,282 612,314 564,358 
+      C 590,405 620,448 650,472 
+      L 660,402 
+      L 712,408 
+      L 700,494 
+      C 706,496 711,497 716,498 
+      L 738,332 
+      L 790,338 
+      L 768,494 
+      C 788,484 804,468 814,444 
+      C 834,394 818,334 762,302 
+      L 778,205 Z
+
+      M 496,366 
+      C 456,306 414,256 362,250 
+      C 318,245 278,260 256,282 
+      L 332.3,290.0 
+      A 32,32 0 1 1 329.6,315.9 
+      L 246,307 
+      C 241,320 239,332 240,343 
+      L 326.5,351.4 
+      L 371.4,373.5 
+      A 32,32 0 1 1 360.0,396.9 
+      L 317.5,376.6 
+      L 241,369 
+      C 243,386 248,402 256,417 
+      L 299.2,422.7 
+      A 30,30 0 1 1 296.6,447.6 
+      L 272,444 
+      C 295,468 332,478 368,470 
+      C 414,460 454,416 496,366 Z
+
+      M 344.5,306 A 15.5,15.5 0 1 0 375.5,306 A 15.5,15.5 0 1 0 344.5,306 Z
+      M 376.5,398 A 15.5,15.5 0 1 0 407.5,398 A 15.5,15.5 0 1 0 376.5,398 Z
+      M 310.5,438 A 14.5,14.5 0 1 0 339.5,438 A 14.5,14.5 0 1 0 310.5,438 Z
+    " />
+
+    <!-- Clip Path for Top-Only Bevel Highlight on Emblem -->
+    <clipPath id="emblemTopClip">
+      <use href="#emblemShape" />
+    </clipPath>
+  </defs>
+
+  <!-- ==================== 1. BACK COVER & CONTINUOUS SPINE BASE ==================== -->
+  <g filter="url(#bookShadow)">
+    <!-- Outer Back Cover & Right-Side Overhang -->
+    <path d="M 148,48 
+             L 10,818 
+             C 3,868 28,908 82,914 
+             L 774,988 
+             C 834,994 876,962 888,900 
+             L 990,190 
+             C 994,158 980,136 956,126 
+             L 236,14 
+             C 192,10 156,18 148,48 Z" 
+          fill="url(#backCoverGrad)" 
+          stroke="#4a5360" 
+          stroke-width="2" />
+
+    <!-- Right-Side & Bottom Back Cover Rim Highlight -->
+    <path d="M 966,132 C 984,144 990,164 987,192 L 885,898 C 872,958 830,988 774,982 L 82,908 C 34,902 12,868 16,824" 
+          fill="none" 
+          stroke="#5c6776" 
+          stroke-width="2.5" 
+          opacity="0.7" />
+
+    <!-- Dark Interior Spine & Right-Edge Recessed Channel -->
+    <path d="M 48,804 
+             L 782,892 
+             C 832,898 864,872 874,820 
+             L 968,145 
+             C 975,155 978,170 975,192 
+             L 876,894 
+             C 864,950 826,976 772,970 
+             L 80,896 
+             C 36,891 22,860 28,826 
+             C 31,810 38,803 48,804 Z" 
+          fill="#0c0f13" />
+
+    <!-- Subtle Right-Side Fore-Edge Paper Stack (Visible Inside Right Channel) -->
+    <path d="M 964,155 
+             L 875,816 
+             L 866,900 
+             L 968,185 
+             C 970,172 968,162 964,155 Z" 
+          fill="url(#rightPagesGrad)" 
+          opacity="0.35" />
+  </g>
+
+  <!-- ==================== 2. 3D PAPER-WHITE PAGE BLOCK ==================== -->
+  <g clip-path="url(#pagesClip)">
+    <!-- Bright Paper-White Base Fill -->
+    <path d="M 45,795 L 895,805 L 885,980 L 40,905 Z" fill="url(#pagesGrad)" />
+
+    <!-- Continuous 3D Page Sheet Lines (Running Across Bottom & Curving Up the Right Side) -->
+    <g fill="none" stroke="#c8d0dc" stroke-width="1.35" opacity="0.85">
+      <path d="M 58,812 L 780,900 C 830,906 863,878 875,822" />
+      <path d="M 57,818 L 779,906 C 829,912 862,884 874,828" />
+      <path d="M 56,824 L 778,912 C 828,918 861,890 873,834" />
+      <path d="M 55,830 L 777,918 C 827,924 860,896 872,840" />
+      <path d="M 54,836 L 776,924 C 826,930 859,902 871,846" />
+      <path d="M 53,842 L 775,930 C 825,936 858,908 870,852" />
+      <path d="M 52,848 L 774,936 C 824,942 857,914 869,858" />
+      <path d="M 51,854 L 773,942 C 823,948 856,920 868,864" />
+      <path d="M 50,860 L 772,948 C 822,954 855,926 867,870" />
+      <path d="M 49,866 L 771,954 C 821,960 854,932 866,876" />
+      <path d="M 48,872 L 770,960 C 820,966 853,938 865,882" />
+      <path d="M 47,878 L 769,966 C 819,972 852,944 864,888" />
+    </g>
+
+    <!-- Pure White Page Sheet Highlights (Between Creases) -->
+    <g fill="none" stroke="#ffffff" stroke-width="1.4" opacity="0.95">
+      <path d="M 58,815 L 780,903 C 830,909 863,881 875,825" />
+      <path d="M 56,827 L 778,915 C 828,921 861,893 873,837" />
+      <path d="M 54,839 L 776,927 C 826,933 859,905 871,849" />
+      <path d="M 52,851 L 774,939 C 824,945 857,917 869,861" />
+      <path d="M 50,863 L 772,951 C 822,957 855,929 867,873" />
+      <path d="M 48,875 L 770,963 C 820,969 853,941 865,885" />
+    </g>
+
+    <!-- Soft Spine-Side Page Bend Shading -->
+    <path d="M 62,806 C 48,848 58,885 84,888 L 104,891 C 80,885 72,848 84,809 Z" 
+          fill="#6c7582" 
+          opacity="0.32" />
+
+    <!-- Curved Overhang Cast Shadow (Follows Front Cover Lip & Curves Up Right Side Without Blocking Pages) -->
+    <path d="M 55,803 L 780,891 C 830,897 864,869 876,813" 
+          fill="none" 
+          stroke="#0a0d12" 
+          stroke-width="14" 
+          opacity="0.65" 
+          filter="url(#overhangShadowBlur)" />
+  </g>
+
+  <!-- ==================== 3. FRONT HARDCOVER & 3D BOARD THICKNESS ==================== -->
+  <!-- Front Cover 3D Board Thickness Wall (Bottom & Right Lip) -->
+  <path d="M 10,818 
+           C 15,790 44,782 88,788 
+           L 782,876 
+           C 830,882 864,854 872,806 
+           L 968,125 
+           L 973,140 
+           L 876,820 
+           C 866,872 832,900 780,894 
+           L 84,806 
+           C 42,801 24,812 24,838 
+           Z" 
+        fill="url(#boardEdgeGrad)" />
+
+  <!-- Continuous U-Shape Spine Rim Highlight (Left Mouth of Book) -->
+  <path d="M 84,806 
+           C 40,801 22,816 22,846 
+           C 22,876 44,894 84,898 
+           L 772,972" 
+        fill="none" 
+        stroke="#3b4350" 
+        stroke-width="3" 
+        opacity="0.8" />
+
+  <!-- Main Front Cover Top Surface -->
+  <path d="M 12,806 
+           C 18,778 46,772 90,778 
+           L 782,866 
+           C 830,872 864,844 872,796 
+           L 968,120 
+           C 972,88 952,70 916,67 
+           L 244,14 
+           C 196,10 156,16 148,48 
+           L 12,806 Z" 
+        fill="url(#coverGrad)" 
+        stroke="url(#rimGrad)" 
+        stroke-width="2.5" />
+
+  <!-- Spine Shading & Indented Hinge Groove (Clipped Cleanly to Front Cover) -->
+  <g clip-path="url(#frontCoverClip)">
+    <!-- Left Spine 3D Cylindrical Shading Overlay -->
+    <path d="M 12,806 
+             C 18,778 46,772 90,778 
+             L 106,780 
+             L 244,14 
+             C 196,10 156,16 148,48 
+             L 12,806 Z" 
+          fill="url(#spineGrad)" />
+
+    <!-- Spine Indented Groove / Hinge Crease -->
+    <path d="M 238,10 L 98,779 L 95,800" fill="none" stroke="#111419" stroke-width="6" opacity="0.9" />
+    <path d="M 243,10 L 103,780 L 100,800" fill="none" stroke="#505a68" stroke-width="2" opacity="0.65" />
+  </g>
+
+  <!-- Front Cover Bottom & Right Edge Bevel Highlight -->
+  <path d="M 18,792 C 30,776 56,774 90,778 L 782,866 C 826,871 858,846 868,800 L 964,122" 
+        fill="none" 
+        stroke="#55606e" 
+        stroke-width="2" 
+        opacity="0.75" />
+
+  <!-- ==================== 4. 3D ORANGE INFINITY EMBLEM ==================== -->
+  <!-- Multi-Layered Cast Shadow on Book Surface -->
+  <use href="#emblemShape" fill="#000000" filter="url(#emblemDropShadow)" />
+
+  <!-- 14-Step Smooth 3D Extrusion Side Walls -->
+  <use href="#emblemShape" transform="translate(-3.5, 14.0)" fill="#5c1800" />
+  <use href="#emblemShape" transform="translate(-3.25, 13.0)" fill="#691c00" />
+  <use href="#emblemShape" transform="translate(-3.0, 12.0)" fill="#752000" />
+  <use href="#emblemShape" transform="translate(-2.75, 11.0)" fill="#822500" />
+  <use href="#emblemShape" transform="translate(-2.5, 10.0)" fill="#8f2900" />
+  <use href="#emblemShape" transform="translate(-2.25, 9.0)" fill="#9b2e00" />
+  <use href="#emblemShape" transform="translate(-2.0, 8.0)"  fill="#a73300" />
+  <use href="#emblemShape" transform="translate(-1.75, 7.0)" fill="#b33800" />
+  <use href="#emblemShape" transform="translate(-1.5, 6.0)"  fill="#be3c01" />
+  <use href="#emblemShape" transform="translate(-1.25, 5.0)" fill="#c94102" />
+  <use href="#emblemShape" transform="translate(-1.0, 4.0)"  fill="#d34603" />
+  <use href="#emblemShape" transform="translate(-0.75, 3.0)" fill="#dd4b05" />
+  <use href="#emblemShape" transform="translate(-0.5, 2.0)"  fill="#e65106" />
+  <use href="#emblemShape" transform="translate(-0.25, 1.0)" fill="#ef5707" />
+
+  <!-- Main Top Face of Orange Emblem -->
+  <use href="#emblemShape" fill="url(#orangeTopGrad)" />
+
+  <!-- Directional 3D Top-Edge Bevel Highlight (Illuminates Only Top/Left Edges) -->
+  <g clip-path="url(#emblemTopClip)">
+    <use href="#emblemShape" 
+         transform="translate(0.6, 1.8)" 
+         fill="none" 
+         stroke="#ffb870" 
+         stroke-width="2.6" 
+         stroke-linejoin="round" 
+         opacity="0.8" />
+  </g>
+</svg>
