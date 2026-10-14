@@ -51,6 +51,7 @@
 }
 
 .shell-content-cell {
+  position: relative;
   grid-column: 3;
   grid-row: 3;
   min-height: 0;
@@ -58,6 +59,11 @@
   overflow-y: auto;
   z-index: var(--z-content);
   padding: var(--space-4) var(--space-4) var(--space-6);
+
+  &:has(.sheet) {
+    overflow: hidden;
+    padding: 0;
+  }
 }
 
 /* Org dropdown backdrop */

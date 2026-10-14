@@ -1,7 +1,7 @@
 // Bill-Book Progressive Web App (PWA) Service Worker
-// Version: 1.0.1
+// Version: 1.0.2
 
-const CACHE_NAME = 'bill-book-pwa-v2';
+const CACHE_NAME = 'bill-book-pwa-v3';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_ASSETS = [

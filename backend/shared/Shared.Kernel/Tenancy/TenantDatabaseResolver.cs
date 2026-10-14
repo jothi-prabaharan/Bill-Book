@@ -29,10 +29,12 @@ public class TenantDatabaseResolver : ITenantDatabaseResolver
         {
             builder.CommandTimeout = StrictTimeoutSeconds;
         }
-        if (builder.KeepAlive == 0)
+        if (builder.KeepAlive == 0 || builder.KeepAlive > 10)
         {
-            builder.KeepAlive = 30;
+            builder.KeepAlive = 10;
         }
+        builder.TcpKeepAlive = true;
+        builder.ConnectionIdleLifetime = 30;
         if (builder.MaxPoolSize > 25)
         {
             builder.MaxPoolSize = 25;

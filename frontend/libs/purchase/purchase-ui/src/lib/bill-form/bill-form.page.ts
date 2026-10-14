@@ -54,6 +54,9 @@ import {
   PurchaseLookupService,
   SaveBillLineRequest,
   SaveBillRequest,
+  ContactAddressOption,
+  formatContactAddress,
+  formatAddressOptionLabel,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 
@@ -160,15 +163,115 @@ export class BillFormPage {
   protected readonly exchangeRate = signal(1);
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');
+  protected readonly contactAddresses = signal<ContactAddressOption[]>([]);
+  protected readonly selectedBillingAddressId = signal<number | null>(null);
+  protected readonly selectedShippingAddressId = signal<number | null>(null);
+  protected readonly sameAsBilling = signal(true);
+
+  protected readonly billingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  protected readonly shippingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  private async loadContactAddresses(contactId: number, preserveExisting = false): Promise<void> {
+    const summary = await this.lookups.contactAddresses?.(contactId);
+    if (!summary) {
+      this.contactAddresses.set([]);
+      return;
+    }
+    this.contactAddresses.set(summary.addresses);
+
+    if (summary.gstin && !this.contactGstin()) {
+      this.contactGstin.set(summary.gstin);
+    }
+
+    if (summary.addresses.length === 0) return;
+
+    if (!preserveExisting || !this.billingAddress()) {
+      const defaultBilling = summary.addresses.find((a) => a.isDefaultBilling) ?? summary.addresses[0];
+      if (defaultBilling) {
+        this.selectedBillingAddressId.set(defaultBilling.contactAddressId);
+        this.billingAddress.set(formatContactAddress(defaultBilling));
+        if (defaultBilling.gstin) {
+          this.contactGstin.set(defaultBilling.gstin);
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.billingAddress());
+      if (matched) {
+        this.selectedBillingAddressId.set(matched.contactAddressId);
+      }
+    }
+
+    if (!preserveExisting || !this.shippingAddress()) {
+      if (this.sameAsBilling()) {
+        this.shippingAddress.set(this.billingAddress());
+        this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+      } else {
+        const defaultShipping = summary.addresses.find((a) => a.isDefaultShipping) ?? summary.addresses[0];
+        if (defaultShipping) {
+          this.selectedShippingAddressId.set(defaultShipping.contactAddressId);
+          this.shippingAddress.set(formatContactAddress(defaultShipping));
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.shippingAddress());
+      if (matched) {
+        this.selectedShippingAddressId.set(matched.contactAddressId);
+      }
+    }
+  }
+
+  protected onBillingAddressChange(addressId: number | null): void {
+    this.selectedBillingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      const formatted = formatContactAddress(addr);
+      this.billingAddress.set(formatted);
+      if (addr.gstin) {
+        this.contactGstin.set(addr.gstin);
+      }
+      if (this.sameAsBilling()) {
+        this.shippingAddress.set(formatted);
+        this.selectedShippingAddressId.set(addressId);
+      }
+    }
+  }
+
+  protected onShippingAddressChange(addressId: number | null): void {
+    this.selectedShippingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      this.shippingAddress.set(formatContactAddress(addr));
+    }
+  }
+
+  protected onSameAsBillingChange(checked: boolean): void {
+    this.sameAsBilling.set(checked);
+    if (checked) {
+      this.shippingAddress.set(this.billingAddress());
+      this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+    }
+  }
+
   protected readonly notes = signal('');
   protected readonly termsAndConditions = signal('');
   protected readonly isInterState = signal(false);
 
   protected copyBillingToShipping(event?: Event | boolean): void {
     const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
-    if (checked) {
-      this.shippingAddress.set(this.billingAddress());
-    }
+    this.onSameAsBillingChange(checked);
   }
 
   /** The vendor charged no GST and this business pays it (TK-115, D-30). */
@@ -318,6 +421,9 @@ export class BillFormPage {
       this.exchangeRate.set(view.exchangeRate ?? 1);
       this.billingAddress.set(view.billingAddress ?? '');
       this.shippingAddress.set(view.shippingAddress ?? '');
+      if (view.contactId) {
+        void this.loadContactAddresses(view.contactId, true);
+      }
       this.notes.set(view.notes ?? '');
       this.termsAndConditions.set(view.termsAndConditions ?? '');
       this.customValues.set(view.customFields ?? {});
@@ -526,6 +632,7 @@ export class BillFormPage {
         this.contactGstin.set(row.meta);
       }
 
+      void this.loadContactAddresses(row.id);
       this.clearReceipt();
     } else if (which === 'receipt') {
       this.goodsReceiptId.set(row.id);

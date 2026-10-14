@@ -1,8 +1,18 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { QuoteService, SalesLookupService, SaveQuoteRequest, blankGridLine, toGridLine, toApiLine } from '@bill-book/sales-core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  QuoteService,
+  SalesLookupService,
+  SaveQuoteRequest,
+  blankGridLine,
+  toGridLine,
+  toApiLine,
+  ContactAddressOption,
+  formatContactAddress,
+  formatAddressOptionLabel,
+} from '@bill-book/sales-core';
 import {
   CreatePageComponent,
   NumberFieldComponent,
@@ -27,6 +37,7 @@ import {
   DocumentCustomFieldsComponent,
   compactValues,
   SelectComponent,
+  BbSelectOption,
   GST_STATE_OPTIONS,
   TRANSACTION_CURRENCY_OPTIONS,
   resolveOrgStateCode,
@@ -47,6 +58,7 @@ import { SalesPicker } from '../sales-picker';
     MoreDetailsComponent,
     DocumentCustomFieldsComponent,
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     DocumentLineGridComponent,
     RouterModule,
@@ -89,9 +101,7 @@ export class QuoteFormComponent implements OnInit {
 
   protected copyBillingToShipping(event?: Event | boolean): void {
     const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
-    if (checked) {
-      this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
-    }
+    this.onSameAsBillingChange(checked);
   }
 
   private fb = inject(FormBuilder);
@@ -117,6 +127,7 @@ export class QuoteFormComponent implements OnInit {
   });
   
   private readonly changes = inject(ChangeDetectorRef);
+  private readonly lookups = inject(SalesLookupService);
 
   lines: DocumentLine[] = [blankGridLine(1)];
 
@@ -124,7 +135,7 @@ export class QuoteFormComponent implements OnInit {
   readonly contactLabel = signal('');
 
   /** The customer and item pickers (TK-15). */
-  readonly picker = new SalesPicker(inject(SalesLookupService), {
+  readonly picker = new SalesPicker(this.lookups, {
     customer: (row) => this.chooseCustomer(row),
     item: (index, row) => {
       this.lines = SalesPicker.withItem(this.lines, index, row, this.context);
@@ -135,6 +146,109 @@ export class QuoteFormComponent implements OnInit {
       this.changes.markForCheck();
     },
   });
+
+  readonly contactAddresses = signal<ContactAddressOption[]>([]);
+  readonly selectedBillingAddressId = signal<number | null>(null);
+  readonly selectedShippingAddressId = signal<number | null>(null);
+  readonly sameAsBilling = signal(true);
+
+  readonly billingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  readonly shippingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  private async loadContactAddresses(contactId: number, preserveExisting = false): Promise<void> {
+    const summary = await this.lookups.contactAddresses?.(contactId);
+    if (!summary) {
+      this.contactAddresses.set([]);
+      return;
+    }
+    this.contactAddresses.set(summary.addresses);
+
+    if (summary.gstin) {
+      this.form.controls.contactGstin.setValue(summary.gstin);
+    }
+
+    if (summary.addresses.length === 0) return;
+
+    if (!preserveExisting || !this.form.controls.billingAddress.value) {
+      const defaultBilling = summary.addresses.find((a) => a.isDefaultBilling) ?? summary.addresses[0];
+      if (defaultBilling) {
+        this.selectedBillingAddressId.set(defaultBilling.contactAddressId);
+        this.form.controls.billingAddress.setValue(formatContactAddress(defaultBilling));
+        if (defaultBilling.gstin) {
+          this.form.controls.contactGstin.setValue(defaultBilling.gstin);
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.form.controls.billingAddress.value);
+      if (matched) {
+        this.selectedBillingAddressId.set(matched.contactAddressId);
+      }
+    }
+
+    if (!preserveExisting || !this.form.controls.shippingAddress.value) {
+      if (this.sameAsBilling()) {
+        this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
+        this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+      } else {
+        const defaultShipping = summary.addresses.find((a) => a.isDefaultShipping) ?? summary.addresses[0];
+        if (defaultShipping) {
+          this.selectedShippingAddressId.set(defaultShipping.contactAddressId);
+          this.form.controls.shippingAddress.setValue(formatContactAddress(defaultShipping));
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.form.controls.shippingAddress.value);
+      if (matched) {
+        this.selectedShippingAddressId.set(matched.contactAddressId);
+      }
+    }
+    this.changes.markForCheck();
+  }
+
+  onBillingAddressChange(addressId: number | null): void {
+    this.selectedBillingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      const formatted = formatContactAddress(addr);
+      this.form.controls.billingAddress.setValue(formatted);
+      if (addr.gstin) {
+        this.form.controls.contactGstin.setValue(addr.gstin);
+      }
+      if (this.sameAsBilling()) {
+        this.form.controls.shippingAddress.setValue(formatted);
+        this.selectedShippingAddressId.set(addressId);
+      }
+    }
+  }
+
+  onShippingAddressChange(addressId: number | null): void {
+    this.selectedShippingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      this.form.controls.shippingAddress.setValue(formatContactAddress(addr));
+    }
+  }
+
+  onSameAsBillingChange(checked: boolean): void {
+    this.sameAsBilling.set(checked);
+    if (checked) {
+      this.form.controls.shippingAddress.setValue(this.form.controls.billingAddress.value);
+      this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+    }
+  }
   context: DocumentLineContext = {
     isInterState: false,
     currencyDecimals: 2,
@@ -180,6 +294,9 @@ export class QuoteFormComponent implements OnInit {
         notes: q.notes,
         termsAndConditions: q.termsAndConditions
       });
+      if (q.contactId) {
+        void this.loadContactAddresses(q.contactId, true);
+      }
       this.customValues.set(q.customFields ?? {});
       // Map lines through the scale boundary. Straight in, a ₹100 line reads as zero.
       this.lines = (q.lines && q.lines.length > 0)
@@ -215,9 +332,10 @@ export class QuoteFormComponent implements OnInit {
     this.form.controls.contactId.setValue(row.id);
     this.form.controls.contactId.markAsTouched();
 
-    if (row.meta && !this.form.controls.contactGstin.value) {
+    if (row.meta) {
       this.form.controls.contactGstin.setValue(row.meta);
     }
+    void this.loadContactAddresses(row.id);
   }
 
   save() {

@@ -85,6 +85,57 @@ export interface TaxRateOption {
   isActive: boolean;
 }
 
+export interface ContactAddressOption {
+  contactAddressId: number;
+  kind: string;
+  isDefaultBilling: boolean;
+  isDefaultShipping: boolean;
+  label?: string | null;
+  addressLine1: string;
+  addressLine2?: string | null;
+  landmark?: string | null;
+  city: string;
+  stateId?: number | null;
+  countryId?: number;
+  postalCode?: string | null;
+  gstin?: string | null;
+  isActive: boolean;
+}
+
+export interface ContactAddressesSummary {
+  contactId: number;
+  displayName: string;
+  gstin: string | null;
+  addresses: ContactAddressOption[];
+}
+
+export function formatContactAddress(addr: {
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  landmark?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+}): string {
+  const parts: string[] = [];
+  if (addr.addressLine1?.trim()) parts.push(addr.addressLine1.trim());
+  if (addr.addressLine2?.trim()) parts.push(addr.addressLine2.trim());
+  if (addr.landmark?.trim()) parts.push(addr.landmark.trim());
+  const cityZip = [addr.city?.trim(), addr.postalCode?.trim()].filter(Boolean).join(' - ');
+  if (cityZip) parts.push(cityZip);
+  return parts.join(', ');
+}
+
+export function formatAddressOptionLabel(addr: {
+  kind: string;
+  label?: string | null;
+  addressLine1?: string | null;
+  city?: string | null;
+}): string {
+  const kindLabel = addr.label ? `${addr.label} (${addr.kind})` : addr.kind;
+  const summary = [addr.addressLine1, addr.city].filter(Boolean).join(', ');
+  return summary ? `${kindLabel}: ${summary}` : kindLabel;
+}
+
 /** What the branch has decided about how its documents are built. */
 export interface BranchDocumentSettings {
   stateCode: string;
@@ -106,6 +157,30 @@ export interface BranchDocumentSettings {
 export class PurchaseLookupService {
   private readonly http = inject(HttpClient);
   private readonly choices = inject(DocumentChoicesService);
+
+  /**
+   * The addresses of a vendor, read from the contact itself.
+   */
+  async contactAddresses(contactId: number): Promise<ContactAddressesSummary | null> {
+    try {
+      const res = await firstValueFrom(
+        this.http.get<{
+          contactId: number;
+          displayName: string;
+          gstin: string | null;
+          addresses?: ContactAddressOption[];
+        }>(`/api/contacts/${contactId}`)
+      );
+      return {
+        contactId: res.contactId,
+        displayName: res.displayName,
+        gstin: res.gstin ?? null,
+        addresses: (res.addresses ?? []).filter((a) => a.isActive !== false),
+      };
+    } catch {
+      return null;
+    }
+  }
 
   /**
    * Vendors matching a search term.

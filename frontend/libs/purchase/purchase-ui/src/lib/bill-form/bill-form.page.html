@@ -164,18 +164,20 @@
     <div class="card-row">
       <div class="card">
         <div class="card-kicker">Vendor details</div>
-        <div class="field">
-          <bb-text-input
-            id="bil-gstin"
-            label="Vendor GSTIN"
-            maxlength="15"
-            [uppercase]="true"
-            [disabled]="readonlyDoc()"
-            [ngModel]="contactGstin()"
-            (ngModelChange)="contactGstin.set($event)"
-          />
-        </div>
-        <div class="field" style="margin-top: var(--space-2)">
+        @if (billingAddressOptions().length > 0) {
+          <div class="field">
+            <bb-select
+              id="bil-billing-select"
+              label="Choose address"
+              placeholder="Choose from vendor's addresses…"
+              [options]="billingAddressOptions()"
+              [disabled]="readonlyDoc()"
+              [ngModel]="selectedBillingAddressId()"
+              (ngModelChange)="onBillingAddressChange($event)"
+            />
+          </div>
+        }
+        <div class="field" [style.marginTop]="billingAddressOptions().length > 0 ? 'var(--space-2)' : null">
           <bb-textarea
             id="bil-billing"
             label="Billing address"
@@ -185,21 +187,36 @@
             (ngModelChange)="billingAddress.set($event)"
           />
         </div>
-        <div class="card-meta">
-          {{ isInterState() ? 'Inter-state IGST' : 'Intra-state CGST + SGST' }}
-        </div>
       </div>
 
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="card-kicker" style="margin-bottom:0">Shipping address</div>
-          <bb-checkbox text="Same as billing" [disabled]="readonlyDoc()" (change)="copyBillingToShipping($event)" />
+          <bb-checkbox
+            text="Same as billing"
+            [disabled]="readonlyDoc()"
+            [ngModel]="sameAsBilling()"
+            (ngModelChange)="onSameAsBillingChange($event)"
+          />
         </div>
+        @if (!sameAsBilling() && shippingAddressOptions().length > 0) {
+          <div class="field" style="margin-top: var(--space-2)">
+            <bb-select
+              id="bil-shipping-select"
+              label="Choose address"
+              placeholder="Choose from vendor's addresses…"
+              [options]="shippingAddressOptions()"
+              [disabled]="readonlyDoc()"
+              [ngModel]="selectedShippingAddressId()"
+              (ngModelChange)="onShippingAddressChange($event)"
+            />
+          </div>
+        }
         <div class="field" style="margin-top: var(--space-2)">
           <bb-textarea
             id="bil-shipping"
             rows="3"
-            [disabled]="readonlyDoc()"
+            [disabled]="readonlyDoc() || sameAsBilling()"
             [ngModel]="shippingAddress()"
             (ngModelChange)="shippingAddress.set($event)"
           />

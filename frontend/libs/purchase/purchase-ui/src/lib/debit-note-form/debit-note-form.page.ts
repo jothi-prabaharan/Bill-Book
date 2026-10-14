@@ -46,6 +46,9 @@ import {
   PurchaseLookupService,
   SaveDebitNoteLineRequest,
   SaveDebitNoteRequest,
+  ContactAddressOption,
+  formatContactAddress,
+  formatAddressOptionLabel,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 import { debitScanned } from './debit-note-scan';
@@ -162,6 +165,108 @@ export class DebitNoteFormPage {
   protected readonly placeOfSupplyStateCode = signal(this.getOrgStateCode());
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');
+  protected readonly contactAddresses = signal<ContactAddressOption[]>([]);
+  protected readonly selectedBillingAddressId = signal<number | null>(null);
+  protected readonly selectedShippingAddressId = signal<number | null>(null);
+  protected readonly sameAsBilling = signal(true);
+
+  protected readonly billingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  protected readonly shippingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  private async loadContactAddresses(contactId: number, preserveExisting = false): Promise<void> {
+    const summary = await this.lookups.contactAddresses?.(contactId);
+    if (!summary) {
+      this.contactAddresses.set([]);
+      return;
+    }
+    this.contactAddresses.set(summary.addresses);
+
+    if (summary.gstin) {
+      this.contactGstin.set(summary.gstin);
+    }
+
+    if (summary.addresses.length === 0) return;
+
+    if (!preserveExisting || !this.billingAddress()) {
+      const defaultBilling = summary.addresses.find((a) => a.isDefaultBilling) ?? summary.addresses[0];
+      if (defaultBilling) {
+        this.selectedBillingAddressId.set(defaultBilling.contactAddressId);
+        this.billingAddress.set(formatContactAddress(defaultBilling));
+        if (defaultBilling.gstin) {
+          this.contactGstin.set(defaultBilling.gstin);
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.billingAddress());
+      if (matched) {
+        this.selectedBillingAddressId.set(matched.contactAddressId);
+      }
+    }
+
+    if (!preserveExisting || !this.shippingAddress()) {
+      if (this.sameAsBilling()) {
+        this.shippingAddress.set(this.billingAddress());
+        this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+      } else {
+        const defaultShipping = summary.addresses.find((a) => a.isDefaultShipping) ?? summary.addresses[0];
+        if (defaultShipping) {
+          this.selectedShippingAddressId.set(defaultShipping.contactAddressId);
+          this.shippingAddress.set(formatContactAddress(defaultShipping));
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.shippingAddress());
+      if (matched) {
+        this.selectedShippingAddressId.set(matched.contactAddressId);
+      }
+    }
+  }
+
+  protected onBillingAddressChange(addressId: number | null): void {
+    this.selectedBillingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      const formatted = formatContactAddress(addr);
+      this.billingAddress.set(formatted);
+      if (addr.gstin) {
+        this.contactGstin.set(addr.gstin);
+      }
+      if (this.sameAsBilling()) {
+        this.shippingAddress.set(formatted);
+        this.selectedShippingAddressId.set(addressId);
+      }
+    }
+  }
+
+  protected onShippingAddressChange(addressId: number | null): void {
+    this.selectedShippingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      this.shippingAddress.set(formatContactAddress(addr));
+    }
+  }
+
+  protected onSameAsBillingChange(checked: boolean): void {
+    this.sameAsBilling.set(checked);
+    if (checked) {
+      this.shippingAddress.set(this.billingAddress());
+      this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+    }
+  }
+
   protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);
   protected readonly isInterState = signal(false);
@@ -189,7 +294,7 @@ export class DebitNoteFormPage {
   });
 
   protected copyBillingToShipping(): void {
-    this.shippingAddress.set(this.billingAddress());
+    this.onSameAsBillingChange(true);
   }
 
   protected zeroAll(): void {
@@ -257,6 +362,9 @@ export class DebitNoteFormPage {
           : String(view.contactId),
       );
       this.contactGstin.set(view.contactGstin ?? '');
+      if (view.contactId) {
+        void this.loadContactAddresses(view.contactId, true);
+      }
       this.billId.set(view.billId);
       this.billLabel.set(view.billNo ?? String(view.billId));
       this.reasonCode.set(view.reasonCode);
@@ -359,9 +467,11 @@ export class DebitNoteFormPage {
       this.contactId.set(row.id);
       this.contactLabel.set(`${row.code} ${row.name}`.trim());
 
-      if (row.meta && !this.contactGstin()) {
+      if (row.meta) {
         this.contactGstin.set(row.meta);
       }
+
+      void this.loadContactAddresses(row.id);
 
       // The bill belonged to the previous vendor.
       this.billId.set(null);
@@ -413,8 +523,11 @@ export class DebitNoteFormPage {
 
       this.lines.set(returnable);
 
-      if (!this.contactGstin() && bill.contactGstin) {
+      if (bill.contactGstin) {
         this.contactGstin.set(bill.contactGstin);
+      }
+      if (bill.contactId) {
+        void this.loadContactAddresses(bill.contactId, true);
       }
       if (bill.billingAddress && !this.billingAddress()) {
         this.billingAddress.set(bill.billingAddress);

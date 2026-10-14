@@ -37,6 +37,8 @@ import {
   LabelData,
   LabelKind,
   LabelPrintDialog,
+  SelectComponent,
+  BbSelectOption,
   resolveOrgStateCode,
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
@@ -52,6 +54,9 @@ import {
   PurchaseOrderService,
   SaveGoodsReceiptLineRequest,
   SaveGoodsReceiptRequest,
+  ContactAddressOption,
+  formatContactAddress,
+  formatAddressOptionLabel,
 } from '@bill-book/purchase-core';
 import { gtinCandidates, matchScannedItem, parseGs1 } from '@bill-book/scan-core';
 import { ReceivingLine, ScannedBatch, receiveScanned, zeroReceived } from './goods-receipt-scan';
@@ -96,6 +101,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'order';
     QuantityInputComponent,
     TextareaComponent,
     CheckboxComponent,
+    SelectComponent,
     MessageBoxComponent,
     LabelPrintDialog,
   ],
@@ -157,6 +163,108 @@ export class GoodsReceiptFormPage {
   protected readonly placeOfSupplyStateCode = signal(this.getOrgStateCode());
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');
+  protected readonly contactAddresses = signal<ContactAddressOption[]>([]);
+  protected readonly selectedBillingAddressId = signal<number | null>(null);
+  protected readonly selectedShippingAddressId = signal<number | null>(null);
+  protected readonly sameAsBilling = signal(true);
+
+  protected readonly billingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  protected readonly shippingAddressOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contactAddresses().map((a) => ({
+      value: a.contactAddressId,
+      label: formatAddressOptionLabel(a),
+    }))
+  );
+
+  private async loadContactAddresses(contactId: number, preserveExisting = false): Promise<void> {
+    const summary = await this.lookups.contactAddresses?.(contactId);
+    if (!summary) {
+      this.contactAddresses.set([]);
+      return;
+    }
+    this.contactAddresses.set(summary.addresses);
+
+    if (summary.gstin && !this.contactGstin()) {
+      this.contactGstin.set(summary.gstin);
+    }
+
+    if (summary.addresses.length === 0) return;
+
+    if (!preserveExisting || !this.billingAddress()) {
+      const defaultBilling = summary.addresses.find((a) => a.isDefaultBilling) ?? summary.addresses[0];
+      if (defaultBilling) {
+        this.selectedBillingAddressId.set(defaultBilling.contactAddressId);
+        this.billingAddress.set(formatContactAddress(defaultBilling));
+        if (defaultBilling.gstin) {
+          this.contactGstin.set(defaultBilling.gstin);
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.billingAddress());
+      if (matched) {
+        this.selectedBillingAddressId.set(matched.contactAddressId);
+      }
+    }
+
+    if (!preserveExisting || !this.shippingAddress()) {
+      if (this.sameAsBilling()) {
+        this.shippingAddress.set(this.billingAddress());
+        this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+      } else {
+        const defaultShipping = summary.addresses.find((a) => a.isDefaultShipping) ?? summary.addresses[0];
+        if (defaultShipping) {
+          this.selectedShippingAddressId.set(defaultShipping.contactAddressId);
+          this.shippingAddress.set(formatContactAddress(defaultShipping));
+        }
+      }
+    } else {
+      const matched = summary.addresses.find((a) => formatContactAddress(a) === this.shippingAddress());
+      if (matched) {
+        this.selectedShippingAddressId.set(matched.contactAddressId);
+      }
+    }
+  }
+
+  protected onBillingAddressChange(addressId: number | null): void {
+    this.selectedBillingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      const formatted = formatContactAddress(addr);
+      this.billingAddress.set(formatted);
+      if (addr.gstin) {
+        this.contactGstin.set(addr.gstin);
+      }
+      if (this.sameAsBilling()) {
+        this.shippingAddress.set(formatted);
+        this.selectedShippingAddressId.set(addressId);
+      }
+    }
+  }
+
+  protected onShippingAddressChange(addressId: number | null): void {
+    this.selectedShippingAddressId.set(addressId);
+    if (addressId === null) return;
+    const addr = this.contactAddresses().find((a) => a.contactAddressId === addressId);
+    if (addr) {
+      this.shippingAddress.set(formatContactAddress(addr));
+    }
+  }
+
+  protected onSameAsBillingChange(checked: boolean): void {
+    this.sameAsBilling.set(checked);
+    if (checked) {
+      this.shippingAddress.set(this.billingAddress());
+      this.selectedShippingAddressId.set(this.selectedBillingAddressId());
+    }
+  }
+
   protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);
   protected readonly notes = signal('');
@@ -307,6 +415,9 @@ export class GoodsReceiptFormPage {
       );
       this.billingAddress.set(view.billingAddress ?? '');
       this.shippingAddress.set(view.shippingAddress ?? '');
+      if (view.contactId) {
+        void this.loadContactAddresses(view.contactId, true);
+      }
       this.currencyCode.set(view.currencyCode ?? 'INR');
       this.exchangeRate.set(view.exchangeRate ?? 1);
       this.notes.set(view.notes ?? '');
@@ -626,9 +737,11 @@ export class GoodsReceiptFormPage {
       this.contactId.set(row.id);
       this.contactLabel.set(`${row.code} ${row.name}`.trim());
 
-      if (row.meta && !this.contactGstin()) {
+      if (row.meta) {
         this.contactGstin.set(row.meta);
       }
+
+      void this.loadContactAddresses(row.id);
 
       // The order belonged to the previous vendor; keeping it would file the
       // receipt against somebody else's order, which the server refuses anyway.

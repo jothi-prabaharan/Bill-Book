@@ -349,7 +349,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 860px) {
   .reg-pager {
     flex-direction: column;
     align-items: stretch;
@@ -379,7 +379,7 @@
 
 /* A register stacked into cards on a phone has nothing to scroll sideways, so
    its cells wrap again. */
-@media (max-width: 640px) {
+@media (max-width: 860px) {
   .data-grid-card.register .table--stacked th,
   .data-grid-card.register .table--stacked ::ng-deep td {
     white-space: normal;
