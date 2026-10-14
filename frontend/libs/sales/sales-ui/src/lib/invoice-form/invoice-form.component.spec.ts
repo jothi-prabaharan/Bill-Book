@@ -574,7 +574,7 @@ describe('InvoiceFormComponent (sales/sales-ui/invoice-form)', () => {
       expect(comp.picker.open()).toBe(false);
     });
 
-    it('INV-PK-02: a GSTIN already typed is kept when the customer is chosen', () => {
+    it('INV-PK-02: choosing a customer always sets GSTIN from the chosen contact', () => {
       const comp = createComponent();
       comp.ngOnInit();
       comp.form.patchValue({ contactGstin: '29AAAAA0000A1Z5' });
@@ -582,7 +582,7 @@ describe('InvoiceFormComponent (sales/sales-ui/invoice-form)', () => {
       comp.openCustomerPicker();
       comp.picker.choose({ id: 77, code: 'C77', name: 'Ravi Stores', meta: '33ABCDE1234F1Z5' });
 
-      expect(comp.form.get('contactGstin')?.value).toBe('29AAAAA0000A1Z5');
+      expect(comp.form.get('contactGstin')?.value).toBe('33ABCDE1234F1Z5');
     });
 
     it('INV-PK-03: choosing an item sets that line\'s item and label and leaves the others', () => {

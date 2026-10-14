@@ -230,8 +230,9 @@ export class CreditNoteFormComponent implements OnInit {
     }
     this.contactAddresses.set(summary.addresses);
 
+    const contactGstin = summary.gstin || this.form.controls.contactGstin.value || '';
     if (!preserveExisting || !this.form.controls.contactGstin.value) {
-      this.form.controls.contactGstin.setValue(summary.gstin ?? '');
+      this.form.controls.contactGstin.setValue(contactGstin);
     }
 
     if (summary.addresses.length === 0) return;
