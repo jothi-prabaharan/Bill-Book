@@ -511,7 +511,9 @@
   &.pt-chip--list {
     border-color: var(--color-accent-400);
     background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-    font-weight: 500;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -668,5 +670,205 @@
   .pt-sidebar {
     width: 100%;
     overflow-y: visible;
+  }
+}
+
+/* History Buttons & Splits Toggle */
+.pt-split-toggle {
+  font-weight: 500;
+  &.btn-active {
+    background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    color: var(--color-accent-900);
+    border: 1px solid var(--color-accent-400);
+  }
+}
+
+.pt-btn-apply-page {
+  font-weight: 600;
+  color: var(--color-accent-800);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  border: 1px solid var(--color-accent-300);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+    color: var(--color-accent-900);
+    border-color: var(--color-accent);
+  }
+}
+
+/* Section Grid Split Sidebar Group */
+.pt-section-grid-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pt-grid-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pt-grid-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 4px;
+}
+
+.pt-btn-preset {
+  font-size: 10px;
+  padding: 3px 6px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+
+  &:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-accent-400);
+    color: var(--color-accent-800);
+  }
+}
+
+.pt-custom-grid-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pt-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  background: var(--color-surface);
+
+  .pt-stepper-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-right: 2px;
+  }
+
+  .pt-step-btn {
+    padding: 0 4px;
+    font-weight: bold;
+    min-height: unset;
+    height: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .pt-step-val {
+    min-width: 16px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+}
+
+.pt-btn-apply-grid {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+}
+
+.pt-grid-actions-row {
+  display: flex;
+  gap: 4px;
+  button {
+    font-size: 10px;
+    padding: 2px 6px;
+    border: 1px solid var(--color-divider);
+    background: var(--color-surface);
+    &:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+    }
+  }
+}
+
+/* On-Canvas Section Banner */
+.pt-seg-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  user-select: none;
+  pointer-events: auto;
+
+  .pt-seg-pill {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent-800);
+    background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .pt-seg-quick-splits {
+    display: inline-flex;
+    gap: 3px;
+
+    button {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border: 1px solid var(--color-accent-300);
+      background: #fff;
+      border-radius: 3px;
+      cursor: pointer;
+      color: var(--color-accent-800);
+      line-height: 1.2;
+
+      &:hover {
+        background: var(--color-accent-100);
+        border-color: var(--color-accent);
+      }
+    }
+  }
+}
+
+/* Visual Split Guidelines on Canvas */
+.pt-show-splits {
+  .pt-seg {
+    td, th {
+      outline: 1px dashed rgba(60, 120, 216, 0.42) !important;
+      outline-offset: -1px;
+      position: relative;
+      min-height: 22px;
+      transition: background 0.1s ease;
+
+      &:empty {
+        background: rgba(240, 246, 255, 0.35);
+        &::after {
+          content: 'Empty';
+          font-size: 9px;
+          color: rgba(140, 160, 190, 0.7);
+          font-style: italic;
+          display: block;
+          pointer-events: none;
+        }
+      }
+
+      &:focus-within, &.pt-active-cell {
+        outline: 2px solid var(--color-accent) !important;
+        outline-offset: -2px;
+        background: rgba(255, 248, 220, 0.3);
+      }
+    }
   }
 }

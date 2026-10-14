@@ -192,6 +192,11 @@ public static class PlaceholderCatalog
         Single("Organization.Phone", "Organization", "Contact telephone", PlaceholderType.Text, 60),
         Single("Organization.Email", "Organization", "Contact email", PlaceholderType.Text, 70),
         Single("Organization.Logo", "Organization", "Branch logo", PlaceholderType.Image, 80),
+        Single("Organization.BankName", "Organization", "Bank name", PlaceholderType.Text, 82),
+        Single("Organization.BankAccountNo", "Organization", "Bank account number", PlaceholderType.Text, 84),
+        Single("Organization.BankIfsc", "Organization", "Bank IFSC code", PlaceholderType.Text, 86),
+        Single("Organization.BankBranch", "Organization", "Bank branch name", PlaceholderType.Text, 88),
+        Single("Organization.UpiId", "Organization", "Branch UPI VPA ID", PlaceholderType.Text, 90),
     ];
 
     private static readonly PlaceholderDefinition[] Document =
@@ -199,17 +204,26 @@ public static class PlaceholderCatalog
         Single("Document.No", "Document", "Document number", PlaceholderType.Text, 10),
         Single("Document.Date", "Document", "Document date", PlaceholderType.Date, 20, DateFormat),
         Single("Document.DueDate", "Document", "Payment due date", PlaceholderType.Date, 30, DateFormat),
-        Single("Document.Reference", "Document", "The other party's own reference", PlaceholderType.Text, 40),
+        Single("Document.DeliveryDate", "Document", "Delivery or expected date", PlaceholderType.Date, 35, DateFormat),
+        Single("Document.Reference", "Document", "The other party's own reference or PO number", PlaceholderType.Text, 40),
+        Single("Document.OriginalDocumentNo", "Document", "Original invoice, bill, or order number", PlaceholderType.Text, 45),
+        Single("Document.Reason", "Document", "Reason for credit or debit note", PlaceholderType.Text, 48),
         Single("Document.Status", "Document", "Draft, posted or void", PlaceholderType.Text, 50),
         Single("Document.PlaceOfSupply", "Document", "State the supply is made in", PlaceholderType.Text, 60),
         Single("Document.Currency", "Document", "Currency code", PlaceholderType.Text, 70),
         Single("Document.Notes", "Document", "Notes for the other party", PlaceholderType.RichText, 80),
         Single("Document.Terms", "Document", "Terms and conditions", PlaceholderType.RichText, 90),
+        Single("Document.VehicleNo", "Document", "Transport vehicle number", PlaceholderType.Text, 92),
+        Single("Document.TransporterName", "Document", "Transporter or carrier name", PlaceholderType.Text, 94),
+        Single("Document.EwayBillNo", "Document", "E-way bill number", PlaceholderType.Text, 96),
+        Single("Document.EwayBillDate", "Document", "E-way bill date", PlaceholderType.Date, 98, DateFormat),
+        Single("Document.PaymentMode", "Document", "Payment mode or method", PlaceholderType.Text, 99),
+        Single("Document.BankAccountName", "Document", "Settlement bank account", PlaceholderType.Text, 100),
 
         // The document's own number as codes (TK-156), so a printed copy can be
         // scanned to open it. When a payload carries no text for them the renderer
         // uses Document.No, so every printable type has them without a change.
-        Single(DocumentBarcodeTag, "Document", "Barcode of the document number", PlaceholderType.Barcode, 100),
+        Single(DocumentBarcodeTag, "Document", "Barcode of the document number", PlaceholderType.Barcode, 105),
         Single(DocumentQrTag, "Document", "QR code of the document number", PlaceholderType.QrCode, 110),
     ];
 
@@ -253,6 +267,7 @@ public static class PlaceholderCatalog
         List("Alloc.DocumentDate", "Alloc", "Date of that document", PlaceholderType.Date, 20, DateFormat),
         List("Alloc.DocumentTotal", "Alloc", "What that document was for", PlaceholderType.Amount, 30, AmountFormat),
         List("Alloc.Amount", "Alloc", "Amount applied to it", PlaceholderType.Amount, 40, AmountFormat),
+        List("Alloc.Balance", "Alloc", "Balance remaining after allocation", PlaceholderType.Amount, 50, AmountFormat),
     ];
 
     private static readonly PlaceholderDefinition[] LedgerLines =

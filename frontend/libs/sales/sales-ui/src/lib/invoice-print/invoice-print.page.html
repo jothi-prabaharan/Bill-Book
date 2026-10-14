@@ -1,6 +1,8 @@
 <div class="print-bar">
   <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
-  <button type="button" class="btn btn-primary" [disabled]="!html()" (click)="print()">Print</button>
+  <button type="button" class="btn btn-primary" [disabled]="!html() || downloading()" (click)="print()">
+    {{ downloading() ? 'Preparing PDF…' : 'Print PDF' }}
+  </button>
   @if (hasArchive()) {
     <button type="button" class="btn btn-secondary" [disabled]="downloading()" (click)="downloadPdf()">
       Download PDF

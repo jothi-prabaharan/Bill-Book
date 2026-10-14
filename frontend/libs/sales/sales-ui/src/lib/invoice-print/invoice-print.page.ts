@@ -48,10 +48,9 @@ export class InvoicePrintPage implements OnInit {
 
   protected readonly downloading = signal(false);
 
-  /** A posted invoice has a PDF on file from the moment it posted; a draft has none. */
+  /** All invoices (draft, posted, void) can return a backend PDF. */
   protected readonly hasArchive = computed(() => {
-    const status = this.invoice()?.status;
-    return status === 'Posted' || status === 'Void';
+    return this.invoice() !== null;
   });
 
   protected readonly isProforma = computed(() => {
@@ -126,7 +125,39 @@ export class InvoicePrintPage implements OnInit {
     }
   }
 
-  protected print(): void {
+  protected async print(): Promise<void> {
+    const invoice = this.invoice();
+    if (invoice) {
+      this.downloading.set(true);
+      try {
+        const blob = await this.invoices.downloadPdf(invoice.invoiceId);
+        const url = URL.createObjectURL(blob);
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        iframe.onload = () => {
+          setTimeout(() => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            setTimeout(() => {
+              iframe.remove();
+              URL.revokeObjectURL(url);
+            }, 60_000);
+          }, 300);
+        };
+        return;
+      } catch {
+        // Fall back to HTML frame print
+      } finally {
+        this.downloading.set(false);
+      }
+    }
     this.frame()?.nativeElement.contentWindow?.print();
   }
 

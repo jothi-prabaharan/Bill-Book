@@ -144,13 +144,13 @@ public sealed class SalesDocumentArchiveRepository
         string? documentNo = kind switch
         {
             ArchivedSalesDocument.Invoice => await _db.Invoices.AsNoTracking()
-                .Where(x => x.InvoiceId == id && x.PostedAt != null)
+                .Where(x => x.InvoiceId == id)
                 .Select(x => x.DocumentNo).FirstOrDefaultAsync(ct),
             ArchivedSalesDocument.CreditNote => await _db.CreditNotes.AsNoTracking()
-                .Where(x => x.CreditNoteId == id && x.PostedAt != null)
+                .Where(x => x.CreditNoteId == id)
                 .Select(x => x.DocumentNo).FirstOrDefaultAsync(ct),
             ArchivedSalesDocument.DeliveryChallan => await _db.DeliveryChallans.AsNoTracking()
-                .Where(x => x.DeliveryChallanId == id && x.PostedAt != null)
+                .Where(x => x.DeliveryChallanId == id)
                 .Select(x => x.DocumentNo).FirstOrDefaultAsync(ct),
             _ => null,
         };
@@ -161,7 +161,92 @@ public sealed class SalesDocumentArchiveRepository
         }
 
         Stream? content = await _storage.OpenReadAsync(Key(Scope(), kind, id), ct);
-        return content is null ? null : new ArchivedPdf(content, FileName(documentNo));
+        if (content is not null)
+        {
+            return new ArchivedPdf(content, FileName(documentNo));
+        }
+
+        byte[]? generated = await GenerateDraftPdfAsync(kind, id, ct);
+        return generated is null ? null : new ArchivedPdf(new MemoryStream(generated), FileName(documentNo));
+    }
+
+    private async Task<byte[]?> GenerateDraftPdfAsync(ArchivedSalesDocument kind, long id, CancellationToken ct)
+    {
+        OrgIdentity? seller = await _orgIdentity.GetIdentityAsync(ct);
+        if (seller is null)
+        {
+            return null;
+        }
+
+        if (kind == ArchivedSalesDocument.Invoice)
+        {
+            var invoice = await _db.Invoices.Include(x => x.Lines).AsNoTracking().FirstOrDefaultAsync(x => x.InvoiceId == id, ct);
+            if (invoice is null) return null;
+
+            var contacts = await _contactNames.ResolveAsync([invoice.ContactId], ct);
+            long[] itemIds = invoice.Lines.Where(l => l.ItemId.HasValue).Select(l => l.ItemId!.Value).Distinct().ToArray();
+            var items = itemIds.Length == 0 ? new Dictionary<long, NamedRef>() : await _itemNames.ResolveAsync(itemIds, ct);
+
+            return _renderer.Render(new SalesPdfModel
+            {
+                Title = "TAX INVOICE",
+                NumberLabel = "Invoice No",
+                Header = invoice,
+                Lines = invoice.Lines,
+                DueDate = invoice.DueDate,
+                SellerName = seller.Name,
+                SellerGstin = seller.Gstin,
+                SellerAddress = SellerAddress(seller),
+                BuyerName = contacts.TryGetValue(invoice.ContactId, out NamedRef? buyer) ? buyer.Name : "Unknown",
+                ItemNames = items.ToDictionary(i => i.Key, i => i.Value.Name),
+            });
+        }
+        else if (kind == ArchivedSalesDocument.CreditNote)
+        {
+            var crn = await _db.CreditNotes.Include(x => x.Lines).AsNoTracking().FirstOrDefaultAsync(x => x.CreditNoteId == id, ct);
+            if (crn is null) return null;
+
+            var contacts = await _contactNames.ResolveAsync([crn.ContactId], ct);
+            long[] itemIds = crn.Lines.Where(l => l.ItemId.HasValue).Select(l => l.ItemId!.Value).Distinct().ToArray();
+            var items = itemIds.Length == 0 ? new Dictionary<long, NamedRef>() : await _itemNames.ResolveAsync(itemIds, ct);
+
+            return _renderer.Render(new SalesPdfModel
+            {
+                Title = "CREDIT NOTE",
+                NumberLabel = "Credit Note No",
+                Header = crn,
+                Lines = crn.Lines,
+                SellerName = seller.Name,
+                SellerGstin = seller.Gstin,
+                SellerAddress = SellerAddress(seller),
+                BuyerName = contacts.TryGetValue(crn.ContactId, out NamedRef? buyer) ? buyer.Name : "Unknown",
+                ItemNames = items.ToDictionary(i => i.Key, i => i.Value.Name),
+            });
+        }
+        else if (kind == ArchivedSalesDocument.DeliveryChallan)
+        {
+            var dlc = await _db.DeliveryChallans.Include(x => x.Lines).AsNoTracking().FirstOrDefaultAsync(x => x.DeliveryChallanId == id, ct);
+            if (dlc is null) return null;
+
+            var contacts = await _contactNames.ResolveAsync([dlc.ContactId], ct);
+            long[] itemIds = dlc.Lines.Where(l => l.ItemId.HasValue).Select(l => l.ItemId!.Value).Distinct().ToArray();
+            var items = itemIds.Length == 0 ? new Dictionary<long, NamedRef>() : await _itemNames.ResolveAsync(itemIds, ct);
+
+            return _renderer.Render(new SalesPdfModel
+            {
+                Title = "DELIVERY CHALLAN",
+                NumberLabel = "Challan No",
+                Header = dlc,
+                Lines = dlc.Lines,
+                SellerName = seller.Name,
+                SellerGstin = seller.Gstin,
+                SellerAddress = SellerAddress(seller),
+                BuyerName = contacts.TryGetValue(dlc.ContactId, out NamedRef? buyer) ? buyer.Name : "Unknown",
+                ItemNames = items.ToDictionary(i => i.Key, i => i.Value.Name),
+            });
+        }
+
+        return null;
     }
 
     private static string? SellerAddress(OrgIdentity seller)

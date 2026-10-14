@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  HostListener,
   OnInit,
   computed,
   inject,
@@ -66,6 +67,11 @@ export const SEGMENTS: SegmentDef[] = [
   { code: 'ff', label: 'Fixed footer', backendKey: 'fixedFooter', contentKey: 'fixedFooterHtml' },
 ];
 
+export interface TemplateSnapshot {
+  content: PrintContent;
+  activeSeg: SegCode;
+}
+
 const CUSTOM_FIELD_KINDS: Record<string, string> = {
   QTE: 'Quote',
   SOR: 'SalesOrder',
@@ -82,11 +88,89 @@ const CUSTOM_FIELD_KINDS: Record<string, string> = {
 const MOCK_ROWS: Record<string, number> = { Item: 42, Tax: 3, Payment: 2, Alloc: 3, Line: 6 };
 
 const MOCK_SINGLE: Record<string, string> = {
-  'Organization.Logo': 'MERIDIAN',
-  'Organization.Name': 'Meridian Trading Co.',
-  'Organization.Address': '14 Fort Road, Ballard Estate, Mumbai 400001',
+  // Organization
+  'Organization.Logo': '<div style="display:inline-block;padding:4px 12px;background:#201f1d;color:#f2610f;font-weight:800;font-size:16px;border-radius:4px;letter-spacing:1px">MERIDIAN</div>',
+  'Organization.Name': 'Meridian Trading Co. Pvt Ltd',
+  'Organization.LegalName': 'Meridian Trading Company Private Limited',
+  'Organization.Address': '14 Fort Road, Ballard Estate, Fort<br>Mumbai, Maharashtra 400001',
+  'Organization.Gstin': '27AABCM1234K1Z9',
   'Organization.GSTIN': '27AABCM1234K1Z9',
+  'Organization.StateName': 'Maharashtra',
   'Organization.Phone': '+91 22 4021 8890',
+  'Organization.Email': 'billing@meridiantrading.example.com',
+  'Organization.BankName': 'HDFC Bank Ltd',
+  'Organization.BankAccountNo': '50200012345678',
+  'Organization.BankIfsc': 'HDFC0000042',
+  'Organization.BankBranch': 'Fort Branch, Mumbai',
+  'Organization.UpiId': 'meridian@hdfcbank',
+
+  // Document
+  'Document.No': 'SI/2026/00418',
+  'Document.Date': '06-Sep-2026',
+  'Document.DueDate': '21-Sep-2026',
+  'Document.DeliveryDate': '15-Sep-2026',
+  'Document.Reference': 'PO/2026/00219',
+  'Document.OriginalDocumentNo': 'SI/2026/00311',
+  'Document.Reason': 'Short supply against original invoice',
+  'Document.Status': 'Posted',
+  'Document.PlaceOfSupply': '29 - Karnataka',
+  'Document.Currency': 'INR',
+  'Document.ExchangeRate': '1.00',
+  'Document.Notes': 'Thank you for your business. Please remit payment via bank transfer or scan UPI QR code.',
+  'Document.Terms': '1. Payment due within 15 days.<br>2. Interest @ 18% p.a. charged on overdue invoices.<br>3. Subject to Mumbai jurisdiction.',
+  'Document.VehicleNo': 'MH 12 QT 4417',
+  'Document.TransporterName': 'VRL Logistics Ltd',
+  'Document.EwayBillNo': '241088491028',
+  'Document.EwayBillDate': '06-Sep-2026',
+  'Document.PaymentMode': 'Bank transfer (NEFT)',
+  'Document.BankAccountName': 'HDFC Current A/c - 5678',
+  'Document.BarcodeImage': '<div style="display:inline-block;font-family:monospace;padding:2px 8px;border:1px dashed #666;font-size:11px;letter-spacing:3px">||| | | |||| | ||| | |||</div>',
+  'Document.QrImage': '<div style="display:inline-block;width:56px;height:56px;border:2px solid #201f1d;background:repeating-linear-gradient(45deg,#201f1d,#201f1d 3px,#fff 3px,#fff 6px);border-radius:2px" title="QR Code"></div>',
+
+  // Party
+  'Party.Name': 'Halcyon Interiors Pvt Ltd',
+  'Party.Address': '3rd Floor, Prestige Atrium, Residency Road<br>Bengaluru, Karnataka 560025',
+  'Party.ShippingAddress': 'Site 42, Outer Ring Road, Marathahalli<br>Bengaluru, Karnataka 560037',
+  'Party.Gstin': '29AACCH8821P1ZB',
+  'Party.GSTIN': '29AACCH8821P1ZB',
+  'Party.StateName': 'Karnataka',
+  'Party.Phone': '+91 80 4123 9900',
+  'Party.Email': 'accounts@halcyoninteriors.com',
+
+  // Totals
+  'Totals.SubTotal': '62,316.00',
+  'Totals.Discount': '500.00',
+  'Totals.TaxableValue': '61,816.00',
+  'Totals.Tax': '11,126.88',
+  'Totals.RoundOff': '0.12',
+  'Totals.GrandTotal': '72,943.00',
+  'Totals.AmountInWords': 'Rupees Seventy Two Thousand Nine Hundred Forty Three only',
+  'Totals.Paid': '50,000.00',
+  'Totals.Outstanding': '22,943.00',
+
+  // Payment UPI
+  'Payment.UpiQr': '<div style="display:inline-block;width:72px;height:72px;border:2px solid #16a34a;background:repeating-linear-gradient(45deg,#16a34a,#16a34a 3px,#fff 3px,#fff 6px);border-radius:4px;position:relative" title="UPI QR Code"><span style="position:absolute;bottom:2px;left:2px;right:2px;background:#fff;font-size:8px;font-weight:bold;text-align:center;color:#16a34a">UPI PAY</span></div>',
+
+  // Kitchen
+  'Kitchen.Station': 'Main Kitchen',
+  'Kitchen.Table': 'Table 14',
+  'Kitchen.OrderNo': 'ORD-2041',
+  'Kitchen.OrderType': 'Dine-in',
+  'Kitchen.Waiter': 'Arun Kumar',
+  'Kitchen.Guests': '4',
+  'Kitchen.Time': '08:42 PM',
+  'Kitchen.Copy': 'ORIGINAL',
+
+  // E-Invoice
+  'EInvoice.Irn': '4a28f7d983e201b17d84a7e8f50c0012e8b23a9b1c7849e7a83d2948e7182903',
+  'EInvoice.AckNo': '1126100482910',
+  'EInvoice.AckDate': '06-Sep-2026',
+  'EInvoice.QrImage': '<div style="display:inline-block;width:72px;height:72px;border:2px solid #2563eb;background:repeating-linear-gradient(45deg,#2563eb,#2563eb 3px,#fff 3px,#fff 6px);border-radius:4px;position:relative" title="IRP Signed QR Code"><span style="position:absolute;bottom:2px;left:2px;right:2px;background:#fff;font-size:8px;font-weight:bold;text-align:center;color:#2563eb">IRP QR</span></div>',
+  'EInvoice.EwbNo': '241088491028',
+  'EInvoice.EwbDate': '06-Sep-2026',
+  'EInvoice.EwbValidUntil': '09-Sep-2026',
+
+  // Legacy mappings
   InvoiceNo: 'SI/2026/00418',
   InvoiceDate: '06-Sep-2026',
   DueDate: '21-Sep-2026',
@@ -96,10 +180,10 @@ const MOCK_SINGLE: Record<string, string> = {
   PaymentTerms: 'Net 15 days from invoice date',
   PONumber: 'PO/2026/00219',
   PODate: '02-Sep-2026',
-  'Vendor.Name': 'Sundar Steel Works',
+  'Vendor.Name': 'Sundar Steel Works Pvt Ltd',
   'Vendor.Address': 'Plot 42, MIDC Phase II, Pune 411026',
   'Vendor.GSTIN': '27AAFCS4471M1Z2',
-  DeliveryDate: '18-Sep-2026',
+  DeliveryDate: '15-Sep-2026',
   ChallanNo: 'DC/2026/00731',
   ChallanDate: '06-Sep-2026',
   VehicleNo: 'MH 12 QT 4417',
@@ -128,69 +212,97 @@ const MOCK_SINGLE: Record<string, string> = {
   PaymentDate: '06-Sep-2026',
   JournalNo: 'JV/2526/00319',
   JournalDate: '06-Sep-2026',
-  Narration: 'Being depreciation, bank charges and rent for September 2026',
+  Narration: 'Being depreciation, rent and charges for September 2026',
   PaymentMode: 'Bank transfer',
   PaymentReference: 'UTR 402188173',
   AgainstDocNo: 'SI/2026/00311',
-  Subtotal: '3,42,180.00',
-  TotalTax: '61,592.40',
-  RoundOff: '(0.40)',
-  TotalAmount: '4,03,772.00',
-  BalanceDue: '2,53,772.00',
-  AmountInWords: 'Rupees Four Lakh Three Thousand Seven Hundred Seventy Two only',
+  Subtotal: '62,316.00',
+  TotalTax: '11,126.88',
+  RoundOff: '0.12',
+  TotalAmount: '72,943.00',
+  BalanceDue: '22,943.00',
+  AmountInWords: 'Rupees Seventy Two Thousand Nine Hundred Forty Three only',
 };
 
-const MOCK_ITEMS: [string, string, string, string, string, string][] = [
-  ['Mild steel angle 50×50×6 mm', '7216', '120.000', 'kg', '78.50', '9,420.00'],
-  ['MS flat bar 40×6 mm', '7214', '86.000', 'kg', '74.20', '6,381.20'],
-  ['Galvanised sheet 1.6 mm', '7210', '24.000', 'sheet', '1,180.00', '28,320.00'],
-  ['SS 304 pipe 25 mm', '7306', '48.000', 'm', '512.00', '24,576.00'],
-  ['Powder coating — matte black', '9988', '160.000', 'sqft', '46.00', '7,360.00'],
-  ['Hex bolt M10×40 zinc', '7318', '400.000', 'nos', '11.40', '4,560.00'],
-  ['Welding consumables', '8311', '18.000', 'kg', '268.00', '4,824.00'],
-  ['Fabrication labour', '9987', '64.000', 'hr', '340.00', '21,760.00'],
-  ['Site installation charges', '9954', '1.000', 'lot', '18,500.00', '18,500.00'],
-  ['Transport — Mumbai to Bengaluru', '9965', '1.000', 'trip', '14,200.00', '14,200.00'],
+const MOCK_ITEMS: [string, string, string, string, string, string, string, string, string, string][] = [
+  ['Mild steel angle 50×50×6 mm', 'Grade IS 2062 E250A — standard lengths 6m', '7216', '120.000', 'kg', '78.50', '0.00', '9,420.00', '18.00', '11,115.60'],
+  ['MS flat bar 40×6 mm', 'Hot rolled mild steel flats commercial grade', '7214', '86.000', 'kg', '74.20', '0.00', '6,381.20', '18.00', '7,529.82'],
+  ['Galvanised sheet 1.6 mm', 'Class 8 zero spangle zinc coated 120 gsm', '7210', '24.000', 'sheet', '1,180.00', '500.00', '27,820.00', '18.00', '32,827.60'],
+  ['SS 304 pipe 25 mm', 'Schedule 10 thickness annealed & pickled', '7306', '48.000', 'm', '512.00', '0.00', '24,576.00', '18.00', '28,999.68'],
+  ['Powder coating — matte black', 'Pure polyester electrostatic coating', '9988', '160.000', 'sqft', '46.00', '0.00', '7,360.00', '18.00', '8,684.80'],
+  ['Hex bolt M10×40 zinc', 'High tensile grade 8.8 zinc plated', '7318', '400.000', 'nos', '11.40', '0.00', '4,560.00', '18.00', '5,380.80'],
+  ['Welding consumables', 'AWS E7018 low hydrogen electrodes 3.15 mm', '8311', '18.000', 'kg', '268.00', '0.00', '4,824.00', '18.00', '5,692.32'],
+  ['Fabrication labour', 'Structural cutting, fitting & CO2 welding', '9987', '64.000', 'hr', '340.00', '0.00', '21,760.00', '18.00', '25,676.80'],
+  ['Site installation charges', 'On-site erection, alignment & commissioning', '9954', '1.000', 'lot', '18,500.00', '0.00', '18,500.00', '18.00', '21,830.00'],
+  ['Transport — Mumbai to Bengaluru', 'Dedicated 14ft container vehicle freight', '9965', '1.000', 'trip', '14,200.00', '0.00', '14,200.00', '18.00', '16,756.00'],
 ];
 
-const MOCK_LIST: Record<string, ((i: number) => string) | string[]> = {
+const MOCK_KOT_ITEMS: [string, string, string, string, string, string, string][] = [
+  ['Paneer Butter Masala', 'Medium spicy, extra butter', '9963', '2', 'portion', '280.00', '560.00'],
+  ['Butter Naan', 'Crisp, well done', '9963', '4', 'pcs', '45.00', '180.00'],
+  ['Jeera Rice', 'Regular portion', '9963', '1', 'bowl', '160.00', '160.00'],
+  ['Dal Tadka', 'Garlic tadka, mild', '9963', '1', 'bowl', '210.00', '210.00'],
+  ['Gulab Jamun', 'Warm with syrup', '9963', '2', 'portion', '90.00', '180.00'],
+];
+
+const MOCK_LIST: Record<string, ((i: number, docType?: string) => string) | string[]> = {
   'Item.SlNo': (i: number) => String(i + 1),
-  'Item.ItemName': (i: number) => MOCK_ITEMS[i % MOCK_ITEMS.length][0],
-  'Item.HSN': (i: number) => MOCK_ITEMS[i % MOCK_ITEMS.length][1],
-  'Item.Qty': (i: number) => MOCK_ITEMS[i % MOCK_ITEMS.length][2],
-  'Item.Unit': (i: number) => MOCK_ITEMS[i % MOCK_ITEMS.length][3],
-  'Item.Rate': (i: number) => MOCK_ITEMS[i % MOCK_ITEMS.length][4],
-  'Item.Amount': (i: number) => MOCK_ITEMS[i % MOCK_ITEMS.length][5],
+  'Item.ItemName': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][0] : MOCK_ITEMS[i % MOCK_ITEMS.length][0]),
+  'Item.Description': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][1] : MOCK_ITEMS[i % MOCK_ITEMS.length][1]),
+  'Item.HsnSac': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][2] : MOCK_ITEMS[i % MOCK_ITEMS.length][2]),
+  'Item.HSN': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][2] : MOCK_ITEMS[i % MOCK_ITEMS.length][2]),
+  'Item.Quantity': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][3] : MOCK_ITEMS[i % MOCK_ITEMS.length][3]),
+  'Item.Qty': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][3] : MOCK_ITEMS[i % MOCK_ITEMS.length][3]),
+  'Item.Uom': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][4] : MOCK_ITEMS[i % MOCK_ITEMS.length][4]),
+  'Item.Unit': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][4] : MOCK_ITEMS[i % MOCK_ITEMS.length][4]),
+  'Item.Rate': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][5] : MOCK_ITEMS[i % MOCK_ITEMS.length][5]),
+  'Item.Discount': (i: number, dt?: string) => (dt === 'KOT' ? '0.00' : MOCK_ITEMS[i % MOCK_ITEMS.length][6]),
+  'Item.TaxableValue': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][6] : MOCK_ITEMS[i % MOCK_ITEMS.length][7]),
+  'Item.TaxRate': (i: number, dt?: string) => (dt === 'KOT' ? '5.00' : MOCK_ITEMS[i % MOCK_ITEMS.length][8]),
+  'Item.Amount': (i: number, dt?: string) => (dt === 'KOT' ? MOCK_KOT_ITEMS[i % MOCK_KOT_ITEMS.length][6] : MOCK_ITEMS[i % MOCK_ITEMS.length][9]),
+  'Tax.Component': ['CGST', 'SGST', 'IGST'],
   'Tax.Name': ['CGST', 'SGST', 'IGST'],
   'Tax.Rate': ['9.00', '9.00', '18.00'],
-  'Tax.TaxableValue': ['1,71,090.00', '1,71,090.00', '1,71,090.00'],
-  'Tax.Amount': ['15,398.10', '15,398.10', '30,796.20'],
+  'Tax.TaxableValue': ['61,816.00', '61,816.00', '61,816.00'],
+  'Tax.Amount': ['5,563.44', '5,563.44', '11,126.88'],
   'Payment.Date': ['28-Aug-2026', '04-Sep-2026'],
-  'Payment.Mode': ['Bank transfer', 'UPI'],
+  'Payment.Mode': ['Bank transfer (NEFT)', 'UPI transfer'],
   'Payment.Reference': ['UTR 402188173', 'UPI 6620041188'],
-  'Payment.Amount': ['1,00,000.00', '50,000.00'],
+  'Payment.Amount': ['35,000.00', '15,000.00'],
+  'Alloc.DocumentNo': ['SI/2026/00311', 'SI/2026/00344', 'SI/2026/00418'],
   'Alloc.DocNo': ['SI/2026/00311', 'SI/2026/00344', 'SI/2026/00418'],
+  'Alloc.DocumentDate': ['12-Aug-2026', '24-Aug-2026', '06-Sep-2026'],
   'Alloc.Date': ['12-Aug-2026', '24-Aug-2026', '06-Sep-2026'],
-  'Alloc.Amount': ['84,200.00', '1,12,400.00', '53,400.00'],
-  'Alloc.Balance': ['0.00', '0.00', '2,53,772.00'],
+  'Alloc.DocumentTotal': ['84,200.00', '1,12,400.00', '72,943.00'],
+  'Alloc.Amount': ['50,000.00', '22,943.00', '72,943.00'],
+  'Alloc.Balance': ['34,200.00', '89,457.00', '0.00'],
+  'Line.AccountCode': ['4010', '1510', '5020', '2010'],
+  'Line.AccountName': [
+    'Depreciation Expense',
+    'Accumulated Depreciation',
+    'Office Rent Expense',
+    'Rent Payable',
+  ],
   'Line.Account': [
-    'Depreciation',
-    'Accumulated depreciation',
-    'Bank charges',
-    'Bank — HDFC 4021',
-    'Rent',
-    'Landlord payable',
+    'Depreciation Expense',
+    'Accumulated Depreciation',
+    'Office Rent Expense',
+    'Rent Payable',
+  ],
+  'Line.Description': [
+    'Plant & machinery depreciation for Sep 2026',
+    'Depreciation reserve provision',
+    'September 2026 premises rent',
+    'Payable to landlord',
   ],
   'Line.Narration': [
-    'Monthly charge',
-    'Monthly charge',
-    'September fees',
-    'September fees',
-    'September rent',
-    'September rent',
+    'Plant & machinery depreciation for Sep 2026',
+    'Depreciation reserve provision',
+    'September 2026 premises rent',
+    'Payable to landlord',
   ],
-  'Line.Debit': ['18,400.00', '', '1,180.00', '', '65,000.00', ''],
-  'Line.Credit': ['', '18,400.00', '', '1,180.00', '', '65,000.00'],
+  'Line.Debit': ['18,400.00', '', '65,000.00', ''],
+  'Line.Credit': ['', '18,400.00', '', '65,000.00'],
 };
 
 @Component({
@@ -328,6 +440,21 @@ export class PrintTemplatesPage implements OnInit {
     f: '',
     ff: '',
   });
+
+  // History Stack (Ctrl+Z / Ctrl+Y)
+  protected readonly undoStack = signal<TemplateSnapshot[]>([]);
+  protected readonly redoStack = signal<TemplateSnapshot[]>([]);
+  protected readonly canUndo = computed(() => this.undoStack().length > 1);
+  protected readonly canRedo = computed(() => this.redoStack().length > 0);
+
+  // Section Grid & Split Guidelines
+  protected readonly showSplits = signal<boolean>(true);
+  protected readonly customRows = signal<number>(1);
+  protected readonly customCols = signal<number>(2);
+
+  // Page-level typography
+  protected readonly pageFontFamily = signal<string>('Arial');
+  protected readonly pageFontSize = signal<number>(11);
 
   // Fonts & Swatches
   protected readonly fontFamilies = [
@@ -615,6 +742,9 @@ export class PrintTemplatesPage implements OnInit {
         : [],
     );
 
+    this.undoStack.set([{ content: { ...detail.content }, activeSeg: 'd' }]);
+    this.redoStack.set([]);
+
     this.loadContentIntoDom(detail.content);
   }
 
@@ -627,6 +757,12 @@ export class PrintTemplatesPage implements OnInit {
         if (!segDef) continue;
         const html = content[segDef.contentKey] || '';
         ref.nativeElement.innerHTML = this.tagToChip(html);
+        if (this.pageFontFamily()) {
+          ref.nativeElement.style.fontFamily = this.pageFontFamily();
+        }
+        if (this.pageFontSize()) {
+          ref.nativeElement.style.fontSize = `${this.pageFontSize()}px`;
+        }
       }
     });
   }
@@ -635,11 +771,23 @@ export class PrintTemplatesPage implements OnInit {
 
   protected tagToChip(html: string): string {
     if (!html) return '';
-    return html.replace(/(?:\{\{([^{}]+)\}\}|(?:<<|«)([^<>«»]+)(?:>>|»))/g, (_match, tag1, tag2) => {
+    // Heal any previously corrupted empty chips like <span ...><></span> or <span ...><item.slno></item.slno></span>
+    const clean = html.replace(
+      /<span[^>]*class="[^"]*pt-chip[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+      (_match, inner) => {
+        const text = inner.replace(/<[^>]+>/g, '').replace(/[↻\s«»{}<>]/g, '').trim();
+        if (text) {
+          return `<<${text}>>`;
+        }
+        return '';
+      },
+    );
+
+    return clean.replace(/(?:\{\{([^{}]+)\}\}|(?:<<|«)([^<>«»]+)(?:>>|»))/g, (_match, tag1, tag2) => {
       const rawTag = (tag1 ?? tag2 ?? '').trim();
       if (!rawTag) return '';
       const isList = tag2 != null || this.isListTag(rawTag);
-      return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `<<${rawTag}>>` : `{{${rawTag}}}`}</span>\u00a0`;
+      return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `&lt;&lt;${rawTag}&gt;&gt;` : `{{${rawTag}}}`}</span>\u00a0`;
     });
   }
 
@@ -651,6 +799,10 @@ export class PrintTemplatesPage implements OnInit {
     chips.forEach((chip) => {
       const raw = chip.textContent || '';
       const cleanTag = raw.replace(/[↻\s«»{}<>]/g, '').trim();
+      if (!cleanTag) {
+        chip.remove();
+        return;
+      }
       const isList =
         chip.classList.contains('pt-chip--list') ||
         raw.includes('<<') ||
@@ -662,7 +814,7 @@ export class PrintTemplatesPage implements OnInit {
     return div.innerHTML;
   }
 
-  private isListTag(tag: string): boolean {
+  protected isListTag(tag: string): boolean {
     const dot = tag.indexOf('.');
     if (dot > 0) {
       const prefix = tag.substring(0, dot).toLowerCase();
@@ -1221,10 +1373,300 @@ export class PrintTemplatesPage implements OnInit {
 
   protected applyPageFont(): void {
     const font = this.lastFont();
+    const sz = this.currentFontSize();
+    this.recordSnapshot(true);
+
+    this.pageFontFamily.set(font);
+    this.pageFontSize.set(sz);
+
     for (const ref of this.segElements()) {
-      ref.nativeElement.style.fontFamily = font;
+      const el = ref.nativeElement;
+      const code = el.dataset['seg'] as SegCode;
+      if (!el || !code) continue;
+
+      el.style.fontFamily = font;
+      el.style.fontSize = `${sz}px`;
+
+      const elements = el.querySelectorAll<HTMLElement>('*');
+      elements.forEach((node) => {
+        node.style.fontFamily = font;
+
+        if (node.tagName.toLowerCase() === 'font') {
+          node.removeAttribute('face');
+          node.removeAttribute('size');
+        }
+
+        if (
+          ['TD', 'TH', 'TABLE', 'TR', 'DIV', 'P', 'SPAN', 'B', 'STRONG', 'I', 'EM', 'FONT'].includes(
+            node.tagName,
+          )
+        ) {
+          if (node.classList.contains('pt-chip')) {
+            node.style.fontFamily = font;
+          } else {
+            node.style.fontFamily = font;
+            node.style.fontSize = `${sz}px`;
+          }
+        }
+      });
+
+      const segDef = SEGMENTS.find((s) => s.code === code);
+      if (segDef) {
+        const tagHtml = this.getSegmentTagHtml(code);
+        const draft = this.draftContent();
+        if (draft) {
+          this.draftContent.set({ ...draft, [segDef.contentKey]: tagHtml });
+        }
+      }
     }
+
+    this.showFlash(`Applied ${font} (${sz}px) to all sections`);
+    this.recordSnapshot(true);
+  }
+
+  // ---- History Stack (Undo / Redo) ------------------------------------------
+
+  private historyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  protected recordSnapshot(immediate = false): void {
+    const snapshot = (): void => {
+      const currentContent: PrintContent = {
+        fixedHeaderHtml: this.getSegmentTagHtml('fh'),
+        headerHtml: this.getSegmentTagHtml('h'),
+        detailsHtml: this.getSegmentTagHtml('d'),
+        footerHtml: this.getSegmentTagHtml('f'),
+        fixedFooterHtml: this.getSegmentTagHtml('ff'),
+      };
+      const snap: TemplateSnapshot = {
+        content: currentContent,
+        activeSeg: this.activeSeg(),
+      };
+      const stack = this.undoStack();
+      const last = stack[stack.length - 1];
+      if (
+        last &&
+        JSON.stringify(last.content) === JSON.stringify(snap.content) &&
+        last.activeSeg === snap.activeSeg
+      ) {
+        return;
+      }
+      this.undoStack.update((s) => [...s.slice(-30), snap]);
+      this.redoStack.set([]);
+    };
+
+    if (immediate) {
+      if (this.historyDebounceTimer) {
+        clearTimeout(this.historyDebounceTimer);
+        this.historyDebounceTimer = null;
+      }
+      snapshot();
+    } else {
+      if (this.historyDebounceTimer) clearTimeout(this.historyDebounceTimer);
+      this.historyDebounceTimer = setTimeout(() => {
+        snapshot();
+      }, 350);
+    }
+  }
+
+  protected undo(): void {
+    const stack = this.undoStack();
+    if (stack.length <= 1) return;
+    const current = stack[stack.length - 1];
+    const prev = stack[stack.length - 2];
+    this.undoStack.set(stack.slice(0, -1));
+    this.redoStack.update((r) => [...r, current]);
+    this.draftContent.set(prev.content);
+    this.loadContentIntoDom(prev.content);
+    this.activeSeg.set(prev.activeSeg);
+    this.showFlash('Undone');
+  }
+
+  protected redo(): void {
+    const rStack = this.redoStack();
+    if (rStack.length === 0) return;
+    const next = rStack[rStack.length - 1];
+    this.redoStack.set(rStack.slice(0, -1));
+    this.undoStack.update((u) => [...u, next]);
+    this.draftContent.set(next.content);
+    this.loadContentIntoDom(next.content);
+    this.activeSeg.set(next.activeSeg);
+    this.showFlash('Redone');
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  protected handleKeyDown(e: KeyboardEvent): void {
+    if (this.mode() !== 'edit' || !this.canEdit()) return;
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        this.undo();
+      } else if ((e.key.toLowerCase() === 'z' && e.shiftKey) || e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        this.redo();
+      }
+    }
+  }
+
+  // ---- Section Grid & Split Configuration -----------------------------------
+
+  protected toggleSplits(): void {
+    this.showSplits.update((v) => !v);
+  }
+
+  protected setCustomRows(rows: number): void {
+    this.customRows.set(Math.max(1, Math.min(10, rows)));
+  }
+
+  protected setCustomCols(cols: number): void {
+    this.customCols.set(Math.max(1, Math.min(6, cols)));
+  }
+
+  protected applyCustomSplit(): void {
+    this.applySectionSplit(this.customRows(), this.customCols());
+  }
+
+  protected applySectionSplit(rows: number, cols: number, ratios?: number[]): void {
+    if (rows < 1) rows = 1;
+    if (cols < 1) cols = 1;
+    this.recordSnapshot(true);
+
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+
+    const existingContents: string[] = [];
+    const existingTds = segEl.querySelectorAll('td, th');
+    if (existingTds.length > 0) {
+      existingTds.forEach((c) => {
+        const h = c.innerHTML.trim();
+        if (h && h !== '&nbsp;') existingContents.push(h);
+      });
+    } else {
+      const rawHtml = segEl.innerHTML.trim();
+      if (rawHtml && rawHtml !== '<br>' && rawHtml !== '&nbsp;') {
+        existingContents.push(rawHtml);
+      }
+    }
+
+    const colWidths: number[] = [];
+    if (ratios && ratios.length === cols) {
+      const sum = ratios.reduce((a, b) => a + b, 0);
+      for (const r of ratios) {
+        colWidths.push(Math.round((r / sum) * 1000) / 10);
+      }
+    } else {
+      const equalWidth = Math.round((100 / cols) * 10) / 10;
+      for (let c = 0; c < cols; c++) {
+        colWidths.push(equalWidth);
+      }
+    }
+
+    const font = this.pageFontFamily() || this.lastFont() || 'Arial';
+    const sz = this.pageFontSize() || this.currentFontSize() || 11;
+
+    let tableHtml = '<table style="width: 100%; border-collapse: collapse; margin-bottom: 4px;">\n  <tbody>\n';
+    let contentIdx = 0;
+    for (let r = 0; r < rows; r++) {
+      tableHtml += '    <tr>\n';
+      for (let c = 0; c < cols; c++) {
+        const w = colWidths[c];
+        const content = contentIdx < existingContents.length ? existingContents[contentIdx++] : '&nbsp;';
+        tableHtml += `      <td style="width: ${w}%; padding: 6px 8px; vertical-align: top; border: 1px dashed rgba(160, 185, 215, 0.45); font-family: ${font}; font-size: ${sz}px;">${content}</td>\n`;
+      }
+      tableHtml += '    </tr>\n';
+    }
+    tableHtml += '  </tbody>\n</table>';
+
+    segEl.innerHTML = tableHtml;
     this.onSegmentInput(this.activeSeg());
+    this.recordSnapshot(true);
+    this.showFlash(`Configured ${this.activeSegLabel()} into ${rows} row${rows > 1 ? 's' : ''} × ${cols} column${cols > 1 ? 's' : ''}`);
+  }
+
+  protected addSectionRow(): void {
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+    const table = segEl.querySelector('table');
+    if (table && table.rows.length > 0) {
+      const lastRow = table.rows[table.rows.length - 1];
+      const newRow = this.createMatchingRow(lastRow);
+      lastRow.parentNode?.insertBefore(newRow, lastRow.nextSibling);
+      this.onSegmentInput(this.activeSeg());
+      this.recordSnapshot(true);
+      this.showFlash(`Added row to ${this.activeSegLabel()}`);
+    } else {
+      this.applySectionSplit(2, 2);
+    }
+  }
+
+  protected removeSectionRow(): void {
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+    const table = segEl.querySelector('table');
+    if (table && table.rows.length > 1) {
+      table.rows[table.rows.length - 1].remove();
+      this.onSegmentInput(this.activeSeg());
+      this.recordSnapshot(true);
+      this.showFlash(`Removed row from ${this.activeSegLabel()}`);
+    }
+  }
+
+  protected addSectionCol(): void {
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+    const table = segEl.querySelector('table');
+    if (table && table.rows.length > 0) {
+      this.recordSnapshot(true);
+      for (const row of Array.from(table.rows)) {
+        const newCell = document.createElement('td');
+        const font = this.pageFontFamily() || this.lastFont() || 'Arial';
+        const sz = this.pageFontSize() || this.currentFontSize() || 11;
+        newCell.style.cssText = `border: 1px dashed rgba(160, 185, 215, 0.45); padding: 6px 8px; font-family: ${font}; font-size: ${sz}px; vertical-align: top;`;
+        newCell.innerHTML = '&nbsp;';
+        row.appendChild(newCell);
+      }
+      for (const row of Array.from(table.rows)) {
+        const cells = Array.from(row.children) as HTMLElement[];
+        const equalW = Math.round((100 / cells.length) * 10) / 10;
+        cells.forEach((c) => (c.style.width = `${equalW}%`));
+      }
+      this.onSegmentInput(this.activeSeg());
+      this.recordSnapshot(true);
+      this.showFlash(`Added column to ${this.activeSegLabel()}`);
+    } else {
+      this.applySectionSplit(1, 2);
+    }
+  }
+
+  protected removeSectionCol(): void {
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+    const table = segEl.querySelector('table');
+    if (table && table.rows.length > 0 && table.rows[0].children.length > 1) {
+      this.recordSnapshot(true);
+      for (const row of Array.from(table.rows)) {
+        if (row.children.length > 1) {
+          row.removeChild(row.lastElementChild!);
+        }
+      }
+      for (const row of Array.from(table.rows)) {
+        const cells = Array.from(row.children) as HTMLElement[];
+        const equalW = Math.round((100 / cells.length) * 10) / 10;
+        cells.forEach((c) => (c.style.width = `${equalW}%`));
+      }
+      this.onSegmentInput(this.activeSeg());
+      this.recordSnapshot(true);
+      this.showFlash(`Removed column from ${this.activeSegLabel()}`);
+    }
   }
 
   protected pickFore(color: string): void {
@@ -1561,9 +2003,12 @@ export class PrintTemplatesPage implements OnInit {
   }
 
   protected insertField(tag: string, isList: boolean): void {
-    const chipHtml = `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `<<${tag}>>` : `{{${tag}}}`}</span>\u00a0`;
+    this.recordSnapshot(true);
+    const chipHtml = `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `&lt;&lt;${tag}&gt;&gt;` : `{{${tag}}}`}</span>\u00a0`;
     this.execSel('insertHTML', chipHtml);
     this.fieldsOpen.set(false);
+    this.onSegmentInput(this.activeSeg());
+    this.recordSnapshot(true);
   }
 
   // ---- Zoom Controls --------------------------------------------------------
@@ -1601,27 +2046,8 @@ export class PrintTemplatesPage implements OnInit {
   }
 
   protected async printPreview(): Promise<void> {
-    const detail = this.detail();
-    if (!detail) return;
-
-    this.busy.set(true);
-    try {
-      this.bankContentFromDom();
-      const preview = await this.api.preview(detail.printTemplateId, {
-        settings: this.draftSettings(),
-        content: this.draftContent() ?? detail.content,
-      });
-
-      if (preview?.html) {
-        printHtml(preview.html, this.isLaser() ? 'document' : 'receipt');
-      } else {
-        this.printClientPreview();
-      }
-    } catch {
-      this.printClientPreview();
-    } finally {
-      this.busy.set(false);
-    }
+    this.bankContentFromDom();
+    this.printClientPreview();
   }
 
   private printClientPreview(): void {
@@ -1629,29 +2055,75 @@ export class PrintTemplatesPage implements OnInit {
     const isLaser = (s.printerType ?? 'laser') === 'laser';
     const paper = (s.paperSize ?? 'A4') as PaperSize;
     const rollW = s.rollWidthMm ?? 80;
+    const font = this.pageFontFamily() || this.lastFont() || 'Arial';
+    const sz = this.pageFontSize() || this.currentFontSize() || 11;
 
     const pageCss = isLaser
-      ? `@page { size: ${paper} portrait; margin: ${s.marginTopMm ?? 10}mm ${s.marginRightMm ?? 10}mm ${s.marginBottomMm ?? 10}mm ${s.marginLeftMm ?? 10}mm; }`
+      ? `@page { size: ${paper} portrait; margin: ${s.marginTopMm ?? 16}mm ${s.marginRightMm ?? 18}mm ${s.marginBottomMm ?? 16}mm ${s.marginLeftMm ?? 18}mm; }`
       : `@page { size: ${rollW}mm auto; margin: ${s.marginTopMm ?? 2}mm ${s.marginRightMm ?? 2}mm ${s.marginBottomMm ?? 2}mm ${s.marginLeftMm ?? 2}mm; }`;
+
+    const fhHtml = this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('fh')));
+    const hHtml = this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('h')));
+    const dHtml = this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('d')));
+    const fHtml = this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('f')));
+    const ffHtml = this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('ff')));
+
+    const fhMargin = this.getSegMarginStyle('fh');
+    const hMargin = this.getSegMarginStyle('h');
+    const dMargin = this.getSegMarginStyle('d');
+    const fMargin = this.getSegMarginStyle('f');
+    const ffMargin = this.getSegMarginStyle('ff');
 
     const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
+<title>${this.draftName() || 'Print Preview'}</title>
 <style>
 ${pageCss}
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; line-height: 1.4; margin: 0; padding: 0; color: #111; }
-table { border-collapse: collapse; width: 100%; }
-th, td { padding: 4px 6px; }
-.pt-print-block { margin-bottom: 8px; }
+* { box-sizing: border-box; }
+body {
+  font-family: ${font}, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: ${sz}px;
+  line-height: 1.35;
+  margin: 0;
+  padding: 0;
+  color: #201f1d;
+  background: #fff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th, td {
+  padding: 4px 6px;
+  vertical-align: top;
+  font-family: inherit;
+  font-size: inherit;
+}
+.pt-print-block {
+  display: block;
+  width: 100%;
+}
+.pt-fh { margin: ${fhMargin}; }
+.pt-h  { margin: ${hMargin}; }
+.pt-d  { margin: ${dMargin}; }
+.pt-f  { margin: ${fMargin}; }
+.pt-ff { margin: ${ffMargin}; }
+@media print {
+  body { margin: 0; padding: 0; }
+  .pt-print-block { page-break-inside: avoid; }
+}
 </style>
 </head>
 <body>
-  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('fh')))}</div>
-  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('h')))}</div>
-  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('d')))}</div>
-  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('f')))}</div>
-  <div class="pt-print-block">${this.ptMockHtml(this.tagToChip(this.getSegmentTagHtml('ff')))}</div>
+  ${fhHtml ? `<div class="pt-print-block pt-fh">${fhHtml}</div>` : ''}
+  ${hHtml ? `<div class="pt-print-block pt-h">${hHtml}</div>` : ''}
+  ${dHtml ? `<div class="pt-print-block pt-d">${dHtml}</div>` : ''}
+  ${fHtml ? `<div class="pt-print-block pt-f">${fHtml}</div>` : ''}
+  ${ffHtml ? `<div class="pt-print-block pt-ff">${ffHtml}</div>` : ''}
 </body>
 </html>`;
 
@@ -1670,9 +2142,99 @@ th, td { padding: 4px 6px; }
   }
 
   private mockVal(tag: string, i: number): string {
-    const v = MOCK_LIST[tag];
-    if (v) return typeof v === 'function' ? v(i) : v[i % v.length];
-    return MOCK_SINGLE[tag] != null ? MOCK_SINGLE[tag] : tag;
+    const clean = tag.replace(/[↻\s«»{}<>]/g, '').trim();
+    const docType = this.documentType() ?? 'INV';
+
+    // Document-specific overrides
+    if (clean === 'Party.Name' || clean === 'Customer.Name') {
+      return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
+        ? 'Sundar Steel Works Pvt Ltd'
+        : 'Halcyon Interiors Pvt Ltd';
+    }
+    if (clean === 'Party.Address' || clean === 'Customer.Address') {
+      return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
+        ? 'Plot 42, MIDC Phase II, Chakan Industrial Area<br>Pune, Maharashtra 411026'
+        : '3rd Floor, Prestige Atrium, Residency Road<br>Bengaluru, Karnataka 560025';
+    }
+    if (clean === 'Party.ShippingAddress') {
+      return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
+        ? '14 Fort Road, Ballard Estate<br>Mumbai, Maharashtra 400001'
+        : 'Site 42, Outer Ring Road, Marathahalli<br>Bengaluru, Karnataka 560037';
+    }
+    if (clean === 'Party.Gstin' || clean === 'Customer.GSTIN' || clean === 'Party.GSTIN') {
+      return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
+        ? '27AAFCS4471M1Z2'
+        : '29AACCH8821P1ZB';
+    }
+    if (clean === 'Party.StateName') {
+      return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
+        ? 'Maharashtra'
+        : 'Karnataka';
+    }
+    if (clean === 'Party.Phone') {
+      return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
+        ? '+91 20 2712 4400'
+        : '+91 80 4123 9900';
+    }
+    if (clean === 'Party.Email') {
+      return ['POR', 'BIL', 'GRN', 'DBN', 'SPM'].includes(docType)
+        ? 'sales@sundarsteel.example.com'
+        : 'accounts@halcyoninteriors.com';
+    }
+    if (clean === 'Document.No' || clean === 'InvoiceNo') {
+      switch (docType) {
+        case 'QTE': return 'QOT/2026/00319';
+        case 'SOR': return 'SOR/2026/00943';
+        case 'DLC': return 'DC/2026/00731';
+        case 'CRN': return 'CN/2026/00042';
+        case 'POR': return 'PO/2026/00219';
+        case 'GRN': return 'GRN/2026/00589';
+        case 'BIL': return 'BIL/2026/01207';
+        case 'DBN': return 'DBN/2026/00098';
+        case 'RCM': return 'REC/2026/00812';
+        case 'SPM': return 'PAY/2026/00477';
+        case 'JRN': return 'JV/2026/00319';
+        case 'KOT': return 'KOT-084';
+        default: return 'SI/2026/00418';
+      }
+    }
+    if (clean === 'Document.Reference' || clean === 'PONumber') {
+      switch (docType) {
+        case 'INV': return 'PO/2026/00219';
+        case 'BIL': return 'SSW/26/894';
+        case 'CRN': return 'SI/2026/00311';
+        case 'DBN': return 'BIL/2026/01207';
+        case 'DLC': return 'SOR/2026/00943';
+        case 'GRN': return 'PO/2026/00219';
+        case 'RCM': return 'UTR 402188173';
+        case 'SPM': return 'CMS 990142881';
+        default: return 'PO/2026/00219';
+      }
+    }
+    if (clean === 'Document.OriginalDocumentNo' || clean === 'AgainstInvoiceNo') {
+      return docType === 'DBN' ? 'BIL/2026/01207' : 'SI/2026/00311';
+    }
+    if (clean === 'Document.Reason' || clean === 'Reason') {
+      return docType === 'DBN'
+        ? 'Goods rejected on quality inspection'
+        : 'Short supply against original invoice';
+    }
+
+    const listGen = MOCK_LIST[clean];
+    if (listGen) {
+      return typeof listGen === 'function' ? listGen(i, docType) : listGen[i % listGen.length];
+    }
+
+    if (MOCK_SINGLE[clean] != null) {
+      return MOCK_SINGLE[clean];
+    }
+
+    const lower = clean.toLowerCase();
+    for (const [k, v] of Object.entries(MOCK_SINGLE)) {
+      if (k.toLowerCase() === lower) return v;
+    }
+
+    return clean;
   }
 
   protected ptMockHtml(html: string): string {
@@ -1704,8 +2266,15 @@ th, td { padding: 4px 6px; }
 
     Array.from(root.querySelectorAll('.pt-chip')).forEach((chip) => {
       const row = chip.closest('tr[data-mock-i]');
-      const val = this.mockVal(tagOf(chip), row ? Number(row.getAttribute('data-mock-i')) : 0);
-      chip.replaceWith(document.createTextNode(val));
+      const tag = tagOf(chip);
+      const val = this.mockVal(tag, row ? Number(row.getAttribute('data-mock-i')) : 0);
+      if (typeof val === 'string' && val.includes('<') && val.includes('>')) {
+        const span = document.createElement('span');
+        span.innerHTML = val;
+        chip.replaceWith(span);
+      } else {
+        chip.replaceWith(document.createTextNode(val));
+      }
     });
 
     return root.innerHTML;

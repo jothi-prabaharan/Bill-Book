@@ -47,7 +47,11 @@ public static class InvoicePrintPayloadRepository
         var singles = payload.Singles;
 
         singles["Organization.Name"] = seller.Name;
+        singles["Organization.LegalName"] = seller.Name;
         singles["Organization.Gstin"] = seller.Gstin;
+        singles["Organization.StateName"] = seller.StateCode;
+        singles["Organization.Phone"] = seller.PhoneNumber;
+        singles["Organization.Email"] = seller.Email;
         singles["Organization.Address"] = Lines(
             seller.AddressLine1,
             seller.AddressLine2,
@@ -59,8 +63,12 @@ public static class InvoicePrintPayloadRepository
         singles["Document.Status"] = invoice.Status.ToString();
         singles["Document.PlaceOfSupply"] = PlaceOfSupply(invoice.ContactGstin, seller.StateCode);
         singles["Document.Currency"] = invoice.CurrencyCode;
+        singles["Document.ExchangeRate"] = invoice.ExchangeRate;
         singles["Document.Notes"] = Lines(invoice.Notes);
         singles["Document.Terms"] = Lines(invoice.TermsAndConditions);
+        singles["Document.VehicleNo"] = invoice.VehicleNo;
+        singles["Document.TransporterName"] = invoice.TransporterName;
+        singles["Document.PaymentMode"] = invoice.PaymentMode;
 
         singles["Party.Name"] = customerName;
         singles["Party.Gstin"] = invoice.ContactGstin;
