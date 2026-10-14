@@ -11,22 +11,25 @@ table.lines {
   table-layout: fixed;
 }
 
-th,
-td {
-  padding: 0.35rem 0.45rem;
+th {
+  padding: 0.45rem 0.45rem;
   border-bottom: 1px solid var(--bb-line, var(--color-divider, #e2e5ea));
   vertical-align: middle;
   text-align: left;
-  font-size: 12.5px;
-}
-
-th {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
   background: color-mix(in srgb, var(--color-text, #000) 4%, var(--color-bg, #f3f2f2));
   white-space: nowrap;
+}
+
+tbody td {
+  padding: 0.4rem 0.45rem;
+  border-bottom: 1px solid var(--bb-line, var(--color-divider, #e2e5ea));
+  vertical-align: top;
+  text-align: left;
+  font-size: 12.5px;
 }
 
 .right {
@@ -45,41 +48,48 @@ th {
 
 /* Calibrated, proportional column widths */
 .col-num {
-  width: 32px;
+  width: 34px;
   text-align: center;
+  padding-top: 0.65rem !important;
+  color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .col-item {
-  width: 260px;
+  width: auto;
+  min-width: 240px;
 }
 
 .col-qty {
-  width: 86px;
+  width: 90px;
 }
 
 .col-rate {
-  width: 108px;
+  width: 110px;
 }
 
 .col-disc {
-  width: 72px;
+  width: 76px;
 }
 
 .col-tax {
-  width: 128px;
+  width: 135px;
 }
 
 .col-tax-comp {
-  width: 82px;
+  width: 85px;
+  padding-top: 0.65rem !important;
 }
 
 .col-total {
-  width: 96px;
+  width: 100px;
+  padding-top: 0.65rem !important;
 }
 
 .col-actions {
-  width: 34px;
+  width: 36px;
   text-align: center;
+  padding-top: 0.5rem !important;
 }
 
 /* Compact 2-line item cell */
@@ -207,6 +217,21 @@ th {
 
   select {
     width: 100%;
+    box-sizing: border-box;
+
+    &:first-child {
+      height: 28px !important;
+      min-height: 28px !important;
+      padding: 2px 6px !important;
+      font-size: 12px !important;
+    }
+
+    &.tax-group {
+      height: 22px !important;
+      min-height: 22px !important;
+      font-size: 11px !important;
+      padding: 1px 4px !important;
+    }
   }
 }
 
@@ -290,6 +315,15 @@ button.clear {
   &:hover:not(:disabled) {
     background: color-mix(in srgb, var(--color-danger) 12%, transparent);
   }
+}
+
+tfoot td {
+  padding: 0.5rem 0.45rem;
+  vertical-align: middle;
+  font-weight: 600;
+  border-top: 2px solid var(--bb-line, var(--color-divider, #d5d9e0));
+  border-bottom: none;
+  background: color-mix(in srgb, var(--color-text, #000) 2.5%, var(--color-bg, #fbfbfb));
 }
 
 .add-line-btn {
@@ -726,8 +760,15 @@ tr.empty td {
 
   .modal-grid-3 {
     display: grid;
-    grid-template-columns: 1fr 1.2fr 0.8fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+  }
+
+  .modal-inclusive-row {
+    display: flex;
+    align-items: center;
+    margin-top: -4px;
+    margin-bottom: 2px;
   }
 
   .modal-checkbox-label {

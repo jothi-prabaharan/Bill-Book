@@ -1,0 +1,100 @@
+.bb-address-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface-muted, #f8f9fa);
+  border: 1px solid var(--color-divider, #e5e7eb);
+  font-size: 12px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  min-height: 72px;
+  justify-content: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &--empty {
+    border-style: dashed;
+    background: transparent;
+    color: var(--color-text-muted, #6b7280);
+    text-align: center;
+    font-style: italic;
+    font-size: 11.5px;
+    align-items: center;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__title-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &__icon {
+    color: var(--color-accent, #f06311);
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--color-text, #111827);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent-800, #b34100);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 25%, transparent);
+    white-space: nowrap;
+  }
+
+  &__body {
+    color: var(--color-text-muted, #4b5563);
+    font-size: 11.5px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  &__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    margin-top: 2px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--color-divider, #e5e7eb);
+    font-size: 11px;
+    color: var(--color-text-subtle, #6b7280);
+  }
+
+  &__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__meta-label {
+    color: var(--color-text-muted, #9ca3af);
+  }
+
+  &__meta-val {
+    font-weight: 500;
+    color: var(--color-text, #374151);
+  }
+}

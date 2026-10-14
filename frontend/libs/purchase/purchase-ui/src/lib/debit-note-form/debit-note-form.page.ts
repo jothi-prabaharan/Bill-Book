@@ -24,6 +24,7 @@ import {
   QuantityInputComponent,
   CheckboxComponent,
   SelectComponent,
+  AddressSummaryComponent,
   TextareaComponent,
   ApprovalPanelComponent,
   CustomFieldValues,
@@ -112,6 +113,7 @@ interface ReturnLine {
     QuantityInputComponent,
     CheckboxComponent,
     SelectComponent,
+    AddressSummaryComponent,
     TextareaComponent,
     MessageBoxComponent,
   ],
@@ -279,6 +281,72 @@ export class DebitNoteFormPage {
       this.selectedShippingOrgId.set(this.selectedBillingOrgId());
     }
   }
+
+  protected readonly selectedBillingAddress = computed(() => {
+    const orgId = this.selectedBillingOrgId();
+    if (orgId) {
+      const match = this.organizationAddresses().find((o) => o.orgId === orgId);
+      if (match) {
+        return {
+          title: match.orgName,
+          badge: match.orgId === this.auth.activeOrgId() ? 'Current Branch' : 'Branch',
+          lines: match.formattedAddress,
+          email: null,
+          phone: null,
+          gstin: match.gstin || null,
+        };
+      }
+    }
+    const raw = this.billingAddress();
+    if (raw && raw.trim()) {
+      return {
+        title: 'Billing premises',
+        badge: null,
+        lines: raw,
+        email: null,
+        phone: null,
+        gstin: null,
+      };
+    }
+    return null;
+  });
+
+  protected readonly selectedShippingAddress = computed(() => {
+    if (this.sameAsBilling()) {
+      const billing = this.selectedBillingAddress();
+      if (!billing) return null;
+      return {
+        ...billing,
+        badge: 'Same as Billing',
+      };
+    }
+    const orgId = this.selectedShippingOrgId();
+    if (orgId) {
+      const match = this.organizationAddresses().find((o) => o.orgId === orgId);
+      if (match) {
+        return {
+          title: match.orgName,
+          badge: match.orgId === this.auth.activeOrgId() ? 'Current Branch' : 'Branch',
+          lines: match.formattedAddress,
+          email: null,
+          phone: null,
+          gstin: match.gstin || null,
+        };
+      }
+    }
+    const raw = this.shippingAddress();
+    if (raw && raw.trim()) {
+      return {
+        title: 'Delivery destination',
+        badge: null,
+        lines: raw,
+        email: null,
+        phone: null,
+        gstin: null,
+      };
+    }
+    return null;
+  });
 
   protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);

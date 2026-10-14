@@ -565,18 +565,9 @@
               [disabled]="context().readonly"
               (blur)="touch(editingIndex()!)"
             />
-            <label class="modal-checkbox-label">
-              <input
-                type="checkbox"
-                [(ngModel)]="activeLine.isPriceInclusive"
-                [disabled]="context().readonly"
-                (ngModelChange)="touch(editingIndex()!)"
-              />
-              <span>Tax inclusive</span>
-            </label>
           </div>
           <div class="modal-field-group">
-            <span class="modal-label">Discount (%)</span>
+            <span class="modal-label">Disc (%)</span>
             <bb-percentage-input
               ariaLabel="Discount percent"
               placeholder="0%"
@@ -586,6 +577,18 @@
               (blur)="touch(editingIndex()!)"
             />
           </div>
+        </div>
+
+        <div class="modal-inclusive-row">
+          <label class="modal-checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="activeLine.isPriceInclusive"
+              [disabled]="context().readonly"
+              (ngModelChange)="touch(editingIndex()!)"
+            />
+            <span>Rate is tax inclusive</span>
+          </label>
         </div>
 
         <!-- 5. Tax Details -->

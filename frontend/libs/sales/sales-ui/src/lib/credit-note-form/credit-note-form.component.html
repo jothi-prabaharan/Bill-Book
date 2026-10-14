@@ -143,8 +143,8 @@
     </div>
 
     <!-- Card Row: Address Details -->
-    <div class="card-row">
-      <div class="card">
+    <div class="card-row address-row">
+      <div class="card address-card">
         <div class="card-kicker">Billing address</div>
         <div class="field">
           <bb-select
@@ -159,11 +159,19 @@
           />
         </div>
         <div class="field" style="margin-top: var(--space-2)">
-          <bb-textarea id="crn-billing" label="Address details" rows="3" formControlName="billingAddress" />
+          <bb-address-summary
+            [title]="selectedBillingAddress()?.title"
+            [badge]="selectedBillingAddress()?.badge"
+            [lines]="selectedBillingAddress()?.lines"
+            [email]="selectedBillingAddress()?.email"
+            [phone]="selectedBillingAddress()?.phone"
+            [gstin]="selectedBillingAddress()?.gstin"
+            emptyText="No billing address selected. Choose customer above."
+          />
         </div>
       </div>
 
-      <div class="card">
+      <div class="card address-card">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2)">
           <span class="card-kicker" style="margin:0">Shipping address</span>
           <bb-checkbox
@@ -189,7 +197,15 @@
           </div>
         }
         <div class="field" style="margin-top: var(--space-2)">
-          <bb-textarea id="crn-shipping" label="Address details" rows="3" formControlName="shippingAddress" />
+          <bb-address-summary
+            [title]="selectedShippingAddress()?.title"
+            [badge]="selectedShippingAddress()?.badge"
+            [lines]="selectedShippingAddress()?.lines"
+            [email]="selectedShippingAddress()?.email"
+            [phone]="selectedShippingAddress()?.phone"
+            [gstin]="selectedShippingAddress()?.gstin"
+            emptyText="No shipping address selected"
+          />
         </div>
         <div class="card-meta">Delivery destination for the goods or services.</div>
       </div>
@@ -210,23 +226,19 @@
     <!-- Card 3: Items -->
     <div class="card">
       <div class="card-kicker">Items</div>
-      <div class="field" style="margin-bottom: var(--space-3)">
-        <div style="display:flex;gap:var(--space-2);align-items:center">
-          <div style="flex:1">
-            <bb-scan
-              label="Scan"
-              placeholder="Scan or type a barcode or item code"
-              ariaLabel="Scan an item onto the lines"
-              [global]="true"
-              (scanned)="onScan($event)"
-            />
-          </div>
-          @if (!context().readonly || lines().length === 0) {
-            <button type="button" class="btn btn-secondary m-0" style="height:36px;white-space:nowrap" (click)="zeroQuantities()">
-              Set all to zero
-            </button>
-          }
-        </div>
+      <div class="crn-form__scan">
+        <bb-scan
+          label="Scan"
+          placeholder="Scan or type a barcode or item code"
+          ariaLabel="Scan an item onto the lines"
+          [global]="true"
+          (scanned)="onScan($event)"
+        />
+        @if (!context().readonly || lines().length === 0) {
+          <button type="button" class="btn btn-secondary m-0" style="height:36px;white-space:nowrap" (click)="zeroQuantities()">
+            Set all to zero
+          </button>
+        }
       </div>
 
       <div style="overflow-x:auto">

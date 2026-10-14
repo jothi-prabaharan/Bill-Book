@@ -1,0 +1,49 @@
+@if (title() || lines()) {
+  <div class="bb-address-card">
+    <div class="bb-address-card__header">
+      <div class="bb-address-card__title-group">
+        <svg class="bb-address-card__icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span class="bb-address-card__title">{{ title() || 'Address details' }}</span>
+      </div>
+      @if (badge()) {
+        <span class="bb-address-card__badge">{{ badge() }}</span>
+      }
+    </div>
+
+    @if (lines()) {
+      <div class="bb-address-card__body">
+        {{ lines() }}
+      </div>
+    }
+
+    @if (gstin() || email() || phone()) {
+      <div class="bb-address-card__footer">
+        @if (gstin()) {
+          <span class="bb-address-card__meta-item">
+            <span class="bb-address-card__meta-label">GSTIN:</span>
+            <span class="bb-address-card__meta-val">{{ gstin() }}</span>
+          </span>
+        }
+        @if (email()) {
+          <span class="bb-address-card__meta-item">
+            <span class="bb-address-card__meta-label">Email:</span>
+            <span class="bb-address-card__meta-val">{{ email() }}</span>
+          </span>
+        }
+        @if (phone()) {
+          <span class="bb-address-card__meta-item">
+            <span class="bb-address-card__meta-label">Ph:</span>
+            <span class="bb-address-card__meta-val">{{ phone() }}</span>
+          </span>
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <div class="bb-address-card bb-address-card--empty">
+    <span class="bb-address-card__empty-text">{{ emptyText() }}</span>
+  </div>
+}

@@ -202,3 +202,21 @@
   }
 }
 
+.address-row {
+  align-items: stretch;
+
+  > .card,
+  > .address-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+
+    .address-card__content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+  }
+}
+

@@ -118,8 +118,8 @@
     </div>
 
     <!-- Card Row: Address Details -->
-    <div class="card-row">
-      <div class="card">
+    <div class="card-row address-row">
+      <div class="card address-card">
         <div class="card-kicker">Billing address</div>
         <div class="field">
           <bb-select
@@ -133,19 +133,20 @@
           />
         </div>
         <div class="field" style="margin-top: var(--space-2)">
-          <bb-textarea
-            id="grn-billing"
-            label="Address details"
-            rows="3"
-            [disabled]="readonlyDoc()"
-            [ngModel]="billingAddress()"
-            (ngModelChange)="billingAddress.set($event)"
+          <bb-address-summary
+            [title]="selectedBillingAddress()?.title"
+            [badge]="selectedBillingAddress()?.badge"
+            [lines]="selectedBillingAddress()?.lines"
+            [email]="selectedBillingAddress()?.email"
+            [phone]="selectedBillingAddress()?.phone"
+            [gstin]="selectedBillingAddress()?.gstin"
+            emptyText="No organization address selected"
           />
         </div>
         <div class="card-meta">Our organization billing premises.</div>
       </div>
 
-      <div class="card">
+      <div class="card address-card">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="card-kicker" style="margin-bottom:0">Deliver to</div>
           <bb-checkbox
@@ -169,13 +170,14 @@
           </div>
         }
         <div class="field" style="margin-top: var(--space-2)">
-          <bb-textarea
-            id="grn-shipping"
-            label="Address details"
-            rows="3"
-            [disabled]="readonlyDoc() || sameAsBilling()"
-            [ngModel]="shippingAddress()"
-            (ngModelChange)="shippingAddress.set($event)"
+          <bb-address-summary
+            [title]="selectedShippingAddress()?.title"
+            [badge]="selectedShippingAddress()?.badge"
+            [lines]="selectedShippingAddress()?.lines"
+            [email]="selectedShippingAddress()?.email"
+            [phone]="selectedShippingAddress()?.phone"
+            [gstin]="selectedShippingAddress()?.gstin"
+            emptyText="No delivery address selected"
           />
         </div>
         <div class="card-meta">Address where stock was received.</div>

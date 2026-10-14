@@ -269,13 +269,14 @@
             />
           </div>
           <div class="field address-card__body" style="margin-top: var(--space-2)">
-            <bb-textarea
-              id="bil-billing"
-              label="Address details"
-              rows="3"
-              [disabled]="readonlyDoc()"
-              [ngModel]="billingAddress()"
-              (ngModelChange)="billingAddress.set($event)"
+            <bb-address-summary
+              [title]="selectedBillingAddress()?.title"
+              [badge]="selectedBillingAddress()?.badge"
+              [lines]="selectedBillingAddress()?.lines"
+              [email]="selectedBillingAddress()?.email"
+              [phone]="selectedBillingAddress()?.phone"
+              [gstin]="selectedBillingAddress()?.gstin"
+              emptyText="No organization address selected"
             />
           </div>
           <div class="card-meta">Our organization billing premises.</div>
@@ -318,13 +319,14 @@
             </div>
           }
           <div class="field address-card__body" style="margin-top: var(--space-2)">
-            <bb-textarea
-              id="bil-shipping"
-              label="Address details"
-              rows="3"
-              [disabled]="readonlyDoc() || sameAsBilling()"
-              [ngModel]="shippingAddress()"
-              (ngModelChange)="shippingAddress.set($event)"
+            <bb-address-summary
+              [title]="selectedShippingAddress()?.title"
+              [badge]="selectedShippingAddress()?.badge"
+              [lines]="selectedShippingAddress()?.lines"
+              [email]="selectedShippingAddress()?.email"
+              [phone]="selectedShippingAddress()?.phone"
+              [gstin]="selectedShippingAddress()?.gstin"
+              emptyText="No delivery address selected"
             />
           </div>
           <div class="card-meta">Our organization delivery destination.</div>

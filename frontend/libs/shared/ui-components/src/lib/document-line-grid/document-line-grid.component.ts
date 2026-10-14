@@ -246,11 +246,11 @@ export class DocumentLineGridComponent {
   }
 
   protected isFreeText(line: DocumentLine): boolean {
-    return line.itemId === null;
+    return line.itemId === null && (line.description?.trim().length ?? 0) > 0;
   }
 
   protected needsAccount(line: DocumentLine): boolean {
-    return line.itemId === null || line.lineType === 'Expense';
+    return this.isFreeText(line) || line.lineType === 'Expense';
   }
 
   /**

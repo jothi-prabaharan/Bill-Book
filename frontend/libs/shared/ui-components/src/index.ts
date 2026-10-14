@@ -74,6 +74,7 @@ export * from './lib/forms/textarea/textarea.component';
 export * from './lib/forms/file/file-input.component';
 export * from './lib/forms/rich-text/sanitize-html';
 export * from './lib/forms/rich-text/rich-text-input.component';
+export * from './lib/forms/address-summary/address-summary.component';
 
 export * from './lib/branch-date-input/branch-date-input.component';
 export * from './lib/currency-input/currency-input.component';

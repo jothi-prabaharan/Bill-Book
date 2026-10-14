@@ -47,6 +47,7 @@ import {
   DocumentCustomFieldsComponent,
   compactValues,
   SelectComponent,
+  AddressSummaryComponent,
   GST_STATE_OPTIONS,
   TRANSACTION_CURRENCY_OPTIONS,
   resolveOrgStateCode,
@@ -100,6 +101,7 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
     DocumentLineGridComponent,
     TextInputComponent,
     SelectComponent,
+    AddressSummaryComponent,
     TextareaComponent,
     CheckboxComponent,
     BranchDateInputComponent,
@@ -332,6 +334,72 @@ export class SalesOrderFormComponent implements OnInit {
       this.selectedShippingAddressId.set(this.selectedBillingAddressId());
     }
   }
+
+  protected readonly selectedBillingAddress = computed(() => {
+    const id = this.selectedBillingAddressId();
+    if (id !== null) {
+      const match = this.contactAddresses().find((a) => a.contactAddressId === id);
+      if (match) {
+        return {
+          title: this.contactLabel() || match.label || 'Billing Address',
+          badge: match.isDefaultBilling ? 'Default Billing' : (match.kind || null),
+          lines: formatContactAddress(match),
+          email: null,
+          phone: null,
+          gstin: match.gstin || this.form.controls.contactGstin.value || null,
+        };
+      }
+    }
+    const raw = this.form.controls.billingAddress.value;
+    if (raw && raw.trim()) {
+      return {
+        title: this.contactLabel() || 'Billing Address',
+        badge: null,
+        lines: raw,
+        email: null,
+        phone: null,
+        gstin: this.form.controls.contactGstin.value || null,
+      };
+    }
+    return null;
+  });
+
+  protected readonly selectedShippingAddress = computed(() => {
+    if (this.sameAsBilling()) {
+      const billing = this.selectedBillingAddress();
+      if (!billing) return null;
+      return {
+        ...billing,
+        badge: 'Same as Billing',
+      };
+    }
+    const id = this.selectedShippingAddressId();
+    if (id !== null) {
+      const match = this.contactAddresses().find((a) => a.contactAddressId === id);
+      if (match) {
+        return {
+          title: this.contactLabel() || match.label || 'Shipping Address',
+          badge: match.isDefaultShipping ? 'Default Shipping' : (match.kind || null),
+          lines: formatContactAddress(match),
+          email: null,
+          phone: null,
+          gstin: match.gstin || null,
+        };
+      }
+    }
+    const raw = this.form.controls.shippingAddress.value;
+    if (raw && raw.trim()) {
+      return {
+        title: this.contactLabel() || 'Shipping Address',
+        badge: null,
+        lines: raw,
+        email: null,
+        phone: null,
+        gstin: null,
+      };
+    }
+    return null;
+  });
 
   /**
    * The grid's own context. `isInterState` is what the *screen* believes, from
