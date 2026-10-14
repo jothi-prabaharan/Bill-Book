@@ -24,7 +24,6 @@ import {
   QuantityInputComponent,
   CheckboxComponent,
   SelectComponent,
-  TextInputComponent,
   TextareaComponent,
   ApprovalPanelComponent,
   CustomFieldValues,

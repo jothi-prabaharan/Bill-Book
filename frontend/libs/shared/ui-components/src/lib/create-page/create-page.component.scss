@@ -20,3 +20,34 @@
   display: block;
   margin-bottom: var(--space-3);
 }
+
+@media (max-width: 640px) {
+  .create-page__actions {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    background: var(--color-surface, #fff);
+    border-top: 1px solid var(--color-divider, #e5e7eb);
+    padding: var(--space-2) var(--space-3);
+    margin: var(--space-3) -0.75rem calc(-1 * var(--space-2)) -0.75rem;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    justify-content: stretch;
+
+    .btn {
+      flex: 1;
+      height: 38px;
+      padding: 0 var(--space-2);
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+  }
+}
+

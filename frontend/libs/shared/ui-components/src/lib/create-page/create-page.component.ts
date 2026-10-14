@@ -47,6 +47,7 @@ export class CreatePageComponent {
 
   readonly save = output<void>();
   readonly saveDraft = output<void>();
+  // eslint-disable-next-line @angular-eslint/no-output-native
   @Output() readonly cancel = new EventEmitter<void>();
 
   protected onCancel(): void {

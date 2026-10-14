@@ -1,5 +1,6 @@
 <bb-create-page
   primaryLabel="Save"
+  draftLabel="Save draft"
   [canDraft]="canDraft()"
   [busy]="saving()"
   [messages]="messages()"
@@ -45,18 +46,98 @@
         <div class="field">
           <bb-form-field
             label="Vendor"
-            controlId="bil-vendor"
+            controlId="bil-vendor-search"
             [required]="true"
           >
-            <button
-              id="bil-vendor"
-              type="button"
-              class="input picker"
-              [disabled]="readonlyDoc()"
-              (click)="openVendorPicker()"
-            >
-              {{ contactLabel() || 'Choose a vendor' }}
-            </button>
+            <div class="vendor-combobox">
+              @if (contactId()) {
+                <div class="vendor-combobox__selected">
+                  <span class="vendor-combobox__label">{{ contactLabel() }}</span>
+                  @if (!readonlyDoc()) {
+                    <button
+                      type="button"
+                      class="vendor-combobox__clear"
+                      title="Clear vendor"
+                      aria-label="Clear vendor"
+                      (click)="clearVendor()"
+                    >
+                      ×
+                    </button>
+                    <button
+                      type="button"
+                      class="vendor-combobox__toggle"
+                      title="Change vendor"
+                      aria-label="Change vendor"
+                      (click)="openVendorDropdown()"
+                    >
+                      ▾
+                    </button>
+                  }
+                </div>
+              } @else {
+                <div class="vendor-combobox__input-wrap">
+                  <bb-text-input
+                    id="bil-vendor-search"
+                    placeholder="Search vendor by name, code or GSTIN…"
+                    [disabled]="readonlyDoc()"
+                    [ngModel]="vendorSearchTerm()"
+                    (ngModelChange)="onVendorSearch($event)"
+                  />
+                  <button
+                    type="button"
+                    class="vendor-combobox__browse"
+                    title="Browse all vendors"
+                    aria-label="Browse all vendors"
+                    [disabled]="readonlyDoc()"
+                    (click)="openVendorPicker()"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+
+              @if (vendorDropdownOpen() && !readonlyDoc()) {
+                <div class="vendor-dropdown-panel" (mousedown)="$event.preventDefault()">
+                  @if (vendorSearchLoading()) {
+                    <div class="vendor-dropdown__loading">Searching vendors…</div>
+                  } @else if (vendorOptions().length === 0) {
+                    <div class="vendor-dropdown__empty">
+                      No vendors match "{{ vendorSearchTerm() }}".
+                      <button type="button" class="btn btn-link btn-xs" (click)="openVendorPicker()">
+                        Browse full catalog
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="vendor-dropdown__list" role="listbox">
+                      @for (vendor of vendorOptions(); track vendor.contactId) {
+                        <button
+                          type="button"
+                          class="vendor-dropdown__item"
+                          role="option"
+                          [attr.aria-selected]="contactId() === vendor.contactId"
+                          (click)="selectVendor(vendor)"
+                        >
+                          <div class="vendor-dropdown__item-title">
+                            <span class="vendor-dropdown__name">{{ vendor.displayName }}</span>
+                            <span class="vendor-dropdown__code">{{ vendor.contactCode }}</span>
+                          </div>
+                          @if (vendor.gstin) {
+                            <div class="vendor-dropdown__item-meta">GSTIN: {{ vendor.gstin }}</div>
+                          }
+                        </button>
+                      }
+                    </div>
+                    <div class="vendor-dropdown__footer">
+                      <button type="button" class="btn btn-link btn-xs" (click)="openVendorPicker()">
+                        Browse all vendors dialog…
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           </bb-form-field>
         </div>
 
@@ -151,7 +232,7 @@
         <div class="field field--checkbox-align">
           <bb-checkbox
             text="Reverse charge"
-            hint="Vendor charged no GST; you pay it."
+            title="Vendor charged no GST; you pay it."
             [disabled]="readonlyDoc()"
             [ngModel]="isReverseCharge()"
             (ngModelChange)="isReverseCharge.set($event)"
@@ -161,8 +242,8 @@
     </div>
 
     <!-- Card Row: Address Details -->
-    <div class="card-row">
-      <div class="card">
+    <div class="card-row address-row">
+      <div class="card address-card">
         <div class="card-kicker">Vendor details</div>
         @if (billingAddressOptions().length > 0) {
           <div class="field">
@@ -177,7 +258,7 @@
             />
           </div>
         }
-        <div class="field" [style.marginTop]="billingAddressOptions().length > 0 ? 'var(--space-2)' : null">
+        <div class="field address-card__body" [style.marginTop]="billingAddressOptions().length > 0 ? 'var(--space-2)' : null">
           <bb-textarea
             id="bil-billing"
             label="Billing address"
@@ -187,9 +268,10 @@
             (ngModelChange)="billingAddress.set($event)"
           />
         </div>
+        <div class="card-meta">Primary billing premises from vendor records.</div>
       </div>
 
-      <div class="card">
+      <div class="card address-card">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="card-kicker" style="margin-bottom:0">Shipping address</div>
           <bb-checkbox
@@ -212,9 +294,10 @@
             />
           </div>
         }
-        <div class="field" style="margin-top: var(--space-2)">
+        <div class="field address-card__body" style="margin-top: var(--space-2)">
           <bb-textarea
             id="bil-shipping"
+            label="Shipping address"
             rows="3"
             [disabled]="readonlyDoc() || sameAsBilling()"
             [ngModel]="shippingAddress()"
@@ -229,7 +312,7 @@
     <div class="card">
       <div class="card-kicker">Items</div>
       @if (!readonlyDoc() && !againstReceipt()) {
-        <div class="field" style="margin-bottom: var(--space-3)">
+        <div class="bill-form__scan">
           <bb-scan
             label="Scan"
             placeholder="Scan or type a barcode or item code"

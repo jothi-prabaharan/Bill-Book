@@ -1,12 +1,8 @@
-import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CheckboxComponent } from '../forms/checkbox/checkbox.component';
-import { NumberInputComponent } from '../number-input/number-input.component';
 import { PercentageInputComponent } from '../forms/numeric/percentage-input.component';
 import { QuantityInputComponent } from '../forms/numeric/quantity-input.component';
 import { UnitPriceInputComponent } from '../forms/numeric/unit-price-input.component';
-import { TextInputComponent } from '../text-input/text-input.component';
 import {
   DocumentLine,
   DocumentLineContext,
@@ -21,21 +17,6 @@ import { blankDocumentLine } from './line-scan';
 /** Rates carry four decimals in a line's tax rows: 18% is stored as 180000. */
 const RATE_SCALE = 10_000;
 
-/**
- * The line grid every sales and purchase document uses.
- *
- * All nine document types share one line shape (`DocumentLineBase`), so they
- * share one grid. What differs between an invoice and a goods receipt is the
- * header around it and the columns each *adds* — delivered quantity, accepted
- * quantity — which the host page renders beside this, not instead of it.
- *
- * **It owns no data and fetches nothing.** Lines come in, changed lines go out,
- * and lookups are the host's job. That keeps the grid testable without a server
- * and keeps one component from needing to know whether it is on a sales page or
- * a purchase one.
- *
- * At ~360px the grid becomes a card per line, per the house rule.
- */
 /** A project a line may name, as the picker offers it (TK-105). */
 export interface ProjectOption {
   value: number;
@@ -48,12 +29,9 @@ export interface ProjectOption {
   standalone: true,
   imports: [
     FormsModule,
-    TextInputComponent,
     QuantityInputComponent,
     UnitPriceInputComponent,
     PercentageInputComponent,
-    CheckboxComponent,
-    NumberInputComponent,
   ],
   templateUrl: './document-line-grid.component.html',
   styleUrl: './document-line-grid.component.scss',
@@ -61,6 +39,16 @@ export interface ProjectOption {
 export class DocumentLineGridComponent {
   readonly lines = input.required<readonly DocumentLine[]>();
   readonly context = input.required<DocumentLineContext>();
+
+  /** Mobile modal popup state */
+  readonly mobileModalOpen = signal(false);
+  readonly editingIndex = signal<number | null>(null);
+
+  protected readonly activeMobileLine = computed(() => {
+    const idx = this.editingIndex();
+    if (idx === null) return null;
+    return this.lines()[idx] ?? null;
+  });
 
   /**
    * The tax groups a line may be put on.
@@ -274,6 +262,54 @@ export class DocumentLineGridComponent {
    */
   protected chargesTaxRows(line: DocumentLine): boolean {
     return line.taxTreatment === 'Taxable' || line.taxTreatment === 'ZeroRated';
+  }
+
+  // ---- Mobile popup workflow methods ---------------------------------------
+
+  protected openMobileAdd(): void {
+    if (this.context().readonly) return;
+    const nextLineNumber = this.lines().length + 1;
+    const newLine = blankDocumentLine(nextLineNumber);
+    this.emit([...this.lines(), newLine]);
+    this.editingIndex.set(this.lines().length);
+    this.mobileModalOpen.set(true);
+  }
+
+  protected openMobileEdit(index: number): void {
+    if (this.context().readonly) return;
+    this.editingIndex.set(index);
+    this.mobileModalOpen.set(true);
+  }
+
+  protected closeMobileModal(): void {
+    const idx = this.editingIndex();
+    if (idx !== null) {
+      const line = this.lines()[idx];
+      // If line has no item, no description, and price is 0, remove it so empty lines don't linger
+      if (line && line.itemId === null && !line.description?.trim() && line.unitPrice === 0) {
+        this.removeLine(idx);
+      }
+    }
+    this.mobileModalOpen.set(false);
+    this.editingIndex.set(null);
+  }
+
+  protected saveMobileModal(): void {
+    const idx = this.editingIndex();
+    if (idx !== null) {
+      this.touch(idx);
+    }
+    this.mobileModalOpen.set(false);
+    this.editingIndex.set(null);
+  }
+
+  protected formatQuantity(rawQuantity: number): string {
+    return (rawQuantity / 1_000_000).toFixed(2);
+  }
+
+  protected totalQuantity(): string {
+    const sum = this.lines().reduce((acc, line) => acc + (line.quantity || 0), 0);
+    return (sum / 1_000_000).toFixed(2);
   }
 
   private emit(lines: readonly DocumentLine[]): void {

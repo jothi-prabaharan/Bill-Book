@@ -47,6 +47,7 @@ import { AuthService } from '@bill-book/auth';
 import { goodsReceiptLabelKind, goodsReceiptLabels } from '../goods-receipt-form/goods-receipt-labels';
 import {
   ItemOption,
+  VendorOption,
   BillService,
   BillView,
   GoodsReceiptService,
@@ -494,6 +495,71 @@ export class BillFormPage {
   /** Sets one line's input tax credit eligibility (TK-115). */
   protected setEligibility(index: number, eligibility: ItcEligibility): void {
     this.lines.set(this.lines().map((line, i) => (i === index ? { ...line, itcEligibility: eligibility } : line)));
+  }
+
+  // ---- Vendor Combobox --------------------------------------------------
+
+  protected readonly vendorSearchTerm = signal('');
+  protected readonly vendorDropdownOpen = signal(false);
+  protected readonly vendorOptions = signal<VendorOption[]>([]);
+  protected readonly vendorSearchLoading = signal(false);
+
+  protected async openVendorDropdown(): Promise<void> {
+    if (this.readonlyDoc()) return;
+    this.vendorDropdownOpen.set(true);
+    if (this.vendorOptions().length === 0) {
+      await this.filterVendors(this.vendorSearchTerm());
+    }
+  }
+
+  protected closeVendorDropdown(): void {
+    setTimeout(() => {
+      this.vendorDropdownOpen.set(false);
+    }, 200);
+  }
+
+  protected async onVendorSearch(term: string): Promise<void> {
+    this.vendorSearchTerm.set(term);
+    this.vendorDropdownOpen.set(true);
+    await this.filterVendors(term);
+  }
+
+  private async filterVendors(term: string): Promise<void> {
+    this.vendorSearchLoading.set(true);
+    try {
+      const list = await this.lookups.vendors(term);
+      this.vendorOptions.set(list);
+    } catch {
+      this.vendorOptions.set([]);
+    } finally {
+      this.vendorSearchLoading.set(false);
+    }
+  }
+
+  protected selectVendor(vendor: VendorOption): void {
+    this.contactId.set(vendor.contactId);
+    this.contactLabel.set(`${vendor.contactCode} ${vendor.displayName}`.trim());
+    if (vendor.gstin) {
+      this.contactGstin.set(vendor.gstin);
+    }
+    void this.loadContactAddresses(vendor.contactId);
+    this.clearReceipt();
+    this.vendorDropdownOpen.set(false);
+    this.vendorSearchTerm.set('');
+  }
+
+  protected clearVendor(): void {
+    if (this.readonlyDoc()) return;
+    this.contactId.set(null);
+    this.contactLabel.set('');
+    this.contactGstin.set('');
+    this.contactAddresses.set([]);
+    this.selectedBillingAddressId.set(null);
+    this.selectedShippingAddressId.set(null);
+    this.billingAddress.set('');
+    this.shippingAddress.set('');
+    this.vendorSearchTerm.set('');
+    this.clearReceipt();
   }
 
   // ---- Pickers ----------------------------------------------------------
