@@ -44,7 +44,12 @@ import {
   CustomFieldValues,
   DocumentCustomFieldsComponent,
   compactValues,
+  GST_STATE_OPTIONS,
+  TRANSACTION_CURRENCY_OPTIONS,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
 
 /**
@@ -106,6 +111,20 @@ export class DeliveryChallanFormComponent implements OnInit {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
 
+  private readonly auth = inject(AuthService);
+  protected readonly currencyOptions = TRANSACTION_CURRENCY_OPTIONS;
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
+
   protected copyBillingToShipping(event?: Event | boolean): void {
     const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
     if (checked) {
@@ -134,13 +153,13 @@ export class DeliveryChallanFormComponent implements OnInit {
     salesOrderId: [null as number | null, [Validators.min(1)]],
     contactId: [0, [Validators.required, Validators.min(1)]],
     contactGstin: ['', [Validators.maxLength(15)]],
-    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
     challanType: [ChallanType.Sale, Validators.required],
     vehicleNo: [''],
     transporterName: ['', [Validators.maxLength(100)]],
     ewayBillNo: ['', [Validators.maxLength(12), Validators.pattern(/^\d{0,12}$/)]],
     ewayBillDate: [''],
-    currencyCode: ['INR', [Validators.required, Validators.maxLength(3)]],
+    currencyCode: [this.getOrgCurrency(), [Validators.required, Validators.maxLength(3)]],
     exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     billingAddress: ['', [Validators.maxLength(100)]],
     shippingAddress: ['', [Validators.maxLength(100)]],
@@ -245,6 +264,7 @@ export class DeliveryChallanFormComponent implements OnInit {
       salesOrderId: challan.salesOrderId ?? null,
       contactId: challan.contactId,
       contactGstin: challan.contactGstin ?? '',
+      placeOfSupplyStateCode: (challan as any).placeOfSupplyStateCode || ((challan as any).placeOfSupplyStateId ? String((challan as any).placeOfSupplyStateId).padStart(2, '0') : this.getOrgStateCode()),
       challanType: challan.challanType,
       vehicleNo: challan.vehicleNo ?? '',
       transporterName: challan.transporterName ?? '',

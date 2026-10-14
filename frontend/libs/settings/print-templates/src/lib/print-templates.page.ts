@@ -1,5 +1,4 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -205,7 +204,7 @@ const MOCK_LIST: Record<string, ((i: number) => string) | string[]> = {
   templateUrl: './print-templates.page.html',
   styleUrl: './print-templates.page.scss',
 })
-export class PrintTemplatesPage implements OnInit, AfterViewInit {
+export class PrintTemplatesPage implements OnInit {
   private readonly api = inject(PrintTemplateService);
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionContextService);
@@ -295,6 +294,20 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
   protected readonly foreColor = signal('#201f1d');
   protected readonly hiliteColor = signal('#fff3a0');
   protected readonly lastFont = signal('Arial');
+  protected readonly currentFontSize = signal<number>(11);
+  protected readonly selectedCellInfo = signal<{
+    hasCell: boolean;
+    colWidthPct: number;
+    rowHeightPx: number;
+    colIndex: number;
+    rowIndex: number;
+  }>({
+    hasCell: false,
+    colWidthPct: 0,
+    rowHeightPx: 0,
+    colIndex: 0,
+    rowIndex: 0,
+  });
   private activeRange: Range | null = null;
   private activeCell: HTMLElement | null = null;
   private flashTimer: ReturnType<typeof setTimeout> | null = null;
@@ -461,9 +474,6 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
     void this.start();
   }
 
-  ngAfterViewInit(): void {
-    // Content will be populated when detail loads
-  }
 
   private async start(): Promise<void> {
     try {
@@ -627,7 +637,7 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
     return html.replace(/\{\{([^{}]+)\}\}/g, (_match, rawTag) => {
       const tag = rawTag.trim();
       const isList = this.isListTag(tag);
-      return `<span contenteditable="false" class="pt-chip">${isList ? '↻ ' : ''}«${tag}»</span>\u00a0`;
+      return `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `<<${tag}>>` : `{{${tag}}}`}</span>\u00a0`;
     });
   }
 
@@ -638,7 +648,7 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
     const chips = div.querySelectorAll('.pt-chip');
     chips.forEach((chip) => {
       const raw = chip.textContent || '';
-      const cleanTag = raw.replace(/[↻\s«»]/g, '').trim();
+      const cleanTag = raw.replace(/[↻\s«»{}<>]/g, '').trim();
       const tagNode = document.createTextNode(`{{${cleanTag}}}`);
       chip.replaceWith(tagNode);
     });
@@ -756,15 +766,94 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
   // ---- Editor Interactions & Formatting ------------------------------------
 
   protected setActiveSeg(code: SegCode): void {
+    if (this.activeSeg() === code) {
+      return;
+    }
     this.activeSeg.set(code);
     setTimeout(() => {
       const el = this.segElements().find(
         (ref) => ref.nativeElement.dataset['seg'] === code,
       )?.nativeElement;
-      if (el) {
+      if (el && !el.contains(document.activeElement)) {
         el.focus();
         this.onSnap();
       }
+    });
+  }
+
+  private setActiveCell(cell: HTMLElement | null): void {
+    if (this.activeCell && this.activeCell !== cell) {
+      this.activeCell.classList.remove('pt-cell-active');
+    }
+    this.activeCell = cell;
+    if (this.activeCell) {
+      this.activeCell.classList.add('pt-cell-active');
+    }
+    this.updateSelectedCellInfo();
+  }
+
+  private getTableContext(): { table: HTMLTableElement; row: HTMLTableRowElement; cell: HTMLTableCellElement } | null {
+    let cell = this.activeCell as HTMLTableCellElement | null;
+    if (!cell) {
+      const sel = window.getSelection();
+      let n = sel && sel.anchorNode;
+      while (n && n.nodeType !== 1) n = n.parentNode;
+      cell = (n as HTMLElement)?.closest ? ((n as HTMLElement).closest('td,th') as HTMLTableCellElement | null) : null;
+    }
+    if (!cell) return null;
+    const row = cell.closest('tr') as HTMLTableRowElement | null;
+    const table = cell.closest('table') as HTMLTableElement | null;
+    if (!row || !table) return null;
+    return { table, row, cell };
+  }
+
+  private getColIndex(row: HTMLTableRowElement, cell: HTMLTableCellElement): number {
+    let idx = 0;
+    for (const c of Array.from(row.children) as HTMLTableCellElement[]) {
+      if (c === cell) return idx;
+      idx += (c.colSpan || 1);
+    }
+    return idx;
+  }
+
+  private updateSelectedCellInfo(): void {
+    const ctx = this.getTableContext();
+    if (!ctx) {
+      this.selectedCellInfo.set({
+        hasCell: false,
+        colWidthPct: 0,
+        rowHeightPx: 0,
+        colIndex: 0,
+        rowIndex: 0,
+      });
+      return;
+    }
+    const { table, row, cell } = ctx;
+    const colIdx = this.getColIndex(row, cell) + 1;
+    const rowIdx = Array.from(table.rows).indexOf(row) + 1;
+
+    let widthPct = 0;
+    if (cell.style.width && cell.style.width.endsWith('%')) {
+      widthPct = parseFloat(cell.style.width) || 0;
+    } else if (cell.getAttribute('width') && cell.getAttribute('width')!.endsWith('%')) {
+      widthPct = parseFloat(cell.getAttribute('width')!) || 0;
+    } else if (table.offsetWidth > 0 && cell.offsetWidth > 0) {
+      widthPct = Math.round((cell.offsetWidth / table.offsetWidth) * 100);
+    }
+
+    let heightPx = 0;
+    if (row.style.height && row.style.height.endsWith('px')) {
+      heightPx = parseFloat(row.style.height) || 0;
+    } else if (row.offsetHeight > 0) {
+      heightPx = Math.round(row.offsetHeight);
+    }
+
+    this.selectedCellInfo.set({
+      hasCell: true,
+      colWidthPct: widthPct,
+      rowHeightPx: heightPx,
+      colIndex: colIdx,
+      rowIndex: rowIdx,
     });
   }
 
@@ -782,20 +871,30 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
     e.preventDefault();
   }
 
-  protected onSnap(): void {
+  protected onSnap(e?: Event): void {
     const sel = window.getSelection();
+    let targetNode: Node | null = null;
     if (sel && sel.rangeCount > 0) {
       this.activeRange = sel.getRangeAt(0).cloneRange();
-      let node: Node | null = sel.anchorNode;
-      while (node && node.nodeType !== 1) {
-        node = node.parentNode;
-      }
-      this.activeCell = node && (node as HTMLElement).closest ? (node as HTMLElement).closest('td,th') : null;
+      targetNode = sel.anchorNode;
     }
-    this.syncFmt();
+    if (!targetNode && e && e.target) {
+      targetNode = e.target as Node;
+    }
+    let node: Node | null = targetNode;
+    while (node && node.nodeType !== 1) {
+      node = node.parentNode;
+    }
+    const el = node as HTMLElement | null;
+    let cell: HTMLElement | null = el?.closest ? el.closest('td,th') : null;
+    if (!cell && e && (e.target as HTMLElement)?.closest) {
+      cell = (e.target as HTMLElement).closest('td,th');
+    }
+    this.setActiveCell(cell);
+    this.syncFmt(el);
   }
 
-  private syncFmt(): void {
+  private syncFmt(clickedEl: HTMLElement | null = null): void {
     const q = (c: string) => {
       try {
         return document.queryCommandState(c);
@@ -803,34 +902,182 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
         return false;
       }
     };
-    const f = {
-      b: q('bold'),
-      i: q('italic'),
-      u: q('underline'),
-      s: q('strikeThrough'),
-      l: false,
-      c: false,
-      r: false,
-      j: false,
-      ul: q('insertUnorderedList'),
-      ol: q('insertOrderedList'),
-    };
 
-    let el: HTMLElement | null = this.activeCell;
+    let el: HTMLElement | null = clickedEl;
     if (!el) {
       const sel = window.getSelection();
       let n = sel && sel.anchorNode;
       while (n && n.nodeType !== 1) n = n.parentNode;
       el = n as HTMLElement | null;
     }
-    if (el) {
-      const ta = getComputedStyle(el).textAlign;
-      f.c = ta === 'center';
-      f.r = ta === 'right' || ta === 'end';
-      f.j = ta === 'justify';
-      f.l = !f.c && !f.r && !f.j;
+    if (!el && this.activeCell) {
+      el = this.activeCell;
     }
+
+    // Bold detection
+    let isBold = q('bold');
+    if (!isBold && el) {
+      let curr: HTMLElement | null = el;
+      while (curr && curr.dataset['seg'] === undefined) {
+        if (curr.tagName === 'B' || curr.tagName === 'STRONG') {
+          isBold = true;
+          break;
+        }
+        const fw = getComputedStyle(curr).fontWeight;
+        if (fw === 'bold' || fw === 'bolder' || parseInt(fw, 10) >= 600) {
+          isBold = true;
+          break;
+        }
+        curr = curr.parentElement;
+      }
+    }
+
+    // Italic detection
+    let isItalic = q('italic');
+    if (!isItalic && el) {
+      let curr: HTMLElement | null = el;
+      while (curr && curr.dataset['seg'] === undefined) {
+        if (curr.tagName === 'I' || curr.tagName === 'EM') {
+          isItalic = true;
+          break;
+        }
+        if (getComputedStyle(curr).fontStyle === 'italic') {
+          isItalic = true;
+          break;
+        }
+        curr = curr.parentElement;
+      }
+    }
+
+    // Underline detection
+    let isUnderline = q('underline');
+    if (!isUnderline && el) {
+      let curr: HTMLElement | null = el;
+      while (curr && curr.dataset['seg'] === undefined) {
+        if (curr.tagName === 'U') {
+          isUnderline = true;
+          break;
+        }
+        const td = getComputedStyle(curr).textDecorationLine || getComputedStyle(curr).textDecoration;
+        if (td && td.includes('underline')) {
+          isUnderline = true;
+          break;
+        }
+        curr = curr.parentElement;
+      }
+    }
+
+    // Strikethrough detection
+    let isStrike = q('strikeThrough');
+    if (!isStrike && el) {
+      let curr: HTMLElement | null = el;
+      while (curr && curr.dataset['seg'] === undefined) {
+        if (curr.tagName === 'S' || curr.tagName === 'STRIKE' || curr.tagName === 'DEL') {
+          isStrike = true;
+          break;
+        }
+        const td = getComputedStyle(curr).textDecorationLine || getComputedStyle(curr).textDecoration;
+        if (td && td.includes('line-through')) {
+          isStrike = true;
+          break;
+        }
+        curr = curr.parentElement;
+      }
+    }
+
+    // Paragraph Alignment detection
+    let isLeft = false;
+    let isCenter = false;
+    let isRight = false;
+    let isJustify = false;
+
+    if (el) {
+      let curr: HTMLElement | null = el;
+      let alignVal = '';
+      while (curr && curr.dataset['seg'] === undefined) {
+        const styleAlign = curr.style.textAlign;
+        const attrAlign = curr.getAttribute('align');
+        const compAlign = getComputedStyle(curr).textAlign;
+        if (styleAlign) {
+          alignVal = styleAlign;
+          break;
+        }
+        if (attrAlign) {
+          alignVal = attrAlign;
+          break;
+        }
+        if (compAlign && compAlign !== 'start' && compAlign !== 'left') {
+          alignVal = compAlign;
+          break;
+        }
+        if (curr.tagName === 'TD' || curr.tagName === 'TH') {
+          if (attrAlign) {
+            alignVal = attrAlign;
+            break;
+          }
+        }
+        curr = curr.parentElement;
+      }
+      if (!alignVal && el) {
+        alignVal = getComputedStyle(el).textAlign;
+      }
+
+      if (alignVal === 'right' || alignVal === 'end' || alignVal === '-webkit-right') {
+        isRight = true;
+      } else if (alignVal === 'center' || alignVal === '-webkit-center') {
+        isCenter = true;
+      } else if (alignVal === 'justify') {
+        isJustify = true;
+      } else {
+        isLeft = true;
+      }
+    } else {
+      isLeft = true;
+    }
+
+    const f = {
+      b: isBold,
+      i: isItalic,
+      u: isUnderline,
+      s: isStrike,
+      l: isLeft,
+      c: isCenter,
+      r: isRight,
+      j: isJustify,
+      ul: q('insertUnorderedList') || !!el?.closest('ul'),
+      ol: q('insertOrderedList') || !!el?.closest('ol'),
+    };
     this.ptFmt.set(f);
+
+    // Font Family & Size Detection
+    if (el) {
+      let curr: HTMLElement | null = el;
+      while (curr && curr.dataset['seg'] === undefined) {
+        const ff = curr.style.fontFamily || getComputedStyle(curr).fontFamily;
+        if (ff) {
+          const cleanFont = ff.split(',')[0].replace(/['"]/g, '').trim();
+          const match = this.fontFamilies.find((font) => font.toLowerCase() === cleanFont.toLowerCase());
+          if (match) {
+            this.lastFont.set(match);
+            break;
+          }
+        }
+        curr = curr.parentElement;
+      }
+
+      curr = el;
+      while (curr && curr.dataset['seg'] === undefined) {
+        const fs = curr.style.fontSize || getComputedStyle(curr).fontSize;
+        if (fs) {
+          const px = Math.round(parseFloat(fs));
+          if (px > 0 && this.fontSizes.includes(px)) {
+            this.currentFontSize.set(px);
+            break;
+          }
+        }
+        curr = curr.parentElement;
+      }
+    }
   }
 
   private execSel(cmd: string, val: string = ''): void {
@@ -887,56 +1134,74 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
       }
     }
     const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return;
-    const range = sel.getRangeAt(0);
     const seg = this.segElements().find(
       (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
     )?.nativeElement;
 
-    const blockOf = (n: Node | null): HTMLElement | null => {
-      while (n && n.nodeType !== 1) n = n.parentNode;
-      const el = n && (n as HTMLElement).closest ? (n as HTMLElement).closest('td,th,li,p,h1,h2,h3,div') : null;
-      return el && seg && seg.contains(el) && el !== seg ? (el as HTMLElement) : seg || null;
-    };
+    if (this.activeCell) {
+      this.activeCell.style.textAlign = value;
+      this.activeCell.removeAttribute('align');
+      Array.from(this.activeCell.querySelectorAll('div, p, h1, h2, h3')).forEach((el) => {
+        (el as HTMLElement).style.textAlign = value;
+        el.removeAttribute('align');
+      });
+    } else if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const blockOf = (n: Node | null): HTMLElement | null => {
+        while (n && n.nodeType !== 1) n = n.parentNode;
+        const el = n && (n as HTMLElement).closest ? (n as HTMLElement).closest('td,th,li,p,h1,h2,h3,div') : null;
+        return el && seg && seg.contains(el) && el !== seg ? (el as HTMLElement) : seg || null;
+      };
 
-    let targets: HTMLElement[] = [];
-    if (!range.collapsed) {
-      const scope = blockOf(range.commonAncestorContainer) || seg;
-      if (scope) {
-        targets = Array.from(scope.querySelectorAll('td,th,li,p')).filter((el) =>
-          range.intersectsNode(el),
-        ) as HTMLElement[];
+      let targets: HTMLElement[] = [];
+      if (!range.collapsed) {
+        const scope = blockOf(range.commonAncestorContainer) || seg;
+        if (scope) {
+          targets = Array.from(scope.querySelectorAll('td,th,li,p,div')).filter((el) =>
+            range.intersectsNode(el),
+          ) as HTMLElement[];
+        }
       }
+      if (!targets.length) {
+        const b = blockOf(range.startContainer);
+        if (b) targets = [b];
+      }
+      targets.forEach((el) => {
+        el.style.textAlign = value;
+        if (el.hasAttribute('align')) el.removeAttribute('align');
+      });
     }
-    if (!targets.length) {
-      const b = blockOf(range.startContainer);
-      if (b) targets = [b];
-    }
-    targets.forEach((el) => {
-      el.style.textAlign = value;
-      if (el.hasAttribute('align')) el.removeAttribute('align');
-    });
     this.onSnap();
     this.onSegmentInput(this.activeSeg());
   }
 
   protected setFontFamily(font: string): void {
     this.lastFont.set(font);
-    this.execSel('fontName', font);
+    if (this.activeCell && (!this.activeRange || this.activeRange.collapsed)) {
+      this.activeCell.style.fontFamily = font;
+    } else {
+      this.execSel('fontName', font);
+    }
+    this.onSegmentInput(this.activeSeg());
   }
 
   protected setFontSize(px: number): void {
-    this.execSel('fontSize', '7');
-    const seg = this.segElements().find(
-      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
-    )?.nativeElement;
-    if (!seg) return;
-    Array.from(seg.querySelectorAll('font[size="7"]')).forEach((f) => {
-      const span = document.createElement('span');
-      span.style.fontSize = `${px}px`;
-      while (f.firstChild) span.appendChild(f.firstChild);
-      f.parentNode?.replaceChild(span, f);
-    });
+    this.currentFontSize.set(px);
+    if (this.activeCell && (!this.activeRange || this.activeRange.collapsed)) {
+      this.activeCell.style.fontSize = `${px}px`;
+    } else {
+      this.execSel('fontSize', '7');
+      const seg = this.segElements().find(
+        (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+      )?.nativeElement;
+      if (!seg) return;
+      Array.from(seg.querySelectorAll('font[size="7"]')).forEach((f) => {
+        const span = document.createElement('span');
+        span.style.fontSize = `${px}px`;
+        while (f.firstChild) span.appendChild(f.firstChild);
+        f.parentNode?.replaceChild(span, f);
+      });
+    }
     this.onSegmentInput(this.activeSeg());
   }
 
@@ -950,12 +1215,22 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
 
   protected pickFore(color: string): void {
     this.foreColor.set(color);
-    this.execSel('foreColor', color);
+    if (this.activeCell && (!this.activeRange || this.activeRange.collapsed)) {
+      this.activeCell.style.color = color;
+    } else {
+      this.execSel('foreColor', color);
+    }
+    this.onSegmentInput(this.activeSeg());
   }
 
   protected pickHilite(color: string): void {
     this.hiliteColor.set(color);
-    this.execSel('hiliteColor', color);
+    if (this.activeCell && (!this.activeRange || this.activeRange.collapsed)) {
+      this.activeCell.style.backgroundColor = color;
+    } else {
+      this.execSel('hiliteColor', color);
+    }
+    this.onSegmentInput(this.activeSeg());
   }
 
   // ---- Table Manipulation ---------------------------------------------------
@@ -968,135 +1243,291 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
     );
   }
 
-  protected rowBelow(): void {
-    const cell = this.activeCell;
-    if (!cell) return;
-    const row = cell.closest('tr');
-    if (!row) return;
-    const clone = row.cloneNode(true) as HTMLTableRowElement;
-    Array.from(clone.children).forEach((c) => {
-      c.innerHTML = '&nbsp;';
-      c.removeAttribute('colspan');
-    });
-    row.parentNode?.insertBefore(clone, row.nextSibling);
+  protected rowAbove(): void {
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { row } = ctx;
+    const newRow = this.createMatchingRow(row);
+    row.parentNode?.insertBefore(newRow, row);
     this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+  }
+
+  protected rowBelow(): void {
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { row } = ctx;
+    const newRow = this.createMatchingRow(row);
+    row.parentNode?.insertBefore(newRow, row.nextSibling);
+    this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+  }
+
+  private createMatchingRow(refRow: HTMLTableRowElement): HTMLTableRowElement {
+    const newRow = document.createElement('tr');
+    Array.from(refRow.children).forEach((c) => {
+      const cell = c as HTMLTableCellElement;
+      const newCell = document.createElement('td');
+      newCell.style.cssText = 'border:1px solid #ccc;padding:4px 6px;font-size:11px';
+      if (cell.style.width) newCell.style.width = cell.style.width;
+      if (cell.getAttribute('width')) newCell.setAttribute('width', cell.getAttribute('width')!);
+      if (cell.colSpan > 1) newCell.colSpan = cell.colSpan;
+      newCell.innerHTML = '&nbsp;';
+      newRow.appendChild(newCell);
+    });
+    return newRow;
+  }
+
+  protected colLeft(): void {
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { table, row, cell } = ctx;
+    const colIdx = this.getColIndex(row, cell);
+
+    for (const r of Array.from(table.rows)) {
+      let cIdx = 0;
+      let inserted = false;
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        const cSpan = c.colSpan || 1;
+        if (cIdx <= colIdx && colIdx < cIdx + cSpan) {
+          if (cSpan > 1 && c !== cell) {
+            c.colSpan = cSpan + 1;
+          } else {
+            const newCell = document.createElement(c.tagName === 'TH' ? 'th' : 'td');
+            newCell.style.cssText = 'border:1px solid #ccc;padding:4px 6px;font-size:11px';
+            newCell.innerHTML = '&nbsp;';
+            c.parentNode?.insertBefore(newCell, c);
+          }
+          inserted = true;
+          break;
+        }
+        cIdx += cSpan;
+      }
+      if (!inserted) {
+        const newCell = document.createElement('td');
+        newCell.style.cssText = 'border:1px solid #ccc;padding:4px 6px;font-size:11px';
+        newCell.innerHTML = '&nbsp;';
+        r.insertBefore(newCell, r.firstChild);
+      }
+    }
+    this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
   }
 
   protected colRight(): void {
-    const cell = this.activeCell;
-    if (!cell) return;
-    const row = cell.closest('tr');
-    const table = cell.closest('table');
-    if (!row || !table) return;
-    const idx = Array.from(row.children).indexOf(cell);
-    Array.from(table.rows).forEach((r) => {
-      const ref = r.children[idx];
-      const c2 = document.createElement(ref && ref.tagName === 'TH' ? 'th' : 'td');
-      c2.style.cssText = 'border:1px solid #ccc;padding:4px 6px;font-size:11px';
-      c2.innerHTML = '&nbsp;';
-      if (ref) r.insertBefore(c2, ref.nextSibling);
-      else r.appendChild(c2);
-    });
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { table, row, cell } = ctx;
+    const colIdx = this.getColIndex(row, cell);
+    const span = cell.colSpan || 1;
+    const targetCol = colIdx + span - 1;
+
+    for (const r of Array.from(table.rows)) {
+      let cIdx = 0;
+      let inserted = false;
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        const cSpan = c.colSpan || 1;
+        if (cIdx <= targetCol && targetCol < cIdx + cSpan) {
+          if (cSpan > 1 && c !== cell) {
+            c.colSpan = cSpan + 1;
+          } else {
+            const newCell = document.createElement(c.tagName === 'TH' ? 'th' : 'td');
+            newCell.style.cssText = 'border:1px solid #ccc;padding:4px 6px;font-size:11px';
+            newCell.innerHTML = '&nbsp;';
+            c.parentNode?.insertBefore(newCell, c.nextSibling);
+          }
+          inserted = true;
+          break;
+        }
+        cIdx += cSpan;
+      }
+      if (!inserted) {
+        const newCell = document.createElement('td');
+        newCell.style.cssText = 'border:1px solid #ccc;padding:4px 6px;font-size:11px';
+        newCell.innerHTML = '&nbsp;';
+        r.appendChild(newCell);
+      }
+    }
+    this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+  }
+
+  protected addCell(): void {
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { cell } = ctx;
+    const newCell = document.createElement('td');
+    newCell.style.cssText = 'border:1px solid #ccc;padding:4px 6px;font-size:11px';
+    newCell.innerHTML = '&nbsp;';
+    cell.parentNode?.insertBefore(newCell, cell.nextSibling);
+    this.setActiveCell(newCell);
     this.onSegmentInput(this.activeSeg());
   }
 
   protected mergeCells(): void {
-    const cell = this.activeCell as HTMLTableCellElement | null;
-    if (!cell) return;
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { cell } = ctx;
     const next = cell.nextElementSibling as HTMLTableCellElement | null;
     if (!next) return;
-    cell.colSpan = (Number(cell.colSpan) || 1) + (Number(next.colSpan) || 1);
-    cell.innerHTML += ` ${next.innerHTML}`;
+    cell.colSpan = (cell.colSpan || 1) + (next.colSpan || 1);
+    cell.innerHTML = `${cell.innerHTML.trim()} ${next.innerHTML.trim()}`;
     next.remove();
     this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
   }
 
   protected splitCell(): void {
-    const cell = this.activeCell as HTMLTableCellElement | null;
-    if (!cell) return;
-    const span = Number(cell.colSpan) || 1;
-    if (span < 2) {
-      cell.rowSpan = 1;
-      return;
-    }
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { cell } = ctx;
+    const span = cell.colSpan || 1;
+    if (span <= 1) return;
     cell.colSpan = 1;
     for (let i = 1; i < span; i += 1) {
-      const c2 = document.createElement(cell.tagName === 'TH' ? 'th' : 'td');
-      c2.style.cssText = cell.style.cssText;
-      c2.innerHTML = '&nbsp;';
-      cell.parentNode?.insertBefore(c2, cell.nextSibling);
+      const newCell = document.createElement(cell.tagName === 'TH' ? 'th' : 'td');
+      newCell.style.cssText = cell.style.cssText;
+      newCell.colSpan = 1;
+      newCell.innerHTML = '&nbsp;';
+      cell.parentNode?.insertBefore(newCell, cell.nextSibling);
     }
     this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
   }
 
   protected delRow(): void {
-    const cell = this.activeCell;
-    if (!cell) return;
-    const row = cell.closest('tr');
-    const table = cell.closest('table');
-    if (!row) return;
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { table, row } = ctx;
     row.remove();
-    this.activeCell = null;
-    if (table && table.rows.length === 0) table.remove();
+    this.setActiveCell(null);
+    if (table.rows.length === 0) {
+      table.remove();
+    }
     this.onSegmentInput(this.activeSeg());
   }
 
   protected delCol(): void {
-    const cell = this.activeCell;
-    if (!cell) return;
-    const row = cell.closest('tr');
-    const table = cell.closest('table');
-    if (!row || !table) return;
-    const idx = Array.from(row.children).indexOf(cell);
-    Array.from(table.rows).forEach((r) => {
-      if (r.children[idx]) r.children[idx].remove();
-    });
-    this.activeCell = null;
-    if (table.rows.length && table.rows[0].children.length === 0) table.remove();
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { table, row, cell } = ctx;
+    const colIdx = this.getColIndex(row, cell);
+
+    for (const r of Array.from(table.rows)) {
+      let cIdx = 0;
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        const cSpan = c.colSpan || 1;
+        if (cIdx <= colIdx && colIdx < cIdx + cSpan) {
+          if (cSpan > 1) {
+            c.colSpan = cSpan - 1;
+          } else {
+            c.remove();
+          }
+          break;
+        }
+        cIdx += cSpan;
+      }
+    }
+    this.setActiveCell(null);
+    if (table.rows.length && table.rows[0].children.length === 0) {
+      table.remove();
+    }
     this.onSegmentInput(this.activeSeg());
   }
 
   protected delCell(): void {
-    const cell = this.activeCell;
-    if (!cell) return;
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { cell } = ctx;
     cell.remove();
-    this.activeCell = null;
+    this.setActiveCell(null);
     this.onSegmentInput(this.activeSeg());
   }
 
   protected toggleBorder(): void {
-    const cell = this.activeCell;
-    if (!cell) return;
-    cell.style.border = cell.style.border === '1px solid #000' ? '1px solid #ccc' : '1px solid #000';
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { cell } = ctx;
+    const current = cell.style.border;
+    if (!current || current === 'none') {
+      cell.style.border = '1px solid #ccc';
+    } else if (current === '1px solid rgb(204, 204, 204)' || current === '1px solid #ccc') {
+      cell.style.border = '1px solid #000';
+    } else {
+      cell.style.border = 'none';
+    }
     this.onSegmentInput(this.activeSeg());
   }
 
   protected toggleShade(): void {
-    const cell = this.activeCell;
-    if (!cell) return;
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { cell } = ctx;
     cell.style.background = cell.style.background ? '' : 'rgba(242,97,15,.12)';
     this.onSegmentInput(this.activeSeg());
   }
 
   protected setColWidth(pct: number): void {
-    const cell = this.activeCell;
-    if (!cell || !pct) return;
-    const row = cell.closest('tr');
-    const table = cell.closest('table');
-    if (!row || !table) return;
-    const idx = Array.from(row.children).indexOf(cell);
-    Array.from(table.rows).forEach((r) => {
-      if (r.children[idx]) (r.children[idx] as HTMLElement).style.width = `${pct}%`;
-    });
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { table, row, cell } = ctx;
+    const colIdx = this.getColIndex(row, cell);
+
+    for (const r of Array.from(table.rows)) {
+      let cIdx = 0;
+      for (const c of Array.from(r.children) as HTMLTableCellElement[]) {
+        const cSpan = c.colSpan || 1;
+        if (cIdx <= colIdx && colIdx < cIdx + cSpan) {
+          if (cSpan === 1) {
+            if (pct > 0) {
+              c.style.width = `${pct}%`;
+            } else {
+              c.style.width = '';
+            }
+            c.removeAttribute('width');
+          }
+          break;
+        }
+        cIdx += cSpan;
+      }
+    }
+    if (pct > 0) {
+      cell.style.width = `${pct}%`;
+    } else {
+      cell.style.width = '';
+    }
+    cell.removeAttribute('width');
+
     this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+  }
+
+  protected adjustColWidth(delta: number): void {
+    const info = this.selectedCellInfo();
+    const current = info.colWidthPct || 20;
+    const next = Math.max(5, Math.min(100, current + delta));
+    this.setColWidth(next);
   }
 
   protected setRowHeight(px: number): void {
-    const cell = this.activeCell;
-    if (!cell || !px) return;
-    const row = cell.closest('tr');
-    if (row) (row as HTMLElement).style.height = `${px}px`;
+    const ctx = this.getTableContext();
+    if (!ctx) return;
+    const { row } = ctx;
+    if (px > 0) {
+      row.style.height = `${px}px`;
+    } else {
+      row.style.height = '';
+    }
+    row.removeAttribute('height');
     this.onSegmentInput(this.activeSeg());
+    this.updateSelectedCellInfo();
+  }
+
+  protected adjustRowHeight(delta: number): void {
+    const info = this.selectedCellInfo();
+    const current = info.rowHeightPx || 24;
+    const next = Math.max(12, Math.min(300, current + delta));
+    this.setRowHeight(next);
   }
 
   // ---- Field Insertion Popover ----------------------------------------------
@@ -1116,7 +1547,7 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
   }
 
   protected insertField(tag: string, isList: boolean): void {
-    const chipHtml = `<span contenteditable="false" class="pt-chip">${isList ? '↻ ' : ''}«${tag}»</span>\u00a0`;
+    const chipHtml = `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `<<${tag}>>` : `{{${tag}}}`}</span>\u00a0`;
     this.execSel('insertHTML', chipHtml);
     this.fieldsOpen.set(false);
   }
@@ -1175,12 +1606,17 @@ export class PrintTemplatesPage implements OnInit, AfterViewInit {
   protected ptMockHtml(html: string): string {
     const root = document.createElement('div');
     root.innerHTML = html || '';
-    const tagOf = (el: Element) => (el.textContent || '').replace(/[↻\s«»]/g, '');
+    const tagOf = (el: Element) => (el.textContent || '').replace(/[↻\s«»{}<>]/g, '').trim();
 
     Array.from(root.querySelectorAll('tr')).forEach((tr) => {
       if (tr.querySelector('tr')) return;
       const listChip = Array.from(tr.querySelectorAll('.pt-chip')).find(
-        (c) => (c.textContent || '').indexOf('↻') >= 0,
+        (c) =>
+          c.classList.contains('pt-chip--list') ||
+          (c.textContent || '').includes('<<') ||
+          (c.textContent || '').includes('«') ||
+          (c.textContent || '').indexOf('↻') >= 0 ||
+          this.isListTag(tagOf(c)),
       );
       if (!listChip) return;
       const n = MOCK_ROWS[tagOf(listChip).split('.')[0]] || 1;

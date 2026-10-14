@@ -11,7 +11,34 @@ import {
   ShellScreenGroup,
 } from './shell-screens';
 
-const MENU_CACHE_KEY = 'bb_menu_cache';
+const MENU_CACHE_KEY = 'bb_menu_cache_v3';
+
+/**
+ * Sanitize menu groups to prevent unwanted, redundant accordion subgroups.
+ * If a module has only a single group, or if a group's name repeats the module's name,
+ * it is stripped to `null` so it renders cleanly as a flat, unnamed section without
+ * a redundant collapsible header.
+ */
+export function sanitizeMenuTree(menus: readonly MenuView[]): MenuView[] {
+  return menus.map((menu) => {
+    const isSingleGroup = menu.groups.length <= 1;
+    const menuLabel = menu.name.trim().toLowerCase();
+    const sanitizedGroups = menu.groups.map((group) => {
+      const isRedundantName =
+        !group.name ||
+        group.name.trim().toLowerCase() === menuLabel ||
+        isSingleGroup;
+      return {
+        ...group,
+        name: isRedundantName ? null : group.name,
+      };
+    });
+    return {
+      ...menu,
+      groups: sanitizedGroups,
+    };
+  });
+}
 
 /**
  * Rebuild the tree from the static registry, shaped like the server's response
@@ -29,17 +56,22 @@ export function buildFallbackMenu(): MenuView[] {
 
   let menuId = 0;
   let subId = 0;
-  return [...byGroup.entries()].map(([name, screens]) => {
+  const rawMenus = [...byGroup.entries()].map(([name, screens]) => {
     menuId += 1;
     const isReports = name.toLowerCase() === 'reports';
-    const hasSubGroups = screens.some((s) => !s.subGroup);
+    const hasSubGroups = screens.some((s) => !!s.subGroup);
 
     let groups: MenuGroupView[] = [];
     if (screens.length > 1) {
       if (hasSubGroups) {
-        const subGroupMap = new Map<string, ShellScreen[]>();
+        const subGroupMap = new Map<string | null, ShellScreen[]>();
         for (const screen of screens) {
-          const sgName = screen.subGroup ?? name;
+          // A module landing screen with no subgroup (like /reports) belongs on the rail,
+          // not as a duplicate subMenu item under an unwanted group.
+          if (isReports && screen.path === '/reports') {
+            continue;
+          }
+          const sgName = screen.subGroup ?? null;
           if (!subGroupMap.has(sgName)) {
             subGroupMap.set(sgName, []);
           }
@@ -108,16 +140,24 @@ export function buildFallbackMenu(): MenuView[] {
       groups,
     };
   });
+
+  return sanitizeMenuTree(rawMenus);
 }
 
 function getInitialMenu(): readonly MenuView[] {
   if (typeof window !== 'undefined') {
     try {
+      // Purge old cache keys from earlier iterations
+      sessionStorage.removeItem('bb_menu_cache');
+      localStorage.removeItem('bb_menu_cache');
+      sessionStorage.removeItem('bb_menu_cache_v2');
+      localStorage.removeItem('bb_menu_cache_v2');
+
       const raw = sessionStorage.getItem(MENU_CACHE_KEY) || localStorage.getItem(MENU_CACHE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return sanitizeMenuTree(parsed);
         }
       }
     } catch {
@@ -181,8 +221,8 @@ export class MenuService {
   readonly rail = computed<ShellRailItem[]>(() =>
     this.menus()
       .map((menu): ShellRailItem | null => {
-        const firstScreen = menu.groups
-          .flatMap((group) => group.subMenus)
+        const firstScreen = (menu.groups ?? [])
+          .flatMap((group) => group.subMenus ?? [])
           .find((sub) => !!sub.routePath)?.routePath;
         // A rail entry is where a module lands, so it drops any query the screen
         // carried: landing pre-filtered on one document type is not what clicking
@@ -211,8 +251,8 @@ export class MenuService {
       const direct: ShellScreen[] = menu.routePath
         ? [{ label: menu.name, path: menu.routePath, group: menu.name, module: menu.module }]
         : [];
-      const nested = menu.groups.flatMap((group) =>
-        group.subMenus
+      const nested = (menu.groups ?? []).flatMap((group) =>
+        (group.subMenus ?? [])
           .filter((sub) => !!sub.routePath)
           .map((sub) => ({
             label: sub.name,
@@ -262,11 +302,12 @@ export class MenuService {
         }
         return;
       }
-      this.menus.set(menus);
+      const sanitized = sanitizeMenuTree(menus);
+      this.menus.set(sanitized);
       this.usingFallback.set(false);
       if (typeof window !== 'undefined') {
         try {
-          const json = JSON.stringify(menus);
+          const json = JSON.stringify(sanitized);
           sessionStorage.setItem(MENU_CACHE_KEY, json);
           localStorage.setItem(MENU_CACHE_KEY, json);
         } catch {
@@ -314,7 +355,7 @@ export class MenuService {
     for (const menu of this.menus()) {
       const paths = [
         menu.routePath,
-        ...menu.groups.flatMap((g) => g.subMenus.map((s) => s.routePath)),
+        ...(menu.groups ?? []).flatMap((g) => (g.subMenus ?? []).map((s) => s.routePath)),
       ].filter((p): p is string => !!p);
 
       for (const path of paths) {
@@ -338,7 +379,7 @@ export class MenuService {
    * Reversing that order would hand every typed register back as the mixed one.
    */
   subMenuFor(path: string): SubMenuView | null {
-    const rows = this.menus().flatMap((menu) => menu.groups.flatMap((group) => group.subMenus));
+    const rows = this.menus().flatMap((menu) => (menu.groups ?? []).flatMap((group) => group.subMenus ?? []));
     const exact = rows.find((s) => s.routePath === path);
     if (exact) return exact;
 
@@ -356,7 +397,7 @@ export class MenuService {
 
   /** How many screens a menu's panel lists. */
   rowCount(menu: MenuView): number {
-    return menu.groups.reduce((total, group) => total + group.subMenus.length, 0);
+    return (menu.groups ?? []).reduce((total, group) => total + (group.subMenus ?? []).length, 0);
   }
 
   /**
@@ -374,7 +415,7 @@ export class MenuService {
 
     const path = url.split('?')[0];
     let best: SubMenuView | null = null;
-    for (const row of this.menus().flatMap((menu) => menu.groups.flatMap((group) => group.subMenus))) {
+    for (const row of this.menus().flatMap((menu) => (menu.groups ?? []).flatMap((group) => group.subMenus ?? []))) {
       const route = row.routePath;
       if (!route || route.includes('?') || !path.startsWith(`${route}/`)) continue;
       if (!best || route.length > (best.routePath?.length ?? 0)) best = row;
@@ -459,7 +500,7 @@ export class MenuService {
 
   /** The first screen in a menu's panel. */
   private firstRoute(menu: MenuView): string | null {
-    return menu.groups.flatMap((group) => group.subMenus).find((sub) => !!sub.routePath)?.routePath ?? null;
+    return (menu.groups ?? []).flatMap((group) => group.subMenus ?? []).find((sub) => !!sub.routePath)?.routePath ?? null;
   }
 
   /**

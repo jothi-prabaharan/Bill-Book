@@ -335,10 +335,11 @@
               <select
                 class="input pt-ribbon-select"
                 aria-label="Font family"
-                (change)="setFontFamily($any($event.target).value)"
+                [ngModel]="lastFont()"
+                (ngModelChange)="setFontFamily($event)"
               >
                 @for (font of fontFamilies; track font) {
-                  <option [value]="font" [selected]="lastFont() === font">{{ font }}</option>
+                  <option [value]="font">{{ font }}</option>
                 }
               </select>
 
@@ -346,10 +347,11 @@
                 <select
                   class="input pt-size-select"
                   aria-label="Font size"
-                  (change)="setFontSize(+$any($event.target).value)"
+                  [ngModel]="currentFontSize()"
+                  (ngModelChange)="setFontSize(+$event)"
                 >
                   @for (sz of fontSizes; track sz) {
-                    <option [value]="sz" [selected]="sz === 11">{{ sz }}px</option>
+                    <option [value]="sz">{{ sz }}px</option>
                   }
                 </select>
                 <button
@@ -569,6 +571,17 @@
                 <button
                   class="pt-ic"
                   type="button"
+                  title="Insert row above"
+                  (mousedown)="keepSel($event)"
+                  (click)="rowAbove()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="10" width="18" height="10" rx="1"/><path d="M12 7V2M9 5h6"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
                   title="Insert row below"
                   (mousedown)="keepSel($event)"
                   (click)="rowBelow()"
@@ -580,12 +593,34 @@
                 <button
                   class="pt-ic"
                   type="button"
+                  title="Insert column left"
+                  (mousedown)="keepSel($event)"
+                  (click)="colLeft()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="12" y="4" width="10" height="16" rx="1"/><path d="M6 8v8M3 12h6"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
                   title="Insert column right"
                   (mousedown)="keepSel($event)"
                   (click)="colRight()"
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <rect x="2" y="4" width="10" height="16" rx="1"/><path d="M18 8v8M15 12h6"/>
+                  </svg>
+                </button>
+                <button
+                  class="pt-ic"
+                  type="button"
+                  title="Add cell"
+                  (mousedown)="keepSel($event)"
+                  (click)="addCell()"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="4" width="12" height="16" rx="1"/><path d="M19 9v6M16 12h6"/>
                   </svg>
                 </button>
                 <button
@@ -667,26 +702,55 @@
                 </button>
               </div>
 
-              <div class="pt-row-gap">
-                <input
-                  class="input pt-num-input"
-                  type="number"
-                  min="1"
-                  max="100"
-                  placeholder="Col %"
-                  title="Selected column width (%)"
-                  (change)="setColWidth(+$any($event.target).value)"
-                />
-                <input
-                  class="input pt-num-input"
-                  type="number"
-                  min="8"
-                  max="200"
-                  placeholder="Row px"
-                  title="Selected row height (px)"
-                  (change)="setRowHeight(+$any($event.target).value)"
-                />
+              <!-- Column width and Row height controls with steppers -->
+              <div class="pt-table-size-row">
+                <div class="pt-size-control">
+                  <span class="pt-sub-label">Col width</span>
+                  <div class="pt-stepper">
+                    <button class="pt-step-btn" type="button" title="Decrease width" (mousedown)="keepSel($event)" (click)="adjustColWidth(-5)">−</button>
+                    <input
+                      class="input pt-num-input"
+                      type="number"
+                      min="5"
+                      max="100"
+                      placeholder="%"
+                      title="Column width (%)"
+                      [value]="selectedCellInfo().colWidthPct || ''"
+                      (change)="setColWidth(+$any($event.target).value)"
+                    />
+                    <button class="pt-step-btn" type="button" title="Increase width" (mousedown)="keepSel($event)" (click)="adjustColWidth(5)">+</button>
+                  </div>
+                </div>
+                <div class="pt-size-control">
+                  <span class="pt-sub-label">Row height</span>
+                  <div class="pt-stepper">
+                    <button class="pt-step-btn" type="button" title="Decrease height" (mousedown)="keepSel($event)" (click)="adjustRowHeight(-2)">−</button>
+                    <input
+                      class="input pt-num-input"
+                      type="number"
+                      min="12"
+                      max="300"
+                      placeholder="px"
+                      title="Row height (px)"
+                      [value]="selectedCellInfo().rowHeightPx || ''"
+                      (change)="setRowHeight(+$any($event.target).value)"
+                    />
+                    <button class="pt-step-btn" type="button" title="Increase height" (mousedown)="keepSel($event)" (click)="adjustRowHeight(2)">+</button>
+                  </div>
+                </div>
               </div>
+
+              @if (selectedCellInfo().hasCell) {
+                <div class="pt-cell-status">
+                  Selected: Row {{ selectedCellInfo().rowIndex }}, Col {{ selectedCellInfo().colIndex }}
+                  @if (selectedCellInfo().colWidthPct > 0) {
+                    <span>· {{ selectedCellInfo().colWidthPct }}%</span>
+                  }
+                  @if (selectedCellInfo().rowHeightPx > 0) {
+                    <span>· {{ selectedCellInfo().rowHeightPx }}px</span>
+                  }
+                </div>
+              }
             </div>
           </div>
         }
@@ -799,8 +863,9 @@
                         class="pt-seg-content"
                         [attr.data-seg]="seg.code"
                         [contentEditable]="canEdit() && activeSeg() === seg.code"
-                        (mouseup)="onSnap()"
-                        (keyup)="onSnap()"
+                        (mouseup)="onSnap($event)"
+                        (keyup)="onSnap($event)"
+                        (click)="onSnap($event)"
                         (input)="onSegmentInput(seg.code)"
                       ></div>
                     </div>
@@ -971,7 +1036,7 @@
                 [title]="field.description"
                 (click)="insertField(field.tag, grp.isList)"
               >
-                {{ field.tag }}
+                {{ grp.isList ? '<<' + field.tag + '>>' : '{{' + field.tag + '}}' }}
               </button>
             }
           </div>

@@ -1,5 +1,5 @@
 <bb-create-page
-  [primaryLabel]="isNew() ? 'Save draft' : 'Save'"
+  primaryLabel="Save"
   [canDraft]="canDraft()"
   [busy]="saving()"
   [messages]="messages()"
@@ -114,14 +114,15 @@
         </div>
 
         <div class="field">
-          <bb-text-input
+          <bb-select
             id="bil-currency"
             label="Currency"
-            maxlength="3"
-            [uppercase]="true"
+            placeholder="Choose currency…"
+            [clearable]="false"
+            [options]="currencyOptions"
             [disabled]="readonlyDoc()"
             [ngModel]="currencyCode()"
-            (ngModelChange)="currencyCode.set($event)"
+            (ngModelChange)="currencyCode.set($event ?? 'INR')"
           />
         </div>
 
@@ -135,15 +136,15 @@
         </div>
 
         <div class="field">
-          <bb-text-input
+          <bb-select
             id="bil-pos"
             label="Place of supply"
-            maxlength="2"
-            placeholder="33"
-            hint="Leave blank to take from GSTIN."
+            placeholder="Choose state…"
+            [clearable]="true"
+            [options]="stateOptions"
             [disabled]="readonlyDoc()"
             [ngModel]="placeOfSupplyStateCode()"
-            (ngModelChange)="placeOfSupplyStateCode.set($event)"
+            (ngModelChange)="placeOfSupplyStateCode.set($event ?? '')"
           />
         </div>
 

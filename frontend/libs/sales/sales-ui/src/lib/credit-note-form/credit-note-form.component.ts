@@ -49,7 +49,12 @@ import {
   CustomFieldValues,
   DocumentCustomFieldsComponent,
   compactValues,
+  GST_STATE_OPTIONS,
+  TRANSACTION_CURRENCY_OPTIONS,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 
 /**
  * A grid line that remembers which invoice line it corrects. The grid spreads a
@@ -103,6 +108,20 @@ export class CreditNoteFormComponent implements OnInit {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
 
+  private readonly auth = inject(AuthService);
+  protected readonly currencyOptions = TRANSACTION_CURRENCY_OPTIONS;
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
+
   protected copyBillingToShipping(event?: Event | boolean): void {
     const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
     if (checked) {
@@ -131,9 +150,9 @@ export class CreditNoteFormComponent implements OnInit {
     invoiceId: [null as number | null, [Validators.required, Validators.min(1)]],
     contactId: [0, [Validators.required, Validators.min(1)]],
     contactGstin: ['', [Validators.maxLength(15)]],
-    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
     reasonCode: [CreditNoteReason.SalesReturn, Validators.required],
-    currencyCode: ['INR', [Validators.required, Validators.maxLength(3)]],
+    currencyCode: [this.getOrgCurrency(), [Validators.required, Validators.maxLength(3)]],
     exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     billingAddress: ['', [Validators.maxLength(100)]],
     shippingAddress: ['', [Validators.maxLength(100)]],
@@ -239,6 +258,7 @@ export class CreditNoteFormComponent implements OnInit {
       invoiceId: note.invoiceId,
       contactId: note.contactId,
       contactGstin: note.contactGstin ?? '',
+      placeOfSupplyStateCode: (note as any).placeOfSupplyStateCode || ((note as any).placeOfSupplyStateId ? String((note as any).placeOfSupplyStateId).padStart(2, '0') : this.getOrgStateCode()),
       reasonCode: note.reasonCode,
       currencyCode: note.currencyCode,
       exchangeRate: note.exchangeRate,

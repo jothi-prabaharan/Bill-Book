@@ -48,11 +48,12 @@
         </div>
 
         <div class="field">
-          <bb-text-input
+          <bb-select
             id="quote-currency"
             label="Currency"
-            maxlength="3"
-            [uppercase]="true"
+            placeholder="Choose currency…"
+            [clearable]="false"
+            [options]="currencyOptions"
             formControlName="currencyCode"
             [required]="true"
           />
@@ -68,13 +69,12 @@
         </div>
 
         <div class="field">
-          <bb-text-input
+          <bb-select
             id="quote-pos"
             label="Place of supply"
-            inputmode="numeric"
-            maxlength="2"
-            placeholder="33"
-            hint="Leave blank to take it from the GSTIN."
+            placeholder="Choose state…"
+            [clearable]="true"
+            [options]="stateOptions"
             formControlName="placeOfSupplyStateCode"
           />
         </div>

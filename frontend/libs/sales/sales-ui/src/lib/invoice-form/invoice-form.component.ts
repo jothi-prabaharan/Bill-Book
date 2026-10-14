@@ -50,6 +50,11 @@ import {
   NumberInputComponent,
   ProjectOption,
   ProjectOptionsService,
+  SelectComponent,
+  GST_STATE_OPTIONS,
+  TRANSACTION_CURRENCY_OPTIONS,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
   TextInputComponent,
   TextareaComponent,
   CheckboxComponent,
@@ -58,6 +63,7 @@ import {
   recalculate,
   totalsOf,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
 import { ProjectItemsDialogComponent } from '../project-items/project-items.dialog';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
@@ -109,6 +115,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     ProjectItemsDialogComponent,
     EwayBillPanel,
     NumberInputComponent,
+    SelectComponent,
     TextInputComponent,
     TextareaComponent,
     CheckboxComponent,
@@ -129,6 +136,20 @@ export class InvoiceFormComponent implements OnInit {
 
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
+
+  private readonly auth = inject(AuthService);
+  protected readonly currencyOptions = TRANSACTION_CURRENCY_OPTIONS;
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
 
   private readonly fb = inject(FormBuilder);
   private readonly invoices = inject(InvoiceService);
@@ -163,8 +184,8 @@ export class InvoiceFormComponent implements OnInit {
     dueDate: [inDays(30), Validators.required],
     contactId: [0, [Validators.required, Validators.min(1)]],
     contactGstin: ['', [Validators.maxLength(15)]],
-    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
-    currencyCode: ['INR', [Validators.required, Validators.maxLength(3)]],
+    placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    currencyCode: [this.getOrgCurrency(), [Validators.required, Validators.maxLength(3)]],
     exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     billingAddress: [''],
     shippingAddress: [''],
@@ -303,6 +324,9 @@ export class InvoiceFormComponent implements OnInit {
       dueDate: invoice.dueDate ?? '',
       contactId: invoice.contactId,
       contactGstin: invoice.contactGstin ?? '',
+      placeOfSupplyStateCode: invoice.placeOfSupplyStateId
+        ? String(invoice.placeOfSupplyStateId).padStart(2, '0')
+        : this.getOrgStateCode(),
       currencyCode: invoice.currencyCode,
       exchangeRate: invoice.exchangeRate,
       billingAddress: invoice.billingAddress ?? '',

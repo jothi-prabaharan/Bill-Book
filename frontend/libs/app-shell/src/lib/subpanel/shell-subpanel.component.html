@@ -27,7 +27,7 @@
 
     <div class="subbody">
       @for (group of groups(); track group.code) {
-        @if (group.name) {
+        @if (isGroupHeaderVisible(group)) {
           <button
             class="grouphead-row"
             type="button"
@@ -46,7 +46,7 @@
 
         @if (isOpen(group)) {
           @for (sub of group.subMenus; track sub.subMenuId; let i = $index) {
-            <span class="subrow" [style.--r]="i" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="!!group.name">
+            <span class="subrow" [style.--r]="i" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="isGroupHeaderVisible(group)">
               <button
                 class="subrow-link"
                 type="button"
@@ -103,7 +103,7 @@
 
       <div class="subbody subsheet-body">
       @for (group of groups(); track group.code) {
-        @if (group.name) {
+        @if (isGroupHeaderVisible(group)) {
           <button
             class="grouphead-row"
             type="button"
@@ -122,7 +122,7 @@
 
         @if (isOpen(group)) {
           @for (sub of group.subMenus; track sub.subMenuId; let i = $index) {
-            <span class="subrow" [style.--r]="i" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="!!group.name">
+            <span class="subrow" [style.--r]="i" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="isGroupHeaderVisible(group)">
               <button
                 class="subrow-link"
                 type="button"

@@ -8,10 +8,13 @@ import { QuoteListItem, QuoteService, SalesOrderService } from '@bill-book/sales
 import {
   BranchDateInputComponent,
   MessageBoxComponent,
-  TextInputComponent,
+  SelectComponent,
+  GST_STATE_OPTIONS,
+  resolveOrgStateCode,
   TextareaComponent,
   UiMessage,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 
 /**
  * Turning an accepted quote into a sales order.
@@ -35,13 +38,21 @@ import {
     ReactiveFormsModule,
     MessageBoxComponent,
     BranchDateInputComponent,
-    TextInputComponent,
+    SelectComponent,
     TextareaComponent,
   ],
   templateUrl: './quote-to-order.dialog.html',
   styleUrl: './quote-to-order.dialog.scss',
 })
 export class QuoteToOrderDialogComponent implements OnInit {
+  private readonly auth = inject(AuthService);
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly quotes = inject(QuoteService);
   private readonly orders = inject(SalesOrderService);
@@ -60,7 +71,7 @@ export class QuoteToOrderDialogComponent implements OnInit {
     quoteId: [0, [Validators.required, Validators.min(1)]],
     documentDate: [today(), Validators.required],
     deliveryDate: [''],
-    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
     notes: [''],
   });
 

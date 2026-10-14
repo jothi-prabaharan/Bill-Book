@@ -1,5 +1,5 @@
 <bb-create-page
-  [primaryLabel]="isNew() ? 'Save draft' : 'Save'"
+  primaryLabel="Save"
   [canDraft]="canDraft()"
   [busy]="saving()"
   [messages]="messages()"
@@ -123,14 +123,15 @@
         </div>
 
         <div class="field">
-          <bb-text-input
+          <bb-select
             id="dbn-currency"
             label="Currency"
-            maxlength="3"
-            [uppercase]="true"
+            placeholder="Choose currency…"
+            [clearable]="false"
+            [options]="currencyOptions"
             [disabled]="readonlyDoc()"
             [ngModel]="currencyCode()"
-            (ngModelChange)="currencyCode.set($event)"
+            (ngModelChange)="currencyCode.set($event ?? 'INR')"
           />
         </div>
 

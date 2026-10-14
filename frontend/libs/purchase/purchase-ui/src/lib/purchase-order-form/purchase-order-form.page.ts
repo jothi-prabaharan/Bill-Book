@@ -31,7 +31,13 @@ import {
   CustomFieldValues,
   DocumentCustomFieldsComponent,
   compactValues,
+  SelectComponent,
+  GST_STATE_OPTIONS,
+  TRANSACTION_CURRENCY_OPTIONS,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 import {
   ItemOption,
   PurchaseLookupService,
@@ -87,6 +93,7 @@ type Picker = 'none' | 'vendor' | 'item';
     LookupDialogComponent,
     BranchDateInputComponent,
     TextInputComponent,
+    SelectComponent,
     TextareaComponent,
     CheckboxComponent,
     MessageBoxComponent,
@@ -97,6 +104,20 @@ type Picker = 'none' | 'vendor' | 'item';
 export class PurchaseOrderFormPage {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
+
+  private readonly auth = inject(AuthService);
+  protected readonly currencyOptions = TRANSACTION_CURRENCY_OPTIONS;
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
 
   private readonly orders = inject(PurchaseOrderService);
   private readonly lookups = inject(PurchaseLookupService);
@@ -114,8 +135,8 @@ export class PurchaseOrderFormPage {
   protected readonly contactId = signal<number | null>(null);
   protected readonly contactLabel = signal<string>('');
   protected readonly contactGstin = signal('');
-  protected readonly placeOfSupplyStateCode = signal('');
-  protected readonly currencyCode = signal('INR');
+  protected readonly placeOfSupplyStateCode = signal(this.getOrgStateCode());
+  protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');

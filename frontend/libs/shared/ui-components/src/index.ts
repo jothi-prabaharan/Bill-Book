@@ -43,6 +43,7 @@ export * from './lib/icon-button/icon-button.component';
  * see `apps/docs/content/inputs.md` for which to reach for and why.
  */
 export * from './lib/forms/field.model';
+export * from './lib/forms/gst-states';
 export * from './lib/forms/field-id';
 export * from './lib/forms/decimal';
 export * from './lib/forms/validators';

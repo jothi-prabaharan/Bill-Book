@@ -97,14 +97,14 @@ export class BranchDateInputComponent extends BbControlBase<string | null> {
   /** The day the calendar's keyboard focus is on. */
   protected readonly cursor = signal<string>(todayIso());
 
-  protected readonly pattern = computed(() => this.formats.settings().datePattern);
+  protected readonly pattern = computed(() => this.formats.settings()?.datePattern || 'dd/MM/yyyy');
 
   protected readonly text = computed(
     () => this.draft() ?? formatDate(this.value(), this.pattern()),
   );
 
   protected readonly shownPlaceholder = computed(
-    () => this.placeholder() || this.pattern().toLowerCase(),
+    () => this.placeholder() || (this.pattern() || 'dd/MM/yyyy').toLowerCase(),
   );
 
   /** The page's own error wins; otherwise what the typing could not be read as. */

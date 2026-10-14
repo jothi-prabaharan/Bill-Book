@@ -5,7 +5,7 @@
       Cancel
     </button>
   }
-  @if (canDraft()) {
+  @if (canDraft() && draftLabel() !== primaryLabel()) {
     <button type="button" class="btn btn-secondary" [disabled]="busy()" (click)="saveDraft.emit()">
       {{ draftLabel() }}
     </button>

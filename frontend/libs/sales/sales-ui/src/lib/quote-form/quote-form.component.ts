@@ -26,7 +26,13 @@ import {
   CustomFieldValues,
   DocumentCustomFieldsComponent,
   compactValues,
+  SelectComponent,
+  GST_STATE_OPTIONS,
+  TRANSACTION_CURRENCY_OPTIONS,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SalesPicker } from '../sales-picker';
 
@@ -45,6 +51,7 @@ import { SalesPicker } from '../sales-picker';
     DocumentLineGridComponent,
     RouterModule,
     TextInputComponent,
+    SelectComponent,
     TextareaComponent,
     CheckboxComponent,
     BranchDateInputComponent,
@@ -61,9 +68,23 @@ export class QuoteFormComponent implements OnInit {
   protected readonly documentNo = signal<string | null>(null);
   protected readonly saving = signal<boolean>(false);
 
+  private readonly auth = inject(AuthService);
+  protected readonly currencyOptions = TRANSACTION_CURRENCY_OPTIONS;
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
+
   protected looksInterState(): boolean {
     const pos = this.form.controls.placeOfSupplyStateCode.value;
-    return !!pos && pos !== '33';
+    return !!pos && pos !== this.getOrgStateCode();
   }
 
   protected copyBillingToShipping(event?: Event | boolean): void {
@@ -86,8 +107,8 @@ export class QuoteFormComponent implements OnInit {
     validUntil: [new Date().toISOString().split('T')[0], Validators.required],
     contactId: [0, [Validators.required, Validators.min(1)]],
     contactGstin: [''],
-    placeOfSupplyStateCode: [''],
-    currencyCode: ['INR', Validators.required],
+    placeOfSupplyStateCode: [this.getOrgStateCode()],
+    currencyCode: [this.getOrgCurrency(), Validators.required],
     exchangeRate: [1, [Validators.required, Validators.min(0.0001)]],
     billingAddress: [''],
     shippingAddress: [''],

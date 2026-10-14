@@ -125,6 +125,26 @@ export class ShellSubpanelComponent {
     });
   }
 
+  /**
+   * Whether to display an accordion header for this section.
+   * Unwanted subgroups (such as a single group whose name repeats the menu title)
+   * are rendered as unnamed flat sections without a redundant collapsible header.
+   */
+  isGroupHeaderVisible(group: MenuGroupView): boolean {
+    if (!group.name || !group.name.trim()) return false;
+    const menuLabel = this.label().trim().toLowerCase();
+    const groupName = group.name.trim().toLowerCase();
+    if (groupName === menuLabel) return false;
+
+    const menu = this.menu();
+    if (!menu) return false;
+    const namedGroups = menu.groups.filter(
+      (g) => g.name && g.name.trim().toLowerCase() !== menuLabel,
+    );
+    if (namedGroups.length <= 1 && menu.groups.length <= 1) return false;
+    return true;
+  }
+
   /** Open the named section holding the screen on view, if the open menu has one. */
   private openCurrentSection(): void {
     const menu = this.menu();
@@ -133,10 +153,10 @@ export class ShellSubpanelComponent {
     const group = route
       ? menu.groups.find((g) => g.subMenus.some((s) => s.routePath === route))
       : null;
-    if (group?.name) {
+    if (group && this.isGroupHeaderVisible(group)) {
       this.panel.openGroup.set(group.code);
     } else if (this.panel.openGroup() === null || !menu.groups.some((g) => g.code === this.panel.openGroup())) {
-      const firstNamed = menu.groups.find((g) => !!g.name);
+      const firstNamed = menu.groups.find((g) => this.isGroupHeaderVisible(g));
       if (firstNamed) {
         this.panel.openGroup.set(firstNamed.code);
       }
@@ -148,14 +168,15 @@ export class ShellSubpanelComponent {
   }
 
   isOpen(group: MenuGroupView): boolean {
+    if (!this.isGroupHeaderVisible(group)) return true;
     // While searching every section stands open: hiding a hit behind a collapsed
     // header is the opposite of what searching asked for.
     if (this.query().trim()) return true;
-    return this.panel.isGroupOpen(group.code, !!group.name);
+    return this.panel.isGroupOpen(group.code, true);
   }
 
   toggleGroup(group: MenuGroupView): void {
-    if (!group.name) return;
+    if (!this.isGroupHeaderVisible(group)) return;
     this.panel.toggleGroup(group.code);
   }
 

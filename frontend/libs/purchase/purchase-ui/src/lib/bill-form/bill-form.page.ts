@@ -38,7 +38,12 @@ import {
   LabelData,
   LabelKind,
   LabelPrintDialog,
+  GST_STATE_OPTIONS,
+  TRANSACTION_CURRENCY_OPTIONS,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 import { goodsReceiptLabelKind, goodsReceiptLabels } from '../goods-receipt-form/goods-receipt-labels';
 import {
   ItemOption,
@@ -115,6 +120,20 @@ export class BillFormPage {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
 
+  private readonly auth = inject(AuthService);
+  protected readonly currencyOptions = TRANSACTION_CURRENCY_OPTIONS;
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
+
   private readonly bills = inject(BillService);
   protected readonly formats = inject(FormatSettingsService);
   private readonly receipts = inject(GoodsReceiptService);
@@ -136,8 +155,8 @@ export class BillFormPage {
   protected readonly vendorBillNo = signal('');
   protected readonly vendorBillDate = signal(this.today());
   protected readonly dueDate = signal('');
-  protected readonly placeOfSupplyStateCode = signal('');
-  protected readonly currencyCode = signal('INR');
+  protected readonly placeOfSupplyStateCode = signal(this.getOrgStateCode());
+  protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');

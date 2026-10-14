@@ -37,7 +37,10 @@ import {
   LabelData,
   LabelKind,
   LabelPrintDialog,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 import { goodsReceiptLabelKind, goodsReceiptLabels } from './goods-receipt-labels';
 
 import {
@@ -131,6 +134,18 @@ export class GoodsReceiptFormPage {
   protected readonly documentNo = signal<string | null>(null);
   protected readonly status = signal('Draft');
 
+  private readonly auth = inject(AuthService);
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
+
   protected readonly documentDate = signal(this.today());
   protected readonly contactId = signal<number | null>(null);
   protected readonly contactLabel = signal('');
@@ -139,10 +154,10 @@ export class GoodsReceiptFormPage {
   protected readonly purchaseOrderNo = signal('');
   protected readonly vendorDeliveryNoteNo = signal('');
   protected readonly vendorDeliveryNoteDate = signal('');
-  protected readonly placeOfSupplyStateCode = signal('');
+  protected readonly placeOfSupplyStateCode = signal(this.getOrgStateCode());
   protected readonly billingAddress = signal('');
   protected readonly shippingAddress = signal('');
-  protected readonly currencyCode = signal('INR');
+  protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);
   protected readonly notes = signal('');
   protected readonly termsAndConditions = signal('');

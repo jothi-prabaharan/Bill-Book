@@ -80,13 +80,12 @@
           </div>
 
           <div class="field">
-            <bb-text-input
+            <bb-select
               id="q2o-pos"
               label="Place of supply"
-              inputmode="numeric"
-              maxlength="2"
-              placeholder="33"
-              hint="Leave blank for a registered customer — their GSTIN settles it."
+              placeholder="Choose state…"
+              [clearable]="true"
+              [options]="stateOptions"
               formControlName="placeOfSupplyStateCode"
               [error]="
                 showError('placeOfSupplyStateCode')

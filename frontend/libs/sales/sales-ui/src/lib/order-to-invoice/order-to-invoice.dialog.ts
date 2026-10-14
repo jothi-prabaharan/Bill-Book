@@ -7,10 +7,13 @@ import { InvoiceService, SalesOrderListItem, SalesOrderService } from '@bill-boo
 import {
   BranchDateInputComponent,
   MessageBoxComponent,
-  TextInputComponent,
+  SelectComponent,
+  GST_STATE_OPTIONS,
+  resolveOrgStateCode,
   TextareaComponent,
   UiMessage,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 
 /** How many confirmed orders to offer. Enough to pick from without a second pager. */
 const CANDIDATE_PAGE = 100;
@@ -37,13 +40,21 @@ const CANDIDATE_PAGE = 100;
     ReactiveFormsModule,
     MessageBoxComponent,
     BranchDateInputComponent,
-    TextInputComponent,
+    SelectComponent,
     TextareaComponent,
   ],
   templateUrl: './order-to-invoice.dialog.html',
   styleUrl: './order-to-invoice.dialog.scss',
 })
 export class OrderToInvoiceDialogComponent implements OnInit {
+  private readonly auth = inject(AuthService);
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly orders = inject(SalesOrderService);
   private readonly invoices = inject(InvoiceService);
@@ -66,7 +77,7 @@ export class OrderToInvoiceDialogComponent implements OnInit {
     // refused by the server, and an order has no due date to carry across — a
     // delivery date is when goods are expected, not when money is.
     dueDate: [inDays(30), Validators.required],
-    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
     notes: [''],
   });
 

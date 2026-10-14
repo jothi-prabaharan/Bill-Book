@@ -42,7 +42,13 @@ import {
   CustomFieldValues,
   DocumentCustomFieldsComponent,
   compactValues,
+  SelectComponent,
+  GST_STATE_OPTIONS,
+  TRANSACTION_CURRENCY_OPTIONS,
+  resolveOrgStateCode,
+  resolveOrgCurrency,
 } from '@bill-book/ui-components';
+import { AuthService } from '@bill-book/auth';
 import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
 import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-availability.drawer';
 
@@ -88,6 +94,7 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
     RouterModule,
     DocumentLineGridComponent,
     TextInputComponent,
+    SelectComponent,
     TextareaComponent,
     CheckboxComponent,
     BranchDateInputComponent,
@@ -100,6 +107,20 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
 export class SalesOrderFormComponent implements OnInit {
   /** The document's custom field values (TK-112). */
   protected readonly customValues = signal<CustomFieldValues>({});
+
+  private readonly auth = inject(AuthService);
+  protected readonly currencyOptions = TRANSACTION_CURRENCY_OPTIONS;
+  protected readonly stateOptions = GST_STATE_OPTIONS;
+
+  private getOrgStateCode(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgStateCode(activeOrg?.gstin);
+  }
+
+  private getOrgCurrency(): string {
+    const activeOrg = this.auth.organizations().find((o) => o.orgId === this.auth.activeOrgId());
+    return resolveOrgCurrency(activeOrg?.baseCurrency);
+  }
 
   protected copyBillingToShipping(event?: Event | boolean): void {
     const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
@@ -147,8 +168,8 @@ export class SalesOrderFormComponent implements OnInit {
     deliveryDate: [''],
     contactId: [0, [Validators.required, Validators.min(1)]],
     contactGstin: ['', [Validators.maxLength(15)]],
-    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
-    currencyCode: ['INR', [Validators.required, Validators.maxLength(3)]],
+    placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    currencyCode: [this.getOrgCurrency(), [Validators.required, Validators.maxLength(3)]],
     exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     billingAddress: [''],
     shippingAddress: [''],
@@ -314,6 +335,9 @@ export class SalesOrderFormComponent implements OnInit {
       deliveryDate: order.deliveryDate ?? '',
       contactId: order.contactId,
       contactGstin: order.contactGstin ?? '',
+      placeOfSupplyStateCode: order.placeOfSupplyStateId
+        ? String(order.placeOfSupplyStateId).padStart(2, '0')
+        : this.getOrgStateCode(),
       currencyCode: order.currencyCode,
       exchangeRate: order.exchangeRate,
       billingAddress: order.billingAddress ?? '',
