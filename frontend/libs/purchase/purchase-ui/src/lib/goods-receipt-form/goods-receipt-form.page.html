@@ -117,74 +117,7 @@
       </div>
     </div>
 
-    <!-- Card Row: Address Details -->
-    <div class="card-row address-row">
-      <div class="card address-card">
-        <div class="card-kicker">Billing address</div>
-        <div class="field">
-          <bb-select
-            id="grn-billing-select"
-            label="Choose address"
-            [placeholder]="billingAddressPlaceholder()"
-            [options]="billingAddressOptions()"
-            [disabled]="readonlyDoc() || billingAddressOptions().length === 0"
-            [ngModel]="selectedBillingOrgId()"
-            (ngModelChange)="onBillingAddressChange($event)"
-          />
-        </div>
-        <div class="field" style="margin-top: var(--space-2)">
-          <bb-address-summary
-            [title]="selectedBillingAddress()?.title"
-            [badge]="selectedBillingAddress()?.badge"
-            [lines]="selectedBillingAddress()?.lines"
-            [email]="selectedBillingAddress()?.email"
-            [phone]="selectedBillingAddress()?.phone"
-            [gstin]="selectedBillingAddress()?.gstin"
-            emptyText="No branch address selected"
-          />
-        </div>
-        <div class="card-meta">Our branch billing premises.</div>
-      </div>
-
-      <div class="card address-card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="card-kicker" style="margin-bottom:0">Deliver to</div>
-          <bb-checkbox
-            text="Same as billing"
-            [disabled]="readonlyDoc()"
-            [ngModel]="sameAsBilling()"
-            (ngModelChange)="onSameAsBillingChange($event)"
-          />
-        </div>
-        @if (!sameAsBilling()) {
-          <div class="field" style="margin-top: var(--space-2)">
-            <bb-select
-              id="grn-shipping-select"
-              label="Choose address"
-              [placeholder]="shippingAddressPlaceholder()"
-              [options]="shippingAddressOptions()"
-              [disabled]="readonlyDoc() || shippingAddressOptions().length === 0"
-              [ngModel]="selectedShippingOrgId()"
-              (ngModelChange)="onShippingAddressChange($event)"
-            />
-          </div>
-        }
-        <div class="field" style="margin-top: var(--space-2)">
-          <bb-address-summary
-            [title]="selectedShippingAddress()?.title"
-            [badge]="selectedShippingAddress()?.badge"
-            [lines]="selectedShippingAddress()?.lines"
-            [email]="selectedShippingAddress()?.email"
-            [phone]="selectedShippingAddress()?.phone"
-            [gstin]="selectedShippingAddress()?.gstin"
-            emptyText="No delivery address selected"
-          />
-        </div>
-        <div class="card-meta">Address where stock was received.</div>
-      </div>
-    </div>
-
-    <!-- Card 3: Items delivered -->
+    <!-- Card 2: Items delivered -->
     <div class="card">
       <div class="card-kicker">What was delivered</div>
 
@@ -218,7 +151,7 @@
       </div>
     </div>
 
-    <!-- Card 4: Items accepted -->
+    <!-- Card 3: Items accepted -->
     <div class="card">
       <div class="card-kicker">What was accepted</div>
       <p class="field__hint" style="margin-bottom: var(--space-2)">
@@ -289,6 +222,73 @@
           Inventory refuses the receipt and names the line if one is missing.
         </p>
       }
+    </div>
+
+    <!-- Card Row: Address Details -->
+    <div class="card-row address-row">
+      <div class="card address-card">
+        <div class="card-kicker">Billing address</div>
+        <div class="field">
+          <bb-select
+            id="grn-billing-select"
+            label="Choose address"
+            [placeholder]="billingAddressPlaceholder()"
+            [options]="billingAddressOptions()"
+            [disabled]="readonlyDoc() || billingAddressOptions().length === 0"
+            [ngModel]="selectedBillingOrgId()"
+            (ngModelChange)="onBillingAddressChange($event)"
+          />
+        </div>
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-address-summary
+            [title]="selectedBillingAddress()?.title"
+            [badge]="selectedBillingAddress()?.badge"
+            [lines]="selectedBillingAddress()?.lines"
+            [email]="selectedBillingAddress()?.email"
+            [phone]="selectedBillingAddress()?.phone"
+            [gstin]="selectedBillingAddress()?.gstin"
+            emptyText="No branch address selected"
+          />
+        </div>
+        <div class="card-meta">Our branch billing premises.</div>
+      </div>
+
+      <div class="card address-card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="card-kicker" style="margin-bottom:0">Deliver to</div>
+          <bb-checkbox
+            text="Same as billing"
+            [disabled]="readonlyDoc()"
+            [ngModel]="sameAsBilling()"
+            (ngModelChange)="onSameAsBillingChange($event)"
+          />
+        </div>
+        @if (!sameAsBilling()) {
+          <div class="field" style="margin-top: var(--space-2)">
+            <bb-select
+              id="grn-shipping-select"
+              label="Choose address"
+              [placeholder]="shippingAddressPlaceholder()"
+              [options]="shippingAddressOptions()"
+              [disabled]="readonlyDoc() || shippingAddressOptions().length === 0"
+              [ngModel]="selectedShippingOrgId()"
+              (ngModelChange)="onShippingAddressChange($event)"
+            />
+          </div>
+        }
+        <div class="field" style="margin-top: var(--space-2)">
+          <bb-address-summary
+            [title]="selectedShippingAddress()?.title"
+            [badge]="selectedShippingAddress()?.badge"
+            [lines]="selectedShippingAddress()?.lines"
+            [email]="selectedShippingAddress()?.email"
+            [phone]="selectedShippingAddress()?.phone"
+            [gstin]="selectedShippingAddress()?.gstin"
+            emptyText="No delivery address selected"
+          />
+        </div>
+        <div class="card-meta">Address where stock was received.</div>
+      </div>
     </div>
 
     <!-- Card Row: Notes & Totals -->

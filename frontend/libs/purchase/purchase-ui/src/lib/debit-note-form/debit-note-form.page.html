@@ -146,6 +146,73 @@
       </div>
     </div>
 
+    <!-- Card 2: Items -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)">
+        <div class="card-kicker" style="margin-bottom:0">
+          {{ movesStock() ? 'What is going back' : 'What is being credited' }}
+        </div>
+        @if (lines().length > 0 && !readonlyDoc()) {
+          <div style="display:flex;gap:var(--space-2)">
+            <button type="button" class="btn btn-secondary m-0" (click)="returnAll()">
+              Take everything outstanding
+            </button>
+            <button type="button" class="btn btn-secondary m-0" (click)="zeroAll()">
+              Set all to zero
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (lines().length === 0) {
+        <p class="state">Choose a bill above to see what can be corrected.</p>
+      } @else {
+        @if (!readonlyDoc()) {
+          <div style="margin-bottom: var(--space-2); max-width: 420px">
+            <bb-scan
+              label="Scan"
+              placeholder="Scan an item going back"
+              ariaLabel="Scan an item going back"
+              [global]="true"
+              (scanned)="onScan($event)"
+            />
+          </div>
+        }
+
+        <bb-data-grid fillHeight [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
+          <ng-template bbCellTemplate="label" let-row="row">
+            {{ row.label }}
+          </ng-template>
+          <ng-template bbCellTemplate="available" let-row="row">
+            {{ row.available }}
+          </ng-template>
+          <ng-template bbCellTemplate="quantity" let-row="row" let-index="index">
+            <bb-quantity-input
+              ariaLabel="Quantity to debit"
+              class="input--qty"
+              [max]="row.available"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.quantity"
+              (ngModelChange)="onQuantityChange(index, $event)"
+              [name]="'qty' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="unitPrice" let-row="row">
+            {{ row.unitPrice | number: '1.2-2' }}
+          </ng-template>
+          <ng-template bbCellTemplate="value" let-row="row">
+            {{ row.quantity * row.unitPrice | number: '1.2-2' }}
+          </ng-template>
+        </bb-data-grid>
+
+        <p class="field__hint" style="margin-top: var(--space-2)">
+          Prices come from the bill and cannot be changed &mdash; a credit has to
+          match what was charged. Tax is worked out by the server and reversed
+          against the same rates the bill claimed.
+        </p>
+      }
+    </div>
+
     <!-- Card Row: Address Details -->
     <div class="card-row address-row">
       <div class="card address-card">
@@ -211,73 +278,6 @@
         </div>
         <div class="card-meta">Destination address for returned goods.</div>
       </div>
-    </div>
-
-    <!-- Card 3: Items -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)">
-        <div class="card-kicker" style="margin-bottom:0">
-          {{ movesStock() ? 'What is going back' : 'What is being credited' }}
-        </div>
-        @if (lines().length > 0 && !readonlyDoc()) {
-          <div style="display:flex;gap:var(--space-2)">
-            <button type="button" class="btn btn-secondary m-0" (click)="returnAll()">
-              Take everything outstanding
-            </button>
-            <button type="button" class="btn btn-secondary m-0" (click)="zeroAll()">
-              Set all to zero
-            </button>
-          </div>
-        }
-      </div>
-
-      @if (lines().length === 0) {
-        <p class="state">Choose a bill above to see what can be corrected.</p>
-      } @else {
-        @if (!readonlyDoc()) {
-          <div style="margin-bottom: var(--space-2); max-width: 420px">
-            <bb-scan
-              label="Scan"
-              placeholder="Scan an item going back"
-              ariaLabel="Scan an item going back"
-              [global]="true"
-              (scanned)="onScan($event)"
-            />
-          </div>
-        }
-
-        <bb-data-grid fillHeight [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
-          <ng-template bbCellTemplate="label" let-row="row">
-            {{ row.label }}
-          </ng-template>
-          <ng-template bbCellTemplate="available" let-row="row">
-            {{ row.available }}
-          </ng-template>
-          <ng-template bbCellTemplate="quantity" let-row="row" let-index="index">
-            <bb-quantity-input
-              ariaLabel="Quantity to debit"
-              class="input--qty"
-              [max]="row.available"
-              [disabled]="readonlyDoc()"
-              [ngModel]="row.quantity"
-              (ngModelChange)="onQuantityChange(index, $event)"
-              [name]="'qty' + index"
-            />
-          </ng-template>
-          <ng-template bbCellTemplate="unitPrice" let-row="row">
-            {{ row.unitPrice | number: '1.2-2' }}
-          </ng-template>
-          <ng-template bbCellTemplate="value" let-row="row">
-            {{ row.quantity * row.unitPrice | number: '1.2-2' }}
-          </ng-template>
-        </bb-data-grid>
-
-        <p class="field__hint" style="margin-top: var(--space-2)">
-          Prices come from the bill and cannot be changed &mdash; a credit has to
-          match what was charged. Tax is worked out by the server and reversed
-          against the same rates the bill claimed.
-        </p>
-      }
     </div>
 
     <!-- Card Row: Notes & Totals -->

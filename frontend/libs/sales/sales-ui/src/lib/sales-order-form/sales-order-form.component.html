@@ -152,6 +152,31 @@
       </div>
     </div>
 
+    <!-- Card 2: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
+      <div class="sor-form__lines" style="border:none;margin-top:0">
+        @if (!context().readonly) {
+          <div class="so-form__scan">
+            <bb-scan
+              label="Scan"
+              placeholder="Scan or type a barcode or item code"
+              ariaLabel="Scan an item onto the lines"
+              [global]="true"
+              (scanned)="onScan($event)"
+            />
+          </div>
+        }
+        <bb-document-line-grid
+          [projects]="projectOptions()"
+          [lines]="lines()"
+          [context]="context()"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
+        />
+      </div>
+    </div>
+
     <!-- Card Row: Billing & Shipping Address -->
     <div class="card-row address-row">
       <div class="card address-card">
@@ -218,31 +243,6 @@
           />
         </div>
         <div class="card-meta">Delivery destination for the goods or services.</div>
-      </div>
-    </div>
-
-    <!-- Card 3: Items -->
-    <div class="card">
-      <div class="card-kicker">Items</div>
-      <div class="sor-form__lines" style="border:none;margin-top:0">
-        @if (!context().readonly) {
-          <div class="so-form__scan">
-            <bb-scan
-              label="Scan"
-              placeholder="Scan or type a barcode or item code"
-              ariaLabel="Scan an item onto the lines"
-              [global]="true"
-              (scanned)="onScan($event)"
-            />
-          </div>
-        }
-        <bb-document-line-grid
-          [projects]="projectOptions()"
-          [lines]="lines()"
-          [context]="context()"
-          (linesChange)="onLinesChange($event)"
-          (pickItem)="onPickItem($event)"
-        />
       </div>
     </div>
 

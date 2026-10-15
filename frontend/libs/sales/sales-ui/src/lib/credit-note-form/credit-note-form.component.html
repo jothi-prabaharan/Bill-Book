@@ -142,6 +142,46 @@
       </div>
     </div>
 
+    @if (editable() && allocationRows().length > 0) {
+      <div class="card">
+        <div class="card-kicker">Invoice allocation</div>
+        <p class="card-meta" style="margin-top:0;margin-bottom:var(--space-2)">The customer's open invoices. Allocating to one of them links this credit note.</p>
+        <bb-allocation-grid
+          [rows]="allocationRows()"
+          [amountToAllocate]="amountToAllocate()"
+          (rowsChange)="onAllocationRowsChange($event)"
+        />
+      </div>
+    }
+
+    <!-- Card 2: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
+      <div class="crn-form__scan">
+        <bb-scan
+          label="Scan"
+          placeholder="Scan or type a barcode or item code"
+          ariaLabel="Scan an item onto the lines"
+          [global]="true"
+          (scanned)="onScan($event)"
+        />
+        @if (!context().readonly || lines().length === 0) {
+          <button type="button" class="btn btn-secondary m-0" style="height:36px;white-space:nowrap" (click)="zeroQuantities()">
+            Set all to zero
+          </button>
+        }
+      </div>
+
+      <div style="overflow-x:auto">
+        <bb-document-line-grid
+          [lines]="lines()"
+          [context]="context()"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
+        />
+      </div>
+    </div>
+
     <!-- Card Row: Address Details -->
     <div class="card-row address-row">
       <div class="card address-card">
@@ -208,46 +248,6 @@
           />
         </div>
         <div class="card-meta">Delivery destination for the goods or services.</div>
-      </div>
-    </div>
-
-    @if (editable() && allocationRows().length > 0) {
-      <div class="card">
-        <div class="card-kicker">Invoice allocation</div>
-        <p class="card-meta" style="margin-top:0;margin-bottom:var(--space-2)">The customer's open invoices. Allocating to one of them links this credit note.</p>
-        <bb-allocation-grid
-          [rows]="allocationRows()"
-          [amountToAllocate]="amountToAllocate()"
-          (rowsChange)="onAllocationRowsChange($event)"
-        />
-      </div>
-    }
-
-    <!-- Card 3: Items -->
-    <div class="card">
-      <div class="card-kicker">Items</div>
-      <div class="crn-form__scan">
-        <bb-scan
-          label="Scan"
-          placeholder="Scan or type a barcode or item code"
-          ariaLabel="Scan an item onto the lines"
-          [global]="true"
-          (scanned)="onScan($event)"
-        />
-        @if (!context().readonly || lines().length === 0) {
-          <button type="button" class="btn btn-secondary m-0" style="height:36px;white-space:nowrap" (click)="zeroQuantities()">
-            Set all to zero
-          </button>
-        }
-      </div>
-
-      <div style="overflow-x:auto">
-        <bb-document-line-grid
-          [lines]="lines()"
-          [context]="context()"
-          (linesChange)="onLinesChange($event)"
-          (pickItem)="onPickItem($event)"
-        />
       </div>
     </div>
 

@@ -150,6 +150,40 @@
       </div>
     </div>
 
+    <!-- Card 2: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
+      <div class="inv-form__lines">
+        @if (editable()) {
+          <div class="inv-form__project-items">
+            <button type="button" class="btn btn-secondary" (click)="showProjectItems.set(true)">Add project items</button>
+            @if (projectItems().length > 0) {
+              <span>{{ projectItems().length }} project item(s) billed on this invoice, claimed when it posts.</span>
+              <button type="button" class="btn btn-link" (click)="clearProjectItems()">Stop billing them</button>
+            }
+          </div>
+        }
+        @if (!context().readonly) {
+          <div class="inv-form__scan">
+            <bb-scan
+              label="Scan"
+              placeholder="Scan or type a barcode or item code"
+              ariaLabel="Scan an item onto the lines"
+              [global]="true"
+              (scanned)="onScan($event)"
+            />
+          </div>
+        }
+        <bb-document-line-grid
+          [projects]="projectOptions()"
+          [lines]="lines()"
+          [context]="context()"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
+        />
+      </div>
+    </div>
+
     <!-- Card Row: Billing & Shipping Address -->
     <div class="card-row address-row">
       <div class="card address-card">
@@ -216,40 +250,6 @@
           />
         </div>
         <div class="card-meta">Delivery destination for the goods or services.</div>
-      </div>
-    </div>
-
-    <!-- Card 3: Items -->
-    <div class="card">
-      <div class="card-kicker">Items</div>
-      <div class="inv-form__lines">
-        @if (editable()) {
-          <div class="inv-form__project-items">
-            <button type="button" class="btn btn-secondary" (click)="showProjectItems.set(true)">Add project items</button>
-            @if (projectItems().length > 0) {
-              <span>{{ projectItems().length }} project item(s) billed on this invoice, claimed when it posts.</span>
-              <button type="button" class="btn btn-link" (click)="clearProjectItems()">Stop billing them</button>
-            }
-          </div>
-        }
-        @if (!context().readonly) {
-          <div class="inv-form__scan">
-            <bb-scan
-              label="Scan"
-              placeholder="Scan or type a barcode or item code"
-              ariaLabel="Scan an item onto the lines"
-              [global]="true"
-              (scanned)="onScan($event)"
-            />
-          </div>
-        }
-        <bb-document-line-grid
-          [projects]="projectOptions()"
-          [lines]="lines()"
-          [context]="context()"
-          (linesChange)="onLinesChange($event)"
-          (pickItem)="onPickItem($event)"
-        />
       </div>
     </div>
 

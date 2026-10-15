@@ -259,6 +259,41 @@
       </div>
     </div>
 
+    <!-- Card 2: Items -->
+    <div class="card">
+      <div class="card-kicker">Items</div>
+      @if (!readonlyDoc() && !againstReceipt()) {
+        <div class="bill-form__scan">
+          <bb-scan
+            label="Scan"
+            placeholder="Scan or type a barcode or item code"
+            ariaLabel="Scan an item"
+            [global]="true"
+            (scanned)="onScan($event)"
+          />
+        </div>
+      }
+
+      <div style="overflow-x:auto">
+        <bb-document-line-grid
+          [projects]="projectOptions()"
+          [showBilling]="true"
+          [lines]="lines()"
+          [context]="gridContext()"
+          [taxGroups]="taxGroups()"
+          [showLineType]="true"
+          (linesChange)="onLinesChange($event)"
+          (pickItem)="onPickItem($event)"
+        />
+      </div>
+
+      @if (againstReceipt()) {
+        <div class="card-meta" style="margin-top:var(--space-2)">
+          Lines locked to goods receipt #{{ goodsReceiptNo() }}.
+        </div>
+      }
+    </div>
+
     <!-- Card Row: Address Details -->
     <div class="card-row address-row">
       <div class="card address-card" [class.address-card--collapsed]="!vendorDetailsOpen()">
@@ -350,41 +385,6 @@
           <div class="card-meta">Our branch delivery destination.</div>
         </div>
       </div>
-    </div>
-
-    <!-- Card 3: Items -->
-    <div class="card">
-      <div class="card-kicker">Items</div>
-      @if (!readonlyDoc() && !againstReceipt()) {
-        <div class="bill-form__scan">
-          <bb-scan
-            label="Scan"
-            placeholder="Scan or type a barcode or item code"
-            ariaLabel="Scan an item"
-            [global]="true"
-            (scanned)="onScan($event)"
-          />
-        </div>
-      }
-
-      <div style="overflow-x:auto">
-        <bb-document-line-grid
-          [projects]="projectOptions()"
-          [showBilling]="true"
-          [lines]="lines()"
-          [context]="gridContext()"
-          [taxGroups]="taxGroups()"
-          [showLineType]="true"
-          (linesChange)="onLinesChange($event)"
-          (pickItem)="onPickItem($event)"
-        />
-      </div>
-
-      @if (againstReceipt()) {
-        <div class="card-meta" style="margin-top:var(--space-2)">
-          Lines locked to goods receipt #{{ goodsReceiptNo() }}.
-        </div>
-      }
     </div>
 
     <!-- Card Row: Notes & Totals -->
