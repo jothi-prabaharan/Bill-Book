@@ -97,6 +97,11 @@
   padding: 0;
 }
 
+html, body {
+  height: auto;
+  min-height: 100%;
+}
+
 html {
   font-family: var(--font-body);
   background-color: var(--color-bg);
