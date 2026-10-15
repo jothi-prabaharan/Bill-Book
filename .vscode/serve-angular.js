@@ -74,7 +74,7 @@ isPortServing().then(async (serving) => {
 
   // Single command string: passing an args array alongside shell:true is
   // deprecated (DEP0190) because the arguments are concatenated unescaped.
-  const child = spawn(`npx nx serve ${project} --port ${PORT} --configuration ${configuration}`, {
+  const child = spawn(`npx nx serve ${project} --port ${PORT} --host 0.0.0.0 --configuration ${configuration}`, {
     cwd: FRONTEND,
     stdio: 'inherit',
     shell: true,

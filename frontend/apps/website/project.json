@@ -26,7 +26,15 @@
             "input": "apps/web/src/assets",
             "output": "assets"
           }
-        ]
+        ],
+        "stylePreprocessorOptions": {
+          "includePaths": [
+            "node_modules"
+          ],
+          "sass": {
+            "silenceDeprecations": ["import", "global-builtin", "color-functions", "mixed-decls"]
+          }
+        }
       },
       "configurations": {
         "production": {
@@ -42,7 +50,8 @@
     "serve": {
       "executor": "@angular/build:dev-server",
       "options": {
-        "port": 4202
+        "port": 4202,
+        "host": "0.0.0.0"
       },
       "configurations": {
         "development": {

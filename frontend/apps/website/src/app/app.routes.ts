@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { SignupPage } from '@bill-book/auth';
 import { HomePageComponent } from './home/home-page.component';
 
 export const appRoutes: Routes = [
@@ -9,6 +10,19 @@ export const appRoutes: Routes = [
   },
   {
     path: 'signup',
+    component: SignupPage,
+    title: 'Start 14-Day Free Trial — Bill-Book',
+  },
+  {
+    path: 'trial',
+    redirectTo: 'signup',
+  },
+  {
+    path: 'register',
+    redirectTo: 'signup',
+  },
+  {
+    path: 'login',
     canActivate: [
       () => {
         if (typeof window !== 'undefined') {
@@ -22,8 +36,8 @@ export const appRoutes: Routes = [
 
           const targetUrl =
             hostname === 'localhost' || hostname === '127.0.0.1' || port
-              ? `${protocol}//${hostname}:${targetPort}/signup`
-              : `${protocol}//app.${hostname.replace(/^www\./, '')}/signup`;
+              ? `${protocol}//${hostname}:${targetPort}/login`
+              : `${protocol}//app.${hostname.replace(/^www\./, '')}/login`;
 
           window.location.href = targetUrl;
         }
@@ -37,4 +51,5 @@ export const appRoutes: Routes = [
     redirectTo: '',
   },
 ];
+
 

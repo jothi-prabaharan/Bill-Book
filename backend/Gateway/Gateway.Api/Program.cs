@@ -77,15 +77,25 @@ string[] allowedOrigins =
         : (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
             .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-if (allowedOrigins.Length > 0)
+if (allowedOrigins.Length > 0 || builder.Environment.IsDevelopment())
 {
-    builder.Services.AddCors(options => options.AddPolicy(CorsPolicy, policy => policy
-        .WithOrigins(allowedOrigins)
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        // Ten minutes of cached preflight. Every API call from a browser is
-        // cross-origin, so without this each one costs two round trips.
-        .SetPreflightMaxAge(TimeSpan.FromMinutes(10))));
+    builder.Services.AddCors(options => options.AddPolicy(CorsPolicy, policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+        }
+    }));
 }
 
 builder.Services.AddHostedService<RequestLogWriter>();

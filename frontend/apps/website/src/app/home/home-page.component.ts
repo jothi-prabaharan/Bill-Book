@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import {
   APPLICATION_OWNER_SEED,
   ApplicationOwnerProfile,
@@ -68,12 +69,13 @@ export interface CalculatedBoxPrice {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-website-home',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss',
 })
 export class HomePageComponent {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
 
   // ---------------------------------------------------------------------------
   // Master Seed Data (Owner details: Chennai & Kumbakonam, Phone: 7010449938)
@@ -347,57 +349,11 @@ export class HomePageComponent {
   // Navigation & Plan Actions
   // ---------------------------------------------------------------------------
   get appTrialUrl(): string {
-    if (typeof window === 'undefined') {
-      return 'http://localhost:4200/signup';
-    }
-
-    const customAppUrl = (window as unknown as { __BB_APP_URL__?: string })?.__BB_APP_URL__;
-    if (customAppUrl) {
-      return `${customAppUrl.replace(/\/+$/, '')}/signup`;
-    }
-
-    const { protocol, hostname, port } = window.location;
-
-    // When running on website standard dev/staging/uat/prod ports (4202, 5202, 6202, 7202)
-    // The web application runs on port ending in 200 (4200, 5200, 6200, 7200)
-    if (port && port.endsWith('202')) {
-      const targetPort = port.replace(/202$/, '200');
-      return `${protocol}//${hostname}:${targetPort}/signup`;
-    }
-
-    // Common local hostnames
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}:4200/signup`;
-    }
-
-    // Specific staging/uat/prod port overrides
-    if (port === '5202') return `${protocol}//${hostname}:5200/signup`;
-    if (port === '6202') return `${protocol}//${hostname}:6200/signup`;
-    if (port === '7202') return `${protocol}//${hostname}:7200/signup`;
-
-    // If port is already a web port
-    if (port === '4200' || port === '5200' || port === '6200' || port === '7200') {
-      return `${protocol}//${hostname}:${port}/signup`;
-    }
-
-    // Standard ports or reverse proxy
-    if (!port || port === '80' || port === '443') {
-      if (hostname.startsWith('www.')) {
-        return `${protocol}//app.${hostname.slice(4)}/signup`;
-      }
-      if (!hostname.startsWith('app.')) {
-        return `${protocol}//app.${hostname}/signup`;
-      }
-      return `${protocol}//${hostname}/signup`;
-    }
-
-    return `${protocol}//${hostname}:${port}/signup`;
+    return '/signup';
   }
 
   navigateToTrial(): void {
-    if (typeof window !== 'undefined') {
-      window.open(this.appTrialUrl, '_blank', 'noopener,noreferrer');
-    }
+    void this.router.navigateByUrl('/signup');
   }
 
   scrollToSection(sectionId: string): void {

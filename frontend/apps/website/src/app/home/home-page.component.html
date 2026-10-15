@@ -30,10 +30,10 @@
         <span class="phone-icon">&#9742;</span>
         <span class="phone-text tabular-nums">7010449938</span>
       </a>
-      <button type="button" class="btn btn-outline btn-sm" (click)="scrollToSection('contact')">
+      <button type="button" class="btn btn-outline btn-sm header-demo-btn" (click)="scrollToSection('contact')">
         Schedule Demo
       </button>
-      <a [href]="appTrialUrl" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm trial-header-btn">
+      <a routerLink="/signup" class="btn btn-primary btn-sm trial-header-btn">
         Create Trial &rarr;
       </a>
     </div>
@@ -62,7 +62,7 @@
         </p>
 
         <div class="hero-cta-group">
-          <a [href]="appTrialUrl" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg pulse-trial-btn">
+          <a routerLink="/signup" class="btn btn-primary btn-lg pulse-trial-btn">
             Create Free Trial &rarr;
           </a>
           <button type="button" class="btn btn-outline btn-lg" (click)="scrollToSection('contact')">
@@ -501,9 +501,7 @@
 
             <div class="box-cta-wrapper">
               <a
-                [href]="appTrialUrl"
-                target="_blank"
-                rel="noopener noreferrer"
+                routerLink="/signup"
                 class="btn full-width"
                 [class.btn-primary]="item.box.highlight"
                 [class.btn-outline]="!item.box.highlight"
@@ -758,7 +756,7 @@
         </p>
       </div>
       <div class="trial-banner-actions">
-        <a [href]="appTrialUrl" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg trial-cta-glow">
+        <a routerLink="/signup" class="btn btn-primary btn-lg trial-cta-glow">
           Create Free Trial &rarr;
         </a>
         <a href="tel:7010449938" class="btn btn-outline btn-lg">

@@ -1,7 +1,16 @@
-/* ==========================================================================
-   Bill-Book Corporate & Marketing Website Styles
-   Exact 100% parity with core ERP application's design system & theme tokens
-   ========================================================================== */
+/* Master Theming Entry Point */
+@use '../../../libs/shared/theming/src/index.scss' as *;
+
+/* Compact ERP Spacing Overrides */
+:root {
+  --space-1: var(--space-compact-1);
+  --space-2: var(--space-compact-2);
+  --space-3: var(--space-compact-3);
+  --space-4: var(--space-compact-4);
+  --space-5: var(--space-compact-5);
+  --space-6: var(--space-compact-6);
+  --space-8: var(--space-compact-8);
+}
 
 :root {
   /* Typography — Mono stack matching core application's design system */
@@ -171,3 +180,206 @@ button {
     padding-right: 32px;
   }
 }
+
+/* ==========================================================================
+   Auth Shell & Authentication Flows (Sign Up / Trial Provisioning)
+   ========================================================================== */
+.auth-shell {
+  --pane-min: 0;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 42fr) minmax(0, 58fr);
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  h1, h2, h3, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    margin: 0 0 var(--space-2);
+  }
+  h6 {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent-700); 
+  }
+  a { color: var(--color-accent-700); text-decoration: none; text-underline-offset: 3px; }
+  a:hover { color: var(--color-accent-800); text-decoration: underline; }
+  ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+}
+
+.auth-aside {
+  background: var(--color-ink, #2f353f);
+  color: #f7f6f6;
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+
+  &__kicker {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent-400);
+    font-variant-numeric: tabular-nums;
+  }
+  &__brand { display: flex; align-items: center; gap: var(--space-3); }
+  &__logo { width: 76px; height: auto; flex: none; }
+  &__mark {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  &__rule { height: 1px; background: color-mix(in srgb, #ffffff 22%, transparent); margin: var(--space-4) 0; }
+  &__copy p {
+    max-width: 26ch;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: color-mix(in srgb, #ffffff 72%, transparent);
+    text-wrap: pretty;
+  }
+  &__stats {
+    display: flex;
+    gap: var(--space-6);
+    font-size: 12px;
+    color: color-mix(in srgb, #ffffff 55%, transparent);
+    font-variant-numeric: tabular-nums;
+
+    b {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 22px;
+      line-height: 1.2;
+      color: var(--color-accent-400);
+    }
+  }
+}
+
+.auth-pane {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-6);
+  overflow-y: auto;
+}
+
+.auth-form {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+
+  &--wide { max-width: 640px; }
+  &--center { text-align: center; }
+
+  h2 { font-size: 28px; margin-bottom: var(--space-3); }
+  &--wide h2 { font-size: 22px; }
+  .lede { font-size: 13px; margin: 0 0 var(--space-4); }
+
+  .field { margin-top: var(--space-3); }
+  .form-row { margin: var(--space-3) 0 var(--space-4); }
+  .btn-block { margin-top: var(--space-2); min-height: 38px; }
+}
+
+.org-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+
+  button {
+    width: 100%;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3);
+    text-align: left;
+    background: transparent;
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+    font: inherit;
+    cursor: pointer;
+
+    strong { font-family: var(--font-heading); font-weight: 600; font-size: 17px; }
+    span { font-size: 12px; color: color-mix(in srgb, var(--color-text) 50%, transparent); }
+
+    &:hover { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 7%, transparent); }
+  }
+}
+
+.stepper {
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-2);
+  }
+  &__count {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+  &__track { position: relative; height: 1px; background: var(--color-divider); margin-bottom: var(--space-4); }
+  &__fill { position: absolute; inset: 0 auto 0 0; background: var(--color-accent); transition: width 220ms ease; }
+}
+
+.error { color: #a2332a; font-size: 13px; margin: var(--space-3) 0 0; }
+
+.provisioning {
+  &__numeral {
+    font-family: var(--font-heading);
+    font-size: 56px;
+    line-height: 1;
+    color: var(--color-accent);
+    font-variant-numeric: tabular-nums;
+  }
+  &__track { position: relative; height: 1px; background: var(--color-divider); overflow: hidden; }
+  &__fill { position: absolute; inset: 0 auto 0 0; width: 62%; background: var(--color-accent); }
+  &__note {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: var(--space-3) 0 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .auth-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; min-height: 100dvh; }
+  .auth-aside {
+    padding: var(--space-4) var(--space-6);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    &__kicker, &__copy p, &__stats { display: none; }
+    &__brand { display: flex; align-items: center; gap: var(--space-3); }
+    &__logo { width: 76px; height: auto; flex: none; }
+    &__mark { font-size: 30px; }
+    &__rule { display: none; }
+  }
+  .auth-pane { padding: var(--space-4); align-items: flex-start; }
+}
+
