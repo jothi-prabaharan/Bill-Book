@@ -72,6 +72,22 @@
         </div>
 
         <div class="field">
+          <label for="sor-print-template">Print template</label>
+          <select
+            id="sor-print-template"
+            class="input"
+            formControlName="printTemplateId"
+          >
+            @for (t of printTemplates(); track t.printTemplateId) {
+              <option [value]="t.printTemplateId">
+                {{ t.templateName }}{{ t.isDefault ? ' (Default)' : '' }} [{{ t.paperSizeName || 'A4' }}]
+              </option>
+            }
+          </select>
+          <span class="hint">Print and PDF paper layout</span>
+        </div>
+
+        <div class="field">
           <bb-form-field
             label="Customer"
             controlId="sor-contact"

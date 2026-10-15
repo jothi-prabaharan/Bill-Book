@@ -35,6 +35,7 @@ export interface SaveBillRequest {
   notes?: string | null;
   termsAndConditions?: string | null;
   lines: SaveBillLineRequest[];
+  printTemplateId?: number | null;
   /** Custom field values (TK-112); left out on an update, what is stored stays. */
   customFields?: Record<string, unknown>;
 }
@@ -90,6 +91,7 @@ export interface BillListItem {
   totalAmount: number;
   status: string;
   isInterState: boolean;
+  printTemplateId?: number | null;
   /** Days past due for a posted bill. Negative is not yet due. */
   daysOverdue: number;
 }

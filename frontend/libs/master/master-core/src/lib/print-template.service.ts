@@ -58,14 +58,26 @@ export interface PrintTemplateListItem {
   printTemplateId: number;
   templateName: string;
   documentTypeCode: string;
+  paperSizeName?: string;
+  isSample?: boolean;
   isDefault: boolean;
   updatedAt: string | null;
+}
+
+export interface PrintTemplateChoice {
+  printTemplateId: number;
+  templateName: string;
+  paperSizeName: string;
+  isSample: boolean;
+  isDefault: boolean;
 }
 
 export interface PrintTemplateDetail {
   printTemplateId: number;
   documentTypeCode: string;
   templateName: string;
+  paperSizeName?: string;
+  isSample?: boolean;
   isDefault: boolean;
   isActive: boolean;
   settings: PrintSettings;
@@ -106,9 +118,17 @@ export interface PreviewPrintTemplateRequest {
 
 export interface UpdatePrintTemplateRequest {
   templateName: string;
+  paperSizeName?: string;
   settings: PrintSettings;
   content: PrintContent;
   templateVersion: number;
+}
+
+export interface SaveAsPrintTemplateRequest {
+  templateName: string;
+  paperSizeName?: string;
+  settings?: PrintSettings;
+  content?: PrintContent;
 }
 
 /**
@@ -185,9 +205,38 @@ export class PrintTemplateService {
     return firstValueFrom(this.http.post<PrintTemplateDetail>(`${this.base}/${id}/reset`, {}));
   }
 
-  /** The saved or draft template, rendered against sample data. */
+  choices(documentTypeCode: string): Promise<PrintTemplateChoice[]> {
+    const query = new URLSearchParams({ docType: documentTypeCode });
+    return firstValueFrom(this.http.get<PrintTemplateChoice[]>(`${this.base}/choices?${query}`));
+  }
+
+  saveAs(id: number, request: SaveAsPrintTemplateRequest): Promise<PrintTemplateDetail> {
+    return firstValueFrom(this.http.post<PrintTemplateDetail>(`${this.base}/${id}/save-as`, request));
+  }
+
+  /** The saved or draft template, rendered against sample data as HTML. */
   preview(id: number, request?: PreviewPrintTemplateRequest): Promise<PrintPreview> {
     return firstValueFrom(this.http.post<PrintPreview>(`${this.base}/${id}/preview`, request ?? {}));
+  }
+
+  /** Renders the exact server-generated PDF binary stream for the template. */
+  previewPdf(id: number, request?: PreviewPrintTemplateRequest): Promise<Blob> {
+    return firstValueFrom(
+      this.http.post(`${this.base}/${id}/preview-pdf`, request ?? {}, { responseType: 'blob' }),
+    );
+  }
+
+  /** Renders a transaction document to an exact server-generated PDF binary stream. */
+  renderPdf(request: {
+    documentTypeCode: string;
+    printTemplateId?: number | null;
+    payload: unknown;
+    watermark?: string;
+    currencySymbol?: string;
+  }): Promise<Blob> {
+    return firstValueFrom(
+      this.http.post('/api/print/render-pdf', request, { responseType: 'blob' }),
+    );
   }
 }
 

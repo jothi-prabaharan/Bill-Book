@@ -24,6 +24,7 @@ export interface SavePurchaseOrderRequest {
   notes?: string | null;
   termsAndConditions?: string | null;
   lines: SavePurchaseOrderLineRequest[];
+  printTemplateId?: number | null;
   /** Custom field values (TK-112); left out on an update, what is stored stays. */
   customFields?: Record<string, unknown>;
 }
@@ -71,6 +72,7 @@ export interface PurchaseOrderListItem {
   totalAmount: number;
   status: string;
   isInterState: boolean;
+  printTemplateId?: number | null;
   /** How many goods receipts have been raised against this order. */
   receiptCount: number;
 }

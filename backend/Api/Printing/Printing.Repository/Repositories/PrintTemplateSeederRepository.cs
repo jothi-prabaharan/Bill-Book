@@ -35,7 +35,8 @@ public sealed class PrintTemplateSeederRepository
             .Where(t => t.OrgId == orgId)
             .ToListAsync(ct);
 
-        IReadOnlyList<PrintTemplate> missing = PrintTemplateSeed.Build(orgId, existing.Select(t => t.DocumentTypeCode));
+        IReadOnlyList<PrintTemplate> missing = PrintTemplateSeed.Build(
+            orgId, existing.Select(t => (t.DocumentTypeCode, t.PaperSizeName ?? DefaultLayoutGenerator.PaperSizeA4)));
         _db.PrintTemplates.AddRange(missing);
 
         int upgraded = 0;

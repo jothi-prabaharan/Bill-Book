@@ -49,6 +49,18 @@ public class PrintTemplate : OrgScopedEntity
     public bool IsDefault { get; set; }
 
     /// <summary>
+    /// Identifies the paper geometry: "A4", "A5", "Letter", "Thermal3Inch", "Thermal4Inch".
+    /// </summary>
+    [MaxLength(20, ErrorMessage = "Paper size name cannot exceed 20 characters.")]
+    public string PaperSizeName { get; set; } = "A4";
+
+    /// <summary>
+    /// True for pre-loaded system sample templates.
+    /// Strictly protected from direct editing or deletion (forces "Save As").
+    /// </summary>
+    public bool IsSample { get; set; }
+
+    /// <summary>
     /// False once soft-deleted. Rows are never removed: documents printed
     /// against this template keep pointing at it, and a hard delete would make
     /// their history unreadable.

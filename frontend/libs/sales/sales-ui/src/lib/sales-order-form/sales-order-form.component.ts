@@ -54,6 +54,7 @@ import {
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
+import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
 import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-availability.drawer';
 
@@ -132,6 +133,7 @@ export class SalesOrderFormComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly orders = inject(SalesOrderService);
+  private readonly printTemplatesService = inject(PrintTemplateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -143,6 +145,9 @@ export class SalesOrderFormComponent implements OnInit {
   protected readonly showStock = signal(false);
   protected readonly stockLoading = signal(false);
   protected readonly stock = signal<StockAvailability[]>([]);
+
+  /** Available print templates for this transaction type */
+  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
 
   /** Draft / ReadyToPost / Posted / Void, as the server last said. */
   protected readonly status = signal('Draft');
@@ -168,6 +173,7 @@ export class SalesOrderFormComponent implements OnInit {
     documentDate: [today(), Validators.required],
     deliveryDate: [''],
     contactId: [0, [Validators.required, Validators.min(1)]],
+    printTemplateId: [null as number | null],
     contactGstin: ['', [Validators.maxLength(15)]],
     placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
     currencyCode: [this.getOrgCurrency(), [Validators.required, Validators.maxLength(3)]],
@@ -479,12 +485,28 @@ export class SalesOrderFormComponent implements OnInit {
 
   ngOnInit(): void {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
+    void this.loadPrintTemplates();
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id && id !== 'new') {
       this.isEdit.set(true);
       this.salesOrderId.set(Number(id));
       void this.load();
+    }
+  }
+
+  private async loadPrintTemplates(): Promise<void> {
+    try {
+      const choices = await this.printTemplatesService.choices('SOR');
+      this.printTemplates.set(choices);
+      if (!this.isEdit()) {
+        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
+        if (defaultTmpl && !this.form.controls.printTemplateId.value) {
+          this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
+        }
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -518,6 +540,7 @@ export class SalesOrderFormComponent implements OnInit {
       documentDate: order.documentDate,
       deliveryDate: order.deliveryDate ?? '',
       contactId: order.contactId,
+      printTemplateId: order.printTemplateId ?? null,
       contactGstin: order.contactGstin ?? '',
       placeOfSupplyStateCode: order.placeOfSupplyStateId
         ? String(order.placeOfSupplyStateId).padStart(2, '0')
@@ -627,6 +650,7 @@ export class SalesOrderFormComponent implements OnInit {
       exchangeRate: value.exchangeRate,
       billingAddress: value.billingAddress || undefined,
       shippingAddress: value.shippingAddress || undefined,
+      printTemplateId: value.printTemplateId ?? undefined,
       notes: value.notes || undefined,
       customFields: compactValues(this.customValues()),
       termsAndConditions: value.termsAndConditions || undefined,

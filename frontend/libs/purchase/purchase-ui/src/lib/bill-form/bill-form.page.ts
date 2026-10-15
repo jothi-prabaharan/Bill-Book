@@ -45,6 +45,7 @@ import {
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
+import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { goodsReceiptLabelKind, goodsReceiptLabels } from '../goods-receipt-form/goods-receipt-labels';
 import {
   ItemOption,
@@ -144,6 +145,7 @@ export class BillFormPage {
   protected readonly formats = inject(FormatSettingsService);
   private readonly receipts = inject(GoodsReceiptService);
   private readonly lookups = inject(PurchaseLookupService);
+  private readonly printTemplatesService = inject(PrintTemplateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -151,6 +153,10 @@ export class BillFormPage {
   protected readonly documentNo = signal<string | null>(null);
   protected readonly status = signal('Draft');
   protected readonly daysOverdue = signal(0);
+
+  /** Available print templates for this transaction type */
+  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+  protected readonly printTemplateId = signal<number | null>(null);
 
   protected readonly documentDate = signal(this.today());
   protected readonly contactId = signal<number | null>(null);
@@ -457,12 +463,28 @@ export class BillFormPage {
   constructor() {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
     void this.loadReferenceData();
+    void this.loadPrintTemplates();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id !== null && id !== 'new') {
       void this.load(Number(id));
     } else {
       void this.loadOrganizationAddresses(false);
+    }
+  }
+
+  private async loadPrintTemplates(): Promise<void> {
+    try {
+      const choices = await this.printTemplatesService.choices('BIL');
+      this.printTemplates.set(choices);
+      if (this.isNew()) {
+        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
+        if (defaultTmpl && !this.printTemplateId()) {
+          this.printTemplateId.set(defaultTmpl.printTemplateId);
+        }
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -518,6 +540,7 @@ export class BillFormPage {
       this.vendorBillNo.set(view.vendorBillNo);
       this.vendorBillDate.set(view.vendorBillDate);
       this.dueDate.set(view.dueDate);
+      this.printTemplateId.set(view.printTemplateId ?? null);
       this.currencyCode.set(view.currencyCode ?? 'INR');
       this.exchangeRate.set(view.exchangeRate ?? 1);
       this.billingAddress.set(view.billingAddress ?? '');
@@ -1056,6 +1079,7 @@ export class BillFormPage {
       placeOfSupplyStateCode: this.placeOfSupplyStateCode() || null,
       billingAddress: this.billingAddress() || null,
       shippingAddress: this.shippingAddress() || null,
+      printTemplateId: this.printTemplateId(),
       currencyCode: this.currencyCode() || 'INR',
       exchangeRate: this.exchangeRate() || 1,
       landedCostAmount: 0,

@@ -69,6 +69,7 @@ import {
   totalsOf,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
+import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
 import { ProjectItemsDialogComponent } from '../project-items/project-items.dialog';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
@@ -160,6 +161,7 @@ export class InvoiceFormComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly invoices = inject(InvoiceService);
+  private readonly printTemplatesService = inject(PrintTemplateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -176,6 +178,9 @@ export class InvoiceFormComponent implements OnInit {
 
   protected readonly status = signal('Draft');
 
+  /** Available print templates for this transaction type */
+  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+
   /** Set when a save was refused at the credit or discount limit and may be sent to an approver (TK-102). */
   protected readonly approvalOffered = signal(false);
 
@@ -190,6 +195,7 @@ export class InvoiceFormComponent implements OnInit {
     documentDate: [today(), Validators.required],
     dueDate: [inDays(30), Validators.required],
     contactId: [0, [Validators.required, Validators.min(1)]],
+    printTemplateId: [null as number | null],
     contactGstin: ['', [Validators.maxLength(15)]],
     placeOfSupplyStateCode: [this.getOrgStateCode(), [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
     currencyCode: [this.getOrgCurrency(), [Validators.required, Validators.maxLength(3)]],
@@ -470,12 +476,28 @@ export class InvoiceFormComponent implements OnInit {
 
   ngOnInit(): void {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
+    void this.loadPrintTemplates();
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id && id !== 'new') {
       this.isEdit.set(true);
       this.invoiceId.set(Number(id));
       void this.load();
+    }
+  }
+
+  private async loadPrintTemplates(): Promise<void> {
+    try {
+      const choices = await this.printTemplatesService.choices('INV');
+      this.printTemplates.set(choices);
+      if (!this.isEdit()) {
+        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
+        if (defaultTmpl && !this.form.controls.printTemplateId.value) {
+          this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
+        }
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -513,6 +535,7 @@ export class InvoiceFormComponent implements OnInit {
       documentDate: invoice.documentDate,
       dueDate: invoice.dueDate ?? '',
       contactId: invoice.contactId,
+      printTemplateId: invoice.printTemplateId ?? null,
       contactGstin: invoice.contactGstin ?? '',
       placeOfSupplyStateCode: invoice.placeOfSupplyStateId
         ? String(invoice.placeOfSupplyStateId).padStart(2, '0')
@@ -528,6 +551,12 @@ export class InvoiceFormComponent implements OnInit {
       transporterName: invoice.transporterName ?? '',
       transportDistanceKm: invoice.transportDistanceKm ?? 0,
     });
+    if (!invoice.printTemplateId && this.printTemplates().length > 0) {
+      const defaultTmpl = this.printTemplates().find((t) => t.isDefault) ?? this.printTemplates()[0];
+      if (defaultTmpl) {
+        this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
+      }
+    }
     if (invoice.contactId) {
       void this.loadContactAddresses(invoice.contactId, true);
     }
@@ -628,6 +657,7 @@ export class InvoiceFormComponent implements OnInit {
       documentDate: value.documentDate,
       dueDate: value.dueDate || undefined,
       contactId: value.contactId,
+      printTemplateId: value.printTemplateId ? Number(value.printTemplateId) : undefined,
       salesOrderId: this.salesOrderId() ?? undefined,
       contactGstin: value.contactGstin || undefined,
       placeOfSupplyStateCode: value.placeOfSupplyStateCode || undefined,

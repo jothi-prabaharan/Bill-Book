@@ -42,6 +42,19 @@ public sealed class PrintTemplatesController : ControllerBase
     public async Task<IActionResult> List([FromQuery] string? docType, CancellationToken ct) =>
         Ok(await _templates.ListAsync(docType, ct));
 
+    /// <summary>
+    /// Active choices for a document type (default first) for transaction entry dropdowns.
+    /// </summary>
+    [HttpGet("choices")]
+    public async Task<IActionResult> Choices([FromQuery] string docType, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(docType))
+        {
+            return BadRequest(new MessageResponse { Message = "Document type code is required." });
+        }
+        return Ok(await _templates.ChoicesAsync(docType, ct));
+    }
+
     /// <summary>The printable document types, for the editor's picker.</summary>
     [HttpGet("document-types")]
     public IActionResult DocumentTypes() =>
@@ -86,6 +99,13 @@ public sealed class PrintTemplatesController : ControllerBase
     public async Task<IActionResult> Delete(long id, CancellationToken ct) =>
         Respond(await _templates.DeleteAsync(id, ct));
 
+    [HttpPost("{id:long}/save-as")]
+    public async Task<IActionResult> SaveAs(
+        long id, [FromBody] SaveAsPrintTemplateRequest request, CancellationToken ct) =>
+        Respond(
+            await _templates.SaveAsAsync(id, request, ct),
+            detail => StatusCode(StatusCodes.Status201Created, detail));
+
     [HttpPost("{id:long}/reset")]
     public async Task<IActionResult> Reset(long id, CancellationToken ct) =>
         Respond(await _templates.ResetAsync(id, ct), Ok);
@@ -94,6 +114,18 @@ public sealed class PrintTemplatesController : ControllerBase
     public async Task<IActionResult> Preview(
         long id, [FromBody] PreviewPrintTemplateRequest? request, CancellationToken ct) =>
         Respond(await _templates.PreviewAsync(id, request ?? new PreviewPrintTemplateRequest(), ct), Ok);
+
+    [HttpPost("{id:long}/preview-pdf")]
+    public async Task<IActionResult> PreviewPdf(
+        long id, [FromBody] PreviewPrintTemplateRequest? request, CancellationToken ct)
+    {
+        PrintTemplateResult<byte[]> result = await _templates.PreviewPdfAsync(
+            id, request ?? new PreviewPrintTemplateRequest(), ct);
+
+        return result.Outcome == PrintTemplateOutcome.Ok
+            ? File(result.Value!, "application/pdf")
+            : Refuse(result.Outcome, result.Details);
+    }
 
     private IActionResult Respond<T>(PrintTemplateResult<T> result, Func<T, IActionResult> onOk) =>
         result.Outcome == PrintTemplateOutcome.Ok
@@ -130,6 +162,12 @@ public sealed class PrintTemplatesController : ControllerBase
             Code = "LAST_TEMPLATE",
             Message = "This is the default template for its document type, or the only one left. "
                 + "Make another template the default first.",
+        }),
+
+        PrintTemplateOutcome.SampleProtected => StatusCode(StatusCodes.Status403Forbidden, new PrintTemplateError
+        {
+            Code = "SAMPLE_TEMPLATE_PROTECTED",
+            Message = "Sample templates are protected platform templates and cannot be edited or deleted directly. Use 'Save As' to create your own custom template.",
         }),
 
         PrintTemplateOutcome.InvalidSegmentHtml => UnprocessableEntity(new PrintTemplateError

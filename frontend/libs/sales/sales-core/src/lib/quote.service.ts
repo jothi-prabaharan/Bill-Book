@@ -15,6 +15,7 @@ export interface SaveQuoteRequest {
   notes?: string;
   termsAndConditions?: string;
   lines: QuoteLineRequest[];
+  printTemplateId?: number | null;
   /** Custom field values (TK-112); left out on an update, what is stored stays. */
   customFields?: Record<string, unknown>;
 }
@@ -44,6 +45,7 @@ export interface QuoteListItem {
   totalAmount: number;
   status: string;
   isInterState: boolean;
+  printTemplateId?: number | null;
   convertedToSalesOrderId?: number;
   /** The customer's answer on the portal (TK-96). */
   customerResponse?: 'None' | 'Accepted' | 'Rejected';
@@ -64,6 +66,7 @@ export interface QuoteView {
   shippingAddress?: string;
   placeOfSupplyStateId: number;
   isInterState: boolean;
+  printTemplateId?: number | null;
   currencyCode: string;
   exchangeRate: number;
   subTotal: number;

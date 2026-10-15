@@ -56,4 +56,23 @@ public sealed class PrintController : ControllerBase
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
     }
+
+    [HttpPost("render-pdf")]
+    public async Task<IActionResult> RenderPdf([FromBody] RenderPrintRequest request, CancellationToken ct)
+    {
+        PrintTemplateResult<byte[]> result = await _templates.RenderPdfAsync(request, ct);
+
+        return result.Outcome switch
+        {
+            PrintTemplateOutcome.Ok => File(result.Value!, "application/pdf"),
+
+            PrintTemplateOutcome.InvalidDocumentType => UnprocessableEntity(new PrintTemplateError
+            {
+                Code = "INVALID_DOCUMENT_TYPE",
+                Message = "That document type has no printable layout.",
+            }),
+
+            _ => StatusCode(StatusCodes.Status500InternalServerError),
+        };
+    }
 }

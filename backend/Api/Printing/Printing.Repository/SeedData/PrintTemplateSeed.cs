@@ -18,28 +18,51 @@ namespace Printing.Repository.SeedData;
 public static class PrintTemplateSeed
 {
     /// <summary>
-    /// The templates a branch is missing. A document type the branch already has
-    /// a template for — whatever state it is in — gets nothing: seeding must
-    /// never overwrite an edit.
+    /// The templates a branch is missing across all five paper sizes.
+    /// A4 is marked as IsDefault = true, and all five are marked IsSample = true.
     /// </summary>
+    public static IReadOnlyList<PrintTemplate> Build(
+        Guid orgId, IEnumerable<(string Code, string PaperSize)> presentTemplates)
+    {
+        HashSet<(string, string)> present = new(
+            presentTemplates.Select(t => (t.Code.Trim().ToUpperInvariant(), t.PaperSize.Trim())),
+            EqualityComparer<(string, string)>.Default);
+
+        var list = new List<PrintTemplate>();
+
+        foreach (DocumentTypeProfile profile in DocumentTypeCatalog.All)
+        {
+            foreach (string paperSize in DefaultLayoutGenerator.AllPaperSizes)
+            {
+                if (present.Contains((profile.Code.ToUpperInvariant(), paperSize)))
+                {
+                    continue;
+                }
+
+                bool isA4 = paperSize == DefaultLayoutGenerator.PaperSizeA4;
+                list.Add(new PrintTemplate
+                {
+                    OrgId = orgId,
+                    DocumentTypeCode = profile.Code,
+                    TemplateName = DefaultLayoutGenerator.SampleTemplateName(profile, paperSize),
+                    PaperSizeName = paperSize,
+                    IsSample = true,
+                    IsDefault = isA4,
+                    IsActive = true,
+                    Settings = DefaultLayoutGenerator.BuildSettings(profile, paperSize),
+                    Content = DefaultLayoutGenerator.Build(profile, paperSize),
+                    TemplateVersion = 1,
+                    SeedVersion = DefaultLayoutGenerator.SeedVersion,
+                });
+            }
+        }
+
+        return list;
+    }
+
     public static IReadOnlyList<PrintTemplate> Build(Guid orgId, IEnumerable<string> presentCodes)
     {
-        HashSet<string> present = new(
-            presentCodes.Select(code => code.Trim()), StringComparer.OrdinalIgnoreCase);
-
-        return [.. DocumentTypeCatalog.All
-            .Where(profile => !present.Contains(profile.Code))
-            .Select(profile => new PrintTemplate
-            {
-                OrgId = orgId,
-                DocumentTypeCode = profile.Code,
-                TemplateName = profile.Name,
-                IsDefault = true,
-                IsActive = true,
-                Settings = DefaultLayoutGenerator.BuildSettings(profile),
-                Content = DefaultLayoutGenerator.Build(profile),
-                TemplateVersion = 1,
-                SeedVersion = DefaultLayoutGenerator.SeedVersion,
-            })];
+        var existing = presentCodes.Select(code => (code, DefaultLayoutGenerator.PaperSizeA4));
+        return Build(orgId, existing);
     }
 }

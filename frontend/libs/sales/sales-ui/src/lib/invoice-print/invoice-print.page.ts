@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { readApiFailure } from '@bill-book/api-client';
@@ -37,11 +36,14 @@ export class InvoicePrintPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly frame = viewChild<ElementRef<HTMLIFrameElement>>('frame');
 
   protected readonly invoice = signal<InvoiceView | null>(null);
   protected readonly html = signal<SafeHtml | null>(null);
+  protected readonly pdfUrl = signal<SafeHtml | null>(null);
+  protected readonly pdfRawUrl = signal<string | null>(null);
   protected readonly pageCount = signal(0);
   protected readonly loading = signal(true);
   protected readonly messages = signal<UiMessage[]>([]);
@@ -59,6 +61,12 @@ export class InvoicePrintPage implements OnInit {
   });
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => {
+      const raw = this.pdfRawUrl();
+      if (raw) {
+        URL.revokeObjectURL(raw);
+      }
+    });
     void this.load();
   }
 
@@ -71,18 +79,19 @@ export class InvoicePrintPage implements OnInit {
     }
 
     try {
-      const [invoice, printed] = await Promise.all([
+      const [invoice, printed, blob] = await Promise.all([
         this.invoices.get(Number(id)),
         this.invoices.print(Number(id)),
+        this.invoices.downloadPdf(Number(id)),
       ]);
 
       this.invoice.set(invoice);
-      // Trusted rather than sanitised again: Printing sanitised every band of
-      // the template, the invoice's own text is escaped before it is merged,
-      // and the frame runs no scripts. Angular's sanitiser would strip the page
-      // styles the layout depends on and print something else.
       this.html.set(this.sanitizer.bypassSecurityTrustHtml(printed.html));
       this.pageCount.set(printed.pageCount);
+
+      const url = URL.createObjectURL(blob);
+      this.pdfRawUrl.set(url);
+      this.pdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
 
       if (printed.unknownTags.length > 0) {
         this.messages.set([

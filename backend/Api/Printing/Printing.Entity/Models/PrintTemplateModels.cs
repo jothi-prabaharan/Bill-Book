@@ -12,6 +12,10 @@ public class PrintTemplateListItem
 
     public string DocumentTypeCode { get; set; } = null!;
 
+    public string PaperSizeName { get; set; } = "A4";
+
+    public bool IsSample { get; set; }
+
     public bool IsDefault { get; set; }
 
     public DateTimeOffset? UpdatedAt { get; set; }
@@ -28,6 +32,10 @@ public class PrintTemplateChoice
 
     public string TemplateName { get; set; } = null!;
 
+    public string PaperSizeName { get; set; } = "A4";
+
+    public bool IsSample { get; set; }
+
     public bool IsDefault { get; set; }
 }
 
@@ -38,6 +46,10 @@ public class PrintTemplateDetail
     public string DocumentTypeCode { get; set; } = null!;
 
     public string TemplateName { get; set; } = null!;
+
+    public string PaperSizeName { get; set; } = "A4";
+
+    public bool IsSample { get; set; }
 
     public bool IsDefault { get; set; }
 
@@ -77,6 +89,9 @@ public class CreatePrintTemplateRequest
     [MaxLength(100, ErrorMessage = "Template name cannot exceed 100 characters.")]
     public string TemplateName { get; set; } = null!;
 
+    [MaxLength(20, ErrorMessage = "Paper size name cannot exceed 20 characters.")]
+    public string PaperSizeName { get; set; } = "A4";
+
     /// <summary>Omitted means the platform defaults.</summary>
     public PrintSettings? Settings { get; set; }
 
@@ -93,6 +108,9 @@ public class UpdatePrintTemplateRequest
     [MaxLength(100, ErrorMessage = "Template name cannot exceed 100 characters.")]
     public string TemplateName { get; set; } = null!;
 
+    [MaxLength(20, ErrorMessage = "Paper size name cannot exceed 20 characters.")]
+    public string? PaperSizeName { get; set; }
+
     [Required(ErrorMessage = "Settings are required.")]
     public PrintSettings Settings { get; set; } = null!;
 
@@ -104,6 +122,22 @@ public class UpdatePrintTemplateRequest
     /// written — somebody else saved while this editor was open.
     /// </summary>
     public int TemplateVersion { get; set; }
+}
+
+public class SaveAsPrintTemplateRequest
+{
+    [Required(ErrorMessage = "Template name is required.")]
+    [MaxLength(100, ErrorMessage = "Template name cannot exceed 100 characters.")]
+    public string TemplateName { get; set; } = null!;
+
+    [MaxLength(20, ErrorMessage = "Paper size name cannot exceed 20 characters.")]
+    public string? PaperSizeName { get; set; }
+
+    /// <summary>Optional modified settings to save with the new template.</summary>
+    public PrintSettings? Settings { get; set; }
+
+    /// <summary>Optional modified content to save with the new template.</summary>
+    public PrintContent? Content { get; set; }
 }
 
 public class PreviewPrintTemplateRequest
@@ -181,6 +215,9 @@ public enum PrintTemplateOutcome
 
     /// <summary>422 PREVIEW_NEEDS_DOCUMENT_SERVICE — see PreviewPrintTemplateRequest.SampleDocId.</summary>
     PreviewNotAvailableHere = 8,
+
+    /// <summary>403 SAMPLE_TEMPLATE_PROTECTED — sample templates cannot be edited or deleted, only Save As.</summary>
+    SampleProtected = 9,
 }
 
 /// <summary>An outcome and, when it failed, what to say about it.</summary>

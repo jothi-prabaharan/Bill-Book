@@ -960,3 +960,130 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Exact Server-Side PDF Preview */
+.pt-pdf-preview-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  width: 100%;
+  background: #525659;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.pt-pdf-loading-state,
+.pt-pdf-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 100%;
+  color: #f1f5f9;
+  background: #334155;
+  text-align: center;
+  padding: 24px;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .hint {
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #38bdf8;
+    border-radius: 50%;
+    animation: ptSpin 0.8s linear infinite;
+  }
+}
+
+@keyframes ptSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pt-pdf-viewer-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pt-pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #525659;
+}
+
+/* Save As Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.pt-save-as-dialog {
+  background: var(--bg-surface, #fff);
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  border: 1px solid var(--color-divider, #e2e8f0);
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-divider, #e2e8f0);
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  .modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .hint {
+      margin: 0;
+      font-size: 13px;
+      color: var(--color-text-secondary, #64748b);
+      line-height: 1.4;
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--color-divider, #e2e8f0);
+    background: var(--bg-surface-secondary, #f8fafc);
+  }
+}
+

@@ -58,8 +58,43 @@ public static class DefaultLayoutGenerator
     /// <summary>The same, when the definition is already in hand.</summary>
     public static string Placeholder(PlaceholderDefinition placeholder) => Placeholder(placeholder.Tag);
 
+    public const string PaperSizeA4 = "A4";
+    public const string PaperSizeA5 = "A5";
+    public const string PaperSizeLetter = "Letter";
+    public const string PaperSizeThermal3Inch = "Thermal3Inch";
+    public const string PaperSizeThermal4Inch = "Thermal4Inch";
+
+    public static readonly IReadOnlyList<string> AllPaperSizes =
+    [
+        PaperSizeA4,
+        PaperSizeA5,
+        PaperSizeLetter,
+        PaperSizeThermal3Inch,
+        PaperSizeThermal4Inch,
+    ];
+
+    public static string SampleTemplateName(DocumentTypeProfile profile, string paperSizeName) => paperSizeName switch
+    {
+        PaperSizeA5 => $"{profile.Name} - Compact A5",
+        PaperSizeLetter => $"{profile.Name} - Standard Letter",
+        PaperSizeThermal3Inch => $"{profile.Name} - Thermal 3\" (80mm)",
+        PaperSizeThermal4Inch => $"{profile.Name} - Thermal 4\" (104mm)",
+        _ => $"{profile.Name} - Standard A4",
+    };
+
     /// <summary>The current layout for a document type.</summary>
     public static PrintContent Build(DocumentTypeProfile profile) => Build(profile, SeedVersion);
+
+    public static PrintContent Build(DocumentTypeProfile profile, string paperSizeName, int generation = SeedVersion)
+    {
+        return paperSizeName switch
+        {
+            PaperSizeThermal3Inch => BuildThermal(profile, 80d, generation),
+            PaperSizeThermal4Inch => BuildThermal(profile, 104d, generation),
+            PaperSizeA5 => BuildA5(profile, generation),
+            _ => Build(profile, generation),
+        };
+    }
 
     /// <summary>
     /// The layout exactly as a given generation wrote it, from
@@ -98,6 +133,64 @@ public static class DefaultLayoutGenerator
     public static bool CarriesCodes(DocumentTypeProfile profile) => !IsKitchenTicket(profile);
 
     public static PrintSettings BuildSettings() => new();
+
+    /// <summary>Builds print settings tailored to the paper size and document type.</summary>
+    public static PrintSettings BuildSettings(DocumentTypeProfile profile, string paperSizeName)
+    {
+        if (IsKitchenTicket(profile))
+        {
+            return new PrintSettings
+            {
+                PrinterType = Printing.Entity.Enums.PrinterType.Thermal,
+                RollWidthMm = 80d,
+                MarginTopMm = 3d,
+                MarginBottomMm = 3d,
+                MarginLeftMm = 3d,
+                MarginRightMm = 3d,
+            };
+        }
+
+        return paperSizeName switch
+        {
+            PaperSizeA5 => new PrintSettings
+            {
+                PrinterType = Printing.Entity.Enums.PrinterType.Laser,
+                PaperSize = Printing.Entity.Enums.PaperSize.A5,
+                MarginTopMm = 10d,
+                MarginBottomMm = 10d,
+                MarginLeftMm = 10d,
+                MarginRightMm = 10d,
+            },
+            PaperSizeLetter => new PrintSettings
+            {
+                PrinterType = Printing.Entity.Enums.PrinterType.Laser,
+                PaperSize = Printing.Entity.Enums.PaperSize.Letter,
+                MarginTopMm = 16d,
+                MarginBottomMm = 16d,
+                MarginLeftMm = 18d,
+                MarginRightMm = 18d,
+            },
+            PaperSizeThermal3Inch => new PrintSettings
+            {
+                PrinterType = Printing.Entity.Enums.PrinterType.Thermal,
+                RollWidthMm = 80d,
+                MarginTopMm = 3d,
+                MarginBottomMm = 3d,
+                MarginLeftMm = 3d,
+                MarginRightMm = 3d,
+            },
+            PaperSizeThermal4Inch => new PrintSettings
+            {
+                PrinterType = Printing.Entity.Enums.PrinterType.Thermal,
+                RollWidthMm = 104d,
+                MarginTopMm = 4d,
+                MarginBottomMm = 4d,
+                MarginLeftMm = 4d,
+                MarginRightMm = 4d,
+            },
+            _ => BuildSettings(profile),
+        };
+    }
 
     /// <summary>A document type's starting page: an 80 mm thermal roll for a kitchen ticket, the A4 default for the rest.</summary>
     public static PrintSettings BuildSettings(DocumentTypeProfile profile) =>
@@ -319,6 +412,138 @@ public static class DefaultLayoutGenerator
             html.Append($"<div>{Placeholder(PlaceholderCatalog.UpiQrTag)}</div>");
         }
 
+        return html.ToString();
+    }
+
+    private static PrintContent BuildA5(DocumentTypeProfile profile, int generation)
+    {
+        bool withCodes = generation >= 3;
+        bool withUpi = generation >= 4 && string.Equals(profile.Code, "INV", StringComparison.OrdinalIgnoreCase);
+
+        return new PrintContent
+        {
+            FixedHeaderHtml = "<div style=\"font-size: 9pt\">" + FixedHeader() + "</div>",
+            HeaderHtml = "<div style=\"font-size: 9pt\">" + Header(profile, withCodes) + "</div>",
+            DetailsHtml = "<div style=\"font-size: 9pt\">" + Details(profile) + "</div>",
+            FooterHtml = "<div style=\"font-size: 9pt\">" + Footer(profile, withUpi) + "</div>",
+            FixedFooterHtml = "<div style=\"font-size: 8.5pt\">" + FixedFooter(withCodes) + "</div>",
+        };
+    }
+
+    private static PrintContent BuildThermal(DocumentTypeProfile profile, double rollWidthMm, int generation)
+    {
+        bool withCodes = generation >= 3;
+        bool withUpi = generation >= 4 && string.Equals(profile.Code, "INV", StringComparison.OrdinalIgnoreCase);
+
+        return new PrintContent
+        {
+            FixedHeaderHtml = string.Empty,
+            HeaderHtml = ThermalHeader(profile),
+            DetailsHtml = ThermalDetails(profile, rollWidthMm),
+            FooterHtml = ThermalFooter(profile, withUpi, withCodes),
+            FixedFooterHtml = string.Empty,
+        };
+    }
+
+    private static string ThermalHeader(DocumentTypeProfile profile)
+    {
+        var html = new StringBuilder();
+        html.Append($"<div align=\"center\">{Placeholder("Organization.Logo")}</div>");
+        html.Append($"<div align=\"center\" style=\"font-weight: bold; font-size: 13pt\">{Placeholder("Organization.Name")}</div>");
+        html.Append($"<div align=\"center\" style=\"font-size: 9pt\">{Placeholder("Organization.Address")}</div>");
+        html.Append($"<div align=\"center\" style=\"font-size: 9pt\">Ph: {Placeholder("Organization.Phone")} | GSTIN: {Placeholder("Organization.Gstin")}</div>");
+        html.Append("<hr style=\"border:none; border-top:1px dashed #000; margin:5px 0\" />");
+        html.Append($"<div align=\"center\" style=\"font-weight: bold; font-size: 11pt\">{profile.Name}</div>");
+        html.Append("<table width=\"100%\" style=\"font-size: 9pt\"><tbody><tr>");
+        html.Append($"<td align=\"left\">No: <b>{Placeholder("Document.No")}</b></td>");
+        html.Append($"<td align=\"right\">Date: {Placeholder("Document.Date")}</td>");
+        html.Append("</tr>");
+
+        if (profile.Party != PartyKind.None)
+        {
+            html.Append("<tr>");
+            html.Append($"<td align=\"left\" colspan=\"2\">Party: <b>{Placeholder("Party.Name")}</b>");
+            html.Append($" (GSTIN: {Placeholder("Party.Gstin")})</td>");
+            html.Append("</tr>");
+        }
+
+        html.Append("</tbody></table>");
+        html.Append("<hr style=\"border:none; border-top:1px dashed #000; margin:5px 0\" />");
+        return html.ToString();
+    }
+
+    private static string ThermalDetails(DocumentTypeProfile profile, double rollWidthMm)
+    {
+        if (rollWidthMm >= 100)
+        {
+            // Thermal 4-inch (104mm): Wide enough for columns
+            return "<table width=\"100%\" style=\"font-size: 8.5pt\"><thead><tr>"
+                + "<th align=\"left\">Item</th>"
+                + "<th align=\"left\">HSN</th>"
+                + "<th align=\"right\">Qty</th>"
+                + "<th align=\"right\">Rate</th>"
+                + "<th align=\"right\">Total</th>"
+                + "</tr></thead><tbody><tr>"
+                + $"<td align=\"left\"><div><b>{Placeholder("Item.ItemName")}</b></div><div style=\"font-size:7.5pt;color:#555\">{Placeholder("Item.Description")}</div></td>"
+                + $"<td align=\"left\">{Placeholder("Item.HsnSac")}</td>"
+                + $"<td align=\"right\">{Placeholder("Item.Quantity")}</td>"
+                + $"<td align=\"right\">{Placeholder("Item.Rate")}</td>"
+                + $"<td align=\"right\"><b>{Placeholder("Item.Amount")}</b></td>"
+                + "</tr></tbody></table>";
+        }
+
+        // Thermal 3-inch (80mm): Compact receipt layout
+        return "<table width=\"100%\" style=\"font-size: 8.5pt\"><thead><tr>"
+            + "<th align=\"left\">Item</th>"
+            + "<th align=\"right\">Qty x Rate</th>"
+            + "<th align=\"right\">Amount</th>"
+            + "</tr></thead><tbody><tr>"
+            + $"<td align=\"left\"><div><b>{Placeholder("Item.ItemName")}</b></div><div style=\"font-size:7.5pt;color:#555\">{Placeholder("Item.Description")}</div></td>"
+            + $"<td align=\"right\">{Placeholder("Item.Quantity")} x {Placeholder("Item.Rate")}</td>"
+            + $"<td align=\"right\"><b>{Placeholder("Item.Amount")}</b></td>"
+            + "</tr></tbody></table>";
+    }
+
+    private static string ThermalFooter(DocumentTypeProfile profile, bool withUpi, bool withCodes)
+    {
+        var html = new StringBuilder();
+        html.Append("<hr style=\"border:none; border-top:1px dashed #000; margin:5px 0\" />");
+
+        html.Append("<table width=\"100%\" style=\"font-size: 9pt\"><tbody>");
+        if (profile.HasTotals)
+        {
+            html.Append(TotalRow("Subtotal", "Totals.SubTotal"));
+            if (profile.HasTax)
+            {
+                html.Append(TotalRow("Tax", "Totals.Tax"));
+            }
+            html.Append(TotalRow("Round off", "Totals.RoundOff"));
+            html.Append("<tr><td align=\"left\" style=\"font-weight: bold; font-size: 10pt\">Total</td>")
+                .Append($"<td align=\"right\" style=\"font-weight: bold; font-size: 10pt\">{Placeholder("Totals.GrandTotal")}</td></tr>");
+        }
+        if (profile.HasPayments)
+        {
+            html.Append(TotalRow("Paid", "Totals.Paid"));
+            html.Append(TotalRow("Balance Due", "Totals.Outstanding"));
+        }
+        html.Append("</tbody></table>");
+
+        if (profile.HasTotals)
+        {
+            html.Append($"<div style=\"font-size: 8pt; margin: 4px 0\">{Placeholder("Totals.AmountInWords")}</div>");
+        }
+
+        if (withUpi)
+        {
+            html.Append($"<div align=\"center\" style=\"margin: 8px 0\">{Placeholder(PlaceholderCatalog.UpiQrTag)}</div>");
+        }
+
+        if (withCodes)
+        {
+            html.Append($"<div align=\"center\" style=\"margin: 6px 0\">{Placeholder(PlaceholderCatalog.DocumentBarcodeTag)}</div>");
+        }
+
+        html.Append("<div align=\"center\" style=\"font-size: 8.5pt; margin-top: 6px; font-weight: bold\">Thank you! Visit again.</div>");
         return html.ToString();
     }
 

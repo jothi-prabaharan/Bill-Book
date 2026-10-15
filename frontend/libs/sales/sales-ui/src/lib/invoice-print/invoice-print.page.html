@@ -23,10 +23,15 @@
 }
 
 @if (loading()) {
-  <p class="print-note">Loading…</p>
+  <p class="print-note">Rendering exact PDF preview…</p>
+} @else if (pdfUrl(); as pdf) {
+  <iframe
+    #frame
+    class="print-frame"
+    title="Invoice PDF Preview"
+    [src]="pdf"
+  ></iframe>
 } @else if (html(); as document) {
-  <!-- Same origin only so this page can open the frame's print dialog; no
-       scripts, so nothing in the template can run. -->
   <iframe
     #frame
     class="print-frame"

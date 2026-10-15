@@ -40,7 +40,7 @@
             >
               @for (t of templates(); track t.printTemplateId) {
                 <option [value]="t.printTemplateId">
-                  {{ t.templateName }}{{ t.isDefault ? ' · default' : '' }}
+                  {{ t.templateName }}{{ t.isDefault ? ' · default' : '' }}{{ t.isSample ? ' · sample' : '' }}
                 </option>
               }
             </select>
@@ -61,6 +61,9 @@
 
           @if (canEdit()) {
             <div class="pt-template-actions">
+              <button class="btn btn-ghost btn-xs" type="button" (click)="openSaveAsModal()">
+                Save As
+              </button>
               <button class="btn btn-ghost btn-xs" type="button" (click)="duplicateTemplate()">
                 Duplicate
               </button>
@@ -71,14 +74,18 @@
                   Set default
                 </button>
               }
-              @if (templates().length > 1) {
-                <button class="btn btn-ghost btn-xs" type="button" (click)="deleteTemplate()">
-                  Delete
+              @if (curTemplate.isSample) {
+                <span class="tag tag-info" title="Sample templates are protected platform templates and cannot be deleted or directly overwritten.">Sample (Protected)</span>
+              } @else {
+                @if (templates().length > 1) {
+                  <button class="btn btn-ghost btn-xs" type="button" (click)="deleteTemplate()">
+                    Delete
+                  </button>
+                }
+                <button class="btn btn-ghost btn-xs" type="button" (click)="resetLayout()">
+                  Reset
                 </button>
               }
-              <button class="btn btn-ghost btn-xs" type="button" (click)="resetLayout()">
-                Reset
-              </button>
             </div>
           }
         </div>
@@ -982,14 +989,37 @@
               >
                 Discard
               </button>
+
               <button
-                class="btn btn-primary"
+                class="btn btn-secondary"
                 type="button"
-                [disabled]="busy() || !dirty() || draftName().trim() === ''"
-                (click)="save()"
+                [disabled]="busy()"
+                (click)="openSaveAsModal()"
+                title="Save as a new custom template scoped to this organization"
               >
-                Save
+                Save As
               </button>
+
+              @if (!curTemplate.isSample) {
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  [disabled]="busy() || !dirty() || draftName().trim() === ''"
+                  (click)="save()"
+                >
+                  Save
+                </button>
+              } @else {
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  [disabled]="busy()"
+                  (click)="openSaveAsModal()"
+                  title="Sample templates are protected from direct edit. Save as a new custom template."
+                >
+                  Save As
+                </button>
+              }
             }
           </div>
         </div>
@@ -1064,136 +1094,92 @@
           </div>
         }
 
-        <!-- Canvas (Preview Mode) -->
+        <!-- Canvas (Preview Mode - Exact Server-Side PDF) -->
         @if (mode() === 'preview') {
-          <div #paperScroller class="pt-scroller">
-            <div [style.width]="zoomWidth()" [style.height]="zoomHeight()" class="pt-zoom-container">
-              <div [style.transform]="zoomScale()" class="pt-zoom-scaler">
-                <div
-                  class="pt-preview-viewport"
-                  [style.width.px]="pageWidthPx()"
-                  [style.height]="viewportHeight()"
-                  [style.fontFamily]="pageFontFamily()"
-                  [style.fontSize.px]="pageFontSize()"
-                >
-                  <!-- Flow Area with Translation -->
-                  <div
-                    class="pt-preview-flow-wrap"
-                    [style.top]="flowTop()"
-                    [style.bottom]="flowBottom()"
-                    [style.left.px]="padLeft()"
-                    [style.right.px]="padRight()"
-                  >
-                    @if (cutTop()) {
-                      <div class="pt-cut-line pt-cut-top"></div>
-                    }
-                    @if (cutBottom()) {
-                      <div class="pt-cut-line pt-cut-bottom"></div>
-                    }
-                    <div [style.transform]="flowShift()">
-                      <div #flowMeasure>
-                        <div #fhMeasure [style.margin]="getSegMarginStyle('fh')">
-                          <div class="pt-cap">Fixed header</div>
-                          <div [innerHTML]="mockHtml('fh')"></div>
-                        </div>
-                        <div [style.margin]="getSegMarginStyle('h')">
-                          <div class="pt-cap">Header</div>
-                          <div [innerHTML]="mockHtml('h')"></div>
-                        </div>
-                        <div [style.margin]="getSegMarginStyle('d')">
-                          <div class="pt-cap">Details</div>
-                          <div [innerHTML]="mockHtml('d')"></div>
-                        </div>
-                        @if (footerInline()) {
-                          <div [style.margin]="getSegMarginStyle('f')">
-                            <div class="pt-cap" style="margin-top:6px">Footer</div>
-                            <div [innerHTML]="mockHtml('f')"></div>
-                          </div>
-                        }
-                        @if (fixedFooterInline()) {
-                          <div [style.margin]="getSegMarginStyle('ff')">
-                            <div class="pt-cap" style="margin-top:6px">Fixed footer</div>
-                            <div [innerHTML]="mockHtml('ff')"></div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Repeated Header on Page > 1 -->
-                  @if (isLaser() && previewPage() > 1) {
-                    <div
-                      class="pt-preview-rep-fh"
-                      [style.left.px]="padLeft()"
-                      [style.right.px]="padRight()"
-                      [style.top.px]="padTop()"
-                    >
-                      <div class="pt-cap">Fixed header · repeated</div>
-                      <div [innerHTML]="mockHtml('fh')"></div>
-                    </div>
-                  }
-
-                  <!-- Pinned Footers at Bottom -->
-                  <div
-                    #pinnedMeasure
-                    class="pt-preview-pinned"
-                    [style.left.px]="padLeft()"
-                    [style.right.px]="padRight()"
-                    [style.bottom.px]="padBottom()"
-                  >
-                    @if (!footerInline() && (isLastPage() || !isLaser())) {
-                      <div #footerMeasure style="background:#fff">
-                        <div class="pt-cap">Footer · last page</div>
-                        <div [innerHTML]="mockHtml('f')"></div>
-                      </div>
-                    }
-                    @if (!fixedFooterInline()) {
-                      <div #ffMeasure style="background:#fff">
-                        <div class="pt-cap" style="margin-top:6px">Fixed footer · every page</div>
-                        <div [innerHTML]="mockHtml('ff')"></div>
-                      </div>
-                    }
-                  </div>
+          <div class="pt-pdf-preview-pane">
+            @if (pdfLoading()) {
+              <div class="pt-pdf-loading-state">
+                <div class="spinner"></div>
+                <div class="pt-pdf-loading-text">
+                  <h3>Generating exact PDF with Puppeteer...</h3>
+                  <p class="hint">Rendering layout on server for paper size: {{ draftSettings().paperSize || curTemplate.paperSizeName || 'A4' }}</p>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Pagination Bar -->
-          <div class="pt-pagination">
-            @if (isLaser()) {
-              <button
-                class="btn btn-ghost"
-                type="button"
-                [disabled]="previewPage() <= 1"
-                (click)="prevPage()"
-              >
-                Prev
-              </button>
-              <span class="pt-page-count">
-                Page {{ previewPage() }} of {{ previewPageCount() }}
-              </span>
-              <button
-                class="btn btn-ghost"
-                type="button"
-                [disabled]="previewPage() >= previewPageCount()"
-                (click)="nextPage()"
-              >
-                Next
-              </button>
+            } @else if (pdfSafeUrl()) {
+              <div class="pt-pdf-viewer-wrap">
+                <iframe
+                  [src]="pdfSafeUrl()"
+                  class="pt-pdf-iframe"
+                  title="PDF Print Preview"
+                ></iframe>
+              </div>
+            } @else {
+              <div class="pt-pdf-error-state">
+                <p>Could not load PDF preview. Please check your template settings and try again.</p>
+                <button class="btn btn-secondary" type="button" (click)="togglePreview()">Back to edit</button>
+              </div>
             }
-            <button
-              class="btn btn-primary"
-              type="button"
-              [disabled]="busy()"
-              (click)="printPreview()"
-            >
-              Print
-            </button>
           </div>
         }
       </main>
     </div>
+
+    <!-- Save As New Template Modal -->
+    @if (showSaveAsModal()) {
+      <div class="modal-backdrop" (click)="showSaveAsModal.set(false)">
+        <div class="modal-dialog pt-save-as-dialog" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Save As New Template</h3>
+            <button type="button" class="btn btn-ghost btn-xs" (click)="showSaveAsModal.set(false)">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="hint">
+              Create an editable custom template scoped to your branch. Original sample templates are protected and will remain intact.
+            </p>
+            <div class="field">
+              <label for="saveAsName">Template Name <span class="text-danger">*</span></label>
+              <input
+                id="saveAsName"
+                class="input"
+                type="text"
+                maxlength="100"
+                [ngModel]="saveAsName()"
+                (ngModelChange)="saveAsName.set($event)"
+                placeholder="e.g. Sales Invoice - A4 Detailed"
+              />
+            </div>
+            <div class="field">
+              <label for="saveAsPaperSize">Paper / Receipt Size</label>
+              <select
+                id="saveAsPaperSize"
+                class="input"
+                [ngModel]="saveAsPaperSize()"
+                (ngModelChange)="saveAsPaperSize.set($event)"
+              >
+                <option value="A4">A4 (210 × 297 mm)</option>
+                <option value="A5">A5 (148 × 210 mm)</option>
+                <option value="Letter">Letter (8.5 × 11 in)</option>
+                <option value="Thermal3Inch">Thermal 3 inch (80 mm POS roll)</option>
+                <option value="Thermal4Inch">Thermal 4 inch (104 mm wide roll)</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" [disabled]="savingAs()" (click)="showSaveAsModal.set(false)">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="savingAs() || saveAsName().trim() === ''"
+              (click)="submitSaveAs()"
+            >
+              {{ savingAs() ? 'Saving…' : 'Save As New Template' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   } @else {
     <div class="pt-empty-loading">
       <p class="text-muted">Loading print template...</p>

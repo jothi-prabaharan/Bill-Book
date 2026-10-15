@@ -528,6 +528,17 @@ export class PrintTemplatesPage implements OnInit {
     ff: '',
   });
 
+  // Save As modal state
+  protected readonly showSaveAsModal = signal(false);
+  protected readonly saveAsName = signal('');
+  protected readonly saveAsPaperSize = signal('A4');
+  protected readonly savingAs = signal(false);
+
+  // Exact PDF Preview state
+  protected readonly pdfLoading = signal(false);
+  protected readonly pdfRawUrl = signal<string | null>(null);
+  protected readonly pdfSafeUrl = signal<SafeHtml | null>(null);
+
   // History Stack (Ctrl+Z / Ctrl+Y)
   protected readonly undoStack = signal<TemplateSnapshot[]>([]);
   protected readonly redoStack = signal<TemplateSnapshot[]>([]);
@@ -2367,16 +2378,14 @@ export class PrintTemplatesPage implements OnInit {
 
   // ---- Preview & Pagination -------------------------------------------------
 
-  protected togglePreview(): void {
+  protected async togglePreview(): Promise<void> {
     if (this.mode() === 'edit') {
-      // Bank content
       this.bankContentFromDom();
       this.mode.set('preview');
-      this.previewPage.set(1);
-      this.updatePreviewHtml();
-      setTimeout(() => this.measurePreview(), 50);
+      await this.loadPdfPreview();
     } else {
       this.mode.set('edit');
+      this.revokePdfUrl();
       const draft = this.draftContent();
       if (draft) {
         this.loadContentIntoDom(draft);
@@ -2384,9 +2393,82 @@ export class PrintTemplatesPage implements OnInit {
     }
   }
 
-  protected async printPreview(): Promise<void> {
+  protected async loadPdfPreview(): Promise<void> {
+    const detail = this.detail();
+    if (!detail) return;
+    this.pdfLoading.set(true);
+    this.revokePdfUrl();
+    try {
+      const blob = await this.api.previewPdf(detail.printTemplateId, {
+        settings: this.draftSettings(),
+        content: this.draftContent() ?? undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      this.pdfRawUrl.set(url);
+      this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+    } catch (err) {
+      this.fail(err);
+    } finally {
+      this.pdfLoading.set(false);
+    }
+  }
+
+  private revokePdfUrl(): void {
+    const raw = this.pdfRawUrl();
+    if (raw) {
+      URL.revokeObjectURL(raw);
+      this.pdfRawUrl.set(null);
+      this.pdfSafeUrl.set(null);
+    }
+  }
+
+  protected printPreview(): void {
+    const raw = this.pdfRawUrl();
+    if (raw) {
+      const printWindow = window.open(raw, '_blank');
+      if (printWindow) {
+        printWindow.focus();
+        printWindow.print();
+      }
+    }
+  }
+
+  protected openSaveAsModal(): void {
+    const detail = this.detail();
+    const curName = this.draftName().trim() || detail?.templateName || 'Custom Template';
+    this.saveAsName.set(curName.includes('(Custom)') ? curName : `${curName} (Custom)`);
+    this.saveAsPaperSize.set(detail?.paperSizeName || 'A4');
+    this.showSaveAsModal.set(true);
+  }
+
+  protected async submitSaveAs(): Promise<void> {
+    const detail = this.detail();
+    if (!detail) return;
+    const name = this.saveAsName().trim();
+    if (!name) return;
+
     this.bankContentFromDom();
-    this.printClientPreview();
+    const draft = this.draftContent();
+    if (!draft) return;
+
+    this.savingAs.set(true);
+    try {
+      const created = await this.api.saveAs(detail.printTemplateId, {
+        templateName: name,
+        paperSizeName: this.saveAsPaperSize(),
+        settings: this.draftSettings(),
+        content: draft,
+      });
+
+      this.showSaveAsModal.set(false);
+      this.apply(created);
+      await this.reloadList(created.printTemplateId);
+      this.showFlash('Saved as new custom template');
+    } catch (error) {
+      this.fail(error);
+    } finally {
+      this.savingAs.set(false);
+    }
   }
 
   private printClientPreview(): void {

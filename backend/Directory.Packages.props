@@ -52,6 +52,7 @@
          and this solution builds with TreatWarningsAsErrors. -->
     <PackageVersion Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageVersion Include="PDFsharp" Version="6.1.1" />
+    <PackageVersion Include="PuppeteerSharp" Version="20.1.0" />
     <!-- Allow-list HTML sanitiser for print template segments, on write. MIT,
          built on AngleSharp, so it parses rather than pattern-matches — a regex
          cannot be trusted with this. Configured in SegmentSanitizer, whose

@@ -81,6 +81,7 @@ builder.Services.AddScoped<PrintTemplateRepository>();
 builder.Services.AddScoped<PrintTemplateSeederRepository>();
 builder.Services.AddScoped<LabelRepository>();
 builder.Services.AddSingleton<PrintRendererRepository>();
+builder.Services.AddSingleton<PrintPdfGeneratorRepository>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

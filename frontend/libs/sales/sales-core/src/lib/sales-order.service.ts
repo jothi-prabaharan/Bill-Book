@@ -26,6 +26,7 @@ export interface SaveSalesOrderRequest {
   notes?: string;
   termsAndConditions?: string;
   lines: SalesOrderLineRequest[];
+  printTemplateId?: number | null;
   /** Custom field values (TK-112); left out on an update, what is stored stays. */
   customFields?: Record<string, unknown>;
 }
@@ -103,6 +104,7 @@ export interface SalesOrderListItem {
   totalAmount: number;
   status: string;
   isInterState: boolean;
+  printTemplateId?: number | null;
   invoicedDocumentId?: number;
   /** Every line billed in full — the billing half of progress, beside `fulfilmentStatus`. */
   isFullyInvoiced: boolean;

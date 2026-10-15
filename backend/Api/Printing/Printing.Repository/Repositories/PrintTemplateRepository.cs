@@ -24,11 +24,16 @@ public sealed class PrintTemplateRepository
 {
     private readonly PrintingDbContext _db;
     private readonly PrintRendererRepository _renderer;
+    private readonly PrintPdfGeneratorRepository _pdfGenerator;
 
-    public PrintTemplateRepository(PrintingDbContext db, PrintRendererRepository renderer)
+    public PrintTemplateRepository(
+        PrintingDbContext db,
+        PrintRendererRepository renderer,
+        PrintPdfGeneratorRepository pdfGenerator)
     {
         _db = db;
         _renderer = renderer;
+        _pdfGenerator = pdfGenerator;
     }
 
     public async Task<IReadOnlyList<PrintTemplateListItem>> ListAsync(string? documentTypeCode, CancellationToken ct)
@@ -50,6 +55,8 @@ public sealed class PrintTemplateRepository
                 PrintTemplateId = t.PrintTemplateId,
                 TemplateName = t.TemplateName,
                 DocumentTypeCode = t.DocumentTypeCode,
+                PaperSizeName = t.PaperSizeName,
+                IsSample = t.IsSample,
                 IsDefault = t.IsDefault,
                 UpdatedAt = t.ModifiedAt ?? t.CreatedAt,
             })
@@ -65,6 +72,8 @@ public sealed class PrintTemplateRepository
                 {
                     DocumentTypeCode = profile.Code,
                     TemplateName = profile.Name,
+                    PaperSizeName = "A4",
+                    IsSample = false,
                     IsDefault = true,
                     IsActive = true,
                     Settings = DefaultLayoutGenerator.BuildSettings(profile),
@@ -82,6 +91,8 @@ public sealed class PrintTemplateRepository
                         PrintTemplateId = template.PrintTemplateId,
                         TemplateName = template.TemplateName,
                         DocumentTypeCode = template.DocumentTypeCode,
+                        PaperSizeName = template.PaperSizeName,
+                        IsSample = template.IsSample,
                         IsDefault = template.IsDefault,
                         UpdatedAt = template.ModifiedAt ?? template.CreatedAt,
                     }
@@ -109,6 +120,8 @@ public sealed class PrintTemplateRepository
             {
                 PrintTemplateId = t.PrintTemplateId,
                 TemplateName = t.TemplateName,
+                PaperSizeName = t.PaperSizeName,
+                IsSample = t.IsSample,
                 IsDefault = t.IsDefault,
             })
             .ToListAsync(ct);
@@ -176,10 +189,14 @@ public sealed class PrintTemplateRepository
         bool hasDefault = await _db.PrintTemplates
             .AnyAsync(t => t.DocumentTypeCode == profile.Code && t.IsDefault && t.IsActive, ct);
 
+        string paperSize = string.IsNullOrWhiteSpace(request.PaperSizeName) ? "A4" : request.PaperSizeName.Trim();
+
         var template = new PrintTemplate
         {
             DocumentTypeCode = profile.Code,
             TemplateName = name,
+            PaperSizeName = paperSize,
+            IsSample = false,
             IsDefault = !hasDefault,
             IsActive = true,
             Settings = settings,
@@ -205,6 +222,12 @@ public sealed class PrintTemplateRepository
             return PrintTemplateResult<PrintTemplateDetail>.Fail(PrintTemplateOutcome.NotFound);
         }
 
+        // Sample templates are protected from direct overwrite.
+        if (template.IsSample)
+        {
+            return PrintTemplateResult<PrintTemplateDetail>.Fail(PrintTemplateOutcome.SampleProtected);
+        }
+
         // Checked before anything else is touched: a stale save must leave the
         // row exactly as the other editor left it.
         if (request.TemplateVersion != template.TemplateVersion)
@@ -228,12 +251,80 @@ public sealed class PrintTemplateRepository
         }
 
         template.TemplateName = name;
+        if (!string.IsNullOrWhiteSpace(request.PaperSizeName))
+        {
+            template.PaperSizeName = request.PaperSizeName.Trim();
+        }
         template.Settings = settings;
         template.Content = content;
         template.TemplateVersion++;
 
         await _db.SaveChangesAsync(ct);
         return PrintTemplateResult<PrintTemplateDetail>.Ok(Detail(template));
+    }
+
+    /// <summary>
+    /// Creates a new branch-scoped custom template from an existing template (sample or custom).
+    /// Always sets IsSample = false.
+    /// </summary>
+    public async Task<PrintTemplateResult<PrintTemplateDetail>> SaveAsAsync(
+        long id, SaveAsPrintTemplateRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        PrintTemplate? source = await Find(id, ct);
+        if (source is null)
+        {
+            return PrintTemplateResult<PrintTemplateDetail>.Fail(PrintTemplateOutcome.NotFound);
+        }
+
+        string name = request.TemplateName.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return PrintTemplateResult<PrintTemplateDetail>.Fail(PrintTemplateOutcome.NameTaken);
+        }
+
+        if (await NameTakenAsync(source.DocumentTypeCode, name, null, ct))
+        {
+            return PrintTemplateResult<PrintTemplateDetail>.Fail(PrintTemplateOutcome.NameTaken);
+        }
+
+        PrintSettings settings = request.Settings is not null
+            ? request.Settings
+            : PrintJson.Deserialize<PrintSettings>(PrintJson.Serialize(source.Settings));
+
+        PrintContent content = request.Content is not null
+            ? request.Content
+            : PrintJson.Deserialize<PrintContent>(PrintJson.Serialize(source.Content));
+
+        PrintTemplateResult<PrintTemplateDetail>? refusal = Prepare(settings, content);
+        if (refusal is not null)
+        {
+            return refusal;
+        }
+
+        string paperSize = !string.IsNullOrWhiteSpace(request.PaperSizeName)
+            ? request.PaperSizeName.Trim()
+            : source.PaperSizeName;
+
+        var newTemplate = new PrintTemplate
+        {
+            DocumentTypeCode = source.DocumentTypeCode,
+            TemplateName = name,
+            PaperSizeName = paperSize,
+            IsSample = false,
+            IsDefault = false,
+            IsActive = true,
+            Settings = settings,
+            Content = content,
+            TemplateVersion = 1,
+            SeedVersion = 0,
+        };
+
+        _db.PrintTemplates.Add(newTemplate);
+        await _db.SaveChangesAsync(ct);
+
+        return PrintTemplateResult<PrintTemplateDetail>.Ok(Detail(newTemplate));
     }
 
     /// <summary>
@@ -289,6 +380,11 @@ public sealed class PrintTemplateRepository
             return PrintTemplateOutcome.NotFound;
         }
 
+        if (template.IsSample)
+        {
+            return PrintTemplateOutcome.SampleProtected;
+        }
+
         // Deleting the default, or the last one, would leave a document type
         // with nothing to print.
         int remaining = await _db.PrintTemplates
@@ -318,6 +414,11 @@ public sealed class PrintTemplateRepository
         if (template is null)
         {
             return PrintTemplateResult<PrintTemplateDetail>.Fail(PrintTemplateOutcome.NotFound);
+        }
+
+        if (template.IsSample)
+        {
+            return PrintTemplateResult<PrintTemplateDetail>.Fail(PrintTemplateOutcome.SampleProtected);
         }
 
         DocumentTypeProfile? profile = DocumentTypeCatalog.Find(template.DocumentTypeCode);
@@ -406,6 +507,64 @@ public sealed class PrintTemplateRepository
             PrintTemplateId = layout.PrintTemplateId,
             Source = layout.Source,
         });
+    }
+
+    public async Task<PrintTemplateResult<byte[]>> PreviewPdfAsync(
+        long id, PreviewPrintTemplateRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.SampleDocId is not null)
+        {
+            return PrintTemplateResult<byte[]>.Fail(PrintTemplateOutcome.PreviewNotAvailableHere);
+        }
+
+        PrintTemplate? template = await Find(id, ct);
+        if (template is null)
+        {
+            return PrintTemplateResult<byte[]>.Fail(PrintTemplateOutcome.NotFound);
+        }
+
+        PrintSettings settings = request.Settings ?? template.Settings;
+        PrintContent content = request.Content ?? template.Content;
+
+        PrintRenderResult rendered = _renderer.Render(new PrintRenderRequest
+        {
+            Settings = settings,
+            Content = content,
+            DocumentTypeCode = template.DocumentTypeCode,
+            Payload = SamplePayloadRepository.For(template.DocumentTypeCode),
+        });
+
+        byte[] pdfBytes = await _pdfGenerator.RenderHtmlToPdfAsync(rendered.Html, settings, ct);
+        return PrintTemplateResult<byte[]>.Ok(pdfBytes);
+    }
+
+    public async Task<PrintTemplateResult<byte[]>> RenderPdfAsync(
+        RenderPrintRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!DocumentTypeCatalog.IsPrintable(request.DocumentTypeCode))
+        {
+            return PrintTemplateResult<byte[]>.Fail(PrintTemplateOutcome.InvalidDocumentType);
+        }
+
+        PrintTemplateResolution layout = await ResolveAsync(
+            request.DocumentTypeCode, request.PrintTemplateId, ct);
+
+        PrintRenderResult rendered = _renderer.Render(new PrintRenderRequest
+        {
+            Settings = layout.Settings,
+            Content = layout.Content,
+            DocumentTypeCode = layout.DocumentTypeCode,
+            Payload = PrintPayloadReaderRepository.Read(request.Payload),
+            Format = new PrintFormatContext { CurrencySymbol = request.CurrencySymbol ?? string.Empty },
+            Watermark = request.Watermark,
+        });
+
+        byte[] pdfBytes = await _pdfGenerator.RenderHtmlToPdfAsync(rendered.Html, layout.Settings, ct);
+        return PrintTemplateResult<byte[]>.Ok(pdfBytes);
     }
 
     /// <summary>
@@ -503,6 +662,8 @@ public sealed class PrintTemplateRepository
         PrintTemplateId = template.PrintTemplateId,
         DocumentTypeCode = template.DocumentTypeCode.Trim(),
         TemplateName = template.TemplateName,
+        PaperSizeName = template.PaperSizeName,
+        IsSample = template.IsSample,
         IsDefault = template.IsDefault,
         IsActive = template.IsActive,
         Settings = template.Settings,

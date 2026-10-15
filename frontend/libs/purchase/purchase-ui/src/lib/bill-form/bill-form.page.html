@@ -172,6 +172,24 @@
         </div>
 
         <div class="field">
+          <label for="bil-print-template">Print template</label>
+          <select
+            id="bil-print-template"
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="printTemplateId()"
+            (ngModelChange)="printTemplateId.set($event ? +$event : null)"
+          >
+            @for (t of printTemplates(); track t.printTemplateId) {
+              <option [value]="t.printTemplateId">
+                {{ t.templateName }}{{ t.isDefault ? ' (Default)' : '' }} [{{ t.paperSizeName || 'A4' }}]
+              </option>
+            }
+          </select>
+          <span class="hint">Print and PDF paper layout</span>
+        </div>
+
+        <div class="field">
           <bb-text-input
             id="bil-vendor-no"
             label="Vendor's bill no."

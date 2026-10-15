@@ -55,6 +55,7 @@ export interface SaveInvoiceRequest {
   transporterId?: string;
   transporterName?: string;
   transportDistanceKm?: number;
+  printTemplateId?: number | null;
   lines: InvoiceLineRequest[];
   /** Custom field values (TK-112); left out on an update, what is stored stays. */
   customFields?: Record<string, unknown>;
@@ -146,6 +147,7 @@ export interface InvoiceListItem {
   totalAmount: number;
   status: string;
   isInterState: boolean;
+  printTemplateId?: number | null;
   /** Zero unless the invoice is posted and past its due date. */
   daysOverdue: number;
   paymentMode?: string;

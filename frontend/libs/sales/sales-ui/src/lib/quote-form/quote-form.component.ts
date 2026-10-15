@@ -44,6 +44,7 @@ import {
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
+import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SalesPicker } from '../sales-picker';
 
@@ -106,16 +107,21 @@ export class QuoteFormComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private quoteService = inject(QuoteService);
+  private printTemplatesService = inject(PrintTemplateService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   isEdit = false;
   quoteId: number | null = null;
 
+  /** Available print templates for this transaction type */
+  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+
   form = this.fb.group({
     documentDate: [new Date().toISOString().split('T')[0], Validators.required],
     validUntil: [new Date().toISOString().split('T')[0], Validators.required],
     contactId: [0, [Validators.required, Validators.min(1)]],
+    printTemplateId: [null as number | null],
     contactGstin: [''],
     placeOfSupplyStateCode: [this.getOrgStateCode()],
     currencyCode: [this.getOrgCurrency(), Validators.required],
@@ -348,11 +354,27 @@ export class QuoteFormComponent implements OnInit {
 
   ngOnInit() {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
+    void this.loadPrintTemplates();
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
       this.isEdit = true;
       this.quoteId = +id;
       this.loadQuote();
+    }
+  }
+
+  private async loadPrintTemplates(): Promise<void> {
+    try {
+      const choices = await this.printTemplatesService.choices('QTE');
+      this.printTemplates.set(choices);
+      if (!this.isEdit) {
+        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
+        if (defaultTmpl && !this.form.controls.printTemplateId.value) {
+          this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
+        }
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -365,6 +387,7 @@ export class QuoteFormComponent implements OnInit {
         documentDate: q.documentDate,
         validUntil: q.validUntil,
         contactId: q.contactId,
+        printTemplateId: (q as any).printTemplateId ?? null,
         contactGstin: q.contactGstin || '',
         placeOfSupplyStateCode: (q as any).placeOfSupplyStateCode || (q as any).placeOfSupplyStateId?.toString() || '',
         currencyCode: q.currencyCode,
@@ -438,6 +461,7 @@ export class QuoteFormComponent implements OnInit {
       exchangeRate: val.exchangeRate!,
       billingAddress: val.billingAddress || undefined,
       shippingAddress: val.shippingAddress || undefined,
+      printTemplateId: val.printTemplateId ?? undefined,
       notes: val.notes || undefined,
       customFields: compactValues(this.customValues()),
       termsAndConditions: val.termsAndConditions || undefined,
