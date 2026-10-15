@@ -36,12 +36,19 @@ public sealed class PrintTemplateSeederRepository
             .ToListAsync(ct);
 
         IReadOnlyList<PrintTemplate> missing = PrintTemplateSeed.Build(
-            orgId, existing.Select(t => (t.DocumentTypeCode, t.PaperSizeName ?? DefaultLayoutGenerator.PaperSizeA4)));
+            orgId, existing.Select(t => (t.DocumentTypeCode, string.IsNullOrWhiteSpace(t.PaperSizeName) ? DefaultLayoutGenerator.PaperSizeA4 : t.PaperSizeName)));
         _db.PrintTemplates.AddRange(missing);
 
         int upgraded = 0;
         foreach (PrintTemplate template in existing)
         {
+            if (string.IsNullOrWhiteSpace(template.PaperSizeName))
+            {
+                template.PaperSizeName = DefaultLayoutGenerator.PaperSizeA4;
+                template.IsSample = true;
+                upgraded++;
+            }
+
             if (Upgrade(template))
             {
                 upgraded++;
