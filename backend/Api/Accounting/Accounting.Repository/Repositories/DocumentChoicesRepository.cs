@@ -114,7 +114,12 @@ public sealed class DocumentChoicesRepository
     public async Task<IReadOnlyList<AccountChoice>> AccountsAsync(
         ChoiceUsage usage, CancellationToken ct)
     {
-        IQueryable<Account> query = _db.Accounts.Where(a => a.IsActive && !a.IsLock);
+        // Parent accounts cannot accept transactions — only leaf accounts can be posted to.
+        var parentAccountIds = _db.Accounts
+            .Where(a => a.ParentAccountId != null)
+            .Select(a => a.ParentAccountId!.Value);
+
+        IQueryable<Account> query = _db.Accounts.Where(a => a.IsActive && !a.IsLock && !parentAccountIds.Contains(a.AccountId));
 
         query = usage switch
         {
@@ -124,18 +129,22 @@ public sealed class DocumentChoicesRepository
             _ => query,
         };
 
-        return await query
-            .OrderBy(a => a.AccountTypeId)
-            .ThenBy(a => a.AccountCode)
-            .Select(a => new AccountChoice
+        return await (
+            from a in query
+            join p in _db.Accounts on a.ParentAccountId equals p.AccountId into parents
+            from p in parents.DefaultIfEmpty()
+            orderby a.AccountTypeId, a.AccountCode
+            select new AccountChoice
             {
                 AccountId = a.AccountId,
                 AccountCode = a.AccountCode,
                 AccountName = a.AccountName,
                 AccountTypeId = a.AccountTypeId,
                 CurrencyCode = a.CurrencyCode,
-            })
-            .ToListAsync(ct);
+                ParentAccountId = a.ParentAccountId,
+                ParentAccountName = p != null ? p.AccountName : null,
+                Depth = a.ParentAccountId != null ? 1 : 0,
+            }).ToListAsync(ct);
     }
 
     /// <summary>

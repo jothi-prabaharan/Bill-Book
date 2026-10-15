@@ -64,6 +64,13 @@
     overflow: hidden;
     padding: 0;
   }
+
+  &:has(.backdrop),
+  &:has(.dialog-backdrop),
+  &:has(.dialog),
+  &:has([role="dialog"]) {
+    z-index: var(--z-modal);
+  }
 }
 
 /* Org dropdown backdrop */

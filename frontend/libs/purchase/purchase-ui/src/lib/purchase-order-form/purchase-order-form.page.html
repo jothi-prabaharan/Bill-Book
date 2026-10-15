@@ -146,17 +146,6 @@
     <!-- Card 2: Items -->
     <div class="card">
       <div class="card-kicker">Items</div>
-      @if (!readonlyDoc()) {
-        <div class="po-form__scan">
-          <bb-scan
-            label="Scan"
-            placeholder="Scan or type a barcode or item code"
-            ariaLabel="Scan an item"
-            [global]="true"
-            (scanned)="onScan($event)"
-          />
-        </div>
-      }
 
       <div style="overflow-x:auto">
         <bb-document-line-grid

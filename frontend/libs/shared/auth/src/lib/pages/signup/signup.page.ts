@@ -199,7 +199,11 @@ export class SignupPage implements OnInit {
 
   back(): void {
     if (this.step() === 1) {
-      void this.router.navigateByUrl('/login');
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      void this.router.navigateByUrl('/');
       return;
     }
     this.error.set(null);

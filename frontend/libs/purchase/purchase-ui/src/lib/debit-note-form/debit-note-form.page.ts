@@ -100,7 +100,6 @@ interface ReturnLine {
     ExchangeRateFieldComponent,
     MoreDetailsComponent,
     FormFieldComponent,
-    ScanComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     DataGridComponent,

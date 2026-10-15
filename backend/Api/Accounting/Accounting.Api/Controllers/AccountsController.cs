@@ -85,6 +85,10 @@ public sealed class AccountsController : ControllerBase
             {
                 Message = "The parent account must exist and share the same account type.",
             }),
+            SaveAccountOutcome.ParentHasTransactions => BadRequest(new MessageResponse
+            {
+                Message = "An account with existing transactions cannot be assigned as a parent account.",
+            }),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
 }

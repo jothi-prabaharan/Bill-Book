@@ -42,6 +42,18 @@ public class AccountListItem
     /// used, or it is a seeded system account. The UI renders those read-only.
     /// </summary>
     public bool IsConfigLocked { get; set; }
+
+    /// <summary>True when other accounts reference this account as their ParentAccountId.</summary>
+    public bool HasChildren { get; set; }
+
+    /// <summary>Display name of the parent account if any.</summary>
+    public string? ParentAccountName { get; set; }
+
+    /// <summary>Hierarchical depth in the chart of accounts tree (0 = root).</summary>
+    public int Depth { get; set; }
+
+    /// <summary>True when direct transactions (journal entries, ledger postings, opening balances) exist on this account.</summary>
+    public bool HasTransactions { get; set; }
 }
 
 public class SaveAccountRequest

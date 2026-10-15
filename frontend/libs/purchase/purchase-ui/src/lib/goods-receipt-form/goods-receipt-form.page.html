@@ -121,20 +121,11 @@
     <div class="card">
       <div class="card-kicker">What was delivered</div>
 
-      @if (!readonlyDoc()) {
+      @if (!readonlyDoc() && lines().length > 0) {
         <div class="grn-form__scan">
-          <bb-scan
-            label="Scan"
-            placeholder="Scan a barcode or a pack's GS1 code"
-            ariaLabel="Scan an item"
-            [global]="true"
-            (scanned)="onScan($event)"
-          />
-          @if (lines().length > 0) {
-            <button type="button" class="btn btn-secondary" (click)="zeroReceived()">
-              Set received to zero
-            </button>
-          }
+          <button type="button" class="btn btn-secondary" (click)="zeroReceived()">
+            Set received to zero
+          </button>
         </div>
       }
 

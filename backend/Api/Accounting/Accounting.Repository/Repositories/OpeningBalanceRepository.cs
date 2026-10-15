@@ -603,6 +603,13 @@ public sealed class OpeningBalanceRepository
                     OpeningBalanceOutcome.AccountUnusable, 0,
                     "One of the lines names an account this branch does not have.");
             }
+
+            if (await _db.Accounts.AnyAsync(a => a.ParentAccountId != null && accountIds.Contains(a.ParentAccountId.Value), ct))
+            {
+                return new OpeningBalanceResult(
+                    OpeningBalanceOutcome.AccountUnusable, 0,
+                    "A line names a parent account. Opening balances can only be entered for leaf accounts.");
+            }
         }
 
         return null;

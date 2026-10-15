@@ -167,17 +167,6 @@
       @if (lines().length === 0) {
         <p class="state">Choose a bill above to see what can be corrected.</p>
       } @else {
-        @if (!readonlyDoc()) {
-          <div style="margin-bottom: var(--space-2); max-width: 420px">
-            <bb-scan
-              label="Scan"
-              placeholder="Scan an item going back"
-              ariaLabel="Scan an item going back"
-              [global]="true"
-              (scanned)="onScan($event)"
-            />
-          </div>
-        }
 
         <bb-data-grid fillHeight [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
           <ng-template bbCellTemplate="label" let-row="row">

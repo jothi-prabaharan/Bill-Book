@@ -87,7 +87,6 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
     ExchangeRateFieldComponent,
     MoreDetailsComponent,
     FormFieldComponent,
-    ScanComponent,
     EditHistoryComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,

@@ -13,6 +13,9 @@
 .badge.sys { background: var(--color-neutral-200); color: var(--color-text-muted); }
 .badge.contra { background: var(--color-warning-bg); color: var(--color-warning); }
 .badge.lock { background: #ffd9d6; color: #a3271c; }
+.badge.parent { background: var(--color-primary-bg, #e0f2fe); color: var(--color-primary, #0369a1); font-weight: 500; }
+.tree-branch { color: var(--color-text-subtle); font-family: monospace; font-size: 0.85em; }
+.parent-name { font-weight: 600; }
 .link { background: none; border: 0; color: var(--color-accent-700); cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
 .link.danger { color: var(--color-danger); }
 .editor { display: grid; gap: .9rem; max-width: 34rem; margin-top: 1rem; }

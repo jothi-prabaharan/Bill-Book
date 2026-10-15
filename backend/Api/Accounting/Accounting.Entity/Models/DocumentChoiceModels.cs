@@ -53,6 +53,9 @@ public class AccountChoice
     public int AccountTypeId { get; set; }
 
     public string? CurrencyCode { get; set; }
+    public long? ParentAccountId { get; set; }
+    public string? ParentAccountName { get; set; }
+    public int Depth { get; set; }
 }
 
 /// <summary>

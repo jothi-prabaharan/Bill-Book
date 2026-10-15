@@ -89,7 +89,6 @@ type Picker = 'none' | 'vendor' | 'item';
     ExchangeRateFieldComponent,
     MoreDetailsComponent,
     FormFieldComponent,
-    ScanComponent,
     DocumentCustomFieldsComponent,
     ApprovalPanelComponent,
     CommonModule,

@@ -34,12 +34,18 @@ export const appRoutes: Routes = [
           else if (port === '6202') targetPort = '6200';
           else if (port === '7202') targetPort = '7200';
 
+          // Prevent loop: strip any repeated app. or www. prefixes, do not prepend app. if already on app.
+          const cleanHost = hostname.replace(/^(app\.)+/, '').replace(/^www\./, '');
+          const appHost = hostname.startsWith('app.') ? hostname : `app.${cleanHost}`;
+
           const targetUrl =
             hostname === 'localhost' || hostname === '127.0.0.1' || port
               ? `${protocol}//${hostname}:${targetPort}/login`
-              : `${protocol}//app.${hostname.replace(/^www\./, '')}/login`;
+              : `${protocol}//${appHost}/login`;
 
-          window.location.href = targetUrl;
+          if (window.location.href !== targetUrl) {
+            window.location.href = targetUrl;
+          }
         }
         return false;
       },

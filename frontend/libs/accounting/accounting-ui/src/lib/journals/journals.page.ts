@@ -79,6 +79,10 @@ interface AccountOption {
   isJE: boolean;
   isLock: boolean;
   isActive: boolean;
+  parentAccountId?: number | null;
+  parentAccountName?: string | null;
+  hasChildren?: boolean;
+  depth?: number;
 }
 
 interface SubAccountOption {
@@ -144,12 +148,34 @@ export class JournalsPage implements OnInit {
    * Mapped on the class so a grid of journal lines builds each list once
    * rather than per row per render.
    */
-  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() =>
-    this.postable().map((account) => ({
+  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() => {
+    const postable = this.postable();
+    const all = this.accounts();
+    const nameMap = new Map(all.map((a) => [a.accountId, a]));
+
+    const buildPath = (account: AccountOption): string => {
+      const parts: string[] = [account.accountName];
+      let curr = account.parentAccountId;
+      const seen = new Set<number>();
+      while (curr != null) {
+        if (seen.has(curr)) break;
+        seen.add(curr);
+        const parent = nameMap.get(curr);
+        if (parent) {
+          parts.unshift(parent.accountName);
+          curr = parent.parentAccountId ?? null;
+        } else {
+          break;
+        }
+      }
+      return parts.join(' > ');
+    };
+
+    return postable.map((account) => ({
       value: account.accountId,
-      label: `${account.accountCode} — ${account.accountName}`,
-    })),
-  );
+      label: `${account.accountCode} — ${buildPath(account)}`,
+    }));
+  });
 
   /** Keyed by account, because which sub-accounts apply depends on it. */
   protected subAccountOptionsFor(accountId: number | null): BbSelectOption<number>[] {
@@ -265,9 +291,20 @@ export class JournalsPage implements OnInit {
    * server refuses those, and a picker that offers what the server refuses is a
    * screen arguing with itself.
    */
-  protected readonly postable = computed(() =>
-    this.accounts().filter((a) => a.isActive && !a.isLock && (!a.isSystemDefault || a.isJE)),
-  );
+  protected readonly postable = computed(() => {
+    const accounts = this.accounts();
+    const parentIds = new Set(
+      accounts.map((a) => a.parentAccountId).filter((id): id is number => id !== null),
+    );
+    return accounts.filter(
+      (a) =>
+        a.isActive &&
+        !a.isLock &&
+        (!a.isSystemDefault || a.isJE) &&
+        !parentIds.has(a.accountId) &&
+        !a.hasChildren,
+    );
+  });
 
   protected readonly totalDebit = computed(() =>
     this.lines().reduce((sum, l) => sum + this.amount(l.debit), 0),

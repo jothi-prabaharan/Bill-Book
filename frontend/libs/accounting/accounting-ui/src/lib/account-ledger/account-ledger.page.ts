@@ -55,6 +55,10 @@ interface AccountOption {
   accountCode: string;
   accountName: string;
   accountTypeId: number;
+  parentAccountId?: number | null;
+  parentAccountName?: string | null;
+  depth?: number;
+  hasChildren?: boolean;
 }
 
 interface AccountType {
@@ -91,12 +95,17 @@ interface AccountType {
 })
 export class AccountLedgerPage implements OnInit {
 
-  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() =>
-    this.accounts().map((account) => ({
-      value: account.accountId,
-      label: `${account.accountCode} — ${account.accountName}`,
-    })),
-  );
+  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() => {
+    const accounts = this.accounts();
+    return accounts.map((account) => {
+      const depth = account.depth ?? 0;
+      const prefix = '\u00A0\u00A0'.repeat(depth) + (depth > 0 ? '↳ ' : '');
+      return {
+        value: account.accountId,
+        label: `${prefix}${account.accountCode} — ${account.accountName}`,
+      };
+    });
+  });
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

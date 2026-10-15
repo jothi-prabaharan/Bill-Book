@@ -133,7 +133,9 @@
       (rowClick)="startEdit($event)"
     >
       <ng-template bbCellTemplate="accountCode" let-row>
-        <span class="code" [class.child]="row.parentAccountId">{{ row.accountCode }}</span>
+        <span class="code" [class.child]="row.parentAccountId" [style.padding-left.rem]="row.depth * 0.75">
+          @if (row.depth > 0) { <span class="tree-branch">└─ </span> }{{ row.accountCode }}
+        </span>
       </ng-template>
 
       <ng-template bbCellTemplate="accountTypeName" let-row>
@@ -141,7 +143,8 @@
       </ng-template>
 
       <ng-template bbCellTemplate="accountName" let-row>
-        <span [class.child]="row.parentAccountId">{{ row.accountName }}</span>
+        <span [class.child]="row.parentAccountId" [class.parent-name]="row.hasChildren">{{ row.accountName }}</span>
+        @if (row.hasChildren) { <span class="badge parent">Parent Group</span> }
         @if (row.isSystemDefault) { <span class="badge sys">System</span> }
         @if (row.isContra) { <span class="badge contra">Contra</span> }
       </ng-template>

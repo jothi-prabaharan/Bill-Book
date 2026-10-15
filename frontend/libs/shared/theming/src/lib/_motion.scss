@@ -1,4 +1,4 @@
-﻿// Motion tokens and keyframes
+// Motion tokens and keyframes
 
 :root {
   --ease-settle: cubic-bezier(.2,.75,.25,1);
@@ -63,7 +63,7 @@ main .card.tilt::after { content:''; position:absolute; inset:-1px; border-radiu
 @keyframes sheetIn  { from { transform-origin:50% 100%; transform:perspective(1200px) translateY(100%) rotateX(16deg) }
                       to   { transform-origin:50% 100%; transform:translateY(0) } }
 
-[role='menu'], [role='dialog'], .dialog { animation:popIn 240ms var(--ease-settle) both }
+[role='menu'] { animation:popIn 240ms var(--ease-settle) both }
 .subpanel { animation:panelOpen 320ms var(--ease-settle) both }
 .subsheet { animation:sheetIn 220ms cubic-bezier(.22,.61,.36,1) both }
 .subrow   { animation:paneIn 300ms var(--ease-settle) both;

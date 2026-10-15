@@ -40,6 +40,10 @@ interface AccountRow {
   isPayment: boolean;
   isBank: boolean;
   isConfigLocked: boolean;
+  hasChildren?: boolean;
+  parentAccountName?: string | null;
+  depth?: number;
+  hasTransactions?: boolean;
 }
 
 /** One account's net position over the period, from the trial balance. */
@@ -57,6 +61,8 @@ export interface AccountRegisterRow extends AccountRow {
   state: AccountState;
   debitBalance: number;
   creditBalance: number;
+  depth: number;
+  hasChildren: boolean;
 }
 
 /**
@@ -66,6 +72,100 @@ export interface AccountRegisterRow extends AccountRow {
 export function accountState(account: Pick<AccountRow, 'isActive' | 'isLock'>): AccountState {
   if (!account.isActive) return 'Inactive';
   return account.isLock ? 'Locked' : 'Active';
+}
+
+/**
+ * Filters accounts eligible to be a parent account:
+ * 1. Must share the exact same AccountTypeId (Rule 4).
+ * 2. Cannot be the account being edited (no self-parenting).
+ * 3. Cannot be a descendant of the account being edited (no circular references).
+ * 4. Cannot be an account that has been used in transactions (Rule 3).
+ *    (An existing parent account that is already a parent group may continue to accept children).
+ */
+export function filterEligibleParents(
+  accounts: readonly AccountRow[],
+  typeId: number,
+  editingId: number | null,
+): AccountRow[] {
+  const isDescendant = (candidateId: number): boolean => {
+    if (editingId === null) return false;
+    let curr: number | null = candidateId;
+    const seen = new Set<number>();
+    while (curr !== null) {
+      if (curr === editingId) return true;
+      if (seen.has(curr)) break;
+      seen.add(curr);
+      const parent = accounts.find((x) => x.accountId === curr);
+      curr = parent?.parentAccountId ?? null;
+    }
+    return false;
+  };
+
+  const parentIds = new Set(
+    accounts.map((a) => a.parentAccountId).filter((id): id is number => id !== null),
+  );
+
+  return accounts.filter((a) => {
+    if (a.accountTypeId !== typeId) return false;
+    if (editingId !== null && (a.accountId === editingId || isDescendant(a.accountId))) return false;
+    const hasTx = (a.isUsed || !!a.hasTransactions) && !parentIds.has(a.accountId);
+    if (hasTx) return false;
+    return true;
+  });
+}
+
+/**
+ * Builds recursively indented option list for a Parent Account dropdown (Rule 1).
+ */
+export function buildRecursiveParentOptions(eligible: readonly AccountRow[]): BbSelectOption<number>[] {
+  const eligibleIds = new Set(eligible.map((a) => a.accountId));
+
+  const byParent = new Map<number, AccountRow[]>();
+  for (const a of eligible) {
+    if (a.parentAccountId !== null && eligibleIds.has(a.parentAccountId)) {
+      const list = byParent.get(a.parentAccountId) ?? [];
+      list.push(a);
+      byParent.set(a.parentAccountId, list);
+    }
+  }
+  for (const list of byParent.values()) {
+    list.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+  }
+
+  const options: BbSelectOption<number>[] = [];
+  const visited = new Set<number>();
+
+  const addOptionBranch = (account: AccountRow, depth: number) => {
+    visited.add(account.accountId);
+    const prefix = '\u00A0\u00A0'.repeat(depth) + (depth > 0 ? '↳ ' : '');
+    options.push({
+      value: account.accountId,
+      label: `${prefix}${account.accountCode} · ${account.accountName}`,
+    });
+
+    const children = byParent.get(account.accountId);
+    if (children) {
+      for (const child of children) {
+        addOptionBranch(child, depth + 1);
+      }
+    }
+  };
+
+  const roots = eligible
+    .filter((a) => a.parentAccountId === null || !eligibleIds.has(a.parentAccountId))
+    .sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+
+  for (const root of roots) {
+    if (!visited.has(root.accountId)) {
+      addOptionBranch(root, 0);
+    }
+  }
+
+  for (const rem of eligible.filter((a) => !visited.has(a.accountId)).sort((a, b) => a.accountCode.localeCompare(b.accountCode))) {
+    addOptionBranch(rem, 0);
+  }
+
+  return options;
 }
 
 interface AccountType {
@@ -107,12 +207,6 @@ export class ChartOfAccountsPage implements OnInit {
     this.types().map((type) => ({ value: type.accountTypeId, label: type.displayName })),
   );
 
-  protected readonly parentAccountOptions = computed<BbSelectOption<number>[]>(() =>
-    this.parentOptions().map((account) => ({
-      value: account.accountId,
-      label: `${account.accountCode} · ${account.accountName}`,
-    })),
-  );
   private readonly http = inject(HttpClient);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
@@ -172,58 +266,89 @@ export class ChartOfAccountsPage implements OnInit {
    * One register of every account (TK-187), in the order the chart reads: by
    * type, then each parent followed by its children, then by code.
    */
+  protected readonly parentOptions = computed(() =>
+    filterEligibleParents(this.accounts(), this.form.accountTypeId, this.editingId),
+  );
+
+  /**
+   * Recursive tree options for the Parent Account dropdown with visual indentation and branch indicators.
+   */
+  protected readonly parentAccountOptions = computed<BbSelectOption<number>[]>(() =>
+    buildRecursiveParentOptions(this.parentOptions()),
+  );
+
+  /**
+   * One register of every account (TK-187), in the order the chart reads: by
+   * type, then each parent followed by its children, then by code.
+   */
   protected readonly registerRows = computed<AccountRegisterRow[]>(() => {
     const types = new Map(this.types().map((t) => [t.accountTypeId, t]));
     const balances = this.balances();
-    return this.accounts()
+    const accounts = this.accounts();
+
+    const parentIds = new Set(
+      accounts.map((a) => a.parentAccountId).filter((id): id is number => id !== null),
+    );
+
+    const sortedTypes = this.types()
       .slice()
-      .sort(
-        (a, b) =>
-          (types.get(a.accountTypeId)?.sortOrder ?? 0) - (types.get(b.accountTypeId)?.sortOrder ?? 0) ||
-          (a.parentAccountId ?? a.accountId) - (b.parentAccountId ?? b.accountId) ||
-          a.accountCode.localeCompare(b.accountCode),
-      )
-      .map((account) => ({
-        ...account,
-        accountTypeName: types.get(account.accountTypeId)?.displayName ?? '',
-        state: accountState(account),
-        debitBalance: balances.get(account.accountId)?.debitBalance ?? 0,
-        creditBalance: balances.get(account.accountId)?.creditBalance ?? 0,
-      }));
-  });
+      .sort((a, b) => a.sortOrder - b.sortOrder);
 
-  protected readonly tabs = computed(() => countStatusTabs(this.registerRows(), this.states, (row) => row.state));
+    const rows: AccountRegisterRow[] = [];
 
-  protected readonly visibleRows = computed(() => {
-    const state = this.stateFilter();
-    return this.registerRows().filter((row) => !state || row.state === state);
-  });
+    for (const t of sortedTypes) {
+      const ofType = accounts.filter((a) => a.accountTypeId === t.accountTypeId);
+      const byParent = new Map<number, AccountRow[]>();
+      for (const a of ofType) {
+        if (a.parentAccountId !== null) {
+          const list = byParent.get(a.parentAccountId) ?? [];
+          list.push(a);
+          byParent.set(a.parentAccountId, list);
+        }
+      }
+      for (const list of byParent.values()) {
+        list.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+      }
 
-  /**
-   * The credit side of the accounts on screen. Across the whole chart it
-   * equals the debit side, which is what a balanced set of books means.
-   */
-  protected readonly periodTotal = computed(() =>
-    this.visibleRows().reduce((sum, row) => sum + row.creditBalance, 0),
-  );
+      const visited = new Set<number>();
 
-  protected stateTone(state: AccountState): string {
-    switch (state) {
-      case 'Active':
-        return 'tag-neutral';
-      case 'Locked':
-        return 'tag-outline';
-      default:
-        return 'tag-info';
+      const addBranch = (account: AccountRow, depth: number) => {
+        visited.add(account.accountId);
+        rows.push({
+          ...account,
+          accountTypeName: t.displayName,
+          state: accountState(account),
+          debitBalance: balances.get(account.accountId)?.debitBalance ?? 0,
+          creditBalance: balances.get(account.accountId)?.creditBalance ?? 0,
+          depth,
+          hasChildren: parentIds.has(account.accountId) || !!account.hasChildren,
+        });
+
+        const children = byParent.get(account.accountId);
+        if (children) {
+          for (const child of children) {
+            addBranch(child, depth + 1);
+          }
+        }
+      };
+
+      const roots = ofType
+        .filter((a) => a.parentAccountId === null || !ofType.some((p) => p.accountId === a.parentAccountId))
+        .sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+
+      for (const root of roots) {
+        if (!visited.has(root.accountId)) {
+          addBranch(root, 0);
+        }
+      }
+
+      for (const rem of ofType.filter((a) => !visited.has(a.accountId)).sort((a, b) => a.accountCode.localeCompare(b.accountCode))) {
+        addBranch(rem, 0);
+      }
     }
-  }
 
-  /** Only same-type accounts may parent, so the tree cannot cross report sections. */
-  protected readonly parentOptions = computed(() =>
-    this.accounts().filter(
-      (a) => a.accountTypeId === this.form.accountTypeId && a.accountId !== this.editingId,
-    ),
-  );
+    return rows;
+  });
 
   ngOnInit(): void {
     void this.load();

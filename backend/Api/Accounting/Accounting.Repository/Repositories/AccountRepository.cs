@@ -25,13 +25,72 @@ public sealed class AccountRepository
             .ThenBy(a => a.AccountCode)
             .ToListAsync(ct);
 
-        return rows.Select(Map).ToList();
+        HashSet<long> parentIds = [.. rows.Where(r => r.ParentAccountId != null).Select(r => r.ParentAccountId!.Value)];
+        Dictionary<long, string> names = rows.ToDictionary(r => r.AccountId, r => r.AccountName);
+
+        List<long> ledgerIds = await _db.JournalLedger.Select(l => l.AccountId).Distinct().ToListAsync(ct);
+        List<long> detailIds = await _db.JournalDetails.Select(d => d.AccountId).Distinct().ToListAsync(ct);
+        List<long> obIds = await _db.OpeningBalanceLines.Where(l => l.AccountId != null).Select(l => l.AccountId!.Value).Distinct().ToListAsync(ct);
+        HashSet<long> txAccountIds = [.. ledgerIds.Concat(detailIds).Concat(obIds)];
+
+        var result = new List<AccountListItem>(rows.Count);
+        var byType = rows.GroupBy(r => r.AccountTypeId).OrderBy(g => g.Key);
+
+        foreach (var group in byType)
+        {
+            var byParent = group.Where(r => r.ParentAccountId != null).GroupBy(r => r.ParentAccountId!.Value).ToDictionary(g => g.Key, g => g.OrderBy(a => a.AccountCode).ToList());
+            var visited = new HashSet<long>();
+
+            void AddBranch(Account a, int depth)
+            {
+                visited.Add(a.AccountId);
+                result.Add(Map(a, depth, parentIds.Contains(a.AccountId),
+                    a.ParentAccountId != null && names.TryGetValue(a.ParentAccountId.Value, out string? pName) ? pName : null,
+                    txAccountIds.Contains(a.AccountId) || (a.IsUsed && !parentIds.Contains(a.AccountId))));
+
+                if (byParent.TryGetValue(a.AccountId, out var children))
+                {
+                    foreach (Account child in children)
+                    {
+                        AddBranch(child, depth + 1);
+                    }
+                }
+            }
+
+            var roots = group.Where(a => a.ParentAccountId == null || !group.Any(p => p.AccountId == a.ParentAccountId)).OrderBy(a => a.AccountCode);
+            foreach (Account root in roots)
+            {
+                if (!visited.Contains(root.AccountId))
+                {
+                    AddBranch(root, 0);
+                }
+            }
+
+            foreach (Account remaining in group.Where(a => !visited.Contains(a.AccountId)).OrderBy(a => a.AccountCode))
+            {
+                AddBranch(remaining, 0);
+            }
+        }
+
+        return result;
     }
 
     public async Task<AccountListItem?> GetAsync(long accountId, CancellationToken ct)
     {
         Account? account = await _db.Accounts.FirstOrDefaultAsync(a => a.AccountId == accountId, ct);
-        return account is null ? null : Map(account);
+        if (account is null) return null;
+
+        bool hasChildren = await _db.Accounts.AnyAsync(a => a.ParentAccountId == accountId, ct);
+        string? parentName = account.ParentAccountId != null
+            ? await _db.Accounts.Where(a => a.AccountId == account.ParentAccountId).Select(a => a.AccountName).FirstOrDefaultAsync(ct)
+            : null;
+
+        bool hasTx = await _db.JournalLedger.AnyAsync(l => l.AccountId == accountId, ct)
+            || await _db.JournalDetails.AnyAsync(d => d.AccountId == accountId, ct)
+            || await _db.OpeningBalanceLines.AnyAsync(l => l.AccountId == accountId, ct)
+            || (account.IsUsed && !hasChildren);
+
+        return Map(account, 0, hasChildren, parentName, hasTx);
     }
 
     public async Task<SaveAccountResult> CreateAsync(SaveAccountRequest request, CancellationToken ct)
@@ -42,9 +101,13 @@ public sealed class AccountRepository
             return new SaveAccountResult(SaveAccountOutcome.CodeInUse, null);
         }
 
-        if (request.ParentAccountId is long parentId && !await ParentIsValidAsync(parentId, request.AccountTypeId, ct))
+        if (request.ParentAccountId is long parentId)
         {
-            return new SaveAccountResult(SaveAccountOutcome.InvalidParent, null);
+            SaveAccountOutcome parentOutcome = await ValidateParentAsync(null, parentId, request.AccountTypeId, ct);
+            if (parentOutcome != SaveAccountOutcome.Ok)
+            {
+                return new SaveAccountResult(parentOutcome, null);
+            }
         }
 
         var account = new Account
@@ -117,10 +180,10 @@ public sealed class AccountRepository
 
         if (request.ParentAccountId is long parentId && parentId != account.ParentAccountId)
         {
-            if (!await ParentIsValidAsync(parentId, account.AccountTypeId, ct)
-                || await WouldCycleAsync(accountId, parentId, ct))
+            SaveAccountOutcome parentOutcome = await ValidateParentAsync(accountId, parentId, account.AccountTypeId, ct);
+            if (parentOutcome != SaveAccountOutcome.Ok)
             {
-                return new SaveAccountResult(SaveAccountOutcome.InvalidParent, null);
+                return new SaveAccountResult(parentOutcome, null);
             }
         }
 
@@ -227,13 +290,40 @@ public sealed class AccountRepository
         // one of them, so the currency is frozen with the rest of the config.
         || account.CurrencyCode != request.CurrencyCode;
 
-    private async Task<bool> ParentIsValidAsync(long parentId, int accountTypeId, CancellationToken ct)
+    private async Task<SaveAccountOutcome> ValidateParentAsync(
+        long? accountId, long parentId, int accountTypeId, CancellationToken ct)
     {
         Account? parent = await _db.Accounts.FirstOrDefaultAsync(a => a.AccountId == parentId, ct);
+        if (parent is null || parent.AccountTypeId != accountTypeId)
+        {
+            return SaveAccountOutcome.InvalidParent;
+        }
 
-        // A child must sit under the same account type, or the tree would put an
-        // expense under an asset and reports would double-count.
-        return parent is not null && parent.AccountTypeId == accountTypeId;
+        // Rule 3: An account that has been used in transactions cannot be assigned as a parent account.
+        bool hasTransactions = await _db.JournalLedger.AnyAsync(l => l.AccountId == parentId, ct)
+            || await _db.JournalDetails.AnyAsync(d => d.AccountId == parentId, ct)
+            || await _db.OpeningBalanceLines.AnyAsync(l => l.AccountId == parentId, ct);
+
+        if (!hasTransactions && parent.IsUsed)
+        {
+            bool hasChildren = await _db.Accounts.AnyAsync(a => a.ParentAccountId == parentId, ct);
+            if (!hasChildren)
+            {
+                hasTransactions = true;
+            }
+        }
+
+        if (hasTransactions)
+        {
+            return SaveAccountOutcome.ParentHasTransactions;
+        }
+
+        if (accountId.HasValue && (accountId.Value == parentId || await WouldCycleAsync(accountId.Value, parentId, ct)))
+        {
+            return SaveAccountOutcome.InvalidParent;
+        }
+
+        return SaveAccountOutcome.Ok;
     }
 
     /// <summary>
@@ -268,7 +358,8 @@ public sealed class AccountRepository
         return false;
     }
 
-    private static AccountListItem Map(Account a) => new()
+    private static AccountListItem Map(
+        Account a, int depth = 0, bool hasChildren = false, string? parentName = null, bool hasTransactions = false) => new()
     {
         AccountId = a.AccountId,
         AccountTypeId = a.AccountTypeId,
@@ -287,6 +378,10 @@ public sealed class AccountRepository
         IsPayment = a.IsPayment,
         IsBank = a.IsBank,
         IsConfigLocked = IsConfigLocked(a),
+        HasChildren = hasChildren,
+        ParentAccountName = parentName,
+        Depth = depth,
+        HasTransactions = hasTransactions,
     };
 }
 
@@ -297,6 +392,7 @@ public enum SaveAccountOutcome
     CodeInUse = 3,
     ConfigLocked = 4,
     InvalidParent = 5,
+    ParentHasTransactions = 6,
 }
 
 public sealed record SaveAccountResult(SaveAccountOutcome Outcome, long? AccountId);

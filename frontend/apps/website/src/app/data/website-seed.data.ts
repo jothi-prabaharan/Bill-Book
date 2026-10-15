@@ -131,7 +131,7 @@ export const BUSINESS_PRICING_TIERS_SEED: BusinessPricingTier[] = [
     name: 'Jewellery & Bullion',
     badge: 'Purity & Bullion',
     tagline: 'Daily 22K/24K purity market rate sync, hallmark HUID, and gold savings scheme.',
-    baseMonthlyPrice: 2500, // 2500 per month
+    baseMonthlyPrice: 4000, // 4000 per month
     features: [
       'Daily 22K (0.9160 factor), 24K and 18K gold/silver market rate sync per gram',
       'Making charges, stone weight deductions, and net metal calculations',

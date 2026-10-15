@@ -186,6 +186,13 @@ public sealed class LedgerPostingRepository
                     $"'{account.AccountName}' is frozen for posting.");
             }
 
+            if (await _db.Accounts.AnyAsync(a => a.ParentAccountId == account.AccountId, ct))
+            {
+                return new PostLedgerResult(
+                    PostLedgerOutcome.AccountLocked, 0, 0,
+                    $"'{account.AccountName}' is a parent account and cannot accept transactions directly. Only sub-accounts can be posted to.");
+            }
+
             long? subAccountId = null;
 
             if (leg.SubAccountId is long suppliedSubAccountId)

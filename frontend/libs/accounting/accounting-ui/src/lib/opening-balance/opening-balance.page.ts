@@ -25,6 +25,10 @@ interface AccountOption {
   accountName: string;
   isLock: boolean;
   isActive: boolean;
+  parentAccountId?: number | null;
+  parentAccountName?: string | null;
+  hasChildren?: boolean;
+  depth?: number;
 }
 
 interface ContactOption {
@@ -164,12 +168,34 @@ export class OpeningBalancePage implements OnInit {
     { value: 'Item', label: 'Stock on hand' },
   ];
 
-  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() =>
-    this.postable().map((account) => ({
+  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() => {
+    const postable = this.postable();
+    const all = this.accounts();
+    const nameMap = new Map(all.map((a) => [a.accountId, a]));
+
+    const buildPath = (account: AccountOption): string => {
+      const parts: string[] = [account.accountName];
+      let curr = account.parentAccountId;
+      const seen = new Set<number>();
+      while (curr != null) {
+        if (seen.has(curr)) break;
+        seen.add(curr);
+        const parent = nameMap.get(curr);
+        if (parent) {
+          parts.unshift(parent.accountName);
+          curr = parent.parentAccountId ?? null;
+        } else {
+          break;
+        }
+      }
+      return parts.join(' > ');
+    };
+
+    return postable.map((account) => ({
       value: account.accountId,
-      label: `${account.accountCode} — ${account.accountName}`,
-    })),
-  );
+      label: `${account.accountCode} — ${buildPath(account)}`,
+    }));
+  });
 
   protected readonly itemOptions = computed<BbSelectOption<number>[]>(() =>
     this.items().map((item) => ({
@@ -231,9 +257,15 @@ export class OpeningBalancePage implements OnInit {
   protected readonly finalized = computed(() => this.document()?.status === 'Finalized');
 
   /** Only accounts an opening balance may be brought in against. */
-  protected readonly postable = computed(() =>
-    this.accounts().filter((a) => a.isActive && !a.isLock),
-  );
+  protected readonly postable = computed(() => {
+    const accounts = this.accounts();
+    const parentIds = new Set(
+      accounts.map((a) => a.parentAccountId).filter((id): id is number => id !== null),
+    );
+    return accounts.filter(
+      (a) => a.isActive && !a.isLock && !parentIds.has(a.accountId) && !a.hasChildren,
+    );
+  });
 
   /**
    * Getters rather than computeds: they read `lines()`, which is a signal, but a

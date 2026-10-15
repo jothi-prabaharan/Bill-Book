@@ -88,7 +88,6 @@ type Picker = 'none' | 'vendor' | 'item' | 'order';
     NumberFieldComponent,
     MoreDetailsComponent,
     FormFieldComponent,
-    ScanComponent,
     DocumentCustomFieldsComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,

@@ -715,6 +715,12 @@ public sealed class JournalRepository
             .Where(a => accountIds.Contains(a.AccountId))
             .ToListAsync(ct);
 
+        List<long> parentAccountIds = await _db.Accounts
+            .Where(a => a.ParentAccountId != null && accountIds.Contains(a.ParentAccountId.Value))
+            .Select(a => a.ParentAccountId!.Value)
+            .Distinct()
+            .ToListAsync(ct);
+
         foreach (long accountId in accountIds)
         {
             Account? account = accounts.FirstOrDefault(a => a.AccountId == accountId);
@@ -724,6 +730,13 @@ public sealed class JournalRepository
                 return new SaveJournalResult(
                     SaveJournalOutcome.AccountMissing, 0,
                     $"Account {accountId} is not in this branch's chart of accounts.");
+            }
+
+            if (parentAccountIds.Contains(accountId))
+            {
+                return new SaveJournalResult(
+                    SaveJournalOutcome.AccountNotPostable, 0,
+                    $"'{account.AccountName}' is a parent account. Transactions can only post to leaf accounts.");
             }
 
             if (!account.IsActive || account.IsLock)
