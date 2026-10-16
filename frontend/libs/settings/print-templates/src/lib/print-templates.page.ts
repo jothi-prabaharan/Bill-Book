@@ -36,7 +36,6 @@ import {
   ConfirmDialogService,
   CustomFieldDefinition,
   MessageBoxComponent,
-  SelectComponent,
   UiMessage,
   printHtml,
 } from '@bill-book/ui-components';
@@ -398,7 +397,6 @@ const MOCK_LIST: Record<string, ((i: number, docType?: string) => string) | stri
   standalone: true,
   imports: [
     MessageBoxComponent,
-    SelectComponent,
     FormsModule,
   ],
   templateUrl: './print-templates.page.html',
@@ -426,9 +424,6 @@ export class PrintTemplatesPage implements OnInit {
 
   // Document types & Templates
   protected readonly documentTypes = signal<DocumentTypeOption[]>([]);
-  protected readonly typeOptions = computed(() =>
-    this.documentTypes().map((type) => ({ value: type.code, label: type.name })),
-  );
   protected readonly documentType = signal<string | null>(null);
   protected readonly templates = signal<PrintTemplateListItem[]>([]);
   protected readonly placeholders = signal<PlaceholderGroup[]>([]);
@@ -732,10 +727,6 @@ export class PrintTemplatesPage implements OnInit {
       const known = this.documentTypes().some((type) => type.code === requested);
       void this.openType(known ? requested : (this.documentTypes()[0]?.code ?? null));
     });
-  }
-
-  protected onTypeChange(code: string): void {
-    void this.router.navigate(['/settings/print-templates', code]);
   }
 
   private async openType(code: string | null): Promise<void> {
@@ -2202,7 +2193,7 @@ export class PrintTemplatesPage implements OnInit {
 
   // ---- Mouse Drag & Drop Column Alignment -----------------------------------
 
-  protected onCellHover(e: MouseEvent, segCode: SegCode): void {
+  protected onCellHover(e: MouseEvent, _segCode: SegCode): void {
     if (this.colResizeState() || !this.canEdit() || this.mode() !== 'edit') return;
     const target = e.target as HTMLElement;
     const cell = target.closest('td, th') as HTMLTableCellElement | null;

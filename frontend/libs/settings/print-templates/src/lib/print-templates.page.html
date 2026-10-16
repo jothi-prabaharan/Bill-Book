@@ -4,17 +4,6 @@
       <h1 class="pt-title">Print templates</h1>
       <p class="hint m-0">How each document looks on paper, for this branch.</p>
     </div>
-
-    <div class="field pt-type">
-      <bb-select
-        label="Document type"
-        name="documentType"
-        [clearable]="false"
-        [options]="typeOptions()"
-        [ngModel]="documentType()"
-        (ngModelChange)="onTypeChange($event)"
-      />
-    </div>
   </header>
 
   <bb-message-box [messages]="messages()" />
