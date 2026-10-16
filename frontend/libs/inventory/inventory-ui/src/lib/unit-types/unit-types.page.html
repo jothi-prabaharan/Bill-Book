@@ -56,7 +56,7 @@
 @if (expandedType(); as type) {
   <div class="sheet child-card">
     <h2>Units for {{ type.uomTypeName }}</h2>
-    <bb-data-grid [gridCode]="'UNIT_TYPES_UNITS'" [columns]="unitColumns" [data]="type.units">
+    <bb-data-grid stackOnPhone [gridCode]="'UNIT_TYPES_UNITS'" [columns]="unitColumns" [data]="type.units">
       <ng-template bbCellTemplate="isBaseUnit" let-row>
         <input
           type="radio"

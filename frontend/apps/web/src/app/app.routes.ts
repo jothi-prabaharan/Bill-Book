@@ -271,6 +271,11 @@ export const appRoutes: Routes = withUpdateGate([
         data: { access: { permission: 'inventory.view' } },
       },
       {
+        path: 'inventory/unit-types',
+        redirectTo: 'settings/unit-types',
+        pathMatch: 'full',
+      },
+      {
         path: 'settings/unit-types',
         loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.UnitTypesPage),
         data: { access: { permission: 'inventory.view' } },
