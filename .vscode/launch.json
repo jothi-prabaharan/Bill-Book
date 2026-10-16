@@ -35,7 +35,7 @@
     "configurations": [
         {
             "name": "Web",
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-web",
             "url": "http://localhost:4200",
@@ -53,7 +53,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
             ],
@@ -63,7 +62,7 @@
         },
         {
             "name": "Website",
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-website",
             "url": "http://localhost:4202",
@@ -81,7 +80,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
             ],
@@ -91,7 +89,7 @@
         },
         {
             "name": "Doc",
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-docs",
             "url": "http://localhost:4201",
@@ -109,7 +107,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
             ],
@@ -214,7 +211,7 @@
         },
         {
             "name": "Mobile (Andriod)",
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-web",
             "url": "http://localhost:4200",
@@ -232,7 +229,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--window-size=412,915",
                 "--user-agent=Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36",
@@ -246,7 +242,7 @@
         },
         {
             "name": "Mobile (IOS)",
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-web",
             "url": "http://localhost:4200",
@@ -264,7 +260,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--window-size=393,852",
                 "--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
@@ -278,7 +273,7 @@
         },
         {
             "name": "Tab (Andriod)",
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-web",
             "url": "http://localhost:4200",
@@ -296,7 +291,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--window-size=1280,800",
                 "--user-agent=Mozilla/5.0 (Linux; Android 14; SM-X810) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
@@ -310,7 +304,7 @@
         },
         {
             "name": "Tab (IOS)",
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-web",
             "url": "http://localhost:4200",
@@ -328,7 +322,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--window-size=834,1194",
                 "--user-agent=Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
@@ -342,7 +335,7 @@
         },
         {
             "name": "Desktop · Renderer (Electron)",
-            "type": "msedge",
+            "type": "chrome",
             "request": "attach",
             "port": 9222,
             "webRoot": "${workspaceFolder}/frontend",
@@ -381,8 +374,8 @@
             }
         },
         {
-            "name": "Web · Staging (Edge, 5200)",
-            "type": "msedge",
+            "name": "Web · Staging (Chrome, 5200)",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-web-staging",
             "url": "http://localhost:5200",
@@ -400,7 +393,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
             ],
@@ -409,8 +401,8 @@
             }
         },
         {
-            "name": "Docs · Staging (Edge, 5201)",
-            "type": "msedge",
+            "name": "Docs · Staging (Chrome, 5201)",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-docs-staging",
             "url": "http://localhost:5201",
@@ -428,7 +420,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
             ],
@@ -437,8 +428,8 @@
             }
         },
         {
-            "name": "Website · Staging (Edge, 5202)",
-            "type": "msedge",
+            "name": "Website · Staging (Chrome, 5202)",
+            "type": "chrome",
             "request": "launch",
             "preLaunchTask": "serve-website-staging",
             "url": "http://localhost:5202",
@@ -456,7 +447,6 @@
                 "${workspaceFolder}/frontend/**",
                 "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
             ],
