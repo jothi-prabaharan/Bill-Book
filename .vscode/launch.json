@@ -58,7 +58,18 @@
             ],
             "presentation": {
                 "order": 1
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web"
         },
         {
             "name": "Website",
@@ -85,7 +96,18 @@
             ],
             "presentation": {
                 "order": 2
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/website"
         },
         {
             "name": "Doc",
@@ -112,7 +134,18 @@
             ],
             "presentation": {
                 "order": 3
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/doc"
         },
         {
             "name": "Electron (Win)",
@@ -238,7 +271,18 @@
             ],
             "presentation": {
                 "order": 7
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/mobile-andriod"
         },
         {
             "name": "Mobile (IOS)",
@@ -269,7 +313,18 @@
             ],
             "presentation": {
                 "order": 8
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/mobile-ios"
         },
         {
             "name": "Tab (Andriod)",
@@ -300,7 +355,18 @@
             ],
             "presentation": {
                 "order": 9
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/tab-andriod"
         },
         {
             "name": "Tab (IOS)",
@@ -331,7 +397,18 @@
             ],
             "presentation": {
                 "order": 10
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/tab-ios"
         },
         {
             "name": "Desktop · Renderer (Electron)",
@@ -398,7 +475,18 @@
             ],
             "presentation": {
                 "hidden": true
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web-staging-chrome-5200"
         },
         {
             "name": "Docs · Staging (Chrome, 5201)",
@@ -425,7 +513,18 @@
             ],
             "presentation": {
                 "hidden": true
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/docs-staging-chrome-5201"
         },
         {
             "name": "Website · Staging (Chrome, 5202)",
@@ -452,7 +551,18 @@
             ],
             "presentation": {
                 "hidden": true
-            }
+            },
+            "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+            "windows": {
+                "runtimeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "stable"
+            },
+            "linux": {
+                "runtimeExecutable": "stable"
+            },
+            "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/website-staging-chrome-5202"
         },
         {
             "name": "Gateway (:4500)",
