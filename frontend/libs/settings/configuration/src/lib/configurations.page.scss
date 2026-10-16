@@ -10,13 +10,50 @@ h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: 
 .meta code { font-size: .7rem; color: var(--color-text-subtle); }
 .desc { font-size: .8rem; color: var(--color-text-muted); }
 .badge { font-size: .65rem; background: var(--color-warning-bg); color: var(--color-warning); padding: .1rem .35rem; border-radius: 4px; align-self: flex-start; }
-.control { display: flex; align-items: center; gap: .6rem; }
-.control input, .control select { padding: .4rem .5rem; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; width: 8rem; }
+.control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1, 4px);
+  width: 14rem;
+  max-width: 100%;
+
+  .control-input {
+    width: 100%;
+
+    bb-text-input,
+    bb-number-input,
+    bb-branch-date-input,
+    bb-select {
+      display: block;
+      width: 100%;
+    }
+  }
+
+  .reset-btn {
+    font-size: 0.75rem;
+    color: var(--color-accent-700);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    text-decoration: none;
+
+    &:disabled {
+      color: var(--color-text-subtle);
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
+
+.control input, .control select { padding: .4rem .5rem; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; width: 100%; }
 .link { background: none; border: 0; color: var(--color-accent-700); cursor: pointer; font: inherit; font-size: .8rem; }
 .link:disabled { color: #b3b7c2; cursor: default; }
 
 @media (max-width: 600px) {
   .setting { flex-direction: column; align-items: stretch; }
+  .control { width: 100%; }
   .control input, .control select { width: 100%; }
 }
 

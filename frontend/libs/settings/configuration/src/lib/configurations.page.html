@@ -21,29 +21,31 @@
           <code>{{ row.code }}</code>
         </div>
         <div class="control">
-          @switch (row.dataType) {
-            @case ('Boolean') {
-              <bb-select
-                ariaLabel="Value"
-                placeholder=""
-                [options]="booleanOptions"
-                [(ngModel)]="row.value"
-                (ngModelChange)="save(row)"
-              />
+          <div class="control-input">
+            @switch (row.dataType) {
+              @case ('Boolean') {
+                <bb-select
+                  ariaLabel="Value"
+                  placeholder=""
+                  [options]="booleanOptions"
+                  [(ngModel)]="row.value"
+                  (ngModelChange)="save(row)"
+                />
+              }
+              @case ('Number') {
+                <bb-number-input [(ngModel)]="row.value" (blur)="save(row)" />
+              }
+              @case ('Date') {
+                <bb-branch-date-input [(ngModel)]="row.value" (blur)="save(row)" />
+              }
+              @default {
+                <bb-text-input [(ngModel)]="row.value" (blur)="save(row)" />
+              }
             }
-            @case ('Number') {
-              <bb-number-input  [(ngModel)]="row.value" (blur)="save(row)" />
-            }
-            @case ('Date') {
-              <bb-branch-date-input  [(ngModel)]="row.value" (blur)="save(row)" />
-            }
-            @default {
-              <bb-text-input  [(ngModel)]="row.value" (blur)="save(row)" />
-            }
-          }
+          </div>
           <button
             type="button"
-            class="link"
+            class="link reset-btn"
             [disabled]="!row.isOverridden || busy()"
             title="Reset to the shipped default"
             (click)="reset(row)"
