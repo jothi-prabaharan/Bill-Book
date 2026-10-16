@@ -7,6 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { API_BASE_URL } from './api-base-url';
 import { apiBaseUrlInterceptor } from './api-base-url.interceptor';
+import { APP_HEADER, PLATFORM_HEADER } from './client-platform';
 
 /**
  * This runs on every request in every deployed environment, and its failure
@@ -25,46 +26,57 @@ describe('apiBaseUrlInterceptor', () => {
     });
   };
 
-  const request = (url: string): string => {
+  const request = (url: string): { url: string; headers: { app: string | null; platform: string | null } } => {
     const http = TestBed.inject(HttpClient);
     const mock = TestBed.inject(HttpTestingController);
     http.get(url).subscribe({ error: () => undefined });
     const req = mock.match(() => true)[0];
     req.flush({});
-    return req.request.url;
+    return {
+      url: req.request.url,
+      headers: {
+        app: req.request.headers.get(APP_HEADER),
+        platform: req.request.headers.get(PLATFORM_HEADER),
+      },
+    };
   };
 
   beforeEach(() => configure('https://api.example.com'));
 
   it('prefixes an /api/ call with the configured origin', () => {
-    expect(request('/api/contacts')).toBe('https://api.example.com/api/contacts');
+    expect(request('/api/contacts').url).toBe('https://api.example.com/api/contacts');
+  });
+
+  it('attaches X-App and X-Platform headers to /api/ requests', () => {
+    const res = request('/api/contacts');
+    expect(res.headers.app).toBeTruthy();
+    expect(res.headers.platform).toBeTruthy();
   });
 
   it('does not double the slash when the base url has a trailing one', () => {
-    // Someone will type it with a trailing slash in an environment file, and
-    // https://api.example.com//api/contacts is a different path to most servers.
     configure('https://api.example.com/');
-
-    expect(request('/api/contacts')).toBe('https://api.example.com/api/contacts');
+    expect(request('/api/contacts').url).toBe('https://api.example.com/api/contacts');
   });
 
-  it('leaves the url alone when no base url is configured', () => {
-    // Development serves through the dev-server proxy, where the root-relative
-    // path is what the proxy is watching for.
+  it('leaves the url alone when no base url is configured, but still adds headers', () => {
     configure('');
-
-    expect(request('/api/contacts')).toBe('/api/contacts');
+    const res = request('/api/contacts');
+    expect(res.url).toBe('/api/contacts');
+    expect(res.headers.app).toBeTruthy();
+    expect(res.headers.platform).toBeTruthy();
   });
 
-  it('leaves an absolute url alone', () => {
-    expect(request('https://elsewhere.example.com/thing')).toBe(
-      'https://elsewhere.example.com/thing',
-    );
+  it('leaves an absolute non-api url alone and without app headers', () => {
+    const res = request('https://elsewhere.example.com/thing');
+    expect(res.url).toBe('https://elsewhere.example.com/thing');
+    expect(res.headers.app).toBeNull();
+    expect(res.headers.platform).toBeNull();
   });
 
-  it('leaves a non-api path alone', () => {
-    // Asset and template fetches go through the same HttpClient and must not be
-    // pointed at the API host.
-    expect(request('/assets/logo.svg')).toBe('/assets/logo.svg');
+  it('leaves a non-api path alone and without app headers', () => {
+    const res = request('/assets/logo.svg');
+    expect(res.url).toBe('/assets/logo.svg');
+    expect(res.headers.app).toBeNull();
+    expect(res.headers.platform).toBeNull();
   });
 });
