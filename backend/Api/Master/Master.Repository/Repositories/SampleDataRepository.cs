@@ -254,6 +254,11 @@ public sealed class SampleDataRepository
             return;
         }
 
+        int? defaultStateId = await _db.States
+            .Where(s => s.CountryId == 1 && s.StateCode == "33")
+            .Select(s => (int?)s.StateId)
+            .FirstOrDefaultAsync(ct);
+
         _db.Organizations.Add(new Organization
         {
             OrgId = orgId,
@@ -266,6 +271,7 @@ public sealed class SampleDataRepository
             BaseCurrency = "INR",
             FinancialYearStartMonth = 4,
             CountryId = 1,
+            StateId = defaultStateId,
             Status = TenantStatus.Provisioning,
         });
 

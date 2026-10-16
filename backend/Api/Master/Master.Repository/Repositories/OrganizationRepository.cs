@@ -194,6 +194,7 @@ public sealed class OrganizationRepository
         };
 
         Apply(organization, request);
+        await InferStateFromGstinAsync(organization, ct);
         _db.Organizations.Add(organization);
 
         // The base currency is enabled and active from creation and can never be
@@ -336,6 +337,7 @@ public sealed class OrganizationRepository
         bool verticalChanged = organization.Vertical != vertical;
 
         Apply(organization, request);
+        await InferStateFromGstinAsync(organization, ct);
         await _db.SaveChangesAsync(ct);
 
         await SaveUpiIdAsync(orgId, request.UpiId, ct);
@@ -531,6 +533,26 @@ public sealed class OrganizationRepository
         organization.MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber);
         organization.Email = Trimmed(request.Email);
         organization.Website = Trimmed(request.Website);
+    }
+
+    private async Task InferStateFromGstinAsync(Organization organization, CancellationToken ct)
+    {
+        if (organization.StateId is null && !string.IsNullOrWhiteSpace(organization.Gstin) && organization.Gstin.Length >= 2)
+        {
+            string gstinState = organization.Gstin[..2];
+            int? stateId = await _db.States
+                .Where(s => s.CountryId == 1 && s.StateCode == gstinState)
+                .Select(s => (int?)s.StateId)
+                .FirstOrDefaultAsync(ct);
+            if (stateId.HasValue)
+            {
+                organization.StateId = stateId.Value;
+                if (organization.CountryId == 0)
+                {
+                    organization.CountryId = 1;
+                }
+            }
+        }
     }
 
     private static string? Trimmed(string? value) =>

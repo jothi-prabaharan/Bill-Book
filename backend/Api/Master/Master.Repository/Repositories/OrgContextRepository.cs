@@ -139,6 +139,18 @@ public sealed class OrgContextRepository
             .Select(c => c.Value)
             .FirstOrDefaultAsync(ct);
 
+        // State code for GST and place of supply. Prefer the linked State's code
+        // (normalized to 2-digit GST code), or derive from the branch's GSTIN.
+        string? stateCode = row.StateCode;
+        if (string.IsNullOrWhiteSpace(stateCode))
+        {
+            stateCode = Shared.Kernel.Tax.Gstin.StateCodeOf(row.Gstin);
+        }
+        else
+        {
+            stateCode = Shared.Kernel.Tax.IndianStateCodes.ToGstCode(stateCode) ?? stateCode;
+        }
+
         return new OrgContextResponse
         {
             OrgId = row.OrgId,
@@ -166,7 +178,7 @@ public sealed class OrgContextRepository
             MaxUsers = neverLapses ? Math.Max(row.MaxUsers, CustomerKindRepository.UnbilledMaxUsers) : row.MaxUsers,
             FinancialYearStartMonth = row.FinancialYearStartMonth,
             BaseCurrency = row.BaseCurrency,
-            StateCode = row.StateCode,
+            StateCode = stateCode,
             DiscountBeforeTax = row.DiscountBeforeTax,
             Vertical = row.Vertical.ToString(),
             BusinessType = row.BusinessType,

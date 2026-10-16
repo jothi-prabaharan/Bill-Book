@@ -33,7 +33,13 @@ public static class GeographyJsonLoader
         {
             if (string.IsNullOrWhiteSpace(item.StateCode)) continue;
 
-            string key = $"{item.CountryId}_{item.StateCode}";
+            string stateCode = item.CountryId == 1
+                ? Shared.Kernel.Tax.IndianStateCodes.ToGstCode(item.StateCode)
+                    ?? Shared.Kernel.Tax.IndianStateCodes.ToGstCode(item.StateName)
+                    ?? item.StateCode
+                : item.StateCode;
+
+            string key = $"{item.CountryId}_{stateCode}";
 
             if (existing.TryGetValue(key, out State? row))
             {
@@ -46,7 +52,7 @@ public static class GeographyJsonLoader
                 {
                     StateId = nextId++,
                     CountryId = item.CountryId,
-                    StateCode = item.StateCode,
+                    StateCode = stateCode,
                     StateName = item.StateName,
                     IsActive = item.IsActive,
                 };

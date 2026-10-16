@@ -60,6 +60,8 @@ public sealed class StateDirectoryRepository : IStateDirectory
             return null;
         }
 
+        code = Shared.Kernel.Tax.IndianStateCodes.ToGstCode(code) ?? code;
+
         _cache.Set($"state:{stateId}", code, TimeSpan.FromHours(12));
         return code;
     }

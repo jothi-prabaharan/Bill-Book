@@ -145,6 +145,8 @@ public class DatabaseMigrationService : IHostedService
             _logger.LogInformation("Geography seeding complete.");
         }
 
+        await BackfillIndianStateCodesAsync(adminDb, _logger, ct);
+
         // 2. Ensure IN000001 Database Exists and seed it
         await EnsureTenantDatabaseSetupAsync(adminDb, adminDbString, "IN000001", ct);
 
@@ -594,6 +596,11 @@ public class DatabaseMigrationService : IHostedService
             GraceDays = 14,
         });
 
+        int? defaultStateId = await adminDb.States
+            .Where(s => s.CountryId == 1 && s.StateCode == "33")
+            .Select(s => (int?)s.StateId)
+            .FirstOrDefaultAsync(ct);
+
         adminDb.Organizations.Add(new Master.Entity.TableEntities.Organization
         {
             OrgId = orgId,
@@ -604,6 +611,8 @@ public class DatabaseMigrationService : IHostedService
             AddOns = addOns,
             Name = _config["Bootstrap:CompanyName"] ?? "Head Office",
             BaseCurrency = _config["Bootstrap:BaseCurrency"] ?? "INR",
+            CountryId = 1,
+            StateId = defaultStateId,
             Status = Master.Entity.Enums.TenantStatus.Active,
         });
 
@@ -649,6 +658,65 @@ public class DatabaseMigrationService : IHostedService
             "Created the first account for {Email}. It has no password: use forgot-password "
             + "to set one.",
             email);
+    }
+
+    private static async Task BackfillIndianStateCodesAsync(AdminDbContext adminDb, ILogger logger, CancellationToken ct)
+    {
+        var indianStates = await adminDb.States
+            .Where(s => s.CountryId == 1)
+            .ToListAsync(ct);
+
+        bool statesChanged = false;
+        foreach (var state in indianStates)
+        {
+            string? gstCode = Shared.Kernel.Tax.IndianStateCodes.ToGstCode(state.StateCode)
+                ?? Shared.Kernel.Tax.IndianStateCodes.ToGstCode(state.StateName);
+            if (gstCode != null && state.StateCode != gstCode)
+            {
+                state.StateCode = gstCode;
+                statesChanged = true;
+            }
+        }
+
+        if (statesChanged)
+        {
+            await adminDb.SaveChangesAsync(ct);
+            logger.LogInformation("Backfilled Indian state codes to 2-digit GST codes in mst.States.");
+        }
+
+        // Ensure branches with GSTIN or Head Office have StateId linked
+        var orgs = await adminDb.Organizations.ToListAsync(ct);
+        bool orgsChanged = false;
+        foreach (var org in orgs)
+        {
+            if (org.StateId == null)
+            {
+                string? gstCode = Shared.Kernel.Tax.Gstin.StateCodeOf(org.Gstin);
+                if (gstCode == null && org.OrgId == InternalCustomerRepository.OrgId)
+                {
+                    gstCode = "33"; // Default Tamil Nadu for Head Office
+                }
+
+                if (gstCode != null)
+                {
+                    var matched = indianStates.FirstOrDefault(s => s.StateCode == gstCode);
+                    if (matched != null)
+                    {
+                        org.StateId = matched.StateId;
+                        if (org.CountryId == 0) org.CountryId = matched.CountryId;
+                        orgsChanged = true;
+                        logger.LogInformation(
+                            "Linked Organization {OrgId} ({Name}) to State {StateName} ({StateCode}).",
+                            org.OrgId, org.Name, matched.StateName, matched.StateCode);
+                    }
+                }
+            }
+        }
+
+        if (orgsChanged)
+        {
+            await adminDb.SaveChangesAsync(ct);
+        }
     }
 }
 
