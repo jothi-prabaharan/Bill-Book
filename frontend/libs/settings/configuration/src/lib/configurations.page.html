@@ -43,15 +43,21 @@
               }
             }
           </div>
-          <button
-            type="button"
-            class="link reset-btn"
-            [disabled]="!row.isOverridden || busy()"
-            title="Reset to the shipped default"
-            (click)="reset(row)"
-          >
-            ↻ {{ row.defaultValue }}
-          </button>
+          <div class="control-footer">
+            @if (row.isOverridden) {
+              <button
+                type="button"
+                class="link reset-btn"
+                [disabled]="busy()"
+                title="Reset to the default value"
+                (click)="reset(row)"
+              >
+                ↻ Reset to {{ row.defaultValue }}
+              </button>
+            } @else {
+              <span class="default-val" title="Shipped default value">Default: {{ row.defaultValue }}</span>
+            }
+          </div>
         </div>
       </div>
     }
