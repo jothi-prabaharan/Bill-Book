@@ -32,6 +32,7 @@
         <span class="plans__muted">—</span>
       }
     </ng-template>
+    <ng-template bbCellTemplate="contactId" let-r>{{ contactName(r.contactId) }}</ng-template>
     <ng-template bbCellTemplate="interval" let-r>{{ cadence(r.interval, r.every) }}</ng-template>
     <ng-template bbCellTemplate="nextDueDate" let-r>
       {{ date(r.nextDueDate) }}

@@ -233,6 +233,19 @@ export class ChartOfAccountsPage implements OnInit {
     { value: 'Locked', label: 'Locked' },
   ];
 
+  protected readonly tabs = computed(() => {
+    const rows = this.registerRows();
+    const active = rows.filter((r) => r.state === 'Active').length;
+    const inactive = rows.filter((r) => r.state === 'Inactive').length;
+    const locked = rows.filter((r) => r.state === 'Locked').length;
+    return [
+      { value: '', label: 'All', count: rows.length },
+      { value: 'Active', label: 'Active', count: active },
+      { value: 'Inactive', label: 'Inactive', count: inactive },
+      { value: 'Locked', label: 'Locked', count: locked },
+    ];
+  });
+
   /** The account being edited, for the editor's Deactivate. */
   protected readonly editingAccount = signal<AccountRow | null>(null);
 
@@ -349,6 +362,30 @@ export class ChartOfAccountsPage implements OnInit {
 
     return rows;
   });
+
+  protected readonly visibleRows = computed(() => {
+    const state = this.stateFilter();
+    return this.registerRows().filter((row) => !state || row.state === state);
+  });
+
+  /**
+   * The credit side of the accounts on screen. Across the whole chart it
+   * equals the debit side, which is what a balanced set of books means.
+   */
+  protected readonly periodTotal = computed(() =>
+    this.visibleRows().reduce((sum, row) => sum + row.creditBalance, 0),
+  );
+
+  protected stateTone(state: AccountState): string {
+    switch (state) {
+      case 'Active':
+        return 'tag-neutral';
+      case 'Locked':
+        return 'tag-outline';
+      default:
+        return 'tag-info';
+    }
+  }
 
   ngOnInit(): void {
     void this.load();

@@ -44,7 +44,7 @@
 
 <bb-info-tooltip text="One quantity and one cost per item, across every warehouse in this branch. Stock is a shared pool — a warehouse records where a movement happened, it does not hold a balance of its own. Reserved stock is promised to an order and still on the shelf, so it stays in on hand and in the valuation; available is what a new order may draw on."></bb-info-tooltip>
 
-<bb-data-grid fillHeight [gridCode]="'STOCK_ROWS'" [columns]="columns" [data]="rows()">
+<bb-data-grid register fillHeight flush stackOnPhone label="Stock" [gridCode]="'STOCK_ROWS'" [columns]="columns" [data]="rows()">
   <ng-template bbCellTemplate="itemCode" let-row>
     <code>{{ row.itemCode }}</code>
   </ng-template>

@@ -165,7 +165,7 @@ export class ContactPersonRolesList implements OnInit {
     });
     if (!ok) return;
 
-    await this.run(() => this.send('DELETE', `/api/contact-person-roles/${row.contactPersonRoleId}`, {}));
+    await this.run(() => this.send('DELETE', `/api/contact-person-roles/${row.contactPersonRoleId}`));
   }
 
   async onDrop(event: CdkDragDrop<ContactPersonRole[]>): Promise<void> {
@@ -225,11 +225,11 @@ export class ContactPersonRolesList implements OnInit {
   private send<T = unknown>(
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
-    body: unknown,
+    body?: unknown,
   ): Promise<T> {
     return new Promise((resolve, reject) =>
       this.http
-        .request<T>(method, url, { body })
+        .request<T>(method, url, body !== undefined ? { body } : {})
         .subscribe({ next: resolve as (value: T) => void, error: reject }),
     );
   }

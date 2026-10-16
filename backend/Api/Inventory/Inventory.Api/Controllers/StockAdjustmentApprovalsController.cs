@@ -21,7 +21,6 @@ namespace Inventory.Api.Controllers;
 [RequireModulePermission("inventory")]
 [Route("api/stock-adjustments")]
 [RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
-[RequireAddOn(AddOn.SiteServices)]
 public sealed class StockAdjustmentApprovalsController : ControllerBase
 {
     private const ApprovalRequestKind Kind = ApprovalRequestKind.StockAdjustment;

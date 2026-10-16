@@ -5,6 +5,36 @@
 /* Items page uses 3-column fields for the Contacts page parity; the
    global .fields defaults to 2 columns, which is what Items uses. */
 
+:host {
+  display: block;
+  position: relative;
+}
+
+.sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--color-surface);
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  max-width: none;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  @media (max-width: 768px) {
+    margin: 0 !important;
+    padding: var(--space-4) var(--space-3) var(--space-4);
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+}
+
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .handle-col { width: 1.75rem; }

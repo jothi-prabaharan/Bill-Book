@@ -82,7 +82,15 @@ export class DataGridComponent implements OnInit {
     return this._columns();
   }
   set columns(val: ColumnDef[]) {
-    this._columns.set(val || []);
+    const next = val || [];
+    const prev = this._columns();
+    if (
+      prev.length === next.length &&
+      prev.every((c, i) => c.field === next[i]?.field && c.header === next[i]?.header && c.visible === next[i]?.visible)
+    ) {
+      return;
+    }
+    this._columns.set(next);
     this.loadState();
   }
 

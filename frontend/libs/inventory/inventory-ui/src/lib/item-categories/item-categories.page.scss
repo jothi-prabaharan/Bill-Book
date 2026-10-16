@@ -52,7 +52,13 @@
   .num { text-align: left; }
   .actions-col { text-align: left; }
   .fields { grid-template-columns: 1fr; }
-  .sheet { border-radius: 0; margin-left: -1rem; margin-right: -1rem; }
+  .sheet {
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 /* Shared by every Inventory master page. Copied rather than imported so each

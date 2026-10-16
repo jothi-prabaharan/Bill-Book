@@ -99,10 +99,12 @@ export class ServicePlansPage implements OnInit {
     ...this.serviceItems().map((i) => ({ value: i.itemId, label: `${i.itemCode ? i.itemCode + ' — ' : ''}${i.itemName}` })),
   ]);
 
+  protected readonly contactsMap = signal<Map<number, string>>(new Map());
+
   protected readonly columns: ColumnDef[] = [
     { field: 'name', header: 'Plan' },
     { field: 'itemId', header: 'Service item', isTemplate: true, width: '11rem' },
-    { field: 'contactId', header: 'Customer', width: '7rem' },
+    { field: 'contactId', header: 'Customer', isTemplate: true, width: '12rem' },
     { field: 'interval', header: 'Repeats', isTemplate: true, width: '9rem' },
     { field: 'nextDueDate', header: 'Next service', isTemplate: true, width: '12rem' },
     { field: 'lastServicedOn', header: 'Last done', isTemplate: true, width: '8rem' },
@@ -128,7 +130,7 @@ export class ServicePlansPage implements OnInit {
   }
 
   private async start(): Promise<void> {
-    await Promise.all([this.load(), this.loadServiceItems()]);
+    await Promise.all([this.load(), this.loadServiceItems(), this.loadContacts()]);
     const open = Number(this.route.snapshot.queryParamMap.get('open'));
     const row = open ? this.plans().find((p) => p.servicePlanId === open) : undefined;
     if (row) {
@@ -144,6 +146,24 @@ export class ServicePlansPage implements OnInit {
         }
       }
     }
+  }
+
+  protected async loadContacts(): Promise<void> {
+    try {
+      const contacts = await this.customers.searchContacts('');
+      const map = new Map<number, string>();
+      for (const c of contacts) {
+        map.set(c.contactId, `${c.contactCode ? c.contactCode + ' ' : ''}${c.displayName}`.trim());
+      }
+      this.contactsMap.set(map);
+    } catch {
+      // Non-critical
+    }
+  }
+
+  protected contactName(contactId: number | null): string {
+    if (!contactId) return '—';
+    return this.contactsMap().get(contactId) ?? `Customer #${contactId}`;
   }
 
   protected async loadServiceItems(): Promise<void> {
@@ -192,7 +212,7 @@ export class ServicePlansPage implements OnInit {
   protected open(plan: ServicePlan): void {
     this.selected.set(plan);
     this.draft = planDraftOf(plan);
-    this.contactLabel.set(`Customer ${plan.contactId}`);
+    this.contactLabel.set(this.contactName(plan.contactId));
     this.completedOn = today();
     this.editing.set(true);
   }
@@ -261,7 +281,9 @@ export class ServicePlansPage implements OnInit {
 
   protected choose(row: LookupRow): void {
     this.draft.contactId = row.id;
-    this.contactLabel.set(`${row.code} ${row.name}`.trim());
+    const label = `${row.code ? row.code + ' ' : ''}${row.name}`.trim();
+    this.contactLabel.set(label);
+    this.contactsMap.update((m) => new Map(m).set(row.id, label));
     this.pickerOpen.set(false);
   }
 

@@ -168,9 +168,11 @@ public sealed class ContactPersonRoleRepository
             return SaveRoleOutcome.RoleInUse;
         }
 
-        _db.ContactPersonRoles.Remove(role);
-        await _db.SaveChangesAsync(ct);
-        return SaveRoleOutcome.Ok;
+        int affected = await _db.ContactPersonRoles
+            .Where(r => r.ContactPersonRoleId == roleId)
+            .ExecuteDeleteAsync(ct);
+
+        return affected > 0 ? SaveRoleOutcome.Ok : SaveRoleOutcome.NotFound;
     }
 
     public async Task<SaveRoleOutcome> ReorderAsync(ReorderRequest request, CancellationToken ct)

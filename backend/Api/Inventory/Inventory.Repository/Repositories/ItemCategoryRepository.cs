@@ -115,14 +115,6 @@ public sealed class ItemCategoryRepository
 
     public async Task<SaveMasterOutcome> DeleteAsync(long categoryId, CancellationToken ct)
     {
-        ItemCategory? category = await _db.ItemCategories
-            .FirstOrDefaultAsync(c => c.ItemCategoryId == categoryId, ct);
-
-        if (category is null)
-        {
-            return SaveMasterOutcome.NotFound;
-        }
-
         if (await _db.ItemCategories.AnyAsync(c => c.ParentCategoryId == categoryId, ct))
         {
             return SaveMasterOutcome.HasChildren;
@@ -133,9 +125,11 @@ public sealed class ItemCategoryRepository
             return SaveMasterOutcome.InUse;
         }
 
-        _db.ItemCategories.Remove(category);
-        await _db.SaveChangesAsync(ct);
-        return SaveMasterOutcome.Ok;
+        int deleted = await _db.ItemCategories
+            .Where(c => c.ItemCategoryId == categoryId)
+            .ExecuteDeleteAsync(ct);
+
+        return deleted > 0 ? SaveMasterOutcome.Ok : SaveMasterOutcome.NotFound;
     }
 
     public async Task<SaveMasterOutcome> ReorderAsync(ReorderRequest request, CancellationToken ct)

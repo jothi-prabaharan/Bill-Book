@@ -182,46 +182,53 @@ export class StockAdjustmentsPage implements OnInit {
     { field: 'actions', header: '' },
   ];
 
+  private static readonly COUNT_DRAFT_COLUMNS: ColumnDef[] = [
+    { field: 'item', header: 'Item' },
+    { field: 'countedQuantity', header: 'Counted', dataType: 'number' },
+    { field: 'unitCost', header: 'Cost per unit', dataType: 'number' },
+    { field: 'batchNumber', header: 'Batch' },
+    { field: 'batchExpiryDate', header: 'Expiry' },
+    { field: 'notes', header: 'Note' },
+    { field: 'actions', header: '' },
+  ];
+
+  private static readonly WRITE_OFF_DRAFT_COLUMNS: ColumnDef[] = [
+    { field: 'item', header: 'Item' },
+    { field: 'quantity', header: 'Quantity', dataType: 'number' },
+    { field: 'direction', header: 'Direction' },
+    { field: 'unitCost', header: 'Cost per unit', dataType: 'number' },
+    { field: 'batchNumber', header: 'Batch' },
+    { field: 'batchExpiryDate', header: 'Expiry' },
+    { field: 'notes', header: 'Note' },
+    { field: 'actions', header: '' },
+  ];
+
   get draftColumns(): ColumnDef[] {
-    const cols: ColumnDef[] = [
-      { field: 'item', header: 'Item' }
-    ];
-    if (this.isCount) {
-      cols.push({ field: 'countedQuantity', header: 'Counted', dataType: 'number' });
-    } else {
-      cols.push(
-        { field: 'quantity', header: 'Quantity', dataType: 'number' },
-        { field: 'direction', header: 'Direction' }
-      );
-    }
-    cols.push(
-      { field: 'unitCost', header: 'Cost per unit', dataType: 'number' },
-      { field: 'batchNumber', header: 'Batch' },
-      { field: 'batchExpiryDate', header: 'Expiry' },
-      { field: 'notes', header: 'Note' },
-      { field: 'actions', header: '' }
-    );
-    return cols;
+    return this.isCount ? StockAdjustmentsPage.COUNT_DRAFT_COLUMNS : StockAdjustmentsPage.WRITE_OFF_DRAFT_COLUMNS;
   }
 
+  private static readonly COUNT_VIEW_COLUMNS: ColumnDef[] = [
+    { field: 'lineNumber', header: '#' },
+    { field: 'item', header: 'Item' },
+    { field: 'systemQuantity', header: 'System held', dataType: 'number' },
+    { field: 'countedQuantity', header: 'Counted', dataType: 'number' },
+    { field: 'movedQuantity', header: 'Moved', dataType: 'number' },
+    { field: 'movementTotalCost', header: 'Cost', dataType: 'number' },
+    { field: 'notes', header: 'Note' },
+  ];
+
+  private static readonly WRITE_OFF_VIEW_COLUMNS: ColumnDef[] = [
+    { field: 'lineNumber', header: '#' },
+    { field: 'item', header: 'Item' },
+    { field: 'movedQuantity', header: 'Moved', dataType: 'number' },
+    { field: 'movementTotalCost', header: 'Cost', dataType: 'number' },
+    { field: 'notes', header: 'Note' },
+  ];
+
   get viewColumns(): ColumnDef[] {
-    const isCount = this.viewing()?.kind === 'PhysicalCount';
-    const cols: ColumnDef[] = [
-      { field: 'lineNumber', header: '#' },
-      { field: 'item', header: 'Item' }
-    ];
-    if (isCount) {
-      cols.push(
-        { field: 'systemQuantity', header: 'System held', dataType: 'number' },
-        { field: 'countedQuantity', header: 'Counted', dataType: 'number' }
-      );
-    }
-    cols.push(
-      { field: 'movedQuantity', header: 'Moved', dataType: 'number' },
-      { field: 'movementTotalCost', header: 'Cost', dataType: 'number' },
-      { field: 'notes', header: 'Note' }
-    );
-    return cols;
+    return this.viewing()?.kind === 'PhysicalCount'
+      ? StockAdjustmentsPage.COUNT_VIEW_COLUMNS
+      : StockAdjustmentsPage.WRITE_OFF_VIEW_COLUMNS;
   }
 
   constructor() {

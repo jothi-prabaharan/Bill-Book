@@ -13,7 +13,6 @@ namespace Inventory.Api.Controllers;
 [RequireModulePermission("inventory")]
 [Route("internal/item-batches")]
 [RequireBusinessType(BusinessType.Retail, BusinessType.Pharma, BusinessType.Jewellery, BusinessType.Restaurant)]
-[RequireAddOn(AddOn.SiteServices)]
 public class ItemBatchesController : ControllerBase
 {
     private readonly InventoryDbContext _db;

@@ -16,7 +16,7 @@
 
 <bb-info-tooltip text="A sheet posts as one document, however many items are on it — so the accounts show one adjustment for a count, not one per line. A draft moves nothing and holds no number; both arrive together when it posts. A posted sheet is never edited or deleted, because its stock has already moved: correct it by reversing, which writes the mirror of it."></bb-info-tooltip>
 
-<bb-data-grid fillHeight [gridCode]="'ADJUSTMENTS'" [columns]="listColumns" [data]="rows()">
+<bb-data-grid register fillHeight flush stackOnPhone label="Stock adjustments" [gridCode]="'ADJUSTMENTS'" [columns]="listColumns" [data]="rows()">
   <ng-template bbCellTemplate="adjustmentNo" let-row>
     @if (row.adjustmentNo) {
       <code>{{ row.adjustmentNo }}</code>
@@ -127,7 +127,7 @@
       />
     </div>
 
-    <bb-data-grid [gridCode]="'ADJUSTMENT_LINES'" [columns]="draftColumns" [data]="lines">
+    <bb-data-grid stackOnPhone [gridCode]="'ADJUSTMENT_LINES'" [columns]="draftColumns" [data]="lines">
       <ng-template bbCellTemplate="item" let-row let-index="index">
         <bb-select
           ariaLabel="Item"
@@ -234,7 +234,7 @@
 
     <bb-info-tooltip text="Posted {{ sheet.postedAt }}. {{ sheet.lineCount }} line(s), dated {{ sheet.adjustmentDate }}. @if (sheet.notes) { {{ sheet.notes }} }"></bb-info-tooltip>
 
-    <bb-data-grid [gridCode]="'ADJUSTMENT_VIEW'" [columns]="viewColumns" [data]="sheet.lines ?? []">
+    <bb-data-grid stackOnPhone [gridCode]="'ADJUSTMENT_VIEW'" [columns]="viewColumns" [data]="sheet.lines ?? []">
       <ng-template bbCellTemplate="item" let-row>
         <code>{{ row.itemCode }}</code> {{ row.itemName }}
       </ng-template>

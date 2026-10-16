@@ -389,13 +389,16 @@ export class ContactFormPage implements OnInit {
     const carried = (history.state as { notice?: string } | null)?.notice;
     if (carried) this.notice.set(carried);
 
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    void this.loadLookups().then(() => {
-      if (Number.isFinite(id) && id > 0) {
-        void this.open(id);
-      } else {
-        this.startNew();
-      }
+    this.route.paramMap.subscribe((params) => {
+      const rawId = params.get('id');
+      const id = rawId ? Number(rawId) : NaN;
+      void this.loadLookups().then(() => {
+        if (Number.isFinite(id) && id > 0) {
+          void this.open(id);
+        } else {
+          this.startNew();
+        }
+      });
     });
   }
 
@@ -609,12 +612,14 @@ export class ContactFormPage implements OnInit {
       if (draft) {
         // Stay on the draft: it is somewhere to come back to, not a finished record.
         const notice = 'Draft saved. It stays out of every document until you save it.';
-        if (id === null && savedId) {
-          void this.router.navigate(['/contacts', savedId], { replaceUrl: true, state: { notice } });
+        if (savedId) {
+          await this.open(savedId);
+          this.notice.set(notice);
+          if (id === null) {
+            void this.router.navigate(['/contacts', savedId], { replaceUrl: true, state: { notice } });
+          }
           return;
         }
-        if (savedId) await this.open(savedId);
-        this.notice.set(notice);
         return;
       }
 
@@ -921,6 +926,8 @@ export class ContactFormPage implements OnInit {
       this.get<{ stateId: number; stateCode: string; stateName: string }[]>(`/api/master/countries/${this.defaultCountryId}/states`)
         .then((s) => this.states.set(s))
         .catch(() => undefined),
+    ]);
+    await Promise.all([
       this.get<{ countryId: number; countryName: string }[]>('/api/master/countries')
         .then((c) => this.countries.set(c.map((row) => ({ id: row.countryId, label: row.countryName }))))
         .catch(() => undefined),
