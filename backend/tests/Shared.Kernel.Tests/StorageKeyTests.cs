@@ -74,13 +74,14 @@ public class StorageKeyTests
     [InlineData(StorageModule.Customer, "customer")]
     [InlineData(StorageModule.Reporting, "reporting")]
     [InlineData(StorageModule.Printing, "printing")]
+    [InlineData(StorageModule.Site, "site")]
     public void Every_module_has_a_fixed_folder(StorageModule module, string folder) =>
         Assert.Equal(folder, StorageKey.Folder(module));
 
     [Fact]
     public void Every_module_and_app_is_covered_by_the_theory_above()
     {
-        Assert.Equal(9, Enum.GetValues<StorageModule>().Length);
+        Assert.Equal(10, Enum.GetValues<StorageModule>().Length);
         Assert.Equal("retail-erp", StorageKey.Folder(StorageApp.RetailErp));
         Assert.Single(Enum.GetValues<StorageApp>());
     }

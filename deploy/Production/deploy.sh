@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # ==============================================================================
@@ -88,7 +88,6 @@ load_secrets() {
   : "${INTERNAL_API_KEY:?INTERNAL_API_KEY missing in $SECRETS_FILE}"
   : "${JWT_SIGNING_KEY:?JWT_SIGNING_KEY missing in $SECRETS_FILE}"
   [ "${#JWT_SIGNING_KEY}" -ge 32 ] || die "JWT_SIGNING_KEY must be at least 32 characters."
-  : "${KEYVAULT_URI:?KEYVAULT_URI missing in $SECRETS_FILE (Production refuses to start without a Key Vault)}"
 }
 
 export_environment() {
@@ -98,7 +97,6 @@ export_environment() {
   export ConnectionStrings__TenantDatabase="Host=$DB_HOST;Port=$DB_PORT;Database=$TENANT_DB;Username=$DB_USER;Password=$DB_PASSWORD;Keepalive=30;Timeout=180;Command Timeout=180"
   export Internal__ApiKey="$INTERNAL_API_KEY"
   export Jwt__SigningKey="$JWT_SIGNING_KEY"
-  export KeyVault__Uri="$KEYVAULT_URI"
 
   local item name project offset key port
   for item in "${SERVICES[@]}"; do

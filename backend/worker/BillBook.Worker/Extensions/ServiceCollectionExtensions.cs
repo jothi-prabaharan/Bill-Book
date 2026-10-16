@@ -1,5 +1,3 @@
-using Azure.Identity;
-using Azure.Messaging.ServiceBus;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +8,6 @@ using BillBook.Worker.Notification;
 using BillBook.Worker.RecurringBilling;
 using BillBook.Worker.SavingsScheme;
 using BillBook.Worker.ServiceReminders;
-using BillBook.Worker.Notification.Consumers;
 using BillBook.Worker.Notification.Email;
 using BillBook.Worker.Notification.Persistence;
 using BillBook.Worker.Notification.Reminders;
@@ -52,12 +49,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMailTransport, SmtpMailTransport>();
         services.AddScoped<IProcessedMessageStore, ProcessedMessageStore>();
         services.AddScoped<EmailRequestHandler>();
-
-        if (config["ServiceBus:Namespace"] is { Length: > 0 } ns)
-        {
-            services.AddSingleton(_ => new ServiceBusClient(ns, new DefaultAzureCredential()));
-            services.AddHostedService<EmailRequestedConsumer>();
-        }
 
         services.AddHttpClient<IContactEmails, HttpContactEmails>(client =>
         {

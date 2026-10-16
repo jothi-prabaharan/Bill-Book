@@ -11,8 +11,6 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Internal;
 using BillBook.Worker;
 using BillBook.Worker.Extensions;
-using Azure.Identity;
-using Azure.Messaging.ServiceBus;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()

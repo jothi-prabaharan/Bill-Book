@@ -29,11 +29,11 @@ public sealed class PrintTemplateRepository
     public PrintTemplateRepository(
         PrintingDbContext db,
         PrintRendererRepository renderer,
-        PrintPdfGeneratorRepository pdfGenerator)
+        PrintPdfGeneratorRepository? pdfGenerator = null)
     {
         _db = db;
         _renderer = renderer;
-        _pdfGenerator = pdfGenerator;
+        _pdfGenerator = pdfGenerator ?? new PrintPdfGeneratorRepository();
     }
 
     public async Task<IReadOnlyList<PrintTemplateListItem>> ListAsync(string? documentTypeCode, CancellationToken ct)

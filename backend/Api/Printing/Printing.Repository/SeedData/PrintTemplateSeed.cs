@@ -21,7 +21,7 @@ public static class PrintTemplateSeed
     /// The templates a branch is missing across all five paper sizes.
     /// A4 is marked as IsDefault = true, and all five are marked IsSample = true.
     /// </summary>
-    public static IReadOnlyList<PrintTemplate> Build(
+    public static IReadOnlyList<PrintTemplate> BuildForPaperSizes(
         Guid orgId, IEnumerable<(string Code, string PaperSize)> presentTemplates)
     {
         HashSet<(string, string)> present = new(
@@ -60,9 +60,28 @@ public static class PrintTemplateSeed
         return list;
     }
 
+    /// <summary>
+    /// The default templates a branch is missing: one default per printable document type.
+    /// </summary>
     public static IReadOnlyList<PrintTemplate> Build(Guid orgId, IEnumerable<string> presentCodes)
     {
-        var existing = presentCodes.Select(code => (code, DefaultLayoutGenerator.PaperSizeA4));
-        return Build(orgId, existing);
+        HashSet<string> present = new(
+            presentCodes.Select(code => code.Trim()), StringComparer.OrdinalIgnoreCase);
+
+        return [.. DocumentTypeCatalog.All
+            .Where(profile => !present.Contains(profile.Code))
+            .Select(profile => new PrintTemplate
+            {
+                OrgId = orgId,
+                DocumentTypeCode = profile.Code,
+                TemplateName = profile.Name,
+                PaperSizeName = DefaultLayoutGenerator.PaperSizeA4,
+                IsDefault = true,
+                IsActive = true,
+                Settings = DefaultLayoutGenerator.BuildSettings(profile),
+                Content = DefaultLayoutGenerator.Build(profile),
+                TemplateVersion = 1,
+                SeedVersion = DefaultLayoutGenerator.SeedVersion,
+            })];
     }
 }

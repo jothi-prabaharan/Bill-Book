@@ -13,7 +13,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="PDFsharp" />
-    <PackageReference Include="Azure.Storage.Blobs" />
   </ItemGroup>
 
   <!-- The Web SDK's implicit usings, so business logic moved out of the Api project compiles unchanged. -->

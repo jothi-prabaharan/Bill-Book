@@ -36,10 +36,6 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageVersion Include="Azure.Identity" Version="1.13.1" />
-    <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />
-    <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.18.2" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.22.2" />
     <!-- SFTP, for the file store a self-hosted deployment can point at a NAS or
          another server (deploy/local). MIT. SFTP rather than FTP because plain
          FTP sends the password and every file in clear, and only SFTP's
