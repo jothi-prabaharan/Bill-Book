@@ -202,9 +202,94 @@
                 "group": "full-stack",
                 "order": 7
             }
+        },
+        {
+            "name": "Desktop App · Full Stack (Electron + APIs)",
+            "configurations": [
+                "Gateway (:4500)",
+                "Accounting.Api (:4501)",
+                "Customer.Api (:4505)",
+                "Inventory.Api (:4509)",
+                "Master.Api (:4511)",
+                "Printing.Api (:4515)",
+                "Purchase.Api (:4516)",
+                "Reporting.Api (:4518)",
+                "Sales.Api (:4519)",
+                "Desktop App (Electron)"
+            ],
+            "stopAll": false,
+            "presentation": {
+                "group": "full-stack",
+                "order": 8
+            }
+        },
+        {
+            "name": "Desktop App (Electron · Main + Renderer)",
+            "configurations": [
+                "Desktop App (Electron)",
+                "Desktop · Renderer (Electron)"
+            ],
+            "stopAll": true,
+            "presentation": {
+                "group": "desktop",
+                "order": 1
+            }
         }
     ],
     "configurations": [
+        {
+            "name": "Desktop App (Electron)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/electron",
+            "windows": {
+                "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/electron/dist/electron.exe"
+            },
+            "args": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app",
+                "--remote-debugging-port=9222"
+            ],
+            "env": {
+                "BILLBOOK_DEV_URL": "http://localhost:4200",
+                "NODE_ENV": "development"
+            },
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app/**/*.js"
+            ],
+            "preLaunchTask": "prepare-desktop",
+            "console": "integratedTerminal",
+            "presentation": {
+                "group": "desktop",
+                "order": 1
+            }
+        },
+        {
+            "name": "Desktop · Renderer (Electron)",
+            "type": "msedge",
+            "request": "attach",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "timeout": 30000,
+            "presentation": {
+                "group": "desktop",
+                "order": 2
+            }
+        },
         {
             "name": "Web · Development (Edge, 4200)",
             "type": "msedge",

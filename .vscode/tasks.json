@@ -48,6 +48,29 @@
       },
       "problemMatcher": []
     },
+    // Desktop (Electron) tasks: build main process and coordinate with Angular dev server
+    {
+      "label": "build-desktop-main",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "apps/desktop/scripts/build.mjs",
+        "--main-only"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "prepare-desktop",
+      "dependsOn": [
+        "serve-web",
+        "build-desktop-main"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
     // Angular dev servers. Wrapper rather than `npx nx serve` directly: it reuses
     // a dev server that is already on the port instead of hanging on Angular's
     // interactive "use a different port?" prompt. See .vscode/serve-angular.js.
