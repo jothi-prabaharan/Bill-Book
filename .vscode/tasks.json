@@ -71,6 +71,76 @@
       "dependsOrder": "parallel",
       "problemMatcher": []
     },
+    // Mobile & Tablet (Capacitor) tasks: sync web bundle and open/run native Android/iOS targets
+    {
+      "label": "cap-sync",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "cap",
+        "sync"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend/apps/mobile"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "cap-open-android",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "cap",
+        "open",
+        "android"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend/apps/mobile"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "cap-open-ios",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "cap",
+        "open",
+        "ios"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend/apps/mobile"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "cap-run-android",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "cap",
+        "run",
+        "android"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend/apps/mobile"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "cap-run-ios",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "cap",
+        "run",
+        "ios"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend/apps/mobile"
+      },
+      "problemMatcher": []
+    },
     // Angular dev servers. Wrapper rather than `npx nx serve` directly: it reuses
     // a dev server that is already on the port instead of hanging on Angular's
     // interactive "use a different port?" prompt. See .vscode/serve-angular.js.

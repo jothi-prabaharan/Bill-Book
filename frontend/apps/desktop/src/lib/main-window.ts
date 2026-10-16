@@ -37,6 +37,9 @@ function readState(): ReturnType<typeof parseWindowState> {
 export function createMainWindow(preload: string, url: string): BrowserWindow {
   const saved = readState();
   const bounds = restoreBounds(saved, displays(), area(screen.getPrimaryDisplay()));
+  const icon = process.platform === 'win32'
+    ? path.join(__dirname, 'icon.ico')
+    : path.join(__dirname, 'icon.png');
 
   const win = new BrowserWindow({
     ...bounds,
@@ -44,6 +47,7 @@ export function createMainWindow(preload: string, url: string): BrowserWindow {
     minHeight: MIN_SIZE.height,
     show: false,
     title: 'Bill Book',
+    icon,
     backgroundColor: '#f3f2f2',
     autoHideMenuBar: true,
     webPreferences: {

@@ -1,8 +1,8 @@
 <!-- Desktop Left Rail -->
 <nav aria-label="Modules" class="shell-sidebar desktop-nav">
-  <div class="shell-sidebar-logo">
-    <img src="assets/bill-book-logo.svg" alt="Bill-Book" style="width: 28px; height: 28px; object-fit: contain;">
-  </div>
+  <a class="shell-sidebar-logo" href="/dashboard" (click)="goHome($event)" title="Bill-Book Dashboard">
+    <img src="/assets/bill-book-logo.svg" alt="Bill-Book" style="width: 28px; height: 28px; object-fit: contain;">
+  </a>
 
   @for (item of primaryNav(); track item.path) {
     <a
@@ -110,6 +110,12 @@
     <div class="more-sheet" role="dialog" aria-label="More">
       <div class="more-scroll">
         <div class="more-handle" aria-hidden="true"></div>
+
+        <div class="more-brand-banner">
+          <img src="/assets/bill-book-logo.svg" alt="Bill-Book" class="more-brand-logo" />
+          <span class="more-brand-title">Bill-Book</span>
+          <span class="more-brand-badge">Retail ERP</span>
+        </div>
 
         <div class="more-account">
           <div class="account-card">

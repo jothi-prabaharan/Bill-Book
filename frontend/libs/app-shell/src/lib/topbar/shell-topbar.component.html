@@ -1,5 +1,7 @@
 <header class="shell-header">
-  <img src="assets/bill-book-logo.svg" alt="Bill-Book" class="mobile-header-elements" style="width: 26px; height: 26px; object-fit: contain;" />
+  <a href="/dashboard" (click)="goHome($event)" class="mobile-header-elements mobile-header-logo-link" title="Bill-Book Dashboard">
+    <img src="/assets/bill-book-logo.svg" alt="Bill-Book" style="width: 26px; height: 26px; object-fit: contain;" />
+  </a>
 
   <!-- Branch switcher -->
   <div class="shell-org-picker org-dropdown-container">

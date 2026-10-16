@@ -20,10 +20,11 @@ module.exports = {
   files: ['**/*'],
   asar: true,
   npmRebuild: false,
-  icon: '../web/public/icons/icon-512.png',
+  icon: 'resources/icon.png',
   artifactName: 'BillBook-${version}-${os}-${arch}.${ext}',
   publish: [{ provider: 'generic', url: updateUrl }],
   win: {
+    icon: 'resources/icon.ico',
     target: [{ target: 'nsis', arch: ['x64'] }],
   },
   nsis: {

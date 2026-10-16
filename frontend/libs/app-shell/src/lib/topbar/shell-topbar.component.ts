@@ -415,6 +415,11 @@ export class ShellTopbarComponent {
     void this.pwa.promptInstall();
   }
 
+  goHome(event?: Event): void {
+    event?.preventDefault();
+    void this.router.navigateByUrl('/dashboard');
+  }
+
   doLogout(): void {
     this.logout.emit();
     // Revokes the session server-side too, so the refresh token cannot be spent

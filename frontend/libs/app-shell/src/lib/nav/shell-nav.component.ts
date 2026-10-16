@@ -197,6 +197,11 @@ export class ShellNavComponent {
     void this.pwa.promptInstall();
   }
 
+  goHome(event?: Event): void {
+    event?.preventDefault();
+    void this.router.navigate(['/dashboard']);
+  }
+
   onLogout(): void {
     this.profileOpen.set(false);
     this.logout.emit();

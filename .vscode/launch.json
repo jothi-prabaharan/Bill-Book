@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "compounds": [
         {
-            "name": "All APIs + Web App (Edge)",
+            "name": "All API",
             "configurations": [
                 "Gateway (:4500)",
                 "Accounting.Api (:4501)",
@@ -27,271 +27,14 @@
                 "Student.Api (:4520)",
                 "TimeLeave.Api (:4521)",
                 "WorkOrder.Api (:4522)",
-                "Site.Api (:4523)",
-                "Web · Development (Edge, 4200)",
-                "Website · Development (Edge, 4202)",
-                "Docs · Development (Edge, 4201)"
+                "Site.Api (:4523)"
             ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 1
-            }
-        },
-        {
-            "name": "All APIs + Website App (Edge)",
-            "configurations": [
-                "Gateway (:4500)",
-                "Accounting.Api (:4501)",
-                "Admission.Api (:4502)",
-                "Attendance.Api (:4503)",
-                "Claims.Api (:4504)",
-                "Customer.Api (:4505)",
-                "Employee.Api (:4506)",
-                "Facility.Api (:4507)",
-                "Fee.Api (:4508)",
-                "Inventory.Api (:4509)",
-                "MaintenanceContract.Api (:4510)",
-                "Master.Api (:4511)",
-                "Payroll.Api (:4512)",
-                "Performance.Api (:4513)",
-                "Preventive.Api (:4514)",
-                "Printing.Api (:4515)",
-                "Purchase.Api (:4516)",
-                "Recruitment.Api (:4517)",
-                "Reporting.Api (:4518)",
-                "Sales.Api (:4519)",
-                "Student.Api (:4520)",
-                "TimeLeave.Api (:4521)",
-                "WorkOrder.Api (:4522)",
-                "Site.Api (:4523)",
-                "Website · Development (Edge, 4202)"
-            ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 2
-            }
-        },
-        {
-            "name": "All APIs + Docs App (Edge)",
-            "configurations": [
-                "Gateway (:4500)",
-                "Accounting.Api (:4501)",
-                "Admission.Api (:4502)",
-                "Attendance.Api (:4503)",
-                "Claims.Api (:4504)",
-                "Customer.Api (:4505)",
-                "Employee.Api (:4506)",
-                "Facility.Api (:4507)",
-                "Fee.Api (:4508)",
-                "Inventory.Api (:4509)",
-                "MaintenanceContract.Api (:4510)",
-                "Master.Api (:4511)",
-                "Payroll.Api (:4512)",
-                "Performance.Api (:4513)",
-                "Preventive.Api (:4514)",
-                "Printing.Api (:4515)",
-                "Purchase.Api (:4516)",
-                "Recruitment.Api (:4517)",
-                "Reporting.Api (:4518)",
-                "Sales.Api (:4519)",
-                "Student.Api (:4520)",
-                "TimeLeave.Api (:4521)",
-                "WorkOrder.Api (:4522)",
-                "Site.Api (:4523)",
-                "Docs · Development (Edge, 4201)"
-            ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 3
-            }
-        },
-        {
-            "name": "All APIs + Web App Only (Edge)",
-            "configurations": [
-                "Gateway (:4500)",
-                "Accounting.Api (:4501)",
-                "Admission.Api (:4502)",
-                "Attendance.Api (:4503)",
-                "Claims.Api (:4504)",
-                "Customer.Api (:4505)",
-                "Employee.Api (:4506)",
-                "Facility.Api (:4507)",
-                "Fee.Api (:4508)",
-                "Inventory.Api (:4509)",
-                "MaintenanceContract.Api (:4510)",
-                "Master.Api (:4511)",
-                "Payroll.Api (:4512)",
-                "Performance.Api (:4513)",
-                "Preventive.Api (:4514)",
-                "Printing.Api (:4515)",
-                "Purchase.Api (:4516)",
-                "Recruitment.Api (:4517)",
-                "Reporting.Api (:4518)",
-                "Sales.Api (:4519)",
-                "Student.Api (:4520)",
-                "TimeLeave.Api (:4521)",
-                "WorkOrder.Api (:4522)",
-                "Site.Api (:4523)",
-                "Web · Development (Edge, 4200)"
-            ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 4
-            }
-        },
-        {
-            "name": "Core Retail APIs + Web App (Edge)",
-            "configurations": [
-                "Gateway (:4500)",
-                "Accounting.Api (:4501)",
-                "Customer.Api (:4505)",
-                "Inventory.Api (:4509)",
-                "Master.Api (:4511)",
-                "Printing.Api (:4515)",
-                "Purchase.Api (:4516)",
-                "Reporting.Api (:4518)",
-                "Sales.Api (:4519)",
-                "Web · Development (Edge, 4200)"
-            ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 5
-            }
-        },
-        {
-            "name": "Core Retail APIs + Website App (Edge)",
-            "configurations": [
-                "Gateway (:4500)",
-                "Accounting.Api (:4501)",
-                "Customer.Api (:4505)",
-                "Inventory.Api (:4509)",
-                "Master.Api (:4511)",
-                "Printing.Api (:4515)",
-                "Purchase.Api (:4516)",
-                "Reporting.Api (:4518)",
-                "Sales.Api (:4519)",
-                "Website · Development (Edge, 4202)"
-            ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 6
-            }
-        },
-        {
-            "name": "Core Retail APIs + Docs App (Edge)",
-            "configurations": [
-                "Gateway (:4500)",
-                "Accounting.Api (:4501)",
-                "Customer.Api (:4505)",
-                "Inventory.Api (:4509)",
-                "Master.Api (:4511)",
-                "Printing.Api (:4515)",
-                "Purchase.Api (:4516)",
-                "Reporting.Api (:4518)",
-                "Sales.Api (:4519)",
-                "Docs · Development (Edge, 4201)"
-            ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 7
-            }
-        },
-        {
-            "name": "Desktop App · Full Stack (Electron + APIs)",
-            "configurations": [
-                "Gateway (:4500)",
-                "Accounting.Api (:4501)",
-                "Customer.Api (:4505)",
-                "Inventory.Api (:4509)",
-                "Master.Api (:4511)",
-                "Printing.Api (:4515)",
-                "Purchase.Api (:4516)",
-                "Reporting.Api (:4518)",
-                "Sales.Api (:4519)",
-                "Desktop App (Electron)"
-            ],
-            "stopAll": false,
-            "presentation": {
-                "group": "full-stack",
-                "order": 8
-            }
-        },
-        {
-            "name": "Desktop App (Electron · Main + Renderer)",
-            "configurations": [
-                "Desktop App (Electron)",
-                "Desktop · Renderer (Electron)"
-            ],
-            "stopAll": true,
-            "presentation": {
-                "group": "desktop",
-                "order": 1
-            }
+            "stopAll": false
         }
     ],
     "configurations": [
         {
-            "name": "Desktop App (Electron)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}/frontend",
-            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/electron",
-            "windows": {
-                "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/electron/dist/electron.exe"
-            },
-            "args": [
-                "${workspaceFolder}/frontend/dist/apps/desktop/app",
-                "--remote-debugging-port=9222"
-            ],
-            "env": {
-                "BILLBOOK_DEV_URL": "http://localhost:4200",
-                "NODE_ENV": "development"
-            },
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/frontend/dist/apps/desktop/app/**/*.js"
-            ],
-            "preLaunchTask": "prepare-desktop",
-            "console": "integratedTerminal",
-            "presentation": {
-                "group": "desktop",
-                "order": 1
-            }
-        },
-        {
-            "name": "Desktop · Renderer (Electron)",
-            "type": "msedge",
-            "request": "attach",
-            "port": 9222,
-            "webRoot": "${workspaceFolder}/frontend",
-            "sourceMaps": true,
-            "sourceMapPathOverrides": {
-                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
-                "webpack:///./*": "${workspaceFolder}/frontend/*",
-                "webpack:///*": "*",
-                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
-                "/apps/*": "${workspaceFolder}/frontend/apps/*",
-                "/libs/*": "${workspaceFolder}/frontend/libs/*"
-            },
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/frontend/**",
-                "!${workspaceFolder}/frontend/node_modules/**"
-            ],
-            "timeout": 30000,
-            "presentation": {
-                "group": "desktop",
-                "order": 2
-            }
-        },
-        {
-            "name": "Web · Development (Edge, 4200)",
+            "name": "Web",
             "type": "msedge",
             "request": "launch",
             "preLaunchTask": "serve-web",
@@ -315,6 +58,309 @@
                 "--disable-features=CalculateNativeWinOcclusion"
             ],
             "presentation": {
+                "order": 1
+            }
+        },
+        {
+            "name": "Website",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-website",
+            "url": "http://localhost:4202",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "order": 2
+            }
+        },
+        {
+            "name": "Doc",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-docs",
+            "url": "http://localhost:4201",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "order": 3
+            }
+        },
+        {
+            "name": "Electron (Win)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/electron",
+            "windows": {
+                "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/electron/dist/electron.exe"
+            },
+            "args": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app",
+                "--remote-debugging-port=9222"
+            ],
+            "env": {
+                "BILLBOOK_DEV_URL": "http://localhost:4200",
+                "NODE_ENV": "development",
+                "PLATFORM": "win32",
+                "TARGET_PLATFORM": "win32"
+            },
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app/**/*.js"
+            ],
+            "preLaunchTask": "prepare-desktop",
+            "console": "integratedTerminal",
+            "presentation": {
+                "order": 4
+            }
+        },
+        {
+            "name": "Electron (Ubuntu)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/electron",
+            "windows": {
+                "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/electron/dist/electron.exe"
+            },
+            "linux": {
+                "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/electron"
+            },
+            "args": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app",
+                "--remote-debugging-port=9222",
+                "--user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 BillBook/1.0.0"
+            ],
+            "env": {
+                "BILLBOOK_DEV_URL": "http://localhost:4200",
+                "NODE_ENV": "development",
+                "PLATFORM": "linux",
+                "TARGET_PLATFORM": "linux"
+            },
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app/**/*.js"
+            ],
+            "preLaunchTask": "prepare-desktop",
+            "console": "integratedTerminal",
+            "presentation": {
+                "order": 5
+            }
+        },
+        {
+            "name": "Electron (MAC)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/electron",
+            "windows": {
+                "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/electron/dist/electron.exe"
+            },
+            "osx": {
+                "runtimeExecutable": "${workspaceFolder}/frontend/node_modules/.bin/electron"
+            },
+            "args": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app",
+                "--remote-debugging-port=9222",
+                "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 BillBook/1.0.0"
+            ],
+            "env": {
+                "BILLBOOK_DEV_URL": "http://localhost:4200",
+                "NODE_ENV": "development",
+                "PLATFORM": "darwin",
+                "TARGET_PLATFORM": "darwin"
+            },
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/frontend/dist/apps/desktop/app/**/*.js"
+            ],
+            "preLaunchTask": "prepare-desktop",
+            "console": "integratedTerminal",
+            "presentation": {
+                "order": 6
+            }
+        },
+        {
+            "name": "Mobile (Andriod)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-web",
+            "url": "http://localhost:4200",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--window-size=412,915",
+                "--user-agent=Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36",
+                "--touch-events=enabled",
+                "--force-device-scale-factor=2.75",
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "order": 7
+            }
+        },
+        {
+            "name": "Mobile (IOS)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-web",
+            "url": "http://localhost:4200",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--window-size=393,852",
+                "--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+                "--touch-events=enabled",
+                "--force-device-scale-factor=3",
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "order": 8
+            }
+        },
+        {
+            "name": "Tab (Andriod)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-web",
+            "url": "http://localhost:4200",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--window-size=1280,800",
+                "--user-agent=Mozilla/5.0 (Linux; Android 14; SM-X810) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+                "--touch-events=enabled",
+                "--force-device-scale-factor=2",
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "order": 9
+            }
+        },
+        {
+            "name": "Tab (IOS)",
+            "type": "msedge",
+            "request": "launch",
+            "preLaunchTask": "serve-web",
+            "url": "http://localhost:4200",
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "userDataDir": false,
+            "runtimeArgs": [
+                "--window-size=834,1194",
+                "--user-agent=Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+                "--touch-events=enabled",
+                "--force-device-scale-factor=2",
+                "--disable-features=CalculateNativeWinOcclusion"
+            ],
+            "presentation": {
+                "order": 10
+            }
+        },
+        {
+            "name": "Desktop · Renderer (Electron)",
+            "type": "msedge",
+            "request": "attach",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}/frontend",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+                "webpack:///./*": "${workspaceFolder}/frontend/*",
+                "webpack:///*": "*",
+                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+                "/apps/*": "${workspaceFolder}/frontend/apps/*",
+                "/libs/*": "${workspaceFolder}/frontend/libs/*"
+            },
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!${workspaceFolder}/frontend/node_modules/**"
+            ],
+            "timeout": 30000,
+            "presentation": {
                 "hidden": true
             }
         },
@@ -331,9 +377,7 @@
             "cwd": "${workspaceFolder}/frontend",
             "console": "integratedTerminal",
             "presentation": {
-                "hidden": true,
-                "group": "frontend",
-                "order": 2
+                "hidden": true
             }
         },
         {
@@ -365,31 +409,6 @@
             }
         },
         {
-            "name": "Docs · Development (Edge, 4201)",
-            "type": "msedge",
-            "request": "launch",
-            "preLaunchTask": "serve-docs",
-            "url": "http://localhost:4201",
-            "webRoot": "${workspaceFolder}/frontend",
-            "sourceMaps": true,
-            "sourceMapPathOverrides": {
-                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
-                "webpack:///./*": "${workspaceFolder}/frontend/*",
-                "webpack:///*": "*",
-                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
-                "/apps/*": "${workspaceFolder}/frontend/apps/*",
-                "/libs/*": "${workspaceFolder}/frontend/libs/*"
-            },
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/frontend/**",
-                "!${workspaceFolder}/frontend/node_modules/**"
-            ],
-            "userDataDir": false,
-            "runtimeArgs": [
-                "--disable-features=CalculateNativeWinOcclusion"
-            ]
-        },
-        {
             "name": "Docs · Staging (Edge, 5201)",
             "type": "msedge",
             "request": "launch",
@@ -412,32 +431,10 @@
             "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
-            ]
-        },
-        {
-            "name": "Website · Development (Edge, 4202)",
-            "type": "msedge",
-            "request": "launch",
-            "preLaunchTask": "serve-website",
-            "url": "http://localhost:4202",
-            "webRoot": "${workspaceFolder}/frontend",
-            "sourceMaps": true,
-            "sourceMapPathOverrides": {
-                "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
-                "webpack:///./*": "${workspaceFolder}/frontend/*",
-                "webpack:///*": "*",
-                "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
-                "/apps/*": "${workspaceFolder}/frontend/apps/*",
-                "/libs/*": "${workspaceFolder}/frontend/libs/*"
-            },
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/frontend/**",
-                "!${workspaceFolder}/frontend/node_modules/**"
             ],
-            "userDataDir": false,
-            "runtimeArgs": [
-                "--disable-features=CalculateNativeWinOcclusion"
-            ]
+            "presentation": {
+                "hidden": true
+            }
         },
         {
             "name": "Website · Staging (Edge, 5202)",
@@ -462,7 +459,10 @@
             "userDataDir": false,
             "runtimeArgs": [
                 "--disable-features=CalculateNativeWinOcclusion"
-            ]
+            ],
+            "presentation": {
+                "hidden": true
+            }
         },
         {
             "name": "Gateway (:4500)",

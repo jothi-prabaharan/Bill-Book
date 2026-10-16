@@ -49,6 +49,11 @@ await writeFile(
   JSON.stringify({ serverUrl: env('BILLBOOK_SERVER_URL'), updateUrl: env('BILLBOOK_UPDATE_URL') }, null, 2),
 );
 
+// Stage the application icons for the window taskbar, title bar and tray
+await cp(path.join(root, 'apps/desktop/resources/icon.png'), path.join(app, 'icon.png'));
+await cp(path.join(root, 'apps/desktop/resources/icon.ico'), path.join(app, 'icon.ico'));
+await cp(path.join(root, 'apps/desktop/resources/bill-book-logo.svg'), path.join(app, 'bill-book-logo.svg'));
+
 if (!mainOnly) {
   try {
     await stat(path.join(web, 'index.html'));

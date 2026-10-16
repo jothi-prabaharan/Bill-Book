@@ -1,12 +1,14 @@
 // Bill-Book Progressive Web App (PWA) Service Worker
 // Version: 1.0.2
 
-const CACHE_NAME = 'bill-book-pwa-v4';
+const CACHE_NAME = 'bill-book-pwa-v5';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_ASSETS = [
   OFFLINE_URL,
   '/manifest.webmanifest',
+  '/favicon.ico',
+  '/icons/apple-touch-icon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/assets/bill-book-logo.svg',

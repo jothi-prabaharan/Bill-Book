@@ -33,10 +33,23 @@
   justify-content: center;
   margin: calc(var(--space-2) * -1) -4px var(--space-2);
   border-bottom: 1px solid color-mix(in srgb, var(--color-neutral-100) 16%, transparent);
+  text-decoration: none;
+  cursor: pointer;
 
   img {
-    width: 24px;
-    height: auto;
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &:hover img {
+    transform: scale(1.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
   }
 }
 
@@ -330,6 +343,41 @@
   border-radius: 2px;
   background: var(--color-divider);
   margin: 0 auto var(--space-4);
+}
+
+.more-brand-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: 0 var(--space-1);
+
+  .more-brand-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex: none;
+  }
+
+  .more-brand-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+  }
+
+  .more-brand-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent-700);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
 }
 
 .more-account {
