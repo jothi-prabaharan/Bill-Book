@@ -50,6 +50,9 @@ public class OrganizationListItem
 
     public string? LogoUrl { get; set; }
 
+    /// <summary>The branch's UPI id for customer payments (TK-158).</summary>
+    public string? UpiId { get; set; }
+
     /// <summary>When this branch's own access ends, or null if only the licence governs.</summary>
     public DateOnly? ExpiryDate { get; set; }
 
@@ -187,6 +190,9 @@ public class SaveOrganizationRequest
 
     [MaxLength(500, ErrorMessage = "Logo URL cannot exceed 500 characters.")]
     public string? LogoUrl { get; set; }
+
+    [MaxLength(100, ErrorMessage = "UPI ID cannot exceed 100 characters.")]
+    public string? UpiId { get; set; }
 
     [MaxLength(200, ErrorMessage = "Address line 1 cannot exceed 200 characters.")]
     public string? AddressLine1 { get; set; }

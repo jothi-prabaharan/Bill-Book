@@ -332,6 +332,90 @@ public sealed class AuthController : ControllerBase
         return Ok(new MessageResponse { Message = "Profile updated successfully." });
     }
 
+    /// <summary>Uploads the user's profile avatar picture.</summary>
+    [Authorize]
+    [HttpPost("profile/avatar")]
+    [HttpPost("/api/users/profile/avatar")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadAvatar(
+        IFormFile? file,
+        [FromServices] Shared.Kernel.Storage.IFileStorage storage,
+        CancellationToken ct)
+    {
+        if (CallerUserId() is not Guid userId) return Unauthorized();
+
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new MessageResponse { Message = "Select an image file to upload." });
+        }
+
+        string[] allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+        if (!allowed.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
+        {
+            return BadRequest(new MessageResponse { Message = "Only JPEG, PNG, WebP, and GIF images are allowed." });
+        }
+
+        string ext = Path.GetExtension(file.FileName);
+        if (string.IsNullOrEmpty(ext)) ext = ".png";
+        string key = $"avatars/{userId:N}{ext}";
+
+        await using Stream stream = file.OpenReadStream();
+        await storage.SaveAsync(key, stream, file.ContentType, Shared.Kernel.Storage.FileWriteMode.Replace, ct);
+
+        return Ok(new { avatarUrl = $"/api/auth/profile/avatar?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}" });
+    }
+
+    /// <summary>Retrieves the user's profile avatar picture.</summary>
+    [Authorize]
+    [HttpGet("profile/avatar")]
+    [HttpGet("/api/users/profile/avatar")]
+    public async Task<IActionResult> GetAvatar(
+        [FromServices] Shared.Kernel.Storage.IFileStorage storage,
+        CancellationToken ct)
+    {
+        if (CallerUserId() is not Guid userId) return Unauthorized();
+
+        string[] exts = [".png", ".jpg", ".jpeg", ".webp", ".gif"];
+        foreach (var ext in exts)
+        {
+            string key = $"avatars/{userId:N}{ext}";
+            Stream? content = await storage.OpenReadAsync(key, ct);
+            if (content is not null)
+            {
+                string mime = ext switch
+                {
+                    ".jpg" or ".jpeg" => "image/jpeg",
+                    ".webp" => "image/webp",
+                    ".gif" => "image/gif",
+                    _ => "image/png"
+                };
+                return File(content, mime);
+            }
+        }
+
+        return NotFound();
+    }
+
+    /// <summary>Deletes the user's profile avatar picture.</summary>
+    [Authorize]
+    [HttpDelete("profile/avatar")]
+    [HttpDelete("/api/users/profile/avatar")]
+    public async Task<IActionResult> DeleteAvatar(
+        [FromServices] Shared.Kernel.Storage.IFileStorage storage,
+        CancellationToken ct)
+    {
+        if (CallerUserId() is not Guid userId) return Unauthorized();
+
+        string[] exts = [".png", ".jpg", ".jpeg", ".webp", ".gif"];
+        foreach (var ext in exts)
+        {
+            string key = $"avatars/{userId:N}{ext}";
+            await storage.DeleteAsync(key, ct);
+        }
+
+        return NoContent();
+    }
+
     private string? Ip() => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     private string? UserAgent() => Request.Headers.UserAgent.ToString();

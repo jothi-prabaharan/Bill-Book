@@ -57,6 +57,8 @@ export class ProfilePage implements OnInit {
   readonly passwordError = signal<string | null>(null);
 
   readonly profile = signal<UserProfile | null>(null);
+  readonly avatarUrl = signal<string | null>(localStorage.getItem('bb.userAvatar') ?? null);
+  readonly uploadingAvatar = signal(false);
 
   displayName = '';
   mobileNumber = '';
@@ -187,5 +189,46 @@ export class ProfilePage implements OnInit {
       .slice(0, 2)
       .map((w) => w[0].toUpperCase())
       .join('');
+  }
+
+  async onAvatarSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    // Read local data URL for immediate preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (dataUrl) {
+        this.avatarUrl.set(dataUrl);
+        localStorage.setItem('bb.userAvatar', dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    this.uploadingAvatar.set(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await firstValueFrom(
+        this.http.post<{ avatarUrl: string }>('/api/auth/profile/avatar', formData)
+      );
+      if (res?.avatarUrl) {
+        this.avatarUrl.set(res.avatarUrl);
+        localStorage.setItem('bb.userAvatar', res.avatarUrl);
+      }
+    } catch {
+      // Local preview preserved even if offline
+    } finally {
+      this.uploadingAvatar.set(false);
+      input.value = '';
+    }
+  }
+
+  removeAvatar(): void {
+    this.avatarUrl.set(null);
+    localStorage.removeItem('bb.userAvatar');
   }
 }

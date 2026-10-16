@@ -7,6 +7,7 @@ import {
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
+import { SessionContextService } from '@bill-book/auth';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -51,6 +52,7 @@ export class ConfigurationsPage implements OnInit {
     { value: 'false', label: 'No' },
   ];
   private readonly http = inject(HttpClient);
+  private readonly session = inject(SessionContextService, { optional: true });
 
   /** Replace with the org id from the auth token once org context lands. */
   private readonly orgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
@@ -60,8 +62,23 @@ export class ConfigurationsPage implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly grouped = computed(() => {
+    const isRestaurant = (this.session?.context()?.businessType?.toLowerCase() === 'restaurant')
+      || (localStorage.getItem('bb.businessType')?.toLowerCase() === 'restaurant');
+
     const map = new Map<string, ConfigurationRow[]>();
     for (const row of this.rows()) {
+      // payment.upiId has moved into Branch Master
+      if (row.code === 'payment.upiId') {
+        continue;
+      }
+
+      const isRestRow = (row.category?.toLowerCase() === 'restaurant')
+        || row.code.toLowerCase().startsWith('restaurant.');
+
+      if (isRestRow && !isRestaurant) {
+        continue;
+      }
+
       const key = row.category ?? 'General';
       map.set(key, [...(map.get(key) ?? []), row]);
     }

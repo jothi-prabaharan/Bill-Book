@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Master.Api.Services;
 using Master.Repository.Repositories;
 using Master.Repository.Clients;
@@ -76,6 +77,137 @@ public sealed class OrganizationsController : ControllerBase
         return result.Outcome == SaveOrganizationOutcome.Ok
             ? NoContent()
             : Respond(result.Outcome);
+    }
+
+    /// <summary>Uploads a logo for the current branch.</summary>
+    [HttpPost("current/logo")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadCurrentLogo(
+        IFormFile? file,
+        [FromServices] Shared.Kernel.Storage.IFileStorage storage,
+        [FromServices] Shared.Kernel.Tenancy.ITenantContext tenant,
+        CancellationToken ct)
+    {
+        if (Caller() is not Guid customerId || CallerOrg() is not Guid orgId)
+        {
+            return Forbid();
+        }
+
+        return await HandleLogoUploadAsync(customerId, orgId, file, storage, tenant, ct);
+    }
+
+    /// <summary>Uploads a logo for a specified branch.</summary>
+    [HttpPost("{orgId:guid}/logo")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadLogo(
+        Guid orgId,
+        IFormFile? file,
+        [FromServices] Shared.Kernel.Storage.IFileStorage storage,
+        [FromServices] Shared.Kernel.Tenancy.ITenantContext tenant,
+        CancellationToken ct)
+    {
+        if (Caller() is not Guid customerId)
+        {
+            return Forbid();
+        }
+
+        return await HandleLogoUploadAsync(customerId, orgId, file, storage, tenant, ct);
+    }
+
+    /// <summary>Deletes the logo of the current branch.</summary>
+    [HttpDelete("current/logo")]
+    public async Task<IActionResult> DeleteCurrentLogo(CancellationToken ct)
+    {
+        if (Caller() is not Guid customerId || CallerOrg() is not Guid orgId)
+        {
+            return Forbid();
+        }
+
+        await _organizations.UpdateLogoUrlAsync(customerId, orgId, null, ct);
+        return NoContent();
+    }
+
+    /// <summary>Deletes the logo of a specified branch.</summary>
+    [HttpDelete("{orgId:guid}/logo")]
+    public async Task<IActionResult> DeleteLogo(Guid orgId, CancellationToken ct)
+    {
+        if (Caller() is not Guid customerId)
+        {
+            return Forbid();
+        }
+
+        await _organizations.UpdateLogoUrlAsync(customerId, orgId, null, ct);
+        return NoContent();
+    }
+
+    private async Task<IActionResult> HandleLogoUploadAsync(
+        Guid customerId,
+        Guid orgId,
+        IFormFile? file,
+        Shared.Kernel.Storage.IFileStorage storage,
+        Shared.Kernel.Tenancy.ITenantContext tenant,
+        CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new MessageResponse { Message = "Select an image file to upload." });
+        }
+
+        string[] allowed = ["image/jpeg", "image/png", "image/webp", "image/svg+xml", "image/gif"];
+        if (!allowed.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
+        {
+            return BadRequest(new MessageResponse { Message = "Only JPEG, PNG, WebP, SVG, and GIF images are allowed." });
+        }
+
+        string ext = Path.GetExtension(file.FileName);
+        if (string.IsNullOrEmpty(ext)) ext = ".png";
+        string key = $"logos/{customerId:N}/{orgId:N}{ext}";
+
+        await using Stream stream = file.OpenReadStream();
+        await storage.SaveAsync(key, stream, file.ContentType, Shared.Kernel.Storage.FileWriteMode.Replace, ct);
+
+        string logoUrl = $"/api/organizations/{orgId}/logo";
+        await _organizations.UpdateLogoUrlAsync(customerId, orgId, logoUrl, ct);
+
+        return Ok(new { logoUrl });
+    }
+
+    /// <summary>Retrieves a branch logo.</summary>
+    [AllowAnonymous]
+    [HttpGet("{orgId:guid}/logo")]
+    public async Task<IActionResult> GetLogo(
+        Guid orgId,
+        [FromServices] Shared.Kernel.Storage.IFileStorage storage,
+        [FromServices] Master.Repository.AdminDbContext db,
+        CancellationToken ct)
+    {
+        var org = await db.Organizations.AsNoTracking()
+            .Where(o => o.OrgId == orgId)
+            .Select(o => new { o.CustomerId })
+            .FirstOrDefaultAsync(ct);
+
+        if (org is null) return NotFound();
+
+        string[] exts = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"];
+        foreach (var ext in exts)
+        {
+            string key = $"logos/{org.CustomerId:N}/{orgId:N}{ext}";
+            Stream? content = await storage.OpenReadAsync(key, ct);
+            if (content is not null)
+            {
+                string mime = ext switch
+                {
+                    ".jpg" or ".jpeg" => "image/jpeg",
+                    ".webp" => "image/webp",
+                    ".svg" => "image/svg+xml",
+                    ".gif" => "image/gif",
+                    _ => "image/png"
+                };
+                return File(content, mime);
+            }
+        }
+
+        return NotFound();
     }
 
     [HttpGet("{orgId:guid}")]

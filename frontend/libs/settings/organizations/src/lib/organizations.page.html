@@ -77,129 +77,186 @@
 </bb-data-grid>
 
 @if (editingId() !== null) {
-  <div class="sheet">
-    <h2>{{ editingId() === '' ? 'New branch' : 'Edit branch' }}</h2>
+  <div class="profile-viewport branch-edit-viewport">
+    <div class="profile-container">
+      <header class="profile-header">
+        <div class="header-titles">
+          <h2 class="page-title">{{ editingId() === '' ? 'New Branch' : 'Edit Branch' }}</h2>
+          <p class="page-subtitle">
+            {{ editingId() === '' 
+              ? 'Configure branch identity, base currency, statutory registrations, payments, and trade add-ons.' 
+              : 'Manage branch identity, statutory registrations, payments, and trade configurations.' }}
+          </p>
+        </div>
+      </header>
 
-    @if (editingId() === '') {
-      <bb-info-tooltip text="A new branch starts empty and is set up as it is created — chart of accounts, GST rates, numbering series, payment terms, units and purities. It stays unusable until that finishes, rather than opening with no books behind it."></bb-info-tooltip>
-    }
+      @if (editingId() === '') {
+        <p class="note">
+          <strong>A new branch starts empty and is set up as it is created</strong> — chart of accounts, GST rates, numbering series, payment terms, units and purities. It stays unusable until that finishes, rather than opening with no books behind it.
+        </p>
+      }
 
-    <div class="fields">
-      <div class="field">
-        <bb-text-input label="Code" hint="Goes into document numbers when a series includes the branch code."  [(ngModel)]="form.orgCode" maxlength="10" class="uppercase" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Name"  [(ngModel)]="form.name" maxlength="200" />
-      </div>
-
-            <div class="field">
-        <bb-select
-          label="Business type"
-          placeholder="None"
-          name="businessType"
-          [options]="businessTypeOptions"
-          hint="Decides which add-ons are available (e.g. School gets SIS but no POS)."
-          [(ngModel)]="form.businessType"
-        />
-      </div>
-
-      <fieldset class="field">
-        <legend>Add-ons</legend>
-        <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
-          @for (addon of allAddOns; track addon.value) {
-            <bb-checkbox
-              [label]="addon.label"
-              [ngModel]="hasAddOn(addon.value)"
-              (ngModelChange)="toggleAddOn(addon.value, $event)"
-              [disabled]="!isAddOnAllowed(addon.value)"
-            />
+      <!-- Branch Summary Banner -->
+      <section class="summary-card" aria-label="Branch Summary">
+        <div class="avatar-col">
+          <div class="profile-avatar" (click)="branchLogoFileInput.click()" title="Click to upload branch logo" role="button" tabindex="0" (keydown.enter)="branchLogoFileInput.click()">
+            @if (form.logoUrl) {
+              <img [src]="form.logoUrl" alt="Branch logo" class="avatar-img" />
+            } @else {
+              {{ branchInitials() }}
+            }
+            <div class="avatar-badge" title="Change logo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <input #branchLogoFileInput type="file" accept="image/*" (change)="onBranchLogoSelected($event)" style="display: none;" />
+          <div class="avatar-links">
+            <button type="button" class="avatar-link" (click)="branchLogoFileInput.click()">
+              {{ form.logoUrl ? 'Change logo' : 'Upload logo' }}
+            </button>
+            @if (form.logoUrl) {
+              <button type="button" class="avatar-link danger" (click)="removeBranchLogo()">Remove</button>
+            }
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="name-row">
+            <h3 class="user-display-name">{{ form.name || 'Branch Name' }}</h3>
+            @if (form.orgCode) {
+              <span class="role-badge">{{ form.orgCode }}</span>
+            }
+            @if (form.businessType) {
+              <span class="business-badge">{{ form.businessType }}</span>
+            }
+          </div>
+          <p class="user-email">
+            {{ form.email || 'No email set' }} &middot; {{ form.city || 'No city set' }} &middot; GSTIN: {{ form.gstin || 'Unregistered' }}
+          </p>
+          @if (form.upiId) {
+            <p class="last-login">UPI ID: <strong>{{ form.upiId }}</strong></p>
           }
         </div>
-      </fieldset>
+      </section>
 
-      <div class="field">
-        <bb-select
-          label="Base currency"
-          placeholder=""
-          [options]="currencyOptions()"
-          [disabled]="currencyLocked"
-          [(ngModel)]="form.baseCurrency"
-        />
-        <small class="field-hint">
-          @if (currencyLocked) {
-            Fixed — every amount already posted here was converted to it.
-          } @else {
-            Every posting in this branch converts to it. It cannot be changed afterwards.
-          }
-        </small>
+      <div class="cards-grid">
+        <!-- Section 1: Branch Details & Payments -->
+        <section class="content-card" aria-labelledby="branch-info-heading">
+          <div class="card-head">
+            <h4 id="branch-info-heading" class="card-title">Branch Identity &amp; Payments</h4>
+            <p class="card-subtitle">Branch code, trade name, payment UPI ID, and modular add-ons.</p>
+          </div>
+          <div class="form-body">
+            <div class="form-grid">
+              <bb-text-input label="Branch code" hint="Appears in generated document numbers when a series includes the branch code." [(ngModel)]="form.orgCode" maxlength="10" class="uppercase" />
+              <bb-text-input label="Branch name" [(ngModel)]="form.name" maxlength="200" />
+              <bb-text-input label="Payment UPI ID" [(ngModel)]="form.upiId" maxlength="100" placeholder="shop@okhdfcbank" hint="The UPI id customers pay this branch at. Prints a QR code on invoices." />
+              <bb-select
+                label="Business type"
+                placeholder="None"
+                name="businessType"
+                [options]="businessTypeOptions"
+                hint="Decides which features and add-ons are available."
+                [(ngModel)]="form.businessType"
+              />
+            </div>
+
+            <fieldset class="mt-3">
+              <legend style="font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">Modular Add-ons</legend>
+              <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
+                @for (addon of allAddOns; track addon.value) {
+                  <bb-checkbox
+                    [label]="addon.label"
+                    [ngModel]="hasAddOn(addon.value)"
+                    (ngModelChange)="toggleAddOn(addon.value, $event)"
+                    [disabled]="!isAddOnAllowed(addon.value)"
+                  />
+                }
+              </div>
+            </fieldset>
+          </div>
+        </section>
+
+        <!-- Section 2: Statutory & Currency -->
+        <section class="content-card" aria-labelledby="statutory-heading">
+          <div class="card-head">
+            <h4 id="statutory-heading" class="card-title">Statutory &amp; Currency</h4>
+            <p class="card-subtitle">GSTIN, PAN, base currency, and financial year start.</p>
+          </div>
+          <div class="form-body">
+            <div class="form-grid">
+              <div>
+                <bb-text-input label="GSTIN" hint="Its first two digits must match the branch's state." [(ngModel)]="form.gstin" maxlength="15" class="uppercase" />
+                @if (gstinMismatch()) {
+                  <small class="warn">
+                    The first two digits ({{ gstinStateCode() }}) do not match the state chosen below.
+                  </small>
+                }
+              </div>
+              <bb-text-input label="PAN" [(ngModel)]="form.pan" maxlength="10" class="uppercase" />
+              <div [class.field-disabled]="currencyLocked">
+                <bb-select
+                  label="Base currency"
+                  placeholder=""
+                  [options]="currencyOptions()"
+                  [disabled]="currencyLocked"
+                  [(ngModel)]="form.baseCurrency"
+                  hint="{{ currencyLocked ? 'Fixed — every amount already posted here was converted to it.' : 'Every posting in this branch converts to it.' }}"
+                />
+              </div>
+              <bb-select
+                label="Financial year starts"
+                placeholder=""
+                hint="April for India. Drives the year segment in generated numbers."
+                [options]="monthOptions"
+                [(ngModel)]="form.financialYearStartMonth"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Address & Contact Details -->
+        <section class="content-card" aria-labelledby="address-heading">
+          <div class="card-head">
+            <h4 id="address-heading" class="card-title">Address &amp; Contact Details</h4>
+            <p class="card-subtitle">Physical location, postal code, phone, mobile, and communication email.</p>
+          </div>
+          <div class="form-body">
+            <div class="form-grid">
+              <bb-text-input label="Address line 1" [(ngModel)]="form.addressLine1" maxlength="200" placeholder="Street / Building" />
+              <bb-text-input label="Address line 2" [(ngModel)]="form.addressLine2" maxlength="200" placeholder="Area / Landmark" />
+              <bb-text-input label="City" [(ngModel)]="form.city" maxlength="100" />
+              <bb-select
+                label="State"
+                placeholder="Not set"
+                [options]="stateOptions()"
+                [(ngModel)]="form.stateId"
+              />
+              <bb-text-input label="Postal code" [(ngModel)]="form.postalCode" maxlength="10" />
+              <bb-text-input label="Phone" hint="Landline with STD code." [(ngModel)]="form.phoneNumber" maxlength="20" />
+              <bb-text-input label="Mobile" hint="Lead with + for international numbers." [(ngModel)]="form.mobileNumber" maxlength="20" />
+              <bb-email-input label="Email" name="email" maxlength="200" [(ngModel)]="form.email" />
+              <bb-text-input label="Website" [(ngModel)]="form.website" maxlength="200" />
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div class="field">
-        <bb-select
-          label="Financial year starts"
-          placeholder=""
-          hint="April for India. Drives the year segment in generated numbers."
-          [options]="monthOptions"
-          [(ngModel)]="form.financialYearStartMonth"
-        />
+      <div class="card-actions" style="margin-top: var(--space-6, 24px); display: flex; gap: 16px; align-items: center;">
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="save()"
+          [disabled]="busy() || !form.orgCode || !form.name || !form.baseCurrency"
+        >
+          @if (busy()) { <span>Saving...</span> } @else { <span>Save Branch</span> }
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="editingId.set(null)" [disabled]="busy()">
+          Cancel
+        </button>
       </div>
-
-      <div class="field">
-        <bb-text-input label="GSTIN" hint="Its first two digits must match the branch's state."  [(ngModel)]="form.gstin" maxlength="15" class="uppercase" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="PAN"  [(ngModel)]="form.pan" maxlength="10" class="uppercase" />
-      </div>
-
-      <div class="field wide">
-        <bb-text-input label="Address line 1"  [(ngModel)]="form.addressLine1" maxlength="200" />
-      </div>
-
-      <div class="field wide">
-        <bb-text-input label="Address line 2"  [(ngModel)]="form.addressLine2" maxlength="200" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="City"  [(ngModel)]="form.city" maxlength="100" />
-      </div>
-
-      <div class="field">
-        <bb-select
-          label="State"
-          placeholder="Not set"
-          [options]="stateOptions()"
-          [(ngModel)]="form.stateId"
-        />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Postal code"  [(ngModel)]="form.postalCode" maxlength="10" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Phone"  [(ngModel)]="form.phoneNumber" maxlength="20" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Mobile"  [(ngModel)]="form.mobileNumber" maxlength="20" />
-      </div>
-
-      <div class="field">
-        <bb-email-input label="Email" name="email" maxlength="200" [(ngModel)]="form.email" />
-      </div>
-    </div>
-
-    <div class="sheet-actions">
-      <button class="btn btn-primary"
-        type="button"
-        (click)="save()"
-        [disabled]="busy() || !form.orgCode || !form.name || !form.baseCurrency"
-      >
-        Save
-      </button>
-      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
     </div>
   </div>
 }

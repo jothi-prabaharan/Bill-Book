@@ -40,6 +40,8 @@ interface Organization {
   isFirst: boolean;
   isTrial: boolean;
   expiryDate: string | null;
+  logoUrl?: string | null;
+  upiId?: string | null;
 }
 
 interface State {
@@ -149,13 +151,97 @@ export class OrganizationsPage implements OnInit {
   protected readonly states = signal<State[]>([]);
   protected readonly currencies = signal<Currency[]>([]);
   protected readonly busy = signal(false);
+  protected readonly uploadingLogo = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
   protected readonly editingId = signal<string | null>(null);
 
   protected readonly currentOrgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
 
+  protected readonly gstinMismatch = computed(() => {
+    const gstin = this.form?.gstin?.trim();
+    const stateId = this.form?.stateId;
+    if (!gstin || gstin.length < 2 || !stateId) return false;
+    const state = this.states().find((s) => s.stateId === stateId);
+    if (!state || !state.stateCode) return false;
+    return gstin.substring(0, 2) !== state.stateCode;
+  });
+
+  protected readonly gstinStateCode = computed(() => {
+    const gstin = this.form?.gstin?.trim();
+    return gstin && gstin.length >= 2 ? gstin.substring(0, 2) : '';
+  });
+
   form: OrganizationForm = this.blank();
+
+  protected branchInitials(): string {
+    const name = this.form?.name?.trim() || this.form?.orgCode?.trim() || 'BR';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  async onBranchLogoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.fail('Only image files (JPEG, PNG, WebP, SVG, GIF) are allowed.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.fail('Image must be under 5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.form.logoUrl = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+
+    const id = this.editingId();
+    if (id && id !== '') {
+      this.uploadingLogo.set(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file, file.name);
+        const res = await this.send<{ logoUrl: string }>('POST', `/api/organizations/${id}/logo`, formData);
+        this.form.logoUrl = res.logoUrl;
+        const row = this.rows().find((r) => r.orgId === id);
+        if (row) {
+          row.logoUrl = res.logoUrl;
+        }
+      } catch (err: unknown) {
+        const anyErr = err as { error?: { message?: string } };
+        this.fail(anyErr?.error?.message ?? 'Could not upload branch logo.');
+      } finally {
+        this.uploadingLogo.set(false);
+      }
+    }
+  }
+
+  async removeBranchLogo(): Promise<void> {
+    const id = this.editingId();
+    if (id && id !== '') {
+      try {
+        await this.send('DELETE', `/api/organizations/${id}/logo`, {});
+        this.form.logoUrl = null;
+        const row = this.rows().find((r) => r.orgId === id);
+        if (row) {
+          row.logoUrl = null;
+        }
+      } catch (err: unknown) {
+        const anyErr = err as { error?: { message?: string } };
+        this.fail(anyErr?.error?.message ?? 'Could not remove logo.');
+      }
+    } else {
+      this.form.logoUrl = null;
+    }
+  }
 
   columns: ColumnDef[] = [
     { field: 'orgCode', header: 'Code' },
@@ -233,6 +319,8 @@ export class OrganizationsPage implements OnInit {
       mobileNumber: row.mobileNumber,
       email: row.email,
       website: row.website,
+      logoUrl: row.logoUrl ?? null,
+      upiId: row.upiId ?? null,
     };
   }
 
@@ -338,6 +426,8 @@ export class OrganizationsPage implements OnInit {
       mobileNumber: null,
       email: null,
       website: null,
+      logoUrl: null,
+      upiId: null,
     };
   }
 

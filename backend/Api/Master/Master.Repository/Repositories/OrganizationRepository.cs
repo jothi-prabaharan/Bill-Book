@@ -79,14 +79,20 @@ public sealed class OrganizationRepository
         // from the truth, and this cannot.
         Guid? firstOrgId = rows.Count > 0 ? rows[0].OrgId : null;
 
+        List<Guid> orgIds = rows.Select(o => o.OrgId).ToList();
         IReadOnlyDictionary<Guid, CurrencyDetails> currencies =
-            await BaseCurrenciesAsync(rows.Select(o => o.OrgId).ToList(), ct);
+            await BaseCurrenciesAsync(orgIds, ct);
+
+        Dictionary<Guid, string> upiIds = await _db.Configurations.AsNoTracking()
+            .Where(c => c.Code == OrgContextRepository.UpiIdConfigCode && c.OrgId != null && orgIds.Contains(c.OrgId.Value))
+            .ToDictionaryAsync(c => c.OrgId!.Value, c => c.Value, ct);
 
         return rows
             .Select(o => Project(
                 o,
                 o.OrgId == firstOrgId,
-                currencies.TryGetValue(o.OrgId, out CurrencyDetails? currency) ? currency : null))
+                currencies.TryGetValue(o.OrgId, out CurrencyDetails? currency) ? currency : null,
+                upiIds.GetValueOrDefault(o.OrgId)))
             .ToList();
     }
 
@@ -228,6 +234,8 @@ public sealed class OrganizationRepository
         organization.Status = TenantStatus.Active;
         await _db.SaveChangesAsync(ct);
 
+        await SaveUpiIdAsync(organization.OrgId, request.UpiId, ct);
+
         return new SaveOrganizationResult(
             beyondLicence ? SaveOrganizationOutcome.CreatedOnTrial : SaveOrganizationOutcome.Ok,
             organization.OrgId,
@@ -329,6 +337,8 @@ public sealed class OrganizationRepository
 
         Apply(organization, request);
         await _db.SaveChangesAsync(ct);
+
+        await SaveUpiIdAsync(orgId, request.UpiId, ct);
 
         if (verticalChanged)
         {
@@ -433,7 +443,42 @@ public sealed class OrganizationRepository
             return SaveOrganizationOutcome.EInvoiceNeedsGstin;
         }
 
+        if (!string.IsNullOrWhiteSpace(request.UpiId)
+            && ConfigurationRepository.ValueRefusal(OrgContextRepository.UpiIdConfigCode, request.UpiId) is not null)
+        {
+            return SaveOrganizationOutcome.InvalidValue;
+        }
+
         return SaveOrganizationOutcome.Ok;
+    }
+
+    private async Task SaveUpiIdAsync(Guid orgId, string? upiId, CancellationToken ct)
+    {
+        Configuration? existing = await _db.Configurations
+            .FirstOrDefaultAsync(c => c.OrgId == orgId && c.Code == OrgContextRepository.UpiIdConfigCode, ct);
+
+        string trimmed = upiId?.Trim() ?? string.Empty;
+
+        if (existing is not null)
+        {
+            existing.Value = trimmed;
+        }
+        else if (!string.IsNullOrEmpty(trimmed))
+        {
+            _db.Configurations.Add(new Configuration
+            {
+                ConfigId = Guid.NewGuid(),
+                OrgId = orgId,
+                Code = OrgContextRepository.UpiIdConfigCode,
+                Name = "UPI ID",
+                Category = "Payments",
+                Description = "The UPI id customers pay this branch at, such as shop@okhdfcbank.",
+                DataType = ConfigDataType.Text,
+                Value = trimmed,
+            });
+        }
+
+        await _db.SaveChangesAsync(ct);
     }
 
     /// <summary>
@@ -537,7 +582,7 @@ public sealed class OrganizationRepository
     }
 
     private static OrganizationListItem Project(
-        Organization o, bool isFirst, CurrencyDetails? currency) => new()
+        Organization o, bool isFirst, CurrencyDetails? currency, string? upiId = null) => new()
     {
         OrgId = o.OrgId,
         OrgCode = o.OrgCode,
@@ -561,6 +606,7 @@ public sealed class OrganizationRepository
         Cin = o.Cin,
         UdyamNumber = o.UdyamNumber,
         LogoUrl = o.LogoUrl,
+        UpiId = upiId,
         ExpiryDate = o.ExpiryDate,
         IsTrial = o.IsTrial,
         AddressLine1 = o.AddressLine1,
@@ -576,4 +622,15 @@ public sealed class OrganizationRepository
         Status = o.Status.ToString(),
         IsFirst = isFirst,
     };
+
+    public async Task<bool> UpdateLogoUrlAsync(Guid customerId, Guid orgId, string? logoUrl, CancellationToken ct)
+    {
+        Organization? organization = await _db.Organizations
+            .FirstOrDefaultAsync(o => o.CustomerId == customerId && o.OrgId == orgId, ct);
+        if (organization is null) return false;
+
+        organization.LogoUrl = logoUrl;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
 }

@@ -19,6 +19,15 @@ public sealed class ConfigurationRepository
 
     public async Task<IReadOnlyList<ConfigurationDto>> ListAsync(Guid orgId, CancellationToken ct)
     {
+        var org = await _db.Organizations.AsNoTracking()
+            .Where(o => o.OrgId == orgId)
+            .Select(o => new { o.BusinessType, o.Vertical })
+            .FirstOrDefaultAsync(ct);
+
+        bool isRestaurant = org is not null && (
+            org.BusinessType == Shared.Kernel.Apps.BusinessType.Restaurant
+            || org.Vertical == Master.Entity.Enums.Vertical.Restaurant);
+
         List<Configuration> defaults = await _db.Configurations
             .Where(c => c.OrgId == null)
             .ToListAsync(ct);
@@ -27,6 +36,24 @@ public sealed class ConfigurationRepository
             .ToListAsync(ct);
 
         return defaults
+            .Where(d =>
+            {
+                // UPI ID has moved into Branch Master (Settings › Organization / Branches).
+                if (d.Code == OrgContextRepository.UpiIdConfigCode)
+                {
+                    return false;
+                }
+
+                bool isRestaurantConfig = string.Equals(d.Category, "Restaurant", StringComparison.OrdinalIgnoreCase)
+                    || d.Code.StartsWith("restaurant.", StringComparison.OrdinalIgnoreCase);
+
+                if (isRestaurantConfig && !isRestaurant)
+                {
+                    return false;
+                }
+
+                return true;
+            })
             .Select(d =>
             {
                 Configuration? o = overrides.FirstOrDefault(x => x.Code == d.Code);

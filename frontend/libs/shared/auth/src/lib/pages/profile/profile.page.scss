@@ -62,9 +62,17 @@
   margin-bottom: var(--space-6, 24px);
   box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 
+  .avatar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2, 8px);
+  }
+
   .profile-avatar {
-    width: 72px;
-    height: 72px;
+    position: relative;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
     background: var(--color-primary, #3b82f6);
     color: #ffffff;
@@ -74,6 +82,64 @@
     align-items: center;
     justify-content: center;
     letter-spacing: 0.05em;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+      .avatar-badge {
+        opacity: 1;
+      }
+    }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .avatar-badge {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      border-radius: 50%;
+    }
+  }
+
+  .avatar-links {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .avatar-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--color-primary, #3b82f6);
+      cursor: pointer;
+      text-decoration: underline;
+
+      &.danger {
+        color: var(--color-danger, #ef4444);
+      }
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
   }
 
   .info-col {

@@ -49,6 +49,7 @@ interface OrganizationSettings {
   cin: string | null;
   udyamNumber: string | null;
   logoUrl: string | null;
+  upiId?: string | null;
   expiryDate: string | null;
   isTrial: boolean;
   addressLine1: string | null;
@@ -239,6 +240,58 @@ export class OrganizationSettingsPage implements OnInit {
   protected readonly months = MONTHS;
 
   form: OrganizationSettings | null = null;
+  readonly uploadingLogo = signal(false);
+
+  orgInitials(): string {
+    const name = this.form?.name || this.form?.orgCode || '';
+    if (!name.trim()) return 'BR';
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0].toUpperCase())
+      .join('');
+  }
+
+  async onLogoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0 || !this.form) return;
+    const file = input.files[0];
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (dataUrl && this.form) {
+        this.form.logoUrl = dataUrl;
+      }
+    };
+    reader.readAsDataURL(file);
+
+    this.uploadingLogo.set(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await new Promise<{ logoUrl: string }>((resolve, reject) => {
+        this.http.post<{ logoUrl: string }>('/api/organizations/current/logo', formData)
+          .subscribe({ next: resolve, error: reject });
+      });
+      if (res?.logoUrl && this.form) {
+        this.form.logoUrl = res.logoUrl;
+      }
+    } catch {
+      // Local preview preserved
+    } finally {
+      this.uploadingLogo.set(false);
+      input.value = '';
+    }
+  }
+
+  removeLogo(): void {
+    if (this.form) {
+      this.form.logoUrl = null;
+    }
+  }
 
   /** The state whose code must match the GSTIN's first two digits. */
   protected readonly gstinStateCode = computed(() => {

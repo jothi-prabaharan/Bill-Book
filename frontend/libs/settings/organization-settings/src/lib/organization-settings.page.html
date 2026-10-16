@@ -1,282 +1,170 @@
-<div class="page-head">
-  <h1>Organization</h1>
-</div>
+<div class="profile-viewport">
+  <div class="profile-container">
+    <header class="profile-header">
+      <div class="header-titles">
+        <h1 class="page-title">Organisation Profile</h1>
+        <p class="page-subtitle">Manage branch identity, statutory registrations, payments, and trade configurations.</p>
+      </div>
+    </header>
 
-<bb-info-tooltip text="The branch you are signed in to. Switch branches from Settings › Branches to edit a different one."></bb-info-tooltip>
+    @if (error(); as message) {
+      <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
+    }
 
-@if (error(); as message) {
-  <bb-message-box [messages]="[{ tone: 'error', text: message }]" />
-}
-
-@if (form; as org) {
-  @if (org.isTrial) {
-    <p class="note">
-      <strong>This branch is on a 30-day trial.</strong>
-      Your licence does not cover it, so it stops
-      @if (org.expiryDate) {
-        on {{ org.expiryDate }}
-      } @else {
-        when the trial ends
+    @if (form; as org) {
+      @if (org.isTrial) {
+        <p class="note">
+          <strong>This branch is on a 30-day trial.</strong>
+          Your licence does not cover it, so it stops
+          @if (org.expiryDate) {
+            on {{ org.expiryDate }}
+          } @else {
+            when the trial ends
+          }
+          unless a licence is added. Everything in it is kept either way, and your
+          other branches are unaffected.
+        </p>
       }
-      unless a licence is added. Everything in it is kept either way, and your
-      other branches are unaffected.
-    </p>
-  }
 
-  <div class="tabs" role="tablist">
-    <button type="button" role="tab" [class.on]="tab() === 'profile'" (click)="tab.set('profile')">
-      Profile
-    </button>
-    <button type="button" role="tab" [class.on]="tab() === 'statutory'" (click)="tab.set('statutory')">
-      Statutory
-    </button>
-    <button type="button" role="tab" [class.on]="tab() === 'financial'" (click)="tab.set('financial')">
-      Financial
-    </button>
-  </div>
-
-  @if (tab() === 'profile') {
-    <div class="fields">
-      <div class="field">
-        <bb-text-input label="Branch code" hint="Appears in generated document numbers — INV/2526/CHN/00042."  name="orgCode" [(ngModel)]="org.orgCode" maxlength="10" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Name"  name="name" [(ngModel)]="org.name" maxlength="200" />
-      </div>
-
-      <div class="field wide">
-        <bb-text-input
- label="Address"          
-          name="addressLine1"
-          [(ngModel)]="org.addressLine1"
-          maxlength="200"
-          placeholder="Line 1"
-        />
-      </div>
-
-      <label class="wide">
-        <span class="sr-only">Address line 2</span>
-        <bb-text-input
-          
-          name="addressLine2"
-          [(ngModel)]="org.addressLine2"
-          maxlength="200"
-          placeholder="Line 2"
-        />
-      </label>
-
-      <div class="field">
-        <bb-text-input label="City"  name="city" [(ngModel)]="org.city" maxlength="100" />
-      </div>
-
-      <div class="field">
-        <bb-select
-          label="State"
-          placeholder="Not set"
-          hint="Decides the place of supply, so it decides CGST/SGST against IGST."
-          name="stateId"
-          [options]="stateOptions()"
-          [(ngModel)]="org.stateId"
-        />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Postal code"  name="postalCode" [(ngModel)]="org.postalCode" maxlength="10" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Phone" hint="STD code then number."  name="phoneNumber" [(ngModel)]="org.phoneNumber" maxlength="20" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Mobile" hint="Lead with + for a number outside the branch's country."  name="mobileNumber" [(ngModel)]="org.mobileNumber" maxlength="20" />
-      </div>
-
-      <div class="field">
-        <bb-email-input label="Email" name="email" maxlength="200" [(ngModel)]="org.email" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Website"  name="website" [(ngModel)]="org.website" maxlength="200" />
-      </div>
-
-      <div class="field wide">
-        <bb-text-input label="Logo URL" hint="Printed on documents. Upload is not built yet — paste a URL."  name="logoUrl" [(ngModel)]="org.logoUrl" maxlength="500" />
-      </div>
-    </div>
-  }
-
-  @if (tab() === 'statutory') {
-    <div class="fields">
-      <label>
-        GSTIN
-        <bb-text-input  name="gstin" [(ngModel)]="org.gstin" maxlength="15" />
-        @if (gstinMismatch()) {
-          <small class="warn">
-            The first two digits ({{ gstinStateCode() }}) do not match the state chosen on
-            Profile. Saving will be refused.
-          </small>
-        } @else {
-          <small>First two digits are the state code and must match the branch's state.</small>
-        }
-      </label>
-
-      <div class="field">
-        <bb-text-input label="PAN"  name="pan" [(ngModel)]="org.pan" maxlength="10" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="TAN" hint="Needed to deduct TDS."  name="tan" [(ngModel)]="org.tan" maxlength="10" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="TIN"  name="tin" [(ngModel)]="org.tin" maxlength="15" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="CIN" hint="Companies only — issued on incorporation."  name="cin" [(ngModel)]="org.cin" maxlength="21" />
-      </div>
-
-      <div class="field">
-        <bb-text-input label="Udyam number" hint="MSME registration."  name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
-      </div>
-
-      <div class="field">
-        <bb-branch-date-input
-          label="E-invoicing from"
-          hint="The date this branch starts registering B2B, export and SEZ invoices and credit notes at the IRP. Leave empty if it does not e-invoice."
-          name="eInvoiceFrom"
-          [(ngModel)]="org.eInvoiceFrom"
-        />
-      </div>
-
-      <div class="field">
-        <bb-select label="E-way bills" name="ewayBills" [options]="ewayBillOptions" [(ngModel)]="ewayBills" />
-      </div>
-
-      @if (eInvoiceNeedsGstin) {
-        <small class="warn">E-invoicing and e-way bills need the branch's GSTIN. Saving will be refused until it is entered.</small>
-      }
-    </div>
-  }
-
-  @if (tab() === 'financial') {
-    <div class="fields">
-      <div class="field">
-        <bb-select
-          label="Base currency"
-          placeholder=""
-          hint="Fixed once the branch exists. Every posting converts to it, so changing it would restate the books."
-          name="baseCurrency"
-          [options]="currencyOptions()"
-          [disabled]="true"
-          [ngModel]="org.baseCurrency"
-        />
-      </div>
-
-            <div class="field">
-        <bb-select
-          label="Business type"
-          placeholder="None"
-          name="businessType"
-          [options]="businessTypeOptions"
-          hint="Decides which add-ons are available (e.g. School gets SIS but no POS)."
-          [(ngModel)]="org.businessType"
-        />
-      </div>
-
-      <fieldset class="field">
-        <legend>Add-ons</legend>
-        <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
-          @for (addon of allAddOns; track addon.value) {
-            <bb-checkbox
-              [label]="addon.label"
-              [ngModel]="hasAddOn(addon.value)"
-              (ngModelChange)="toggleAddOn(addon.value, $event)"
-              [disabled]="!isAddOnAllowed(addon.value)"
-            />
+      <!-- Organisation Summary Banner -->
+      <section class="summary-card" aria-label="Branch Summary">
+        <div class="avatar-col">
+          <div class="profile-avatar" (click)="logoFileInput.click()" title="Click to upload organisation logo" role="button" tabindex="0" (keydown.enter)="logoFileInput.click()">
+            @if (org.logoUrl) {
+              <img [src]="org.logoUrl" alt="Organisation logo" class="avatar-img" />
+            } @else {
+              {{ orgInitials() }}
+            }
+            <div class="avatar-badge" title="Change logo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <input #logoFileInput type="file" accept="image/*" (change)="onLogoSelected($event)" style="display: none;" />
+          <div class="avatar-links">
+            <button type="button" class="avatar-link" (click)="logoFileInput.click()">
+              {{ org.logoUrl ? 'Change logo' : 'Upload logo' }}
+            </button>
+            @if (org.logoUrl) {
+              <button type="button" class="avatar-link danger" (click)="removeLogo()">Remove</button>
+            }
+          </div>
+        </div>
+        <div class="info-col">
+          <div class="name-row">
+            <h2 class="user-display-name">{{ org.name || 'Branch Name' }}</h2>
+            <span class="role-badge">{{ org.orgCode }}</span>
+            @if (org.businessType) {
+              <span class="business-badge">{{ org.businessType }}</span>
+            }
+          </div>
+          <p class="user-email">
+            {{ org.email || 'No email set' }} &middot; {{ org.city || 'No city set' }} &middot; GSTIN: {{ org.gstin || 'Unregistered' }}
+          </p>
+          @if (org.upiId) {
+            <p class="last-login">UPI ID: <strong>{{ org.upiId }}</strong></p>
           }
         </div>
-      </fieldset>
+      </section>
 
-      <div class="field">
-        <bb-select
-          label="Financial year starts"
-          placeholder=""
-          hint="April in India. Decides the year segment in document numbers and when series reset."
-          name="financialYearStartMonth"
-          [options]="monthOptions"
-          [(ngModel)]="org.financialYearStartMonth"
-        />
+      <div class="cards-grid">
+        <!-- Section 1: Profile & Contact Details -->
+        <section class="content-card" aria-labelledby="profile-info-heading">
+          <div class="card-head">
+            <h3 id="profile-info-heading" class="card-title">Profile &amp; Contact Details</h3>
+            <p class="card-subtitle">Basic branch identity, address, contact information, and payment UPI ID.</p>
+          </div>
+          <div class="form-body">
+            <div class="form-grid">
+              <bb-text-input label="Branch code" hint="Appears in generated document numbers — INV/2526/CHN/00042." name="orgCode" [(ngModel)]="org.orgCode" maxlength="10" />
+              <bb-text-input label="Branch name" name="name" [(ngModel)]="org.name" maxlength="200" />
+              <bb-text-input label="Payment UPI ID" name="upiId" [(ngModel)]="org.upiId" maxlength="100" placeholder="shop@okhdfcbank" hint="The UPI id customers pay this branch at. Prints a QR code on invoices." />
+              <bb-text-input label="Phone" hint="STD code then number." name="phoneNumber" [(ngModel)]="org.phoneNumber" maxlength="20" />
+              <bb-text-input label="Mobile" hint="Lead with + for international numbers." name="mobileNumber" [(ngModel)]="org.mobileNumber" maxlength="20" />
+              <bb-email-input label="Email address" name="email" maxlength="200" [(ngModel)]="org.email" />
+              <bb-text-input label="Address line 1" name="addressLine1" [(ngModel)]="org.addressLine1" maxlength="200" placeholder="Street / Building" />
+              <bb-text-input label="Address line 2" name="addressLine2" [(ngModel)]="org.addressLine2" maxlength="200" placeholder="Area / Landmark" />
+              <bb-text-input label="City" name="city" [(ngModel)]="org.city" maxlength="100" />
+              <bb-select label="State" placeholder="Not set" hint="Decides place of supply (CGST/SGST vs IGST)." name="stateId" [options]="stateOptions()" [(ngModel)]="org.stateId" />
+              <bb-text-input label="Postal code" name="postalCode" [(ngModel)]="org.postalCode" maxlength="10" />
+              <bb-text-input label="Website" name="website" [(ngModel)]="org.website" maxlength="200" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Statutory & Tax Registrations -->
+        <section class="content-card" aria-labelledby="statutory-heading">
+          <div class="card-head">
+            <h3 id="statutory-heading" class="card-title">Statutory &amp; Tax Registrations</h3>
+            <p class="card-subtitle">GSTIN, PAN, and government filing credentials.</p>
+          </div>
+          <div class="form-body">
+            <div class="form-grid">
+              <div>
+                <bb-text-input label="GSTIN" name="gstin" [(ngModel)]="org.gstin" maxlength="15" />
+                @if (gstinMismatch()) {
+                  <small class="warn">
+                    The first two digits ({{ gstinStateCode() }}) do not match the state chosen above. Saving will be refused.
+                  </small>
+                }
+              </div>
+              <bb-text-input label="PAN" name="pan" [(ngModel)]="org.pan" maxlength="10" />
+              <bb-text-input label="TAN" hint="Needed to deduct TDS." name="tan" [(ngModel)]="org.tan" maxlength="10" />
+              <bb-text-input label="TIN" name="tin" [(ngModel)]="org.tin" maxlength="15" />
+              <bb-text-input label="CIN" hint="Companies only — issued on incorporation." name="cin" [(ngModel)]="org.cin" maxlength="21" />
+              <bb-text-input label="Udyam number" hint="MSME registration." name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
+              <bb-branch-date-input label="E-invoicing from" hint="Date this branch starts registering B2B invoices at IRP." name="eInvoiceFrom" [(ngModel)]="org.eInvoiceFrom" />
+              <bb-select label="E-way bills" name="ewayBills" [options]="ewayBillOptions" [(ngModel)]="ewayBills" />
+            </div>
+            @if (eInvoiceNeedsGstin) {
+              <small class="warn">E-invoicing and e-way bills need the branch's GSTIN. Saving will be refused until entered.</small>
+            }
+          </div>
+        </section>
+
+        <!-- Section 3: Financial & Trade Settings -->
+        <section class="content-card" aria-labelledby="financial-heading">
+          <div class="card-head">
+            <h3 id="financial-heading" class="card-title">Financial &amp; Trade Configurations</h3>
+            <p class="card-subtitle">Base currency, business vertical, and document pricing rules.</p>
+          </div>
+          <div class="form-body">
+            <div class="form-grid">
+              <div class="field-disabled">
+                <bb-select label="Base currency" placeholder="" hint="Fixed once the branch exists. Every posting converts to it." name="baseCurrency" [options]="currencyOptions()" [disabled]="true" [ngModel]="org.baseCurrency" />
+              </div>
+              <bb-select label="Business type" placeholder="None" name="businessType" [options]="businessTypeOptions" hint="Decides which features and add-ons are available." [(ngModel)]="org.businessType" />
+              <bb-select label="Financial year starts" placeholder="" hint="April for India. Drives year segment in generated numbers." name="financialYearStartMonth" [options]="monthOptions" [(ngModel)]="org.financialYearStartMonth" />
+              <bb-select label="Lines without an item" placeholder="" name="allowFreeTextLines" [options]="freeTextLineOptions" hint="Allows description-only line items without an inventory code." [(ngModel)]="freeTextLines" />
+              <bb-select label="Discount entered at" placeholder="" name="discountLevel" [options]="discountLevelOptions" hint="Line item, header discount, or both." [(ngModel)]="org.discountLevel" />
+              <bb-select label="Discount reduces tax" placeholder="" hint="Yes is trade discount (reduces GST). No is cash settlement discount." name="discountBeforeTax" [options]="discountBeforeTaxOptions" [(ngModel)]="discountBeforeTax" />
+              <bb-select label="Over-budget warnings compare" hint="Chooses which budget figure expense warnings measure against." name="budgetWarning" [options]="budgetWarningOptions" [clearable]="false" [(ngModel)]="budgetWarning" />
+            </div>
+
+            <fieldset class="mt-3">
+              <legend style="font-weight: 600; font-size: 0.875rem; margin-bottom: 8px;">Modular Add-ons</legend>
+              <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px;">
+                @for (addon of allAddOns; track addon.value) {
+                  <bb-checkbox [label]="addon.label" [ngModel]="hasAddOn(addon.value)" (ngModelChange)="toggleAddOn(addon.value, $event)" [disabled]="!isAddOnAllowed(addon.value)" />
+                }
+              </div>
+            </fieldset>
+          </div>
+        </section>
       </div>
-    </div>
 
-    <h3>Documents</h3>
-    <bb-info-tooltip text="These three decide how every invoice and bill is built. Like the base currency they are set once � they stay editable until this branch posts its first sales or purchase document, and are fixed after that."></bb-info-tooltip>
-
-    <div class="grid">
-      <div class="field">
-        <bb-select
-          label="Lines without an item"
-          placeholder=""
-          name="allowFreeTextLines"
-          [options]="freeTextLineOptions"
-          hint="A line with no item carries a description, quantity and price — useful for a service or a one-off charge. It moves no stock and never appears in a sales-by-item report."
-          [(ngModel)]="freeTextLines"
-        />
+      <div class="card-actions" style="margin-top: var(--space-6); display: flex; gap: 16px; align-items: center;">
+        <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy()">
+          @if (busy()) { <span>Saving...</span> } @else { <span>Save Changes</span> }
+        </button>
+        @if (saved()) {
+          <span class="notice">Branch profile saved successfully.</span>
+        }
       </div>
-
-      <div class="field">
-        <bb-select
-          label="Discount entered at"
-          placeholder=""
-          name="discountLevel"
-          [options]="discountLevelOptions"
-          hint="A header discount is spread across the lines by taxable value before tax, because GST is charged per line."
-          [(ngModel)]="org.discountLevel"
-        />
-      </div>
-
-      <div class="field">
-        <bb-select
-          label="Discount reduces tax"
-          placeholder=""
-          hint="Yes is the trade-discount case. No is a settlement discount: it does not reduce GST liability and must still be shown on the invoice."
-          name="discountBeforeTax"
-          [options]="discountBeforeTaxOptions"
-          [(ngModel)]="discountBeforeTax"
-        />
-      </div>
-    </div>
-
-    <div class="fields">
-      <div class="field">
-        <bb-select
-          label="Over-budget warnings compare"
-          hint="A bill or journal that takes an expense account past the approved budget is saved with a warning. This chooses which budget figure it is measured against."
-          name="budgetWarning"
-          [options]="budgetWarningOptions"
-          [clearable]="false"
-          [(ngModel)]="budgetWarning"
-        />
-      </div>
-    </div>
-
-    <bb-info-tooltip text="Which currencies this branch trades in is set on Settings › Currencies; number formats and default terms on Settings › Configuration."></bb-info-tooltip>
-  }
-
-  <div class="sheet-actions">
-    <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy()">Save</button>
-    @if (saved()) {
-      <span class="notice">Saved.</span>
+    } @else if (!loaded() && !busy()) {
+      <bb-info-tooltip text="No organization details found."></bb-info-tooltip>
     }
   </div>
-} @else if (!loaded() && !busy()) {
-  <bb-info-tooltip text="Nothing to show."></bb-info-tooltip>
-}
-
-
-
-
-
+</div>
