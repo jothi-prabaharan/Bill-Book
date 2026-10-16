@@ -273,36 +273,66 @@
           </tr>
         }
       } @empty {
-        <tr class="empty">
-          <td [attr.colspan]="components().length + 9">No lines yet. Click "+ Add line" below.</td>
+        <tr class="empty-row">
+          <td [attr.colspan]="columnCount()">
+            <div class="empty-state">
+              <div class="empty-state__icon" aria-hidden="true">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m7.5 4.27 9 5.15"/>
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                  <path d="m3.3 7 8.7 5 8.7-5"/>
+                  <path d="M12 22V12"/>
+                </svg>
+              </div>
+              <div class="empty-state__content">
+                <span class="empty-state__title">
+                  {{ context().readonly ? 'No items on this document' : 'No items added yet' }}
+                </span>
+                <span class="empty-state__subtitle">
+                  {{ context().readonly ? 'This document does not contain any line items.' : 'Add items, products, or custom lines to this document' }}
+                </span>
+              </div>
+              @if (!context().readonly) {
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm empty-state__btn"
+                  (click)="addLine()"
+                >
+                  + Add line
+                </button>
+              }
+            </div>
+          </td>
         </tr>
       }
     </tbody>
 
-    <tfoot>
-      <tr>
-        <td colspan="2" class="add-cell">
-          <button type="button" class="btn btn-secondary btn-sm add-line-btn" [disabled]="context().readonly" (click)="addLine()">
-            + Add line
-          </button>
-        </td>
-        <td class="col-qty right amount total-qty">{{ totalQuantity() }}</td>
-        <td class="col-rate"></td>
-        <td class="col-disc"></td>
-        <td class="col-tax right muted font-medium">
-          Taxable: {{ money(totals().taxableAmount) }}
-        </td>
-        @for (component of components(); track component) {
-          <td class="col-tax-comp right amount">
-            {{ money(component === 'Igst' ? totals().igstAmount
-                   : component === 'Cgst' ? totals().cgstAmount
-                   : totals().sgstAmount) }}
+    @if (lines().length > 0) {
+      <tfoot>
+        <tr>
+          <td colspan="2" class="add-cell">
+            <button type="button" class="btn btn-secondary btn-sm add-line-btn" [disabled]="context().readonly" (click)="addLine()">
+              + Add line
+            </button>
           </td>
-        }
-        <td class="col-total right amount total">{{ money(totals().totalAmount) }}</td>
-        <td class="col-actions"></td>
-      </tr>
-    </tfoot>
+          <td class="col-qty right amount total-qty">{{ totalQuantity() }}</td>
+          <td class="col-rate"></td>
+          <td class="col-disc"></td>
+          <td class="col-tax right muted font-medium">
+            Taxable: {{ money(totals().taxableAmount) }}
+          </td>
+          @for (component of components(); track component) {
+            <td class="col-tax-comp right amount">
+              {{ money(component === 'Igst' ? totals().igstAmount
+                     : component === 'Cgst' ? totals().cgstAmount
+                     : totals().sgstAmount) }}
+            </td>
+          }
+          <td class="col-total right amount total">{{ money(totals().totalAmount) }}</td>
+          <td class="col-actions"></td>
+        </tr>
+      </tfoot>
+    }
   </table>
 </div>
 

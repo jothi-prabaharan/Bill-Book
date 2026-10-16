@@ -95,6 +95,8 @@ export class DocumentLineGridComponent {
     componentsFor(this.context().isInterState, this.context().isUnionTerritory ?? false),
   );
 
+  protected readonly columnCount = computed(() => this.components().length + 8);
+
   protected readonly treatments: readonly TaxTreatment[] = [
     'Taxable',
     'ZeroRated',
