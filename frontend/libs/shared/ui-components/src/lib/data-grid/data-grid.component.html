@@ -156,16 +156,40 @@
        one page, and "1 to 3 of 3" is the count the strip above repeats. -->
   <div *ngIf="register && paged" class="reg-pager">
     <div class="reg-pager__size">
-      <div class="reg-pager__size-group">
-        <span class="reg-pager__label">Page size</span>
-        <div class="reg-seg" role="group" aria-label="Page size">
-          <button *ngFor="let size of pageSizes"
-                  type="button"
-                  class="reg-seg__btn"
-                  [attr.aria-pressed]="size === pageSize"
-                  (click)="setPageSize(size)">{{ size }}</button>
+      <!-- Desktop view (> 768px): dropdown -->
+      <div class="reg-pager__size-group reg-pager__size-group--pc">
+        <label [for]="'reg-page-size-' + (gridCode || 'grid')" class="reg-pager__label">Page size</label>
+        <div class="reg-pager__select-wrap">
+          <select [id]="'reg-page-size-' + (gridCode || 'grid')"
+                  class="reg-pager__select"
+                  [value]="pageSize"
+                  (change)="onPageSizeSelect($event)"
+                  aria-label="Page size">
+            <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">
+              {{ size }}
+            </option>
+          </select>
+          <svg class="reg-pager__select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
         </div>
       </div>
+
+      <!-- Mobile view (<= 768px): popup trigger -->
+      <div class="reg-pager__size-group reg-pager__size-group--mobile">
+        <button type="button"
+                class="reg-pager__mobile-trigger"
+                (click)="openPageSizeModal()"
+                aria-label="Select page size"
+                [attr.aria-expanded]="pageSizeModalOpen()">
+          <span class="reg-pager__mobile-label">Page size:</span>
+          <span class="reg-pager__mobile-val">{{ pageSize }}</span>
+          <svg class="reg-pager__mobile-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      </div>
+
       <span class="reg-pager__summary">{{ rangeSummary() }}</span>
     </div>
     <div class="reg-pager__nav">
@@ -192,9 +216,46 @@
 
   <!-- Pagination Strip -->
   <div *ngIf="showPager() && !register" class="table-pagination">
-    <span class="text-muted pagination-summary">
-      {{ paginationSummary() }}
-    </span>
+    <div class="table-pagination__left">
+      <!-- Desktop view (> 768px): dropdown -->
+      <div class="reg-pager__size-group reg-pager__size-group--pc">
+        <label [for]="'table-page-size-' + (gridCode || 'grid')" class="reg-pager__label">Page size</label>
+        <div class="reg-pager__select-wrap">
+          <select [id]="'table-page-size-' + (gridCode || 'grid')"
+                  class="reg-pager__select"
+                  [value]="pageSize"
+                  (change)="onPageSizeSelect($event)"
+                  aria-label="Page size">
+            <option *ngFor="let size of pageSizes" [value]="size" [selected]="size === pageSize">
+              {{ size }}
+            </option>
+          </select>
+          <svg class="reg-pager__select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Mobile view (<= 768px): popup trigger -->
+      <div class="reg-pager__size-group reg-pager__size-group--mobile">
+        <button type="button"
+                class="reg-pager__mobile-trigger"
+                (click)="openPageSizeModal()"
+                aria-label="Select page size"
+                [attr.aria-expanded]="pageSizeModalOpen()">
+          <span class="reg-pager__mobile-label">Page size:</span>
+          <span class="reg-pager__mobile-val">{{ pageSize }}</span>
+          <svg class="reg-pager__mobile-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <span class="text-muted pagination-summary">
+        {{ paginationSummary() }}
+      </span>
+    </div>
+
     <div class="pagination-actions flex gap-2">
       <button type="button"
               class="btn btn-secondary pagination-btn"
@@ -215,6 +276,35 @@
               class="btn btn-secondary pagination-btn"
               [disabled]="currentPage >= totalPages() || totalPages() <= 1"
               (click)="nextPage()">Next</button>
+    </div>
+  </div>
+
+  <!-- Mobile Page Size Modal Popup -->
+  <div *ngIf="pageSizeModalOpen()" class="dialog-backdrop" (click)="closePageSizeModal()">
+    <div class="mobile-dialog page-size-dialog" role="dialog" aria-modal="true" aria-labelledby="pageSizeDialogTitle" (click)="$event.stopPropagation()">
+      <div class="mobile-dialog__head">
+        <h3 id="pageSizeDialogTitle" class="mobile-dialog__title">Page Size</h3>
+        <button type="button" class="mobile-dialog__close" aria-label="Close" (click)="closePageSizeModal()">✕</button>
+      </div>
+      <div class="mobile-dialog__body">
+        <div class="page-size-options" role="radiogroup" aria-label="Select page size">
+          <button *ngFor="let size of pageSizes"
+                  type="button"
+                  role="radio"
+                  class="page-size-option"
+                  [class.is-active]="size === pageSize"
+                  [attr.aria-checked]="size === pageSize"
+                  (click)="setPageSizeAndClose(size)">
+            <div class="page-size-option__left">
+              <span class="page-size-option__radio">
+                <span *ngIf="size === pageSize" class="page-size-option__dot"></span>
+              </span>
+              <span class="page-size-option__text">{{ size }} records per page</span>
+            </div>
+            <span *ngIf="size === pageSize" class="page-size-option__badge">Current</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

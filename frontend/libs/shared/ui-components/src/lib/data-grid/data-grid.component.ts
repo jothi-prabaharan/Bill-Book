@@ -57,6 +57,16 @@ export class DataGridComponent implements OnInit {
     }
   }
 
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.pageSizeModalOpen()) {
+      this.closePageSizeModal();
+    }
+    if (this.openFilterField()) {
+      this.openFilterField.set(null);
+    }
+  }
+
   @ContentChildren(DataGridCellTemplateDirective) cellTemplates!: QueryList<DataGridCellTemplateDirective>;
   @ContentChild('emptyTemplate') contentEmptyTemplate?: TemplateRef<any>;
   @ContentChild(DataGridFooterDirective) footer?: DataGridFooterDirective;
@@ -202,6 +212,32 @@ export class DataGridComponent implements OnInit {
 
   /** The page sizes the register's pager offers. */
   @Input() pageSizes: readonly number[] = [10, 25, 50, 100];
+
+  /** Mobile popup dialog state for selecting page size. */
+  readonly pageSizeModalOpen = signal(false);
+
+  openPageSizeModal(): void {
+    this.pageSizeModalOpen.set(true);
+  }
+
+  closePageSizeModal(): void {
+    this.pageSizeModalOpen.set(false);
+  }
+
+  setPageSizeAndClose(size: number): void {
+    this.setPageSize(size);
+    this.closePageSizeModal();
+  }
+
+  onPageSizeSelect(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    if (target) {
+      const val = parseInt(target.value, 10);
+      if (!isNaN(val)) {
+        this.setPageSize(val);
+      }
+    }
+  }
 
   /** Fires when the register's page size changes, for a server-paged list to refetch. */
   @Output() pageSizeChange = new EventEmitter<number>();
