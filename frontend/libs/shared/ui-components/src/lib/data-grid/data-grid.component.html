@@ -168,12 +168,25 @@
       </div>
       <span class="reg-pager__summary">{{ rangeSummary() }}</span>
     </div>
-    <div class="reg-pager__nav" *ngIf="totalPages() > 1">
-      <button type="button" class="reg-pager__btn" aria-label="First page" [disabled]="currentPage <= 1" (click)="goToPage(1)">«</button>
-      <button type="button" class="reg-pager__btn" aria-label="Previous page" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">‹</button>
+    <div class="reg-pager__nav">
+      <button type="button" class="reg-pager__btn" aria-label="First page" title="First page" [disabled]="currentPage <= 1" (click)="goToPage(1)">«</button>
+      <button type="button" class="reg-pager__btn" aria-label="Previous page" title="Previous page" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">‹</button>
+      <div class="reg-pager__pages" role="group" aria-label="Page navigation">
+        <ng-container *ngFor="let p of visiblePageNumbers()">
+          <button *ngIf="p !== '...'"
+                  type="button"
+                  class="reg-pager__btn reg-pager__btn--page"
+                  [class.active]="p === currentPage"
+                  [attr.aria-current]="p === currentPage ? 'page' : null"
+                  [attr.aria-label]="'Page ' + p"
+                  [disabled]="totalItems() === 0"
+                  (click)="goToPage(p)">{{ p }}</button>
+          <span *ngIf="p === '...'" class="reg-pager__ellipsis" aria-hidden="true">…</span>
+        </ng-container>
+      </div>
+      <button type="button" class="reg-pager__btn" aria-label="Next page" title="Next page" [disabled]="currentPage >= totalPages() || totalPages() <= 1" (click)="goToPage(currentPage + 1)">›</button>
+      <button type="button" class="reg-pager__btn" aria-label="Last page" title="Last page" [disabled]="currentPage >= totalPages() || totalPages() <= 1" (click)="goToPage(totalPages())">»</button>
       <span class="reg-pager__page">Page {{ currentPage }} of {{ totalPages() }}</span>
-      <button type="button" class="reg-pager__btn" aria-label="Next page" [disabled]="currentPage >= totalPages()" (click)="goToPage(currentPage + 1)">›</button>
-      <button type="button" class="reg-pager__btn" aria-label="Last page" [disabled]="currentPage >= totalPages()" (click)="goToPage(totalPages())">»</button>
     </div>
   </div>
 
@@ -187,9 +200,20 @@
               class="btn btn-secondary pagination-btn"
               [disabled]="currentPage <= 1"
               (click)="prevPage()">Previous</button>
+      <ng-container *ngFor="let p of visiblePageNumbers()">
+        <button *ngIf="p !== '...'"
+                type="button"
+                class="btn pagination-btn page-num-btn"
+                [class.btn-primary]="p === currentPage"
+                [class.btn-secondary]="p !== currentPage"
+                [attr.aria-current]="p === currentPage ? 'page' : null"
+                [disabled]="totalItems() === 0"
+                (click)="goToPage(p)">{{ p }}</button>
+        <span *ngIf="p === '...'" class="pagination-ellipsis">…</span>
+      </ng-container>
       <button type="button"
               class="btn btn-secondary pagination-btn"
-              [disabled]="currentPage >= totalPages()"
+              [disabled]="currentPage >= totalPages() || totalPages() <= 1"
               (click)="nextPage()">Next</button>
     </div>
   </div>

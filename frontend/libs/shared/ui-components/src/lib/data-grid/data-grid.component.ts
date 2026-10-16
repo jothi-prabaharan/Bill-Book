@@ -545,6 +545,33 @@ export class DataGridComponent implements OnInit {
     return size > 0 ? Math.max(1, Math.ceil(total / size)) : 1;
   });
 
+  visiblePageNumbers = computed<(number | '...')[]>(() => {
+    const total = this.totalPages();
+    const current = Math.min(Math.max(1, this._currentPage()), total);
+    if (total <= 7) {
+      return Array.from({ length: Math.max(1, total) }, (_, i) => i + 1);
+    }
+    const pages: (number | '...')[] = [];
+    if (current <= 4) {
+      for (let i = 1; i <= 5; i++) pages.push(i);
+      pages.push('...');
+      pages.push(total);
+    } else if (current >= total - 3) {
+      pages.push(1);
+      pages.push('...');
+      for (let i = total - 4; i <= total; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      pages.push('...');
+      pages.push(current - 1);
+      pages.push(current);
+      pages.push(current + 1);
+      pages.push('...');
+      pages.push(total);
+    }
+    return pages;
+  });
+
   paginationSummary = computed(() => {
     const total = this._totalCount() > 0 ? this._totalCount() : this.filteredData().length;
     const size = this._pageSize();
