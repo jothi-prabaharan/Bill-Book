@@ -5819,7 +5819,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a user with only the Purchase role loads tax rates, payment terms, accounts, the next bill number and the bill's print templates; the frame and fields render at 1280px and 360px.
 
 ### TK-193 · Create pages: the nine sales and purchase documents
-- [~] working (Claude Opus 5.5) — since 2026-10-12
+- [!] blocked — superseded: the owner did the transaction create pages themselves (14–16 October 2026)
 - **Issue:** [#183](https://github.com/jothi-prabaharan/Bill-Book/issues/183)
 - **Group:** Z · Owner request
 - **Lanes:** L-UI (`document-line-grid` and a shared document form in ui-components), L-SAL-UI, L-PUR-UI, L-SAL and L-PUR (line and address fields below), L-DOC · **Depends on:** TK-192 · **Decision:** as TK-192
@@ -5832,6 +5832,7 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test, docs and release notes.
 - **Not built (owner, 12 October 2026):** a quote from an enquiry and a purchase order from a requisition — no requisition exists.
 - **Done when:** all nine create pages read like the design at 1280px and stack at 360px, and save, post and convert as they do today.
+- **Handover (19 October 2026):** stopped at the owner's word that the design changes are already done (by their own work, 14–16 October: address dropdowns from the contact, currency and state dropdowns, address cards after the item list on every create page, the compact bill layout). Nothing from this card was pushed. Left unbuilt and unpushed, saved only as patches in the session scratchpad: `bb-party-field`, `bb-address-card`, `bb-document-totals`, `bb-quick-contact-dialog`, a card layout for `bb-document-line-grid`, `DocumentPartyState`, the invoice rebuilt on them, and the branch state in `GET /api/me/context`. What TK-192 pushed stays: the choices API, `DocumentChoicesService` and `bb-create-page`. If the owner wants any of it, ask first.
 
 ### TK-194 · Create pages: journal, account, tax rate, payment term, receive, spend and transfer
 - [ ] open
