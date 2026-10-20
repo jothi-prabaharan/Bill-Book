@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Master.Entity.Enums;
 
 namespace Master.Entity.Models;
 
@@ -36,10 +37,35 @@ public class SignupRequest
 
     [Required(ErrorMessage = "Password is required.")]
     [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [MaxLength(200, ErrorMessage = "Password cannot exceed 200 characters.")]
     public string Password { get; set; } = null!;
 
+    /// <summary>
+    /// The owner's mobile number. Optional on a platform operator's create;
+    /// <b>required on a public signup</b>, which is verified by a code sent to
+    /// it before anything is created (TK-196). The controller says so, since
+    /// one request model serves both.
+    /// </summary>
     [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
     public string? MobileNumber { get; set; }
+
+    // ---- Verification (public signup only, TK-196) -------------------------
+
+    /// <summary>
+    /// How the verification code is sent: WhatsApp, the default, or SMS. Email
+    /// is refused here, because the code is what proves the mobile number.
+    /// </summary>
+    [EnumDataType(typeof(OtpChannel), ErrorMessage = "Choose WhatsApp or SMS for the code.")]
+    public OtpChannel OtpChannel { get; set; } = OtpChannel.WhatsApp;
+
+    /// <summary>
+    /// The code that was sent to <see cref="MobileNumber"/>. Absent, a public
+    /// signup sends one and creates nothing; present and right, it creates the
+    /// trial. A platform operator's create ignores both fields.
+    /// </summary>
+    [MaxLength(6, ErrorMessage = "The code must be 6 digits.")]
+    [RegularExpression(@"^\d{6}$", ErrorMessage = "The code must be 6 digits.")]
+    public string? OtpCode { get; set; }
 
     // ---- Company / first organization -------------------------------------
 
@@ -104,6 +130,78 @@ public class SignupResponse
     public string CustomerCode { get; set; } = null!;
 
     public string Message { get; set; } = null!;
+}
+
+/// <summary>
+/// The answer to a public signup sent without a code: a code is on its way and
+/// nothing has been created (TK-196). The signup is sent again with the code.
+/// </summary>
+public class SignupCodeResponse
+{
+    public OtpChannel Channel { get; set; }
+
+    /// <summary>The number the code went to, all but its last four digits hidden.</summary>
+    [MaxLength(30, ErrorMessage = "Destination cannot exceed 30 characters.")]
+    public string Destination { get; set; } = null!;
+
+    public int ExpiresInSeconds { get; set; }
+
+    /// <summary>How long before another code can be asked for.</summary>
+    public int ResendAfterSeconds { get; set; }
+
+    [MaxLength(300, ErrorMessage = "Message cannot exceed 300 characters.")]
+    public string Message { get; set; } = null!;
+}
+
+/// <summary>What became of a request for a signup code (TK-196).</summary>
+public enum SignupCodeOutcome
+{
+    Sent = 1,
+
+    /// <summary>The number had a code too recently, or too many this hour.</summary>
+    TooSoon = 2,
+
+    /// <summary>The provider refused the message or could not be reached.</summary>
+    DeliveryFailed = 3,
+
+    /// <summary>No WhatsApp or SMS provider is configured (D-66).</summary>
+    DeliveryUnavailable = 4,
+}
+
+public sealed class SignupCodeResult
+{
+    public required SignupCodeOutcome Outcome { get; init; }
+
+    public SignupCodeResponse? Response { get; init; }
+
+    /// <summary>For <see cref="SignupCodeOutcome.TooSoon"/>: the wait, rounded up to a second.</summary>
+    public int RetryAfterSeconds { get; init; }
+}
+
+/// <summary>What became of a public signup sent with a code (TK-196).</summary>
+public enum TrialSignupOutcome
+{
+    Created = 1,
+
+    /// <summary>The code is not the one sent; tries remain.</summary>
+    CodeWrong = 2,
+
+    /// <summary>No live code for the number: expired, already used, or never sent.</summary>
+    CodeExpired = 3,
+
+    /// <summary>Five wrong tries: the code no longer works.</summary>
+    TooManyTries = 4,
+}
+
+public sealed class TrialSignupResult
+{
+    public required TrialSignupOutcome Outcome { get; init; }
+
+    /// <summary>For <see cref="TrialSignupOutcome.Created"/>.</summary>
+    public SignupResponse? Response { get; init; }
+
+    /// <summary>For <see cref="TrialSignupOutcome.CodeWrong"/>.</summary>
+    public int TriesLeft { get; init; }
 }
 
 /// <summary>Polled by the signup screen until CanLogin is true.</summary>

@@ -10,7 +10,8 @@ public sealed record ProvisioningJob(
     string OwnerEmail,
     string OwnerDisplayName,
     string? OwnerMobileNumber,
-    string OwnerPassword);
+    string OwnerPassword,
+    bool IsOwnerMobileConfirmed = false);
 
 public interface IProvisioningQueue
 {

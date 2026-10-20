@@ -135,7 +135,9 @@ public sealed class SignupTests
                 new StubCurrencies(),
                 new StubSeeder(),
                 new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance),
-                new FixedClock()),
+                new FixedClock(),
+                new OtpService(),
+                new RecordingMobileMessages()),
             db,
             queue);
     }

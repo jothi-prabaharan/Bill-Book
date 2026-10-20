@@ -107,7 +107,7 @@ public sealed class CustomerKindTests
         var signup = new SignupRepository(
             db, new NoQueue(), new NoCurrencies(), new NoSeeding(),
             new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance),
-            new FixedClock(SignedUpOn));
+            new FixedClock(SignedUpOn), new OtpService(), new RecordingMobileMessages());
 
         return await signup.SignupAsync(new SignupRequest
         {
@@ -185,7 +185,7 @@ public sealed class CustomerKindTests
         var signup = new SignupRepository(
             db, new NoQueue(), new NoCurrencies(), new NoSeeding(),
             new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance),
-            new FixedClock(SignedUpOn));
+            new FixedClock(SignedUpOn), new OtpService(), new RecordingMobileMessages());
 
         IReadOnlyList<CustomerListItem> demos = await signup.ListAsync(default, CustomerKind.Demo);
 

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { DEFAULT_OTP_CHANNEL } from './otp-flow';
 import { readPermissions, readSubject } from './token-claims';
 import {
   AccessibleOrg,
@@ -9,6 +10,8 @@ import {
   CustomerStatus,
   LoginResponse,
   SessionState,
+  OtpChannel,
+  SignupCodeResponse,
   SignupRequest,
   SignupResponse,
   StateRow,
@@ -316,9 +319,10 @@ export class AuthService {
 
   // ---- Forgot password (OTP) ----------------------------------------------
 
-  forgotPassword(email: string): Promise<unknown> {
+  /** Always answers the same, whether or not the account exists or anything was sent. */
+  forgotPassword(email: string, channel: OtpChannel = DEFAULT_OTP_CHANNEL): Promise<unknown> {
     return firstValueFrom(
-      this.http.post('/api/auth/forgot-password', { email, channel: 1 }),
+      this.http.post('/api/auth/forgot-password', { email, channel }),
     );
   }
 
@@ -334,9 +338,15 @@ export class AuthService {
 
   // ---- Signup -------------------------------------------------------------
 
-  signup(request: SignupRequest): Promise<SignupResponse> {
+  /**
+   * The trial signup, sent twice (TK-196): without `otpCode` the server sends a
+   * code to the mobile number and creates nothing (`SignupCodeResponse`); with
+   * the right code it creates the trial (`SignupResponse`). `isSignupCodeSent`
+   * tells the two apart.
+   */
+  signup(request: SignupRequest): Promise<SignupResponse | SignupCodeResponse> {
     return firstValueFrom(
-      this.http.post<SignupResponse>('/api/customers/signup', request),
+      this.http.post<SignupResponse | SignupCodeResponse>('/api/customers/signup', request),
     );
   }
 

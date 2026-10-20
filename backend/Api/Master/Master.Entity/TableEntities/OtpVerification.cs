@@ -5,20 +5,31 @@ using Shared.Kernel.Entities;
 namespace Master.Entity.TableEntities;
 
 /// <summary>
-/// A short numeric code sent to email or mobile. Backs OTP-based
-/// forgot-password, and reusable for email/mobile confirmation.
+/// A short numeric code sent by email, SMS or WhatsApp. Backs OTP-based
+/// forgot-password and the mobile check on a trial signup (TK-196), and is
+/// reusable for email/mobile confirmation.
 /// </summary>
 public class OtpVerification : AuditableEntity
 {
     public long OtpVerificationId { get; set; }
 
-    public Guid UserId { get; set; }
+    /// <summary>
+    /// The account the code is for. Null for a <see cref="OtpPurpose.TrialSignup"/>
+    /// code, which is sent before the account exists and is found by
+    /// <see cref="Destination"/> instead (TK-196).
+    /// </summary>
+    public Guid? UserId { get; set; }
 
     public OtpPurpose Purpose { get; set; }
 
     public OtpChannel Channel { get; set; }
 
-    /// <summary>The email or masked mobile the code was sent to.</summary>
+    /// <summary>
+    /// Where the code went: the email, or the masked mobile, for a password
+    /// reset; the whole mobile number for a trial signup, because with no user
+    /// yet the number is what the code is matched on, and a signup is accepted
+    /// only for the number that proved it.
+    /// </summary>
     [Required(ErrorMessage = "Destination is required.")]
     [MaxLength(200, ErrorMessage = "Destination cannot exceed 200 characters.")]
     public string Destination { get; set; } = null!;

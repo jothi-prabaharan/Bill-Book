@@ -17,9 +17,14 @@ public interface IIdentityAdminRepository
     Task CreateOwnerUserAsync(CreateOwnerUser request, CancellationToken ct = default);
 }
 
+/// <param name="IsMobileConfirmed">
+/// True when the signup proved the number with a WhatsApp or SMS code (TK-196).
+/// Only a new user takes it; an existing account keeps its own.
+/// </param>
 public sealed record CreateOwnerUser(
     Guid OrgId,
     string Email,
     string DisplayName,
     string? MobileNumber,
-    string Password);
+    string Password,
+    bool IsMobileConfirmed = false);

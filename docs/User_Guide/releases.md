@@ -31,6 +31,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Security**: **A free trial starts only after the mobile number is verified (TK-196).** The last step of signup sends a 6-digit code on WhatsApp, or by SMS if you choose, and the trial is created only when the right code is entered. Until then nothing exists: no customer, branch, licence or owner. **Forgot password** offers WhatsApp (the default), SMS or email. Codes work for ten minutes, can be resent after a minute (five an hour per number), and stop working after five wrong tries.
+  - ⚠ **Breaking:** WhatsApp and SMS need a messaging provider, which is not chosen yet. Until one is configured, no new trial can start outside a development install, and a password reset has to choose email.
+  - **Fixed on the way:** the five-try limit on reset codes never engaged, because each wrong try was undone along with the refusal.
+
 - **Added**: **Visual WYSIWYG Print Template Editor from Claude Design (Settings › Print templates).** Replaces the text-only band editor with a visual designer featuring true paper geometry (A4, A5, Letter, Legal for laser/inkjet; 58, 80, 112 mm for thermal rolls), zoom scaling (Fit width, 50%–200%), live segment editing for all five bands with auto-pinning to page bottom, a rich formatting ribbon (font families, sizes, colors, alignment, lists, and complete table manipulation tools), placeholder chips with list repeat indicators (`↻`), template duplication, deletion, and real-time paginated multi-page preview with sample data substitution.
 
 - **Fixed**: **Purchase clerks get the GST rates on purchase orders, goods receipts and bills** without Accounting access (TK-192). The rate list read the tax master, which needs Accounting access, so for anyone without it the list came up empty, with nothing on screen to say why.

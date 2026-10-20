@@ -104,6 +104,7 @@ public sealed class InProcessIdentityAdmin : IIdentityAdminRepository
                 DisplayName = request.DisplayName,
                 MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber),
                 EmailConfirmed = false,
+                MobileConfirmed = request.IsMobileConfirmed,
                 IsActive = true,
             };
 

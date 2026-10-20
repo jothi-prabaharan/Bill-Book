@@ -5,6 +5,7 @@ using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Shared.Kernel.Apps;
+using Shared.Kernel.Persistence;
 using Shared.Kernel.Validation;
 
 namespace Master.Repository.Repositories;
@@ -32,13 +33,21 @@ public sealed class SignupRepository
 
     private readonly TimeProvider _clock;
 
+    /// <summary>Makes and checks the six-digit codes a public signup is verified with (TK-196).</summary>
+    private readonly IOtpRepository _otp;
+
+    /// <summary>Sends them by WhatsApp or SMS.</summary>
+    private readonly IMobileMessageClient _messages;
+
     public SignupRepository(
         AdminDbContext db,
         IProvisioningQueue queue,
         IMasterCurrenciesRepository master,
         ITenantSeeder seeder,
         ITenantDatabaseAllocator databases,
-        TimeProvider clock)
+        TimeProvider clock,
+        IOtpRepository otp,
+        IMobileMessageClient messages)
     {
         _db = db;
         _queue = queue;
@@ -46,6 +55,8 @@ public sealed class SignupRepository
         _seeder = seeder;
         _databases = databases;
         _clock = clock;
+        _otp = otp;
+        _messages = messages;
     }
 
     /// <summary>
@@ -71,7 +82,216 @@ public sealed class SignupRepository
             : "One of the chosen add-ons is not available for that business type.";
     }
 
+    /// <summary>
+    /// Creates the customer, its licence and first branch, and queues the owner
+    /// and the seed — with nothing verified. A platform operator's create
+    /// (<c>AdminCustomersController</c>) comes here directly; a public signup
+    /// comes through <see cref="SignupWithCodeAsync"/>, which proves the mobile
+    /// number first (TK-196).
+    /// </summary>
     public async Task<SignupResponse> SignupAsync(SignupRequest request, CancellationToken ct)
+    {
+        (SignupResponse response, ProvisioningJob job) = await CreateTrialAsync(request, isMobileConfirmed: false, ct);
+        await _queue.EnqueueAsync(job, ct);
+        return response;
+    }
+
+    // ---- Public signup: a code first, then the trial (TK-196) ---------------
+
+    /// <summary>
+    /// Sends a six-digit code to the signup's mobile number by the chosen
+    /// channel, and creates nothing else: no customer, licence, branch, shard
+    /// capacity, seed or token. The controller has already checked everything
+    /// it checks before a create, so a code is sent only for a signup that
+    /// would be accepted.
+    ///
+    /// A new code replaces any live one for the number. The number waits
+    /// <see cref="OtpPolicy.ResendAfter"/> between codes and gets
+    /// <see cref="OtpPolicy.MaxPerWindow"/> an hour, counted from the codes
+    /// stored for it; a code that could not be sent is removed again, so it
+    /// neither holds the wait nor counts toward the cap.
+    ///
+    /// Runs with no request transaction (<c>[NoTransaction]</c>): each save
+    /// here stands on its own.
+    /// </summary>
+    public async Task<SignupCodeResult> SendCodeAsync(SignupRequest request, CancellationToken ct)
+    {
+        DateTimeOffset now = _clock.GetUtcNow();
+        string mobile = SignupMobile(request);
+
+        DateTimeOffset floor = OtpPolicy.WindowExpiryFloor(now);
+        List<DateTimeOffset> expiries = await _db.OtpVerifications
+            .Where(o => o.Purpose == OtpPurpose.TrialSignup
+                && o.Destination == mobile
+                && o.ExpiresAt > floor)
+            .Select(o => o.ExpiresAt)
+            .ToListAsync(ct);
+
+        TimeSpan wait = OtpPolicy.WaitBeforeNext(expiries.Select(OtpPolicy.SentAt), now);
+        if (wait > TimeSpan.Zero)
+        {
+            return new SignupCodeResult
+            {
+                Outcome = SignupCodeOutcome.TooSoon,
+                RetryAfterSeconds = (int)Math.Ceiling(wait.TotalSeconds),
+            };
+        }
+
+        List<OtpVerification> live = await _db.OtpVerifications
+            .Where(o => o.Purpose == OtpPurpose.TrialSignup
+                && o.Destination == mobile
+                && o.ConsumedAt == null
+                && o.ExpiresAt > now)
+            .ToListAsync(ct);
+        foreach (OtpVerification stale in live)
+        {
+            stale.ConsumedAt = now;
+        }
+
+        (string code, string hash) = _otp.Generate();
+        var otp = new OtpVerification
+        {
+            UserId = null,
+            Purpose = OtpPurpose.TrialSignup,
+            Channel = request.OtpChannel,
+            Destination = mobile,
+            CodeHash = hash,
+            ExpiresAt = now.Add(OtpPolicy.Lifetime),
+            AttemptCount = 0,
+        };
+        _db.OtpVerifications.Add(otp);
+        await _db.SaveChangesAsync(ct);
+
+        string? phoneCode = await _db.Countries
+            .Where(c => c.CountryId == request.CountryId)
+            .Select(c => c.PhoneCode)
+            .FirstOrDefaultAsync(ct);
+
+        try
+        {
+            await _messages.SendOtpAsync(new MobileOtpMessage(
+                request.OtpChannel,
+                MobileMessages.International(mobile, phoneCode),
+                code,
+                OtpPurpose.TrialSignup,
+                OtpPolicy.Lifetime), ct);
+        }
+        catch (OtpDeliveryException failure)
+        {
+            _db.OtpVerifications.Remove(otp);
+            await _db.SaveChangesAsync(ct);
+
+            return new SignupCodeResult
+            {
+                Outcome = failure.IsUnavailable ? SignupCodeOutcome.DeliveryUnavailable : SignupCodeOutcome.DeliveryFailed,
+            };
+        }
+
+        return new SignupCodeResult
+        {
+            Outcome = SignupCodeOutcome.Sent,
+            Response = new SignupCodeResponse
+            {
+                Channel = request.OtpChannel,
+                Destination = OtpPolicy.MaskMobile(mobile),
+                ExpiresInSeconds = (int)OtpPolicy.Lifetime.TotalSeconds,
+                ResendAfterSeconds = (int)OtpPolicy.ResendAfter.TotalSeconds,
+                Message = request.OtpChannel == OtpChannel.Sms
+                    ? "A 6-digit code has been sent by SMS."
+                    : "A 6-digit code has been sent on WhatsApp.",
+            },
+        };
+    }
+
+    /// <summary>
+    /// Creates the trial for a signup whose code is right, and only then.
+    ///
+    /// The code is matched on the signup's own mobile number, so a code sent to
+    /// one number cannot create an account for another. A wrong code is
+    /// counted and saved on its own before the refusal is returned, which is
+    /// why the route runs with no request transaction: a transaction rolled
+    /// back with the 400 would take the count with it, and the five-try limit
+    /// would never be reached.
+    ///
+    /// A right code is spent and the customer, licence and branch written in
+    /// one transaction, with the code spent by a guarded update so that of two
+    /// requests carrying it only one creates a trial. A refusal after that
+    /// (no shard with room) rolls the spend back too, so the same code works
+    /// on a retry. The owner and the seed are queued after the commit, so the
+    /// worker never looks for a customer that is not there yet.
+    /// </summary>
+    public async Task<TrialSignupResult> SignupWithCodeAsync(SignupRequest request, CancellationToken ct)
+    {
+        DateTimeOffset now = _clock.GetUtcNow();
+        string mobile = SignupMobile(request);
+
+        OtpVerification? otp = await _db.OtpVerifications
+            .Where(o => o.Purpose == OtpPurpose.TrialSignup
+                && o.Destination == mobile
+                && o.ConsumedAt == null
+                && o.ExpiresAt > now)
+            .OrderByDescending(o => o.OtpVerificationId)
+            .FirstOrDefaultAsync(ct);
+
+        if (otp is null)
+        {
+            return new TrialSignupResult { Outcome = TrialSignupOutcome.CodeExpired };
+        }
+
+        if (otp.AttemptCount >= OtpPolicy.MaxAttempts)
+        {
+            return new TrialSignupResult { Outcome = TrialSignupOutcome.TooManyTries };
+        }
+
+        if (!_otp.Verify(request.OtpCode ?? string.Empty, otp.CodeHash))
+        {
+            otp.AttemptCount++;
+            await _db.SaveChangesAsync(ct);
+
+            return otp.AttemptCount >= OtpPolicy.MaxAttempts
+                ? new TrialSignupResult { Outcome = TrialSignupOutcome.TooManyTries }
+                : new TrialSignupResult
+                {
+                    Outcome = TrialSignupOutcome.CodeWrong,
+                    TriesLeft = OtpPolicy.MaxAttempts - otp.AttemptCount,
+                };
+        }
+
+        SignupResponse response;
+        ProvisioningJob job;
+
+        await using (ITransactionScope scope = await _db.Database.BeginScopeAsync(ct))
+        {
+            int spent = await _db.OtpVerifications
+                .Where(o => o.OtpVerificationId == otp.OtpVerificationId && o.ConsumedAt == null)
+                .ExecuteUpdateAsync(set => set.SetProperty(o => o.ConsumedAt, now), ct);
+
+            if (spent == 0)
+            {
+                return new TrialSignupResult { Outcome = TrialSignupOutcome.CodeExpired };
+            }
+
+            (response, job) = await CreateTrialAsync(request, isMobileConfirmed: true, ct);
+            await scope.CommitAsync(ct);
+        }
+
+        await _queue.EnqueueAsync(job, ct);
+
+        return new TrialSignupResult { Outcome = TrialSignupOutcome.Created, Response = response };
+    }
+
+    /// <summary>The number a public signup is verified on, as it is stored. The controller refuses a blank one.</summary>
+    private static string SignupMobile(SignupRequest request) =>
+        PhoneNumbers.NormalizeOptional(request.MobileNumber)
+            ?? throw new InvalidOperationException("A public signup needs a mobile number; the controller checks it first.");
+
+    /// <summary>
+    /// The writes every signup shares: the customer on a shard, its licence and
+    /// first branch, and the provisioning job for the caller to queue once
+    /// those are committed.
+    /// </summary>
+    private async Task<(SignupResponse Response, ProvisioningJob Job)> CreateTrialAsync(
+        SignupRequest request, bool isMobileConfirmed, CancellationToken ct)
     {
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
@@ -205,22 +425,24 @@ public sealed class SignupRepository
         // tenant database. What is left is the owner user and the seed
         // (chart of accounts, tax master, numbering series, units...), which
         // can still fail or run long, so it stays a queued background step
-        // rather than blocking this response: the signup screen already polls
-        // GetStatusAsync for CanLogin, and that contract does not change.
-        await _queue.EnqueueAsync(new ProvisioningJob(
+        // rather than blocking the response: the signup screen polls
+        // GetStatusAsync for CanLogin. The caller queues the job once these
+        // rows are committed.
+        var job = new ProvisioningJob(
             customer.CustomerId,
             org.OrgId,
             request.Email,
             request.DisplayName,
             request.MobileNumber,
-            request.Password), ct);
+            request.Password,
+            isMobileConfirmed);
 
-        return new SignupResponse
+        return (new SignupResponse
         {
             CustomerId = customer.CustomerId,
             CustomerCode = customer.CustomerCode,
             Message = "Signup received. Your account is being set up.",
-        };
+        }, job);
     }
 
     public async Task<CustomerStatusResponse?> GetStatusAsync(Guid customerId, CancellationToken ct)

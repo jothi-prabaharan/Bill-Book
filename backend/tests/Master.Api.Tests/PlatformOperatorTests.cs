@@ -51,7 +51,8 @@ public sealed class PlatformOperatorTests
 
         return new AuthRepository(
             db, new BcryptPasswordHasher(), new JwtTokenRepository(options, TimeProvider.System),
-            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System);
+            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System,
+            new RecordingMobileMessages());
     }
 
     private static string[] Permissions(string accessToken) =>

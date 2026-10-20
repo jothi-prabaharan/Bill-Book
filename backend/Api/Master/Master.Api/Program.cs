@@ -115,6 +115,18 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 builder.Services.AddScoped<IPasswordHasherRepository, BcryptPasswordHasher>();
 builder.Services.AddScoped<ITokenRepository, JwtTokenRepository>();
 builder.Services.AddScoped<IOtpRepository, OtpService>();
+// WhatsApp and SMS codes (TK-196). No provider is chosen yet (D-66), so
+// Development writes the code to the log and every other environment refuses
+// to send: a trial signup then says it cannot send a code, and a password reset
+// still answers its usual 200. A provider is one more implementation here.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IMobileMessageClient, LoggingMobileMessageClient>();
+}
+else
+{
+    builder.Services.AddScoped<IMobileMessageClient, UnconfiguredMobileMessageClient>();
+}
 builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<RoleRepository>();
 builder.Services.AddScoped<UserRepository>();
@@ -201,6 +213,8 @@ builder.Services.AddScoped<PortalAccessRepository>();
 builder.Services.AddScoped<IPortalLinkLifetime, ConfigurationPortalLinkLifetime>();
 builder.Services.AddScoped<IDiscountLimitSetting, ConfigurationDiscountLimitSetting>();
 builder.Services.AddPortalRateLimit();
+// Ten code requests and checks a minute per address (TK-196).
+builder.Services.AddOtpRateLimit();
 builder.Services.AddScoped<ContactPersonRoleRepository>();
 builder.Services.AddScoped<ContactAttachmentRepository>();
 

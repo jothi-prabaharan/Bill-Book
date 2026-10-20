@@ -1,19 +1,41 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
-import { Component, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { Component, computed, inject, signal } from '@angular/core';
+import { AbstractControl, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { OtpChannel } from '../../auth.models';
 import { AuthService } from '../../auth.service';
+import {
+  DEFAULT_OTP_CHANNEL,
+  OTP_CODE_PATTERN,
+  RESET_OTP_CHANNELS,
+  apiMessage,
+  channelPhrase,
+  fieldError,
+  formatWait,
+  secondsLeft,
+} from '../../otp-flow';
 import {
   EmailInputComponent,
   MessageBoxComponent,
   PasswordInputComponent,
+  RadioGroupComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
+
+/** The server's own wait between codes, kept here too so the button says so rather than silently sending nothing. */
+const RESEND_AFTER_MS = 60_000;
+
+/** One sentence for every way a code can fail, so the answer never says whether the account exists. */
+const CODE_REFUSED = 'That code is wrong or has expired. Check it, or send a new code.';
 
 /**
  * OTP wizard: request → verify → reset. The request step always advances,
  * whether or not the account exists — never reveal which.
+ *
+ * The code goes on WhatsApp unless SMS or email is chosen (TK-196); a WhatsApp
+ * or SMS code goes to the mobile number on the account. A field's own problem
+ * shows under it; a refused code shows in the message box.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,6 +48,7 @@ import {
     EmailInputComponent,
     PasswordInputComponent,
     MessageBoxComponent,
+    RadioGroupComponent,
     TextInputComponent,
   ],
   templateUrl: './forgot-password.page.html',
@@ -34,10 +57,14 @@ import {
 export class ForgotPasswordPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly channelOptions = RESET_OTP_CHANNELS;
 
   protected readonly fpForm = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
-    code: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    channel: new FormControl<OtpChannel>(DEFAULT_OTP_CHANNEL, { nonNullable: true }),
+    code: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(OTP_CODE_PATTERN)] }),
     newPassword: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
     confirmPassword: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] })
   });
@@ -46,50 +73,108 @@ export class ForgotPasswordPage {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  /** The channel the last code went by, for the verify step's words. */
+  protected readonly sentBy = signal<OtpChannel>(DEFAULT_OTP_CHANNEL);
+
+  private readonly resendAt = signal<number | null>(null);
+  private readonly now = signal(Date.now());
+  protected readonly resendIn = computed(() => secondsLeft(this.resendAt(), this.now()));
+  protected readonly resendWait = computed(() => formatWait(this.resendIn()));
+
+  constructor() {
+    const timer = setInterval(() => this.now.set(Date.now()), 1000);
+    this.destroyRef.onDestroy(() => clearInterval(timer));
+  }
+
+  protected err(control: AbstractControl, label: string, words: Partial<Record<string, string>> = {}): string {
+    return fieldError(control, label, words);
+  }
+
+  protected sentPhrase(): string {
+    return channelPhrase(this.sentBy());
+  }
+
+  /** "the mobile number on the account" or the address typed, for the verify step. */
+  protected sentTo(): string {
+    return this.sentBy() === 'Email' ? this.fpForm.controls.email.value : 'the mobile number on that account';
+  }
+
   async request(): Promise<void> {
-    if (this.fpForm.controls.email.invalid) return;
+    const email = this.fpForm.controls.email;
+    if (email.invalid) {
+      email.markAsTouched();
+      return;
+    }
+    if (this.busy() || this.resendIn() > 0) return;
+
+    const channel = this.fpForm.controls.channel.value;
     this.busy.set(true);
     this.error.set(null);
     try {
-      await this.auth.forgotPassword(this.fpForm.value.email!);
+      await this.auth.forgotPassword(email.value, channel);
+    } catch (err: unknown) {
+      // Only the connection's own limit is worth saying; anything else would
+      // be a difference between an account and none.
+      if ((err as { status?: number })?.status === 429) {
+        this.error.set(apiMessage(err, ''));
+      }
     } finally {
       // Always advance — identical behaviour whether or not the account exists.
+      this.sentBy.set(channel);
+      this.resendAt.set(Date.now() + RESEND_AFTER_MS);
+      this.fpForm.controls.code.reset('');
       this.step.set('verify');
       this.busy.set(false);
     }
   }
 
+  /** Back to the first step to pick another channel; the resend wait still holds. */
+  changeChannel(): void {
+    this.error.set(null);
+    this.step.set('request');
+  }
+
   async verify(): Promise<void> {
-    if (this.fpForm.controls.code.invalid) return;
+    const code = this.fpForm.controls.code;
+    if (code.invalid) {
+      code.markAsTouched();
+      return;
+    }
     this.busy.set(true);
     this.error.set(null);
     try {
-      await this.auth.verifyOtp(this.fpForm.value.email!, this.fpForm.value.code!);
+      await this.auth.verifyOtp(this.fpForm.controls.email.value, code.value);
       this.step.set('reset');
-    } catch {
-      this.error.set('Invalid or expired code.');
+    } catch (err: unknown) {
+      this.error.set((err as { status?: number })?.status === 429 ? apiMessage(err, CODE_REFUSED) : CODE_REFUSED);
     } finally {
       this.busy.set(false);
     }
   }
 
   async reset(): Promise<void> {
-    if (this.fpForm.controls.code.invalid) return;
-    if (this.fpForm.value.newPassword !== this.fpForm.value.confirmPassword) {
-      this.error.set('Passwords do not match.');
+    const { code, newPassword, confirmPassword } = this.fpForm.controls;
+    if (code.invalid) {
+      this.step.set('verify');
+      return;
+    }
+    newPassword.markAsTouched();
+    confirmPassword.markAsTouched();
+    if (newPassword.invalid || confirmPassword.invalid) return;
+    if (newPassword.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ mismatch: true });
       return;
     }
 
     this.busy.set(true);
     this.error.set(null);
     try {
-      await this.auth.resetPassword(this.fpForm.value.email!, this.fpForm.value.code!, this.fpForm.value.newPassword!, this.fpForm.value.confirmPassword!);
+      await this.auth.resetPassword(this.fpForm.controls.email.value, code.value, newPassword.value, confirmPassword.value);
       await this.router.navigateByUrl('/login');
-    } catch {
-      this.error.set('Invalid or expired code.');
+    } catch (err: unknown) {
+      this.error.set((err as { status?: number })?.status === 429 ? apiMessage(err, CODE_REFUSED) : CODE_REFUSED);
     } finally {
       this.busy.set(false);
     }
   }
 }
-

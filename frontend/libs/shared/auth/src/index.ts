@@ -12,3 +12,4 @@ export * from './lib/pages/forgot-password/forgot-password.page';
 export * from './lib/pages/trial-expired/trial-expired.page';
 export * from './lib/pages/accept-invitation/accept-invitation.page';
 export * from './lib/pages/profile/profile.page';
+export * from './lib/otp-flow';

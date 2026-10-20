@@ -16,7 +16,7 @@
           <h6>Free trial</h6>
           <span class="stepper__count">Step {{ step() }} of {{ stepCount }}</span>
         </div>
-        <div class="stepper__track"><div class="stepper__fill" [style.width.%]="progress()"></div></div>
+        <div class="stepper__track"><div class="stepper__fill" [attr.data-step]="step()"></div></div>
 
         @switch (step()) {
           @case (1) {
@@ -24,36 +24,43 @@
             <p class="text-muted lede">This becomes the owner user for the books we create.</p>
             <div class="grid-2">
               <div class="field">
-                <bb-text-input id="su-first" label="First name" maxlength="100"
+                <bb-text-input [id]="'su-first'" label="First name" maxlength="100"
                                autocomplete="given-name" formControlName="firstName"
-                               [required]="true" />
+                               [required]="true"
+                               [error]="err(signupForm.controls.firstName, 'First name')" />
               </div>
               <div class="field">
-                <bb-text-input id="su-last" label="Last name" maxlength="100"
+                <bb-text-input [id]="'su-last'" label="Last name" maxlength="100"
                                autocomplete="family-name" formControlName="lastName"
-                               [required]="true" />
+                               [required]="true"
+                               [error]="err(signupForm.controls.lastName, 'Last name')" />
               </div>
               <div class="field">
-                <bb-email-input id="su-email" label="Email" maxlength="200"
-                                formControlName="email" [required]="true" />
+                <bb-email-input [id]="'su-email'" label="Email" maxlength="200"
+                                formControlName="email" [required]="true"
+                                [error]="err(signupForm.controls.email, 'Email')" />
               </div>
               <div class="field">
                 <!-- A mobile number carries no pattern: lengths vary too much by
                      country, and the leading `+` is what marks a foreign one. -->
-                <bb-phone-input id="su-mobile" label="Mobile" maxlength="20"
-                                formControlName="mobileNumber" [required]="true" />
+                <bb-phone-input [id]="'su-mobile'" label="Mobile" maxlength="20"
+                                hint="We send a code here on WhatsApp or by SMS to verify it."
+                                formControlName="mobileNumber" [required]="true"
+                                [error]="err(signupForm.controls.mobileNumber, 'Mobile number')" />
               </div>
               <div class="field">
-                <bb-password-input id="su-password" label="Password" purpose="new"
+                <bb-password-input [id]="'su-password'" label="Password" purpose="new"
                                    placeholder="At least 8 characters" minlength="8"
-                                   formControlName="password" [required]="true" />
+                                   formControlName="password" [required]="true"
+                                   [error]="err(signupForm.controls.password, 'Password')" />
               </div>
               <div class="field">
-                <bb-password-input id="su-password2" label="Confirm password" purpose="new"
-                                   formControlName="confirmPassword" [required]="true" />
+                <bb-password-input [id]="'su-password2'" label="Confirm password" purpose="new"
+                                   formControlName="confirmPassword" [required]="true"
+                                   [error]="err(signupForm.controls.confirmPassword, 'Confirm password', { mismatch: 'Both passwords must match.' })" />
               </div>
             </div>
-            <p style="margin: var(--space-2) 0 0" class="text-muted text-xs">
+            <p class="mt-2 mb-0 text-muted text-xs">
               Your display name will be <em>First Last</em> — you can change it later in Settings.
             </p>
           }
@@ -62,17 +69,19 @@
             <p class="text-muted lede">One company can hold many organizations later. Start with one.</p>
             <div class="grid-2">
               <div class="field">
-                <bb-text-input id="su-company" label="Company name" maxlength="200"
+                <bb-text-input [id]="'su-company'" label="Company name" maxlength="200"
                                autocomplete="organization" formControlName="companyName"
-                               [required]="true" />
+                               [required]="true"
+                               [error]="err(signupForm.controls.companyName, 'Company name')" />
               </div>
               <div class="field">
-                <bb-text-input id="su-org" label="Organization name" maxlength="200"
-                               formControlName="organizationName" [required]="true" />
+                <bb-text-input [id]="'su-org'" label="Organization name" maxlength="200"
+                               formControlName="organizationName" [required]="true"
+                               [error]="err(signupForm.controls.organizationName, 'Organization name')" />
               </div>
               <div class="field">
                 <bb-select
-                  id="su-business-type"
+                  [id]="'su-business-type'"
                   label="Kind of business"
                   placeholder=""
                   hint="Decides the screens and add-ons the branch gets. Pick HRMS or Payroll only if you trade nothing here."
@@ -90,25 +99,28 @@
               </fieldset>
               <div class="field">
                 <bb-select
-                  id="su-fy"
+                  [id]="'su-fy'"
                   label="Financial year starts"
                   placeholder=""
                   [options]="monthOptions"
                   formControlName="financialYearStartMonth"
+                  [error]="err(signupForm.controls.financialYearStartMonth, 'Financial year start')"
                 />
               </div>
               <div class="field">
                 <bb-select
-                  id="su-country"
+                  [id]="'su-country'"
                   label="Country"
                   placeholder=""
                   [options]="countryOptions()"
                   formControlName="countryId"
+                  [required]="true"
+                  [error]="err(signupForm.controls.countryId, 'Country')"
                 />
               </div>
               <div class="field">
                 <bb-select
-                  id="su-state"
+                  [id]="'su-state'"
                   label="State"
                   placeholder="—"
                   [options]="stateOptions()"
@@ -116,24 +128,24 @@
                 />
               </div>
               <div class="field field--wide">
-                <bb-text-input id="su-addr1" label="Address line 1" maxlength="200"
+                <bb-text-input [id]="'su-addr1'" label="Address line 1" maxlength="200"
                                autocomplete="address-line1" formControlName="addressLine1" />
               </div>
               <div class="field field--wide">
-                <bb-text-input id="su-addr2" label="Address line 2" maxlength="200"
+                <bb-text-input [id]="'su-addr2'" label="Address line 2" maxlength="200"
                                autocomplete="address-line2" formControlName="addressLine2" />
               </div>
               <div class="field">
-                <bb-text-input id="su-city" label="City" maxlength="100"
+                <bb-text-input [id]="'su-city'" label="City" maxlength="100"
                                autocomplete="address-level2" formControlName="city" />
               </div>
               <div class="field">
-                <bb-text-input id="su-postal" label="Postal code" inputmode="numeric" maxlength="10"
+                <bb-text-input [id]="'su-postal'" label="Postal code" inputmode="numeric" maxlength="10"
                                autocomplete="postal-code" formControlName="postalCode" />
               </div>
               <div class="field">
                 <bb-select
-                  id="su-currency"
+                  [id]="'su-currency'"
                   label="Base currency"
                   placeholder=""
                   hint="Defaults from the country — change it only if you keep books in another currency."
@@ -148,27 +160,27 @@
             <p class="text-muted lede">All optional — you can add them later in Organization settings.</p>
             <div class="grid-2">
               <div class="field">
-                <bb-text-input id="su-gstin" label="GSTIN" maxlength="15"
+                <bb-text-input [id]="'su-gstin'" label="GSTIN" maxlength="15"
                                [uppercase]="true" formControlName="gstin" />
               </div>
               <div class="field">
-                <bb-text-input id="su-pan" label="PAN" maxlength="10"
+                <bb-text-input [id]="'su-pan'" label="PAN" maxlength="10"
                                [uppercase]="true" formControlName="pan" />
               </div>
               <div class="field">
-                <bb-text-input id="su-tan" label="TAN" maxlength="10"
+                <bb-text-input [id]="'su-tan'" label="TAN" maxlength="10"
                                [uppercase]="true" formControlName="tan" />
               </div>
               <div class="field">
-                <bb-text-input id="su-tin" label="TIN" maxlength="15"
+                <bb-text-input [id]="'su-tin'" label="TIN" maxlength="15"
                                [uppercase]="true" formControlName="tin" />
               </div>
               <div class="field">
-                <bb-text-input id="su-cin" label="CIN" maxlength="21"
+                <bb-text-input [id]="'su-cin'" label="CIN" maxlength="21"
                                [uppercase]="true" formControlName="cin" />
               </div>
               <div class="field">
-                <bb-text-input id="su-udyam" label="Udyam" maxlength="20"
+                <bb-text-input [id]="'su-udyam'" label="Udyam" maxlength="20"
                                [uppercase]="true" formControlName="udyamNumber" />
               </div>
             </div>
@@ -176,19 +188,59 @@
               The GSTIN's first two digits must match your state's GST code.
             </p>
           }
+          @case (4) {
+            <h2>Verify your mobile.</h2>
+            <p class="text-muted lede">
+              We send a 6-digit code to {{ signupForm.controls.mobileNumber.value }}. Nothing is created
+              until you enter it.
+            </p>
+            <div class="verify" [formGroup]="verifyForm">
+              <bb-radio-group [id]="'su-channel'" label="Send the code by" orientation="horizontal"
+                              [options]="channelOptions" formControlName="otpChannel" />
+
+              @if (codeSent()) {
+                <div class="field">
+                  <bb-text-input [id]="'su-code'" label="Verification code" display="code"
+                                 inputmode="numeric" [maxlength]="6" autocomplete="one-time-code"
+                                 formControlName="otpCode" [required]="true"
+                                 [error]="err(verifyForm.controls.otpCode, 'The code', { pattern: 'Enter the 6 digits from the message.' })" />
+                </div>
+                <p class="text-muted lede mb-0">
+                  @if (resendIn() > 0) {
+                    No code? You can ask for a new one in {{ resendWait() }}.
+                  } @else {
+                    No code?
+                    <button class="btn btn-link" type="button" [disabled]="sending()" (click)="sendCode()">
+                      {{ sending() ? 'Sending…' : 'Send a new code' }}
+                    </button>
+                  }
+                </p>
+              }
+            </div>
+          }
         }
 
-        @if (error(); as failure) {
-          <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+        @if (messages().length > 0) {
+          <bb-message-box [messages]="messages()" />
         }
 
         <div class="form-actions">
-          <button class="btn btn-secondary" type="button" (click)="back()">Back</button>
+          <button class="btn btn-secondary" type="button" [disabled]="busy()" (click)="back()">Back</button>
           @if (step() < stepCount) {
             <button class="btn btn-primary" type="button" (click)="next()">Continue</button>
+          } @else if (!codeSent()) {
+            <button class="btn btn-primary" type="button" [disabled]="sending() || resendIn() > 0" (click)="sendCode()">
+              @if (sending()) {
+                Sending…
+              } @else if (resendIn() > 0) {
+                Send code in {{ resendWait() }}
+              } @else {
+                Send code
+              }
+            </button>
           } @else {
             <button class="btn btn-primary" type="submit" [disabled]="busy()">
-              {{ busy() ? 'Creating…' : 'Create my account' }}
+              {{ busy() ? 'Creating…' : 'Verify and create my account' }}
             </button>
           }
         </div>

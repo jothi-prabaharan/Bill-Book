@@ -6,6 +6,8 @@ using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Persistence;
+using Shared.Kernel.Validation;
 
 namespace Master.Repository.Repositories;
 
@@ -13,8 +15,6 @@ public sealed class AuthRepository
 {
     private const int LockoutThreshold = 5;
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
-    private static readonly TimeSpan OtpLifetime = TimeSpan.FromMinutes(10);
-    private const int OtpMaxAttempts = 5;
 
     private readonly AdminDbContext _db;
     private readonly IPasswordHasherRepository _passwordHasher;
@@ -24,6 +24,9 @@ public sealed class AuthRepository
     private readonly IEmailSender _email;
     private readonly TimeProvider _clock;
 
+    /// <summary>Sends WhatsApp and SMS reset codes (TK-196).</summary>
+    private readonly IMobileMessageClient _messages;
+
     public AuthRepository(
         AdminDbContext db,
         IPasswordHasherRepository passwordHasher,
@@ -31,7 +34,8 @@ public sealed class AuthRepository
         IOtpRepository otp,
         OrgContextRepository orgs,
         IEmailSender email,
-        TimeProvider clock)
+        TimeProvider clock,
+        IMobileMessageClient messages)
     {
         _db = db;
         _passwordHasher = passwordHasher;
@@ -40,6 +44,7 @@ public sealed class AuthRepository
         _orgs = orgs;
         _email = email;
         _clock = clock;
+        _messages = messages;
     }
 
     // ---- Step one: credentials -> pre-auth token + accessible orgs --------
@@ -434,12 +439,41 @@ public sealed class AuthRepository
 
     // ---- Forgot password: OTP --------------------------------------------
 
-    /// <summary>Always succeeds silently — never reveals whether the account exists.</summary>
+    /// <summary>
+    /// Always succeeds silently — never reveals whether the account exists.
+    ///
+    /// The code goes by the channel asked for (TK-196): WhatsApp or SMS to the
+    /// mobile number on the account, or email. Every reason nothing is sent —
+    /// no such account, no mobile number on it, a code sent under
+    /// <see cref="OtpPolicy.ResendAfter"/> ago or <see cref="OtpPolicy.MaxPerWindow"/>
+    /// this hour, a provider that refused — ends the same way, because the caller
+    /// answers 200 whatever happens and any difference would tell a stranger
+    /// which addresses have accounts. The page keeps its own resend countdown.
+    /// </summary>
     public async Task RequestPasswordResetAsync(ForgotPasswordRequest request, CancellationToken ct)
     {
         DateTimeOffset now = _clock.GetUtcNow();
         User? user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email, ct);
         if (user is null || !user.IsActive)
+        {
+            return;
+        }
+
+        bool byPhone = request.Channel is OtpChannel.WhatsApp or OtpChannel.Sms;
+        string? mobile = PhoneNumbers.NormalizeOptional(user.MobileNumber);
+        if (byPhone && mobile is null)
+        {
+            return;
+        }
+
+        DateTimeOffset floor = OtpPolicy.WindowExpiryFloor(now);
+        List<DateTimeOffset> expiries = await _db.OtpVerifications
+            .Where(o => o.UserId == user.UserId
+                && o.Purpose == OtpPurpose.PasswordReset
+                && o.ExpiresAt > floor)
+            .Select(o => o.ExpiresAt)
+            .ToListAsync(ct);
+        if (OtpPolicy.WaitBeforeNext(expiries.Select(OtpPolicy.SentAt), now) > TimeSpan.Zero)
         {
             return;
         }
@@ -457,24 +491,20 @@ public sealed class AuthRepository
         }
 
         (string code, string hash) = _otp.Generate();
-        string destination = request.Channel == OtpChannel.Sms
-            ? MaskMobile(user.MobileNumber)
-            : user.Email;
-
-        _db.OtpVerifications.Add(new OtpVerification
+        var otp = new OtpVerification
         {
             UserId = user.UserId,
             Purpose = OtpPurpose.PasswordReset,
             Channel = request.Channel,
-            Destination = destination,
+            Destination = byPhone ? OtpPolicy.MaskMobile(mobile) : user.Email,
             CodeHash = hash,
-            ExpiresAt = now.Add(OtpLifetime),
+            ExpiresAt = now.Add(OtpPolicy.Lifetime),
             AttemptCount = 0,
-        });
+        };
+        _db.OtpVerifications.Add(otp);
         await _db.SaveChangesAsync(ct);
 
-        // SMS delivery is not yet wired — only email actually sends today.
-        if (request.Channel == OtpChannel.Email)
+        if (!byPhone)
         {
             await _email.SendAsync(new EmailMessage
             {
@@ -484,13 +514,45 @@ public sealed class AuthRepository
                 HtmlBody = $"<p>Your verification code is <strong>{code}</strong>. It expires in 10 minutes.</p>",
                 TextBody = $"Your verification code is {code}. It expires in 10 minutes.",
             }, ct);
+            return;
+        }
+
+        try
+        {
+            await _messages.SendOtpAsync(new MobileOtpMessage(
+                request.Channel,
+                MobileMessages.International(mobile!, await UserPhoneCodeAsync(user, ct)),
+                code,
+                OtpPurpose.PasswordReset,
+                OtpPolicy.Lifetime), ct);
+        }
+        catch (OtpDeliveryException)
+        {
+            // The client has logged why. A code nobody received should not hold
+            // the resend wait, and the answer stays the same 200.
+            _db.OtpVerifications.Remove(otp);
+            await _db.SaveChangesAsync(ct);
         }
     }
+
+    /// <summary>
+    /// The country code for a local mobile number: that of the branch the user
+    /// last worked in, else of any branch they belong to. Null falls back to
+    /// India's in <see cref="MobileMessages.International"/>.
+    /// </summary>
+    private async Task<string?> UserPhoneCodeAsync(User user, CancellationToken ct) =>
+        await (
+            from a in _db.UserOrganizationRoles
+            join o in _db.Organizations on a.OrgId equals o.OrgId
+            join c in _db.Countries on o.CountryId equals c.CountryId
+            where a.UserId == user.UserId && c.PhoneCode != null
+            orderby o.OrgId == user.LastAccessedOrgId descending
+            select c.PhoneCode).FirstOrDefaultAsync(ct);
 
     public async Task<bool> VerifyOtpAsync(VerifyOtpRequest request, CancellationToken ct)
     {
         OtpVerification? otp = await ActiveOtpAsync(request.Email, ct);
-        if (otp is null || otp.AttemptCount >= OtpMaxAttempts)
+        if (otp is null || otp.AttemptCount >= OtpPolicy.MaxAttempts)
         {
             return false;
         }
@@ -500,6 +562,9 @@ public sealed class AuthRepository
             return true;
         }
 
+        // Saved on its own: the route runs with no request transaction, so the
+        // count survives the 400 it answers with (TK-196). Before, it was rolled
+        // back with the refusal and the five-try limit never engaged.
         otp.AttemptCount++;
         await _db.SaveChangesAsync(ct);
         return false;
@@ -515,10 +580,11 @@ public sealed class AuthRepository
         }
 
         OtpVerification? otp = await ActiveOtpAsync(request.Email, ct);
-        if (otp is null || otp.AttemptCount >= OtpMaxAttempts || !_otp.Verify(request.Code, otp.CodeHash))
+        if (otp is null || otp.AttemptCount >= OtpPolicy.MaxAttempts || !_otp.Verify(request.Code, otp.CodeHash))
         {
             if (otp is not null)
             {
+                // Its own save, kept whatever the answer (see VerifyOtpAsync).
                 otp.AttemptCount++;
                 await _db.SaveChangesAsync(ct);
             }
@@ -526,8 +592,18 @@ public sealed class AuthRepository
             return false;
         }
 
+        // The route has no request transaction, so the writes that must land
+        // together get one of their own.
+        await using ITransactionScope scope = await _db.Database.BeginScopeAsync(ct);
+
         otp.ConsumedAt = now;
         user.PasswordHash = _passwordHasher.Hash(request.NewPassword);
+
+        // A WhatsApp or SMS code that worked proves the number on the account.
+        if (otp.Channel is OtpChannel.WhatsApp or OtpChannel.Sms)
+        {
+            user.MobileConfirmed = true;
+        }
 
         // Password reset revokes every live session.
         List<RefreshToken> tokens = await _db.RefreshTokens
@@ -539,6 +615,7 @@ public sealed class AuthRepository
         }
 
         await _db.SaveChangesAsync(ct);
+        await scope.CommitAsync(ct);
         return true;
     }
 
@@ -596,14 +673,4 @@ public sealed class AuthRepository
             IpAddress = ip,
             UserAgent = userAgent,
         };
-
-    private static string MaskMobile(string? mobile)
-    {
-        if (string.IsNullOrEmpty(mobile) || mobile.Length < 4)
-        {
-            return "****";
-        }
-
-        return string.Concat(new string('*', mobile.Length - 4), mobile.AsSpan(mobile.Length - 4));
-    }
 }

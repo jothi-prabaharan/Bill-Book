@@ -84,7 +84,8 @@ public sealed class RefreshTokenRotationTests
             new OtpService(),
             new OrgContextRepository(db, clock),
             new NoEmail(),
-            clock);
+            clock,
+            new RecordingMobileMessages());
     }
 
     /// <summary>

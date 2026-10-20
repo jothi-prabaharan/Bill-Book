@@ -418,7 +418,7 @@ JWT claims: `sub`, `customer_id`, `customer_code`, `org_id`, `display_name`, `li
 - 5 system roles (Owner, Administrator, Accountant, Sales, Viewer) + customer-defined (`Role.CustomerId` null = system)
 - Permissions are `{module}.{action}`; `platform.*` is operator-only
 - System roles read-only; roles in use can't be deleted
-- Trial: 14 days, public self-service signup
+- Trial: 14 days, public self-service signup, **created only after the mobile number is proved by a WhatsApp or SMS code** (TK-196). `POST /api/customers/signup` without `otpCode` sends the code and creates nothing; with the right one it creates the trial. Forgot password offers WhatsApp (default), SMS or email. Codes go through `IMobileMessageClient`, and no provider is chosen yet (D-66): Development logs the code and every other environment refuses to send
 - Customer kinds (D-44, TK-152): **Standard** (paying; the only kind signup makes), **Internal** (our own organisation) and **Demo** — the last two only by a platform operator, Elite, never lapse, never billed, no user or branch cap (`CustomerKindRepository`). The **sample customer** (`SAMPLE`, TK-185) is a Demo one for local development. It has one branch per business type and one sample user who is Owner of all of them, and it is made on start only when `Bootstrap:SeedSampleData` is on, with the user's details from `Bootstrap:SampleUser*` settings (each falling back to its `Bootstrap:Owner*` one) and never from source (`SampleDataRepository`)
 
 ---

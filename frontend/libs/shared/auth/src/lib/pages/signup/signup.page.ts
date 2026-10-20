@@ -1,11 +1,23 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Country, StateRow, Currency } from '../../auth.models';
+import { Country, StateRow, Currency, OtpChannel, SignupCodeResponse, SignupRequest } from '../../auth.models';
 import { AuthService } from '../../auth.service';
 import { ADD_ONS, AddOnCode, BUSINESS_TYPES, isAddOnAllowed } from '../../business-types';
+import {
+  DEFAULT_OTP_CHANNEL,
+  OTP_CODE_PATTERN,
+  SIGNUP_OTP_CHANNELS,
+  apiMessage,
+  channelPhrase,
+  fieldError,
+  formatWait,
+  isSignupCodeSent,
+  retryAfterSeconds,
+  secondsLeft,
+} from '../../otp-flow';
 import {
   BbSelectOption,
   CheckboxComponent,
@@ -13,8 +25,11 @@ import {
   MessageBoxComponent,
   PasswordInputComponent,
   PhoneInputComponent,
+  RadioGroupComponent,
   SelectComponent,
   TextInputComponent,
+  UiMessage,
+  bbPhone,
 } from '@bill-book/ui-components';
 
 /**
@@ -27,6 +42,13 @@ import {
  * The first branch's business type and add-ons are chosen here (D-50, TK-136):
  * there are no apps to sign up for any more. "HRMS or Payroll only" sends no
  * business type, and then one of those two add-ons is required.
+ *
+ * **Nothing is created until the mobile number is proved** (TK-196). The
+ * fourth step sends a six-digit code by WhatsApp (chosen unless the person
+ * picks SMS), and the same signup sent again with that code is what creates
+ * the trial. A field's own problem shows under the field; what the server says
+ * — a wrong or expired code, a code that could not be sent — shows in the
+ * message box.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +65,7 @@ import {
     SelectComponent,
     CheckboxComponent,
     MessageBoxComponent,
+    RadioGroupComponent,
   ],
   templateUrl: './signup.page.html',
   styleUrl: './signup.page.scss',
@@ -84,6 +107,7 @@ export class SignupPage implements OnInit {
 
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly countries = signal<Country[]>([]);
   protected readonly states = signal<StateRow[]>([]);
@@ -93,14 +117,48 @@ export class SignupPage implements OnInit {
   protected readonly provisioning = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly stepCount = 3;
+  protected readonly stepCount = 4;
   protected readonly step = signal(1);
+
+  // ---- Step 4: the code (TK-196) -----------------------------------------
+
+  protected readonly channelOptions = SIGNUP_OTP_CHANNELS;
+
+  protected readonly verifyForm = new FormGroup({
+    otpChannel: new FormControl<OtpChannel>(DEFAULT_OTP_CHANNEL, { nonNullable: true }),
+    otpCode: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(OTP_CODE_PATTERN)],
+    }),
+  });
+
+  /** Where the last code went; null until one has been sent for the number on the form. */
+  protected readonly codeSent = signal<SignupCodeResponse | null>(null);
+  protected readonly sending = signal(false);
+
+  /** When another code may be asked for (epoch ms), and a clock that ticks while waiting. */
+  private readonly resendAt = signal<number | null>(null);
+  private readonly now = signal(Date.now());
+  protected readonly resendIn = computed(() => secondsLeft(this.resendAt(), this.now()));
+  protected readonly resendWait = computed(() => formatWait(this.resendIn()));
+
+  /** What the message box shows: the server's refusal, else where the code went. */
+  protected readonly messages = computed<UiMessage[]>(() => {
+    const failure = this.error();
+    if (failure) {
+      return [{ tone: 'error', text: failure }];
+    }
+    const sent = this.codeSent();
+    return sent && this.step() === this.stepCount
+      ? [{ tone: 'success', text: `Code sent ${channelPhrase(sent.channel)} to ${sent.destination}. It works for ${Math.round(sent.expiresInSeconds / 60)} minutes.` }]
+      : [];
+  });
 
   protected readonly signupForm = new FormGroup({
     firstName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     lastName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
-    mobileNumber: new FormControl(''),
+    mobileNumber: new FormControl('', { nonNullable: true, validators: [Validators.required, bbPhone()] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
     confirmPassword: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
     
@@ -153,47 +211,49 @@ export class SignupPage implements OnInit {
     }
   }
 
-  protected progress(): number {
-    return Math.round((this.step() / this.stepCount) * 100);
+  /** The words under a field once it has been touched; empty when it is fine. */
+  protected err(control: AbstractControl, label: string, words: Partial<Record<string, string>> = {}): string {
+    return fieldError(control, label, words);
   }
 
-  next(): void {
+  private static readonly stepControls: Record<number, readonly string[]> = {
+    1: ['firstName', 'lastName', 'email', 'mobileNumber', 'password', 'confirmPassword'],
+    2: ['companyName', 'organizationName', 'financialYearStartMonth', 'countryId'],
+    3: ['gstin', 'pan', 'tan', 'tin', 'cin', 'udyamNumber'],
+  };
+
+  /** Touches a step's fields so each shows its own problem; true when the step is fine. */
+  private checkStep(step: number): boolean {
     let valid = true;
-    if (this.step() === 1) {
-      const step1Controls = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'] as const;
-      for (const ctrl of step1Controls) {
-        if (this.signupForm.controls[ctrl].invalid) {
-          this.signupForm.controls[ctrl].markAsTouched();
-          valid = false;
-        }
-      }
-      if (!valid) {
-        this.error.set('Please fill out all required fields.');
-        return;
-      }
-      if (this.signupForm.value.password !== this.signupForm.value.confirmPassword) {
-        this.error.set('Both passwords must match.');
-        return;
-      }
-    } else if (this.step() === 2) {
-      const step2Controls = ['companyName', 'organizationName', 'financialYearStartMonth', 'countryId'] as const;
-      for (const ctrl of step2Controls) {
-        if (this.signupForm.controls[ctrl].invalid) {
-          this.signupForm.controls[ctrl].markAsTouched();
-          valid = false;
-        }
-      }
-      if (!valid) {
-        this.error.set('Please fill out all required fields.');
-        return;
-      }
-      if (!this.signupForm.controls.businessType.value && this.chosenAddOns() === 'None') {
-        this.error.set('Choose HRMS or Payroll, or pick a business type.');
-        return;
+    for (const name of SignupPage.stepControls[step] ?? []) {
+      const control = this.signupForm.get(name);
+      if (control?.invalid) {
+        control.markAsTouched();
+        valid = false;
       }
     }
 
+    if (step === 1 && valid && this.signupForm.value.password !== this.signupForm.value.confirmPassword) {
+      const confirm = this.signupForm.controls.confirmPassword;
+      confirm.setErrors({ mismatch: true });
+      confirm.markAsTouched();
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  next(): void {
     this.error.set(null);
+    if (!this.checkStep(this.step())) {
+      return;
+    }
+
+    if (this.step() === 2 && !this.signupForm.controls.businessType.value && this.chosenAddOns() === 'None') {
+      this.error.set('Choose HRMS or Payroll, or pick a business type.');
+      return;
+    }
+
     this.step.update((s) => Math.min(s + 1, this.stepCount));
   }
 
@@ -217,7 +277,19 @@ export class SignupPage implements OnInit {
     { value: 10, name: 'October' }, { value: 11, name: 'November' }, { value: 12, name: 'December' },
   ];
 
+  constructor() {
+    // The resend countdown. One tick a second is all it needs, and only this
+    // page reads it.
+    const timer = setInterval(() => this.now.set(Date.now()), 1000);
+    this.destroyRef.onDestroy(() => clearInterval(timer));
+  }
+
   ngOnInit(): void {
+    // A code proves one number: change the number and it has to be sent again.
+    this.signupForm.controls.mobileNumber.valueChanges.subscribe(() => {
+      this.codeSent.set(null);
+      this.verifyForm.controls.otpCode.reset('');
+    });
     void this.load();
     this.applyAddOnRules(this.signupForm.controls.businessType.value);
     this.signupForm.controls.businessType.valueChanges.subscribe((type) => this.applyAddOnRules(type));
@@ -231,7 +303,10 @@ export class SignupPage implements OnInit {
       const fetchedCountries = await this.auth.countries();
       this.countries.set(fetchedCountries);
       if (!this.signupForm.value.countryId && fetchedCountries.length > 0) {
-        this.signupForm.patchValue({ countryId: fetchedCountries[0].countryId });
+        // India unless it is missing: the list is alphabetical, and its first
+        // entry would give the verification code the wrong country code.
+        const preferred = fetchedCountries.find((c) => c.countryCode === 'IN') ?? fetchedCountries[0];
+        this.signupForm.patchValue({ countryId: preferred.countryId });
       }
       
       const fetchedCurrencies = await this.auth.currencies();
@@ -255,23 +330,16 @@ export class SignupPage implements OnInit {
     this.states.set(await this.auth.states(countryId));
   }
 
-  async submit(): Promise<void> {
-    if (this.signupForm.invalid) {
-      this.signupForm.markAllAsTouched();
-      this.error.set('Please fill out all required fields.');
-      return;
-    }
-    this.busy.set(true);
-    this.error.set(null);
-    
+  /** The signup as the server reads it, with or without the code. */
+  private payload(otpCode?: string): SignupRequest {
     const val = this.signupForm.getRawValue();
-    const payload = {
+    return {
       businessType: val.businessType || null,
       addOns: this.chosenAddOns(),
       displayName: `${val.firstName} ${val.lastName}`.trim(),
       email: val.email,
       password: val.password,
-      mobileNumber: val.mobileNumber ?? '',
+      mobileNumber: val.mobileNumber,
       companyName: val.companyName,
       organizationName: val.organizationName,
       financialYearStartMonth: val.financialYearStartMonth,
@@ -288,16 +356,85 @@ export class SignupPage implements OnInit {
       addressLine2: val.addressLine2 ?? '',
       city: val.city ?? '',
       postalCode: val.postalCode ?? '',
+      otpChannel: this.verifyForm.controls.otpChannel.value,
+      otpCode,
     };
-    
+  }
+
+  /** Back to the first step with a problem, every field on it showing its own. False when there is one. */
+  private everyStepFine(): boolean {
+    for (let step = 1; step < this.stepCount; step++) {
+      if (!this.checkStep(step)) {
+        this.step.set(step);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Sends a code to the mobile number. Nothing is created by this. */
+  async sendCode(): Promise<void> {
+    if (this.sending() || this.resendIn() > 0 || !this.everyStepFine()) {
+      return;
+    }
+
+    this.sending.set(true);
+    this.error.set(null);
     try {
-      const response = await this.auth.signup(payload);
+      const response = await this.auth.signup(this.payload());
+      if (isSignupCodeSent(response)) {
+        this.codeSent.set(response);
+        this.verifyForm.controls.otpCode.reset('');
+        this.resendAt.set(Date.now() + response.resendAfterSeconds * 1000);
+      }
+    } catch (err: unknown) {
+      const wait = retryAfterSeconds(err);
+      if (wait) {
+        this.resendAt.set(Date.now() + wait * 1000);
+      }
+      this.error.set(apiMessage(err, 'The code could not be sent. Please try again.'));
+    } finally {
+      this.sending.set(false);
+    }
+  }
+
+  /** Sends the signup with its code; the right code creates the trial. */
+  async submit(): Promise<void> {
+    if (this.step() < this.stepCount) {
+      this.next();
+      return;
+    }
+
+    if (!this.codeSent()) {
+      await this.sendCode();
+      return;
+    }
+
+    const code = this.verifyForm.controls.otpCode;
+    if (code.invalid) {
+      code.markAsTouched();
+      return;
+    }
+
+    if (!this.everyStepFine()) {
+      return;
+    }
+
+    this.busy.set(true);
+    this.error.set(null);
+
+    try {
+      const response = await this.auth.signup(this.payload(code.value));
+      if (isSignupCodeSent(response)) {
+        // Not expected with a code, but it is a code on its way, not a failure.
+        this.codeSent.set(response);
+        return;
+      }
       this.provisioning.set(true);
       await this.poll(response.customerId);
       await this.router.navigateByUrl('/login');
     } catch (err: unknown) {
-      const anyErr = err as { error?: { message?: string } };
-      this.error.set(anyErr?.error?.message ?? 'Signup failed. Please try again.');
+      this.error.set(apiMessage(err, 'Signup failed. Please try again.'));
       this.provisioning.set(false);
     } finally {
       this.busy.set(false);

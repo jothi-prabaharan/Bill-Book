@@ -111,18 +111,27 @@ public class ForgotPasswordRequest
 {
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Email must be a valid email address.")]
+    [MaxLength(200, ErrorMessage = "Email cannot exceed 200 characters.")]
     public string Email { get; set; } = null!;
 
-    public OtpChannel Channel { get; set; } = OtpChannel.Email;
+    /// <summary>
+    /// How the code is sent: WhatsApp by default, SMS, or email (TK-196). A
+    /// WhatsApp or SMS code goes to the mobile number on the account; with none
+    /// there, nothing is sent and the answer is the same 200.
+    /// </summary>
+    [EnumDataType(typeof(OtpChannel), ErrorMessage = "Choose WhatsApp, SMS or email for the code.")]
+    public OtpChannel Channel { get; set; } = OtpChannel.WhatsApp;
 }
 
 public class VerifyOtpRequest
 {
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Email must be a valid email address.")]
+    [MaxLength(200, ErrorMessage = "Email cannot exceed 200 characters.")]
     public string Email { get; set; } = null!;
 
     [Required(ErrorMessage = "Code is required.")]
+    [MaxLength(6, ErrorMessage = "Code must be 6 digits.")]
     [RegularExpression(@"^\d{6}$", ErrorMessage = "Code must be 6 digits.")]
     public string Code { get; set; } = null!;
 }
@@ -131,17 +140,21 @@ public class ResetPasswordRequest
 {
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Email must be a valid email address.")]
+    [MaxLength(200, ErrorMessage = "Email cannot exceed 200 characters.")]
     public string Email { get; set; } = null!;
 
     [Required(ErrorMessage = "Code is required.")]
+    [MaxLength(6, ErrorMessage = "Code must be 6 digits.")]
     [RegularExpression(@"^\d{6}$", ErrorMessage = "Code must be 6 digits.")]
     public string Code { get; set; } = null!;
 
     [Required(ErrorMessage = "New password is required.")]
     [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [MaxLength(200, ErrorMessage = "Password cannot exceed 200 characters.")]
     public string NewPassword { get; set; } = null!;
 
     [Required(ErrorMessage = "Confirm password is required.")]
+    [MaxLength(200, ErrorMessage = "Password cannot exceed 200 characters.")]
     [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
     public string ConfirmPassword { get; set; } = null!;
 }

@@ -5,3 +5,20 @@
   grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
   gap: var(--space-2);
 }
+
+/* How far through the four steps: a width per step rather than a style
+   binding, so the template carries no inline style (TK-196). */
+.stepper__fill {
+  &[data-step='1'] { width: 25%; }
+  &[data-step='2'] { width: 50%; }
+  &[data-step='3'] { width: 75%; }
+  &[data-step='4'] { width: 100%; }
+}
+
+/* Step 4: the channel, then the code once it is sent. */
+.verify {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 26rem;
+}

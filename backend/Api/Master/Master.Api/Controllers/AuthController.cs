@@ -4,6 +4,8 @@ using Master.Repository.Clients;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Shared.Kernel.Persistence;
 using Master.Repository;
 using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
@@ -241,6 +243,7 @@ public sealed class AuthController : ControllerBase
     /// <summary>Always returns the same 200, whether or not the account exists.</summary>
     [AllowAnonymous]
     [HttpPost("forgot-password")]
+    [EnableRateLimiting(OtpRateLimit.Policy)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken ct)
     {
         await _auth.RequestPasswordResetAsync(request, ct);
@@ -250,8 +253,14 @@ public sealed class AuthController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// <c>[NoTransaction]</c> so a wrong code's count is kept: rolled back with
+    /// the 400, it never reached the five-try limit (TK-196).
+    /// </summary>
     [AllowAnonymous]
     [HttpPost("verify-otp")]
+    [NoTransaction]
+    [EnableRateLimiting(OtpRateLimit.Policy)]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request, CancellationToken ct)
     {
         bool ok = await _auth.VerifyOtpAsync(request, ct);
@@ -260,8 +269,15 @@ public sealed class AuthController : ControllerBase
             : BadRequest(new MessageResponse { Message = "Invalid or expired code." });
     }
 
+    /// <summary>
+    /// <c>[NoTransaction]</c> for the same reason as verify-otp;
+    /// <c>AuthRepository</c> puts the password, the spent code and the revoked
+    /// sessions in one transaction of its own.
+    /// </summary>
     [AllowAnonymous]
     [HttpPost("reset-password")]
+    [NoTransaction]
+    [EnableRateLimiting(OtpRateLimit.Policy)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken ct)
     {
         bool ok = await _auth.ResetPasswordAsync(request, ct);

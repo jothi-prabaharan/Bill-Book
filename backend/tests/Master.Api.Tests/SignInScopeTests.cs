@@ -41,7 +41,8 @@ public sealed class SignInScopeTests
 
         return new AuthRepository(
             db, new BcryptPasswordHasher(), new JwtTokenRepository(options, TimeProvider.System),
-            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System);
+            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System,
+            new RecordingMobileMessages());
     }
 
     private static JwtSecurityToken Read(string token) => new JwtSecurityTokenHandler().ReadJwtToken(token);

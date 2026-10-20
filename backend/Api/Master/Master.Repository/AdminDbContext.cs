@@ -364,6 +364,9 @@ public class AdminDbContext : DbContext
         {
             b.HasKey(e => e.OtpVerificationId);
             b.HasIndex(e => new { e.UserId, e.Purpose, e.ExpiresAt });
+            // A trial-signup code has no user and is found by the number it
+            // went to (TK-196): the resend wait and the hourly cap read it too.
+            b.HasIndex(e => new { e.Destination, e.Purpose, e.ExpiresAt });
             b.Property(e => e.Purpose).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.Channel).HasConversion<string>().HasMaxLength(10);
         });

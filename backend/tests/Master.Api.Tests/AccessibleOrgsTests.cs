@@ -39,7 +39,8 @@ public sealed class AccessibleOrgsTests
 
         return new AuthRepository(
             db, new BcryptPasswordHasher(), new JwtTokenRepository(options, TimeProvider.System),
-            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System);
+            new OtpService(), new OrgContextRepository(db, TimeProvider.System), new NoEmail(), TimeProvider.System,
+            new RecordingMobileMessages());
     }
 
     /// <summary>
