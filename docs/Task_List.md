@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 180 completed, 0 working, 10 open, and 2 blocked (192 cards).
+**Summary:** 180 completed, 1 working, 10 open, and 2 blocked (193 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -202,3 +202,4 @@ where to start, sub-tasks and notes.
 | [TK-193](./Task_Details.md#tk-193--create-pages-the-nine-sales-and-purchase-documents) | Create pages: the nine sales and purchase documents | Z | 🚫 blocked | — | — | — | [#183](https://github.com/jothi-prabaharan/Bill-Book/issues/183) | superseded: the owner did the transaction create pages themselves (14–16 October 2026) |
 | [TK-194](./Task_Details.md#tk-194--create-pages-journal-account-tax-rate-payment-term-receive-spend-and-transfer) | Create pages: journal, account, tax rate, payment term, receive, spend and transfer | Z | 🟪 open | — | — | — | — | — |
 | [TK-195](./Task_Details.md#tk-195--create-pages-items-item-groups-stock-adjustments-and-the-contact-form) | Create pages: items, item groups, stock adjustments and the contact form | Z | 🟪 open | — | — | — | — | — |
+| [TK-196](./Task_Details.md#tk-196--trial-signup-verified-by-a-whatsapp-or-sms-code-before-anything-is-created-the-same-choice-on-password-reset) | Trial signup verified by a WhatsApp or SMS code before anything is created; the same choice on password reset | Z | 🔶 working | Claude Opus 5.5 (working) | since 2026-10-20 | — | [#186](https://github.com/jothi-prabaharan/Bill-Book/issues/186) | — |
