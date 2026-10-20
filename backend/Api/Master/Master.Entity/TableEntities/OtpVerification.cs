@@ -6,7 +6,7 @@ namespace Master.Entity.TableEntities;
 
 /// <summary>
 /// A short numeric code sent by email, SMS or WhatsApp. Backs OTP-based
-/// forgot-password and the mobile check on a trial signup (TK-196), and is
+/// forgot-password and the check on a trial signup (TK-196, TK-197), and is
 /// reusable for email/mobile confirmation.
 /// </summary>
 public class OtpVerification : AuditableEntity
@@ -26,9 +26,9 @@ public class OtpVerification : AuditableEntity
 
     /// <summary>
     /// Where the code went: the email, or the masked mobile, for a password
-    /// reset; the whole mobile number for a trial signup, because with no user
-    /// yet the number is what the code is matched on, and a signup is accepted
-    /// only for the number that proved it.
+    /// reset; for a trial signup the whole address, lower-cased, or the whole
+    /// mobile number, because with no user yet that is what the code is matched
+    /// on, and a signup is accepted only for the address or number that proved it.
     /// </summary>
     [Required(ErrorMessage = "Destination is required.")]
     [MaxLength(200, ErrorMessage = "Destination cannot exceed 200 characters.")]

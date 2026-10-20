@@ -35,8 +35,11 @@ public sealed class AesSecretProtector : ISecretProtectorRepository
         string? configured = configuration["Encryption:Key"];
         if (string.IsNullOrWhiteSpace(configured))
         {
-            // Development/local fallback: 32 bytes (256-bit) AES key
-            configured = "ZGV2LWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzLWxvbmch";
+            // Development/local fallback: 32 bytes (256-bit) AES key, the
+            // base64 of "dev-encryption-key-32-bytes-long". It and the two
+            // appsettings copies once ended in "!", which made 33 bytes, so
+            // this constructor threw and no mail could be sent (TK-197).
+            configured = "ZGV2LWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzLWxvbmc=";
         }
 
         _key = Convert.FromBase64String(configured);

@@ -7,13 +7,15 @@ using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shared.Kernel.Apps;
+using Shared.Kernel.Interfaces;
 using Xunit;
 
 namespace Master.Api.Tests;
 
 /// <summary>
-/// A public trial signup is verified by a WhatsApp or SMS code before anything
-/// is created (TK-196), through the service, against a real database.
+/// A public trial signup is verified by a code by email (the default, TK-197),
+/// WhatsApp or SMS (TK-196) before anything is created, through the service,
+/// against a real database.
 ///
 /// <b>Why a real database.</b> Two of the guarantees are the database's: the
 /// wrong-try count has to be committed on its own (a test against an in-memory
@@ -78,6 +80,8 @@ public sealed class SignupOtpTests
         public RecordingQueue Queue { get; } = new();
 
         public RecordingMobileMessages Messages { get; set; } = new();
+
+        public RecordingEmailSender Email { get; } = new();
     }
 
     /// <summary>A repository for one request, on a context of its own.</summary>
@@ -93,7 +97,8 @@ public sealed class SignupOtpTests
             new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance),
             harness.Clock,
             new OtpService(),
-            harness.Messages), db);
+            harness.Messages,
+            harness.Email), db);
     }
 
     /// <summary>A number no other test uses: tests share one database.</summary>
@@ -156,6 +161,45 @@ public sealed class SignupOtpTests
         return await db.Customers.AnyAsync(c => c.BillingEmail == email);
     }
 
+    /// <summary>
+    /// The platform's own mailbox, which a signup's email is sent from. The
+    /// recorded sender never opens it, so its password is never decrypted.
+    /// </summary>
+    private async Task EnsurePlatformMailboxAsync()
+    {
+        await using AdminDbContext db = _admin.CreateContext();
+        SmtpSettings? row = await db.SmtpSettings.FirstOrDefaultAsync(s => s.CustomerId == null);
+        if (row is null)
+        {
+            db.SmtpSettings.Add(new SmtpSettings
+            {
+                SmtpSettingsId = Guid.NewGuid(),
+                Host = "localhost",
+                Port = 25,
+                UseSsl = false,
+                FromEmail = "codes@example.com",
+                FromName = "Bill Book",
+                Username = "codes@example.com",
+                PasswordEncrypted = "not-read-by-these-tests",
+                IsActive = true,
+            });
+        }
+        else
+        {
+            row.IsActive = true;
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>A signup verified by email, with no mobile number at all.</summary>
+    private static SignupRequest EmailSignup(string? code = null)
+    {
+        SignupRequest request = Signup(NewMobile(), code, OtpChannel.Email);
+        request.MobileNumber = null;
+        return request;
+    }
+
     // ---- Sending a code -----------------------------------------------------
 
     [SkippableFact]
@@ -192,14 +236,13 @@ public sealed class SignupOtpTests
     }
 
     [SkippableFact]
-    public async Task WhatsApp_is_the_default_and_the_number_goes_out_in_international_form()
+    public async Task WhatsApp_sends_the_number_in_international_form()
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         var harness = new Harness();
         string mobile = NewMobile();
-        SignupRequest request = Signup(mobile);
-        request.OtpChannel = new SignupRequest().OtpChannel;
+        SignupRequest request = Signup(mobile, channel: OtpChannel.WhatsApp);
 
         SignupCodeResult sent = await SendAsync(harness, request);
 
@@ -473,6 +516,144 @@ public sealed class SignupOtpTests
 
         await SeedShardAsync();
         Assert.Equal(TrialSignupOutcome.Created, (await SignUpAsync(harness, Signup(mobile, code))).Outcome);
+    }
+
+    // ---- By email (TK-197) -----------------------------------------------------
+
+    [SkippableFact]
+    public async Task Email_is_the_default_and_the_code_goes_to_the_address_being_signed_up()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await EnsurePlatformMailboxAsync();
+        var harness = new Harness();
+        SignupRequest request = EmailSignup();
+        request.Email = request.Email.ToUpperInvariant();
+
+        Assert.Equal(OtpChannel.Email, new SignupRequest().OtpChannel);
+
+        SignupCodeResult sent = await SendAsync(harness, request);
+
+        Assert.Equal(SignupCodeOutcome.Sent, sent.Outcome);
+        EmailMessage message = Assert.Single(harness.Email.Sent);
+        Assert.Equal(request.Email, message.ToEmail);
+        Assert.Null(message.CustomerId);
+        Assert.Matches(@"^\d{6}$", harness.Email.LastCode());
+        Assert.Empty(harness.Messages.Sent);
+
+        // The person typed the address, so the answer shows it whole.
+        Assert.Equal(OtpChannel.Email, sent.Response!.Channel);
+        Assert.Equal(request.Email, sent.Response.Destination);
+
+        Assert.False(await CustomerExistsAsync(request.Email));
+        Assert.Empty(harness.Queue.Jobs);
+
+        await using AdminDbContext db = _admin.CreateContext();
+        OtpVerification otp = await db.OtpVerifications.AsNoTracking()
+            .SingleAsync(o => o.Destination == request.Email.ToLowerInvariant() && o.Purpose == OtpPurpose.TrialSignup);
+        Assert.Null(otp.UserId);
+        Assert.Equal(OtpChannel.Email, otp.Channel);
+    }
+
+    [SkippableFact]
+    public async Task The_right_code_by_email_creates_the_trial_with_the_owner_email_confirmed()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await EnsurePlatformMailboxAsync();
+        await SeedShardAsync();
+        var harness = new Harness();
+        SignupRequest request = EmailSignup();
+
+        await SendAsync(harness, request);
+        request.OtpCode = harness.Email.LastCode();
+
+        TrialSignupResult result = await SignUpAsync(harness, request);
+
+        Assert.Equal(TrialSignupOutcome.Created, result.Outcome);
+        Assert.True(await CustomerExistsAsync(request.Email));
+
+        ProvisioningJob job = Assert.Single(harness.Queue.Jobs);
+        Assert.True(job.IsOwnerEmailConfirmed);
+        Assert.False(job.IsOwnerMobileConfirmed);
+        Assert.Null(job.OwnerMobileNumber);
+    }
+
+    [SkippableFact]
+    public async Task A_wrong_code_by_email_creates_nothing_and_the_try_is_kept()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await EnsurePlatformMailboxAsync();
+        var harness = new Harness();
+        SignupRequest request = EmailSignup();
+
+        await SendAsync(harness, request);
+        request.OtpCode = WrongCode(harness.Email.LastCode());
+
+        TrialSignupResult result = await SignUpAsync(harness, request);
+
+        Assert.Equal(TrialSignupOutcome.CodeWrong, result.Outcome);
+        Assert.False(await CustomerExistsAsync(request.Email));
+
+        await using AdminDbContext db = _admin.CreateContext();
+        Assert.Equal(1, await db.OtpVerifications
+            .Where(o => o.Destination == request.Email.ToLowerInvariant()).Select(o => o.AttemptCount).SingleAsync());
+    }
+
+    [SkippableFact]
+    public async Task A_code_sent_by_email_does_not_sign_up_by_phone()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await EnsurePlatformMailboxAsync();
+        await SeedShardAsync();
+        var harness = new Harness();
+        string mobile = NewMobile();
+        SignupRequest byEmail = Signup(mobile, channel: OtpChannel.Email);
+
+        await SendAsync(harness, byEmail);
+
+        SignupRequest byPhone = Signup(mobile, harness.Email.LastCode(), OtpChannel.WhatsApp);
+        byPhone.Email = byEmail.Email;
+
+        Assert.Equal(TrialSignupOutcome.CodeExpired, (await SignUpAsync(harness, byPhone)).Outcome);
+        Assert.False(await CustomerExistsAsync(byEmail.Email));
+    }
+
+    /// <summary>
+    /// With no platform mailbox the email would fail on the worker after the
+    /// request had said it was sent, so the request is refused instead and
+    /// nothing is written. Every other test here expects the mailbox, so it is
+    /// put back however this one ends.
+    /// </summary>
+    [SkippableFact]
+    public async Task With_no_platform_mailbox_a_code_by_email_is_refused_and_nothing_is_written()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await EnsurePlatformMailboxAsync();
+        var harness = new Harness();
+        SignupRequest request = EmailSignup();
+
+        try
+        {
+            await using (AdminDbContext db = _admin.CreateContext())
+            {
+                await db.SmtpSettings.Where(s => s.CustomerId == null)
+                    .ExecuteUpdateAsync(set => set.SetProperty(s => s.IsActive, false));
+            }
+
+            Assert.Equal(SignupCodeOutcome.DeliveryUnavailable, (await SendAsync(harness, request)).Outcome);
+            Assert.Empty(harness.Email.Sent);
+
+            await using AdminDbContext check = _admin.CreateContext();
+            Assert.False(await check.OtpVerifications.AnyAsync(o => o.Destination == request.Email.ToLowerInvariant()));
+        }
+        finally
+        {
+            await EnsurePlatformMailboxAsync();
+        }
     }
 
     // ---- The rules, without a database -----------------------------------------

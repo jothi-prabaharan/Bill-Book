@@ -109,7 +109,7 @@ public sealed class SignupScopeTests
         SignupRepository signup = new(
             db, queue, new StubCurrencies(), new NoSeeding(),
             new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance), TimeProvider.System,
-            new OtpService(), new RecordingMobileMessages());
+            new OtpService(), new RecordingMobileMessages(), new RecordingEmailSender());
 
         SignupResponse response = await signup.SignupAsync(new SignupRequest
         {

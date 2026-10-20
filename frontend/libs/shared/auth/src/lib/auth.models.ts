@@ -78,25 +78,28 @@ export interface SignupRequest {
   addressLine2?: string;
   city?: string;
   postalCode?: string;
-  /** How the verification code is sent (TK-196): WhatsApp, the default, or SMS. */
+  /**
+   * How the verification code is sent: by email to `email`, the default
+   * (TK-197), or on WhatsApp or by SMS to `mobileNumber` (TK-196).
+   */
   otpChannel?: OtpChannel;
   /**
-   * The code sent to `mobileNumber`. Absent, the server sends one and creates
+   * The code sent by `otpChannel`. Absent, the server sends one and creates
    * nothing; present and right, it creates the trial.
    */
   otpCode?: string;
 }
 
 /**
- * How a one-time code is sent (TK-196). A trial signup takes WhatsApp or SMS;
- * a password reset takes email as well.
+ * How a one-time code is sent. Signup and password reset both take all three,
+ * email the default (TK-196, TK-197).
  */
 export type OtpChannel = 'WhatsApp' | 'Sms' | 'Email';
 
 /** The answer to a signup sent without a code: one is on its way, nothing is created yet. */
 export interface SignupCodeResponse {
   channel: OtpChannel;
-  /** The number, all but its last four digits hidden. */
+  /** The email address as typed, or the number with all but its last four digits hidden. */
   destination: string;
   expiresInSeconds: number;
   resendAfterSeconds: number;

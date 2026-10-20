@@ -4,26 +4,26 @@ import { OtpChannel, SignupCodeResponse, SignupResponse } from './auth.models';
 
 /**
  * The pieces the signup and forgot-password pages share for one-time codes
- * (TK-196). Pure: no DOM, no HTTP, so they are tested without a page.
+ * (TK-196, TK-197). Pure: no DOM, no HTTP, so they are tested without a page.
  */
 
-/** WhatsApp first and chosen unless the person picks otherwise, on both pages. */
-export const DEFAULT_OTP_CHANNEL: OtpChannel = 'WhatsApp';
+/** Email first and chosen unless the person picks otherwise, on both pages (TK-197). */
+export const DEFAULT_OTP_CHANNEL: OtpChannel = 'Email';
 
-/** A trial signup proves the mobile number, so only the mobile channels are offered. */
-export const SIGNUP_OTP_CHANNELS: readonly BbRadioOption<OtpChannel>[] = [
+/**
+ * The same three on signup and on password reset: email to the address, or
+ * WhatsApp or SMS to the mobile number.
+ */
+export const OTP_CHANNELS: readonly BbRadioOption<OtpChannel>[] = [
+  { value: 'Email', label: 'Email' },
   { value: 'WhatsApp', label: 'WhatsApp' },
   { value: 'Sms', label: 'SMS' },
 ];
 
-/**
- * A reset also offers email: an account can exist with no mobile number on it,
- * and its owner still needs a way back in.
- */
-export const RESET_OTP_CHANNELS: readonly BbRadioOption<OtpChannel>[] = [
-  ...SIGNUP_OTP_CHANNELS,
-  { value: 'Email', label: 'Email' },
-];
+/** True for the channels that send to the mobile number, which then has to be there. */
+export function isPhoneChannel(channel: OtpChannel): boolean {
+  return channel === 'WhatsApp' || channel === 'Sms';
+}
 
 /** "on WhatsApp", "by SMS", "by email": the phrase after "sent". */
 export function channelPhrase(channel: OtpChannel): string {

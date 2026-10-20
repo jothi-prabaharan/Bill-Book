@@ -523,8 +523,8 @@ A short numeric code sent to email or mobile. Used by forgot-password, and reusa
 | OtpVerificationId | long | PK, identity |
 | UserId | Guid? | FK. **Null for a `TrialSignup` code**, sent before the user exists (TK-196) |
 | Purpose | enum→string(20) | Required. PasswordReset / EmailConfirm / MobileConfirm / TrialSignup |
-| Channel | enum→string(10) | Required. Email / Sms / WhatsApp. **WhatsApp is the default wherever one is chosen** (TK-196) |
-| Destination | string(200) | Required. The email or masked mobile a reset code went to; **the whole mobile number for a signup code**, which is matched on it |
+| Channel | enum→string(10) | Required. Email / Sms / WhatsApp. **Email is the default wherever one is chosen** (TK-197) |
+| Destination | string(200) | Required. The email or masked mobile a reset code went to; **for a signup code the whole address, lower-cased, or the whole mobile number**, which is matched on it |
 | CodeHash | string(500) | Required. **The 6-digit code, hashed (SHA-256) — never stored plaintext** |
 | ExpiresAt | DateTimeOffset | Required. **10 minutes** |
 | AttemptCount | int | Default 0. **Lock after 5 wrong tries** |
@@ -532,7 +532,7 @@ A short numeric code sent to email or mobile. Used by forgot-password, and reusa
 
 Indexes: `(UserId, Purpose, ExpiresAt)`, `(Destination, Purpose, ExpiresAt)`.
 
-The code is 6 digits, generated with a cryptographic RNG, and only its hash is stored — same discipline as passwords. A new request invalidates any unconsumed code for the same `(UserId, Purpose)`, or for a signup the same number. One destination gets a code at most once a minute and five times an hour (`OtpPolicy`), and a code that could not be sent is deleted rather than kept. WhatsApp and SMS go through `IMobileMessageClient`; **no provider is chosen yet (D-66)**, so Development logs the code and every other environment refuses to send.
+The code is 6 digits, generated with a cryptographic RNG, and only its hash is stored — same discipline as passwords. A new request invalidates any unconsumed code for the same `(UserId, Purpose)`, or for a signup the same address or number. One destination gets a code at most once a minute and five times an hour (`OtpPolicy`), and a code that could not be sent is deleted rather than kept. Email goes through `IEmailSender` from the platform's own mailbox (`mst.SmtpSettings` with no customer). WhatsApp and SMS go through `IMobileMessageClient`; **no provider is chosen yet (D-66)**, so Development logs the code and every other environment refuses to send.
 
 ### `rat.CurrencyRates` 📋 / `rat.MetalRates` 📋
 Dated history, not just today's rate. Manual override always available.
@@ -1171,7 +1171,7 @@ All components accept one declarative `validation` object rather than hand-wired
 ### Forgot password — OTP
 Three steps, all on one route with a wizard:
 
-1. **Request** — `POST /api/auth/forgot-password` with the email and a `channel`: `WhatsApp` (the default), `Sms` or `Email` (TK-196). **Always returns 200 with the same message** and always advances to step 2, even for an unknown account — never reveal whether it exists. If the account *does* exist, a 6-digit OTP (`mst.OtpVerifications`, 10-min expiry) goes by email, or by WhatsApp or SMS to the mobile number on the account. The number need not be confirmed; a reset by WhatsApp or SMS confirms it. No number, a resend inside the minute, or a provider that refused all end in the same 200.
+1. **Request** — `POST /api/auth/forgot-password` with the email and a `channel`: `Email` (the default, TK-197), `WhatsApp` or `Sms` (TK-196). **Always returns 200 with the same message** and always advances to step 2, even for an unknown account — never reveal whether it exists. If the account *does* exist, a 6-digit OTP (`mst.OtpVerifications`, 10-min expiry) goes by email, or by WhatsApp or SMS to the mobile number on the account. The number need not be confirmed; a reset by WhatsApp or SMS confirms it, and a reset by email confirms the email. No number, a resend inside the minute, or a provider that refused all end in the same 200.
 2. **Verify** — `POST /api/auth/verify-otp` with the code. Wrong code increments `AttemptCount`; **5 wrong tries locks the code** and forces a new request. Expired code → ask to resend.
 3. **Reset** — `POST /api/auth/reset-password` with the verified OTP reference + new password (min 8 chars, confirm field). On success **all refresh tokens are revoked** — redirect to login.
 
@@ -1185,24 +1185,24 @@ Invitations are **link-based**, not OTP: the user opens the tokenised URL from t
 ## Trial signup (`apps/web`, public) 🔨
 `POST /api/customers/signup` — one public form that provisions a whole tenant.
 
-**Account** — DisplayName (the person), Email, Password, MobileNumber (**required on a public signup**, TK-196)
-**Verification (public signup only, TK-196)** — OtpChannel (`WhatsApp`, the default, or `Sms`), OtpCode
+**Account** — DisplayName (the person), Email, Password, MobileNumber (**required on a public signup verified by WhatsApp or SMS**, TK-196, TK-197)
+**Verification (public signup only)** — OtpChannel (`Email`, the default, TK-197; `WhatsApp` or `Sms`, TK-196), OtpCode
 **Company / first organization** — CompanyName, OrganizationName, financial-year start date (defaults to 1 April), BaseCurrency (defaults from country)
 **Statutory (India, all optional at signup, editable later)** — GSTIN, PAN, TAN, TIN, CIN, Udyam
 **Location** — CountryId (dropdown from `/api/master/countries`), StateId (dependent dropdown), City, PostalCode
 
 Validate GSTIN's first two digits against the chosen state's `StateCode` when GSTIN is supplied.
 
-**A code first, then the trial (TK-196).** The route answers in two phases:
-- **Without `OtpCode`** it runs every check below, sends a 6-digit code to the mobile number by the chosen channel and answers **200** with the channel, the masked number, the code's lifetime and the resend wait. It creates nothing: no customer, licence, organization, shard capacity, seed or token. A resend inside the minute, or past five an hour, is **429** with `retryAfterSeconds`; no provider is **503**; a provider that refused is **502**.
-- **With `OtpCode`** it runs the same checks again, matches the code on that mobile number, and only if it is right does what follows. A wrong code is **400** with the tries left, committed on its own (the route is `[NoTransaction]`); five wrong tries, an expired code or a spent one are each a **400** saying to send a new code. The right code is spent by a guarded update in the same transaction as the writes below, so it creates one trial at most, and a refusal after it (no shard) leaves it unspent.
+**A code first, then the trial (TK-196, TK-197).** The route answers in two phases:
+- **Without `OtpCode`** it runs every check below, sends a 6-digit code by the chosen channel — by email to `Email`, or on WhatsApp or by SMS to `MobileNumber` — and answers **200** with the channel, where it went (the address as typed, or the masked number), the code's lifetime and the resend wait. It creates nothing: no customer, licence, organization, shard capacity, seed or token. A resend inside the minute, or past five an hour, is **429** with `retryAfterSeconds`; no platform mailbox (for email) or no provider (for WhatsApp or SMS) is **503**; a provider that refused is **502**.
+- **With `OtpCode`** it runs the same checks again, matches the code on that address or number as the channel says, and only if it is right does what follows. A wrong code is **400** with the tries left, committed on its own (the route is `[NoTransaction]`); five wrong tries, an expired code or a spent one are each a **400** saying to send a new code. The right code is spent by a guarded update in the same transaction as the writes below, so it creates one trial at most, and a refusal after it (no shard) leaves it unspent.
 
 A platform operator's create (`POST /api/admin/customers`) is not sent a code.
 
 **What the server does with the right code** (see the signup flow for the full sequence):
 1. Create `mst.Customers` (Status = Provisioning) + generate `CustomerCode`
 2. Create a **Trial `mst.Licenses`** — 14 days, 3 users, 1 org — automatically
-3. Create the first Organization, then create the owner `mst.Users` with the Owner role, password already hashed, and `MobileConfirmed` set
+3. Create the first Organization, then create the owner `mst.Users` with the Owner role, password already hashed, and `EmailConfirmed` or `MobileConfirmed` set by the channel that proved it
 4. Seed every service's default data into the shared tenant database, scoped to the new `CustomerId`/`OrgId` — Chart of Accounts, the 6 TaxMasters (AccountTypes and the other reference masters live in the master database), numbering series, payment terms, contact roles, unit types, units and metal purities
 5. Flip Customer and Organization to Active/Trial — or, if a service could not be reached, leave the Customer at Provisioning (Failed if there is no way back in to retry) for `apps/admin` to retry later
 
@@ -1507,7 +1507,7 @@ These slot into build step 1 (Identity/Platform) and step 7 (Notification worker
 - `mst.Licenses`, `mst.SmtpSettings`, `mst.OtpVerifications` migrations, and the `license_status` claim
 - `IEmailSender` backed by real SMTP reading `mst.SmtpSettings` (decrypting the password)
 - `licenseActiveGuard` (frontend) + the `403 LicenseExpired` middleware (every service)
-- WhatsApp and SMS delivery wait on a provider (D-66); the channels are offered and built against `IMobileMessageClient` (TK-196)
+- WhatsApp and SMS delivery wait on a provider (D-66); the channels are offered and built against `IMobileMessageClient` (TK-196). Email codes, the default, go through `IEmailSender` (TK-197)
 
 # Original User Request
 

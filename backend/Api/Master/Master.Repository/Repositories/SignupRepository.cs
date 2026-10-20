@@ -5,6 +5,7 @@ using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Shared.Kernel.Apps;
+using Shared.Kernel.Interfaces;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Validation;
 
@@ -39,6 +40,9 @@ public sealed class SignupRepository
     /// <summary>Sends them by WhatsApp or SMS.</summary>
     private readonly IMobileMessageClient _messages;
 
+    /// <summary>Sends them by email, from the platform's own mailbox (TK-197).</summary>
+    private readonly IEmailSender _email;
+
     public SignupRepository(
         AdminDbContext db,
         IProvisioningQueue queue,
@@ -47,7 +51,8 @@ public sealed class SignupRepository
         ITenantDatabaseAllocator databases,
         TimeProvider clock,
         IOtpRepository otp,
-        IMobileMessageClient messages)
+        IMobileMessageClient messages,
+        IEmailSender email)
     {
         _db = db;
         _queue = queue;
@@ -57,6 +62,7 @@ public sealed class SignupRepository
         _clock = clock;
         _otp = otp;
         _messages = messages;
+        _email = email;
     }
 
     /// <summary>
@@ -86,12 +92,12 @@ public sealed class SignupRepository
     /// Creates the customer, its licence and first branch, and queues the owner
     /// and the seed — with nothing verified. A platform operator's create
     /// (<c>AdminCustomersController</c>) comes here directly; a public signup
-    /// comes through <see cref="SignupWithCodeAsync"/>, which proves the mobile
-    /// number first (TK-196).
+    /// comes through <see cref="SignupWithCodeAsync"/>, which proves the email
+    /// address or the mobile number first (TK-196, TK-197).
     /// </summary>
     public async Task<SignupResponse> SignupAsync(SignupRequest request, CancellationToken ct)
     {
-        (SignupResponse response, ProvisioningJob job) = await CreateTrialAsync(request, isMobileConfirmed: false, ct);
+        (SignupResponse response, ProvisioningJob job) = await CreateTrialAsync(request, verifiedBy: null, ct);
         await _queue.EnqueueAsync(job, ct);
         return response;
     }
@@ -99,17 +105,20 @@ public sealed class SignupRepository
     // ---- Public signup: a code first, then the trial (TK-196) ---------------
 
     /// <summary>
-    /// Sends a six-digit code to the signup's mobile number by the chosen
-    /// channel, and creates nothing else: no customer, licence, branch, shard
-    /// capacity, seed or token. The controller has already checked everything
-    /// it checks before a create, so a code is sent only for a signup that
-    /// would be accepted.
+    /// Sends a six-digit code by the chosen channel — by email to the signup's
+    /// address, the default (TK-197), or on WhatsApp or by SMS to its mobile
+    /// number (TK-196) — and creates nothing else: no customer, licence,
+    /// branch, shard capacity, seed or token. The controller has already
+    /// checked everything it checks before a create, so a code is sent only
+    /// for a signup that would be accepted.
     ///
-    /// A new code replaces any live one for the number. The number waits
+    /// A new code replaces any live one for the address or number, which waits
     /// <see cref="OtpPolicy.ResendAfter"/> between codes and gets
     /// <see cref="OtpPolicy.MaxPerWindow"/> an hour, counted from the codes
     /// stored for it; a code that could not be sent is removed again, so it
-    /// neither holds the wait nor counts toward the cap.
+    /// neither holds the wait nor counts toward the cap. An email is queued
+    /// and sent from the platform's mailbox in the background, so with no
+    /// mailbox set up the request is refused before anything is written.
     ///
     /// Runs with no request transaction (<c>[NoTransaction]</c>): each save
     /// here stands on its own.
@@ -117,12 +126,21 @@ public sealed class SignupRepository
     public async Task<SignupCodeResult> SendCodeAsync(SignupRequest request, CancellationToken ct)
     {
         DateTimeOffset now = _clock.GetUtcNow();
-        string mobile = SignupMobile(request);
+        bool byEmail = request.OtpChannel == OtpChannel.Email;
+        string destination = SignupDestination(request);
+
+        // The mailbox SmtpSettingsRepository.ResolveAsync picks for a mail with
+        // no customer, which a signup's is. Without one the queued email would
+        // fail on the worker after this had answered that it was sent.
+        if (byEmail && !await _db.SmtpSettings.AnyAsync(s => s.CustomerId == null && s.IsActive, ct))
+        {
+            return new SignupCodeResult { Outcome = SignupCodeOutcome.DeliveryUnavailable };
+        }
 
         DateTimeOffset floor = OtpPolicy.WindowExpiryFloor(now);
         List<DateTimeOffset> expiries = await _db.OtpVerifications
             .Where(o => o.Purpose == OtpPurpose.TrialSignup
-                && o.Destination == mobile
+                && o.Destination == destination
                 && o.ExpiresAt > floor)
             .Select(o => o.ExpiresAt)
             .ToListAsync(ct);
@@ -139,7 +157,7 @@ public sealed class SignupRepository
 
         List<OtpVerification> live = await _db.OtpVerifications
             .Where(o => o.Purpose == OtpPurpose.TrialSignup
-                && o.Destination == mobile
+                && o.Destination == destination
                 && o.ConsumedAt == null
                 && o.ExpiresAt > now)
             .ToListAsync(ct);
@@ -154,13 +172,41 @@ public sealed class SignupRepository
             UserId = null,
             Purpose = OtpPurpose.TrialSignup,
             Channel = request.OtpChannel,
-            Destination = mobile,
+            Destination = destination,
             CodeHash = hash,
             ExpiresAt = now.Add(OtpPolicy.Lifetime),
             AttemptCount = 0,
         };
         _db.OtpVerifications.Add(otp);
         await _db.SaveChangesAsync(ct);
+
+        if (byEmail)
+        {
+            int minutes = (int)OtpPolicy.Lifetime.TotalMinutes;
+            try
+            {
+                await _email.SendAsync(new EmailMessage
+                {
+                    ToEmail = request.Email.Trim(),
+                    ToName = request.DisplayName,
+                    Subject = "Your signup verification code",
+                    HtmlBody = $"<p>Your verification code is <strong>{code}</strong>. It expires in {minutes} minutes.</p>"
+                        + "<p>If you did not start a signup, you can ignore this email.</p>",
+                    TextBody = $"Your verification code is {code}. It expires in {minutes} minutes. "
+                        + "If you did not start a signup, you can ignore this email.",
+                }, ct);
+            }
+            catch
+            {
+                // A code that was never queued should not hold the wait. The
+                // failure itself goes on to the error handler like any other.
+                _db.OtpVerifications.Remove(otp);
+                await _db.SaveChangesAsync(CancellationToken.None);
+                throw;
+            }
+
+            return Sent(request.OtpChannel, request.Email.Trim(), "A 6-digit code has been sent by email.");
+        }
 
         string? phoneCode = await _db.Countries
             .Where(c => c.CountryId == request.CountryId)
@@ -171,7 +217,7 @@ public sealed class SignupRepository
         {
             await _messages.SendOtpAsync(new MobileOtpMessage(
                 request.OtpChannel,
-                MobileMessages.International(mobile, phoneCode),
+                MobileMessages.International(destination, phoneCode),
                 code,
                 OtpPurpose.TrialSignup,
                 OtpPolicy.Lifetime), ct);
@@ -187,27 +233,33 @@ public sealed class SignupRepository
             };
         }
 
-        return new SignupCodeResult
-        {
-            Outcome = SignupCodeOutcome.Sent,
-            Response = new SignupCodeResponse
-            {
-                Channel = request.OtpChannel,
-                Destination = OtpPolicy.MaskMobile(mobile),
-                ExpiresInSeconds = (int)OtpPolicy.Lifetime.TotalSeconds,
-                ResendAfterSeconds = (int)OtpPolicy.ResendAfter.TotalSeconds,
-                Message = request.OtpChannel == OtpChannel.Sms
-                    ? "A 6-digit code has been sent by SMS."
-                    : "A 6-digit code has been sent on WhatsApp.",
-            },
-        };
+        return Sent(
+            request.OtpChannel,
+            OtpPolicy.MaskMobile(destination),
+            request.OtpChannel == OtpChannel.Sms
+                ? "A 6-digit code has been sent by SMS."
+                : "A 6-digit code has been sent on WhatsApp.");
     }
+
+    private static SignupCodeResult Sent(OtpChannel channel, string destination, string message) => new()
+    {
+        Outcome = SignupCodeOutcome.Sent,
+        Response = new SignupCodeResponse
+        {
+            Channel = channel,
+            Destination = destination,
+            ExpiresInSeconds = (int)OtpPolicy.Lifetime.TotalSeconds,
+            ResendAfterSeconds = (int)OtpPolicy.ResendAfter.TotalSeconds,
+            Message = message,
+        },
+    };
 
     /// <summary>
     /// Creates the trial for a signup whose code is right, and only then.
     ///
-    /// The code is matched on the signup's own mobile number, so a code sent to
-    /// one number cannot create an account for another. A wrong code is
+    /// The code is matched on the signup's own address or mobile number, as its
+    /// channel says, so a code sent to one cannot create an account for
+    /// another. A wrong code is
     /// counted and saved on its own before the refusal is returned, which is
     /// why the route runs with no request transaction: a transaction rolled
     /// back with the 400 would take the count with it, and the five-try limit
@@ -223,11 +275,11 @@ public sealed class SignupRepository
     public async Task<TrialSignupResult> SignupWithCodeAsync(SignupRequest request, CancellationToken ct)
     {
         DateTimeOffset now = _clock.GetUtcNow();
-        string mobile = SignupMobile(request);
+        string destination = SignupDestination(request);
 
         OtpVerification? otp = await _db.OtpVerifications
             .Where(o => o.Purpose == OtpPurpose.TrialSignup
-                && o.Destination == mobile
+                && o.Destination == destination
                 && o.ConsumedAt == null
                 && o.ExpiresAt > now)
             .OrderByDescending(o => o.OtpVerificationId)
@@ -271,7 +323,7 @@ public sealed class SignupRepository
                 return new TrialSignupResult { Outcome = TrialSignupOutcome.CodeExpired };
             }
 
-            (response, job) = await CreateTrialAsync(request, isMobileConfirmed: true, ct);
+            (response, job) = await CreateTrialAsync(request, verifiedBy: otp.Channel, ct);
             await scope.CommitAsync(ct);
         }
 
@@ -280,18 +332,26 @@ public sealed class SignupRepository
         return new TrialSignupResult { Outcome = TrialSignupOutcome.Created, Response = response };
     }
 
-    /// <summary>The number a public signup is verified on, as it is stored. The controller refuses a blank one.</summary>
-    private static string SignupMobile(SignupRequest request) =>
-        PhoneNumbers.NormalizeOptional(request.MobileNumber)
-            ?? throw new InvalidOperationException("A public signup needs a mobile number; the controller checks it first.");
+    /// <summary>
+    /// Where a public signup's code goes, as it is stored and matched: the
+    /// address, lower-cased, for email; the mobile number as it is stored for
+    /// WhatsApp or SMS. The controller refuses a phone channel with no number.
+    /// </summary>
+    private static string SignupDestination(SignupRequest request) =>
+        request.OtpChannel == OtpChannel.Email
+            ? request.Email.Trim().ToLowerInvariant()
+            : PhoneNumbers.NormalizeOptional(request.MobileNumber)
+                ?? throw new InvalidOperationException("A code by WhatsApp or SMS needs a mobile number; the controller checks it first.");
 
     /// <summary>
     /// The writes every signup shares: the customer on a shard, its licence and
     /// first branch, and the provisioning job for the caller to queue once
-    /// those are committed.
+    /// those are committed. <paramref name="verifiedBy"/> is the channel whose
+    /// code proved the signup, null for an operator's create; the owner's email
+    /// or mobile is created confirmed to match.
     /// </summary>
     private async Task<(SignupResponse Response, ProvisioningJob Job)> CreateTrialAsync(
-        SignupRequest request, bool isMobileConfirmed, CancellationToken ct)
+        SignupRequest request, OtpChannel? verifiedBy, CancellationToken ct)
     {
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
@@ -435,7 +495,8 @@ public sealed class SignupRepository
             request.DisplayName,
             request.MobileNumber,
             request.Password,
-            isMobileConfirmed);
+            IsOwnerMobileConfirmed: verifiedBy is OtpChannel.WhatsApp or OtpChannel.Sms,
+            IsOwnerEmailConfirmed: verifiedBy == OtpChannel.Email);
 
         return (new SignupResponse
         {

@@ -41,25 +41,24 @@ public class SignupRequest
     public string Password { get; set; } = null!;
 
     /// <summary>
-    /// The owner's mobile number. Optional on a platform operator's create;
-    /// <b>required on a public signup</b>, which is verified by a code sent to
-    /// it before anything is created (TK-196). The controller says so, since
-    /// one request model serves both.
+    /// The owner's mobile number. Optional, except on a public signup verified
+    /// by WhatsApp or SMS, where the code goes to it (TK-196, TK-197). The
+    /// controller says so, since one request model serves both kinds of create.
     /// </summary>
     [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
     public string? MobileNumber { get; set; }
 
-    // ---- Verification (public signup only, TK-196) -------------------------
+    // ---- Verification (public signup only, TK-196, TK-197) ------------------
 
     /// <summary>
-    /// How the verification code is sent: WhatsApp, the default, or SMS. Email
-    /// is refused here, because the code is what proves the mobile number.
+    /// How the verification code is sent: by email to <see cref="Email"/>, the
+    /// default (TK-197), or on WhatsApp or by SMS to <see cref="MobileNumber"/>.
     /// </summary>
-    [EnumDataType(typeof(OtpChannel), ErrorMessage = "Choose WhatsApp or SMS for the code.")]
-    public OtpChannel OtpChannel { get; set; } = OtpChannel.WhatsApp;
+    [EnumDataType(typeof(OtpChannel), ErrorMessage = "Choose email, WhatsApp or SMS for the code.")]
+    public OtpChannel OtpChannel { get; set; } = OtpChannel.Email;
 
     /// <summary>
-    /// The code that was sent to <see cref="MobileNumber"/>. Absent, a public
+    /// The code that was sent by <see cref="OtpChannel"/>. Absent, a public
     /// signup sends one and creates nothing; present and right, it creates the
     /// trial. A platform operator's create ignores both fields.
     /// </summary>
@@ -140,8 +139,11 @@ public class SignupCodeResponse
 {
     public OtpChannel Channel { get; set; }
 
-    /// <summary>The number the code went to, all but its last four digits hidden.</summary>
-    [MaxLength(30, ErrorMessage = "Destination cannot exceed 30 characters.")]
+    /// <summary>
+    /// Where the code went: the email address as typed, or the mobile number
+    /// with all but its last four digits hidden.
+    /// </summary>
+    [MaxLength(200, ErrorMessage = "Destination cannot exceed 200 characters.")]
     public string Destination { get; set; } = null!;
 
     public int ExpiresInSeconds { get; set; }
@@ -158,13 +160,16 @@ public enum SignupCodeOutcome
 {
     Sent = 1,
 
-    /// <summary>The number had a code too recently, or too many this hour.</summary>
+    /// <summary>The address or number had a code too recently, or too many this hour.</summary>
     TooSoon = 2,
 
-    /// <summary>The provider refused the message or could not be reached.</summary>
+    /// <summary>The WhatsApp or SMS provider refused the message or could not be reached.</summary>
     DeliveryFailed = 3,
 
-    /// <summary>No WhatsApp or SMS provider is configured (D-66).</summary>
+    /// <summary>
+    /// Nothing can send by the chosen channel: no WhatsApp or SMS provider is
+    /// configured (D-66), or, for email, no platform mailbox.
+    /// </summary>
     DeliveryUnavailable = 4,
 }
 
@@ -186,7 +191,7 @@ public enum TrialSignupOutcome
     /// <summary>The code is not the one sent; tries remain.</summary>
     CodeWrong = 2,
 
-    /// <summary>No live code for the number: expired, already used, or never sent.</summary>
+    /// <summary>No live code for the address or number: expired, already used, or never sent.</summary>
     CodeExpired = 3,
 
     /// <summary>Five wrong tries: the code no longer works.</summary>

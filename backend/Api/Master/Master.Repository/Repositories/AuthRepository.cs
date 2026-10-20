@@ -442,9 +442,9 @@ public sealed class AuthRepository
     /// <summary>
     /// Always succeeds silently — never reveals whether the account exists.
     ///
-    /// The code goes by the channel asked for (TK-196): WhatsApp or SMS to the
-    /// mobile number on the account, or email. Every reason nothing is sent —
-    /// no such account, no mobile number on it, a code sent under
+    /// The code goes by the channel asked for: email, the default (TK-197), or
+    /// WhatsApp or SMS to the mobile number on the account (TK-196). Every
+    /// reason nothing is sent — no such account, no mobile number on it, a code sent under
     /// <see cref="OtpPolicy.ResendAfter"/> ago or <see cref="OtpPolicy.MaxPerWindow"/>
     /// this hour, a provider that refused — ends the same way, because the caller
     /// answers 200 whatever happens and any difference would tell a stranger
@@ -599,10 +599,15 @@ public sealed class AuthRepository
         otp.ConsumedAt = now;
         user.PasswordHash = _passwordHasher.Hash(request.NewPassword);
 
-        // A WhatsApp or SMS code that worked proves the number on the account.
+        // A code that worked proves where it went: the number on the account
+        // for WhatsApp or SMS (TK-196), the address for email (TK-197).
         if (otp.Channel is OtpChannel.WhatsApp or OtpChannel.Sms)
         {
             user.MobileConfirmed = true;
+        }
+        else if (otp.Channel == OtpChannel.Email)
+        {
+            user.EmailConfirmed = true;
         }
 
         // Password reset revokes every live session.

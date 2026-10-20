@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 181 completed, 1 working, 10 open, and 2 blocked (194 cards).
+**Summary:** 182 completed, 0 working, 10 open, and 2 blocked (194 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -203,4 +203,4 @@ where to start, sub-tasks and notes.
 | [TK-194](./Task_Details.md#tk-194--create-pages-journal-account-tax-rate-payment-term-receive-spend-and-transfer) | Create pages: journal, account, tax rate, payment term, receive, spend and transfer | Z | 🟪 open | — | — | — | — | — |
 | [TK-195](./Task_Details.md#tk-195--create-pages-items-item-groups-stock-adjustments-and-the-contact-form) | Create pages: items, item groups, stock adjustments and the contact form | Z | 🟪 open | — | — | — | — | — |
 | [TK-196](./Task_Details.md#tk-196--trial-signup-verified-by-a-whatsapp-or-sms-code-before-anything-is-created-the-same-choice-on-password-reset) | Trial signup verified by a WhatsApp or SMS code before anything is created; the same choice on password reset | Z | ✅ completed | Claude Opus 5.5 | 2026-10-20 | written, not run | [#186](https://github.com/jothi-prabaharan/Bill-Book/issues/186) | — |
-| [TK-197](./Task_Details.md#tk-197--email-codes-on-trial-signup-and-password-reset-email-the-default) | Email codes on trial signup and password reset, email the default | Z | 🔶 working | Claude Opus 5.5 (working) | since 2026-10-20 | — | [#187](https://github.com/jothi-prabaharan/Bill-Book/issues/187) | — |
+| [TK-197](./Task_Details.md#tk-197--email-codes-on-trial-signup-and-password-reset-email-the-default) | Email codes on trial signup and password reset, email the default | Z | ✅ completed | Claude Opus 5.5 | 2026-10-20 | written, not run | [#187](https://github.com/jothi-prabaharan/Bill-Book/issues/187) | — |

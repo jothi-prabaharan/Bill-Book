@@ -12,7 +12,8 @@ using Xunit;
 namespace Master.Api.Tests;
 
 /// <summary>
-/// Forgot password by WhatsApp, SMS or email (TK-196), against a real database.
+/// Forgot password by email (the default, TK-197), WhatsApp or SMS (TK-196),
+/// against a real database.
 ///
 /// Every request answers the same 200 whether or not anything was sent, so
 /// these tests read what the service did — the message recorded, the code row
@@ -32,22 +33,11 @@ public sealed class PasswordResetOtpTests
         public override DateTimeOffset GetUtcNow() => Now;
     }
 
-    private sealed class RecordingEmail : IEmailSender
-    {
-        public List<EmailMessage> Sent { get; } = [];
-
-        public Task SendAsync(EmailMessage message, CancellationToken ct = default)
-        {
-            Sent.Add(message);
-            return Task.CompletedTask;
-        }
-    }
-
     private sealed class Harness
     {
         public SettableClock Clock { get; } = new();
 
-        public RecordingEmail Email { get; } = new();
+        public RecordingEmailSender Email { get; } = new();
 
         public RecordingMobileMessages Messages { get; set; } = new();
     }
@@ -134,14 +124,35 @@ public sealed class PasswordResetOtpTests
     private static string WrongCode(string code) => ((int.Parse(code) + 1) % 1_000_000).ToString("D6");
 
     [SkippableFact]
-    public async Task WhatsApp_is_the_default_and_goes_to_the_mobile_number_on_the_account()
+    public async Task Email_is_the_default_and_goes_to_the_account_address()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        var harness = new Harness();
+        User user = await SeedUserAsync("9843055128");
+
+        await ForgotAsync(harness, user.Email);
+
+        Assert.Equal(OtpChannel.Email, new ForgotPasswordRequest().Channel);
+        Assert.Equal(user.Email, Assert.Single(harness.Email.Sent).ToEmail);
+        Assert.Matches(@"^\d{6}$", harness.Email.LastCode());
+        Assert.Empty(harness.Messages.Sent);
+
+        await using AdminDbContext db = _admin.CreateContext();
+        OtpVerification otp = await db.OtpVerifications.AsNoTracking().SingleAsync(o => o.UserId == user.UserId);
+        Assert.Equal(OtpChannel.Email, otp.Channel);
+        Assert.Equal(user.Email, otp.Destination);
+    }
+
+    [SkippableFact]
+    public async Task WhatsApp_goes_to_the_mobile_number_on_the_account()
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
         var harness = new Harness();
         User user = await SeedUserAsync("9843055120");
 
-        await ForgotAsync(harness, user.Email);
+        await ForgotAsync(harness, user.Email, OtpChannel.WhatsApp);
 
         MobileOtpMessage message = Assert.Single(harness.Messages.Sent);
         Assert.Equal(OtpChannel.WhatsApp, message.Channel);
@@ -209,7 +220,7 @@ public sealed class PasswordResetOtpTests
         var harness = new Harness();
         User user = await SeedUserAsync("9843055123");
 
-        await ForgotAsync(harness, user.Email);
+        await ForgotAsync(harness, user.Email, OtpChannel.WhatsApp);
         harness.Clock.Now = harness.Clock.Now.AddSeconds(30);
         await ForgotAsync(harness, user.Email, OtpChannel.Email);
 
@@ -229,7 +240,7 @@ public sealed class PasswordResetOtpTests
         var harness = new Harness { Messages = RecordingMobileMessages.Unavailable() };
         User user = await SeedUserAsync("9843055124");
 
-        await ForgotAsync(harness, user.Email);
+        await ForgotAsync(harness, user.Email, OtpChannel.WhatsApp);
 
         await using AdminDbContext db = _admin.CreateContext();
         Assert.False(await db.OtpVerifications.AnyAsync(o => o.UserId == user.UserId && o.ConsumedAt == null));
@@ -249,7 +260,7 @@ public sealed class PasswordResetOtpTests
         var harness = new Harness();
         User user = await SeedUserAsync("9843055125");
 
-        await ForgotAsync(harness, user.Email);
+        await ForgotAsync(harness, user.Email, OtpChannel.WhatsApp);
         string code = harness.Messages.Sent[0].Code;
 
         Assert.False(await VerifyAsync(harness, user.Email, WrongCode(code)));
@@ -277,7 +288,7 @@ public sealed class PasswordResetOtpTests
         var harness = new Harness();
         User user = await SeedUserAsync("9843055126");
 
-        await ForgotAsync(harness, user.Email);
+        await ForgotAsync(harness, user.Email, OtpChannel.WhatsApp);
         string code = harness.Messages.Sent[0].Code;
 
         Assert.True(await VerifyAsync(harness, user.Email, code));
@@ -293,7 +304,7 @@ public sealed class PasswordResetOtpTests
     }
 
     [SkippableFact]
-    public async Task A_reset_by_email_leaves_the_mobile_unconfirmed()
+    public async Task A_reset_by_email_confirms_the_email_and_leaves_the_mobile_unconfirmed()
     {
         Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
 
@@ -301,11 +312,12 @@ public sealed class PasswordResetOtpTests
         User user = await SeedUserAsync("9843055127");
 
         await ForgotAsync(harness, user.Email, OtpChannel.Email);
-        string code = System.Text.RegularExpressions.Regex.Match(harness.Email.Sent[0].TextBody!, @"\d{6}").Value;
 
-        Assert.True(await ResetAsync(harness, user.Email, code));
+        Assert.True(await ResetAsync(harness, user.Email, harness.Email.LastCode()));
 
         await using AdminDbContext db = _admin.CreateContext();
-        Assert.False(await db.Users.Where(u => u.UserId == user.UserId).Select(u => u.MobileConfirmed).SingleAsync());
+        User saved = await db.Users.AsNoTracking().SingleAsync(u => u.UserId == user.UserId);
+        Assert.True(saved.EmailConfirmed);
+        Assert.False(saved.MobileConfirmed);
     }
 }

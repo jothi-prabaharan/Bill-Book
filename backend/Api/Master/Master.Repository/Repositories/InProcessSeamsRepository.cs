@@ -103,7 +103,7 @@ public sealed class InProcessIdentityAdmin : IIdentityAdminRepository
                 PasswordHash = _hasher.Hash(request.Password),
                 DisplayName = request.DisplayName,
                 MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber),
-                EmailConfirmed = false,
+                EmailConfirmed = request.IsEmailConfirmed,
                 MobileConfirmed = request.IsMobileConfirmed,
                 IsActive = true,
             };

@@ -137,7 +137,8 @@ public sealed class SignupTests
                 new TenantDatabaseAllocatorRepository(db, NullLogger<TenantDatabaseAllocatorRepository>.Instance),
                 new FixedClock(),
                 new OtpService(),
-                new RecordingMobileMessages()),
+                new RecordingMobileMessages(),
+                new RecordingEmailSender()),
             db,
             queue);
     }

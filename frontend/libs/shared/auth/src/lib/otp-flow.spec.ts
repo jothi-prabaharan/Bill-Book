@@ -2,30 +2,35 @@ import { FormControl, Validators } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_OTP_CHANNEL,
+  OTP_CHANNELS,
   OTP_CODE_PATTERN,
-  RESET_OTP_CHANNELS,
-  SIGNUP_OTP_CHANNELS,
   apiMessage,
   channelPhrase,
   fieldError,
   formatWait,
+  isPhoneChannel,
   isSignupCodeSent,
   retryAfterSeconds,
   secondsLeft,
 } from './otp-flow';
 
-/** The one-time code pieces the signup and forgot-password pages share (TK-196). */
+/** The one-time code pieces the signup and forgot-password pages share (TK-196, TK-197). */
 
 describe('channels', () => {
-  it('OTP-01: WhatsApp is the default and listed first on both pages', () => {
-    expect(DEFAULT_OTP_CHANNEL).toBe('WhatsApp');
-    expect(SIGNUP_OTP_CHANNELS[0].value).toBe('WhatsApp');
-    expect(RESET_OTP_CHANNELS[0].value).toBe('WhatsApp');
+  it('OTP-01: email is the default and listed first', () => {
+    expect(DEFAULT_OTP_CHANNEL).toBe('Email');
+    expect(OTP_CHANNELS[0].value).toBe('Email');
   });
 
-  it('OTP-02: a signup offers WhatsApp and SMS only; a reset adds email', () => {
-    expect(SIGNUP_OTP_CHANNELS.map((c) => c.value)).toEqual(['WhatsApp', 'Sms']);
-    expect(RESET_OTP_CHANNELS.map((c) => c.value)).toEqual(['WhatsApp', 'Sms', 'Email']);
+  it('OTP-02: both pages offer email, WhatsApp and SMS', () => {
+    expect(OTP_CHANNELS.map((c) => c.value)).toEqual(['Email', 'WhatsApp', 'Sms']);
+    expect(OTP_CHANNELS.map((c) => c.label)).toEqual(['Email', 'WhatsApp', 'SMS']);
+  });
+
+  it('OTP-13: only WhatsApp and SMS need the mobile number', () => {
+    expect(isPhoneChannel('WhatsApp')).toBe(true);
+    expect(isPhoneChannel('Sms')).toBe(true);
+    expect(isPhoneChannel('Email')).toBe(false);
   });
 
   it('OTP-03: says how the code went', () => {
@@ -39,6 +44,9 @@ describe('the two signup answers', () => {
   it('OTP-04: a code on its way has no customer; a created trial has one', () => {
     expect(
       isSignupCodeSent({ channel: 'WhatsApp', destination: '******1234', expiresInSeconds: 600, resendAfterSeconds: 60, message: '' }),
+    ).toBe(true);
+    expect(
+      isSignupCodeSent({ channel: 'Email', destination: 'owner@example.com', expiresInSeconds: 600, resendAfterSeconds: 60, message: '' }),
     ).toBe(true);
     expect(isSignupCodeSent({ customerId: 'c1', customerCode: '0000000001', message: '' })).toBe(false);
   });

@@ -124,15 +124,15 @@ There are no apps any more (TK-136). A customer buys one product, and what each 
 ### Signing up
 
 - **Signup asks what the business does.** Choose the first branch's kind of business and its add-ons. Pick **HRMS or Payroll only** for a customer that trades nothing, and then tick HRMS, Payroll or both. An add-on the business type does not allow cannot be ticked.
-- **The mobile number is verified before anything is created (TK-196).** The last step sends a 6-digit code to the number from the first step, on **WhatsApp** unless you choose **SMS**. Nothing exists until the code is entered: no customer, branch, licence, owner or trial. A wrong code says how many tries are left, and five wrong tries need a new code. A code works for ten minutes. A new one can be asked for after a minute, five an hour per number. Changing the number on the first step needs a new code. If no code can be sent, the page says so and nothing is created.
-- Signing up with the right code creates the customer, the first branch, the owner and a 14-day trial. The owner gets the **Owner** role, and the mobile number counts as confirmed.
+- **You prove your email or mobile number before anything is created (TK-196, TK-197).** The last step sends a 6-digit code **by email** to the address from the first step, unless you choose **WhatsApp** or **SMS**, which send it to your mobile number. The mobile number is optional unless you choose one of those two; if it is missing, the field appears on the last step. Nothing exists until the code is entered: no customer, branch, licence, owner or trial. A wrong code says how many tries are left, and five wrong tries need a new code. A code works for ten minutes. A new one can be asked for after a minute, five an hour per address or number. Changing the channel, the email or the number needs a new code. If no code can be sent that way, the page says so and nothing is created.
+- Signing up with the right code creates the customer, the first branch, the owner and a 14-day trial. The owner gets the **Owner** role, and the email or mobile number the code went to counts as confirmed.
 - A platform operator adding a customer from the admin **Customers** page is not sent a code.
 
 ### Forgot password
 
-- **Choose how the code comes:** **WhatsApp** (the default), **SMS** or **Email**. A WhatsApp or SMS code goes to the mobile number on the account. Email is there for an account with no mobile number.
+- **Choose how the code comes:** **Email** (the default), **WhatsApp** or **SMS** (TK-197). An email code goes to the account's address; a WhatsApp or SMS code goes to the mobile number on the account.
 - **The page always moves on to the code**, whether or not the email has an account, the account has a mobile number, or the code could be sent. It never says which, so the page cannot be used to find out who has an account.
-- A code works for ten minutes. **Send a new code** comes back after a minute; **Send it another way** goes back to choose another channel. Five wrong tries need a new code. Resetting ends every other session, and a reset by WhatsApp or SMS marks the mobile number as confirmed.
+- A code works for ten minutes. **Send a new code** comes back after a minute; **Send it another way** goes back to choose another channel. Five wrong tries need a new code. Resetting ends every other session, and the reset marks where the code went as confirmed: the email, or the mobile number for WhatsApp or SMS.
 - Ten code requests or checks a minute from one connection are allowed, across signup and reset.
 - **What a branch is set up with follows its scope.** Accounting and print templates are set up for every branch, because payroll and fees post to the books and every branch prints. Items, sales, purchases, reports, support and contacts are set up for a branch with a trade. School's services are set up for a School branch, and the employee master for a School branch or one with HRMS or Payroll.
 
@@ -240,7 +240,9 @@ The invitee follows the link to `/accept-invitation`, sets a password, and the e
 
 **No temporary password is ever created.** A resend issues a fresh token and invalidates the previous link.
 
-> **WhatsApp and SMS codes need a messaging provider, and none is chosen yet (D-66).** Signup and Forgot password both offer WhatsApp and SMS (TK-196). Until a provider is configured, a development install writes each code to the Master service's log, and every other install sends nothing: a signup says codes cannot be sent and creates nothing, and a reset falls back to the email choice. An invited user's mobile number is not verified by the invitation.
+> **Signup and reset codes by email come from the platform's own mailbox** (TK-197): the mail settings with no customer, which a platform operator sets. With none set, a signup by email says codes cannot be sent by email and creates nothing.
+>
+> **WhatsApp and SMS codes need a messaging provider, and none is chosen yet (D-66).** Signup and Forgot password both offer WhatsApp and SMS (TK-196). Until a provider is configured, a development install writes each code to the Master service's log, and every other install sends nothing: a signup by WhatsApp or SMS says codes cannot be sent that way and creates nothing, and a reset sends nothing. Email works meanwhile. An invited user's mobile number is not verified by the invitation.
 
 ## Revoking access
 

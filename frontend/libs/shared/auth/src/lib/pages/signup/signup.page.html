@@ -44,8 +44,8 @@
                 <!-- A mobile number carries no pattern: lengths vary too much by
                      country, and the leading `+` is what marks a foreign one. -->
                 <bb-phone-input [id]="'su-mobile'" label="Mobile" maxlength="20"
-                                hint="We send a code here on WhatsApp or by SMS to verify it."
-                                formControlName="mobileNumber" [required]="true"
+                                hint="Needed if you'd rather get the code on WhatsApp or by SMS than by email."
+                                formControlName="mobileNumber" [required]="byPhone()"
                                 [error]="err(signupForm.controls.mobileNumber, 'Mobile number')" />
               </div>
               <div class="field">
@@ -189,14 +189,28 @@
             </p>
           }
           @case (4) {
-            <h2>Verify your mobile.</h2>
+            <h2>Verify it's you.</h2>
             <p class="text-muted lede">
-              We send a 6-digit code to {{ signupForm.controls.mobileNumber.value }}. Nothing is created
-              until you enter it.
+              @if (byPhone()) {
+                We send a 6-digit code {{ channelWords() }} to your mobile number.
+              } @else {
+                We send a 6-digit code by email to {{ signupForm.controls.email.value }}.
+              }
+              Nothing is created until you enter it.
             </p>
             <div class="verify" [formGroup]="verifyForm">
               <bb-radio-group [id]="'su-channel'" label="Send the code by" orientation="horizontal"
                               [options]="channelOptions" formControlName="otpChannel" />
+
+              @if (byPhone()) {
+                <!-- The same control as step 1's, here so the number the code
+                     goes to can be entered or corrected without going back. -->
+                <div class="field">
+                  <bb-phone-input [id]="'su-verify-mobile'" label="Mobile" maxlength="20"
+                                  [formControl]="signupForm.controls.mobileNumber" [required]="true"
+                                  [error]="err(signupForm.controls.mobileNumber, 'Mobile number')" />
+                </div>
+              }
 
               @if (codeSent()) {
                 <div class="field">

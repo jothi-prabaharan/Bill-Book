@@ -115,12 +115,12 @@ public class ForgotPasswordRequest
     public string Email { get; set; } = null!;
 
     /// <summary>
-    /// How the code is sent: WhatsApp by default, SMS, or email (TK-196). A
-    /// WhatsApp or SMS code goes to the mobile number on the account; with none
-    /// there, nothing is sent and the answer is the same 200.
+    /// How the code is sent: by email by default (TK-197), or on WhatsApp or by
+    /// SMS (TK-196). A WhatsApp or SMS code goes to the mobile number on the
+    /// account; with none there, nothing is sent and the answer is the same 200.
     /// </summary>
-    [EnumDataType(typeof(OtpChannel), ErrorMessage = "Choose WhatsApp, SMS or email for the code.")]
-    public OtpChannel Channel { get; set; } = OtpChannel.WhatsApp;
+    [EnumDataType(typeof(OtpChannel), ErrorMessage = "Choose email, WhatsApp or SMS for the code.")]
+    public OtpChannel Channel { get; set; } = OtpChannel.Email;
 }
 
 public class VerifyOtpRequest

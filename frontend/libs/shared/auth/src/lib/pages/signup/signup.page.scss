@@ -22,3 +22,10 @@
   gap: var(--space-3);
   max-width: 26rem;
 }
+
+/* "Verify and create my account" is wider than a 360px card beside Back:
+   let it shrink and wrap rather than run past the card's edge (TK-197). */
+.form-actions .btn-primary {
+  min-width: 0;
+  white-space: normal;
+}

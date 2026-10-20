@@ -8,12 +8,13 @@ import { AuthService } from '../../auth.service';
 import { ADD_ONS, AddOnCode, BUSINESS_TYPES, isAddOnAllowed } from '../../business-types';
 import {
   DEFAULT_OTP_CHANNEL,
+  OTP_CHANNELS,
   OTP_CODE_PATTERN,
-  SIGNUP_OTP_CHANNELS,
   apiMessage,
   channelPhrase,
   fieldError,
   formatWait,
+  isPhoneChannel,
   isSignupCodeSent,
   retryAfterSeconds,
   secondsLeft,
@@ -43,12 +44,12 @@ import {
  * there are no apps to sign up for any more. "HRMS or Payroll only" sends no
  * business type, and then one of those two add-ons is required.
  *
- * **Nothing is created until the mobile number is proved** (TK-196). The
- * fourth step sends a six-digit code by WhatsApp (chosen unless the person
- * picks SMS), and the same signup sent again with that code is what creates
- * the trial. A field's own problem shows under the field; what the server says
- * — a wrong or expired code, a code that could not be sent — shows in the
- * message box.
+ * **Nothing is created until a code proves the email or the mobile number**
+ * (TK-196, TK-197). The fourth step sends a six-digit code by email (chosen
+ * unless the person picks WhatsApp or SMS, which need the mobile number), and
+ * the same signup sent again with that code is what creates the trial. A
+ * field's own problem shows under the field; what the server says — a wrong or
+ * expired code, a code that could not be sent — shows in the message box.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -120,9 +121,9 @@ export class SignupPage implements OnInit {
   protected readonly stepCount = 4;
   protected readonly step = signal(1);
 
-  // ---- Step 4: the code (TK-196) -----------------------------------------
+  // ---- Step 4: the code (TK-196, TK-197) ----------------------------------
 
-  protected readonly channelOptions = SIGNUP_OTP_CHANNELS;
+  protected readonly channelOptions = OTP_CHANNELS;
 
   protected readonly verifyForm = new FormGroup({
     otpChannel: new FormControl<OtpChannel>(DEFAULT_OTP_CHANNEL, { nonNullable: true }),
@@ -132,7 +133,12 @@ export class SignupPage implements OnInit {
     }),
   });
 
-  /** Where the last code went; null until one has been sent for the number on the form. */
+  /** The chosen channel, as a signal for the template's words. */
+  protected readonly channel = signal<OtpChannel>(DEFAULT_OTP_CHANNEL);
+  protected readonly byPhone = computed(() => isPhoneChannel(this.channel()));
+  protected readonly channelWords = computed(() => channelPhrase(this.channel()));
+
+  /** Where the last code went; null until one has been sent for the address or number on the form. */
   protected readonly codeSent = signal<SignupCodeResponse | null>(null);
   protected readonly sending = signal(false);
 
@@ -158,7 +164,8 @@ export class SignupPage implements OnInit {
     firstName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     lastName: new FormControl('', { nonNullable: true, validators: Validators.required }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
-    mobileNumber: new FormControl('', { nonNullable: true, validators: [Validators.required, bbPhone()] }),
+    // Required only for a code on WhatsApp or by SMS; see applyChannel.
+    mobileNumber: new FormControl('', { nonNullable: true, validators: [bbPhone()] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
     confirmPassword: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
     
@@ -209,6 +216,26 @@ export class SignupPage implements OnInit {
         control.disable({ emitEvent: false });
       }
     }
+  }
+
+  /**
+   * The mobile number is needed only when the code goes to it, and a code sent
+   * one way does not work another, so a new channel starts the code over.
+   */
+  private applyChannel(channel: OtpChannel): void {
+    this.channel.set(channel);
+    const mobile = this.signupForm.controls.mobileNumber;
+    mobile.setValidators(isPhoneChannel(channel) ? [Validators.required, bbPhone()] : [bbPhone()]);
+    mobile.updateValueAndValidity({ emitEvent: false });
+    this.error.set(null);
+    this.restartCode();
+  }
+
+  /** Forgets the code sent: it no longer matches where the next one would go. */
+  private restartCode(): void {
+    this.codeSent.set(null);
+    this.resendAt.set(null);
+    this.verifyForm.controls.otpCode.reset('');
   }
 
   /** The words under a field once it has been touched; empty when it is fine. */
@@ -285,11 +312,10 @@ export class SignupPage implements OnInit {
   }
 
   ngOnInit(): void {
-    // A code proves one number: change the number and it has to be sent again.
-    this.signupForm.controls.mobileNumber.valueChanges.subscribe(() => {
-      this.codeSent.set(null);
-      this.verifyForm.controls.otpCode.reset('');
-    });
+    // A code proves one address or number: change it and it has to be sent again.
+    this.signupForm.controls.email.valueChanges.subscribe(() => this.restartCode());
+    this.signupForm.controls.mobileNumber.valueChanges.subscribe(() => this.restartCode());
+    this.verifyForm.controls.otpChannel.valueChanges.subscribe((channel) => this.applyChannel(channel));
     void this.load();
     this.applyAddOnRules(this.signupForm.controls.businessType.value);
     this.signupForm.controls.businessType.valueChanges.subscribe((type) => this.applyAddOnRules(type));
@@ -339,7 +365,7 @@ export class SignupPage implements OnInit {
       displayName: `${val.firstName} ${val.lastName}`.trim(),
       email: val.email,
       password: val.password,
-      mobileNumber: val.mobileNumber,
+      mobileNumber: val.mobileNumber.trim() || undefined,
       companyName: val.companyName,
       organizationName: val.organizationName,
       financialYearStartMonth: val.financialYearStartMonth,
@@ -372,9 +398,21 @@ export class SignupPage implements OnInit {
     return true;
   }
 
-  /** Sends a code to the mobile number. Nothing is created by this. */
+  /** Sends a code by the chosen channel. Nothing is created by this. */
   async sendCode(): Promise<void> {
-    if (this.sending() || this.resendIn() > 0 || !this.everyStepFine()) {
+    if (this.sending() || this.resendIn() > 0) {
+      return;
+    }
+
+    // The mobile field is on this step too when the code goes to it, so its
+    // problem shows here rather than sending the person back to the first step.
+    const mobile = this.signupForm.controls.mobileNumber;
+    if (this.byPhone() && mobile.invalid) {
+      mobile.markAsTouched();
+      return;
+    }
+
+    if (!this.everyStepFine()) {
       return;
     }
 

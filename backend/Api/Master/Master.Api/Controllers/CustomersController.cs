@@ -26,9 +26,10 @@ public sealed class CustomersController : ControllerBase
     /// Public trial signup, in two phases on one route (TK-196).
     ///
     /// <b>Without <c>otpCode</c></b> it checks the whole signup, sends a
-    /// six-digit code to the mobile number by WhatsApp (the default) or SMS,
-    /// and answers 200 with where the code went. Nothing is created: no
-    /// customer, licence, branch, shard capacity, seed or token.
+    /// six-digit code by email to the signup's address (the default, TK-197)
+    /// or on WhatsApp or by SMS to its mobile number, and answers 200 with
+    /// where the code went. Nothing is created: no customer, licence, branch,
+    /// shard capacity, seed or token.
     ///
     /// <b>With the right <c>otpCode</c></b> it runs the same checks again and
     /// creates the trial, answering 202 with the customer to poll, as before.
@@ -51,17 +52,14 @@ public sealed class CustomersController : ControllerBase
             return BadRequest(new { message = scopeRefusal });
         }
 
-        // The model is shared with a platform operator's create, where both are
-        // optional, so the public signup's own rules are checked here and
-        // answered field by field like any other validation error.
-        if (string.IsNullOrWhiteSpace(request.MobileNumber))
+        // The model is shared with a platform operator's create, where the
+        // mobile number is optional, so the public signup's own rule is checked
+        // here and answered field by field like any other validation error.
+        if (request.OtpChannel is OtpChannel.WhatsApp or OtpChannel.Sms
+            && string.IsNullOrWhiteSpace(request.MobileNumber))
         {
-            ModelState.AddModelError(nameof(SignupRequest.MobileNumber), "Mobile number is required.");
-        }
-
-        if (request.OtpChannel is not (OtpChannel.WhatsApp or OtpChannel.Sms))
-        {
-            ModelState.AddModelError(nameof(SignupRequest.OtpChannel), "Choose WhatsApp or SMS for the code.");
+            ModelState.AddModelError(
+                nameof(SignupRequest.MobileNumber), "Mobile number is required to send the code on WhatsApp or by SMS.");
         }
 
         if (!ModelState.IsValid)
@@ -125,13 +123,16 @@ public sealed class CustomersController : ControllerBase
         SignupCodeOutcome.TooSoon => StatusCode(StatusCodes.Status429TooManyRequests, new
         {
             message = sent.RetryAfterSeconds > 120
-                ? $"Too many codes have gone to this number. Try again in {(sent.RetryAfterSeconds + 59) / 60} minutes."
+                ? $"Too many codes have gone to this {(channel == OtpChannel.Email ? "address" : "number")}. "
+                    + $"Try again in {(sent.RetryAfterSeconds + 59) / 60} minutes."
                 : $"A code was sent a moment ago. You can ask for another in {sent.RetryAfterSeconds} seconds.",
             retryAfterSeconds = sent.RetryAfterSeconds,
         }),
         SignupCodeOutcome.DeliveryUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new
         {
-            message = "Verification codes cannot be sent at the moment, so a trial cannot be started. Please try again later.",
+            message = channel == OtpChannel.Email
+                ? "Codes cannot be sent by email at the moment. Choose WhatsApp or SMS, or try again later."
+                : "Codes cannot be sent on WhatsApp or by SMS at the moment. Choose email, or try again later.",
         }),
         _ => StatusCode(StatusCodes.Status502BadGateway, new
         {

@@ -8,7 +8,7 @@ import { AuthService } from '../../auth.service';
 import {
   DEFAULT_OTP_CHANNEL,
   OTP_CODE_PATTERN,
-  RESET_OTP_CHANNELS,
+  OTP_CHANNELS,
   apiMessage,
   channelPhrase,
   fieldError,
@@ -33,9 +33,9 @@ const CODE_REFUSED = 'That code is wrong or has expired. Check it, or send a new
  * OTP wizard: request → verify → reset. The request step always advances,
  * whether or not the account exists — never reveal which.
  *
- * The code goes on WhatsApp unless SMS or email is chosen (TK-196); a WhatsApp
- * or SMS code goes to the mobile number on the account. A field's own problem
- * shows under it; a refused code shows in the message box.
+ * The code goes by email unless WhatsApp or SMS is chosen (TK-197); a WhatsApp
+ * or SMS code goes to the mobile number on the account (TK-196). A field's own
+ * problem shows under it; a refused code shows in the message box.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,7 +59,7 @@ export class ForgotPasswordPage {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly channelOptions = RESET_OTP_CHANNELS;
+  protected readonly channelOptions = OTP_CHANNELS;
 
   protected readonly fpForm = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
@@ -94,9 +94,9 @@ export class ForgotPasswordPage {
     return channelPhrase(this.sentBy());
   }
 
-  /** "the mobile number on the account" or the address typed, for the verify step. */
+  /** Where the code went, for the verify step's sentence, which has already named the address. */
   protected sentTo(): string {
-    return this.sentBy() === 'Email' ? this.fpForm.controls.email.value : 'the mobile number on that account';
+    return this.sentBy() === 'Email' ? 'that address' : 'the mobile number on that account';
   }
 
   async request(): Promise<void> {
