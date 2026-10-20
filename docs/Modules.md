@@ -3038,7 +3038,7 @@ told; none of them is designed until one is picked.
 
 Every stage is built in the same order: migration, then seed, then API with field and business
 validation, then UI. Each is committed to `main` as it stands up, with its docs page in
-`frontend/apps/docs/content/` and a release-notes bullet in the same commit.
+`docs/User_Guide/` and a release-notes bullet in the same commit.
 
 # --- Designs.md ---
 # Approved designs (D-17, D-16, D-06)

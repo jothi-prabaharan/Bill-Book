@@ -15,9 +15,9 @@ import angular from 'angular-eslint';
  *
  * Exemptions are per file, further down this config, each with its reason.
  * Inline `eslint-disable` comments are switched off for templates, so there is
- * no other way round it. The guide is `apps/docs/content/inputs.md`.
+ * no other way round it. The guide is `docs/User_Guide/inputs.md`.
  */
-const SEE = 'See apps/docs/content/inputs.md, "The common-component rule".';
+const SEE = 'See docs/User_Guide/inputs.md, "The common-component rule".';
 
 const inputSelector = (allowedTypes) =>
   `Element[name="input"]:not(:has(TextAttribute[name="type"][value=/^(${allowedTypes.join('|')})$/]))`;

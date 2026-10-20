@@ -40,7 +40,7 @@ export * from './lib/icon-button/icon-button.component';
 
 /*
  * The common input system. One wrapper, four bases and nineteen controls —
- * see `apps/docs/content/inputs.md` for which to reach for and why.
+ * see `docs/User_Guide/inputs.md` for which to reach for and why.
  */
 export * from './lib/forms/field.model';
 export * from './lib/forms/gst-states';

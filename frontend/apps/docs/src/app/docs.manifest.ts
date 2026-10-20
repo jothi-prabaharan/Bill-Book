@@ -1,6 +1,6 @@
 /**
  * The documentation table of contents. Adding a page means adding a markdown
- * file under apps/docs/content and an entry here — nothing else.
+ * file under docs/User_Guide and an entry here — nothing else.
  */
 export interface DocPage {
   slug: string;

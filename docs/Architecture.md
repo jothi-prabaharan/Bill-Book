@@ -804,7 +804,7 @@ Guiding principle: apps orchestrate, -core contains behaviour and side-effects, 
 - Maintain test coverage for critical UI flows (login, org-switch, invoice pages) and fix regressions.
 
 ### Documentation
-- Ship documentation with any user-visible UI change. Add/update a page under `frontend/apps/docs/content/` and update `docs.manifest.ts` to include the new/changed doc.
+- Ship documentation with any user-visible UI change. Add/update a page under `docs/User_Guide/` and update `docs.manifest.ts` to include the new/changed doc.
 - For public `-ui` components, include a short usage example, the Inputs/Outputs table and any required tokens/themes in the component's docs.
 
 ---

@@ -18,7 +18,7 @@
         "assets": [
           {
             "glob": "**/*.md",
-            "input": "apps/docs/content",
+            "input": "../docs/User_Guide",
             "output": "content"
           },
           {

@@ -16,7 +16,8 @@ for f in $(git diff --cached --name-only --diff-filter=AR -- '*.md' '*.MD' '*.ma
   case "$f" in
     README.md|CLAUDE.md|AGENTS.md) ;;
     .claude/*) ;;
-    frontend/apps/docs/content/*.md) ;;
+    docs/User_Guide/*.md) ;;
+    docs/User_Guide/*) bad="$bad\n  $f  (user guide pages are .md files named lowercase-with-hyphens)" ;;
     docs/*/*) bad="$bad\n  $f  (docs/ is flat: no sub-folders)" ;;
     docs/[A-Z]*.md)
       name=${f#docs/}

@@ -6,7 +6,7 @@
 //
 // BILLBOOK_SERVER_URL and BILLBOOK_UPDATE_URL, when set, are baked into the
 // installer's desktop-config.json; an operator can still override them per
-// computer. See apps/docs/content/deployment.md, "Desktop and mobile apps".
+// computer. See docs/User_Guide/deployment.md, "Desktop and mobile apps".
 import { build } from 'esbuild';
 import { cp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';

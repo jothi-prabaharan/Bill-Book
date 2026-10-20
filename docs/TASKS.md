@@ -243,7 +243,7 @@ as #2 to #13.)
 |---|---|
 | `Directory.Packages.props`, `Bill-Book.sln`, `Directory.Build.*`, `package.json`, `package-lock.json`, `nx.json`, `tsconfig.base.json`, `.github/workflows/*` | Take lane **`L-DEPS`** as well for the commit that changes them. Hold it for that one commit only. `Npgsql` and `Npgsql.EntityFrameworkCore.PostgreSQL` move together |
 | `release-notes.md`, `frontend/apps/docs/docs.manifest.ts` | Add lines only. On a rebase conflict, keep both sides |
-| `frontend/apps/docs/content/**` | Edit only your module's page. A shared page takes `L-DOC` |
+| `docs/User_Guide/**` | Edit only your module's page. A shared page takes `L-DOC` |
 | `docs/TASKS.md` | Edit only your own card (section 0.2) |
 
 ---
@@ -1134,7 +1134,7 @@ The queue below is one list in card-number order. Each card names its group.
     - The dialog sits in a `.picker-layer` stacking context (z-index 1001), because the ticket
       form's overlay is at 1000 and the dialog's own is 100, so it would otherwise open behind
       the form.
-  - **Docs:** there is no Support page under `frontend/apps/docs/content/`, so only the release note
+  - **Docs:** there is no Support page under `docs/User_Guide/`, so only the release note
     carries this. A Customer/Support page is its own piece of work.
   - Tests: three added to `ticket-form.component.spec.ts`.
 
@@ -2858,7 +2858,7 @@ The queue below is one list in card-number order. Each card names its group.
     number while the screen compared names. `Status` is now a string, like the invoice's.
   - `ReleaseReservation` is now per line (`SalesOrderDetailId.HasValue`). With every line of an
     order challan required to name an order line, that equals the old header test — see TK-78.
-  - Docs: `frontend/apps/docs/content/delivery-challans.md` (new, `partial` in the manifest),
+  - Docs: `docs/User_Guide/delivery-challans.md` (new, `partial` in the manifest),
     `sales-orders.md`, and release notes.
   - **Left for `L-DOC`:** `CLAUDE.md` "Still not built" still says the challan has "a scaffold page
     but no verified path".
@@ -2935,7 +2935,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Two cards are numbered TK-10.** The GDNI card was added with TK-76 (commit `cb7da6c`); the
     trigger-restoring card took the same number later, and `CLAUDE.md` now cites it. The comments in
     `SalesAccountNameTests` and `DeliveryChallanService` mean the GDNI card.
-  - Docs: `frontend/apps/docs/content/credit-notes.md` (new), the manifest, release notes.
+  - Docs: `docs/User_Guide/credit-notes.md` (new), the manifest, release notes.
   - **Left for `L-DOC`:** `CLAUDE.md` "Still not built" still calls the credit note a scaffold
     with no verified path.
   - Tests written, not run: `backend/tests/Sales.Api.Tests/CreditNoteServiceTests.cs` (rewritten,
@@ -4460,13 +4460,13 @@ The queue below is one list in card-number order. Each card names its group.
   - `frontend/libs/shared/ui-components/src/index.ts`: the exports.
 - **State (checked 30 September 2026):**
   - `<bb-date-input` appears 119 times across 55 files. Four files import `DateInputComponent` directly: `master-ui/.../contacts.page.ts`, `shared/ui-components/.../edit-history/edit-log-report.component.ts`, `apps/admin/.../rates.page.ts` and `cva-form-lifecycle.spec.ts`.
-  - `apps/docs/content/inputs.md` (lines about 169, 289, 457 to 477, 522) and `frontend/eslint.config.mjs` name `bb-date-input`.
+  - `docs/User_Guide/inputs.md` (lines about 169, 289, 457 to 477, 522) and `frontend/eslint.config.mjs` name `bb-date-input`.
   - No template uses `<bb-branch-date-input`.
   - Shared components with no template using them today (starting list, not a verdict): `bb-bank-graph-card`, `bb-currency-input`, `bb-master-select`, `bb-radio-group`, `bb-rich-text-input`, `bb-url-input`.
 - **Sub-tasks:**
   - [x] Swap the selector `bb-date-input` → `bb-branch-date-input` in all templates, and `DateInputComponent` → `BranchDateInputComponent` in every `imports` array. The value is ISO in and out, so no other change per caller. Check each caller's `min`, `max`, `placeholder`, `label`, `hint` and `error` bindings are inputs `bb-branch-date-input` has, and add any that are missing to it.
   - [x] Delete `date-input/` (component, spec if any) and its export. Point `cva-form-lifecycle.spec.ts` at the new component or remove the case it covers.
-  - [x] Update `eslint.config.mjs` and `apps/docs/content/inputs.md`: the branch's own format is now what every date field shows, so remove the "shows the browser's locale" limitation and the "not yet swapped" notes. Add a bullet under **Unreleased** in `release-notes.md` (hard rule 10).
+  - [x] Update `eslint.config.mjs` and `docs/User_Guide/inputs.md`: the branch's own format is now what every date field shows, so remove the "shows the browser's locale" limitation and the "not yet swapped" notes. Add a bullet under **Unreleased** in `release-notes.md` (hard rule 10).
   - [x] Audit every component under `libs/shared/ui-components/src/lib/`: for each selector and class, search templates, `imports` arrays, `index.ts`, dynamic creation (`ViewContainerRef`, `createComponent`), the docs pages and specs. Delete the ones with no user anywhere, together with their spec, styles and export. Where a component is used only by its own spec, or is documented as part of the input library, delete it only if it is clearly not needed; otherwise leave it and list it in Notes for the owner rather than deciding alone.
   - [x] Run the build, lint and typecheck for every app, since a deleted export fails at compile time. (Tests are written, never run: section 0.5.)
   - [x] Test: update or add specs so `BranchDateInputComponent` covers what `DateInputComponent`'s spec covered (ISO in and out, `null` for empty, disabled and readonly). Written, never run by an AI.
@@ -5068,7 +5068,7 @@ The queue below is one list in card-number order. Each card names its group.
   - `LabelsController` at `api/print/labels` under the `inventory` module: `GET templates`, `PUT templates/{id}` (edit), `POST` (`[PermissionAction("print")]`).
   - Frontend: `bb-label-print-dialog` in `ui-components` (kind, size editor with **Save size**, copies per label, A4 sheet switch, full-screen sheet under 480 px) prints with `printHtml`. Items list (tick column + **Print labels**), the item form (**Print labels**, **Batch labels**, **Serial labels**), and the goods receipt and bill forms (one label per whole unit accepted) open it.
   - Tests: `Printing.Api.Tests.LabelPrintTests`, `label-print.model.spec.ts`, `item-labels.spec.ts`, `goods-receipt-labels.spec.ts`.
-  - Docs: [Printing labels](../frontend/apps/docs/content/masters.md), purchase **Labels for what arrived**, release note.
+  - Docs: [Printing labels](User_Guide/masters.md), purchase **Labels for what arrived**, release note.
 
 ### TK-160 · Shared scan input with a small camera popup
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · D-46 still open; its default is what was built
@@ -5091,7 +5091,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Library (D-46)**: the browser's `BarcodeDetector` when it reads our formats; otherwise **`barcode-detector` 3.2.2 (MIT)**, a polyfill of the same API over `zxing-wasm` (MIT), imported lazily on first camera use. Its wasm is copied into `assets/zxing/` by `apps/web`'s build and located there, so no CDN is contacted.
   - Not yet on any screen: TK-161 to TK-163 put it on the sales, purchase and stock forms.
   - Tests: `scan-burst.spec.ts`, `scan-session.spec.ts`, `scan.component.spec.ts`; `pos-keys.spec.ts` still covers the re-export.
-  - Docs: [Scanning](../frontend/apps/docs/content/inputs.md), release note.
+  - Docs: [Scanning](User_Guide/inputs.md), release note.
 
 ### TK-161 · Scan on sales documents
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
@@ -5113,7 +5113,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Credit note**: lines are the invoice's and a hand-added line is refused, so a scan adds one unit to that item's invoice line up to what it can still return (`returnable`, recorded when the invoice is loaded; a saved note leaves the cap to the server), and never adds a line. **Set all to zero** starts a count from nothing. An unknown code, an item not on the invoice or a full line is a one-line message, not the picker. Pure in `credit-note-scan.ts`.
   - Fixed in passing: NG8107 on TK-159's label dialog (`chosen` typed `LabelTemplate | null`).
   - Tests: `line-scan.spec.ts` (the *Done when*: three scans → one line of 3), `scan-match.spec.ts`, `sales-picker-scan.spec.ts`, `credit-note-scan.spec.ts`.
-  - Docs: [Scanning items](../frontend/apps/docs/content/invoices.md) with pointers from the quote, order, challan and credit-note pages; release note.
+  - Docs: [Scanning items](User_Guide/invoices.md) with pointers from the quote, order, challan and credit-note pages; release note.
 
 ### TK-162 · Scan on purchase documents and scan to open
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · serial capture waits on D-51
@@ -5136,7 +5136,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Debit note**: `debitScanned` (`debit-note-scan.ts`) sends one more unit back on the bill line for the item, capped at `available`, moving to the next line for the item when one is full; never adds a line.
   - **Scan to open**: `GET api/sales/transactions/by-number?no=` and `GET api/purchase/transactions/by-number?no=` (`DocumentNumberRepository` in each, LINQ, exact `DocumentNo`, the query filter keeping it to the branch; 404 otherwise). `ScanToOpenService` in `app-shell`, started by the shell, catches a page-level burst (skipping one a screen's `bb-scan` already took — it prevents the Enter in the capture phase) and asks the modules the user may view, then navigates (`documentPath`). The top bar's **Search** panel has a **Scan a document code** field with the camera for phones.
   - Tests: backend `DeliveryChallanServiceTests` / `GoodsReceiptServiceTests` gain `A_printed_document_number_opens_its_own_branchs_document`; frontend `goods-receipt-scan.spec.ts`, `debit-note-scan.spec.ts`, `gs1.spec.ts`, `scan-to-open.service.spec.ts`. The top bar spec now provides `HttpClient`.
-  - Docs: purchase page (order, **Counting it in by scanning**, bill, debit note), [Scanning](../frontend/apps/docs/content/inputs.md) (opening a document by its code), release note.
+  - Docs: purchase page (order, **Counting it in by scanning**, bill, debit note), [Scanning](User_Guide/inputs.md) (opening a document by its code), release note.
 
 ### TK-163 · Scan on stock documents
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05 · no transfer screen exists to scan on
@@ -5205,7 +5205,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **API** on `TableReservationsController` under `api/restaurant/reservations` and `api/restaurant/waiting-list`, guarded by `[RequireBusinessType(Restaurant)]`, `[RequireModulePermission("restaurant")]` and `[RequireRestaurantFeature(Tables)]`; gateway routes added. Master menu row 1154 **Bookings** (`rst-bookings`, restaurant view/create/edit), hidden with the tables switch; admin migration `BookingsMenu`.
   - **Frontend**: `restaurant-reservations.ts` in restaurant-core (types, `overlaps`/`nextThatFits` mirrors, the strip's `stillToArrive`); **Restaurant › Bookings** page (day's bookings beside the waiting list, stacked at 360 px, sheets for booking, seating and adding a party; seating goes to the new order); the floor plan shows **Today's bookings**, *Booked HH:mm* on a tile, and on a free table offers to seat the next waiting party that fits.
   - Tests: `Sales.Api.Tests.TableReservationRulesTests` and `TableReservationTests` (the *Done when*: 8 pm then 8:30 pm refused, seating opens the order), `Master.Api.Tests.RestaurantMenuTests` (bookings row and switch), `restaurant-reservations.spec.ts`.
-  - Docs: new page [Bookings](../frontend/apps/docs/content/restaurant-bookings.md) and its manifest entry, a section on the Tables page, release notes (the feature, and the RLS fix as Security).
+  - Docs: new page [Bookings](User_Guide/restaurant-bookings.md) and its manifest entry, a section on the Tables page, release notes (the feature, and the RLS fix as Security).
 
 
 ### TK-166 · Loyalty points on a bill
@@ -5786,7 +5786,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Issue:** [#181](https://github.com/jothi-prabaharan/Bill-Book/issues/181)
 - **Group:** Z · Owner request
 - **Lanes:** L-INV (`MetalPuritiesController`, `Inventory.Api.Tests`), L-DOC (`masters.md`) · **Depends on:** — · **Decision:** D-65
-- **Where:** `backend/Api/Inventory/Inventory.Api/Controllers/MetalPuritiesController.cs` (its `[RequireBusinessType]`), `backend/tests/Inventory.Api.Tests/TradeSeedTests.cs`, `frontend/apps/docs/content/masters.md` › Metal purities.
+- **Where:** `backend/Api/Inventory/Inventory.Api/Controllers/MetalPuritiesController.cs` (its `[RequireBusinessType]`), `backend/tests/Inventory.Api.Tests/TradeSeedTests.cs`, `docs/User_Guide/masters.md` › Metal purities.
 - **State:** checked 12 October 2026. Master's menu (`TradeScopeRepository.MenuTrades["mtp"]`) and Inventory's seed (`MetalPurityRepository.SeedsPurities`) give metal purities to Retail and Jewellery, but the controller admits Jewellery only, so on a Retail branch the screen opens and `GET /api/metal-purities` answers 403. Found by TK-189's check of every menu row.
 - **Sub-tasks:**
   - [x] `MetalPuritiesController` admits Retail and Jewellery.
@@ -6095,7 +6095,7 @@ Copy these into any card that builds a feature, and tick them as you go:
 - [ ] `-core` view-model and `-ui` page: standalone components, `inject()`, signals, working at 360px.
 - [ ] Write the tests: behaviour, the **Done when** line, and the `RlsAudit` and `EndpointGuardAudit`
       tests for the new schema and controllers. An AI writes them and does not run them (section 0.5).
-- [ ] Update the docs page under `frontend/apps/docs/content/` and `docs.manifest.ts`, and add a
+- [ ] Update the docs page under `docs/User_Guide/` and `docs.manifest.ts`, and add a
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
 - [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
       all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).
