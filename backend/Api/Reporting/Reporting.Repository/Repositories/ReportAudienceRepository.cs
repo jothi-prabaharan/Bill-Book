@@ -26,11 +26,15 @@ public sealed record ReportAudience(
     /// branch has turned off.
     /// </summary>
     public bool Allows(IReportSourceRepository source) =>
-        (source.RequiredAddOn == AddOn.None || (AddOns & source.RequiredAddOn) != 0)
-        && (Everything || source.RequiredBusinessType is null || BusinessType == source.RequiredBusinessType)
+        Allows(source.RequiredAddOn, source.RequiredBusinessType)
         && (Everything
             || source.RequiredRestaurantFeature is not RestaurantFeature feature
             || (Restaurant is not null && RequireRestaurantFeatureAttribute.Refusal(feature, Restaurant) is null));
+
+    /// <summary>Whether a report needing this add-on and trade is for this audience. Pure.</summary>
+    public bool Allows(AddOn requiredAddOn, BusinessType? requiredBusinessType) =>
+        (requiredAddOn == AddOn.None || (AddOns & requiredAddOn) != 0)
+        && (Everything || requiredBusinessType is null || BusinessType == requiredBusinessType);
 }
 
 /// <summary>

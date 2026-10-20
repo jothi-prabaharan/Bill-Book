@@ -1,0 +1,87 @@
+<header class="page-head">
+  <div>
+    <h1>Salary Increment Report</h1>
+    <p class="subtitle text-muted">
+      Salary revisions that take effect in the period, with the CTC before and after. Salaries are annual CTC.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'sir-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'sir-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sir-department'" label="Department" placeholder="All departments"
+               [options]="departmentOptions()" formControlName="departmentId"
+               [error]="err('departmentId', 'Department')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sir-employee'" label="Employee" placeholder="All employees"
+               [options]="employeeOptions()" formControlName="employeeId"
+               [error]="err('employeeId', 'Employee')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="count text-muted">
+    {{ report.totals.revisionCount }} {{ report.totals.revisionCount === 1 ? 'revision' : 'revisions' }}
+    for {{ report.totals.employeeCount }} {{ report.totals.employeeCount === 1 ? 'employee' : 'employees' }},
+    effective {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}.
+  </p>
+
+  <bb-data-grid [columns]="columns" [data]="report.rows" [loading]="busy()" [paged]="false"
+                [showColumnFilters]="false" [showCount]="false" [stackOnPhone]="true"
+                label="Salary increments" emptyText="No salary revisions take effect in this period.">
+    <ng-template bbCellTemplate="department" let-row>
+      <span class="stack">
+        <span>{{ row.department ?? '—' }}</span>
+        @if (row.designation) {
+          <span class="text-muted">{{ row.designation }}</span>
+        }
+      </span>
+    </ng-template>
+    <ng-template bbCellTemplate="effectiveDate" let-row>{{ row.effectiveDate | registerDate }}</ng-template>
+    <ng-template bbCellTemplate="previousSalary" let-row><bb-money-cell [value]="row.previousSalary" /></ng-template>
+    <ng-template bbCellTemplate="incrementAmount" let-row><bb-money-cell [value]="row.incrementAmount" /></ng-template>
+    <ng-template bbCellTemplate="incrementPercent" let-row>{{ percent(row.incrementPercent) }}</ng-template>
+    <ng-template bbCellTemplate="revisedSalary" let-row><bb-money-cell [value]="row.revisedSalary" /></ng-template>
+    <ng-template bbCellTemplate="recordedBy" let-row>
+      <span class="stack">
+        <span>{{ row.recordedBy ?? '—' }}</span>
+        @if (row.remarks) {
+          <span class="text-muted">{{ row.remarks }}</span>
+        }
+      </span>
+    </ng-template>
+
+    @if (report.rows.length > 0) {
+      <ng-template bbGridFooter>
+        <tr class="total">
+          <th scope="row" colspan="4" class="total__label">Total</th>
+          <td class="numeric" data-label="Total previous CTC"><bb-money-cell [value]="report.totals.totalPreviousSalary" /></td>
+          <td class="numeric" data-label="Total increment"><bb-money-cell [value]="report.totals.totalIncrementAmount" /></td>
+          <td class="numeric" data-label="Average increment %">
+            <span class="total__hint text-muted">avg</span> {{ percent(report.totals.averageIncrementPercent) }}
+          </td>
+          <td class="numeric" data-label="Total revised CTC"><bb-money-cell [value]="report.totals.totalRevisedSalary" /></td>
+          <td class="total__spare"></td>
+        </tr>
+      </ng-template>
+    }
+  </bb-data-grid>
+}

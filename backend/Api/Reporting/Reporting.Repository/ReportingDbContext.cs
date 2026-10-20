@@ -145,6 +145,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<SalaryComponentRead> SalaryComponents => Set<SalaryComponentRead>();
     public DbSet<SalaryStructureRead> SalaryStructures => Set<SalaryStructureRead>();
     public DbSet<EmployeeSalaryRead> EmployeeSalaries => Set<EmployeeSalaryRead>();
+    public DbSet<SalaryRevisionRead> SalaryRevisions => Set<SalaryRevisionRead>();
     public DbSet<SalaryHoldRead> SalaryHolds => Set<SalaryHoldRead>();
     public DbSet<OneTimePaymentRead> OneTimePayments => Set<OneTimePaymentRead>();
     public DbSet<EmployeeLoanRead> EmployeeLoans => Set<EmployeeLoanRead>();
@@ -437,6 +438,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<SalaryComponentRead>(modelBuilder, "SalaryComponents", "pay", e => e.SalaryComponentId);
         MapRead<SalaryStructureRead>(modelBuilder, "SalaryStructures", "pay", e => e.SalaryStructureId);
         MapRead<EmployeeSalaryRead>(modelBuilder, "EmployeeSalaries", "pay", e => e.EmployeeSalaryId);
+        MapRead<SalaryRevisionRead>(modelBuilder, "SalaryRevisions", "pay", e => e.SalaryRevisionId);
         MapRead<SalaryHoldRead>(modelBuilder, "SalaryHolds", "pay", e => e.SalaryHoldId);
         MapRead<OneTimePaymentRead>(modelBuilder, "OneTimePayments", "pay", e => e.OneTimePaymentId);
         MapRead<EmployeeLoanRead>(modelBuilder, "EmployeeLoans", "pay", e => e.EmployeeLoanId);

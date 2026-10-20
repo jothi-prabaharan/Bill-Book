@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **The Salary Increment Report (TK-198).** It lists every salary revision that takes effect between two dates. Each row shows the previous and revised annual CTC, the increment, the increment as a percentage, who recorded it and the reason. The total row sums the salaries and gives the average increment percentage. Filter by department or employee. It is under **Payroll** on the Reports page, or at `/reports/salary-increment`, for branches with the Payroll add-on and users with **payroll.view**.
+
 - **Security**: **A free trial starts only after a code proves the email or mobile number (TK-196, TK-197).** The last step of signup sends a 6-digit code **by email**, or on WhatsApp or by SMS if you choose, and the trial is created only when the right code is entered. Until then nothing exists: no customer, branch, licence or owner. The mobile number is needed only for WhatsApp or SMS. **Forgot password** offers the same three, email first. Codes work for ten minutes, can be resent after a minute (five an hour per address or number), and stop working after five wrong tries. A code that worked confirms the email or number it went to.
   - ⚠ **Breaking:** a code by email needs the platform's mailbox set (the mail settings with no customer); without it a signup by email is refused. WhatsApp and SMS need a messaging provider, which is not chosen yet (D-66), so outside a development install those two send nothing until one is configured.
   - **Fixed on the way:** the five-try limit on reset codes never engaged, because each wrong try was undone along with the refusal.

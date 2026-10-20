@@ -18341,6 +18341,63 @@ namespace Reporting.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Reporting.Repository.ReadModels.SalaryRevisionRead", b =>
+                {
+                    b.Property<long>("SalaryRevisionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SalaryRevisionId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<long>("EmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("NewCtc")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PreviousCtc")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("SalaryRevisionId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("SalaryRevisions", "pay", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
             modelBuilder.Entity("Reporting.Repository.ReadModels.SalaryStructureRead", b =>
                 {
                     b.Property<long>("SalaryStructureId")

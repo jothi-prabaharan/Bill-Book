@@ -158,11 +158,28 @@ public sealed class ReportLayerCertificationTests
 
         // A seeded report with no source is a row in the list that opens onto
         // nothing — worse than an absent report, because the user can see it.
+        // A report with a page of its own (TK-198) opens onto that page instead.
         Assert.Equal(
             string.Empty,
             string.Join(", ", ReportCatalogSeeder.SeededColumnKeys.Keys
-                .Where(key => !keys.Contains(key))
+                .Where(key => !keys.Contains(key) && DedicatedReportPages.Find(key) is null)
                 .Order(StringComparer.Ordinal)));
+    }
+
+    [Fact]
+    public void Every_report_with_its_own_page_has_a_catalog_entry_and_no_source()
+    {
+        HashSet<string> sourced = [.. Tested.Select(s => s.ReportKey)];
+
+        foreach (DedicatedReportPage page in DedicatedReportPages.All)
+        {
+            Assert.True(
+                ReportCatalogSeeder.SeededColumnKeys.ContainsKey(page.ReportKey),
+                $"{page.ReportKey} has its own page but no catalog entry, so the report list never shows it.");
+            Assert.False(
+                sourced.Contains(page.ReportKey),
+                $"{page.ReportKey} is both a source and a page of its own: two answers to one report.");
+        }
     }
 
     [Fact]

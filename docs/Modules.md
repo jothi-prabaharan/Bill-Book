@@ -2341,7 +2341,10 @@ Reporting sources, each flagged with the app it serves — Payroll for the pay a
 - **Time**: daily attendance; monthly muster roll; late and early-out; overtime; regularisations.
 - **Leave**: leave register; balances; encashment; team availability.
 - **Pay**: salary register; payslip summary; CTC report; month-on-month variance; bank advice; held
-  salaries; arrears; loans outstanding.
+  salaries; arrears; loans outstanding. **Salary increment** is built as a page and endpoint of its own
+  (`api/reports/salary-increment`, TK-198), not a source: revisions by effective date with previous and
+  revised CTC, the increment and its percentage, and totals. As built, a revision has no approval columns,
+  so the report shows who recorded it.
 - **Statutory**: PF, ESI, PT and LWF statements; gratuity provision; bonus register; TDS summary and
   projection.
 - **Recruitment**: pipeline by stage; time to hire; source effectiveness; offer acceptance.

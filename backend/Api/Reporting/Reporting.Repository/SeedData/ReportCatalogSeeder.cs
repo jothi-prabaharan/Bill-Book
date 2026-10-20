@@ -1933,6 +1933,18 @@ public sealed class ReportCatalogSeeder
         },
         new()
         {
+            // Its own endpoint and page (TK-198), so no columns: the page draws
+            // its own, and no source reads seed rows for it.
+            ReportKey = "salary-increment",
+            Title = "Salary Increment Report",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Salary revisions by effective date: previous and revised CTC, the increment and its percentage.",
+            SortOrder = 1009,
+            Columns = [],
+        },
+        new()
+        {
             ReportKey = "pf-statement",
             Title = "PF Statement",
             Module = ReportModule.Statutory,

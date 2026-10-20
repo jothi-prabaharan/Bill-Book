@@ -28,6 +28,14 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-198), ahead of the shared host.
+    // The server checks the same add-on and permission.
+    path: 'salary-increment',
+    loadComponent: () =>
+      import('./salary-increment/salary-increment-report.page').then((m) => m.SalaryIncrementReportPage),
+    data: { access: { permission: 'payroll.view', addOns: ['Payroll'] } },
+  },
+  {
     path: ':reportKey',
     loadComponent: () =>
       import('./report-host/report-host.page').then((m) => m.ReportHostPage),

@@ -3,8 +3,29 @@ using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Reporting.Entity.TableEntities;
 using Reporting.Repository;
+using Shared.Kernel.Apps;
 
 namespace Reporting.Repository.Repositories;
+
+/// <summary>
+/// A report with an endpoint and a page of its own rather than an
+/// <see cref="IReportSourceRepository"/> the shared runner reads (TK-198). Its
+/// <c>rpt.Reports</c> row puts it in the catalog like any other, and the page
+/// at <c>/reports/{key}</c> is routed ahead of the shared report host.
+/// </summary>
+public sealed record DedicatedReportPage(string ReportKey, AddOn RequiredAddOn, BusinessType? RequiredBusinessType = null);
+
+/// <summary>Every report with a page of its own.</summary>
+public static class DedicatedReportPages
+{
+    public static readonly IReadOnlyList<DedicatedReportPage> All =
+    [
+        new(SalaryIncrementReportRepository.ReportKey, AddOn.Payroll),
+    ];
+
+    public static DedicatedReportPage? Find(string reportKey) =>
+        All.FirstOrDefault(p => string.Equals(p.ReportKey, reportKey, StringComparison.Ordinal));
+}
 
 /// <summary>
 /// Which reports a caller may run, and what each one looks like.
@@ -50,9 +71,11 @@ public sealed class ReportCatalogRepository
         return
         [
             .. rows
-                .Where(r => _sources.ContainsKey(r.ReportKey))
                 .Where(r => permissions.Contains(r.RequiredPermission))
-                .Where(r => audience.Allows(_sources[r.ReportKey]))
+                .Where(r => _sources.TryGetValue(r.ReportKey, out IReportSourceRepository? source)
+                    ? audience.Allows(source)
+                    : DedicatedReportPages.Find(r.ReportKey) is DedicatedReportPage page
+                        && audience.Allows(page.RequiredAddOn, page.RequiredBusinessType))
                 .Select(r => new ReportCatalogItemView
                 {
                     ReportKey = r.ReportKey,
@@ -60,7 +83,7 @@ public sealed class ReportCatalogRepository
                     Module = r.Module,
                     Description = r.Description,
                     SortOrder = r.SortOrder,
-                    IsDataset = _sources[r.ReportKey].IsDataset,
+                    IsDataset = _sources.TryGetValue(r.ReportKey, out IReportSourceRepository? source) && source.IsDataset,
                 }),
         ];
     }

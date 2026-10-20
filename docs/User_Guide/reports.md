@@ -120,6 +120,19 @@ Four reports read project accounting, under **Projects** in the list. Running th
 
 A project's income and costs come from the ledger rows tagged with it. That covers manual journals, money documents, and sales and purchase lines. See [Projects](accounting#projects).
 
+## Salary Increment Report
+
+Every salary revision that takes effect in a period, under **Payroll** in the list, or straight at `/reports/salary-increment`. It needs the Payroll add-on and **payroll.view** (TK-198). Unlike the other reports it has a page of its own, so it has no column chooser, saved views, schedule or export.
+
+- **Filters:** **From** and **To** effective dates, both required, and this financial year to begin with. **Department** and **Employee** narrow it; choosing a department leaves only its employees in the employee list. A missing date, or a to date before the from date, is shown under the field.
+- **Columns:** code, employee, department and designation, effective date, **Previous CTC**, **Increment**, **Increment %**, **Revised CTC**, and who recorded the revision with its reason.
+- **Salaries are annual CTC**, as Payroll stores them on each revision. There is no separate basic or gross figure to report.
+- **Increment %** is the increase as a share of the previous CTC, to two places. A cut shows as negative. A revision from a CTC of zero has no percentage and shows a dash.
+- **The total row** adds up previous CTC, increment and revised CTC. It shows the **average increment %**, the mean of each revision's own percentage, leaving out any from a zero CTC. On a phone each revision is a card, and the totals are the last card.
+- **The department and designation are the employee's today.** A revision does not record what they were when it was made.
+- **Recorded by** is the person who saved the revision. Salary revisions are not approved in the product yet, so there is no approver to show.
+- Only this branch's revisions are shown.
+
 ## Restaurant reports
 
 A Restaurant branch has eight more: day-end, item sales, category sales, waiter-wise sales, table turnover, food cost, wastage and KOT cancellations. They are listed under **Restaurant** here and on **Restaurant › Reports**, and a report whose switch is off in Restaurant settings is not listed. See [Restaurant reports](restaurant-reports).

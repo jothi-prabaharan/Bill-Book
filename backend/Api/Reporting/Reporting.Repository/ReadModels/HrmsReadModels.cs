@@ -294,6 +294,21 @@ public class EmployeeSalaryRead : OrgScopedEntity
     public DateOnly EffectiveFrom { get; set; }
 }
 
+/// <summary>
+/// A salary revision (TK-198): written by Payroll when a salary is revised, with
+/// the annual CTC before and after and the date it takes effect. The user who
+/// recorded it is the audit column <c>CreatedBy</c>.
+/// </summary>
+public class SalaryRevisionRead : OrgScopedEntity
+{
+    public long SalaryRevisionId { get; set; }
+    public long EmployeeId { get; set; }
+    public decimal PreviousCtc { get; set; }
+    public decimal NewCtc { get; set; }
+    public DateOnly EffectiveFrom { get; set; }
+    public string? Reason { get; set; }
+}
+
 public class SalaryHoldRead : OrgScopedEntity
 {
     public long SalaryHoldId { get; set; }

@@ -1,0 +1,83 @@
+/* The Salary Increment Report (TK-198): a filter card, then the shared grid. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle {
+  margin: var(--space-1) 0 0;
+}
+
+/* Four fields and the button, as many to a row as fit; one per row on a phone. */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+/* Level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.count {
+  margin: 0;
+}
+
+/* Two lines in one cell: department over designation, who over why. */
+.stack {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.total__hint {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .filters__actions .btn {
+    width: 100%;
+  }
+
+  /* The grid stacks each row into a card; the footer follows suit, a figure
+     to a line, each named, as the cards' own cells are. */
+  .total {
+    display: block;
+  }
+
+  .total > th,
+  .total > td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .total > td[data-label]::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-text-subtle);
+  }
+
+  .total__hint,
+  .total__spare {
+    display: none;
+  }
+}
