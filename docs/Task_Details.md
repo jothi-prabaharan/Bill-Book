@@ -5924,6 +5924,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `SalaryIncrementReportTests`, `ReportLayerCertificationTests` and `salary-increment-report.service.spec.ts`; say whether payroll reports should get a group in the Reports side menu.
 - **Done when:** the report lists each revision whose effective date falls in the range, with the increment and its percentage, and totals that match the rows.
 
+### TK-199 · Balance Sheet: its own endpoint and page, rebuilt
+- [~] working (Claude Opus 5.5) — since 2026-10-20
+- **Issue:** [#189](https://github.com/jothi-prabaharan/Bill-Book/issues/189)
+- **Group:** Z · Owner request (the Finance reports, one by one: Balance Sheet, Profit & Loss, Cash Flow Statement – Direct, Reconciliation Report)
+- **Lanes:** L-RPT (`StatementsController`, a new repository and controller, `Reporting.Api.Tests`), L-UI (`libs/reporting`), L-DOC · **Depends on:** TK-198 · **Decision:** the owner's request of 20 October 2026
+- **Where:** `StatementsController.BalanceSheet` (moved out), a new `BalanceSheetReportRepository` and `BalanceSheetReportController`, `BalanceSheetReportModels.cs`; `reporting-core` (the models and service), `reporting-ui` (the page that replaces `statements/balance-sheet.page`).
+- **State:** checked 20 October 2026. `GET api/statements/balance-sheet` builds anonymous objects in the controller from every ledger row loaded into memory, and puts all profit since the beginning into "Current Year Earnings". The page has no date filter, formats money in Western grouping and logs failures to the console. The shared-engine source (`BalanceSheetSourceRepository`) leaves out inactive accounts that still carry a balance and the year's profit.
+- **Sub-tasks:**
+  - [ ] The repository: balances summed per account in the database to the as-at date and the comparison date, LINQ only; sections by account type, contra accounts negative within theirs; current-year and earlier-years profit split at the financial-year start.
+  - [ ] The endpoint at the same address with its own request and response models; `reports` and `accounting.view`; another branch in the request is 403.
+  - [ ] The page: as at, compare with, show accounts with no balance; a section per type with its total; the totals and the balance check; 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** on any date, total assets equal total liabilities plus equity for a balanced ledger, with the year's profit and earlier years' profit shown in equity.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
