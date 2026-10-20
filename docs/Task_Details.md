@@ -5864,6 +5864,22 @@ The queue below is one list in card-number order. Each card names its group.
 - **Not built (owner, 12 October 2026):** contact groups; dish menu details, the service billing card and the jewellery "sold by weight" and "tag per piece" flags — nothing stores them; HUID stays per piece.
 - **Done when:** all four open from the menu's + on their own page and read like the design at 1280px and 360px.
 
+### TK-196 · Trial signup verified by a WhatsApp or SMS code before anything is created; the same choice on password reset
+- [~] working (Claude Opus 5.5) — since 2026-10-20
+- **Issue:** [#186](https://github.com/jothi-prabaharan/Bill-Book/issues/186)
+- **Group:** Z · Owner request
+- **Lanes:** L-MST (signup, auth, `OtpVerification`, an `mst` migration, `Master.Api.Tests`), L-UI (`libs/shared/auth`: the signup and forgot-password pages, `AuthService`), L-DOC · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-66 (which WhatsApp and SMS provider) is open and does not block
+- **Where:** `CustomersController.Signup`, `SignupRepository`, `AuthController` (forgot-password, verify-otp, reset-password), `AuthRepository`, `OtpVerification`, `OtpChannel`, `OtpPurpose`; `signup.page.*`, `forgot-password.page.*`, `auth.service.ts`.
+- **State:** checked 20 October 2026. Signup writes the customer, licence and branch, claims shard capacity and queues the owner and seed in the first request, with nothing verified. Forgot password sends by email only (the SMS branch stores a row and sends nothing). A wrong code's `AttemptCount` is saved and then rolled back with the 400, so the five-try lock never engages.
+- **Sub-tasks:**
+  - [ ] `OtpChannel.WhatsApp`, `OtpPurpose.TrialSignup`; `OtpVerification.UserId` nullable (a signup code has no user yet), with an index for finding a signup code by number.
+  - [ ] Signup in two phases on the existing route: no code → validate everything, send a code, create nothing; right code → consume it and create the trial as today, the owner's mobile marked confirmed. Wrong, expired and locked codes each say so. Resend after 60 seconds, five codes a number an hour.
+  - [ ] Password reset: WhatsApp by default, SMS, or email, to the account's own number; still the same 200 whatever happens. Attempt counts survive the refusal.
+  - [ ] One sender for WhatsApp and SMS, chosen by configuration: Development logs the code; elsewhere, with no provider, a signup is refused with 503.
+  - [ ] Pages: the signup wizard's fourth step and the reset wizard choose the channel (WhatsApp first), show a resend countdown, field errors at the field and code errors in the message box; no inline styles; 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** a signup without the right code leaves no customer, branch, licence or shard capacity behind; with it, the trial is created and provisioned as before; both flows send by WhatsApp unless SMS is chosen.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
