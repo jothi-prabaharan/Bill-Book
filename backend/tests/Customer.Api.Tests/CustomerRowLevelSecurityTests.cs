@@ -16,7 +16,7 @@ namespace Customer.Api.Tests;
 /// no bypass. The shape is <c>Accounting.Api.Tests.RowLevelSecurityTests</c>,
 /// which TK-71 wrote as the template.
 ///
-/// Written for TK-73 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-73 and not run by the AI that wrote it (docs/Task_Details.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class CustomerRowLevelSecurityTests

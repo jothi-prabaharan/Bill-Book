@@ -21,7 +21,7 @@ namespace Sales.Api.Tests;
 /// by the application, and by a superuser, because the refusal is a trigger
 /// rather than a grant.
 ///
-/// Written for TK-118 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-118 and not run by the AI that wrote it (docs/Task_Details.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class EditLogTests

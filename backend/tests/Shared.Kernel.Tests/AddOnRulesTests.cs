@@ -5,7 +5,7 @@ namespace Shared.Kernel.Tests;
 
 /// <summary>
 /// Unit tests for <see cref="BusinessType"/>, <see cref="AddOn"/>, and <see cref="AddOnRules"/> (D-36, TK-126).
-/// Tests are written by AI and run by the repository owner (Section 0.5 of docs/TASKS.md).
+/// Tests are written by AI and run by the repository owner (Section 0.5 of docs/Task_Details.md).
 /// </summary>
 public sealed class AddOnRulesTests
 {

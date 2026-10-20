@@ -13,7 +13,7 @@ namespace Shared.Kernel.Tests;
 /// rows and columns it logs, and which document a line is filed under. No
 /// database: the model is built and the tracker read, nothing is saved.
 ///
-/// Written for TK-118 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-118 and not run by the AI that wrote it (docs/Task_Details.md 0.5).
 /// </summary>
 public sealed class EditLogWriterTests
 {

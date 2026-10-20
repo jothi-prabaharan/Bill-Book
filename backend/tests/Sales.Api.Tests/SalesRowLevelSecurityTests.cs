@@ -20,7 +20,7 @@ namespace Sales.Api.Tests;
 /// with no tenant and so sees nothing under these policies until TK-20 gives it
 /// one per branch.
 ///
-/// Written for TK-03 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-03 and not run by the AI that wrote it (docs/Task_Details.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class SalesRowLevelSecurityTests

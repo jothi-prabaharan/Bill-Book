@@ -1,4 +1,6 @@
-# TASKS.md — the work queue
+# Task details — the work queue
+
+The detail behind every task: the rules, lanes, decisions and each card in full. **The status at a glance (who completed what, and when) is [`Task_List.md`](./Task_List.md)**, a table generated from the cards below; to change a status, edit the card's first line here and the commit hook rewrites the list.
 
 Every pending piece of work in RetailErp, as **one ordered queue** of task cards. Work them top to
 bottom; several agents can work at once, as long as they follow section 0.
@@ -78,7 +80,7 @@ normal for agent 1 to be on TK-70 while agent 2 is on TK-74.
 3. Change its status to `- [x] completed (Antigravity) - 2026-10-01
 4. **Open the card's GitHub issue** (section 0.6) if it has none, and add its `- **Issue:**` line
    to the card under the status line.
-5. Commit only `docs/TASKS.md` with the message `claim TK-nn (AI name)` and `Refs #N` in the body,
+5. Commit only `docs/Task_Details.md` with the message `claim TK-nn (AI name)` and `Refs #N` in the body,
    then `git push origin main`.
 6. **If the push is rejected**, run `git rebase --abort` if a rebase is in progress, then
    `git reset --hard origin/main`. This throws away only your one-line claim commit. Re-read the
@@ -89,7 +91,7 @@ normal for agent 1 to be on TK-70 while agent 2 is on TK-74.
 **While working**
 - Write only to paths in your card's lanes. Shared files (section 1.1) follow their own rules.
 - Commit small, and run `git pull --rebase origin main` before every push.
-- In `docs/TASKS.md`, edit only your own card. In `docs/Modules.md`, you may tick your own stage's
+- In `docs/Task_Details.md`, edit only your own card. In `docs/Modules.md`, you may tick your own stage's
   box without holding `L-DOC`.
 - On a shared machine, give your test databases their own names (e.g. `SALES_TEST_DB=sales_test_agent2`).
   Two suites dropping the same database will break each other's results.
@@ -191,7 +193,7 @@ as #2 to #13.)
   without the `###`: `TK-nn · Title`. Search for one first; never open a second.
 - **When:** at the claim (section 0.2, step 4). A card worked before this rule gets its issue the
   next time anyone touches it.
-- **Body:** the card's link (`docs/TASKS.md` › TK-nn), its dependencies by issue number where they
+- **Body:** the card's link (`docs/Task_Details.md` › TK-nn), its dependencies by issue number where they
   have one, its sub-tasks as a checklist, and its *Done when*. No credentials, hosts or customer
   data. End with the Claude Code attribution footer when an AI writes it.
 - **The card names it**: `- **Issue:** [#N](https://github.com/jothi-prabaharan/Bill-Book/issues/N)`,
@@ -244,7 +246,7 @@ as #2 to #13.)
 | `Directory.Packages.props`, `Bill-Book.sln`, `Directory.Build.*`, `package.json`, `package-lock.json`, `nx.json`, `tsconfig.base.json`, `.github/workflows/*` | Take lane **`L-DEPS`** as well for the commit that changes them. Hold it for that one commit only. `Npgsql` and `Npgsql.EntityFrameworkCore.PostgreSQL` move together |
 | `release-notes.md`, `frontend/apps/docs/docs.manifest.ts` | Add lines only. On a rebase conflict, keep both sides |
 | `docs/User_Guide/**` | Edit only your module's page. A shared page takes `L-DOC` |
-| `docs/TASKS.md` | Edit only your own card (section 0.2) |
+| `docs/Task_Details.md` | Edit only your own card (section 0.2) |
 
 ---
 
@@ -4644,7 +4646,7 @@ The queue below is one list in card-number order. Each card names its group.
   - **Specs:** `Accounting.Api.Tests.SavingsSchemeTests` (rules, and *Done when*), and `savings-schemes.model.spec.ts`.
   - **Owner step:** run them, then retry seeding for existing branches so they get account `5400`.
 
-### TK-142 · Housekeeping: `TASKS.md` fixes, `CLAUDE.md`, docs and release notes
+### TK-142 · Housekeeping: `Task_Details.md` fixes, `CLAUDE.md`, docs and release notes
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05
 - **Issue:** [#123](https://github.com/jothi-prabaharan/Bill-Book/issues/123)
 - **Group:** J · Business types, add-ons and one worker project
@@ -4656,11 +4658,11 @@ The queue below is one list in card-number order. Each card names its group.
   - [x] Test: written, never run by an AI (section 0.5)
 - **As built:**
   - **The boxes were ticked before the work was done**, so this card was audited line by line against the code rather than closed on its ticks.
-  - `TASKS.md`: the TK-131 heading and status line, and the group lines on TK-131 to TK-135, are fixed; TK-135 had no group or issue line at all. **TK-133 is built** (Settings › Branches and Organization settings choose the type and add-ons) and its box is ticked. **TK-134, TK-135 and TK-136 were marked completed with work still open and are reopened**, each with an audit note saying what is and is not built. The biggest gap is TK-134's: `deploy/local`'s web image still builds `portal` and `admin`, which no longer exist, so it does not build. TK-136's `General` → `Retail` rename and the `App` enum's retirement were never done.
+  - `Task_Details.md`: the TK-131 heading and status line, and the group lines on TK-131 to TK-135, are fixed; TK-135 had no group or issue line at all. **TK-133 is built** (Settings › Branches and Organization settings choose the type and add-ons) and its box is ticked. **TK-134, TK-135 and TK-136 were marked completed with work still open and are reopened**, each with an audit note saying what is and is not built. The biggest gap is TK-134's: `deploy/local`'s web image still builds `portal` and `admin`, which no longer exist, so it does not build. TK-136's `General` → `Retail` rename and the `App` enum's retirement were never done.
   - `CLAUDE.md`: three frontend apps, one worker project (`BillBook.Worker`, with what it hosts and its per-job switches), the six business types and ten add-ons with how they reach the token and the guards, and the open TK-136 rename. It also fixes a stray control character that read "(pps/web)", the stale "RateSync.Worker is empty" and "all five app builds" lines, and the paragraph on `apps/portal` and `apps/admin`.
   - Docs: `platform.md`'s trade section now covers the six types and the add-on table (`AddOnRules.Allowed`); `deployment.md` gains a **Background worker** section and its email and rate sync sections name the one worker; `deploy/azure/README.md` stops calling the workers empty; `inputs.md` loses a known-limitation paragraph that a blind find-and-replace had turned into `bb-branch-date-input` replacing itself. Release notes: bullets for TK-136 and TK-137/138, Antigravity's unformatted business-type block rewritten as bullets, and the three `## Unreleased` headings merged into one, dropping a duplicated copy and an early "Restaurant Mode" note the TK-143 to TK-150 bullets supersede. TK-139 to TK-141 already had their pages, manifest rows and bullets.
   - Left for the reopened cards, not done here: `docs/Modules.md` and the `platform.md` **Apps** section still describe separate apps (TK-134); the deploy fix needs the owner's call on what ports 8082 and 8083 and their tunnel hostnames become (TK-134).
-- **Done when:** `CLAUDE.md` and `TASKS.md` match what is built.
+- **Done when:** `CLAUDE.md` and `Task_Details.md` match what is built.
 
 ### TK-143 · Restaurant business type, setting keys and Settings › Restaurant
 - [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-05

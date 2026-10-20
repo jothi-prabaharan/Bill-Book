@@ -19,7 +19,7 @@ namespace Accounting.Api.Tests;
 /// <c>NOSUPERUSER NOBYPASSRLS</c> role, with no explicit transaction around the
 /// reads, which is how most of the product reads.
 ///
-/// Written for TK-08 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-08 and not run by the AI that wrote it (docs/Task_Details.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class TenantInterceptorTests

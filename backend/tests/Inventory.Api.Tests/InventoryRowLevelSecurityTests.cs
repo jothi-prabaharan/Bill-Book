@@ -20,7 +20,7 @@ namespace Inventory.Api.Tests;
 /// sets each branch's tenant on its own scope, which is the property these tests
 /// check; a costing run as a non-bypass role is the owner's check on TK-74.
 ///
-/// Written for TK-74 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-74 and not run by the AI that wrote it (docs/Task_Details.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class InventoryRowLevelSecurityTests

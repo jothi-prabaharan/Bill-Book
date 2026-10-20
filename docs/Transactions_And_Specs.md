@@ -10,7 +10,7 @@ Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard ru
 **Checklist marking rule**: any `- [ ]` box in this file (e.g. the Definition-of-Done lists) is
 marked `- [~] working (AI name)` when picked up and `- [x] completed (AI name) — YYYY-MM-DD` when
 verified, same convention as [`docs/Modules.md`](./Modules.md). The work order and the
-parallel-agent claim rules are in [`docs/TASKS.md`](./TASKS.md) section 0.
+parallel-agent claim rules are in [`docs/Task_Details.md`](./Task_Details.md) section 0.
 
 ---
 

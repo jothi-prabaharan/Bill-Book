@@ -6,7 +6,7 @@ class Program
 {
     static void Main()
     {
-        string path = "docs/TASKS.md";
+        string path = "docs/Task_Details.md";
         string text = File.ReadAllText(path);
         
         // Fix TK-131 heading broken char

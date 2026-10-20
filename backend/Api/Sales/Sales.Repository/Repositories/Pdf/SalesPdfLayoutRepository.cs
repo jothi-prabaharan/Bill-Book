@@ -41,7 +41,7 @@ public sealed class SalesPdfModel
 /// The fixed layout every archived sales document shares, drawn with PDFsharp.
 ///
 /// <b>Not PDF/A.</b> PDFsharp 6.1.1, the pinned version, has no PDF/A API; see
-/// TK-22 in <c>docs/TASKS.md</c>. <b>Not the print template either:</b> a
+/// TK-22 in <c>docs/Task_Details.md</c>. <b>Not the print template either:</b> a
 /// template is HTML, and PDFsharp draws rather than lays out HTML.
 /// </summary>
 public static class SalesPdfLayoutRepository

@@ -32,4 +32,16 @@ if [ -n "$bad" ]; then
   echo "Put it in docs/ as Capitalised_Words.md, or add it to the docs app content if it is user documentation." >&2
   exit 1
 fi
+# docs/Task_List.md is generated from the cards in docs/Task_Details.md; keep it in step.
+if git diff --cached --name-only | grep -qx 'docs/Task_Details.md'; then
+  if command -v python3 >/dev/null 2>&1; then
+    python3 scripts/update-task-list.py >/dev/null && git add docs/Task_List.md
+  else
+    echo "REFUSED: python3 is needed to regenerate docs/Task_List.md (scripts/update-task-list.py)." >&2
+    exit 1
+  fi
+fi
+if git diff --cached --name-only | grep -qx 'docs/Task_List.md'; then
+  python3 scripts/update-task-list.py --check || exit 1
+fi
 exit 0

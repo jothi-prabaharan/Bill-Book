@@ -13,7 +13,7 @@ The order to build things in, and how to tell when each one is actually done.
 2. Do it, and check it against its **Done when** line. That line is the test; "it compiles" is not the same as "it works".
 3. Tick the box **in the same commit as the work**, the way release notes and docs already work here.
 4. If a task turns out to be wrong or unnecessary, strike it and say why rather than deleting it. The reason is worth more than the tidiness.
-5. **Mark who is on a box, not just whether it's done.** Before starting, change `- [ ]` to `- [~] working (AI name)` so two sessions don't pick up the same item. On completion, change it to `- [x] completed (AI name) — YYYY-MM-DD`. This applies to every checklist in this file. **The work order is [`docs/TASKS.md`](./TASKS.md), not this file**: it holds every pending task as one queue, with the lane and claim rules that let several agents work at once without conflict. Claim the card there first; tick the matching box here in the same commit as the work.
+5. **Mark who is on a box, not just whether it's done.** Before starting, change `- [ ]` to `- [~] working (AI name)` so two sessions don't pick up the same item. On completion, change it to `- [x] completed (AI name) — YYYY-MM-DD`. This applies to every checklist in this file. **The work order is [`docs/Task_Details.md`](./Task_Details.md), not this file**: it holds every pending task as one queue, with the lane and claim rules that let several agents work at once without conflict. Claim the card there first; tick the matching box here in the same commit as the work.
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
 
@@ -505,7 +505,7 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 | **Written, unverified end to end** | T3.6 delivery challan, T5.2 credit note — both can now save, neither has been driven through a full path |
 | **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
 | **Part built** | T3.3 outstanding — settlement now shows on the invoice list (Paid / Part-paid / Unpaid, from `internal/ledger/settlements`), still no aging buckets |
-| **Part built** | T3.4 print — the browser print view exists, and since 6 September a **template master and server-side renderer** exist behind it (`docs/Master.md` stage 7). The per-document print route is not built, blocked on a tenancy decision. An archived copy **is** written: posting an invoice renders it with PDFsharp and saves it to storage — but as plain PDF rather than PDF/A, in a fixed layout rather than the template, for invoices only, and with no endpoint to fetch it (TK-22, D-11 in `docs/TASKS.md`) |
+| **Part built** | T3.4 print — the browser print view exists, and since 6 September a **template master and server-side renderer** exist behind it (`docs/Master.md` stage 7). The per-document print route is not built, blocked on a tenancy decision. An archived copy **is** written: posting an invoice renders it with PDFsharp and saves it to storage — but as plain PDF rather than PDF/A, in a fixed layout rather than the template, for invoices only, and with no endpoint to fetch it (TK-22, D-11 in `docs/Task_Details.md`) |
 | **Not built** | T7.1 POS till screen (Phase 3); the item and customer pickers on every sales form, which wait on the item lookup endpoint |
 
 ---
@@ -992,7 +992,7 @@ The seven beyond the specification are Account Movement, Customer Statement, Ven
 
 #### The five not implemented
 
-**Four fixed-asset reports — no longer blocked on the register.** Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation and Fixed Assets Schedule read the fixed-asset register, and the register now exists: `acc.FixedAssetCategories`, `acc.FixedAssets`, `acc.DepreciationSchedules` (Books and Tax) and `acc.AssetTransactions`. What is missing on the reporting side is a read model for each in `ReportingDbContext` and a source per report. Two of them are still only half-meaningful until owner decisions D-19 and D-20 (`docs/TASKS.md`) are answered: capitalisation and disposal post nothing to the ledger yet, so a reconciliation of the register against its control account, or a disposal schedule with a gain or loss, has nothing to tie to. See the fixed-assets roadmap note in `CLAUDE.md`.
+**Four fixed-asset reports — no longer blocked on the register.** Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation and Fixed Assets Schedule read the fixed-asset register, and the register now exists: `acc.FixedAssetCategories`, `acc.FixedAssets`, `acc.DepreciationSchedules` (Books and Tax) and `acc.AssetTransactions`. What is missing on the reporting side is a read model for each in `ReportingDbContext` and a source per report. Two of them are still only half-meaningful until owner decisions D-19 and D-20 (`docs/Task_Details.md`) are answered: capitalisation and disposal post nothing to the ledger yet, so a reconciliation of the register against its control account, or a disposal schedule with a gain or loss, has nothing to tie to. See the fixed-assets roadmap note in `CLAUDE.md`.
 
 **One is not a report.** *Business Performance*, under a group called *Financial performance*, appears in `reports.json` as a group and a name with no columns, no sub-group and nothing else. There is no specification to implement. It needs a business decision about what it is before it can be engineering work.
 
@@ -3045,8 +3045,8 @@ validation, then UI. Each is committed to `main` as it stands up, with its docs 
 
 The owner gave the go-ahead for these on 24 September 2026. Each section is a **design, not a
 build**: nothing here is coded unless it says so. The build cards each design produced are in
-`docs/TASKS.md`, section E2. Where a design needs an answer the owner has not given, it names the
-D-number raised for it in `docs/TASKS.md` section 3 and does not assume one.
+`docs/Task_Details.md`, section E2. Where a design needs an answer the owner has not given, it names the
+D-number raised for it in `docs/Task_Details.md` section 3 and does not assume one.
 
 ---
 
