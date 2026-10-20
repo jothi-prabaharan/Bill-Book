@@ -5885,6 +5885,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `SignupOtpTests`, `PasswordResetOtpTests`, the seven suites named above and `otp-flow.spec.ts`; choose a provider (D-66).
 - **Done when:** a signup without the right code leaves no customer, branch, licence or shard capacity behind; with it, the trial is created and provisioned as before; both flows send by WhatsApp unless SMS is chosen.
 
+### TK-197 · Email codes on trial signup and password reset, email the default
+- [~] working (Claude Opus 5.5) — since 2026-10-20
+- **Issue:** [#187](https://github.com/jothi-prabaharan/Bill-Book/issues/187)
+- **Group:** Z · Owner request
+- **Lanes:** L-MST (signup, auth, `Master.Api.Tests`), L-UI (`libs/shared/auth`: the signup and forgot-password pages), L-DOC · **Depends on:** TK-196 · **Decision:** the owner's request of 20 October 2026; D-66 (the WhatsApp and SMS provider) stays open and does not block
+- **Where:** `CustomersController.Signup`, `SignupRepository`, `AuthRepository`, `SignupModels.cs`, `AuthModels.cs`, `OtpChannel`, the provisioning job and `CreateOwnerUser`; `signup.page.*`, `forgot-password.page.*`, `otp-flow.ts`.
+- **State:** checked 20 October 2026. TK-196 verifies a signup by WhatsApp or SMS only, with WhatsApp the default on both flows; email is offered on reset alone. Outside Development no WhatsApp or SMS provider is configured (D-66), so no trial can start there.
+- **Sub-tasks:**
+  - [ ] Email as a signup channel and the default on both flows; the code goes to the address being signed up, through the platform's default mailbox. The mobile number is required only for WhatsApp or SMS.
+  - [ ] A trial verified by email confirms the owner's email; a reset by email confirms the account's email.
+  - [ ] Pages: Email first in both channel choices; the signup's verify step shows where the code goes, with the mobile field there when WhatsApp or SMS is chosen.
+  - [ ] Test, docs and release notes.
+- **Done when:** both flows send by email unless WhatsApp or SMS is chosen, and a signup by email creates nothing until its code is right.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
