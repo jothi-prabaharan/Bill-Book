@@ -5960,6 +5960,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `ProfitAndLossReportTests` and `profit-and-loss-report.service.spec.ts`.
 - **Done when:** net profit for a period equals the change in current year earnings on the Balance Sheet over the same days, and gross profit is revenue less cost of sales.
 
+### TK-201 · Cash Flow Statement – Direct: its own endpoint and page
+- [~] working (Claude Opus 5.5) — since 2026-10-20
+- **Issue:** [#191](https://github.com/jothi-prabaharan/Bill-Book/issues/191)
+- **Group:** Z · Owner request (the Finance reports, one by one: Balance Sheet TK-199, Profit & Loss TK-200, Cash Flow Statement – Direct, Reconciliation Report)
+- **Lanes:** L-RPT (a new repository and controller, `Reporting.Api.Tests`), L-GWY (one route), L-UI (`libs/reporting`), L-DOC · **Depends on:** TK-200 · **Decision:** the owner's request of 20 October 2026; D-67 (a required date filter)
+- **Where:** a new `CashFlowReportRepository` and `CashFlowReportController`, `CashFlowReportModels.cs`; the gateway's `appsettings.json`; `reporting-core` (the models and service), `reporting-ui` (a page at `/reports/cash-flow-statement-direct`, the path the menu already links to).
+- **State:** checked 20 October 2026. The menu's *Finance › Cash Flow Statement - Direct* links to `/reports/cash-flow-statement-direct`, which no report answers, because the catalog's only cash report is `cash-flow`: a date-ordered list of cash and bank legs (`IsBank`) with no activities, no opening or closing cash and no date required. The seeded *Cash in Hand*, *Bank Accounts* and *Bank OD & Credit Cards* are parents; the cash and bank accounts Banking provisions under them carry `IsBank`, which is also what Business Performance's total cash balance reads.
+- **Sub-tasks:**
+  - [ ] The repository: each posting (transaction type, id and date) that moves a cash or bank account, with the debits less credits of every other account in it summed in the database, LINQ only; the cost-of-sales and goods-delivered pairs left out, being balanced among themselves; opening-balance postings counted in cash at the beginning rather than as a flow. Each account to a line by its system name and type; GST, TDS, round-off and realized exchange legs going with the rest of their posting when that falls on one line. Investing split into fixed assets bought and sold by the posting's sign. Exchange-rate revaluation on its own line, cash at the beginning and end, and the difference when they do not reconcile.
+  - [ ] The endpoint `GET api/statements/cash-flow` with its own request and response models; from and to required (D-67), a comparison period with both dates or neither; `reports` and `accounting.view`; another branch in the request is 403; its gateway route.
+  - [ ] The page: from, to, compare from and to with "Same period last year"; a table per activity with the accounts under each line; net change, exchange effect, cash at the beginning and end with the check; 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** cash at the beginning plus the net change and the exchange-rate effect equals cash at the end, for a balanced ledger, on both the period and the comparison.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the

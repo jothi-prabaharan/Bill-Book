@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 185 completed, 0 working, 10 open, and 2 blocked (197 cards).
+**Summary:** 185 completed, 1 working, 10 open, and 2 blocked (198 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -207,3 +207,4 @@ where to start, sub-tasks and notes.
 | [TK-198](./Task_Details.md#tk-198--salary-increment-report-its-own-endpoint-and-page) | Salary Increment Report: its own endpoint and page | Z | ✅ completed | Claude Opus 5.5 | 2026-10-20 | written, not run | [#188](https://github.com/jothi-prabaharan/Bill-Book/issues/188) | — |
 | [TK-199](./Task_Details.md#tk-199--balance-sheet-its-own-endpoint-and-page-rebuilt) | Balance Sheet: its own endpoint and page, rebuilt | Z | ✅ completed | Claude Opus 5.5 | 2026-10-20 | written, not run | [#189](https://github.com/jothi-prabaharan/Bill-Book/issues/189) | — |
 | [TK-200](./Task_Details.md#tk-200--profit--loss-its-own-endpoint-and-page-rebuilt) | Profit & Loss: its own endpoint and page, rebuilt | Z | ✅ completed | Claude Opus 5.5 | 2026-10-20 | written, not run | [#190](https://github.com/jothi-prabaharan/Bill-Book/issues/190) | — |
+| [TK-201](./Task_Details.md#tk-201--cash-flow-statement--direct-its-own-endpoint-and-page) | Cash Flow Statement – Direct: its own endpoint and page | Z | 🔶 working | Claude Opus 5.5 (working) | since 2026-10-20 | — | [#191](https://github.com/jothi-prabaharan/Bill-Book/issues/191) | — |
