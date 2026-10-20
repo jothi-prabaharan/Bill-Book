@@ -427,6 +427,8 @@ JWT claims: `sub`, `customer_id`, `customer_code`, `org_id`, `display_name`, `li
 
 **Phone numbers**: local stored **without** prefix, foreign **with** leading `+`. The `+` is the discriminator — SMS/OTP prepends the org's `Country.PhoneCode` when absent. Landline needs an STD code (2+ digits) then number (3+ digits). Mobile has no regex (lengths vary too much by country).
 
+**Every report has a required date filter** (D-67, owner, 20 October 2026): a from and to date for a report over a period, an as-at date for one at a point in time. A report with its own page (TK-198 onward) refuses a request without it with a field error.
+
 **Multi-language** (Tamil, Chinese) works natively — Postgres `varchar` is UTF-8 and counts characters not bytes. Create databases with UTF8 encoding.
 
 **Printing — two separate paths, don't conflate:**
