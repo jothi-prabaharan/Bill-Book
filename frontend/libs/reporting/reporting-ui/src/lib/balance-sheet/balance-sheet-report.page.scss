@@ -1,0 +1,122 @@
+/* The Balance Sheet (TK-199): the filters, a table per section, then the totals. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.as-at {
+  margin: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+.filters__shortcut {
+  padding: 0;
+  font-size: 12px;
+}
+
+/* The tick box sits level with the inputs, below their labels. */
+.filters__field--check,
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.section__title {
+  font-size: 1rem;
+  margin: 0 0 var(--space-2);
+}
+
+.account {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.account__code,
+.account__note {
+  font-size: 12px;
+}
+
+/* The totals: a label and one or two figures a line. */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+}
+
+.summary__head,
+.summary__line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.summary--compare .summary__head,
+.summary--compare .summary__line {
+  grid-template-columns: 1fr auto auto;
+}
+
+.summary__head {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+  text-align: right;
+}
+
+.summary__line dt,
+.summary__line dd {
+  margin: 0;
+}
+
+.summary__line dd {
+  text-align: right;
+}
+
+.summary__line--total {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-divider);
+  font-weight: 600;
+}
+
+.summary__check {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+.summary__check--off {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .filters__actions .btn {
+    width: 100%;
+  }
+
+  /* The account code and name carry the line; the note would crowd it. */
+  .account__note {
+    display: none;
+  }
+}

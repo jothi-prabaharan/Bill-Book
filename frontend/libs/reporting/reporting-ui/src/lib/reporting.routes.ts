@@ -24,7 +24,7 @@ export const reportingRoutes: Routes = [
   {
     path: 'balance-sheet',
     loadComponent: () =>
-      import('./statements/balance-sheet.page').then((m) => m.BalanceSheetPage),
+      import('./balance-sheet/balance-sheet-report.page').then((m) => m.BalanceSheetReportPage),
     data: { access: { permission: 'reports.view' } },
   },
   {

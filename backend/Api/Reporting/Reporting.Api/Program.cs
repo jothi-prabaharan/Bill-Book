@@ -238,6 +238,8 @@ builder.Services.AddScoped<IReportSourceRepository, Reporting.Repository.Reposit
 builder.Services.AddScoped<RestaurantReportRepository>();
 // The Salary Increment Report: its own endpoint and page, not a source (TK-198).
 builder.Services.AddScoped<SalaryIncrementReportRepository>();
+// The Balance Sheet: its own endpoint and page (TK-199).
+builder.Services.AddScoped<BalanceSheetReportRepository>();
 
 // The report builder's datasets (TK-113). Their custom field columns come
 // from Master's definitions, cached five minutes per branch and kind.

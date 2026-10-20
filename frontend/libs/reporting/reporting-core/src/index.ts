@@ -6,3 +6,5 @@ export * from './lib/custom-report.service';
 export * from './lib/report-schedule.service';
 export * from './lib/salary-increment/salary-increment-report.models';
 export * from './lib/salary-increment/salary-increment-report.service';
+export * from './lib/balance-sheet/balance-sheet-report.models';
+export * from './lib/balance-sheet/balance-sheet-report.service';

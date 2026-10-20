@@ -46,6 +46,17 @@ The address bar carries your columns, filters, sorting and grouping. Copy the li
 
 Below tablet width each row becomes a card, with the report's key columns as its title. Pivot is not offered at that width — a matrix has no card form.
 
+## Balance Sheet
+
+What the branch owns and owes at the end of a day, under **Reports › Finance** in the menu, at `/reports/balance-sheet` (TK-199). It needs **accounting.view** as well as access to reports, and has a page of its own, with no column chooser, saved views, schedule or export.
+
+- **As at** is required and starts at today. **Compare with** adds a second column; **Same day last year** fills it in. **Show accounts with no balance** lists every active balance-sheet account, not only those with a balance.
+- **Assets, Liabilities and Equity** each list their accounts by code, with a total. Every balance reads positive on its own side, so an account running against its type, such as accumulated depreciation, shows negative within its section.
+- **Equity includes the profit not yet moved to an account.** **Profit of earlier years** is income less expenses before the financial year the date falls in. **Current year earnings** is income less expenses from the start of that year to the date. A year-end entry that moves profit into a retained earnings account leaves both right, because that account is then listed with its own balance.
+- **An inactive account is listed while it still holds a balance.** Leaving it out would unbalance the sheet.
+- **The totals** show total assets, liabilities, equity, and liabilities plus equity, and say whether assets equal liabilities plus equity. When they differ, the page says by how much: the ledger does not balance up to that date.
+- Every figure is in the branch's base currency.
+
 ## Business Performance
 
 **Business Performance**, under **Accounting**, shows eight ratios for a period, one per row:
