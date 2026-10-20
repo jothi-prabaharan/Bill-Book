@@ -8,4 +8,27 @@ case "$branch" in
     echo "Commit to main, then promote: main -> staging -> uat -> production, by merge." >&2
     exit 1 ;;
 esac
+
+# Markdown files live in docs/ (CLAUDE.md hard rule 17). Only a NEW or renamed
+# .md file is checked; the exceptions are the ones named in that rule.
+bad=""
+for f in $(git diff --cached --name-only --diff-filter=AR -- '*.md' '*.MD' '*.markdown' '*.mdx'); do
+  case "$f" in
+    README.md|CLAUDE.md|AGENTS.md) ;;
+    .claude/*) ;;
+    frontend/apps/docs/content/*.md) ;;
+    docs/*/*) bad="$bad\n  $f  (docs/ is flat: no sub-folders)" ;;
+    docs/[A-Z]*.md)
+      name=${f#docs/}
+      case "$name" in
+        *[!A-Za-z0-9_.]*) bad="$bad\n  $f  (name may only use letters, digits and underscores)" ;;
+      esac ;;
+    *) bad="$bad\n  $f" ;;
+  esac
+done
+if [ -n "$bad" ]; then
+  printf 'REFUSED: markdown files belong in docs/ (CLAUDE.md hard rule 17):%b\n' "$bad" >&2
+  echo "Put it in docs/ as Capitalised_Words.md, or add it to the docs app content if it is user documentation." >&2
+  exit 1
+fi
 exit 0

@@ -122,6 +122,8 @@ git pull --rebase origin main
 
 **`staging`, `uat` and `production` are deployment branches, and nothing is ever committed to them directly (10 October 2026, the owner's strict rule).** Work goes only to `main`. These three move forward only by merging the branch before it (`main` → `staging` → `uat` → `production`), only when the owner asks for that promotion in that request, with no conflict edits, no force-push, no history rewrite, no deletion, and no `--no-verify`. A fix for an environment is made on `main` and promoted. The full rule and how it is enforced are in `CLAUDE.md`, section "Deployment branches".
 
+**Markdown files live in `docs/` and nowhere else** (CLAUDE.md hard rule 17): one flat file per subject, named `Capitalised_Words.md`, extending an existing file before adding a new one. Exceptions are only root `README.md`, `CLAUDE.md`, `AGENTS.md`, `.claude/`, and the in-product pages in `frontend/apps/docs/content/`. `.githooks/pre-commit` refuses a new `.md` anywhere else.
+
 **Do not open a pull request unless you are asked for one.** There is no second branch for one to merge from.
 
 ---

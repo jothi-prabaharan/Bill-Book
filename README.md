@@ -231,4 +231,4 @@ Read **[CLAUDE.md](./CLAUDE.md)** before writing any code. It holds the binding 
 
 It also lists what is still undecided. If your work touches one of those items, ask rather than assume.
 
-Then read **[SPEC.md](./SPEC.md)** for the concrete what-to-build: column-level table definitions, seed data, page specifications and the build order. Each item carries a status — ✅ built, ��[...]
+Then read **[docs/Modules.md](./docs/Modules.md)** for the concrete what-to-build: column-level table definitions, seed data, page specifications and the build order. Each item carries a status — ✅ built, ��[...]
