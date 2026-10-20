@@ -46,11 +46,12 @@ public sealed class BusinessPerformanceSourceRepository : ReportSource<BusinessP
 
     // AccountSystemName of the control accounts the seed writes, as
     // Accounting.Entity.Enums.SystemAccountNames spells them. An org may rename
-    // an account; it cannot rename these.
+    // an account; it cannot rename these. The two cost-of-sales names are
+    // public because the Profit & Loss classifies by them too (TK-200).
     private const string AccountsReceivable = "Accounts Receivable";
     private const string AccountsPayable = "Accounts Payable";
-    private const string CostOfGoodsSold = "Cost of Goods Sold";
-    private const string PurchaseReturns = "Purchase Returns";
+    public const string CostOfGoodsSold = "Cost of Goods Sold";
+    public const string PurchaseReturns = "Purchase Returns";
     private const string FixedAsset = "Fixed Asset";
 
     public override string ReportKey => "business-performance";

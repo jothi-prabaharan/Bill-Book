@@ -18,7 +18,7 @@ export const reportingRoutes: Routes = [
   {
     path: 'profit-and-loss',
     loadComponent: () =>
-      import('./statements/profit-and-loss.page').then((m) => m.ProfitAndLossPage),
+      import('./profit-and-loss/profit-and-loss-report.page').then((m) => m.ProfitAndLossReportPage),
     data: { access: { permission: 'reports.view' } },
   },
   {

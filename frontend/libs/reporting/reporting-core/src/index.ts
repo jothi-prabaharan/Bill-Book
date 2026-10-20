@@ -8,3 +8,5 @@ export * from './lib/salary-increment/salary-increment-report.models';
 export * from './lib/salary-increment/salary-increment-report.service';
 export * from './lib/balance-sheet/balance-sheet-report.models';
 export * from './lib/balance-sheet/balance-sheet-report.service';
+export * from './lib/profit-and-loss/profit-and-loss-report.models';
+export * from './lib/profit-and-loss/profit-and-loss-report.service';

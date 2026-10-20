@@ -1,0 +1,117 @@
+/* The Profit & Loss (TK-200): the filters, a table per section, and the profit lines between them. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period {
+  margin: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+.filters__shortcut {
+  padding: 0;
+  font-size: 12px;
+}
+
+/* The tick box and the button sit level with the inputs, below their labels. */
+.filters__field--check,
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.section__title {
+  font-size: 1rem;
+  margin: 0 0 var(--space-2);
+}
+
+.account {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.account__code {
+  font-size: 12px;
+}
+
+/* A profit line: a label and one or two figures, set to the grid's amount columns. */
+.profit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.profit__line {
+  display: grid;
+  grid-template-columns: 1fr 9.5rem;
+  /* No gap: the amount columns are as wide as the grid's, which has none either. */
+  gap: 0;
+  align-items: baseline;
+  font-weight: 600;
+}
+
+.profit--compare .profit__line {
+  grid-template-columns: 1fr 9.5rem 9.5rem;
+}
+
+.profit__line dt,
+.profit__line dd {
+  margin: 0;
+}
+
+.profit__line dd {
+  text-align: right;
+}
+
+.profit__line--margin {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-subtle);
+}
+
+.profit--net {
+  border-top: 2px solid var(--color-divider);
+}
+
+.profit--net .profit__line:first-child {
+  font-size: 1.05rem;
+}
+
+@media (max-width: 640px) {
+  .filters__actions .btn {
+    width: 100%;
+  }
+
+  .profit__line {
+    grid-template-columns: 1fr auto;
+    gap: var(--space-3);
+  }
+
+  .profit--compare .profit__line {
+    grid-template-columns: 1fr auto auto;
+  }
+}

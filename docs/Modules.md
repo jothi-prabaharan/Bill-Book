@@ -978,7 +978,7 @@ A report is **Completed (100%)** only when its schema/data source, backend query
 
 ### 8.2 The reconciliation
 
-`reports.json` holds **46 distinct `(ReportGroup, ReportName)` pairs**, and that file is where the number 46 comes from. Four of the forty-six declare **no columns at all** — Balance Sheet, Cash Flow Statement – Direct, Profit & Loss and Business Performance. The first three are statement reports with pages of their own and are built (the Balance Sheet rebuilt with its own endpoint, request and response models in TK-199: as-at and comparison dates, profit split at the financial year); the fourth is a bare name with no column list, which is not a report definition to implement.
+`reports.json` holds **46 distinct `(ReportGroup, ReportName)` pairs**, and that file is where the number 46 comes from. Four of the forty-six declare **no columns at all** — Balance Sheet, Cash Flow Statement – Direct, Profit & Loss and Business Performance. The first three are statement reports with pages of their own and are built (the Balance Sheet rebuilt with its own endpoint, request and response models in TK-199: as-at and comparison dates, profit split at the financial year; the Profit & Loss likewise in TK-200: required from and to dates, a comparison period, revenue and cost of sales split as Business Performance splits them, gross and net margins); the fourth is a bare name with no column list, which is not a report definition to implement.
 
 | | Count |
 |---|---|

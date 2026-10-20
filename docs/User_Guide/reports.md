@@ -57,6 +57,18 @@ What the branch owns and owes at the end of a day, under **Reports › Finance**
 - **The totals** show total assets, liabilities, equity, and liabilities plus equity, and say whether assets equal liabilities plus equity. When they differ, the page says by how much: the ledger does not balance up to that date.
 - Every figure is in the branch's base currency.
 
+## Profit & Loss
+
+What the branch earned and spent over a period, under **Reports › Finance** in the menu, at `/reports/profit-and-loss` (TK-200). It needs **accounting.view** as well as access to reports, and has a page of its own, with no column chooser, saved views, schedule or export.
+
+- **From** and **To** are both required. They start at the beginning of the financial year and today. **Compare from** and **Compare to** add a second column, and need both dates or neither. **Same period last year** fills them in. **Show accounts with no movement** lists every active income and expense account, not only those that moved.
+- **Revenue** is your sales accounts, so sales returns and discounts given are taken off it. **Cost of sales** is Cost of Goods Sold less Purchase Returns. **Gross profit** is revenue less cost of sales.
+- **Other income** is every other income account, such as fee income or a foreign exchange gain. **Expenses** is every other expense account. **Net profit** is gross profit plus other income less expenses.
+- Each section lists its accounts by code, with a total. Every amount reads positive on its own side, so an account running against its type, such as sales returns, shows negative and reduces its section.
+- **Gross margin** and **net margin** are each profit line as a percentage of revenue, to two places. A period with no revenue shows no margin rather than a misleading number.
+- The sections are split the way **Business Performance** splits them, so its margins and these agree. Net profit for a period within one financial year equals the change in **Current year earnings** on the Balance Sheet over the same days.
+- Every figure is in the branch's base currency.
+
 ## Business Performance
 
 **Business Performance**, under **Accounting**, shows eight ratios for a period, one per row:
