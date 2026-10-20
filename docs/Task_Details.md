@@ -5905,6 +5905,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `SignupOtpTests`, `PasswordResetOtpTests`, `SecretProtectorTests`, the suites that build `SignupRepository` and `otp-flow.spec.ts`; set the platform mailbox on each environment; an environment that sets its own `Encryption__Key` must give one of 32 bytes.
 - **Done when:** both flows send by email unless WhatsApp or SMS is chosen, and a signup by email creates nothing until its code is right.
 
+### TK-198 · Salary Increment Report: its own endpoint and page
+- [~] working (Claude Opus 5.5) — since 2026-10-20
+- **Issue:** [#188](https://github.com/jothi-prabaharan/Bill-Book/issues/188)
+- **Group:** Z · Owner request
+- **Lanes:** L-RPT (a `pay` read model, a `rpt` migration with no SQL, the catalog, `Reporting.Api.Tests`), L-UI (`libs/reporting`), L-DOC · **Depends on:** — · **Decision:** the owner's request of 20 October 2026
+- **Where:** `HrmsReadModels.cs`, `ReportingDbContext`, a new `SalaryIncrementReportRepository` and `SalaryIncrementReportController`, `ReportCatalogRepository`, `ReportCatalogSeeder`; `reporting-core` (the models and service), `reporting-ui` (the page and its route).
+- **State:** checked 20 October 2026. Payroll stores each revision in `pay.SalaryRevisions` (previous and new annual CTC, effective date, reason) when a salary is revised. Reporting has no read model for it and no report on it. Salary revisions go through no approval, so there is no approver to report.
+- **Sub-tasks:**
+  - [ ] Read model and migration; the query in a repository, LINQ only, with the employee, department and designation from `hrm`.
+  - [ ] `POST api/reports/salary-increment` with its own request and response models, and the filter options; Payroll add-on and `payroll.view`; another branch in the request is 403.
+  - [ ] The catalog lists it under Payroll; the page at `/reports/salary-increment` with the filters, the grid and the footer, at 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** the report lists each revision whose effective date falls in the range, with the increment and its percentage, and totals that match the rows.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
