@@ -5942,6 +5942,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `BalanceSheetReportTests` and `balance-sheet-report.service.spec.ts`.
 - **Done when:** on any date, total assets equal total liabilities plus equity for a balanced ledger, with the year's profit and earlier years' profit shown in equity.
 
+### TK-200 · Profit & Loss: its own endpoint and page, rebuilt
+- [~] working (Claude Opus 5.5) — since 2026-10-20
+- **Issue:** [#190](https://github.com/jothi-prabaharan/Bill-Book/issues/190)
+- **Group:** Z · Owner request (the Finance reports, one by one: Balance Sheet TK-199, Profit & Loss, Cash Flow Statement – Direct, Reconciliation Report)
+- **Lanes:** L-RPT (`StatementsController`, a new repository and controller, `Reporting.Api.Tests`), L-UI (`libs/reporting`), L-DOC · **Depends on:** TK-199 · **Decision:** the owner's request of 20 October 2026; D-67 (a required date filter)
+- **Where:** `StatementsController.ProfitAndLoss` (moved out), a new `ProfitAndLossReportRepository` and `ProfitAndLossReportController`, `ProfitAndLossReportModels.cs`; `reporting-core` (the models and service), `reporting-ui` (the page that replaces `statements/profit-and-loss.page`).
+- **State:** checked 20 October 2026. `GET api/statements/profit-and-loss` builds anonymous objects in the controller from every ledger row in the range loaded into memory; its gross profit is income less every expense, the same figure as its net profit; the page sends no dates at all, so it always shows everything ever posted.
+- **Sub-tasks:**
+  - [ ] The repository: each income and expense account's movement in the period, and in a comparison period, summed in the database, LINQ only; revenue, cost of sales, other income and expenses classified as Business Performance does; gross and net profit and margins.
+  - [ ] The endpoint at the same address with its own request and response models; from and to required (D-67); `reports` and `accounting.view`; another branch in the request is 403.
+  - [ ] The page: from, to, compare with and "Same period last year", show accounts with no movement; a table per section, gross and net profit, 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** net profit for a period equals the change in current year earnings on the Balance Sheet over the same days, and gross profit is revenue less cost of sales.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -6018,7 +6032,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-64 | GST on a site bill: separate supplies (labor on SAC, material on HSN) or one composite supply? | TK-175 (the invoice lines) | **Separate lines** (owner, 2026-10-09): labour on SAC, material on HSN, each at its own GST rate. TK-175 |
 | D-65 | Does a **Retail** branch get Settings › Metal purity? The menu (`TradeScopeRepository.MenuTrades["mtp"]`, pinned by `TradeScopeTests`) and the seed give it to Retail and Jewellery, but `MetalPuritiesController` is `[RequireBusinessType(Jewellery)]`, so on a Retail branch the screen opens and every call answers 403. Widen the controller to Retail, or narrow the menu and the seed to Jewellery? | TK-191 | **Retail and Jewellery** (owner, 2026-10-12): the controller is widened to Retail, matching the menu and the seed. TK-191 |
 | D-66 | Which provider sends WhatsApp and SMS codes? TK-196 built signup and password-reset codes against `IMobileMessageClient`; nothing delivers outside Development until one is configured, so there a code goes by email only (the default since TK-197). Options: **MSG91** (Indian, SMS with DLT templates and WhatsApp from one account), **Gupshup**, **Twilio**, or **Meta's WhatsApp Cloud API** plus a separate SMS gateway. Each needs DLT registration for SMS and an approved WhatsApp authentication template. | TK-196 (delivery only) | — |
-| D-67 | Must every report have a date filter? | TK-198, TK-199 and every report rebuilt after them | **Yes, required** (owner, 2026-10-20): every report has a mandatory date filter, a from and to date for a report over a period and an as-at date for one at a point in time. The Salary Increment Report (from and to) and the Balance Sheet (as at) already require theirs; each report rebuilt from here does too. Of the shared engine's 115 sources none requires a date today: 27 take an optional one and 88 none. Whether to change those now or as each is rebuilt is open with the owner. |
+| D-67 | Must every report have a date filter? | TK-198, TK-199 and every report rebuilt after them | **Yes, required** (owner, 2026-10-20): every report has a mandatory date filter, a from and to date for a report over a period and an as-at date for one at a point in time. The Salary Increment Report (from and to) and the Balance Sheet (as at) already require theirs; each report rebuilt from here does too. Of the shared engine's 115 sources none requires a date today: 27 take an optional one and 88 none. They get theirs **as each is rebuilt** (owner, 2026-10-20), not in one sweep. |
 
 ---
 
