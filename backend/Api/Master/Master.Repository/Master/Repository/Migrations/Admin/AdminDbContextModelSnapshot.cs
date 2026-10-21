@@ -7034,7 +7034,7 @@ namespace Master.Repository.Migrations.Admin
                     b.Property<int>("MaxOrganizations")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MaxUsers")
+                    b.Property<int?>("MaxUsers")
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
@@ -7042,6 +7042,12 @@ namespace Master.Repository.Migrations.Admin
 
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<int?>("MonthlyPurchaseTransactionLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("MonthlySalesTransactionLimit")
+                        .HasColumnType("integer");
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
@@ -25209,6 +25215,73 @@ namespace Master.Repository.Migrations.Admin
                             Name = "Recipe Consumption",
                             Version = 0u
                         });
+                });
+
+            modelBuilder.Entity("Master.Entity.TableEntities.UpgradeRequest", b =>
+                {
+                    b.Property<long>("UpgradeRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UpgradeRequestId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FromPlan")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("ToPlan")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("UpgradeRequestId");
+
+                    b.HasIndex("CustomerId", "Status");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("UpgradeRequests", "mst");
                 });
 
             modelBuilder.Entity("Master.Entity.TableEntities.User", b =>

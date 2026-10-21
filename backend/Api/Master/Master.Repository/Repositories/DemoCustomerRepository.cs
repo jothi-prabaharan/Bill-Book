@@ -181,17 +181,18 @@ public sealed class DemoCustomerRepository
         };
         _db.Customers.Add(customer);
 
-        _db.Licenses.Add(new License
+        var licence = new License
         {
             LicenseId = Guid.NewGuid(),
             CustomerId = customerId,
             LicenseType = licenceType,
             StartDate = today,
             ExpiryDate = expiry,
-            MaxUsers = CustomerKindRepository.UnbilledMaxUsers,
             MaxOrganizations = CustomerKindRepository.UnbilledMaxOrganizations,
             IsActive = true,
-        });
+        };
+        PlanCatalogRepository.Apply(licence);
+        _db.Licenses.Add(licence);
 
         int? defaultStateId = await _db.States
             .Where(s => s.CountryId == 1 && s.StateCode == "33")

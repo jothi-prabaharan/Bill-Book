@@ -5,6 +5,7 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Licensing;
 using Shared.Kernel.Validation;
 
 namespace Master.Repository.Repositories;
@@ -67,6 +68,12 @@ public sealed class UserRepository
     /// Creates the user (no password), assigns the role for this organization,
     /// issues a 7-day invitation token and emails the link. Never issues a
     /// temporary password.
+    ///
+    /// A branch holds as many users as its plan allows, and a user who has been
+    /// revoked still holds a place (D-68, TK-209): the place is taken the first
+    /// time someone is given access and is not given back. So the count below
+    /// is of everyone who has ever been assigned, and someone being invited
+    /// back needs no place of their own.
     /// </summary>
     public async Task<InviteUserResult> InviteAsync(
         Guid orgId, Guid? customerId, InviteUserRequest request, CancellationToken ct)
@@ -77,17 +84,24 @@ public sealed class UserRepository
             return new InviteUserResult(InviteOutcome.OrgNotFound, null);
         }
 
-        int activeUsers = await (
-            from a in _db.UserOrganizationRoles
-            where a.OrgId == orgId && a.IsActive
-            select a.UserId).Distinct().CountAsync(ct);
-        if (activeUsers >= org.MaxUsers)
+        User? user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email, ct);
+
+        // What this person already holds in the branch, revoked or not.
+        List<UserOrganizationRole> held = user is null
+            ? []
+            : await _db.UserOrganizationRoles
+                .Where(a => a.UserId == user.UserId && a.OrgId == orgId)
+                .ToListAsync(ct);
+
+        if (held.Any(a => a.IsActive))
         {
-            return new InviteUserResult(InviteOutcome.UserLimitReached, null);
+            return new InviteUserResult(InviteOutcome.AlreadyMember, user!.UserId);
         }
 
-        User? user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email, ct);
-        bool isNewUser = user is null;
+        if (held.Count == 0 && await SeatRefusalAsync(org, orgId, ct) is PlanLimitResponse refusal)
+        {
+            return new InviteUserResult(InviteOutcome.UserLimitReached, null, refusal);
+        }
 
         if (user is null)
         {
@@ -104,17 +118,14 @@ public sealed class UserRepository
             _db.Users.Add(user);
         }
 
-        // Already in this branch.
-        bool alreadyInOrg = await (
-            from a in _db.UserOrganizationRoles
-            where a.UserId == user.UserId && a.OrgId == orgId && a.IsActive
-            select a).AnyAsync(ct);
-        if (alreadyInOrg && !isNewUser)
+        // Someone invited back to the role they had gets that assignment back;
+        // a new row for it would break the one-row-per-role index.
+        UserOrganizationRole? returning = held.FirstOrDefault(a => a.RoleId == request.RoleId);
+        if (returning is not null)
         {
-            return new InviteUserResult(InviteOutcome.AlreadyMember, user.UserId);
+            returning.IsActive = true;
         }
-
-        if (!alreadyInOrg)
+        else
         {
             _db.UserOrganizationRoles.Add(new UserOrganizationRole
             {
@@ -130,6 +141,44 @@ public sealed class UserRepository
 
         await SendInviteAsync(user, org.OrgName, token, customerId, ct);
         return new InviteUserResult(InviteOutcome.Ok, user.UserId);
+    }
+
+    /// <summary>
+    /// The refusal for a branch whose places are all taken, or null when there
+    /// is one left to give. A plan with no user limit has none to run out of.
+    /// </summary>
+    private async Task<PlanLimitResponse?> SeatRefusalAsync(OrgContextResponse org, Guid orgId, CancellationToken ct)
+    {
+        if (org.MaxUsers is not int limit)
+        {
+            return null;
+        }
+
+        // Two invitations racing for the last place must not both pass the
+        // count below. Updating the licence row holds its lock until the
+        // request's transaction ends, so the second waits, then counts the first.
+        await _db.Licenses
+            .Where(l => l.CustomerId == org.CustomerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(l => l.MaxUsers, l => l.MaxUsers), ct);
+
+        int used = await _db.UserOrganizationRoles
+            .Where(a => a.OrgId == orgId)
+            .Select(a => a.UserId)
+            .Distinct()
+            .CountAsync(ct);
+        if (used < limit)
+        {
+            return null;
+        }
+
+        return new PlanLimitResponse
+        {
+            Message = PlanCatalogRepository.UserLimitMessage(org.LicenseType, limit),
+            Kind = PlanLimitKind.Users,
+            Plan = PlanCatalogRepository.Name(org.LicenseType),
+            Limit = limit,
+            Used = used,
+        };
     }
 
     /// <summary>Re-issues the invitation and sends it again, invalidating the previous link.</summary>
@@ -313,7 +362,8 @@ public enum InviteOutcome
     AlreadyMember = 4,
 }
 
-public sealed record InviteUserResult(InviteOutcome Outcome, Guid? UserId);
+/// <summary>The outcome of an invitation; <paramref name="Limit"/> carries the figures when it was refused for a full plan.</summary>
+public sealed record InviteUserResult(InviteOutcome Outcome, Guid? UserId, PlanLimitResponse? Limit = null);
 
 public enum RevokeOutcome
 {

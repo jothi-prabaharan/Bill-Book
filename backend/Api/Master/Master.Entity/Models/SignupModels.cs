@@ -316,7 +316,20 @@ public class OrgContextResponse
     /// </summary>
     public bool ExpiryIsBranchLevel { get; set; }
 
-    public int MaxUsers { get; set; }
+    /// <summary>
+    /// Users the branch may hold, deactivated ones included. Null is no limit,
+    /// which is Elite's and an unbilled customer's (TK-209).
+    /// </summary>
+    public int? MaxUsers { get; set; }
+
+    /// <summary>The licence's type; the plan a person reads is named from it (TK-209).</summary>
+    public LicenseType LicenseType { get; set; }
+
+    /// <summary>Sales documents the branch may create in a calendar month; null is no limit (TK-210).</summary>
+    public int? MonthlySalesTransactionLimit { get; set; }
+
+    /// <summary>Purchase documents the branch may create in a calendar month; null is no limit (TK-210).</summary>
+    public int? MonthlyPurchaseTransactionLimit { get; set; }
 
     /// <summary>
     /// The branch's financial year start month — 4 for India. Carried here

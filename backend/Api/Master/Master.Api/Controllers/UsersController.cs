@@ -55,10 +55,7 @@ public sealed class UsersController : ControllerBase
             {
                 Message = "That person already has access to this organization.",
             }),
-            InviteOutcome.UserLimitReached => Conflict(new MessageResponse
-            {
-                Message = "Your plan's user limit has been reached. Upgrade to add more users.",
-            }),
+            InviteOutcome.UserLimitReached => Conflict(result.Limit),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
     }

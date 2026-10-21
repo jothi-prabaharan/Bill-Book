@@ -89,7 +89,7 @@ public sealed class InternalCustomerRepository
         {
             licence.LicenseType = LicenseType.Elite;
             licence.ExpiryDate = CustomerKindRepository.NoExpiry;
-            licence.MaxUsers = Math.Max(licence.MaxUsers, CustomerKindRepository.UnbilledMaxUsers);
+            PlanCatalogRepository.Apply(licence);
             licence.MaxOrganizations = Math.Max(licence.MaxOrganizations, CustomerKindRepository.UnbilledMaxOrganizations);
             licence.IsActive = true;
         }

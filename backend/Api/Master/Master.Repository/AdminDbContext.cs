@@ -107,6 +107,9 @@ public class AdminDbContext : DbContext
 
     public DbSet<OtpVerification> OtpVerifications => Set<OtpVerification>();
 
+    /// <summary>Customers asking for a higher plan (D-70, TK-209).</summary>
+    public DbSet<UpgradeRequest> UpgradeRequests => Set<UpgradeRequest>();
+
     /// <summary>Exchange rate history, schema <c>rat</c> (TK-24).</summary>
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
 
@@ -266,6 +269,18 @@ public class AdminDbContext : DbContext
             // One licence per customer (D-36, TK-127).
             b.HasIndex(e => e.CustomerId).IsUnique();
             b.Property(e => e.LicenseType).HasConversion<string>().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<UpgradeRequest>(b =>
+        {
+            b.HasKey(e => e.UpgradeRequestId);
+            // The operator's list: what is waiting, newest first.
+            b.HasIndex(e => new { e.Status, e.CreatedAt });
+            b.HasIndex(e => new { e.CustomerId, e.Status });
+            b.Property(e => e.FromPlan).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.ToPlan).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Reason).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
         });
 
         modelBuilder.Entity<SmtpSettings>(b =>

@@ -135,7 +135,9 @@ public sealed class CustomerKindTests
         Assert.Equal(PlanTier.Elite, customer.PlanTier);
         Assert.Equal(LicenseType.Elite, licence.LicenseType);
         Assert.Equal(CustomerKindRepository.NoExpiry, licence.ExpiryDate);
-        Assert.Equal(CustomerKindRepository.UnbilledMaxUsers, licence.MaxUsers);
+        Assert.Null(licence.MaxUsers);
+        Assert.Null(licence.MonthlySalesTransactionLimit);
+        Assert.Null(licence.MonthlyPurchaseTransactionLimit);
     }
 
     [SkippableFact]

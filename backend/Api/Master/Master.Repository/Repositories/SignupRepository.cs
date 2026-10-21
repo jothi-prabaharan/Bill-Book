@@ -14,7 +14,6 @@ namespace Master.Repository.Repositories;
 public sealed class SignupRepository
 {
     private const int TrialDays = 14;
-    private const int TrialMaxUsers = 3;
     private const int TrialMaxOrganizations = 1;
     private const int CodeRetryLimit = 5;
 
@@ -421,10 +420,12 @@ public sealed class SignupRepository
             LicenseType = licenceType,
             StartDate = today,
             ExpiryDate = licenceExpiry,
-            MaxUsers = CustomerKindRepository.NeverLapses(kind) ? CustomerKindRepository.UnbilledMaxUsers : TrialMaxUsers,
             MaxOrganizations = CustomerKindRepository.NeverLapses(kind) ? CustomerKindRepository.UnbilledMaxOrganizations : TrialMaxOrganizations,
             IsActive = true,
         };
+
+        // A trial's three users and its transaction limits, or none for an unbilled customer.
+        PlanCatalogRepository.Apply(license);
         _db.Licenses.Add(license);
 
         var org = new Organization

@@ -72,6 +72,8 @@ public sealed class OrgContextRepository
                 LicenseType = l != null ? l.LicenseType : LicenseType.Trial,
                 LicenseActive = l != null && l.IsActive,
                 MaxUsers = l != null ? l.MaxUsers : 0,
+                SalesLimit = l != null ? l.MonthlySalesTransactionLimit : 0,
+                PurchaseLimit = l != null ? l.MonthlyPurchaseTransactionLimit : 0,
             }).FirstOrDefaultAsync(ct);
 
         if (row is null)
@@ -175,7 +177,13 @@ public sealed class OrgContextRepository
             // down, talk to your head office" — and telling a paying customer
             // to renew a licence that is perfectly valid is the worse message.
             ExpiryIsBranchLevel = !neverLapses && row.HasLicence && row.OrgExpiryDate is DateOnly branchDate && branchDate < row.ExpiryDate,
-            MaxUsers = neverLapses ? Math.Max(row.MaxUsers, CustomerKindRepository.UnbilledMaxUsers) : row.MaxUsers,
+            // An unbilled customer is held to none of a plan's limits (D-44); a
+            // customer with no licence at all is held to zero of them, never to
+            // none, which is what an empty limit means.
+            MaxUsers = neverLapses ? null : row.MaxUsers,
+            LicenseType = row.LicenseType,
+            MonthlySalesTransactionLimit = neverLapses ? null : row.SalesLimit,
+            MonthlyPurchaseTransactionLimit = neverLapses ? null : row.PurchaseLimit,
             FinancialYearStartMonth = row.FinancialYearStartMonth,
             BaseCurrency = row.BaseCurrency,
             StateCode = stateCode,

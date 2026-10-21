@@ -10,7 +10,9 @@ public class LicenseDto
     public string LicenseType { get; set; } = string.Empty;
     public DateOnly StartDate { get; set; }
     public DateOnly ExpiryDate { get; set; }
-    public int MaxUsers { get; set; }
+    public int? MaxUsers { get; set; }
+    public int? MonthlySalesTransactionLimit { get; set; }
+    public int? MonthlyPurchaseTransactionLimit { get; set; }
     public int MaxOrganizations { get; set; }
     public bool IsActive { get; set; }
     public int GraceDays { get; set; }

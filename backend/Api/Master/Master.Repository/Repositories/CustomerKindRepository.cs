@@ -21,14 +21,12 @@ public static class CustomerKindRepository
     public static readonly DateOnly NoExpiry = new(2099, 12, 31);
 
     /// <summary>
-    /// The user and branch limits on an unbilled customer's licence. They are
-    /// what a paying customer buys, so an unbilled one is not held to them;
-    /// a number rather than "no limit" keeps the columns and the checks as
-    /// they are.
+    /// The branch limit on an unbilled customer's licence. It is what a paying
+    /// customer buys, so an unbilled one is not held to it; a number rather
+    /// than "no limit" keeps the column and the check as they are. Its users
+    /// and transactions have no stand-in: an empty limit on the licence is no
+    /// limit (D-68, TK-209).
     /// </summary>
-    public const int UnbilledMaxUsers = 10_000;
-
-    /// <inheritdoc cref="UnbilledMaxUsers"/>
     public const int UnbilledMaxOrganizations = 1_000;
 
     /// <summary>Whether a customer of this kind can lapse, be stamped Expired, or be reminded to pay.</summary>

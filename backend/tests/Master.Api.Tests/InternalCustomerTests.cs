@@ -119,7 +119,10 @@ public sealed class InternalCustomerTests
         Assert.Equal(CustomerKind.Internal, customer.Kind);
         Assert.Equal(TenantStatus.Active, customer.Status);
         Assert.Equal(CustomerKindRepository.NoExpiry, licence.ExpiryDate);
-        Assert.Equal(CustomerKindRepository.UnbilledMaxUsers, licence.MaxUsers);
+        // Elite has no user or transaction limit; an empty limit is how that is stored (D-68).
+        Assert.Null(licence.MaxUsers);
+        Assert.Null(licence.MonthlySalesTransactionLimit);
+        Assert.Null(licence.MonthlyPurchaseTransactionLimit);
         Assert.Equal(BusinessType.Service, ho.BusinessType);
         Assert.Equal(Vertical.Service, ho.Vertical);
         Assert.Equal(AddOn.Hrms, ho.AddOns);

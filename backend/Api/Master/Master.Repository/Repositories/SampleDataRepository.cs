@@ -230,17 +230,18 @@ public sealed class SampleDataRepository
             DatabaseName = databaseName,
         });
 
-        _db.Licenses.Add(new License
+        var licence = new License
         {
             LicenseId = Guid.NewGuid(),
             CustomerId = CustomerId,
             LicenseType = licenceType,
             StartDate = today,
             ExpiryDate = expiry,
-            MaxUsers = CustomerKindRepository.UnbilledMaxUsers,
             MaxOrganizations = CustomerKindRepository.UnbilledMaxOrganizations,
             IsActive = true,
-        });
+        };
+        PlanCatalogRepository.Apply(licence);
+        _db.Licenses.Add(licence);
 
         await _db.SaveChangesAsync(ct);
         return true;

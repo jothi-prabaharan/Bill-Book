@@ -175,11 +175,24 @@ One row per customer (`GET /api/customers/{id}/licenses`), created automatically
 |---|---|
 | `LicenseType` | Trial |
 | `ExpiryDate` | signup + 14 days |
-| `MaxUsers` | 3 |
+| `MaxUsers` | 3 (see **Plans** below) |
+| `MonthlySalesTransactionLimit`, `MonthlyPurchaseTransactionLimit` | 1,000 each (see **Plans** below) |
 | `MaxOrganizations` | 1 |
 | `GraceDays` | 0 |
 
 A licence is expired when `today > ExpiryDate + GraceDays`. Expiry is evaluated **lazily**, the first time an org context is resolved, and stamped onto the customer — no nightly job is required.
+
+## Plans
+
+A customer is on one of three plans (D-68, TK-209). The plan is the licence's type: **Trial**, **Professional** (stored as `Pro`; an older `Standard` licence reads as the same thing) or **Elite**. What a plan allows is stored on the licence, so an operator can settle a different figure for one customer:
+
+| Plan | Users in a branch | Sales documents a month | Purchase documents a month |
+|---|---|---|---|
+| **Trial** (14 days) | 3 | 1,000 | 1,000 |
+| **Professional** | 5 | 1,000 | 1,000 |
+| **Elite** | no limit | no limit | no limit |
+
+An empty figure on the licence means **no limit**, which only Elite has. Every start fills a missing figure on a Trial or Professional licence with its plan's own and clears the figures on an Elite one; a figure an operator set on anything else is left alone. An Internal or Demo customer is Elite and is never held to a limit. The 10,000 users such a licence once carried in place of "no limit" are gone.
 
 ## Expiry blocks the app, never the login
 
@@ -197,7 +210,21 @@ Letting login itself fail would have been simpler to build and worse to use — 
 
 ![User Roles & Permission Management](assets/screenshots/users-management.png)
 
-Inviting a user checks `MaxUsers` and returns `409` with an upgrade prompt when the cap is reached, rather than creating a user that cannot log in.
+A branch holds as many users as its plan allows: **3 on a trial, 5 on Professional, no limit on Elite** (D-68, TK-209). The limit is counted **per branch**, and it counts **everyone who has ever been given access, deactivated people included.** Revoking someone does not free their place. The ways to more places are the Elite plan, or an operator changing the figure on the licence.
+
+Inviting a sixth user to a Professional branch is refused with `409` and says why:
+
+> Professional plan user limit reached (maximum 5 users including inactive accounts). Upgrade to the Elite Plan to add more users.
+
+On a trial the sentence names the Trial plan and points at Professional or Elite. The answer carries the figures with the words (`code` `PlanLimitReached`, `kind` `Users`, `plan`, `limit`, `used`), so a screen can open its upgrade prompt without reading the sentence. Nothing is created, so no user is left who cannot sign in.
+
+Inviting someone back who was revoked takes no new place: they are already counted, and their assignment to the role they had is switched on again. Inviting someone who is already active in the branch is told so (`409`), not that the plan is full. Two invitations racing for the last place cannot both succeed.
+
+`GET /api/plan` (*Settings: view*) returns the plan's name, its limits, and how many places the signed-in branch has used.
+
+### Asking for a higher plan
+
+There is no payment inside the app (D-70). `POST /api/plan/upgrade-requests` (*Settings: edit*) records the request, with who asked, from which branch and what sent them, in `mst.UpgradeRequests`, and mails it to the address in `Licensing:UpgradeRequestEmail`, from the platform's own mailbox. A platform operator changes the plan. A customer with a request waiting does not make a second one: it is told so and nothing more is sent. With no address set the request is still recorded and a warning is logged. Elite, and an Internal or Demo customer, have nothing to ask for.
 
 
 
@@ -234,7 +261,7 @@ Outgoing system emails (user invitations, password resets, and transaction alert
 1. Creates the user with **no password** and `EmailConfirmed = false`
 2. Assigns the role for the current organization
 3. Issues a **7-day invitation token** (only its hash is stored) and queues the email
-4. Refuses with `409` when the licence's user limit is reached
+4. Refuses with `409` when the plan's user limit is reached (see **User limit**)
 
 The invitee follows the link to `/accept-invitation`, sets a password, and the email is confirmed in the same step. Until then the user cannot sign in — an empty password hash fails verification outright.
 
@@ -246,7 +273,7 @@ The invitee follows the link to `/accept-invitation`, sets a password, and the e
 
 ## Revoking access
 
-Revoking deactivates the organization assignment rather than deleting the user, so history and audit trails survive. Two guards: you cannot revoke yourself, and you cannot revoke the last active Owner of an organization.
+Revoking deactivates the organization assignment rather than deleting the user, so history and audit trails survive. The person **keeps their place** under the plan's user limit. Two guards: you cannot revoke yourself, and you cannot revoke the last active Owner of an organization.
 
 
 

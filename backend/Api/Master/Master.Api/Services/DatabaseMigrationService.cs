@@ -84,6 +84,9 @@ public class DatabaseMigrationService : IHostedService
             _logger.LogInformation("Granted platform operator access to {Count} user(s) from Bootstrap:OperatorEmails.", granted);
         }
 
+        // 3b. Every licence has the limits its plan gives (D-68, TK-209)
+        await PlanRepository.ApplyDefaultsAsync(adminDb, cancellationToken);
+
         // 4. The bootstrap customer is the Internal one (D-44, TK-153)
         AddOn internalAddOns = InternalCustomerRepository.AddOnsFrom(_config["Bootstrap:InternalAddOns"], out string? addOnProblem);
         if (addOnProblem is not null)
@@ -594,18 +597,19 @@ public class DatabaseMigrationService : IHostedService
             Status = Master.Entity.Enums.TenantStatus.Active,
         });
 
-        adminDb.Licenses.Add(new Master.Entity.TableEntities.License
+        var bootstrapLicence = new Master.Entity.TableEntities.License
         {
             CustomerId = customerId,
             LicenseType = Master.Entity.Enums.LicenseType.Elite,
             StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
             // Never lapses (TK-152).
             ExpiryDate = CustomerKindRepository.NoExpiry,
-            MaxUsers = CustomerKindRepository.UnbilledMaxUsers,
             MaxOrganizations = CustomerKindRepository.UnbilledMaxOrganizations,
             IsActive = true,
             GraceDays = 14,
-        });
+        };
+        PlanCatalogRepository.Apply(bootstrapLicence);
+        adminDb.Licenses.Add(bootstrapLicence);
 
         int? defaultStateId = await adminDb.States
             .Where(s => s.CountryId == 1 && s.StateCode == "33")

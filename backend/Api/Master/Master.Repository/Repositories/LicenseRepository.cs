@@ -50,6 +50,8 @@ public sealed class LicenseRepository
             StartDate = license.StartDate,
             ExpiryDate = license.ExpiryDate,
             MaxUsers = license.MaxUsers,
+            MonthlySalesTransactionLimit = license.MonthlySalesTransactionLimit,
+            MonthlyPurchaseTransactionLimit = license.MonthlyPurchaseTransactionLimit,
             MaxOrganizations = license.MaxOrganizations,
             IsActive = license.IsActive,
             GraceDays = license.GraceDays,
