@@ -5997,6 +5997,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `BankReconciliationReportTests`, `ProjectReportTests` and `bank-reconciliation-report.service.spec.ts`.
 - **Done when:** for a bank account whose statement lines are all matched or ignored up to a date, the statement balance the books expect equals the imported one.
 
+### TK-203 · Business Performance: its own endpoint and page
+- [~] working (Claude Opus 5.5) — since 2026-10-21
+- **Issue:** [#193](https://github.com/jothi-prabaharan/Bill-Book/issues/193)
+- **Group:** Z · Owner request (the reports, one by one: Finance TK-199 to TK-202, then Financial performance)
+- **Lanes:** L-RPT (a new repository and controller, `BusinessPerformanceSourceRepository`'s ratio names, `Reporting.Api.Tests`), L-GWY (one route), L-UI (`libs/reporting`), L-DOC · **Depends on:** TK-202 · **Decision:** the owner's request of 20 October 2026; D-15 (the ratios); D-67 (a required date filter)
+- **Where:** a new `BusinessPerformanceReportRepository` and `BusinessPerformanceReportController`, `BusinessPerformanceReportModels.cs`; `BusinessPerformanceSourceRepository` (each ratio's name and how it is worked out, in one place for both); the gateway's `appsettings.json`; `reporting-core` (the models and service), `reporting-ui` (a page at `/reports/business-performance`, the path the menu already links to).
+- **State:** checked 21 October 2026. The menu opens the shared report page on the catalog's `business-performance` source (TK-84): dates optional, defaulting to the twelve months to today, which D-67 no longer allows; no comparison period; percentages, days, times and money in one number column. The arithmetic (`Rows`) is tested by `BusinessPerformanceTests` and stays as it is.
+- **Sub-tasks:**
+  - [ ] The repository: `Rows` for the period and for a comparison period; every ratio in its defined order with its group (profitability, efficiency, financial position, cash), unit, value, numerator, denominator and how it is worked out, the comparison's, and the change; a ratio the books cannot give still listed, with no value.
+  - [ ] The endpoint `GET api/statements/business-performance` with its own request and response models; from and to required (D-67), a comparison period with both dates or neither; `reports` and `accounting.view`; another branch in the request is 403; its gateway route.
+  - [ ] The page: from, to, compare from and to with "Previous period" and "Same period last year"; a table per group, each ratio in its unit with the figures behind it, the comparison and the change; 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** each ratio on the page equals its numerator over its denominator, for the period and the comparison, and a ratio with nothing to divide by shows no value.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
