@@ -6106,6 +6106,49 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Tests, docs and release notes.
 - **Done when:** an invoice or bill paid through Receive or Spend money reads as paid everywhere its settlement is shown, payments from before TK-206 included, and the head office offers every GST rate.
 
+### TK-209 · Plan limits and the seat cap
+- [~] working (Claude Sonnet 5.5) — since 2026-10-21
+- **Issue:** [#199](https://github.com/jothi-prabaharan/Bill-Book/issues/199)
+- **Group:** Z · Owner request
+- **Lanes:** L-MST (`License`, `UserRepository`, a licence controller, the `AdminDbContext` migration), L-KERNEL (the plan-limit refusal shape), L-UI (`libs/settings/users`, `libs/shared/{ui-components,api-client}`), L-DOC · **Depends on:** — · **Decision:** D-68 to D-71, the owner's request of 21 October 2026
+- **Lane note:** TK-208 lists L-MST (a hosted worker) and L-UI (`purchase-ui`). Neither touches the files here, and the owner asked for this by name.
+- **Where:** `Master.Entity/TableEntities/License.cs`, `Master.Repository/Repositories/{UserRepository,LicenseRepository,SignupRepository,CustomerKindRepository}.cs`, `Master.Api/Controllers/UsersController.cs`, `libs/settings/users/src/lib/users.page.*`.
+- **State:** checked 21 October 2026. The licence has `LicenseType` (Trial, Standard, Pro, Elite), `MaxUsers` (a plain int: 3 on a trial, a 10,000 stand-in for unbilled customers) and `MaxOrganizations`. `UserRepository.InviteAsync` counts only the branch's *active* users against `MaxUsers` and answers 409 "Your plan's user limit has been reached." Nothing limits transactions. There is no plan screen, no seat counter on the Users screen, and no way to ask for an upgrade.
+- **Sub-tasks:**
+  - [ ] `License`: `MaxUsers` nullable (null = unlimited), `MonthlySalesTransactionLimit` and `MonthlyPurchaseTransactionLimit` (nullable, null = unlimited), with a migration. `LicencePlanRepository` holds the plan defaults (Trial 3 users; Standard and Pro 5 users, 1,000 and 1,000; Elite none) and applies them at signup, at start for a licence still on the old values, and when the plan changes. The unbilled kinds are Elite and lose their 10,000 stand-in.
+  - [ ] The invite guard counts every user with a row in the branch, active or not. A refusal is 409 with "{Plan} plan user limit reached (maximum {n} users including inactive accounts). Upgrade to the Elite Plan to add more users." and the code `PlanLimitReached`. Re-inviting someone already counted needs no seat.
+  - [ ] `GET api/licence/plan` (plan, seats used and allowed, the monthly limits) and `POST api/licence/upgrade-requests` (recorded in `mst.UpgradeRequests`, emailed to `Licensing:UpgradeRequestEmail`; 503 with a curated sentence when none is set).
+  - [ ] `bb-upgrade-dialog` and `PlanService`; the Users screen: a seat banner in the shared message box ("5 of 5 user slots used (includes deactivated users)"), Invite disabled when full with a tooltip, and an "Upgrade to Elite for Unlimited Users" button.
+  - [ ] Test: written, never run by an AI (section 0.5).
+  - [ ] Docs and release notes.
+- **Done when:** a branch on Professional holds at most five users, active or not; the sixth invite is refused with the plan message; the Users screen shows the seats used and offers the upgrade; an Elite branch has no cap.
+
+### TK-210 · Monthly transaction limits for Sales and Purchase
+- [ ] open
+- **Group:** Z · Owner request
+- **Lanes:** L-SAL, L-PUR, L-KERNEL (the quota contract), L-MST (two token claims), L-UI (`libs/shared`, the Sales and Purchase headers), L-DOC · **Depends on:** TK-209 · **Decision:** D-69
+- **State:** checked 21 October 2026. Nothing counts documents; a licence has no transaction limit; the sign-in token carries `plan_tier` but no limits.
+- **Sub-tasks:**
+  - [ ] Two token claims, `sales_txn_limit` and `purchase_txn_limit` (absent = unlimited).
+  - [ ] `sal.MonthlyUsage` and `pur.MonthlyUsage`: a counter per branch and month taken with a guarded update whose row count is the answer, inside the document's own transaction, so two requests cannot both take the last slot and a save that fails gives its slot back. Migrations with the tenant RLS block.
+  - [ ] A `TransactionQuotaRepository` in each service, called by every create and convert path in D-69's list; a refusal is 409 with the plan message and the code `PlanLimitReached`. Recurring billing skips and logs.
+  - [ ] `GET api/sales/usage` and `GET api/purchase/usage`; a remaining-quota badge on the Sales and Purchase pages for a Professional branch.
+  - [ ] One interceptor opens `bb-upgrade-dialog` on a `PlanLimitReached` refusal, so no form needs its own handling.
+  - [ ] Test, docs and release notes.
+- **Done when:** the 1,001st Sales document in a month is refused on Professional while Purchase still takes its own 1,000; Elite is never refused; the badge counts down; the dialog opens on the refusal.
+
+### TK-211 · The Plan screen and switching a plan
+- [ ] open
+- **Group:** Z · Owner request
+- **Lanes:** L-MST (`mst.PlanPrices`, the operator action), L-UI (a Settings › Plan lib), L-WEB (the route), L-DOC · **Depends on:** TK-209, TK-210 · **Decision:** D-70, D-71
+- **State:** checked 21 October 2026. No plan screen; no price in the product; an operator cannot change a customer's plan.
+- **Sub-tasks:**
+  - [ ] `mst.PlanPrices` (business type and cycle: Quarterly, Bi-Annual) seeded from the website's monthly prices, Elite three times Professional's; `GET api/licence/prices`.
+  - [ ] Settings › Plan: Professional (features, users used of five, the two monthly meters out of 1,000, prices) and Elite (highlighted, three times the price, unlimited users and transactions), with "Request upgrade".
+  - [ ] An operator action to switch a customer's plan, which re-applies the plan defaults; the admin customer list shows pending upgrade requests.
+  - [ ] Test, docs and release notes.
+- **Done when:** the screen shows both plans with live usage; a request reaches the operator; the operator's switch changes the limits at once.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
@@ -6183,6 +6226,10 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-65 | Does a **Retail** branch get Settings › Metal purity? The menu (`TradeScopeRepository.MenuTrades["mtp"]`, pinned by `TradeScopeTests`) and the seed give it to Retail and Jewellery, but `MetalPuritiesController` is `[RequireBusinessType(Jewellery)]`, so on a Retail branch the screen opens and every call answers 403. Widen the controller to Retail, or narrow the menu and the seed to Jewellery? | TK-191 | **Retail and Jewellery** (owner, 2026-10-12): the controller is widened to Retail, matching the menu and the seed. TK-191 |
 | D-66 | Which provider sends WhatsApp and SMS codes? TK-196 built signup and password-reset codes against `IMobileMessageClient`; nothing delivers outside Development until one is configured, so there a code goes by email only (the default since TK-197). Options: **MSG91** (Indian, SMS with DLT templates and WhatsApp from one account), **Gupshup**, **Twilio**, or **Meta's WhatsApp Cloud API** plus a separate SMS gateway. Each needs DLT registration for SMS and an approved WhatsApp authentication template. | TK-196 (delivery only) | — |
 | D-67 | Must every report have a date filter? | TK-198, TK-199 and every report rebuilt after them | **Yes, required** (owner, 2026-10-20): every report has a mandatory date filter, a from and to date for a report over a period and an as-at date for one at a point in time. The Salary Increment Report (from and to) and the Balance Sheet (as at) already require theirs; each report rebuilt from here does too. Of the shared engine's 115 sources none requires a date today: 27 take an optional one and 88 none. They get theirs **as each is rebuilt** (owner, 2026-10-20), not in one sweep. |
+| D-68 | How are the two new plans, Professional and Elite, modelled? Pro and Elite already exist on the licence, the customer and the token, and Elite also means a dedicated database. | TK-209 to TK-211 | **Reuse them** (owner, 2026-10-21): Professional is the existing `Pro`, Elite the existing `Elite`. The licence gains the two monthly transaction limits and `MaxUsers` becomes nullable for unlimited. Internal and Demo customers, already Elite, become unlimited. Standard is treated as Professional, and Trial keeps its 3 users with the Professional transaction limits. TK-209 |
+| D-69 | Which transactions count toward a Professional plan's 1,000 a month, and when? | TK-210 | **Every saved document** (owner, 2026-10-21): Sales counts quotes, sales orders, invoices (POS included) and credit notes; Purchase counts purchase orders, goods receipts, bills and debit notes. A document counts when it is created, drafts and voided included, on the IST calendar month of its creation. Delivery challans do not count. A conversion counts as the new document it creates. Recurring billing skips and logs a document once the limit is reached. Sales and Purchase are counted apart. TK-210 |
+| D-70 | What does "Upgrade to Elite" do, with no payment system in the app? | TK-209, TK-211 | **Send a request** (owner, 2026-10-21): the request is recorded (`mst.UpgradeRequests`) and emailed to a configured address, and a platform operator switches the plan from the admin screens. No payment is taken in the app; a self-service checkout would need a payment provider, which has not been chosen. TK-209, TK-211 |
+| D-71 | Where do the Plan screen's prices come from? | TK-211 | **A server price table** (owner, 2026-10-21): Quarterly and Bi-Annual prices per business type in `mst.PlanPrices`, seeded from the website's monthly prices; Elite is three times Professional's, and an operator can change a price without a release. TK-211 |
 
 ---
 
