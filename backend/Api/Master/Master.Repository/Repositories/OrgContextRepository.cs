@@ -153,6 +153,11 @@ public sealed class OrgContextRepository
             stateCode = Shared.Kernel.Tax.IndianStateCodes.ToGstCode(stateCode) ?? stateCode;
         }
 
+        if (string.IsNullOrWhiteSpace(stateCode) && (row.BaseCurrency == "INR" || string.IsNullOrWhiteSpace(row.BaseCurrency)))
+        {
+            stateCode = "33";
+        }
+
         return new OrgContextResponse
         {
             OrgId = row.OrgId,

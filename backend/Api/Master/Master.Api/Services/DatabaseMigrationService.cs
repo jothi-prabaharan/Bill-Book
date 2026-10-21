@@ -707,9 +707,9 @@ public class DatabaseMigrationService : IHostedService
             if (org.StateId == null)
             {
                 string? gstCode = Shared.Kernel.Tax.Gstin.StateCodeOf(org.Gstin);
-                if (gstCode == null && org.OrgId == InternalCustomerRepository.OrgId)
+                if (gstCode == null && (org.OrgId == InternalCustomerRepository.OrgId || org.CountryId == 1 || org.BaseCurrency == "INR"))
                 {
-                    gstCode = "33"; // Default Tamil Nadu for Head Office
+                    gstCode = "33"; // Default Tamil Nadu for Head Office and Indian branches
                 }
 
                 if (gstCode != null)

@@ -80,15 +80,28 @@ public sealed class HttpBranchSettingsProvider : IBranchSettingsProvider
         {
             OrgContextDto? context = await _http.GetFromJsonAsync<OrgContextDto>(
                 $"internal/orgs/{orgId}/context", ct);
+            if (context is null)
+            {
+                return null;
+            }
 
-            // A two-digit state code or nothing.
-            if (context?.StateCode is not { Length: 2 } stateCode)
+            // A two-digit state code, or fallback to Tamil Nadu (33) for INR branches.
+            string stateCode;
+            if (context.StateCode is { Length: 2 } validCode)
+            {
+                stateCode = validCode;
+            }
+            else if (context.BaseCurrency == "INR" || string.IsNullOrWhiteSpace(context.BaseCurrency))
+            {
+                stateCode = "33";
+            }
+            else
             {
                 _log.LogWarning(
                     "Organization {OrgId} reported state code {StateCode}, which is not a "
                         + "two-digit code",
                     orgId,
-                    context?.StateCode);
+                    context.StateCode);
 
                 return null;
             }
@@ -111,5 +124,5 @@ public sealed class HttpBranchSettingsProvider : IBranchSettingsProvider
 
     /// <summary>Only the required fields are read.</summary>
     private sealed record OrgContextDto(
-        string? StateCode, bool DiscountBeforeTax, DateOnly? EInvoiceFrom, bool EwayBillEnabled, bool BudgetWarningYearToDate);
+        string? StateCode, bool DiscountBeforeTax, DateOnly? EInvoiceFrom, bool EwayBillEnabled, bool BudgetWarningYearToDate, string? BaseCurrency = null);
 }

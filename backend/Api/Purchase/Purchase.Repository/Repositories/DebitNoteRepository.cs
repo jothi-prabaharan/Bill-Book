@@ -310,7 +310,8 @@ public sealed class DebitNoteRepository
             remaining[lineReq.BillDetailId] = left - lineReq.Quantity;
 
             TaxRate? rate = null;
-            if (lineReq.TaxGroupId is long taxGroupId)
+            long? targetTaxGroupId = (lineReq.TaxGroupId is > 0) ? lineReq.TaxGroupId : (billLine.TaxGroupId is > 0 ? billLine.TaxGroupId : null);
+            if (targetTaxGroupId is long taxGroupId)
             {
                 rate = await _rates.GetRateAsync(taxGroupId, request.DocumentDate, ct);
                 if (rate is null)

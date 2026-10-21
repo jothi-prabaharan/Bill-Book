@@ -857,7 +857,7 @@ export class DebitNoteFormPage {
       discountPercent: null,
       discountAmount: 0,
       taxTreatment: line.taxTreatment,
-      taxGroupId: line.taxGroupId,
+      taxGroupId: line.taxGroupId && line.taxGroupId > 0 ? line.taxGroupId : null,
       lineType: line.lineType,
       warehouseId: line.warehouseId,
       itemBatchId: line.itemBatchId,

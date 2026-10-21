@@ -169,13 +169,13 @@
       } @else {
 
         <bb-data-grid fillHeight [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
-          <ng-template bbCellTemplate="label" let-row="row">
+          <ng-template bbCellTemplate="label" let-row>
             {{ row.label }}
           </ng-template>
-          <ng-template bbCellTemplate="available" let-row="row">
+          <ng-template bbCellTemplate="available" let-row>
             {{ row.available }}
           </ng-template>
-          <ng-template bbCellTemplate="quantity" let-row="row" let-index="index">
+          <ng-template bbCellTemplate="quantity" let-row let-index="index">
             <bb-quantity-input
               ariaLabel="Quantity to debit"
               class="input--qty"
@@ -186,10 +186,10 @@
               [name]="'qty' + index"
             />
           </ng-template>
-          <ng-template bbCellTemplate="unitPrice" let-row="row">
+          <ng-template bbCellTemplate="unitPrice" let-row>
             {{ row.unitPrice | number: '1.2-2' }}
           </ng-template>
-          <ng-template bbCellTemplate="value" let-row="row">
+          <ng-template bbCellTemplate="value" let-row>
             {{ row.quantity * row.unitPrice | number: '1.2-2' }}
           </ng-template>
         </bb-data-grid>

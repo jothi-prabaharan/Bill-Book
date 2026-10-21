@@ -155,13 +155,13 @@
         <p class="state">Add a line above first.</p>
       } @else {
         <bb-data-grid fillHeight [gridCode]="'GOODS_RECEIPT_LINES'" [columns]="columns" [data]="receiving()">
-          <ng-template bbCellTemplate="item" let-row="row" let-index="index">
+          <ng-template bbCellTemplate="item" let-row let-index="index">
             {{ itemLabelOf(index) }}
           </ng-template>
-          <ng-template bbCellTemplate="delivered" let-row="row" let-index="index">
+          <ng-template bbCellTemplate="delivered" let-row let-index="index">
             {{ deliveredOf(index) }}
           </ng-template>
-          <ng-template bbCellTemplate="rejected" let-row="row" let-index="index">
+          <ng-template bbCellTemplate="rejected" let-row let-index="index">
             <bb-quantity-input
               ariaLabel="Rejected quantity"
               class="input--qty"
@@ -172,10 +172,10 @@
               [name]="'rejected' + index"
             />
           </ng-template>
-          <ng-template bbCellTemplate="accepted" let-row="row">
+          <ng-template bbCellTemplate="accepted" let-row>
             <span class="accepted">{{ row.acceptedQuantity }}</span>
           </ng-template>
-          <ng-template bbCellTemplate="reason" let-row="row" let-index="index">
+          <ng-template bbCellTemplate="reason" let-row let-index="index">
             <bb-text-input
               class="input"
               maxlength="300"
@@ -186,7 +186,7 @@
               [name]="'reason' + index"
             />
           </ng-template>
-          <ng-template bbCellTemplate="batch" let-row="row" let-index="index">
+          <ng-template bbCellTemplate="batch" let-row let-index="index">
             <bb-text-input
               class="input"
               maxlength="50"
@@ -197,7 +197,7 @@
               [name]="'batch' + index"
             />
           </ng-template>
-          <ng-template bbCellTemplate="expiry" let-row="row" let-index="index">
+          <ng-template bbCellTemplate="expiry" let-row let-index="index">
             <bb-branch-date-input
               class="input"
               [disabled]="readonlyDoc()"
