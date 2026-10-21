@@ -6015,6 +6015,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `BusinessPerformanceReportTests`, `BusinessPerformanceTests` and `business-performance-report.service.spec.ts`.
 - **Done when:** each ratio on the page equals its numerator over its denominator, for the period and the comparison, and a ratio with nothing to divide by shows no value.
 
+### TK-204 · Budget vs Actual: its own endpoint and page
+- [~] working (Claude Opus 5.5) — since 2026-10-21
+- **Issue:** [#194](https://github.com/jothi-prabaharan/Bill-Book/issues/194)
+- **Group:** Z · Owner request (the reports, one by one: Finance TK-199 to TK-202, Business Performance TK-203, then the budget reports)
+- **Lanes:** L-RPT (a new repository and controller, `Reporting.Api.Tests`), L-GWY (two routes), L-UI (`libs/reporting`), L-DOC · **Depends on:** TK-203 · **Decision:** the owner's request of 20 October 2026; D-67 (a required date filter)
+- **Where:** a new `BudgetVsActualReportRepository` and `BudgetVsActualReportController`, `BudgetVsActualReportModels.cs`; the gateway's `appsettings.json`; `reporting-core` (the models and service), `reporting-ui` (a page at `/reports/budget-vs-actual`, the path the menu already links to).
+- **State:** checked 21 October 2026. The menu opens the shared report page on the catalog's `budget-vs-actual` source (TK-109): the as-at date optional (today), the period typed as text (`month`, `quarter`, `ytd`), the budget as a numeric id (the branch's approved budget when blank), one flat list of active accounts, and no revenue, cost of sales or profit lines. Its actuals are correlated sub-queries per account.
+- **Sub-tasks:**
+  - [ ] The repository: for a budget and the window an as-at date and period give (`BudgetWindows.For`, whole months of the budget's year), each account's budget (contra negated) and actual summed in the database, LINQ only; laid out as the Profit & Loss lays them out (`ProfitAndLossReportRepository.SectionOf`), with gross and net profit; each line's, section's and profit line's variance and variance %, positive when favourable.
+  - [ ] The endpoint `GET api/statements/budget-vs-actual` with its own request and response models, and `…/budgets` for the budgets it offers; budget, as-at date and period required (D-67), the date within the budget's year; the Budget add-on alone (with the business-type guard beside it either would admit), `reports` and `accounting.view`; another branch in the request is 403; a budget not the branch's is 404; gateway routes.
+  - [ ] The page: budget (the branch's approved one for this year), as at (today, within the budget's year) and period; a table per section with budget, actual, variance and variance %, the profit lines; 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** the actual net profit for a window equals the Profit & Loss's for the same dates, and every variance is the budget against the actual with favourable positive.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
