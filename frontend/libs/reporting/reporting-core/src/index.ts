@@ -14,3 +14,5 @@ export * from './lib/cash-flow/cash-flow-report.models';
 export * from './lib/cash-flow/cash-flow-report.service';
 export * from './lib/bank-reconciliation/bank-reconciliation-report.models';
 export * from './lib/bank-reconciliation/bank-reconciliation-report.service';
+export * from './lib/business-performance/business-performance-report.models';
+export * from './lib/business-performance/business-performance-report.service';

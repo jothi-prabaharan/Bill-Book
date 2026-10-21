@@ -6,4 +6,5 @@ export * from './lib/profit-and-loss/profit-and-loss-report.page';
 export * from './lib/balance-sheet/balance-sheet-report.page';
 export * from './lib/cash-flow/cash-flow-report.page';
 export * from './lib/bank-reconciliation/bank-reconciliation-report.page';
+export * from './lib/business-performance/business-performance-report.page';
 export * from './lib/salary-increment/salary-increment-report.page';

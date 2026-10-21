@@ -1,0 +1,87 @@
+/* Business Performance (TK-203): the filters, then a table of ratios per heading. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period,
+.note {
+  margin: 0;
+}
+
+.note {
+  font-size: 12px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+.filters__shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+}
+
+.filters__shortcut {
+  padding: 0;
+  font-size: 12px;
+}
+
+/* The button sits level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.section__title {
+  font-size: 1rem;
+  margin: 0 0 var(--space-2);
+}
+
+/* A ratio: its name, how it is worked out, and the figures it divides. */
+.ratio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ratio__title {
+  font-weight: 600;
+}
+
+.ratio__how,
+.ratio__figures {
+  font-size: 12px;
+}
+
+.figure {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .filters__actions .btn {
+    width: 100%;
+  }
+
+  /* The figures line carries the check; the explanation would crowd a phone. */
+  .ratio__how {
+    display: none;
+  }
+}

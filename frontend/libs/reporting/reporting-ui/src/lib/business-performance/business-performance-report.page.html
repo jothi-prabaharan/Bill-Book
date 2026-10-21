@@ -1,0 +1,81 @@
+<header class="page-head">
+  <div>
+    <h1>Business Performance</h1>
+    <p class="subtitle text-muted">
+      The branch's key ratios over a period: margins, return, payment days, liquidity and cash.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bp-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bp-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bp-compare-from'" label="Compare from" formControlName="compareFromDate"
+                          hint="Optional: a second period beside it."
+                          [error]="err('compareFromDate', 'Comparison from date')" />
+    <span class="filters__shortcuts">
+      <button class="btn btn-link filters__shortcut" type="button" (click)="compareWithPreviousPeriod()">Previous period</button>
+      <button class="btn btn-link filters__shortcut" type="button" (click)="compareWithLastYear()">Same period last year</button>
+    </span>
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bp-compare-to'" label="Compare to" formControlName="compareToDate"
+                          [error]="err('compareToDate', 'Comparison to date')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }} ({{ report.days }} days)@if (report.compareFromDate) {, compared with {{ report.compareFromDate | registerDate }} to {{ report.compareToDate | registerDate }} ({{ report.compareDays }} days)}.
+    Balances are at the end of each period.
+  </p>
+
+  @for (group of groups(); track group.group) {
+    <section class="section" [attr.aria-label]="group.title">
+      <h2 class="section__title">{{ group.title }}</h2>
+      <bb-data-grid flush [columns]="columns()" [data]="group.ratios" [loading]="busy()" [stackOnPhone]="true"
+                    [sortable]="false" [showColumnFilters]="false" [showCount]="false" [paged]="false"
+                    [label]="group.title">
+        <ng-template bbCellTemplate="title" let-ratio>
+          <span class="ratio">
+            <span class="ratio__title">{{ ratio.title }}</span>
+            <span class="ratio__how text-muted">{{ ratio.calculation }}</span>
+            @if (figuresText(ratio, report.days); as figures) {
+              <span class="ratio__figures text-muted">{{ figures }}</span>
+            }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="value" let-ratio>
+          <span class="figure">{{ valueText(ratio.value, ratio.unit) }}</span>
+        </ng-template>
+        <ng-template bbCellTemplate="compareValue" let-ratio>
+          <span class="figure text-muted">{{ valueText(ratio.compareValue, ratio.unit) }}</span>
+        </ng-template>
+        <ng-template bbCellTemplate="change" let-ratio>
+          <span class="figure">{{ changeText(ratio.change, ratio.unit) }}</span>
+        </ng-template>
+      </bb-data-grid>
+    </section>
+  }
+
+  <p class="note text-muted">
+    A dash means the ratio has nothing to divide by in the period, such as no revenue or no credit purchases.
+    Revenue is your sales accounts; cost of sales is Cost of Goods Sold less Purchase Returns.
+  </p>
+}

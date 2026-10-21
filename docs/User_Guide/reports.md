@@ -104,7 +104,7 @@ A bank account's balance in the books against its bank statement at the end of a
 
 ## Business Performance
 
-**Business Performance**, under **Accounting**, shows eight ratios for a period, one per row:
+The branch's key ratios over a period, under **Reports › Financial performance** in the menu, at `/reports/business-performance` (TK-203). It needs **accounting.view** as well as access to reports. Its page shows eight ratios, one per row:
 
 | Ratio | How it is worked out |
 |---|---|
@@ -117,9 +117,13 @@ A bank account's balance in the books against its bank statement at the end of a
 | Term assets to liabilities | Fixed assets, net of depreciation, ÷ total liabilities, at the end of the period |
 | Total cash balance | Your bank and cash accounts, less overdrafts and credit cards, at the end of the period |
 
-Each row shows its **Unit** — percent, days, times or an amount. Add the **Numerator** and **Denominator** columns to see the two figures behind a ratio, so you can check it against the Profit & Loss and the Balance Sheet.
+- **From** and **To** are both required. They start at the beginning of the financial year and today. **Compare from** and **Compare to** add a second column and a **Change** column, and need both dates or neither. **Previous period** fills them with the same number of days just before; **Same period last year** with the same days a year earlier.
+- The ratios are grouped under **Profitability** (the two margins and return on investment), **Efficiency** (the payment days), **Financial position** (assets to liabilities) and **Cash**. Each shows in its own unit: a percentage, days, times or an amount.
+- Under each ratio are how it is worked out and the two figures behind it, such as **₹36,000 ÷ ₹80,000 × 100**, so you can check it against the Profit & Loss and the Balance Sheet.
+- **Change** is in the ratio's own unit: percentage points for a margin, days for the payment days, times for the asset ratios, and money for the cash balance.
+- The ratios always appear in the order above. The page shows the number of days in each period, which the payment days and the yearly return are scaled by.
 
-With no dates, the report covers the twelve months to today. The ratios always appear in the order above and the report cannot be re-sorted.
+The catalog's **Business Performance** report, with its **Numerator** and **Denominator** columns, works the ratios out the same way and is still there for export and scheduled emails.
 
 What each term means here:
 

@@ -54,6 +54,39 @@ public sealed class BusinessPerformanceSourceRepository : ReportSource<BusinessP
     public const string PurchaseReturns = "Purchase Returns";
     private const string FixedAsset = "Fixed Asset";
 
+    // Each ratio's name and how it is worked out: what the rows carry, and what
+    // the report's own page shows (TK-203), so the two cannot read differently.
+    private const string GrossProfitMarginTitle = "Gross profit margin";
+    private const string GrossProfitMarginCalculation = "Gross profit ÷ revenue × 100";
+    private const string NetProfitMarginTitle = "Net profit margin";
+    private const string NetProfitMarginCalculation = "Net profit ÷ revenue × 100";
+    private const string ReturnOnInvestmentTitle = "Return on investment (p.a.)";
+    private const string ReturnOnInvestmentCalculation = "Net profit for a year at this period's rate ÷ net assets at the end × 100";
+    private const string AverageDaysCustomersTakeToPayTitle = "Average time customers take to pay";
+    private const string AverageDaysCustomersTakeToPayCalculation = "Average accounts receivable ÷ credit sales × days in the period";
+    private const string AverageDaysToPaySuppliersTitle = "Average time to pay suppliers";
+    private const string AverageDaysToPaySuppliersCalculation = "Average accounts payable ÷ credit purchases × days in the period";
+    private const string CurrentAssetsToLiabilitiesTitle = "Current assets to liabilities";
+    private const string CurrentAssetsToLiabilitiesCalculation = "Current assets ÷ current liabilities, at the end of the period";
+    private const string TermAssetsToLiabilitiesTitle = "Term assets to liabilities";
+    private const string TermAssetsToLiabilitiesCalculation = "Fixed assets net of depreciation ÷ total liabilities, at the end of the period";
+    private const string TotalCashBalanceTitle = "Total cash balance";
+    private const string TotalCashBalanceCalculation = "Bank and cash accounts, less overdrafts and cards, at the end of the period";
+
+    /// <summary>A ratio's name, unit and how it is worked out, as its row carries them. Pure.</summary>
+    public static (string Title, BusinessPerformanceUnit Unit, string Calculation) Describe(BusinessPerformanceMetric metric) =>
+        metric switch
+        {
+            BusinessPerformanceMetric.GrossProfitMargin => (GrossProfitMarginTitle, BusinessPerformanceUnit.Percent, GrossProfitMarginCalculation),
+            BusinessPerformanceMetric.NetProfitMargin => (NetProfitMarginTitle, BusinessPerformanceUnit.Percent, NetProfitMarginCalculation),
+            BusinessPerformanceMetric.ReturnOnInvestment => (ReturnOnInvestmentTitle, BusinessPerformanceUnit.Percent, ReturnOnInvestmentCalculation),
+            BusinessPerformanceMetric.AverageDaysCustomersTakeToPay => (AverageDaysCustomersTakeToPayTitle, BusinessPerformanceUnit.Days, AverageDaysCustomersTakeToPayCalculation),
+            BusinessPerformanceMetric.AverageDaysToPaySuppliers => (AverageDaysToPaySuppliersTitle, BusinessPerformanceUnit.Days, AverageDaysToPaySuppliersCalculation),
+            BusinessPerformanceMetric.CurrentAssetsToLiabilities => (CurrentAssetsToLiabilitiesTitle, BusinessPerformanceUnit.Times, CurrentAssetsToLiabilitiesCalculation),
+            BusinessPerformanceMetric.TermAssetsToLiabilities => (TermAssetsToLiabilitiesTitle, BusinessPerformanceUnit.Times, TermAssetsToLiabilitiesCalculation),
+            _ => (TotalCashBalanceTitle, BusinessPerformanceUnit.Amount, TotalCashBalanceCalculation),
+        };
+
     public override string ReportKey => "business-performance";
 
     public override string Title => "Business Performance";
@@ -187,33 +220,33 @@ public sealed class BusinessPerformanceSourceRepository : ReportSource<BusinessP
         IQueryable<BusinessPerformanceRow> grossMargin = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.GrossProfitMargin,
-            Metric = "Gross profit margin",
+            Metric = GrossProfitMarginTitle,
             Unit = nameof(BusinessPerformanceUnit.Percent),
             Numerator = f.Revenue - f.CostOfSales,
             Denominator = f.Revenue,
             Value = f.Revenue == 0m
                 ? (decimal?)null
                 : Math.Round((f.Revenue - f.CostOfSales) / f.Revenue * 100m, 2),
-            Calculation = "Gross profit ÷ revenue × 100",
+            Calculation = GrossProfitMarginCalculation,
         });
 
         IQueryable<BusinessPerformanceRow> netMargin = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.NetProfitMargin,
-            Metric = "Net profit margin",
+            Metric = NetProfitMarginTitle,
             Unit = nameof(BusinessPerformanceUnit.Percent),
             Numerator = f.Income - f.Expenses,
             Denominator = f.Revenue,
             Value = f.Revenue == 0m
                 ? (decimal?)null
                 : Math.Round((f.Income - f.Expenses) / f.Revenue * 100m, 2),
-            Calculation = "Net profit ÷ revenue × 100",
+            Calculation = NetProfitMarginCalculation,
         });
 
         IQueryable<BusinessPerformanceRow> returnOnInvestment = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.ReturnOnInvestment,
-            Metric = "Return on investment (p.a.)",
+            Metric = ReturnOnInvestmentTitle,
             Unit = nameof(BusinessPerformanceUnit.Percent),
             Numerator = (f.Income - f.Expenses) * 365m / days,
             Denominator = f.Assets - f.Liabilities,
@@ -221,70 +254,70 @@ public sealed class BusinessPerformanceSourceRepository : ReportSource<BusinessP
                 ? (decimal?)null
                 : Math.Round(
                     (f.Income - f.Expenses) * 365m / days / (f.Assets - f.Liabilities) * 100m, 2),
-            Calculation = "Net profit for a year at this period's rate ÷ net assets at the end × 100",
+            Calculation = ReturnOnInvestmentCalculation,
         });
 
         IQueryable<BusinessPerformanceRow> customerDays = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.AverageDaysCustomersTakeToPay,
-            Metric = "Average time customers take to pay",
+            Metric = AverageDaysCustomersTakeToPayTitle,
             Unit = nameof(BusinessPerformanceUnit.Days),
             Numerator = (f.ReceivablesOpening + f.ReceivablesClosing) / 2m,
             Denominator = f.CreditSales,
             Value = f.CreditSales == 0m
                 ? (decimal?)null
                 : Math.Round((f.ReceivablesOpening + f.ReceivablesClosing) / 2m / f.CreditSales * days, 2),
-            Calculation = "Average accounts receivable ÷ credit sales × days in the period",
+            Calculation = AverageDaysCustomersTakeToPayCalculation,
         });
 
         IQueryable<BusinessPerformanceRow> supplierDays = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.AverageDaysToPaySuppliers,
-            Metric = "Average time to pay suppliers",
+            Metric = AverageDaysToPaySuppliersTitle,
             Unit = nameof(BusinessPerformanceUnit.Days),
             Numerator = (f.PayablesOpening + f.PayablesClosing) / 2m,
             Denominator = f.CreditPurchases,
             Value = f.CreditPurchases == 0m
                 ? (decimal?)null
                 : Math.Round((f.PayablesOpening + f.PayablesClosing) / 2m / f.CreditPurchases * days, 2),
-            Calculation = "Average accounts payable ÷ credit purchases × days in the period",
+            Calculation = AverageDaysToPaySuppliersCalculation,
         });
 
         IQueryable<BusinessPerformanceRow> currentRatio = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.CurrentAssetsToLiabilities,
-            Metric = "Current assets to liabilities",
+            Metric = CurrentAssetsToLiabilitiesTitle,
             Unit = nameof(BusinessPerformanceUnit.Times),
             Numerator = f.Assets - f.TermAssets,
             Denominator = f.Liabilities,
             Value = f.Liabilities == 0m
                 ? (decimal?)null
                 : Math.Round((f.Assets - f.TermAssets) / f.Liabilities, 2),
-            Calculation = "Current assets ÷ current liabilities, at the end of the period",
+            Calculation = CurrentAssetsToLiabilitiesCalculation,
         });
 
         IQueryable<BusinessPerformanceRow> termRatio = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.TermAssetsToLiabilities,
-            Metric = "Term assets to liabilities",
+            Metric = TermAssetsToLiabilitiesTitle,
             Unit = nameof(BusinessPerformanceUnit.Times),
             Numerator = f.TermAssets,
             Denominator = f.Liabilities,
             Value = f.Liabilities == 0m
                 ? (decimal?)null
                 : Math.Round(f.TermAssets / f.Liabilities, 2),
-            Calculation = "Fixed assets net of depreciation ÷ total liabilities, at the end of the period",
+            Calculation = TermAssetsToLiabilitiesCalculation,
         });
 
         IQueryable<BusinessPerformanceRow> cash = figures.Select(f => new BusinessPerformanceRow
         {
             MetricOrder = (int)BusinessPerformanceMetric.TotalCashBalance,
-            Metric = "Total cash balance",
+            Metric = TotalCashBalanceTitle,
             Unit = nameof(BusinessPerformanceUnit.Amount),
             Numerator = f.Cash,
             Denominator = (decimal?)null,
             Value = f.Cash,
-            Calculation = "Bank and cash accounts, less overdrafts and cards, at the end of the period",
+            Calculation = TotalCashBalanceCalculation,
         });
 
         return grossMargin
