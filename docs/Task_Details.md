@@ -5978,6 +5978,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run `CashFlowReportTests` and `cash-flow-report.service.spec.ts`.
 - **Done when:** cash at the beginning plus the net change and the exchange-rate effect equals cash at the end, for a balanced ledger, on both the period and the comparison.
 
+### TK-202 · Reconciliation Report: its own endpoint and page
+- [~] working (Claude Opus 5.5) — since 2026-10-21
+- **Issue:** [#192](https://github.com/jothi-prabaharan/Bill-Book/issues/192)
+- **Group:** Z · Owner request (the Finance reports, one by one: Balance Sheet TK-199, Profit & Loss TK-200, Cash Flow Statement – Direct TK-201, Reconciliation Report)
+- **Lanes:** L-RPT (a read model and its migration, a new repository and controller, `Reporting.Api.Tests`), L-GWY (two routes), L-UI (`libs/reporting`), L-DOC · **Depends on:** TK-201 · **Decision:** the owner's request of 20 October 2026; D-67 (a required date filter: an as-at date for a report at a point in time)
+- **Where:** `TransferMoneyRead` (a read model of `acc.TransferMoney`, with a snapshot-only migration), a new `BankReconciliationReportRepository` and `BankReconciliationReportController`, `BankReconciliationReportModels.cs`; the gateway's `appsettings.json`; `reporting-core` (the models and service), `reporting-ui` (a page at `/reports/reconciliation-report`, the path the menu already links to).
+- **State:** checked 21 October 2026. The menu's *Finance › Reconciliation Report* links to `/reports/reconciliation-report`, which no report answers; the catalog's `reconciliation` source lists imported statement lines with their status, for every bank account at once, with no date required and no balance on either side. Statement lines are matched to posted money documents only (`BankStatementRepository`: spend money `SPM`, receive money `RCM`, transfers `TRM`, on the same bank account); everything else on a statement is ignored once it is dealt with. Reporting reads spend and receive money and statement lines, not transfers.
+- **Sub-tasks:**
+  - [ ] The repository: for one bank account as at a date, in its currency, the balance of its ledger account; the posted money documents on it up to the date that no statement line up to the date is matched to, as payments and receipts; the statement lines up to the date that are unmatched, or matched to a document after the date; the statement balance the books expect, the balance the last imported statement gives on or before the date, and the difference. LINQ only.
+  - [ ] The endpoint `GET api/statements/bank-reconciliation` with its own request and response models, and `…/accounts` for the bank accounts it offers; bank account and as-at date required (D-67); `reports` and `accounting.view`; another branch in the request is 403; an unknown bank account is 404; gateway routes.
+  - [ ] The page: bank account and as at (today); the summary from the books to the statement, the outstanding payments, outstanding receipts and statement lines not in the books, each listed with its date, number, reference and amount; the difference in the message box when the two balances disagree; 360px.
+  - [ ] Test, docs and release notes.
+- **Done when:** for a bank account whose statement lines are all matched or ignored up to a date, the statement balance the books expect equals the imported one.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
