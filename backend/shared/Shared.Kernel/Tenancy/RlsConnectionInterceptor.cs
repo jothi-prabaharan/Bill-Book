@@ -42,6 +42,16 @@ namespace Shared.Kernel.Tenancy;
 /// which is what startup, migrations and anonymous requests should see. It also
 /// keeps the prefix off statements that may not run in a transaction block.
 ///
+/// <b>Except a SaveChanges batch inside a transaction, which gets the two
+/// statements as a command of their own, sent just before it in the same
+/// transaction.</b> Npgsql's EF provider reads each modification's row count by
+/// its position among the batch's statements, so two statements in front shift
+/// every count by two: the first <c>DELETE</c> of a batch was read as the
+/// <c>SET</c>'s zero rows and failed as a concurrency conflict — which refused
+/// every edit of a draft that replaces its lines. Not cached per transaction:
+/// EF takes a savepoint before each batch and rolls back to it on failure,
+/// which undoes a <c>SET LOCAL</c> made after it.
+///
 /// The values are inlined because <c>SET</c> takes no parameters. They are
 /// <see cref="Guid"/>s, formatted here, so the text is hex digits and hyphens
 /// and nothing a caller can influence.
@@ -82,6 +92,60 @@ public sealed class RlsConnectionInterceptor : DbCommandInterceptor
             command.CommandText = prefix + command.CommandText;
         }
 
+        SetTimeout(command);
+    }
+
+    /// <summary>The tenant as a command of its own, when this command is a SaveChanges batch in a transaction.</summary>
+    private DbCommand? SeparateSetter(DbCommand command, CommandEventData eventData)
+    {
+        if (eventData.CommandSource != CommandSource.SaveChanges || command.Transaction is null)
+        {
+            return null;
+        }
+
+        string? prefix = PrefixFor(_tenant.CustomerId, _tenant.OrgId);
+        if (prefix is null)
+        {
+            return null;
+        }
+
+        DbCommand setter = command.Connection!.CreateCommand();
+        setter.Transaction = command.Transaction;
+        setter.CommandText = prefix;
+        return setter;
+    }
+
+    private void ApplyToBatch(DbCommand command, CommandEventData eventData)
+    {
+        using DbCommand? setter = SeparateSetter(command, eventData);
+
+        if (setter is null)
+        {
+            Apply(command);
+            return;
+        }
+
+        setter.ExecuteNonQuery();
+        SetTimeout(command);
+    }
+
+    private async ValueTask ApplyToBatchAsync(
+        DbCommand command, CommandEventData eventData, CancellationToken cancellationToken)
+    {
+        await using DbCommand? setter = SeparateSetter(command, eventData);
+
+        if (setter is null)
+        {
+            Apply(command);
+            return;
+        }
+
+        await setter.ExecuteNonQueryAsync(cancellationToken);
+        SetTimeout(command);
+    }
+
+    private static void SetTimeout(DbCommand command)
+    {
         if (command.CommandTimeout < 180)
         {
             command.CommandTimeout = 180;
@@ -91,35 +155,35 @@ public sealed class RlsConnectionInterceptor : DbCommandInterceptor
     public override InterceptionResult<DbDataReader> ReaderExecuting(
         DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result)
     {
-        Apply(command);
+        ApplyToBatch(command, eventData);
         return result;
     }
 
-    public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
+    public override async ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
         DbCommand command,
         CommandEventData eventData,
         InterceptionResult<DbDataReader> result,
         CancellationToken cancellationToken = default)
     {
-        Apply(command);
-        return ValueTask.FromResult(result);
+        await ApplyToBatchAsync(command, eventData, cancellationToken);
+        return result;
     }
 
     public override InterceptionResult<int> NonQueryExecuting(
         DbCommand command, CommandEventData eventData, InterceptionResult<int> result)
     {
-        Apply(command);
+        ApplyToBatch(command, eventData);
         return result;
     }
 
-    public override ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(
+    public override async ValueTask<InterceptionResult<int>> NonQueryExecutingAsync(
         DbCommand command,
         CommandEventData eventData,
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        Apply(command);
-        return ValueTask.FromResult(result);
+        await ApplyToBatchAsync(command, eventData, cancellationToken);
+        return result;
     }
 
     public override InterceptionResult<object> ScalarExecuting(

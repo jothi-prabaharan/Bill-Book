@@ -650,6 +650,75 @@ public class MoneyDocumentServiceTests
         Assert.Equal(MoneyDocumentOutcome.MappingNotSettleable, draft.Outcome);
     }
 
+    /// <summary>
+    /// A posted payment settles the bill its line names. Before, the line named
+    /// the bill and nothing recorded the claim, so the bill stayed open in the
+    /// Allocate dialog and every outstanding figure, ready to be paid twice. The
+    /// overpayment line names the same bill and claims nothing.
+    /// </summary>
+    [SkippableFact]
+    public async Task Posting_a_bill_payment_records_its_settlement_and_a_void_releases_it()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 11_000m,
+            Lines =
+            [
+                Settles(BillPayment, "BIL", 500, 10_000m),
+                Settles(VendorOverpayment, "BIL", 500, 1_000m),
+            ],
+        }, ct);
+
+        Assert.Equal(MoneyDocumentOutcome.Ok, (await h.Spend.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        // The bill is the source and the payment the target — the way round the
+        // Allocate dialog writes it, so both read the same.
+        TransactionRatio claim = Assert.Single(await h.Db.TransactionRatios
+            .Where(t => t.TargetTransactionTypeCode == "SPM" && t.TargetTransactionId == draft.DocumentId)
+            .ToListAsync(ct));
+
+        Assert.Equal(("BIL", 500L), (claim.SourceTransactionTypeCode, claim.SourceTransactionId));
+        Assert.Equal(10_000m, claim.Amount);
+        Assert.False(claim.IsVoided);
+
+        await h.Spend.VoidAsync(draft.DocumentId, new VoidMoneyDocumentRequest { Reason = "Paid twice" }, ct);
+
+        h.Db.ChangeTracker.Clear();
+        Assert.True((await h.Db.TransactionRatios.SingleAsync(t => t.TransactionRatioId == claim.TransactionRatioId, ct)).IsVoided);
+    }
+
+    /// <summary>A receipt is the other way round: the invoice is the target.</summary>
+    [SkippableFact]
+    public async Task Posting_an_invoice_receipt_records_the_invoice_as_the_target()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Receive.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 4_000m,
+            Lines = [Settles(InvoicePayment, "INV", 900, 4_000m)],
+        }, ct);
+
+        Assert.Equal(MoneyDocumentOutcome.Ok, (await h.Receive.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        TransactionRatio claim = Assert.Single(await h.Db.TransactionRatios
+            .Where(t => t.SourceTransactionTypeCode == "RCM" && t.SourceTransactionId == draft.DocumentId)
+            .ToListAsync(ct));
+
+        Assert.Equal(("INV", 900L), (claim.TargetTransactionTypeCode, claim.TargetTransactionId));
+        Assert.Equal(4_000m, claim.Amount);
+    }
+
     private static SaveMoneyLineRequest Settles(
         int ledgerSourceId, string typeCode, long transactionId, decimal amount) => new()
         {

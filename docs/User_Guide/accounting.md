@@ -280,7 +280,11 @@ This is also why the contact comes first. Until one is chosen there is no balanc
 
 ## What it settles
 
-A line that settles a document names it — a bill number, an invoice number. The document *kind* is not something you choose beside the line: a bill payment can only settle a bill, and an advance settles nothing, so changing what a line is for changes what it can point at.
+A line that settles a document names it — a bill, an invoice. The document *kind* is not something you choose beside the line: a bill payment can only settle a bill, and an advance settles nothing, so changing what a line is for changes what it can point at.
+
+Once the contact is chosen, the line offers that contact's documents of that kind that still have something left to settle, each with its number, date and what is still open. Choosing one on a line with no amount fills in what is still open. A line left without a document settles nothing in particular and goes to the contact's balance.
+
+**Posting the payment settles the documents its lines name.** A bill paid in full no longer shows as owed, in **Allocate** or anywhere outstanding amounts are shown; one paid in part shows what is left. An overpayment line that names the same bill is a balance of its own and settles nothing. Voiding the payment makes those documents owed again.
 
 When the whole payment is about one document, the document is recorded on the payment as a whole as well as on the line. Split across several, only the lines can say, so only the lines do.
 

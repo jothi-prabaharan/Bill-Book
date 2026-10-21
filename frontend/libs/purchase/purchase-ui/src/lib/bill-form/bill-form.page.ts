@@ -11,7 +11,6 @@ import {
   MoreDetailsComponent,
   FormFieldComponent,
   addScannedItem,
-  ScanComponent,
   ApprovalPanelComponent,
   BbSelectOption,
   CheckboxComponent,
@@ -156,6 +155,12 @@ export class BillFormPage {
   /** Available print templates for this transaction type */
   protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
   protected readonly printTemplateId = signal<number | null>(null);
+  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.printTemplates().map((t) => ({
+      value: t.printTemplateId,
+      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
+    })),
+  );
 
   protected readonly documentDate = signal(this.today());
   protected readonly contactId = signal<number | null>(null);
@@ -371,7 +376,39 @@ export class BillFormPage {
 
   protected readonly notes = signal('');
   protected readonly termsAndConditions = signal('');
-  protected readonly isInterState = signal(false);
+
+  /**
+   * The branch's own GST state: its GSTIN's first two digits until the branch
+   * settings answer with the state the server decides against.
+   */
+  private readonly branchStateCode = signal(this.getOrgStateCode());
+
+  /** What the server decided when the bill was saved; null on a new bill. */
+  private readonly savedInterState = signal<boolean | null>(null);
+
+  /**
+   * Which tax columns to draw. A saved bill shows the server's own answer once
+   * it can no longer change; otherwise the place of supply, or the vendor's
+   * GSTIN state when none is set, against the branch's state — the same rule
+   * `PlaceOfSupply.Resolve` applies on save.
+   */
+  protected readonly isInterState = computed(() => {
+    const saved = this.savedInterState();
+    if (saved !== null && this.readonlyDoc()) {
+      return saved;
+    }
+    const supply = this.placeOfSupplyStateCode() || gstinState(this.contactGstin()) || '';
+    return supply.length === 2 ? supply !== this.branchStateCode() : (saved ?? false);
+  });
+
+  /**
+   * A registered vendor's GSTIN fixes the place of supply, and the server
+   * refuses a bill whose two disagree; an unregistered one goes back to the
+   * branch's own state.
+   */
+  private applyVendorState(gstin: string | null | undefined): void {
+    this.placeOfSupplyStateCode.set(gstinState(gstin) ?? this.branchStateCode());
+  }
 
   protected copyBillingToShipping(event?: Event | boolean): void {
     const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
@@ -493,6 +530,15 @@ export class BillFormPage {
       this.allowFreeTextLines.set(settings.allowFreeTextLines);
       this.discountBeforeTax.set(settings.discountBeforeTax);
       this.discountLevel.set(settings.discountLevel);
+
+      const state = gstinState(settings.stateCode);
+      if (state) {
+        const defaulted = this.placeOfSupplyStateCode() === this.branchStateCode();
+        this.branchStateCode.set(state);
+        if (this.isNew() && this.contactId() === null && defaulted) {
+          this.placeOfSupplyStateCode.set(state);
+        }
+      }
     } catch {
       // Defaults already set.
     }
@@ -548,7 +594,13 @@ export class BillFormPage {
       this.notes.set(view.notes ?? '');
       this.termsAndConditions.set(view.termsAndConditions ?? '');
       this.customValues.set(view.customFields ?? {});
-      this.isInterState.set(view.isInterState);
+      // The bill keeps whether it was inter-state, not the state code, so a
+      // draft reopened takes it back from the vendor's GSTIN; an unregistered
+      // vendor's inter-state draft has to have its state chosen again.
+      this.placeOfSupplyStateCode.set(
+        gstinState(view.contactGstin) ?? (view.isInterState ? '' : this.branchStateCode()),
+      );
+      this.savedInterState.set(view.isInterState);
       this.isReverseCharge.set(view.isReverseCharge ?? false);
       this.tds.set(
         view.tdsAmount || view.tdsSectionCode
@@ -660,6 +712,7 @@ export class BillFormPage {
     this.contactId.set(vendor.contactId);
     this.contactLabel.set(`${vendor.contactCode} ${vendor.displayName}`.trim());
     this.contactGstin.set(vendor.gstin ?? '');
+    this.applyVendorState(vendor.gstin);
     this.clearReceipt();
     this.vendorDropdownOpen.set(false);
     this.vendorSearchTerm.set('');
@@ -670,6 +723,7 @@ export class BillFormPage {
     this.contactId.set(null);
     this.contactLabel.set('');
     this.contactGstin.set('');
+    this.applyVendorState(null);
     this.vendorSearchTerm.set('');
     this.clearReceipt();
   }
@@ -807,6 +861,7 @@ export class BillFormPage {
       this.contactLabel.set(`${row.code} ${row.name}`.trim());
 
       this.contactGstin.set(row.meta ?? '');
+      this.applyVendorState(row.meta);
       this.clearReceipt();
     } else if (which === 'receipt') {
       this.goodsReceiptId.set(row.id);
@@ -893,6 +948,7 @@ export class BillFormPage {
 
       if (receipt.contactGstin) {
         this.contactGstin.set(receipt.contactGstin);
+        this.applyVendorState(receipt.contactGstin);
       }
     } catch {
       this.error.set('That receipt could not be read, so its lines were not copied.');
@@ -1121,9 +1177,17 @@ export class BillFormPage {
     return errObj?.message ?? 'The bill could not be saved.';
   }
 
+  /** Today on the user's own clock: `toISOString` is UTC, which is yesterday in India until 05:30. */
   private today(): string {
-    return new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
+}
+
+/** The two-digit state a GSTIN is registered in, or null when it does not start with one. */
+export function gstinState(gstin: string | null | undefined): string | null {
+  const code = (gstin ?? '').trim().slice(0, 2);
+  return /^\d{2}$/.test(code) ? code : null;
 }
 
 

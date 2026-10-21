@@ -106,6 +106,39 @@ public sealed class TenantInterceptorTests
     }
 
     /// <summary>
+    /// A tracked delete and an update in one SaveChanges batch, in an explicit
+    /// transaction, under a role the policy binds.
+    ///
+    /// Npgsql's EF provider reads each modification's row count by its position
+    /// among the batch's statements, so the two SET LOCAL statements once put in
+    /// front of the batch made the first DELETE read as zero rows: every edit of
+    /// a draft that replaces its lines failed as a concurrency conflict. The
+    /// tenant now goes as a command of its own in the same transaction.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_batch_that_deletes_and_updates_saves_inside_a_transaction()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        (Guid customerId, Guid orgId) = await SeedBranchAsync();
+        string probe = await ProbeConnectionStringAsync();
+
+        await using AccountingDbContext db = Context(probe, new TenantContext { CustomerId = customerId, OrgId = orgId });
+        await using IDbContextTransaction tx = await db.Database.BeginTransactionAsync();
+
+        List<Account> accounts = await db.Accounts.OrderBy(a => a.AccountCode).ToListAsync();
+        db.Accounts.Remove(accounts[0]);
+        accounts[1].AccountName = "Office rent";
+
+        Assert.Equal(2, await db.SaveChangesAsync());
+        await tx.CommitAsync();
+
+        db.ChangeTracker.Clear();
+        Account left = Assert.Single(await db.Accounts.ToListAsync());
+        Assert.Equal("Office rent", left.AccountName);
+    }
+
+    /// <summary>
     /// The query filter is bypassed on purpose, so the policy is the only thing
     /// between this context and the other branch's rows.
     /// </summary>

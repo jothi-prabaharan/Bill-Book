@@ -19,6 +19,7 @@ import {
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
+import { AllocationApiService, OpenDocument } from '@bill-book/api-client';
 import { AllocationFormComponent } from '../allocation-form/allocation-form.component';
 import {
   MoneySource,
@@ -192,6 +193,10 @@ export class MoneyDocumentFormPage implements OnInit {
   protected readonly contacts = signal<ContactOption[]>([]);
   protected readonly subAccounts = signal<SubAccountRow[]>([]);
   protected readonly subAccountsFor = signal<number | null>(null);
+
+  /** The contact's documents with something left to settle, both sides. */
+  protected readonly openDocuments = signal<readonly OpenDocument[]>([]);
+  private readonly allocationApi = inject(AllocationApiService);
   protected readonly viewing = signal<MoneyDocumentView | null>(null);
   protected readonly busy = signal(false);
   protected readonly allocating = signal(false);
@@ -200,7 +205,7 @@ export class MoneyDocumentFormPage implements OnInit {
 
   protected editingId: number | null = null;
 
-  transactionDate = new Date().toISOString().slice(0, 10);
+  transactionDate = localToday();
   bankAccountId: number | null = null;
   contactId: number | null = null;
   amount = '';
@@ -331,7 +336,7 @@ export class MoneyDocumentFormPage implements OnInit {
   startCreate(): void {
     this.editingId = null;
     this.viewing.set(null);
-    this.transactionDate = new Date().toISOString().slice(0, 10);
+    this.transactionDate = localToday();
     this.bankAccountId =
       this.usableAccounts().find((a) => a.isDefault)?.bankAccountId ??
       this.usableAccounts()[0]?.bankAccountId ??
@@ -339,6 +344,7 @@ export class MoneyDocumentFormPage implements OnInit {
     this.contactId = null;
     this.subAccounts.set([]);
     this.subAccountsFor.set(null);
+    this.openDocuments.set([]);
     this.amount = '';
     this.paymentMethod = 2;
     this.referenceNo = '';
@@ -421,9 +427,11 @@ export class MoneyDocumentFormPage implements OnInit {
     if (this.contactId === null) {
       this.subAccounts.set([]);
       this.subAccountsFor.set(null);
+      this.openDocuments.set([]);
       return;
     }
     const wanted = this.contactId;
+    void this.loadOpenDocuments(wanted);
     try {
       const rows = await this.req<SubAccountRow[]>(
         'GET',
@@ -435,6 +443,52 @@ export class MoneyDocumentFormPage implements OnInit {
       }
     } catch {
       this.show('The contact’s ledger accounts could not be read.', true);
+    }
+  }
+
+  /**
+   * What a line can settle: the contact's open documents of the kind its source
+   * settles, plus whatever the line already names, so a draft reopened after its
+   * bill was settled elsewhere still shows its own choice.
+   */
+  protected documentOptions(line: LineForm): BbSelectOption<number>[] {
+    const code = line.mappingTransactionTypeCode;
+    if (code === null) return [];
+    const chosen = this.reference(line.mappingTransactionId);
+    const options = this.openDocuments()
+      .filter((d) => d.transactionTypeCode === code && (d.unallocatedAmount > 0 || d.transactionId === chosen))
+      .map((d) => ({
+        value: d.transactionId,
+        label: `${d.documentNo} · ${d.documentDate} · ${d.unallocatedAmount.toFixed(2)} open`,
+      }));
+    if (chosen !== null && !options.some((o) => o.value === chosen)) {
+      options.unshift({ value: chosen, label: `${code} #${chosen}` });
+    }
+    return options;
+  }
+
+  /** Names the document a line settles and, on an empty line, takes what it still owes. */
+  protected pickDocument(line: LineForm, transactionId: number | null): void {
+    line.mappingTransactionId = transactionId === null ? '' : String(transactionId);
+    const document = this.openDocuments().find(
+      (d) => d.transactionTypeCode === line.mappingTransactionTypeCode && d.transactionId === transactionId,
+    );
+    if (document && this.money(line.amount) === 0) {
+      line.amount = document.unallocatedAmount.toFixed(2);
+    }
+    this.touch();
+  }
+
+  private async loadOpenDocuments(contactId: number): Promise<void> {
+    try {
+      const open = await this.allocationApi.openDocuments(contactId);
+      if (this.contactId === contactId) {
+        this.openDocuments.set([...open.sources, ...open.targets]);
+      }
+    } catch {
+      if (this.contactId === contactId) {
+        this.openDocuments.set([]);
+      }
     }
   }
 
@@ -528,7 +582,10 @@ export class MoneyDocumentFormPage implements OnInit {
         challanMonth: challan ? this.challanMonth || null : null,
         lines: kept.map((l) => ({
           ledgerSourceId: l.ledgerSourceId,
-          mappingTransactionTypeCode: l.mappingTransactionTypeCode,
+          // Type and id travel together or not at all: the database refuses
+          // half a mapping, and a line with no document chosen settles nothing.
+          mappingTransactionTypeCode:
+            this.reference(l.mappingTransactionId) === null ? null : l.mappingTransactionTypeCode,
           mappingTransactionId: this.reference(l.mappingTransactionId),
           amount: this.money(l.amount),
           lineMemo: l.lineMemo || null,
@@ -705,4 +762,10 @@ export class MoneyDocumentFormPage implements OnInit {
     }
     return fallback;
   }
+}
+
+/** Today on the user's own clock: `toISOString` is UTC, which is yesterday in India until 05:30. */
+function localToday(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }

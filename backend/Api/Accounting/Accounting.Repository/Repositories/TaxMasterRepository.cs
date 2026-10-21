@@ -211,6 +211,8 @@ public sealed class TaxMasterRepository
     /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
+        await RepairUngroupedAsync(orgId, ct);
+
         List<string> existing = await _db.TaxMasters
             .IgnoreQueryFilters()
             .Where(t => t.OrgId == orgId && t.TaxSystemName != null)
@@ -249,6 +251,41 @@ public sealed class TaxMasterRepository
         }
 
         return missing.Count;
+    }
+
+    /// <summary>
+    /// Gives a rate written with no group id its own, and provisions its GST
+    /// sub-accounts.
+    ///
+    /// Master's startup seed once wrote the default rates straight into this
+    /// table, skipping both steps, and this seed then saw them as present and
+    /// added nothing. With every group id 0, the document choices collapse to
+    /// a single rate and a posting finds no GST sub-account. A first version
+    /// never has group 0 when it is written here, so 0 can only be that.
+    /// </summary>
+    private async Task RepairUngroupedAsync(Guid orgId, CancellationToken ct)
+    {
+        List<TaxMaster> ungrouped = await _db.TaxMasters
+            .IgnoreQueryFilters()
+            .Where(t => t.OrgId == orgId && t.TaxGroupId == 0)
+            .ToListAsync(ct);
+
+        if (ungrouped.Count == 0)
+        {
+            return;
+        }
+
+        foreach (TaxMaster rate in ungrouped)
+        {
+            rate.TaxGroupId = rate.TaxMasterId;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        foreach (TaxMaster rate in ungrouped)
+        {
+            await ProvisionSubAccountsAsync(rate, ct);
+        }
     }
 
     /// <summary>

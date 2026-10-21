@@ -445,6 +445,11 @@ public sealed class ReceiveMoneyRepository
         document.PostedAt = _clock.GetUtcNow();
         document.PostedBy = _user.UserId;
 
+        // The invoices the lines settled stop showing as owed.
+        MoneyAllocationRepository.RecordSettlements(
+            _db, TypeCode, id, spending: false, document.TransactionDate,
+            lines.Select(l => (l.LedgerSourceId, l.MappingTransactionTypeCode, l.MappingTransactionId, l.Amount)));
+
         await _db.SaveChangesAsync(ct);
 
         // The register row the Form 26AS match reads (TK-117).
@@ -520,6 +525,10 @@ public sealed class ReceiveMoneyRepository
         document.VoidedAt = _clock.GetUtcNow();
         document.VoidedBy = _user.UserId;
         document.VoidReason = request.Reason;
+
+        // What it settled is owed again.
+        await MoneyAllocationRepository.ReleaseSettlementsAsync(
+            _db, TypeCode, id, "The receipt was voided.", ct);
 
         if (_tds is not null)
         {

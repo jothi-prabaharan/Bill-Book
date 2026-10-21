@@ -223,12 +223,13 @@
         <ng-template bbCellTemplate="settles" let-row>
           @if (row.mappingTransactionTypeCode) {
             <span class="chip">{{ row.mappingTransactionTypeCode }}</span>
-            <bb-text-input
-              ariaLabel="Document number"
-              [(ngModel)]="row.mappingTransactionId"
+            <bb-select
+              [ariaLabel]="'Document to settle'"
+              [options]="documentOptions(row)"
+              [placeholder]="documentOptions(row).length ? 'Choose…' : 'Nothing open'"
               name="mappingTransactionId"
-              placeholder="Number"
-              (ngModelChange)="touch()"
+              [ngModel]="row.mappingTransactionId === '' ? null : +row.mappingTransactionId"
+              (ngModelChange)="pickDocument(row, $event)"
             />
           } @else {
             <span class="none">—</span>

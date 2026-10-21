@@ -316,7 +316,21 @@ and locked, because a bill has to agree with its receipt to the paise.
 **With no receipt**, nothing has arrived in the books yet, so the bill does both
 jobs: it **moves the stock** and debits Inventory directly.
 
-A bill with no receipt has the **Scan** field above its lines, as an order does (TK-162). A bill attached to a receipt has none, because its lines are the receipt's.
+
+## Place of supply
+
+Choosing a vendor with a GSTIN sets **Place of supply** to the state their GSTIN
+is registered in, because the two have to agree: a bill whose place of supply
+contradicts the vendor's GSTIN is refused. An unregistered vendor puts it back to
+your branch's own state; change it if the goods came from elsewhere.
+
+The tax columns follow it as you type. A vendor in another state shows **IGST**,
+one in your own state **CGST** and **SGST**, and the totals say which applies.
+The bill keeps the answer the server worked out when it was saved, and a saved
+draft reopens with the vendor's state again.
+
+A bill opens with its own print template, and keeps it when the draft is saved
+again.
 
 ## Three kinds of line
 
@@ -347,6 +361,14 @@ Every posted bill and debit note writes its lines to the **purchase register**, 
 A bill to a vendor with TDS turned on deducts it when it posts. The deduction is worked out on the bill's value before GST, under the section on the vendor's contact, once the single-document or yearly threshold is crossed. **TDS Payable** is credited with it and the vendor is owed the rest. The bill shows what was deducted and why. If the vendor's section has no row in force on the bill's date, the bill is not posted and the message says so. See [Accounts](accounting#tds).
 
 A debit note does not give back TDS already deducted.
+
+## Paying a bill
+
+Pay a posted bill from **Banking › Spend money** with a **Bill payment** line,
+choosing the bill from the vendor's open bills. See
+[What it settles](accounting#what-it-settles). Posting the payment marks the bill
+paid, or part paid, straight away. A payment or advance already posted can be put
+against a bill afterwards with **Allocate** on the bills list.
 
 ## Due dates and aging
 

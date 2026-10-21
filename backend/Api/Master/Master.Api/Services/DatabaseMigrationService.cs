@@ -292,6 +292,17 @@ public class DatabaseMigrationService : IHostedService
                 accDb.NumberingSeries.AddRange(Accounting.Repository.SeedData.NumberingSeriesSeed.Build(orgId));
                 accDb.PaymentTerms.AddRange(Accounting.Repository.SeedData.PaymentTermsSeed.Build(orgId));
                 await accDb.SaveChangesAsync(ct);
+
+                // A first version is its own group, as TaxMasterRepository sets
+                // it. Left at 0, every rate shares one group and the document
+                // choices collapse to a single rate. The GST sub-accounts come
+                // from Accounting's own seed, which repairs rows left at 0.
+                foreach (var rate in accDb.TaxMasters.Local)
+                {
+                    rate.TaxGroupId = rate.TaxMasterId;
+                }
+
+                await accDb.SaveChangesAsync(ct);
             }
         }
 

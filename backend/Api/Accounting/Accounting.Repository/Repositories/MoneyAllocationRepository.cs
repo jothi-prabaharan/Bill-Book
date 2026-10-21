@@ -1,4 +1,7 @@
 using Accounting.Entity.Models;
+using Accounting.Entity.TableEntities;
+using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Audit;
 
 namespace Accounting.Repository.Repositories;
 
@@ -115,5 +118,75 @@ public static class MoneyAllocationRepository
             .Distinct()];
 
         return named.Length == 1 ? (named[0].Item1, named[0].Item2) : (null, null);
+    }
+
+    /// <summary>
+    /// Writes the allocation each settling line makes, as a posted money document
+    /// takes effect.
+    ///
+    /// <b>Without it a paid bill stays open.</b> The line names the bill, but the
+    /// open-documents read, the Allocate dialog and every outstanding figure count
+    /// <c>acc.TransactionRatios</c> and nothing else — so a payment posted against a
+    /// bill left it showing the full amount still owed, ready to be paid twice.
+    ///
+    /// Only a line on a <c>Primary</c> source settles: an overpayment that names the
+    /// bill it ran past is a balance of its own, not part of the bill's settlement.
+    /// The pair runs the way the Allocate dialog writes it — a credit-side document
+    /// is the source and a debit-side one the target — so a payment's bill is the
+    /// source and a receipt's invoice is the target. Added to the caller's
+    /// transaction; the caller saves.
+    /// </summary>
+    public static void RecordSettlements(
+        AccountingDbContext db,
+        string moneyTypeCode,
+        long moneyId,
+        bool spending,
+        DateOnly allocationDate,
+        IEnumerable<(int LedgerSourceId, string? TypeCode, long? TransactionId, decimal Amount)> lines)
+    {
+        var settled = lines
+            .Where(l => l.TypeCode is { Length: > 0 } && l.TransactionId is not null && l.Amount > 0m)
+            .Where(l => (spending
+                    ? MoneyPostingMapRepository.ForSpend(l.LedgerSourceId)
+                    : MoneyPostingMapRepository.ForReceive(l.LedgerSourceId))
+                ?.SubAccountPurpose == MoneyPostingMapRepository.Primary)
+            .GroupBy(l => (Code: l.TypeCode!.ToUpperInvariant(), Id: l.TransactionId!.Value))
+            .Select(g => (g.Key.Code, g.Key.Id, Amount: g.Sum(l => l.Amount)));
+
+        foreach ((string code, long id, decimal amount) in settled)
+        {
+            db.TransactionRatios.Add(new TransactionRatio
+            {
+                SourceTransactionTypeCode = spending ? code : moneyTypeCode,
+                SourceTransactionId = spending ? id : moneyId,
+                TargetTransactionTypeCode = spending ? moneyTypeCode : code,
+                TargetTransactionId = spending ? moneyId : id,
+                Amount = amount,
+                AllocationDate = allocationDate,
+                AllocatedAt = DateTime.UtcNow,
+            });
+        }
+    }
+
+    /// <summary>
+    /// Releases every allocation a voided money document took part in, at either
+    /// end — the ones its own lines made and any made to it afterwards. Voided,
+    /// not deleted, as <c>AllocationRepository.RemoveAllocationsAsync</c> does.
+    /// </summary>
+    public static Task<int> ReleaseSettlementsAsync(
+        AccountingDbContext db, string moneyTypeCode, long moneyId, string reason, CancellationToken ct)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        return db.TransactionRatios
+            .Where(t => !t.IsVoided
+                && ((t.SourceTransactionTypeCode == moneyTypeCode && t.SourceTransactionId == moneyId)
+                    || (t.TargetTransactionTypeCode == moneyTypeCode && t.TargetTransactionId == moneyId)))
+            .ExecuteUpdateLoggedAsync(db,
+                s => s
+                    .SetProperty(t => t.IsVoided, true)
+                    .SetProperty(t => t.VoidedAt, now)
+                    .SetProperty(t => t.VoidReason, reason),
+                ct);
     }
 }

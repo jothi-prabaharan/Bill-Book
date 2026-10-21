@@ -81,9 +81,13 @@ public sealed class AllocationRepository
                     && l.TransactionId == request.TargetTransactionId
                     && l.LedgerTypeId == ControlLedgerType);
 
-            if (await targetControlQuery.AnyAsync(l => l.ContactId != null, ct))
+            // The contact's own legs: the ones under their sub-account. The
+            // ledger stamps the contact on every leg of a document, the bank
+            // leg of a payment included, so ContactId alone nets a payment to
+            // nothing.
+            if (await targetControlQuery.AnyAsync(l => l.SubAccountId != null, ct))
             {
-                targetControlQuery = targetControlQuery.Where(l => l.ContactId != null);
+                targetControlQuery = targetControlQuery.Where(l => l.SubAccountId != null);
             }
 
             decimal net = await targetControlQuery
@@ -348,8 +352,14 @@ public sealed class AllocationRepository
     /// </summary>
     public async Task<OpenDocumentsDto> GetOpenDocumentsAsync(long contactId, CancellationToken ct)
     {
+        // Under the contact's own sub-accounts only. The ledger stamps the
+        // contact on every leg of a document, and a payment's bank leg is a
+        // CONTROL leg too, so without this a posted payment or advance nets to
+        // nothing and never shows as credit.
         var posted = await _db.JournalLedger
-            .Where(l => l.ContactId == contactId && l.LedgerTypeId == ControlLedgerType)
+            .Where(l => l.ContactId == contactId
+                && l.LedgerTypeId == ControlLedgerType
+                && l.SubAccountId != null)
             .GroupBy(l => new { l.TransactionTypeCode, l.TransactionId })
             .Select(g => new
             {
@@ -513,9 +523,11 @@ public sealed class AllocationRepository
                 && l.TransactionId == transactionId
                 && l.LedgerTypeId == ControlLedgerType);
 
-        if (await controlQuery.AnyAsync(l => l.ContactId != null, ct))
+        // The contact's own legs, as in AllocateAsync: a payment's bank leg
+        // carries the contact too.
+        if (await controlQuery.AnyAsync(l => l.SubAccountId != null, ct))
         {
-            controlQuery = controlQuery.Where(l => l.ContactId != null);
+            controlQuery = controlQuery.Where(l => l.SubAccountId != null);
         }
 
         decimal net = await controlQuery

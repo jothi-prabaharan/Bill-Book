@@ -31,6 +31,14 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **Bills from a vendor in another state can be saved.** Choosing a vendor with a GSTIN now sets **Place of supply** to that vendor's state. Before, it stayed at your branch's state, and saving was refused because the GSTIN and place of supply disagreed. The line grid and totals show **IGST** for such a bill as you enter it; before, they showed CGST and SGST until it was saved.
+
+- **Fixed**: **A saved draft bill can be changed and saved again.** Every second save of a draft was refused as a conflicting change. The same fault refused any save that removed lines, on every document in every module. Reopening a draft bill also kept its print template and place of supply; before, both went blank and the template was cleared on the next save. **Save** is off on a posted bill.
+
+- **Fixed**: **A posted payment settles the bill it names.** **Spend money** and **Receive money** lines now pick the document they settle from the contact's open documents, with what is still owed, and fill in that amount. Before, the line asked for a number, and the bill number you would type was refused. Posting the payment marks the bill or invoice paid. Before, it stayed owed in **Allocate** and could be paid twice. Voiding the payment makes it owed again. Payments and advances already posted now show as credit in **Allocate**; before, they never appeared.
+
+- **Fixed**: **Every GST rate is offered on a new branch's purchase lines.** Branches set up by the first-run seed offered only one rate, and posting found no GST account to post to. Accounting's seed repairs them the next time it runs.
+
 - **Changed**: **Budget vs Actual has a page of its own (TK-204).** **Budget**, **As at** and **Period** are now chosen from lists and all required. The page opens on the branch's approved budget for this year, today and the year to date, and the date must fall within the budget's year. The accounts are laid out as on the Profit & Loss, with each section's total, **Gross profit** and **Net profit**. Every line shows budget, actual, variance and variance %, green when favourable and red when adverse. An account made inactive still shows what was posted to it, so the actual profit always equals the Profit & Loss. The page works on a phone.
 
 - **Fixed**: **Clicking Accounts on the rail while the menu is still loading no longer loses its menu** (TK-205). The Accounts menu opened, then closed and the rail went back to the page's own module the moment the real menu arrived. A slow connection or a first visit showed it; picking Accounts a second time worked. Every other module was unaffected.

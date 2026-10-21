@@ -1166,6 +1166,7 @@ public sealed class BillRepository
                     ? today.DayNumber - b.DueDate.DayNumber
                     : 0,
                 ContactGstin = b.ContactGstin,
+                PrintTemplateId = b.PrintTemplateId,
                 PlaceOfSupplyStateId = b.PlaceOfSupplyStateId,
                 PaymentTermId = b.PaymentTermId,
                 BillingAddress = b.BillingAddress,

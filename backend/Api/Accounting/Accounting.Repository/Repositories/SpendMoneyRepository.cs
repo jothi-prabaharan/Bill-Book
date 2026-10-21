@@ -479,6 +479,11 @@ public sealed class SpendMoneyRepository
         document.TdsAmount = withheld;
         document.TdsSectionCode = tdsQuote is { Applies: true } ? tdsQuote.SectionCode : null;
 
+        // The bills the lines paid stop showing as owed.
+        MoneyAllocationRepository.RecordSettlements(
+            _db, TypeCode, id, spending: true, document.TransactionDate,
+            lines.Select(l => (l.LedgerSourceId, l.MappingTransactionTypeCode, l.MappingTransactionId, l.Amount)));
+
         await _db.SaveChangesAsync(ct);
 
         // The register row, which counts toward the vendor's threshold even
@@ -705,6 +710,10 @@ public sealed class SpendMoneyRepository
         document.VoidedAt = _clock.GetUtcNow();
         document.VoidedBy = _user.UserId;
         document.VoidReason = request.Reason;
+
+        // What it paid is owed again.
+        await MoneyAllocationRepository.ReleaseSettlementsAsync(
+            _db, TypeCode, id, "The payment was voided.", ct);
 
         // A voided challan gives its deductions back to the undeposited pool; a
         // voided payment leaves the register (TK-117).

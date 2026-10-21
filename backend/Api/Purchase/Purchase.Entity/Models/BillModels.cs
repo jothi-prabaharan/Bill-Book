@@ -264,6 +264,9 @@ public class BillView : BillListItem
 {
     public string? ContactGstin { get; set; }
 
+    /// <summary>The layout it prints with; the form saves it back, so a read that drops it clears it.</summary>
+    public long? PrintTemplateId { get; set; }
+
     public int PlaceOfSupplyStateId { get; set; }
 
     public long? PaymentTermId { get; set; }

@@ -6050,6 +6050,28 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run the two specs named above.
 - **Done when:** a module picked while the menu is loading is still the open one after the server's menu arrives, for every module on the rail.
 
+### TK-206 · Purchase bill create page and paying a bill: fix what a browser run found
+- [x] completed (Claude Opus 5.5) · tests written, not run — 2026-10-21
+- **Issue:** [#196](https://github.com/jothi-prabaharan/Bill-Book/issues/196)
+- **Group:** Z · Owner request
+- **Lanes:** L-UI (`purchase-ui` bill form, `accounting-ui` money document form), L-ACC (money documents, allocation, tax seed), L-PUR (`BillView`), L-KERNEL (`RlsConnectionInterceptor`), L-DOC · **Depends on:** — · **Decision:** the owner's request of 21 October 2026 ("test bill create page and payment, and fix all bugs")
+- **Where:** `bill-form.page.{ts,html}`, `money-document-form.page.{ts,html}`, `SpendMoneyRepository`, `ReceiveMoneyRepository`, `MoneyAllocationRepository`, `AllocationRepository.GetOpenDocumentsAsync`, `TaxMasterRepository.SeedForOrganizationAsync`, Master's `DatabaseMigrationService`, `BillView`, `RlsConnectionInterceptor`.
+- **State:** found 21 October 2026 by running every service and the web app locally and driving the pages in Chromium, on the Sample Retail branch. Six faults, set out in the issue: inter-state bills refused; draft re-saves refused as concurrency conflicts in every service; template and place of supply lost on reopening; a payment line that took a database id; a posted payment that never settled its bill, with payments and advances netting to nothing in open documents; and bootstrap branches whose GST rates all shared group 0.
+- **Sub-tasks:**
+  - [x] Bill form: a vendor's GSTIN sets the place of supply, an unregistered vendor sets the branch's own state, and the branch state comes from `/api/organizations/current`. IGST/CGST+SGST is computed as you type. A draft reopens with the vendor's state. **Save** is disabled on a posted bill. Today is the local date. The print template uses `bb-select`, and the unused `ScanComponent` import is gone (scan was removed from purchase on purpose in `85332ded`).
+  - [x] `BillView.PrintTemplateId`.
+  - [x] `RlsConnectionInterceptor`: a SaveChanges batch inside a transaction gets its `SET LOCAL` as a separate command in that transaction. Everything else keeps the prefix.
+  - [x] Money document form: a settling line picks from the contact's open documents of its kind, filling in what is still open. A line with no document sends no type code. Today is the local date.
+  - [x] Posting Spend or Receive money writes a `TransactionRatios` row per document a Primary line settles: the bill is the source, the invoice the target, as Allocate writes them. Voiding releases them.
+  - [x] Open documents and the allocation guards read the contact's legs under a sub-account, so a payment's bank leg (which the ledger also stamps with the contact) no longer cancels it.
+  - [x] Accounting's seed repairs rates at group 0 (own group, GST sub-accounts). Master's seed sets the group after insert.
+  - [x] Tests: written, never run by an AI (section 0.5): `MoneyDocumentServiceTests` (settlement on post, release on void, receipt direction), `TenantInterceptorTests.A_batch_that_deletes_and_updates_saves_inside_a_transaction`, `TaxMasterRepairTests`.
+  - [x] Docs: `purchase.md` (Place of supply, Paying a bill; stale Scan line removed), `accounting.md` (What it settles), release notes.
+- **Verified by an AI (21 October 2026), in a browser, not by a test runner:** bills from Tamil Nadu, Karnataka and unregistered vendors are saved and posted, with CGST/SGST or IGST as expected. A Karnataka draft is reopened (template and place of supply kept) and saved again. Two bills are paid from Spend money by picking them, and drop off open documents. A payment is voided and its bill is owed again. Allocate applies a ₹1,180 payment in full and a ₹500 advance in part (₹680 left). The backend solution builds with no warnings, the web app builds, and both libs lint clean.
+- **Not done, said rather than widened:** the head office branch from `DatabaseMigrationService` never gets Accounting's HTTP seed, so its rates keep group 0 until a retry from the admin pages runs the seed. Payments posted before this fix carry no settlement row; apply them with Allocate. The purchase order and debit note forms probably have the same place-of-supply default, and were not checked. Reports that net a contact's CONTROL legs without a sub-account filter may be wrong the same way for money documents; not checked. `frontend/package-lock.json` is out of sync with `package.json` (`npm ci` fails), and is not changed here.
+- **Owner step:** run the three test files named above, against databases dropped and recreated.
+- **Done when:** a bill from any vendor saves, posts, re-saves as a draft and can be paid by picking it, and the payment settles it.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
