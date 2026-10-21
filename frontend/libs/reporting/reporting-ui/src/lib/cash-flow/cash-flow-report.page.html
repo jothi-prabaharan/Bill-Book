@@ -1,0 +1,122 @@
+<header class="page-head">
+  <div>
+    <h1>Cash Flow Statement</h1>
+    <p class="subtitle text-muted">
+      Where the branch's cash came from and went over a period, in its base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'cf-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'cf-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'cf-compare-from'" label="Compare from" formControlName="compareFromDate"
+                          hint="Optional: a second period beside it."
+                          [error]="err('compareFromDate', 'Comparison from date')" />
+    <button class="btn btn-link filters__shortcut" type="button" (click)="compareWithLastYear()">
+      Same period last year
+    </button>
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'cf-compare-to'" label="Compare to" formControlName="compareToDate"
+                          [error]="err('compareToDate', 'Comparison to date')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as statement) {
+  <p class="period text-muted">
+    {{ statement.fromDate | registerDate }} to {{ statement.toDate | registerDate }}@if (statement.compareFromDate) {, compared with {{ statement.compareFromDate | registerDate }} to {{ statement.compareToDate | registerDate }}}.
+    Cash in is positive, cash out negative.
+  </p>
+
+  @for (section of statement.sections; track section.activity) {
+    <section class="section" [attr.aria-label]="section.title">
+      <h2 class="section__title">{{ section.title }}</h2>
+      <bb-data-grid flush [columns]="columns()" [data]="rowsOf(section)" [loading]="busy()" [rowClass]="rowClass"
+                    [sortable]="false" [showColumnFilters]="false" [showCount]="false" [paged]="false"
+                    [label]="section.title">
+        <ng-template bbCellTemplate="label" let-row>
+          @if (row.kind === 'account') {
+            <span class="account">
+              <span class="account__code text-muted">{{ row.code }}</span>
+              <span>{{ row.label }}</span>
+            </span>
+          } @else {
+            {{ row.label }}
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="amount" let-row><bb-money-cell [value]="row.amount" /></ng-template>
+        <ng-template bbCellTemplate="compareAmount" let-row><bb-money-cell [value]="row.compareAmount" /></ng-template>
+
+        <ng-template bbGridFooter>
+          <tr>
+            <th scope="row">Net cash from {{ section.title.toLowerCase() }}</th>
+            <td class="numeric"><bb-money-cell [value]="section.total" /></td>
+            @if (statement.compareFromDate) {
+              <td class="numeric"><bb-money-cell [value]="section.compareTotal" /></td>
+            }
+          </tr>
+        </ng-template>
+      </bb-data-grid>
+    </section>
+  }
+
+  <dl class="summary card" [class.summary--compare]="!!statement.compareFromDate" aria-label="Cash at each end">
+    <div class="summary__head" aria-hidden="true">
+      <span></span>
+      <span>Amount</span>
+      @if (statement.compareFromDate) {
+        <span>Compared</span>
+      }
+    </div>
+    <div class="summary__line summary__line--strong">
+      <dt>Net change in cash</dt>
+      <dd><bb-money-cell [value]="statement.totals.netChange" /></dd>
+      @if (statement.compareFromDate) {
+        <dd><bb-money-cell [value]="statement.totals.compareNetChange" /></dd>
+      }
+    </div>
+    <div class="summary__line">
+      <dt>{{ statement.exchangeRateEffect.title }}</dt>
+      <dd><bb-money-cell [value]="statement.exchangeRateEffect.amount" /></dd>
+      @if (statement.compareFromDate) {
+        <dd><bb-money-cell [value]="statement.exchangeRateEffect.compareAmount" /></dd>
+      }
+    </div>
+    <div class="summary__line">
+      <dt>Cash at the beginning of the period</dt>
+      <dd><bb-money-cell [value]="statement.totals.openingCash" /></dd>
+      @if (statement.compareFromDate) {
+        <dd><bb-money-cell [value]="statement.totals.compareOpeningCash" /></dd>
+      }
+    </div>
+    <div class="summary__line summary__line--total">
+      <dt>Cash at the end of the period</dt>
+      <dd><bb-money-cell [value]="statement.totals.closingCash" /></dd>
+      @if (statement.compareFromDate) {
+        <dd><bb-money-cell [value]="statement.totals.compareClosingCash" /></dd>
+      }
+    </div>
+    <div class="summary__check" [class.summary__check--off]="!statement.isReconciled">
+      {{ statement.isReconciled
+        ? 'Cash at the beginning plus the net change and the exchange effect equals cash at the end.'
+        : 'Cash at the beginning plus the net change and the exchange effect does not equal cash at the end.' }}
+    </div>
+  </dl>
+}

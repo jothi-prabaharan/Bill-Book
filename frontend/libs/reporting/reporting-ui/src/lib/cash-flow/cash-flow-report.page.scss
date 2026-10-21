@@ -1,0 +1,138 @@
+/* The Cash Flow Statement (TK-201): the filters, a table per activity, then cash at each end. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period {
+  margin: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+.filters__shortcut {
+  padding: 0;
+  font-size: 12px;
+}
+
+/* The button sits level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.section__title {
+  font-size: 1rem;
+  margin: 0 0 var(--space-2);
+}
+
+/* An account sits indented under its line. */
+.account {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  padding-left: var(--space-3);
+}
+
+.account__code {
+  font-size: 12px;
+}
+
+/* Cash at each end: a label and one or two figures, set to the grids' amount columns. */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.summary__head,
+.summary__line {
+  display: grid;
+  grid-template-columns: 1fr 9.5rem;
+  /* No gap: the amount columns are as wide as the grids', which have none either. */
+  gap: 0;
+  align-items: baseline;
+}
+
+.summary--compare .summary__head,
+.summary--compare .summary__line {
+  grid-template-columns: 1fr 9.5rem 9.5rem;
+}
+
+.summary__head {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+  text-align: right;
+}
+
+.summary__line dt,
+.summary__line dd {
+  margin: 0;
+}
+
+.summary__line dd {
+  text-align: right;
+}
+
+.summary__line--strong {
+  font-weight: 600;
+}
+
+.summary__line--total {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-divider);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.summary__check {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+.summary__check--off {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .filters__actions .btn {
+    width: 100%;
+  }
+
+  .summary__head,
+  .summary__line {
+    grid-template-columns: 1fr auto;
+    gap: var(--space-3);
+  }
+
+  .summary--compare .summary__head,
+  .summary--compare .summary__line {
+    grid-template-columns: 1fr auto auto;
+  }
+
+  .account {
+    padding-left: var(--space-2);
+  }
+}

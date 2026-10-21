@@ -4,4 +4,5 @@ export * from './lib/saved-views/saved-view.dialog';
 export * from './lib/reporting.routes';
 export * from './lib/profit-and-loss/profit-and-loss-report.page';
 export * from './lib/balance-sheet/balance-sheet-report.page';
+export * from './lib/cash-flow/cash-flow-report.page';
 export * from './lib/salary-increment/salary-increment-report.page';

@@ -69,6 +69,25 @@ What the branch earned and spent over a period, under **Reports › Finance** in
 - The sections are split the way **Business Performance** splits them, so its margins and these agree. Net profit for a period within one financial year equals the change in **Current year earnings** on the Balance Sheet over the same days.
 - Every figure is in the branch's base currency.
 
+## Cash Flow Statement
+
+Where the branch's cash came from and went over a period, under **Reports › Finance › Cash Flow Statement - Direct** in the menu, at `/reports/cash-flow-statement-direct` (TK-201). It needs **accounting.view** as well as access to reports, and has a page of its own, with no column chooser, saved views, schedule or export.
+
+- **From** and **To** are both required. They start at the beginning of the financial year and today. **Compare from** and **Compare to** add a second column, and need both dates or neither. **Same period last year** fills them in.
+- **Cash** is your cash, wallet, bank, overdraft and credit card accounts: the ones you set up under **Banking**. Money moved between them is not a flow, so a transfer from the bank to petty cash does not appear.
+- Each movement of cash is traced to the other accounts in the same entry, and each line lists those accounts with the cash they account for. Cash in is positive, cash out negative.
+- **Operating activities:**
+  - **Receipts from customers** are payments against receivables, and cash sales.
+  - **Payments to suppliers and employees** are payments of payables and salaries, stock, and every expense.
+  - **GST and TDS paid or refunded** is tax paid to or refunded by the government. GST, TDS, rounding and an exchange gain or loss inside a receipt or payment count with it instead. So a customer who pays ₹11,800 including GST, or ₹9,800 after deducting TDS, shows that amount under receipts from customers.
+  - **Other operating activities** is everything else, such as interest received or deposits.
+- **Investing activities** are fixed assets bought and sold, with any gain or loss on the sale. They cover the Fixed Asset account and the accounts your fixed asset categories use. Paying a supplier's bill for an asset bought on credit counts as a payment to a supplier, because the payment itself names no asset.
+- **Financing activities** are capital paid in and drawings: your equity accounts.
+- **Loans cannot yet be told apart** from other liabilities, so borrowing and repaying show under other operating activities.
+- **Effect of exchange rate changes** is the revaluation of foreign-currency cash and bank accounts. It changes the cash balance without any money moving, so it sits outside the three activities.
+- **Cash at the beginning of the period** is the balance on the day before, plus any opening balances entered within the period, because an opening balance is not a flow. **Cash at the end of the period** is read from the ledger. The page checks that the beginning, plus the net change and the exchange effect, equals the end. When they differ, it says by how much: a journal moved cash with nothing on the other side.
+- Every figure is in the branch's base currency.
+
 ## Business Performance
 
 **Business Performance**, under **Accounting**, shows eight ratios for a period, one per row:

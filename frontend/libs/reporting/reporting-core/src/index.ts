@@ -10,3 +10,5 @@ export * from './lib/balance-sheet/balance-sheet-report.models';
 export * from './lib/balance-sheet/balance-sheet-report.service';
 export * from './lib/profit-and-loss/profit-and-loss-report.models';
 export * from './lib/profit-and-loss/profit-and-loss-report.service';
+export * from './lib/cash-flow/cash-flow-report.models';
+export * from './lib/cash-flow/cash-flow-report.service';
