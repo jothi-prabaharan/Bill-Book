@@ -6072,6 +6072,21 @@ The queue below is one list in card-number order. Each card names its group.
 - **Owner step:** run the three test files named above, against databases dropped and recreated.
 - **Done when:** a bill from any vendor saves, posts, re-saves as a draft and can be paid by picking it, and the payment settles it.
 
+### TK-207 · Budget vs Actual by Project: its own endpoint and page
+- [~] working (Claude Opus 5.5) — since 2026-10-21
+- **Issue:** [#197](https://github.com/jothi-prabaharan/Bill-Book/issues/197)
+- **Group:** Z · Owner request (the reports, one by one: Finance TK-199 to TK-202, Business Performance TK-203, Budget vs Actual TK-204, then the rest of the budget reports)
+- **Lanes:** L-RPT (a new repository and controller, `BudgetReportsSourcesRepository`, `Reporting.Api.Tests`), L-GWY (two routes), L-UI (`libs/reporting`), L-DOC · **Depends on:** TK-204 · **Decision:** the owner's request of 20 October 2026; D-67 (a required date filter)
+- **Where:** a new `BudgetVsActualByProjectReportRepository` and `BudgetVsActualByProjectReportController`, `BudgetVsActualByProjectReportModels.cs`; `BudgetReports.AgainstActual` and `AgainstActualByProject`; the gateway's `appsettings.json`; `reporting-core` (the models and service), `reporting-ui` (a page at `/reports/budget-vs-actual-by-project`, the path the menu already links to).
+- **State:** checked 21 October 2026. The menu opens the shared report page on the catalog's `budget-vs-actual-by-project` source (TK-109): the as-at date optional, the period typed as text, the budget as a numeric id, one flat list of project and account pairs with no project totals or profit. Run against PostgreSQL it answers 500, because its actuals are a correlated sub-query per pair that EF cannot translate. The catalog's `budget-vs-actual` source has the same fault (found in TK-204).
+- **Sub-tasks:**
+  - [ ] The repository: for a budget kept by project and the window an as-at date and period give, each project's budget and actual per account summed in the database (grouped by project and account, LINQ only); each project laid out by Budget vs Actual's own composition (TK-204), with its gross and net profit; the total across the projects shown; an optional single project.
+  - [ ] The endpoint `GET api/statements/budget-vs-actual-by-project` with its own request and response models, and `…/projects` for the project filter; budget, as-at date and period required (D-67), the budget kept by project and the date within its year (field errors), a project not the branch's a field error; the Budget add-on alone, `reports` and `accounting.view`; another branch in the request is 403; a budget not the branch's is 404; gateway routes.
+  - [ ] The page: budget (budgets kept by project only), as at, period and project (all when blank); one grid with a heading per project, its accounts and section totals, its gross and net profit, and the net profit across all projects; 360px.
+  - [ ] The catalog's two queries rewritten as grouped sums joined to the accounts, with no correlated sub-query, so export and scheduled emails of both run.
+  - [ ] Test, docs and release notes.
+- **Done when:** each project's actual is what was posted with that project in the window, the total across projects equals Budget vs Actual's actual when every posting carries a project, and both catalog sources run against PostgreSQL.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the

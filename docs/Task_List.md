@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 190 completed, 0 working, 10 open, and 2 blocked (202 cards).
+**Summary:** 191 completed, 1 working, 10 open, and 2 blocked (204 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -213,3 +213,4 @@ where to start, sub-tasks and notes.
 | [TK-204](./Task_Details.md#tk-204--budget-vs-actual-its-own-endpoint-and-page) | Budget vs Actual: its own endpoint and page | Z | ✅ completed | Claude Opus 5.5 | 2026-10-21 | written, not run | [#194](https://github.com/jothi-prabaharan/Bill-Book/issues/194) | — |
 | [TK-205](./Task_Details.md#tk-205--accounts-rail-a-menu-picked-before-the-servers-menu-arrives-is-lost) | Accounts rail: a menu picked before the server's menu arrives is lost | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-21 | written, not run | [#195](https://github.com/jothi-prabaharan/Bill-Book/issues/195) | — |
 | [TK-206](./Task_Details.md#tk-206--purchase-bill-create-page-and-paying-a-bill-fix-what-a-browser-run-found) | Purchase bill create page and paying a bill: fix what a browser run found | Z | ✅ completed | Claude Opus 5.5 | 2026-10-21 | written, not run | [#196](https://github.com/jothi-prabaharan/Bill-Book/issues/196) | — |
+| [TK-207](./Task_Details.md#tk-207--budget-vs-actual-by-project-its-own-endpoint-and-page) | Budget vs Actual by Project: its own endpoint and page | Z | 🔶 working | Claude Opus 5.5 (working) | since 2026-10-21 | — | [#197](https://github.com/jothi-prabaharan/Bill-Book/issues/197) | — |
