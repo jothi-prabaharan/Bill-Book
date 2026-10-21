@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { MenuService } from './menu.service';
+import { MenuService, buildFallbackMenu } from './menu.service';
+import { FALLBACK_RAIL } from './shell-screens';
 import { MenuView, SubMenuView } from './menu.models';
 
 const TREE: MenuView[] = [
@@ -240,4 +241,19 @@ describe('MenuService (libs/app-shell)', () => {
     expect(service.createPath(sub('rst-recipes', '/restaurant/recipes'))).toBeNull();
     expect(service.createPath(sub('xyz', null))).toBeNull();
   });
+
+  /** The server's nine core rail codes, as `MenuSeed.cs` names them. */
+  const SERVER_CORE_CODES = ['home', 'contacts', 'inventory', 'purchase', 'sales', 'banking', 'accounting', 'reports', 'settings'];
+
+  it("MENU-15: The fallback tree's module codes are the server's, so a module picked on one is the same module on the other (TK-205)", () => {
+    // Accounts' was `accounts`, made from its group name; the server's is `accounting`.
+    expect(FALLBACK_RAIL.map((rail) => rail.code)).toEqual(SERVER_CORE_CODES);
+
+    const fallback = buildFallbackMenu();
+    expect(fallback.map((menu) => menu.code).sort()).toEqual([...SERVER_CORE_CODES].sort());
+    for (const menu of fallback) {
+      expect(FALLBACK_RAIL.find((rail) => rail.label === menu.name)?.code).toBe(menu.code);
+    }
+  });
 });
+

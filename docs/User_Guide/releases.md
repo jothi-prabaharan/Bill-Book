@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **Clicking Accounts on the rail while the menu is still loading no longer loses its menu** (TK-205). The Accounts menu opened, then closed and the rail went back to the page's own module the moment the real menu arrived. A slow connection or a first visit showed it; picking Accounts a second time worked. Every other module was unaffected.
+
 - **Changed**: **Business Performance has a page of its own (TK-203).** **From** and **To** are now required and start at the beginning of the financial year and today; before, the report covered the twelve months to today unless you chose otherwise. An optional comparison period adds the earlier figures and the change, filled in by **Previous period** or **Same period last year**. The eight ratios are grouped under profitability, efficiency, financial position and cash. Each shows in its own unit (%, days, times or money), with how it is worked out and the two figures behind it. The page works on a phone.
 
 - **Added**: **The Reconciliation Report (TK-202).** **Reports › Finance › Reconciliation Report** used to open no report; it now reconciles one bank account at the end of a day, with **Bank account** and **As at** required. It starts from the balance in the books, adds payments not yet on the statement, takes off receipts not yet on it, and adds statement lines not yet in the books. That gives the balance the statement should show, beside the balance the imported statement does show, and the difference. Each item is listed with its date, number, reference and payee. It reads the matches made under Banking, so a cheque that cleared after the day shows as outstanding on it. The page works on a phone.

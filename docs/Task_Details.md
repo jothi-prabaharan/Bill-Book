@@ -6030,7 +6030,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the actual net profit for a window equals the Profit & Loss's for the same dates, and every variance is the budget against the actual with favourable positive.
 
 ### TK-205 · Accounts rail: a menu picked before the server's menu arrives is lost
-- [~] working (Claude Sonnet 5.5) — since 2026-10-21
+- [x] completed (Claude Sonnet 5.5) · tests written, not run — 2026-10-21
 - **Issue:** [#195](https://github.com/jothi-prabaharan/Bill-Book/issues/195)
 - **Group:** Z · Owner request
 - **Lanes:** L-UI (`frontend/libs/app-shell` only), L-DOC (release notes) · **Depends on:** — · **Decision:** the owner's request of 21 October 2026
@@ -6038,9 +6038,11 @@ The queue below is one list in card-number order. Each card names its group.
 - **Where:** `app-shell/src/lib/menu.service.ts` (`buildFallbackMenu`), `app-shell/src/lib/shell-screens.ts` (`FALLBACK_RAIL`), `app-shell/src/lib/menu.service.spec.ts`.
 - **State:** checked 21 October 2026. Until `GET /api/menu` answers, the shell draws a fallback tree built from `shell-screens.ts`, and a module picked on the rail is remembered by its code (`ShellNavigationService.picked`). The fallback's code comes from the group name, so Accounts is `accounts`; the server's code is `accounting`. When the server's tree replaces the fallback, the remembered code matches nothing: the menu closes and the rail returns to the page's own module. The other eight core modules have the same code in both trees, so only Accounts showed it. Found by clicking every rail module before and after the menu arrived.
 - **Sub-tasks:**
-  - [ ] The fallback tree takes its module codes from `FALLBACK_RAIL`, and Accounts' is `accounting`, the server's.
-  - [ ] Test: written, never run by an AI (section 0.5): the fallback's codes are the rail's, and are the server's nine core codes.
-  - [ ] Release notes.
+  - [x] The fallback tree takes its module codes from `FALLBACK_RAIL`, and Accounts' is `accounting`, the server's.
+  - [x] Test: written, never run by an AI (section 0.5): `menu.service.spec.ts` MENU-15 (the fallback's codes are the rail's, and the server's nine core codes) and `shell-navigation.service.spec.ts` NAVS-11 (a module picked on the fallback tree is still open once the server's tree arrives).
+  - [x] Release notes.
+- **Verified by an AI (21 October 2026):** reproduced on `main` before the fix with the menu call held for four seconds: Accounts opened, then closed when the menu arrived. After the fix, every module on the rail passes both clicks (while loading, and after). Against a stub serving the real `MenuSeed.cs` tree, all 107 rows of the eight multi-screen modules open their own screen with the row, the rail item and the breadcrumb right, and the 27 earlier menu checks pass. One more row belongs to another trade or add-on and its route guard refuses it. `npm run typecheck` and `app-shell` lint are clean; no unit test was run (section 0.5).
+- **Owner step:** run the two specs named above.
 - **Done when:** a module picked while the menu is loading is still the open one after the server's menu arrives, for every module on the rail.
 
 ## 3. Decisions from the owner

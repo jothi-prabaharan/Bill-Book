@@ -246,7 +246,11 @@ export const FALLBACK_RAIL: readonly ShellRailItem[] = [
   { code: 'purchase', path: '/purchase', label: 'Purchase', icon: 'package', module: 'purchase' },
   { code: 'sales', path: '/sales', label: 'Sales', icon: 'shopping-cart', module: 'sales' },
   { code: 'banking', path: '/banking', label: 'Banking', icon: 'landmark', module: 'banking' },
-  { code: 'accounts', path: '/accounting', label: 'Accounts', icon: 'book-open', module: 'accounting' }, // STRICT UI RULE: Accounts
+  // The label is "Accounts" by rule, but the code is the server's: `accounting`, as
+  // `MenuSeed` names the rail entry. The fallback tree takes its codes from here, and
+  // a module picked while it is on screen is remembered by code — one that differs
+  // from the server's closes the menu the moment the server's tree arrives (TK-205).
+  { code: 'accounting', path: '/accounting', label: 'Accounts', icon: 'book-open', module: 'accounting' },
   { code: 'reports', path: '/reports', label: 'Reports', icon: 'chart-no-axes-combined', module: 'reports' },
   { code: 'settings', path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
 ];

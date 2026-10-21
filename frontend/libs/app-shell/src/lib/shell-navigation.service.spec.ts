@@ -180,4 +180,43 @@ describe('ShellNavigationService (libs/app-shell, TK-189)', () => {
     expect(nav.isCurrent(item('inventory', '/inventory', 'Inventory', 'inventory'))).toBe(true);
     expect(nav.isCurrent(item('settings', '/settings', 'Settings', 'settings'))).toBe(false);
   });
+
+  it("NAVS-11: A module picked while the fallback tree is on screen is still open once the server's tree arrives (TK-205)", async () => {
+    // The fallback is what a first visit draws until GET /api/menu answers.
+    sessionStorage.removeItem('bb_menu_cache_v3');
+    localStorage.removeItem('bb_menu_cache_v3');
+
+    const serverTree: MenuView[] = [
+      TREE[0],
+      {
+        menuId: 7, code: 'accounting', name: 'Accounts', icon: 'book-open', module: 'accounting', routePath: '/accounting', isSearchable: false,
+        groups: [{ menuGroupId: 9, code: 'accounting-g1', name: null, icon: null, subMenus: [row(7, 'coa', 'Chart of accounts', '/accounting/chart-of-accounts'), row(8, 'jrn', 'Manual journals', '/accounting/journals')] }],
+      },
+    ];
+    TestBed.resetTestingModule();
+    routerEvents$ = new Subject<RouterEvent>();
+    router = { url: '/dashboard', events: routerEvents$.asObservable(), navigateByUrl: vi.fn().mockResolvedValue(true) };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: Router, useValue: router },
+        { provide: HttpClient, useValue: { get: vi.fn().mockReturnValue(of(serverTree)) } },
+      ],
+    });
+    const menus = TestBed.inject(MenuService);
+    const nav = TestBed.inject(ShellNavigationService);
+
+    const accounts = menus.rail().find((entry) => entry.label === 'Accounts')!;
+    nav.pickRail(accounts, click());
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(nav.panelMenu()?.name).toBe('Accounts');
+
+    await menus.load();
+
+    expect(menus.usingFallback()).toBe(false);
+    expect(nav.panelMenu()?.code).toBe('accounting');
+    expect(nav.activeCode()).toBe('accounting');
+    expect(nav.isCurrent(menus.rail().find((entry) => entry.label === 'Accounts')!)).toBe(true);
+    expect(nav.isCurrent(menus.rail().find((entry) => entry.label === 'Home')!)).toBe(false);
+  });
 });
+

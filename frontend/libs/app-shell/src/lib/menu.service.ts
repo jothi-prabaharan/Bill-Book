@@ -131,7 +131,9 @@ export function buildFallbackMenu(): MenuView[] {
 
     return {
       menuId,
-      code: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      // The rail's own code where it has one, so the same module is the same
+      // module before and after the server's tree replaces this one (TK-205).
+      code: FALLBACK_RAIL.find((rail) => rail.label === name)?.code ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       name,
       icon: null,
       module: screens[0]?.module ?? 'dashboard',
