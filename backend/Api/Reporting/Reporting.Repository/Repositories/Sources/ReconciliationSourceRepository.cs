@@ -87,7 +87,7 @@ public sealed class ReconciliationSourceRepository : ReportSource<Reconciliation
                    CurrencyCode = ba != null ? ba.CurrencyCode : "",
                    AmountIn = l.DepositAmount,
                    AmountOut = l.WithdrawalAmount,
-                   Status = (StatementLineStatus)l.Status,
+                   Status = l.Status,
                    Statement = s.StatementReference ?? s.FileName ?? "Unknown",
                };
     }

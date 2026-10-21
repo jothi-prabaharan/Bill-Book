@@ -1,4 +1,5 @@
 using Reporting.Api.Services;
+using Reporting.Entity.Enums;
 using Reporting.Repository.Repositories;
 using Reporting.Repository.ReadModels;
 using Shared.Kernel.Documents;
@@ -177,8 +178,8 @@ public sealed class ProjectReportTests
         ];
         List<SpendMoneyRead> spend =
         [
-            new() { SpendMoneyId = 50, Status = 1, CurrencyCode = "INR", ExchangeRate = 1m },
-            new() { SpendMoneyId = 51, Status = 0, CurrencyCode = "INR", ExchangeRate = 1m },
+            new() { SpendMoneyId = 50, Status = MoneyDocumentStatus.Posted, CurrencyCode = "INR", ExchangeRate = 1m },
+            new() { SpendMoneyId = 51, Status = MoneyDocumentStatus.Draft, CurrencyCode = "INR", ExchangeRate = 1m },
         ];
         List<SpendMoneyDetailRead> spendLines =
         [

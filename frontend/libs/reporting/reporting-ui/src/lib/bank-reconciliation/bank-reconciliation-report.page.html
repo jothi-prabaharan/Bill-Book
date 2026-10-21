@@ -1,0 +1,119 @@
+<header class="page-head">
+  <div>
+    <h1>Reconciliation Report</h1>
+    <p class="subtitle text-muted">
+      A bank account's balance in the books against its bank statement, at the end of a day.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'br-account'" label="Bank account" [required]="true" [clearable]="false"
+               placeholder="Choose a bank account" [options]="accountOptions()" [loading]="!accountsLoaded()"
+               emptyText="No bank accounts on this branch" formControlName="bankAccountId"
+               [error]="err('bankAccountId', 'Bank account')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'br-as-of'" label="As at" formControlName="asOfDate" [required]="true"
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.accountName }}@if (report.accountNumber && report.accountNumber !== '-') { · {{ report.accountNumber }}}, in {{ report.currencyCode }}, at the end of {{ report.asOfDate | registerDate }}.
+  </p>
+
+  <dl class="summary card" aria-label="From the books to the statement">
+    <div class="summary__line">
+      <dt>Balance in the books</dt>
+      <dd><bb-money-cell [value]="report.bookBalance" /></dd>
+    </div>
+    @if (report.bookBalanceBase !== report.bookBalance) {
+      <div class="summary__line summary__line--note">
+        <dt>The same in base currency</dt>
+        <dd><bb-money-cell [value]="report.bookBalanceBase" /></dd>
+      </div>
+    }
+    @for (group of report.groups; track group.group) {
+      <div class="summary__line">
+        <dt>{{ group.title }} <span class="text-muted">({{ group.items.length }})</span></dt>
+        <dd><bb-money-cell [value]="group.adjustment" /></dd>
+      </div>
+    }
+    <div class="summary__line summary__line--total">
+      <dt>Statement balance the books expect</dt>
+      <dd><bb-money-cell [value]="report.expectedStatementBalance" /></dd>
+    </div>
+    <div class="summary__line">
+      <dt>
+        Balance on the imported statement
+        @if (report.statementBalanceDate) {
+          <span class="text-muted">(as the bank gave it on {{ report.statementBalanceDate | registerDate }}, with any lines after)</span>
+        }
+      </dt>
+      <dd>
+        @if (report.statementBalance !== null) {
+          <bb-money-cell [value]="report.statementBalance" />
+        } @else {
+          <span class="text-muted">Not known</span>
+        }
+      </dd>
+    </div>
+    @if (report.difference !== null) {
+      <div class="summary__line summary__line--strong">
+        <dt>Difference</dt>
+        <dd><bb-money-cell [value]="report.difference" /></dd>
+      </div>
+    }
+    <div class="summary__check" [class.summary__check--off]="report.statementBalance !== null && !report.isReconciled">
+      @if (report.statementBalance === null) {
+        No imported statement gives a balance by this day.
+      } @else if (report.isReconciled) {
+        The books and the bank statement agree.
+      } @else {
+        The books and the bank statement do not agree.
+      }
+    </div>
+  </dl>
+
+  @for (group of report.groups; track group.group) {
+    <section class="section" [attr.aria-label]="group.title">
+      <h2 class="section__title">{{ group.title }}</h2>
+      <bb-data-grid flush [columns]="columns" [data]="group.items" [loading]="busy()" [stackOnPhone]="true"
+                    [sortable]="false" [showColumnFilters]="false" [showCount]="false" [paged]="false"
+                    [label]="group.title" emptyText="None on this day.">
+        <ng-template bbCellTemplate="transactionDate" let-row>{{ row.transactionDate | registerDate }}</ng-template>
+        <ng-template bbCellTemplate="transactionNo" let-row>{{ row.transactionNo ?? '—' }}</ng-template>
+        <ng-template bbCellTemplate="reference" let-row>{{ row.reference ?? '—' }}</ng-template>
+        <ng-template bbCellTemplate="description" let-row>{{ row.description ?? '—' }}</ng-template>
+        <ng-template bbCellTemplate="amountIn" let-row>
+          @if (row.amountIn) { <bb-money-cell [value]="row.amountIn" /> }
+        </ng-template>
+        <ng-template bbCellTemplate="amountOut" let-row>
+          @if (row.amountOut) { <bb-money-cell [value]="row.amountOut" /> }
+        </ng-template>
+
+        @if (group.items.length > 0) {
+          <ng-template bbGridFooter>
+            <tr>
+              <th scope="row" colspan="4">Total</th>
+              <td class="numeric"><bb-money-cell [value]="totalIn(group.items)" /></td>
+              <td class="numeric"><bb-money-cell [value]="totalOut(group.items)" /></td>
+            </tr>
+          </ng-template>
+        }
+      </bb-data-grid>
+    </section>
+  }
+}

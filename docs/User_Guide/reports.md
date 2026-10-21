@@ -88,6 +88,20 @@ Where the branch's cash came from and went over a period, under **Reports › Fi
 - **Cash at the beginning of the period** is the balance on the day before, plus any opening balances entered within the period, because an opening balance is not a flow. **Cash at the end of the period** is read from the ledger. The page checks that the beginning, plus the net change and the exchange effect, equals the end. When they differ, it says by how much: a journal moved cash with nothing on the other side.
 - Every figure is in the branch's base currency.
 
+## Reconciliation Report
+
+A bank account's balance in the books against its bank statement at the end of a day, under **Reports › Finance › Reconciliation Report** in the menu, at `/reports/reconciliation-report` (TK-202). It needs **accounting.view** as well as access to reports, and has a page of its own, with no column chooser, saved views, schedule or export.
+
+- **Bank account** and **As at** are both required. The page opens on the first active bank account and today. Every figure is in the account's own currency.
+- **What counts as on the statement** is what you matched under **Banking**: a statement line matched to a spend money, receive money or transfer on that account. A line you ignored has been dealt with another way, such as a bank charge entered by journal, so it stands on neither side.
+- **Balance in the books** is the account's balance in the ledger at the end of the day. For a foreign-currency account the base-currency balance is shown beneath it.
+- **Payments not yet on the statement** are spend money and transfers out, dated on or before the day, that no statement line on or before the day is matched to: cheques not yet presented, for example. **Receipts not yet on the statement** are receive money and transfers in, likewise.
+- **Statement lines not yet in the books** are lines on or before the day that are unmatched, or matched to a document dated after it.
+- **Statement balance the books expect** is the balance in the books, plus the payments and less the receipts not yet on the statement, plus the statement lines not yet in the books.
+- **Balance on the imported statement** is the latest balance the bank gave on or before the day. That is the running balance on a line, or a statement's closing balance, whichever is later, plus any lines after it. When the two balances agree the page says so. When they differ it shows the difference: match or ignore the remaining lines, or look for a payment keyed for the wrong amount or account. When no imported statement gives a balance by the day, there is nothing to compare yet.
+- Each group is listed below with the date, number, reference, payee and amount of every item.
+- Only money documents can be matched to a statement line. Anything else that moves the account, such as a cash sale posted to it or a journal, is in the books balance but never listed as outstanding. Ignore its statement line once it is in the books.
+
 ## Business Performance
 
 **Business Performance**, under **Accounting**, shows eight ratios for a period, one per row:

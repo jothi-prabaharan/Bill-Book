@@ -108,6 +108,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<ReceiveMoneyDetailRead> ReceiveMoneyDetails => Set<ReceiveMoneyDetailRead>();
     public DbSet<SpendMoneyRead> SpendMoney => Set<SpendMoneyRead>();
     public DbSet<SpendMoneyDetailRead> SpendMoneyDetails => Set<SpendMoneyDetailRead>();
+    public DbSet<TransferMoneyRead> TransferMoney => Set<TransferMoneyRead>();
     public DbSet<GoodsReceiptDetailRead> GoodsReceiptDetails => Set<GoodsReceiptDetailRead>();
 
     public DbSet<FixedAssetRead> FixedAssets => Set<FixedAssetRead>();
@@ -364,6 +365,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<ReceiveMoneyDetailRead>(modelBuilder, "ReceiveMoneyDetails", "acc", e => e.ReceiveMoneyDetailId);
         MapRead<SpendMoneyRead>(modelBuilder, "SpendMoney", "acc", e => e.SpendMoneyId);
         MapRead<SpendMoneyDetailRead>(modelBuilder, "SpendMoneyDetails", "acc", e => e.SpendMoneyDetailId);
+        MapRead<TransferMoneyRead>(modelBuilder, "TransferMoney", "acc", e => e.TransferMoneyId);
         MapRead<GoodsReceiptDetailRead>(modelBuilder, "GoodsReceiptDetails", "pur", e => e.GoodsReceiptDetailId);
 
         // The fixed-asset register. Accounting stores its four enums by name, so
@@ -386,6 +388,14 @@ public class ReportingDbContext : TenantDbContext
         // as the enum's integer, every report touching one of these statuses
         // failed on the first row (found by TK-95).
         modelBuilder.Entity<InvoiceRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        // The same for Accounting's money documents, statement lines and bank
+        // accounts, which were read as integers too: every query touching one
+        // of these columns failed on its first row (found by TK-202).
+        modelBuilder.Entity<SpendMoneyRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<ReceiveMoneyRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<TransferMoneyRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<BankStatementLineRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<BankAccountRead>().Property(e => e.AccountType).HasConversion<string>().HasMaxLength(15);
         modelBuilder.Entity<CreditNoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<QuoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<SalesOrderRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);

@@ -1,4 +1,5 @@
 #pragma warning disable CS8618
+using Reporting.Entity.Enums;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -23,7 +24,7 @@ public class BankAccountRead : OrgScopedEntity
     public string AccountName { get; set; }
     public string AccountNumber { get; set; }
     /// <summary>Matches <c>BankAccountType</c> in Accounting: current, savings, OD, and so on.</summary>
-    public int AccountType { get; set; }
+    public BankAccountType AccountType { get; set; }
 
     public string CurrencyCode { get; set; }
     public bool IsActive { get; set; }

@@ -1,4 +1,5 @@
 using System;
+using Reporting.Entity.Enums;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -20,7 +21,7 @@ public class SpendMoneyRead : OrgScopedEntity
     public string? Memo { get; set; }
     public string? MappingTransactionTypeCode { get; set; }
     public long? MappingTransactionId { get; set; }
-    public int Status { get; set; }
+    public MoneyDocumentStatus Status { get; set; }
     public DateTimeOffset? PostedAt { get; set; }
     public Guid? PostedBy { get; set; }
     public DateTimeOffset? VoidedAt { get; set; }

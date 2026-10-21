@@ -1,4 +1,5 @@
 #pragma warning disable CS8618
+using Reporting.Entity.Enums;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -39,7 +40,7 @@ public class BankStatementLineRead : OrgScopedEntity
     public decimal? RunningBalance { get; set; }
 
     /// <summary>Matches <c>StatementLineStatus</c> in Accounting.</summary>
-    public int Status { get; set; }
+    public StatementLineStatus Status { get; set; }
 
     public string? MatchedTransactionTypeCode { get; set; }
 

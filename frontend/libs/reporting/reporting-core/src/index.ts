@@ -12,3 +12,5 @@ export * from './lib/profit-and-loss/profit-and-loss-report.models';
 export * from './lib/profit-and-loss/profit-and-loss-report.service';
 export * from './lib/cash-flow/cash-flow-report.models';
 export * from './lib/cash-flow/cash-flow-report.service';
+export * from './lib/bank-reconciliation/bank-reconciliation-report.models';
+export * from './lib/bank-reconciliation/bank-reconciliation-report.service';

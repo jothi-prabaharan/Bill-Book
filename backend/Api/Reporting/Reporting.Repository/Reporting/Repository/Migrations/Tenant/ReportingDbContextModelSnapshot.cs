@@ -12724,8 +12724,10 @@ namespace Reporting.Repository.Migrations.Tenant
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("AccountType")
-                        .HasColumnType("integer");
+                    b.Property<string>("AccountType")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<long?>("BankId")
                         .HasColumnType("bigint");
@@ -12883,8 +12885,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<decimal?>("RunningBalance")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
 
                     b.Property<DateOnly>("TransactionDate")
                         .HasColumnType("date");
@@ -17863,8 +17867,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<string>("ReferenceNo")
                         .HasColumnType("text");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
 
                     b.Property<DateOnly>("TransactionDate")
                         .HasColumnType("date");
@@ -19854,8 +19860,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<string>("ReferenceNo")
                         .HasColumnType("text");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
 
                     b.Property<DateOnly>("TransactionDate")
                         .HasColumnType("date");
@@ -20260,6 +20268,81 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.HasIndex("CustomerId", "OrgId");
 
                     b.ToTable("TimeEntries", "acc", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.TransferMoneyRead", b =>
+                {
+                    b.Property<long>("TransferMoneyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TransferMoneyId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<long>("FromBankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Memo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReferenceNo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<long>("ToBankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly>("TransactionDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TransactionNo")
+                        .HasColumnType("text");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("TransferMoneyId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("TransferMoney", "acc", t =>
                         {
                             t.ExcludeFromMigrations();
                         });

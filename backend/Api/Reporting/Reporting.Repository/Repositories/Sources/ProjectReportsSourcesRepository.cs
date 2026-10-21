@@ -174,7 +174,7 @@ public static class ProjectReports
                                  2)).Sum(),
                 Expenses = (from d in spendLines
                             join s in spend on d.SpendMoneyId equals s.SpendMoneyId
-                            where d.ProjectId == p.ProjectId && d.IsBillable && d.BilledInvoiceId == null && s.Status == PostedMoneyDocument
+                            where d.ProjectId == p.ProjectId && d.IsBillable && d.BilledInvoiceId == null && s.Status == MoneyDocumentStatus.Posted
                             select Math.Round(d.AmountBase * (1m + ((d.MarkupPercent ?? 0m) / 100m)), 2)).Sum()
                     + (from l in billLines
                        join b in bills on l.BillId equals b.BillId
@@ -229,9 +229,6 @@ public static class ProjectReports
             BilledHours = g.Sum(x => x.BillingStatus == "Billed" ? x.Hours : 0m),
             NonBillableHours = g.Sum(x => x.IsBillable ? 0m : x.Hours),
         };
-
-    /// <summary><c>MoneyDocumentStatus.Posted</c>; acc stores a money document's status as its number.</summary>
-    private const int PostedMoneyDocument = 1;
 }
 
 public sealed class ProjectProfitabilityRow

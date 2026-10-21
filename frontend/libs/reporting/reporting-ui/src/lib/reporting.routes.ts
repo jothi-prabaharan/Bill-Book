@@ -29,6 +29,13 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-202), at the path the menu links to.
+    path: 'reconciliation-report',
+    loadComponent: () =>
+      import('./bank-reconciliation/bank-reconciliation-report.page').then((m) => m.BankReconciliationReportPage),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     path: 'balance-sheet',
     loadComponent: () =>
       import('./balance-sheet/balance-sheet-report.page').then((m) => m.BalanceSheetReportPage),
