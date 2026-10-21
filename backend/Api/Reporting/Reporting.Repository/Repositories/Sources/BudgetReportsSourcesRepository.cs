@@ -105,7 +105,13 @@ public static class BudgetReports
     private const int Income = 4;
     private const int Expense = 5;
 
-    /// <summary>One row per active income or expense account with a budget or an actual in the window.</summary>
+    /// <summary>
+    /// One row per active income or expense account with a budget or an actual
+    /// in the window. Budget lines and postings are each reduced to one figure
+    /// per account and summed together before the accounts are joined: a
+    /// sub-query per account (TK-109 as first written) cannot be translated,
+    /// and the report answered 500 (TK-207).
+    /// </summary>
     public static IQueryable<BudgetActualRow> AgainstActual(
         IQueryable<AccountRead> accounts,
         IQueryable<JournalLedgerRead> ledger,
@@ -118,13 +124,22 @@ public static class BudgetReports
         int periodFrom = window.PeriodFrom;
         int periodTo = window.PeriodTo;
 
+        var planned =
+            from l in lines
+            where l.BudgetId == budgetId && l.Period >= periodFrom && l.Period <= periodTo
+            select new { l.AccountId, Budget = l.Amount, Net = 0m };
+        var posted =
+            from l in ledger
+            where l.LedgerDate >= start && l.LedgerDate <= end
+            select new { l.AccountId, Budget = 0m, Net = l.DebitAmountBase - l.CreditAmountBase };
+        var sums = planned.Concat(posted)
+            .GroupBy(x => x.AccountId)
+            .Select(g => new { AccountId = g.Key, Budget = g.Sum(x => x.Budget), Net = g.Sum(x => x.Net) });
+
         IQueryable<BudgetActualRow> rows =
-            from a in accounts
+            from s in sums
+            join a in accounts on s.AccountId equals a.AccountId
             where a.IsActive && (a.AccountTypeId == Income || a.AccountTypeId == Expense)
-            let legs = ledger.Where(l => l.AccountId == a.AccountId && l.LedgerDate >= start && l.LedgerDate <= end)
-            let planned = lines
-                .Where(l => l.BudgetId == budgetId && l.AccountId == a.AccountId && l.Period >= periodFrom && l.Period <= periodTo)
-                .Sum(l => l.Amount)
             select new BudgetActualRow
             {
                 AccountId = a.AccountId,
@@ -132,16 +147,19 @@ public static class BudgetReports
                 AccountCode = a.AccountCode,
                 AccountName = a.AccountName,
                 AccountType = a.AccountTypeId == Income ? "Income" : "Expense",
-                Budget = a.IsContra ? -planned : planned,
-                Actual = a.AccountTypeId == Income
-                    ? legs.Sum(l => l.CreditAmountBase) - legs.Sum(l => l.DebitAmountBase)
-                    : legs.Sum(l => l.DebitAmountBase) - legs.Sum(l => l.CreditAmountBase),
+                Budget = a.IsContra ? -s.Budget : s.Budget,
+                Actual = a.AccountTypeId == Income ? -s.Net : s.Net,
             };
 
         return rows.Where(r => r.Budget != 0m || r.Actual != 0m).Select(Finish);
     }
 
-    /// <summary>One row per project and account with a budget or an actual in the window. Needs a budget by project for the budget column.</summary>
+    /// <summary>
+    /// One row per project and account with a budget or an actual in the
+    /// window. Needs a budget by project for the budget column. Summed by
+    /// project and account before the accounts and projects are joined, for
+    /// the reason <see cref="AgainstActual"/> gives.
+    /// </summary>
     public static IQueryable<BudgetActualRow> AgainstActualByProject(
         IQueryable<AccountRead> accounts,
         IQueryable<ProjectRead> projects,
@@ -155,23 +173,23 @@ public static class BudgetReports
         int periodFrom = window.PeriodFrom;
         int periodTo = window.PeriodTo;
 
-        var planned = lines
-            .Where(l => l.BudgetId == budgetId && l.ProjectId != null && l.Period >= periodFrom && l.Period <= periodTo)
-            .Select(l => new { l.AccountId, ProjectId = l.ProjectId!.Value });
-        var spent = ledger
-            .Where(l => l.ProjectId != null && l.LedgerDate >= start && l.LedgerDate <= end)
-            .Select(l => new { l.AccountId, ProjectId = l.ProjectId!.Value });
+        var planned =
+            from l in lines
+            where l.BudgetId == budgetId && l.ProjectId != null && l.Period >= periodFrom && l.Period <= periodTo
+            select new { l.AccountId, ProjectId = l.ProjectId!.Value, Budget = l.Amount, Net = 0m };
+        var posted =
+            from l in ledger
+            where l.ProjectId != null && l.LedgerDate >= start && l.LedgerDate <= end
+            select new { l.AccountId, ProjectId = l.ProjectId!.Value, Budget = 0m, Net = l.DebitAmountBase - l.CreditAmountBase };
+        var sums = planned.Concat(posted)
+            .GroupBy(x => new { x.AccountId, x.ProjectId })
+            .Select(g => new { g.Key.AccountId, g.Key.ProjectId, Budget = g.Sum(x => x.Budget), Net = g.Sum(x => x.Net) });
 
         IQueryable<BudgetActualRow> rows =
-            from pair in planned.Union(spent)
-            join a in accounts on pair.AccountId equals a.AccountId
+            from s in sums
+            join a in accounts on s.AccountId equals a.AccountId
             where a.IsActive && (a.AccountTypeId == Income || a.AccountTypeId == Expense)
-            join p in projects on pair.ProjectId equals p.ProjectId
-            let legs = ledger.Where(l => l.AccountId == pair.AccountId && l.ProjectId == pair.ProjectId && l.LedgerDate >= start && l.LedgerDate <= end)
-            let amount = lines
-                .Where(l => l.BudgetId == budgetId && l.AccountId == pair.AccountId && l.ProjectId == pair.ProjectId
-                    && l.Period >= periodFrom && l.Period <= periodTo)
-                .Sum(l => l.Amount)
+            join p in projects on s.ProjectId equals p.ProjectId
             select new BudgetActualRow
             {
                 RowKey = p.ProjectCode + "/" + a.AccountCode,
@@ -182,10 +200,8 @@ public static class BudgetReports
                 AccountCode = a.AccountCode,
                 AccountName = a.AccountName,
                 AccountType = a.AccountTypeId == Income ? "Income" : "Expense",
-                Budget = a.IsContra ? -amount : amount,
-                Actual = a.AccountTypeId == Income
-                    ? legs.Sum(l => l.CreditAmountBase) - legs.Sum(l => l.DebitAmountBase)
-                    : legs.Sum(l => l.DebitAmountBase) - legs.Sum(l => l.CreditAmountBase),
+                Budget = a.IsContra ? -s.Budget : s.Budget,
+                Actual = a.AccountTypeId == Income ? -s.Net : s.Net,
             };
 
         return rows.Where(r => r.Budget != 0m || r.Actual != 0m).Select(Finish);

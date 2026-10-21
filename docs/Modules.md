@@ -3652,9 +3652,16 @@ Unique on (`BudgetId`, `AccountId`, `ProjectId`, `Period`).
   and `…/budgets`, with the budget, the as-at date (within the budget's year) and the period required.
   It lays the accounts out with `ProfitAndLossReportRepository.SectionOf`, adds gross and net profit,
   and includes an account made inactive since it moved, so its actual net profit is the P&L's for the
-  same dates. The catalog's `budget-vs-actual` and `budget-vs-actual-by-project` sources still use a
-  correlated sub-query per account that EF cannot translate (found in TK-204); the page now owns the
-  menu's path, and the by-project source waits for its own card.
+  same dates.
+- **Budget against actual by project has its own page and endpoint (TK-207)**:
+  `GET api/statements/budget-vs-actual-by-project` and `…/projects`, for a budget kept by project, with
+  an optional single project. Each project is composed by Budget vs Actual's own `Compose` over that
+  project's sums, and the profit across the projects over their sums added together. Only postings
+  and budget lines that carry a project count.
+- The catalog's `budget-vs-actual` and `budget-vs-actual-by-project` sources had a correlated
+  sub-query per account (and per project) that EF cannot translate, so both answered 500 (found in
+  TK-204). Since TK-207 each sums the budget lines and postings in one grouped query, as the monthly
+  trend already did, before joining the accounts.
 
 ## Warnings on documents
 

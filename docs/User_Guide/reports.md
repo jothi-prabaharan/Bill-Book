@@ -173,14 +173,24 @@ Budget vs Actual has its own page at `/reports/budget-vs-actual` (TK-204). Besid
 - An account with neither a budget nor anything posted in the months covered is left out.
 - On a phone each row becomes a card, and each section's heading is a title above its accounts.
 
-### Budget vs Actual by Project and Budget Monthly Trend
+### Budget vs Actual by Project
 
-These two run in the shared report page. Each takes an **As at** date, today when left blank. Each also takes a **Budget**; when blank it uses the branch's approved budget for the year holding that date.
+Budget vs Actual by Project has its own page at `/reports/budget-vs-actual-by-project` (TK-207). It needs what Budget vs Actual needs, and a budget entered with **Budget by project** ticked.
 
-- **Budget vs Actual by Project**: each project and account's budget and actual for a budget kept by project. **Period** is `month`, `quarter` or `ytd`, year to date when blank.
-- **Budget Monthly Trend**: one row per account and month of the budget's year, with budget and actual side by side. Pivot on **Month** to lay the twelve months across.
+- **Budget**, **As at** and **Period** are required and work as on Budget vs Actual. Only budgets kept by project are offered; with none, the page says how to enter one. **Project** is optional: leave it on **All projects**, or choose one.
+- Each project has its own block: its accounts by section with each section's total, its **Gross profit** when it has revenue or a cost of sales, and its **Net profit**. A completed, cancelled or on-hold project says so beside its name.
+- With more than one project, **All projects** at the end gives their gross and net profit added together.
+- Only postings and budget lines that carry a project count. Rent with no project, for example, is on Budget vs Actual and not here. When every posting carries a project, the profit across all projects equals Budget vs Actual's.
+- A project with nothing budgeted or posted to an income or expense account in the months covered is left out, such as one whose only posting is equipment bought for it.
+- Variances, colours, percentages and the phone layout are as on Budget vs Actual.
 
-In both, **Actual** is income as credits less debits and expenses as debits less credits, over the branch's active income and expense accounts. **Variance** is positive when it is favourable, as on Budget vs Actual.
+### Budget Monthly Trend
+
+This report runs in the shared report page. It takes an **As at** date, today when left blank, and a **Budget**; when blank it uses the branch's approved budget for the year holding that date. It shows one row per account and month of the budget's year, with budget and actual side by side. Pivot on **Month** to lay the twelve months across.
+
+**Actual** is income as credits less debits and expenses as debits less credits, over the branch's active income and expense accounts. **Variance** is positive when it is favourable, as on Budget vs Actual.
+
+The catalog's **Budget vs Actual** and **Budget vs Actual by Project** reports, used for export and scheduled emails, give the same figures as their pages for active accounts. Until TK-207 they failed to run.
 
 ## Project reports
 

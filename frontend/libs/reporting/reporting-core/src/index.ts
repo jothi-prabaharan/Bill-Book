@@ -18,3 +18,5 @@ export * from './lib/business-performance/business-performance-report.models';
 export * from './lib/business-performance/business-performance-report.service';
 export * from './lib/budget-vs-actual/budget-vs-actual-report.models';
 export * from './lib/budget-vs-actual/budget-vs-actual-report.service';
+export * from './lib/budget-vs-actual-by-project/budget-vs-actual-by-project-report.models';
+export * from './lib/budget-vs-actual-by-project/budget-vs-actual-by-project-report.service';

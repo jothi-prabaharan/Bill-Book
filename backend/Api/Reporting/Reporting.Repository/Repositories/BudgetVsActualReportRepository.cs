@@ -67,25 +67,30 @@ public sealed class BudgetVsActualReportRepository
 
         List<AccountTypeDto> types = await _master.GetAccountTypesFullAsync(ct);
 
-        List<ProfitAndLossAccount> accounts = await _db.Accounts
-            .Select(a => new ProfitAndLossAccount
-            {
-                AccountId = a.AccountId,
-                AccountTypeId = a.AccountTypeId,
-                AccountCode = a.AccountCode,
-                AccountName = a.AccountName,
-                AccountSystemName = a.AccountSystemName,
-                IsContra = a.IsContra,
-                IsSales = a.IsSales,
-                IsActive = a.IsActive,
-            })
-            .ToListAsync(ct);
+        List<ProfitAndLossAccount> accounts = await AccountsOf(_db.Accounts).ToListAsync(ct);
 
         List<AccountAmount> budgeted = await Budgeted(_db.BudgetLines, budget.BudgetId, window.PeriodFrom, window.PeriodTo).ToListAsync(ct);
         List<AccountAmount> actuals = await Actuals(_db.Ledger, window.From, window.To).ToListAsync(ct);
 
         return Compose(accounts, types, budgeted, actuals, budget, asOf, period, window);
     }
+
+    /// <summary>
+    /// Every account of the branch, active or not, as the layout needs it: an
+    /// account made inactive since it moved still has to be shown. LINQ only.
+    /// </summary>
+    public static IQueryable<ProfitAndLossAccount> AccountsOf(IQueryable<AccountRead> accounts) =>
+        accounts.Select(a => new ProfitAndLossAccount
+        {
+            AccountId = a.AccountId,
+            AccountTypeId = a.AccountTypeId,
+            AccountCode = a.AccountCode,
+            AccountName = a.AccountName,
+            AccountSystemName = a.AccountSystemName,
+            IsContra = a.IsContra,
+            IsSales = a.IsSales,
+            IsActive = a.IsActive,
+        });
 
     /// <summary>The whole months the as-at date and period cover in the budget's year. Pure.</summary>
     public static BudgetWindow WindowOf(BudgetVsActualBudgetDto budget, DateOnly asOf, BudgetPeriod period) =>
