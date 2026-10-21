@@ -719,6 +719,91 @@ public class MoneyDocumentServiceTests
         Assert.Equal(4_000m, claim.Amount);
     }
 
+    /// <summary>
+    /// The settlement reads count what a receipt settled. The receipt posts under
+    /// its own key, so an invoice paid through Receive money read as still owed:
+    /// its status, its print, the portal and the payment reminders (TK-208).
+    /// </summary>
+    [SkippableFact]
+    public async Task An_invoice_settled_by_a_receipt_reads_as_paid()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        // The invoice's own legs, as Sales posts them: receivable debited.
+        List<long> accounts = await h.Db.Accounts.OrderBy(a => a.AccountId).Select(a => a.AccountId).Take(2).ToListAsync(ct);
+        h.Db.JournalLedger.AddRange(
+            new JournalLedger
+            {
+                OrgId = h.Db.CurrentOrgId, AccountId = accounts[0], TransactionTypeCode = "INV", TransactionId = 900,
+                LedgerDate = new DateOnly(2026, 8, 1), CurrencyCode = "INR", ExchangeRate = 1m, ContactId = 7,
+                LedgerTypeId = MoneyPostingMapRepository.ControlLedgerType,
+                DebitAmount = 5_000m, DebitAmountBase = 5_000m,
+            },
+            new JournalLedger
+            {
+                OrgId = h.Db.CurrentOrgId, AccountId = accounts[1], TransactionTypeCode = "INV", TransactionId = 900,
+                LedgerDate = new DateOnly(2026, 8, 1), CurrencyCode = "INR", ExchangeRate = 1m, ContactId = 7,
+                LedgerTypeId = 1,
+                CreditAmount = 5_000m, CreditAmountBase = 5_000m,
+            });
+        await h.Db.SaveChangesAsync(ct);
+
+        MoneyDocumentResult draft = await h.Receive.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 2),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 4_000m,
+            Lines = [Settles(InvoicePayment, "INV", 900, 4_000m)],
+        }, ct);
+        Assert.Equal(MoneyDocumentOutcome.Ok, (await h.Receive.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        var reports = new LedgerReportRepository(h.Db);
+
+        SettlementView settled = Assert.Single(await reports.GetSettlementsAsync(
+            "INV", MoneyPostingMapRepository.ControlLedgerType, [900], ct));
+        Assert.Equal(5_000m, settled.TotalAmount);
+        Assert.Equal(4_000m, settled.PaidAmount);
+        Assert.Equal(1_000m, settled.OutstandingAmount);
+
+        OutstandingBalanceView open = Assert.Single(
+            await reports.GetOutstandingBalancesAsync(7, MoneyPostingMapRepository.ControlLedgerType, ct),
+            b => b.TransactionTypeCode == "INV");
+        Assert.Equal(1_000m, open.OutstandingAmount);
+    }
+
+    /// <summary>
+    /// A payment posted before posting wrote its settlement gets it from the
+    /// branch seed, once; a second run writes nothing (TK-208).
+    /// </summary>
+    [SkippableFact]
+    public async Task The_seed_backfills_a_missing_settlement_once()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 2_000m,
+            Lines = [Settles(BillPayment, "BIL", 501, 2_000m)],
+        }, ct);
+        Assert.Equal(MoneyDocumentOutcome.Ok, (await h.Spend.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        // As a payment posted before TK-206 left it: no settlement row.
+        await h.Db.TransactionRatios.Where(t => t.TargetTransactionTypeCode == "SPM" && t.TargetTransactionId == draft.DocumentId).ExecuteDeleteAsync(ct);
+
+        Assert.Equal(1, await MoneyAllocationRepository.BackfillSettlementsAsync(h.Db, ct));
+        Assert.Equal(0, await MoneyAllocationRepository.BackfillSettlementsAsync(h.Db, ct));
+
+        TransactionRatio claim = Assert.Single(await h.Db.TransactionRatios
+            .Where(t => t.TargetTransactionTypeCode == "SPM" && t.TargetTransactionId == draft.DocumentId).ToListAsync(ct));
+        Assert.Equal(("BIL", 501L, 2_000m), (claim.SourceTransactionTypeCode, claim.SourceTransactionId, claim.Amount));
+    }
+
     private static SaveMoneyLineRequest Settles(
         int ledgerSourceId, string typeCode, long transactionId, decimal amount) => new()
         {

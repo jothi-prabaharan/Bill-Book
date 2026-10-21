@@ -31,6 +31,14 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **An invoice paid through Receive money reads as paid.** The invoice list, its print, the client portal and payment reminders all took an invoice's balance from its own postings, and a receipt posts under its own number, so a paid invoice stayed owed and could be reminded. They now count what each receipt, payment, credit note or advance settled. Payments and receipts posted before payments recorded what they settled get that record on the next start for the head office and the sample branches. On any other branch, apply such a payment with **Allocate**.
+
+- **Fixed**: **A sales invoice with GST can be posted.** Every taxable invoice was refused with "'Output GST' has no Primary sub-account for Tax 0", because the invoice did not record which GST rate its tax belonged to.
+
+- **Fixed**: **Purchase orders, goods receipts and debit notes take the place of supply from the vendor**, as bills do: a vendor in another state shows **IGST** as you enter the document, and saving is no longer refused for disagreeing with the GSTIN. A debit note takes it from its bill. The purchase order's number preview, which never loaded, shows again.
+
+- **Fixed**: **The head office offers every GST rate.** The branch the first start creates now gets every service's own setup once the services are running, including its GST sub-accounts.
+
 - **Changed**: **Budget vs Actual by Project has a page of its own (TK-207).** Choose a budget kept by project, the **As at** date and the **Period**, all required, and optionally one project. Each project is laid out as Budget vs Actual lays out the branch: its accounts by section with totals, its gross and net profit, and the variance on every line, green when favourable and red when adverse. **All projects** totals them at the end. The page works on a phone.
 - **Fixed**: **Budget vs Actual and Budget vs Actual by Project could not be run from the report list, exported or emailed on a schedule (TK-207).** Both stopped with an error; they now run, with the same figures as their pages.
 

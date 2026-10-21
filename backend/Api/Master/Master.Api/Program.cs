@@ -194,6 +194,7 @@ builder.Services.AddHostedService<DemoCustomerBootstrapWorker>();
 // The sample customer, one branch per business type, only with
 // Bootstrap:SeedSampleData (TK-185).
 builder.Services.AddHostedService<SampleDataBootstrapWorker>();
+builder.Services.AddHostedService<HeadOfficeSeedWorker>();
 
 // Runs database setup and EF core migrations on startup
 builder.Services.AddHostedService<DatabaseMigrationService>();

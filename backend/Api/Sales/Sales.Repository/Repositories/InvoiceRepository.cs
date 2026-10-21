@@ -624,6 +624,11 @@ public sealed class InvoiceRepository : IInvoiceRepository
                 detail.Taxes.Add(new InvoiceDetailTax
                 {
                     TaxComponent = comp.Component,
+
+                    // The GST sub-accounts are keyed on the rate's group; the
+                    // TAX leg posts against this. Left at 0, every taxable
+                    // invoice was refused at post (TK-208).
+                    SubAccountId = rate?.TaxGroupId ?? taxGroupId ?? 0,
                     Rate = comp.Rate,
                     TaxableAmount = comp.TaxableAmount,
                     Amount = comp.Amount,
@@ -874,6 +879,11 @@ public sealed class InvoiceRepository : IInvoiceRepository
                 detail.Taxes.Add(new InvoiceDetailTax
                 {
                     TaxComponent = comp.Component,
+
+                    // The GST sub-accounts are keyed on the rate's group; the
+                    // TAX leg posts against this. Left at 0, every taxable
+                    // invoice was refused at post (TK-208).
+                    SubAccountId = rate?.TaxGroupId ?? taxGroupId ?? 0,
                     Rate = comp.Rate,
                     TaxableAmount = comp.TaxableAmount,
                     Amount = comp.Amount,

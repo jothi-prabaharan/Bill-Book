@@ -62,7 +62,7 @@
         <bb-number-field
           [number]="documentNo() || ''"
           module="purchase"
-          series="PO"
+          series="POR"
           [date]="documentDate()"
         />
 
@@ -89,21 +89,16 @@
         </div>
 
         <div class="field">
-          <label for="po-print-template">Print template</label>
-          <select
+          <bb-select
             id="po-print-template"
-            class="input"
+            label="Print template"
+            hint="Print and PDF paper layout"
+            [clearable]="false"
+            [options]="printTemplateOptions()"
             [disabled]="readonlyDoc()"
             [ngModel]="printTemplateId()"
-            (ngModelChange)="printTemplateId.set($event ? +$event : null)"
-          >
-            @for (t of printTemplates(); track t.printTemplateId) {
-              <option [value]="t.printTemplateId">
-                {{ t.templateName }}{{ t.isDefault ? ' (Default)' : '' }} [{{ t.paperSizeName || 'A4' }}]
-              </option>
-            }
-          </select>
-          <span class="hint">Print and PDF paper layout</span>
+            (ngModelChange)="printTemplateId.set($event ?? null)"
+          />
         </div>
 
         <div class="field">

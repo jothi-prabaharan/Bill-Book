@@ -12,7 +12,6 @@ import {
   MoreDetailsComponent,
   FormFieldComponent,
   UiMessage,
-  ScanComponent,
   BbSelectOption,
   ColumnDef,
   DataGridCellTemplateDirective,
@@ -49,6 +48,9 @@ import {
   OrgAddressOption,
   formatOrgAddress,
   formatOrgAddressOptionLabel,
+  gstinState,
+  placeOfSupplyFor,
+  supplyIsInterState,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 import { debitScanned } from './debit-note-scan';
@@ -354,7 +356,43 @@ export class DebitNoteFormPage {
 
   protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);
-  protected readonly isInterState = signal(false);
+  /** The branch's own GST state; the branch settings correct the GSTIN-derived guess. */
+  private readonly branchStateCode = signal(this.getOrgStateCode());
+
+  /** What the server decided when the document was saved, or its source's; null when neither. */
+  private readonly savedInterState = signal<boolean | null>(null);
+
+  /**
+   * Which tax columns to draw: the server's answer once the document can no
+   * longer change, otherwise the place of supply (or the vendor's GSTIN)
+   * against the branch's state, as `PlaceOfSupply.Resolve` decides on save.
+   */
+  protected readonly isInterState = computed(() => {
+    const saved = this.savedInterState();
+    if (saved !== null && this.readonlyDoc()) {
+      return saved;
+    }
+    return supplyIsInterState(this.placeOfSupplyStateCode(), this.contactGstin(), this.branchStateCode())
+      ?? saved ?? false;
+  });
+
+  /** A registered vendor's GSTIN fixes the place of supply; the server refuses the two disagreeing. */
+  private applyVendorState(gstin: string | null | undefined): void {
+    this.placeOfSupplyStateCode.set(placeOfSupplyFor(gstin, this.branchStateCode()));
+  }
+
+  /** Corrects the branch state from the branch settings, and a new document's untouched default with it. */
+  private applyBranchState(stateCode: string | null | undefined): void {
+    const state = gstinState(stateCode);
+    if (!state) {
+      return;
+    }
+    const defaulted = this.placeOfSupplyStateCode() === this.branchStateCode();
+    this.branchStateCode.set(state);
+    if (this.isNew() && this.contactId() === null && defaulted) {
+      this.placeOfSupplyStateCode.set(state);
+    }
+  }
   protected readonly voidOpen = signal(false);
   protected readonly voidReason = signal('');
   protected readonly notes_ = signal('');
@@ -423,6 +461,12 @@ export class DebitNoteFormPage {
   );
 
   constructor() {
+    // The branch's real state, for the place of supply and inter-state.
+    this.lookups.settings().then(
+      (settings) => this.applyBranchState(settings.stateCode),
+      () => undefined,
+    );
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id !== null && id !== 'new') {
       void this.load(Number(id));
@@ -453,12 +497,16 @@ export class DebitNoteFormPage {
       this.billId.set(view.billId);
       this.billLabel.set(view.billNo ?? String(view.billId));
       this.reasonCode.set(view.reasonCode);
+      // Only the inter-state flag is kept, never the state code, so a saved
+      // document takes the state back from the vendor's GSTIN.
       this.placeOfSupplyStateCode.set(
-        view.placeOfSupplyStateId ? String(view.placeOfSupplyStateId).padStart(2, '0') : '',
+        view.placeOfSupplyStateId
+          ? String(view.placeOfSupplyStateId).padStart(2, '0')
+          : gstinState(view.contactGstin) ?? (view.isInterState ? '' : this.branchStateCode()),
       );
       this.currencyCode.set(view.currencyCode ?? 'INR');
       this.exchangeRate.set(view.exchangeRate ?? 1);
-      this.isInterState.set(view.isInterState);
+      this.savedInterState.set(view.isInterState);
       this.notes_.set(view.notes ?? '');
       this.voidReason.set(view.voidReason ?? '');
       this.customValues.set(view.customFields ?? {});
@@ -553,6 +601,7 @@ export class DebitNoteFormPage {
       this.contactLabel.set(`${row.code} ${row.name}`.trim());
 
       this.contactGstin.set(row.meta ?? '');
+      this.applyVendorState(row.meta);
 
       // The bill belonged to the previous vendor.
       this.billId.set(null);
@@ -606,6 +655,10 @@ export class DebitNoteFormPage {
 
       if (bill.contactGstin) {
         this.contactGstin.set(bill.contactGstin);
+        this.applyVendorState(bill.contactGstin);
+      } else if (bill.isInterState) {
+        // An unregistered vendor's inter-state bill: its state was not kept.
+        this.placeOfSupplyStateCode.set('');
       }
       void this.loadOrganizationAddresses(true);
       if (bill.billingAddress && !this.billingAddress()) {
@@ -620,7 +673,7 @@ export class DebitNoteFormPage {
       if (bill.exchangeRate) {
         this.exchangeRate.set(bill.exchangeRate);
       }
-      this.isInterState.set(bill.isInterState);
+      this.savedInterState.set(bill.isInterState);
     } catch {
       this.error.set('That bill could not be read, so its lines were not copied.');
     }
@@ -839,8 +892,10 @@ export class DebitNoteFormPage {
     { field: 'value', header: 'Value' }
   ];
 
+  /** Today on the user's own clock: `toISOString` is UTC, which is yesterday in India until 05:30. */
   private today(): string {
-    return new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
 }
 

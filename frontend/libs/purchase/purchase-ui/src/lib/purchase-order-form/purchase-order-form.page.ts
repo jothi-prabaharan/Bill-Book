@@ -10,7 +10,6 @@ import {
   MoreDetailsComponent,
   FormFieldComponent,
   addScannedItem,
-  ScanComponent,
   BranchDateInputComponent,
   DocumentLine,
   DocumentLineContext,
@@ -51,6 +50,9 @@ import {
   OrgAddressOption,
   formatOrgAddress,
   formatOrgAddressOptionLabel,
+  gstinState,
+  placeOfSupplyFor,
+  supplyIsInterState,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 
@@ -140,6 +142,12 @@ export class PurchaseOrderFormPage {
   /** Available print templates for this transaction type */
   protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
   protected readonly printTemplateId = signal<number | null>(null);
+  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.printTemplates().map((t) => ({
+      value: t.printTemplateId,
+      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
+    })),
+  );
 
   protected readonly documentDate = signal(this.today());
   protected readonly expectedDate = signal<string>('');
@@ -341,7 +349,30 @@ export class PurchaseOrderFormPage {
 
   protected readonly notes = signal('');
   protected readonly termsAndConditions = signal('');
-  protected readonly isInterState = signal(false);
+  /** The branch's own GST state; the branch settings correct the GSTIN-derived guess. */
+  private readonly branchStateCode = signal(this.getOrgStateCode());
+
+  /** What the server decided when the order was saved; null on a new one. */
+  private readonly savedInterState = signal<boolean | null>(null);
+
+  /**
+   * Which tax columns to draw: the server's answer once the order can no
+   * longer change, otherwise the place of supply (or the vendor's GSTIN)
+   * against the branch's state, as `PlaceOfSupply.Resolve` decides on save.
+   */
+  protected readonly isInterState = computed(() => {
+    const saved = this.savedInterState();
+    if (saved !== null && this.readonlyDoc()) {
+      return saved;
+    }
+    return supplyIsInterState(this.placeOfSupplyStateCode(), this.contactGstin(), this.branchStateCode())
+      ?? saved ?? false;
+  });
+
+  /** A registered vendor's GSTIN fixes the place of supply; the server refuses the two disagreeing. */
+  private applyVendorState(gstin: string | null | undefined): void {
+    this.placeOfSupplyStateCode.set(placeOfSupplyFor(gstin, this.branchStateCode()));
+  }
 
   protected copyBillingToShipping(event?: Event | boolean): void {
     const checked = typeof event === 'boolean' ? event : ((event?.target as HTMLInputElement)?.checked ?? true);
@@ -456,6 +487,15 @@ export class PurchaseOrderFormPage {
       this.allowFreeTextLines.set(settings.allowFreeTextLines);
       this.discountBeforeTax.set(settings.discountBeforeTax);
       this.discountLevel.set(settings.discountLevel);
+
+      const state = gstinState(settings.stateCode);
+      if (state) {
+        const defaulted = this.placeOfSupplyStateCode() === this.branchStateCode();
+        this.branchStateCode.set(state);
+        if (this.isNew() && this.contactId() === null && defaulted) {
+          this.placeOfSupplyStateCode.set(state);
+        }
+      }
     } catch {
       // Defaults already set on the signals.
     }
@@ -508,7 +548,12 @@ export class PurchaseOrderFormPage {
       this.notes.set(view.notes ?? '');
       this.customValues.set(view.customFields ?? {});
       this.termsAndConditions.set(view.termsAndConditions ?? '');
-      this.isInterState.set(view.isInterState);
+      // The order keeps whether it was inter-state, not the state code, so a
+      // reopened draft takes it back from the vendor's GSTIN.
+      this.placeOfSupplyStateCode.set(
+        gstinState(view.contactGstin) ?? (view.isInterState ? '' : this.branchStateCode()),
+      );
+      this.savedInterState.set(view.isInterState);
 
       this.lines.set(
         view.lines.map((line) => ({
@@ -666,6 +711,7 @@ export class PurchaseOrderFormPage {
       this.contactLabel.set(`${row.code} ${row.name}`.trim());
 
       this.contactGstin.set(row.meta ?? '');
+      this.applyVendorState(row.meta);
     } else {
       if (this.pickingFromScan) {
         this.addScanned(row);
@@ -858,8 +904,10 @@ export class PurchaseOrderFormPage {
     return body?.message ?? 'The purchase order could not be saved.';
   }
 
+  /** Today on the user's own clock: `toISOString` is UTC, which is yesterday in India until 05:30. */
   private today(): string {
-    return new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
 }
 

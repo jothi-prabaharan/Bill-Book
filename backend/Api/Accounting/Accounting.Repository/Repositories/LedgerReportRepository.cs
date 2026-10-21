@@ -367,7 +367,7 @@ public sealed class LedgerReportRepository
 
         List<long> ids = [.. transactionIds.Distinct()];
 
-        return await _db.JournalLedger
+        List<SettlementView> own = await _db.JournalLedger
             .Where(l => l.TransactionTypeCode == transactionTypeCode
                 && l.LedgerTypeId == ledgerTypeId
                 && ids.Contains(l.TransactionId))
@@ -384,6 +384,88 @@ public sealed class LedgerReportRepository
                 OutstandingAmount = g.Sum(x => x.DebitAmountBase) - g.Sum(x => x.CreditAmountBase),
             })
             .ToListAsync(ct);
+
+        // A receipt posts under its own key, not the invoice's, so what it
+        // settled is the allocation it wrote (TK-206), as is a credit note or
+        // an advance applied with Allocate.
+        Dictionary<(string, long), decimal> claims =
+            await ClaimsAsync([transactionTypeCode], [.. own.Select(v => v.TransactionId)], ct);
+
+        foreach (SettlementView view in own)
+        {
+            if (claims.TryGetValue((transactionTypeCode, view.TransactionId), out decimal claimed))
+            {
+                view.PaidAmount += claimed;
+                view.OutstandingAmount -= claimed;
+            }
+        }
+
+        return own;
+    }
+
+    /// <summary>
+    /// The live allocations naming each of these documents, at either end, summed
+    /// per document — the same count the open-documents read takes.
+    /// </summary>
+    private async Task<Dictionary<(string, long), decimal>> ClaimsAsync(
+        IReadOnlyCollection<string> codes, IReadOnlyCollection<long> ids, CancellationToken ct)
+    {
+        if (codes.Count == 0 || ids.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await _db.TransactionRatios
+            .Where(t => !t.IsVoided
+                && ((codes.Contains(t.TargetTransactionTypeCode) && ids.Contains(t.TargetTransactionId))
+                    || (codes.Contains(t.SourceTransactionTypeCode) && ids.Contains(t.SourceTransactionId))))
+            .Select(t => new
+            {
+                t.TargetTransactionTypeCode,
+                t.TargetTransactionId,
+                t.SourceTransactionTypeCode,
+                t.SourceTransactionId,
+                t.Amount,
+            })
+            .ToListAsync(ct);
+
+        return rows
+            .SelectMany(t => new[]
+            {
+                (Key: (t.TargetTransactionTypeCode, t.TargetTransactionId), t.Amount),
+                (Key: (t.SourceTransactionTypeCode, t.SourceTransactionId), t.Amount),
+            })
+            .GroupBy(c => c.Key)
+            .ToDictionary(g => g.Key, g => g.Sum(c => c.Amount));
+    }
+
+    /// <summary>
+    /// One document's outstanding figures, its allocations taken off. A debit
+    /// document (an invoice) owes the debit; a credit one (a bill) is owed the
+    /// credit, and an allocation reduces either towards zero. The outstanding
+    /// amount keeps its sign: negative for a credit document.
+    /// </summary>
+    private static (decimal Total, decimal Paid, decimal Outstanding) Settle(
+        decimal debit, decimal credit, decimal claimed)
+    {
+        decimal net = debit - credit;
+
+        // Nets to nothing on its own: a payment, whose bank leg carries the
+        // contact too. Its allocations settle the documents it paid, which
+        // show them; on itself they would invent a balance.
+        if (net == 0m)
+        {
+            return (debit, credit, 0m);
+        }
+
+        if (net > 0m)
+        {
+            return (debit, credit + claimed, net - claimed);
+        }
+
+        // A credit document: its total is the credit, and what has been paid
+        // on it is what came back as a debit, plus its allocations.
+        return (credit, debit + claimed, net + claimed);
     }
 
     public async Task<List<OutstandingBalanceView>> GetAllOutstandingBalancesAsync(int ledgerTypeId, CancellationToken ct = default)
@@ -407,12 +489,17 @@ public sealed class LedgerReportRepository
             })
             .ToListAsync(ct);
 
+        Dictionary<(string, long), decimal> claims = await ClaimsAsync(
+            [.. ledgers.Select(l => l.TransactionTypeCode).Distinct()],
+            [.. ledgers.Select(l => l.TransactionId).Distinct()],
+            ct);
+
         var result = new List<OutstandingBalanceView>();
         foreach (var l in ledgers)
         {
-            decimal totalAmount = l.TotalDebit;
-            decimal paidAmount = l.TotalCredit;
-            decimal outstanding = totalAmount - paidAmount;
+            claims.TryGetValue((l.TransactionTypeCode, l.TransactionId), out decimal claimed);
+            (decimal totalAmount, decimal paidAmount, decimal outstanding) =
+                Settle(l.TotalDebit, l.TotalCredit, claimed);
 
             if (Math.Abs(outstanding) > 0.01m)
             {
@@ -457,12 +544,17 @@ public sealed class LedgerReportRepository
             })
             .ToListAsync(ct);
 
+        Dictionary<(string, long), decimal> claims = await ClaimsAsync(
+            [.. ledgers.Select(l => l.TransactionTypeCode).Distinct()],
+            [.. ledgers.Select(l => l.TransactionId).Distinct()],
+            ct);
+
         var result = new List<OutstandingBalanceView>();
         foreach (var l in ledgers)
         {
-            decimal totalAmount = l.TotalDebit;
-            decimal paidAmount = l.TotalCredit;
-            decimal outstanding = totalAmount - paidAmount;
+            claims.TryGetValue((l.TransactionTypeCode, l.TransactionId), out decimal claimed);
+            (decimal totalAmount, decimal paidAmount, decimal outstanding) =
+                Settle(l.TotalDebit, l.TotalCredit, claimed);
 
             if (Math.Abs(outstanding) > 0.01m)
             {

@@ -57,8 +57,11 @@ not from the tax master, which needs Accounting access to read.
 
 ### Place of supply matters more here than on an invoice
 
-Left blank, the place of supply follows the vendor's GSTIN, which is right for
-an ordinary registered vendor.
+Choosing a vendor with a GSTIN sets the place of supply to their GSTIN's state,
+and the tax columns show **IGST** or **CGST** and **SGST** to match as you type.
+Orders, goods receipts, bills and debit notes all work this way; a debit note
+takes it from the bill it corrects. Left blank, the place of supply follows the
+vendor's GSTIN, which is right for an ordinary registered vendor.
 
 **A vendor who is unregistered or on the composition scheme has no GSTIN**, so on
 those orders there is nothing to fall back to and the order is refused until you

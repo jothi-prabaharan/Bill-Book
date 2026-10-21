@@ -59,6 +59,9 @@ import {
   OrgAddressOption,
   formatOrgAddress,
   formatOrgAddressOptionLabel,
+  gstinState,
+  placeOfSupplyFor,
+  supplyIsInterState,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 
@@ -397,8 +400,8 @@ export class BillFormPage {
     if (saved !== null && this.readonlyDoc()) {
       return saved;
     }
-    const supply = this.placeOfSupplyStateCode() || gstinState(this.contactGstin()) || '';
-    return supply.length === 2 ? supply !== this.branchStateCode() : (saved ?? false);
+    return supplyIsInterState(this.placeOfSupplyStateCode(), this.contactGstin(), this.branchStateCode())
+      ?? saved ?? false;
   });
 
   /**
@@ -407,7 +410,7 @@ export class BillFormPage {
    * branch's own state.
    */
   private applyVendorState(gstin: string | null | undefined): void {
-    this.placeOfSupplyStateCode.set(gstinState(gstin) ?? this.branchStateCode());
+    this.placeOfSupplyStateCode.set(placeOfSupplyFor(gstin, this.branchStateCode()));
   }
 
   protected copyBillingToShipping(event?: Event | boolean): void {
@@ -1182,12 +1185,6 @@ export class BillFormPage {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
-}
-
-/** The two-digit state a GSTIN is registered in, or null when it does not start with one. */
-export function gstinState(gstin: string | null | undefined): string | null {
-  const code = (gstin ?? '').trim().slice(0, 2);
-  return /^\d{2}$/.test(code) ? code : null;
 }
 
 

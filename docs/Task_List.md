@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 192 completed, 2 working, 12 open, and 2 blocked (208 cards).
+**Summary:** 193 completed, 1 working, 13 open, and 2 blocked (209 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -214,7 +214,8 @@ where to start, sub-tasks and notes.
 | [TK-205](./Task_Details.md#tk-205--accounts-rail-a-menu-picked-before-the-servers-menu-arrives-is-lost) | Accounts rail: a menu picked before the server's menu arrives is lost | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-21 | written, not run | [#195](https://github.com/jothi-prabaharan/Bill-Book/issues/195) | — |
 | [TK-206](./Task_Details.md#tk-206--purchase-bill-create-page-and-paying-a-bill-fix-what-a-browser-run-found) | Purchase bill create page and paying a bill: fix what a browser run found | Z | ✅ completed | Claude Opus 5.5 | 2026-10-21 | written, not run | [#196](https://github.com/jothi-prabaharan/Bill-Book/issues/196) | — |
 | [TK-207](./Task_Details.md#tk-207--budget-vs-actual-by-project-its-own-endpoint-and-page) | Budget vs Actual by Project: its own endpoint and page | Z | ✅ completed | Claude Opus 5.5 | 2026-10-21 | written, not run | [#197](https://github.com/jothi-prabaharan/Bill-Book/issues/197) | — |
-| [TK-208](./Task_Details.md#tk-208--close-the-gaps-tk-206-left-settlement-reads-older-payments-head-office-seed-purchase-forms-lockfile) | Close the gaps TK-206 left: settlement reads, older payments, head office seed, purchase forms, lockfile | Z | 🔶 working | Claude Opus 5.5 (working) | since 2026-10-21 | — | [#198](https://github.com/jothi-prabaharan/Bill-Book/issues/198) | — |
+| [TK-208](./Task_Details.md#tk-208--close-the-gaps-tk-206-left-settlement-reads-older-payments-head-office-seed-purchase-forms-lockfile) | Close the gaps TK-206 left: settlement reads, older payments, head office seed, purchase forms, lockfile | Z | ✅ completed | Claude Opus 5.5 | 2026-10-21 | written, not run | [#198](https://github.com/jothi-prabaharan/Bill-Book/issues/198) | — |
 | [TK-209](./Task_Details.md#tk-209--plan-limits-and-the-seat-cap) | Plan limits and the seat cap | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-21 | — | [#199](https://github.com/jothi-prabaharan/Bill-Book/issues/199) | — |
 | [TK-210](./Task_Details.md#tk-210--monthly-transaction-limits-for-sales-and-purchase) | Monthly transaction limits for Sales and Purchase | Z | 🟪 open | — | — | — | — | — |
 | [TK-211](./Task_Details.md#tk-211--the-plan-screen-and-switching-a-plan) | The Plan screen and switching a plan | Z | 🟪 open | — | — | — | — | — |
+| [TK-212](./Task_Details.md#tk-212--items-get-their-sub-accounts-so-a-stock-item-can-be-sold) | Items get their sub-accounts, so a stock item can be sold | Z | 🟪 open | — | — | — | — | — |

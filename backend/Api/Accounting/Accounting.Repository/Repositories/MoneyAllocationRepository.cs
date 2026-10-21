@@ -1,4 +1,5 @@
 using Accounting.Entity.Models;
+using Accounting.Entity.Enums;
 using Accounting.Entity.TableEntities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Audit;
@@ -166,6 +167,70 @@ public static class MoneyAllocationRepository
                 AllocatedAt = DateTime.UtcNow,
             });
         }
+    }
+
+    /// <summary>
+    /// Writes the settlement rows posted payments and receipts should have had,
+    /// for those posted before posting wrote them (TK-206). Idempotent: a pair
+    /// that has ever had an allocation, live or voided, is left alone, so
+    /// neither a claim someone made with Allocate nor one they released is
+    /// written again. Runs with the branch seed. Returns how many it wrote.
+    /// </summary>
+    public static async Task<int> BackfillSettlementsAsync(AccountingDbContext db, CancellationToken ct)
+    {
+        var spent = await (
+            from d in db.SpendMoneyDetails
+            join m in db.SpendMoney on d.SpendMoneyId equals m.SpendMoneyId
+            where m.Status == MoneyDocumentStatus.Posted && d.MappingTransactionId != null
+            select new { MoneyId = m.SpendMoneyId, m.TransactionDate, d.LedgerSourceId, d.MappingTransactionTypeCode, d.MappingTransactionId, d.Amount })
+            .ToListAsync(ct);
+
+        var received = await (
+            from d in db.ReceiveMoneyDetails
+            join m in db.ReceiveMoney on d.ReceiveMoneyId equals m.ReceiveMoneyId
+            where m.Status == MoneyDocumentStatus.Posted && d.MappingTransactionId != null
+            select new { MoneyId = m.ReceiveMoneyId, m.TransactionDate, d.LedgerSourceId, d.MappingTransactionTypeCode, d.MappingTransactionId, d.Amount })
+            .ToListAsync(ct);
+
+        if (spent.Count == 0 && received.Count == 0)
+        {
+            return 0;
+        }
+
+        var touched = await db.TransactionRatios
+            .Where(t => t.SourceTransactionTypeCode == "SPM" || t.TargetTransactionTypeCode == "SPM"
+                || t.SourceTransactionTypeCode == "RCM" || t.TargetTransactionTypeCode == "RCM")
+            .Select(t => new { t.SourceTransactionTypeCode, t.SourceTransactionId, t.TargetTransactionTypeCode, t.TargetTransactionId })
+            .ToListAsync(ct);
+
+        HashSet<(string, long, string, long)> seen =
+            [.. touched.Select(t => (t.SourceTransactionTypeCode, t.SourceTransactionId, t.TargetTransactionTypeCode, t.TargetTransactionId))];
+
+        int before = db.ChangeTracker.Entries<TransactionRatio>().Count(e => e.State == EntityState.Added);
+
+        foreach (var document in spent.GroupBy(l => (l.MoneyId, l.TransactionDate)))
+        {
+            RecordSettlements(db, "SPM", document.Key.MoneyId, spending: true, document.Key.TransactionDate,
+                document
+                    .Where(l => !seen.Contains((l.MappingTransactionTypeCode!.ToUpperInvariant(), l.MappingTransactionId!.Value, "SPM", document.Key.MoneyId)))
+                    .Select(l => (l.LedgerSourceId, (string?)l.MappingTransactionTypeCode, l.MappingTransactionId, l.Amount)));
+        }
+
+        foreach (var document in received.GroupBy(l => (l.MoneyId, l.TransactionDate)))
+        {
+            RecordSettlements(db, "RCM", document.Key.MoneyId, spending: false, document.Key.TransactionDate,
+                document
+                    .Where(l => !seen.Contains(("RCM", document.Key.MoneyId, l.MappingTransactionTypeCode!.ToUpperInvariant(), l.MappingTransactionId!.Value)))
+                    .Select(l => (l.LedgerSourceId, (string?)l.MappingTransactionTypeCode, l.MappingTransactionId, l.Amount)));
+        }
+
+        int written = db.ChangeTracker.Entries<TransactionRatio>().Count(e => e.State == EntityState.Added) - before;
+        if (written > 0)
+        {
+            await db.SaveChangesAsync(ct);
+        }
+
+        return written;
     }
 
     /// <summary>

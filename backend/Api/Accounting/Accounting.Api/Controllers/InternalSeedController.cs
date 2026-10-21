@@ -1,5 +1,6 @@
 using Shared.Kernel.Apps;
 using Accounting.Api.Services;
+using Accounting.Repository;
 using Accounting.Repository.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +68,10 @@ public sealed class InternalSeedController : ControllerBase
                 ["tdsSections"] = await _services
                     .GetRequiredService<Accounting.Repository.Repositories.TdsSectionRepository>()
                     .SeedForOrganizationAsync(request.OrgId, ct),
+
+                // Payments posted before they wrote their own settlements (TK-206).
+                ["settlementsBackfilled"] = await MoneyAllocationRepository.BackfillSettlementsAsync(
+                    _services.GetRequiredService<AccountingDbContext>(), ct),
             },
         };
 

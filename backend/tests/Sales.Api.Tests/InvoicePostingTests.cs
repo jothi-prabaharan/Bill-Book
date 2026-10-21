@@ -85,6 +85,35 @@ public sealed class InvoicePostingTests
     }
 
     /// <summary>
+    /// The GST legs name the rate's group, which is what the per-rate GST
+    /// sub-accounts are keyed on. The invoice once left its tax rows' sub-account
+    /// at 0, so Accounting refused every taxable invoice: "'Output GST' has no
+    /// Primary sub-account for Tax 0" (TK-208).
+    /// </summary>
+    [SkippableFact]
+    public async Task The_tax_legs_name_the_rates_group()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        InvoiceResult created = await h.Invoices.CreateAsync(
+            Request(lines: [Line(quantity: 10m, unitPrice: 100m)]),
+            CancellationToken.None);
+        Assert.Equal(InvoiceOutcome.Ok, created.Outcome);
+
+        InvoiceView? view = await h.Invoices.GetAsync(created.InvoiceId, CancellationToken.None);
+        long group = view!.Lines.Single().TaxGroupId!.Value;
+        Assert.All(view.Lines.Single().Taxes, t => Assert.Equal(group, t.SubAccountId));
+
+        Assert.Equal(InvoiceOutcome.Ok, (await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None)).Outcome);
+
+        List<LedgerLegRequest> taxLegs = [.. Assert.Single(h.Ledger.Posts).Legs.Where(l => l.AccountSystemName == TaxPayableAccount)];
+        Assert.NotEmpty(taxLegs);
+        Assert.All(taxLegs, l => Assert.Equal(group, l.SubAccountReferenceId));
+    }
+
+    /// <summary>
     /// A direct sale's cost is posted once (TK-10). The invoice writes it per
     /// line, provisionally, on the key the costing worker settles it on: this
     /// invoice, the line, the COGS leg type, with the item's sub-accounts. The
