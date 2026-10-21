@@ -248,6 +248,29 @@ as #2 to #13.)
 | `docs/User_Guide/**` | Edit only your module's page. A shared page takes `L-DOC` |
 | `docs/Task_Details.md` | Edit only your own card (section 0.2) |
 
+### 1.2 Report lanes (21 October 2026)
+
+The reports in the Reports menu are rebuilt one by one (section 8.6 of `docs/Modules.md`), and the cards for them (TK-213 onward) are open to any agent. To let two agents build reports at once, **each menu group has its own lane**, carved out of `L-RPT`:
+
+| Lane | Owns |
+|---|---|
+| `L-RPT-ACC` | The Finance, Financial performance and Accounting report pages: their `*ReportRepository`, `*ReportController` and `*ReportModels` files and enums in Reporting, their catalog sources, their `*ReportTests`, and their folders in `frontend/libs/reporting/reporting-{core,ui}/src/lib/` |
+| `L-RPT-SAL` | The same for the Sales Reports group |
+| `L-RPT-PUR` | The same for the Purchase Report group |
+| `L-RPT-INV` | The same for the Inventory Report group |
+| `L-RPT-FA` | The same for the Fixed Asset group |
+| `L-RPT-PRJ` | The same for the Projects group |
+
+`L-RPT` keeps everything else in Reporting: `ReportingDbContext`, the read models, the migrations, the seeders, the report runner and the shared report code. **A card that changes a read model or adds a migration takes `L-RPT` as well**, so two agents never generate migrations for the same context.
+
+The registration files every report page touches are shared, and a change to them **adds lines only**; on a rebase conflict, keep both sides:
+- `backend/Api/Reporting/Reporting.Api/Program.cs`;
+- the gateway's `backend/Gateway/Gateway.Api/appsettings.json` routes;
+- `frontend/libs/reporting/reporting-ui/src/lib/reporting.routes.ts`;
+- `reporting-core/src/index.ts` and `reporting-ui/src/index.ts`.
+
+`docs/User_Guide/reports.md` is edited only in the report's own section.
+
 ---
 
 ## 2. The queue
@@ -6174,6 +6197,1315 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] A backfill for items that have none, from Accounting's or Inventory's branch seed.
   - [ ] Test, docs and release notes.
 - **Done when:** a new stock item can be put on a sales invoice and posted, and so can one created before the fix.
+
+### TK-213 · Reporting read models: enum columns read as their names, and the settlement read model
+- [ ] open
+- **Issue:** [#200](https://github.com/jothi-prabaharan/Bill-Book/issues/200)
+- **Group:** Z · Owner request (the reports, one by one). **First of the report cards**: most of them depend on it. Opened 21 October 2026.
+- **Lanes:** L-RPT, L-RPT-INV, L-RPT-ACC, L-RPT-SAL, L-RPT-PUR (it edits sources in each of those groups) · **Depends on:** — · **Decision:** —
+- **Where:** `backend/Api/Reporting/Reporting.Repository/ReadModels/` (the twelve read models below), `ReportingDbContext.cs` (`HasConversion<string>()`, as TK-202 did for `MoneyDocumentStatus`, `StatementLineStatus` and `BankAccountType`), `Reporting.Entity/Enums/` (one enum per closed set, copied from the owning service: `Inventory.Entity/Enums/` for `StockMovementType`, `StockDirection`, `CostingStatus`, `LedgerStatus`, `ItemType`, `ItemProfile`, `TaxPreference`, `CostingType`, `SerialStatus`, `WarehouseType`, `StorageType`; `Sales.Entity/Enums/SalesEnums.cs` for `FulfilmentStatus`, `ChallanType`; `Accounting.Entity/Enums/` for `PaymentMethod`, `SubAccountReferenceType`, `SubAccountPurpose`; `JournalStatus` already exists in Reporting), every source and repository that compares them, and a snapshot-only migration.
+- **State:** checked 21 October 2026 by comparing every read model mapped in `ReportingDbContext` with the columns of a freshly migrated tenant database. **Twenty-one properties are numbers over text columns**, because the owning services store enums by name:
+
+  | Read model | Properties (`int` here, `varchar` in the table) |
+  |---|---|
+  | `StockMovementRead` (`inv.StockMovements`) | `MovementType`, `Direction`, `CostingStatus`, `LedgerStatus` |
+  | `ItemRead` (`inv.Items`) | `ItemProfile`, `ItemType`, `TaxPreference`, `CostingType` |
+  | `ItemCategoryRead` (`inv.ItemCategories`) | `DefaultItemProfile`, `DefaultCostingType` (nullable) |
+  | `ItemSerialRead` (`inv.ItemSerials`) | `Status` |
+  | `WarehouseRead` (`inv.Warehouses`) | `WarehouseType`, `StorageType` |
+  | `SubAccountRead` (`acc.SubAccounts`) | `ReferenceType`, `Purpose` |
+  | `JournalRead` (`acc.Journals`) | `Status` |
+  | `SalesOrderRead` (`sal.SalesOrders`) | `FulfilmentStatus` |
+  | `DeliveryChallanRead` (`sal.DeliveryChallans`) | `ChallanType` |
+  | `PurchaseOrderRead` (`pur.PurchaseOrders`) | `FulfilmentStatus` |
+  | `ReceiveMoneyRead`, `SpendMoneyRead` (`acc.ReceiveMoney`, `acc.SpendMoney`) | `PaymentMethod` |
+
+  A comparison in SQL fails at once with *operator does not exist: character varying = integer*. That is why `inventory-item-detail`, `batch-tracking-detail`, `serial-tracking-status`, `serial-tracking-detail`, `warehouse-tracking-status`, `journal-report` and `account-transaction` answer 500 today. A column that is only read fails on the first row instead, so `sales-order-track` and `purchase-order-track` pass on an empty branch and fail on a real one. `DashboardRepository`, `PortalAccountRepository` (the client portal statement), `DatasetSourcesRepository` and `ReportQueryBuilderRepository` touch the same properties. Reporting also maps no read model for `acc.TransactionRatios`, the settlement rows that TK-206 and TK-208 now write for every payment and allocation. The ageing, invoice-summary, track and payment-collection report cards all need it.
+- **Sub-tasks:**
+  - [ ] An enum per closed set in `Reporting.Entity/Enums/`, with the owning service's member names (the database stores names), each with a summary naming its source.
+  - [ ] Each of the 21 properties typed as its enum (nullable where the column is) with `HasConversion<string>()` in `ReportingDbContext`.
+  - [ ] Every comparison and projection that used a number updated to the enum (`m.Direction == 1` becomes `m.Direction == StockDirection.In`) across `Repositories/Sources/*`, `DashboardRepository`, `PortalAccountRepository`, `DatasetSourcesRepository` and `ReportQueryBuilderRepository`. Check that every `grep -rn "\.Direction\|\.MovementType\|\.ReferenceType\|\.FulfilmentStatus\|\.CostingType\|\.ItemType\|\.PaymentMethod" Api/Reporting` hit compiles against the enum.
+  - [ ] `TransactionRatioRead` mapping `acc.TransactionRatios` read-only (`MapRead`, excluded from migrations, under the tenant query filter like the other read models): source and target transaction type and id, amount, allocation date, `IsVoided`.
+  - [ ] A snapshot-only migration: `dotnet ef migrations add ReadModelEnums --no-build --project Api/Reporting/Reporting.Repository --startup-project Api/Reporting/Reporting.Api --context ReportingDbContext --output-dir Migrations/Tenant`. The read models are excluded, so `Up` is empty and only the snapshot moves. Never run `migrations remove`: it connects to the Development database in `appsettings.Development.json`.
+  - [ ] Test: written, never run by an AI (section 0.5). A model test over `ReportingDbContext` (no database) asserting each of the 21 properties has a string conversion; existing source tests updated to the enums.
+  - [ ] Verify: build with no warnings; then run every catalog source in the table above against a local PostgreSQL with a few rows in each table (`POST api/reports/{key}/query`). Write in each dependant card's Notes which sources still fail and why. Expect the correlated sub-queries in `inventory-item-summary`, `batch-tracking-status`, `trial-balance`, `general-ledger-summary` and `bank-summary`, and the `sum(unknown)` in `inventory-item-list` and the two FX sources. Those belong to their own cards.
+  - [ ] Docs: `docs/Modules.md` §8 (one line), this card ticked, `python3 scripts/update-task-list.py`, `Closes` its issue.
+- **Done when:** no read model property is a number over a text column (the model test), and none of the sources above fails with *character varying = integer*.
+- **Notes:** The comparison script used on 21 October: parse every `MapRead<T>(modelBuilder, "Table", "schema")` in `ReportingDbContext`, read `T`'s properties, and list the `int`/`short`/`long` ones whose column in `information_schema.columns` is `character varying`. Re-run it when adding a read model.
+
+
+### TK-214 · Budget Monthly Trend: its own endpoint and page
+- [ ] open
+- **Issue:** [#201](https://github.com/jothi-prabaharan/Bill-Book/issues/201)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Financial performance*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/BudgetReportsSourcesRepository.cs` (class `BudgetMonthlyTrendSource`, reading `Accounts`, `BudgetLines`, `Ledger`); new `BudgetMonthlyTrendReportRepository`, `BudgetMonthlyTrendReportController`, `BudgetMonthlyTrendReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/budget-monthly-trend/`, `frontend/libs/reporting/reporting-ui/src/lib/budget-monthly-trend/` (the page at `/reports/budget-monthly-trend`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The catalog source runs (200, checked 21 October). Give it the same required budget and as-at date so export and schedules obey D-67. The catalog source takes `asOf` (date, optional), `budgetId` (number, optional); its columns are accountType, accountCode, accountName, month, period, budget, actual, variance. Guard today: `accounting.view`, add-on Budget. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** How each income and expense account ran against its budget month by month across the budget's year: the shape of the year, not one window of it.
+- **Benchmark:** Xero's *Budget Variance* by month and *Budget Summary*; Odoo's budget analysis by period; AutoCount's monthly budget vs actual.
+- **Filters:**
+  - **Budget** (required; budgets from `api/statements/budget-vs-actual/budgets`, the branch's approved one for this year first), as on Budget vs Actual
+  - **As at** date (required, within the budget's year; months after it show the budget with no actual yet, marked so)
+  - **Show** budget, actual or variance, or all three (optional; all by default)
+- **Layout:** One grid laid out as Budget vs Actual (TK-204): section headings (Revenue, Cost of sales, Other income, Expenses), each account, section totals, gross and net profit. Twelve month columns plus a year total, each with budget / actual / variance as chosen; the months after the as-at date are greyed as future. Wide: the account column sticks while the months scroll sideways inside the grid card only (never the page). At 360px: one card per account with a month list.
+- **Rules:**
+  - Use `BudgetWindows` and `BudgetVsActualReportRepository` (`WindowOf`, `AccountsOf`, `Compose`, `VarianceOf`, `PercentOf`) rather than new arithmetic: each month is Budget vs Actual's Month window composed once, so a month's figures equal Budget vs Actual for that month.
+  - Budgets and actuals summed in the database once, grouped by account and month (budget `Period` 1-12; ledger month index from the year start), not twelve queries.
+  - Inactive accounts that moved are shown, as on Budget vs Actual, so the year's actual net profit equals the Profit & Loss for the year to date.
+  - Contra accounts' budgets negated to the P&L's sign; variance positive when favourable.
+- **Sub-tasks:**
+  - [ ] The repository `BudgetMonthlyTrendReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/budget-monthly-trend` with `BudgetMonthlyTrendReportRequest` (the filters above, dates required) and its result models; guards `[RequireAddOn(AddOn.Budget)]` alone, `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]`; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `budget-monthly-trend`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/budget-monthly-trend`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view', addOns: ['Budget'] } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `BudgetMonthlyTrendReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `budget-monthly-trend-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each month's figures equal Budget vs Actual's for that month, and the year-to-date total's actual net profit equals the Profit & Loss for the same dates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-215 · Trial Balance: a required period and the report standard
+- [ ] open
+- **Issue:** [#202](https://github.com/jothi-prabaharan/Bill-Book/issues/202)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-ACC (`LedgerController`, `LedgerReportRepository`, a request model), L-ACC-UI (the existing page), L-RPT-ACC (the catalog source) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** `backend/Api/Accounting/Accounting.Api/Controllers/LedgerController.cs` and `Accounting.Repository/Repositories/LedgerReportRepository.cs`; the page `frontend/libs/accounting/accounting-ui/src/lib/trial-balance/`; the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/TrialBalanceSourceRepository.cs`; `docs/User_Guide/accounting.md`.
+- **State:** checked 21 October 2026. The menu opens `/accounting/trial-balance`, an Accounting page whose dates are optional (an **All dates** button clears them), which D-67 no longer allows. The catalog's `trial-balance` source (`Sources/TrialBalanceSourceRepository.cs`, `accounting.view`) takes `from` (date, optional), `to` (date, optional); columns accountCode, accountName, accountType, debit, credit, currentBalance. Against PostgreSQL it **answers 500**. Catalog `trial-balance` (`Sources/TrialBalanceSourceRepository.cs`) answers 500 on PostgreSQL: *The query contains a projection … DbSet<JournalLedgerRead>()…* (correlated sub-query). Fix as in TK-207.
+- **What it answers:** Every account's debit or credit balance for a period and the two totals, which must agree: the first check an accountant runs before closing a period.
+- **Benchmark:** Xero's *Trial Balance* (as at a date, with YTD columns); AutoCount's *Trial Balance* (period, opening/movement/closing); Odoo's *Trial Balance* (initial balance, period debit/credit, end balance).
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); remove the **All dates** button; the page opens on the financial year to date
+  - **Show accounts with no balance** (optional tick)
+  - **Compare** to a second period (optional), as the Profit & Loss does
+- **Layout:** Keep the existing Accounting page (`accounting-ui/src/lib/trial-balance`) and bring it to the report standard: one grid with account type headings (`row--group`), opening balance, debits, credits and closing balance per account, a subtotal per type and the grand totals (`row--total`) with a visible "in balance" or "out by ₹x" line; 360px card per account; field errors under the dates.
+- **Rules:**
+  - Served by Accounting's `LedgerController` (`GET api/ledger/trial-balance`), whose `from`/`to` are optional today: make them required with a field error when missing (a request model with `[Required(ErrorMessage)]`).
+  - Opening balance = everything before From (for balance-sheet accounts) and the profit carried to retained earnings at the financial-year start, as the Balance Sheet (TK-199) splits it.
+  - Debit total equals credit total; the page says so in words, not only by colour.
+  - The catalog's `trial-balance` source answers 500 (a correlated sub-query per account EF cannot translate): fix it the way TK-207 fixed the budget sources (sum the ledger by account first, then join), and give it required dates.
+- **Sub-tasks:**
+  - [ ] The endpoint: a request model with `[Required(ErrorMessage)]` dates (and the account, for the ledger), validated by the controller as field errors; the repository keeps its arithmetic and follows the rules above.
+  - [ ] The page: remove **All dates**, open on the financial year to date, show the server's refusals under each field, and bring the layout to the report standard above (shared components only, no inline styles, 360px).
+  - [ ] The catalog source `trial-balance`: fix the failure under **State** as TK-207 fixed the budget sources, and make its dates required, so export and scheduled emails run and obey D-67.
+  - [ ] Test: written, never run by an AI (section 0.5) — the required dates (and account), each rule above on hand-worked postings, the catalog source's query over lists, and the page's helpers in a `-core` spec where it has any.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/accounting.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The totals agree for any period on books that balance; each account's closing balance equals its General ledger closing balance and the Balance Sheet / Profit & Loss figure for the same dates; the catalog source runs.
+- **Notes:** Lanes are Accounting's, not Reporting's: the page and endpoint belong to the Accounting service. Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-216 · General ledger: a required period and the report standard
+- [ ] open
+- **Issue:** [#203](https://github.com/jothi-prabaharan/Bill-Book/issues/203)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-ACC (`LedgerController`, `LedgerReportRepository`, a request model), L-ACC-UI (the existing page), L-RPT-ACC (the catalog source) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** `backend/Api/Accounting/Accounting.Api/Controllers/LedgerController.cs` and `Accounting.Repository/Repositories/LedgerReportRepository.cs`; the page `frontend/libs/accounting/accounting-ui/src/lib/account-ledger/`; the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/GeneralLedgerSummarySourceRepository.cs`; `docs/User_Guide/accounting.md`.
+- **State:** checked 21 October 2026. The menu opens `/accounting/ledger`, an Accounting page whose dates are optional (an **All dates** button clears them), which D-67 no longer allows. The catalog's `general-ledger-summary` source (`Sources/GeneralLedgerSummarySourceRepository.cs`, `accounting.view`) takes `from` (date, optional), `to` (date, optional); columns account, accountCode, openingBalance, debit, credit, netMovement, closing. Against PostgreSQL it **answers 500**. Catalog `general-ledger-summary` (`Sources/GeneralLedgerSummarySourceRepository.cs`) answers 500: correlated sub-query per account. Fix as in TK-207.
+- **What it answers:** Every posting to an account over a period, with the opening balance, a running balance and the closing balance: where an account's number comes from.
+- **Benchmark:** Xero's *General Ledger Detail* and *Summary*; AutoCount's *General Ledger*; Odoo's *General Ledger* (grouped by account with initial balance).
+- **Filters:**
+  - **Account** (required, the existing account picker); **From** and **To**, both required (D-67), opening on the financial year to date
+  - **Contact** and **Project** (optional) where the ledger carries them
+- **Layout:** Keep the existing Accounting page (`accounting-ui/src/lib/account-ledger`) and bring it to the report standard: opening balance row, one row per posting (date, document number linking to the document, source, contact, description, debit, credit, running balance), closing balance row (`row--total`); a summary mode listing every account with opening, debits, credits and closing (the catalog's General Ledger Summary); 360px cards.
+- **Rules:**
+  - Served by Accounting's `LedgerController` (`GET api/ledger/accounts/{accountId}`), whose `from`/`to` are optional: make them required.
+  - Running balance on the account's normal side; opening = all postings before From.
+  - `DocumentNo` comes from `acc.JournalLedger.DocumentNo`; the `{code}-{id}` stand-in only for rows written before the column (CLAUDE.md).
+  - The catalog's `general-ledger-summary` source answers 500 (correlated sub-query): fix as TK-207 did and give it required dates.
+- **Sub-tasks:**
+  - [ ] The endpoint: a request model with `[Required(ErrorMessage)]` dates (and the account, for the ledger), validated by the controller as field errors; the repository keeps its arithmetic and follows the rules above.
+  - [ ] The page: remove **All dates**, open on the financial year to date, show the server's refusals under each field, and bring the layout to the report standard above (shared components only, no inline styles, 360px).
+  - [ ] The catalog source `general-ledger-summary`: fix the failure under **State** as TK-207 fixed the budget sources, and make its dates required, so export and scheduled emails run and obey D-67.
+  - [ ] Test: written, never run by an AI (section 0.5) — the required dates (and account), each rule above on hand-worked postings, the catalog source's query over lists, and the page's helpers in a `-core` spec where it has any.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/accounting.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** An account's closing balance equals its Trial Balance closing balance for the same dates, and opening + debits − credits = closing on every account (normal side respected).
+- **Notes:** Lanes are Accounting's: the pages and endpoints belong to the Accounting service; the catalog source fix takes L-RPT-ACC. Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-217 · Journal Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#204](https://github.com/jothi-prabaharan/Bill-Book/issues/204)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/JournalReportSourceRepository.cs` (class `JournalReportSourceRepository`, reading `Accounts`, `Contacts`, `JournalDetails`, `Journals`, `SubAccounts`); new `JournalReportReportRepository`, `JournalReportReportController`, `JournalReportReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/journal/`, `frontend/libs/reporting/reporting-ui/src/lib/journal/` (the page at `/reports/journal-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `journal-report` (`Sources/JournalReportSourceRepository.cs`) answers 500: *operator does not exist: character varying = integer* (`JournalRead.Status` and `SubAccountRead.ReferenceType` are `int`, the columns are text) — fixed by TK-213. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are date, transactionNo, reference, narration, description, transactions, accountCode, accountName, contactName, currency, exchangeRate, debitSource, creditSource, debit, credit, createdByName, createdAt, postedByName, postedAt, modifiedByName, modifiedAt, status. Guard today: `accounting.view`. Run against PostgreSQL it **answers 500**: operator does not exist: character varying = integer….
+- **What it answers:** Every journal in a period with its lines, who created and posted it, and its status: the audit view of what was posted by hand and by the system.
+- **Benchmark:** Xero's *Journal Report* (manual and system journals, with source); AutoCount's *Journal Entry Listing*; Odoo's *Journal Audit*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Source** (optional: manual journals, sales, purchase, money documents, fixed assets…, from the ledger's transaction type)
+  - **Status** (optional: Posted, Reversed; Draft only when asked)
+  - **Account** (optional)
+- **Layout:** One grid grouped by journal: a heading row per journal (date, number, reference, narration, status, created/posted by and when), its lines (account, contact, description, currency and rate, debit and credit in the source currency and in base), a balanced total per journal; filter chips for source and status; 360px cards per line under a journal title.
+- **Rules:**
+  - Read `acc.Journals` / `JournalDetails` for manual journals and `acc.JournalLedger` for system postings, or the ledger alone with the journal header where it exists — decide from TK-07's ledger shape and say which in the card's Notes.
+  - User names resolved from `mst.Users` in one batched call (`BatchedNameResolverRepository`), never per row.
+  - Every journal shown balances; a reversed journal shows its reversal's number.
+- **Sub-tasks:**
+  - [ ] The repository `JournalReportReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/journal-report` with `JournalReportReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `journal-report`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/journal-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `JournalReportReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `journal-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Debits equal credits for every journal and for the period, and the period's totals equal the Trial Balance's movement columns for the same dates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-218 · Account Transaction: its own endpoint and page
+- [ ] open
+- **Issue:** [#205](https://github.com/jothi-prabaharan/Bill-Book/issues/205)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213, TK-216 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/AccountTransactionSourceRepository.cs` (class `AccountTransactionSourceRepository`, reading `Accounts`, `ContactLicences`, `Contacts`, `Ledger`, `SubAccounts`, `TaxMasters`); new `AccountTransactionReportRepository`, `AccountTransactionReportController`, `AccountTransactionReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/account-transaction/`, `frontend/libs/reporting/reporting-ui/src/lib/account-transaction/` (the page at `/reports/account-transaction`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `account-transaction` (`Sources/AccountTransactionSourceRepository.cs`) answers 500: *character varying = integer* (`SubAccountRead.ReferenceType`) — fixed by TK-213. The catalog source takes `from` (date, optional), `to` (date, optional), `accountId` (number, optional); its columns are date, transactionNo, source, accountCode, account, relatedAccount, contactCode, contactName, description, reference, taxRate, taxRateName, permitNo, currency, exchangeRate, debitSource, creditSource, debit, credit, runningBalance. Guard today: `accounting.view`. Run against PostgreSQL it **answers 500**: operator does not exist: character varying = integer….
+- **What it answers:** Every posting in a period, account by account, with its contact, currency, tax rate and a running balance: the detailed general ledger across many accounts at once.
+- **Benchmark:** Xero's *Account Transactions*; AutoCount's *Ledger Transaction Listing*; Odoo's *General Ledger* with partner and tax columns.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Accounts** (optional, several; all when blank)
+  - **Contact**, **Tax rate**, **Source** (optional)
+- **Layout:** One grid grouped by account: heading per account with its opening balance, its postings (date, document number, source, related account, contact, description, reference, tax rate, currency and rate, debit and credit in source and base, running balance), a closing balance row per account (`row--subtotal`), grand totals (`row--total`). Column chooser for the wide set. 360px cards.
+- **Rules:**
+  - Opening balance per account = postings before From; running balance on the account's normal side.
+  - Licence permit number (`ContactLicences`) only where the contact has one.
+  - Summed and paged in the database; the running balance computed over the ordered page plus the opening of the page (the catalog runner's `OpeningBalanceAsync` / `ApplyRunningTotals` pattern).
+- **Sub-tasks:**
+  - [ ] The repository `AccountTransactionReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/account-transaction` with `AccountTransactionReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `account-transaction`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/account-transaction`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `AccountTransactionReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `account-transaction-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** For each account, opening + debits − credits = closing, and the closing balance equals the General ledger's for the same dates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-219 · Bank Summary: its own endpoint and page
+- [ ] open
+- **Issue:** [#206](https://github.com/jothi-prabaharan/Bill-Book/issues/206)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/BankSummarySourceRepository.cs` (class `BankSummarySourceRepository`, reading `Accounts`, `BankAccounts`, `Ledger`); new `BankSummaryReportRepository`, `BankSummaryReportController`, `BankSummaryReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/bank-summary/`, `frontend/libs/reporting/reporting-ui/src/lib/bank-summary/` (the page at `/reports/bank-summary`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `bank-summary` (`Sources/BankSummarySourceRepository.cs`) answers 500 (correlated sub-query per account; recorded in TK-202). Fix as TK-207 did. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are accountName, accountType, currencyCode, openingBalance, received, spent, closingBalance, bankRevaluation. Guard today: `accounting.view`. Run against PostgreSQL it **answers 500**: The query contains a projection '<>h__TransparentIdentifier1 => DbSet<JournalLedgerRead>()     .Where(l => l.AccountId == <>h__TransparentIdentifier1.<>h__Trans….
+- **What it answers:** For each bank and cash account: what it held at the start of a period, what came in, what went out, what it holds at the end, and any revaluation of a foreign-currency account.
+- **Benchmark:** Xero's *Bank Summary*; AutoCount's *Bank Book summary*; Odoo's *Bank and Cash* journals summary.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Bank account** (optional; all when blank), from the reconciliation's account list (`api/statements/bank-reconciliation/accounts`)
+- **Layout:** One grid, one row per bank account (name, type, currency, opening, received, spent, revaluation, closing) with totals in base currency; a foreign-currency account also shows its balance in its own currency; 360px card per account.
+- **Rules:**
+  - Opening = ledger balance of the account before From; received = debits, spent = credits in the period, excluding revaluation postings, which have their own column.
+  - Transfers between two bank accounts count as spent from one and received by the other (state it under the grid).
+  - Use the `BankAccountType` enum and the `BankAccountRead` mapping TK-202 added.
+- **Sub-tasks:**
+  - [ ] The repository `BankSummaryReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/bank-summary` with `BankSummaryReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `bank-summary`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/bank-summary`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `BankSummaryReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `bank-summary-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each account's closing balance equals its ledger balance at To and the Reconciliation Report's "balance in the books" for that date; opening + received − spent + revaluation = closing.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-220 · Foreign Currency Gain or Loss: its own endpoint and page
+- [ ] open
+- **Issue:** [#207](https://github.com/jothi-prabaharan/Bill-Book/issues/207)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/FxGainLossSourceRepository.cs` (class `FxGainLossSourceRepository`, reading `Accounts`, `Ledger`); new `ForeignCurrencyGainLossReportRepository`, `ForeignCurrencyGainLossReportController`, `ForeignCurrencyGainLossReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/foreign-currency-gain-or-loss/`, `frontend/libs/reporting/reporting-ui/src/lib/foreign-currency-gain-or-loss/` (the page at `/reports/foreign-currency-gain-or-loss`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `fx-gain-loss` (`Sources/FxGainLossSourceRepository.cs`) answers 500: *function sum(unknown) is not unique* (a sum over an untyped constant in a union). Fix by typing the constant (`0m`) or summing before the union. The catalog source takes `asOf` (date, optional); its columns are accountName, currencyCode, dueSource, due, revalueFxRate, revaluedDue, realizedAmount, realizedExposure, realizedYtd, unrealizedAmount, unrealizedExposure, unrealizedYtd, netAmount, netExposure, netYtd. Guard today: `accounting.view`. Run against PostgreSQL it **answers 500**: function sum(unknown) is not unique….
+- **What it answers:** The exchange gains and losses on foreign-currency balances: realized when a document is settled at a different rate, unrealized on what is still open at a revaluation rate.
+- **Benchmark:** Xero's *Foreign Currency Gains and Losses* (realized/unrealized, by currency and account); AutoCount's *Unrealized Gain/Loss*; Odoo's *Unrealized Currency Gains/Losses*.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today (unrealized is worked out at this date)
+  - **From** (required) for the realized part over the period to the as-at date
+  - **Currency** (optional)
+  - **Revaluation rate** per currency: the rate stored for the as-at date in `rat` (manual entry or the RBI scrape, D-03), editable on the page before running
+- **Layout:** One grid grouped by currency: per account (receivable, payable, bank) the amount due in the currency, its base value at the original rates, its value at the revaluation rate, realized in the period, unrealized at the date, and the net; totals per currency and overall; 360px cards.
+- **Rules:**
+  - Realized = settlement postings to the Realized FX Gain/Loss account in the period (they exist: Accounting posts them on settlement).
+  - Unrealized = open foreign balance × revaluation rate − its base carrying value; nothing is posted by this report.
+  - The exchange rate on a document is a snapshot (CLAUDE.md, Multi-currency): never re-read it live.
+- **Sub-tasks:**
+  - [ ] The repository `ForeignCurrencyGainLossReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/foreign-currency-gain-or-loss` with `ForeignCurrencyGainLossReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `fx-gain-loss`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/foreign-currency-gain-or-loss`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ForeignCurrencyGainLossReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `foreign-currency-gain-or-loss-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Realized for the period equals the Realized FX Gain/Loss account's movement in the Profit & Loss for the same dates, and unrealized per document equals the details report's figure.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-221 · Foreign Currency Gain or Loss Details: its own endpoint and page
+- [ ] open
+- **Issue:** [#208](https://github.com/jothi-prabaharan/Bill-Book/issues/208)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-220 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/FxGainLossDetailsSourceRepository.cs` (class `FxGainLossDetailsSourceRepository`, reading `Accounts`, `Contacts`, `Ledger`); new `ForeignCurrencyGainLossDetailsReportRepository`, `ForeignCurrencyGainLossDetailsReportController`, `ForeignCurrencyGainLossDetailsReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/foreign-currency-gain-or-loss-details/`, `frontend/libs/reporting/reporting-ui/src/lib/foreign-currency-gain-or-loss-details/` (the page at `/reports/foreign-currency-gain-or-loss-details`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `fx-gain-loss-details` (`Sources/FxGainLossDetailsSourceRepository.cs`) answers 500: *function sum(unknown) is not unique*. Fix with TK-220's change. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are accountName, currencyCode, contactName, transactionDate, transactionNo, transactionFxRate, reference, source, dueSource, due, revalueFxRate, revaluedDue, realizedAmount, realizedExposure, realizedYtd, unrealizedAmount, unrealizedExposure, unrealizedYtd, netAmount, netExposure, netYtd. Guard today: `accounting.view`. Run against PostgreSQL it **answers 500**: function sum(unknown) is not unique….
+- **What it answers:** The same gains and losses document by document: which invoice, bill or payment made each realized amount, and which open document carries each unrealized amount.
+- **Benchmark:** Xero's *Foreign Currency Gains and Losses* detail; AutoCount's *Realized Gain/Loss Listing*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**; unrealized is worked out at To
+  - **Currency**, **Contact**, **Account** (optional)
+  - the revaluation rates as on the summary report (TK-220)
+- **Layout:** One grid grouped by currency then account: per document its date, number, contact, reference, original rate, revaluation rate, amount due in the currency and in base, realized, unrealized and net; subtotals per account and currency; 360px cards.
+- **Rules:**
+  - Share the arithmetic with TK-220's repository (one `Compose`, a detail and a summary shape), so the two reports cannot disagree.
+  - A settled document shows its realized amount on the settlement date; an open one its unrealized amount at To.
+- **Sub-tasks:**
+  - [ ] The repository `ForeignCurrencyGainLossDetailsReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/foreign-currency-gain-or-loss-details` with `ForeignCurrencyGainLossDetailsReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `fx-gain-loss-details`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/foreign-currency-gain-or-loss-details`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ForeignCurrencyGainLossDetailsReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `foreign-currency-gain-or-loss-details-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each currency's totals equal the Foreign Currency Gain or Loss report's for the same dates and rates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-222 · Aged Receivables Summary: its own endpoint and page
+- [ ] open
+- **Issue:** [#209](https://github.com/jothi-prabaharan/Bill-Book/issues/209)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ArAgingSummarySourceRepository.cs` (class `ArAgingSummarySourceRepository`, reading `Accounts`, `Contacts`, `Ledger`); new `AgedReceivablesSummaryReportRepository`, `AgedReceivablesSummaryReportController`, `AgedReceivablesSummaryReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/aged-receivables-summary/`, `frontend/libs/reporting/reporting-ui/src/lib/aged-receivables-summary/` (the page at `/reports/aged-receivables-summary`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `aged-receivables-summary`, which is not a catalog key (the source is `ar-aging-summary`, `Sources/ArAgingSummarySourceRepository.cs`): **the menu item shows no report today**. The source runs (200) but takes no date at all: give it a required `asOf` (D-67). The catalog source takes none; its columns are contactCode, contactName, current, days1_30, days31_60, days61_90, days90Plus, total. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** What each customer owed on a date and how overdue it is: current, 1-30, 31-60, 61-90 and over 90 days.
+- **Benchmark:** Xero's *Aged Receivables Summary* (as at, ageing by due date or invoice date, bucket size); AutoCount's *Debtor Aging*; Odoo's *Aged Receivable*.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Age by** due date or invoice date (optional, due date by default)
+  - **Bucket** of 30 days (optional: 7, 15, 30); five buckets either way
+  - **Customer** (optional) and **Show customers with nothing owed** (optional tick)
+- **Layout:** One grid, one row per customer (code, name, current, the four buckets, total), totals row; the total links to the detail report filtered to that customer; credits and advances shown as negative in Current; 360px card per customer.
+- **Rules:**
+  - Outstanding per document at the as-at date = its base total − settlements dated on or before the as-at date. Settlements are `acc.TransactionRatios` rows (not voided, `AllocationDate` ≤ as at) naming the document as source or target. TK-206 and TK-208 write them for money documents, and Allocate writes them document to document; read those two cards first. TK-213 maps them as `TransactionRatioRead`.
+  - Days overdue = as at − due date (or invoice date when chosen); not yet due is Current.
+  - Customer credit notes and unallocated receipts/advances reduce the customer's total (show them in Current as negatives), so the total equals the customer's receivable sub-account balance.
+  - Base currency; a foreign-currency document at its own rate (snapshot).
+- **Sub-tasks:**
+  - [ ] The repository `AgedReceivablesSummaryReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/aged-receivables-summary` with `AgedReceivablesSummaryReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `ar-aging-summary`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/aged-receivables-summary`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `AgedReceivablesSummaryReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `aged-receivables-summary-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The grand total equals the Accounts Receivable control account's balance at the as-at date (Trial Balance), and each customer's total equals the detail report's total for that customer.
+- **Notes:** Depends on TK-213 for the `TransactionRatioRead` settlement read model. Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-223 · Aged Receivables Detail: its own endpoint and page
+- [ ] open
+- **Issue:** [#210](https://github.com/jothi-prabaharan/Bill-Book/issues/210)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-222 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/AgedReceivablesDetailSourceRepository.cs` (class `AgedReceivablesDetailSourceRepository`, reading `Contacts`, `Invoices`); new `AgedReceivablesDetailReportRepository`, `AgedReceivablesDetailReportController`, `AgedReceivablesDetailReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/aged-receivables-detail/`, `frontend/libs/reporting/reporting-ui/src/lib/aged-receivables-detail/` (the page at `/reports/aged-receivables-detail`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `aged-receivables-detail`; the catalog source is `ar-aging-detail` (`Sources/AgedReceivablesDetailSourceRepository.cs`): **the menu item shows no report today**. The source takes no date: give it a required `asOf`. The catalog source takes none; its columns are documentNo, documentDate, dueDate, contactName, totalAmount, amountDue. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** The same ageing, one line per open invoice, debit note, credit note and advance: what makes up each customer's balance.
+- **Benchmark:** Xero's *Aged Receivables Detail*; AutoCount's *Debtor Aging Detail*; Odoo's *Aged Receivable* expanded by partner.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Age by**, **Bucket** and **Customer** as on the summary (TK-222)
+- **Layout:** One grid grouped by customer: per document its number (link), date, due date, days overdue, original amount, settled to date, outstanding, and the outstanding placed in its bucket column; subtotal per customer, grand total; 360px cards.
+- **Rules:**
+  - Share TK-222's repository (one composition, summary and detail shapes), so the two reports cannot disagree.
+  - Only documents outstanding at the as-at date; a document settled after it is still listed with what was open then.
+- **Sub-tasks:**
+  - [ ] The repository `AgedReceivablesDetailReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/aged-receivables-detail` with `AgedReceivablesDetailReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `ar-aging-detail`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/aged-receivables-detail`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `AgedReceivablesDetailReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `aged-receivables-detail-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each customer's subtotal equals the summary's total for that customer, and every bucket total equals the summary's.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-224 · Receivable Invoice Summary: its own endpoint and page
+- [ ] open
+- **Issue:** [#211](https://github.com/jothi-prabaharan/Bill-Book/issues/211)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ReceivableInvoiceSummarySourceRepository.cs` (class `ReceivableInvoiceSummarySourceRepository`, reading `Contacts`, `Invoices`); new `ReceivableInvoiceSummaryReportRepository`, `ReceivableInvoiceSummaryReportController`, `ReceivableInvoiceSummaryReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/receivable-invoice-summary/`, `frontend/libs/reporting/reporting-ui/src/lib/receivable-invoice-summary/` (the page at `/reports/receivable-invoice-summary`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date (D-67): give it required `from` and `to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, totalAmount, amountDue. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Every sales invoice raised in a period with its taxable value, tax, total, what has been received and what is still due.
+- **Benchmark:** Xero's *Receivable Invoice Summary*; AutoCount's *Sales Invoice Listing*; Odoo's *Invoices Analysis*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (invoice date)
+  - **Customer** (optional)
+  - **Status** (optional: Posted, Paid, Partly paid, Overdue; Void only when asked; drafts never)
+  - **Currency** (optional)
+- **Layout:** Register-style grid (one row per invoice): number (link), date, due date, customer, currency, taxable value, CGST/SGST/IGST total, total, received, due, status; totals row in base currency; status tabs with counts; 360px cards.
+- **Rules:**
+  - Received/due as at today (or as at To — decide, state it on the page): settlements from `acc.TransactionRatios` (see TK-222).
+  - Credit notes are not invoices: list them only if a **Include credit notes** tick is on, as negatives.
+  - Tax split per component from `sal.InvoiceDetailTaxes`.
+- **Sub-tasks:**
+  - [ ] The repository `ReceivableInvoiceSummaryReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/receivable-invoice-summary` with `ReceivableInvoiceSummaryReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `receivable-invoice-summary`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/receivable-invoice-summary`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ReceivableInvoiceSummaryReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `receivable-invoice-summary-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The period's total taxable value equals the sales register's (`sales-register` source) for posted invoices in the period, and total − received = due on every row.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-225 · Receivable Invoice Detail: its own endpoint and page
+- [ ] open
+- **Issue:** [#212](https://github.com/jothi-prabaharan/Bill-Book/issues/212)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-224 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ReceivableInvoiceDetailSourceRepository.cs` (class `ReceivableInvoiceDetailSourceRepository`, reading `Contacts`, `InvoiceDetails`, `Invoices`, `Items`); new `ReceivableInvoiceDetailReportRepository`, `ReceivableInvoiceDetailReportController`, `ReceivableInvoiceDetailReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/receivable-invoice-detail/`, `frontend/libs/reporting/reporting-ui/src/lib/receivable-invoice-detail/` (the page at `/reports/receivable-invoice-detail`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date: give it required `from` and `to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, itemCode, itemName, quantity, unitPrice, lineTotal. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** The same invoices line by line: which items, quantities, prices, discounts and taxes make up each invoice.
+- **Benchmark:** Xero's *Receivable Invoice Detail*; AutoCount's *Sales Invoice Detail Listing*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (invoice date)
+  - **Customer**, **Item**, **Item category** (optional)
+  - **Status** as on the summary (TK-224)
+- **Layout:** One grid grouped by invoice: heading per invoice (number, date, customer, status), its lines (item code and name, description, quantity, unit, unit price, discount, taxable value, tax rate and amount, line total), an invoice total; grand totals; 360px cards.
+- **Rules:**
+  - Share TK-224's filters and status rules.
+  - Line amounts in the invoice currency with base totals.
+- **Sub-tasks:**
+  - [ ] The repository `ReceivableInvoiceDetailReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/receivable-invoice-detail` with `ReceivableInvoiceDetailReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `receivable-invoice-detail`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/receivable-invoice-detail`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ReceivableInvoiceDetailReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `receivable-invoice-detail-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each invoice's lines add up to its total on the summary report (TK-224), and the period's taxable total equals the summary's.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-226 · Invoice Track Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#213](https://github.com/jothi-prabaharan/Bill-Book/issues/213)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-224 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/InvoiceTrackSourceRepository.cs` (class `InvoiceTrackSourceRepository`, reading `Contacts`, `Invoices`); new `InvoiceTrackReportRepository`, `InvoiceTrackReportController`, `InvoiceTrackReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/invoice-track/`, `frontend/libs/reporting/reporting-ui/src/lib/invoice-track/` (the page at `/reports/invoice-track-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `invoice-track-report`; the catalog source is `invoice-track` (`Sources/InvoiceTrackSourceRepository.cs`): **the menu item shows no report today**. It takes no date: give it required `from`/`to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, status, totalAmount, amountDue. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Where each invoice is in its life: raised, posted, sent, part-paid, paid, overdue or void, with the dates of each step and what is still due.
+- **Benchmark:** AutoCount's *Invoice Tracking*; Odoo's invoice follow-up view.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (invoice date)
+  - **Customer**, **Status** (optional)
+- **Layout:** Register-style grid: number (link), date, customer, total, status, posted on, due date, last payment date, days overdue, due amount; status tabs with counts; 360px cards.
+- **Rules:**
+  - Status from `DocumentLifecycle` (`Shared.Kernel.Documents`), and Paid / Partly paid / Overdue derived from settlements (see TK-222).
+  - Last payment = the latest `TransactionRatios.AllocationDate` naming the invoice.
+- **Sub-tasks:**
+  - [ ] The repository `InvoiceTrackReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/invoice-track-report` with `InvoiceTrackReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `invoice-track`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/invoice-track-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `InvoiceTrackReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `invoice-track-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Every invoice in the period appears once, and the due column equals the Receivable Invoice Summary's for the same invoices.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-227 · Invoice/DN Payment Collection Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#214](https://github.com/jothi-prabaharan/Bill-Book/issues/214)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/InvoiceDnPaymentCollectionSourceRepository.cs` (class `InvoiceDnPaymentCollectionSourceRepository`, reading `Contacts`, `Invoices`, `Set`); new `InvoiceDnPaymentCollectionReportRepository`, `InvoiceDnPaymentCollectionReportController`, `InvoiceDnPaymentCollectionReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/invoice-dn-payment-collection/`, `frontend/libs/reporting/reporting-ui/src/lib/invoice-dn-payment-collection/` (the page at `/reports/invoice-dn-payment-collection-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `invoice-dn-payment-collection-report`; the catalog source is `invoice-dn-payment-collection` (`Sources/InvoiceDnPaymentCollectionSourceRepository.cs`): **the menu item shows no report today**. It takes no date: give it required `from`/`to`. The catalog source takes none; its columns are receiveMoneyNo, receiptDate, contactName, documentNo, amount. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** What was collected in a period and which invoices and debit notes each receipt settled.
+- **Benchmark:** AutoCount's *Debtor Payment Collection*; Xero's *Customer Invoice Activity* / receipts; Odoo's *Payments* grouped by partner.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (receipt date)
+  - **Customer**, **Bank account**, **Payment method** (optional)
+- **Layout:** One grid grouped by receipt: heading per receipt (number, date, customer, bank account, method, amount), the documents it settled (number, date, amount settled), unallocated remainder; totals per customer and overall; 360px cards.
+- **Rules:**
+  - Receipts are `acc.ReceiveMoney` (posted); the documents settled come from `acc.TransactionRatios` where the receipt is the source.
+  - `ReceiveMoneyRead.PaymentMethod` is `int` over a text column — TK-213 maps it.
+  - A voided receipt is excluded.
+- **Sub-tasks:**
+  - [ ] The repository `InvoiceDnPaymentCollectionReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/invoice-dn-payment-collection-report` with `InvoiceDnPaymentCollectionReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `invoice-dn-payment-collection`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/invoice-dn-payment-collection-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `InvoiceDnPaymentCollectionReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `invoice-dn-payment-collection-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The total collected equals the posted Receive money total for the period, and allocated + unallocated = each receipt's amount.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-228 · Sales Analysis: its own endpoint and page
+- [ ] open
+- **Issue:** [#215](https://github.com/jothi-prabaharan/Bill-Book/issues/215)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/SalesAnalysisSourceRepository.cs` (class `SalesAnalysisSourceRepository`, reading `InvoiceDetails`, `Invoices`, `ItemCategories`, `Items`); new `SalesAnalysisReportRepository`, `SalesAnalysisReportController`, `SalesAnalysisReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/sales-analysis/`, `frontend/libs/reporting/reporting-ui/src/lib/sales-analysis/` (the page at `/reports/sales-analysis`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date: give it required `from`/`to`. The catalog source takes none; its columns are itemCode, itemName, categoryName, quantity, grossAmount. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** What sold in a period, grouped by item, item category or customer: quantity, value, discount, net, cost and margin.
+- **Benchmark:** Xero's *Sales by Item* / *Sales by Customer*; AutoCount's *Sales Analysis by Item/Customer*; Odoo's *Sales Analysis* pivot.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (invoice date)
+  - **Group by** item, category or customer (required, item by default)
+  - **Customer**, **Item category**, **Warehouse** (optional)
+  - **Include credit notes** (on by default: returns reduce the figures)
+- **Layout:** One grid: per group the quantity, gross value, discount, net value, cost of sales, margin and margin %; totals row; a compare-period option as on the P&L; 360px cards.
+- **Rules:**
+  - Posted invoices (and POS sales, `TransactionTypeCode = 'POS'`) less posted credit notes.
+  - Cost of sales from the costed stock movements (`inv.StockMovements` / cost layers) for those lines; a line not yet costed (`CostingStatus` not `Costed`) shows its cost as pending, not zero (CLAUDE.md, Inventory & costing).
+  - Net sales in base currency, before tax.
+- **Sub-tasks:**
+  - [ ] The repository `SalesAnalysisReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/sales-analysis` with `SalesAnalysisReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `sales-analysis`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/sales-analysis`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `SalesAnalysisReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `sales-analysis-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Net sales equal the Profit & Loss's sales revenue less sales returns for the same dates (posted documents), and cost of sales equals its Cost of Goods Sold for costed lines.
+- **Notes:** Depends on TK-213 because cost of sales reads `StockMovementRead`. Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-229 · Sales Analysis Detail Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#216](https://github.com/jothi-prabaharan/Bill-Book/issues/216)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-228 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/SalesAnalysisDetailSourceRepository.cs` (class `SalesAnalysisDetailSourceRepository`, reading `InvoiceDetails`, `Invoices`, `Items`); new `SalesAnalysisDetailReportRepository`, `SalesAnalysisDetailReportController`, `SalesAnalysisDetailReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/sales-analysis-detail/`, `frontend/libs/reporting/reporting-ui/src/lib/sales-analysis-detail/` (the page at `/reports/sales-analysis-detail-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `sales-analysis-detail-report`; the catalog source is `sales-analysis-detail` (`Sources/SalesAnalysisDetailSourceRepository.cs`): **the menu item shows no report today**. It takes no date: give it required `from`/`to`. The catalog source takes none; its columns are documentDate, documentNo, itemCode, itemName, quantity, unitPrice, lineTotal. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** The same sales, one line per invoice line: the evidence behind each figure in Sales Analysis.
+- **Benchmark:** AutoCount's *Sales Analysis Detail*; Odoo's sales analysis list view.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Item**, **Item category**, **Customer**, **Warehouse** (optional)
+  - **Include credit notes** as on Sales Analysis (TK-228)
+- **Layout:** Grid grouped by item (or by customer, chosen): per line the date, document number (link), customer, quantity, unit price, discount, net, cost, margin; subtotals per group; 360px cards.
+- **Rules:**
+  - Share TK-228's repository: the detail is the analysis before grouping.
+- **Sub-tasks:**
+  - [ ] The repository `SalesAnalysisDetailReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/sales-analysis-detail-report` with `SalesAnalysisDetailReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `sales-analysis-detail`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/sales-analysis-detail-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `SalesAnalysisDetailReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `sales-analysis-detail-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each group's subtotal equals Sales Analysis's row for that group and the same dates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-230 · Sales Order Track Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#217](https://github.com/jothi-prabaharan/Bill-Book/issues/217)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/SalesOrderTrackSourceRepository.cs` (class `SalesOrderTrackSourceRepository`, reading `Contacts`, `SalesOrders`); new `SalesOrderTrackReportRepository`, `SalesOrderTrackReportController`, `SalesOrderTrackReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/sales-order-track/`, `frontend/libs/reporting/reporting-ui/src/lib/sales-order-track/` (the page at `/reports/sales-order-track-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `sales-order-track-report`; the catalog source is `sales-order-track` (`Sources/SalesOrderTrackSourceRepository.cs`): **the menu item shows no report today**. No date: give it required `from`/`to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, status, fulfilmentStatus, totalAmount. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each sales order's progress: ordered, delivered and invoiced, line by line, and what is still to deliver or bill.
+- **Benchmark:** AutoCount's *Sales Order Outstanding / Tracking*; Odoo's *Sales* with delivery and invoice status.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (order date)
+  - **Customer**, **Status**, **Fulfilment** (optional: open, partly delivered, delivered, invoiced, closed)
+  - **Outstanding only** (optional tick)
+- **Layout:** Grid grouped by order: heading (number, date, customer, status, fulfilment), lines with ordered, delivered, invoiced and outstanding quantities and values; totals; 360px cards.
+- **Rules:**
+  - Delivered/invoiced come from `DeliveredQuantity`/`InvoicedQuantity` on the order lines; CLAUDE.md records that partial fulfilment was deferred to T3.6, so check whether those columns are advanced yet and, if not, derive them from the linked challans and invoices or say on the page what is missing.
+  - `SalesOrderRead.FulfilmentStatus` is `int` over a text column — TK-213 maps it (the source passes on an empty branch and will fail on the first row).
+- **Sub-tasks:**
+  - [ ] The repository `SalesOrderTrackReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/sales-order-track-report` with `SalesOrderTrackReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `sales-order-track`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/sales-order-track-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `SalesOrderTrackReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `sales-order-track-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Ordered − delivered = outstanding to deliver and ordered − invoiced = outstanding to bill on every line, and an order's invoiced value equals the sum of the invoices raised from it.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-231 · Quotation Track Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#218](https://github.com/jothi-prabaharan/Bill-Book/issues/218)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/QuotationTrackSourceRepository.cs` (class `QuotationTrackSourceRepository`, reading `Contacts`, `Quotes`); new `QuotationTrackReportRepository`, `QuotationTrackReportController`, `QuotationTrackReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/quotation-track/`, `frontend/libs/reporting/reporting-ui/src/lib/quotation-track/` (the page at `/reports/quotation-track-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `quotation-track-report`; the catalog source is `quote-track` (`Sources/QuotationTrackSourceRepository.cs`): **the menu item shows no report today**. No date: give it required `from`/`to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, status, totalAmount. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each quote's outcome: open, expired, accepted, converted to an order or invoice, or declined, and the conversion rate over a period.
+- **Benchmark:** AutoCount's *Quotation Tracking*; Odoo's *Quotations* with conversion; Zoho's *Quote status*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (quote date)
+  - **Customer**, **Status** (optional)
+- **Layout:** Register-style grid: number (link), date, expiry, customer, value, status, converted to (order/invoice number, linking), days to convert; status tabs with counts; a summary strip with quotes raised, converted and the conversion rate by count and value; 360px cards.
+- **Rules:**
+  - The conversion link comes from the order's/invoice's source-document reference (T2.1/T2.2 conversion); an expired quote is open past its expiry date.
+- **Sub-tasks:**
+  - [ ] The repository `QuotationTrackReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/quotation-track-report` with `QuotationTrackReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `quote-track`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/quotation-track-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `QuotationTrackReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `quotation-track-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Raised = open + expired + accepted/converted + declined for the period, and every converted quote names an existing document.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-232 · Delivery Order Track Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#219](https://github.com/jothi-prabaharan/Bill-Book/issues/219)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/DeliveryOrderTrackSourceRepository.cs` (class `DeliveryOrderTrackSourceRepository`, reading `Contacts`, `DeliveryChallans`); new `DeliveryOrderTrackReportRepository`, `DeliveryOrderTrackReportController`, `DeliveryOrderTrackReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/delivery-order-track/`, `frontend/libs/reporting/reporting-ui/src/lib/delivery-order-track/` (the page at `/reports/delivery-order-track-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `delivery-order-track-report`; the catalog source is `delivery-challan-track` (`Sources/DeliveryOrderTrackSourceRepository.cs`): **the menu item shows no report today**. No date: give it required `from`/`to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, status. Guard today: `sales.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each delivery challan's progress: delivered, invoiced in full or in part, or still to bill, and what it was delivered against.
+- **Benchmark:** AutoCount's *Delivery Order Tracking*; Odoo's *Deliveries* with billing status.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (challan date)
+  - **Customer**, **Status**, **Challan type** (optional)
+  - **Not yet invoiced only** (optional tick)
+- **Layout:** Grid grouped by challan: heading (number, date, customer, type, status, source order), lines with delivered and invoiced quantities and the remainder; totals; 360px cards.
+- **Rules:**
+  - `DeliveryChallanRead.ChallanType` is `int` over a text column — TK-213 maps it.
+  - Invoiced quantities from the invoices raised from the challan (GDNI posting, TK-90).
+- **Sub-tasks:**
+  - [ ] The repository `DeliveryOrderTrackReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/delivery-order-track-report` with `DeliveryOrderTrackReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("sales.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `delivery-challan-track`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/delivery-order-track-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `DeliveryOrderTrackReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `delivery-order-track-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Delivered − invoiced = still to bill on every line, and the total still to bill equals the goods-delivered-not-invoiced balance where the branch posts GDNI (TK-90).
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-233 · Aged Payables Summary: its own endpoint and page
+- [ ] open
+- **Issue:** [#220](https://github.com/jothi-prabaharan/Bill-Book/issues/220)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ApAgingSummarySourceRepository.cs` (class `ApAgingSummarySourceRepository`, reading `Accounts`, `Contacts`, `Ledger`); new `AgedPayablesSummaryReportRepository`, `AgedPayablesSummaryReportController`, `AgedPayablesSummaryReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/aged-payables-summary/`, `frontend/libs/reporting/reporting-ui/src/lib/aged-payables-summary/` (the page at `/reports/aged-payables-summary`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `aged-payables-summary`; the catalog source is `ap-aging-summary` (`Sources/ApAgingSummarySourceRepository.cs`): **the menu item shows no report today**. It takes no date: give it a required `asOf`. The catalog source takes none; its columns are contactCode, contactName, current, days1_30, days31_60, days61_90, days90Plus, total. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** What the branch owed each vendor on a date and how overdue it is.
+- **Benchmark:** Xero's *Aged Payables Summary*; AutoCount's *Creditor Aging*; Odoo's *Aged Payable*.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Age by**, **Bucket**, **Vendor**, **Show vendors with nothing owed** as on Aged Receivables (TK-222)
+- **Layout:** As TK-222 for vendors: one row per vendor with current and four buckets and total; link to the detail; 360px cards.
+- **Rules:**
+  - Mirror TK-222 with bills, debit notes, vendor advances and Spend money; the same `TransactionRatios` settlement rule. If TK-222 is done, reuse its settlement read model and composition (one shared repository, two directions).
+  - MSME vendors are flagged (the `msme-aging` source shows the Sec 43B(h) view; link to it).
+- **Sub-tasks:**
+  - [ ] The repository `AgedPayablesSummaryReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/aged-payables-summary` with `AgedPayablesSummaryReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `ap-aging-summary`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/aged-payables-summary`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `AgedPayablesSummaryReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `aged-payables-summary-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The grand total equals the Accounts Payable control balance at the as-at date, and each vendor's total equals the detail report's.
+- **Notes:** Read TK-222 first if it is done: the two should share their settlement logic. Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-234 · Aged Payables Details: its own endpoint and page
+- [ ] open
+- **Issue:** [#221](https://github.com/jothi-prabaharan/Bill-Book/issues/221)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-233 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/AgedPayablesDetailsSourceRepository.cs` (class `AgedPayablesDetailsSourceRepository`, reading `Bills`, `Contacts`); new `AgedPayablesDetailsReportRepository`, `AgedPayablesDetailsReportController`, `AgedPayablesDetailsReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/aged-payables-details/`, `frontend/libs/reporting/reporting-ui/src/lib/aged-payables-details/` (the page at `/reports/aged-payables-details`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `aged-payables-details`; the catalog source is `ap-aging-detail` (`Sources/AgedPayablesDetailsSourceRepository.cs`): **the menu item shows no report today**. Its `asOf` is optional: make it required. The catalog source takes `asOf` (date, optional); its columns are documentNo, documentDate, dueDate, contactName, totalAmount, amountDue. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** The payables ageing one line per open bill, debit note and advance.
+- **Benchmark:** Xero's *Aged Payables Detail*; AutoCount's *Creditor Aging Detail*.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Age by**, **Bucket**, **Vendor** as on the summary (TK-233)
+- **Layout:** As TK-223 for vendors; 360px cards.
+- **Rules:**
+  - Share TK-233's repository.
+  - The catalog source already takes an optional `asOf`: make it required.
+- **Sub-tasks:**
+  - [ ] The repository `AgedPayablesDetailsReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/aged-payables-details` with `AgedPayablesDetailsReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `ap-aging-detail`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/aged-payables-details`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `AgedPayablesDetailsReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `aged-payables-details-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each vendor's subtotal equals the summary's total for that vendor.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-235 · Payable Invoice Summary: its own endpoint and page
+- [ ] open
+- **Issue:** [#222](https://github.com/jothi-prabaharan/Bill-Book/issues/222)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/PayableInvoiceSummarySourceRepository.cs` (class `PayableInvoiceSummarySourceRepository`, reading `Bills`, `Contacts`); new `PayableInvoiceSummaryReportRepository`, `PayableInvoiceSummaryReportController`, `PayableInvoiceSummaryReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/payable-invoice-summary/`, `frontend/libs/reporting/reporting-ui/src/lib/payable-invoice-summary/` (the page at `/reports/payable-invoice-summary`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date: give it required `from`/`to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, totalAmount, amountDue. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Every purchase bill in a period with its taxable value, tax, total, what has been paid and what is still due.
+- **Benchmark:** Xero's *Payable Invoice Summary*; AutoCount's *Purchase Invoice Listing*; Odoo's *Bills Analysis*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (bill date)
+  - **Vendor**, **Status**, **Currency** (optional)
+  - **Include debit notes** (optional)
+- **Layout:** As TK-224 for bills: register grid with number, vendor reference, dates, vendor, taxable value, tax, total, paid, due, status; status tabs; 360px cards.
+- **Rules:**
+  - Mirror TK-224; tax per component from `pur.BillDetailTaxes`; TDS deducted shown where the bill carries it (TK-117).
+- **Sub-tasks:**
+  - [ ] The repository `PayableInvoiceSummaryReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/payable-invoice-summary` with `PayableInvoiceSummaryReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `payable-invoice-summary`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/payable-invoice-summary`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `PayableInvoiceSummaryReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `payable-invoice-summary-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The period's taxable total equals the purchase register's (`purchase-register` source) for posted bills, and total − paid = due on every row.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-236 · Payable Invoice Detail: its own endpoint and page
+- [ ] open
+- **Issue:** [#223](https://github.com/jothi-prabaharan/Bill-Book/issues/223)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-235 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/PayableInvoiceDetailSourceRepository.cs` (class `PayableInvoiceDetailSourceRepository`, reading `BillDetails`, `Bills`, `Contacts`, `Items`); new `PayableInvoiceDetailReportRepository`, `PayableInvoiceDetailReportController`, `PayableInvoiceDetailReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/payable-invoice-detail/`, `frontend/libs/reporting/reporting-ui/src/lib/payable-invoice-detail/` (the page at `/reports/payable-invoice-detail`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date: give it required `from`/`to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, itemCode, itemName, quantity, unitPrice, lineTotal. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** The same bills line by line.
+- **Benchmark:** Xero's *Payable Invoice Detail*; AutoCount's *Purchase Invoice Detail Listing*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (bill date)
+  - **Vendor**, **Item**, **Item category** (optional)
+- **Layout:** As TK-225 for bills; capital lines (fixed asset) marked; 360px cards.
+- **Rules:**
+  - Share TK-235's filters and status rules.
+- **Sub-tasks:**
+  - [ ] The repository `PayableInvoiceDetailReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/payable-invoice-detail` with `PayableInvoiceDetailReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `payable-invoice-detail`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/payable-invoice-detail`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `PayableInvoiceDetailReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `payable-invoice-detail-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each bill's lines add up to its total on the summary report (TK-235).
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-237 · Bills Track Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#224](https://github.com/jothi-prabaharan/Bill-Book/issues/224)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-235 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/BillsTrackSourceRepository.cs` (class `BillsTrackSourceRepository`, reading `Bills`, `Contacts`); new `BillsTrackReportRepository`, `BillsTrackReportController`, `BillsTrackReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/bills-track/`, `frontend/libs/reporting/reporting-ui/src/lib/bills-track/` (the page at `/reports/bills-track-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `bills-track-report`; the catalog source is `bills-track` (`Sources/BillsTrackSourceRepository.cs`): **the menu item shows no report today**. Its dates are optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are documentNo, documentDate, contactName, status, totalAmount, amountDue. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Where each bill is in its life: draft, approved, posted, part-paid, paid, overdue or void, with dates and what is still owed.
+- **Benchmark:** AutoCount's *Purchase Invoice Tracking*; Odoo's vendor bill follow-up.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (bill date)
+  - **Vendor**, **Status** (optional)
+- **Layout:** As TK-226 for bills; 360px cards.
+- **Rules:**
+  - Mirror TK-226; approvals (TK-99/TK-103) shown where the bill went through them.
+  - The source already has optional `from`/`to`: make them required.
+- **Sub-tasks:**
+  - [ ] The repository `BillsTrackReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/bills-track-report` with `BillsTrackReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `bills-track`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/bills-track-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `BillsTrackReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `bills-track-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Every bill in the period appears once and its due equals the Payable Invoice Summary's.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-238 · Bill/DN Payment Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#225](https://github.com/jothi-prabaharan/Bill-Book/issues/225)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/BillDnPaymentSourceRepository.cs` (class `BillDnPaymentSourceRepository`, reading `Bills`, `Contacts`, `Set`); new `BillDnPaymentReportRepository`, `BillDnPaymentReportController`, `BillDnPaymentReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/bill-dn-payment/`, `frontend/libs/reporting/reporting-ui/src/lib/bill-dn-payment/` (the page at `/reports/bill-dn-payment-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `bill-dn-payment-report`; the catalog source is `bill-dn-payment` (`Sources/BillDnPaymentSourceRepository.cs`): **the menu item shows no report today**. No date: give it required `from`/`to`. The catalog source takes none; its columns are spendMoneyNo, paymentDate, contactName, documentNo, amount. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** What was paid to vendors in a period and which bills and debit notes each payment settled.
+- **Benchmark:** AutoCount's *Creditor Payment Listing*; Xero's *Supplier payments*; Odoo's *Payments* to vendors.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (payment date)
+  - **Vendor**, **Bank account**, **Payment method** (optional)
+- **Layout:** As TK-227 for Spend money: heading per payment, documents settled, unallocated remainder, TDS deducted; totals; 360px cards.
+- **Rules:**
+  - Payments are `acc.SpendMoney` (posted); settlements from `TransactionRatios` (bill as source).
+  - `SpendMoneyRead.PaymentMethod` is `int` over text — TK-213.
+- **Sub-tasks:**
+  - [ ] The repository `BillDnPaymentReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/bill-dn-payment-report` with `BillDnPaymentReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `bill-dn-payment`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/bill-dn-payment-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `BillDnPaymentReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `bill-dn-payment-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The total paid equals posted Spend money to vendors for the period, and allocated + unallocated = each payment.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-239 · Purchase Analysis: its own endpoint and page
+- [ ] open
+- **Issue:** [#226](https://github.com/jothi-prabaharan/Bill-Book/issues/226)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/PurchaseAnalysisSourceRepository.cs` (class `PurchaseAnalysisSourceRepository`, reading `BillDetails`, `Bills`, `ItemCategories`, `Items`); new `PurchaseAnalysisReportRepository`, `PurchaseAnalysisReportController`, `PurchaseAnalysisReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/purchase-analysis/`, `frontend/libs/reporting/reporting-ui/src/lib/purchase-analysis/` (the page at `/reports/purchase-analysis`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200); its dates are optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are itemCode, itemName, category, quantity, grossAmount. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** What was bought in a period, grouped by item, category or vendor: quantity, value, average cost.
+- **Benchmark:** Xero's *Purchases by Item* / *by Supplier*; AutoCount's *Purchase Analysis*; Odoo's *Purchase Analysis*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (bill date)
+  - **Group by** item, category or vendor (required)
+  - **Vendor**, **Item category** (optional)
+  - **Include debit notes** (on by default)
+- **Layout:** Grid per group: quantity, gross, discount, net, average unit cost, share of total; totals; compare period; 360px cards.
+- **Rules:**
+  - Posted bills less posted debit notes; capital lines excluded unless asked (they are fixed assets, not stock).
+  - The source already has optional `from`/`to`: make them required.
+- **Sub-tasks:**
+  - [ ] The repository `PurchaseAnalysisReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/purchase-analysis` with `PurchaseAnalysisReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `purchase-analysis`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/purchase-analysis`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `PurchaseAnalysisReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `purchase-analysis-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Net purchases of stock items equal the Inventory account's debits from bills for the same dates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-240 · Purchase Order Track Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#227](https://github.com/jothi-prabaharan/Bill-Book/issues/227)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/PurchaseOrderTrackSourceRepository.cs` (class `PurchaseOrderTrackSourceRepository`, reading `Contacts`, `PurchaseOrders`); new `PurchaseOrderTrackReportRepository`, `PurchaseOrderTrackReportController`, `PurchaseOrderTrackReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/purchase-order-track/`, `frontend/libs/reporting/reporting-ui/src/lib/purchase-order-track/` (the page at `/reports/purchase-order-track-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `purchase-order-track-report`; the catalog source is `purchase-order-track` (`Sources/PurchaseOrderTrackSourceRepository.cs`): **the menu item shows no report today**. Dates optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are documentNo, documentDate, contactName, status, fulfilmentStatus, totalAmount. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each purchase order's progress: ordered, received and billed, line by line.
+- **Benchmark:** AutoCount's *Purchase Order Outstanding*; Odoo's *Purchase* with receipt and bill status.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (order date)
+  - **Vendor**, **Status**, **Fulfilment**, **Outstanding only** (optional)
+- **Layout:** As TK-230 for purchase orders: received from goods receipts, billed from bills; 360px cards.
+- **Rules:**
+  - `PurchaseOrderRead.FulfilmentStatus` is `int` over text — TK-213.
+  - Received from `pur.GoodsReceiptDetails` linked to the order; billed from bills linked to the order or its receipts.
+- **Sub-tasks:**
+  - [ ] The repository `PurchaseOrderTrackReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/purchase-order-track-report` with `PurchaseOrderTrackReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `purchase-order-track`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/purchase-order-track-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `PurchaseOrderTrackReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `purchase-order-track-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Ordered − received = to receive and ordered − billed = to bill on every line.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-241 · Purchase Receive Order Details: its own endpoint and page
+- [ ] open
+- **Issue:** [#228](https://github.com/jothi-prabaharan/Bill-Book/issues/228)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/PurchaseReceiveOrderDetailsSourceRepository.cs` (class `PurchaseReceiveOrderDetailsSourceRepository`, reading `Contacts`, `GoodsReceipts`, `Items`, `Set`); new `PurchaseReceiveOrderDetailsReportRepository`, `PurchaseReceiveOrderDetailsReportController`, `PurchaseReceiveOrderDetailsReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/purchase-receive-order-details/`, `frontend/libs/reporting/reporting-ui/src/lib/purchase-receive-order-details/` (the page at `/reports/purchase-receive-order-details`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date: give it required `from`/`to`. The catalog source takes none; its columns are documentNo, documentDate, contactName, itemCode, quantity. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Every goods receipt line in a period: what arrived, from whom, against which order, into which warehouse, and at what cost.
+- **Benchmark:** AutoCount's *Goods Received Note Listing*; Odoo's *Receipts* detail.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (receipt date)
+  - **Vendor**, **Item**, **Warehouse**, **Purchase order** (optional)
+- **Layout:** Grid grouped by receipt: heading (number, date, vendor, order), lines (item, quantity, unit, warehouse, batch/serial where tracked, unit cost, value, billed quantity); totals; 360px cards.
+- **Rules:**
+  - Batch and serial from `inv.ItemBatches`/`ItemSerials` where the receipt created them.
+- **Sub-tasks:**
+  - [ ] The repository `PurchaseReceiveOrderDetailsReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/purchase-receive-order-details` with `PurchaseReceiveOrderDetailsReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `purchase-receive-order-details`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/purchase-receive-order-details`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `PurchaseReceiveOrderDetailsReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `purchase-receive-order-details-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each receipt's quantities equal the stock-in movements it created (`inv.StockMovements` with that source).
+- **Notes:** Depends on TK-213 if it reads stock movements for the cross-check. Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-242 · Receive Order Track Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#229](https://github.com/jothi-prabaharan/Bill-Book/issues/229)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Purchase Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PUR, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ReceiveOrderTrackSourceRepository.cs` (class `ReceiveOrderTrackSourceRepository`, reading `Contacts`, `GoodsReceipts`); new `ReceiveOrderTrackReportRepository`, `ReceiveOrderTrackReportController`, `ReceiveOrderTrackReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/receive-order-track/`, `frontend/libs/reporting/reporting-ui/src/lib/receive-order-track/` (the page at `/reports/receive-order-track-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `receive-order-track-report`; the catalog source is `receive-order-track` (`Sources/ReceiveOrderTrackSourceRepository.cs`): **the menu item shows no report today**. Dates optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are documentNo, documentDate, contactName, status. Guard today: `purchase.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each goods receipt's status: received, billed in full or part, or still to bill.
+- **Benchmark:** AutoCount's *GRN Tracking*; Odoo's receipts with billing status.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (receipt date)
+  - **Vendor**, **Status**, **Not yet billed only** (optional)
+- **Layout:** Register grid: number (link), date, vendor, order, value, billed value, to bill, status; status tabs; 360px cards.
+- **Rules:**
+  - Billed from bills raised from the receipt.
+  - The source's dates are optional: make them required.
+- **Sub-tasks:**
+  - [ ] The repository `ReceiveOrderTrackReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/receive-order-track-report` with `ReceiveOrderTrackReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("purchase.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `receive-order-track`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/receive-order-track-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ReceiveOrderTrackReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `receive-order-track-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Received − billed = to bill on every receipt.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-243 · Inventory Item Summary: its own endpoint and page
+- [ ] open
+- **Issue:** [#230](https://github.com/jothi-prabaharan/Bill-Book/issues/230)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ItemSummarySourceRepository.cs` (class `ItemSummarySourceRepository`, reading `Accounts`, `ItemCategories`, `Items`, `StockMovements`, `SubAccounts`, `UnitsOfMeasure`); new `InventoryItemSummaryReportRepository`, `InventoryItemSummaryReportController`, `InventoryItemSummaryReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/inventory-item-summary/`, `frontend/libs/reporting/reporting-ui/src/lib/inventory-item-summary/` (the page at `/reports/inventory-item-summary`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `inventory-item-summary` (`Sources/ItemSummarySourceRepository.cs`) answers 500 (correlated sub-query `periodMoves`, and `MovementType`/`Direction`/`ItemType`/`CostingType` read as `int` over text). TK-213 fixes the columns; fix the sub-query as TK-207 did. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are itemCode, itemName, itemGroup, productCategory, inventoryType, costingMethod, unitOfMeasurement, openingQuantity, openingBalance, quantityPurchased, purchases, quantitySold, sales, quantityAdjusted, adjustments, cogs, profit, closingQuantity, closingBalance, inventoryAccount, purchaseAccount, salesAccount. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: The query contains a projection '<>h__TransparentIdentifier7 => <>h__TransparentIdentifier7.<>h__TransparentIdentifier6.<>h__TransparentIdentifier5.periodMoves ….
+- **What it answers:** For each item over a period: opening quantity and value, purchased, sold, adjusted, closing quantity and value, and the profit on what was sold.
+- **Benchmark:** Xero's *Inventory Item Summary*; AutoCount's *Stock Card summary*; Odoo's *Stock valuation*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Item category**, **Item** (optional)
+  - **Show items with no movement** (optional tick)
+- **Layout:** Grid per item: code, name, category, costing method, unit, opening qty/value, purchased qty/value, sold qty/value, adjusted qty/value, COGS, profit, closing qty/value; totals; 360px cards.
+- **Rules:**
+  - Stock is one pool per branch (`OrgId`); warehouses are a location only (CLAUDE.md).
+  - Values from costed movements; a movement not yet `Costed` makes its row say so rather than show zero.
+  - Opening = movements before From; closing = opening + movements in the period.
+- **Sub-tasks:**
+  - [ ] The repository `InventoryItemSummaryReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/inventory-item-summary` with `InventoryItemSummaryReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `inventory-item-summary`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/inventory-item-summary`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `InventoryItemSummaryReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `inventory-item-summary-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Total closing value equals the Inventory control account's balance at To (for costed movements), and opening + in − out = closing quantity on every item.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-244 · Inventory Item Detail: its own endpoint and page
+- [ ] open
+- **Issue:** [#231](https://github.com/jothi-prabaharan/Bill-Book/issues/231)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-243 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ItemDetailSourceRepository.cs` (class `ItemDetailSourceRepository`, reading `Accounts`, `ItemCategories`, `Items`, `StockMovements`, `SubAccounts`, `UnitsOfMeasure`); new `InventoryItemDetailReportRepository`, `InventoryItemDetailReportController`, `InventoryItemDetailReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/inventory-item-detail/`, `frontend/libs/reporting/reporting-ui/src/lib/inventory-item-detail/` (the page at `/reports/inventory-item-detail`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `inventory-item-detail` (`Sources/ItemDetailSourceRepository.cs`) answers 500 (`character varying = integer`) — TK-213. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are date, itemCode, itemName, itemGroup, productCategory, description, contactCode, contactName, costingMethod, unitOfMeasurement, transactionNo, reference, source, qohMovement, valueMovement, unitCostPrice, unitSalePrice, margin, profitPerItem, inventoryAccount, purchaseAccount, salesAccount, adjustmentAccount. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: operator does not exist: character varying = integer….
+- **What it answers:** Every stock movement of an item in a period, with quantity, cost, value, running quantity and the margin on each sale: the stock card.
+- **Benchmark:** Xero's *Inventory Item Detail*; AutoCount's *Stock Card*; Odoo's *Moves Analysis*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Item** (optional; one item gives a running balance), **Item category**, **Warehouse**, **Source** (optional)
+- **Layout:** Grid grouped by item: opening row, movements (date, document, source, contact, quantity in/out, unit cost, value, unit sale price, margin, running quantity and value), closing row; 360px cards.
+- **Rules:**
+  - Share TK-243's opening/closing arithmetic.
+  - Document numbers from the movement's source document.
+- **Sub-tasks:**
+  - [ ] The repository `InventoryItemDetailReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/inventory-item-detail` with `InventoryItemDetailReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `inventory-item-detail`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/inventory-item-detail`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `InventoryItemDetailReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `inventory-item-detail-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each item's closing quantity and value equal Inventory Item Summary's for the same dates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-245 · Inventory Item List: its own endpoint and page
+- [ ] open
+- **Issue:** [#232](https://github.com/jothi-prabaharan/Bill-Book/issues/232)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-243 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ItemListSourceRepository.cs` (class `ItemListSourceRepository`, reading `Accounts`, `CostLayers`, `ItemCategories`, `ItemStocks`, `Items`, `SubAccounts`, `TaxMasters`, `UnitsOfMeasure`); new `InventoryItemListReportRepository`, `InventoryItemListReportController`, `InventoryItemListReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/inventory-item-list/`, `frontend/libs/reporting/reporting-ui/src/lib/inventory-item-list/` (the page at `/reports/inventory-item-list`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. Catalog `inventory-item-list` (`Sources/ItemListSourceRepository.cs`) answers 500: *function sum(unknown) is not unique* (and reads `ReferenceType`/`ItemType`/`CostingType` as `int` — TK-213). Type the constant in the union. The catalog source takes none; its columns are itemCode, itemName, itemGroup, productCategory, inventoryType, costingMethod, status, date, unitOfMeasurement, purchaseDescription, salesDescription, purchaseTaxRate, salesTaxRate, inventoryAccount, purchaseAccount, salesAccount, quantityOnHand, averageCost, unitCostPrice, balanceQty, unitCostPriceFifo, unitSalePrice, totalValue, quantityOnOrder, quantityReceived, committedQuotes, committedToDO. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: function sum(unknown) is not unique….
+- **What it answers:** Every item as at a date: its settings, accounts, taxes, quantity on hand, average and FIFO cost, value, and what is on order or committed.
+- **Benchmark:** Xero's *Inventory Item List*; AutoCount's *Item Listing with balance*; Odoo's *Inventory* report.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Item category**, **Status**, **Item type** (optional)
+  - **Only items with stock** (optional tick)
+- **Layout:** Grid per item with a column chooser for the wide set (purchase/sales descriptions, tax rates, accounts); default columns: code, name, category, unit, on hand, average cost, value, on order, committed; totals; 360px cards.
+- **Rules:**
+  - On hand as at the date from movements, not `ItemStock` (which is now).
+  - On order = open purchase-order quantities; committed = open sales-order and quote quantities (decide which and label them).
+- **Sub-tasks:**
+  - [ ] The repository `InventoryItemListReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/inventory-item-list` with `InventoryItemListReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `inventory-item-list`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/inventory-item-list`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `InventoryItemListReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `inventory-item-list-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Total value equals Inventory Item Summary's closing value at the same date.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-246 · Inventory Aging Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#233](https://github.com/jothi-prabaharan/Bill-Book/issues/233)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/InventoryAgingSourceRepository.cs` (class `InventoryAgingSourceRepository`, reading `CostLayers`, `ItemCategories`, `Items`, `UnitsOfMeasure`); new `InventoryAgingReportRepository`, `InventoryAgingReportController`, `InventoryAgingReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/inventory-aging/`, `frontend/libs/reporting/reporting-ui/src/lib/inventory-aging/` (the page at `/reports/inventory-aging-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `inventory-aging-report`; the catalog source is `inventory-aging` (`Sources/InventoryAgingSourceRepository.cs`): **the menu item shows no report today**. It runs (200); make `asOf` required. The catalog source takes `asOf` (date, optional); its columns are itemCode, itemName, productCategory, unitOfMeasurement, inventoryAssetAccount, bucket, agedInventoryQuantity, agedInventoryValue. Guard today: `inventory.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** How long stock has been held: quantity and value by age of receipt, for slow-moving and dead stock.
+- **Benchmark:** AutoCount's *Stock Aging*; Odoo's *Inventory Aging*; Zoho's *Inventory Aging Summary*.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Buckets** (optional: 0-30, 31-60, 61-90, 91-180, over 180 days by default; editable)
+  - **Item category**, **Warehouse** (optional)
+- **Layout:** Grid per item with quantity and value per bucket and totals; a value-only view; 360px cards.
+- **Rules:**
+  - Age from the remaining quantity of each cost layer (`inv.CostLayer` receipt date, less consumptions up to the as-at date) — FIFO-correct even for weighted-average items, and say so.
+  - The source already has an optional `asOf`: make it required.
+- **Sub-tasks:**
+  - [ ] The repository `InventoryAgingReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/inventory-aging-report` with `InventoryAgingReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `inventory-aging`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/inventory-aging-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `InventoryAgingReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `inventory-aging-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Total aged value equals Inventory Item List's value at the same date (layers' remaining value), and each item's bucket quantities add up to its on-hand.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-247 · Batch Tracking Status Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#234](https://github.com/jothi-prabaharan/Bill-Book/issues/234)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/BatchTrackingStatusSourceRepository.cs` (class `BatchTrackingStatusSourceRepository`, reading `ItemBatches`, `ItemCategories`, `Items`, `StockMovements`, `Warehouses`); new `BatchTrackingStatusReportRepository`, `BatchTrackingStatusReportController`, `BatchTrackingStatusReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/batch-tracking-status/`, `frontend/libs/reporting/reporting-ui/src/lib/batch-tracking-status/` (the page at `/reports/batch-tracking-status-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `batch-tracking-status-report`; the catalog source is `batch-tracking-status` (`Sources/BatchTrackingStatusSourceRepository.cs`): **the menu item shows no report today**, and the source answers 500 (correlated sub-query over `StockMovementRead`). TK-213 fixes the columns; fix the sub-query as TK-207 did. The catalog source takes none; its columns are batchNo, itemCode, itemName, description, productCategory, manufacturedDate, expiryDate, batchQuantity, availableQuantity, costingMethod, warehouse. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: The query contains a projection '<>h__TransparentIdentifier2 => DbSet<StockMovementRead>()     .Where(m => m.ItemBatchId == (long?)<>h__TransparentIdentifier2.<….
+- **What it answers:** Every batch as at a date: its item, manufacture and expiry dates, quantity received and still available, and where it is.
+- **Benchmark:** AutoCount's *Batch No Balance*; Odoo's *Lots/Serial Numbers* with quantities; pharma near-expiry views.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Item**, **Warehouse** (optional)
+  - **Expiring within** N days and **Expired only** (optional)
+  - **With stock only** (optional tick)
+- **Layout:** Grid per batch: batch no, item, category, manufactured, expiry (red when expired, amber when within the window), received, available, warehouse; totals; 360px cards.
+- **Rules:**
+  - Available from batch movements up to the as-at date; FEFO items listed by expiry first.
+- **Sub-tasks:**
+  - [ ] The repository `BatchTrackingStatusReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/batch-tracking-status-report` with `BatchTrackingStatusReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `batch-tracking-status`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/batch-tracking-status-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `BatchTrackingStatusReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `batch-tracking-status-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** For each item, available across its batches equals its on-hand at the same date.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-248 · Batch Tracking Detail Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#235](https://github.com/jothi-prabaharan/Bill-Book/issues/235)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-247 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/BatchTrackingDetailSourceRepository.cs` (class `BatchTrackingDetailSourceRepository`, reading `ItemBatches`, `ItemCategories`, `Items`, `StockMovements`, `UnitsOfMeasure`, `Warehouses`); new `BatchTrackingDetailReportRepository`, `BatchTrackingDetailReportController`, `BatchTrackingDetailReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/batch-tracking-detail/`, `frontend/libs/reporting/reporting-ui/src/lib/batch-tracking-detail/` (the page at `/reports/batch-tracking-detail-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `batch-tracking-detail-report`; the catalog source is `batch-tracking-detail`: **the menu item shows no report today**, and the source answers 500 (`character varying = integer`) — TK-213. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are batchNo, itemCode, itemName, description, productCategory, manufacturedDate, expiryDate, costingMethod, warehouse, transactionDate, transactionNo, transactionType, contactName, quantityIn, quantityOut, unitOfMeasurement. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: operator does not exist: character varying = integer….
+- **What it answers:** Every movement of each batch in a period: where it came from and where it went, for recalls and traceability.
+- **Benchmark:** AutoCount's *Batch No Movement*; Odoo's *Traceability* report.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Batch**, **Item**, **Warehouse**, **Contact** (optional)
+- **Layout:** Grid grouped by batch: opening, movements (date, document, type, contact, in, out, running), closing; 360px cards.
+- **Rules:**
+  - Share TK-247's batch arithmetic.
+- **Sub-tasks:**
+  - [ ] The repository `BatchTrackingDetailReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/batch-tracking-detail-report` with `BatchTrackingDetailReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `batch-tracking-detail`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/batch-tracking-detail-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `BatchTrackingDetailReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `batch-tracking-detail-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each batch's closing equals its available quantity on Batch Tracking Status at To.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-249 · Serial Tracking Status Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#236](https://github.com/jothi-prabaharan/Bill-Book/issues/236)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/SerialTrackingStatusSourceRepository.cs` (class `SerialTrackingStatusSourceRepository`, reading `ItemBatches`, `ItemCategories`, `ItemSerials`, `Items`, `Warehouses`); new `SerialTrackingStatusReportRepository`, `SerialTrackingStatusReportController`, `SerialTrackingStatusReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/serial-tracking-status/`, `frontend/libs/reporting/reporting-ui/src/lib/serial-tracking-status/` (the page at `/reports/serial-tracking-status-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `serial-tracking-status-report`; the catalog source is `serial-tracking-status`: **the menu item shows no report today**, and the source answers 500 (`character varying = integer`) — TK-213. The catalog source takes none; its columns are serialNo, itemCode, itemName, productCategory, manufacturedDate, expiryDate, availableQuantity, costingMethod, warehouse. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: operator does not exist: character varying = integer….
+- **What it answers:** Every serial number as at a date: in stock, sold (to whom), returned or written off, and where it is.
+- **Benchmark:** AutoCount's *Serial No Listing*; Odoo's serial number status.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Item**, **Warehouse**, **Status** (optional)
+- **Layout:** Grid per serial: serial no, item, status, warehouse, received on, sold on and to, warranty/expiry; status tabs; 360px cards.
+- **Rules:**
+  - `ItemSerialRead.Status` is `int` over text — TK-213.
+- **Sub-tasks:**
+  - [ ] The repository `SerialTrackingStatusReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/serial-tracking-status-report` with `SerialTrackingStatusReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `serial-tracking-status`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/serial-tracking-status-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `SerialTrackingStatusReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `serial-tracking-status-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** For each serialised item, the serials in stock equal its on-hand quantity at the same date.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-250 · Serial Tracking Detail Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#237](https://github.com/jothi-prabaharan/Bill-Book/issues/237)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-249 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/SerialTrackingDetailSourceRepository.cs` (class `SerialTrackingDetailSourceRepository`, reading `ItemBatches`, `ItemCategories`, `ItemSerials`, `Items`, `StockMovements`, `UnitsOfMeasure`, `Warehouses`); new `SerialTrackingDetailReportRepository`, `SerialTrackingDetailReportController`, `SerialTrackingDetailReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/serial-tracking-detail/`, `frontend/libs/reporting/reporting-ui/src/lib/serial-tracking-detail/` (the page at `/reports/serial-tracking-detail-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `serial-tracking-detail-report`; the catalog source is `serial-tracking-detail`: **the menu item shows no report today**, and the source answers 500 (`character varying = integer`) — TK-213. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are serialNo, itemCode, itemName, productCategory, manufacturedDate, expiryDate, costingMethod, warehouse, transactionDate, transactionNo, transactionType, contactName, quantityIn, quantityOut, unitOfMeasurement. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: operator does not exist: character varying = integer….
+- **What it answers:** Every movement of each serial number in a period.
+- **Benchmark:** AutoCount's *Serial No Movement*; Odoo's *Traceability* by serial.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Serial**, **Item**, **Contact** (optional)
+- **Layout:** Grid grouped by serial: movements (date, document, type, contact, warehouse, in/out); 360px cards.
+- **Rules:**
+  - Share TK-249's status rules.
+- **Sub-tasks:**
+  - [ ] The repository `SerialTrackingDetailReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/serial-tracking-detail-report` with `SerialTrackingDetailReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `serial-tracking-detail`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/serial-tracking-detail-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `SerialTrackingDetailReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `serial-tracking-detail-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** A serial's last movement on or before To matches its status on Serial Tracking Status.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-251 · Warehouse Tracking Status Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#238](https://github.com/jothi-prabaharan/Bill-Book/issues/238)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Inventory Report*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-INV, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/WarehouseTrackingStatusSourceRepository.cs` (class `WarehouseTrackingStatusSourceRepository`, reading `StockMovements`, `Warehouses`); new `WarehouseTrackingStatusReportRepository`, `WarehouseTrackingStatusReportController`, `WarehouseTrackingStatusReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/warehouse-tracking-status/`, `frontend/libs/reporting/reporting-ui/src/lib/warehouse-tracking-status/` (the page at `/reports/warehouse-tracking-status-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `warehouse-tracking-status-report`; the catalog source is `warehouse-tracking-status`: **the menu item shows no report today**, and the source answers 500 (`character varying = integer`, `StockMovementRead.Direction`) — TK-213. The catalog source takes none; its columns are warehouseName, address, city, state, country, primary, status, quantityIn, quantityOut, availableQuantity. Guard today: `inventory.view`. Run against PostgreSQL it **answers 500**: operator does not exist: character varying = integer….
+- **What it answers:** For each warehouse as at a date: quantities received, issued and available, item by item.
+- **Benchmark:** AutoCount's *Stock Balance by Location*; Odoo's *Locations* report.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today
+  - **Warehouse**, **Item category** (optional)
+- **Layout:** Grid grouped by warehouse (address, primary, status): per item quantity in, out and available; warehouse totals; 360px cards.
+- **Rules:**
+  - Warehouses are a location dimension only; the branch's stock pool and its value are not split by warehouse (CLAUDE.md), so show quantities, and value only as the branch's average × quantity, labelled so.
+  - The catalog also has `warehouse-tracking-detail` (movements), which the menu does not list: offer it as a detail mode of this page.
+- **Sub-tasks:**
+  - [ ] The repository `WarehouseTrackingStatusReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/warehouse-tracking-status-report` with `WarehouseTrackingStatusReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("inventory.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `warehouse-tracking-status`: fix the failure above in the same card, and give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/warehouse-tracking-status-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `WarehouseTrackingStatusReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `warehouse-tracking-status-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each item's available quantity across warehouses equals its on-hand at the same date.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-252 · Fixed Assets Schedule: its own endpoint and page
+- [ ] open
+- **Issue:** [#239](https://github.com/jothi-prabaharan/Bill-Book/issues/239)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Fixed Asset*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-FA, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/FixedAssetsScheduleSourceRepository.cs` (class `FixedAssetsScheduleSourceRepository`, reading the register repositories); new `FixedAssetsScheduleReportRepository`, `FixedAssetsScheduleReportController`, `FixedAssetsScheduleReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/fixed-assets-schedule/`, `frontend/libs/reporting/reporting-ui/src/lib/fixed-assets-schedule/` (the page at `/reports/fixed-assets-schedule`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200, checked 21 October); dates are optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are assetNumber, assetName, description, serialNumber, assetType, assetAccount, accumDepAccount, depExpenseAccount, purchaseDate, purchasePrice, depMethod, depStartDate, rate, effectiveLife, residualValue, openingCost, additionCost, disposalCost, closingCost, openingAccumDep, depreciation, disposalAccumDep, closingAccumDep, openingNbv, closingNbv, disposalDate, saleProceeds, nbvAtDisposal, gainOnDisposal, lossOnDisposal. Guard today: `accounting.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** For each asset over a period: opening cost and accumulated depreciation, additions, disposals, depreciation charged, and closing cost and book value: the register's movement schedule.
+- **Benchmark:** Xero's *Fixed Asset Reconciliation* / asset register; AutoCount's *Fixed Asset Register*; Schedule III's fixed-asset note.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Category**, **Status** (optional)
+  - **Book**: the Books or Tax schedule (D-08; Books by default)
+- **Layout:** Grid grouped by category: per asset the opening cost, additions, disposals, closing cost, opening accumulated depreciation, charge, disposal write-back, closing accumulated depreciation, opening and closing book value; category subtotals; totals; disposal details in a column chooser; 360px cards.
+- **Rules:**
+  - Guard with `[RequireAddOn(AddOn.FixedAssets)]` alone (as Accounting's `FixedAssetsController`); the catalog sources have no add-on guard today — add `RequiredAddOn => AddOn.FixedAssets` to all four.
+  - Read the register through `FixedAssetRegisterRepository` / `FixedAssetPeriodRepository` (TK-83), not a copy.
+- **Sub-tasks:**
+  - [ ] The repository `FixedAssetsScheduleReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/fixed-assets-schedule` with `FixedAssetsScheduleReportRequest` (the filters above, dates required) and its result models; guards `[RequireAddOn(AddOn.FixedAssets)]` alone (with `[RequireBusinessType]` beside it either would admit), `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]`; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `fixed-assets-schedule`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/fixed-assets-schedule`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `FixedAssetsScheduleReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `fixed-assets-schedule-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Closing cost and accumulated depreciation per category equal the category's Fixed Asset and Accumulated Depreciation account balances at To (Fixed Asset Reconciliation, TK-255).
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-253 · Depreciation Schedule: its own endpoint and page
+- [ ] open
+- **Issue:** [#240](https://github.com/jothi-prabaharan/Bill-Book/issues/240)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Fixed Asset*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-FA, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-252 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/DepreciationScheduleSourceRepository.cs` (class `DepreciationScheduleSourceRepository`, reading the register repositories); new `DepreciationScheduleReportRepository`, `DepreciationScheduleReportController`, `DepreciationScheduleReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/depreciation-schedule/`, `frontend/libs/reporting/reporting-ui/src/lib/depreciation-schedule/` (the page at `/reports/depreciation-schedule`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200); dates optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are assetNumber, assetName, description, serialNumber, assetType, assetAccount, accumDepAccount, depExpenseAccount, purchaseDate, purchasePrice, cost, depMethod, depStartDate, rate, effectiveLife, residualValue, openingAccumDep, depreciation, closingAccumDep, openingNbv, closingNbv, disposalDate, saleProceeds, nbvAtDisposal, gainOnDisposal, lossOnDisposal, capitalGain. Guard today: `accounting.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each asset's depreciation method, rate and life, and what it charged over a period, on the books or tax schedule.
+- **Benchmark:** Xero's *Depreciation Schedule*; AutoCount's *Depreciation Listing*; India's Income-tax block view for the tax schedule.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Book** (Books or Tax, D-08)
+  - **Category**, **Method** (optional)
+- **Layout:** Grid grouped by category: asset, method, start date, rate/life, residual value, cost, opening accumulated depreciation, charge, closing, book value; totals; 360px cards.
+- **Rules:**
+  - Share TK-252's register reading and guard.
+- **Sub-tasks:**
+  - [ ] The repository `DepreciationScheduleReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/depreciation-schedule` with `DepreciationScheduleReportRequest` (the filters above, dates required) and its result models; guards `[RequireAddOn(AddOn.FixedAssets)]` alone (with `[RequireBusinessType]` beside it either would admit), `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]`; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `depreciation-schedule`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/depreciation-schedule`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `DepreciationScheduleReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `depreciation-schedule-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** The Books charge for the period equals the Depreciation Expense account's movement on the Profit & Loss for the same dates.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-254 · Disposal Schedule Report: its own endpoint and page
+- [ ] open
+- **Issue:** [#241](https://github.com/jothi-prabaharan/Bill-Book/issues/241)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Fixed Asset*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-FA, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-252 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/DisposalScheduleSourceRepository.cs` (class `DisposalScheduleSourceRepository`, reading the register repositories); new `DisposalScheduleReportRepository`, `DisposalScheduleReportController`, `DisposalScheduleReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/disposal-schedule/`, `frontend/libs/reporting/reporting-ui/src/lib/disposal-schedule/` (the page at `/reports/disposal-schedule-report`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The menu asks for `disposal-schedule-report`; the catalog source is `disposal-schedule` (`Sources/DisposalScheduleSourceRepository.cs`): **the menu item shows no report today**. Dates optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are assetNumber, assetName, assetType, disposalDate, purchased, cost, depMethod, depStartDate, rate, effectiveLife, residualValue, disposed, accumDep, assetValue, salePrice, gain, capitalGain, loss. Guard today: `accounting.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Assets disposed of in a period: cost, accumulated depreciation, book value, proceeds and the gain or loss on each.
+- **Benchmark:** Xero's *Disposal Schedule*; AutoCount's *Asset Disposal Listing*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To** (disposal date)
+  - **Category** (optional)
+- **Layout:** Grid per disposal: asset, category, disposal date, cost, accumulated depreciation, book value, proceeds (with the bank account or invoice they came through, D-20), gain, loss; totals; 360px cards.
+- **Rules:**
+  - Share TK-252's guard; disposals from `acc.AssetTransactions` (D-20).
+- **Sub-tasks:**
+  - [ ] The repository `DisposalScheduleReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/disposal-schedule-report` with `DisposalScheduleReportRequest` (the filters above, dates required) and its result models; guards `[RequireAddOn(AddOn.FixedAssets)]` alone (with `[RequireBusinessType]` beside it either would admit), `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]`; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `disposal-schedule`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/disposal-schedule-report`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `DisposalScheduleReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `disposal-schedule-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Gain − loss for the period equals the Gain/Loss on Asset Disposal account's movement on the Profit & Loss.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-255 · Fixed Asset Reconciliation: its own endpoint and page
+- [ ] open
+- **Issue:** [#242](https://github.com/jothi-prabaharan/Bill-Book/issues/242)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Fixed Asset*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-FA, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-252 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/FixedAssetReconciliationSourceRepository.cs` (class `FixedAssetReconciliationSourceRepository`, reading `Accounts`, `FixedAssetCategories`, `Ledger`); new `FixedAssetReconciliationReportRepository`, `FixedAssetReconciliationReportController`, `FixedAssetReconciliationReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/fixed-asset-reconciliation/`, `frontend/libs/reporting/reporting-ui/src/lib/fixed-asset-reconciliation/` (the page at `/reports/fixed-asset-reconciliation`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200); dates optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are accountCode, account, source, openingCost, costDebits, costCredits, closingCost, openingAccumDep, accumDepDebits, accumDepCredits, closingAccumDep, openingBookValue, closingBookValue. Guard today: `accounting.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Whether the asset register and the ledger agree, account by account: cost and accumulated depreciation per category against the GL.
+- **Benchmark:** Xero's *Fixed Asset Reconciliation*.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+- **Layout:** Grid per account (cost and accumulated depreciation accounts of each category): opening, debits, credits, closing from the register and from the ledger, and the difference highlighted; totals; 360px cards.
+- **Rules:**
+  - Share TK-252's guard; ledger figures from `acc.JournalLedger`, register figures from TK-252's reading.
+  - A difference is the point of the report: show it in words ("Register is ₹x below the ledger").
+- **Sub-tasks:**
+  - [ ] The repository `FixedAssetReconciliationReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/fixed-asset-reconciliation` with `FixedAssetReconciliationReportRequest` (the filters above, dates required) and its result models; guards `[RequireAddOn(AddOn.FixedAssets)]` alone (with `[RequireBusinessType]` beside it either would admit), `[RequireModulePermission("reports")]`, `[RequirePermission("accounting.view")]`; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `fixed-asset-reconciliation`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/fixed-asset-reconciliation`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `FixedAssetReconciliationReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `fixed-asset-reconciliation-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** On books where every asset posting went through the register, every difference is zero; a manual journal to an asset account shows up as a difference of that amount.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-256 · Project Profitability: its own endpoint and page
+- [ ] open
+- **Issue:** [#243](https://github.com/jothi-prabaharan/Bill-Book/issues/243)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Projects*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PRJ, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ProjectReportsSourcesRepository.cs` (class `ProjectProfitabilitySource`, reading `Accounts`, `Contacts`, `Ledger`, `Projects`); new `ProjectProfitabilityReportRepository`, `ProjectProfitabilityReportController`, `ProjectProfitabilityReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/project-profitability/`, `frontend/libs/reporting/reporting-ui/src/lib/project-profitability/` (the page at `/reports/project-profitability`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200); dates optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are projectCode, projectName, customer, status, billingMethod, revenue, cost, profit, marginPercent, budgetAmount. Guard today: `projects.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each project's income, cost, profit and margin over a period, against its budget.
+- **Benchmark:** Xero Projects' *Project Profitability*; Odoo's *Project Profitability*; Zoho Projects' profitability.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **Customer**, **Status**, **Billing method** (optional)
+- **Layout:** Grid per project: code, name, customer, status, billing method, revenue, cost, profit, margin %, budget; totals; drill to Budget vs Actual by Project (TK-207) for the account detail; 360px cards.
+- **Rules:**
+  - Income and cost from ledger rows carrying the project (`JournalLedger.ProjectId`), on income and expense accounts, as Budget vs Actual by Project reads them; share that reading.
+  - Guard as the project screens: `[RequireBusinessType]` with the branch's trade, `reports` and `projects.view`.
+- **Sub-tasks:**
+  - [ ] The repository `ProjectProfitabilityReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/project-profitability` with `ProjectProfitabilityReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("projects.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `project-profitability`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/project-profitability`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ProjectProfitabilityReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `project-profitability-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Each project's profit equals Budget vs Actual by Project's actual net profit for the same months.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-257 · Project Budget vs Actual: its own endpoint and page
+- [ ] open
+- **Issue:** [#244](https://github.com/jothi-prabaharan/Bill-Book/issues/244)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Projects*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PRJ, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ProjectReportsSourcesRepository.cs` (class `ProjectBudgetSource`, reading `Accounts`, `Ledger`, `ProjectTasks`, `Projects`, `TimeEntries`); new `ProjectBudgetVsActualReportRepository`, `ProjectBudgetVsActualReportController`, `ProjectBudgetVsActualReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/project-budget-vs-actual/`, `frontend/libs/reporting/reporting-ui/src/lib/project-budget-vs-actual/` (the page at `/reports/project-budget-vs-actual`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date: give it a required `asOf`. The catalog source takes none; its columns are projectCode, projectName, status, budgetAmount, actualCost, costVariance, costUsedPercent, budgetHours, actualHours, hoursVariance. Guard today: `projects.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Each project's cost budget and hours budget against the costs posted and hours logged to date.
+- **Benchmark:** Xero Projects' *Project budget*; Odoo's project budget vs actual.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today (costs and hours up to it)
+  - **Status**, **Customer** (optional)
+- **Layout:** Grid per project with its tasks under it (task budget hours vs logged): budget amount, actual cost, variance, % used, budget hours, actual hours, variance; over-budget amber/red; 360px cards.
+- **Rules:**
+  - The project's own `BudgetAmount` and task hours budgets (TK-104), not the accounting budget (that is TK-207's).
+  - The source takes no date (D-67): add the as-at date.
+- **Sub-tasks:**
+  - [ ] The repository `ProjectBudgetVsActualReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/project-budget-vs-actual` with `ProjectBudgetVsActualReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("projects.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `project-budget-vs-actual`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/project-budget-vs-actual`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ProjectBudgetVsActualReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `project-budget-vs-actual-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Actual cost per project equals its expense-side postings up to the as-at date, and actual hours equal the time entries up to it.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-258 · Project Unbilled Work: its own endpoint and page
+- [ ] open
+- **Issue:** [#245](https://github.com/jothi-prabaharan/Bill-Book/issues/245)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Projects*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PRJ, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ProjectReportsSourcesRepository.cs` (class `ProjectUnbilledSource`, reading `BillDetails`, `Bills`, `Contacts`, `ProjectMembers`, `ProjectMilestones`, `ProjectTasks`, `Projects`, `SpendMoney`, `SpendMoneyDetails`, `TimeEntries`); new `ProjectUnbilledWorkReportRepository`, `ProjectUnbilledWorkReportController`, `ProjectUnbilledWorkReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/project-unbilled-work/`, `frontend/libs/reporting/reporting-ui/src/lib/project-unbilled-work/` (the page at `/reports/project-unbilled-work`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200) but takes no date: give it a required `asOf`. The catalog source takes none; its columns are projectCode, projectName, customer, billingMethod, unbilledHours, timeValue, expenses, milestones, total. Guard today: `projects.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** What could be invoiced now: billable hours, recharge expenses and milestones not yet on an invoice, by project.
+- **Benchmark:** Xero Projects' *Unbilled*; Harvest's *Uninvoiced*; Odoo's *To invoice*.
+- **Filters:**
+  - **As at** date, required (D-67); the page opens on today (work up to it)
+  - **Customer**, **Project** (optional)
+- **Layout:** Grid grouped by project: hours × rate, expenses, milestones due, total; per-line detail in a drill-down; a button to start an invoice from the project (TK-106) where that exists; 360px cards.
+- **Rules:**
+  - Billing rules from TK-106 (time and materials, fixed fee milestones); the rate basis from the project.
+  - The source takes no date: add the as-at date.
+- **Sub-tasks:**
+  - [ ] The repository `ProjectUnbilledWorkReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/project-unbilled-work` with `ProjectUnbilledWorkReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("projects.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `project-unbilled-work`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/project-unbilled-work`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ProjectUnbilledWorkReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `project-unbilled-work-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** After invoicing everything a project shows, the project disappears from the report for that date.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
+
+### TK-259 · Project Time by User: its own endpoint and page
+- [ ] open
+- **Issue:** [#246](https://github.com/jothi-prabaharan/Bill-Book/issues/246)
+- **Group:** Z · Owner request (the reports, one by one: menu group *Projects*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
+- **Lanes:** L-RPT-PRJ, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
+- **Where:** the catalog source `backend/Api/Reporting/Reporting.Repository/Repositories/Sources/ProjectReportsSourcesRepository.cs` (class `ProjectTimeByUserSource`, reading `ProjectTasks`, `Projects`, `TimeEntries`); new `ProjectTimeByUserReportRepository`, `ProjectTimeByUserReportController`, `ProjectTimeByUserReportModels.cs`; `frontend/libs/reporting/reporting-core/src/lib/project-time-by-user/`, `frontend/libs/reporting/reporting-ui/src/lib/project-time-by-user/` (the page at `/reports/project-time-by-user`, the path the menu links to); a gateway route per endpoint.
+- **State:** checked 21 October 2026 on a local PostgreSQL. The source runs (200); dates optional: make them required. The catalog source takes `from` (date, optional), `to` (date, optional); its columns are projectCode, projectName, taskName, userName, hours, billableHours, billedHours, nonBillableHours. Guard today: `projects.view`. Run against PostgreSQL it runs (200 on an empty branch).
+- **What it answers:** Hours logged in a period by person, project and task: billable, billed and non-billable.
+- **Benchmark:** Xero Projects' *Staff time*; Harvest's *Time report*; Odoo's *Timesheets* analysis.
+- **Filters:**
+  - **From** and **To** dates, both required (D-67); the page opens on the financial year to date (`rangeForPreset('this-financial-year')` to today); To before From is a field error on **To**
+  - **User**, **Project** (optional)
+  - **Group by** user or project (required, user by default)
+- **Layout:** Grid grouped by user (or project): per task the hours, billable, billed, non-billable; subtotals; utilisation % (billable ÷ total); 360px cards.
+- **Rules:**
+  - User names resolved from `mst.Users` in one batched call.
+  - Dates optional in the source: make them required.
+- **Sub-tasks:**
+  - [ ] The repository `ProjectTimeByUserReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [ ] The endpoint `GET api/statements/project-time-by-user` with `ProjectTimeByUserReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("projects.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [ ] The catalog source `project-time-by-user`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [ ] The page at `/reports/project-time-by-user`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [ ] Test: written, never run by an AI (section 0.5) — `ProjectTimeByUserReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `project-time-by-user-report.service.spec.ts`.
+  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+- **Done when:** Total hours for the period equal the sum of time entries in it, and billable = billed + unbilled billable.
+- **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
 
 ## 3. Decisions from the owner
 

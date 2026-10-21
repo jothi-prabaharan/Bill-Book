@@ -1068,6 +1068,64 @@ The values follow the conventions the seeder already set:
 Four of the forty-six reports declare no columns at all (§8.2) and so carry none
 of these.
 
+### 8.6 Rebuilding a report as its own page (TK-198 onward)
+
+The owner's programme of 20 October 2026 rebuilds each report in the Reports menu as **its own endpoint, request and answer, and its own page**, one at a time, with a required date filter (D-67). The catalog source of the same report stays, because export, saved views and scheduled emails run on it. Every report card from TK-213 onward points here. Follow these steps in order, and use the finished ones as models: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-201 Cash Flow, TK-202 Reconciliation (a lookup sub-route), TK-203 Business Performance, TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 Budget vs Actual by Project (a shared repository), and TK-198 Salary Increment (an add-on report).
+
+**1. Backend, in Reporting.**
+- `Reporting.Entity/Models/{Name}ReportModels.cs`: `{Name}ReportRequest` with every date `[Required(ErrorMessage = "… is required.")]`, the optional filters, and `Guid? OrgId`; result DTOs with `[MaxLength(…, ErrorMessage = …)]` on every string. Enums go in `Reporting.Entity/Enums/`; they serialise as names (`JsonStringEnumConverter` in `Program.cs`).
+- `Reporting.Repository/Repositories/{Name}ReportRepository.cs`: **public static `IQueryable` builders** that take the read models (so tests run them over lists), a **pure static `Compose`** that shapes rows and totals, a static `DateRefusals(request)` returning `(field, message)` pairs, and `RunAsync`. LINQ only.
+  - **Never project a correlated sub-query**, for example `let legs = db.Ledger.Where(l => l.AccountId == a.AccountId)` used inside `select`. EF cannot translate it, and that is why `trial-balance`, `general-ledger-summary`, `bank-summary`, `inventory-item-summary` and `batch-tracking-status` answered 500. Group and sum first, then join (TK-207's rewrite of `BudgetReports`).
+  - **Never compare an enum column with a number.** The services store enums by name; TK-213 maps them.
+  - A sum over a constant in a union needs a typed constant (`0m`), or Postgres refuses it with *sum(unknown) is not unique*.
+- `Reporting.Api/Controllers/{Name}ReportController.cs`, `[Route("api/statements/{menu-key}")]`, where the menu key is the last part of the menu's path.
+  - Guards: `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, and `[RequirePermission("{module}.view")]` on each action. An add-on report carries `[RequireAddOn(AddOn.X)]` **instead of** `[RequireBusinessType]`: the two together admit a branch that has either.
+  - The action, in this order: `Forbid()` when `OrgId` differs from the token's `org_id` (`OrgRouteMustMatchTokenAttribute.ClaimType`); `ValidationProblem(ModelState)` for missing fields; each date refusal added to `ModelState` on the field it names; `NotFound()` for an id outside the branch, never 403 (CLAUDE.md); then `Ok(await RunAsync(…))`.
+  - Lookups the page's filters need go under sub-routes (`…/accounts`, `…/projects`).
+- Register the repository in `Reporting.Api/Program.cs` (`AddScoped`).
+- Add a gateway route per path to `backend/Gateway/Gateway.Api/appsettings.json`: `reporting-statements-{menu-key}`, cluster `reporting`, `Path` `/api/statements/{menu-key}`, one per sub-route too. Without it the browser gets the gateway's 404.
+- A read model change (a property, a conversion, a new table) takes lane `L-RPT` and a snapshot-only migration: `dotnet ef migrations add <Name> --no-build --project Api/Reporting/Reporting.Repository --startup-project Api/Reporting/Reporting.Api --context ReportingDbContext --output-dir Migrations/Tenant`. Never run `migrations remove`, which connects to the Development database in `appsettings.Development.json`.
+- The catalog source: fix it if it fails, and give it the same required date parameter, so export and schedules obey D-67.
+
+**2. Frontend.**
+- In `libs/reporting/reporting-core/src/lib/{slug}/`:
+  - `{slug}-report.models.ts`, field for field with the C# models.
+  - `{slug}-report.service.ts`: `@Injectable({ providedIn: 'root' })`, `inject(HttpClient)`, an `async` method per endpoint resolving a `Promise`.
+  - `{slug}-report.service.spec.ts`: Vitest, with `HttpClient` mocked.
+  - Export them from `reporting-core/src/index.ts`. A core lib touches no `window` or `document`.
+- In `libs/reporting/reporting-ui/src/lib/{slug}/`, `{slug}-report.page.ts|html|scss`:
+  - Standalone and `OnPush`, with signals and `inject()`, and a reactive form whose required validators match the server's.
+  - **Shared components only**: `bb-branch-date-input`, `bb-select`, `bb-checkbox`, `bb-data-grid` (`flush`, `stackOnPhone`, `rowClass` with `row--group`, `row--subtotal` and `row--total`), `bb-money-cell`, `bb-message-box`, the `registerDate` pipe, `rangeForPreset`, `toIsoDate`.
+  - Cell templates need `DataGridCellTemplateDirective` imported, and the row is `let-row`, never `let-row="row"` (CLAUDE.md).
+  - No inline styles; `--space-*` and `--color-*` tokens only; one grid for figures that must line up.
+  - 360px: the grid stacks into cards, the filters stack, and buttons go full width.
+  - The server's field errors go under their fields, keyed by camelCase name. Anything else goes in the message box, and 403 reads "You do not have access to … on this branch."
+- Register the route in `reporting-ui/src/lib/reporting.routes.ts` at the menu's path, **ahead of `:reportKey`**, with `data: { access: { permission: 'reports.view' } }` plus `addOns` for an add-on report. Export the page from `reporting-ui/src/index.ts`.
+
+**3. Tests, written and never run by an AI** (`docs/Task_Details.md` §0.5). `backend/tests/Reporting.Api.Tests/{Name}ReportTests.cs` covers:
+- figures worked by hand, run through the same builders over lists, and `Compose`;
+- each rule on the card, and every refusal;
+- the required fields, by reflection;
+- 403 for another branch: the controller built with `null!` dependencies and a `ClaimsPrincipal` carrying `org_id`;
+- the route and guards, by reflection;
+- a tie-out test against the report's partner, where it has one (the Profit & Loss, the ledger, the summary report).
+
+The service spec covers the call and any helper.
+
+**4. Verify.**
+- `dotnet build` the API and the test project, with no warnings.
+- In `frontend/`: `npm run typecheck`, `npx nx run-many -t lint -p reporting-core reporting-ui`, `npx nx build web`.
+- Load hand-checked rows into a local scratch database, run the endpoint and the page (Chromium at 1280px and 360px), run the catalog source (`POST api/reports/{key}/query`), then remove the rows.
+- Never put credentials in the repository, a card or an issue.
+
+**5. Documentation, in the same commit.**
+- The report's section of `docs/User_Guide/reports.md` (or `accounting.md` for an Accounting page).
+- A line under **Unreleased** in `docs/User_Guide/releases.md`, and a line in this file where the design changed.
+- The card ticked `completed (AI name) · tests written, not run`, then `python3 scripts/update-task-list.py`.
+- `Closes #N` in the commit, pushed to `main`.
+
+**Menu keys and catalog keys differ.** On 21 October 2026, 26 menu items asked the shared report page for a key the catalog does not have: the menu's `aged-receivables-summary` against the catalog's `ar-aging-summary`, `invoice-track-report` against `invoice-track`, and so on. Those items showed no report at all. A page of its own at the menu's path is the fix; each card names its two keys.
+
 ## 9. Delivery checklist
 
 
