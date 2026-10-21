@@ -6029,6 +6029,20 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test, docs and release notes.
 - **Done when:** the actual net profit for a window equals the Profit & Loss's for the same dates, and every variance is the budget against the actual with favourable positive.
 
+### TK-205 · Accounts rail: a menu picked before the server's menu arrives is lost
+- [~] working (Claude Sonnet 5.5) — since 2026-10-21
+- **Issue:** [#195](https://github.com/jothi-prabaharan/Bill-Book/issues/195)
+- **Group:** Z · Owner request
+- **Lanes:** L-UI (`frontend/libs/app-shell` only), L-DOC (release notes) · **Depends on:** — · **Decision:** the owner's request of 21 October 2026
+- **Lane note:** TK-204 lists L-UI too, for `libs/reporting`. The files do not overlap, and the owner asked for this fix by name.
+- **Where:** `app-shell/src/lib/menu.service.ts` (`buildFallbackMenu`), `app-shell/src/lib/shell-screens.ts` (`FALLBACK_RAIL`), `app-shell/src/lib/menu.service.spec.ts`.
+- **State:** checked 21 October 2026. Until `GET /api/menu` answers, the shell draws a fallback tree built from `shell-screens.ts`, and a module picked on the rail is remembered by its code (`ShellNavigationService.picked`). The fallback's code comes from the group name, so Accounts is `accounts`; the server's code is `accounting`. When the server's tree replaces the fallback, the remembered code matches nothing: the menu closes and the rail returns to the page's own module. The other eight core modules have the same code in both trees, so only Accounts showed it. Found by clicking every rail module before and after the menu arrived.
+- **Sub-tasks:**
+  - [ ] The fallback tree takes its module codes from `FALLBACK_RAIL`, and Accounts' is `accounting`, the server's.
+  - [ ] Test: written, never run by an AI (section 0.5): the fallback's codes are the rail's, and are the server's nine core codes.
+  - [ ] Release notes.
+- **Done when:** a module picked while the menu is loading is still the open one after the server's menu arrives, for every module on the rail.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
