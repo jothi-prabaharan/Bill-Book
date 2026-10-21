@@ -6087,6 +6087,21 @@ The queue below is one list in card-number order. Each card names its group.
   - [ ] Test, docs and release notes.
 - **Done when:** each project's actual is what was posted with that project in the window, the total across projects equals Budget vs Actual's actual when every posting carries a project, and both catalog sources run against PostgreSQL.
 
+### TK-208 · Close the gaps TK-206 left: settlement reads, older payments, head office seed, purchase forms, lockfile
+- [~] working (Claude Opus 5.5) — since 2026-10-21
+- **Issue:** [#198](https://github.com/jothi-prabaharan/Bill-Book/issues/198)
+- **Group:** Z · Owner request
+- **Lanes:** L-ACC (`LedgerReportRepository`, `MoneyAllocationRepository`, the seed controller), L-MST (a hosted worker), L-UI (`purchase-ui` order, receipt and debit note forms; `purchase-core`), L-DOC, the frontend lockfile · **Depends on:** TK-206 · **Decision:** the owner's request of 21 October 2026 ("fix all gaps")
+- **Lane note:** TK-207 holds L-RPT; nothing here touches `Reporting`.
+- **Sub-tasks:**
+  - [ ] Settlement and outstanding reads count the live allocations that name a document.
+  - [ ] Payments posted before TK-206 get their settlement rows from Accounting's branch seed.
+  - [ ] The head office branch gets every service's seed from a worker once Master listens.
+  - [ ] The purchase order, goods receipt and debit note forms take the place of supply from the vendor's GSTIN and work out inter-state as you type.
+  - [ ] `package-lock.json` in step with `package.json`.
+  - [ ] Tests, docs and release notes.
+- **Done when:** an invoice or bill paid through Receive or Spend money reads as paid everywhere its settlement is shown, payments from before TK-206 included, and the head office offers every GST rate.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the

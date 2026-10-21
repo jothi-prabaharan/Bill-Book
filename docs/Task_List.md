@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 191 completed, 1 working, 10 open, and 2 blocked (204 cards).
+**Summary:** 191 completed, 2 working, 10 open, and 2 blocked (205 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -214,3 +214,4 @@ where to start, sub-tasks and notes.
 | [TK-205](./Task_Details.md#tk-205--accounts-rail-a-menu-picked-before-the-servers-menu-arrives-is-lost) | Accounts rail: a menu picked before the server's menu arrives is lost | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-21 | written, not run | [#195](https://github.com/jothi-prabaharan/Bill-Book/issues/195) | — |
 | [TK-206](./Task_Details.md#tk-206--purchase-bill-create-page-and-paying-a-bill-fix-what-a-browser-run-found) | Purchase bill create page and paying a bill: fix what a browser run found | Z | ✅ completed | Claude Opus 5.5 | 2026-10-21 | written, not run | [#196](https://github.com/jothi-prabaharan/Bill-Book/issues/196) | — |
 | [TK-207](./Task_Details.md#tk-207--budget-vs-actual-by-project-its-own-endpoint-and-page) | Budget vs Actual by Project: its own endpoint and page | Z | 🔶 working | Claude Opus 5.5 (working) | since 2026-10-21 | — | [#197](https://github.com/jothi-prabaharan/Bill-Book/issues/197) | — |
+| [TK-208](./Task_Details.md#tk-208--close-the-gaps-tk-206-left-settlement-reads-older-payments-head-office-seed-purchase-forms-lockfile) | Close the gaps TK-206 left: settlement reads, older payments, head office seed, purchase forms, lockfile | Z | 🔶 working | Claude Opus 5.5 (working) | since 2026-10-21 | — | [#198](https://github.com/jothi-prabaharan/Bill-Book/issues/198) | — |
