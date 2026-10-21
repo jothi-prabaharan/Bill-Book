@@ -157,17 +157,30 @@ The register does not record brand, outlet, warranty expiry, cost limit or avera
 
 ## Budget reports
 
-Three reports compare the branch's budget with what was posted, under **Accounting** in the list and **Reports › Financial performance** in the menu. Each takes an **As at** date, today when left blank. Each also takes a **Budget**; when blank it uses the branch's approved budget for the year holding that date. With no budget, the reports still show the actuals.
+Three reports compare the branch's budget with what was posted, under **Reports › Financial performance** in the menu. They need the **Budget** add-on.
 
-- **Budget vs Actual**: each income and expense account's budget and actual, with the variance, the variance as a percentage of the budget, and whether it is **Favourable** or **Adverse**. **Period** chooses the date's month, its financial quarter, or the year to date (`month`, `quarter` or `ytd`; year to date when blank). The period always covers whole months, because a budget is monthly.
-- **Budget vs Actual by Project**: the same for each project and account, for a budget kept by project.
+### Budget vs Actual
+
+Budget vs Actual has its own page at `/reports/budget-vs-actual` (TK-204). Besides access to reports it needs **accounting.view**.
+
+- **Budget**, **As at** and **Period** are all required. The page opens on the branch's own approved budget for the year holding today, today's date and **Year to date**, and runs straight away. With no approved budget for this year it takes another budget for this year, else the latest one. A draft or superseded budget says so in the list.
+- **As at** must fall within the budget's year. Choosing a budget for another year moves the date to the nearer end of that year.
+- **Period** is the date's month, its financial quarter, or the year to date. It always covers whole months, because a budget is monthly, and the line under the filters shows the dates it covers.
+- The accounts are laid out as on the Profit & Loss: **Revenue** and **Cost of sales** to **Gross profit**, then **Other income** and **Expenses** to **Net profit**. Each account, each section's total and each profit line shows **Budget**, **Actual**, **Variance** and **Var %**.
+- **Variance** is positive when it is good: income above budget, spending below it, or profit above it. A positive variance is green and a negative one red. **Var %** is the variance as a share of the budget, with a dash where nothing was budgeted.
+- The actual gross and net profit are exactly what the Profit & Loss shows for the same dates. An account made inactive since still shows what was posted to it, so the two never disagree.
+- Budgets are entered as positive figures, so a contra account's budget is shown with the Profit & Loss's sign. Sales returns budgeted at 1,000 read −1,000, beside actual returns that read negative too. A budget kept by project counts every project's figures under the account.
+- An account with neither a budget nor anything posted in the months covered is left out.
+- On a phone each row becomes a card, and each section's heading is a title above its accounts.
+
+### Budget vs Actual by Project and Budget Monthly Trend
+
+These two run in the shared report page. Each takes an **As at** date, today when left blank. Each also takes a **Budget**; when blank it uses the branch's approved budget for the year holding that date.
+
+- **Budget vs Actual by Project**: each project and account's budget and actual for a budget kept by project. **Period** is `month`, `quarter` or `ytd`, year to date when blank.
 - **Budget Monthly Trend**: one row per account and month of the budget's year, with budget and actual side by side. Pivot on **Month** to lay the twelve months across.
 
-How the figures are worked out:
-
-- **Actual** is exactly what the Profit and Loss report shows for the same dates: income as credits less debits, expenses as debits less credits, over the branch's active income and expense accounts.
-- **Variance** is positive when it is good, meaning income above budget or expenses below it. So a positive variance is always favourable.
-- Budgets are entered as positive figures, so a contra account's budget is shown with the P&L's sign. Sales returns budgeted at 1,000 read −1,000, beside actual returns that read negative too.
+In both, **Actual** is income as credits less debits and expenses as debits less credits, over the branch's active income and expense accounts. **Variance** is positive when it is favourable, as on Budget vs Actual.
 
 ## Project reports
 

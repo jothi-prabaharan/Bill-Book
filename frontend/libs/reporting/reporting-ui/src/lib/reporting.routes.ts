@@ -43,6 +43,14 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoints (TK-204), ahead of the shared host.
+    // The server checks the same add-on.
+    path: 'budget-vs-actual',
+    loadComponent: () =>
+      import('./budget-vs-actual/budget-vs-actual-report.page').then((m) => m.BudgetVsActualReportPage),
+    data: { access: { permission: 'reports.view', addOns: ['Budget'] } },
+  },
+  {
     path: 'balance-sheet',
     loadComponent: () =>
       import('./balance-sheet/balance-sheet-report.page').then((m) => m.BalanceSheetReportPage),

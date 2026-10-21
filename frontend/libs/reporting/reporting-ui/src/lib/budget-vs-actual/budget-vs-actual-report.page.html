@@ -1,0 +1,80 @@
+<header class="page-head">
+  <div>
+    <h1>Budget vs Actual</h1>
+    <p class="subtitle text-muted">
+      A budget against the books, account by account, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-select [id]="'bva-budget'" label="Budget" [required]="true" [clearable]="false"
+               placeholder="Choose a budget" [options]="budgetOptions()" [loading]="!budgetsLoaded()"
+               emptyText="No budgets on this branch" formControlName="budgetId"
+               [error]="err('budgetId', 'Budget')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bva-as-of'" label="As at" formControlName="asOfDate" [required]="true"
+                          hint="Within the budget's year."
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'bva-period'" label="Period" [required]="true" [clearable]="false"
+               [options]="periodOptions" formControlName="period"
+               [error]="err('period', 'Period')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy() || budgets().length === 0">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.budget.name }}: {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}.
+    A positive variance is favourable.
+  </p>
+
+  <bb-data-grid flush [columns]="columns()" [data]="rows()" [loading]="busy()" [stackOnPhone]="true"
+                [rowClass]="rowClass" [sortable]="false" [showColumnFilters]="false" [showCount]="false"
+                [paged]="false" label="Budget vs Actual">
+    <ng-template bbCellTemplate="accountName" let-row>
+      <span class="account">
+        @if (row.accountCode) {
+          <span class="account__code text-muted">{{ row.accountCode }}</span>
+        }
+        <span>{{ row.accountName }}</span>
+      </span>
+    </ng-template>
+    <ng-template bbCellTemplate="budget" let-row>
+      @if (row.kind !== 'section') {
+        <bb-money-cell [value]="row.budget" />
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="actual" let-row>
+      @if (row.kind !== 'section') {
+        <bb-money-cell [value]="row.actual" />
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="variance" let-row>
+      @if (row.kind !== 'section') {
+        <span [class.variance--favourable]="tone(row.variance) === 'favourable'"
+              [class.variance--adverse]="tone(row.variance) === 'adverse'">
+          <bb-money-cell [value]="row.variance" />
+        </span>
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="variancePercent" let-row>
+      @if (row.kind !== 'section') {
+        <span [class.variance--favourable]="tone(row.variance) === 'favourable'"
+              [class.variance--adverse]="tone(row.variance) === 'adverse'">{{ percent(row.variancePercent) }}</span>
+      }
+    </ng-template>
+  </bb-data-grid>
+}

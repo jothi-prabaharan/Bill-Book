@@ -89,6 +89,12 @@
   border-top: 1px solid var(--color-divider);
 }
 
+/* A total that closes a statement (gross or net profit), above a subtotal. */
+.table tbody tr.row--total td {
+  font-weight: 700;
+  border-top: 2px solid var(--color-divider);
+}
+
 /* A table that becomes one card per row on a phone (bb-data-grid's
    stackOnPhone). Every cell carries its column's name in data-label. */
 @media (max-width: 640px) {
@@ -120,6 +126,15 @@
   .table--stacked tbody td.text-right,
   .table--stacked tbody td.numeric {
     text-align: right;
+  }
+
+  /* A group heading is a title on its own: no column name, no empty figures. */
+  .table--stacked tbody tr.row--group td:not(:first-child) {
+    display: none;
+  }
+
+  .table--stacked tbody tr.row--group td[data-label]::before {
+    content: none;
   }
 
   .table--stacked tfoot {

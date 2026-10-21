@@ -3648,6 +3648,13 @@ Unique on (`BudgetId`, `AccountId`, `ProjectId`, `Period`).
 - **Monthly trend**: twelve columns of budget and actual side by side.
 - Actuals come from `acc.JournalLedger` in base currency, the same figures as the P&L, so the two
   reports never disagree.
+- **Budget against actual has its own page and endpoint (TK-204)**: `GET api/statements/budget-vs-actual`
+  and `…/budgets`, with the budget, the as-at date (within the budget's year) and the period required.
+  It lays the accounts out with `ProfitAndLossReportRepository.SectionOf`, adds gross and net profit,
+  and includes an account made inactive since it moved, so its actual net profit is the P&L's for the
+  same dates. The catalog's `budget-vs-actual` and `budget-vs-actual-by-project` sources still use a
+  correlated sub-query per account that EF cannot translate (found in TK-204); the page now owns the
+  menu's path, and the by-project source waits for its own card.
 
 ## Warnings on documents
 
