@@ -57,7 +57,7 @@ public sealed class TaxMasterRepository
         long taxGroupId, DateOnly onDate, CancellationToken ct)
     {
         TaxMaster? row = await _db.TaxMasters
-            .Where(t => t.TaxGroupId == taxGroupId
+            .Where(t => (t.TaxGroupId == taxGroupId || (t.TaxGroupId == 0 && t.TaxMasterId == taxGroupId))
                 && t.IsActive
                 && t.EffectiveFrom <= onDate
                 && (t.EffectiveTo == null || t.EffectiveTo >= onDate))
@@ -320,7 +320,7 @@ public sealed class TaxMasterRepository
     private static TaxMasterListItem Map(TaxMaster t) => new()
     {
         TaxMasterId = t.TaxMasterId,
-        TaxGroupId = t.TaxGroupId,
+        TaxGroupId = t.TaxGroupId != 0 ? t.TaxGroupId : t.TaxMasterId,
         TaxSystemName = t.TaxSystemName,
         TaxName = t.TaxName,
         TotalRate = t.TotalRate,

@@ -88,11 +88,11 @@ public sealed class InternalTaxController : ControllerBase
         // applied across all of them in one read rather than one call per line.
         List<TaxRate> rates = [.. rows
             .Where(r => r.EffectiveFrom <= on && (r.EffectiveTo is null || r.EffectiveTo >= on))
-            .GroupBy(r => r.TaxGroupId)
+            .GroupBy(r => r.TaxGroupId != 0 ? r.TaxGroupId : r.TaxMasterId)
             .Select(g => g.OrderByDescending(r => r.EffectiveFrom).First())
             .Select(r => new TaxRate(
                 r.TaxMasterId,
-                r.TaxGroupId,
+                r.TaxGroupId != 0 ? r.TaxGroupId : r.TaxMasterId,
                 r.TaxSystemName,
                 r.TotalRate,
                 r.CgstRate,
