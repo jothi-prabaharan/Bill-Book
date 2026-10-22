@@ -6252,7 +6252,7 @@ The queue below is one list in card-number order. Each card names its group.
 
 
 ### TK-214 · Budget Monthly Trend: its own endpoint and page
-- [ ] open
+- [~] working (Claude Sonnet 5.5) — since 2026-10-22
 - **Issue:** [#201](https://github.com/jothi-prabaharan/Bill-Book/issues/201)
 - **Group:** Z · Owner request (the reports, one by one: menu group *Financial performance*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
 - **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
