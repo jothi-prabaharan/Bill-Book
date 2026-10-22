@@ -209,8 +209,8 @@ public sealed class QuoteRepository
         Quote.TotalAmountBase = Quote.TotalAmount * Quote.ExchangeRate;
 
         Quote.Status = DocumentStatus.Draft;
-        Quote.PostedAt = _clock.GetUtcNow();
-        Quote.PostedBy = _user.UserId;
+        Quote.PostedAt = null;
+        Quote.PostedBy = null;
         
         _db.Quotes.Add(Quote);
         await _db.SaveChangesAsync(ct);

@@ -48,6 +48,7 @@ import {
   TextareaComponent,
   TextInputComponent,
   totalsOf,
+  recalculate,
   UiMessage,
   ApprovalPanelComponent,
   CustomFieldValues,
@@ -454,7 +455,7 @@ export class CreditNoteFormComponent implements OnInit {
 
     this.lines.set(
       note.lines.map((line, index) => ({
-        ...toGridLine({ ...line, itemName: line.itemLabel }, index + 1),
+        ...recalculate(toGridLine({ ...line, itemName: line.itemLabel }, index + 1), this.context()),
         invoiceDetailId: line.invoiceDetailId,
       })),
     );
@@ -529,7 +530,7 @@ export class CreditNoteFormComponent implements OnInit {
         available.map(({ line, quantity }, index) => {
           const grid = toGridLine({ ...line, itemName: line.itemLabel, quantity, discountAmount: 0 }, index + 1);
           // What this invoice line can still take back, the most a scan may count to (TK-161).
-          return { ...grid, invoiceDetailId: line.invoiceDetailId, returnable: grid.quantity };
+          return { ...recalculate(grid, this.context()), invoiceDetailId: line.invoiceDetailId, returnable: grid.quantity };
         }),
       );
 

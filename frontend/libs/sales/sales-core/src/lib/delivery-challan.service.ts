@@ -48,6 +48,7 @@ export interface SaveDeliveryChallanRequest {
   notes?: string;
   billingAddress?: string;
   shippingAddress?: string;
+  printTemplateId?: number | null;
   lines: SaveDeliveryChallanLineRequest[];
   /** Custom field values (TK-112); left out on an update, what is stored stays. */
   customFields?: Record<string, unknown>;

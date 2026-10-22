@@ -21,6 +21,9 @@
     }
 
     @if (canPost()) {
+      <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="post()">
+        Post
+      </button>
       <button type="button" class="btn btn-secondary m-0" (click)="preview()">Preview entry</button>
     }
 
@@ -70,19 +73,14 @@
         </div>
 
         <div class="field">
-          <label for="inv-print-template">Print template</label>
-          <select
+          <bb-select
             id="inv-print-template"
-            class="input"
+            label="Print template"
+            placeholder="Choose template…"
+            [options]="printTemplateOptions()"
             formControlName="printTemplateId"
-          >
-            @for (t of printTemplates(); track t.printTemplateId) {
-              <option [value]="t.printTemplateId">
-                {{ t.templateName }}{{ t.isDefault ? ' (Default)' : '' }} [{{ t.paperSizeName || 'A4' }}]
-              </option>
-            }
-          </select>
-          <span class="hint">Print and PDF paper layout</span>
+            hint="Print and PDF paper layout"
+          />
         </div>
 
         <div class="field">

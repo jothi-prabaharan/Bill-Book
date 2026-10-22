@@ -12,7 +12,7 @@
         <bb-number-field
           [number]="documentNo()"
           module="sales"
-          series="QOT"
+          series="QTE"
           [date]="form.controls.documentDate.value"
         />
 
@@ -35,19 +35,14 @@
         </div>
 
         <div class="field">
-          <label for="quote-print-template">Print template</label>
-          <select
+          <bb-select
             id="quote-print-template"
-            class="input"
+            label="Print template"
+            placeholder="Choose template…"
+            [options]="printTemplateOptions()"
             formControlName="printTemplateId"
-          >
-            @for (t of printTemplates(); track t.printTemplateId) {
-              <option [value]="t.printTemplateId">
-                {{ t.templateName }}{{ t.isDefault ? ' (Default)' : '' }} [{{ t.paperSizeName || 'A4' }}]
-              </option>
-            }
-          </select>
-          <span class="hint">Print and PDF paper layout</span>
+            hint="Print and PDF paper layout"
+          />
         </div>
 
         <div class="field">

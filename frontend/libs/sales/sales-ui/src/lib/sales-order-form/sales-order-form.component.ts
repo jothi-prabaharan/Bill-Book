@@ -148,6 +148,12 @@ export class SalesOrderFormComponent implements OnInit {
 
   /** Available print templates for this transaction type */
   protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.printTemplates().map((t) => ({
+      value: t.printTemplateId,
+      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
+    }))
+  );
 
   /** Draft / ReadyToPost / Posted / Void, as the server last said. */
   protected readonly status = signal('Draft');

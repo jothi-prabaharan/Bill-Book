@@ -116,6 +116,12 @@ export class QuoteFormComponent implements OnInit {
 
   /** Available print templates for this transaction type */
   protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.printTemplates().map((t) => ({
+      value: t.printTemplateId,
+      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
+    }))
+  );
 
   form = this.fb.group({
     documentDate: [new Date().toISOString().split('T')[0], Validators.required],
@@ -473,7 +479,16 @@ export class QuoteFormComponent implements OnInit {
           hsnSacCode: api.hsnSacCode ?? undefined,
           accountId: api.accountId ?? undefined,
           taxTreatment: api.taxTreatment ?? 'Taxable',
-          taxMasterId: api.taxMasterId ?? undefined,
+          taxMasterId: (api.taxGroupId && api.taxGroupId > 0) ? api.taxGroupId : (api.taxMasterId && api.taxMasterId > 0 ? api.taxMasterId : undefined),
+          taxGroupId: (api.taxGroupId && api.taxGroupId > 0) ? api.taxGroupId : (api.taxMasterId && api.taxMasterId > 0 ? api.taxMasterId : undefined),
+          warehouseId: api.warehouseId ?? undefined,
+          uomId: api.uomId ?? undefined,
+          conversionFactor: api.conversionFactor ?? 1,
+          isPriceInclusive: api.isPriceInclusive ?? false,
+          discountAmount: api.discountAmount ?? 0,
+          lineType: api.lineType ?? undefined,
+          projectId: api.projectId ?? undefined,
+          itemBatchId: api.itemBatchId ?? undefined,
           quantity: api.quantity ?? 0,
           unitPrice: api.unitPrice ?? 0,
           discountPercent: api.discountPercent ?? 0,

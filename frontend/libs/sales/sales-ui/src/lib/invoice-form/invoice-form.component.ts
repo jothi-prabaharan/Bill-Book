@@ -180,6 +180,12 @@ export class InvoiceFormComponent implements OnInit {
 
   /** Available print templates for this transaction type */
   protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.printTemplates().map((t) => ({
+      value: t.printTemplateId,
+      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
+    }))
+  );
 
   /** Set when a save was refused at the credit or discount limit and may be sent to an approver (TK-102). */
   protected readonly approvalOffered = signal(false);

@@ -48,7 +48,7 @@
         <bb-number-field
           [number]="documentNo()"
           module="sales"
-          series="SO"
+          series="SOR"
           [date]="form.controls.documentDate.value"
         />
 
@@ -72,19 +72,14 @@
         </div>
 
         <div class="field">
-          <label for="sor-print-template">Print template</label>
-          <select
+          <bb-select
             id="sor-print-template"
-            class="input"
+            label="Print template"
+            placeholder="Choose template…"
+            [options]="printTemplateOptions()"
             formControlName="printTemplateId"
-          >
-            @for (t of printTemplates(); track t.printTemplateId) {
-              <option [value]="t.printTemplateId">
-                {{ t.templateName }}{{ t.isDefault ? ' (Default)' : '' }} [{{ t.paperSizeName || 'A4' }}]
-              </option>
-            }
-          </select>
-          <span class="hint">Print and PDF paper layout</span>
+            hint="Print and PDF paper layout"
+          />
         </div>
 
         <div class="field">
