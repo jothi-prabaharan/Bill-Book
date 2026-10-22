@@ -410,7 +410,7 @@ export class ChartOfAccountsPage implements OnInit {
   }
 
   /**
-   * Each account's balance for the period, from the trial balance: one column
+   * Each account's balance for the period, from the ledger's account balances: one column
    * per account, the side its net falls on. A user who may not read the ledger
    * still gets the chart, with no balances.
    */
@@ -420,7 +420,7 @@ export class ChartOfAccountsPage implements OnInit {
     try {
       const view = await this.req<{ rows: TrialBalanceRow[] }>(
         'GET',
-        `/api/ledger/trial-balance${query ? `?${query}` : ''}`,
+        `/api/ledger/account-balances${query ? `?${query}` : ''}`,
       );
       this.balances.set(new Map(view.rows.map((row) => [row.accountId, row])));
     } catch {

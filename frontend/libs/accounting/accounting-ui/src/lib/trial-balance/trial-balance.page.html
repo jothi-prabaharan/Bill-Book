@@ -1,62 +1,133 @@
 <header class="page-head">
-  <h1>Trial balance</h1>
-  <a class="link" routerLink="/accounting/journals">Journal entries →</a>
+  <div>
+    <h1>Trial balance</h1>
+    <p class="subtitle text-muted">
+      Every account's balance when the period opens, what was posted in it and its balance when it closes, in the branch's base currency.
+    </p>
+  </div>
+  <a class="btn btn-link" routerLink="/accounting/journals">Journal entries →</a>
 </header>
 
-@if (message(); as failure) {
-  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
-}
-
-<form class="filters" (ngSubmit)="load()">
-  <div class="field">
-    <bb-branch-date-input label="From"  [(ngModel)]="from" name="from" />
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'tb-from'" label="From" formControlName="from" [required]="true"
+                          [error]="err('from', 'From date')" />
   </div>
-  <div class="field">
-    <bb-branch-date-input label="To"  [(ngModel)]="to" name="to" />
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'tb-to'" label="To" formControlName="to" [required]="true"
+                          [error]="err('to', 'To date')" />
   </div>
-  <button class="btn btn-primary" type="submit" [disabled]="busy()">Show</button>
-  <button type="button" class="btn btn-ghost" (click)="clear()" [disabled]="busy()">All dates</button>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'tb-compare-from'" label="Compare from" formControlName="compareFrom"
+                          hint="Optional: a second period's closing balances beside it."
+                          [error]="err('compareFrom', 'Comparison from date')" />
+    <button class="btn btn-link filters__shortcut" type="button" (click)="compareWithLastYear()">
+      Same period last year
+    </button>
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'tb-compare-to'" label="Compare to" formControlName="compareTo"
+                          [error]="err('compareTo', 'Comparison to date')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Show accounts with no balance" formControlName="isZeroBalanceShown" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
 </form>
 
-@if (busy()) {
-  <p class="empty">Loading…</p>
-} @else if (report(); as tb) {
-  @if (!tb.isBalanced) {
-    <p class="broken">
-      <strong>The books do not balance.</strong>
-      Debits total {{ tb.totalDebit | number: '1.2-2' }} and credits
-      {{ tb.totalCredit | number: '1.2-2' }} — a difference of
-      {{ tb.totalDebit - tb.totalCredit | number: '1.2-2' }}. Every posting is checked when it is
-      written, so this should be impossible; it wants investigating before anything is filed.
-    </p>
-  }
-
-  <!-- Since Trial balance has groups, we might need a custom layout or just feed flattened rows. Wait, DataGrid might not support groups in the same way, but let's map the raw rows and let the group headers be lost or flattened if data grid doesn't support groups. Actually, let's feed the rows. -->
-  <bb-data-grid fillHeight [gridCode]="'TRIAL_BALANCE'" [columns]="columns" [data]="tb.rows">
-    <ng-template bbCellTemplate="code" let-row>
-      <div class="code-col">{{ row.accountCode }}</div>
-    </ng-template>
-    <ng-template bbCellTemplate="account" let-row>
-      <a class="link" [routerLink]="['/accounting/ledger', row.accountId]">
-        {{ row.accountName }}
-      </a>
-      @if (row.isContra) {
-        <span class="badge" title="Normal balance runs opposite its type">Contra</span>
-      }
-    </ng-template>
-    <ng-template bbCellTemplate="debit" let-row>
-      <div class="num">{{ row.debitBalance ? (row.debitBalance | number: '1.2-2') : '' }}</div>
-    </ng-template>
-    <ng-template bbCellTemplate="credit" let-row>
-      <div class="num">{{ row.creditBalance ? (row.creditBalance | number: '1.2-2') : '' }}</div>
-    </ng-template>
-  </bb-data-grid>
-
-  @if (tb.rows.length === 0) {
-    <p class="empty">
-      Nothing has been posted yet. Accounts appear here as soon as something reaches the ledger.
-    </p>
-  }
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
 }
 
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.from | registerDate }} to {{ report.to | registerDate }}@if (report.compareFrom) {, compared with {{ report.compareFrom | registerDate }} to {{ report.compareTo | registerDate }}}.
+    Income and expense accounts open from {{ report.financialYearStart | registerDate }}, the start of the financial year; earlier years' profit is carried into equity.
+  </p>
 
+  @if (rows().length === 0) {
+    <p class="empty text-muted">
+      Nothing was posted to any account up to the end of this period. Accounts appear here as soon as something reaches the ledger.
+    </p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Trial balance">
+      @for (row of rows(); track $index) {
+        @if (row.kind === 'group') {
+          <h2 class="cards__group" role="presentation">{{ row.accountName }}</h2>
+        } @else {
+          <article class="card figures-card" role="listitem"
+                   [class.figures-card--subtotal]="row.kind === 'subtotal'" [class.figures-card--total]="row.kind === 'total'">
+            <h3 class="figures-card__name">
+              @if (row.kind === 'line' && row.accountId) {
+                <span class="account__code text-muted">{{ row.accountCode }}</span>
+                <a class="account__name" [routerLink]="['/accounting/ledger', row.accountId]">{{ row.accountName }}</a>
+                @if (row.isContra) {
+                  <span class="badge" title="Normal balance runs opposite its type">Contra</span>
+                }
+              } @else {
+                <span [class.account--computed]="row.isComputed">{{ row.accountName }}</span>
+              }
+            </h3>
+            <dl class="figures">
+              <div class="figures__heads" aria-hidden="true"><span></span><span>Debit</span><span>Credit</span></div>
+              <div class="figures__row">
+                <dt>Opening</dt>
+                <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.openingDebit" /></dd>
+                <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.openingCredit" /></dd>
+              </div>
+              <div class="figures__row">
+                <dt>Period</dt>
+                <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.movementDebit" /></dd>
+                <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.movementCredit" /></dd>
+              </div>
+              <div class="figures__row figures__row--closing">
+                <dt>Closing</dt>
+                <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.closingDebit" /></dd>
+                <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.closingCredit" /></dd>
+              </div>
+              @if (comparing()) {
+                <div class="figures__row figures__row--compare">
+                  <dt>Compared</dt>
+                  <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.compareDebit" /></dd>
+                  <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.compareCredit" /></dd>
+                </div>
+              }
+            </dl>
+          </article>
+        }
+      }
+    </div>
+  } @else {
+    <div class="matrix" [class.matrix--compare]="comparing()">
+      <bb-data-grid flush [columns]="columns()" [data]="rows()" [loading]="busy()"
+                    [rowClass]="rowClass" [sortable]="false" [showColumnFilters]="false" [showCount]="false"
+                    [paged]="false" label="Trial balance">
+        <ng-template bbCellTemplate="accountName" let-row>
+          @if (row.kind === 'line' && row.accountId) {
+            <span class="account">
+              <span class="account__code text-muted">{{ row.accountCode }}</span>
+              <a class="account__name" [routerLink]="['/accounting/ledger', row.accountId]">{{ row.accountName }}</a>
+              @if (row.isContra) {
+                <span class="badge" title="Normal balance runs opposite its type">Contra</span>
+              }
+            </span>
+          } @else {
+            <span [class.account--computed]="row.isComputed">{{ row.accountName }}</span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="openingDebit" let-row><bb-money-cell [value]="row.openingDebit" /></ng-template>
+        <ng-template bbCellTemplate="openingCredit" let-row><bb-money-cell [value]="row.openingCredit" /></ng-template>
+        <ng-template bbCellTemplate="movementDebit" let-row><bb-money-cell [value]="row.movementDebit" /></ng-template>
+        <ng-template bbCellTemplate="movementCredit" let-row><bb-money-cell [value]="row.movementCredit" /></ng-template>
+        <ng-template bbCellTemplate="closingDebit" let-row><bb-money-cell [value]="row.closingDebit" /></ng-template>
+        <ng-template bbCellTemplate="closingCredit" let-row><bb-money-cell [value]="row.closingCredit" /></ng-template>
+        <ng-template bbCellTemplate="compareDebit" let-row><bb-money-cell [value]="row.compareDebit" /></ng-template>
+        <ng-template bbCellTemplate="compareCredit" let-row><bb-money-cell [value]="row.compareCredit" /></ng-template>
+      </bb-data-grid>
+    </div>
+  }
+}

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Accounting.Api.Services;
 using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
@@ -24,8 +25,13 @@ namespace Accounting.Api.Controllers;
 public sealed class LedgerController : ControllerBase
 {
     private readonly LedgerReportRepository _reports;
+    private readonly TrialBalanceReportRepository _trialBalance;
 
-    public LedgerController(LedgerReportRepository reports) => _reports = reports;
+    public LedgerController(LedgerReportRepository reports, TrialBalanceReportRepository trialBalance)
+    {
+        _reports = reports;
+        _trialBalance = trialBalance;
+    }
 
     [HttpGet("accounts/{accountId:long}")]
     public async Task<IActionResult> AccountLedger(
@@ -42,8 +48,51 @@ public sealed class LedgerController : ControllerBase
         return ledger is null ? NotFound() : Ok(ledger);
     }
 
+    /// <summary>
+    /// The Trial Balance report (TK-215): a period with both ends required, each
+    /// account's opening balance, movement and closing balance, a subtotal for
+    /// each account type and the totals that must agree, with a second period
+    /// beside it when asked. A request naming another branch is 403, a missing or
+    /// reversed date a field error.
+    /// </summary>
     [HttpGet("trial-balance")]
     public async Task<IActionResult> TrialBalance(
+        [FromQuery] TrialBalanceReportRequest request, CancellationToken ct)
+    {
+        if (request.OrgId is Guid orgId
+            && !(Guid.TryParse(User.FindFirstValue(OrgRouteMustMatchTokenAttribute.ClaimType), out Guid tokenOrg)
+                && tokenOrg == orgId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        IReadOnlyList<(string Field, string Message)> refusals = TrialBalanceReportRepository.DateRefusals(request);
+        if (refusals.Count > 0)
+        {
+            foreach ((string field, string message) in refusals)
+            {
+                ModelState.AddModelError(field, message);
+            }
+
+            return ValidationProblem(ModelState);
+        }
+
+        return Ok(await _trialBalance.RunAsync(request, ct));
+    }
+
+    /// <summary>
+    /// Each account's debit or credit balance over an optional period: the feed
+    /// of the chart of accounts, which shows a balance beside every account and
+    /// has no use for a report's opening balance, subtotals or required dates.
+    /// It was <c>trial-balance</c> until the report took that address.
+    /// </summary>
+    [HttpGet("account-balances")]
+    public async Task<IActionResult> AccountBalances(
         [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken ct) =>
         Ok(await _reports.GetTrialBalanceAsync(from, to, ct));
 

@@ -1,35 +1,200 @@
-.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-.link { color: var(--color-accent-700); text-decoration: none; }
-.link:hover { text-decoration: underline; }
-.error { color: var(--color-danger); }
-.empty { color: var(--color-text-subtle); font-size: .85rem; }
+/* The Trial Balance (TK-215): the filters, the verdict, then one grid of account types, subtotals and totals. */
 
-.filters { display: flex; align-items: flex-end; gap: .75rem; margin: 1rem 0; flex-wrap: wrap; }
-.filters label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: var(--color-text-muted); }
-.filters input { padding: .4rem .5rem; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; font-size: .85rem; }
-.filters button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: var(--color-accent-600); color: #fff; font: inherit; font-size: .85rem; cursor: pointer; }
-.filters button.ghost { background: var(--color-neutral-200); color: var(--color-text-muted); }
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
 
-/* The one thing on this page that must never be quiet. */
-.broken { background: var(--color-danger-bg); border-left: 3px solid var(--color-danger); color: #7d241a; padding: .7rem .9rem; font-size: .85rem; }
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
 
-.grid { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-.grid th, .grid td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--color-divider); }
-.grid th { font-size: .78rem; color: var(--color-text-muted); }
-.grid tr.group td { background: var(--color-surface-muted); font-weight: 600; font-size: .82rem; }
-.grid tfoot td { border-top: 2px solid #4a4f60; border-bottom: 0; font-weight: 600; padding-top: .6rem; }
-.grid tfoot tr.broken-row td { color: var(--color-danger); }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-.code-col { width: 6rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
-.badge { font-size: .62rem; background: var(--color-warning-bg); color: var(--color-warning); padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
 
-/* At 360px the table becomes a card list: the head row is meaningless once each
-   row is stacked, so each cell carries its own label instead. */
+.subtitle,
+.period,
+.empty {
+  margin: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+.filters__shortcut {
+  padding: 0;
+  font-size: 12px;
+}
+
+/* The tick box and the button sit level with the inputs, below their labels. */
+.filters__field--check,
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+/* Six columns of figures, eight with a comparison: the frame scrolls sideways and the page never does. */
+.matrix {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.matrix bb-data-grid {
+  min-width: 68rem;
+}
+
+.matrix--compare bb-data-grid {
+  min-width: 85rem;
+}
+
+.account {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.account__code {
+  font-size: 12px;
+}
+
+.account__name {
+  color: var(--color-accent-700);
+  text-decoration: none;
+}
+
+.account__name:hover {
+  text-decoration: underline;
+}
+
+.account--computed {
+  font-style: italic;
+}
+
+.badge {
+  font-size: 10px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+/* Phone: an account type's heading, then one card for each account, subtotal and the total. */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cards__group {
+  margin: var(--space-2) 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.figures-card {
+  padding: var(--space-2) var(--space-3);
+}
+
+.figures-card__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.figures-card--subtotal {
+  background: var(--color-surface-muted);
+}
+
+.figures-card--total {
+  border-top: 2px solid var(--color-divider);
+  background: var(--color-surface-muted);
+}
+
+/* Opening, period and closing, each a label and a debit and a credit figure. */
+.figures {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.figures__heads,
+.figures__row {
+  display: grid;
+  grid-template-columns: 1fr 7.5rem 7.5rem;
+  align-items: baseline;
+}
+
+.figures__heads {
+  font-size: 11px;
+  color: var(--color-text-subtle);
+  text-align: right;
+}
+
+.figures dt {
+  color: var(--color-text-muted);
+}
+
+.figures dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.figures__row--closing {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-divider);
+  font-weight: 600;
+}
+
+.figures__row--closing dt {
+  color: inherit;
+}
+
+.figures__row--compare {
+  color: var(--color-text-subtle);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
-  .grid thead { display: none; }
-  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid var(--color-divider); }
-  .grid td { display: flex; justify-content: space-between; gap: 1rem; border: 0; padding: .15rem .6rem; }
-  .grid td::before { content: attr(data-label); color: var(--color-text-subtle); font-size: .72rem; }
-  .grid tr.group td, .grid tfoot td { display: flex; }
-  .num { text-align: right; }
+  .filters__actions .btn {
+    width: 100%;
+  }
 }
