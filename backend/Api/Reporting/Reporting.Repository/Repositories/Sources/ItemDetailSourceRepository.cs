@@ -53,7 +53,7 @@ public sealed class ItemDetailSourceRepository : ReportSource<ItemDetailRow>
     ];
 
     /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
-    private const int ItemReference = 2;
+    private const SubAccountReferenceType ItemReference = SubAccountReferenceType.Item;
 
     protected override IQueryable<ItemDetailRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
@@ -78,7 +78,7 @@ public sealed class ItemDetailSourceRepository : ReportSource<ItemDetailRow>
                from c in categories.DefaultIfEmpty()
                join u in db.UnitsOfMeasure on i.InventoryUomId equals u.UomId into uoms
                from u in uoms.DefaultIfEmpty()
-               let sign = m.Direction == 1 ? 1m : -1m // 1 = Inbound, 2 = Outbound
+               let sign = m.Direction == StockDirection.In ? 1m : -1m
                select new ItemDetailRow
                {
                    StockMovementId = m.StockMovementId,

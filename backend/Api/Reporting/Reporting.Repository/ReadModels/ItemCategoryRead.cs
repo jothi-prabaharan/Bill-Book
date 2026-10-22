@@ -1,6 +1,7 @@
 #pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -21,9 +22,9 @@ public class ItemCategoryRead : OrgScopedEntity
     /// <summary>Null is a top-level category. Maximum depth is three.</summary>
     public long? ParentCategoryId { get; set; }
 
-    public int? DefaultItemProfile { get; set; }
+    public ItemProfile? DefaultItemProfile { get; set; }
 
-    public int? DefaultCostingType { get; set; }
+    public CostingType? DefaultCostingType { get; set; }
 
     public long? DefaultUomTypeId { get; set; }
 

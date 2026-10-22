@@ -95,8 +95,8 @@ public sealed class SerialTrackingDetailSourceRepository : ReportSource<SerialTr
                    TransactionNo = c.m.SourceId != null ? c.m.SourceType + "-" + c.m.SourceId : null,
                    TransactionType = c.m.MovementType.ToString(),
                    ContactName = null, // Set via resolver if necessary
-                   QuantityIn = c.m.Direction == 1 ? 1m : 0m,
-                   QuantityOut = c.m.Direction == 2 ? 1m : 0m,
+                   QuantityIn = c.m.Direction == StockDirection.In ? 1m : 0m,
+                   QuantityOut = c.m.Direction == StockDirection.Out ? 1m : 0m,
                    UnitOfMeasurement = u != null ? u.UomName : "Unknown"
                };
     }

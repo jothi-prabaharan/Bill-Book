@@ -47,8 +47,8 @@ public sealed class WarehouseTrackingStatusSourceRepository : ReportSource<Wareh
     protected override IQueryable<WarehouseTrackingStatusRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
         return from w in db.Warehouses
-               let inQty = db.StockMovements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == 1).Sum(m => (decimal?)m.Quantity) ?? 0m
-               let outQty = db.StockMovements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == 2).Sum(m => (decimal?)m.Quantity) ?? 0m
+               let inQty = db.StockMovements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == StockDirection.In).Sum(m => (decimal?)m.Quantity) ?? 0m
+               let outQty = db.StockMovements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == StockDirection.Out).Sum(m => (decimal?)m.Quantity) ?? 0m
                select new WarehouseTrackingStatusRow
                {
                    WarehouseId = w.WarehouseId,

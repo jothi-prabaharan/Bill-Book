@@ -1,5 +1,6 @@
 #pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -28,12 +29,12 @@ public class SubAccountRead : OrgScopedEntity
     public long AccountId { get; set; }
 
     /// <summary>Matches <c>SubAccountReferenceType</c> in Accounting: contact, item or tax.</summary>
-    public int ReferenceType { get; set; }
+    public SubAccountReferenceType ReferenceType { get; set; }
 
     public long ReferenceId { get; set; }
 
     /// <summary>Matches <c>SubAccountPurpose</c> in Accounting.</summary>
-    public int Purpose { get; set; }
+    public SubAccountPurpose Purpose { get; set; }
 
     public string SubAccountName { get; set; }
 }

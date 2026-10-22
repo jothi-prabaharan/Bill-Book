@@ -1,6 +1,7 @@
 #pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -38,9 +39,9 @@ public class StockMovementRead : OrgScopedEntity
     /// </summary>
     public long? ItemBatchId { get; set; }
 
-    public int MovementType { get; set; }
+    public StockMovementType MovementType { get; set; }
 
-    public int Direction { get; set; }
+    public StockDirection Direction { get; set; }
 
     /// <summary>The date the stock actually moved, which is not always today.</summary>
     public DateOnly MovementDate { get; set; }
@@ -98,7 +99,7 @@ public class StockMovementRead : OrgScopedEntity
     // --- Costing state. Costing is asynchronous, so a movement carries where
     // it has got to rather than leaving a reader to guess from a null cost.
 
-    public int CostingStatus { get; set; }
+    public CostingStatus CostingStatus { get; set; }
     public DateTimeOffset? CostedAt { get; set; }
 
     /// <summary>Attempts so far. A movement that keeps failing stops rather than retrying forever.</summary>
@@ -111,7 +112,7 @@ public class StockMovementRead : OrgScopedEntity
     // --- Ledger state. The same shape as costing, one step behind it: a
     // movement cannot be posted until what it cost has been settled.
 
-    public int LedgerStatus { get; set; }
+    public LedgerStatus LedgerStatus { get; set; }
     public DateTimeOffset? LedgerPostedAt { get; set; }
 
     /// <summary>Attempts so far. Bounded for the same reason costing's is.</summary>

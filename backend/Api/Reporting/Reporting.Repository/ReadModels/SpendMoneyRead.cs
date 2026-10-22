@@ -15,7 +15,7 @@ public class SpendMoneyRead : OrgScopedEntity
     public decimal Amount { get; set; }
     public string CurrencyCode { get; set; } = null!;
     public decimal ExchangeRate { get; set; }
-    public int PaymentMethod { get; set; }
+    public PaymentMethod PaymentMethod { get; set; }
     public string? ReferenceNo { get; set; }
     public DateOnly? ReferenceDate { get; set; }
     public string? Memo { get; set; }

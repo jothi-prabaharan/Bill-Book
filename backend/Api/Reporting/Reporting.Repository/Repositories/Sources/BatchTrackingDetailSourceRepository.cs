@@ -87,8 +87,8 @@ public sealed class BatchTrackingDetailSourceRepository : ReportSource<BatchTrac
                    TransactionNo = m.SourceId != null ? m.SourceType + "-" + m.SourceId : null,
                    TransactionType = m.MovementType.ToString(),
                    ContactName = null, // Will be filled by batched resolver if needed, or by source doc join
-                   QuantityIn = m.Direction == 1 ? m.Quantity : 0m,
-                   QuantityOut = m.Direction == 2 ? m.Quantity : 0m,
+                   QuantityIn = m.Direction == StockDirection.In ? m.Quantity : 0m,
+                   QuantityOut = m.Direction == StockDirection.Out ? m.Quantity : 0m,
                    UnitOfMeasurement = u != null ? u.UomName : "Unknown"
                };
     }

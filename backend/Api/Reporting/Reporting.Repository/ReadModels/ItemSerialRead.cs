@@ -1,6 +1,7 @@
 #pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -42,7 +43,7 @@ public class ItemSerialRead : OrgScopedEntity
     /// </summary>
     public long? CostLayerId { get; set; }
 
-    public int Status { get; set; }
+    public SerialStatus Status { get; set; }
     /// <summary>Where the piece physically is. A location fact; the pool is still shared.</summary>
     public long? WarehouseId { get; set; }
 

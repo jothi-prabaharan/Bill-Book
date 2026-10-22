@@ -49,7 +49,7 @@ public sealed class ItemSummarySourceRepository : ReportSource<ItemSummaryRow>
     ];
 
     /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
-    private const int ItemReference = 2;
+    private const SubAccountReferenceType ItemReference = SubAccountReferenceType.Item;
 
     protected override IQueryable<ItemSummaryRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
@@ -65,17 +65,17 @@ public sealed class ItemSummarySourceRepository : ReportSource<ItemSummaryRow>
                let periodMoves = db.StockMovements.Where(m => m.ItemId == i.ItemId && (start == null || m.MovementDate >= start) && (end == null || m.MovementDate <= end))
                
                // Compute opening
-               let openingQty = openingMoves.Sum(m => m.Direction == 1 ? m.Quantity : -m.Quantity)
-               let openingBal = openingMoves.Sum(m => m.Direction == 1 ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
+               let openingQty = openingMoves.Sum(m => m.Direction == StockDirection.In ? m.Quantity : -m.Quantity)
+               let openingBal = openingMoves.Sum(m => m.Direction == StockDirection.In ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
 
                // Compute period adjustments (Adjustment = 3)
-               let adjMoves = periodMoves.Where(m => m.MovementType == 3)
-               let adjQty = adjMoves.Sum(m => m.Direction == 1 ? m.Quantity : -m.Quantity)
-               let adjBal = adjMoves.Sum(m => m.Direction == 1 ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
+               let adjMoves = periodMoves.Where(m => m.MovementType == StockMovementType.Adjustment)
+               let adjQty = adjMoves.Sum(m => m.Direction == StockDirection.In ? m.Quantity : -m.Quantity)
+               let adjBal = adjMoves.Sum(m => m.Direction == StockDirection.In ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
                
                // Compute period totals for closing
-               let periodQty = periodMoves.Sum(m => m.Direction == 1 ? m.Quantity : -m.Quantity)
-               let periodBal = periodMoves.Sum(m => m.Direction == 1 ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
+               let periodQty = periodMoves.Sum(m => m.Direction == StockDirection.In ? m.Quantity : -m.Quantity)
+               let periodBal = periodMoves.Sum(m => m.Direction == StockDirection.In ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
                
                select new ItemSummaryRow
                {

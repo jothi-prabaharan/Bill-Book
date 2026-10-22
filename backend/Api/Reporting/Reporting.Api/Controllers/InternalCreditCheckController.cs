@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Reporting.Repository;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Api.Controllers;
 
@@ -52,7 +53,7 @@ public class InternalCreditCheckController : ControllerBase
         // We know an AR sub-account has ReferenceType = 1 (Contact), Purpose = 0 (Trade).
         var arSubAccountIds = await _db.SubAccounts
             .AsNoTracking()
-            .Where(sa => sa.ReferenceType == 1 && sa.ReferenceId == request.ContactId && sa.Purpose == 0)
+            .Where(sa => sa.ReferenceType == SubAccountReferenceType.Contact && sa.ReferenceId == request.ContactId && sa.Purpose == SubAccountPurpose.Primary)
             .Select(sa => sa.SubAccountId)
             .ToListAsync(ct);
 

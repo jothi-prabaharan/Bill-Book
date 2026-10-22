@@ -1,5 +1,6 @@
 #pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -33,7 +34,7 @@ public class JournalRead : OrgScopedEntity
 
     public string TransactionTypeCode { get; set; }
     /// <summary>Matches <c>JournalStatus</c> in Accounting: draft, posted, reversed.</summary>
-    public int Status { get; set; }
+    public JournalStatus Status { get; set; }
 
     public DateTimeOffset? PostedAt { get; set; }
 

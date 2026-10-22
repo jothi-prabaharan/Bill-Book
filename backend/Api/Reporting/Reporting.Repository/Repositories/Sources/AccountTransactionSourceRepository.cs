@@ -34,7 +34,7 @@ public sealed class AccountTransactionSourceRepository : ReportSource<AccountTra
     /// project deliberately does not reference Accounting's enums — the read
     /// models carry the underlying integers for the same reason.
     /// </summary>
-    private const int TaxReference = 3;
+    private const SubAccountReferenceType TaxReference = SubAccountReferenceType.Tax;
 
     public override string ReportKey => "account-transaction";
 

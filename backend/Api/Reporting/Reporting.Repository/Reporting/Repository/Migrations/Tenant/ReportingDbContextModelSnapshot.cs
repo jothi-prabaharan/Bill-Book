@@ -13484,8 +13484,10 @@ namespace Reporting.Repository.Migrations.Tenant
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("LicenceType")
-                        .HasColumnType("integer");
+                    b.Property<string>("LicenceType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -13888,8 +13890,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<decimal>("CgstAmount")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("ChallanType")
-                        .HasColumnType("integer");
+                    b.Property<string>("ChallanType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
 
                     b.Property<string>("ContactGstin")
                         .HasColumnType("text");
@@ -15635,11 +15639,13 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("DefaultCostingType")
-                        .HasColumnType("integer");
+                    b.Property<string>("DefaultCostingType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
-                    b.Property<int?>("DefaultItemProfile")
-                        .HasColumnType("integer");
+                    b.Property<string>("DefaultItemProfile")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<long?>("DefaultUomTypeId")
                         .HasColumnType("bigint");
@@ -15686,8 +15692,10 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ItemId"));
 
-                    b.Property<int>("CostingType")
-                        .HasColumnType("integer");
+                    b.Property<string>("CostingType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -15754,11 +15762,15 @@ namespace Reporting.Repository.Migrations.Tenant
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("ItemProfile")
-                        .HasColumnType("integer");
+                    b.Property<string>("ItemProfile")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
-                    b.Property<int>("ItemType")
-                        .HasColumnType("integer");
+                    b.Property<string>("ItemType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<int?>("LeadTimeDays")
                         .HasColumnType("integer");
@@ -15814,8 +15826,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<long?>("TaxGroupId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("TaxPreference")
-                        .HasColumnType("integer");
+                    b.Property<string>("TaxPreference")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<bool>("TrackInventory")
                         .HasColumnType("boolean");
@@ -15887,8 +15901,10 @@ namespace Reporting.Repository.Migrations.Tenant
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -16324,8 +16340,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<long?>("ReversesJournalId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("TransactionTypeCode")
                         .IsRequired()
@@ -17375,8 +17393,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<DateOnly?>("ExpectedDate")
                         .HasColumnType("date");
 
-                    b.Property<int>("FulfilmentStatus")
-                        .HasColumnType("integer");
+                    b.Property<string>("FulfilmentStatus")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
 
                     b.Property<decimal>("IgstAmount")
                         .HasColumnType("numeric");
@@ -17852,8 +17872,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("PaymentMethod")
-                        .HasColumnType("integer");
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTimeOffset?>("PostedAt")
                         .HasColumnType("timestamp with time zone");
@@ -18639,8 +18661,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<decimal>("ExchangeRate")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("FulfilmentStatus")
-                        .HasColumnType("integer");
+                    b.Property<string>("FulfilmentStatus")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
 
                     b.Property<decimal>("IgstAmount")
                         .HasColumnType("numeric");
@@ -19845,8 +19869,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("PaymentMethod")
-                        .HasColumnType("integer");
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTimeOffset?>("PostedAt")
                         .HasColumnType("timestamp with time zone");
@@ -19916,8 +19942,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<string>("CostingError")
                         .HasColumnType("text");
 
-                    b.Property<int>("CostingStatus")
-                        .HasColumnType("integer");
+                    b.Property<string>("CostingStatus")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -19928,8 +19956,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Direction")
-                        .HasColumnType("integer");
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
 
                     b.Property<decimal>("EnteredQuantity")
                         .HasColumnType("numeric");
@@ -19952,8 +19982,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<DateTimeOffset?>("LedgerPostedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("LedgerStatus")
-                        .HasColumnType("integer");
+                    b.Property<string>("LedgerStatus")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -19964,8 +19996,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<DateOnly>("MovementDate")
                         .HasColumnType("date");
 
-                    b.Property<int>("MovementType")
-                        .HasColumnType("integer");
+                    b.Property<string>("MovementType")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -20048,14 +20082,18 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Purpose")
-                        .HasColumnType("integer");
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<long>("ReferenceId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("ReferenceType")
-                        .HasColumnType("integer");
+                    b.Property<string>("ReferenceType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("SubAccountName")
                         .IsRequired()
@@ -20268,6 +20306,71 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.HasIndex("CustomerId", "OrgId");
 
                     b.ToTable("TimeEntries", "acc", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.TransactionRatioRead", b =>
+                {
+                    b.Property<long>("TransactionRatioId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TransactionRatioId"));
+
+                    b.Property<DateOnly>("AllocationDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsVoided")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("SourceTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SourceTransactionTypeCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("TargetTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TargetTransactionTypeCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("TransactionRatioId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("TransactionRatios", "acc", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -20491,8 +20594,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<int?>("StateId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("StorageType")
-                        .HasColumnType("integer");
+                    b.Property<string>("StorageType")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -20508,8 +20613,10 @@ namespace Reporting.Repository.Migrations.Tenant
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("WarehouseType")
-                        .HasColumnType("integer");
+                    b.Property<string>("WarehouseType")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
 
                     b.HasKey("WarehouseId");
 

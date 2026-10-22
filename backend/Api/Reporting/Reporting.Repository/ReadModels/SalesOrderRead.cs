@@ -1,5 +1,6 @@
 using System;
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -9,7 +10,7 @@ public class SalesOrderRead : OrgScopedEntity
     public long SalesOrderId { get; set; }
     public long? QuoteId { get; set; }
     public DateOnly? DeliveryDate { get; set; }
-    public int FulfilmentStatus { get; set; } // enum mapped as int
+    public FulfilmentStatus FulfilmentStatus { get; set; }
     public string? ShortCloseReason { get; set; }
 
     public string TransactionTypeCode { get; set; } = null!;

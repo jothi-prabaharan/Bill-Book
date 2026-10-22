@@ -125,7 +125,7 @@ public sealed class JournalReportSourceRepository : ReportSource<JournalReportRo
         // matches almost nothing. A correlated subquery reads the same way
         // AccountTransactionSourceRepository's tax lookup does, rather than a second LEFT
         // JOIN keyed off a value that only exists when the first one matched.
-        const int contactReference = 1; // SubAccountReferenceType.Contact
+        const SubAccountReferenceType contactReference = SubAccountReferenceType.Contact;
 
         return from j in journals
                join l in db.JournalDetails on j.JournalId equals l.JournalId
@@ -160,7 +160,7 @@ public sealed class JournalReportSourceRepository : ReportSource<JournalReportRo
                    PostedAt = j.PostedAt,
                    ModifiedBy = j.ModifiedBy,
                    ModifiedAt = j.ModifiedAt,
-                   Status = (JournalStatus)j.Status,
+                   Status = j.Status,
                };
     }
 

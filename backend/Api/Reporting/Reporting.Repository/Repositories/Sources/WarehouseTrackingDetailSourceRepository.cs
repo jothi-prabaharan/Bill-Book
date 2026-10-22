@@ -87,13 +87,13 @@ public sealed class WarehouseTrackingDetailSourceRepository : ReportSource<Wareh
                    BatchOrSerialNo = b != null ? b.BatchNumber : null,
                    TransactionDate = m.MovementDate,
                    
-                   QuantityIn = m.Direction == 1 ? m.Quantity : 0m,
-                   QuantityOut = m.Direction == 2 ? m.Quantity : 0m,
+                   QuantityIn = m.Direction == StockDirection.In ? m.Quantity : 0m,
+                   QuantityOut = m.Direction == StockDirection.Out ? m.Quantity : 0m,
                    BalanceQuantity = 0m,
                    
-                   TrackedQuantity = m.ItemBatchId != null ? (m.Direction == 1 ? m.Quantity : -m.Quantity) : 0m,
-                   UnTrackedQuantity = m.ItemBatchId == null ? (m.Direction == 1 ? m.Quantity : -m.Quantity) : 0m,
-                   TotalQuantity = m.Direction == 1 ? m.Quantity : -m.Quantity
+                   TrackedQuantity = m.ItemBatchId != null ? (m.Direction == StockDirection.In ? m.Quantity : -m.Quantity) : 0m,
+                   UnTrackedQuantity = m.ItemBatchId == null ? (m.Direction == StockDirection.In ? m.Quantity : -m.Quantity) : 0m,
+                   TotalQuantity = m.Direction == StockDirection.In ? m.Quantity : -m.Quantity
                };
     }
 

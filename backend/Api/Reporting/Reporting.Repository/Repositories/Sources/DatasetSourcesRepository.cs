@@ -373,11 +373,11 @@ public sealed class StockMovementsDataset : DatasetSourceRepository<StockMovemen
             Warehouse = w != null ? w.WarehouseName : null,
 
             // StockDirection: 1 is in, 2 is out, as the tracking reports read it.
-            Direction = m.Direction == 1 ? "In" : "Out",
+            Direction = m.Direction == StockDirection.In ? "In" : "Out",
             SourceType = m.SourceType,
-            QuantityIn = m.Direction == 1 ? m.Quantity : 0m,
-            QuantityOut = m.Direction == 1 ? 0m : m.Quantity,
-            NetQuantity = m.Direction == 1 ? m.Quantity : -m.Quantity,
+            QuantityIn = m.Direction == StockDirection.In ? m.Quantity : 0m,
+            QuantityOut = m.Direction == StockDirection.In ? 0m : m.Quantity,
+            NetQuantity = m.Direction == StockDirection.In ? m.Quantity : -m.Quantity,
             UnitCost = m.UnitCost,
             TotalCost = m.TotalCost,
             CustomFields = i.CustomFields,

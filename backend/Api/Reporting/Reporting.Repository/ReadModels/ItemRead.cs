@@ -1,6 +1,7 @@
 #pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -32,8 +33,8 @@ public class ItemRead : OrgScopedEntity
     /// inferred from the child row, because the form needs it before anything
     /// has been saved. Immutable once stock has moved.
     /// </summary>
-    public int ItemProfile { get; set; }
-    public int ItemType { get; set; }
+    public ItemProfile ItemProfile { get; set; }
+    public ItemType ItemType { get; set; }
     public long? ItemCategoryId { get; set; }
 
     /// <summary>Unenforced reference to mst.HsnSacCodes — cross-database, validated in C#.</summary>
@@ -45,7 +46,7 @@ public class ItemRead : OrgScopedEntity
     /// </summary>
     public long? TaxGroupId { get; set; }
 
-    public int TaxPreference { get; set; }
+    public TaxPreference TaxPreference { get; set; }
     /// <summary>True for pharma: the printed MRP already includes GST.</summary>
     public bool IsPriceInclusiveOfTax { get; set; }
 
@@ -70,7 +71,7 @@ public class ItemRead : OrgScopedEntity
 
     public bool TrackInventory { get; set; }
     /// <summary>Immutable once any stock movement exists.</summary>
-    public int CostingType { get; set; }
+    public CostingType CostingType { get; set; }
     public bool IsBatchTracked { get; set; }
 
     /// <summary>Requires batch tracking — an expiry with nothing to attach it to means nothing.</summary>

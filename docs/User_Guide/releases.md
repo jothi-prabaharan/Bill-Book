@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **Several reports stopped with an error and now run (TK-213):** Journal Report, Account Transaction, Inventory Item Detail, Batch Tracking Detail, Serial Tracking Status and Detail, and Warehouse Tracking Status and Detail. The Sales Order, Purchase Order and Delivery Challan track reports also stopped working as soon as there were orders. They now run with the right quantities in and out. The credit-limit check on a sales invoice reads the customer's balance correctly again.
+
 - **Fixed**: **An invoice paid through Receive money reads as paid.** The invoice list, its print, the client portal and payment reminders all took an invoice's balance from its own postings, and a receipt posts under its own number, so a paid invoice stayed owed and could be reminded. They now count what each receipt, payment, credit note or advance settled. Payments and receipts posted before payments recorded what they settled get that record on the next start for the head office and the sample branches. On any other branch, apply such a payment with **Allocate**.
 
 - **Fixed**: **A sales invoice with GST can be posted.** Every taxable invoice was refused with "'Output GST' has no Primary sub-account for Tax 0", because the invoice did not record which GST rate its tax belonged to.

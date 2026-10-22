@@ -69,7 +69,7 @@ public sealed class ItemListSourceRepository : ReportSource<ItemListRow>
     ];
 
     /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
-    private const int ItemReference = 2;
+    private const SubAccountReferenceType ItemReference = SubAccountReferenceType.Item;
 
     protected override IQueryable<ItemListRow> Build(ReportParameters parameters, ReportingDbContext db)
     {

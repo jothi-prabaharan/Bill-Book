@@ -11,7 +11,7 @@ public class SalesOrderTrackRow
     public DateOnly DocumentDate { get; set; }
     public string ContactName { get; set; } = null!;
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
-    public int FulfilmentStatus { get; set; }
+    public string FulfilmentStatus { get; set; } = null!;
     public decimal TotalAmount { get; set; }
 }
 
@@ -31,7 +31,7 @@ public sealed class SalesOrderTrackSourceRepository : ReportSource<SalesOrderTra
         ReportColumn.Of<SalesOrderTrackRow, DateOnly>("documentDate", ColumnDataType.Date, r => r.DocumentDate),
         ReportColumn.Of<SalesOrderTrackRow, string>("contactName", ColumnDataType.Text, r => r.ContactName, groupable: true),
         ReportColumn.Of<SalesOrderTrackRow, string>("status", ColumnDataType.Text, r => r.Status.ToString()),
-        ReportColumn.Of<SalesOrderTrackRow, int>("fulfilmentStatus", ColumnDataType.Number, r => r.FulfilmentStatus),
+        ReportColumn.Of<SalesOrderTrackRow, string>("fulfilmentStatus", ColumnDataType.Enum, r => r.FulfilmentStatus, groupable: true),
         ReportColumn.Of<SalesOrderTrackRow, decimal>("totalAmount", ColumnDataType.Money, r => r.TotalAmount, aggregate: AggregateFunction.Sum),
     ];
 
@@ -45,7 +45,7 @@ public sealed class SalesOrderTrackSourceRepository : ReportSource<SalesOrderTra
                    DocumentDate = s.DocumentDate,
                    ContactName = c.DisplayName,
                    Status = s.Status,
-                   FulfilmentStatus = s.FulfilmentStatus,
+                   FulfilmentStatus = s.FulfilmentStatus.ToString(),
                    TotalAmount = s.TotalAmount
                };
     }

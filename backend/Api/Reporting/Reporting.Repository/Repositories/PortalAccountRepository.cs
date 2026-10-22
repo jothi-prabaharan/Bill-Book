@@ -3,6 +3,7 @@ using Reporting.Repository;
 using Reporting.Repository.ReadModels;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Numbering;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.Repositories;
 
@@ -89,8 +90,8 @@ public sealed class PortalStatement
 /// </summary>
 public sealed class PortalAccountRepository
 {
-    /// <summary><c>acc.SubAccounts.ReferenceType</c> 1 — a contact.</summary>
-    private const int ContactReference = 1;
+    /// <summary><c>acc.SubAccounts.ReferenceType</c>: a contact's sub-account.</summary>
+    private const SubAccountReferenceType ContactReference = SubAccountReferenceType.Contact;
 
     private const int AssetType = 1;
     private const int LiabilityType = 2;

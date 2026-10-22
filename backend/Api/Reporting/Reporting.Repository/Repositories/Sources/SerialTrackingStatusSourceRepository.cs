@@ -40,7 +40,7 @@ public sealed class SerialTrackingStatusSourceRepository : ReportSource<SerialTr
                join w in db.Warehouses on s.WarehouseId equals w.WarehouseId into warehouses
                from w in warehouses.DefaultIfEmpty()
                // InStock = 0, Sold = 1, Returned = 2, Scrapped = 3
-               let isAvailable = s.Status == 0 || s.Status == 2
+               let isAvailable = s.Status == SerialStatus.InStock || s.Status == SerialStatus.Returned
                select new SerialTrackingStatusRow
                {
                    ItemSerialId = s.ItemSerialId,

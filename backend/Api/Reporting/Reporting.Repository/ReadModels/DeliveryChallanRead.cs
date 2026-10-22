@@ -1,5 +1,6 @@
 using System;
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -8,7 +9,7 @@ public class DeliveryChallanRead : OrgScopedEntity
 {
     public long DeliveryChallanId { get; set; }
     public long? SalesOrderId { get; set; }
-    public int ChallanType { get; set; } // enum mapped as int
+    public ChallanType ChallanType { get; set; }
     public DateOnly DispatchDate { get; set; }
     public string? VehicleNo { get; set; }
     public string? TransporterName { get; set; }

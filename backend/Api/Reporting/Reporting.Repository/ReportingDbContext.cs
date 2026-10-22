@@ -109,6 +109,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<SpendMoneyRead> SpendMoney => Set<SpendMoneyRead>();
     public DbSet<SpendMoneyDetailRead> SpendMoneyDetails => Set<SpendMoneyDetailRead>();
     public DbSet<TransferMoneyRead> TransferMoney => Set<TransferMoneyRead>();
+    public DbSet<TransactionRatioRead> TransactionRatios => Set<TransactionRatioRead>();
     public DbSet<GoodsReceiptDetailRead> GoodsReceiptDetails => Set<GoodsReceiptDetailRead>();
 
     public DbSet<FixedAssetRead> FixedAssets => Set<FixedAssetRead>();
@@ -366,6 +367,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<SpendMoneyRead>(modelBuilder, "SpendMoney", "acc", e => e.SpendMoneyId);
         MapRead<SpendMoneyDetailRead>(modelBuilder, "SpendMoneyDetails", "acc", e => e.SpendMoneyDetailId);
         MapRead<TransferMoneyRead>(modelBuilder, "TransferMoney", "acc", e => e.TransferMoneyId);
+        MapRead<TransactionRatioRead>(modelBuilder, "TransactionRatios", "acc", e => e.TransactionRatioId);
         MapRead<GoodsReceiptDetailRead>(modelBuilder, "GoodsReceiptDetails", "pur", e => e.GoodsReceiptDetailId);
 
         // The fixed-asset register. Accounting stores its four enums by name, so
@@ -403,6 +405,47 @@ public class ReportingDbContext : TenantDbContext
         modelBuilder.Entity<BillRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<PurchaseOrderRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<GoodsReceiptRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+
+        // The owning services store these enums by name, so each is read as its
+        // name. Read as an int, a comparison failed in SQL with "character
+        // varying = integer" and a projection failed on the first row (TK-213).
+        modelBuilder.Entity<StockMovementRead>(b =>
+        {
+            b.Property(e => e.MovementType).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.Direction).HasConversion<string>().HasMaxLength(3);
+            b.Property(e => e.CostingStatus).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.LedgerStatus).HasConversion<string>().HasMaxLength(14);
+        });
+        modelBuilder.Entity<ItemRead>(b =>
+        {
+            b.Property(e => e.ItemProfile).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.ItemType).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.TaxPreference).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.CostingType).HasConversion<string>().HasMaxLength(25);
+        });
+        modelBuilder.Entity<ItemCategoryRead>(b =>
+        {
+            b.Property(e => e.DefaultItemProfile).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.DefaultCostingType).HasConversion<string>().HasMaxLength(20);
+        });
+        modelBuilder.Entity<ItemSerialRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+        modelBuilder.Entity<WarehouseRead>(b =>
+        {
+            b.Property(e => e.WarehouseType).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.StorageType).HasConversion<string>().HasMaxLength(15);
+        });
+        modelBuilder.Entity<SubAccountRead>(b =>
+        {
+            b.Property(e => e.ReferenceType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Purpose).HasConversion<string>().HasMaxLength(20);
+        });
+        modelBuilder.Entity<JournalRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+        modelBuilder.Entity<SalesOrderRead>().Property(e => e.FulfilmentStatus).HasConversion<string>().HasMaxLength(16);
+        modelBuilder.Entity<DeliveryChallanRead>().Property(e => e.ChallanType).HasConversion<string>().HasMaxLength(16);
+        modelBuilder.Entity<PurchaseOrderRead>().Property(e => e.FulfilmentStatus).HasConversion<string>().HasMaxLength(16);
+        modelBuilder.Entity<ReceiveMoneyRead>().Property(e => e.PaymentMethod).HasConversion<string>().HasMaxLength(20);
+        modelBuilder.Entity<SpendMoneyRead>().Property(e => e.PaymentMethod).HasConversion<string>().HasMaxLength(20);
+        modelBuilder.Entity<ContactLicenceRead>().Property(e => e.LicenceType).HasConversion<string>().HasMaxLength(20);
         modelBuilder.Entity<DepreciationScheduleRead>()
             .Property(e => e.ScheduleType).HasConversion<string>().HasMaxLength(20);
         modelBuilder.Entity<DepreciationScheduleRead>()

@@ -58,8 +58,8 @@ public sealed class BatchTrackingStatusSourceRepository : ReportSource<BatchTrac
                    ProductCategory = c != null ? c.CategoryName : null,
                    ManufacturedDate = b.ManufactureDate,
                    ExpiryDate = b.ExpiryDate,
-                   BatchQuantity = g.Where(x => x.Direction == 1).Sum(x => x.Quantity),
-                   AvailableQuantity = g.Sum(x => x.Direction == 1 ? x.Quantity : -x.Quantity),
+                   BatchQuantity = g.Where(x => x.Direction == StockDirection.In).Sum(x => x.Quantity),
+                   AvailableQuantity = g.Sum(x => x.Direction == StockDirection.In ? x.Quantity : -x.Quantity),
                    CostingMethod = i.CostingType.ToString(),
                    Warehouse = w != null ? w.WarehouseName : "Unknown"
                };

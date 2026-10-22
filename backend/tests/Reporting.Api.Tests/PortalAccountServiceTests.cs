@@ -1,4 +1,5 @@
 using Reporting.Api.Services;
+using Reporting.Entity.Enums;
 using Reporting.Repository.Repositories;
 using Reporting.Repository.ReadModels;
 using Shared.Kernel.Documents;
@@ -176,7 +177,7 @@ public sealed class PortalAccountServiceTests
             SubAccountId = id,
             AccountId = accountTypeId == 1 ? 1100 : 2100,
             AccountTypeId = accountTypeId,
-            ReferenceType = 1,
+            ReferenceType = SubAccountReferenceType.Contact,
             ReferenceId = contactId,
             SubAccountName = $"Contact {contactId}",
         });

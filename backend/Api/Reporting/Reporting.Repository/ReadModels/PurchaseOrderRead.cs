@@ -1,5 +1,6 @@
 using System;
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -8,7 +9,7 @@ public class PurchaseOrderRead : OrgScopedEntity
 {
     public long PurchaseOrderId { get; set; }
     public DateOnly? ExpectedDate { get; set; }
-    public int FulfilmentStatus { get; set; } // enum mapped as int
+    public PurchaseFulfilmentStatus FulfilmentStatus { get; set; }
 
     public string TransactionTypeCode { get; set; } = null!;
     public string DocumentNo { get; set; } = null!;

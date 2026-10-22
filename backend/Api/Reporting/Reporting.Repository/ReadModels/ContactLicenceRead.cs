@@ -1,5 +1,6 @@
 #pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -23,7 +24,7 @@ public class ContactLicenceRead : OrgScopedEntity
     public long ContactId { get; set; }
 
     /// <summary>Matches <c>LicenceType</c> in Master.</summary>
-    public int LicenceType { get; set; }
+    public LicenceType LicenceType { get; set; }
 
     public string LicenceNumber { get; set; }
 

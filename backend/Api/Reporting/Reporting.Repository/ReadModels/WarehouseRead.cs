@@ -2,6 +2,7 @@
 
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Validation;
+using Reporting.Entity.Enums;
 
 namespace Reporting.Repository.ReadModels;
 
@@ -19,9 +20,9 @@ public class WarehouseRead : OrgScopedEntity
 
     public string WarehouseCode { get; set; }
     public string WarehouseName { get; set; }
-    public int WarehouseType { get; set; }
+    public WarehouseType WarehouseType { get; set; }
     /// <summary>Cold chain is not a note: breaking it makes the stock unsaleable.</summary>
-    public int StorageType { get; set; }
+    public StorageCondition StorageType { get; set; }
     public string? AddressLine1 { get; set; }
 
     public string? AddressLine2 { get; set; }
