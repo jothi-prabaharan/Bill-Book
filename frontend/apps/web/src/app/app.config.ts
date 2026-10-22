@@ -10,6 +10,7 @@ import {
   resolveApiBaseUrl,
 } from '@bill-book/api-client';
 import { environment } from '../environments/environment';
+import { planLimitInterceptor } from '@bill-book/app-shell';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -26,6 +27,10 @@ export const appConfig: ApplicationConfig = {
     // Order matters: rewrite the URL onto the configured origin first, then
     // attach the bearer token. portalTokenInterceptor attaches the portal token
     // (only for /api/portal/ requests) and must run after authInterceptor.
-    provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor, portalTokenInterceptor])),
+    // planLimitInterceptor only reads what comes back: it opens the upgrade
+    // prompt when a document is refused at the plan's monthly limit (TK-210).
+    provideHttpClient(
+      withInterceptors([apiBaseUrlInterceptor, authInterceptor, portalTokenInterceptor, planLimitInterceptor]),
+    ),
   ],
 };

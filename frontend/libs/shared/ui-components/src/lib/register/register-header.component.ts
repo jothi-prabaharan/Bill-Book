@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { InfoTooltipComponent } from '../info-tooltip/info-tooltip.component';
+import { QuotaBadgeComponent } from '../quota-badge/quota-badge.component';
 import { onCreateRequest } from './create-request';
 
 /**
@@ -11,6 +12,11 @@ import { onCreateRequest } from './create-request';
  * for a page that opens its editor in place. Anything else the heading needs —
  * a link to a related report — is projected beside it.
  *
+ * A register of a counted document (a quote, order, invoice or credit note, or a
+ * purchase order, receipt, bill or debit note) wears a badge of what is left of the
+ * plan's monthly limit, chosen by its `code`, so no register has to ask for it
+ * (TK-210).
+ *
  * The secondary menu's + asks for a new record with `?action=create`; the heading
  * answers it as if its own button had been pressed, so every register that uses
  * it opens its form from the menu with nothing of its own to wire (TK-189).
@@ -19,7 +25,7 @@ import { onCreateRequest } from './create-request';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-register-header',
   standalone: true,
-  imports: [RouterLink, InfoTooltipComponent],
+  imports: [RouterLink, InfoTooltipComponent, QuotaBadgeComponent],
   templateUrl: './register-header.component.html',
   styleUrl: './register-header.component.scss',
 })

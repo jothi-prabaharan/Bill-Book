@@ -28,7 +28,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public string? SkipReason { get; private set; }
 
-    private string ConnectionString =>
+    public string ConnectionString =>
         Environment.GetEnvironmentVariable("PURCHASE_TEST_DB") ?? DefaultConnection;
 
     public async Task InitializeAsync()

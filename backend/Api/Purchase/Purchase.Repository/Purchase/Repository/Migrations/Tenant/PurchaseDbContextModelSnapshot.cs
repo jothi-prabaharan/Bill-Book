@@ -2678,6 +2678,54 @@ namespace Purchase.Repository.Migrations.Tenant
                     b.ToTable("ErrorLogs", "pur");
                 });
 
+            modelBuilder.Entity("Shared.Kernel.Licensing.MonthlyUsage", b =>
+                {
+                    b.Property<long>("MonthlyUsageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MonthlyUsageId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DocumentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("MonthlyUsageId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.HasIndex("OrgId", "PeriodStart")
+                        .IsUnique();
+
+                    b.ToTable("MonthlyUsages", "pur");
+                });
+
             modelBuilder.Entity("Shared.Kernel.Numbering.NumberingSeries", b =>
                 {
                     b.Property<long>("NumberingSeriesId")

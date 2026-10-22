@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Kernel.Licensing;
 
 namespace Shared.Kernel.Errors;
 
@@ -31,6 +32,16 @@ public sealed class ApiExceptionFilter : IExceptionFilter
         }
 
         Exception exception = context.Exception;
+
+        // A plan's monthly limit is an expected answer, not a failure: a 409 with
+        // the figures, nothing in the error log (TK-210).
+        if (PlanLimitReachedException.Find(exception) is PlanLimitReachedException refusal)
+        {
+            context.Result = new ConflictObjectResult(refusal.Limit);
+            context.ExceptionHandled = true;
+            return;
+        }
+
         TranslatedError translated = DbExceptionTranslator.Translate(exception);
         ApiErrorDiagnostics diagnostics = DbExceptionTranslator.Describe(exception);
 

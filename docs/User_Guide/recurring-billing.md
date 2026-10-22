@@ -28,6 +28,7 @@ The background worker checks every hour and raises whatever has fallen due. An o
 
 - **Catching up:** if the worker was down, it catches up each missed occurrence on its own date, up to 12 per schedule per run.
 - **Refused occurrences:** if an occurrence is refused (a credit limit, a missing rate), nothing is raised. The reason shows on the schedule, and the next run tries again.
+- **The plan's monthly limit:** a Trial or Professional branch may create 1,000 Sales and 1,000 Purchase documents a month, and an occurrence counts as one. When the month is full the occurrence is **skipped**, not failed: nothing is raised, the schedule keeps its due date with the plan's sentence on it, and it is raised on the first run after a place is free, which is the first of next month. Elite has no limit.
 - **Refused posting:** if posting is refused, the document stays a draft and the reason shows beside it under **Raised**.
 
 ## Pausing and ending

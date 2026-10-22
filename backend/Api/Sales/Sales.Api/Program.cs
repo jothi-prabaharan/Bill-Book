@@ -15,6 +15,7 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Secrets;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Licensing;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tax;
@@ -59,6 +60,18 @@ builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantCon
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
+
+// The plan's monthly limit on Sales documents (D-69, TK-210). The interceptor
+// counts every counted document inserted through SaveChanges, so no create path
+// has to remember to.
+builder.Services.AddScoped(sp => new DocumentQuotaInterceptor(
+    PlanLimitKind.SalesTransactions,
+    UsageRepository.CountedDocuments,
+    sp.GetRequiredService<IPlanLimitProvider>(),
+    sp.GetRequiredService<ITenantContext>(),
+    sp.GetRequiredService<IServiceScopeFactory>(),
+    sp.GetRequiredService<TimeProvider>(),
+    sp.GetRequiredService<ILogger<DocumentQuotaInterceptor>>()));
 // Key Vault when KeyVault:Uri is set, configuration otherwise — and a
 // startup failure in Production if neither, rather than serving requests off
 // whatever configuration happens to hold. See SecretStoreRegistration.
@@ -77,7 +90,8 @@ builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
         });
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
-        sp.GetRequiredService<RlsConnectionInterceptor>());
+        sp.GetRequiredService<RlsConnectionInterceptor>(),
+        sp.GetRequiredService<DocumentQuotaInterceptor>());
 });
 
 // Uploaded files. Blob Storage, Cloud Storage or local disk, chosen by which
@@ -141,6 +155,16 @@ builder.Services.AddHttpClient<IBranchSettingsProvider, HttpBranchSettingsProvid
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
+
+// What the plan allows a month, on a one-minute cache so an operator's plan switch
+// is in force within the minute (TK-210). Unreachable means unknown, and unknown is
+// never a limit.
+builder.Services.AddHttpClient<IPlanLimitProvider, HttpPlanLimitProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddScoped<UsageRepository>();
 
 // Who the branch is, for the seller block on a printed tax invoice. Same call
 // and the same six-hour cache as the branch settings above; mst.Organizations is

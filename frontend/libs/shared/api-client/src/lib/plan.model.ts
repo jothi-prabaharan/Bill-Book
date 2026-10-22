@@ -127,3 +127,71 @@ export function comparePlans(summary: PlanSummary): PlanComparisonRow[] {
     { label: 'Purchase documents a month', current: figure(summary.monthlyPurchaseTransactionLimit), elite: figure(null) },
   ];
 }
+
+/** The two counted sides of a plan's monthly limit: documents are counted for Sales and for Purchase, apart (D-69). */
+export type TransactionKind = 'SalesTransactions' | 'PurchaseTransactions';
+
+/** What a branch has created of one kind of document this month, against what its plan allows (TK-210). */
+export interface MonthlyUsage {
+  kind: TransactionKind;
+  /** Trial, Professional or Elite; null when the plan could not be read. */
+  plan: string | null;
+  /** The first day of the month counted, in India Standard Time. */
+  periodStart: string;
+  used: number;
+  /** Null is no limit: Elite, and a branch whose plan could not be read. */
+  limit: number | null;
+  remaining: number | null;
+}
+
+/** The document codes that count, and which side. A delivery challan (`DLC`) is not one of them. */
+const COUNTED_CODES: Readonly<Record<string, TransactionKind>> = {
+  QTE: 'SalesTransactions',
+  SOR: 'SalesTransactions',
+  INV: 'SalesTransactions',
+  CRN: 'SalesTransactions',
+  POR: 'PurchaseTransactions',
+  GRN: 'PurchaseTransactions',
+  BIL: 'PurchaseTransactions',
+  DBN: 'PurchaseTransactions',
+};
+
+/** Which side a register's documents are counted on, or null for one that is not counted at all. */
+export function quotaKindOf(code: string): TransactionKind | null {
+  return COUNTED_CODES[code.trim().toUpperCase()] ?? null;
+}
+
+/** The badge a register wears while its branch has a limit: places left, and the tone that says how few. */
+export interface QuotaBadge {
+  tone: 'info' | 'warning' | 'danger';
+  text: string;
+  /** The full sentence, for the tooltip and a screen reader. */
+  title: string;
+}
+
+/**
+ * "Sales: 88 of 1,000 left". A warning when a fifth or less is left, and a
+ * danger once none is. Null when the branch has no limit, which is nothing to
+ * count down.
+ */
+export function quotaBadge(usage: MonthlyUsage): QuotaBadge | null {
+  // Not a number is no limit, whether the server said null or said nothing.
+  if (typeof usage.limit !== 'number' || typeof usage.remaining !== 'number') {
+    return null;
+  }
+
+  const side = usage.kind === 'PurchaseTransactions' ? 'Purchase' : 'Sales';
+  const limit = COUNT.format(usage.limit);
+  const plan = usage.plan ? `${usage.plan} plan: ` : '';
+  const title = `${plan}${COUNT.format(usage.used)} of ${limit} ${side} transactions used this month.`;
+
+  if (usage.remaining === 0) {
+    return { tone: 'danger', text: `${side}: limit reached`, title };
+  }
+
+  return {
+    tone: usage.remaining * 5 <= usage.limit ? 'warning' : 'info',
+    text: `${side}: ${COUNT.format(usage.remaining)} of ${limit} left`,
+    title,
+  };
+}

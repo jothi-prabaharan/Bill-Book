@@ -361,6 +361,9 @@ public sealed class PlanLimitTests
 
         Assert.Equal((5, 1000, 1000, LicenseType.Pro), (pro.MaxUsers, pro.MonthlySalesTransactionLimit, pro.MonthlyPurchaseTransactionLimit, pro.LicenseType));
         Assert.Equal((null, null, null), (unbilled.MaxUsers, unbilled.MonthlySalesTransactionLimit, unbilled.MonthlyPurchaseTransactionLimit));
+
+        // Sales and Purchase name the plan in a refusal from here, and keep no copy of the mapping (TK-210).
+        Assert.Equal(("Professional", "Elite"), (pro.PlanName, unbilled.PlanName));
     }
 
     // ---- Asking for the higher plan ---------------------------------------------

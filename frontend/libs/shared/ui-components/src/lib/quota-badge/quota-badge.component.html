@@ -1,0 +1,10 @@
+@if (badge(); as current) {
+  <span
+    class="tag"
+    [class.tag-info]="current.tone === 'info'"
+    [class.tag-warning]="current.tone === 'warning'"
+    [class.tag-danger]="current.tone === 'danger'"
+    [attr.title]="current.title"
+    [attr.aria-label]="current.title"
+  >{{ current.text }}</span>
+}

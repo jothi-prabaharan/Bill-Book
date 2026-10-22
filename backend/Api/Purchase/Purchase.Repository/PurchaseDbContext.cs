@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.TableEntities;
 using Shared.Kernel.Documents;
+using Shared.Kernel.Licensing;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 
@@ -87,6 +88,12 @@ public class PurchaseDbContext : TenantDbContext
 
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
+
+    /// <summary>
+    /// The month's count of documents, for the plan's limit (D-69, TK-210).
+    /// Written only by <see cref="DocumentQuotaInterceptor"/>.
+    /// </summary>
+    public DbSet<MonthlyUsage> MonthlyUsages => Set<MonthlyUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -440,6 +447,14 @@ public class PurchaseDbContext : TenantDbContext
             b.HasIndex(e => e.BillId).IsUnique();
             b.HasOne<RecurringBillSchedule>().WithMany().HasForeignKey(e => e.RecurringBillScheduleId).OnDelete(DeleteBehavior.Cascade);
             b.HasOne<Bill>().WithMany().HasForeignKey(e => e.BillId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // One row a branch and month: the guarded update that takes a place, and the
+        // first-of-the-month insert that races for it, both rely on this key.
+        modelBuilder.Entity<MonthlyUsage>(b =>
+        {
+            b.HasKey(e => e.MonthlyUsageId);
+            b.HasIndex(e => new { e.OrgId, e.PeriodStart }).IsUnique();
         });
 
         base.OnModelCreating(modelBuilder);

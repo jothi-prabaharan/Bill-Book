@@ -40,6 +40,7 @@
          database the same three questions of every schema, and seven copies is
          how the answers drift. -->
     <Compile Include="..\Shared\RlsAudit.cs" Link="RlsAudit.cs" />
+    <Compile Include="..\Shared\QuotaHarness.cs" Link="QuotaHarness.cs" />
   </ItemGroup>
 
 </Project>

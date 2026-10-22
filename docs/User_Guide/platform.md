@@ -194,6 +194,24 @@ A customer is on one of three plans (D-68, TK-209). The plan is the licence's ty
 
 An empty figure on the licence means **no limit**, which only Elite has. Every start fills a missing figure on a Trial or Professional licence with its plan's own and clears the figures on an Elite one; a figure an operator set on anything else is left alone. An Internal or Demo customer is Elite and is never held to a limit. The 10,000 users such a licence once carried in place of "no limit" are gone.
 
+### Documents a month
+
+A Trial or Professional branch may create **1,000 Sales documents and 1,000 Purchase documents in a calendar month** (D-69, TK-210). The two are counted apart: a branch that has filled its Sales month still has its thousand purchase documents. Elite is never counted or refused.
+
+| Counted | Not counted |
+|---|---|
+| Sales: quotes, sales orders, invoices (a POS sale is an invoice) and credit notes | Delivery challans |
+| Purchase: purchase orders, goods receipts, bills and debit notes | Changing a document that already exists |
+
+- **When a document counts.** The moment it is created, **drafts and voided ones included**, in the **Indian calendar month** of its creation: the month turns at midnight in India, not in UTC. Converting a document counts as the new document it creates: an order from a quote, an invoice from an order, a bill from a goods receipt.
+- **Every way of creating one is counted.** The count is taken when the document is saved, so the form, a conversion, a till and recurring billing all pass through it, and a way added later does too.
+- **The document past the limit is refused**, with `409` and the plan's words: *Professional plan Sales transaction limit reached (maximum 1,000 Sales transactions this month). Upgrade to the Elite Plan for unlimited transactions.* The answer carries the figures (`code` `PlanLimitReached`, `kind` `SalesTransactions` or `PurchaseTransactions`, `plan`, `limit`, `used`), and the form shows the sentence like any refusal. **The upgrade prompt opens as well**, from one place in the app, so no form has handling of its own.
+- **Counted inside the document's own save.** Two people creating the last document at once cannot both get it, and a document that fails to save gives its place back: the count and the document stand or fall together.
+- **Recurring billing skips and logs.** A schedule whose occurrence would pass the limit raises nothing: the schedule stays due with the plan's sentence on it, the run reports the occurrence as *skipped*, and it is raised on the first run after a place is free, which is the first of next month.
+- **The limits are read from the licence through Master, cached for a minute**, so a plan an operator has just switched is in force within the minute. If Master cannot be reached the limit is unknown, and unknown is never a limit: nothing is counted or refused until it answers.
+
+**What is left shows on the screens.** Beside the title of each Sales and Purchase register a badge reads, for example, **Sales: 88 of 1,000 left**. It is a warning when a fifth or less is left and turns red when none is; an Elite branch has no badge, and a register of delivery challans never does. `GET /api/sales/usage` and `GET /api/purchase/usage` (*Sales: view*, *Purchase: view*) return what the signed-in branch has used this month, its limit and what remains.
+
 ## Expiry blocks the app, never the login
 
 This is the important rule, and it is deliberate.

@@ -187,6 +187,7 @@ public sealed class OrgContextRepository
             // none, which is what an empty limit means.
             MaxUsers = neverLapses ? null : row.MaxUsers,
             LicenseType = row.LicenseType,
+            PlanName = PlanCatalogRepository.Name(row.LicenseType),
             MonthlySalesTransactionLimit = neverLapses ? null : row.SalesLimit,
             MonthlyPurchaseTransactionLimit = neverLapses ? null : row.PurchaseLimit,
             FinancialYearStartMonth = row.FinancialYearStartMonth,

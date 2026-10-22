@@ -325,6 +325,13 @@ public class OrgContextResponse
     /// <summary>The licence's type; the plan a person reads is named from it (TK-209).</summary>
     public LicenseType LicenseType { get; set; }
 
+    /// <summary>
+    /// The plan as a person reads it: Trial, Professional or Elite. Here so a
+    /// service refusing a document at its limit names the plan without keeping a
+    /// copy of the mapping from the licence's type (TK-210).
+    /// </summary>
+    public string PlanName { get; set; } = null!;
+
     /// <summary>Sales documents the branch may create in a calendar month; null is no limit (TK-210).</summary>
     public int? MonthlySalesTransactionLimit { get; set; }
 

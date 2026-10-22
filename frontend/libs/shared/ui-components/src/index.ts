@@ -38,6 +38,7 @@ export * from './lib/confirm-dialog/confirm-dialog.component';
 
 export * from './lib/icon-button/icon-button.component';
 
+export * from './lib/quota-badge/quota-badge.component';
 export * from './lib/upgrade-dialog/upgrade-dialog.model';
 export * from './lib/upgrade-dialog/upgrade-dialog.service';
 export * from './lib/upgrade-dialog/upgrade-dialog.component';

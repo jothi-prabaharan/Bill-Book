@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Licensing;
 using Shared.Kernel.Tenancy;
 
 namespace Shared.Kernel.Errors;
@@ -52,6 +53,15 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         if (httpContext.RequestAborted.IsCancellationRequested
             && exception is OperationCanceledException)
         {
+            return true;
+        }
+
+        // A plan's monthly limit is an expected answer, not a failure (TK-210).
+        if (PlanLimitReachedException.Find(exception) is PlanLimitReachedException refusal
+            && !httpContext.Response.HasStarted)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+            await httpContext.Response.WriteAsJsonAsync(refusal.Limit, cancellationToken);
             return true;
         }
 

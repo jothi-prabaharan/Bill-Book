@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.TableEntities;
 using Shared.Kernel.Documents;
+using Shared.Kernel.Licensing;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 
@@ -130,6 +131,10 @@ public class SalesDbContext : TenantDbContext
     public DbSet<TableReservation> TableReservations => Set<TableReservation>();
 
     public DbSet<WaitingListEntry> WaitingListEntries => Set<WaitingListEntry>();
+
+    // The month's count of documents, for the plan's limit (D-69, TK-210). Written
+    // only by DocumentQuotaInterceptor.
+    public DbSet<MonthlyUsage> MonthlyUsages => Set<MonthlyUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -637,6 +642,14 @@ public class SalesDbContext : TenantDbContext
             b.HasOne<RestaurantTable>().WithMany().HasForeignKey(e => e.RestaurantTableId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne<RestaurantOrder>().WithMany().HasForeignKey(e => e.RestaurantOrderId).OnDelete(DeleteBehavior.Restrict);
             b.ToTable(t => t.HasCheckConstraint("chk_waiting_list_party", "\"PartySize\" BETWEEN 1 AND 500"));
+        });
+
+        // One row a branch and month: the guarded update that takes a place, and the
+        // first-of-the-month insert that races for it, both rely on this key.
+        modelBuilder.Entity<MonthlyUsage>(b =>
+        {
+            b.HasKey(e => e.MonthlyUsageId);
+            b.HasIndex(e => new { e.OrgId, e.PeriodStart }).IsUnique();
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

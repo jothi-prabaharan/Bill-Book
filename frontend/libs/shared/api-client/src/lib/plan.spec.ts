@@ -2,7 +2,18 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { comparePlans, PlanLimit, planLimitOf, PlanSummary, seatBanner, seatsFull, userLimitOf } from './plan.model';
+import {
+  comparePlans,
+  MonthlyUsage,
+  PlanLimit,
+  planLimitOf,
+  PlanSummary,
+  quotaBadge,
+  quotaKindOf,
+  seatBanner,
+  seatsFull,
+  userLimitOf,
+} from './plan.model';
 import { PlanService } from './plan.service';
 
 const professional: PlanSummary = {
@@ -95,6 +106,65 @@ describe('Plan limits', () => {
   });
 });
 
+const salesUsage = (used: number, limit: number | null = 1000): MonthlyUsage => ({
+  kind: 'SalesTransactions',
+  plan: 'Professional',
+  periodStart: '2026-10-01',
+  used,
+  limit,
+  remaining: limit === null ? null : Math.max(0, limit - used),
+});
+
+describe('Monthly document limits', () => {
+  it('QUOTA-01: a register counts down the places left, on its own side', () => {
+    expect(quotaBadge(salesUsage(412))).toEqual({
+      tone: 'info',
+      text: 'Sales: 588 of 1,000 left',
+      title: 'Professional plan: 412 of 1,000 Sales transactions used this month.',
+    });
+
+    expect(quotaBadge({ ...salesUsage(40), kind: 'PurchaseTransactions' })?.text).toBe('Purchase: 960 of 1,000 left');
+  });
+
+  it('QUOTA-02: a fifth left is a warning, none left is a danger', () => {
+    expect(quotaBadge(salesUsage(799))?.tone).toBe('info');
+    expect(quotaBadge(salesUsage(800))?.tone).toBe('warning');
+    expect(quotaBadge(salesUsage(999))?.tone).toBe('warning');
+
+    expect(quotaBadge(salesUsage(1000))).toEqual({
+      tone: 'danger',
+      text: 'Sales: limit reached',
+      title: 'Professional plan: 1,000 of 1,000 Sales transactions used this month.',
+    });
+  });
+
+  it('QUOTA-03: a branch with no limit has nothing to count down', () => {
+    expect(quotaBadge(salesUsage(5000, null))).toBeNull();
+    expect(quotaBadge({ ...salesUsage(3, null), plan: null })).toBeNull();
+
+    // An answer with no figures in it is read the same way, not drawn as NaN.
+    expect(quotaBadge({} as MonthlyUsage)).toBeNull();
+  });
+
+  it('QUOTA-04: a plan that could not be read is not named in the tooltip', () => {
+    expect(quotaBadge({ ...salesUsage(10), plan: null })?.title).toBe('10 of 1,000 Sales transactions used this month.');
+  });
+
+  it('QUOTA-05: the code of a register says which side it is counted on, and a challan is not counted', () => {
+    for (const code of ['QTE', 'SOR', 'INV', 'CRN']) {
+      expect(quotaKindOf(code)).toBe('SalesTransactions');
+    }
+    for (const code of ['POR', 'GRN', 'BIL', 'DBN']) {
+      expect(quotaKindOf(code)).toBe('PurchaseTransactions');
+    }
+
+    expect(quotaKindOf('inv')).toBe('SalesTransactions');
+    expect(quotaKindOf('DLC')).toBeNull();
+    expect(quotaKindOf('')).toBeNull();
+    expect(quotaKindOf('JRN')).toBeNull();
+  });
+});
+
 describe('PlanService', () => {
   let service: PlanService;
   let http: HttpTestingController;
@@ -111,6 +181,16 @@ describe('PlanService', () => {
     const pending = service.summary();
     http.expectOne('/api/plan').flush(professional);
     expect((await pending).maxUsers).toBe(5);
+  });
+
+  it('QUOTA-06: reads Sales and Purchase usage from their own services', async () => {
+    const sales = service.usage('SalesTransactions');
+    http.expectOne('/api/sales/usage').flush(salesUsage(10));
+    expect((await sales).used).toBe(10);
+
+    const purchase = service.usage('PurchaseTransactions');
+    http.expectOne('/api/purchase/usage').flush({ ...salesUsage(7), kind: 'PurchaseTransactions' });
+    expect((await purchase).kind).toBe('PurchaseTransactions');
   });
 
   it('PLANUI-07: asks for a higher plan and returns the server\'s words', async () => {

@@ -109,6 +109,9 @@ public class RunRecurringResponse
     public int Posted { get; set; }
 
     public int Failed { get; set; }
+
+    /// <summary>Occurrences not raised because the plan's monthly limit on Purchase documents was reached (TK-210).</summary>
+    public int Skipped { get; set; }
 }
 
 public enum RecurringScheduleOutcome

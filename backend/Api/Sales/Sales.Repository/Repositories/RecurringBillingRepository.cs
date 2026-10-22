@@ -1,9 +1,11 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Shared.Kernel.Documents;
+using Shared.Kernel.Licensing;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Recurring;
 using Shared.Kernel.Tenancy;
@@ -30,6 +32,11 @@ namespace Sales.Repository.Repositories;
 /// limit, a closed period — leaves the invoice as a draft for someone to look at,
 /// with the reason on the run, rather than undoing the invoice and trying again
 /// every hour.
+///
+/// <b>The plan's monthly limit skips an occurrence</b> and does not fail it
+/// (D-69, TK-210): the invoice is not raised, the schedule stays due with the
+/// plan's sentence on it, and the run counts it as skipped. It is raised on the
+/// first run after a place is free, which is the first of next month.
 /// </summary>
 public sealed class RecurringBillingRepository
 {
@@ -37,14 +44,20 @@ public sealed class RecurringBillingRepository
     private readonly IInvoiceRepository _invoices;
     private readonly IBaseCurrencyProvider _baseCurrency;
     private readonly TimeProvider _clock;
+    private readonly ILogger<RecurringBillingRepository>? _log;
 
     public RecurringBillingRepository(
-        SalesDbContext db, IInvoiceRepository invoices, IBaseCurrencyProvider baseCurrency, TimeProvider clock)
+        SalesDbContext db,
+        IInvoiceRepository invoices,
+        IBaseCurrencyProvider baseCurrency,
+        TimeProvider clock,
+        ILogger<RecurringBillingRepository>? log = null)
     {
         _db = db;
         _invoices = invoices;
         _baseCurrency = baseCurrency;
         _clock = clock;
+        _log = log;
     }
 
     private DateOnly Today => DateOnly.FromDateTime(_clock.GetLocalNow().DateTime);
@@ -348,9 +361,25 @@ public sealed class RecurringBillingRepository
             autoPost = schedule.AutoPost;
 
             SaveInvoiceRequest? request = await CopyTemplateAsync(schedule, occurrence, ct);
-            InvoiceResult created = request is null
-                ? new InvoiceResult(InvoiceOutcome.NotFound, Detail: "The invoice this schedule repeats no longer exists.")
-                : await _invoices.CreateAsync(request, ct);
+
+            InvoiceResult created;
+            try
+            {
+                created = request is null
+                    ? new InvoiceResult(InvoiceOutcome.NotFound, Detail: "The invoice this schedule repeats no longer exists.")
+                    : await _invoices.CreateAsync(request, ct);
+            }
+            catch (Exception ex) when (PlanLimitReachedException.Find(ex) is PlanLimitReachedException refusal)
+            {
+                // The plan's monthly limit: skip, leave the schedule due, say so on it (D-69).
+                await tx.RollbackAsync(ct);
+                await RecordErrorAsync(scheduleId, refusal.Limit.Message, ct);
+                _log?.LogInformation(
+                    "Recurring invoice schedule {ScheduleId} skipped for {Occurrence}: {Message}",
+                    scheduleId, occurrence, refusal.Limit.Message);
+                response.Skipped++;
+                return OccurrenceOutcome.Failed;
+            }
 
             if (created.Outcome != InvoiceOutcome.Ok)
             {

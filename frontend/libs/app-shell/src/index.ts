@@ -17,6 +17,7 @@ export * from './lib/favourites.service';
 export * from './lib/notifications.service';
 export * from './lib/scan-to-open.service';
 export * from './lib/pwa-install.service';
+export * from './lib/plan-limit.interceptor';
 
 // Navigation contracts: the server's menu tree, and the static fallback
 export * from './lib/menu.models';
