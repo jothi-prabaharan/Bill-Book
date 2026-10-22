@@ -106,10 +106,10 @@ public sealed class PlanLimitTests
             [PlanRepository.UpgradeRequestEmailKey] = upgradeEmail,
         }).Build();
 
-    private static UserRepository Users(AdminDbContext db, RecordingEmailSender mail) =>
+    internal static UserRepository Users(AdminDbContext db, RecordingEmailSender mail) =>
         new(db, mail, new OrgContextRepository(db, TimeProvider.System), Config(), TimeProvider.System);
 
-    private static PlanRepository Plans(AdminDbContext db, RecordingEmailSender mail, string? upgradeEmail = "ops@platform.test") =>
+    internal static PlanRepository Plans(AdminDbContext db, RecordingEmailSender mail, string? upgradeEmail = "ops@platform.test") =>
         new(db, mail, Config(upgradeEmail), NullLogger<PlanRepository>.Instance);
 
     /// <summary>
@@ -117,7 +117,7 @@ public sealed class PlanLimitTests
     /// <paramref name="seated"/> users, the last <paramref name="revoked"/> of
     /// whom have been revoked.
     /// </summary>
-    private static async Task<(Guid CustomerId, Guid OrgId, List<Guid> UserIds)> SeedAsync(
+    internal static async Task<(Guid CustomerId, Guid OrgId, List<Guid> UserIds)> SeedAsync(
         AdminDbContext db, LicenseType plan, int seated, int revoked = 0, CustomerKind kind = CustomerKind.Standard)
     {
         var customerId = Guid.NewGuid();
@@ -190,10 +190,10 @@ public sealed class PlanLimitTests
         return (customerId, orgId, userIds);
     }
 
-    private static InviteUserRequest Invitation(string email, int roleId) =>
+    internal static InviteUserRequest Invitation(string email, int roleId) =>
         new() { Email = email, DisplayName = "Newcomer", RoleId = roleId };
 
-    private static Task<int> ViewerRoleAsync(AdminDbContext db) =>
+    internal static Task<int> ViewerRoleAsync(AdminDbContext db) =>
         db.Roles.Where(r => r.IsSystemRole && r.SystemName == "Viewer").Select(r => r.RoleId).SingleAsync();
 
     [SkippableFact]

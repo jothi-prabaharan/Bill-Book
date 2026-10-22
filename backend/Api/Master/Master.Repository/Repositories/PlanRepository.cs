@@ -137,6 +137,67 @@ public sealed class PlanRepository
     }
 
     /// <summary>
+    /// Moves a customer to Professional or Elite, as a platform operator (D-70,
+    /// TK-211). The licence takes that plan's own limits at once, the customer's
+    /// tier follows so the token and the support channel agree with the licence, a
+    /// customer on its trial becomes an active one, and the upgrade requests this
+    /// answers are closed.
+    ///
+    /// <b>It changes the plan and nothing else.</b> The licence's expiry is the
+    /// renewal's to move, and a customer's data is not moved to a database of its
+    /// own: Elite's dedicated database is chosen when a customer is made.
+    /// </summary>
+    public async Task<SwitchPlanResult> SwitchPlanAsync(Guid customerId, LicenseType plan, CancellationToken ct)
+    {
+        if (plan is not (LicenseType.Pro or LicenseType.Elite))
+        {
+            return new SwitchPlanResult(SwitchPlanOutcome.NotSold, null);
+        }
+
+        License? licence = await _db.Licenses.FirstOrDefaultAsync(l => l.CustomerId == customerId, ct);
+        Master.Entity.TableEntities.Customer? customer =
+            await _db.Customers.FirstOrDefaultAsync(c => c.CustomerId == customerId, ct);
+        if (licence is null || customer is null)
+        {
+            return new SwitchPlanResult(SwitchPlanOutcome.NotFound, null);
+        }
+
+        // Internal and Demo customers are Elite for good and are never billed.
+        if (CustomerKindRepository.NeverLapses(customer.Kind))
+        {
+            return new SwitchPlanResult(SwitchPlanOutcome.Unbilled, null);
+        }
+
+        // Standard is Professional under its old name, so it is already on Professional.
+        if (PlanCatalogRepository.Rank(licence.LicenseType) == PlanCatalogRepository.Rank(plan))
+        {
+            return new SwitchPlanResult(SwitchPlanOutcome.AlreadyOnPlan, PlanCatalogRepository.Name(licence.LicenseType));
+        }
+
+        licence.LicenseType = plan;
+        PlanCatalogRepository.Apply(licence);
+
+        customer.PlanTier = plan == LicenseType.Elite
+            ? Shared.Kernel.Tenancy.PlanTier.Elite
+            : Shared.Kernel.Tenancy.PlanTier.Pro;
+        if (customer.Status == TenantStatus.Trial)
+        {
+            customer.Status = TenantStatus.Active;
+        }
+
+        List<UpgradeRequest> waiting = await _db.UpgradeRequests
+            .Where(r => r.CustomerId == customerId && r.Status == UpgradeRequestStatus.Pending)
+            .ToListAsync(ct);
+        foreach (UpgradeRequest request in waiting.Where(r => PlanCatalogRepository.Rank(r.ToPlan) <= PlanCatalogRepository.Rank(plan)))
+        {
+            request.Status = UpgradeRequestStatus.Done;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return new SwitchPlanResult(SwitchPlanOutcome.Switched, PlanCatalogRepository.Name(plan));
+    }
+
+    /// <summary>
     /// Tells the operators. The request is already saved, so a missing address
     /// or a mailbox that cannot send is logged and not the customer's problem:
     /// the request waits on the admin screens either way.
@@ -226,6 +287,18 @@ public sealed class PlanRepository
                 l => l.MonthlyPurchaseTransactionLimit, (int?)PlanCatalogRepository.ProfessionalMonthlyTransactions), ct);
     }
 }
+
+public enum SwitchPlanOutcome
+{
+    Switched = 1,
+    NotFound = 2,
+    NotSold = 3,
+    Unbilled = 4,
+    AlreadyOnPlan = 5,
+}
+
+/// <summary>The outcome of a plan switch, with the plan's name where it helps the answer.</summary>
+public sealed record SwitchPlanResult(SwitchPlanOutcome Outcome, string? Plan);
 
 public enum UpgradeRequestOutcome
 {

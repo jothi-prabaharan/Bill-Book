@@ -11,6 +11,11 @@ export interface UpgradeDialogOptions {
    * administrator, and the request button is not offered. Defaults to true.
    */
   canRequest?: boolean;
+  /**
+   * The plan being asked for: Elite unless a trial asks for Professional from the
+   * Plan screen (TK-211). The limits' prompts always ask for Elite.
+   */
+  toPlan?: 'Pro' | 'Elite';
 }
 
 export interface UpgradeDialogState {
@@ -37,8 +42,23 @@ export function comparisonColumns(summary: PlanSummary): ColumnDef[] {
   ];
 }
 
+/** The plan the prompt asks for. */
+export function upgradeTarget(options: UpgradeDialogOptions): 'Pro' | 'Elite' {
+  return options.toPlan ?? 'Elite';
+}
+
+/** The plan the prompt asks for, as a person reads it. */
+export function upgradeTargetName(options: UpgradeDialogOptions): string {
+  return upgradeTarget(options) === 'Pro' ? 'Professional' : 'Elite';
+}
+
 export function upgradeTitle(options: UpgradeDialogOptions): string {
-  return options.limit ? 'Plan limit reached' : 'Upgrade to Elite';
+  return options.limit ? 'Plan limit reached' : `Upgrade to ${upgradeTargetName(options)}`;
+}
+
+/** The comparison sets the signed-in plan against Elite, so it is shown when Elite is what is asked for. */
+export function showsComparison(state: UpgradeDialogState): boolean {
+  return state.summary !== null && upgradeTarget(state.options) === 'Elite';
 }
 
 /** Whether the prompt can still send a request: allowed, one is not waiting, and there is a higher plan. */

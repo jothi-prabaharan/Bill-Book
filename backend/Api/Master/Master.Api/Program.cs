@@ -157,6 +157,7 @@ builder.Services.AddScoped<SmtpSettingsRepository>();
 builder.Services.AddScoped<OrganizationRepository>();
 builder.Services.AddScoped<LicenseRepository>();
 builder.Services.AddScoped<PlanRepository>();
+builder.Services.AddScoped<PlanPriceRepository>();
 builder.Services.AddSingleton<ISecretProtectorRepository, AesSecretProtector>();
 
 // A branch GSTIN is checked against its state's code, and so is a contact's.

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { MonthlyUsage, PlanSummary, TransactionKind, UpgradeRequestInput } from './plan.model';
+import { MonthlyUsage, PlanPrices, PlanSummary, TransactionKind, UpgradeRequestInput } from './plan.model';
 
 /**
  * The customer's plan (TK-209): what it allows the signed-in branch, and asking
@@ -15,6 +15,11 @@ export class PlanService {
   /** The plan and its limits, with the user places the branch has taken. */
   summary(): Promise<PlanSummary> {
     return firstValueFrom(this.http.get<PlanSummary>('/api/plan'));
+  }
+
+  /** What each paid plan allows and costs for the signed-in branch's trade (TK-211). */
+  prices(): Promise<PlanPrices> {
+    return firstValueFrom(this.http.get<PlanPrices>('/api/plan/prices'));
   }
 
   /** What the signed-in branch has created of Sales or Purchase documents this month, against its plan's limit. */

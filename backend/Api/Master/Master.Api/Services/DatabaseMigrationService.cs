@@ -87,6 +87,9 @@ public class DatabaseMigrationService : IHostedService
         // 3b. Every licence has the limits its plan gives (D-68, TK-209)
         await PlanRepository.ApplyDefaultsAsync(adminDb, cancellationToken);
 
+        // 3c. The paid plans have prices; only the missing ones are added (D-71, TK-211)
+        await PlanPriceRepository.EnsureSeededAsync(adminDb, cancellationToken);
+
         // 4. The bootstrap customer is the Internal one (D-44, TK-153)
         AddOn internalAddOns = InternalCustomerRepository.AddOnsFrom(_config["Bootstrap:InternalAddOns"], out string? addOnProblem);
         if (addOnProblem is not null)

@@ -4,7 +4,14 @@ import { comparePlans } from '@bill-book/api-client';
 import { DataGridComponent } from '../data-grid/data-grid.component';
 import { TextareaComponent } from '../forms/textarea/textarea.component';
 import { MessageBoxComponent } from '../message-box/message-box.component';
-import { canAskForUpgrade, comparisonColumns, upgradeMessages, upgradeTitle } from './upgrade-dialog.model';
+import {
+  canAskForUpgrade,
+  comparisonColumns,
+  showsComparison,
+  upgradeMessages,
+  upgradeTargetName,
+  upgradeTitle,
+} from './upgrade-dialog.model';
 import { UpgradeDialogService } from './upgrade-dialog.service';
 
 /**
@@ -35,6 +42,8 @@ export class UpgradeDialogComponent {
   protected readonly title = upgradeTitle;
   protected readonly messages = upgradeMessages;
   protected readonly canAsk = canAskForUpgrade;
+  protected readonly showsComparison = showsComparison;
+  protected readonly targetName = upgradeTargetName;
 
   /** The grid's columns and rows, worked out once per plan read rather than on every change detection. */
   protected readonly columns = computed(() => {

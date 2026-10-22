@@ -32,6 +32,12 @@
   <ng-template bbCellTemplate="createdAt" let-row>
     {{ dateOnly(row.createdAt) }}
   </ng-template>
+  <ng-template bbCellTemplate="planTier" let-row>
+    {{ row.planName ?? row.planTier }}
+    @if (row.upgradeRequestedTo) {
+      <span class="badge ask" [attr.title]="'Asked on ' + dateOnly(row.upgradeRequestedAt)">Wants {{ row.upgradeRequestedTo }}</span>
+    }
+  </ng-template>
   <ng-template bbCellTemplate="kind" let-row>
     @switch (row.kind) {
       @case ('Internal') { <span class="badge">Internal</span> }
@@ -52,6 +58,10 @@
   </ng-template>
   <ng-template bbCellTemplate="actions" let-row>
     <button type="button" class="link" (click)="open(row)" [disabled]="busy()">View</button>
+
+    @if (canSwitch(row)) {
+      <button type="button" class="link" (click)="startSwitch(row)" [disabled]="busy()">Switch plan</button>
+    }
 
     @if (row.status === 'Provisioning' || row.status === 'Failed') {
       <button type="button" class="link" (click)="retry(row)" [disabled]="busy()">
@@ -166,3 +176,54 @@
 }
 
 
+
+@if (switching(); as customer) {
+  <div class="backdrop" aria-hidden="true" (click)="cancelSwitch()"></div>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="switch-plan-title">
+    <header class="dialog-header">
+      <h2 id="switch-plan-title">Switch plan</h2>
+      <button type="button" class="close-btn" (click)="cancelSwitch()" aria-label="Close dialog">✕</button>
+    </header>
+
+    <div class="dialog-body switch-body">
+      <p>
+        <strong>{{ customer.name }}</strong> is on the <strong>{{ customer.planName }}</strong> plan.
+        @if (customer.upgradeRequestedTo) {
+          They have asked for <strong>{{ customer.upgradeRequestedTo }}</strong>.
+        }
+      </p>
+
+      <bb-select
+        label="Move to"
+        placeholder=""
+        [options]="switchOptions"
+        [ngModel]="switchPlan()"
+        (ngModelChange)="switchPlan.set($event)"
+      />
+
+      <p class="hint">
+        The licence takes the new plan's limits at once, and a request for it is closed. The renewal date is not changed here.
+      </p>
+
+      @if (isCurrentPlan(customer, switchPlan())) {
+        <p class="hint">They are already on the {{ switchPlanLabel(switchPlan()) }} plan.</p>
+      }
+
+      @if (switchError(); as failure) {
+        <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+      }
+    </div>
+
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancelSwitch()">Cancel</button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="busy() || isCurrentPlan(customer, switchPlan())"
+        (click)="confirmSwitch()"
+      >
+        Switch to {{ switchPlanLabel(switchPlan()) }}
+      </button>
+    </footer>
+  </div>
+}

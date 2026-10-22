@@ -1,0 +1,106 @@
+<header class="page-head">
+  <h1>Plan</h1>
+  @if (summary(); as current) {
+    <span class="tag tag-accent">{{ current.plan }}</span>
+  }
+</header>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (loading()) {
+  <p class="hint" role="status">Reading your plan…</p>
+}
+
+@if (summary(); as current) {
+  @if (current.upgradeRequested) {
+    <bb-message-box tone="info">You have asked to upgrade. We will contact you to complete it.</bb-message-box>
+  }
+
+  <section class="card plan-usage" aria-labelledby="plan-usage-title">
+    <h2 id="plan-usage-title" class="card-title">Your usage</h2>
+
+    <div class="plan-usage__meters">
+      @for (meter of meters(); track meter.label) {
+        <bb-usage-meter [label]="meter.label" [used]="meter.used" [limit]="meter.limit" [note]="meter.note" />
+      }
+    </div>
+
+    <p class="hint">
+      Every saved Sales or Purchase document counts, drafts and cancelled ones too. Each count starts again on the 1st of the month (India time).
+    </p>
+  </section>
+
+  @if (cards().length > 0) {
+    <section class="plan-compare" aria-labelledby="plan-compare-title">
+      <div class="plan-compare__head">
+        <h2 id="plan-compare-title">Compare plans</h2>
+
+        @if (cycleOptions().length > 1) {
+          <bb-radio-group
+            label="Billing cycle"
+            name="billingCycle"
+            orientation="horizontal"
+            [options]="cycleOptions()"
+            [ngModel]="cycle()"
+            (ngModelChange)="cycle.set($event)"
+          />
+        }
+      </div>
+
+      <div class="plan-cards">
+        @for (card of cards(); track card.tier.licenseType) {
+          <article
+            class="card plan-card"
+            [class.plan-card--featured]="card.featured"
+            [attr.aria-labelledby]="'plan-card-' + card.tier.licenseType"
+          >
+            <header class="plan-card__head">
+              <h3 class="card-title" [id]="'plan-card-' + card.tier.licenseType">{{ card.tier.plan }}</h3>
+              @if (card.state === 'current') {
+                <span class="tag tag-accent">Current plan</span>
+              }
+            </header>
+
+            @if (card.price) {
+              <p class="plan-card__price">
+                <strong>{{ card.price }}</strong>
+                <span>{{ card.period }}</span>
+              </p>
+              <p class="hint">{{ card.monthly }}</p>
+            } @else {
+              <p class="plan-card__price">Price on request</p>
+            }
+
+            <ul class="plan-card__features">
+              @for (feature of card.features; track feature) {
+                <li>{{ feature }}</li>
+              }
+            </ul>
+
+            @if (card.action) {
+              <footer class="plan-card__foot">
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-primary]="card.featured"
+                  [class.btn-secondary]="!card.featured"
+                  (click)="request(card)"
+                >
+                  {{ card.action }}
+                </button>
+              </footer>
+            }
+          </article>
+        }
+      </div>
+
+      @if (!hasPrices()) {
+        <p class="hint">
+          Prices for your kind of business are agreed with our team. Ask for an upgrade and we will contact you.
+        </p>
+      }
+    </section>
+  }
+}

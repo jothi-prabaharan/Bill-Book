@@ -4,14 +4,25 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   comparePlans,
+  cycleLabel,
+  cyclePriceOf,
+  formatPlanPrice,
+  LicenseType,
   MonthlyUsage,
+  perMonth,
+  PlanCyclePrice,
   PlanLimit,
   planLimitOf,
+  PlanPrices,
+  planCardState,
+  planRank,
   PlanSummary,
+  PlanTier,
   quotaBadge,
   quotaKindOf,
   seatBanner,
   seatsFull,
+  tierFeatures,
   userLimitOf,
 } from './plan.model';
 import { PlanService } from './plan.service';
@@ -165,6 +176,90 @@ describe('Monthly document limits', () => {
   });
 });
 
+const professionalTier: PlanTier = {
+  plan: 'Professional',
+  licenseType: 'Pro',
+  maxUsers: 5,
+  monthlySalesTransactionLimit: 1000,
+  monthlyPurchaseTransactionLimit: 1000,
+};
+
+const eliteTier: PlanTier = {
+  plan: 'Elite',
+  licenseType: 'Elite',
+  maxUsers: null,
+  monthlySalesTransactionLimit: null,
+  monthlyPurchaseTransactionLimit: null,
+};
+
+const quarter: PlanCyclePrice = { cycle: 'Quarterly', months: 3, professional: 4050, elite: 12150 };
+
+describe('The Plan screen', () => {
+  it('PRICE-01: ranks a trial below Professional, which Standard is, below Elite', () => {
+    const types: LicenseType[] = ['Trial', 'Standard', 'Pro', 'Elite'];
+
+    expect(types.map(planRank)).toEqual([0, 1, 1, 2]);
+  });
+
+  it('PRICE-02: a card is yours, one you can ask for, or neither', () => {
+    // On Professional: its own card is current, Elite can be asked for.
+    expect(planCardState(professional, professionalTier)).toBe('current');
+    expect(planCardState(professional, eliteTier)).toBe('upgrade');
+
+    // On Elite: nothing is above it, and Professional is below it.
+    expect(planCardState(elite, eliteTier)).toBe('current');
+    expect(planCardState(elite, professionalTier)).toBe('none');
+
+    // A trial may ask for either paid plan.
+    const trial: PlanSummary = { ...professional, plan: 'Trial', licenseType: 'Trial' };
+    expect(planCardState(trial, professionalTier)).toBe('upgrade');
+    expect(planCardState(trial, eliteTier)).toBe('upgrade');
+
+    // Standard is Professional under its old name.
+    expect(planCardState({ ...professional, licenseType: 'Standard' }, professionalTier)).toBe('current');
+
+    // Nothing to upgrade to, as for a customer that is never billed: nothing is offered.
+    expect(planCardState({ ...professional, canUpgrade: false }, eliteTier)).toBe('none');
+  });
+
+  it('PRICE-03: names a cycle the way the screen reads it', () => {
+    expect(cycleLabel('Quarterly')).toBe('Quarterly');
+    expect(cycleLabel('BiAnnual')).toBe('Bi-annual');
+  });
+
+  it('PRICE-04: a platform price is shown in whole units of the currency it was set in', () => {
+    expect(formatPlanPrice(4050, 'INR')).toBe('₹4,050');
+    expect(formatPlanPrice(122400, 'INR')).toBe('₹1,22,400');
+    expect(formatPlanPrice(4321.5, 'INR')).toBe('₹4,322');
+
+    // A code the platform cannot format is still shown, not thrown.
+    expect(formatPlanPrice(4050, 'NOT-A-CODE')).toBe('NOT-A-CODE 4,050');
+  });
+
+  it('PRICE-05: works out a month of a cycle, and picks each plan\'s own price', () => {
+    expect(perMonth(4050, 3)).toBe(1350);
+    expect(perMonth(7650, 6)).toBe(1275);
+    expect(perMonth(100, 0)).toBe(100);
+
+    expect(cyclePriceOf(quarter, professionalTier)).toBe(4050);
+    expect(cyclePriceOf(quarter, eliteTier)).toBe(12150);
+  });
+
+  it('PRICE-06: lists what a plan allows, one line each, in the server\'s figures', () => {
+    expect(tierFeatures(professionalTier)).toEqual([
+      'Up to 5 users in each branch, deactivated ones included',
+      '1,000 Sales documents a month',
+      '1,000 Purchase documents a month',
+    ]);
+
+    expect(tierFeatures(eliteTier)).toEqual([
+      'Unlimited users in every branch',
+      'Unlimited Sales documents',
+      'Unlimited Purchase documents',
+    ]);
+  });
+});
+
 describe('PlanService', () => {
   let service: PlanService;
   let http: HttpTestingController;
@@ -181,6 +276,19 @@ describe('PlanService', () => {
     const pending = service.summary();
     http.expectOne('/api/plan').flush(professional);
     expect((await pending).maxUsers).toBe(5);
+  });
+
+  it('PRICE-07: reads what each plan allows and costs for the signed-in branch', async () => {
+    const prices: PlanPrices = {
+      businessType: 'Retail',
+      currencyCode: 'INR',
+      tiers: [professionalTier, eliteTier],
+      cycles: [quarter],
+    };
+
+    const pending = service.prices();
+    http.expectOne('/api/plan/prices').flush(prices);
+    expect(await pending).toEqual(prices);
   });
 
   it('QUOTA-06: reads Sales and Purchase usage from their own services', async () => {

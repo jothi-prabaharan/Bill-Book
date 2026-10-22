@@ -9,7 +9,7 @@
     <div class="dialog-body upgrade-dialog__body">
       <bb-message-box [messages]="messages(current)" />
 
-      @if (current.summary) {
+      @if (showsComparison(current)) {
         <bb-data-grid
           flush
           label="What each plan allows"
@@ -32,7 +32,7 @@
       <button type="button" class="btn btn-secondary" (click)="close()">{{ current.requested ? 'Close' : 'Not now' }}</button>
       @if (canAsk(current)) {
         <button type="button" class="btn btn-primary" [disabled]="current.busy" (click)="request()">
-          Request upgrade to Elite
+          Request upgrade to {{ targetName(current.options) }}
         </button>
       }
     </footer>

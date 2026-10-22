@@ -247,6 +247,15 @@ public class CustomerListItem
     public string Status { get; set; } = null!;
 
     public DateTimeOffset? CreatedAt { get; set; }
+
+    /// <summary>The licence's plan as a person reads it: Trial, Professional or Elite; null when there is no licence (TK-211).</summary>
+    public string? PlanName { get; set; }
+
+    /// <summary>The plan a waiting upgrade request asks for, or null when none is waiting (TK-211).</summary>
+    public string? UpgradeRequestedTo { get; set; }
+
+    /// <summary>When that request was made.</summary>
+    public DateTimeOffset? UpgradeRequestedAt { get; set; }
 }
 
 /// <summary>Outcome of an admin retrying a stuck customer's provisioning.</summary>

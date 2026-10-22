@@ -7,7 +7,10 @@ import {
   ALREADY_ASKED,
   ASK_AN_ADMINISTRATOR,
   canAskForUpgrade,
+  showsComparison,
   upgradeMessages,
+  upgradeTarget,
+  upgradeTargetName,
   upgradeTitle,
   UpgradeDialogState,
 } from './upgrade-dialog.model';
@@ -75,6 +78,26 @@ describe('Upgrade prompt, pure', () => {
     // The plan could not be read: still offered, the server decides.
     expect(canAskForUpgrade(state({ summary: null }))).toBe(true);
     expect(canAskForUpgrade(state({ requested: true }))).toBe(false);
+  });
+
+  it('UPG-09: asks for Elite unless a trial asks for Professional, and names the plan it asks for', () => {
+    expect(upgradeTarget({})).toBe('Elite');
+    expect(upgradeTargetName({})).toBe('Elite');
+    expect(upgradeTarget({ toPlan: 'Pro' })).toBe('Pro');
+    expect(upgradeTargetName({ toPlan: 'Pro' })).toBe('Professional');
+
+    expect(upgradeTitle({ toPlan: 'Pro' })).toBe('Upgrade to Professional');
+    expect(upgradeTitle({ toPlan: 'Elite' })).toBe('Upgrade to Elite');
+
+    // A limit's prompt keeps its own title whichever plan it asks for.
+    expect(upgradeTitle({ limit: usersLimit, toPlan: 'Pro' })).toBe('Plan limit reached');
+  });
+
+  it('UPG-10: sets the plan against Elite only when Elite is what is asked for and the plan was read', () => {
+    expect(showsComparison(state())).toBe(true);
+    expect(showsComparison(state({ options: { toPlan: 'Elite' } }))).toBe(true);
+    expect(showsComparison(state({ options: { toPlan: 'Pro' } }))).toBe(false);
+    expect(showsComparison(state({ summary: null }))).toBe(false);
   });
 });
 
@@ -172,5 +195,17 @@ describe('UpgradeDialogService', () => {
     expect(service.state()?.busy).toBe(false);
     expect(service.state()?.outcome).toEqual({ tone: 'error', text: 'Your plan cannot be moved to that one.', detail: [] });
     expect(canAskForUpgrade(service.state() as UpgradeDialogState)).toBe(true);
+  });
+
+  it('UPG-11: a trial asking from the Plan screen for Professional sends that plan', async () => {
+    await openWith({ toPlan: 'Pro' }, { ...professional, plan: 'Trial', licenseType: 'Trial' });
+
+    const sending = service.request('');
+    const request = http.expectOne('/api/plan/upgrade-requests');
+    expect(request.request.body).toEqual({ toPlan: 'Pro', reason: undefined, note: undefined });
+    request.flush({ message: 'Your request has been sent. We will contact you to complete the upgrade.' });
+    await sending;
+
+    expect(service.state()?.requested).toBe(true);
   });
 });

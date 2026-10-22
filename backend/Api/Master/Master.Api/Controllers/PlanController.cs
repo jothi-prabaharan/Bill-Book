@@ -22,11 +22,13 @@ namespace Master.Api.Controllers;
 public sealed class PlanController : ControllerBase
 {
     private readonly PlanRepository _plans;
+    private readonly PlanPriceRepository _prices;
     private readonly ICurrentUser _currentUser;
 
-    public PlanController(PlanRepository plans, ICurrentUser currentUser)
+    public PlanController(PlanRepository plans, PlanPriceRepository prices, ICurrentUser currentUser)
     {
         _plans = plans;
+        _prices = prices;
         _currentUser = currentUser;
     }
 
@@ -42,6 +44,23 @@ public sealed class PlanController : ControllerBase
 
         PlanSummaryResponse? summary = await _plans.GetSummaryAsync(customerId, orgId, ct);
         return summary is null ? NotFound() : Ok(summary);
+    }
+
+    /// <summary>
+    /// What each paid plan costs the signed-in branch's trade for a quarter and for
+    /// half a year (D-71). No cycles for a branch with no trade, whose price is agreed
+    /// with the platform's team.
+    /// </summary>
+    [RequirePermission("settings.view")]
+    [HttpGet("prices")]
+    public async Task<IActionResult> Prices(CancellationToken ct)
+    {
+        if (_currentUser.OrgId is not Guid orgId)
+        {
+            return Forbid();
+        }
+
+        return Ok(await _prices.GetForBranchAsync(orgId, ct));
     }
 
     /// <summary>Asks for a higher plan. There is no payment here; an operator makes the change.</summary>

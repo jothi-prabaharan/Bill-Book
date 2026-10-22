@@ -9182,6 +9182,23 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            MenuId = 1156,
+                            AddOns = 0,
+                            CanCreate = false,
+                            Code = "plan",
+                            DisplayOrder = 11,
+                            Icon = "gem",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Plan",
+                            ParentId = 114,
+                            RoutePath = "/settings/plan",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
                             MenuId = 1125,
                             AddOns = 0,
                             CanCreate = false,
@@ -15333,6 +15350,24 @@ namespace Master.Repository.Migrations.Admin
                             Module = "support",
                             PermissionCode = "support.edit",
                             Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 523,
+                            Action = "view",
+                            MenuId = 1156,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 524,
+                            Action = "edit",
+                            MenuId = 1156,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
                         });
                 });
 
@@ -18492,6 +18527,67 @@ namespace Master.Repository.Migrations.Admin
                             Module = "site",
                             Version = 0u
                         });
+                });
+
+            modelBuilder.Entity("Master.Entity.TableEntities.PlanPrice", b =>
+                {
+                    b.Property<long>("PlanPriceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PlanPriceId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("BillingCycle")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("BusinessType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Plan")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("PlanPriceId");
+
+                    b.HasIndex("BusinessType", "Plan", "BillingCycle")
+                        .IsUnique();
+
+                    b.ToTable("PlanPrices", "mst");
                 });
 
             modelBuilder.Entity("Master.Entity.TableEntities.RateFetchRun", b =>

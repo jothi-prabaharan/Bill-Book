@@ -8,6 +8,12 @@
 .badge.warn { background: var(--color-warning-bg); color: var(--color-warning); }
 .badge.trial { background: var(--color-warning-bg); color: var(--color-warning); }
 .badge.danger { background: #fbe4e1; color: var(--color-danger); }
+/* A request waiting for an operator, beside the plan it asks for (TK-211). */
+.badge.ask { background: var(--color-accent-100); color: var(--color-accent-800); }
+
+.switch-body { display: grid; gap: var(--space-3); }
+.switch-body p { margin: 0; }
+.switch-body .hint { margin: 0; }
 
 .link { background: none; border: 0; color: var(--color-accent-700); cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
 .link + .link { margin-left: .6rem; }

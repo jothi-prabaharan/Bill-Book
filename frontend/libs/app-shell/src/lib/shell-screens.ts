@@ -136,6 +136,7 @@ export const SHELL_SCREENS: readonly ShellScreen[] = [
   { label: 'Number series', path: '/settings/numbering', group: 'Settings', module: 'settings', subGroup: 'Organisation' },
   { label: 'Currencies', path: '/settings/currencies', group: 'Settings', module: 'settings', subGroup: 'Organisation' },
   { label: 'Email', path: '/settings/email', group: 'Settings', module: 'settings', subGroup: 'Organisation' },
+  { label: 'Plan', path: '/settings/plan', group: 'Settings', module: 'settings', subGroup: 'Organisation' },
   { label: 'Support & Bug reports', path: '/settings/support', group: 'Settings', module: 'support', subGroup: 'Organisation' },
 
   { label: 'Users', path: '/settings/users', group: 'Settings', module: 'settings', subGroup: 'Users and access' },

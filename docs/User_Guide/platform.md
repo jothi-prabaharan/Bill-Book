@@ -212,6 +212,44 @@ A Trial or Professional branch may create **1,000 Sales documents and 1,000 Purc
 
 **What is left shows on the screens.** Beside the title of each Sales and Purchase register a badge reads, for example, **Sales: 88 of 1,000 left**. It is a warning when a fifth or less is left and turns red when none is; an Elite branch has no badge, and a register of delivery challans never does. `GET /api/sales/usage` and `GET /api/purchase/usage` (*Sales: view*, *Purchase: view*) return what the signed-in branch has used this month, its limit and what remains.
 
+### The Plan screen
+
+**Settings › Plan** (`/settings/plan`, *Settings: view*) shows the plan the signed-in branch is on and how much of it is used, beside the two paid plans and what they cost (D-70, D-71, TK-211). It is in every branch's Settings, whatever its trade.
+
+- **Your usage.** A meter for each count: **Users** (everyone who has ever been given access, deactivated people included), and **Sales** and **Purchases** this month. A meter turns amber at four fifths of its limit and red when the limit is reached. On Elite it shows what has been used and that it is **Unlimited**, with no bar. A branch that cannot give a document count goes without that meter.
+- **Compare plans.** Professional and Elite side by side, Elite raised. Each card lists what the plan allows, in the server's figures, and its price for the chosen billing cycle, **Quarterly** (three months) or **Bi-annual** (six months), with about what a month comes to. The card of the plan the branch is on says **Current plan**; the other offers **Request upgrade to …**. A trial may ask for either paid plan, Professional may ask for Elite, and Elite has nothing to ask for.
+- **Asking.** The button opens the upgrade prompt for that plan (see **The upgrade prompt**). Someone without *Settings: edit* is told to ask an administrator of the business.
+
+`GET /api/plan/prices` (*Settings: view*) returns what each paid plan allows (`tiers`) and what each costs for the signed-in branch's trade (`cycles`). A branch with no trade, or a trade nobody has priced, has no cycles: the screen says the price is agreed with the platform's team, and the request still goes through.
+
+### Prices
+
+The prices are rows in `mst.PlanPrices` (`BusinessType`, `Plan`, `BillingCycle`, `Amount`, `CurrencyCode`, `IsActive`), one for each trade, plan and cycle, so an operator can change one without a release. Every start adds the rows that are missing and **never touches one that is there**: a figure someone changed stays as they set it, and a row set to inactive takes its cycle off the screen.
+
+The first figures come from the website's monthly price for each trade:
+
+| Trade | Monthly price |
+|---|---|
+| Retail, Pharma, Service | ₹1,500 |
+| Restaurant | ₹2,200 |
+| Jewellery | ₹4,000 |
+| School | ₹5,000 |
+
+**Professional** costs that price for the months in the cycle, less **10% for a quarter and 15% for six months**. The website sells a quarter at 10% off and a year at 20% off but no half year, so the half year is taken midway between them. That is an assumption, and the first thing to change if it is priced differently. **Elite costs three times Professional** for the same trade and cycle. For Retail that is ₹4,050 and ₹12,150 a quarter, and ₹7,650 and ₹22,950 for six months. A price is shown in the currency it was set in, rupees, and not in the branch's own.
+
+### Switching a customer's plan
+
+There is no payment inside the app, so a platform operator moves a customer once the request has been dealt with (D-70). **Admin › Customers** shows each customer's plan, with a **Wants Elite** badge beside it while a request is waiting. **Switch plan**, on any Standard customer that has a licence, opens a prompt that starts on the plan they asked for (Elite for a Professional customer who has not asked, Professional for anyone else), does not offer the plan they are already on, and says the renewal date is not changed here.
+
+`PUT /api/customers/{customerId}/licenses/plan` (*Platform: edit*) takes `{ "plan": "Pro" }` or `{ "plan": "Elite" }`:
+
+- the licence takes that plan's own limits at once and `Customer.PlanTier` follows; a customer on trial becomes **Active**;
+- the waiting requests the new plan answers are marked done, so a request for Elite stays waiting when the customer is moved to Professional;
+- the user limit applies at once, and Sales and Purchase pick up the new document limits within the minute they cache them;
+- it refuses a plan the customer is already on (`409`, Standard counting as Professional), an Internal or Demo customer, which is Elite for good and never billed (`409`), a plan that is not for sale, such as Trial (`400`), and a customer that does not exist (`404`).
+
+Moving a customer **down** is allowed and takes nothing away: the people and the documents stay, and the lower limits apply to what is added next. A switch changes neither the expiry nor the branch cap, which **Renew** does, and it does not move a customer's books to a database of their own.
+
 ## Expiry blocks the app, never the login
 
 This is the important rule, and it is deliberate.
@@ -248,11 +286,11 @@ When none is left, **Invite user** is off and an information icon beside it give
 
 ### The upgrade prompt
 
-One prompt serves every limit, opened from a button or from a refused request. It shows the limit's sentence, a comparison of what the plan allows against what Elite does (users in a branch, Sales documents a month, Purchase documents a month), an optional note, and **Request upgrade to Elite**. Once the request is sent the prompt says so and offers nothing more. If a request is already waiting it says that instead; someone without *Settings: edit* is told to ask an administrator of the business; a refusal is shown in the server's words and the request can be sent again. On a phone the prompt takes the whole screen.
+One prompt serves every limit, opened from a button or from a refused request. It shows the limit's sentence, a comparison of what the plan allows against what Elite does (users in a branch, Sales documents a month, Purchase documents a month), an optional note, and **Request upgrade to Elite**. A trial asking for Professional from the Plan screen gets the same prompt, titled **Upgrade to Professional**, without the Elite comparison, and the request names Professional. Once the request is sent the prompt says so and offers nothing more. If a request is already waiting it says that instead; someone without *Settings: edit* is told to ask an administrator of the business; a refusal is shown in the server's words and the request can be sent again. On a phone the prompt takes the whole screen.
 
 ### Asking for a higher plan
 
-There is no payment inside the app (D-70). `POST /api/plan/upgrade-requests` (*Settings: edit*) records the request, with who asked, from which branch and what sent them, in `mst.UpgradeRequests`, and mails it to the address in `Licensing:UpgradeRequestEmail`, from the platform's own mailbox. A platform operator changes the plan. A customer with a request waiting does not make a second one: it is told so and nothing more is sent. With no address set the request is still recorded and a warning is logged. Elite, and an Internal or Demo customer, have nothing to ask for.
+There is no payment inside the app (D-70). `POST /api/plan/upgrade-requests` (*Settings: edit*) records the request, with who asked, from which branch and what sent them, in `mst.UpgradeRequests`, and mails it to the address in `Licensing:UpgradeRequestEmail`, from the platform's own mailbox. The plan asked for is Elite unless a trial asks for Professional. A platform operator changes the plan (see **Switching a customer's plan**). A customer with a request waiting does not make a second one: it is told so and nothing more is sent. With no address set the request is still recorded and a warning is logged. Elite, and an Internal or Demo customer, have nothing to ask for.
 
 
 

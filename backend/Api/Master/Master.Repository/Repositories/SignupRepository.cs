@@ -539,22 +539,55 @@ public sealed class SignupRepository
     /// this screen to look at.
     /// </summary>
     /// <summary>The platform admin's customer list, newest first, optionally of one kind (TK-152).</summary>
-    public async Task<IReadOnlyList<CustomerListItem>> ListAsync(CancellationToken ct, CustomerKind? kind = null) =>
-        await _db.Customers
+    public async Task<IReadOnlyList<CustomerListItem>> ListAsync(CancellationToken ct, CustomerKind? kind = null)
+    {
+        // The plan and the waiting request are read beside each customer (TK-211). The
+        // plan's name is worked out below, because the mapping is not SQL.
+        var rows = await _db.Customers
             .Where(c => kind == null || c.Kind == kind)
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new CustomerListItem
+            .Select(c => new
             {
-                CustomerId = c.CustomerId,
-                CustomerCode = c.CustomerCode,
-                Name = c.Name,
-                BillingEmail = c.BillingEmail,
-                PlanTier = c.PlanTier.ToString(),
-                Kind = c.Kind.ToString(),
-                Status = c.Status.ToString(),
-                CreatedAt = c.CreatedAt,
+                c.CustomerId,
+                c.CustomerCode,
+                c.Name,
+                c.BillingEmail,
+                c.PlanTier,
+                c.Kind,
+                c.Status,
+                c.CreatedAt,
+                LicenseType = _db.Licenses
+                    .Where(l => l.CustomerId == c.CustomerId)
+                    .Select(l => (LicenseType?)l.LicenseType)
+                    .FirstOrDefault(),
+                RequestedTo = _db.UpgradeRequests
+                    .Where(r => r.CustomerId == c.CustomerId && r.Status == UpgradeRequestStatus.Pending)
+                    .OrderByDescending(r => r.UpgradeRequestId)
+                    .Select(r => (LicenseType?)r.ToPlan)
+                    .FirstOrDefault(),
+                RequestedAt = _db.UpgradeRequests
+                    .Where(r => r.CustomerId == c.CustomerId && r.Status == UpgradeRequestStatus.Pending)
+                    .OrderByDescending(r => r.UpgradeRequestId)
+                    .Select(r => r.CreatedAt)
+                    .FirstOrDefault(),
             })
             .ToListAsync(ct);
+
+        return [.. rows.Select(r => new CustomerListItem
+        {
+            CustomerId = r.CustomerId,
+            CustomerCode = r.CustomerCode,
+            Name = r.Name,
+            BillingEmail = r.BillingEmail,
+            PlanTier = r.PlanTier.ToString(),
+            Kind = r.Kind.ToString(),
+            Status = r.Status.ToString(),
+            CreatedAt = r.CreatedAt,
+            PlanName = r.LicenseType is LicenseType type ? PlanCatalogRepository.Name(type) : null,
+            UpgradeRequestedTo = r.RequestedTo is LicenseType to ? PlanCatalogRepository.Name(to) : null,
+            UpgradeRequestedAt = r.RequestedTo is null ? null : r.RequestedAt,
+        })];
+    }
 
     /// <summary>
     /// Re-runs the seed for a customer stuck at Provisioning or Failed — the

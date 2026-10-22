@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PlanService, readApiFailure } from '@bill-book/api-client';
-import { UpgradeDialogOptions, UpgradeDialogState } from './upgrade-dialog.model';
+import { UpgradeDialogOptions, UpgradeDialogState, upgradeTarget } from './upgrade-dialog.model';
 
 /**
  * Asking for a higher plan, from wherever a limit is met (TK-209).
@@ -36,7 +36,7 @@ export class UpgradeDialogService {
     this.patch({ busy: true, outcome: null });
     try {
       const text = await this.plan.requestUpgrade({
-        toPlan: 'Elite',
+        toPlan: upgradeTarget(current.options),
         reason: current.options.limit?.kind,
         note: note.trim() || undefined,
       });

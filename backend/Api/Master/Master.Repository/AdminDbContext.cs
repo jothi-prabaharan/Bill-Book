@@ -110,6 +110,9 @@ public class AdminDbContext : DbContext
     /// <summary>Customers asking for a higher plan (D-70, TK-209).</summary>
     public DbSet<UpgradeRequest> UpgradeRequests => Set<UpgradeRequest>();
 
+    /// <summary>What each paid plan costs a trade for a billing cycle (D-71, TK-211).</summary>
+    public DbSet<PlanPrice> PlanPrices => Set<PlanPrice>();
+
     /// <summary>Exchange rate history, schema <c>rat</c> (TK-24).</summary>
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
 
@@ -269,6 +272,17 @@ public class AdminDbContext : DbContext
             // One licence per customer (D-36, TK-127).
             b.HasIndex(e => e.CustomerId).IsUnique();
             b.Property(e => e.LicenseType).HasConversion<string>().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<PlanPrice>(b =>
+        {
+            b.HasKey(e => e.PlanPriceId);
+            b.HasIndex(e => new { e.BusinessType, e.Plan, e.BillingCycle }).IsUnique();
+            b.Property(e => e.BusinessType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Plan).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.BillingCycle).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Amount).HasPrecision(12, 2);
+            b.Property(e => e.CurrencyCode).HasMaxLength(3);
         });
 
         modelBuilder.Entity<UpgradeRequest>(b =>

@@ -1,0 +1,24 @@
+<div
+  class="usage-meter"
+  [class.usage-meter--warning]="tone() === 'warning'"
+  [class.usage-meter--danger]="tone() === 'danger'"
+>
+  <div class="usage-meter__head">
+    <span class="usage-meter__label" [id]="labelId">{{ label() }}</span>
+    <span class="usage-meter__figures">{{ figures() }}</span>
+  </div>
+
+  @if (limit() !== null) {
+    <progress
+      class="usage-meter__bar"
+      [attr.aria-labelledby]="labelId"
+      [attr.aria-valuetext]="figures()"
+      [value]="used()"
+      [max]="max()"
+    ></progress>
+  }
+
+  @if (note()) {
+    <small class="usage-meter__note">{{ note() }}</small>
+  }
+</div>

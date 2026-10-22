@@ -47,6 +47,7 @@ public static class MenuSeed
         9,                                              // Settings rail
         114, 1079, 1080, 1081, 1082, 1083, 1084,        // Organisation (1085, Applications, retired by TK-136)
         1125,                                           // Approval workflows (TK-103)
+        1156,                                           // Plan (TK-211): every customer reads their own plan
         1137,                                           // Custom fields (TK-110)
         1139,                                           // Audit log (TK-118)
         115, 1086, 1087, 1088, 1089, 1090, 1106,        // Users and access
@@ -252,6 +253,8 @@ public static class MenuSeed
         new Menu { MenuId = 1082, ParentId = 114, Type = MenuType.Item, Code = "ser", Name = "Number series", Icon = "hash", Module = "settings", RoutePath = "/settings/numbering", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
         new Menu { MenuId = 1083, ParentId = 114, Type = MenuType.Item, Code = "ocu", Name = "Organisation currencies", Icon = "coins", Module = "settings", RoutePath = "/settings/currencies", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = true },
         new Menu { MenuId = 1084, ParentId = 114, Type = MenuType.Item, Code = "smtp", Name = "Email and SMTP", Icon = "mail", Module = "settings", RoutePath = "/settings/email", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
+        // The customer's plan, its limits and what is left of them (D-68, TK-211).
+        new Menu { MenuId = 1156, ParentId = 114, Type = MenuType.Item, Code = "plan", Name = "Plan", Icon = "gem", Module = "settings", RoutePath = "/settings/plan", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 11, IsActive = true },
         // Every app's approval chains, configured in one place (TK-103).
         new Menu { MenuId = 1125, ParentId = 114, Type = MenuType.Item, Code = "apw", Name = "Approval workflows", Icon = "list-checks", Module = "settings", RoutePath = "/settings/approval-workflows", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = true },
         new Menu { MenuId = 1137, ParentId = 114, Type = MenuType.Item, Code = "cfd", Name = "Custom fields", Icon = "list-plus", Module = "settings", RoutePath = "/settings/custom-fields", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 9, IsActive = true },
@@ -904,6 +907,8 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 520, MenuId = 1155, PermissionCode = "support.view", Action = "view", Module = "support" },
         new MenuPermission { MenuPermissionId = 521, MenuId = 1155, PermissionCode = "support.create", Action = "create", Module = "support" },
         new MenuPermission { MenuPermissionId = 522, MenuId = 1155, PermissionCode = "support.edit", Action = "edit", Module = "support" },
+        new MenuPermission { MenuPermissionId = 523, MenuId = 1156, PermissionCode = "settings.view", Action = "view", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 524, MenuId = 1156, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
     ];
 }
 

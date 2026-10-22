@@ -1,0 +1,100 @@
+/* Tokens only. The frame of a card, a tag and a button is the global one; this
+   file lays the page out. The cards stack on a phone and sit side by side from
+   about 640px, because each column is asked to be at least --plan-card-min wide. */
+
+:host {
+  --plan-card-min: 20rem;
+  --plan-meter-min: 20rem;
+
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+/* The title row's own margin and the grid's gap would otherwise add up. */
+.page-head {
+  margin-bottom: 0;
+}
+
+.plan-usage__meters {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--plan-meter-min)), 1fr));
+}
+
+.plan-usage .hint {
+  margin: 0;
+}
+
+.plan-compare {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.plan-compare__head {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.plan-cards {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--plan-card-min)), 1fr));
+}
+
+.plan-card {
+  align-content: start;
+}
+
+.plan-card--featured {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+
+.plan-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.plan-card__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+
+  strong {
+    font-size: var(--font-size-xl);
+  }
+
+  span {
+    color: var(--color-text-muted);
+  }
+}
+
+.plan-card .hint {
+  margin: 0;
+}
+
+.plan-card__features {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.plan-card__foot {
+  margin-top: var(--space-2);
+}

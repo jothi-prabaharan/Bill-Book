@@ -166,6 +166,9 @@
       "@bill-book/settings-organizations": [
         "libs/settings/organizations/src/index.ts"
       ],
+      "@bill-book/settings-plan": [
+        "libs/settings/plan/src/index.ts"
+      ],
       "@bill-book/settings-print-templates": [
         "libs/settings/print-templates/src/index.ts"
       ],

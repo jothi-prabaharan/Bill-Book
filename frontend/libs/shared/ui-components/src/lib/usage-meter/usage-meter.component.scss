@@ -1,0 +1,73 @@
+/* Tokens only. The fill takes its colour from --meter-fill, which the warning
+   and danger modifiers change, so the three pseudo-elements a progress bar needs
+   are written once. */
+
+.usage-meter {
+  --meter-fill: var(--color-accent);
+
+  display: grid;
+  gap: var(--space-1);
+}
+
+.usage-meter--warning {
+  --meter-fill: var(--color-warning);
+}
+
+.usage-meter--danger {
+  --meter-fill: var(--color-danger);
+}
+
+.usage-meter__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.usage-meter__label {
+  font-weight: 600;
+}
+
+.usage-meter__figures {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.usage-meter--warning .usage-meter__figures {
+  color: var(--color-warning);
+}
+
+.usage-meter--danger .usage-meter__figures {
+  color: var(--color-danger);
+}
+
+.usage-meter__bar {
+  appearance: none;
+  width: 100%;
+  height: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--color-neutral-200);
+  color: var(--meter-fill);
+
+  &::-webkit-progress-bar {
+    background: var(--color-neutral-200);
+  }
+
+  &::-webkit-progress-value {
+    background: var(--meter-fill);
+    border-radius: var(--radius-pill);
+  }
+
+  &::-moz-progress-bar {
+    background: var(--meter-fill);
+    border-radius: var(--radius-pill);
+  }
+}
+
+.usage-meter__note {
+  color: var(--color-text-subtle);
+}

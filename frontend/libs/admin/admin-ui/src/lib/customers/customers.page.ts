@@ -8,6 +8,7 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   EmailInputComponent,
+  MessageBoxComponent,
   PasswordInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -21,10 +22,52 @@ interface CustomerListItem {
   name: string;
   billingEmail: string;
   planTier: string;
+  /** Trial, Professional or Elite; null while the customer has no licence (TK-211). */
+  planName: string | null;
+  /** The plan a waiting upgrade request asks for, or null when none is waiting (TK-211). */
+  upgradeRequestedTo: string | null;
+  upgradeRequestedAt: string | null;
   /** Standard, Internal or Demo (TK-152). */
   kind: string;
   status: string;
   createdAt: string | null;
+}
+
+/** The plans an operator can put a customer on (D-70). A trial and Standard are not for sale. */
+export const SWITCHABLE_PLANS: readonly BbSelectOption<string>[] = [
+  { value: 'Pro', label: 'Professional' },
+  { value: 'Elite', label: 'Elite' },
+];
+
+/** The name of the plan a switch's value stands for. */
+export function switchPlanName(plan: string): string {
+  return plan === 'Elite' ? 'Elite' : 'Professional';
+}
+
+/** An operator moves a paying customer that has a licence; Internal and Demo customers are never billed. */
+export function canSwitchPlan(row: { kind: string; planName: string | null }): boolean {
+  return row.kind === 'Standard' && row.planName !== null;
+}
+
+/**
+ * The plan a switch starts on: the one the customer asked for, otherwise Elite
+ * for a Professional customer and Professional for anyone else.
+ */
+export function planToOffer(row: { planName: string | null; upgradeRequestedTo: string | null }): 'Pro' | 'Elite' {
+  if (row.upgradeRequestedTo === 'Elite') {
+    return 'Elite';
+  }
+
+  if (row.upgradeRequestedTo === 'Professional') {
+    return 'Pro';
+  }
+
+  return row.planName === 'Professional' ? 'Elite' : 'Pro';
+}
+
+/** Whether choosing this plan would leave the customer where they are. */
+export function isCurrentPlan(row: { planName: string | null }, plan: string): boolean {
+  return row.planName === switchPlanName(plan);
 }
 
 /** The three kinds of customer (D-44). Internal and Demo are never billed and never lapse. */
@@ -88,6 +131,7 @@ interface CreateCustomerForm {
     DataGridComponent,
     DataGridCellTemplateDirective,
     FormsModule,
+    MessageBoxComponent,
     TextInputComponent,
     SelectComponent,
     EmailInputComponent,
@@ -111,6 +155,10 @@ export class CustomersPage implements OnInit {
     })),
   );
   protected readonly kindOptions = CUSTOMER_KINDS;
+  protected readonly switchOptions = SWITCHABLE_PLANS;
+  protected readonly canSwitch = canSwitchPlan;
+  protected readonly switchPlanLabel = switchPlanName;
+  protected readonly isCurrentPlan = isCurrentPlan;
   protected readonly kindFilterOptions: BbSelectOption<string>[] = [{ value: '', label: 'Every kind' }, ...CUSTOMER_KINDS];
   protected readonly businessTypeOptions: BbSelectOption<string>[] = BUSINESS_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
@@ -129,6 +177,11 @@ export class CustomersPage implements OnInit {
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
   protected readonly adding = signal(false);
+
+  /** The customer whose plan is being switched, or null while the prompt is shut (TK-211). */
+  protected readonly switching = signal<CustomerListItem | null>(null);
+  protected readonly switchPlan = signal<string>('Elite');
+  protected readonly switchError = signal<string | null>(null);
 
   form: CreateCustomerForm = this.blank();
 
@@ -229,6 +282,47 @@ export class CustomersPage implements OnInit {
     } catch (err: unknown) {
       const anyErr = err as { error?: { message?: string } };
       this.fail(anyErr?.error?.message ?? 'Could not create the demo customers.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  protected startSwitch(row: CustomerListItem): void {
+    this.switchError.set(null);
+    this.switchPlan.set(planToOffer(row));
+    this.switching.set(row);
+  }
+
+  protected cancelSwitch(): void {
+    this.switching.set(null);
+  }
+
+  /**
+   * Moves the customer to the chosen plan. The licence takes that plan's limits
+   * at once and a request for it is closed (D-70); a refusal is shown in the
+   * prompt, in the server's words, so it can be put right and sent again.
+   */
+  protected async confirmSwitch(): Promise<void> {
+    const row = this.switching();
+    if (!row || this.busy()) {
+      return;
+    }
+
+    this.busy.set(true);
+    this.switchError.set(null);
+    try {
+      const answer = await this.send<{ message: string }>(
+        'PUT',
+        `/api/customers/${row.customerId}/licenses/plan`,
+        { plan: this.switchPlan() },
+      );
+      this.switching.set(null);
+      this.message.set(answer.message);
+      this.messageIsError.set(false);
+      await this.load();
+    } catch (err: unknown) {
+      const anyErr = err as { error?: { message?: string } };
+      this.switchError.set(anyErr?.error?.message ?? 'That did not work.');
     } finally {
       this.busy.set(false);
     }

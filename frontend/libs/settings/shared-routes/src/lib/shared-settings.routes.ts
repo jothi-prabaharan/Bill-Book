@@ -54,6 +54,12 @@ export const sharedSettingsRoutes: Routes = [
     loadComponent: () => import('@bill-book/settings-smtp').then((m) => m.SmtpSettingsPage),
     data: { access: { permission: 'settings.view' } },
   },
+  // The customer's plan, its usage and the two paid plans' prices (TK-211).
+  {
+    path: 'settings/plan',
+    loadComponent: () => import('@bill-book/settings-plan').then((m) => m.PlanPage),
+    data: { access: { permission: 'settings.view' } },
+  },
   // One menu row per document type, each landing on its own type. Opening
   // takes settings.view; the page is read-only without settings.edit, and
   // the API refuses a write without it regardless.

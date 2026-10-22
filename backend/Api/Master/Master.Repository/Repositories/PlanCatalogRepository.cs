@@ -63,7 +63,8 @@ public static class PlanCatalogRepository
     public static bool IsUpgrade(LicenseType from, LicenseType to) =>
         to is LicenseType.Pro or LicenseType.Elite && Rank(to) > Rank(from);
 
-    private static int Rank(LicenseType type) => type switch
+    /// <summary>Where a plan stands: a trial, then Professional (and the older Standard), then Elite.</summary>
+    public static int Rank(LicenseType type) => type switch
     {
         LicenseType.Trial => 0,
         LicenseType.Standard or LicenseType.Pro => 1,

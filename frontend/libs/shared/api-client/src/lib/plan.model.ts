@@ -195,3 +195,109 @@ export function quotaBadge(usage: MonthlyUsage): QuotaBadge | null {
     title,
   };
 }
+
+// ---- The Plan screen (TK-211) --------------------------------------------------------------------
+
+/** How often a paid plan is paid for. */
+export type BillingCycle = 'Quarterly' | 'BiAnnual';
+
+/** What one paid plan allows, as the server gives a licence it. Null is no limit. */
+export interface PlanTier {
+  /** Professional or Elite. */
+  plan: string;
+  licenseType: LicenseType;
+  maxUsers: number | null;
+  monthlySalesTransactionLimit: number | null;
+  monthlyPurchaseTransactionLimit: number | null;
+}
+
+/** What each paid plan costs for the whole of one billing cycle. */
+export interface PlanCyclePrice {
+  cycle: BillingCycle;
+  months: number;
+  professional: number;
+  elite: number;
+}
+
+/**
+ * What the Plan screen shows beside the plan: what each paid plan allows, and
+ * what each costs for the branch's trade. No cycles means no price is set for
+ * the trade, and the price is agreed with the platform's team.
+ */
+export interface PlanPrices {
+  businessType: string | null;
+  currencyCode: string;
+  tiers: PlanTier[];
+  cycles: PlanCyclePrice[];
+}
+
+/** Where a plan stands: a trial, then Professional (and the older Standard), then Elite. */
+export function planRank(type: LicenseType): number {
+  switch (type) {
+    case 'Trial':
+      return 0;
+    case 'Standard':
+    case 'Pro':
+      return 1;
+    default:
+      return 2;
+  }
+}
+
+/** What a plan's card offers: it is yours, it is one you can ask for, or it is neither. */
+export type PlanCardState = 'current' | 'upgrade' | 'none';
+
+/** The plans below yours, and every plan when nothing can be upgraded, offer nothing. */
+export function planCardState(summary: PlanSummary, tier: PlanTier): PlanCardState {
+  const mine = planRank(summary.licenseType);
+  const theirs = planRank(tier.licenseType);
+
+  if (mine === theirs) {
+    return 'current';
+  }
+
+  return theirs > mine && summary.canUpgrade ? 'upgrade' : 'none';
+}
+
+/** The name a cycle is shown under. */
+export function cycleLabel(cycle: BillingCycle): string {
+  return cycle === 'BiAnnual' ? 'Bi-annual' : 'Quarterly';
+}
+
+/** A platform price, whole currency units, in the currency it was set in and not the branch's. */
+export function formatPlanPrice(amount: number, currencyCode: string): string {
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: currencyCode,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${currencyCode} ${COUNT.format(Math.round(amount))}`;
+  }
+}
+
+/** What a cycle's price comes to in one month. */
+export function perMonth(total: number, months: number): number {
+  return months > 0 ? total / months : total;
+}
+
+/** A plan's price for a cycle. */
+export function cyclePriceOf(price: PlanCyclePrice, tier: PlanTier): number {
+  return tier.licenseType === 'Elite' ? price.elite : price.professional;
+}
+
+/** What a plan allows, one line each, in the words the Plan screen lists. */
+export function tierFeatures(tier: PlanTier): string[] {
+  return [
+    tier.maxUsers === null
+      ? 'Unlimited users in every branch'
+      : `Up to ${COUNT.format(tier.maxUsers)} users in each branch, deactivated ones included`,
+    tier.monthlySalesTransactionLimit === null
+      ? 'Unlimited Sales documents'
+      : `${COUNT.format(tier.monthlySalesTransactionLimit)} Sales documents a month`,
+    tier.monthlyPurchaseTransactionLimit === null
+      ? 'Unlimited Purchase documents'
+      : `${COUNT.format(tier.monthlyPurchaseTransactionLimit)} Purchase documents a month`,
+  ];
+}
