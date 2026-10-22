@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 196 completed, 0 working, 58 open, and 2 blocked (256 cards).
+**Summary:** 196 completed, 1 working, 57 open, and 2 blocked (256 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -217,7 +217,7 @@ where to start, sub-tasks and notes.
 | [TK-208](./Task_Details.md#tk-208--close-the-gaps-tk-206-left-settlement-reads-older-payments-head-office-seed-purchase-forms-lockfile) | Close the gaps TK-206 left: settlement reads, older payments, head office seed, purchase forms, lockfile | Z | ✅ completed | Claude Opus 5.5 | 2026-10-21 | written, not run | [#198](https://github.com/jothi-prabaharan/Bill-Book/issues/198) | — |
 | [TK-209](./Task_Details.md#tk-209--plan-limits-and-the-seat-cap) | Plan limits and the seat cap | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-22 | written, not run | [#199](https://github.com/jothi-prabaharan/Bill-Book/issues/199) | — |
 | [TK-210](./Task_Details.md#tk-210--monthly-transaction-limits-for-sales-and-purchase) | Monthly transaction limits for Sales and Purchase | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-22 | written, not run | [#247](https://github.com/jothi-prabaharan/Bill-Book/issues/247) | — |
-| [TK-211](./Task_Details.md#tk-211--the-plan-screen-and-switching-a-plan) | The Plan screen and switching a plan | Z | 🟪 open | — | — | — | — | — |
+| [TK-211](./Task_Details.md#tk-211--the-plan-screen-and-switching-a-plan) | The Plan screen and switching a plan | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-22 | — | [#248](https://github.com/jothi-prabaharan/Bill-Book/issues/248) | — |
 | [TK-212](./Task_Details.md#tk-212--items-get-their-sub-accounts-so-a-stock-item-can-be-sold) | Items get their sub-accounts, so a stock item can be sold | Z | 🟪 open | — | — | — | — | — |
 | [TK-213](./Task_Details.md#tk-213--reporting-read-models-enum-columns-read-as-their-names-and-the-settlement-read-model) | Reporting read models: enum columns read as their names, and the settlement read model | Z | ✅ completed | Claude Opus 5.5 | 2026-10-22 | written, not run | [#200](https://github.com/jothi-prabaharan/Bill-Book/issues/200) | — |
 | [TK-214](./Task_Details.md#tk-214--budget-monthly-trend-its-own-endpoint-and-page) | Budget Monthly Trend: its own endpoint and page | Z | 🟪 open | — | — | — | [#201](https://github.com/jothi-prabaharan/Bill-Book/issues/201) | — |

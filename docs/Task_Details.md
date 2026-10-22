@@ -6186,16 +6186,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** the 1,001st Sales document in a month is refused on Professional while Purchase still takes its own 1,000; Elite is never refused; the badge counts down; the dialog opens on the refusal.
 
 ### TK-211 · The Plan screen and switching a plan
-- [ ] open
+- [~] working (Claude Sonnet 5.5) — since 2026-10-22
+- **Issue:** [#248](https://github.com/jothi-prabaharan/Bill-Book/issues/248)
 - **Group:** Z · Owner request
-- **Lanes:** L-MST (`mst.PlanPrices`, the operator action), L-UI (a Settings › Plan lib), L-WEB (the route), L-DOC · **Depends on:** TK-209, TK-210 · **Decision:** D-70, D-71
-- **State:** checked 21 October 2026. No plan screen; no price in the product; an operator cannot change a customer's plan.
+- **Lanes:** L-MST (`mst.PlanPrices`, `PlanRepository`, `PlanController`, `LicensesController`, the admin customer list, `MenuSeed`, an `AdminDbContext` migration), L-UI (`libs/shared/{ui-components,api-client}`, `libs/settings/{plan,shared-routes}`, `libs/admin/admin-ui`, the shell's fallback screens), L-DOC · **Depends on:** TK-209, TK-210 · **Decision:** D-70, D-71
+- **Where:** `Master.Entity/TableEntities/PlanPrice.cs`, `Master.Entity/Enums/BillingCycle.cs`, `Master.Repository/SeedData/PlanPriceSeed.cs`, `Master.Repository/Repositories/{PlanRepository,PlanPriceRepository,SignupRepository}.cs`, `Master.Api/Controllers/{PlanController,LicensesController}.cs`, `Master.Repository/SeedData/MenuSeed.cs`, `libs/settings/plan`, `libs/settings/shared-routes`, `libs/admin/admin-ui/src/lib/customers`.
+- **State:** checked 22 October 2026. TK-209 gave the licence its limits and a customer a way to ask for Elite; TK-210 counts Sales and Purchase documents. There is no Plan screen, no price anywhere in the product (the website carries the base monthly price of each trade, 10% off a quarter and 20% off a year), and an operator can renew a licence but not change its plan. A request is recorded and mailed, and nothing shows it on the admin pages.
 - **Sub-tasks:**
-  - [ ] `mst.PlanPrices` (business type and cycle: Quarterly, Bi-Annual) seeded from the website's monthly prices, Elite three times Professional's; `GET api/licence/prices`.
-  - [ ] Settings › Plan: Professional (features, users used of five, the two monthly meters out of 1,000, prices) and Elite (highlighted, three times the price, unlimited users and transactions), with "Request upgrade".
-  - [ ] An operator action to switch a customer's plan, which re-applies the plan defaults; the admin customer list shows pending upgrade requests.
+  - [ ] `mst.PlanPrices` (`BusinessType`, `Plan` Pro or Elite, `BillingCycle` Quarterly or BiAnnual, `Amount`, `CurrencyCode`, `IsActive`; unique on the first three) with a migration and an idempotent seed at start that adds only the rows that are missing, so a price an operator changed is never overwritten. **Seed rule (an assumption, written down so it is easy to change):** Professional is the website's base monthly price for the trade times the months in the cycle, less the website's own 10% for a quarter and 15% for six months, which is midway between its quarter and its year, since the website sells no half year; Elite is three times Professional's price for the same cycle (D-71). Master's trades without a website price (a branch with no trade) get no price.
+  - [ ] `GET api/plan/prices` (*Settings: view*): both plans for both cycles for the signed-in branch's trade, with the currency; empty for a branch with no trade.
+  - [ ] Settings › Plan (`/settings/plan`, a menu row under Organisation and a fallback screen): Professional and Elite side by side, Elite highlighted. Each card has its name, price for a quarter and for six months, what it includes, and its limits; the current plan's card shows usage meters (users used of five, Sales and Purchase documents of 1,000 this month, from `GET api/plan` and the two usage routes) and says "Your plan". "Request upgrade" opens `bb-upgrade-dialog`. A `bb-usage-meter` in ui-components, on tokens, warning at 80% and danger at 100%.
+  - [ ] `PUT api/customers/{customerId}/licenses/plan` (*Platform: edit*): switches a customer to Professional or Elite, re-applies that plan's limits, keeps `Customer.PlanTier` in step, takes a trial customer to Active, and marks the pending upgrade requests it answers as done. It refuses an Internal or Demo customer, which is Elite for good, and a plan the customer is already on. It does not move a customer's data to a database of its own: Elite's dedicated database is chosen when a customer is made, and moving one is not part of this card.
+  - [ ] The admin customer list: the plan, a "Upgrade requested" badge with the plan asked for, and a **Switch plan** action.
   - [ ] Test, docs and release notes.
-- **Done when:** the screen shows both plans with live usage; a request reaches the operator; the operator's switch changes the limits at once.
+- **Done when:** the screen shows both plans with live usage and prices; a request reaches the operator and shows on the customer list; the operator's switch changes the limits at once.
 
 ### TK-212 · Items get their sub-accounts, so a stock item can be sold
 - [ ] open
