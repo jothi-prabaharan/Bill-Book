@@ -12,5 +12,8 @@
     <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
 
-</Project>
+  <ItemGroup Condition="Exists('SeedData')">
+    <Content Update="SeedData\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
+</Project>

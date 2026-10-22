@@ -37,6 +37,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITenantDatabaseResolver, TenantDatabaseResolver>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddTenantMigration();
 
 builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
@@ -135,6 +136,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<TenantMiddleware>();
+app.UseTenantMigration<CustomerDbContext>();
 
 app.MapControllers();
 

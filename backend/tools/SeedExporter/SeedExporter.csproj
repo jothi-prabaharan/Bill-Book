@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Shared.Kernel\Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\Api\Accounting\Accounting.Repository\Accounting.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Inventory\Inventory.Repository\Inventory.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Customer\Customer.Repository\Customer.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Printing\Printing.Repository\Printing.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Sales\Sales.Repository\Sales.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Purchase\Purchase.Repository\Purchase.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Site\Site.Repository\Site.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Admission\Admission.Repository\Admission.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Fee\Fee.Repository\Fee.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Student\Student.Repository\Student.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Employee\Employee.Repository\Employee.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\Payroll\Payroll.Repository\Payroll.Repository.csproj" />
+    <ProjectReference Include="..\..\Api\WorkOrder\WorkOrder.Repository\WorkOrder.Repository.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,54 @@
+[
+  {
+    "slaPolicyId": 0,
+    "priority": "Urgent",
+    "responseHours": 1,
+    "resolutionHours": 2,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  },
+  {
+    "slaPolicyId": 0,
+    "priority": "High",
+    "responseHours": 4,
+    "resolutionHours": 8,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  },
+  {
+    "slaPolicyId": 0,
+    "priority": "Medium",
+    "responseHours": 8,
+    "resolutionHours": 48,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  },
+  {
+    "slaPolicyId": 0,
+    "priority": "Low",
+    "responseHours": 24,
+    "resolutionHours": 168,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]

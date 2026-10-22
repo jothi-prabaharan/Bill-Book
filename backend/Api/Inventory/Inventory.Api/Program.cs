@@ -44,6 +44,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITenantDatabaseResolver, TenantDatabaseResolver>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddTenantMigration();
 
 // Tenancy — resolved per request from the JWT, then used to pick the database.
 builder.Services.AddScoped<TenantContext>();
@@ -161,6 +162,7 @@ app.UseAuthorization();
 
 // After authentication so the claims are available, before any DbContext use.
 app.UseMiddleware<TenantMiddleware>();
+app.UseTenantMigration<InventoryDbContext>();
 
 app.MapControllers();
 

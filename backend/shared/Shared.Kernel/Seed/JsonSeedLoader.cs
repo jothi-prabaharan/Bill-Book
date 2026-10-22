@@ -1,6 +1,10 @@
+using System.Collections.Concurrent;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 
 namespace Shared.Kernel.Seed;
@@ -30,6 +34,7 @@ public class JsonSeedLoader : IJsonSeedLoader
     public async Task<int> SeedFromDirectoryAsync(
         DbContext dbContext,
         string seedDirectoryPath,
+        Guid? orgId = null,
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(dbContext);
@@ -57,7 +62,7 @@ public class JsonSeedLoader : IJsonSeedLoader
         {
             try
             {
-                int count = await ProcessSeedFileAsync(dbContext, file, ct);
+                int count = await ProcessSeedFileAsync(dbContext, file, orgId, ct);
                 totalInserted += count;
             }
             catch (Exception ex)
@@ -79,6 +84,7 @@ public class JsonSeedLoader : IJsonSeedLoader
         DbContext dbContext,
         string jsonFilePath,
         Func<TEntity, object> keySelector,
+        Guid? orgId = null,
         CancellationToken ct = default) where TEntity : class
     {
         ArgumentNullException.ThrowIfNull(dbContext);
@@ -96,6 +102,21 @@ public class JsonSeedLoader : IJsonSeedLoader
         if (items is null || items.Count == 0)
         {
             return 0;
+        }
+
+        if (orgId.HasValue && orgId.Value != Guid.Empty)
+        {
+            PropertyInfo? orgProp = typeof(TEntity).GetProperty("OrgId");
+            if (orgProp != null && orgProp.PropertyType == typeof(Guid) && orgProp.CanWrite)
+            {
+                foreach (TEntity item in items)
+                {
+                    if ((Guid)orgProp.GetValue(item)! == Guid.Empty)
+                    {
+                        orgProp.SetValue(item, orgId.Value);
+                    }
+                }
+            }
         }
 
         return await SeedEntitiesAsync(dbContext, items, keySelector, ct);
@@ -145,15 +166,14 @@ public class JsonSeedLoader : IJsonSeedLoader
     protected virtual async Task<int> ProcessSeedFileAsync(
         DbContext dbContext,
         string filePath,
+        Guid? orgId,
         CancellationToken ct)
     {
         string fileName = Path.GetFileNameWithoutExtension(filePath);
 
-        // Find entity type in model by CLR name or Table name
+        // Find entity type in model by CLR name, pluralization, or Table name
         var entityType = dbContext.Model.GetEntityTypes()
-            .FirstOrDefault(t => 
-                string.Equals(t.ClrType.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(t.GetTableName(), fileName, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(t => IsMatchingEntityType(t, fileName));
 
         if (entityType is null)
         {
@@ -163,40 +183,165 @@ public class JsonSeedLoader : IJsonSeedLoader
             return 0;
         }
 
-        var clrType = entityType.ClrType;
-        var primaryKey = entityType.FindPrimaryKey();
-        if (primaryKey is null || primaryKey.Properties.Count == 0)
-        {
-            _logger.LogWarning("Entity '{Entity}' has no primary key; skipping dynamic JSON seed.", clrType.Name);
-            return 0;
-        }
+        Type clrType = entityType.ClrType;
 
-        var keyProperty = clrType.GetProperty(primaryKey.Properties[0].Name);
-        if (keyProperty is null)
-        {
-            return 0;
-        }
+        // Build key selector delegate via expression tree
+        Delegate keySelectorDelegate = BuildKeySelector(entityType);
 
         string json = await File.ReadAllTextAsync(filePath, ct);
-        var listType = typeof(List<>).MakeGenericType(clrType);
-        var deserialized = JsonSerializer.Deserialize(json, listType, JsonOptions);
+        Type listType = typeof(List<>).MakeGenericType(clrType);
+        object? deserialized = JsonSerializer.Deserialize(json, listType, JsonOptions);
 
         if (deserialized is not System.Collections.IEnumerable enumerable)
         {
             return 0;
         }
 
+        // Apply OrgId if applicable
+        if (orgId.HasValue && orgId.Value != Guid.Empty)
+        {
+            PropertyInfo? orgProp = clrType.GetProperty("OrgId");
+            if (orgProp != null && orgProp.PropertyType == typeof(Guid) && orgProp.CanWrite)
+            {
+                foreach (object item in enumerable)
+                {
+                    if ((Guid)orgProp.GetValue(item)! == Guid.Empty)
+                    {
+                        orgProp.SetValue(item, orgId.Value);
+                    }
+                }
+            }
+        }
+
         // Dynamically invoke SeedEntitiesAsync<TEntity>
-        var method = typeof(JsonSeedLoader).GetMethod(nameof(SeedEntitiesAsync))!
+        MethodInfo method = typeof(JsonSeedLoader).GetMethod(nameof(SeedEntitiesAsync))!
             .MakeGenericMethod(clrType);
 
-        Func<object, object> keySelector = obj => keyProperty.GetValue(obj)!;
-
-        // Create generic Func<TEntity, object>
-        var delegateType = typeof(Func<,>).MakeGenericType(clrType, typeof(object));
-        var typedKeySelector = Delegate.CreateDelegate(delegateType, keySelector.Target, keySelector.Method);
-
-        var task = (Task<int>)method.Invoke(this, [dbContext, enumerable, typedKeySelector, ct])!;
+        var task = (Task<int>)method.Invoke(this, [dbContext, enumerable, keySelectorDelegate, ct])!;
         return await task;
+    }
+
+    private static bool IsMatchingEntityType(IEntityType t, string fileName)
+    {
+        string clrName = t.ClrType.Name;
+        string? tableName = t.GetTableName();
+
+        if (string.Equals(clrName, fileName, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(tableName, fileName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Plural matching: "Accounts" -> "Account", "PaymentTerms" -> "PaymentTerm"
+        if (string.Equals(clrName + "s", fileName, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(clrName + "es", fileName, StringComparison.OrdinalIgnoreCase) ||
+            (tableName != null && string.Equals(tableName + "s", fileName, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        // "ies" to "y" matching: "MetalPurities" -> "MetalPurity", "Categories" -> "Category"
+        if (fileName.EndsWith("ies", StringComparison.OrdinalIgnoreCase) &&
+            clrName.EndsWith("y", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(fileName[..^3] + "y", clrName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static Delegate BuildKeySelector(IEntityType entityType)
+    {
+        Type clrType = entityType.ClrType;
+        ParameterExpression param = Expression.Parameter(clrType, "e");
+
+        // Determine key properties: prefer unique index or natural key over auto-increment identity PK
+        List<PropertyInfo> keyProps = DetermineKeyProperties(entityType);
+
+        Expression body;
+        if (keyProps.Count == 1)
+        {
+            body = Expression.Convert(Expression.Property(param, keyProps[0]), typeof(object));
+        }
+        else
+        {
+            // Composite key: concatenate properties with delimiter e.g. "OrgId|AccountCode"
+            var stringExpressions = keyProps.Select(p =>
+            {
+                MemberExpression propAccess = Expression.Property(param, p);
+                MethodInfo toStringMethod = typeof(object).GetMethod(nameof(ToString), Type.EmptyTypes)!;
+                Expression nullCheck = Expression.Condition(
+                    Expression.Equal(Expression.Convert(propAccess, typeof(object)), Expression.Constant(null)),
+                    Expression.Constant(string.Empty),
+                    Expression.Call(Expression.Convert(propAccess, typeof(object)), toStringMethod));
+                return nullCheck;
+            }).ToList();
+
+            // Interleave with "|"
+            List<Expression> withDelimiters = new();
+            for (int i = 0; i < stringExpressions.Count; i++)
+            {
+                if (i > 0) withDelimiters.Add(Expression.Constant("|"));
+                withDelimiters.Add(stringExpressions[i]);
+            }
+
+            MethodInfo concatMethod = typeof(string).GetMethod(nameof(string.Concat), [typeof(string[])])!;
+            NewArrayExpression newArray = Expression.NewArrayInit(typeof(string), withDelimiters);
+            body = Expression.Call(concatMethod, newArray);
+        }
+
+        Type delegateType = typeof(Func<,>).MakeGenericType(clrType, typeof(object));
+        return Expression.Lambda(delegateType, body, param).Compile();
+    }
+
+    private static List<PropertyInfo> DetermineKeyProperties(IEntityType entityType)
+    {
+        Type clrType = entityType.ClrType;
+
+        // 1. Check if there is a unique index defined on the entity
+        var uniqueIndex = entityType.GetIndexes()
+            .FirstOrDefault(i => i.IsUnique && !i.Properties.Any(p => p.ValueGenerated == ValueGenerated.OnAdd));
+
+        if (uniqueIndex != null)
+        {
+            return uniqueIndex.Properties
+                .Select(p => clrType.GetProperty(p.Name)!)
+                .Where(p => p != null)
+                .ToList();
+        }
+
+        // 2. Check for natural code / system name properties
+        PropertyInfo? orgProp = clrType.GetProperty("OrgId");
+        string[] candidateNames = ["SystemName", "Code", "AccountCode", "SeriesCode", "SectionCode", "RoleSystemName", "TaxSystemName", "Priority", "TemplateName", "Key", "Name"];
+
+        PropertyInfo? naturalProp = candidateNames
+            .Select(name => clrType.GetProperties().FirstOrDefault(p =>
+                string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase) ||
+                p.Name.EndsWith(name, StringComparison.OrdinalIgnoreCase)))
+            .FirstOrDefault(p => p != null);
+
+        if (naturalProp != null)
+        {
+            List<PropertyInfo> list = new();
+            if (orgProp != null)
+            {
+                list.Add(orgProp);
+            }
+            list.Add(naturalProp);
+            return list;
+        }
+
+        // 3. Fallback to Primary Key properties
+        var primaryKey = entityType.FindPrimaryKey();
+        if (primaryKey != null && primaryKey.Properties.Count > 0)
+        {
+            return primaryKey.Properties
+                .Select(p => clrType.GetProperty(p.Name)!)
+                .Where(p => p != null)
+                .ToList();
+        }
+
+        throw new InvalidOperationException($"Unable to determine key selector for entity '{clrType.Name}'.");
     }
 }

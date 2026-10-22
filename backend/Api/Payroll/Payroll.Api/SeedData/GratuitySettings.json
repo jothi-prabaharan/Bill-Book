@@ -1,0 +1,15 @@
+[
+  {
+    "gratuitySettingId": 0,
+    "effectiveFrom": "2020-01-01",
+    "effectiveTo": null,
+    "gratuityPercentage": 4.81,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]

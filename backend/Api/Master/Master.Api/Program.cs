@@ -57,6 +57,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITenantDatabaseResolver, TenantDatabaseResolver>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddTenantMigration();
 
 builder.Services.Configure<JwtOptionsRepository>(builder.Configuration.GetSection(JwtOptionsRepository.SectionName));
 
@@ -356,6 +357,7 @@ app.UseAuthorization();
 // Only the contacts context needs it; it is harmless on the master one, which
 // takes no tenant.
 app.UseMiddleware<TenantMiddleware>();
+app.UseTenantMigration<ContactsDbContext>();
 
 // Only the portal session exchange names a policy (TK-94).
 app.UseRateLimiter();

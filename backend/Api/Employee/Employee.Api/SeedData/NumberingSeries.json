@@ -1,0 +1,33 @@
+[
+  {
+    "numberingSeriesId": 0,
+    "seriesSystemName": "EMP",
+    "seriesCode": "EMP",
+    "seriesName": "Employee Code",
+    "seriesFor": "Master",
+    "prefix": "EMP",
+    "suffix": null,
+    "separator": "-",
+    "includeFinancialYear": false,
+    "financialYearFormat": "Compact",
+    "includeBranchCode": false,
+    "branchCode": null,
+    "numberLength": 5,
+    "startNumber": 1,
+    "nextNumber": 1,
+    "resetFrequency": "Never",
+    "lastResetOn": null,
+    "allowManualOverride": false,
+    "isDefault": true,
+    "isSystem": true,
+    "isActive": true,
+    "displayOrder": 900,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]

@@ -99,6 +99,13 @@ public class TenantMigrationMiddleware<TContext> where TContext : DbContext
                 return;
             }
 
+            // Ensure request tenant context has the database name set
+            var tenant = context.RequestServices.GetService<ITenantContext>();
+            if (tenant is TenantContext writable && string.IsNullOrWhiteSpace(writable.DatabaseName))
+            {
+                writable.DatabaseName = dbName;
+            }
+
             // Obtain a scoped DbContext instance configured for the resolved tenant
             using IServiceScope scope = context.RequestServices.CreateScope();
             TContext dbContext = scope.ServiceProvider.GetRequiredService<TContext>();
@@ -127,7 +134,8 @@ public class TenantMigrationMiddleware<TContext> where TContext : DbContext
                         ? _options.SeedDataDirectory
                         : Path.Combine(AppContext.BaseDirectory, _options.SeedDataDirectory);
 
-                    await seedLoader.SeedFromDirectoryAsync(dbContext, seedDir, context.RequestAborted);
+                    Guid? orgId = context.RequestServices.GetService<ITenantContext>()?.OrgId;
+                    await seedLoader.SeedFromDirectoryAsync(dbContext, seedDir, orgId, context.RequestAborted);
                 }
             }
             else

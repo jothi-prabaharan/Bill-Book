@@ -1,0 +1,28 @@
+[
+  {
+    "relationshipTypeId": 0,
+    "code": "LEAD",
+    "name": "Lead",
+    "isActive": true,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  },
+  {
+    "relationshipTypeId": 0,
+    "code": "PROJLEAD",
+    "name": "Project Lead",
+    "isActive": true,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]

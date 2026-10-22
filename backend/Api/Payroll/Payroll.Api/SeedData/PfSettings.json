@@ -1,0 +1,20 @@
+[
+  {
+    "pfSettingId": 0,
+    "effectiveFrom": "2020-01-01",
+    "effectiveTo": null,
+    "employeeContributionRate": 12.0,
+    "employerContributionRate": 12.0,
+    "wageCeiling": 15000.0,
+    "restrictToWageCeiling": true,
+    "adminChargesRate": 0.50,
+    "edliRate": 0.50,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]

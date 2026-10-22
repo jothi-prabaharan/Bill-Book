@@ -1,0 +1,21 @@
+[
+  {
+    "workLocationId": 0,
+    "code": "HO",
+    "name": "Head office",
+    "stateId": null,
+    "addressLine1": null,
+    "city": null,
+    "latitude": null,
+    "longitude": null,
+    "geoFenceMetres": null,
+    "isActive": true,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]

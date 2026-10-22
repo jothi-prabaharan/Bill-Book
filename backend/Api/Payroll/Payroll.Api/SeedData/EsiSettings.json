@@ -1,0 +1,17 @@
+[
+  {
+    "esiSettingId": 0,
+    "effectiveFrom": "2020-01-01",
+    "effectiveTo": null,
+    "employeeContributionRate": 0.75,
+    "employerContributionRate": 3.25,
+    "wageCeiling": 21000.0,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]

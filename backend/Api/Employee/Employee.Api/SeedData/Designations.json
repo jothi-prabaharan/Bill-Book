@@ -1,0 +1,15 @@
+[
+  {
+    "designationId": 0,
+    "code": "STAFF",
+    "name": "Staff",
+    "isActive": true,
+    "customerId": "00000000-0000-0000-0000-000000000000",
+    "orgId": "00000000-0000-0000-0000-000000000000",
+    "createdBy": null,
+    "createdAt": null,
+    "modifiedBy": null,
+    "modifiedAt": null,
+    "version": 0
+  }
+]
