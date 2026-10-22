@@ -222,6 +222,16 @@ Inviting someone back who was revoked takes no new place: they are already count
 
 `GET /api/plan` (*Settings: view*) returns the plan's name, its limits, and how many places the signed-in branch has used.
 
+### On the Users screen
+
+**Settings › Users** says how many places are taken: **5 of 5 User Slots Used (Includes Deactivated Users)**. It is a note while a place is left and a warning when none is. A plan with no user limit shows no banner.
+
+When none is left, **Invite user** is off and an information icon beside it gives the reason in the server's own sentence. **Upgrade to Elite for Unlimited Users**, in the banner, opens the **upgrade prompt**. If the branch fills up between the screen opening and an invitation being sent, the refusal is shown as a warning in those same words and the banner catches up. **Revoke** warns that the person still counts towards the limit.
+
+### The upgrade prompt
+
+One prompt serves every limit, opened from a button or from a refused request. It shows the limit's sentence, a comparison of what the plan allows against what Elite does (users in a branch, Sales documents a month, Purchase documents a month), an optional note, and **Request upgrade to Elite**. Once the request is sent the prompt says so and offers nothing more. If a request is already waiting it says that instead; someone without *Settings: edit* is told to ask an administrator of the business; a refusal is shown in the server's words and the request can be sent again. On a phone the prompt takes the whole screen.
+
 ### Asking for a higher plan
 
 There is no payment inside the app (D-70). `POST /api/plan/upgrade-requests` (*Settings: edit*) records the request, with who asked, from which branch and what sent them, in `mst.UpgradeRequests`, and mails it to the address in `Licensing:UpgradeRequestEmail`, from the platform's own mailbox. A platform operator changes the plan. A customer with a request waiting does not make a second one: it is told so and nothing more is sent. With no address set the request is still recorded and a warning is logged. Elite, and an Internal or Demo customer, have nothing to ask for.

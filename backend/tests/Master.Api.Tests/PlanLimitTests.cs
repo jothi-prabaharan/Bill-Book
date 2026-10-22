@@ -337,6 +337,12 @@ public sealed class PlanLimitTests
         Assert.Equal(("Professional", 5, 4, 1000, 1000, true), (pro.Plan, pro.MaxUsers, pro.UsersUsed, pro.MonthlySalesTransactionLimit, pro.MonthlyPurchaseTransactionLimit, pro.CanUpgrade));
         Assert.Equal(("Elite", null, 2, false), (elite.Plan, elite.MaxUsers, elite.UsersUsed, elite.CanUpgrade));
         Assert.False(demo.CanUpgrade);
+
+        // One place left: no refusal to show. All taken, revoked ones among them: the invitation's own sentence.
+        Assert.Null(pro.UserLimitMessage);
+        Assert.Null(elite.UserLimitMessage);
+        (Guid fullCustomer, Guid fullOrg, _) = await SeedAsync(db, LicenseType.Pro, seated: 5, revoked: 2);
+        Assert.Equal(ProfessionalRefusal, (await plans.GetSummaryAsync(fullCustomer, fullOrg, default))!.UserLimitMessage);
         Assert.Null(await plans.GetSummaryAsync(Guid.NewGuid(), Guid.NewGuid(), default));
     }
 

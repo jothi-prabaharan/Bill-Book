@@ -38,6 +38,10 @@ export * from './lib/confirm-dialog/confirm-dialog.component';
 
 export * from './lib/icon-button/icon-button.component';
 
+export * from './lib/upgrade-dialog/upgrade-dialog.model';
+export * from './lib/upgrade-dialog/upgrade-dialog.service';
+export * from './lib/upgrade-dialog/upgrade-dialog.component';
+
 /*
  * The common input system. One wrapper, four bases and nineteen controls —
  * see `docs/User_Guide/inputs.md` for which to reach for and why.

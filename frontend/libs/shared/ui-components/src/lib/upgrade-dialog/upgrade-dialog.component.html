@@ -1,0 +1,40 @@
+@if (state(); as current) {
+  <div class="backdrop" aria-hidden="true" (click)="close()"></div>
+  <div class="dialog upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="upgrade-dialog-title">
+    <header class="dialog-header">
+      <h2 id="upgrade-dialog-title">{{ title(current.options) }}</h2>
+      <button type="button" class="close-btn" (click)="close()" aria-label="Close dialog">✕</button>
+    </header>
+
+    <div class="dialog-body upgrade-dialog__body">
+      <bb-message-box [messages]="messages(current)" />
+
+      @if (current.summary) {
+        <bb-data-grid
+          flush
+          label="What each plan allows"
+          [columns]="columns()"
+          [data]="rows()"
+          [sortable]="false"
+          [showColumnFilters]="false"
+          [showCount]="false"
+          [showExport]="false"
+          [paged]="false"
+        />
+      }
+
+      @if (canAsk(current)) {
+        <bb-textarea label="Note (optional)" name="upgradeNote" [rows]="2" [maxlength]="500" [(ngModel)]="note" />
+      }
+    </div>
+
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="close()">{{ current.requested ? 'Close' : 'Not now' }}</button>
+      @if (canAsk(current)) {
+        <button type="button" class="btn btn-primary" [disabled]="current.busy" (click)="request()">
+          Request upgrade to Elite
+        </button>
+      }
+    </footer>
+  </div>
+}

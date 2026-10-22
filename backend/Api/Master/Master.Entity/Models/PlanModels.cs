@@ -28,6 +28,13 @@ public class PlanSummaryResponse
     /// <summary>Purchase documents a month; null is no limit.</summary>
     public int? MonthlyPurchaseTransactionLimit { get; set; }
 
+    /// <summary>
+    /// The sentence an invitation would be refused with, or null while the
+    /// branch has a place left. Here so a screen shows the server's words
+    /// beside a disabled button and does not write a copy of its own.
+    /// </summary>
+    public string? UserLimitMessage { get; set; }
+
     /// <summary>False on Elite, and for a customer that is never billed.</summary>
     public bool CanUpgrade { get; set; }
 

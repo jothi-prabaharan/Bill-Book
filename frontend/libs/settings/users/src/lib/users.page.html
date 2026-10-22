@@ -1,13 +1,33 @@
 <header class="page-head">
   <h1>Users</h1>
-  <button class="btn btn-primary" type="button" (click)="inviting.set(!inviting())" [disabled]="busy()">
-    + Invite user
-  </button>
+  <div class="page-actions">
+    <button
+      class="btn btn-primary"
+      type="button"
+      (click)="startInvite()"
+      [disabled]="busy() || full()"
+      [attr.title]="plan()?.userLimitMessage"
+    >
+      + Invite user
+    </button>
+    @if (plan()?.userLimitMessage; as reason) {
+      <bb-info-tooltip [text]="reason" />
+    }
+  </div>
 </header>
 
-@if (message()) {
-  <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
+@if (banner(); as seats) {
+  <bb-message-box [tone]="seats.tone">
+    <div class="seat-banner">
+      <span>{{ seats.text }}</span>
+      @if (canUpgrade()) {
+        <button type="button" class="btn btn-primary btn-sm" (click)="upgrade()">Upgrade to Elite for Unlimited Users</button>
+      }
+    </div>
+  </bb-message-box>
 }
+
+<bb-message-box [messages]="messages()" [dismissible]="true" (dismiss)="clearMessages()" />
 
 @if (inviting()) {
   <div class="backdrop" aria-hidden="true" (click)="inviting.set(false)"></div>

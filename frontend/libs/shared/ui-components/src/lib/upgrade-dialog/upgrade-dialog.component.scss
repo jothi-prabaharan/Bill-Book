@@ -1,0 +1,8 @@
+/* Tokens only. The frame — backdrop, dialog, header, footer, buttons — is the
+   global dialog, which also becomes a full-screen sheet on a phone, and the
+   comparison is the product's own grid; this file only spaces the body. */
+
+.upgrade-dialog__body {
+  display: grid;
+  gap: var(--space-3);
+}

@@ -69,12 +69,17 @@ public sealed class PlanRepository
         bool requested = await _db.UpgradeRequests.AnyAsync(
             r => r.CustomerId == customerId && r.Status == UpgradeRequestStatus.Pending, ct);
 
+        int? maxUsers = unbilled ? null : row.MaxUsers;
+
         return new PlanSummaryResponse
         {
             Plan = PlanCatalogRepository.Name(row.LicenseType),
             LicenseType = row.LicenseType,
-            MaxUsers = unbilled ? null : row.MaxUsers,
+            MaxUsers = maxUsers,
             UsersUsed = used,
+            UserLimitMessage = maxUsers is int limit && used >= limit
+                ? PlanCatalogRepository.UserLimitMessage(row.LicenseType, limit)
+                : null,
             MonthlySalesTransactionLimit = unbilled ? null : row.MonthlySalesTransactionLimit,
             MonthlyPurchaseTransactionLimit = unbilled ? null : row.MonthlyPurchaseTransactionLimit,
             CanUpgrade = !unbilled && row.LicenseType != LicenseType.Elite,
