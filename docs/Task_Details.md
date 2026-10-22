@@ -6165,16 +6165,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a branch on Professional holds at most five users, active or not; the sixth invite is refused with the plan message; the Users screen shows the seats used and offers the upgrade; an Elite branch has no cap.
 
 ### TK-210 · Monthly transaction limits for Sales and Purchase
-- [ ] open
+- [~] working (Claude Sonnet 5.5) — since 2026-10-22
+- **Issue:** [#247](https://github.com/jothi-prabaharan/Bill-Book/issues/247)
 - **Group:** Z · Owner request
-- **Lanes:** L-SAL, L-PUR, L-KERNEL (the quota contract), L-MST (two token claims), L-UI (`libs/shared`, the Sales and Purchase headers), L-DOC · **Depends on:** TK-209 · **Decision:** D-69
-- **State:** checked 21 October 2026. Nothing counts documents; a licence has no transaction limit; the sign-in token carries `plan_tier` but no limits.
+- **Lanes:** L-SAL, L-PUR, L-KERNEL (the quota mechanism, the refusal mapping), L-UI (`libs/shared`, `libs/app-shell`), L-DOC · **Depends on:** TK-209 · **Decision:** D-69
+- **Lane note:** TK-213 holds the reporting lanes only. The owner asked for this by name. Sales and Purchase repositories are also being edited by other cards, so the count is taken by a `SaveChanges` interceptor and no create path is edited.
+- **Where:** `Shared.Kernel/Licensing/` (`MonthlyUsage`, `IPlanLimitProvider`, `QuotaPeriod`, `DocumentQuotaInterceptor`, `PlanLimitReachedException`), `Shared.Kernel/Errors/{ApiExceptionFilter,GlobalExceptionHandler}.cs`, `{Sales,Purchase}.Repository/{SalesDbContext,PurchaseDbContext}.cs` and their migrations, `{Sales,Purchase}.Api/{Program.cs,Controllers/*UsageController.cs}`, both `RecurringBillingRepository.cs`, `libs/app-shell`, `libs/shared/{api-client,ui-components}`.
+- **State:** checked 22 October 2026. Nothing counts documents. The licence has the two limits and Master's org context carries them (TK-209). Every document insert passes through `SaveChanges`, inside the request's transaction (rule 13). **Two changes from the first sketch of this card:** no token claims, because a claim would not reach a user until their next refresh and TK-211 wants a plan switch to take effect at once; the limits are read from Master's org context through a provider cached for one minute, as `IBranchSettingsProvider` does for the branch's settings. And no edit to each create path: a `SaveChanges` interceptor counts the counted headers being inserted, which covers every path by construction (quote, order, invoice, POS, credit note, conversions, recurring billing, workers) and cannot miss a new one.
 - **Sub-tasks:**
-  - [ ] Two token claims, `sales_txn_limit` and `purchase_txn_limit` (absent = unlimited).
-  - [ ] `sal.MonthlyUsage` and `pur.MonthlyUsage`: a counter per branch and month taken with a guarded update whose row count is the answer, inside the document's own transaction, so two requests cannot both take the last slot and a save that fails gives its slot back. Migrations with the tenant RLS block.
-  - [ ] A `TransactionQuotaRepository` in each service, called by every create and convert path in D-69's list; a refusal is 409 with the plan message and the code `PlanLimitReached`. Recurring billing skips and logs.
-  - [ ] `GET api/sales/usage` and `GET api/purchase/usage`; a remaining-quota badge on the Sales and Purchase pages for a Professional branch.
-  - [ ] One interceptor opens `bb-upgrade-dialog` on a `PlanLimitReached` refusal, so no form needs its own handling.
+  - [ ] `IPlanLimitProvider` and `HttpPlanLimitProvider`: the branch's plan name and its two limits from `internal/orgs/{orgId}/context`, cached one minute. Unreachable means unknown, and unknown is not limited: the count is still kept and a warning logged.
+  - [ ] `MonthlyUsage` (`OrgScopedEntity`: `PeriodStart`, the first day of the IST month; `DocumentCount`) mapped by `SalesDbContext` and `PurchaseDbContext` into `sal.MonthlyUsages` and `pur.MonthlyUsages`, with a migration each and the tenant RLS block.
+  - [ ] `DocumentQuotaInterceptor`: on `SavingChanges`, counts the Added headers of the counted types and takes that many places with a guarded `ExecuteUpdate` whose row count is the answer, creating the month's row the first time (a race for it is settled by the unique index and a retry). It runs in the document's own transaction, so a save that fails gives its places back; with no transaction open it opens one for the save. Sales counts `Quote`, `SalesOrder`, `Invoice` (POS included), `CreditNote`; Purchase counts `PurchaseOrder`, `GoodsReceipt`, `Bill`, `DebitNote`. Delivery challans do not count.
+  - [ ] The refusal: `PlanLimitReachedException`, mapped to 409 `PlanLimitResponse` by `ApiExceptionFilter` and `GlobalExceptionHandler`, and not written to the error log (an expected outcome, not a failure). "{Plan} plan limit reached: {n} Sales documents this month. Upgrade to the Elite Plan for unlimited transactions." Recurring billing, in both services, catches it, skips the schedule and logs.
+  - [ ] `GET api/sales/usage` and `GET api/purchase/usage` (used, limit, period); a remaining-places badge on the Sales and Purchase screens for a limited branch.
+  - [ ] One HTTP interceptor in the shell opens `bb-upgrade-dialog` on a refused Sales or Purchase document, so no form needs its own handling; the form still shows the server's sentence.
   - [ ] Test, docs and release notes.
 - **Done when:** the 1,001st Sales document in a month is refused on Professional while Purchase still takes its own 1,000; Elite is never refused; the badge counts down; the dialog opens on the refusal.
 
