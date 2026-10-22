@@ -26,26 +26,77 @@ public sealed class LedgerController : ControllerBase
 {
     private readonly LedgerReportRepository _reports;
     private readonly TrialBalanceReportRepository _trialBalance;
+    private readonly GeneralLedgerReportRepository _generalLedger;
 
-    public LedgerController(LedgerReportRepository reports, TrialBalanceReportRepository trialBalance)
+    public LedgerController(
+        LedgerReportRepository reports,
+        TrialBalanceReportRepository trialBalance,
+        GeneralLedgerReportRepository generalLedger)
     {
         _reports = reports;
         _trialBalance = trialBalance;
+        _generalLedger = generalLedger;
     }
 
+    /// <summary>
+    /// The General ledger (TK-216): one account over a period with both ends
+    /// required, its opening balance, every posting with a running balance and its
+    /// closing balance, on the account's normal side, optionally narrowed to one
+    /// contact or one project. A request naming another branch is 403, a missing or
+    /// reversed date a field error.
+    ///
+    /// NotFound rather than an empty ledger for an account that is not here: the
+    /// query filter is what decided, so an account in another branch and an account
+    /// that never existed are indistinguishable from outside.
+    /// </summary>
     [HttpGet("accounts/{accountId:long}")]
     public async Task<IActionResult> AccountLedger(
-        long accountId,
-        [FromQuery] DateOnly? from,
-        [FromQuery] DateOnly? to,
-        CancellationToken ct)
+        long accountId, [FromQuery] GeneralLedgerReportRequest request, CancellationToken ct)
     {
-        AccountLedgerView? ledger = await _reports.GetAccountLedgerAsync(accountId, from, to, ct);
+        if (OtherBranch(request.OrgId))
+        {
+            return Forbid();
+        }
 
-        // NotFound rather than an empty ledger: the query filter is what decided
-        // the account is not here, and an account in another branch and an
-        // account that never existed should be indistinguishable from outside.
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        if (RefuseDates(GeneralLedgerReportRepository.DateRefusals(request.From, request.To)) is IActionResult refused)
+        {
+            return refused;
+        }
+
+        GeneralLedgerReportResultDto? ledger = await _generalLedger.RunAsync(accountId, request, ct);
+
         return ledger is null ? NotFound() : Ok(ledger);
+    }
+
+    /// <summary>
+    /// Every account that moved or holds a balance over a period, with its opening
+    /// balance, its debits and credits and its closing balance: the general
+    /// ledger's summary. Both dates are required.
+    /// </summary>
+    [HttpGet("summary")]
+    public async Task<IActionResult> Summary([FromQuery] GeneralLedgerSummaryRequest request, CancellationToken ct)
+    {
+        if (OtherBranch(request.OrgId))
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        if (RefuseDates(GeneralLedgerReportRepository.DateRefusals(request.From, request.To)) is IActionResult refused)
+        {
+            return refused;
+        }
+
+        return Ok(await _generalLedger.SummaryAsync(request, ct));
     }
 
     /// <summary>
@@ -59,9 +110,7 @@ public sealed class LedgerController : ControllerBase
     public async Task<IActionResult> TrialBalance(
         [FromQuery] TrialBalanceReportRequest request, CancellationToken ct)
     {
-        if (request.OrgId is Guid orgId
-            && !(Guid.TryParse(User.FindFirstValue(OrgRouteMustMatchTokenAttribute.ClaimType), out Guid tokenOrg)
-                && tokenOrg == orgId))
+        if (OtherBranch(request.OrgId))
         {
             return Forbid();
         }
@@ -71,15 +120,9 @@ public sealed class LedgerController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        IReadOnlyList<(string Field, string Message)> refusals = TrialBalanceReportRepository.DateRefusals(request);
-        if (refusals.Count > 0)
+        if (RefuseDates(TrialBalanceReportRepository.DateRefusals(request)) is IActionResult refused)
         {
-            foreach ((string field, string message) in refusals)
-            {
-                ModelState.AddModelError(field, message);
-            }
-
-            return ValidationProblem(ModelState);
+            return refused;
         }
 
         return Ok(await _trialBalance.RunAsync(request, ct));
@@ -137,4 +180,26 @@ public sealed class LedgerController : ControllerBase
     [HttpGet("outstanding-balances/{ledgerTypeId:int}")]
     public async Task<IActionResult> AllOutstandingBalances(int ledgerTypeId, CancellationToken ct) =>
         Ok(await _reports.GetAllOutstandingBalancesAsync(ledgerTypeId, ct));
+
+    /// <summary>A request that names a branch other than the token's.</summary>
+    private bool OtherBranch(Guid? orgId) =>
+        orgId is Guid named
+        && !(Guid.TryParse(User.FindFirstValue(OrgRouteMustMatchTokenAttribute.ClaimType), out Guid tokenOrg)
+            && tokenOrg == named);
+
+    /// <summary>Each refusal added to the field it names, answered together; null when there are none.</summary>
+    private IActionResult? RefuseDates(IReadOnlyList<(string Field, string Message)> refusals)
+    {
+        if (refusals.Count == 0)
+        {
+            return null;
+        }
+
+        foreach ((string field, string message) in refusals)
+        {
+            ModelState.AddModelError(field, message);
+        }
+
+        return ValidationProblem(ModelState);
+    }
 }

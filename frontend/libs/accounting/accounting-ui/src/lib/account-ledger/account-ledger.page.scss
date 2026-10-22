@@ -1,41 +1,218 @@
-.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-.link { color: var(--color-accent-700); text-decoration: none; }
-.link:hover { text-decoration: underline; }
-.error { color: var(--color-danger); }
-.empty { color: var(--color-text-subtle); font-size: .85rem; }
+/* The General ledger (TK-216): the filters, one account's postings or every account's summary. */
 
-.filters { display: flex; align-items: flex-end; gap: .75rem; margin: 1rem 0; flex-wrap: wrap; }
-.filters label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: var(--color-text-muted); }
-.filters label.wide { flex: 1 1 18rem; }
-.filters input, .filters select { padding: .4rem .5rem; border: 1px solid var(--color-border-strong); border-radius: 6px; font: inherit; font-size: .85rem; }
-.filters button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: var(--color-accent-600); color: #fff; font: inherit; font-size: .85rem; cursor: pointer; }
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
 
-.summary { background: var(--color-surface-muted); border-radius: 8px; padding: .8rem 1rem; margin-bottom: 1rem; }
-.summary h2 { font-size: 1rem; margin: 0 0 .5rem; display: flex; gap: .5rem; align-items: baseline; }
-.summary .code { color: var(--color-text-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
-.summary dl { display: flex; gap: 2rem; margin: 0; flex-wrap: wrap; }
-.summary dt { font-size: .72rem; color: var(--color-text-subtle); }
-.summary dd { margin: 0; font-variant-numeric: tabular-nums; font-size: .95rem; }
-.summary .closing dd { font-weight: 600; }
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
 
-.grid { width: 100%; border-collapse: collapse; }
-.grid th, .grid td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--color-divider); vertical-align: top; }
-.grid th { font-size: .78rem; color: var(--color-text-muted); }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-.balance { font-weight: 500; }
-.date-col { width: 6.5rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
-.chip { font-size: .62rem; background: var(--color-accent-100); color: var(--color-accent-800); padding: .05rem .3rem; border-radius: 3px; margin-right: .3rem; }
-.ref { color: var(--color-text-subtle); font-size: .78rem; }
-.sub { display: block; color: var(--color-text-subtle); font-size: .75rem; }
-.badge { font-size: .62rem; background: var(--color-warning-bg); color: var(--color-warning); padding: .05rem .3rem; border-radius: 3px; }
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
 
-/* At 360px the grid becomes a card list — each cell keeps its own label, since
-   the header row is gone. */
+.subtitle,
+.period,
+.empty {
+  margin: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+.filters__field--wide {
+  grid-column: span 2;
+}
+
+/* The tick box and the button sit level with the inputs, below their labels. */
+.filters__field--check,
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.account__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.account__code {
+  font-size: 12px;
+}
+
+.account__line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.equation {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.document {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.sub {
+  display: block;
+  font-size: 12px;
+}
+
+.side {
+  font-size: 11px;
+  color: var(--color-text-subtle);
+}
+
+.badge {
+  font-size: 10px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.link {
+  color: var(--color-accent-700);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* Seven columns, with room for a description: the frame scrolls sideways when the window is narrower, never the page. */
+.matrix {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.matrix bb-data-grid {
+  min-width: 58rem;
+}
+
+/* Phone: one card for the opening balance, each posting and the closing balance. */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entry {
+  padding: var(--space-2) var(--space-3);
+}
+
+.entry--opening,
+.entry--closing {
+  background: var(--color-surface-muted);
+}
+
+.entry--closing {
+  border-top: 2px solid var(--color-divider);
+}
+
+.entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  font-size: 13px;
+}
+
+.entry__date {
+  font-weight: 600;
+}
+
+.entry__text {
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+}
+
+.entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.figures {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+}
+
+.figures__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.figures dt {
+  color: var(--color-text-muted);
+}
+
+.figures dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.figures__row--balance {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-divider);
+  font-weight: 600;
+}
+
+.figures__row--balance dt {
+  color: inherit;
+}
+
 @media (max-width: 640px) {
-  .summary dl { gap: 1rem; }
-  .grid thead { display: none; }
-  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid var(--color-divider); }
-  .grid td { display: flex; justify-content: space-between; gap: 1rem; border: 0; padding: .15rem .6rem; }
-  .grid td::before { content: attr(data-label); color: var(--color-text-subtle); font-size: .72rem; flex: 0 0 auto; }
-  .date-col { width: auto; }
+  .filters__field--wide {
+    grid-column: auto;
+  }
+
+  .filters__actions .btn {
+    width: 100%;
+  }
 }

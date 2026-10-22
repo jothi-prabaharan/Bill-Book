@@ -124,6 +124,7 @@ builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(cl
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<LedgerReportRepository>();
 builder.Services.AddScoped<TrialBalanceReportRepository>();
+builder.Services.AddScoped<GeneralLedgerReportRepository>();
 builder.Services.AddScoped<OpeningBalanceRepository>();
 builder.Services.AddScoped<DepreciationRepository>();
 builder.Services.AddScoped<FixedAssetRepository>();

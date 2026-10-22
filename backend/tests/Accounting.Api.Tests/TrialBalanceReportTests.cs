@@ -459,7 +459,7 @@ public sealed class TrialBalanceReportTests
     [Fact]
     public async Task Another_branch_in_the_request_is_forbidden_not_hidden()
     {
-        var controller = new LedgerController(null!, null!)
+        var controller = new LedgerController(null!, null!, null!)
         {
             ControllerContext = new ControllerContext
             {

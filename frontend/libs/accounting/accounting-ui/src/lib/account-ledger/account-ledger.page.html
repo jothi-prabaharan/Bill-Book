@@ -1,96 +1,234 @@
 <header class="page-head">
-  <h1>Account ledger</h1>
-  <a class="link" routerLink="/accounting/trial-balance">Trial balance →</a>
+  <div>
+    <h1>General ledger</h1>
+    <p class="subtitle text-muted">
+      Every posting to an account over a period, or every account's balances for it, in the branch's base currency.
+    </p>
+  </div>
+  <a class="btn btn-link" routerLink="/accounting/trial-balance">Trial balance →</a>
 </header>
 
-@if (message(); as failure) {
-  <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
-}
-
-<form class="filters" (ngSubmit)="load()">
-  <div class="field wide">
-    <bb-select
-      label="Account"
-      placeholder="Choose an account…"
-      [options]="accountOptions()"
-      name="accountId"
-      [(ngModel)]="accountId"
-      (ngModelChange)="choose()"
-    />
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'gl-account'" label="Account" placeholder="All accounts (summary)" [options]="accountOptions()"
+               [loading]="!choicesLoaded()" emptyText="No accounts on this branch" formControlName="accountId" />
   </div>
-  <div class="field">
-    <bb-branch-date-input label="From"  [(ngModel)]="from" name="from" />
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'gl-from'" label="From" formControlName="from" [required]="true"
+                          [error]="err('from', 'From date')" />
   </div>
-  <div class="field">
-    <bb-branch-date-input label="To"  [(ngModel)]="to" name="to" />
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'gl-to'" label="To" formControlName="to" [required]="true"
+                          [error]="err('to', 'To date')" />
   </div>
-  <button class="btn btn-primary" type="submit" [disabled]="busy() || accountId === null">Show</button>
+  @if (chosen() !== null) {
+    <div class="filters__field">
+      <bb-select [id]="'gl-contact'" label="Contact" placeholder="Any contact" [options]="contactOptions()"
+                 [loading]="!choicesLoaded()" emptyText="No contacts" formControlName="contactId" />
+    </div>
+    <div class="filters__field">
+      <bb-select [id]="'gl-project'" label="Project" placeholder="Any project" [options]="projectOptions()"
+                 [loading]="!choicesLoaded()" emptyText="No projects" formControlName="projectId" />
+    </div>
+  } @else {
+    <div class="filters__field filters__field--check">
+      <bb-checkbox text="Show accounts with no balance" formControlName="isZeroBalanceShown" />
+    </div>
+  }
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
 </form>
 
-@if (busy()) {
-  <p class="empty">Loading…</p>
-} @else if (accountId === null) {
-  <p class="empty">Choose an account to see its postings.</p>
-} @else if (ledger(); as l) {
-  <section class="summary">
-    <h2>
-      <span class="code">{{ l.accountCode }}</span>
-      {{ l.accountName }}
-      @if (l.isContra) { <span class="badge">Contra</span> }
-    </h2>
-    <dl>
-      <div>
-        <dt>Opening</dt>
-        <dd>{{ presented(l.openingBalance) | number: '1.2-2' }}</dd>
-      </div>
-      <div>
-        <dt>Debits</dt>
-        <dd>{{ l.totalDebit | number: '1.2-2' }}</dd>
-      </div>
-      <div>
-        <dt>Credits</dt>
-        <dd>{{ l.totalCredit | number: '1.2-2' }}</dd>
-      </div>
-      <div class="closing">
-        <dt>Closing ({{ normalBalance() }})</dt>
-        <dd>{{ presented(l.closingBalance) | number: '1.2-2' }}</dd>
-      </div>
-    </dl>
-  </section>
-
-  <bb-data-grid fillHeight [gridCode]="'ACCOUNT_LEDGER'" [columns]="columns" [data]="l.rows">
-    <ng-template bbCellTemplate="ledgerDate" let-row>
-      {{ row.ledgerDate }}
-    </ng-template>
-    <ng-template bbCellTemplate="document" let-row>
-      <span class="chip">{{ row.transactionTypeCode }}</span>
-      @if (row.journalId) {
-        <a class="link" [routerLink]="['/accounting/journals', row.journalId]">
-          {{ row.journalNo ?? '#' + row.journalId }}
-        </a>
-      } @else {
-        <span class="ref">#{{ row.transactionId }}</span>
-      }
-      @if (row.transactionDetailId) {
-        <span class="ref">· line {{ row.transactionDetailId }}</span>
-      }
-    </ng-template>
-    <ng-template bbCellTemplate="detail" let-row>
-      {{ row.transactionDesc }}
-      @if (row.subAccountName) {
-        <span class="sub">{{ row.subAccountName }}</span>
-      }
-    </ng-template>
-    <ng-template bbCellTemplate="debit" let-row>
-      {{ row.debitAmountBase ? (row.debitAmountBase | number: '1.2-2') : '' }}
-    </ng-template>
-    <ng-template bbCellTemplate="credit" let-row>
-      {{ row.creditAmountBase ? (row.creditAmountBase | number: '1.2-2') : '' }}
-    </ng-template>
-    <ng-template bbCellTemplate="balance" let-row>
-      {{ presented(row.runningBalance) | number: '1.2-2' }}
-    </ng-template>
-  </bb-data-grid>
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
 }
 
+@if (ledger(); as report) {
+  <section class="account" aria-label="Account">
+    <h2 class="account__title">
+      <span class="account__code text-muted">{{ report.accountCode }}</span>
+      <span>{{ report.accountName }}</span>
+      @if (report.isContra) {
+        <span class="badge" title="Normal balance runs opposite its type">Contra</span>
+      }
+    </h2>
+    <p class="period text-muted">
+      {{ report.from | registerDate }} to {{ report.to | registerDate }}. Balances are on the account's normal side, {{ report.normalSide === 'Debit' ? 'debit' : 'credit' }}.
+      @if (report.contactId !== null || report.projectId !== null) {
+        Only the postings that name the contact or project chosen are shown, and the opening balance is theirs too.
+      }
+    </p>
+    <p class="equation">{{ equation() }}</p>
+    @if (yearNote()) {
+      <p class="period text-muted">{{ yearNote() }}</p>
+    }
+  </section>
 
+  @if (narrow()) {
+    <div class="cards" role="list" aria-label="General ledger">
+      @for (row of ledgerGridRows(); track $index) {
+        <article class="card entry" role="listitem"
+                 [class.entry--opening]="row.kind === 'opening'" [class.entry--closing]="row.kind === 'closing'">
+          <header class="entry__head">
+            @if (row.kind === 'posting') {
+              <span class="entry__date">{{ row.ledgerDate | registerDate }}</span>
+              <span class="chip">{{ row.sourceCode }}</span>
+              @if (row.journalId) {
+                <a class="link" [routerLink]="['/accounting/journals', row.journalId]">{{ row.documentNo }}</a>
+              } @else {
+                <span>{{ row.documentNo }}</span>
+              }
+            } @else {
+              <strong>{{ row.description }}</strong>
+            }
+          </header>
+          @if (row.kind === 'posting') {
+            @if (row.description) {
+              <p class="entry__text">{{ row.description }}</p>
+            }
+            @if (row.contactName || row.projectName || row.subAccountName || row.foreignNote) {
+              <p class="entry__meta text-muted">
+                @if (row.contactName) { <span>{{ row.contactName }}</span> }
+                @if (row.projectName) { <span>Project {{ row.projectName }}</span> }
+                @if (row.subAccountName) { <span>{{ row.subAccountName }}</span> }
+                @if (row.foreignNote) { <span>{{ row.foreignNote }}</span> }
+              </p>
+            }
+          }
+          <dl class="figures">
+            @if (row.debit !== null) {
+              <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Debits' : 'Debit' }}</dt><dd><bb-money-cell [value]="row.debit" /></dd></div>
+            }
+            @if (row.credit !== null) {
+              <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Credits' : 'Credit' }}</dt><dd><bb-money-cell [value]="row.credit" /></dd></div>
+            }
+            <div class="figures__row figures__row--balance">
+              <dt>Balance ({{ sideLetter(report.normalSide) }})</dt><dd><bb-money-cell [value]="row.balance" /></dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+    <bb-data-grid flush [columns]="ledgerColumns()" [data]="ledgerGridRows()" [loading]="busy()"
+                  [rowClass]="ledgerRowClass" [sortable]="false" [showColumnFilters]="false" [showCount]="false"
+                  [paged]="false" label="General ledger">
+      <ng-template bbCellTemplate="ledgerDate" let-row>
+        @if (row.kind === 'posting') {
+          {{ row.ledgerDate | registerDate }}
+        }
+      </ng-template>
+      <ng-template bbCellTemplate="document" let-row>
+        @if (row.kind === 'posting') {
+          <span class="document">
+            <span class="chip">{{ row.sourceCode }}</span>
+            @if (row.journalId) {
+              <a class="link" [routerLink]="['/accounting/journals', row.journalId]">{{ row.documentNo }}</a>
+            } @else {
+              <span>{{ row.documentNo }}</span>
+            }
+          </span>
+        }
+      </ng-template>
+      <ng-template bbCellTemplate="contactName" let-row>{{ row.contactName }}</ng-template>
+      <ng-template bbCellTemplate="description" let-row>
+        @if (row.kind === 'posting') {
+          <span>{{ row.description }}</span>
+          @if (row.subAccountName) {
+            <span class="sub text-muted">{{ row.subAccountName }}</span>
+          }
+          @if (row.projectName) {
+            <span class="sub text-muted">Project {{ row.projectName }}</span>
+          }
+          @if (row.foreignNote) {
+            <span class="sub text-muted">{{ row.foreignNote }}</span>
+          }
+        } @else {
+          <strong>{{ row.description }}</strong>
+        }
+      </ng-template>
+      <ng-template bbCellTemplate="debit" let-row><bb-money-cell [value]="row.debit" /></ng-template>
+      <ng-template bbCellTemplate="credit" let-row><bb-money-cell [value]="row.credit" /></ng-template>
+      <ng-template bbCellTemplate="balance" let-row><bb-money-cell [value]="row.balance" /></ng-template>
+    </bb-data-grid>
+    </div>
+  }
+}
+
+@if (summary(); as report) {
+  <p class="period text-muted">
+    {{ report.from | registerDate }} to {{ report.to | registerDate }}. Each balance is on its account's normal side, marked Dr or Cr;
+    an income or expense account opens at what was posted since {{ report.financialYearStart | registerDate }}, the start of the financial year.
+    Choose an account above, or its name, to see its postings.
+  </p>
+
+  @if (summaryGridRows().length === 0) {
+    <p class="empty text-muted">Nothing was posted to any account in this period, and no account holds a balance.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="General ledger summary">
+      @for (row of summaryGridRows(); track $index) {
+        <article class="card entry" role="listitem" [class.entry--closing]="row.kind === 'total'">
+          <header class="entry__head">
+            @if (row.kind === 'line') {
+              <span class="account__code text-muted">{{ row.accountCode }}</span>
+              <a class="link" [routerLink]="['/accounting/ledger', row.accountId]" [queryParams]="period()">{{ row.accountName }}</a>
+              @if (row.isContra) {
+                <span class="badge" title="Normal balance runs opposite its type">Contra</span>
+              }
+            } @else {
+              <strong>{{ row.accountName }}</strong>
+            }
+          </header>
+          <dl class="figures">
+            @if (row.kind === 'line') {
+              <div class="figures__row"><dt>Opening</dt><dd><bb-money-cell [value]="row.openingBalance" /> <small class="side">{{ sideLetter(row.side!) }}</small></dd></div>
+            }
+            @if (row.debit !== null) {
+              <div class="figures__row"><dt>Debits</dt><dd><bb-money-cell [value]="row.debit" /></dd></div>
+            }
+            @if (row.credit !== null) {
+              <div class="figures__row"><dt>Credits</dt><dd><bb-money-cell [value]="row.credit" /></dd></div>
+            }
+            @if (row.kind === 'line') {
+              <div class="figures__row figures__row--balance"><dt>Closing</dt><dd><bb-money-cell [value]="row.closingBalance" /> <small class="side">{{ sideLetter(row.side!) }}</small></dd></div>
+            }
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <bb-data-grid flush [columns]="summaryColumns" [data]="summaryGridRows()" [loading]="busy()"
+                  [rowClass]="summaryRowClass" [sortable]="false" [showColumnFilters]="false" [showCount]="false"
+                  [paged]="false" label="General ledger summary">
+      <ng-template bbCellTemplate="accountName" let-row>
+        @if (row.kind === 'line') {
+          <span class="account__line">
+            <span class="account__code text-muted">{{ row.accountCode }}</span>
+            <a class="link" [routerLink]="['/accounting/ledger', row.accountId]" [queryParams]="period()">{{ row.accountName }}</a>
+            @if (row.isContra) {
+              <span class="badge" title="Normal balance runs opposite its type">Contra</span>
+            }
+          </span>
+        } @else {
+          <strong>{{ row.accountName }}</strong>
+        }
+      </ng-template>
+      <ng-template bbCellTemplate="openingBalance" let-row>
+        @if (row.kind === 'line') {
+          <bb-money-cell [value]="row.openingBalance" /> <small class="side">{{ sideLetter(row.side) }}</small>
+        }
+      </ng-template>
+      <ng-template bbCellTemplate="debit" let-row><bb-money-cell [value]="row.debit" /></ng-template>
+      <ng-template bbCellTemplate="credit" let-row><bb-money-cell [value]="row.credit" /></ng-template>
+      <ng-template bbCellTemplate="closingBalance" let-row>
+        @if (row.kind === 'line') {
+          <bb-money-cell [value]="row.closingBalance" /> <small class="side">{{ sideLetter(row.side) }}</small>
+        }
+      </ng-template>
+    </bb-data-grid>
+  }
+}

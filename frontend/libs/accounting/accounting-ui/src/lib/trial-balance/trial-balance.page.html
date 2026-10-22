@@ -64,7 +64,7 @@
             <h3 class="figures-card__name">
               @if (row.kind === 'line' && row.accountId) {
                 <span class="account__code text-muted">{{ row.accountCode }}</span>
-                <a class="account__name" [routerLink]="['/accounting/ledger', row.accountId]">{{ row.accountName }}</a>
+                <a class="account__name" [routerLink]="['/accounting/ledger', row.accountId]" [queryParams]="{ from: report.from, to: report.to }">{{ row.accountName }}</a>
                 @if (row.isContra) {
                   <span class="badge" title="Normal balance runs opposite its type">Contra</span>
                 }
@@ -110,7 +110,7 @@
           @if (row.kind === 'line' && row.accountId) {
             <span class="account">
               <span class="account__code text-muted">{{ row.accountCode }}</span>
-              <a class="account__name" [routerLink]="['/accounting/ledger', row.accountId]">{{ row.accountName }}</a>
+              <a class="account__name" [routerLink]="['/accounting/ledger', row.accountId]" [queryParams]="{ from: report.from, to: report.to }">{{ row.accountName }}</a>
               @if (row.isContra) {
                 <span class="badge" title="Normal balance runs opposite its type">Contra</span>
               }

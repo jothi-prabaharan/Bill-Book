@@ -591,11 +591,19 @@ Receivables, payables and inventory are driven by their own subledgers — invoi
 
 ## Reading the ledger back
 
-Two screens, and between them every posting in the product can be checked by a person.
+Two reports, and between them every posting in the product can be checked by a person.
 
-**Account ledger** — one account over a date range: what it stood at when the range opened, every posting inside it, and a running balance down the page. Every row names the document behind it and links to it, so a figure can always be traced to what produced it.
+**General ledger** (TK-216) — one account over a period, or every account for it. It is under **Reports › Accounting**, and needs **accounting.view**.
 
-Balances are held internally in debit terms and turned the right way up for display, because "Accounts Payable: −40,000" is a number every accountant has to stop and translate.
+- **From** and **To** are both required. The page opens on the financial year to date and runs straight away; there is no "all dates". A date left out, or a **To** before the **From**, is shown at its field.
+- With **Account** left on **All accounts (summary)**, the page lists every account that moved or holds a balance: its **Opening** balance, the period's **Debits** and **Credits**, and its **Closing** balance, with the debits and credits totalled at the foot. **Show accounts with no balance** adds the idle active accounts. An account's name opens its own ledger for the same dates.
+- With an account chosen, the page shows the **opening balance**, then one row for each posting, then the **closing balance** with the period's debits and credits. A row has its date, its **Document** (the document's own number, with its type beside it; a manual journal links to the journal), the **Contact**, the description, the debit, the credit and the **balance** after it. A posting booked in another currency also says what it was and the rate it was booked at.
+- Every balance is on the account's **normal side**, which the column heading names: an asset or an expense grows on the debit side and everything else on the credit side, and a contra account such as sales returns runs the other way. A balance on the wrong side keeps its minus sign, because an overdrawn bank account is what someone needs to see. A line above the table says it in words: opening + what grew the account − what reduced it = closing.
+- An account's **opening** balance is everything posted before **From**, except for an income or expense account, which opens at what was posted since its financial year began, because earlier years' profit is not this year's income. That is the Trial balance's rule, so **an account's closing balance here is its closing balance on the Trial balance for the same dates**, and the Trial balance's account names open this page on its period.
+- **Contact** and **Project** narrow the ledger to the postings that name them, and the opening balance to the same postings', so the running balance still starts from what that part of the ledger stood at.
+- A row written before the ledger kept document numbers shows the document type and id joined, such as `INV-42`.
+- On a wide screen the columns scroll sideways inside the report's own frame if the window is narrow, never the page. On a phone each posting is a small card.
+- The catalog's *General Ledger Summary*, used for export and scheduled emails, takes the same **From** and **To**, both required, and gives each active account's opening balance, debits, credits and closing balance in debit terms, a credit balance being negative. Until TK-216 it failed to run on any branch with postings.
 
 **Trial balance** (TK-215) — every account's balance when a period opens, what was posted to it in the period, and its balance when the period closes, with a subtotal for each account type and the totals at the foot. It is under **Reports › Accounting**, and needs **accounting.view**.
 
