@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 198 completed, 0 working, 56 open, and 2 blocked (256 cards).
+**Summary:** 198 completed, 1 working, 55 open, and 2 blocked (256 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -221,7 +221,7 @@ where to start, sub-tasks and notes.
 | [TK-212](./Task_Details.md#tk-212--items-get-their-sub-accounts-so-a-stock-item-can-be-sold) | Items get their sub-accounts, so a stock item can be sold | Z | 🟪 open | — | — | — | — | — |
 | [TK-213](./Task_Details.md#tk-213--reporting-read-models-enum-columns-read-as-their-names-and-the-settlement-read-model) | Reporting read models: enum columns read as their names, and the settlement read model | Z | ✅ completed | Claude Opus 5.5 | 2026-10-22 | written, not run | [#200](https://github.com/jothi-prabaharan/Bill-Book/issues/200) | — |
 | [TK-214](./Task_Details.md#tk-214--budget-monthly-trend-its-own-endpoint-and-page) | Budget Monthly Trend: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-22 | written, not run | [#201](https://github.com/jothi-prabaharan/Bill-Book/issues/201) | — |
-| [TK-215](./Task_Details.md#tk-215--trial-balance-a-required-period-and-the-report-standard) | Trial Balance: a required period and the report standard | Z | 🟪 open | — | — | — | [#202](https://github.com/jothi-prabaharan/Bill-Book/issues/202) | — |
+| [TK-215](./Task_Details.md#tk-215--trial-balance-a-required-period-and-the-report-standard) | Trial Balance: a required period and the report standard | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-22 | — | [#202](https://github.com/jothi-prabaharan/Bill-Book/issues/202) | — |
 | [TK-216](./Task_Details.md#tk-216--general-ledger-a-required-period-and-the-report-standard) | General ledger: a required period and the report standard | Z | 🟪 open | — | — | — | [#203](https://github.com/jothi-prabaharan/Bill-Book/issues/203) | — |
 | [TK-217](./Task_Details.md#tk-217--journal-report-its-own-endpoint-and-page) | Journal Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#204](https://github.com/jothi-prabaharan/Bill-Book/issues/204) | — |
 | [TK-218](./Task_Details.md#tk-218--account-transaction-its-own-endpoint-and-page) | Account Transaction: its own endpoint and page | Z | 🟪 open | — | — | — | [#205](https://github.com/jothi-prabaharan/Bill-Book/issues/205) | — |
