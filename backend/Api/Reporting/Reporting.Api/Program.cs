@@ -246,6 +246,7 @@ builder.Services.AddScoped<BankReconciliationReportRepository>();
 builder.Services.AddScoped<BusinessPerformanceReportRepository>();
 builder.Services.AddScoped<BudgetVsActualReportRepository>();
 builder.Services.AddScoped<BudgetVsActualByProjectReportRepository>();
+builder.Services.AddScoped<BudgetMonthlyTrendReportRepository>();
 
 // The report builder's datasets (TK-113). Their custom field columns come
 // from Master's definitions, cached five minutes per branch and kind.

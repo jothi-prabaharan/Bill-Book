@@ -3718,6 +3718,16 @@ Unique on (`BudgetId`, `AccountId`, `ProjectId`, `Period`).
   an optional single project. Each project is composed by Budget vs Actual's own `Compose` over that
   project's sums, and the profit across the projects over their sums added together. Only postings
   and budget lines that carry a project count.
+- **The monthly trend has its own page and endpoint (TK-214)**: `GET api/statements/budget-monthly-trend`,
+  with the budget and the as-at date (within the budget's year) required and no lookup of its own (the
+  page uses `…/budget-vs-actual/budgets`). Budget lines and postings are each summed once in the
+  database by account and month (`BudgetedByMonth`, `ActualsByMonth`); `Compose` then runs Budget vs
+  Actual's `Compose` once for each of the twelve months, once for the year to date and once over the
+  whole year's budget, so every cell equals Budget vs Actual's own for the same window. Months after
+  the as-at date's have their budget and a null actual, variance and percentage. The catalog's
+  `budget-monthly-trend` source now requires a budget and an as-at date (`BudgetWindows.Require`,
+  raised as a `ReportQueryException`, which the runner answers as 400), since the runner does not
+  enforce `IsRequired` itself.
 - The catalog's `budget-vs-actual` and `budget-vs-actual-by-project` sources had a correlated
   sub-query per account (and per project) that EF cannot translate, so both answered 500 (found in
   TK-204). Since TK-207 each sums the budget lines and postings in one grouped query, as the monthly

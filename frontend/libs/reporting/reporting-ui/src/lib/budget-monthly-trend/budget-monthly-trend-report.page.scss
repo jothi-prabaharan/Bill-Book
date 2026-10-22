@@ -1,0 +1,97 @@
+/* Budget Monthly Trend (TK-214): the filters, then one grid of twelve months that scrolls inside its own frame. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period {
+  margin: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+/* The button sits level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+/* Twelve months do not fit, so the frame scrolls sideways and the page never does. */
+.matrix {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.matrix bb-data-grid {
+  min-width: 100rem;
+}
+
+.account {
+  display: flex;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+/* The second and third rows of an account or total repeat its name, quietly, so a sideways scroll never loses it. */
+.account--repeat {
+  color: var(--color-text-subtle);
+}
+
+.account__code {
+  font-size: 12px;
+}
+
+.account__measure {
+  margin-left: auto;
+  font-size: 11px;
+}
+
+.figure--future {
+  color: var(--color-text-subtle);
+}
+
+.figure--stacked {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.figure__percent {
+  font-size: 11px;
+}
+
+.variance--favourable {
+  color: var(--color-success);
+}
+
+.variance--adverse {
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .filters__actions .btn {
+    width: 100%;
+  }
+}

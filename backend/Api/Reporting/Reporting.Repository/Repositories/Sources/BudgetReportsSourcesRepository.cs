@@ -85,17 +85,56 @@ public static class BudgetWindows
         return new BudgetSelection(budget?.BudgetId, budget?.ByProject ?? false, For(yearStart, asOf, scope));
     }
 
-    internal static IReadOnlyList<ReportParameterRepository> Parameters(bool withScope)
+    /// <summary>
+    /// The parameters a budget report takes. <paramref name="required"/> makes the
+    /// as-at date and the budget required (D-67, TK-214): the report is then
+    /// refused without them by <see cref="Require"/>, since the runner reads
+    /// <c>IsRequired</c> as a label and does not enforce it.
+    /// </summary>
+    internal static IReadOnlyList<ReportParameterRepository> Parameters(bool withScope, bool required = false)
     {
-        List<ReportParameterRepository> parameters = [new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date }];
+        List<ReportParameterRepository> parameters = [new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date, IsRequired = required }];
 
         if (withScope)
         {
             parameters.Add(new() { Name = "scope", Label = "Period: month, quarter or ytd", DataType = ColumnDataType.Text, DefaultValue = YearToDate });
         }
 
-        parameters.Add(new() { Name = "budgetId", Label = "Budget (the branch's when blank)", DataType = ColumnDataType.Number });
+        parameters.Add(required
+            ? new() { Name = "budgetId", Label = "Budget", DataType = ColumnDataType.Number, IsRequired = true }
+            : new() { Name = "budgetId", Label = "Budget (the branch's when blank)", DataType = ColumnDataType.Number });
         return parameters;
+    }
+
+    /// <summary>
+    /// Refuses a request with no as-at date or budget, a budget that is not the
+    /// branch's, or a date outside the budget's year, in the words the report's
+    /// page uses. The message reaches the caller as a 400.
+    /// </summary>
+    public static void Require(ReportParameters parameters, BudgetSelection selection)
+    {
+        if (parameters.Date("asOf") is not DateOnly asOf)
+        {
+            throw new ReportQueryException("As at date is required.");
+        }
+
+        if (parameters.Id("budgetId") is null)
+        {
+            throw new ReportQueryException("Budget is required.");
+        }
+
+        if (selection.BudgetId is null)
+        {
+            throw new ReportQueryException("That budget is not on this branch.");
+        }
+
+        DateOnly start = selection.Window.YearStart;
+        DateOnly end = start.AddYears(1).AddDays(-1);
+        if (asOf < start || asOf > end)
+        {
+            throw new ReportQueryException(
+                $"Choose a date within the budget's year, {start:dd MMM yyyy} to {end:dd MMM yyyy}.");
+        }
     }
 }
 
@@ -413,7 +452,7 @@ public sealed class BudgetMonthlyTrendSource : ReportSource<BudgetTrendRow>
     public override ReportModule Module => ReportModule.Accounting;
     public override string RequiredPermission => "accounting.view";
     public override AddOn RequiredAddOn => AddOn.Budget;
-    public override IReadOnlyList<ReportParameterRepository> Parameters => BudgetWindows.Parameters(withScope: false);
+    public override IReadOnlyList<ReportParameterRepository> Parameters => BudgetWindows.Parameters(withScope: false, required: true);
 
     public override IReadOnlyList<ReportColumn> Columns =>
     [
@@ -427,8 +466,11 @@ public sealed class BudgetMonthlyTrendSource : ReportSource<BudgetTrendRow>
         ReportColumn.Of<BudgetTrendRow, decimal>("variance", ColumnDataType.Money, r => r.Variance, aggregate: AggregateFunction.Sum),
     ];
 
-    protected override async Task PrepareAsync(ReportParameters parameters, ReportingDbContext db, CancellationToken ct) =>
+    protected override async Task PrepareAsync(ReportParameters parameters, ReportingDbContext db, CancellationToken ct)
+    {
         _selection = await BudgetWindows.ResolveAsync(parameters, db, _financialYear, ct);
+        BudgetWindows.Require(parameters, _selection);
+    }
 
     protected override IQueryable<BudgetTrendRow> Build(ReportParameters parameters, ReportingDbContext db) =>
         BudgetReports.MonthlyTrend(db.Accounts, db.Ledger, db.BudgetLines, _selection!.BudgetId, _selection.Window.YearStart);

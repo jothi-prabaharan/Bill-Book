@@ -9,4 +9,5 @@ export * from './lib/bank-reconciliation/bank-reconciliation-report.page';
 export * from './lib/business-performance/business-performance-report.page';
 export * from './lib/budget-vs-actual/budget-vs-actual-report.page';
 export * from './lib/budget-vs-actual-by-project/budget-vs-actual-by-project-report.page';
+export * from './lib/budget-monthly-trend/budget-monthly-trend-report.page';
 export * from './lib/salary-increment/salary-increment-report.page';

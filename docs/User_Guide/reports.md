@@ -186,11 +186,17 @@ Budget vs Actual by Project has its own page at `/reports/budget-vs-actual-by-pr
 
 ### Budget Monthly Trend
 
-This report runs in the shared report page. It takes an **As at** date, today when left blank, and a **Budget**; when blank it uses the branch's approved budget for the year holding that date. It shows one row per account and month of the budget's year, with budget and actual side by side. Pivot on **Month** to lay the twelve months across.
+Budget Monthly Trend has its own page at `/reports/budget-monthly-trend` (TK-214). It needs what Budget vs Actual needs. It shows the shape of the budget's year: the same accounts, sections and profit lines as Budget vs Actual, with a column for each month.
 
-**Actual** is income as credits less debits and expenses as debits less credits, over the branch's active income and expense accounts. **Variance** is positive when it is favourable, as on Budget vs Actual.
+- **Budget** and **As at** are both required and work as on Budget vs Actual: the page opens on the branch's approved budget for this year and today's date, and runs straight away. The date must fall within the budget's year, and choosing a budget for another year moves it to the nearer end of that year.
+- **Show** chooses **Budget**, **Actual** or **Variance**, or all three, which is the default. It only changes what is drawn; the figures are not asked for again.
+- Each account, each section's total and the gross and net profit has a figure for each of the twelve months of the budget's year, then **Year to date** and **Full-year budget**. Every month's figures are exactly what **Budget vs Actual** shows for that month, and the year to date is its year to date, so the two reports never disagree.
+- The month holding the **As at** date counts whole, as on Budget vs Actual. The months after it show their budget and no actual yet, and are greyed. **Full-year budget** is the budget for all twelve months. It is shown with **Budget** and when all three are shown.
+- **Variance** is positive when it is favourable and is green, and a negative one is red, with the year to date's variance as a percentage beneath it. A contra account's budget carries the Profit & Loss's sign, as on Budget vs Actual.
+- The actual net profit for the year to date is exactly what the Profit & Loss shows for the same dates. An account made inactive since it moved still shows, so the two agree.
+- On a wide screen the twelve months scroll sideways inside the report's own frame, never the page. On a phone, choose a **Line**, such as Net profit or an account, and its twelve months are listed with budget, actual and variance, with the year to date at the end.
 
-The catalog's **Budget vs Actual** and **Budget vs Actual by Project** reports, used for export and scheduled emails, give the same figures as their pages for active accounts. Until TK-207 they failed to run.
+The catalog's **Budget vs Actual**, **Budget vs Actual by Project** and **Budget Monthly Trend** reports, used for export and scheduled emails, give the same figures as their pages for active accounts. Budget Monthly Trend's now needs a **Budget** and an **As at** date, and refuses a run without them, a budget that is not the branch's, or a date outside the budget's year. Until TK-207 the first two failed to run.
 
 ## Project reports
 

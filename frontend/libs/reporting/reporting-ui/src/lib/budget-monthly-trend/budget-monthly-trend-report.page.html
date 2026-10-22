@@ -1,0 +1,152 @@
+<header class="page-head">
+  <div>
+    <h1>Budget Monthly Trend</h1>
+    <p class="subtitle text-muted">
+      A budget against the books, month by month across its year, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-select [id]="'bmt-budget'" label="Budget" [required]="true" [clearable]="false"
+               placeholder="Choose a budget" [options]="budgetOptions()" [loading]="!budgetsLoaded()"
+               emptyText="No budgets on this branch" formControlName="budgetId"
+               [error]="err('budgetId', 'Budget')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bmt-as-of'" label="As at" formControlName="asOfDate" [required]="true"
+                          hint="Within the budget's year. Later months show their budget only."
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+  @if (!narrow()) {
+    <div class="filters__field">
+      <bb-select [id]="'bmt-show'" label="Show" [clearable]="false" [options]="showOptions" formControlName="show" />
+    </div>
+  }
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy() || budgets().length === 0">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.budget.name }}: actuals from {{ report.fromDate | registerDate }} to {{ report.throughDate | registerDate }};
+    the months after show their budget only. A positive variance is favourable.
+  </p>
+
+  @if (narrow()) {
+    <div class="line-choice">
+      <bb-select [id]="'bmt-line'" label="Line" [clearable]="false" [options]="lineOptions()" [formControl]="lineControl" />
+    </div>
+
+    <bb-data-grid flush [columns]="phoneColumns" [data]="monthRows()" [loading]="busy()"
+                  [rowClass]="phoneRowClass" [sortable]="false" [showColumnFilters]="false" [showCount]="false"
+                  [paged]="false" label="Budget Monthly Trend by month">
+      <ng-template bbCellTemplate="label" let-row>
+        <span>{{ row.label }}</span>
+      </ng-template>
+      <ng-template bbCellTemplate="budget" let-row><bb-money-cell [value]="row.cell.budget" /></ng-template>
+      <ng-template bbCellTemplate="actual" let-row><bb-money-cell [value]="row.cell.actual" /></ng-template>
+      <ng-template bbCellTemplate="variance" let-row>
+        <span class="figure figure--stacked" [class.variance--favourable]="tone(row.cell.variance) === 'favourable'"
+              [class.variance--adverse]="tone(row.cell.variance) === 'adverse'">
+          <bb-money-cell [value]="row.cell.variance" />
+          @if (row.cell.variancePercent !== null) {
+            <small class="figure__percent">{{ percent(row.cell.variancePercent) }}</small>
+          }
+        </span>
+      </ng-template>
+    </bb-data-grid>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns()" [data]="rows()" [loading]="busy()"
+                    [rowClass]="rowClass" [sortable]="false" [showColumnFilters]="false" [showCount]="false"
+                    [paged]="false" label="Budget Monthly Trend">
+        <ng-template bbCellTemplate="accountName" let-row>
+          @if (row.kind === 'section') {
+            <span>{{ row.accountName }}</span>
+          } @else {
+            <span class="account" [class.account--repeat]="!row.first">
+              @if (row.accountCode) {
+                <span class="account__code text-muted">{{ row.accountCode }}</span>
+              }
+              <span>{{ row.accountName }}</span>
+              @if (showAll()) {
+                <span class="account__measure text-muted">{{ row.measure }}</span>
+              }
+            </span>
+          }
+        </ng-template>
+      <ng-template bbCellTemplate="m0" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 0 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m1" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 1 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m2" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 2 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m3" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 3 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m4" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 4 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m5" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 5 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m6" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 6 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m7" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 7 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m8" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 8 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m9" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 9 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m10" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 10 }"></ng-container>
+      </ng-template>
+      <ng-template bbCellTemplate="m11" let-row>
+        <ng-container *ngTemplateOutlet="monthCell; context: { $implicit: row, index: 11 }"></ng-container>
+      </ng-template>
+        <ng-template bbCellTemplate="yearToDate" let-row>
+          @if (row.kind !== 'section') {
+            <span class="figure figure--stacked" [class.variance--favourable]="row.measure === 'Variance' && tone(row.yearToDate) === 'favourable'"
+                  [class.variance--adverse]="row.measure === 'Variance' && tone(row.yearToDate) === 'adverse'">
+              <bb-money-cell [value]="row.yearToDate" />
+              @if (row.yearToDatePercent !== null) {
+                <small class="figure__percent">{{ percent(row.yearToDatePercent) }}</small>
+              }
+            </span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="yearBudget" let-row>
+          @if (row.kind !== 'section' && row.yearBudget !== null) {
+            <bb-money-cell [value]="row.yearBudget" />
+          }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+  }
+}
+
+<ng-template #monthCell let-row let-i="index">
+  @if (row.kind !== 'section') {
+    <span class="figure" [class.figure--future]="row.future[i]"
+          [class.variance--favourable]="row.measure === 'Variance' && tone(row.months[i]) === 'favourable'"
+          [class.variance--adverse]="row.measure === 'Variance' && tone(row.months[i]) === 'adverse'">
+      <bb-money-cell [value]="row.months[i]" />
+    </span>
+  }
+</ng-template>
