@@ -6202,7 +6202,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** a new stock item can be put on a sales invoice and posted, and so can one created before the fix.
 
 ### TK-213 · Reporting read models: enum columns read as their names, and the settlement read model
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-10-22
 - **Issue:** [#200](https://github.com/jothi-prabaharan/Bill-Book/issues/200)
 - **Group:** Z · Owner request (the reports, one by one). **First of the report cards**: most of them depend on it. Opened 21 October 2026.
 - **Lanes:** L-RPT, L-RPT-INV, L-RPT-ACC, L-RPT-SAL, L-RPT-PUR (it edits sources in each of those groups) · **Depends on:** — · **Decision:** —
