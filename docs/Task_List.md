@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 202 completed, 0 working, 52 open, and 2 blocked (256 cards).
+**Summary:** 202 completed, 1 working, 51 open, and 2 blocked (256 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -225,7 +225,7 @@ where to start, sub-tasks and notes.
 | [TK-216](./Task_Details.md#tk-216--general-ledger-a-required-period-and-the-report-standard) | General ledger: a required period and the report standard | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-22 | written, not run | [#203](https://github.com/jothi-prabaharan/Bill-Book/issues/203) | — |
 | [TK-217](./Task_Details.md#tk-217--journal-report-its-own-endpoint-and-page) | Journal Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-23 | written, not run | [#204](https://github.com/jothi-prabaharan/Bill-Book/issues/204) | — |
 | [TK-218](./Task_Details.md#tk-218--account-transaction-its-own-endpoint-and-page) | Account Transaction: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-23 | written, not run | [#205](https://github.com/jothi-prabaharan/Bill-Book/issues/205) | — |
-| [TK-219](./Task_Details.md#tk-219--bank-summary-its-own-endpoint-and-page) | Bank Summary: its own endpoint and page | Z | 🟪 open | — | — | — | [#206](https://github.com/jothi-prabaharan/Bill-Book/issues/206) | — |
+| [TK-219](./Task_Details.md#tk-219--bank-summary-its-own-endpoint-and-page) | Bank Summary: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-23 | — | [#206](https://github.com/jothi-prabaharan/Bill-Book/issues/206) | — |
 | [TK-220](./Task_Details.md#tk-220--foreign-currency-gain-or-loss-its-own-endpoint-and-page) | Foreign Currency Gain or Loss: its own endpoint and page | Z | 🟪 open | — | — | — | [#207](https://github.com/jothi-prabaharan/Bill-Book/issues/207) | — |
 | [TK-221](./Task_Details.md#tk-221--foreign-currency-gain-or-loss-details-its-own-endpoint-and-page) | Foreign Currency Gain or Loss Details: its own endpoint and page | Z | 🟪 open | — | — | — | [#208](https://github.com/jothi-prabaharan/Bill-Book/issues/208) | — |
 | [TK-222](./Task_Details.md#tk-222--aged-receivables-summary-its-own-endpoint-and-page) | Aged Receivables Summary: its own endpoint and page | Z | 🟪 open | — | — | — | [#209](https://github.com/jothi-prabaharan/Bill-Book/issues/209) | — |
