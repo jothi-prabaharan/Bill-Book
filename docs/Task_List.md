@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 200 completed, 0 working, 54 open, and 2 blocked (256 cards).
+**Summary:** 200 completed, 1 working, 53 open, and 2 blocked (256 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -223,7 +223,7 @@ where to start, sub-tasks and notes.
 | [TK-214](./Task_Details.md#tk-214--budget-monthly-trend-its-own-endpoint-and-page) | Budget Monthly Trend: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-22 | written, not run | [#201](https://github.com/jothi-prabaharan/Bill-Book/issues/201) | — |
 | [TK-215](./Task_Details.md#tk-215--trial-balance-a-required-period-and-the-report-standard) | Trial Balance: a required period and the report standard | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-22 | written, not run | [#202](https://github.com/jothi-prabaharan/Bill-Book/issues/202) | — |
 | [TK-216](./Task_Details.md#tk-216--general-ledger-a-required-period-and-the-report-standard) | General ledger: a required period and the report standard | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-22 | written, not run | [#203](https://github.com/jothi-prabaharan/Bill-Book/issues/203) | — |
-| [TK-217](./Task_Details.md#tk-217--journal-report-its-own-endpoint-and-page) | Journal Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#204](https://github.com/jothi-prabaharan/Bill-Book/issues/204) | — |
+| [TK-217](./Task_Details.md#tk-217--journal-report-its-own-endpoint-and-page) | Journal Report: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-23 | — | [#204](https://github.com/jothi-prabaharan/Bill-Book/issues/204) | — |
 | [TK-218](./Task_Details.md#tk-218--account-transaction-its-own-endpoint-and-page) | Account Transaction: its own endpoint and page | Z | 🟪 open | — | — | — | [#205](https://github.com/jothi-prabaharan/Bill-Book/issues/205) | — |
 | [TK-219](./Task_Details.md#tk-219--bank-summary-its-own-endpoint-and-page) | Bank Summary: its own endpoint and page | Z | 🟪 open | — | — | — | [#206](https://github.com/jothi-prabaharan/Bill-Book/issues/206) | — |
 | [TK-220](./Task_Details.md#tk-220--foreign-currency-gain-or-loss-its-own-endpoint-and-page) | Foreign Currency Gain or Loss: its own endpoint and page | Z | 🟪 open | — | — | — | [#207](https://github.com/jothi-prabaharan/Bill-Book/issues/207) | — |

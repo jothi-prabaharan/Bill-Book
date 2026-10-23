@@ -6355,7 +6355,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Notes:** Lanes are Accounting's: the pages and endpoints belong to the Accounting service; the catalog source fix takes L-RPT-ACC. Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
 
 ### TK-217 · Journal Report: its own endpoint and page
-- [ ] open
+- [~] working (Claude Sonnet 5.5) — since 2026-10-23
 - **Issue:** [#204](https://github.com/jothi-prabaharan/Bill-Book/issues/204)
 - **Group:** Z · Owner request (the reports, one by one: menu group *Accounting*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
 - **Lanes:** L-RPT-ACC, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-213 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
